@@ -1,6 +1,6 @@
 # Run notes, spec #424 (M5a kanban, `@mermaid-js/diagram-kanban`)
 
-Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft PR: opened after the first ticket merge.
+Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft PR: #476.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
