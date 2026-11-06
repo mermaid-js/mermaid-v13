@@ -21,7 +21,20 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #462 T5 integration (open)
 
+- [ ] **From #458 (T6), the facet's move to the registry.** Once the manifest has `"language": "./dist/language.js"` (`() => import('@mermaid-js/diagram-packet/language').then((m) => m.language)`), `goldens.spec.ts` fails on "packet is still unlisted": delete the packet row in `language-service/src/testing/unlisted-facets.ts` (goldens stay); `conformance/src/packet/service-symbols.spec.ts`'s last test fails too: drop its eager row (`createLanguageService()` + `preload({ types: ['packet'] })`). Add `@mermaid-js/diagram-packet` to `language-service`'s optional peers.
+- [ ] **From #458 (T6), the adapter highlighters (language.md step 9).** `LEZER_HIGHLIGHTERS` (`language-service-codemirror/src/grammars.ts`) and `MONARCH_HIGHLIGHTERS` (`language-service-monaco/src/grammars.ts`) rows need `FirstPartyFacetId` `packet`, which only the manifest gives; then each adapter's `gen`, `adapters-agree.spec.ts` and both first-paint e2e specs with a packet document. The generated `grammar/generated/packet.*` files are committed (T2).
+
 - **Orchestrator choice (for the maintainer): forest is a family-rule approximation (D541), not a new shared input.** v12 forest packet reads its own `primaryTextColor` (#321b67) and `mainBkg` (#cde498); default uses literals. A new generic shared input ("strong text ink", "muted surface") would grow core's vocabulary and every theme spec for one diagram, with core at R-PERF-8's limit, and no second wave-1 port needs it yet. So forest takes the light entry (`black`, `#efefef`): six forest `DIFFERENCES` entries in the theme oracle spec, and one MIGRATION.md row. A later spec that needs a strong ink can promote it.
+
+## #458 T6 language facet (running)
+
+- Deviations (for the maintainer):
+  - `LanguageFacet.standalone` and its service handling (`language-service/src/symbols.ts`, `service.spec.ts`, DESIGN.md, language.md) are copied hunk for hunk from mindmap's #389 (`e99d313ef`, on `mermaid-v13`, not yet here): D346's "each its own definition, no references, duplicates allowed" needs it, and identical hunks keep the base merge through the T0 branch clean. Packet's facet sets `standalone: ['field']`.
+  - The probe follows `+` and `-` (T2's hooks): right after them the parser expects a bit number, so `+`/`-` are not a prefix to complete.
+  - The next start bit is found by parsing the text above the cursor with a `+1: ""` field appended (the parser's own `lastBit`, broken fields included), so completion at a line start parses about twice. 50k-character packet: one cycle (update + every query) about 14 ms best of 15, completion 3.4 ms; *not measured on a steady machine*.
+  - Completion offers `packet`, not `packet-beta` (the older name), at the start; on the `packet` line only `title`; `:` after a field's bits once a blank follows (right after a bit number the cursor extends it); `"` after the `:`.
+  - Hover on a field without a model entry says "Not drawn:" with its D341 message (or the row cap); the facet parses without the document's config (the service passes none), so rows are not shown.
+  - A label written otherwise than its name (escape, entity, tag quote, comment line or CRLF inside) is no service occurrence, as pie's (46 in the gate corpus, pinned in the oracle spec).
 
 ## #452 T1 lexer (merged)
 
