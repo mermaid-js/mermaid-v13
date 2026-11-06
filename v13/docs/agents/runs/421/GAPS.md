@@ -22,7 +22,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - Follow-up, not in this spec (for the maintainer): packet's `lexer.ts` shares about 75% of its lines with pie's (the `common.langium` rules: strings, YAML, directives, accessibility closers, blanks, memos), `packetTokens` mirrors `pieTokens`, `lexer-parity.spec.ts` mirrors pie's, and `stress.spec.ts` repeats `cpuMs`/`cost`. Diagram packages cannot share code with each other, so the home is core's parser kit (a Langium-common lexer helper) and a shared Langium parity runner in conformance. Radar, cynefin and the later Langium ports would be the third and further copies.
 - Review findings fixed before the merge (`b1454682f`): a package lexer unit spec (pitfall 4), a harvest drift spec for the pie and packet corpora, the 15 sources v12 does not lex pinned by id, test names dropped from the harvest (pie unchanged), stress small runs sized past the 2 ms floor.
-- [ ] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables.
+- [x] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables. Done in #456: the layout reads `fontFamily`, which now lists `packet` in `usedBy`.
 
 ## #454 T2 parser (merged at `0739831cc`; review fixes on `feature/454_packet-parser-fixes`)
 
@@ -42,6 +42,22 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - [x] **Review fix (standards): one "whole field" helper.** `packetV13Snapshot` (conformance) and `v12-specs/adapter.ts` both test whether a piece is its whole field; export one helper. Export the semantic codes once rather than repeating them in `adapter.ts`'s `SEMANTIC`. **Fixed:** `isWholeField(field, piece)` and `PACKET_SEMANTIC_ERRORS`, exported, used by `packetV13Snapshot`, `v12-specs/adapter.ts` and the grammar `reference.ts`.
 - Smells left as is (pie has the same shape): `VALUE_WORDS`/`KIND_OF`/`ID_OF` triple table, `WrittenBits` optional fields, positional `undefined` in `fail()`; follow-up with the lexer duplication above.
 - Early T6 work in T2 (D346 symbols, probe hooks) follows pie's pattern; T6 owns them from here.
+
+## #456 T3 layout (open)
+
+- [ ] **#460 T4:** declare `packetByteFontSize`, `packetLabelFontSize`, `packetTitleFontSize` and `packetBlockStrokeWidth` (kind `length`) in packet's theme table. Until then `packetThemeLength` (`src/layout/metrics.ts`) catches core's `Unknown theme variable` and uses v12's 10, 12, 14 and 1 from `PACKET_THEME_DEFAULTS`; a value that is not finite and above 0 falls back too. Once the table has them, drop the `try` and the defaults table (the theme's light entry holds them).
+- Orchestrator choices to record (no D-id covers them): a title of several lines keeps its first line where v12 centred its one line and grows down (D344 grows the bounds); the bounds include half of `packetBlockStrokeWidth` round each piece; a label shrinks in proportion to its overflow, at most `FIT_STEPS` (4) measurements, down to `min(label size, bit-number size)`, so it never grows (D343); each piece of a split field fits its own label; bit numbers are plain digits measured with the measurer, not through `layoutLabel`; the layout uses `model.bitsPerRow`, never re-reads it from config, and reads the other options from T2's `packetConfig()` without warning again.
+
+### #456 review fixes (pending; T3 agent after the #454 fixes merge, before T4)
+
+- [ ] **Spec: positions do not depend on measurements.** Lay out the same model under two measurers (e.g. `tableMeasurer` and a scaled one) and assert equal piece boxes, label centres, bit-number points and title point.
+- [ ] **Spec: title below the last row, as a box.** `invariants.ts` checks the first line's midpoint; check the title box's top against the last row's bottom, so a large `packetTitleFontSize` fails it.
+- [ ] **Spec: D343 always reaches the floor.** The shrink loop stops after `FIT_STEPS = 4`; with a non-linear measurer a label can stop above 10 px and still overflow. Make the last step the floor size (still at most a few measurements).
+- [ ] **Standards: quadratic invariant.** `coverViolations` filters every piece per field (O(fields × pieces), > 10,000 pieces in the corpus); group pieces by field once.
+- [ ] **Standards: small cleanups.** Drop the `as Readonly<Record<string, unknown>>` cast (`ctx.config.packet ?? {}` as pie); update `fontFamily`'s comment in `core/src/theme/vocabulary.ts` to cover packet; drop the unused `PACKET_THEME_DEFAULTS` export; rewrap the `testing.ts` comment.
+- Judgement call left as is: `invariants.ts` re-derives the column/width/height formulas from `PACKET_METRICS`; acceptable as an independent restatement of the spec's formulas, but the hand-worked v12 positions in `layout.spec.ts` are what pin them.
+- [ ] **#460: theme lengths read directly.** `packetThemeLength` (`metrics.ts`) wraps `theme.number` in a catch-all fallback until the table declares `packetByteFontSize`, `packetLabelFontSize`, `packetTitleFontSize`, `packetBlockStrokeWidth`. Once T4 declares them, read `ctx.theme.number(...)` directly (no catch), and make sure `theme-used-by.spec.ts` sees the reads (its scanner misses a name passed as a second argument; use direct calls or `DYNAMIC_READS`).
+- [ ] **#460: multi-line titles.** The layout keeps v12's point for the first title line and grows the bounds down, not the canvas; the renderer must draw from the layout's title box, not recompute it.
 
 ## Shared contracts
 
