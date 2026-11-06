@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/language-service-monaco",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Monaco adapter for the Mermaid language service: language id, Monarch tokens and every provider in one call.",
   "type": "module",
   "license": "MIT",

@@ -27,7 +27,8 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | base (38d663b44) | 93,551 B | — (657 B spare) |
 | #383 T1 | 93,551 B | 0 (no core change) |
 | #380 (tree loader, engine selection) | 93,760 B | +209 (448 B spare) |
-| #386 T2 | 93,760 B | 0 (no core change) |
+| merge `mermaid-v13` 586e00c8f/f246e6a0a (#410 pure theme tables; base 92,181 bench / 92,520 CDN) | 92,398 B bench, 92,756 B CDN ESM | +217 / +236 over the new base (1,810 B / 1,452 B spare) |
+| #386 T2 | 92,398 B bench, 92,756 B CDN ESM | 0 (no core change) |
 
 - Coordinator, 2026-11-06: `fix/theme-variables-pure` (gitGraph's find: core keeps the whole `THEME_VARIABLES` inventory) drops about 1.3 KB gz from core. Merge `mermaid-v13` when it lands. Until then, a ticket that would go over the gate records its bytes and the run continues with the tickets that don't depend on it.
 

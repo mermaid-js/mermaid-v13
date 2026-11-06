@@ -1,8 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid, type InitializeConfig, type RenderResult } from 'mermaid';
 import { shapeNames } from '@mermaid-js/diagram-flowchart/testing';
 import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
+
+/** The version every render stamps; it changes with each release. */
+const MERMAID_VERSION = (
+  JSON.parse(readFileSync(join(import.meta.dirname, '../../mermaid/package.json'), 'utf8')) as {
+    version: string;
+  }
+).version;
 
 /**
  * Flowchart rendering behaviour through the public `render()` (spec #1 primary seam): the
@@ -41,7 +50,7 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
     expect(tree.getAttr(root, 'role')).toBe('img');
     expect(tree.getAttr(root, 'aria-roledescription')).toBe('flowchart');
     expect(tree.getAttr(root, 'class')).toBe('mermaid mermaid-flowchart');
-    expect(tree.getAttr(root, 'data-mermaid-version')).toBe('13.0.0-alpha.0');
+    expect(tree.getAttr(root, 'data-mermaid-version')).toBe(MERMAID_VERSION);
     expect(tree.getAttr(root, 'width')).toBe('100%');
     expect(tree.getAttr(root, 'viewBox')).toMatch(/^0 0 \d+ \d+$/);
     expect(tree.getAttr(root, 'style')).toMatch(/^max-width:\d+px;--_/);

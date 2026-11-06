@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
 import { pendingChangesets } from './changesets.ts';
-import { nextStep, releasePlan, type ChangesetStatus } from './preflight.ts';
+import { nextStep, releasePlan, statusOutputArg, type ChangesetStatus } from './preflight.ts';
 import { REGISTRIES, isPublished, npm, publishedPackages } from './publish.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
@@ -109,7 +109,7 @@ if (pending.length > 0) {
   const out = join(mkdtempSync(join(tmpdir(), 'release-status-')), 'status.json');
   try {
     // Exits 1 when changed packages have no changeset; the output file is written either way.
-    sh('pnpm', ['exec', 'changeset', 'status', '--output', out]);
+    sh('pnpm', ['exec', 'changeset', 'status', '--output', statusOutputArg(ROOT, out)]);
   } catch {
     // read what it wrote
   }

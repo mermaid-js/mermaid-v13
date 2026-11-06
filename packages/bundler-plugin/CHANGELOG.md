@@ -1,0 +1,10 @@
+# @mermaid-js/bundler-plugin
+
+## 13.0.0-alpha.1
+
+### Patch Changes
+
+- [#256](https://github.com/mermaid-js/mermaid-v13/pull/256) [`2158515`](https://github.com/mermaid-js/mermaid-v13/commit/2158515780459fb92b9cba9c684f902bb0125dd0) Thanks [@knsv-bot](https://github.com/knsv-bot)! - feat: first release of `@mermaid-js/bundler-plugin`, one-line Mermaid plugin discovery for Vite, webpack, Rollup and esbuild: `plugins: [mermaid()]` (from `@mermaid-js/bundler-plugin/vite`, `/webpack`, `/rollup` or `/esbuild`). At build time it scans the app's own `node_modules` for packages with a `mermaid` manifest and bundles each detector, with each diagram entry in its own lazily loaded chunk. Installed extensions, `@mermaid-js/plugin-interactions` among them, are activated with no registration code.
+
+- Updated dependencies [[`3ba88a6`](https://github.com/mermaid-js/mermaid-v13/commit/3ba88a685ee7e16d5cdeaa40cc9f088a49c786cb), [`09f9319`](https://github.com/mermaid-js/mermaid-v13/commit/09f9319b902359410db4512c7b1052a135a4d14c), [`411e967`](https://github.com/mermaid-js/mermaid-v13/commit/411e9676909d16e790707d1cac4e1a00c99d226f), [`2158515`](https://github.com/mermaid-js/mermaid-v13/commit/2158515780459fb92b9cba9c684f902bb0125dd0), [`24468c6`](https://github.com/mermaid-js/mermaid-v13/commit/24468c63c38a04cad0346e856443b55f527dd8d3), [`a58fba2`](https://github.com/mermaid-js/mermaid-v13/commit/a58fba2b78b680a018706c2662b1c8fe6f8583d2), [`101dab1`](https://github.com/mermaid-js/mermaid-v13/commit/101dab15d7e6a18dd948f1876f2bfb2cb4a3f293), [`c0b1a0b`](https://github.com/mermaid-js/mermaid-v13/commit/c0b1a0b9a4bd92e9146f9d6eb61622ef39bb1f1d), [`f433e76`](https://github.com/mermaid-js/mermaid-v13/commit/f433e76f0c391850c4100aaaf10f44207655d5b1), [`aac2097`](https://github.com/mermaid-js/mermaid-v13/commit/aac2097c19d3b1517e8aa701003cd8f8397e4f8c), [`36db503`](https://github.com/mermaid-js/mermaid-v13/commit/36db50399202f23e86904c55e821458c3528d820), [`dd9ee1c`](https://github.com/mermaid-js/mermaid-v13/commit/dd9ee1ce5dab450dff95a270793167c953016c79)]:
+  - mermaid@13.0.0-alpha.1
