@@ -64,11 +64,14 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - [x] **#460: theme lengths read directly.** `packetThemeLength` (`metrics.ts`) wraps `theme.number` in a catch-all fallback until the table declares `packetByteFontSize`, `packetLabelFontSize`, `packetTitleFontSize`, `packetBlockStrokeWidth`. Once T4 declares them, read `ctx.theme.number(...)` directly (no catch), and make sure `theme-used-by.spec.ts` sees the reads (its scanner misses a name passed as a second argument; use direct calls or `DYNAMIC_READS`). **Done in #460:** `ctx.theme.number('packet…')` directly; `theme-used-by.spec.ts`'s scanner skips a var's `nested:` key (v12's `titleColor` is not a read).
 - [x] **#460: multi-line titles.** The layout keeps v12's point for the first title line and grows the bounds down, not the canvas; the renderer must draw from the layout's title box, not recompute it. **Done in #460:** `w.label(title.text, centre of title box)`; `render.spec.ts` pins three lines growing down from the one-line point.
 
-## #460 T4 renderer (in review)
+## #460 T4 renderer (merged at `ae1c901da`)
 
 - Review sent back (fixing): the 10,000-row cap fails `LIMIT` at the default `maxOutputLength`, against D342's "truncate and warn" (fix by hoisting shared paint attributes, never by loosening the limit; MIGRATION row either way); the new "every table var is read" test in `theme-used-by.spec.ts` is removed as T0b scope; `paints()` in `render/paint.ts`; `drawPiece` parts object; `neo: { fallback: 'redux' }`; vocabulary comment dropped; MIGRATION root row mentions `auto`'s `<style>`/`data-p`.
 - For #414 T0b (from the T4 review): a used-by check that every table variable is read by its package's sources is worth having, but it must fail a package that exports no plugin, and not count a rule's right-hand side as a read. Packet's T4 drafted one and removed it as T0b's scope.
 - Deviations accepted (for the maintainer): dark values come from each family's `dark` entry (the theme's dark trait, per CONTRACT.md), so `darkMode: true` on a light theme keeps v12's light colours, as v12 did; an empty label writes no `<text>` (MIGRATION row).
+
+- **For the maintainer: D342's row cap and `maxOutputLength`.** A diagram that hits the 10,000-row cap draws about 4.28 MB of SVG (427 characters per row, after hoisting the shared paints to the root), over the default `maxOutputLength` of 4,000,000. Such a render fails with `LIMIT` instead of drawing with `PACKET_TRUNCATED`, so D342's "truncate and warn" holds only with a raised limit. The limit is a security gate and was not loosened. MIGRATION.md has a row. Options: amend D342 (the cap case fails at default limits), lower packet's row cap to fit (about 9,300 rows), or accept it as is. Pinned by a test in `conformance/src/packet/render.spec.ts`.
+- **For #414 (T0a gate bug), reported to the coordinator:** `theme-direction.spec.ts` rule 2 flags the contract's own `neo: { fallback: 'redux' }` as a theme name, so packet's table repeats the entry for `neo` with a comment. Switch to `fallback` once the gate allows family names.
 
 ## Shared contracts
 
