@@ -131,6 +131,11 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - For #414 T0b: `v13/docs/theme-variables.md` lists none of packet's ten flat variables (the generator reads only core's `THEME_VARIABLES`); per-package `gen:theme` should cover diagram tables. Only MIGRATION.md names them today.
 - Checked, nothing found: config read once, warnings not duplicated across `render()` and `prepare`+`renderSync`; AST ids, `data-ast`/`data-id` and facet symbols agree; `standalone` hunks byte-identical to `e99d313ef`; packet chunk 9,355 B gz with no `invariants.ts`; neo-dark/redux-dark/redux-dark-color and forest colours as MIGRATION.md says; no unchecked GAPS box and the T1–T6 acceptance table met.
 
+### #464 review (fixes in the review-fix pass)
+
+- **For the maintainer (D347):** with `showBits` on (the default) the bit-number line sits between rows, so rows are separate boxes; D347's shared-border table appears only with `showBits: false`. Both readings of D347 cannot hold at once. Also, at two columns a bit, a bit number that would touch its neighbour is omitted (from bit 10, consecutive one-bit fields lose every other number); documented in ascii.md. The title is centred on the drawn width, not the full `bitsPerRow` canvas.
+- Follow-up (with the lexer and facet items): packet's `wrap`/centred title and `warnings.ts` are a third copy of ER's and flowchart's ascii helpers; the home is `core/ascii`.
+
 ## Shared contracts
 
 - **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
