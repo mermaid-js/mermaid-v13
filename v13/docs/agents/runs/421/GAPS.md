@@ -27,7 +27,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - Closed by #462: both rows, both `gen`s (`packet.parser*.js`, `packet.tokens.js`, `packet.monarch.*`), both highlighter unit specs, `adapters-agree.spec.ts` and the CodeMirror and Monaco first-paint e2e specs cover packet.
 
 - **Orchestrator choice (for the maintainer): forest is a family-rule approximation (D541), not a new shared input.** v12 forest packet reads its own `primaryTextColor` (#321b67) and `mainBkg` (#cde498); default uses literals. A new generic shared input ("strong text ink", "muted surface") would grow core's vocabulary and every theme spec for one diagram, with core at R-PERF-8's limit, and no second wave-1 port needs it yet. So forest takes the light entry (`black`, `#efefef`): six forest `DIFFERENCES` entries in the theme oracle spec, and one MIGRATION.md row. A later spec that needs a strong ink can promote it.
-  - Done in #462: `conformance/src/packet/theme.spec.ts` lists the six forest colours (D541) and the six colours of each of `neo-dark`, `redux-dark`, `redux-dark-color` (D333(b)): 24 entries, matched exactly; MIGRATION.md "Packet theme colours" has one row for each kind. A forest `primaryTextColor` override no longer moves packet's inks (pinned).
+  - Done in #462: `conformance/src/packet/theme.spec.ts` lists the six forest colours (D541) and the six colours of each of `neo-dark`, `redux-dark`, `redux-dark-color` (D333(b)): 24 entries, matched exactly; MIGRATION.md "Packet theme colours" has one D333(b) row per theme and one D541 row. A forest `primaryTextColor` override no longer moves packet's inks (pinned).
 - Deviations (for the maintainer):
   - The theme oracle is the CSS v12's own packet `styles()` writes for each theme's resolved `themeVariables`, read back key by key (the spec loads v12's chunk holding `src/diagrams/packet/styles.ts`), not a pinned copy of `styles.ts`'s literals.
   - The config oracle (`conformance/src/packet/config.spec.ts`) compares with v12's `packetDb.getConfig()` after taking off the 10 px it adds to `paddingY` when `showBits` is on (`db.ts:49-51`); v13 adds them in the layout (`PacketLayout.paddingY`).
@@ -35,7 +35,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - Packet joins `plugin-hand-drawn`'s unsketched-types spec: v12 never sketched packet either (D301, D305).
   - T6's count of labels written otherwise than their name is 49, not 46: three baseline labels (`<br>`, `#amp;`, `<b>`) join the gate corpus.
 - Not done (not in #462's criteria): a `bench language:packet` CLI (T6 left it; `language-budget-packet.spec.ts` covers R-LANG-4 by ratio).
-- **Size (for the maintainer, D217, R-PERF-8):** the CDN measure of core grows 92,961 → 92,976 B gz (+15 B, the registry row) of 94,208; packet's chunks beyond core 14,499 B gz; load path for one packet render 107,475 B gz. The theme table adds nothing to core.
+- **Size (for the maintainer, D217, R-PERF-8):** the CDN measure of core grows 92,961 → 92,976 B gz (+15 B, the registry row) of 94,208; load path for one packet render 106,532 B gz by the bench method (107,475 on the CDN build). The theme table adds nothing to core. The local bench (`--mode report`) passes every gate; its corpus has no per-type fixtures, so it does not render packet (the warm ratio, 15.3×, is a one-off run over packet's e2e fixtures).
+- Review fixes: `PACKET_CONFIG_DEFAULTS` without casts (a key record makes a missing key a type error; the generated type makes every key optional, so a type guard checks the defaults exist when the module loads); `PACKET_METRICS` at `./testing`.
 
 ## #458 T6 language facet (running)
 
