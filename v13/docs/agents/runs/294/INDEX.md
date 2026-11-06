@@ -1,6 +1,6 @@
 # Run notes, spec #294 (mindmap and the core `tree` engine)
 
-Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draft PR: not opened yet.
+Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draft PR: #406.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
