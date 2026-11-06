@@ -220,4 +220,6 @@ export const TEXT_SIZES = {
   pieStrokeWidth: 2,
   pieOuterStrokeWidth: 2,
   pieOpacity: 0.7,
+  commitLabelFontSize: 10,
+  tagLabelFontSize: 10,
 } as const;

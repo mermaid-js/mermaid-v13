@@ -85,9 +85,59 @@ export function fillTypes(colours: string): Readonly<Record<string, string>> {
   return out;
 }
 
-/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258). */
-export const paletteSlots = (entry: (i: number) => string): readonly string[] =>
-  Array.from({ length: 12 }, (_, i) => entry(i));
+/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258; 8 for the git palettes). */
+export const paletteSlots = (entry: (i: number) => string, length = 12): readonly string[] =>
+  Array.from({ length }, (_, i) => entry(i));
+
+/**
+ * The colours v12 starts its `git0`–`git7` from (D267): the primary, secondary and tertiary
+ * colours, then the primary turned by −30, −60, −90, 60 and 120 degrees. Each argument is a rule.
+ */
+export const gitSources = (p: string, s: string, t: string): readonly string[] => [
+  p,
+  s,
+  t,
+  ...[-30, -60, -90, 60, 120].map((h) => `adjustHue(${p}, ${h})`),
+];
+
+/**
+ * v12's `git`, `gitInv` and `gitBranchLabel` (`theme-base.js` and the themes that copy it): each
+ * source darkened by 25 points of HSL lightness (`lightenHsl` under `darkMode`), the inverse of
+ * that step, and one label rule in every slot. v12 steps an author's `git<n>` too before it inverts
+ * it, then draws the author's colour as given; `ifSet` keeps both.
+ */
+export const gitPalettes = (
+  sources: readonly string[],
+  step = 'darkenHsl',
+  label = 'labelTextColor'
+): Readonly<Record<'git' | 'gitInv' | 'gitBranchLabel', readonly string[]>> => ({
+  git: sources.map((c) => `${step}(${c}, 25%)`),
+  gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
+  gitBranchLabel: sources.map(() => label),
+});
+
+/**
+ * gitGraph's commit label colours and tag border (D267) as one v12 theme derives them: the
+ * author's `secondaryTextColor`, else v12's `invert(secondaryColor)` (`text`); `background`; the
+ * author's `tagBorder`, else the author's `primaryBorderColor`, else v12's resolved border
+ * (`border`, a khroma saturation step the DSL has no function for).
+ */
+export const gitLabelRules = (
+  text: string,
+  border: string,
+  background = 'secondaryColor'
+): ThemeRuleTable => ({
+  commitLabelColor: `ifSet(secondaryTextColor, ${text})`,
+  commitLabelBackground: background,
+  tagLabelBorder: `ifSet(tagBorder, ifSet(primaryBorderColor, ${border}))`,
+});
+
+/**
+ * v12 `theme-base.js`'s `secondaryColor`, a hue turn of `primaryColor` unless the author sets it:
+ * what the shared rules (`LIGHT_RULES`) derive the commit labels from (the text is its inverse),
+ * as `neo` and the light redux themes do.
+ */
+export const BASE_SECONDARY = 'ifSet(secondaryColor, adjustHue(primaryColor, -120))';
 
 /** `cScaleInv` as v12 derives it from a fixed `cScale`: `invert(cScale<n>)`. */
 export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);

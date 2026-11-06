@@ -2,7 +2,7 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
+import { fillTypes, gitSources, paletteSlots, pieSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -36,6 +36,16 @@ const PIE_DEFAULT: ThemeRuleTable = {
   pieTitleTextColor: 'black',
   pieLegendTextColor: 'black',
 };
+
+/**
+ * v12 `theme-default.js` derives its git palettes in the constructor, from its own colours, and
+ * steps them again when it calculates without recomputing them (D267): fixed lists that ignore
+ * the base colours, `labelTextColor` and the author's `git<n>` (drawn as given). These are the
+ * constructor's values, darkened by 25.
+ */
+const DEFAULT_GIT = gitSources('#ececff', '#ffffde', 'adjustHue(#ececff, -160)').map(
+  (c) => `darkenHsl(${c}, 25%)`
+);
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -90,6 +100,12 @@ const theme: ThemeSpec = {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
     ...PIE_DEFAULT,
+    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them.
+    commitLabelColor: '#000021',
+    commitLabelBackground: '#ffffde',
+    tagLabelColor: '#131300',
+    tagLabelBackground: '#ececff',
+    tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #c7c7f1))',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
@@ -125,7 +141,11 @@ const theme: ThemeSpec = {
     cScaleLabel: paletteSlots((i) =>
       i === 0 || i === 3 ? 'invert(labelTextColor)' : 'labelTextColor'
     ),
+    git: DEFAULT_GIT.map((c) => `darkenHsl(${c}, 25%)`),
+    gitInv: DEFAULT_GIT.map((c, i) => (i ? `invert(${c})` : `darkenHsl(invert(${c}), 25%)`)),
+    gitBranchLabel: paletteSlots((i) => (i === 0 || i === 3 ? 'white' : 'black'), 8),
   },
+  darkModePalettes: { git: DEFAULT_GIT.map((c) => `lightenHsl(${c}, 25%)`) },
 };
 
 export default theme;

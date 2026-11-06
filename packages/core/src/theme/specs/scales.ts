@@ -1,6 +1,6 @@
 /**
  * The rules the lazily loaded themes derive their `cScale`, `cScaleInv` and `cScaleLabel` with
- * (D258), kept out of `palettes.ts` so the default theme's static chunk does not carry them.
+ * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static chunk does not carry them.
  */
 import { paletteSlots } from './palettes.ts';
 
@@ -62,3 +62,22 @@ export const DARK_HUE_SOURCES = hueSources(
 /** `cScaleLabel` where v12 writes `black` under `darkMode` (`theme-dark.js`, `theme-neutral.js`). */
 export const darkModeLabels = (keep: Readonly<Record<number, string>> = {}): readonly string[] =>
   paletteSlots((i) => keep[i] ?? '#000000');
+
+/**
+ * `gitBranchLabel` of `theme-forest.js` and `theme-dark.js`: v12's `labelTextColor`, inverted in
+ * slots 0 and 3. Both set `labelTextColor` themselves before the labels (forest to
+ * `actorTextColor`, dark to its `mainContrastColor`), so `label` is that rule.
+ */
+export const classicGitLabels = (label: string): readonly string[] =>
+  paletteSlots((i) => (i === 0 || i === 3 ? `invert(${label})` : label), 8);
+
+/**
+ * `git` and `gitInv` where v12 derives a slot without reading the author's `git<n>` first
+ * (`theme-dark.js`, `theme-neutral.js`): each rule, and its inverse.
+ */
+export const fixedGit = (
+  git: readonly string[]
+): { readonly git: readonly string[]; readonly gitInv: readonly string[] } => ({
+  git,
+  gitInv: git.map((c) => `invert(${c})`),
+});
