@@ -630,8 +630,9 @@ function numberedOverrides(
 /**
  * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
  * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
- * `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>` and `gitBranchLabel<n>` replace one entry. Any unsafe colour drops that override with a warning.
- * The theme's own entries are evaluated when a renderer reads the palette.
+ * `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>` and `gitBranchLabel<n>` replace one entry. Any
+ * unsafe colour drops that override with a warning. The theme's own entries are evaluated when a
+ * renderer reads the palette.
  */
 function paletteSource(
   spec: ThemeSpec,

@@ -1,6 +1,7 @@
 /**
  * The rules the lazily loaded themes derive their `cScale`, `cScaleInv` and `cScaleLabel` with
- * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static chunk does not carry them.
+ * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static
+ * chunk does not carry them.
  */
 import type { ThemeRuleTable } from '../spec.ts';
 import { paletteSlots } from './palettes.ts';

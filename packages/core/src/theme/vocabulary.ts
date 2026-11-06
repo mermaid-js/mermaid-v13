@@ -202,7 +202,10 @@ export const NUMBERED_PALETTES = [
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
 export type NumberedPalette = (typeof NUMBERED_PALETTES)[number];
 
-/** How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`, D258). */
+/**
+ * How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`,
+ * D258).
+ */
 export const PALETTE_LIMIT = 12;
 
 /** How many numbered names the git palettes have (v12 `git0`–`git7`, D267). */
@@ -421,7 +424,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   messageEndGap: def('meg', 'length', ['sequence']),
   labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
   actorFooterPadding: def('afp', 'length', ['sequence']),
-  timelineRadius: def('gto', 'length', ['timeline']),
+  timelineRadius: def('tlr', 'length', ['timeline']),
   timelineLabelOffset: def('tlo', 'padding', ['timeline']),
   timelineEventLabelShift: def('tle', 'length', ['timeline']),
   timelineScaleColors: def('tls', 'flag', ['timeline']),
