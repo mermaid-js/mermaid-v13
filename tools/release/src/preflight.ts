@@ -3,6 +3,16 @@
  * pending changesets bump (from `changeset status --output`), and the versions already bumped
  * but not yet on the registry (a release that stopped half way).
  */
+import { relative } from 'node:path';
+
+/**
+ * The `--output` argument for `changeset status`, run with `cwd: root`, that writes to `file`.
+ * changesets writes to `path.join(cwd, output)` even when `output` is absolute, so an absolute
+ * path is turned into one relative to the root.
+ */
+export function statusOutputArg(root: string, file: string): string {
+  return relative(root, file);
+}
 
 /** The part of `changeset status --output` the plan reads. */
 export interface ChangesetStatus {

@@ -1,5 +1,6 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextStep, releasePlan } from './preflight.ts';
+import { nextStep, releasePlan, statusOutputArg } from './preflight.ts';
 
 describe('release plan', () => {
   it('keeps the published packages changeset version bumps, dependents included', () => {
@@ -54,5 +55,19 @@ describe('release plan', () => {
     expect(nextStep(2, 0)).toBe('version');
     expect(nextStep(0, 1)).toBe('publish');
     expect(nextStep(2, 1)).toBe('version-then-publish');
+  });
+
+  it('passes `changeset status --output` a path relative to the root, which changesets joins on', () => {
+    // changesets writes to path.join(cwd, output) even for an absolute output, so an absolute
+    // temp file would land under the repository and the plan would never be read back.
+    const root = '/work/mermaid-v13';
+    for (const file of [
+      '/tmp/release-status-x/status.json',
+      '/work/mermaid-v13/.tmp/status.json',
+    ]) {
+      const arg = statusOutputArg(root, file);
+      expect(arg.startsWith('/')).toBe(false);
+      expect(join(root, arg)).toBe(file);
+    }
   });
 });
