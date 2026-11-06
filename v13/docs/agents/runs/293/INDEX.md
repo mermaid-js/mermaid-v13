@@ -13,7 +13,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | T4 SVG renderer | #381 | #379 | merged (ff e05dec35a) |
 | T6 language facet | #382 | #378 | merged (ff 7d7a32db2) |
 | I1 interactions spec | #384 | #381 | merged (ff 13a63ae5b) |
-| T5 integration | #385 | #381, #382 | open |
+| T5 integration | #385 | #381, #382 | merged (ff a3115006d) |
 
 - `01-v12-gantt.md`: pointer notes on v12 grammar, DB, renderer, styles, config, corpus, Pele.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
@@ -29,6 +29,8 @@ Measured with `measureStaticClosure(readSizeBudget().core.entry).size.gzip` from
 | base 38d663b44 | 93,551 | 657 | skeleton adds nothing to core |
 | #375 T0 | 93,573 | 635 | `now`, `availableWidth` on the context (+22 B) |
 | merge `mermaid-v13` 586e00c8f (#410) | 92,204 | 2,004 | `mermaid-v13` alone: 92,181; gantt's T0 adds 23 |
+| T4 19 theme rows | 92,486 | 1,722 | CDN 92,833 |
+| T5 integration (registry row, theme rules, constant) | 92,322 | 1,886 | CDN 92,788; gantt since #410: bench +120, CDN +240 |
 
 ## Finish rule
 
