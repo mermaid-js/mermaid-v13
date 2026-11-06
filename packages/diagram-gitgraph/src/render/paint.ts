@@ -9,18 +9,16 @@
  * colours, the others the border palette.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  checkColor,
-  type Length,
-  type OutlinePaint,
-  type Paint,
-  type SafeColor,
-  type SafeFilter,
-  type SafeValue,
-  type ThemeRef,
+import type {
+  Length,
+  OutlinePaint,
+  Paint,
+  SafeColor,
+  SafeFilter,
+  SafeValue,
+  ThemeRef,
 } from '@mermaid-js/core/svg';
-import { GIT_PAINT, type GitColorVariable, type GitFlagVariable } from './variables.ts';
-import type { GitLengthVariable } from './variables.ts';
+import { GIT_PAINT, type GitFlagVariable, type GitLengthVariable } from './variables.ts';
 
 type Theme = RenderContext['theme'];
 type PaletteName = Parameters<Theme['palette']>[0];
@@ -28,9 +26,6 @@ type PaletteName = Parameters<Theme['palette']>[0];
 /** v12 `THEME_COLOR_LIMIT` for bullets and arrows (core's `GIT_PALETTE_LIMIT`, D267). */
 const GIT_SLOTS = 8;
 
-/** v12's cherry-pick ink: white on light themes, black on dark ones. */
-const CHERRY_INK_LIGHT = '#ffffff' as SafeColor;
-const CHERRY_INK_DARK = '#000000' as SafeColor;
 /** v12 classic: reverse crosses 3 px wide; commit label backgrounds at half opacity. */
 const CLASSIC_CROSS_WIDTH = 3;
 const CLASSIC_LABEL_OPACITY = 0.5;
@@ -63,7 +58,7 @@ export interface Paints {
   readonly inset: Paint;
   readonly crossWidth: Length;
   /** A cherry-pick bullet: its body (undefined: v12 classic sets none, so it is black). */
-  readonly cherry: { readonly fill?: Paint; readonly ink: SafeColor };
+  readonly cherry: { readonly fill?: Paint; readonly ink: Paint };
   /** Branch lines. */
   readonly line: { readonly stroke: Paint; readonly dash: SafeValue };
   readonly commitLabel: {
@@ -92,36 +87,8 @@ export interface Paints {
   readonly cherryPickDot: number;
 }
 
-/** A flag core may not know yet: its classic value then (`variables.ts`). */
-function flagOf(theme: Theme, v: GitFlagVariable): boolean {
-  const s = theme.value(v.name);
-  if (s === 'true' || s === 'false') return s === 'true';
-  return v.classic;
-}
-
-/** A length core may not know yet: its classic value then. */
-function numberOf(theme: Theme, v: GitLengthVariable): number {
-  try {
-    const n = theme.number(v.name);
-    if (Number.isFinite(n) && n >= 0) return n;
-  } catch {
-    // Not in core's vocabulary yet.
-  }
-  return v.classic;
-}
-
-/** A colour variable, else a literal colour. */
-function paintOf(theme: Theme, name: string): Paint | undefined {
-  try {
-    return theme.color(name);
-  } catch {
-    return checkColor(name);
-  }
-}
-
-/** A colour core may not know yet: the classic colour then. */
-const colorOf = (theme: Theme, v: GitColorVariable): Paint =>
-  paintOf(theme, v.name) ?? paintOf(theme, v.classic) ?? theme.color('lineColor');
+const flagOf = (theme: Theme, v: GitFlagVariable): boolean => theme.value(v.name) === 'true';
+const numberOf = (theme: Theme, v: GitLengthVariable): number => theme.number(v.name);
 
 const weightOf = (value: string): SafeValue | undefined =>
   value === 'normal' || value === '400' ? undefined : (value as SafeValue);
@@ -207,10 +174,10 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     crossWidth: nodeColors ? strokeWidth : CLASSIC_CROSS_WIDTH,
     cherry: {
       fill: nodeColors ? nodeBorder : undefined,
-      ink: theme.dark ? CHERRY_INK_DARK : CHERRY_INK_LIGHT,
+      ink: theme.color(GIT_PAINT.cherryPickInk.name),
     },
     line: {
-      stroke: colorOf(theme, GIT_PAINT.commitLineColor),
+      stroke: theme.color(GIT_PAINT.commitLineColor.name),
       dash: nodeColors ? NODE_DASH : CLASSIC_DASH,
     },
     commitLabel: { ...commitLabel, size: theme.length('commitLabelFontSize') },

@@ -4,8 +4,8 @@ import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { gitApi } from './render-api.ts';
 
 /**
- * What the gitGraph renderer draws (spec #292 T4), through `render()` with the plugin
- * registered for the tests (`render-api.ts`). Expected colours and sizes are v12 12.2.0's
+ * What the gitGraph renderer draws (spec #292 T4), through `render()` and the generated
+ * registry (`render-api.ts`, #374). Expected colours and sizes are v12 12.2.0's
  * (`gitGraphRenderer.ts` and `styles.js` at fa796a943, `01-v12-gitgraph.md` §3–4). Colours are
  * checked as literals (`cssVariables: false`) against the author's base colours, so each part
  * is seen to take the variable v12's style sheet gave it.

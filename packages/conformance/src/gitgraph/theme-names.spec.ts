@@ -6,8 +6,7 @@ import { THEME_NAMES } from '@mermaid-js/core/theme';
 
 // D152, D153 (spec #292 T4): a diagram package never checks a theme name or `look`; every family
 // difference is a theme variable. Scans the package's runtime sources (specs and v12 ports
-// excluded, the layout fixtures, and the specs' theme stand-in, `stand-in.ts`, whose families
-// are named `classic`, `neo` and `redux` and which no render reads).
+// excluded, and the layout fixtures).
 const SRC = fileURLToPath(new URL('../../../diagram-gitgraph/src', import.meta.url));
 
 function sources(dir: string): string[] {
@@ -21,7 +20,6 @@ function sources(dir: string): string[] {
       !entry.name.endsWith('.spec.ts') &&
       !entry.name.endsWith('.fixtures.ts') &&
       entry.name !== 'fixtures.ts' &&
-      entry.name !== 'stand-in.ts' &&
       entry.name !== 'config-defaults.ts'
     )
       out.push(path);

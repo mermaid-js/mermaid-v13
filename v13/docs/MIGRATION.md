@@ -353,7 +353,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `gitGraph.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did. |  |
 | `gitGraph.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `gitGraph.nodeLabel` | ignored | v12's gitGraph never read it. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -510,6 +512,16 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
 | `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
 | `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
+| `gitCommitRadius` (gitGraph bullet radius; half a highlight square's side) | 7 (`neo`, `neo-dark`: 10, D266) | 10 |
+| `gitLaneShift` (gitGraph LR: how far a branch's line and commits sit below 2 px above its lane, v12 classic's spot) | 9, so 7 below the lane (`neo`, `neo-dark`: 0) | 0 |
+| `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` (gitGraph: room the branch label box adds) | 16 / 12 (`neo`, `neo-dark`: 0 / 0) | 0 / 0 |
+| `gitBranchLabelRadius` (gitGraph branch label box corner) | 0 (`neo`, `neo-dark`: 4) | 4 |
+| `gitBranchLabelShiftX` / `gitBranchLabelOffsetY` (gitGraph TB/BT: the branch label box moved left and away from the commits) | 11 / 22 (`neo`, `neo-dark`: 0 / 0) | 0 / 0 |
+| `gitArrowWidth` (gitGraph arrows) | 2, v12's `strokeWidth`, which an author's `strokeWidth` no longer moves (`neo`, `neo-dark`: 8) | 8 |
+| `gitHighlightInnerSize` / `gitMergeRadius` / `gitReverseCrossSize` / `gitCherryPickDotRadius` (gitGraph bullet insides: highlight square side, merge circle radius, half the reverse cross, cherry-pick dot radius) | 8 / 5 / 4 / 2.5 (`neo`, `neo-dark`: classic) | 12 / 6 / 5 / 2.75 |
+| `gitNodeColors` (gitGraph: the first branch, the commit and tag labels and the bullet insides take `nodeBorder` / `mainBkg`, label boxes `mainBkg` with an outline, tags the shadow, branch lines a `4 2` dash and reverse crosses `strokeWidth`) | `true` (`neo`, `neo-dark` too) | `false`: the git label variables and `primaryColor`, a `2` dash and 3 px crosses |
+| `gitPaletteColors` (gitGraph: the `git`, `gitInv` and `gitBranchLabel` palettes colour the branches; a non-empty `borderColorArray` colours them in every theme) | `false`: every branch in `nodeBorder` (`neo`, `neo-dark`: `true`) | `true` |
+| `commitLineColor` (colour: gitGraph branch lines, v12's name) | `#BDBCCC` (`neo`, `neo-dark`: `lineColor`) | `lineColor` |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -1445,6 +1457,53 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
 
+## gitGraph syntax and config
+
+- **SVG only:** `gitGraph`, `gitGraph LR:`, `gitGraph TB:` and `gitGraph BT:` are detected by
+  v12's case-sensitive `gitGraph` detector, after `timeline` and before `stateDiagram`.
+  `format: 'ascii'` throws `UnsupportedFormatError` (D216).
+- **Commit ids are derived, not random** (D260). A commit with no `id:` is still
+  `<seq>-<7 hex digits>`, but the digits come from a fixed hash of the sequence number instead
+  of `Math.random`, so the same text gives the same ids and the same SVG on every render. A
+  derived id never takes an id that a `commit` or `merge` writes anywhere in the text.
+- **Text is drawn as written** (D263). v12 stored `<`, `>` and `=` in ids, messages, tags and
+  branch names as `&lt;`, `&gt;` and `&equals;` and broke branch names on `<br>`; v13 keeps the
+  source text, escapes it in the SVG, and breaks a branch name only on a newline. Labels are
+  plain text (D268): `$$…$$` and `fa:` stay as written, as in v12.
+- **A repeated commit id** keeps v12's model (D264): the later commit replaces the earlier and
+  lists itself as a parent. v13 warns `GIT_DUPLICATE_ID` on the second id, with the first as a
+  related location, and draws no arrow for the self-parent. Where the repeat makes a parent
+  cycle (`A`, `B`, `A`), only parents written earlier count for `parallelCommits`, and a commit
+  with none is placed as a root; v12 threw in BT with `parallelCommits` and placed such commits
+  differently from pass to pass elsewhere.
+- **Branch names starting with `title`** are rejected, as in v12, with a hint to quote them
+  (D269). A statement with a syntax error changes nothing; one that breaks a rule (an unknown
+  branch, a merge of a branch into itself, …) keeps its place in the text but changes nothing
+  either, and its error message is v13's own wording.
+- **Titles are drawn** (D265): the in-text `title` and a front-matter `title` (the in-text one
+  wins), 18 px in `textColor`, `gitGraph.titleTopMargin` above the drawing.
+- **Overlapping branch labels are moved apart.** Where v12 drew branch labels over each other
+  (TB and BT: a long name after a short one, since v12 spaces lanes by the previous name only;
+  LR: names of four or more lines), the lane moves out until the boxes are 10 px apart.
+  Elsewhere every position is v12's. In TB with a redux theme the branch name sits 1 px lower
+  than v12's.
+- **Arrows are drawn in commit order**; v12 used its commit map's insertion order, which differs
+  only for repeated ids.
+- **The default theme is `redux-color`** (D151): a v12 diagram without a `theme` drew in
+  `default`. Add `theme: 'default'` for v12's look. `look` is ignored, with one `LOOK_REMOVED`
+  warning (D153): the redux themes carry v12's `look: neo` gitGraph geometry and colours, the
+  classic themes v12 classic, and `neo` / `neo-dark` classic geometry with the neo colours, as
+  v12 drew them (D266). Each difference is a theme variable ([Theme geometry](#theme-geometry)).
+- **Honoured** in the `gitGraph` section, with v12's defaults: `titleTopMargin` (25),
+  `diagramPadding` (8), `mainBranchName` (`main`), `mainBranchOrder` (0), `showCommitLabel`,
+  `showBranches`, `rotateCommitLabel` (true), `parallelCommits` (false) and `useMaxWidth` (true).
+  A `titleTopMargin` or `diagramPadding` that is not a number of at least 0 draws with the
+  default and a `GIT_CONFIG_IGNORED` warning. The language service reads `mainBranchName` and
+  `mainBranchOrder` from the document's front matter and `init` directives; renaming the main
+  branch is refused there, as its name is config, not text.
+- **Ignored**, as v12's gitGraph never read them: `nodeLabel`, `arrowMarkerAbsolute` and
+  `useWidth`.
+
 ## gitGraph SVG structure
 
 What changed in the gitGraph's SVG compared with v12's `gitGraphRenderer.ts` and `styles.js`
@@ -1468,5 +1527,5 @@ What changed in the gitGraph's SVG compared with v12's `gitGraphRenderer.ts` and
 | Colours from a `<style>` chosen by theme name (`REDUX_GEOMETRY_THEMES`, `COLOR_THEMES`, `NEO_THEMES`, `DARK_THEMES`, `NEO_COLOR_GEN_THEMES`) | The same colours from theme variables, read in every theme: the `git`, `gitInv` and `gitBranchLabel` palettes, `borderColorArray` when non-empty, the node colours (`nodeBorder`, `mainBkg`) where v12's neo and redux themes used them, the label variables, `primaryColor`, `textColor` and `commitLineColor`. The redux and neo differences are the flags `gitNodeColors` and `gitPaletteColors` and the bullet sizes `gitHighlightInnerSize`, `gitMergeRadius`, `gitReverseCrossSize` and `gitCherryPickDotRadius`, next to the layout's geometry variables ([Theme geometry](#theme-geometry)). A classic cherry-pick body is still unpainted (black), as in v12 | D152, D153 |
 | `look: neo` gave branch label boxes `style="filter: …"` (a `<filter id="<id>-drop-shadow">` in the redux themes) and `data-look="neo"`; `useGradient` wrote `<linearGradient id="<id>-gradient">` whatever the look | The box takes the theme's `dropShadow` as a `filter` attribute wherever it is not `none`, whatever the look, and no `data-look`; the neo outline is core's gradient (`<prefix>-gradient`, written only when referred to). Tags take the shadow in the neo and redux themes, as v12's `.tag-label-bkg` did | D153, D182 |
 | Branch names and ids at `noteFontWeight` in the redux themes (CSS) | `font-weight` from the theme's `fontWeight`, which the layout measures with: the same weight in every v12 theme. An author's `noteFontWeight` is not read; set `fontWeight` | Measure in the font drawn (pitfall 16) |
-| The cherry-pick mark white, black in `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` | Black whenever the theme is dark, `darkMode: true` included; under `theme: 'auto'` the light theme's white | D152 |
+| The cherry-pick mark white, black in `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` | The colour variable `gitCherryPickInk`: `#ffffff` in the light themes, `#000000` in the dark ones (the dark rules, so `darkMode: true` too); under `theme: 'auto'` it switches with the colour scheme | D152 |
 | `utils.insertTitle`: `text.gitTitleText` centred by the svg's `getBBox`, 18px and `textColor` from CSS | `text.gitTitleText` where the layout centred it over the drawing, with `fill` and `font-size="18"` attributes. The in-text `title` and a front-matter `title` are both drawn | D265 |

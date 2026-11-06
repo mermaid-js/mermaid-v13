@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { detectGitGraph } from '@mermaid-js/diagram-gitgraph';
 import { gitGraphLanguage } from '@mermaid-js/diagram-gitgraph/language';
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
@@ -27,24 +26,15 @@ import { sanitizeLikeV12 } from './v13.ts';
  * CRLF inside it) is no service occurrence, so a rename could not keep it: counted in
  * {@link ESCAPED}, not checked.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until gitGraph's
- * manifest has its `language` entry (#374); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (gitGraph's manifest
+ * `language` entry, #374).
  */
 
 /** v12 names written otherwise than their name in the corpus (skipped above). */
 const ESCAPED = 5;
 
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'gitGraph',
-      id: 'gitGraph',
-      section: 'gitGraph',
-      detector: (t) => detectGitGraph(t),
-      facet: gitGraphLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['gitGraph'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const DERIVED = /^\d+-\*$/;
 
@@ -129,8 +119,9 @@ describe('gitGraph definition, references and folding through the service match 
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it("runs with an eager row only while gitGraph's manifest has no `language` entry", () => {
+  it('loads the facet from the generated registry (#374)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'gitGraph');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///g', 'gitGraph\n  commit').facet?.id).toBe('gitGraph');
   });
 });

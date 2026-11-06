@@ -5,5 +5,12 @@
 export { layoutGitGraph } from './layout.ts';
 export type { GitLayoutContext } from './env.ts';
 export { gitLayoutViolations, type ViolationOptions } from './invariants.ts';
-export { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
+export {
+  GIT_GEOMETRY,
+  GIT_METRICS,
+  type GeometryVariable,
+  type GitGeometry,
+  type GitGeometryVariables,
+  type GitMetrics,
+} from './metrics.ts';
 export type * from './types.ts';

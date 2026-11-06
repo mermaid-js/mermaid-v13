@@ -4,8 +4,6 @@
  * Parser-produced models replace these once T2 (#370) is on the branch.
  */
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
-import type { Theme } from '@mermaid-js/core/theme';
-import { gitThemeStandIn } from '../stand-in.ts';
 import type {
   GitBranch,
   GitCommit,
@@ -14,6 +12,7 @@ import type {
   GitModel,
   GitWrittenType,
 } from '../model.ts';
+import { GIT_GEOMETRY, type GeometryVariable } from './metrics.ts';
 
 export interface CommitOptions {
   readonly id?: string;
@@ -223,7 +222,9 @@ export const halfEm: Measurer = {
 };
 
 /**
- * `theme` with v12's redux geometry: what a redux theme gives once T5 (#374) adds the geometry
- * variables to core. A stand-in for the specs only.
+ * v12's redux geometry as `themeVariables`, so a spec can lay out a classic theme (its fonts)
+ * with redux geometry.
  */
-export const reduxGeometry = (theme: Theme): Theme => gitThemeStandIn(theme, 'redux');
+export const REDUX_GEOMETRY: Readonly<Record<string, number>> = Object.fromEntries(
+  (Object.values(GIT_GEOMETRY) as GeometryVariable[]).map((v) => [v.name, v.redux])
+);

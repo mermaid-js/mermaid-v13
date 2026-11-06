@@ -4,7 +4,7 @@
  * (#370): the parser, the model builder (v12's DB) and the AST; `parseGitGraph` is what the
  * layout (#371), the language facet (#372) and the plugin (#374) build on. T3 (#371): the
  * custom layout, `layoutGitGraph`. T4 (#373): the SVG renderer, `renderGitGraph`, and the plugin
- * object, `gitGraph` (registered by T5, #374).
+ * object, `gitGraph`, which the manifest registers (T5, #374).
  */
 export {
   detectGitGraph,
@@ -18,7 +18,13 @@ export type * from './model.ts';
 // T3 (#371): the custom layout.
 export { GIT_GEOMETRY, GIT_METRICS, layoutGitGraph } from './layout/index.ts';
 export type * from './layout/types.ts';
-export type { GitGeometry, GitLayoutContext, GitMetrics } from './layout/index.ts';
+export type {
+  GeometryVariable,
+  GitGeometry,
+  GitGeometryVariables,
+  GitLayoutContext,
+  GitMetrics,
+} from './layout/index.ts';
 // T4 (#373): the renderer and the plugin object.
 export { GIT_PAINT, renderGitGraph } from './render/index.ts';
 export type { GitPaintVariable, GitPaintVariables, GitRenderContext } from './render/index.ts';

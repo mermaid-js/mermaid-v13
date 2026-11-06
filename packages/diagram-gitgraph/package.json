@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/diagram-gitgraph",
   "version": "13.0.0-alpha.0",
-  "private": true,
-  "description": "Git graph plugin for Mermaid: lexer, parser, model and language facet (layout and renderer to follow).",
+  "description": "Git graph plugin for Mermaid: parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -44,5 +43,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "gitGraph",
+    "types": [
+      "gitGraph"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "gitGraph",
+    "language": "./dist/language.js"
   }
 }
