@@ -7,14 +7,19 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { darkenedScale, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
+  CLASSIC_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
+import { PIE_REDUX } from './redux.ts';
+
+const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 
 const neo: ThemeSpec = {
   name: 'neo',
@@ -45,12 +50,13 @@ const neo: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
   // v12 neo derives these as theme-redux.js does: `classText` from `textColor`, no ER row fill
   // of its own, and the neo-look zero circle on the node fill.
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX },
   values: {
     // v12 `drop-shadow( 0px 1px 2px rgba(0, 0, 0, 0.25));`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))',
@@ -72,6 +78,10 @@ const neo: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-neo.js derives cScale from its own constants (#ECECFE, #E9E9F1), not from
+  // primaryColor, darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(SOURCES, 75),
 };
 
 export default neo;

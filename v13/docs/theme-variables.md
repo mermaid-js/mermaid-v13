@@ -6,7 +6,8 @@ Every variable is exposed as a CSS custom property `--mermaid-<name>` and can be
 `themeVariables`. A **base** variable is set by every theme (at most 8, R-THEME-5); a
 **derived** one follows its rule unless a theme or the author sets it; a **token** is a
 shape token (R-THEME-11). Rules are in the derivation DSL (`mix`, `lighten`, `darken`,
-`alpha`, `contrast`, `invert`) and compile to `color-mix(in srgb, …)`. Variables of
+`lightenHsl`, `darkenHsl`, `alpha`, `contrast`, `invert`, `adjustHue`, `ifSet`) and compile
+to CSS (`color-mix(in srgb, …)`, relative colours). Variables of
 diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
@@ -17,16 +18,16 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, pie, timeline |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, timeline |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
@@ -58,10 +59,33 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |
+| `pie1` | `--mermaid-pie1` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
+| `pie2` | `--mermaid-pie2` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
+| `pie3` | `--mermaid-pie3` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark-color, default, dark, neutral, neo | pie |
+| `pie4` | `--mermaid-pie4` | derived | color | `darkenHsl(primaryColor, 10%)` | `darkenHsl(primaryColor, 10%)` | redux-color, redux, redux-dark-color, dark, forest, neutral, neo | pie |
+| `pie5` | `--mermaid-pie5` | derived | color | `darkenHsl(secondaryColor, 10%)` | `darkenHsl(secondaryColor, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie6` | `--mermaid-pie6` | derived | color | `darkenHsl(tertiaryColor, 10%)` | `darkenHsl(tertiaryColor, 10%)` | redux-color, redux, redux-dark-color, default, dark, forest, neutral, neo | pie |
+| `pie7` | `--mermaid-pie7` | derived | color | `#c5ffaa` | `#c5ffaa` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie8` | `--mermaid-pie8` | derived | color | `#ffaac5` | `#ffaac5` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie9` | `--mermaid-pie9` | derived | color | `#ddfff4` | `#ddfff4` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie10` | `--mermaid-pie10` | derived | color | `#a3ff77` | `#a3ff77` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie11` | `--mermaid-pie11` | derived | color | `#ff77a3` | `#ff77a3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie12` | `--mermaid-pie12` | derived | color | `#aaffe3` | `#aaffe3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pieTitleTextSize` | `--mermaid-pieTitleTextSize` | token | length | | | all | pie |
+| `pieTitleTextColor` | `--mermaid-pieTitleTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `pieSectionTextSize` | `--mermaid-pieSectionTextSize` | token | length | | | all | pie |
+| `pieSectionTextColor` | `--mermaid-pieSectionTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
+| `pieLegendTextSize` | `--mermaid-pieLegendTextSize` | token | length | | | all | pie |
+| `pieLegendTextColor` | `--mermaid-pieLegendTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `pieStrokeColor` | `--mermaid-pieStrokeColor` | derived | color | `black` | `black` | | pie |
+| `pieStrokeWidth` | `--mermaid-pieStrokeWidth` | token | length | | | all | pie |
+| `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
+| `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
+| `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
-| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core |
+| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
@@ -105,11 +129,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
 | `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
 | `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
+| `timelineRadius` | `--mermaid-timelineRadius` | token | length | | | all | timeline |
+| `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
+| `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
+| `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -118,11 +146,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 Lists of colours a theme carries as data (D151, D152), read as literal colours rather than
 CSS variables. In `themeVariables` a whole list is an array of colours or a comma-separated
-string; `cScale0`–`cScale11` replace one entry of `cScale`. A theme not listed carries an
-empty list.
+string; `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11` and `cScaleLabel0`–`cScaleLabel11`
+replace one entry. A theme entry can be a rule over the base colours and other palette
+entries, so `cScaleInv` and `cScaleLabel` follow an override of `cScale` or `primaryColor` as
+in v12 (D258). A theme not listed carries an empty list.
 
 | Palette | `themeVariables` names | Set by themes |
 | --- | --- | --- |
 | `borderColorArray` | `borderColorArray` | redux-color, redux-dark-color |
 | `bkgColorArray` | `bkgColorArray` | redux-color |
-| `cScale` | `cScale`, `cScale0`–`cScale11` | redux-color, redux-dark-color |
+| `cScale` | `cScale`, `cScale0`–`cScale11` | all |
+| `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
+| `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |

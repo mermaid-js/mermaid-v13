@@ -14,7 +14,7 @@ import {
 import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { THEME_VARIABLES, type ThemeRuleTable } from '@mermaid-js/core/theme';
+import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
 export type AnyPlugin = DiagramPlugin<any, any>;
@@ -289,7 +289,7 @@ const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
     : m;
 
 /** Theme variables core defines: a fragment's own must not reuse them. */
-const THEME_NAMES: ReadonlySet<string> = new Set(Object.keys(THEME_VARIABLES));
+const THEME_NAMES: ReadonlySet<string> = new Set(Object.keys(THEME_VARIABLE_TABLE));
 
 const HOOKS = ['postParse', 'postLayout', 'postRender', 'afterMount'] as const;
 

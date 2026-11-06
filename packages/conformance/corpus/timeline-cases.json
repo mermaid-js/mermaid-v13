@@ -1,0 +1,158 @@
+[
+  {
+    "id": "timeline-cases/td-sections",
+    "source": "timeline TD\n  title Vertical\n  section A\n    2002 : one\n    2003 : two : three\n  section B\n    2004 : four\n"
+  },
+  {
+    "id": "timeline-cases/lr-explicit",
+    "source": "timeline LR\n  2002 : one\n  2003 : two\n"
+  },
+  {
+    "id": "timeline-cases/direction-case",
+    "source": "timeline td\n  2002 : one\n"
+  },
+  {
+    "id": "timeline-cases/direction-tab",
+    "source": "timeline\tTD\n  2002 : one\n"
+  },
+  {
+    "id": "timeline-cases/direction-not-a-word",
+    "source": "timeline TDx\n  2002 : one\n"
+  },
+  {
+    "id": "timeline-cases/acc-single",
+    "source": "timeline\n  accTitle: An accessible title\n  accDescr: An accessible description\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/acc-multiline",
+    "source": "timeline\n  accDescr {\n    line one\n      line two\n  }\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/acc-last-wins",
+    "source": "timeline\n  accTitle: one\n  accTitle: two\n  accDescr: one\n  accDescr {\n    two\n  }\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/acc-value-next-line",
+    "source": "timeline\n  accTitle:\n  T\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/title-last-wins",
+    "source": "timeline\n  title one\n  title two\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/title-bare-takes-next-line",
+    "source": "timeline\n  title\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/front-matter-title",
+    "source": "---\ntitle: From front matter\n---\ntimeline\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/front-matter-and-text-title",
+    "source": "---\ntitle: From front matter\n---\ntimeline\n  title In text\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/comments",
+    "source": "timeline\n  %% a comment line\n  2002 : x %% after an event\n  %%{init: {\"theme\": \"forest\"}}%%\n  2003 : y\n"
+  },
+  {
+    "id": "timeline-cases/hash-comments",
+    "source": "timeline\n  # a whole line\n  2002 # after a period : x\n  2003 : #tag : y#\n"
+  },
+  {
+    "id": "timeline-cases/leading-periods",
+    "source": "timeline\n  1999 : before\n  2000\n  section A\n  2001 : a\n  section B\n  2002 : b\n"
+  },
+  {
+    "id": "timeline-cases/repeated-section",
+    "source": "timeline\n  section A\n  2001 : a\n  section B\n  2002 : b\n  section A\n  2003 : c\n"
+  },
+  {
+    "id": "timeline-cases/empty-sections",
+    "source": "timeline\n  section A\n  section B\n  2002 : b\n"
+  },
+  {
+    "id": "timeline-cases/events-on-own-lines",
+    "source": "timeline\n  2002 : a\n       : b\n  section S\n       : c\n"
+  },
+  {
+    "id": "timeline-cases/period-without-events",
+    "source": "timeline\n  2002\n  2003\n  2004 : x\n"
+  },
+  {
+    "id": "timeline-cases/repeated-period",
+    "source": "timeline\n  2002 : a\n  2002 : b\n"
+  },
+  {
+    "id": "timeline-cases/period-colon-next-line",
+    "source": "timeline\n  2002 :\n  2003 : x\n"
+  },
+  {
+    "id": "timeline-cases/event-colons",
+    "source": "timeline\n  2002 : a:b : c::d\n"
+  },
+  {
+    "id": "timeline-cases/br-and-entities",
+    "source": "timeline\n  title A<br>B #amp; C\n  section #lt;S#gt;\n  2002<br>Q1 : one<br>two : #9829;\n"
+  },
+  {
+    "id": "timeline-cases/markdown-link",
+    "source": "timeline\n  2002 : [event](http://example.com)\n"
+  },
+  {
+    "id": "timeline-cases/semicolons",
+    "source": "timeline\n  title ;t;\n  section ;s;\n  ;p; : ;e; : f;\n"
+  },
+  {
+    "id": "timeline-cases/crlf",
+    "source": "timeline\r\n  title CRLF\r\n  section A\r\n  2002 : x\r\n  : y\r\n"
+  },
+  {
+    "id": "timeline-cases/case-insensitive-keywords",
+    "source": "timeline\n  TITLE T\n  Section S\n  ACCTITLE: a\n  AccDescr: d\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/empty",
+    "source": "timeline\n"
+  },
+  {
+    "id": "timeline-cases/reject-event-before-period",
+    "source": "timeline\n  : x\n  2002 : y\n"
+  },
+  {
+    "id": "timeline-cases/reject-event-after-bare-section",
+    "source": "timeline\n  section\n  2002 : x\n"
+  },
+  {
+    "id": "timeline-cases/reject-trailing-colon",
+    "source": "timeline\n  2002 : \n"
+  },
+  {
+    "id": "timeline-cases/reject-colon-without-blank",
+    "source": "timeline\n  2002 :x\n"
+  },
+  {
+    "id": "timeline-cases/reject-two-headers",
+    "source": "timeline\n  2002 : x\ntimeline\n"
+  },
+  {
+    "id": "timeline-cases/reject-timeline-as-period",
+    "source": "timeline\n  timeline : x\n"
+  },
+  {
+    "id": "timeline-cases/reject-unclosed-description",
+    "source": "timeline\n  2002 : x\n  accDescr {\n    never closed\n"
+  },
+  {
+    "id": "timeline-cases/reject-empty-acc-title-at-end",
+    "source": "timeline\n  2002 : x\n  accTitle: "
+  },
+  {
+    "id": "timeline-cases/reject-empty-acc-descr-at-end",
+    "source": "timeline\n  2002 : x\n  accDescr:"
+  },
+  {
+    "id": "timeline-cases/reject-many-errors",
+    "source": "timeline\n  : a\n  2002 :b\n  2003 : c\n  2004 : \n"
+  }
+]

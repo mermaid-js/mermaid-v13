@@ -15,6 +15,7 @@ export { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './
 export {
   ARROWHEAD_VARIABLES,
   BASE_VARIABLES,
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -23,9 +24,11 @@ export {
   type BaseVariable,
   type PaletteVariable,
   type ThemeVarDef,
+  type ThemeVarEntry,
   type ThemeVarKind,
   type TokenVariable,
 } from './vocabulary.ts';
+export { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 export {
   createTheme,
   type AliasName,

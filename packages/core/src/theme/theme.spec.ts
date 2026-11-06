@@ -44,7 +44,7 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
       themeVariables: {
         primaryColor: 'url(javascript:alert(1))',
         lineColor: 'red;}svg{fill:red',
-        pie1: '#123456',
+        notAThemeVariable: '#123456',
         fontFamily: 'x</style><script>',
       },
       cssVariables: false,
@@ -84,6 +84,45 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
     expect(t.length('strokeWidth')).toBe('var(--_sw)');
     expect(t.rootStyle()).toEqual({ '--_sw': 'var(--mermaid-strokeWidth,3px)' });
     expect(t.font()).toBe('var(--_ff)');
+  });
+});
+
+describe('createTheme: opacity (D221)', () => {
+  it('reads an opacity as a number in [0, 1], with no CSS variable', () => {
+    const t = createTheme(base);
+    expect(t.number('pieOpacity')).toBe(0.7);
+    expect(t.rootStyle()).toEqual({});
+    expect(() => t.color('pieOpacity')).toThrow(TypeError);
+    expect(() => t.length('pieOpacity')).toThrow(TypeError);
+  });
+
+  it('takes a number or a numeric string between 0 and 1', () => {
+    for (const [given, read] of [
+      [0.4, 0.4],
+      ['0.25', 0.25],
+      [0, 0],
+      [1, 1],
+      [' 0.5 ', 0.5],
+      ['1.0', 1],
+    ] as const) {
+      const t = createTheme(base, { themeVariables: { pieOpacity: given } });
+      expect(t.number('pieOpacity'), String(given)).toBe(read);
+    }
+  });
+
+  it('drops anything else with a warning and keeps the theme value', () => {
+    for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(base, {
+        themeVariables: { pieOpacity: given },
+        warn: (w) => warnings.push(w),
+      });
+      expect(t.number('pieOpacity'), String(given)).toBe(0.7);
+      expect(
+        warnings.map((w) => w.code),
+        String(given)
+      ).toEqual(['THEME_VARIABLE_DROPPED']);
+    }
   });
 });
 
@@ -241,5 +280,20 @@ describe('standalone SVG (R-THEME-2)', () => {
     expect(svg).toContain('fill="var(--_mb)"');
     // Every var(--_x) used is declared on the root.
     for (const m of svg.matchAll(/var\((--_\w+)\)/g)) expect(svg).toContain(m[1] + ':');
+  });
+});
+
+describe('createTheme: extra rules (config fragments, D153)', () => {
+  it('reads a variable a rule table adds as a colour aliased by its name', async () => {
+    const spec = await loadTheme('default');
+    const theme = createTheme(spec, { rules: { fixtureInk: 'primaryTextColor' } });
+    expect(theme.color('fixtureInk')).toBe('var(--_fixtureInk)');
+    expect(theme.value('fixtureInk')).toBe(theme.value('primaryTextColor'));
+    expect(theme.rootStyle()).toHaveProperty('--_fixtureInk');
+    const set = createTheme(spec, {
+      rules: { fixtureInk: 'primaryTextColor' },
+      themeVariables: { fixtureInk: '#ff0000' },
+    });
+    expect(set.value('fixtureInk')).toBe('#ff0000');
   });
 });

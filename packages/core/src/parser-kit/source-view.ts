@@ -146,14 +146,24 @@ function cut(src: string, removed: readonly Hole[]): Pick<SourceView, 'text' | '
 
 /**
  * Source offsets of `view.text` positions. Lookups near the previous one are O(1), so a scan in
- * either direction costs O(runs passed).
+ * either direction costs O(runs passed). `near` (a text offset) starts it at that run, found by
+ * binary search, so a lookup in the middle of a long text does not walk every run before it.
  */
 export class SourceOffsets {
   private k = 0;
   private readonly last: number;
 
-  constructor(private readonly runs: Uint32Array) {
+  constructor(
+    private readonly runs: Uint32Array,
+    near = 0
+  ) {
     this.last = (runs.length >> 1) - 1;
+    let hi = this.last;
+    while (this.k < hi) {
+      const mid = (this.k + hi + 1) >> 1;
+      if ((runs[2 * mid] ?? 0) <= near) this.k = mid;
+      else hi = mid - 1;
+    }
   }
 
   /** The source offset of `text[i]`. */
@@ -395,7 +405,7 @@ export function cook(src: string, start: number, end: number, view: SourceView):
     return src.slice(start, end);
   const from = localOffset(view, start);
   const to = localOffset(view, end);
-  const offsets = mask && view.runs ? new SourceOffsets(view.runs) : undefined;
+  const offsets = view.runs ? new SourceOffsets(view.runs, from) : undefined;
   let out = '';
   for (let i = from; i < to; i++) {
     const c = text.charCodeAt(i);
@@ -405,7 +415,13 @@ export function cook(src: string, start: number, end: number, view: SourceView):
     }
     if (c === CR) {
       out += '\n';
-      if (text.charCodeAt(i + 1) === LF) i++;
+      // A CRLF in the source; a CR and an LF that a removed span left side by side were two
+      // line ends to v12, which turned CRs into LFs before removing anything.
+      if (
+        text.charCodeAt(i + 1) === LF &&
+        (!offsets || offsets.source(i + 1) === offsets.source(i) + 1)
+      )
+        i++;
       continue;
     }
     if (c === HASH) {

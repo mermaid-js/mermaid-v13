@@ -1,0 +1,182 @@
+[
+  {
+    "id": "v12-specs/pie.spec.ts#1",
+    "source": "pie"
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#2",
+    "source": "pie\n      \"ash\": 100\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#3",
+    "source": "pie\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#4",
+    "source": "pie showData\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#5",
+    "source": "pie\n      %% comments\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#6",
+    "source": "pie title a 60/40 pie\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#7",
+    "source": "pie title a neat chart\n      accTitle: a neat acc title\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#8",
+    "source": "pie title a neat chart\n      accDescr: a neat description\n      \"ash\" : 60\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#9",
+    "source": "pie title a neat chart\n      accDescr {\n        a neat description\n        on multiple lines\n      }\n      \"ash\" : 60\n      \"bat\" : 40\n    "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#10",
+    "source": "pie\n      \"ash\" : 60.67\n      \"bat\" : 40\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#11",
+    "source": "pie\n        \"ash\" : -60.67\n        \"bat\" : 40.12\n        "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#12",
+    "source": "pie title Default text position: Animal adoption\n        accTitle: simple pie char demo\n        accDescr: pie chart with 3 sections: dogs, cats, rats. Most are dogs.\n         \"dogs\" : 0\n        \"rats\" : 40.12\n      "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#13",
+    "source": "pie title Default text position: Animal adoption\n        accTitle: simple pie char demo\n        accDescr: pie chart with 3 sections: dogs, cats, rats. Most are dogs.\n         \"dogs\" : -60.67\n        \"rats\" : 40.12\n    "
+  },
+  {
+    "id": "v12-specs/pie.spec.ts#14",
+    "source": "pie title Unsafe props test\n        \"__proto__\" : 386\n        \"constructor\" : 85\n        \"prototype\" : 15"
+  },
+  {
+    "id": "v12-specs/pieRenderer.spec.ts#1",
+    "source": "pie\n      \"A\" : 10\n      \"B\" : 100\n      \"C\" : 50"
+  },
+  {
+    "id": "v12-specs/pieRenderer.spec.ts#2",
+    "source": "pie\n      \"A\" : 10\n      \"B\" : 100\n      \"C\" : 0.1\n      \"D\" : 50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#3",
+    "source": "  pie  "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#4",
+    "source": "\tpie\t"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#5",
+    "source": "\n    \tpie\n    "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#6",
+    "source": "pie showData"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#7",
+    "source": "  pie  showData  "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#8",
+    "source": "\tpie\tshowData\t"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#9",
+    "source": "\n    pie\tshowData\n    "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#10",
+    "source": "pie title sample title"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#11",
+    "source": "  pie  title sample title  "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#12",
+    "source": "\tpie\ttitle sample title\t"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#13",
+    "source": "pie\n        \ttitle sample title\n        "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#14",
+    "source": "pie\n        title sample title"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#15",
+    "source": "pie\n        title sample title\n        "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#18",
+    "source": "pie showData title sample title"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#19",
+    "source": "pie showData title sample title\n        "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#20",
+    "source": "pie showData\n        title sample title"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#21",
+    "source": "pie showData\n        title sample title\n        "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#24",
+    "source": "pie\n        \"GitHub\":100\n        \"GitLab\":50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#25",
+    "source": "pie\n        \"GitHub\"   :   100\n        \"GitLab\"   :   50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#26",
+    "source": "pie\n        \"GitHub\"\t:\t100\n        \"GitLab\"\t:\t50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#27",
+    "source": "pie\n        \t\"GitHub\" \t : \t 100\n        \t\"GitLab\" \t : \t  50\n        "
+  },
+  {
+    "id": "v12-specs/pie.test.ts#28",
+    "source": "pie showData\n        \"GitHub\": 100\n        \"GitLab\": 50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#29",
+    "source": "pie title sample wow\n        \"GitHub\": 100\n        \"GitLab\": 50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#30",
+    "source": "pie\n        \"ash\": 60.67\n        \"bat\": 40"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#31",
+    "source": "pie accTitle: sample wow\n        \"GitHub\": 100\n        \"GitLab\": 50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#32",
+    "source": "pie accDescr: sample wow\n        \"GitHub\": 100\n        \"GitLab\": 50"
+  },
+  {
+    "id": "v12-specs/pie.test.ts#33",
+    "source": "pie accDescr {\n            sample wow\n        }\n        \"GitHub\": 100\n        \"GitLab\": 50"
+  },
+  {
+    "id": "v12-docs/pie.md#1",
+    "source": "pie title Pets adopted by volunteers\n    \"Dogs\" : 386\n    \"Cats\" : 85\n    \"Rats\" : 15\n"
+  },
+  {
+    "id": "v12-docs/pie.md#2",
+    "source": "---\nconfig:\n  pie:\n    textPosition: 0.5\n    donutHole: 0.2\n    highlightSlice: Potassium\n  themeVariables:\n    pieOuterStrokeWidth: \"5px\"\n---\npie showData\n    title Key elements in Product X\n    \"Calcium\" : 42.96\n    \"Potassium\" : 50.05\n    \"Magnesium\" : 10.01\n    \"Iron\" :  5\n"
+  }
+]

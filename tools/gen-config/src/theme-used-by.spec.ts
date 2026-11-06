@@ -19,6 +19,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   flowchart: ['node', 'stadium', 'hexagon', 'subroutine', 'cylinder', 'lean', 'odd'].flatMap(
     (shape) => [`${shape}PaddingX`, `${shape}PaddingY`]
   ),
+  // `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
+  pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
 };
 
 function sources(dir: string): string[] {
@@ -45,7 +47,7 @@ const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
-    expect(TYPES).toEqual(['class', 'er', 'flowchart', 'sequence', 'state']);
+    expect(TYPES).toEqual(['class', 'er', 'flowchart', 'pie', 'sequence', 'state', 'timeline']);
     for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 

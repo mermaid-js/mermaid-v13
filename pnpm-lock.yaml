@@ -110,12 +110,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:^
+        version: link:../diagram-timeline
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -177,12 +183,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:^
+        version: link:../diagram-timeline
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -204,6 +216,9 @@ importers:
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
+      mermaid-parser-v12:
+        specifier: npm:@mermaid-js/parser@2.0.1
+        version: '@mermaid-js/parser@2.0.1'
       mermaid-v12:
         specifier: npm:mermaid@^12.2.0
         version: mermaid@12.2.0
@@ -306,6 +321,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-pie:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
@@ -313,6 +334,12 @@ importers:
         version: link:../core
 
   packages/diagram-state:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-timeline:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -332,12 +359,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:*
+        version: link:../diagram-timeline
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -363,12 +396,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:*
+        version: link:../diagram-timeline
 
   packages/language-service-codemirror:
     devDependencies:
@@ -550,12 +589,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:*
+        version: link:../diagram-timeline
     devDependencies:
       esbuild:
         specifier: ^0.25.12
@@ -663,12 +708,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../../packages/diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../../packages/diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../../packages/diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:^
+        version: link:../../packages/diagram-timeline
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

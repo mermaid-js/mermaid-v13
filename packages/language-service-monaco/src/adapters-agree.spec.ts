@@ -103,6 +103,33 @@ const DOCS: Readonly<Record<string, string>> = {
     '  ORDER }|..|{ ITEM : "contains"',
     '',
   ].join('\n'),
+  timeline: [
+    'timeline TD',
+    '  title History of Social Media',
+    '  accTitle: Platforms',
+    '  accDescr {',
+    '    When each platform',
+    '    launched',
+    '  }',
+    '  %% the early years',
+    '  section 2002 - 2004',
+    '    2002 : LinkedIn',
+    '    2004 : Facebook : Google',
+    '         : Orkut',
+    '',
+  ].join('\n'),
+  pie: [
+    'pie showData',
+    '  title Pets adopted',
+    '  accDescr {',
+    '    Pets adopted',
+    '    by volunteers',
+    '  }',
+    '  %% counted in May',
+    '  "Dogs" : 386',
+    "  'Cats' : 85.5",
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

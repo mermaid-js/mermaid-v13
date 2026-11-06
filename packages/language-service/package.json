@@ -32,8 +32,10 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
-    "@mermaid-js/diagram-state": "workspace:*"
+    "@mermaid-js/diagram-state": "workspace:*",
+    "@mermaid-js/diagram-timeline": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-class": {
@@ -45,10 +47,16 @@
     "@mermaid-js/diagram-flowchart": {
       "optional": true
     },
+    "@mermaid-js/diagram-pie": {
+      "optional": true
+    },
     "@mermaid-js/diagram-sequence": {
       "optional": true
     },
     "@mermaid-js/diagram-state": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-timeline": {
       "optional": true
     }
   },
@@ -57,7 +65,9 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
-    "@mermaid-js/diagram-state": "workspace:*"
+    "@mermaid-js/diagram-state": "workspace:*",
+    "@mermaid-js/diagram-timeline": "workspace:*"
   }
 }
