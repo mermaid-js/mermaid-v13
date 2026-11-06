@@ -77,7 +77,7 @@ function corners(tree: SvgView): { x: number; y: number }[] {
 
 describe('mindmap render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape and icon references', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(33);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(53);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const shapes = new Set(cases.flatMap((c) => c.r.layout.mindmap.nodes.map((n) => n.shape)));
     expect([...shapes].sort()).toEqual(

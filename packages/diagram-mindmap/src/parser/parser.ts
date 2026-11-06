@@ -55,6 +55,7 @@ import type {
   SourceView,
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
+import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { mindmapSections } from '../model.ts';
@@ -74,6 +75,10 @@ export interface MindmapParseOptions extends ParseOptions {
   preprocessed?: PreprocessResult;
   /** How sections are assigned (`mindmap.colorBy`); `'branch'` when absent. */
   colorBy?: MindmapColorBy;
+  /** Node cap (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */
+  maxNodes?: number;
+  /** Tree depth cap: how deep a node may sit under the root (core `DEFAULT_LIMITS.maxDepth`). */
+  maxDepth?: number;
 }
 
 export type MindmapParseResult = ParseResult<MindmapModel, MindmapDocument>;
@@ -204,11 +209,17 @@ class MindmapParser {
   /** `mindmap` was read; a missing one was reported once, so a later one is the header. */
   private headerSeen = false;
   private lines: LineIndex | undefined;
+  private readonly maxNodes: number;
+  private readonly maxDepth: number;
+  /** The depth limit was reported (once per parse, as the node limit). */
+  private tooDeep = false;
 
   constructor(
     private readonly src: string,
     private readonly options: MindmapParseOptions
   ) {
+    this.maxNodes = options.maxNodes ?? DEFAULT_LIMITS.maxNodes;
+    this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.view = sourceView(
@@ -760,6 +771,27 @@ class MindmapParser {
     const span = this.st.beginStatement('node', range.start);
     span.range.end = range.end;
     open.push({ index, level, span });
+    this.checkLimits(model, range);
+  }
+
+  /** The integrator's node and depth caps (R-SEC-5): each reported once, at the first breach. */
+  private checkLimits(node: OpenNode, range: Range): void {
+    const { maxNodes, maxDepth } = this;
+    if (this.nodes.length === maxNodes + 1) {
+      this.st.diagnostics.error(
+        LIMIT_CODES.maxNodes,
+        `The diagram has more than ${maxNodes} nodes, the limit. The limit is set by the page or app that renders the diagram.`,
+        range
+      );
+    }
+    if (node.depth > maxDepth && !this.tooDeep) {
+      this.tooDeep = true;
+      this.st.diagnostics.error(
+        LIMIT_CODES.maxDepth,
+        `Nodes are nested ${node.depth} deep here, over the limit of ${maxDepth}. The limit is set by the page or app that renders the diagram.`,
+        range
+      );
+    }
   }
 
   /**

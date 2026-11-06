@@ -1,10 +1,14 @@
 {
   "name": "@mermaid-js/diagram-mindmap",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Mindmap diagram plugin for Mermaid: parser, model, layout and renderer.",
+  "version": "13.0.0-alpha.0",
+  "description": "Mindmap diagram plugin for Mermaid: parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-mindmap"
+  },
   "sideEffects": false,
   "exports": {
     "./testing": {
@@ -39,5 +43,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "mindmap",
+    "types": [
+      "mindmap"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "mindmap",
+    "language": "./dist/language.js"
   }
 }

@@ -1126,7 +1126,8 @@ export const configSchema: ConfigSchema = {
     "mindmap": {
       "$ref": "#/$defs/MindmapDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "ishikawa": {
@@ -2832,6 +2833,22 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the mindmap renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
         "colorBy": {
           "description": "Color nodes by their top-level branch or by their depth in the tree.\nDepth is counted from the root, independently of indentation width.\n",
           "type": "string",
@@ -2845,21 +2862,29 @@ export const configSchema: ConfigSchema = {
           },
           "default": "branch",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: eleven sections, by top-level branch or by depth below the root; any other value colours by branch."
           }
         },
         "padding": {
+          "description": "Padding in px inside default, circle, cloud and bang nodes (twice this inside\nhexagons), and the margin around the drawing.\n",
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Where v12 read it (D287): inside default, circle, cloud and bang nodes, doubled in hexagons, and as the margin around the drawing. Square and rounded nodes keep v12's fixed paddings. Numeric strings are read as numbers; anything else, or a value below 0, lays out with 10 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "maxNodeWidth": {
+          "description": "The width in px at which node labels wrap.\n",
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "layoutAlgorithm": {
