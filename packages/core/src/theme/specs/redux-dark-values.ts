@@ -10,6 +10,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   REDUX_TIMELINE,
+  REDUX_GITGRAPH,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -39,6 +40,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   ...REDUX_PADDING,
   ...NEO_SEQUENCE,
   ...REDUX_TIMELINE,
+  ...REDUX_GITGRAPH,
   useGradient: false,
 };
 
@@ -48,6 +50,8 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   labelBoxBorderColor: '#bdbccc',
   // v12's drop shadow in white for a theme name with 'dark' (insertLookDefs), as a CSS filter.
   dropShadow: 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))',
+  // v12 `theme-redux*.js`: gitGraph branch lines.
+  commitLineColor: '#BDBCCC',
   primaryBorderColor: '#cccccc',
   secondaryBorderColor: '#2f2f2f',
   tertiaryBorderColor: '#060606',

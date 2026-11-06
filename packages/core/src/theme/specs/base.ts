@@ -11,6 +11,7 @@ import {
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -48,6 +49,7 @@ const base: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode); git darkened by 25

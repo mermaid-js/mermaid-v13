@@ -10,6 +10,7 @@ import {
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -64,6 +65,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   rules: { ...PIE_DARK, ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc') },

@@ -16,6 +16,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   REDUX_TIMELINE,
+  REDUX_GITGRAPH,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -111,6 +112,7 @@ const redux: ThemeSpec = {
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
     ...REDUX_TIMELINE,
+    ...REDUX_GITGRAPH,
     useGradient: false,
   },
   rules: { ...REDUX_RULES, ...PIE_REDUX, ...REDUX_GIT_LABELS },
@@ -119,6 +121,8 @@ const redux: ThemeSpec = {
     ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
+    // v12 `theme-redux*.js`: gitGraph branch lines.
+    commitLineColor: '#BDBCCC',
     primaryBorderColor: '#28253d',
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',

@@ -55,10 +55,19 @@ const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, 
  * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
  */
 const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+/**
+ * gitGraph's v13 variables (#374): v12 chose its gitGraph geometry by a theme name with `redux`
+ * and its node colours by `NEO_COLOR_GEN_THEMES`, so `theme: neo` drew classic geometry with the
+ * node colours (D266). `commitLineColor` is v12's, which no neo theme sets (`?? lineColor`).
+ */
+const GITGRAPH = [
+  ...Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('git')),
+  'commitLineColor',
+];
 
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
-  .filter(([name]) => !TIMELINE.includes(name))
+  .filter(([name]) => !TIMELINE.includes(name) && !GITGRAPH.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -99,6 +108,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
+  ),
+  ...Object.fromEntries(
+    GITGRAPH.map((n) => [n, 'D266: v12 has no value; theme neo drew classic gitGraph geometry'])
   ),
 };
 
