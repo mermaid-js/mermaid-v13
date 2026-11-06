@@ -90,6 +90,12 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - **For the maintainer: D342's row cap and `maxOutputLength`.** A diagram that hits the 10,000-row cap draws about 4.28 MB of SVG (427 characters per row, after hoisting the shared paints to the root), over the default `maxOutputLength` of 4,000,000. Such a render fails with `LIMIT` instead of drawing with `PACKET_TRUNCATED`, so D342's "truncate and warn" holds only with a raised limit. The limit is a security gate and was not loosened. MIGRATION.md has a row. Options: amend D342 (the cap case fails at default limits), lower packet's row cap to fit (about 9,300 rows), or accept it as is. Pinned by a test in `conformance/src/packet/render.spec.ts`.
 - **For #414 (T0a gate bug), reported to the coordinator:** `theme-direction.spec.ts` rule 2 flags the contract's own `neo: { fallback: 'redux' }` as a theme name, so packet's table repeats the entry for `neo` with a comment. Switch to `fallback` once the gate allows family names.
 
+## #458 T6 language facet (merged at `f1a0e4e61`)
+
+- Review fixes merged: the facet reads the source's own `packet` config (front matter, then `%%{init}%%`) via `packetSectionOf`; field nodes carry `dropped` (error or row cap) set by the parser; the next-bit completion reparses only the lines since the last field.
+- **For the maintainer: R-LANG-4 budget.** New `packages/bench/src/language-budget-packet.spec.ts` (as sequence's; pie has none): one cycle ≤ 4.5 bare parses (measured 4.0–4.1), 4× text ≤ 6.2× cycle (measured 4.4–4.6). Best of 15 on the 50k fixture is 15.5 ms against R-LANG-4's 15 ms, at load average 14 (flowchart measured 18.8 ms in the same run): not measured on a steady machine. The ratio margins are about 10%; if it flakes on CI as `language-budget-sequence.spec.ts` does, rerun once before acting.
+- Copied verbatim from `mermaid-v13`'s `e99d313ef` (mindmap #389): `LanguageFacet.standalone` and its service handling (core `parser-kit/language.ts` types, `language-service/src/symbols.ts`, `service.spec.ts`, DESIGN.md, `language.md`); identical hunks, so the base merge resolves them cleanly.
+
 ## Shared contracts
 
 - **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
