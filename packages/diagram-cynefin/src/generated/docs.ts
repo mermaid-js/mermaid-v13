@@ -7,16 +7,13 @@ import { T } from '../parser/tokens.ts';
  * docs: the text the syntax reference page shows. Hover reads it.
  */
 export const cynefinDocs: Readonly<Partial<Record<number, string>>> = {
-  [T.HeaderColon]:
-    '`cynefin-beta:` starts a cynefin diagram, as `cynefin-beta` does; anything may follow the colon.',
-  [T.Header]: '`cynefin-beta`: starts a cynefin diagram of the five domains.',
-  [T.Arrow]: '`complex --> clear`: a transition from one domain to another.',
-  [T.Colon]:
-    '`complex --> clear : "Pattern found"`: a transition and its optional label. A transition from a domain to itself is not drawn.',
-  [T.DomainName]:
-    '`complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.',
-  [T.AccDescr]: '`accDescr: …` or `accDescr { … }`: the accessible description.',
-  [T.AccTitle]: '`accTitle: …`: the accessible title.',
-  [T.Title]: '`title Incident response`: the title drawn above the diagram (the last one wins).',
-  [T.String]: '`"Probe"`: an item of the domain before it.',
+  [T.HeaderColon]: "`cynefin-beta:` starts a cynefin diagram, as `cynefin-beta` does; anything may follow the colon.",
+  [T.Header]: "`cynefin-beta`: starts a cynefin diagram of the five domains.",
+  [T.Arrow]: "`complex --> clear`: a transition from one domain to another.",
+  [T.Colon]: "`complex --> clear : \"Pattern found\"`: a transition and its optional label. A transition from a domain to itself is not drawn.",
+  [T.DomainName]: "`complex \"Probe\" \"Sense\"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.",
+  [T.AccDescr]: "`accDescr: …` or `accDescr { … }`: the accessible description.",
+  [T.AccTitle]: "`accTitle: …`: the accessible title.",
+  [T.Title]: "`title Incident response`: the title drawn above the diagram (the last one wins).",
+  [T.String]: "`\"Probe\"`: an item of the domain before it.",
 };
