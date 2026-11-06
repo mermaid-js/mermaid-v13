@@ -22,13 +22,19 @@ export const CYNEFIN_DEFAULTS = {
   maxAmplitude: 50,
 } as const;
 
-/** The canvas: four quadrants of half the size, and the confusion ellipse (renderer :40-50, :158). */
+/**
+ * The canvas (renderer :40-50, :158): four quadrants of half the size, each centred on its
+ * quarter point, and the confusion ellipse. Halves are written `/ 2`, as in v12.
+ */
 export const CANVAS = {
-  /** A quadrant is half the canvas; its centre a quarter of it in. */
-  half: 0.5,
-  quarter: 0.25,
   /** The ellipse's radii, of the width and the height. */
   ellipseRadius: 0.15,
+  /**
+   * Not v12's. A canvas extent times this must be finite (D366): the largest numbers the layout
+   * computes are sums of coordinates times Bézier coefficients (at most 8, `geometry.ts`) and
+   * sums of two of those, so 16 × the canvas bounds them.
+   */
+  headroom: 16,
 } as const;
 
 /** Domain labels and subtitles, from the domain's centre (renderer :168-225). */

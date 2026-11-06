@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { Measurer } from '@mermaid-js/core/text';
+import { Style, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
-import { FIXTURES, model } from './fixtures.ts';
+import { FIXTURES, model } from './cynefin.fixtures.ts';
 import { curveData, layoutCynefin, type CynefinLayout, type Point } from './index.ts';
 
 let spec: ThemeSpec;
@@ -114,11 +114,13 @@ describe('cynefin layout: labels and subtitles (:168-225)', () => {
 
   it('measures labels at domainFontSize bold, subtitles at itemFontSize − 1 (pitfall 16)', () => {
     const l = lay(FIXTURES.empty!);
-    expect(l.fonts.label).toMatchObject({ size: 16, weight: 700 });
-    expect(l.fonts.subtitle).toMatchObject({ size: 11, weight: 400 });
-    expect(l.fonts.item).toMatchObject({ size: 12, weight: 400 });
-    expect(l.fonts.transition).toMatchObject({ size: 11, weight: 400 });
-    expect(l.fonts.title).toMatchObject({ size: 18, weight: 700 });
+    expect(l.fonts.label).toMatchObject({ size: 16, weight: 700, style: 'normal' });
+    expect(l.fonts.subtitle).toMatchObject({ size: 11, weight: 400, style: 'italic' });
+    expect(l.fonts.item).toMatchObject({ size: 12, weight: 400, style: 'normal' });
+    expect(l.fonts.transition).toMatchObject({ size: 11, weight: 400, style: 'normal' });
+    expect(l.fonts.title).toMatchObject({ size: 18, weight: 700, style: 'normal' });
+    // The subtitles were measured italic: every run of theirs is.
+    expect(l.subtitles[0]!.text.lines[0]!.every((r) => r.style === Style.Italic)).toBe(true);
     // "Complex": 7 characters at 10 px, one 19.2 px line.
     expect(l.labels[0]).toMatchObject({ x: 165, width: 70, height: 16 * 1.2 });
   });
@@ -319,6 +321,21 @@ describe('cynefin layout: config (D366)', () => {
     ]);
     expect(warnings[0]!.message).toBe(
       'cynefin.width is -100, not a number of 1 or more; using the default 800'
+    );
+  });
+
+  it('falls back on a size whose canvas would overflow, one warning per key', () => {
+    const warnings: Warning[] = [];
+    const l = lay(
+      FIXTURES.two!,
+      { width: 1e308, height: 1e200, padding: Number.MAX_VALUE },
+      'm',
+      warnings
+    );
+    expect([l.width, l.height, l.padding]).toEqual([800, 1e200, 40]);
+    expect(warnings.map((w) => w.path)).toEqual(['cynefin.width', 'cynefin.padding']);
+    expect(warnings[0]!.message).toBe(
+      'cynefin.width is 1e+308, not a number of 1 or more that keeps the canvas finite; using the default 800'
     );
   });
 

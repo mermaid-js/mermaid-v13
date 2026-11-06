@@ -19,6 +19,11 @@ export interface Rect extends Point {
   readonly height: number;
 }
 
+/** A font a text was measured in, and so is drawn in: core's key plus its CSS `font-style`. */
+export interface CynefinFont extends FontKey {
+  readonly style: 'normal' | 'italic';
+}
+
 /** A measured label and the box it is drawn in, centred on the box's centre. */
 export interface PlacedLabel extends Rect {
   readonly text: MeasuredLabel;
@@ -141,11 +146,12 @@ export interface CynefinLayout {
   readonly title?: PlacedLabel;
   /** The fonts the texts were measured in, and so are drawn in. */
   readonly fonts: {
-    readonly label: FontKey;
-    readonly subtitle: FontKey;
-    readonly item: FontKey;
-    readonly transition: FontKey;
-    readonly title: FontKey;
+    readonly label: CynefinFont;
+    /** Italic (styles.ts :40). */
+    readonly subtitle: CynefinFont;
+    readonly item: CynefinFont;
+    readonly transition: CynefinFont;
+    readonly title: CynefinFont;
   };
   /** v12's viewBox in content space, `(-padding, -padding)` on, grown to cover what is drawn (D361). */
   readonly bounds: Rect;

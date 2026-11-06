@@ -9,18 +9,22 @@ import type { CubicCurve, Point, Rect } from './types.ts';
 function cubicRange(p0: number, p1: number, p2: number, p3: number): [number, number] {
   let lo = Math.min(p0, p3);
   let hi = Math.max(p0, p3);
-  // B'(t) / 3 = a t² + b t + c.
-  const a = -p0 + 3 * p1 - 3 * p2 + p3;
-  const b = 2 * (p0 - 2 * p1 + p2);
-  const c = p1 - p0;
+  // B'(t) / 3 = a t² + b t + c, scaled to its largest coefficient so the squares of the
+  // quadratic formula cannot overflow at a huge canvas (D366).
+  const a0 = -p0 + 3 * p1 - 3 * p2 + p3;
+  const b0 = 2 * (p0 - 2 * p1 + p2);
+  const c0 = p1 - p0;
+  const scale = Math.max(Math.abs(a0), Math.abs(b0), Math.abs(c0));
   const roots: number[] = [];
-  if (a === 0) {
-    if (b !== 0) roots.push(-c / b);
-  } else {
-    const disc = b * b - 4 * a * c;
-    if (disc >= 0) {
-      const s = Math.sqrt(disc);
-      roots.push((-b + s) / (2 * a), (-b - s) / (2 * a));
+  if (scale > 0) {
+    const [a, b, c] = [a0 / scale, b0 / scale, c0 / scale];
+    if (a === 0) roots.push(-c / b);
+    else {
+      const disc = b * b - 4 * a * c;
+      if (disc >= 0) {
+        const s = Math.sqrt(disc);
+        roots.push((-b + s) / (2 * a), (-b - s) / (2 * a));
+      }
     }
   }
   for (const t of roots) {

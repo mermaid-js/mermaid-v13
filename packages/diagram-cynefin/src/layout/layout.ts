@@ -17,10 +17,11 @@ import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundar
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { Box, cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
 import { DOMAIN_META, domainTitle } from './meta.ts';
-import { ARROWS, CANVAS, FONTS, ITEMS, LABELS, TITLE } from './metrics.ts';
+import { ARROWS, FONTS, ITEMS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
 import type {
   CynefinEllipse,
+  CynefinFont,
   CynefinFixedText,
   CynefinItemBadge,
   CynefinLayout,
@@ -50,9 +51,9 @@ interface Env {
   readonly o: CynefinOptions;
   readonly fonts: Fonts;
   /** A fixed text (D363): a plain constant, no markup to read, no extension spans. */
-  plain(text: string, font: FontKey, style?: number): MeasuredLabel;
+  plain(text: string, font: CynefinFont): MeasuredLabel;
   /** Author text through core's label layout, unwrapped as v12 drew it (D363). */
-  rich(text: string, font: FontKey): MeasuredLabel;
+  rich(text: string, font: CynefinFont): MeasuredLabel;
 }
 
 /** The canvas's domains: four quadrants and the ellipse, with their AST ids when declared. */
@@ -121,24 +122,33 @@ function environment(
   ctx: CynefinLayoutContext
 ): Env {
   const family = ctx.theme.value('fontFamily');
-  const font = (size: number, weight: number): FontKey => ({ family, size, weight });
+  const font = (size: number, weight: number, style: CynefinFont['style'] = 'normal') => ({
+    family,
+    size,
+    weight,
+    style,
+  });
+  // The measurer gets core's key; an italic font starts every run italic.
+  const key = (f: CynefinFont): FontKey => ({ family: f.family, size: f.size, weight: f.weight });
+  const bits = (f: CynefinFont): number => (f.style === 'italic' ? Style.Italic : 0);
   const smaller = lengths.itemFontSize + FONTS.smallerDelta;
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   return {
     o,
     fonts: {
       label: font(lengths.domainFontSize, FONTS.bold),
-      subtitle: font(smaller, FONTS.normal),
+      subtitle: font(smaller, FONTS.normal, 'italic'),
       item: font(lengths.itemFontSize, FONTS.normal),
       transition: font(smaller, FONTS.normal),
       title: font(lengths.domainFontSize + TITLE.sizeDelta, FONTS.bold),
     },
-    plain: (text, f, style = 0) => layoutLabel(text, f, Infinity, ctx.measurer, { style }),
+    plain: (text, f) => layoutLabel(text, key(f), Infinity, ctx.measurer, { style: bits(f) }),
     rich: (text, f) => {
       const md = markdownString(text);
+      const style = bits(f);
       return md === undefined
-        ? layoutLabel(text, f, Infinity, ctx.measurer, inline)
-        : layoutLabel(md, f, Infinity, ctx.measurer, { ...inline, markdown: true });
+        ? layoutLabel(text, key(f), Infinity, ctx.measurer, { ...inline, style })
+        : layoutLabel(md, key(f), Infinity, ctx.measurer, { ...inline, markdown: true, style });
     },
   };
 }
@@ -148,8 +158,8 @@ function canvasOf(
   o: CynefinOptions,
   declared: ReadonlyMap<CynefinDomainName, CynefinDomain>
 ): Canvas {
-  const hw = o.width * CANVAS.half;
-  const hh = o.height * CANVAS.half;
+  const hw = o.width / 2;
+  const hh = o.height / 2;
   const astOf = (name: CynefinDomainName): { ast?: string } => {
     const d = declared.get(name);
     return d ? { ast: d.ast } : {};
@@ -168,7 +178,7 @@ function canvasOf(
       y,
       width: hw,
       height: hh,
-      center: { x: x + hw * CANVAS.half, y: y + hh * CANVAS.half },
+      center: { x: x + hw / 2, y: y + hh / 2 },
       ...astOf(name),
     };
   });
@@ -192,7 +202,7 @@ function fixedTexts(
     ...centred(text, x, y),
   });
   const name = (d: CynefinDomainName): MeasuredLabel => env.plain(domainTitle(d), env.fonts.label);
-  const sub = (text: string): MeasuredLabel => env.plain(text, env.fonts.subtitle, Style.Italic);
+  const sub = (text: string): MeasuredLabel => env.plain(text, env.fonts.subtitle);
   const { x: ex, y: ey } = canvas.confusion.center;
 
   const labels = canvas.quadrants.map(({ name: d, center: { x, y } }) =>
@@ -264,13 +274,14 @@ function transition(
   const end = canvas.centre(t.to);
   const dx = end.x - start.x;
   const dy = end.y - start.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
+  // v12's `sqrt(dx² + dy²)`, without the overflow of the squares at a huge canvas.
+  const len = Math.hypot(dx, dy);
   const bend = len * ARROWS.bend;
   const nx = len === 0 ? 0 : -dy / len;
   const ny = len === 0 ? 0 : dx / len;
   const control = {
-    x: (start.x + end.x) * CANVAS.half + nx * bend,
-    y: (start.y + end.y) * CANVAS.half + ny * bend,
+    x: (start.x + end.x) / 2 + nx * bend,
+    y: (start.y + end.y) / 2 + ny * bend,
   };
   const head = arrowhead(control, end, lengths.arrowWidth);
   const line = { from: t.from, to: t.to, ast: t.ast, start, control, end, head };
@@ -287,7 +298,7 @@ function titleOf(env: Env, title: string): PlacedLabel {
   const text = env.rich(title, env.fonts.title);
   const lastLine = env.o.padding * TITLE.paddingShare;
   const y = lastLine + text.lineHeight / 2 - text.height;
-  const x = env.o.width * CANVAS.half - text.width / 2;
+  const x = env.o.width / 2 - text.width / 2;
   return { x, y, width: text.width, height: text.height, text };
 }
 
@@ -328,7 +339,7 @@ function arrowhead(
 ): readonly [Point, Point, Point] {
   const dx = end.x - control.x;
   const dy = end.y - control.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
+  const len = Math.hypot(dx, dy);
   const ux = len === 0 ? 1 : dx / len;
   const uy = len === 0 ? 0 : dy / len;
   const unit = (ARROWS.markerWidth * strokeWidth) / ARROWS.markerBox;

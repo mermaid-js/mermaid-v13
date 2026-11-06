@@ -22,7 +22,7 @@ export function foldCurve(
   seed: number,
   amplitude: number
 ): CubicCurve {
-  const cx = width * CANVAS.half;
+  const cx = width / 2;
   const step = height / W.segments;
   const points: Point[] = [];
   for (let i = 0; i <= W.segments; i++) {
@@ -33,7 +33,7 @@ export function foldCurve(
   for (let i = 0; i < W.segments; i++) {
     const p0 = points[i]!;
     const p1 = points[i + 1]!;
-    const midY = (p0.y + p1.y) * CANVAS.half;
+    const midY = (p0.y + p1.y) / 2;
     const offset =
       amplitude *
       W.controlShare *
@@ -55,7 +55,7 @@ export function horizonCurve(
   amplitude: number
 ): CubicCurve {
   const s = seed + W.horizonSeedOffset;
-  const cy = height * CANVAS.half;
+  const cy = height / 2;
   const step = width / W.segments;
   const points: Point[] = [];
   for (let i = 0; i <= W.segments; i++) {
@@ -66,7 +66,7 @@ export function horizonCurve(
   for (let i = 0; i < W.segments; i++) {
     const p0 = points[i]!;
     const p1 = points[i + 1]!;
-    const midX = (p0.x + p1.x) * CANVAS.half;
+    const midX = (p0.x + p1.x) / 2;
     const offset =
       amplitude *
       W.controlShare *
@@ -82,7 +82,7 @@ export function horizonCurve(
  * in two cubic segments.
  */
 export function cliffCurve(width: number, height: number): CubicCurve {
-  const cx = width * CANVAS.half;
+  const cx = width / 2;
   const top = height * CLIFF.top;
   const amplitude = width * CLIFF.amplitude;
   const at = ([fx, fy]: readonly [number, number]): Point => ({
@@ -103,7 +103,7 @@ export function cliffCurve(width: number, height: number): CubicCurve {
 /** The confusion ellipse: centred on the canvas, radii `0.15·width` and `0.15·height`. */
 export function confusionEllipse(width: number, height: number): CynefinEllipse {
   return {
-    center: { x: width * CANVAS.half, y: height * CANVAS.half },
+    center: { x: width / 2, y: height / 2 },
     rx: width * CANVAS.ellipseRadius,
     ry: height * CANVAS.ellipseRadius,
     strokeWidth: ELLIPSE_STROKE_WIDTH,

@@ -4,7 +4,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
-import { FIXTURES } from './fixtures.ts';
+import { FIXTURES } from './cynefin.fixtures.ts';
 import { cynefinLayoutViolations, layoutCynefin, type CynefinLayout } from './index.ts';
 
 let spec: ThemeSpec;
@@ -37,6 +37,12 @@ const OPTION_SETS: readonly unknown[] = [
   { width: Number.NaN, height: Infinity, padding: Number.NaN, boundaryAmplitude: -Infinity },
   { width: '1000', height: null, padding: {}, boundaryAmplitude: 'wavy', seed: Infinity },
   { showDomainDescriptions: 'no', seed: 0.5, boundaryAmplitude: Infinity },
+  // Finite but huge: squares and sums of these overflow unless the layout guards them.
+  { width: 1e200, height: 1e200, padding: 1e200 },
+  { width: 1e308, height: 1e308, padding: 1e308 },
+  { width: Number.MAX_VALUE, height: Number.MAX_VALUE, padding: Number.MAX_VALUE },
+  { width: 1e200, height: 3 },
+  { width: 1e307, height: 1e307, padding: 1e307 },
 ];
 
 describe('cynefin layout invariants', () => {

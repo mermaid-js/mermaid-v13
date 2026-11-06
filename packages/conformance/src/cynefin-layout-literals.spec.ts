@@ -30,9 +30,10 @@ function numericLiterals(source: string): string[] {
 
 const DIR = join(REPO_ROOT, 'packages/diagram-cynefin/src/layout');
 // The table itself, the PRNG, test fixtures and specs are not layout code.
-const SKIPPED = new Set(['metrics.ts', 'random.ts', 'fixtures.ts']);
+const SKIPPED = new Set(['metrics.ts', 'random.ts']);
 const SOURCES = readdirSync(DIR).filter(
-  (f) => f.endsWith('.ts') && !f.endsWith('.spec.ts') && !SKIPPED.has(f)
+  (f) =>
+    f.endsWith('.ts') && !f.endsWith('.spec.ts') && !f.endsWith('.fixtures.ts') && !SKIPPED.has(f)
 );
 
 describe('cynefin layout', () => {

@@ -7,7 +7,7 @@
  * `CYNEFIN_CONFIG_INVALID` warning per render. `showDomainDescriptions` is read as v12 read it.
  */
 import type { Warning } from '@mermaid-js/core';
-import { CYNEFIN_DEFAULTS as D } from './metrics.ts';
+import { CANVAS, CYNEFIN_DEFAULTS as D } from './metrics.ts';
 
 /** The options, each valid. */
 export interface CynefinOptions {
@@ -41,13 +41,30 @@ export function cynefinOptions(
       path: `cynefin.${key}`,
     });
 
-  const atLeast = (key: 'width' | 'height' | 'padding', min: number): number => {
+  /**
+   * A size: a finite number of at least `min` whose canvas, `size + 2 · padding` on both axes,
+   * stays finite even scaled by the layout's largest factor (`CANVAS.headroom`), so no sum or
+   * product the layout and its bounds compute overflows to Infinity or NaN (D366).
+   */
+  const size = (
+    key: 'width' | 'height' | 'padding',
+    min: number,
+    fits: (v: number) => boolean
+  ): number => {
     const v = given[key];
     if (v === undefined) return D[key];
-    if (typeof v === 'number' && Number.isFinite(v) && v >= min) return v;
-    invalid(key, `a number of ${min} or more`, D[key]);
+    const wants = `a number of ${min} or more`;
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < min) invalid(key, wants, D[key]);
+    else if (!fits(v)) invalid(key, `${wants} that keeps the canvas finite`, D[key]);
+    else return v;
     return D[key];
   };
+  const fits = (w: number, h: number, p: number): boolean =>
+    Number.isFinite((w + 2 * p) * CANVAS.headroom) &&
+    Number.isFinite((h + 2 * p) * CANVAS.headroom);
+  const width = size('width', D.minSize, (v) => fits(v, D.height, D.padding));
+  const height = size('height', D.minSize, (v) => fits(D.width, v, D.padding));
+  const padding = size('padding', D.minPadding, (v) => fits(width, height, v));
 
   const amplitude = (): number => {
     const v = given.boundaryAmplitude;
@@ -72,9 +89,9 @@ export function cynefinOptions(
 
   const show = given.showDomainDescriptions;
   return {
-    width: atLeast('width', D.minSize),
-    height: atLeast('height', D.minSize),
-    padding: atLeast('padding', D.minPadding),
+    width,
+    height,
+    padding,
     // v12 tests it for truth, so only an absent key takes the default.
     showDomainDescriptions: show === undefined ? D.showDomainDescriptions : Boolean(show),
     boundaryAmplitude: amplitude(),
