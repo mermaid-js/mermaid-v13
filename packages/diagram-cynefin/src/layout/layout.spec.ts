@@ -5,8 +5,8 @@ import { Style, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
-import { FIXTURES, model } from './cynefin.fixtures.ts';
-import { curveData, layoutCynefin, type CynefinLayout, type Point } from './index.ts';
+import { fixture } from './mmd.fixtures.ts';
+import { layoutCynefin, type CynefinLayout, type Point } from './index.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -40,6 +40,23 @@ function lay(
   });
 }
 
+/** Parsed `e2e/diagrams/cynefin/` fixtures (`mmd.fixtures.ts`). */
+const F = {
+  empty: fixture('pr-check/should-render-an-empty-cynefin-framework'),
+  five: fixture('pr-check/should-render-a-simple-cynefin-diagram-with-all-five-domains'),
+  bare: fixture('nightly-check/should-render-cynefin-without-domain-descriptions'),
+  many: fixture('pr-check/should-render-cynefin-with-many-items-per-domain'),
+  confusion: fixture('pr-check/should-render-cynefin-with-confusion-domain-items-without-overflow'),
+  transitions: fixture('pr-check/should-render-a-cynefin-diagram-with-transitions'),
+  two: fixture('pr-check/should-render-cynefin-with-config-override'),
+  seeded: fixture(
+    'pr-check/should-render-cynefin-deterministically-with-an-explicit-seed-override'
+  ),
+  lineBreaks: fixture('baseline/text/line-breaks-and-markdown'),
+  crowded: fixture('baseline/layout/crowded-and-wide'),
+  repeats: fixture('baseline/layout/repeated-transitions'),
+};
+
 const centre = (r: { x: number; y: number; width: number; height: number }): Point => ({
   x: r.x + r.width / 2,
   y: r.y + r.height / 2,
@@ -47,7 +64,7 @@ const centre = (r: { x: number; y: number; width: number; height: number }): Poi
 
 describe('cynefin layout: the canvas (v12 cynefinRenderer.ts :40-50, :83-112, :158)', () => {
   it('tiles 800 × 600 with four quadrants, complex at the top left', () => {
-    const l = lay(FIXTURES.empty!);
+    const l = lay(F.empty);
     expect(l.quadrants.map((q) => [q.name, q.x, q.y, q.width, q.height])).toEqual([
       ['complex', 0, 0, 400, 300],
       ['complicated', 400, 0, 400, 300],
@@ -64,14 +81,14 @@ describe('cynefin layout: the canvas (v12 cynefinRenderer.ts :40-50, :83-112, :1
   });
 
   it('keeps v12’s viewBox when nothing leaves it: the canvas and the padding', () => {
-    const l = lay(FIXTURES.five!);
+    const l = lay(F.five);
     expect(l.offset).toEqual({ x: 40, y: 40 });
     expect(l.bounds).toEqual({ x: -40, y: -40, width: 880, height: 680 });
     expect(l.viewBox).toEqual({ x: 0, y: 0, width: 880, height: 680 });
   });
 
   it('marks declared domains with their block’s AST id; undeclared ones are drawn without', () => {
-    const l = lay(FIXTURES.five!);
+    const l = lay(F.five);
     expect(l.quadrants.map((q) => q.ast)).toEqual([
       'd:complex',
       'd:complicated',
@@ -79,7 +96,7 @@ describe('cynefin layout: the canvas (v12 cynefinRenderer.ts :40-50, :83-112, :1
       'd:clear',
     ]);
     expect(l.confusion.ast).toBe('d:confusion');
-    const bare = lay(FIXTURES.bare!);
+    const bare = lay(F.bare);
     expect(bare.quadrants.map((q) => q.ast)).toEqual([
       'd:complex',
       undefined,
@@ -92,7 +109,7 @@ describe('cynefin layout: the canvas (v12 cynefinRenderer.ts :40-50, :83-112, :1
 
 describe('cynefin layout: labels and subtitles (:168-225)', () => {
   it('puts a quadrant name 30 above its centre, its model and practice at −10 and +5', () => {
-    const l = lay(FIXTURES.empty!);
+    const l = lay(F.empty);
     expect(l.labels.map((t) => [t.domain, t.text.lines[0]![0]!.text, centre(t)])).toEqual([
       ['complex', 'Complex', { x: 200, y: 120 }],
       ['complicated', 'Complicated', { x: 600, y: 120 }],
@@ -114,7 +131,7 @@ describe('cynefin layout: labels and subtitles (:168-225)', () => {
   });
 
   it('measures labels at domainFontSize bold, subtitles at itemFontSize − 1 (pitfall 16)', () => {
-    const l = lay(FIXTURES.empty!);
+    const l = lay(F.empty);
     expect(l.fonts.label).toMatchObject({ size: 16, weight: 700, style: 'normal' });
     expect(l.fonts.subtitle).toMatchObject({ size: 11, weight: 400, style: 'italic' });
     expect(l.fonts.item).toMatchObject({ size: 12, weight: 400, style: 'normal' });
@@ -127,7 +144,7 @@ describe('cynefin layout: labels and subtitles (:168-225)', () => {
   });
 
   it('centres the names without descriptions, and draws no subtitles', () => {
-    const l = lay(FIXTURES.bare!, { showDomainDescriptions: false });
+    const l = lay(F.bare, { showDomainDescriptions: false });
     expect(l.labels.map(centre)).toEqual([
       { x: 200, y: 150 },
       { x: 600, y: 150 },
@@ -141,7 +158,7 @@ describe('cynefin layout: labels and subtitles (:168-225)', () => {
 
 describe('cynefin layout: item badges (:229-348)', () => {
   it('centres 26 px badges on the quadrant, 25 under its centre, stepping by 30', () => {
-    const l = lay(FIXTURES.many!);
+    const l = lay(F.many);
     const complex = l.items.filter((i) => i.domain === 'complex');
     // "New product discovery": 21 characters, 210 px, plus 10 each side.
     expect(complex.map((i) => [i.ast, i.x, i.y, i.width, i.height])).toEqual([
@@ -154,7 +171,7 @@ describe('cynefin layout: item badges (:229-348)', () => {
   });
 
   it('draws quadrants in v12’s order, then confusion', () => {
-    const l = lay(FIXTURES.five!);
+    const l = lay(F.five);
     expect([...new Set(l.items.map((i) => i.domain))]).toEqual([
       'complex',
       'complicated',
@@ -165,13 +182,13 @@ describe('cynefin layout: item badges (:229-348)', () => {
   });
 
   it('starts quadrant items 15 under the centre, confusion items 14, without descriptions', () => {
-    const l = lay(FIXTURES.five!, { showDomainDescriptions: false });
+    const l = lay(F.five, { showDomainDescriptions: false });
     expect(l.items.find((i) => i.domain === 'complex')!.y).toBe(165);
     expect(l.items.find((i) => i.domain === 'confusion')!.y).toBe(314);
   });
 
   it('shows three confusion items from 22 under the centre, then a +2 more badge', () => {
-    const l = lay(FIXTURES.confusion!);
+    const l = lay(F.confusion);
     expect(l.items.map((i) => [i.label.text.lines[0]![0]!.text, i.y])).toEqual([
       ['Unknown A', 322],
       ['Unknown B', 352],
@@ -180,24 +197,25 @@ describe('cynefin layout: item badges (:229-348)', () => {
     // "+2 more": 7 characters.
     expect(l.overflow).toMatchObject({ count: 2, x: 400 - 45, y: 412, width: 90, height: 26 });
     expect(l.overflow!.label.text.lines[0]![0]!.text).toBe('+2 more');
-    expect(lay(FIXTURES.five!).overflow).toBeUndefined();
+    expect(lay(F.five).overflow).toBeUndefined();
   });
 
   it('grows a badge by its extra lines (D363) and steps the next one past it', () => {
-    const l = lay(FIXTURES.labels!);
-    const [two, amp, md, empty] = l.items;
+    const l = lay(F.lineBreaks);
+    const [two, md] = l.items;
     // Two 14.4 px lines: 26 + 14.4.
     expect(two!.height).toBeCloseTo(40.4);
     expect(two!.label.text.lines.length).toBe(2);
-    expect(amp!.y).toBeCloseTo(175 + 40.4 + 4);
-    expect(amp!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('Tom & Jerry');
-    expect(md!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('bold item');
+    expect(md!.y).toBeCloseTo(175 + 40.4 + 4);
+    expect(md!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('Bold and italic');
+    const fish = l.items.find((i) => i.domain === 'complicated')!;
+    expect(fish.label.text.lines[0]!.map((r) => r.text).join('')).toBe('Fish & chips');
     // An empty item is a badge of the padding alone.
-    expect(empty).toMatchObject({ width: 20, height: 26 });
+    expect(lay(F.repeats).items[0]).toMatchObject({ width: 20, height: 26 });
   });
 
   it('lets a twelfth item run past the canvas, and grows the bounds to cover it (D361)', () => {
-    const l = lay(FIXTURES.crowded!);
+    const l = lay(F.crowded);
     const chaotic = l.items.filter((i) => i.domain === 'chaotic');
     const last = chaotic[chaotic.length - 1]!;
     expect(last.y).toBe(475 + 11 * 30);
@@ -208,7 +226,7 @@ describe('cynefin layout: item badges (:229-348)', () => {
 
 describe('cynefin layout: transitions (:350-419)', () => {
   it('bends a curve from centre to centre by 0.15 of its length to the left', () => {
-    const [t] = lay(FIXTURES.transitions!).transitions;
+    const [t] = lay(F.transitions).transitions;
     expect(t).toMatchObject({
       from: 'complex',
       to: 'complicated',
@@ -226,7 +244,7 @@ describe('cynefin layout: transitions (:350-419)', () => {
   });
 
   it('puts v12’s marker triangle at the end, along the end tangent, 12 px long', () => {
-    const [t] = lay(FIXTURES.transitions!).transitions;
+    const [t] = lay(F.transitions).transitions;
     const { end, control } = t!;
     const len = Math.hypot(end.x - control.x, end.y - control.y);
     const u = { x: (end.x - control.x) / len, y: (end.y - control.y) / len };
@@ -248,7 +266,7 @@ describe('cynefin layout: transitions (:350-419)', () => {
   });
 
   it('draws no label for none, keeps repeats on top of each other (D365)', () => {
-    const l = lay(FIXTURES.repeats!);
+    const l = lay(F.repeats);
     expect(l.transitions.map((t) => t.ast)).toEqual([
       't:complex>clear',
       't:complex>clear#2',
@@ -259,39 +277,41 @@ describe('cynefin layout: transitions (:350-419)', () => {
   });
 
   it('skips a self-loop that reaches the layout, as v12’s renderer does', () => {
-    const l = lay(
-      model(
-        [],
-        [
-          ['complex', 'complex', 'x'],
-          ['complex', 'clear'],
-        ]
-      )
-    );
-    expect(l.transitions.map((t) => t.ast)).toEqual(['t:complex>clear']);
+    // Synthetic: the parser leaves self-loops out of the model (D365), so no source gives this.
+    const loop: CynefinModel = {
+      domains: [],
+      transitions: [
+        { from: 'complex', to: 'complex', label: 'x', ast: 't:complex>complex' },
+        { from: 'complex', to: 'clear', ast: 't:complex>clear' },
+      ],
+      accTitle: '',
+      accDescr: '',
+      warnings: [],
+    };
+    expect(lay(loop).transitions.map((t) => t.ast)).toEqual(['t:complex>clear']);
   });
 });
 
 describe('cynefin layout: the title (:424-433)', () => {
   it('centres it half the padding above the canvas, at domainFontSize + 2 bold', () => {
-    const l = lay(FIXTURES.transitions!);
+    const l = lay(F.transitions);
     expect(centre(l.title!)).toEqual({ x: 400, y: -20 });
     expect(l.title!.width).toBe(230);
-    expect(lay(FIXTURES.two!).title).toBeUndefined();
+    expect(lay(F.two).title).toBeUndefined();
   });
 
   it('grows a title of several lines upwards, its last line where one would be', () => {
-    const t = lay(FIXTURES.labels!).title!;
+    const t = lay(F.lineBreaks).title!;
     expect(t.text.lines.length).toBe(2);
     expect(t.y + t.height - t.text.lineHeight / 2).toBeCloseTo(-20);
   });
 
   it('grows the bounds over a title wider than the canvas, or above it with little padding', () => {
-    const wide = lay(FIXTURES.wide!);
+    const wide = lay(F.crowded);
     expect(wide.bounds.x).toBeLessThan(-40);
     expect(wide.bounds.x).toBeCloseTo(wide.title!.x);
     expect(wide.viewBox.x).toBeCloseTo(wide.bounds.x + 40);
-    const tight = lay(FIXTURES.transitions!, { padding: 0 });
+    const tight = lay(F.transitions, { padding: 0 });
     // A 21.6 px line centred on y = 0.
     expect(tight.bounds.y).toBeCloseTo(-10.8);
   });
@@ -299,7 +319,7 @@ describe('cynefin layout: the title (:424-433)', () => {
 
 describe('cynefin layout: config (D366)', () => {
   it('reads width, height, padding and the amplitude', () => {
-    const l = lay(FIXTURES.two!, { width: 1000, height: 700, padding: 10, boundaryAmplitude: 0 });
+    const l = lay(F.two, { width: 1000, height: 700, padding: 10, boundaryAmplitude: 0 });
     expect([l.width, l.height, l.padding]).toEqual([1000, 700, 10]);
     expect(l.quadrants[3]).toMatchObject({ x: 500, y: 350, width: 500, height: 350 });
     expect(l.viewBox).toEqual({ x: 0, y: 0, width: 1020, height: 720 });
@@ -309,7 +329,7 @@ describe('cynefin layout: config (D366)', () => {
   it('falls back on a bad width, height or padding, with one warning each', () => {
     const warnings: Warning[] = [];
     const l = lay(
-      FIXTURES.two!,
+      F.two,
       { width: -100, height: Number.NaN, padding: '12', showDomainDescriptions: true },
       'm',
       warnings
@@ -327,12 +347,7 @@ describe('cynefin layout: config (D366)', () => {
 
   it('falls back on a size whose canvas would overflow, one warning per key', () => {
     const warnings: Warning[] = [];
-    const l = lay(
-      FIXTURES.two!,
-      { width: 1e308, height: 1e200, padding: Number.MAX_VALUE },
-      'm',
-      warnings
-    );
+    const l = lay(F.two, { width: 1e308, height: 1e200, padding: Number.MAX_VALUE }, 'm', warnings);
     expect([l.width, l.height, l.padding]).toEqual([800, 1e200, 40]);
     expect(warnings.map((w) => w.path)).toEqual(['cynefin.width', 'cynefin.padding']);
     expect(warnings[0]!.message).toBe(
@@ -342,21 +357,21 @@ describe('cynefin layout: config (D366)', () => {
 
   it('clamps the amplitude to [0, 50] and counts a non-finite seed as 0', () => {
     const warnings: Warning[] = [];
-    const high = lay(FIXTURES.two!, { boundaryAmplitude: 80, seed: Infinity }, 'p', warnings);
+    const high = lay(F.two, { boundaryAmplitude: 80, seed: Infinity }, 'p', warnings);
     expect(high.boundaries.fold).toEqual(
-      lay(FIXTURES.two!, { boundaryAmplitude: 50 }, 'p').boundaries.fold
+      lay(F.two, { boundaryAmplitude: 50 }, 'p').boundaries.fold
     );
     expect(warnings.map((w) => w.path)).toEqual(['cynefin.boundaryAmplitude', 'cynefin.seed']);
-    expect(lay(FIXTURES.two!, { boundaryAmplitude: -1 }).boundaries.fold).toEqual(
-      lay(FIXTURES.two!, { boundaryAmplitude: 0 }).boundaries.fold
+    expect(lay(F.two, { boundaryAmplitude: -1 }).boundaries.fold).toEqual(
+      lay(F.two, { boundaryAmplitude: 0 }).boundaries.fold
     );
   });
 
   it('warns about nothing for the defaults or an absent section', () => {
     const warnings: Warning[] = [];
-    lay(FIXTURES.two!, {}, 'm', warnings);
+    lay(F.two, {}, 'm', warnings);
     lay(
-      FIXTURES.two!,
+      F.two,
       { width: 800, height: 600, padding: 0, boundaryAmplitude: 50, seed: -3 },
       'm',
       warnings
@@ -367,21 +382,21 @@ describe('cynefin layout: config (D366)', () => {
 
 describe('cynefin layout: the seed (D362)', () => {
   it('draws a non-zero seed’s boundaries whatever the id prefix', () => {
-    const a = lay(FIXTURES.seeded!, { seed: 42 }, 'a');
-    const b = lay(FIXTURES.seeded!, { seed: 42 }, 'b');
+    const a = lay(F.seeded, { seed: 42 }, 'a');
+    const b = lay(F.seeded, { seed: 42 }, 'b');
     expect(a.seed).toBe(42);
-    expect(curveData(a.boundaries.fold)).toBe(curveData(b.boundaries.fold));
+    expect(a.boundaries.fold).toEqual(b.boundaries.fold);
   });
 
   it('hashes the id prefix for seed 0: the same per prefix, different between two', () => {
-    const a = lay(FIXTURES.seeded!, {}, 'mermaid-a');
-    const again = lay(FIXTURES.seeded!, { seed: 0 }, 'mermaid-a');
-    const b = lay(FIXTURES.seeded!, {}, 'mermaid-b');
+    const a = lay(F.seeded, {}, 'mermaid-a');
+    const again = lay(F.seeded, { seed: 0 }, 'mermaid-a');
+    const b = lay(F.seeded, {}, 'mermaid-b');
     // Java hashCode of "mermaid-a".
     expect(a.seed).toBe(1795733021);
     expect(again).toEqual(a);
     expect(b.seed).not.toBe(a.seed);
-    expect(curveData(b.boundaries.fold)).not.toBe(curveData(a.boundaries.fold));
-    expect(curveData(b.boundaries.horizon)).not.toBe(curveData(a.boundaries.horizon));
+    expect(b.boundaries.fold).not.toEqual(a.boundaries.fold);
+    expect(b.boundaries.horizon).not.toEqual(a.boundaries.horizon);
   });
 });

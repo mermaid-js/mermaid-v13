@@ -5,7 +5,7 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
-import { FIXTURES } from './cynefin.fixtures.ts';
+import { fixture, FIXTURES } from './mmd.fixtures.ts';
 import { cynefinLayoutViolations, layoutCynefin, type CynefinLayout } from './index.ts';
 
 let spec: ThemeSpec;
@@ -47,6 +47,10 @@ const OPTION_SETS: readonly unknown[] = [
 ];
 
 describe('cynefin layout invariants', () => {
+  it('reads every e2e fixture', () => {
+    expect(Object.keys(FIXTURES).length).toBe(32);
+  });
+
   it.each(Object.keys(FIXTURES))('hold for %s at every option set', (name) => {
     const m = FIXTURES[name]!;
     const failures = OPTION_SETS.flatMap((o) =>
@@ -57,7 +61,11 @@ describe('cynefin layout invariants', () => {
 
   it('warns once per invalid key per render, and never for a valid one', () => {
     const warnings: Warning[] = [];
-    lay(FIXTURES.five!, OPTION_SETS[9], warnings);
+    lay(
+      fixture('pr-check/should-render-a-simple-cynefin-diagram-with-all-five-domains'),
+      OPTION_SETS[9],
+      warnings
+    );
     expect(warnings.map((w) => w.path)).toEqual([
       'cynefin.width',
       'cynefin.height',
@@ -66,12 +74,17 @@ describe('cynefin layout invariants', () => {
       'cynefin.seed',
     ]);
     const none: Warning[] = [];
-    for (const o of OPTION_SETS.slice(0, 9)) lay(FIXTURES.five!, o, none);
+    for (const o of OPTION_SETS.slice(0, 9))
+      lay(
+        fixture('pr-check/should-render-a-simple-cynefin-diagram-with-all-five-domains'),
+        o,
+        none
+      );
     expect(none).toEqual([]);
   });
 
   it('finds what a broken layout breaks', () => {
-    const m = FIXTURES.transitions!;
+    const m = fixture('pr-check/should-render-a-cynefin-diagram-with-transitions');
     const good = lay(m, {});
     const nan = {
       ...good,

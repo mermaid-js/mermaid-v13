@@ -170,8 +170,8 @@ describe('cynefin lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
     process.stdout.write(
       `cynefin lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
-    // Every e2e fixture reaches the cynefin lexer: the 12 v12 fixtures and the 17 baselines.
-    expect(e2e).toBe(29);
+    // Every e2e fixture reaches the cynefin lexer: the 12 v12 fixtures and the 20 baselines.
+    expect(e2e).toBe(32);
     expect(dropped.sort()).toEqual([...NOT_DETECTED.keys()].sort());
     expect(compared).toBe(items.length - NOT_DETECTED.size);
     expect(diffs).toEqual([]);
