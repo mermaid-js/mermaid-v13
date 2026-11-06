@@ -88,6 +88,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
   secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
   altBackground: 'D189: #404040; v12 #f0f0f0 hid the #cccccc lines on a nested composite',
+  pie5: "D333(a): darkenHsl(secondaryColor, 10%) of the hex colour; v12's #2e3030 is a rounding artefact",
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
   // Journey (#327): v12 sets neither; `.face` falls back to #FFF8DC and dots to actorColours.
   faceColor: 'D245: v12 sets no faceColor; v13 gives its `.face` fallback #FFF8DC as the value',

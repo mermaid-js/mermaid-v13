@@ -604,6 +604,7 @@ Every other colour is v12 12.2.0's. To get a v12 value back, set it in `themeVar
 | `strokeWidth` | 1 | 2, as in `neo` | D183 |
 | `secondaryTextColor` | `#b8b6b6` (4.49:1 on `secondaryColor`) | `#b9b7b7` (AA) | D183, R-THEME-9 |
 | `altBackground` (state: a nested composite's body) | `#f0f0f0`, on which the `#cccccc` transitions and arrowheads all but vanish | `#404040` | D189, D183 |
+| `pie5` | `#2e3030`, a rounding artefact | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a); [Pie chart](#pie-chart) |
 
 The shadow is v12's, written `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. The ER row,
 ER marker and palette differences are those of `neo` (D152, D181).
@@ -1491,13 +1492,25 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
   ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values, so in `redux-color` and
+  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
   `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
   slice drew black; it is now `cScale0`, as in `neutral`.
+- **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
+  which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
+  by v12's own formula, so it also follows that base colour's override:
+
+  | Theme | Variable | v12 12.2.0 | v13 | Why |
+  | --- | --- | --- | --- | --- |
+  | `default` | `pie3` | `#b5ff20` | `#b9ff20` (`tertiaryColor` darkened 40) | D333(a) |
+  | `default` | `pie6` | `#d7ff86` | `#d9ff86` (`tertiaryColor` darkened 20) | D333(a) |
+  | `forest` | `pie6` | `#33b42f` | `#33b52e` (`tertiaryColor` turned 40°, darkened 40) | D333(a) |
+  | `redux-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+  | `neo-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+
 - **`format: 'ascii'`** throws `UnsupportedFormatError`: pie has no text output (D216).
 
 ## Pie SVG structure

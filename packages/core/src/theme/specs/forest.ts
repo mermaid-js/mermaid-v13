@@ -87,10 +87,11 @@ const theme: ThemeSpec = {
     ),
     // v12 sets its label ink before the labels: `scaleLabelColor` (D334).
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
-    // v12 theme-forest.js: the base colours, primary and secondary −30, then hue turns; then the
-    // tints, v12's resolved values.
+    // v12 theme-forest.js: the base colours, primary and secondary −30, the tertiary colour turned
+    // by 40° and −40 (derived from the hex tertiary colour, where v12 stepped its unrounded HSL
+    // one, D333(a)), then hue turns; then the tints, v12's resolved values.
     seriesColorArray: series(
-      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) #33b42f #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) darkenHsl(adjustHue(tertiaryColor,40),40%) #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
         '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'
     ),
     // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted; the label is

@@ -244,10 +244,10 @@ flags and opacities, which are read literally.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `pie1` | | color | `#f4a8ff` | `#ececfe` | `#1f2020` | `#f4a8ff` | `#ececff` | `#0b0000` | `#cde498` | `#f4f4f4` | `#fff4dd` | `#ececfe` | `#1f2020` |
 | `pie2` | | color | `#46ecd5` | `#e9e9f1` | `#474949` | `#46ecd5` | `#ffffde` | `#4d1037` | `#cdffb2` | `#555555` | `#f4ddff` | `#e9e9f1` | `#474949` |
-| `pie3` | | color | `#ffb86a` | `#ffffff` | `#201f1f` | `#ffb86a` | `#b5ff20` | `#3f5258` | `#e1efc0` | `#bbbbbb` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `pie3` | | color | `#ffb86a` | `#ffffff` | `#201f1f` | `#ffb86a` | `#b9ff20` | `#3f5258` | `#e1efc0` | `#bbbbbb` | `#f6f9ff` | `#ffffff` | `#201f1f` |
 | `pie4` | | color | `#dab2ff` | `#bcbcfb` | `#060606` | `#dab2ff` | `#b9b9ff` | `#4f2f1b` | `#8cb42f` | `#777777` | `#ffe3aa` | `#bcbcfb` | `#060606` |
-| `pie5` | | color | `#7bf1a8` | `#cacadd` | `#2e3030` | `#7bf1a8` | `#ffff45` | `#6e0a0a` | `#6aff19` | `#999999` | `#e3aaff` | `#cacadd` | `#2e3030` |
-| `pie6` | | color | `#c4b4ff` | `#fcfccf` | `#060606` | `#c4b4ff` | `#d7ff86` | `#3b0048` | `#33b42f` | `#dddddd` | `#c3d7ff` | `#fcfccf` | `#060606` |
+| `pie5` | | color | `#7bf1a8` | `#cacadd` | `#2e2f2f` | `#7bf1a8` | `#ffff45` | `#6e0a0a` | `#6aff19` | `#999999` | `#e3aaff` | `#cacadd` | `#2e2f2f` |
+| `pie6` | | color | `#c4b4ff` | `#fcfccf` | `#060606` | `#c4b4ff` | `#d9ff86` | `#3b0048` | `#33b52e` | `#dddddd` | `#c3d7ff` | `#fcfccf` | `#060606` |
 | `pie7` | | color | `#ffa2a2` | `#fbbcfb` | `#060606` | `#ffa2a2` | `#ff86ff` | `#995a01` | `#70d990` | `#ffffff` | `#c5ffaa` | `#fbbcfb` | `#060606` |
 | `pie8` | | color | `#ffdf20` | `#bcfbfb` | `#060606` | `#ffdf20` | `#20ffff` | `#154706` | `#d99070` | `#dddddd` | `#ffaac5` | `#bcfbfb` | `#060606` |
 | `pie9` | | color | `#a3b3ff` | `#feecec` | `#201f20` | `#a3b3ff` | `#ff2020` | `#161722` | `#98cde4` | `#bbbbbb` | `#ddfff4` | `#feecec` | `#201f20` |

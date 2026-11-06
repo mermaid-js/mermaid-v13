@@ -64,11 +64,11 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
 
 /**
  * The series palette (D332) of v12 `theme-redux-dark.js` and `theme-neo-dark.js`: base's formulas.
- * Entry 4 is v12's value, since v12 darkens the unrounded HSL secondary colour, which lands one
- * step off the hex one. Then the tints, v12's resolved values.
+ * Entry 4 derives from the hex secondary colour, where v12 darkened its unrounded HSL one, which
+ * lands one step off (D333(a): v12's #2e3030). Then the tints, v12's resolved values.
  */
 export const REDUX_DARK_SERIES = series(
-  'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) #2e3030 darkenHsl(tertiaryColor,10%) #060606 #060606 #201f20 #000000 #000000 #060606 ' +
+  'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #060606 #060606 #201f20 #000000 #000000 #060606 ' +
     '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
 );
 
