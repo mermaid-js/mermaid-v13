@@ -1,0 +1,51 @@
+@ 2:6  com|plex "Probe"
+  2:3-2:10 "complex"
+  | **`complex`** domain
+  |
+  | Probe → Sense → Respond · Emergent Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+  |
+  | Replaced: only the last `complex` block (line 8) is drawn.
+@ 3:14  complicated| "Analyse"
+  3:3-3:14 "complicated"
+  | **`complicated`** domain
+  |
+  | Sense → Analyse → Respond · Good Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+@ 4:5  cl|ear "Categorise"
+  4:3-4:8 "clear"
+  | **`clear`** domain
+  |
+  | Sense → Categorise → Respond · Best Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+@ 5:3  |chaotic "Act"
+  5:3-5:10 "chaotic"
+  | **`chaotic`** domain
+  |
+  | Act → Sense → Respond · Novel Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+@ 6:8  confu|sion "Unsure"
+  6:3-6:12 "confusion"
+  | **`confusion`** domain
+  |
+  | Disorder
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+@ 7:17  complex --> cl|ear
+  7:15-7:20 "clear"
+  | **`clear`** domain
+  |
+  | Sense → Categorise → Respond · Best Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.
+@ 8:7  comp|lex "Replaced"
+  8:3-8:10 "complex"
+  | **`complex`** domain
+  |
+  | Probe → Sense → Respond · Emergent Practices
+  |
+  | `complex "Probe" "Sense"`: a domain (`complex`, `complicated`, `clear`, `chaotic` or `confusion`) and its items, which may each be on a line of their own. Only the last block of a domain is drawn, at the place of its first.

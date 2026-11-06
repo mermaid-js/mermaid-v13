@@ -74,6 +74,12 @@ const KNOWN_REFUSALS = [
   "flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd L_B_D_0@428: 'renamedZq7' would not read as the same edge id everywhere it is used.",
 ];
 
+/**
+ * Facets whose symbols are fixed names, so every rename is refused by design: cynefin's five
+ * domains (D367). Checked, not listed: each of their symbols must be refused, and at least one is.
+ */
+const FIXED_NAMES = new Set(['cynefin']);
+
 const corpus = (readdirSync(CORPUS, { recursive: true }) as string[])
   .filter((f) => f.endsWith('.mmd'))
   .sort();
@@ -124,6 +130,7 @@ describe('rename, re-parse, same model modulo the name', () => {
     const problems: string[] = [];
     const refused: string[] = [];
     let renamed = 0;
+    let fixed = 0;
     for (const file of corpus) {
       const text = readFileSync(join(CORPUS, file), 'utf8');
       if (text.includes(FRESH)) continue;
@@ -135,6 +142,11 @@ describe('rename, re-parse, same model modulo the name', () => {
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
         const result = doc.rename(at, FRESH);
+        if (FIXED_NAMES.has(doc.facet.id)) {
+          if ('refused' in result) fixed++;
+          else problems.push(`${where}: a fixed name was renamed`);
+          continue;
+        }
         if ('refused' in result) {
           refused.push(`${where}: ${result.refused}`);
           continue;
@@ -152,6 +164,7 @@ describe('rename, re-parse, same model modulo the name', () => {
       }
     }
     expect(renamed).toBeGreaterThan(2000);
+    expect(fixed).toBeGreaterThan(0);
     expect(problems).toEqual([...KNOWN_MODEL_CHANGES, ...KNOWN_BACK_REFUSALS]);
     expect(refused).toEqual(KNOWN_REFUSALS);
   }, 120_000);

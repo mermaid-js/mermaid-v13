@@ -19,17 +19,23 @@
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4); items right
  * after the failed line still join the block before it, so one error gives one diagnostic.
  *
+ * With `probe` (R-LANG-7, D95, #470) the rules also record what they would accept at that offset,
+ * at the same decision points as their `fail` lists, for completion; nothing else changes.
+ *
  * Two warnings, one per parse each (D226): `CYNEFIN_DUPLICATE_DOMAIN` names the blocks a later
  * block of the same domain replaced (D364), `CYNEFIN_SELF_LOOP` the `x --> x` transitions the
  * model leaves out (D365).
  */
 import {
+  APOSTROPHE,
   cook,
+  DQUOTE,
   ExpectedTable,
   Kind,
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
   sourceView,
@@ -74,9 +80,56 @@ const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 const HEADER = [T.Header, T.HeaderColon];
 const DOC = [T.DomainName, ...TEXT, Kind.Newline, Kind.EOF];
 const LINE_END = [Kind.Newline, Kind.EOF];
+/** Before the header: line breaks, then `cynefin-beta`. */
+const HEAD = [...HEADER, Kind.Newline];
+/** Inside a block (after its name or an item, or at a later line start): an item too. */
+const IN_BLOCK = [T.String, ...DOC];
+/** After a transition's target: its label, or the line end. */
+const AFTER_TARGET = [T.Colon, ...LINE_END];
 
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
+/**
+ * Kinds a probe's cursor follows rather than extends: `:`, `-->`, and an item or label, which
+ * its closing quote ends (right after `"Probe"` another item may follow).
+ */
+const PROBE_FOLLOWS = kindSet(T.Colon, T.Arrow, T.String);
+
+/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
+const VALUE_WORDS: Readonly<Record<number, string>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
+ * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
+ * that statement, `string` inside an item or label (closed or not), else `INITIAL` (code).
+ * Pie's rule, over the same `common.langium` tokens.
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    const c = src.charCodeAt(start);
+    if (kind === T.String && o < end) return 'string';
+    // An unclosed item is an error token from its quote to the line end.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+    const word = VALUE_WORDS[kind];
+    if (!word) continue;
+    let k = start;
+    while (/[\t ]/.test(src.charAt(k))) k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
 
 /** `a`, `a and b`, `a, b and c` (or `or`). */
 function listOf(parts: readonly string[], conjunction = 'and'): string {
@@ -164,6 +217,7 @@ class CynefinParser {
   private readonly t: TokenView;
   private i = 0;
   private readonly state = new ParseState();
+  private readonly probe: Probe | undefined;
   private readonly children: CynefinStatementNode[] = [];
   private lines: LineIndex | undefined;
   /** Mentions per id base (`d:complex`, `i:complex/a`, `title`, …), for the `@n` suffixes. */
@@ -196,6 +250,13 @@ class CynefinParser {
     );
     this.full = lex(src, pre.bodyStart, this.view);
     this.t = significantTokens(this.full, CYNEFIN_TRIVIA);
+    if (options.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
+    }
   }
 
   parse(): CynefinParseResult {
@@ -204,6 +265,8 @@ class CynefinParser {
     this.document();
     this.warnDuplicates();
     this.warnSelfLoops();
+    // In source order (the facet contract, R-LANG-3): the warnings are made after the parse.
+    state.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = state.diagnostics.list.filter((d) => d.severity === 'warning');
     const domains: CynefinDomain[] = [];
     for (const [name, nodes] of this.blocks) {
@@ -228,7 +291,7 @@ class CynefinParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return state.result(model, ast, this.full, this.options);
+    return state.result(model, ast, this.full, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -247,8 +310,18 @@ class CynefinParser {
     return cook(this.src, start, end, this.view);
   }
 
+  /**
+   * Probe hook: the parser tests token `j` for `kinds` (a constant list), or would accept them
+   * there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
+  }
+
   /** Consume a token of `kind` and return its index, or fail. */
   private expect(kind: number, hint?: string): number {
+    this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
@@ -378,6 +451,7 @@ class CynefinParser {
 
   /** Skip to the next line break after an error (R-PARSE-4). */
   private recover(): void {
+    this.probe?.freeze();
     this.i = skipTo(this.t, this.i, BOUNDARY);
   }
 
@@ -395,7 +469,11 @@ class CynefinParser {
 
   /** `NEWLINE* ("cynefin-beta" | "cynefin-beta:")` */
   private header(): void {
-    while (this.kind() === Kind.Newline) this.i++;
+    for (;;) {
+      this.tested(HEAD);
+      if (this.kind() !== Kind.Newline) break;
+      this.i++;
+    }
     const k = this.kind();
     if (!HEADER.includes(k)) this.fail(HEADER);
     const range = this.range(this.i++);
@@ -406,6 +484,7 @@ class CynefinParser {
   /** `(TitleAndAccessibilities | DomainBlock | Transition | NEWLINE)* EOF` */
   private document(): void {
     for (;;) {
+      this.tested(this.open === undefined || this.open === STRAY ? DOC : IN_BLOCK);
       const k = this.kind();
       if (k === Kind.EOF) return;
       if (k === Kind.Newline) {
@@ -414,6 +493,8 @@ class CynefinParser {
       }
       const open = this.open;
       this.open = undefined;
+      // After a domain name: `-->` makes it a transition (the block's items are tested below).
+      if (k === T.DomainName) this.tested([T.Arrow], this.i + 1);
       this.statement(() => {
         if (k === T.DomainName && this.kind(this.i + 1) === T.Arrow) this.transition();
         else if (k === T.DomainName) this.block();
@@ -433,6 +514,7 @@ class CynefinParser {
 
   /** `EOL: NEWLINE+ | EOF` (the document loop takes the line breaks after the first). */
   private eol(): void {
+    this.tested(LINE_END);
     const k = this.kind();
     if (k === Kind.EOF) return;
     if (k === Kind.Newline) {
@@ -475,7 +557,8 @@ class CynefinParser {
   private items(node: CynefinDomainNode): void {
     for (;;) {
       let j = this.i;
-      while (this.kind(j) === Kind.Newline) j++;
+      this.tested(IN_BLOCK, j);
+      while (this.kind(j) === Kind.Newline) this.tested(IN_BLOCK, ++j);
       if (this.kind(j) !== T.String) return;
       this.i = j + 1;
       const range = this.range(j);
@@ -499,6 +582,7 @@ class CynefinParser {
     const range = { start: fromRange.start, end: toRange.end };
     let label: string | undefined;
     let labelRange: Range | undefined;
+    this.tested(AFTER_TARGET);
     if (this.kind() === T.Colon) {
       this.i++;
       const labelToken = this.expect(T.String, QUOTE_LABEL);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import { parseCynefin } from './index.ts';
+import { CynefinTokenKind as T, parseCynefin } from './index.ts';
 
 const H = 'cynefin-beta\n';
 const parse = (src: string) => {
@@ -179,5 +179,79 @@ describe('cynefin parser: warnings', () => {
 
   it('gives no warning for a plain diagram', () => {
     expect(parse(H + 'complex "a"\nclear "b"\ncomplex --> clear\n').diagnostics).toEqual([]);
+  });
+});
+
+/** Probe mode (R-LANG-7, D95, #470): what the parser would accept at one offset. */
+describe('cynefin parser: probe', () => {
+  const split = (marked: string): [string, number] => {
+    const at = marked.indexOf('¦');
+    return [marked.slice(0, at) + marked.slice(at + 1), at];
+  };
+  const probe = (marked: string) => {
+    const [src, at] = split(marked);
+    return parseCynefin(src, { probe: at }).probe;
+  };
+  const expected = (marked: string) => [...(probe(marked)?.expected ?? [])].sort();
+  const sorted = (...kinds: number[]) => [...kinds].sort();
+
+  it('returns a probe only on request', () => {
+    expect(parseCynefin(H).probe).toBeUndefined();
+    expect(probe('cynefin-beta¦')).toMatchObject({ offset: 12 });
+  });
+
+  it('expects the header in an empty text', () => {
+    expect(probe('¦')?.expected).toEqual(expect.arrayContaining([T.Header]));
+  });
+
+  it('expects a domain or a statement at the start of a line', () => {
+    expect(probe(H + '¦')?.expected).toEqual(
+      expect.arrayContaining([T.DomainName, T.Title, T.AccTitle, T.AccDescr])
+    );
+    expect(probe(H + '¦')?.expected).not.toContain(T.String);
+  });
+
+  it('expects an item at the start of a line inside a block', () => {
+    expect(probe(H + 'complex "a"\n¦')?.expected).toEqual(
+      expect.arrayContaining([T.String, T.DomainName, T.Title])
+    );
+  });
+
+  it('expects `-->` or an item after a domain name', () => {
+    expect(probe(H + 'complex ¦')?.expected).toEqual(expect.arrayContaining([T.Arrow, T.String]));
+  });
+
+  it('expects a domain after `-->`', () => {
+    expect(expected(H + 'complex -->¦')).toEqual(sorted(T.DomainName));
+    expect(expected(H + 'complex --> ¦')).toEqual(sorted(T.DomainName));
+    expect(expected(H + 'complex --> cl¦')).toEqual(sorted(T.DomainName));
+  });
+
+  it('expects `:` or the line end after a transition target, and a label after `:`', () => {
+    expect(probe(H + 'complex --> clear ¦')?.expected).toContain(T.Colon);
+    expect(expected(H + 'complex --> clear :¦')).toEqual(sorted(T.String));
+    expect(expected(H + 'complex --> clear : ¦')).toEqual(sorted(T.String));
+  });
+
+  it('follows a closed item: right after it another item may follow', () => {
+    const p = probe(H + 'complex "a"¦');
+    expect(p?.expected).toContain(T.String);
+    expect(p?.prefix).toEqual({ start: H.length + 11, end: H.length + 11 });
+  });
+
+  it('names where the probe is: code, or inside an item or a statement value', () => {
+    const mode = (marked: string) => probe(marked)?.mode;
+    expect(mode('¦')).toBe('INITIAL');
+    expect(mode(H + 'tit¦')).toBe('INITIAL');
+    expect(mode(H + 'title¦')).toBe('INITIAL');
+    expect(mode(H + 'title Inc¦ident')).toBe('title');
+    expect(mode(H + 'accTitle: x¦')).toBe('accTitle');
+    expect(mode(H + 'accDescr {\n  a¦\n}')).toBe('accDescr');
+    expect(mode(H + 'accDescr {\n  a\n}¦')).toBe('INITIAL');
+    expect(mode(H + 'complex "Pro¦be"')).toBe('string');
+    expect(mode(H + 'complex "Probe¦')).toBe('string');
+    expect(mode(H + 'complex "Probe"¦')).toBe('INITIAL');
+    expect(mode(H + 'complex --> clear : "x¦"')).toBe('string');
+    expect(mode(H + '%% c¦')).toBe('comment');
   });
 });
