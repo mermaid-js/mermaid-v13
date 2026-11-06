@@ -119,32 +119,41 @@ function sameSymbol(list: readonly Occurrence[], o: Occurrence): Occurrence[] {
 }
 
 /**
- * The defining occurrence: the first `def`, else the first mention. A block declaration (a
+ * The defining occurrence: the first `def`, else the first mention (none with `declaredOnly`,
+ * {@link LanguageFacet.declaredOnly}). A block declaration (a
  * `subgraph`) wins over a node mention that created the name first: in v12 an edge to a
  * subgraph id is an edge to the subgraph, wherever the subgraph is written.
  */
-export function definitionOf(all: readonly Occurrence[]): Occurrence | undefined {
+export function definitionOf(
+  all: readonly Occurrence[],
+  declaredOnly = false
+): Occurrence | undefined {
   return (
     all.find((x) => x.role === 'def' && x.kind === 'subgraph') ??
     all.find((x) => x.role === 'def') ??
-    all[0]
+    (declaredOnly ? undefined : all[0])
   );
 }
 
-export function definition(list: readonly Occurrence[], offset: number): Range | undefined {
+export function definition(
+  list: readonly Occurrence[],
+  offset: number,
+  declaredOnly = false
+): Range | undefined {
   const o = occurrenceAt(list, offset);
-  return o && definitionOf(sameSymbol(list, o))?.range;
+  return o && definitionOf(sameSymbol(list, o), declaredOnly)?.range;
 }
 
 export function references(
   list: readonly Occurrence[],
   offset: number,
-  includeDeclaration: boolean
+  includeDeclaration: boolean,
+  declaredOnly = false
 ): readonly Range[] {
   const o = occurrenceAt(list, offset);
   if (!o) return Object.freeze([]);
   const all = sameSymbol(list, o);
-  const def = definitionOf(all);
+  const def = definitionOf(all, declaredOnly);
   return Object.freeze(all.filter((x) => includeDeclaration || x !== def).map((x) => x.range));
 }
 

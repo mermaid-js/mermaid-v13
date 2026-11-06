@@ -237,12 +237,17 @@ class Snapshot implements DocumentSnapshot {
 
   /** The range of the first definition of the name at `offset` (D92). */
   definition(offset: number): Range | undefined {
-    return definition(this.#occurrences(), offset);
+    return definition(this.#occurrences(), offset, this.#context.facet?.declaredOnly === true);
   }
 
   /** Every occurrence of the name at `offset` in its namespace, in source order. */
   references(offset: number, includeDeclaration = true): readonly Range[] {
-    return references(this.#occurrences(), offset, includeDeclaration);
+    return references(
+      this.#occurrences(),
+      offset,
+      includeDeclaration,
+      this.#context.facet?.declaredOnly === true
+    );
   }
 
   /** The name at `offset` and its range, or why it cannot be renamed. */

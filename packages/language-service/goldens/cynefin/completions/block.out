@@ -1,0 +1,15 @@
+@ 2:11  complex |
+  --> operator (then a domain) 2:11-2:11 "" -> "--> "
+  " value (an item such as "Probe") 2:11-2:11 "" -> "\""
+@ 3:22  clear "Categorise" |
+  " value (an item such as "Probe") 3:22-3:22 "" -> "\""
+@ 6:5  |
+  complex keyword (Probe → Sense → Respond · Emergent Practices) 6:5-6:5 "" -> "complex"
+  complicated keyword (Sense → Analyse → Respond · Good Practices) 6:5-6:5 "" -> "complicated"
+  clear keyword (Sense → Categorise → Respond · Best Practices) 6:5-6:5 "" -> "clear"
+  chaotic keyword (Act → Sense → Respond · Novel Practices) 6:5-6:5 "" -> "chaotic"
+  confusion keyword (Disorder) 6:5-6:5 "" -> "confusion"
+  title keyword 6:5-6:5 "" -> "title "
+  accTitle keyword 6:5-6:5 "" -> "accTitle: "
+  accDescr keyword 6:5-6:5 "" -> "accDescr: "
+  " value (an item such as "Probe") 6:5-6:5 "" -> "\""

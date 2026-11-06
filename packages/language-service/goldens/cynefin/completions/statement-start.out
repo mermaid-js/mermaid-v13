@@ -1,0 +1,25 @@
+@ 2:3  |
+  complex keyword (Probe → Sense → Respond · Emergent Practices) 2:3-2:3 "" -> "complex"
+  complicated keyword (Sense → Analyse → Respond · Good Practices) 2:3-2:3 "" -> "complicated"
+  clear keyword (Sense → Categorise → Respond · Best Practices) 2:3-2:3 "" -> "clear"
+  chaotic keyword (Act → Sense → Respond · Novel Practices) 2:3-2:3 "" -> "chaotic"
+  confusion keyword (Disorder) 2:3-2:3 "" -> "confusion"
+  title keyword 2:3-2:3 "" -> "title "
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr keyword 2:3-2:3 "" -> "accDescr: "
+@ 4:6  com|
+  complex keyword (Probe → Sense → Respond · Emergent Practices) 4:3-4:6 "com" -> "complex"
+  complicated keyword (Sense → Analyse → Respond · Good Practices) 4:3-4:6 "com" -> "complicated"
+@ 5:6  acc|
+  accTitle keyword 5:3-5:6 "acc" -> "accTitle: "
+  accDescr keyword 5:3-5:6 "acc" -> "accDescr: "
+@ 7:3  |
+  complex keyword (Probe → Sense → Respond · Emergent Practices) 7:3-7:3 "" -> "complex"
+  complicated keyword (Sense → Analyse → Respond · Good Practices) 7:3-7:3 "" -> "complicated"
+  clear keyword (Sense → Categorise → Respond · Best Practices) 7:3-7:3 "" -> "clear"
+  chaotic keyword (Act → Sense → Respond · Novel Practices) 7:3-7:3 "" -> "chaotic"
+  confusion keyword (Disorder) 7:3-7:3 "" -> "confusion"
+  title keyword 7:3-7:3 "" -> "title "
+  accTitle keyword 7:3-7:3 "" -> "accTitle: "
+  accDescr keyword 7:3-7:3 "" -> "accDescr: "
+  " value (an item such as "Probe") 7:3-7:3 "" -> "\""

@@ -1,0 +1,11 @@
+@ 4:6  com|plex "Probe"
+  prepare: 4:3-4:10 "complex"; rename to "renamed":
+  refused: Domain names are fixed: a cynefin diagram has the five domains `complex`, `complicated`, `clear`, `chaotic` and `confusion`, so a domain cannot be renamed.
+@ 5:17  complex --> cl|ear
+  prepare: 5:15-5:20 "clear"; rename to "renamed":
+  refused: Domain names are fixed: a cynefin diagram has the five domains `complex`, `complicated`, `clear`, `chaotic` and `confusion`, so a domain cannot be renamed.
+@ 6:13  clear "Cat|egorise"
+  prepare: refused: There is no id or class name here to rename.
+@ 7:6  cha|otic
+  prepare: 7:3-7:10 "chaotic"; rename to "renamed":
+  refused: Domain names are fixed: a cynefin diagram has the five domains `complex`, `complicated`, `clear`, `chaotic` and `confusion`, so a domain cannot be renamed.

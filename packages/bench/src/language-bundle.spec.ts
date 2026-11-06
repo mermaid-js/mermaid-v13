@@ -40,6 +40,11 @@ const PACKAGES = [
     dir: 'diagram-pie',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
+  {
+    name: 'cynefin',
+    dir: 'diagram-cynefin',
+    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

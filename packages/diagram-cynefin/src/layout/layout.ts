@@ -16,7 +16,8 @@ import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { Box, cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
-import { DOMAIN_META, domainTitle } from './meta.ts';
+import { DOMAIN_META } from '../domains.ts';
+import { domainTitle } from './meta.ts';
 import { ARROWS, FONTS, ITEMS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
 import type {

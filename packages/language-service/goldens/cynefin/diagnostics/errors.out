@@ -1,0 +1,6 @@
+2:15-2:16 ";" error UNEXPECTED_CHARACTER: Unexpected character `;`; `;` does not end a statement in a cynefin diagram: put each transition, title and accessibility statement on a line of its own.
+3:3-3:10 "Complex" error UNEXPECTED_CHARACTER: Unexpected character `Complex`; domain names are written in lower case: `complex`, `complicated`, `clear`, `chaotic` or `confusion`.
+4:23-4:30 "Pattern" error UNEXPECTED_CHARACTER: Unexpected character `Pattern`; a transition label is quoted, as in `complex --> clear : "Pattern found"`.
+5:3-5:22 "complex --> complex" warning CYNEFIN_SELF_LOOP: A transition from a domain to itself is not drawn: `complex --> complex` at line 5. A transition goes from one domain to another.
+6:3-6:8 "clear" warning CYNEFIN_DUPLICATE_DOMAIN: Only the last block of a domain is drawn: the `clear` block at line 6 is replaced by a later block, and its items are not drawn. Put all the items of a domain in one block.
+8:11-8:20 "\"Unclosed" error UNCLOSED_STRING: Unclosed label: the `"` at line 8 has no closing `"`. Add `"` after the label.
