@@ -10,6 +10,7 @@ import { parsePacket } from '../parser/index.ts';
 
 export interface DrawOptions {
   charset?: 'unicode' | 'ascii';
+  padding?: 'compact' | 'roomy';
   maxWidth?: number;
   /** The site's `packet` section, under the source's own. */
   packet?: Record<string, unknown>;

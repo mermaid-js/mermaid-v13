@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,8 +40,9 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(leaked).toEqual([]);
   });
 
-  // #464: packet's text entry is its own lazily imported chunk, apart from its plugin.
-  it('a packet SVG render loads the packet plugin and no ascii module', () => {
+  // #464: packet's text entry is its own lazily imported chunk, apart from its plugin; nor does
+  // the plugin carry what only `./testing` exports (v12's token names, the layout invariants).
+  it('a packet SVG render loads the packet plugin, and no ascii or testing-only module', () => {
     const plugin = chunkOf(prod, 'packages/diagram-packet/src/index.ts');
     expect(plugin).toBeDefined();
     const { svg } = splitByFormat(prod);
@@ -50,6 +51,13 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs).toContain('packages/diagram-packet/src/plugin.ts');
     expect(inputs.filter(isAsciiModule)).toEqual([]);
+    // The table's own strings, in case it moves back into a module the parser imports.
+    const code = loaded.map((f) => readFileSync(join(prod.outdir, f), 'utf8')).join('\n');
+    expect(code).not.toContain('SINGLE_LINE_COMMENT');
+    const testingOnly = ['parser/langium-names.ts', 'layout/invariants.ts', 'layout/fixtures.ts'];
+    expect(
+      inputs.filter((i) => testingOnly.some((t) => i.endsWith(`diagram-packet/src/${t}`)))
+    ).toEqual([]);
   });
 
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
@@ -87,7 +95,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // depend on the working directory, or the gate measures nothing.
   it('finds the ascii chunks when built from the bench package directory', () => {
     const probe = [
-      "import { mkdtempSync } from 'node:fs';",
+      "import { mkdtempSync, readFileSync } from 'node:fs';",
       "import { tmpdir } from 'node:os';",
       "import { join } from 'node:path';",
       "import { bundle } from './src/build.ts';",

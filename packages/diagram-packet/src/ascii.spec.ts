@@ -108,6 +108,41 @@ describe('rows', () => {
   });
 });
 
+describe('padding', () => {
+  it('honours ascii.padding roomy as a blank line above and below each label (D77)', () => {
+    const src = 'packet\n0-3: "a"\n4-7: "b"\n8-11: "c"';
+    expect(text(src, { packet: { bitsPerRow: 8, showBits: false }, padding: 'roomy' })).toBe(
+      lines(
+        '┌───────┬───────┐',
+        '│       │       │',
+        '│   a   │   b   │',
+        '│       │       │',
+        '├───────┼───────┘',
+        '│       │',
+        '│   c   │',
+        '│       │',
+        '└───────┘'
+      )
+    );
+    expect(text(src, { packet: { bitsPerRow: 8 }, padding: 'roomy' })).toBe(
+      lines(
+        ' 0     3 4     7',
+        '┌───────┬───────┐',
+        '│       │       │',
+        '│   a   │   b   │',
+        '│       │       │',
+        '└───────┴───────┘',
+        ' 8    11',
+        '┌───────┐',
+        '│       │',
+        '│   c   │',
+        '│       │',
+        '└───────┘'
+      )
+    );
+  });
+});
+
 describe('labels', () => {
   it('cuts a label to its field with an ellipsis, … in unicode and ~ in ascii', () => {
     const src = 'packet\n0: "Long"\n1-3: "Reserved"\n4-5: "ab"';
@@ -181,6 +216,18 @@ describe('warnings', () => {
       ['field:0-7', 'field:8-15'],
     ]);
     expect(out).toContain(' bold ');
+  });
+
+  it('warns about a bold title too, naming its statement', () => {
+    const { warnings } = draw('packet\ntitle <b>Bold</b>\n0-7: "<i>it</i>"');
+    expect(
+      warnings.map((w) => [
+        (w as { feature?: string }).feature,
+        (w as { astIds?: string[] }).astIds,
+      ])
+    ).toEqual([['emphasis', ['field:0-7', 'title']]]);
+    const front = draw('---\ntitle: <b>Front</b>\n---\npacket\n0-7: "a"').warnings;
+    expect(front.map((w) => (w as { astIds?: string[] }).astIds)).toEqual([[]]);
   });
 
   it('warns about nothing in a plain diagram, and ignores the px options without a word', () => {

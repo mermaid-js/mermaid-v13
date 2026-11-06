@@ -19,7 +19,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Orchestrator choices to record (no D-id covers them): the dark entry is each family's `dark` entry (the `dark` trait), not the table's `rules.dark`, so an author's `darkMode: true` on a light theme keeps v12's black on `#efefef` (v12 keyed packet colours by theme only); the light colours are the table's `rules.light` (literals), the lengths every family's `tokens`. An empty label draws no `<text>` (core's label writer writes nothing for no lines). The 10,000-row cap draws about 4.3 MB of SVG (427 characters a one-piece row, after hoisting the shared paints onto the root; 407 without the explicit `text-anchor="start"` the ported v12 spec reads), past the default `maxOutputLength` of 4,000,000: it is a `LIMIT` error at the default limits (pinned, MIGRATION.md row; review asked to fit it, it does not), and the conformance render corpus lifts the limit to cover it. `neo` repeats the classic/redux entry instead of `{ fallback: 'redux' }`: `theme-direction.ts` rule 2 reads the literal `'redux'` as the theme name (for #414 T0b).
 - Shared edits: `background` and `primaryTextColor` list `packet` in `usedBy` (`gen:theme`); `theme-used-by.spec.ts`'s scanner skips a var's `nested:` key. (The review dropped the "reads every table var" check: T0b's job.)
 
-## #464 T7 ASCII renderer (done on `feature/464_packet-ascii`)
+## #464 T7 ASCII renderer (merged)
 
 - Changed for `ascii` (the orchestrator's list): manifest `formats` + `ascii` key and the `./ascii` export, plugin `formats`, `gen:registry` (`registry.gen.ts`, `detectors.gen.ts`, `format-matrix.md`); `mermaid/src/packet.spec.ts` (refusal test now draws ascii, plus `ASCII_TOO_WIDE`); `conformance/src/packet/render.spec.ts` (refusal test removed); MIGRATION.md's packet `format: 'ascii'` bullet; `diagram-packet/README.md`; RELEASING.md's packet row; `ascii.md` (type lists, a "Packet diagrams" section, Size); changeset `diagram-packet-ascii.md`; bench `ascii-size.spec.ts` (packet's path, and a packet SVG render loads no ascii module).
 - Deviations (for the maintainer; no D-id covers them):
@@ -31,7 +31,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - The pipeline still runs the px `PacketLayout` (with the cell measurer) before the hook; the hook does not read it.
 - Size (R-ASCII-9, D130): packet's text path 7,821 B gz (core/ascii shared 6,304 + packet entry 1,517); the largest stays sequence's (10,142).
 
-## #462 T5 integration (done on `feature/462_packet-integration`)
+## #462 T5 integration (merged)
 
 - [x] **From #458 (T6), the facet's move to the registry.** Once the manifest has `"language": "./dist/language.js"` (`() => import('@mermaid-js/diagram-packet/language').then((m) => m.language)`), `goldens.spec.ts` fails on "packet is still unlisted": delete the packet row in `language-service/src/testing/unlisted-facets.ts` (goldens stay); `conformance/src/packet/service-symbols.spec.ts`'s last test fails too: drop its eager row (`createLanguageService()` + `preload({ types: ['packet'] })`). Add `@mermaid-js/diagram-packet` to `language-service`'s optional peers.
   - Closed by #462: `UNLISTED_FACETS` is empty again; `service-symbols.spec.ts` uses `createLanguageService()` + `preload` and checks the generated row has a `load`; `diagram-packet` is an optional peer of `language-service` and a dependency of `language-server`.
@@ -60,7 +60,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - `PacketFieldNode.dropped` (additive): why a field is not in the model, set by the parser; hover reads it (review fix).
   - Budget (R-LANG-4): `bench/src/language-budget-packet.spec.ts` on `fixtures/language/packet-50k.mmd`; a cycle is 4.0–4.1 bare parses under vitest, best of 15 under tsx 15.5 ms with flowchart at 18.8 on the same loaded machine: *not measured on a steady machine*. No `language:packet` CLI.
   - Completion offers `packet`, not `packet-beta` (the older name), at the start; on the `packet` line only `title`; `:` after a field's bits once a blank follows (right after a bit number the cursor extends it); `"` after the `:`.
-  - Hover on a field without a model entry says "Not drawn:" with its D341 message (or the row cap); the facet parsed without the document's config (fixed in the #458 review by `packetSectionOf`) (the service passes none), so rows are not shown.
+  - Hover on a field without a model entry says "Not drawn:" with its D341 message (or the row cap). Hover shows a field's bits and width, not its rows; the row cap it reports follows the source's own `packet` config (`packetSectionOf`, the #458 review fix).
   - A label written otherwise than its name (escape, entity, tag quote, comment line or CRLF inside) is no service occurrence, as pie's (46 in the gate corpus, pinned in the oracle spec).
 
 ## #452 T1 lexer (merged)
@@ -124,9 +124,9 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 
 - [ ] **Cross-port (reported to the coordinator):** packet's generic `conformance/src/cli/harvest-v12.ts` (`HARVESTS` table) and radar's `harvest-langium.ts`/`src/langium-harvest.ts` both replace `harvest-pie.ts`; info and cynefin add their own harvesters. The wave picks one shape; packet adapts.
 - [ ] **D342 cap vs `maxOutputLength`:** confirmed (`packet\n0-319999: "x"` draws 4,264,246 characters against 4,000,000; at `bitsPerRow: 1` it fits, 3.26 MB). A maintainer decision, listed in the PR.
-- [ ] **`LANGIUM_NAMES` leaks into the render chunk** (computed keys keep it, ~128 B gz): move it to a module only `testing.ts` imports; drop it from `parser/index.ts`.
-- [ ] **`layout/fixtures.ts` ships in `dist`:** `tsconfig.build.json` excludes `*.fixtures.ts` only; exclude it (pie has the same; fix packet's).
-- [ ] **Stale text:** `render/render.ts:10-12` ("still passes the default `maxOutputLength`" should say it exceeds it); `src/index.ts` header stops at T4; GAPS "(running)" headings and the T6 "parses without the document's config" line (fixed by `packetSectionOf`).
+- [x] **`LANGIUM_NAMES` leaks into the render chunk** (computed keys keep it, ~128 B gz): move it to a module only `testing.ts` imports; drop it from `parser/index.ts`. **Fixed (review-fix pass):** `parser/langium-names.ts`, imported only by `testing.ts`; `parser/index.ts` no longer re-exports it. Packet chunk 8,754 → 8,619 B gz, load path for one packet render 105,574 → 105,440 B gz (bench method); `ascii-size.spec.ts` pins that the packet SVG path holds neither the table's strings nor the testing-only modules.
+- [x] **`layout/fixtures.ts` ships in `dist`:** `tsconfig.build.json` excludes `*.fixtures.ts` only; exclude it (pie has the same; fix packet's). **Fixed:** excluded in `tsconfig.build.json`; a build emits `dist/layout/{index,invariants,layout,metrics,types}` only.
+- [x] **Stale text:** `render/render.ts:10-12` ("still passes the default `maxOutputLength`" should say it exceeds it); `src/index.ts` header stops at T4; GAPS "(running)" headings and the T6 "parses without the document's config" line (fixed by `packetSectionOf`). **Fixed:** `render.ts` says the cap exceeds the default `maxOutputLength`; the `src/index.ts` header covers T5–T7 and the `./language`, `./ascii`, `./testing` entries; the GAPS headings and the T6 hover line are current.
 - [ ] **Base merge:** `tools/gen-config/src/theme-used-by.spec.ts`'s scanner line is also rewritten by `feature/414_theme-t0`; keep the `nested:` exclusion when merging. When T0b lands, packet's `background`/`primaryTextColor` reads (rule right-hand sides) may need `DYNAMIC_READS`.
 - For #414 T0b: `v13/docs/theme-variables.md` lists none of packet's ten flat variables (the generator reads only core's `THEME_VARIABLES`); per-package `gen:theme` should cover diagram tables. Only MIGRATION.md names them today.
 - Checked, nothing found: config read once, warnings not duplicated across `render()` and `prepare`+`renderSync`; AST ids, `data-ast`/`data-id` and facet symbols agree; `standalone` hunks byte-identical to `e99d313ef`; packet chunk 9,355 B gz with no `invariants.ts`; neo-dark/redux-dark/redux-dark-color and forest colours as MIGRATION.md says; no unchecked GAPS box and the T1–T6 acceptance table met.
@@ -135,6 +135,12 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 
 - **For the maintainer (D347):** with `showBits` on (the default) the bit-number line sits between rows, so rows are separate boxes; D347's shared-border table appears only with `showBits: false`. Both readings of D347 cannot hold at once. Also, at two columns a bit, a bit number that would touch its neighbour is omitted (from bit 10, consecutive one-bit fields lose every other number); documented in ascii.md. The title is centred on the drawn width, not the full `bitsPerRow` canvas.
 - Follow-up (with the lexer and facet items): packet's `wrap`/centred title and `warnings.ts` are a third copy of ER's and flowchart's ascii helpers; the home is `core/ascii`.
+- [x] **Pitfall 22, `ascii.padding`:** honoured. `roomy` puts a blank line above and below each label (core's "one cell each way"); the columns stay two a bit (D347), so it adds nothing across. ascii.md says so; a golden pins both `showBits` settings.
+- [x] **R-ASCII-5, emphasised title:** a bold or italic title joins the `emphasis` warning, with the drawn `title` statement's id (none for a front-matter title).
+- [x] **ascii.md width:** "bounded by `bitsPerRow`" (at most `2 × bitsPerRow + 1` columns of boxes; a long title or a 4-digit bit number at a row end goes past).
+- [x] **Omitted bit numbers:** ascii.md states the rule (left to right, a number that would touch or overlap the last one drawn is left out; the row's first is always drawn; from bit 10 a run of one-bit fields shows every other number). The corpus property now places every number where the SVG puts it, flags any out of place, and flags an omitted one that had room (a one-column-wider gap fails it).
+- [x] **draw.ts cleanups:** core's `GlyphSet` has no ellipsis, so the `…`/`~` switch stays, with a comment; label options built once; `rowStride`, `firstBoxLine`, `nextFree`; labels measured in one pass, emphasis read from them, no side effect.
+- Text path after these: 7,931 B gz (was 7,821).
 
 ## Shared contracts
 

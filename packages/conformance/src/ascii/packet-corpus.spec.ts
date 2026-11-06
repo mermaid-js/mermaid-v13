@@ -19,8 +19,8 @@ import type { Charset } from './structure.ts';
 // only what SVG rejects; deterministic; `rows` lines, none wider than `columns` and one exactly that
 // wide, no trailing spaces, no box glyph in ascii. Read back against the parsed model: every
 // piece of every row is a closed box two columns a bit wide on the row's own lines, its label
-// inside (whole or cut with the charset's ellipsis), the bit numbers above each row only bits
-// of that row's pieces, the first one always there, and the title on the last line.
+// inside (whole or cut with the charset's ellipsis), the bit numbers above each row where the
+// SVG puts them, one left out only where it would touch the one before, and the title last.
 
 const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
@@ -199,7 +199,11 @@ describe('packet ascii corpus properties (D347, R-ASCII-9)', { timeout: 120_000 
     ).toEqual({});
   });
 
-  it('writes above each row only bit numbers of its pieces, the first piece’s always', () => {
+  // D347 puts the numbers where the SVG does: a one-bit piece's number centred over its cell,
+  // a wider piece's leading bit from its first cell and its trailing bit up to its last (the
+  // higher bit leading when `descending`). Left to right, a number is left out only when it
+  // would start before the column after the blank that follows the last number drawn.
+  it('writes each row’s bit numbers where they belong, leaving one out only where it would touch the one before', () => {
     expect(
       problems((c, cs) => {
         if (!c.showBits) return [];
@@ -208,15 +212,40 @@ describe('packet ascii corpus properties (D347, R-ASCII-9)', { timeout: 120_000 
         c.model.rows.forEach((pieces, r) => {
           const line = lines[topOf(c, r) - 1] ?? '';
           if (!/^[ 0-9]*$/.test(line)) return void found.push(`row ${r}: ${JSON.stringify(line)}`);
-          const ends = new Set(pieces.flatMap((p) => [String(p.start), String(p.end)]));
-          const numbers = line.trim() === '' ? [] : line.trim().split(/ +/);
-          const stray = numbers.filter((n) => !ends.has(n));
-          if (stray.length > 0) found.push(`row ${r}: not a piece's end bit: ${stray.join(' ')}`);
-          const lead = c.descending
-            ? pieces.reduce((a, p) => (p.end > a ? p.end : a), -1)
-            : pieces[0]?.start;
-          if (lead !== undefined && numbers[0] !== String(lead))
-            found.push(`row ${r}: starts ${numbers[0]}, not ${lead}`);
+          const drawn = [...line.matchAll(/[0-9]+/g)].map((m) => ({ x: m.index, text: m[0] }));
+          const wanted = pieces
+            .flatMap((p) => {
+              const bits = p.end - p.start + 1;
+              const first = p.start % c.model.bitsPerRow;
+              const x = 2 * (c.descending ? c.model.bitsPerRow - first - bits : first);
+              const [lead, trail] = c.descending ? [p.end, p.start] : [p.start, p.end];
+              if (bits === 1) {
+                const t = String(lead);
+                return [{ x: Math.max(0, x + 1 - Math.floor((t.length - 1) / 2)), text: t }];
+              }
+              const t = String(trail);
+              return [
+                { x: x + 1, text: String(lead) },
+                { x: x + 2 * bits - t.length, text: t },
+              ];
+            })
+            .sort((a, b) => a.x - b.x);
+          const key = (n: { x: number; text: string }) => `${n.x}:${n.text}`;
+          const want = new Set(wanted.map(key));
+          for (const d of drawn)
+            if (!want.has(key(d)))
+              found.push(`row ${r}: ${d.text} at column ${d.x} is out of place`);
+          const shown = new Set(drawn.map(key));
+          let last: { x: number; text: string } | undefined;
+          for (const n of wanted) {
+            if (shown.has(key(n))) {
+              last = n;
+              continue;
+            }
+            const touches = last !== undefined && n.x <= last.x + last.text.length;
+            if (!touches)
+              found.push(`row ${r}: ${n.text} left out at column ${n.x} with room for it`);
+          }
         });
         return found;
       })

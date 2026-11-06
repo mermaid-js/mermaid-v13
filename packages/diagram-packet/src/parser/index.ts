@@ -7,7 +7,7 @@ import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
-export { LANGIUM_NAMES, PACKET_TRIVIA, T as PacketTokenKind } from './tokens.ts';
+export { PACKET_TRIVIA, T as PacketTokenKind } from './tokens.ts';
 export { PACKET_SEMANTIC_ERRORS, parsePacket } from './parser.ts';
 export { isWholeField, MAX_PACKET_ROWS } from '../normalise.ts';
 export type { PacketParseOptions, PacketParseResult } from './parser.ts';

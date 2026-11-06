@@ -8,8 +8,8 @@
 // What every piece shares is written once on the root as an inherited presentation attribute:
 // the stroke width (text has no stroke, so it ignores it), the bit numbers' font size and the
 // labels' colour. Each element writes only what differs, so a one-piece row is about 430
-// characters; the 10,000-row cap (about 4.3 MB) still passes the default `maxOutputLength`, so at
-// the default limits it is a `LIMIT` error.
+// characters. The 10,000-row cap (about 4.3 MB) still exceeds the default `maxOutputLength`
+// (4,000,000), so at the default limits it is a `LIMIT` error (GAPS, for the maintainer).
 import type { RenderContext } from '@mermaid-js/core';
 import { px, styleScope, styleText, themeStyleSheet } from '@mermaid-js/core/svg';
 import type { SvgWriter } from '@mermaid-js/core/svg';

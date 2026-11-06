@@ -28,10 +28,11 @@ export type PacketAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
 export function ascii(model: PacketModel, _layout: unknown, ctx: PacketAsciiContext): string {
   // The parse already warned about each option it could not use (`PACKET_CONFIG_INVALID`).
   const { showBits, bitOrder } = packetConfig(ctx.config.packet ?? {}).config;
-  const { charset, maxWidth } = asciiOptions(ctx.config);
+  const { charset, padding, maxWidth } = asciiOptions(ctx.config);
   const drawn = drawPacket(model, {
     glyphs: charset === 'ascii' ? asciiGlyphs : unicode,
     showBits,
+    padding,
     descending: bitOrder === 'descending',
     ...(maxWidth !== undefined ? { maxWidth } : {}),
     ...(ctx.inline ? { inline: ctx.inline } : {}),
