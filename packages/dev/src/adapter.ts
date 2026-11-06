@@ -10,9 +10,12 @@
  * So is `@mermaid-js/plugin-icons`, with the static packs of `icon-packs.ts`: `fa:fa-bell` in a
  * label and `A@{ icon: "aws:…" }` draw from them (D290–D299), and `prepare` loads only the packs
  * a diagram names.
+ * And `@mermaid-js/plugin-hand-drawn`: `look: handDrawn` (or `handDrawn: true`) sketches the
+ * outlines of flowchart, class, state and ER (D300); without it the look would only warn.
  */
 import type { Measurer } from '@mermaid-js/core/text';
 import elkLayouts from '@mermaid-js/layout-elk';
+import handDrawn from '@mermaid-js/plugin-hand-drawn';
 import icons from '@mermaid-js/plugin-icons';
 import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
@@ -39,7 +42,7 @@ export interface RenderOutput {
 
 const mermaid = createMermaid();
 mermaid.registerLayoutLoaders(elkLayouts);
-const registered = mermaid.registerExternalDiagrams([math, icons]);
+const registered = mermaid.registerExternalDiagrams([math, icons, handDrawn]);
 mermaid.registerIconPacks(iconPacks);
 
 export async function renderDiagram(

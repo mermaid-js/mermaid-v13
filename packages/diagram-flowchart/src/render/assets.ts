@@ -103,9 +103,9 @@ export function drawIcon(
   const top = assetTop(view, size);
   const glyph = icon?.(v.icon!, size);
   const f: Attrs = glyph ? { ...a, stroke: a.fill } : a;
-  if (v.form === 'circle') w.leaf('circle', { cy: top + size / 2, r: size / 2, ...f });
+  if (v.form === 'circle') w.outline('node', 'circle', { cy: top + size / 2, r: size / 2, ...f });
   else if (v.form === 'square' || v.form === 'rounded') {
-    w.leaf('rect', {
+    w.outline('node', 'rect', {
       x: -size / 2,
       y: top,
       width: size,

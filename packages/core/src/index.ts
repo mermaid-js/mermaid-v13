@@ -22,6 +22,7 @@ export {
 } from './pipeline/draw.ts';
 export {
   HookRunner,
+  type ActiveOutline,
   type ExtensionClaim,
   type ExtensionNeed,
   type ExtensionPlugin,
@@ -31,6 +32,7 @@ export {
   type HookContext,
   type HookRun,
   type LaidOut,
+  type OutlineDrawer,
   type ResourceRequest,
 } from './pipeline/extensions.ts';
 export type {

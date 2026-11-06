@@ -22,6 +22,7 @@ import {
 import {
   INTEGRATOR_ONLY_KEYS,
   resolveText,
+  type ConfigFragment,
   type MermaidConfig,
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
@@ -63,7 +64,7 @@ import {
 } from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
-import { iconPackRegistry, type IconLoader } from './icon-packs.ts';
+import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
@@ -209,9 +210,19 @@ export type ParseErrorHandler = (error: MermaidError) => void;
 
 const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
-/** A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`). */
-const toWarning = (w: Warning): Warning => {
-  const out: Plain = { code: w.code, message: w.message };
+/**
+ * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`).
+ * `LOOK_REMOVED` names the hand-drawn package here, core never names one (D153, as D173), and
+ * only while no registered fragment declares `handDrawn` (the plugin's, or any that takes it).
+ */
+const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): Warning => {
+  const out: Plain = {
+    code: w.code,
+    message:
+      w.code === 'LOOK_REMOVED' && !fragments.some((f) => 'handDrawn' in f.keys)
+        ? `${w.message} For handDrawn, register @mermaid-js/plugin-hand-drawn.`
+        : w.message,
+  };
   for (const k of WARNING_KEYS) {
     const v = w[k];
     if (v !== undefined) out[k] = Array.isArray(v) ? [...(v as unknown[])] : v;
@@ -414,7 +425,7 @@ export function createMermaid(
     pre: PreprocessResult
   ): Analysis {
     const warnings: Warning[] = [];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w));
+    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
     const section = sectionOf(detected, plugin);
     const front = pre.frontMatter?.config;
@@ -594,7 +605,7 @@ export function createMermaid(
     const { config } = prepared;
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w));
+    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     const missing = [
       ...missingFor(registry, analysis, textOutput),
       // An icon pack is missing only while `pending`: an unregistered one is unresolved (D291),
@@ -612,13 +623,7 @@ export function createMermaid(
           .join(', ')}.`,
       });
     }
-    // D299: only while no extension claims icons. `mermaid` names the package; core never does.
-    if (iconPacks.names()[0] && !hooks.claims().includes('icons')) {
-      warn({
-        code: 'ICON_PACKS_UNSUPPORTED',
-        message: 'registerIconPacks() needs @mermaid-js/plugin-icons registered.',
-      });
-    }
+    for (const w of packsUnsupported(iconPacks, hooks.claims())) warn(w);
     let engine: LayoutEngine | undefined;
     let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {

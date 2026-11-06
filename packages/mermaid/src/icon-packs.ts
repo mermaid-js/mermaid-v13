@@ -5,7 +5,7 @@
  * still count. A loader runs only when a diagram names its pack (or `preload` does); a
  * rejecting loader leaves its pack `failed`, which the next `prepare()` retries (D299).
  */
-import type { IconifyJSON, IconPackSource, IconPackState } from '@mermaid-js/core';
+import type { IconifyJSON, IconPackSource, IconPackState, Warning } from '@mermaid-js/core';
 
 /** v12's lazy pack: `loader` may return the pack itself rather than a promise (D294). */
 export interface AsyncIconLoader {
@@ -84,3 +84,17 @@ export function iconPackRegistry(): [IconPackSource, (loaders: readonly IconLoad
     },
   ];
 }
+
+/**
+ * D299: `ICON_PACKS_UNSUPPORTED` while packs are registered and no extension claims icons.
+ * `mermaid` names the package here; core never does.
+ */
+export const packsUnsupported = (packs: IconPackSource, claims: readonly string[]): Warning[] =>
+  packs.names()[0] && !claims.includes('icons')
+    ? [
+        {
+          code: 'ICON_PACKS_UNSUPPORTED',
+          message: 'registerIconPacks() needs @mermaid-js/plugin-icons registered.',
+        },
+      ]
+    : [];

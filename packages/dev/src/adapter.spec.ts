@@ -54,4 +54,28 @@ describe('renderDiagram (the page adapter)', () => {
       svg.match(/<g transform="translate\([^)]*\)"(?: color="[^"]*")?><g transform="/g)
     ).toHaveLength(glyphs);
   });
+
+  it('sketches `look: handDrawn` with @mermaid-js/plugin-hand-drawn, as an installed plugin would (D300)', async () => {
+    const text = 'flowchart LR\n  A --> B';
+    const sketched = await renderDiagram(`---\nconfig:\n  look: handDrawn\n---\n${text}`);
+    expect(sketched.warnings).toEqual([]);
+    expect(sketched.svg).not.toMatch(/<rect /);
+    expect((await renderDiagram(text)).svg).toMatch(/<rect /);
+  });
+
+  it('has a hand-drawn baseline per diagram type the plugin sketches, in each theme family (D307)', () => {
+    const handDrawn = galleryFixtures()
+      .filter((f) => f.path.split('/')[1] === 'handdrawn')
+      .map((f) => [
+        f.path,
+        /^ {2}theme: (\S+)$/m.exec(f.source)?.[1],
+        f.source.includes('look: handDrawn'),
+      ]);
+    const families = ['default', 'neo-dark', 'neo', 'redux'];
+    expect(handDrawn).toEqual(
+      ['class-diagram', 'er-diagram', 'flowchart', 'state-diagram-v2'].flatMap((folder) =>
+        families.map((theme) => [`${folder}/handdrawn/${theme}.mmd`, theme, true])
+      )
+    );
+  });
 });

@@ -83,10 +83,49 @@ export interface LabelBox {
   readonly baselines?: readonly number[];
 }
 
+/**
+ * What an outline draws (D302): a node's shape, a part of one (a compartment, an underlay), a
+ * divider line inside a node, a small mark (a dot, a cross), a group's frame, or an edge line.
+ */
+export type OutlineRole = 'node' | 'part' | 'divider' | 'mark' | 'group' | 'edge';
+
+/** The elements an outline can be. */
+export type OutlineTag = 'rect' | 'circle' | 'ellipse' | 'polygon' | 'line' | 'path';
+
+/**
+ * Where an outline drawer writes its replacement: `<g>` groups and `<path>` leaves only. Core
+ * checks every tag and attribute name, and that each `open` has its `close` within one `draw`.
+ */
+export interface OutlineSink {
+  open(tag: 'g', attrs?: Attrs): void;
+  leaf(tag: 'path', attrs?: Attrs): void;
+  close(): void;
+  /** A builder for `d` values, as `SvgWriter.path()`. */
+  path(): PathBuilder;
+}
+
+/**
+ * The drawer the writer calls for each outline: writes the replacement into `sink` and returns
+ * true, or returns false for the plain leaf. The draw step installs the active extension's
+ * drawer, already checked (`HookRun.outline`).
+ */
+export type OutlineDraw = (
+  role: OutlineRole,
+  tag: OutlineTag,
+  attrs: Attrs,
+  sink: OutlineSink
+) => boolean;
+
 export interface SvgWriter {
   open(tag: AllowedTag, attrs?: Attrs): void;
   close(): void;
   leaf(tag: AllowedTag, attrs?: Attrs): void;
+  /**
+   * A shape outline (D302): exactly `leaf(tag, attrs)` unless an extension's drawer is active,
+   * which may draw it another way (hand-drawn). Arrowheads, label backgrounds and text are not
+   * outlines.
+   */
+  outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void;
   /** Character data, always escaped. Only `text`, `tspan`, `title` and `desc` hold text. */
   text(content: string): void;
   /** A measured label centred on (x, y), as `<text>`/`<tspan>`. */
@@ -106,6 +145,25 @@ export interface WriterOptions {
    * is `url(#<id>)`, `finish()` writes it as the root's first child.
    */
   readonly gradient?: SvgGradient;
+  /**
+   * Internal: the active outline drawer (D302), which gets the writer itself as its sink. Only
+   * the draw step sets it, with a drawer already guarded by `HookRun.outline` (the D302 sink
+   * rules). Without one, `outline` is `leaf`.
+   */
+  readonly outline?: OutlineDraw;
+}
+
+const NO_ATTRS: Attrs = Object.freeze({});
+
+/** `outline` on either backing: the drawer's replacement, or the plain leaf. */
+function writeOutline(
+  w: SvgWriter,
+  draw: OutlineDraw | undefined,
+  role: OutlineRole,
+  tag: OutlineTag,
+  attrs: Attrs | undefined
+): void {
+  if (!draw?.(role, tag, attrs ?? NO_ATTRS, w)) w.leaf(tag, attrs);
 }
 
 /** `url(#id)`, the value an outline that refers to the gradient carries. */
@@ -300,7 +358,10 @@ class Stream implements StreamSvgWriter {
   private readonly ref: string | undefined;
   private referred = false;
 
-  constructor(private readonly gradient: SvgGradient | undefined) {
+  constructor(
+    private readonly gradient: SvgGradient | undefined,
+    private readonly draw: OutlineDraw | undefined
+  ) {
     this.ref = refOf(gradient);
   }
 
@@ -361,6 +422,10 @@ class Stream implements StreamSvgWriter {
     this.out += '<' + tag + a + '/>';
   }
 
+  outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void {
+    writeOutline(this, this.draw, role, tag, attrs);
+  }
+
   text(content: string): void {
     const top = this.stack[this.stack.length - 1];
     if (top === undefined || !TEXT_HOLDERS.has(top))
@@ -396,7 +461,10 @@ class Tree implements TreeSvgWriter {
   private readonly compact = new CompactTree();
   private readonly stack: number[] = [0];
 
-  constructor(private readonly gradient: SvgGradient | undefined) {}
+  constructor(
+    private readonly gradient: SvgGradient | undefined,
+    private readonly draw: OutlineDraw | undefined
+  ) {}
 
   get tree(): SvgTree {
     return this.compact;
@@ -417,6 +485,10 @@ class Tree implements TreeSvgWriter {
 
   leaf(tag: AllowedTag, attrs?: Attrs): void {
     this.compact.appendElement(this.current, tag, attrs);
+  }
+
+  outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void {
+    writeOutline(this, this.draw, role, tag, attrs);
   }
 
   text(content: string): void {
@@ -451,10 +523,10 @@ class Tree implements TreeSvgWriter {
 
 /** The default backing: writes straight into a string buffer. */
 export function streamWriter(options?: WriterOptions): StreamSvgWriter {
-  return new Stream(options?.gradient);
+  return new Stream(options?.gradient, options?.outline);
 }
 
 /** The tree backing, for when a `postRender` hook is registered. */
 export function treeWriter(options?: WriterOptions): TreeSvgWriter {
-  return new Tree(options?.gradient);
+  return new Tree(options?.gradient, options?.outline);
 }

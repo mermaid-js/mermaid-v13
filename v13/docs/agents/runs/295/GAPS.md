@@ -11,7 +11,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - ~~[I2 #322] From the review fixes: glyph providers fit their glyph into `req.size` themselves (exact numbers) and return an `SvgFragment`; I2 warns about `failed` packs (`IconPacks.error`, truncated) through the request's `warn`; I2 checks a pack's shape (`get()` is unchecked); `ICON_NOT_RENDERED` is deduped by code per render, first message wins.~~ Done in #322 (`tickets/322.md`): fitted to 1e-6, failed packs named in the one `ICON_NOT_RENDERED` (error cut to 60), `get()` checked for an `icons` object, the first warning names every unresolved icon.
 - I1 #320 owns the pure resolver and body converter; I2 packages it. *Done in #320 (`tickets/320.md`); the manifest, `private`, the changeset and the licenses `UPSTREAMS` entry done in #322.*
 - ~~[I3 #324] Label icons with `currentColor` strokes draw in the CSS colour, not the label's.~~ Done in #324 (`tickets/324.md`): the plugin's `postRender` sets `color` to the label's inherited fill.
-- ~~[I4 #326] Flowchart warns `ICON_UNAVAILABLE` beside `ICON_NOT_RENDERED` (D299 alias).~~ Done in #326 (`tickets/326.md`): the alias goes once per render next to `ICON_NOT_RENDERED` (flowchart gives that itself without an icons extension), names the shapes, not for placeholders; MIGRATION.md. Open: D301's outline hook is not on the branch, so the icon frame is not sketched under hand-drawn yet.
+- ~~[I4 #326] Flowchart warns `ICON_UNAVAILABLE` beside `ICON_NOT_RENDERED` (D299 alias).~~ Done in #326 (`tickets/326.md`): the alias goes once per render next to `ICON_NOT_RENDERED` (flowchart gives that itself without an icons extension), names the shapes, not for placeholders; MIGRATION.md. Hand-drawn: since `feature/296_hand-drawn` was merged, the frame is drawn with `w.outline('node', …)` and is sketched under `look: handDrawn`.
 
 ## Decisions made without the maintainer (also in the PR body)
 
@@ -33,7 +33,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - #324: label icons that still paint `currentColor` (strokes) are marked `mermaid-label-icon` and recoloured to the label's fill in the plugin's `postRender`, then the class is removed; core's writer is untouched (R-PERF-8 headroom). With the plugin registered, SVG renders go through the tree writer (same bytes as the stream writer).
 - #324: icons cannot go in class relation labels or single-line state notes: the v12 grammar takes no `:` there.
 - #326: an unresolved shape icon keeps its outlined frame (D298 "keeps today's frame-only drawing"): byte-identical without the extension, and a borderless `mainBkg` frame would vanish on a `mainBkg` page. The `ICON_UNAVAILABLE` alias names the shapes' icons. A glyph provider that declines without warning leaves the render quiet (D291: warning is the extension's). Glyph colour ignores the palette slot, as v12.
-- [hand-drawn spec, D301] No node-outline hook on this branch yet: the icon frame is not sketched under hand-drawn. The glyph is a separate `<g>` after the frame, ready for the hook.
+- ~~[hand-drawn spec, D301] No node-outline hook on this branch yet.~~ Merged with `feature/296_hand-drawn` (D302): the icon frame goes through `w.outline('node', …)` and is sketched; the glyph stays a separate `<g>` after it, not sketched.
 
 ## From the final whole-branch review (`fix/295_final-review`, `tickets/final-review.md`)
 

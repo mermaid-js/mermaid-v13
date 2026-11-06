@@ -34,7 +34,8 @@ What most integrators have to change:
    default layout is `layered`; set `theme: 'default'` to keep v12's `default` colours and
    classic geometry ([Changed defaults](#changed-defaults), [Themes](#themes)).
 7. `look` is ignored with a `LOOK_REMOVED` warning; neo and classic geometry now come with the
-   theme ([Themes](#themes)).
+   theme ([Themes](#themes)). `look: handDrawn` needs `@mermaid-js/plugin-hand-drawn`
+   ([Hand-drawn look](#hand-drawn-look)).
 8. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
    ([Errors](#errors-and-the-error-image)).
 9. `mermaid.min.js` is now a small loader that imports the ES module build: the browser needs
@@ -53,6 +54,7 @@ What most integrators have to change:
 | `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13`, with dist-tag `v13-alpha` only, so `mermaid@latest` stays v12: install `mermaid@v13-alpha`. Public `mermaid@13.0.0-alpha.N` starts at `13.0.0-alpha.0` (D159) | R-REL-2, R-REL-3, D28, D159 |
 | No language-service or editor packages | Editor support is published as packages: `@mermaid-js/language-service` (editor-agnostic), `@mermaid-js/language-server` (LSP over stdio), and the adapters `@mermaid-js/language-service-codemirror` (CodeMirror 6) and `@mermaid-js/language-service-monaco` (Monaco). The adapters ship the generated first-paint grammars, one lazily loaded file per diagram type; the diagram packages ship none | R-LANG-2, D135, D158 |
 | `@mermaid-js/layout-elk` | Same name, a 13.x line. Register it as in v12 (`mermaid.registerLayoutLoaders(elkLayouts)`); without it `layout: elk` draws with the built-in engine and warns `ELK_NOT_INSTALLED` ([ELK](#elk)) | R-PLUG-8, D171 |
+| `look: handDrawn`, drawn by roughjs inside `mermaid` | `@mermaid-js/plugin-hand-drawn`, an optional extension with roughjs 4.6.6 as its one dependency. Installed is enabled; without it `look: handDrawn` draws the plain diagram and warns `LOOK_REMOVED` ([Hand-drawn look](#hand-drawn-look)) | R-PLUG-8, D300 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 
 ## Loading and plugins
@@ -423,7 +425,7 @@ Sequence diagrams (`sequence` section, #145):
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
-| `look: handDrawn` | Ignored like any other `look`, with the same generic `LOOK_REMOVED` warning; core names no plugin. Hand-drawn strokes will come from an optional plugin, which will claim `look: handDrawn` as a legacy alias of its own key once plugins can declare config | D7, D153, R-PLUG-8 |
+| `look: handDrawn` | Drawn by the optional `@mermaid-js/plugin-hand-drawn`, whose config fragment takes `look: handDrawn` as an alias of its `handDrawn` key. Without the plugin it is ignored like any other `look`, with one `LOOK_REMOVED` warning that names the plugin. See [Hand-drawn look](#hand-drawn-look) | D7, D153, D300, D303, R-PLUG-8 |
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Public theme variables. `neo` and `neo-dark` turn the gradient on (`#0042eb` to `#eb0042`, left to right); every other theme has it off, and any theme can turn it on in `themeVariables`. The SVG then carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">`, and the outlines v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`, so two diagrams on a page never share it. The stops read `--mermaid-gradientStart` / `--mermaid-gradientStop`. See [Neo gradient](#neo-gradient) | D182, R-THEME-7 |
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. `neo` keeps v12's blurred shadow, `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`, and `neo-dark` its own, `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. Under `neo` and `neo-dark`, sequence participants take the theme's drop shadow, as notes and fragment labels do; v12 drew them with a separate 6% white offset filter that did not show on `neo` (D184). The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152, D181, D184 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
@@ -560,6 +562,91 @@ each region's frame with the gradient) and a described state's divider. Class di
 lifted 0.01 so they take the gradient (v12 0.001) (D185).
 No node part is filled with the gradient: the flowchart fork and join bar is stroked with it and
 filled in plain `nodeBorder`, the same colour as the `lineColor` v12 neo filled it with (D185).
+
+## Hand-drawn look
+
+v12 drew `look: handDrawn` with roughjs inside `mermaid`. v13 draws it with the optional
+`@mermaid-js/plugin-hand-drawn` (D300), which sketches the outlines a diagram draws with roughjs's
+DOM-free generator. `renderSync` works with it in Node and the browser, with no DOM.
+
+```sh
+npm install @mermaid-js/plugin-hand-drawn
+```
+
+- **Activation.** Installed is enabled ([Plugins](#plugins-installed-is-enabled-r-plug-5)): Node
+  discovery finds it, as does `@mermaid-js/bundler-plugin`. Elsewhere, register it once:
+  `import { handDrawn } from '@mermaid-js/plugin-hand-drawn'; await
+  mermaid.registerExternalDiagrams([handDrawn]);`. Diagram text cannot install it.
+- **Keys.** The plugin owns `handDrawn` (boolean, default `false`) and `handDrawnSeed` (number,
+  default 0), which left core's schema; see the plugin's sections of
+  [config-reference.md](./config-reference.md). `look: handDrawn` sets `handDrawn: true`, at the
+  top level or in a diagram section, and gives no warning. Other `look` values still warn
+  `LOOK_REMOVED`. Installing the plugin changes no default: a diagram without the look draws as
+  before (D303).
+- **A section's `look` applies to the diagram drawn,** whatever its type: `sequence.look:
+  handDrawn` in the config of a flowchart sketches that flowchart. v12 read only the drawn type's
+  section.
+- **Only `handDrawn: false` turns the sketch off.** `look: classic` and `look: neo` still only
+  warn `LOOK_REMOVED`: they do not beat a `look: handDrawn` set in another source (`initialize`,
+  front matter, a directive) or at the top level. In v12 the diagram text's `look`, and the
+  drawn type's section, won. To draw one diagram plain under a site-wide hand-drawn look, set
+  `handDrawn: false` in its front matter or directive.
+- **Without the plugin,** `look: handDrawn` draws the plain diagram with one `LOOK_REMOVED`
+  warning naming `@mermaid-js/plugin-hand-drawn`, and `handDrawn` or `handDrawnSeed` give
+  `CONFIG_UNKNOWN_KEY`, as `elk.*` keys do without ELK (D153).
+- **Seed 0 is a fixed seed (D300, D304).** v12's default `handDrawnSeed: 0` drew a random sketch
+  on every render. In v13 every seed, 0 included, gives the same drawing on every render and
+  machine, and another seed another drawing. A non-zero seed gives roughjs's v12 strokes for the
+  same geometry, but v13's geometry is not v12's, so the drawings still differ. Every outline
+  shares the seed, as in v12.
+- **Node bounds are not measured from the sketch.** v12 measured the roughjs paths (`getBBox`)
+  and sized nodes, edges and the viewBox from them. v13 lays out first and sketches after
+  (DESIGN §6): the layout, every node and edge position and the viewBox are the same with and
+  without the look. A stroke strays at most a few units off the outline (about 2.6 units for a
+  120 × 40 node, about 5.6 with its hachure fill), inside the viewBox padding.
+- **Paints come from the theme and the diagram (D152, D307),** in every theme: `style`,
+  `classDef` and `linkStyle` colours, widths and dash patterns are kept. Under `neo` and
+  `neo-dark` the gradient strokes the sketch and the `dropShadow` filter sits on the sketch's
+  `<g>`; v12 never combined neo and hand-drawn. Fills are hachured as in v12; state composites
+  are solid.
+- **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
+  collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
+  (states, composites, notes, start and end, choice, fork and join, region dividers,
+  transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
+  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
+  sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
+  State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
+  fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
+  plain element.
+- **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
+  (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
+  ported. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
+  venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
+- **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
+  `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
+  included (D305).
+- **Size.** roughjs loads with the plugin, not lazily (D306): about 11.2 KB gz for the plugin,
+  8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
+- **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
+  `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
+  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
+  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
+  ([Limits](#limits)); diagram text cannot.
+
+### Hand-drawn SVG structure
+
+v13 keeps its own class names on sketched elements (D308): there is no `rough-node` class (v12
+swapped it in for `node`) and no `data-look` attribute on clusters. CSS that targets v13's
+classes works the same with the look on.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| A sketched node's outline is a `<g>` that `rough.svg` drew, inside a node classed `rough-node` | The node keeps its v13 classes. Its outline (`<rect>`, `<circle>`, `<polygon>`, `<path>`, …) becomes a `<g>` that carries the outline's own attributes other than geometry and paint (`class`, `filter`, `opacity`, `transform`, `style`, data attributes), holding roughjs's paths in its order: the fill, then the outline. A hachure fill is a `<path>` stroked in the fill colour (`fill="none"`), a solid one a `<path>` filled with it (`stroke="none"`). The paths have no ids | D302, D308, R-SEC-2 |
+| Clusters with `data-look="handDrawn"`, drawn as a rounded-rectangle path of radius 0 | No `data-look`. A subgraph, namespace or ER subgraph frame is sketched as a rectangle (a rounded one when the frame has rounded corners), with v12's options, so its strokes differ from v12's | D308 |
+| Edges: one `<path>` with a sketched `d` | The same: the edge's `<path>` keeps its attributes and gets roughjs's `d`; paint it inherits from its `edgePaths` group stays there | D302 |
+| ER: a solid copy of each hachured entity underneath it, so markers do not show through | Dropped: no v13 ER edge or end marker is drawn under an entity, so nothing shows through. A subgraph's fill still shows through a hachured entity, as for a flowchart node in a subgraph | D308 |
+| State composites: the title band and an alternate (`statediagram-cluster-alt`) body hachured | Both composite parts are solid: the drawer sees only the outline it draws, and an alternate body's outline does not say it is one. Known gap of 13.0 | D302 |
 
 ## Layout
 
