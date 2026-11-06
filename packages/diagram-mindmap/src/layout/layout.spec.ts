@@ -125,7 +125,7 @@ describe('the icon slot (D297)', () => {
     const n = await only('abcd', 'default', {}, 'mdi:fire');
     expect(size(n)).toEqual([130, 60]);
     expect(n.labelAt).toEqual({ x: 25, y: 0 });
-    expect(n.icon).toEqual({ at: { x: -20, y: 0 }, slot: 50, glyph: 40 });
+    expect(n.icon).toMatchObject({ at: { x: -20, y: 0 }, slot: 50, glyph: 40 });
   });
 
   it('grows a circle by 50 both ways, the icon row above the label', async () => {
@@ -134,7 +134,7 @@ describe('the icon slot (D297)', () => {
     expect(n.width).toBeCloseTo(plain.width + 50, 9);
     expect(n.height).toBeCloseTo(plain.height + 50, 9);
     expect(n.labelAt).toEqual({ x: 0, y: 25 });
-    expect(n.icon).toEqual({ at: { x: 0, y: -10 }, slot: 50, glyph: 40 });
+    expect(n.icon).toMatchObject({ at: { x: 0, y: -10 }, slot: 50, glyph: 40 });
   });
 
   it('keeps a tall node its height', async () => {
@@ -193,5 +193,63 @@ describe('config', () => {
       ['MINDMAP_CONFIG_IGNORED', 'mindmap.padding'],
       ['MINDMAP_CONFIG_IGNORED', 'mindmap.maxNodeWidth'],
     ]);
+  });
+});
+
+describe('family geometry from the theme (D152, D288)', () => {
+  async function inTheme(name: 'redux-color' | 'neo' | 'default', shape: MindmapShape) {
+    const ctx = contextFor(tree, await themeNamed(name));
+    return layoutMindmap(fixtureModel([{ label: 'abcd', shape, depth: 0 }]), ctx).mindmap.nodes[0]!;
+  }
+
+  it('draws plain nodes rounded where mindmapRoundedNodes is on (the redux family)', async () => {
+    const redux = await inTheme('redux-color', 'default');
+    expect(redux.shape).toBe('rounded');
+    expect(size(redux)).toEqual([70, 50]);
+    expect((await inTheme('neo', 'default')).shape).toBe('default');
+    expect(size(await inTheme('neo', 'default'))).toEqual([80, 30]);
+  });
+
+  it('pads rect, circle and hexagon with the theme: v12 neo in redux and neo, classic in default', async () => {
+    for (const name of ['redux-color', 'neo'] as const) {
+      expect(size(await inTheme(name, 'rect')), name).toEqual([40 + 32, 20 + 24]);
+      const c = await inTheme(name, 'circle');
+      expect(c.width, name).toBeCloseTo(Math.hypot(40, 20) + 32, 9);
+      // 70 across and 32 down: v12's swapped hexagon axes corrected, as in the flowchart (D151).
+      const h = await inTheme(name, 'hexagon');
+      expect(h.height, name).toBe(20 + 32);
+      expect(h.width, name).toBeCloseTo(40 + 70 + (2 * 52) / 3.5, 9);
+      expect(h.point, name).toBeCloseTo(52 / 3.5, 9);
+    }
+    expect(size(await inTheme('default', 'rect'))).toEqual([80, 40]);
+    expect((await inTheme('default', 'hexagon')).point).toBe(40 / 4);
+  });
+});
+
+describe('the icon reference as written (D286)', () => {
+  // Widths scale with the font size, as a real measurer's do.
+  const scaling = {
+    id: 'scaling',
+    width: (text: string, font: { size: number }) => [...text].length * font.size * 0.5,
+    metrics: (font: { size: number }) => ({
+      ascent: font.size,
+      descent: font.size / 4,
+      lineHeight: font.size * 1.25,
+    }),
+  };
+
+  it('is the trimmed text in the theme font, made smaller to fit the 40 px glyph square', async () => {
+    const t = await themeNamed();
+    const fs = t.number('fontSize');
+    const ctx = contextFor(tree, t, {}, scaling);
+    const at = (icon: string) =>
+      layoutMindmap(fixtureModel([{ label: 'a', depth: 0, icon }]), ctx).mindmap.nodes[0]!.icon!;
+    const short = at(' x ');
+    expect(short.size).toBe(fs);
+    expect(short.text.lines.flat().map((r) => r.text)).toEqual(['x']);
+    const long = at('fa fa-book-open');
+    expect(long.size).toBeLessThan(fs);
+    expect(long.text.width).toBeLessThanOrEqual(40 + 1e-9);
+    expect(long.text.height).toBeLessThanOrEqual(40 + 1e-9);
   });
 });

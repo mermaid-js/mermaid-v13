@@ -10,6 +10,7 @@ import {
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_MINDMAP,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -61,6 +62,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_MINDMAP,
     useGradient: false,
   },
   rules: PIE_NEUTRAL,

@@ -702,6 +702,41 @@ properties:
           since: 13.0.0
           reason: >-
             `false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable.
+      mindmapRoundedNodes:
+        description: |
+          `true`: a mindmap node written without a shape is drawn rounded (D288), and with
+          `mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text and, where
+          `borderColorArray` is empty, every node takes `mainBkg` with a `nodeBorder` outline and
+          text. `false`: plain nodes are v12's default shape, and the root takes `git0`.
+        type: [boolean, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `true` in the redux themes, `false` in the classic and neo themes (v12 `mindmapDb.ts` and `styles.ts` for a theme name with `redux`, D288). Read literally at render time, so it has no CSS variable.
+      mindmapOutlinedNodes:
+        description: |
+          `true`: mindmap nodes take an outline at `strokeWidth` (`cScale<n>`, `nodeBorder` or the
+          gradient) and the theme's `dropShadow`, plain nodes are flat-bottomed, labels take
+          `cScaleLabel<n>` (the root `cScaleLabel0`), and edges are `max(10 − 2d, 2)` px wide at
+          depth class `d`. `false`: no outline or shadow, four rounded corners, the root label
+          `gitBranchLabel0`, and edges `14 − 3d` px wide (3 px from depth class 5).
+        type: [boolean, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `true` in the redux and neo themes, `false` in the classic themes (v12 `look: neo`, `styles.ts`, D288). Read literally at render time, so it has no CSS variable.
+      mindmapBorderEdges:
+        description: |
+          `true`: mindmap edges are drawn in `nodeBorder`; `false`: in their section's `cScale<n>`.
+          Read only with `mindmapOutlinedNodes`, as in v12.
+        type: [boolean, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `true` in the redux themes and `neo-dark`, `false` in the classic themes and `neo` (v12 `styles.ts`). Read literally at render time, so it has no CSS variable.
   themeCSS:
     type: string
     x-mermaid:

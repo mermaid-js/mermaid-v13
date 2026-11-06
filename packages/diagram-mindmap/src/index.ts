@@ -1,7 +1,7 @@
 /**
  * `@mermaid-js/diagram-mindmap`: the mindmap diagram plugin (spec #294). The parser, its model
- * and AST, the lexer and the layout are here; the renderer, plugin export and manifest land
- * with the other tickets of that spec.
+ * and AST, the lexer, the layout and the renderer are here; the plugin export and manifest land
+ * with T5 (#390).
  */
 export {
   detectMindmap,
@@ -26,3 +26,6 @@ export type {
 } from './layout/prepare.ts';
 export { cloudOutline, bangOutline } from './layout/outline.ts';
 export type { Outline, OutlineArc } from './layout/outline.ts';
+export { renderMindmap } from './render/render.ts';
+export type { MindmapRenderContext } from './render/context.ts';
+export { ICON_NOT_RENDERED } from './render/assets.ts';

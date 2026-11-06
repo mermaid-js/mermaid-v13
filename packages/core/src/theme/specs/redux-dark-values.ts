@@ -10,6 +10,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   REDUX_TIMELINE,
+  REDUX_MINDMAP,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -39,6 +40,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   ...REDUX_PADDING,
   ...NEO_SEQUENCE,
   ...REDUX_TIMELINE,
+  ...REDUX_MINDMAP,
   useGradient: false,
 };
 

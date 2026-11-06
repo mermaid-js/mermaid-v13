@@ -510,6 +510,9 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
 | `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
 | `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
+| `mindmapRoundedNodes` (mindmap: a node written without a shape is drawn rounded, D288; with `mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text, and without a `borderColorArray` every node takes `mainBkg` with a `nodeBorder` outline and text) | `true` (`neo`, `neo-dark`: `false`) | `false` |
+| `mindmapOutlinedNodes` (mindmap: an outline at `strokeWidth` and `dropShadow`, flat-bottomed plain nodes, `cScaleLabel0` root text, edges `max(10 − 2d, 2)` px at depth class `d`) | `true` | `false`: no outline or shadow, four rounded corners, `gitBranchLabel0` root text, edges `14 − 3d` px (3 px from depth class 5) |
+| `mindmapBorderEdges` (mindmap edges in `nodeBorder` rather than their section's `cScale<n>`; read with `mindmapOutlinedNodes`) | `true` (`neo`: `false`) | `false` |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -536,6 +539,12 @@ so it counts twice towards the diameter compared with the per-side node padding.
   the same as in v12. Sizes are what v12 draws, not its marker boxes: a v12 cross does not fill
   its box, so `crossArrowheadSize` is the arm span (10.4 neo, 9 classic) and the neo stroke is
   v12's 2.5 scaled by the marker's 0.8.
+- **Mindmap shapes take the same padding variables** as the flowchart's (spec #294 T4): a rectangle
+  `nodePaddingX` / `nodePaddingY` of 10 (v12's renderer fixed it; 16 / 12 in the redux family), a
+  circle `circlePadding` of `mindmap.padding` (16, with no minimum diameter), a hexagon
+  `hexagonPaddingX` / `hexagonPaddingY` of `2 × mindmap.padding` and `hexagonSlant`. The rounded
+  shape keeps 15 on each side with the theme's `radius` corner; the plain, cloud and bang shapes
+  have no family difference.
 - **Hexagon padding axes are corrected.** v12 adds the X padding to the height and the Y padding
   to the width; v13 applies X to the width and Y to the height, so a hexagon in a redux theme is
   wider and less tall than in v12 (D151).
@@ -1324,6 +1333,26 @@ Legend entries carry `data-id="a:<name>"` only.
   slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
   D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
   needs `theme: 'default'` to keep its colours.
+
+## Mindmap SVG structure
+
+What changed in the mindmap's SVG compared with v12 12.2.0 (`mindmapRenderer.ts` through the
+shared `rendering-util` shapes and edges, `styles.ts`), and why (DESIGN §7.2, spec #294). v12's
+class names are kept where the element still exists: `mindmap-node`, `section-<n>`,
+`section-root`, `node-bkg`, `edge`, `section-edge-<n>`, `edge-depth-<d>`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="mindmapDiagram"`, a `<style>` scoped by the id; colours from CSS rules per section | No root `id`; `class="mermaid mermaid-mindmap"`, `role="img"`, `aria-roledescription="mindmap"`, `data-mermaid-version`; colours are presentation attributes, theme variables as `var(--_x)` aliases and palette slots as literal colours | Inert output (R-SEC-2), D152 |
+| Node `<g id="node_<n>" class="mindmap-node section-<n>" data-look>` placed by `transform`, the shape inside with `id`; edges in `g.edgePaths`, nodes in `g.nodes` | `<g class="mindmap-node section-<n> <author classes>" data-id="n:<id>" data-ast="n:<id>">` (the root `section-root section--1`), coordinates absolute, no `transform`, no ids, no `data-look`; edges in `g.mindmap-edges` under nodes in `g.mindmap-nodes`. An edge is `<path class="edge section-edge-<n> edge-depth-<d>" data-id="edge:n:<child>">` | One element per node maps it to its source (R-PARSE-8, D289); D308 |
+| Labels in `<foreignObject>` HTML (`htmlLabels`), every label markdown | `<text class="mindmap-node-label">` with a `<tspan>` per line from core's label layout; markdown kept (bold, italic, line breaks, D225) | No `foreignObject` (R-SEC-2) |
+| `edge-depth-<d>` from the parent's raw indent plus 1 (two-space indents give 1, 3, 5 …); widths from CSS: classic `17 − 3i`, so 11, 8, 5, 2 and 3 px from class 5 on (the browser drops the negative ones), neo `max(10 − 2d, 2)` | The same class numbering and widths, written as `stroke-width` on each edge; with two-space indents classic edges are 11, 5 and 3 px wide, not 11, 8, 5 | P2: author CSS for `edge-depth-<d>` keeps matching (GAPS #388) |
+| Edges `curve: 'basis'` through cose-bilkent's three points, or tidy-tree's elbows | `tree`'s port-to-port routes as one cubic leaving and entering along the ports; `layered` and ELK routes as the basis spline through their points | D280–D282 |
+| A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |
+| Neo nodes in `[data-look="neo"]` rules by theme name (`redux`, `redux-dark`, `neutral`, `neo-dark`, `includes('redux')`); `filter: url(#<id>-drop-shadow)` on the node's group | The flags and `borderColorArray` decide (`redux` and `redux-dark` carry none); the shadow is the `dropShadow` CSS filter on the shape, so labels are not shadowed. `neutral` is a classic theme, so v12's neo-only `neutral` label rule has nothing to apply to | D152, D153, D227 |
+| Under `useGradient` a second `<linearGradient id="<id>-gradient">`, a duplicate id | One scoped gradient (D182) | Unique ids |
+| `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); without an icons extension the reference as written, smaller to fit 40 px, in the label's slot colour, with one `ICON_NOT_RENDERED` | D286, D291 |
+| No hand-drawn sketch of the plain node | Every outline and edge goes through the outline hook, the plain node too | D302, D308, D309 |
 
 ## Timeline SVG structure
 

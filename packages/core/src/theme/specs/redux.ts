@@ -9,6 +9,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   REDUX_TIMELINE,
+  REDUX_MINDMAP,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -97,6 +98,7 @@ const redux: ThemeSpec = {
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
     ...REDUX_TIMELINE,
+    ...REDUX_MINDMAP,
     useGradient: false,
   },
   rules: { ...REDUX_RULES, ...PIE_REDUX },
