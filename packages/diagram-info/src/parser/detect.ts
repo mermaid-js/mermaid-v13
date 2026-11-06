@@ -1,3 +1,4 @@
+// cspell:words infox
 /**
  * Info detection, as v12's `infoDetector` saw the text (`/^\s*info/`, case-sensitive): after
  * the front matter, with directives and `%%` comments removed. `infox` is detected too, and
