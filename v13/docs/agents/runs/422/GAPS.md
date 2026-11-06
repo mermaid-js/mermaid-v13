@@ -30,8 +30,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## T2 (#446)
 
 - **`RadarModel` unchanged** by T2. Additive export: `layoutRadar` and the `RadarLayout` types from the runtime entry (for the layout corpus spec, as pie's #305).
-- Parity over the gate corpus: 0 divergences; exclusions as T1's (unclosed directives, the indented-front-matter dev diagram), each asserted to differ only in core. Nothing added to `divergences.json`.
-- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse with the others `related` (D356).
+- Parity over the gate corpus: 0 unlisted. The core divergences (unclosed directives, the indented-front-matter dev diagram, each plain/CRLF/commented) are 9 rows in `divergences.json` (owner #446), and the parity spec asserts nothing else differs.
+- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse, `related` its curve and the other unknown entries (D356).
 - Skipped ported specs: `closedRoundCurve` path strings and `draw` (#448 ports them, edit `SKIP` in `scripts/port-v12-specs.ts`); v12's "unknown location at the end of input" (v13 locates it).
 
 ## Theme T0a merged (2026-11-06)

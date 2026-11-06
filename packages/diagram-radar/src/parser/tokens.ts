@@ -53,6 +53,21 @@ export const T = {
 } as const;
 
 /**
+ * The words v12's lexer reads as a token even at the start of a longer name (no `ID`
+ * longer-alternative), by kind: `circles` is `circle` then the name `s` (D357). The lexer
+ * matches the first two kinds from here (TITLE is its own rule); the parser names them all in
+ * its messages.
+ */
+export const PREFIX_KEYWORDS: readonly {
+  readonly kind: number;
+  readonly words: readonly string[];
+}[] = [
+  { kind: T.GraticuleValue, words: ['circle', 'polygon'] },
+  { kind: T.Boolean, words: ['true', 'false'] },
+  { kind: T.Title, words: ['title'] },
+];
+
+/**
  * Trivia for the radar parser: the shared trivia kinds and {@link T.Yaml}. In-text `%%`
  * comments are `Kind.Comment` and `%%{…}%%` directives `Kind.Directive`, like the spans v12
  * removed before lexing.

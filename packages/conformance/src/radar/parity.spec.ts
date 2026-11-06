@@ -12,40 +12,40 @@ import { radarAdapter } from './v13.ts';
  * fixtures, the dev diagram and the v12 spec strings (the first and the last also in the main
  * parity run), and `corpus/radar-cases.json`, each also with CRLF line breaks and with comment
  * lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: `getAxes()`,
- * `getCurves()`, `getOptions()`, the title and accessibility) must agree, except listed
- * divergences.
+ * `getCurves()`, `getOptions()`, the title and accessibility) must agree, except the divergences
+ * listed in `divergences.json`.
  *
- * Excluded ({@link EXCLUDED}, by id prefix, every variant), with the reasons the lexer gate
- * gives, both core's reading shared by every type and each checked below to still differ only
- * there:
- * - `radar-cases/unclosed-directive`: core ends an unclosed `%%{` at its line end and reports
+ * The listed radar divergences are core's reading, shared by every type, and the second test
+ * checks they differ only there ({@link CORE}):
+ * - `radar-cases/unclosed-directive*`: core ends an unclosed `%%{` at its line end and reports
  *   `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed.
  * - `dev-diagrams/knsv/knsv2-03-radar.mmd`: its front matter is indented; core reads it (#7613)
  *   and reports `UNCLOSED_FRONT_MATTER`, where v12 saw no front matter. Its dedented copy
- *   (`radar-cases/dev-diagram-dedented`) is in the gate.
+ *   (`radar-cases/dev-diagram-dedented`) agrees.
  */
-const EXCLUDED: ReadonlyMap<string, RegExp> = new Map([
+const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['radar-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
   ['dev-diagrams/knsv/knsv2-03-radar.mmd', /^UNCLOSED_FRONT_MATTER/],
 ]);
-const excluded = (id: string) => [...EXCLUDED.keys()].some((p) => id.startsWith(p));
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
   yield* items;
 }
 
+const run = async () =>
+  runParity({
+    adapters: [radarAdapter],
+    corpus: each(await radarGateCorpus()),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+  });
+
 describe('radar oracle parity with mermaid@12', () => {
   it('matches accept/reject and the model over the gate corpus', async () => {
-    const items = (await radarGateCorpus()).filter((i) => !excluded(i.id));
-    const report = await runParity({
-      adapters: [radarAdapter],
-      corpus: each(items),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
-    });
+    const report = await run();
     const agree = report.results.filter((r) => r.status === 'agree');
     const rejected = agree.filter((r) => !r.oracleAccepted).length;
     process.stdout.write(
-      `radar parity: ${report.results.length} sources, ${agree.length} agree (${rejected} rejected by both)\n`
+      `radar parity: ${report.results.length} sources, ${agree.length} agree (${rejected} rejected by both), ${report.expected.length} listed divergences\n`
     );
     expect(agree.length).toBeGreaterThan(550);
     expect(rejected).toBeGreaterThan(100);
@@ -55,19 +55,20 @@ describe('radar oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('still differs on the exclusions, in core', async () => {
-    for (const [prefix, detail] of EXCLUDED) {
-      const items = (await radarGateCorpus()).filter((i) => i.id.startsWith(prefix));
-      const report = await runParity({
-        adapters: [radarAdapter],
-        corpus: each(items),
-        divergences: [],
-      });
-      expect(items.length, prefix).toBeGreaterThan(0);
-      for (const r of report.results) {
-        expect(r.divergence?.kind, r.id).toBe('reject');
-        expect(r.divergence?.detail, r.id).toMatch(detail);
-      }
+  it('differs only in core, where the list says (unclosed directives, indented front matter)', async () => {
+    const report = await run();
+    const prefixes = [...CORE.keys()];
+    for (const prefix of prefixes) {
+      expect(
+        report.expected.some((d) => d.id.startsWith(prefix)),
+        prefix
+      ).toBe(true);
     }
-  }, 60_000);
+    for (const d of report.expected) {
+      const prefix = prefixes.find((p) => d.id.startsWith(p));
+      expect(prefix, d.id).toBeDefined();
+      expect(d.kind, d.id).toBe('reject');
+      expect(d.detail, d.id).toMatch(CORE.get(prefix ?? '') ?? /^$/);
+    }
+  }, 300_000);
 });

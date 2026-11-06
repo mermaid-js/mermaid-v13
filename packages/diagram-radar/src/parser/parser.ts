@@ -19,9 +19,8 @@
  *     TitleAndAccessibilities: ((ACC_DESCR | ACC_TITLE | TITLE) EOL)+     EOL: NEWLINE+ | EOF
  *
  * so it accepts and rejects what v12's parser does. The model is then resolved as v12's DB did
- * (`db.ts`): axes before curves whatever the text order, detailed entries reordered to the axes
- * (the first per axis wins), options the last of each name, `ticks` at most 32. v12's two DB
- * throws are semantic errors with its messages at the curve (R-PARSE-4). Unlike v12 the parser
+ * ({@link normalise}); v12's two DB throws are semantic errors with its messages at the curve
+ * (R-PARSE-4). Unlike v12 the parser
  * does not stop at the first error: it reports it, skips to the next line break (past the `}`
  * of a curve it was in) and carries on.
  */
@@ -31,6 +30,7 @@ import {
   cook,
   DQUOTE,
   ExpectedTable,
+  formatExpected,
   Kind,
   kindSet,
   LineIndex,
@@ -44,15 +44,13 @@ import type {
   ParseOptions,
   ParseResult,
   Range,
-  RelatedInfo,
   SourceView,
   TokenStream,
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { MAX_TICKS } from '../layout/metrics.ts';
-import type { RadarAxis, RadarCurve, RadarEntry, RadarModel, RadarOptions } from '../model.ts';
+import type { RadarModel } from '../model.ts';
 import type {
   RadarAxisNode,
   RadarCurveNode,
@@ -62,9 +60,11 @@ import type {
   RadarStatementNode,
   RadarTextNode,
 } from './ast.ts';
+import { normalise } from './normalise.ts';
+import type { OptionName } from './normalise.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { RADAR_TRIVIA, T } from './tokens.ts';
+import { PREFIX_KEYWORDS, RADAR_TRIVIA, T } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -72,15 +72,6 @@ export interface RadarParseOptions extends ParseOptions {
 }
 
 export type RadarParseResult = ParseResult<RadarModel, RadarDocument>;
-
-/** A detailed entry names no axis: it is ignored (D356). */
-export const RADAR_UNKNOWN_AXIS = 'RADAR_UNKNOWN_AXIS';
-/** `ticks` above {@link MAX_TICKS}: clamped (D356; v12 only logged it). */
-export const RADAR_TICKS_CLAMPED = 'RADAR_TICKS_CLAMPED';
-/** v12 `db.ts`'s `Missing entry for axis …`: a detailed curve leaves an axis out. */
-export const RADAR_MISSING_ENTRY = 'RADAR_MISSING_ENTRY';
-/** v12 `db.ts`'s `Axes must be populated …`: detailed entries and no axis at all. */
-export const RADAR_NO_AXES = 'RADAR_NO_AXES';
 
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 const OPTIONS = [T.ShowLegend, T.Ticks, T.Max, T.Min, T.Graticule];
@@ -91,7 +82,12 @@ const HEAD = [T.RadarBeta, T.RadarBetaColon, Kind.Newline];
 const LINE_END = [Kind.Newline, Kind.EOF];
 const STARTS_SET = kindSet(...STARTS);
 /** Tokens that cannot start or continue a name although they look like one (D357). */
-const KEYWORD_PREFIX = kindSet(T.GraticuleValue, T.Boolean, T.Title);
+const KEYWORD_PREFIX = kindSet(...PREFIX_KEYWORDS.map((k) => k.kind));
+/** `a`, `b` or `c`, each in backticks. */
+const words = (list: readonly string[]) => formatExpected(list.map((w) => `\`${w}\``));
+const wordsOf = (kind: number) => words(PREFIX_KEYWORDS.find((k) => k.kind === kind)?.words ?? []);
+/** `circle`, `polygon`, `true`, `false` or `title`. */
+const KEYWORD_NAMES = words(PREFIX_KEYWORDS.flatMap((k) => k.words));
 
 /**
  * Kinds a probe's cursor follows rather than extends: punctuation, and a label, which its
@@ -107,24 +103,13 @@ const PROBE_FOLLOWS = kindSet(
   T.String
 );
 
-type OptionName = RadarOptionNode['name'];
-
 /** Each option keyword's name and the kind of its value. */
-const OPTION_OF: Readonly<Record<number, readonly [OptionName, number]>> = {
-  [T.ShowLegend]: ['showLegend', T.Boolean],
-  [T.Ticks]: ['ticks', T.Number],
-  [T.Max]: ['max', T.Number],
-  [T.Min]: ['min', T.Number],
-  [T.Graticule]: ['graticule', T.GraticuleValue],
-};
-
-/** v12's option defaults (`db.ts`). */
-const DEFAULT_OPTIONS: RadarOptions = {
-  showLegend: true,
-  ticks: 5,
-  max: null,
-  min: 0,
-  graticule: 'circle',
+const OPTION_OF: Readonly<Record<number, { readonly name: OptionName; readonly value: number }>> = {
+  [T.ShowLegend]: { name: 'showLegend', value: T.Boolean },
+  [T.Ticks]: { name: 'ticks', value: T.Number },
+  [T.Max]: { name: 'max', value: T.Number },
+  [T.Min]: { name: 'min', value: T.Number },
+  [T.Graticule]: { name: 'graticule', value: T.GraticuleValue },
 };
 
 /** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
@@ -177,8 +162,8 @@ const EXPECTED = new ExpectedTable([
   ['`:`', [T.Colon]],
   ['`,`', [T.Comma]],
   ['`}`', [T.RBrace]],
-  ['`true` or `false`', [T.Boolean]],
-  ['`circle` or `polygon`', [T.GraticuleValue]],
+  [wordsOf(T.Boolean), [T.Boolean]],
+  [wordsOf(T.GraticuleValue), [T.GraticuleValue]],
   ['a line break', [Kind.Newline]],
   ['the end of the text', [Kind.EOF]],
 ]);
@@ -193,7 +178,6 @@ const ID_OF: Record<RadarTextNode['type'], string> = {
   AccTitle: 'accTitle',
   AccDescr: 'accDescr',
 };
-const KEYWORD_NAMES = '`circle`, `polygon`, `true`, `false` or `title`';
 
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
@@ -340,9 +324,10 @@ class RadarParser {
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
     if (this.kind() === T.Id) this.accessibilityName(where);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
+    const names = EXPECTED.names(want);
     const why = hint ?? this.explain(want);
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    const message = `Expected ${formatExpected(names)}, got ${this.found()}${why ? `; ${why}` : ''}.`;
+    st.diagnostics.error('UNEXPECTED', message, where, { expected: names });
     throw STOP;
   }
 
@@ -414,12 +399,21 @@ class RadarParser {
     if (k === Kind.Newline && (want.includes(T.LBrace) || want.includes(T.RBracket))) {
       return "a curve's label and `{` go on the line of its name";
     }
-    if (!this.inBraces) {
-      if (k === T.RadarBeta || k === T.RadarBetaColon) {
-        return 'a chart has one `radar-beta`, at its start';
-      }
-      return undefined;
+    if (k === T.Id && want.includes(T.Number) && /^[0-9]/.test(this.raw())) {
+      return 'a value is a number such as `42` or `3.5`, with digits on both sides of a `.`';
     }
+    if (this.inBraces) return this.explainEntries(want);
+    if (k === T.RadarBeta || k === T.RadarBetaColon) {
+      return 'a chart has one `radar-beta`, at its start';
+    }
+    return undefined;
+  }
+
+  /** {@link explain} inside a curve's `{ … }`. */
+  private explainEntries(want: readonly number[]): string | undefined {
+    const k = this.kind();
+    const prev = this.kind(this.i - 1);
+    if (STARTS_SET[k] === 1 && prev === Kind.Newline) return "the curve's `{` has no `}`";
     if (k === T.Comma && prev === Kind.Newline) {
       return 'a line break inside `{ }` may follow a `,`, not come before it';
     }
@@ -674,7 +668,7 @@ class RadarParser {
     this.tested(OPTIONS);
     const of = OPTION_OF[this.kind()];
     if (!of) this.fail(OPTIONS);
-    const [name, valueKind] = of;
+    const { name, value: valueKind } = of;
     const start = this.range(this.i++).start;
     const v = this.expect(valueKind);
     const valueRange = this.range(v);
@@ -707,121 +701,26 @@ class RadarParser {
     this.eol();
   }
 
-  // ---- the model (v12 `db.ts`) ----------------------------------------------------------
+  // ---- the model ----------------------------------------------------------------------
 
   private model(): RadarModel {
     const { diagnostics } = this.st;
-    const axes: RadarAxis[] = this.axes.map((a) =>
-      Object.freeze({ name: a.name, label: a.label ?? a.name, astId: a.id })
+    const resolved = normalise(
+      {
+        src: this.src,
+        axes: this.axes,
+        curves: this.curves,
+        options: this.options,
+        title: this.title,
+        accTitle: this.accTitle,
+        accDescr: this.accDescr,
+        frontMatterTitle: this.pre.frontMatter?.title,
+      },
+      diagnostics
     );
-    const unknown: [RadarEntryNode, RadarCurveNode][] = [];
-    const curves = this.curves.map((c) => this.resolve(c, axes, unknown));
-    if (axes.length > 0) this.unknownAxes(unknown);
-    const options = this.resolvedOptions();
     // The model's diagnostics are found after the parse: keep the list in source order.
-    diagnostics.list.sort((a, b) => a.range.start - b.range.start);
+    diagnostics.list.sort((x, y) => x.range.start - y.range.start);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning');
-    // D218: the in-text title if non-empty, else the front-matter one.
-    const title = this.title || this.pre.frontMatter?.title;
-    return Object.freeze({
-      axes: Object.freeze(axes),
-      curves: Object.freeze(curves),
-      options,
-      ...(title ? { title } : {}),
-      accTitle: this.accTitle,
-      accDescr: this.accDescr,
-      warnings: Object.freeze(warnings),
-    });
-  }
-
-  /**
-   * v12 `computeCurveEntries`: positional entries as written; detailed ones, for each axis in
-   * order, the first entry naming it. v12 threw when an axis had none, and when there were no
-   * axes at all: errors here (v12's messages), and the curve keeps the entries it has.
-   */
-  private resolve(
-    c: RadarCurveNode,
-    axes: readonly RadarAxis[],
-    unknown: [RadarEntryNode, RadarCurveNode][]
-  ): RadarCurve {
-    const entry = (e: RadarEntryNode): RadarEntry => Object.freeze({ value: e.value, astId: e.id });
-    const curve = (entries: RadarEntry[]): RadarCurve =>
-      Object.freeze({
-        name: c.name,
-        label: c.label ?? c.name,
-        entries: Object.freeze(entries),
-        astId: c.id,
-      });
-    const nodes = c.children;
-    if (nodes[0]?.axis === undefined) return curve(nodes.map(entry));
-    const { diagnostics } = this.st;
-    if (axes.length === 0) {
-      diagnostics.error(
-        RADAR_NO_AXES,
-        'Axes must be populated before curves for reference entries',
-        c.range
-      );
-      return curve([]);
-    }
-    const names = new Set(axes.map((a) => a.name));
-    for (const e of nodes) if (!names.has(e.axis ?? '')) unknown.push([e, c]);
-    const first = new Map<string, RadarEntryNode>();
-    for (const e of nodes) if (e.axis !== undefined && !first.has(e.axis)) first.set(e.axis, e);
-    const entries: RadarEntry[] = [];
-    let missing: RadarAxis | undefined;
-    for (const a of axes) {
-      const e = first.get(a.name);
-      if (e) entries.push(entry(e));
-      else missing ??= a;
-    }
-    if (missing) {
-      diagnostics.error(RADAR_MISSING_ENTRY, `Missing entry for axis ${missing.label}`, c.range);
-    }
-    return curve(entries);
-  }
-
-  /** D356: one warning for the entries that name no axis, at the first, the rest related. */
-  private unknownAxes(unknown: readonly [RadarEntryNode, RadarCurveNode][]): void {
-    const say = ([e, c]: [RadarEntryNode, RadarCurveNode]) =>
-      `\`${e.axis ?? ''}\` in curve \`${c.name}\` names no axis`;
-    const [first, ...rest] = unknown;
-    if (!first) return;
-    const n = rest.length;
-    const more = n === 0 ? '' : ` (and ${n} more ${n === 1 ? 'entry' : 'entries'})`;
-    const related: RelatedInfo[] = rest.map((u) => ({
-      message: `${say(u)}.`,
-      range: u[0].axisRange ?? u[0].range,
-    }));
-    this.st.diagnostics.warning(
-      RADAR_UNKNOWN_AXIS,
-      `${say(first)}${more}: the value is ignored. Declare the axis with \`axis\`, or use the name of one.`,
-      first[0].axisRange ?? first[0].range,
-      related.length > 0 ? { related } : undefined
-    );
-  }
-
-  /** v12 `setOptions`: the last of each name, else the default; `ticks` at most 32. */
-  private resolvedOptions(): RadarOptions {
-    const get = <V>(name: OptionName, fallback: V): V =>
-      (this.options.get(name)?.value as V | undefined) ?? fallback;
-    let ticks = get('ticks', DEFAULT_OPTIONS.ticks);
-    const t = this.options.get('ticks');
-    if (t && ticks > MAX_TICKS) {
-      const written = this.src.slice(t.valueRange.start, t.valueRange.end);
-      this.st.diagnostics.warning(
-        RADAR_TICKS_CLAMPED,
-        `\`ticks ${written}\` is more than ${MAX_TICKS}: the chart draws ${MAX_TICKS} rings.`,
-        t.valueRange,
-        { related: [{ message: 'The `ticks` option that sets it.', range: t.range }] }
-      );
-      ticks = MAX_TICKS;
-    }
-    return Object.freeze({
-      showLegend: get('showLegend', DEFAULT_OPTIONS.showLegend),
-      ticks,
-      max: get<number | null>('max', DEFAULT_OPTIONS.max),
-      min: get('min', DEFAULT_OPTIONS.min),
-      graticule: get('graticule', DEFAULT_OPTIONS.graticule),
-    });
+    return Object.freeze({ ...resolved, warnings: Object.freeze(warnings) });
   }
 }

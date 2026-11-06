@@ -26,9 +26,16 @@ export async function radarCorpus(): Promise<CorpusItem[]> {
   return [...items, ...readItems('packages/conformance/corpus/radar-v12-specs.json')];
 }
 
-/** The hand-written cases: the spec's quirks and the rules' other corners. */
+/**
+ * The hand-written cases: the spec's quirks and the rules' other corners, and the parser's
+ * recovery set (`radar-recovery.json`, whose expected diagnostics the radar package checks).
+ */
 export function radarCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/radar-cases.json');
+  const recovery = readItems('packages/conformance/corpus/radar-recovery.json');
+  return [
+    ...readItems('packages/conformance/corpus/radar-cases.json'),
+    ...recovery.map(({ id, source }) => ({ id, source })),
+  ];
 }
 
 /** The corpus, the cases, and a CRLF and a commented copy of each. */
