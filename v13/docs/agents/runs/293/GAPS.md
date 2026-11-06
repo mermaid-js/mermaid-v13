@@ -175,3 +175,6 @@ Renderer items, fix round for #381 (queued until a slot frees):
 - [x] **Sections with no `data-ast`** (`layout/parts.ts`, `render.ts`): a repeated `section A` (`s:A@2`) and a section holding only `vert` tasks get no drawn element with their AST id (pitfall 12; the round-trip spec checks only drawn sections). Give each section AST node exactly one element.
 - [x] **Empty `<g/>`** when the only section is unnamed (no `section` line): `render.ts` writes it though `drawSection` returns early. Don't write it.
 - [x] MIGRATION.md: "slots past section3" outside labels took `taskTextDarkColor`, not `textColor`; `transform-origin` was on every bar and exclude rect, not only milestones; d3's per-tick `translate` and the grid group's `translate(sidePad, h-50)` are flattened. Fix the wording.
+
+## Shared timing (coordinator, not gantt)
+- `packages/conformance/src/flowchart/probe.spec.ts` ("over the corpus and the error corpus", 60 s timeout) sweeps every `PARITY_SUITES` corpus: about 4,078 sources and 1.13 MB. Its comment says about 3 s alone; on this machine at load ~20 it takes 38.7 s alone and timed out twice inside the full `pnpm check` (one pre-push rejection, retried green). Gantt adds 148 sources and 47 KB, about 4%. Not changed here (never loosen a gate); it may need sampling, or to sweep only flowchart's corpus, before more types land.
