@@ -1,0 +1,12 @@
+# @mermaid-js/diagram-flowchart
+
+## 13.0.0-alpha.1
+
+### Patch Changes
+
+- [#347](https://github.com/mermaid-js/mermaid-v13/pull/347) [`a7e2ebe`](https://github.com/mermaid-js/mermaid-v13/commit/a7e2ebe4739113090ce062a2b70c9ae112a72359) Thanks [@knsv-bot](https://github.com/knsv-bot)! - feat: flowchart icon shapes (`@{ icon: … }`, with `form: square`, `circle` or `rounded`) draw their glyph with `@mermaid-js/plugin-icons`, as v12 did: the glyph takes the node's `stroke` style, else `nodeBorder`, or the gradient under `useGradient` (`neo`, `neo-dark`), and the frame is borderless. An icon that is not drawn keeps its outlined frame, with one `ICON_NOT_RENDERED` per render (also without the icons extension). `ICON_UNAVAILABLE` is deprecated: for one alpha it is raised once per render next to `ICON_NOT_RENDERED` (which names the icons with the icons extension), with a fixed message as `SEQUENCE_MATH`, and no longer for a placeholder render.
+
+- [#123](https://github.com/mermaid-js/mermaid-v13/pull/123) [`d1906aa`](https://github.com/mermaid-js/mermaid-v13/commit/d1906aaf00de245710f91a873254736d2a528bd0) Thanks [@knsv-bot](https://github.com/knsv-bot)! - feat: the flowchart language facet as the `./language` subpath (parser, token categories, completion and hover; no renderer code), used by `@mermaid-js/language-service`.
+
+- Updated dependencies [[`756c1a2`](https://github.com/mermaid-js/mermaid-v13/commit/756c1a214be52650abd37b34ae4469b6ba128da4), [`24468c6`](https://github.com/mermaid-js/mermaid-v13/commit/24468c63c38a04cad0346e856443b55f527dd8d3), [`a58fba2`](https://github.com/mermaid-js/mermaid-v13/commit/a58fba2b78b680a018706c2662b1c8fe6f8583d2), [`d1906aa`](https://github.com/mermaid-js/mermaid-v13/commit/d1906aaf00de245710f91a873254736d2a528bd0), [`411e967`](https://github.com/mermaid-js/mermaid-v13/commit/411e9676909d16e790707d1cac4e1a00c99d226f), [`101dab1`](https://github.com/mermaid-js/mermaid-v13/commit/101dab15d7e6a18dd948f1876f2bfb2cb4a3f293), [`c0b1a0b`](https://github.com/mermaid-js/mermaid-v13/commit/c0b1a0b9a4bd92e9146f9d6eb61622ef39bb1f1d), [`f433e76`](https://github.com/mermaid-js/mermaid-v13/commit/f433e76f0c391850c4100aaaf10f44207655d5b1), [`aac2097`](https://github.com/mermaid-js/mermaid-v13/commit/aac2097c19d3b1517e8aa701003cd8f8397e4f8c), [`36db503`](https://github.com/mermaid-js/mermaid-v13/commit/36db50399202f23e86904c55e821458c3528d820)]:
+  - @mermaid-js/core@13.0.0-alpha.1

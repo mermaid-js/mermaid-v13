@@ -7,6 +7,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { VERSION } from './version.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const CLI = join(import.meta.dirname, 'cli.ts');
@@ -274,6 +275,6 @@ describe('mermaid CLI --help', () => {
 
   it('prints the version', async () => {
     const r = await cli(['--version']);
-    expect(r).toEqual({ code: 0, stdout: '13.0.0-alpha.0\n', stderr: '' });
+    expect(r).toEqual({ code: 0, stdout: `${VERSION}\n`, stderr: '' });
   }, 30_000);
 });
