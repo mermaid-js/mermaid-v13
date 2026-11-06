@@ -44,6 +44,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #371 T3 layout
 
 ## #372 T6 language facet
+- **Choice:** the main branch is no symbol: the facet's parse drops its occurrences (its name is config, not text). Renaming it is refused at prepare with the service's generic "There is no id or class name here to rename."; definition and references on it are empty; hover says its name is set in `gitGraph.mainBranchName`. A specific refusal message needs an optional hook on core's `LanguageFacet` (type-only, 0 B), left for the maintainer (D102: no core change here). Refusing at `rename` instead would add a `KNOWN_REFUSALS` entry per corpus file that mentions `main` (about 100).
+- **Choice:** the facet reads `mainBranchName`/`mainBranchOrder` from the document's front matter and `init` directives (last wins, an `init` `config` key after its `gitGraph` key); the site config is the integrator's and not in the text. Without it `checkout trunk` under `mainBranchName: trunk` (3 corpus files) is a false error.
+- **Choice:** folding is the parser's statement spans, so a statement with a string written over lines folds too (as pie's labels), not only `accDescr { … }`.
+- **Choice:** completion: on the `gitGraph` line only a direction (`TB:`) or `:`, not the statements v12 also reads there; branch and commit items are kind `value` (no `branch`/`commit` kind). After a cherry-pick's `id:` only ids written before the cursor and not on the branch checked out (a merge only with a `parent:`), after `parent:` the merge's parents with written ids: every item then parses clean (`completion-validity.spec.ts`).
+- Parser changes (probe and a range only): the probe's mode is `string` from an unclosed quote to its line end (the lexer makes the quote alone an error token); a cherry-pick without `id:` reports `GIT_CHERRY_PICK_UNKNOWN_COMMIT` zero-width after the statement and its blanks (was the keyword), as timeline's `accTitle:`.
+- Four-way agreement pins two line-based gaps of TextMate/Monarch (Lezer agrees): a string over lines (corpus `97-…multi-line-text…`) and a body `---` block (fixture), as pie.
+- [ ] **For T5 (#374):** see `tickets/372.md` (unlisted row, eager row, adapter rows).
 
 ## #373 T4 renderer
 - [ ] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368.
