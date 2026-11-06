@@ -5,11 +5,11 @@ Integration branch `feature/422_radar` (draft PR #474), cut from `mermaid-v13` a
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate on the Langium oracle | #445 | — | merged |
-| T2 grammar, parser, model, AST, ported specs | #446 | #445 | in progress |
+| T2 grammar, parser, model, AST, ported specs | #446 | #445 | merged |
 | T3 custom layout (`RadarLayout`) | #447 | #446 (soft) | merged |
-| T4 SVG renderer | #448 | #446, #447 | open |
+| T4 SVG renderer | #448 | #446, #447 | in review |
 | T5 integration | #449 | #448, #414 T0a | open |
-| T6 language facet | #450 | #446 | open |
+| T6 language facet | #450 | #446 | in progress |
 
 No T0 (radar adds no core contract; the theme table comes from #414 T0a, D322, D335) and no T7 (D320).
 

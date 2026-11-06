@@ -41,3 +41,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Base sync (2026-11-06)
 
 - `mermaid-v13` gained gantt #398 and gitGraph #404. Merging it here conflicts in 11 core theme files between T0a and M4 wave 2 (`theme/spec.ts`, `theme.ts`, `vocabulary.ts`, `specs/*`, `generated/variables.ts`): the T0's to resolve. Aborted; coordinator rule (until #472 merges): M5a ports take `mermaid-v13` only through `feature/414_theme-t0`, never directly; the T0 session merges all three wave-2 types (mindmap #406 too) and the coordinator sends the sha. Radar-owned conflicts expected then: `conformance/package.json`, `jison/harvest.ts` (gitGraph's harvest vs #445's `harvest:langium`), `langium-lexer.ts` row order, `theme-used-by.spec.ts`. Hosted CI does not run on #474 until the conflicts are gone.
+
+## T2 (#446, merged)
+
+- Review fixes (orchestrator): divergences listed in `divergences.json` (9 rows: unclosed directives and the indented-front-matter dev diagram, each plain/CRLF/commented; a spec pins them to core's codes); `RADAR_UNKNOWN_AXIS` always has `related` (its curve first); recovery set 39 cases, 13 multi-error; recovery cases in `corpus/radar-recovery.json`, multi-line diagrams in `e2e/diagrams/radar/nightly-check/parser-*.mmd`; model resolution in `normalise.ts`, one keyword table (`PREFIX_KEYWORDS`).
+- Accepted deviations: `layoutRadar` exported from the runtime entry; parser-stress spec; symbols, statements and probe hooks in the parser; `UNCLOSED_ACC_DESCR`; `@n` ids for repeated `title`/`accTitle`/`accDescr`/options; a curve with v12's semantic error stays in the model with what it has, the text still rejected (error severity).
