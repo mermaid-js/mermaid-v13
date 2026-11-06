@@ -18,6 +18,8 @@
  * transition, any other a block (Langium's lookahead). Unlike v12 it does not stop at the first
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4); items right
  * after the failed line still join the block before it, so one error gives one diagnostic.
+ * Every lexer error is reported, also one in the rest of a line it skips, as v12's lexer
+ * reported each; a parse error is reported once per line.
  *
  * With `probe` (R-LANG-7, D95, #470) the rules also record what they would accept at that offset,
  * at the same decision points as their `fail` lists, for completion; nothing else changes.
@@ -369,17 +371,24 @@ class CynefinParser {
   private fail(want: readonly number[], hint?: string): never {
     const { state } = this;
     const where = this.range();
-    if (this.kind() === Kind.Error) this.badCharacters(where, hint);
+    if (this.kind() === Kind.Error) {
+      this.badCharacters(this.i, hint);
+      throw STOP;
+    }
     const d = state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
     const why = hint ?? this.explain();
     if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
     throw STOP;
   }
 
-  /** Text no token rule matched: an unclosed string or `accDescr {`, or stray characters. */
-  private badCharacters(where: Range, hint: string | undefined): never {
+  /**
+   * Report the error token `j`, text no token rule matched: an unclosed string or `accDescr {`,
+   * or stray characters.
+   */
+  private badCharacters(j: number, hint?: string): void {
     const { state } = this;
-    const text = this.raw();
+    const where = this.range(j);
+    const text = this.raw(j);
     const line = this.lineOf(where.start);
     if (text.startsWith('"') || text.startsWith("'")) {
       const q = text[0] ?? '"';
@@ -389,7 +398,7 @@ class CynefinParser {
         where,
         { expected: [`\`${q}\``] }
       );
-      throw STOP;
+      return;
     }
     const word = /^[\t ]*(accDescr|accTitle)/.exec(text)?.[1];
     if (word === 'accDescr') {
@@ -398,7 +407,7 @@ class CynefinParser {
         `Unclosed accessible description: the \`accDescr {\` at line ${line} has no closing \`}\`, and \`accDescr\` without \`{\` takes a \`:\`. Write \`accDescr: …\` or \`accDescr { … }\`.`,
         where
       );
-      throw STOP;
+      return;
     }
     if (word === 'accTitle') {
       state.diagnostics.error(
@@ -407,25 +416,24 @@ class CynefinParser {
         where,
         { expected: ['`:`'] }
       );
-      throw STOP;
+      return;
     }
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
-    const why = hint ?? this.explainCharacters(text, where);
+    const why = hint ?? this.explainCharacters(text, j);
     state.diagnostics.error(
       'UNEXPECTED_CHARACTER',
       `Unexpected character \`${shown}\`${why ? `; ${why}` : ''}.`,
       where
     );
-    throw STOP;
   }
 
   /** Why stray characters are not cynefin, where a likely cause shows. */
-  private explainCharacters(text: string, where: Range): string | undefined {
+  private explainCharacters(text: string, j: number): string | undefined {
     const lower = text.toLowerCase();
-    const prev = this.i - 1;
+    const prev = j - 1;
     if (text === ';') return `\`;\` does not end a statement in a cynefin diagram: ${ONE_PER_LINE}`;
     if (/^\s/.test(text)) return 'only spaces, tabs and line breaks separate words';
-    const glued = this.kind(prev) === T.DomainName && (this.t.end[prev] ?? -1) === where.start;
+    const glued = this.kind(prev) === T.DomainName && this.t.end[prev] === this.t.start[j];
     if (glued && /^\w/.test(text)) {
       return `a domain is one of ${DOMAIN_LIST}, with a blank or a line break after it`;
     }
@@ -449,10 +457,15 @@ class CynefinParser {
     return undefined;
   }
 
-  /** Skip to the next line break after an error (R-PARSE-4). */
+  /**
+   * Skip to the next line break after an error (R-PARSE-4), reporting each lexer error in the
+   * skipped text: the token that failed is reported already.
+   */
   private recover(): void {
     this.probe?.freeze();
-    this.i = skipTo(this.t, this.i, BOUNDARY);
+    const end = skipTo(this.t, this.i, BOUNDARY);
+    for (let j = this.i + 1; j < end; j++) if (this.kind(j) === Kind.Error) this.badCharacters(j);
+    this.i = end;
   }
 
   /** Run one statement rule; on failure, recover. */

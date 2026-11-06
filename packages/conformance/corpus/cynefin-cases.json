@@ -554,7 +554,10 @@
   {
     "id": "cynefin-cases/recovery-unclosed-string",
     "source": "cynefin-beta\ncomplex \"a\"\n\"never closed\nchaotic",
-    "errors": [["UNCLOSED_STRING", 3]],
+    "errors": [
+      ["UNCLOSED_STRING", 3],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
     "keeps": ["a"]
   },
   {
@@ -566,13 +569,21 @@
   {
     "id": "cynefin-cases/recovery-unclosed-acc-descr",
     "source": "cynefin-beta\naccDescr { never closed\ncomplex \"a\"",
-    "errors": [["UNCLOSED_ACC_DESCR", 2]],
+    "errors": [
+      ["UNCLOSED_ACC_DESCR", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
     "keeps": ["a"]
   },
   {
     "id": "cynefin-cases/recovery-acc-title-no-colon",
     "source": "cynefin-beta\naccTitle x\ncomplex \"a\"",
-    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
     "keeps": ["a"]
   },
   {
@@ -638,6 +649,7 @@
     "source": "cynefin-beta\naccTitle x\ncomplex \"a\" ;\n\"b\"\nclear --> chaotic \"c\"\nchaotic \"d\"",
     "errors": [
       ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
       ["UNEXPECTED_CHARACTER", 3],
       ["UNEXPECTED", 5]
     ],
@@ -651,7 +663,9 @@
       ["UNEXPECTED_CHARACTER", 4],
       ["UNEXPECTED_CHARACTER", 5],
       ["UNEXPECTED", 7],
-      ["UNCLOSED_ACC_DESCR", 8]
+      ["UNCLOSED_ACC_DESCR", 8],
+      ["UNEXPECTED_CHARACTER", 8],
+      ["UNEXPECTED_CHARACTER", 8]
     ],
     "keeps": ["c", "d"]
   },
@@ -666,6 +680,64 @@
       ["UNCLOSED_STRING", 7]
     ],
     "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-two-lexer-errors",
+    "source": "cynefin-beta\ncomplex \"a\" ; \"b\" Clear\nclear \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-three-lexer-errors",
+    "source": "cynefin-beta\ncomplex -> clear @ ;\nclear \"b\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-bare-label-words",
+    "source": "cynefin-beta\ncomplex --> clear : x y\nchaotic \"a\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-parse-then-lexer-error",
+    "source": "cynefin-beta\n\"a\" ; \"b\"\ncomplex \"c\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-lexer-error-then-unclosed",
+    "source": "cynefin-beta\ncomplex \"c\"\nclear ; \"b",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-lines-several-each",
+    "source": "cynefin-beta\ncomplex \"a\" ; @\nComplex \"b\" ;\nclear --> chaotic : x\nchaotic \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "c"]
   },
   {
     "id": "cynefin-cases/unclosed-directive-line",
