@@ -280,7 +280,7 @@ function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
       'data-color-id': slot?.id,
     });
     // The author's `style` / `classDef` still wins over the palette (spread after).
-    w.leaf('rect', {
+    w.outline('group', 'rect', {
       x: box.x - box.width / 2,
       y: box.y - box.height / 2,
       width: box.width,
@@ -330,7 +330,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       markerTrim(e.start, paint.heads),
       markerTrim(e.end, paint.heads)
     );
-    w.leaf('path', {
+    w.outline('edge', 'path', {
       d: path.d,
       'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
       'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,

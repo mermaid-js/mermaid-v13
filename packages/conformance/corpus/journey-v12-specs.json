@@ -1,0 +1,34 @@
+[
+  {
+    "id": "v12-specs/parser/journey.spec.js#1",
+    "source": "journey\ntitle Adding journey diagram functionality to mermaid"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#2",
+    "source": "journey\naccDescr: A user journey for family shopping\ntitle Adding journey diagram functionality to mermaid\nsection Order from website"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#3",
+    "source": "journey\naccDescr {\n        A user journey for\n        family shopping\n      }title Adding journey diagram functionality to mermaid\naccTitle: Adding acc journey diagram functionality to mermaid\nsection Order from website"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#4",
+    "source": "journey\n    accTitle: The title\n    section Order from website"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#5",
+    "source": "journey\ntitle Adding journey diagram functionality to mermaid\nsection Order from website"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#6",
+    "source": "journey\ntitle Adding gantt diagram functionality to mermaid\nsection Line1<br>Line2<br/>Line3</br />Line4<br\t/>Line5"
+  },
+  {
+    "id": "v12-specs/parser/journey.spec.js#7",
+    "source": "journey\ntitle Adding journey diagram functionality to mermaid\nsection Documentation\nA task: 5: Alice, Bob, Charlie\nB task: 3:Bob, Charlie\nC task: 5\nD task: 5: Charlie, Alice\nE task: 5:\nsection Another section\nP task: 5:\nQ task: 5:\nR task: 5:"
+  },
+  {
+    "id": "v12-docs/userJourney.md#1",
+    "source": "journey\n    title My working day\n    section Go to work\n      Make tea: 5: Me\n      Go upstairs: 3: Me\n      Do work: 1: Me, Cat\n    section Go home\n      Go downstairs: 5: Me\n      Sit down: 5: Me\n"
+  }
+]

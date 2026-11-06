@@ -552,12 +552,6 @@ properties:
         themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic
         geometry (D152, D181).
       replacement: '`theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8)'
-  handDrawnSeed:
-    description: |
-      Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
-    type: number
-    default: 0
-    x-mermaid: { status: pending }
   layout:
     $ref: '#/$defs/BaseDiagramConfig/properties/layout'
     description: |

@@ -10,6 +10,10 @@
  * An extension can also load things lazily (R-API-2, D178): its `resources` say what a parsed
  * diagram needs from it, `prepare()` loads those, and `renderSync` throws `NotLoadedError` (or
  * draws placeholders) while they are missing, as for a diagram's own resources.
+ *
+ * An extension's `outline` drawer (D302) draws the shapes a diagram writes with `w.outline`
+ * another way (hand-drawn): the first registered drawer is asked once per SVG render whether it
+ * is active, and its output goes through a sink that admits `<g>` and `<path>` only.
  */
 import type { ConfigFragment } from '../config/fragment.ts';
 import type { ResolvedConfig } from '../config/resolve.ts';
@@ -18,7 +22,14 @@ import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
-import type { InlineBox } from '../svg/writer.ts';
+import type { Attrs } from '../svg/types.ts';
+import type {
+  InlineBox,
+  OutlineDraw,
+  OutlineRole,
+  OutlineSink,
+  OutlineTag,
+} from '../svg/writer.ts';
 import type { InlineProvider } from '../text/inline.ts';
 import { MermaidError, type Resource } from './errors.ts';
 import type { RenderContext } from './types.ts';
@@ -81,10 +92,38 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
   /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
   readonly resources?: ExtensionResources;
   /**
+   * Draws the outlines diagrams write with `w.outline` (D302), when `active` says so. The first
+   * registered extension with a drawer wins; text output never asks it.
+   */
+  readonly outline?: OutlineDrawer;
+  /**
    * The extension's config fragment (D153): its own keys, defaults, aliases and theme
    * variables, known to the validator while the extension is registered.
    */
   readonly config?: ConfigFragment;
+}
+
+/**
+ * An extension's outline drawer (D302). `active` is asked once per SVG render, with the hook
+ * context; when it returns true, the writer calls `draw` for every `w.outline(role, tag, attrs)`.
+ * `draw` writes its replacement into `sink` and returns true, or returns false and the writer
+ * writes the plain `<tag …attrs/>` (after anything `draw` wrote). `attrs` is the diagram's; do
+ * not change it. A throw, a tag other than `<g>`/`<path>`, an attribute name off the allow-list,
+ * an `open` without its `close` (or the reverse) within one `draw`, or a result that is not a
+ * boolean is `MermaidError('INTERNAL')` naming the extension.
+ */
+export interface OutlineDrawer {
+  active(ctx: HookContext): boolean;
+  draw(role: OutlineRole, tag: OutlineTag, attrs: Attrs, sink: OutlineSink): boolean;
+}
+
+/** The drawer one SVG render uses, and the extension it belongs to. */
+export interface ActiveOutline {
+  /** The extension's id, for errors. */
+  readonly id: string;
+  readonly draw: OutlineDraw;
+  /** Whether `draw` wrote through its sink in this render: only then is the output checked again. */
+  readonly wrote: boolean;
 }
 
 /** What an extension's `resources.missing` is asked with, besides the parse. */
@@ -119,7 +158,14 @@ export interface ExtensionNeed {
   load(): Promise<void>;
 }
 
-type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline' | 'resources';
+type Hook =
+  | 'postParse'
+  | 'postLayout'
+  | 'postRender'
+  | 'afterMount'
+  | 'inline'
+  | 'resources'
+  | 'outline';
 
 /** One render's hooks, created by {@link HookRunner.start}. */
 export interface HookRun<El = unknown, R = unknown> {
@@ -132,6 +178,11 @@ export interface HookRun<El = unknown, R = unknown> {
   postRender(tree: SvgTree): void;
   /** Runs every `afterMount` hook with this render's state. For the DOM adapter. */
   afterMount(el: El, result: R): void;
+  /**
+   * The outline drawer for this SVG render (D302): the first registered extension's, when its
+   * `active` returns true; `active` runs on the first call only. The draw step calls it.
+   */
+  outline(): ActiveOutline | undefined;
 }
 
 function failed(plugin: { id: string }, hook: Hook, e: unknown): MermaidError {
@@ -208,6 +259,75 @@ function guarded(plugin: { id: string }, provider: InlineProvider): InlineProvid
   };
 }
 
+function checkOutline(plugin: { id: string }, o: unknown): OutlineDrawer | undefined {
+  if (o === undefined) return undefined;
+  const d = o as Partial<OutlineDrawer> | null;
+  if (
+    typeof d !== 'object' ||
+    d === null ||
+    typeof d.active !== 'function' ||
+    typeof d.draw !== 'function'
+  )
+    throw new TypeError(`Extension "${plugin.id}": outline needs active() and draw()`);
+  return d as OutlineDrawer;
+}
+
+/**
+ * `drawer.draw` behind a sink that admits `<g>` and `<path>` (the writer checks attribute names),
+ * balanced within each call, and with its failures reported as `plugin`'s; `wrote` once it writes.
+ */
+function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): ActiveOutline {
+  const active = { id: plugin.id, wrote: false } as {
+    -readonly [K in keyof ActiveOutline]: ActiveOutline[K];
+  };
+  active.draw = (role, tag, attrs, w) => {
+    let depth = 0;
+    let live = true;
+    const alive = (): void => {
+      if (!live) throw new TypeError('an outline sink was used after its draw() returned');
+      active.wrote = true;
+    };
+    const sink: OutlineSink = {
+      open(t, a) {
+        alive();
+        // Untyped callers can pass any tag.
+        if ((t as string) !== 'g')
+          throw new TypeError(`an outline sink opens <g> only, not <${String(t as unknown)}>`);
+        // Both backings reject a disallowed attribute name as they write it.
+        w.open(t, a);
+        depth++;
+      },
+      leaf(t, a) {
+        alive();
+        if ((t as string) !== 'path')
+          throw new TypeError(
+            `an outline sink writes <path> leaves only, not <${String(t as unknown)}>`
+          );
+        w.leaf(t, a);
+      },
+      close() {
+        alive();
+        if (depth === 0) throw new TypeError('an outline sink close() without its open()');
+        depth--;
+        w.close();
+      },
+      path: () => w.path(),
+    };
+    try {
+      const drawn: unknown = drawer.draw(role, tag, attrs, sink);
+      if (typeof drawn !== 'boolean')
+        throw new TypeError(`draw() must return a boolean, got ${typeof drawn}`);
+      if (depth !== 0) throw new TypeError(`draw() returned with ${depth} <g> still open`);
+      return drawn;
+    } catch (e) {
+      throw failed(plugin, 'outline', e);
+    } finally {
+      live = false;
+    }
+  };
+  return active;
+}
+
 const sameResource = (a: Resource, b: Resource): boolean => a.kind === b.kind && a.name === b.name;
 
 function checkResources(plugin: { id: string }, r: unknown): ExtensionResources | undefined {
@@ -250,6 +370,8 @@ export class HookRunner<El = unknown, R = unknown> {
   private readonly providers = new Map<ExtensionPlugin<El, R>, readonly InlineProvider[]>();
   /** Each extension's `resources`, checked once at registration. */
   private readonly loaders = new Map<ExtensionPlugin<El, R>, ExtensionResources>();
+  /** Each extension's outline drawer, checked once at registration. */
+  private readonly drawers = new Map<ExtensionPlugin<El, R>, OutlineDrawer>();
 
   /** Adds an extension, or replaces the one with the same id in place (keeping its order). */
   register(plugin: ExtensionPlugin<El, R>): void {
@@ -260,14 +382,17 @@ export class HookRunner<El = unknown, R = unknown> {
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
     const resources = checkResources(plugin, plugin.resources);
+    const drawer = checkOutline(plugin, plugin.outline);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
       this.providers.delete(this.list[at]!);
       this.loaders.delete(this.list[at]!);
+      this.drawers.delete(this.list[at]!);
       this.list[at] = plugin;
     } else this.list.push(plugin);
     this.providers.set(plugin, providers);
     if (resources) this.loaders.set(plugin, resources);
+    if (drawer) this.drawers.set(plugin, drawer);
   }
 
   /**
@@ -344,6 +469,23 @@ export class HookRunner<El = unknown, R = unknown> {
       }
       return value;
     };
+    const owner = list.find((p) => this.drawers.has(p));
+    let outline: ActiveOutline | undefined | null = owner === undefined ? undefined : null;
+    const activeOutline = (): ActiveOutline | undefined => {
+      if (outline !== null) return outline;
+      const p = owner as ExtensionPlugin<El, R>;
+      const drawer = this.drawers.get(p) as OutlineDrawer;
+      let on: unknown;
+      try {
+        on = drawer.active(context(p));
+        if (typeof on !== 'boolean')
+          throw new TypeError(`active() must return a boolean, got ${typeof on}`);
+      } catch (e) {
+        throw failed(p, 'outline', e);
+      }
+      outline = on ? guardedOutline(p, drawer) : undefined;
+      return outline;
+    };
     return {
       editsTree: list.some((p) => typeof p.postRender === 'function'),
       mounts: list.some((p) => typeof p.afterMount === 'function'),
@@ -378,6 +520,7 @@ export class HookRunner<El = unknown, R = unknown> {
           p.afterMount!(e, result, stateOf(p));
           return e;
         }),
+      outline: activeOutline,
     };
   }
 }

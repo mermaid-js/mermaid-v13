@@ -2,7 +2,6 @@
   theme property (string) 2:11-2:13 "th" -> "theme: "
   themeVariables property (object) 2:11-2:13 "th" -> "themeVariables: "
   themeCSS property (string) 2:11-2:13 "th" -> "themeCSS: "
-  handDrawnSeed property (number) 2:11-2:13 "th" -> "handDrawnSeed: "
   layout property (string) 2:11-2:13 "th" -> "layout: "
   ascii property (object) 2:11-2:13 "th" -> "ascii: "
   fontFamily property (string) 2:11-2:13 "th" -> "fontFamily: "

@@ -1,9 +1,12 @@
 // Node shapes: size from the label, outline drawn through the SvgWriter, and how far the
 // outline sits inside the layout box (so edges meet the outline, not the box). Ported from
 // Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano),
-// with v12's shape names and the theme's padding and radius tokens.
+// with v12's shape names and the theme's padding and radius tokens. Every shape goes through
+// `w.outline` (D302): the outline as `node`, inner lines as `divider`, a filled piece inside a
+// shape as `part`, small dots as `mark`.
 // cspell:ignore kepano
 import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import type { OutlineRole } from '@mermaid-js/core/svg';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
 /** Padding added across (`x`) and down (`y`). */
@@ -124,20 +127,26 @@ const padded =
 const lean = padded((p) => p.lean, 0, 0.5);
 
 function rect(w: SvgWriter, x: number, y: number, W: number, H: number, a: Attrs, rx?: number) {
-  w.leaf('rect', { x, y, width: W, height: H, rx, ...a });
+  w.outline('node', 'rect', { x, y, width: W, height: H, rx, ...a });
 }
 const centred = (w: SvgWriter, W: number, H: number, a: Attrs, rx?: number): void =>
   rect(w, -W / 2, -H / 2, W, H, a, rx);
 const poly = (w: SvgWriter, points: number[], a: Attrs): void =>
-  w.leaf('polygon', { points, ...a });
-const circle = (w: SvgWriter, r: number, a: Attrs, cx?: number, cy?: number): void =>
-  w.leaf('circle', { cx, cy, r, ...a });
+  w.outline('node', 'polygon', { points, ...a });
+const circle = (
+  w: SvgWriter,
+  r: number,
+  a: Attrs,
+  role: OutlineRole = 'node',
+  cx?: number,
+  cy?: number
+): void => w.outline(role, 'circle', { cx, cy, r, ...a });
 // Line segments [x0, y0, x1, y1, …] as one path, each pair of points a separate stroke.
 function lines(w: SvgWriter, coords: number[], a: Attrs): void {
   const b = w.path();
   for (let i = 0; i + 3 < coords.length; i += 4)
     b.moveTo(coords[i]!, coords[i + 1]!).lineTo(coords[i + 2]!, coords[i + 3]!);
-  w.leaf('path', { d: b.done(), ...a, fill: 'none' });
+  w.outline('divider', 'path', { d: b.done(), ...a, fill: 'none' });
 }
 
 // A rectangle whose bottom is a wave.
@@ -154,7 +163,7 @@ function wave(w: SvgWriter, W: number, H: number, a: Attrs): void {
     .quadTo(-q, base + 12, -x, base)
     .close()
     .done();
-  w.leaf('path', { d, ...a });
+  w.outline('node', 'path', { d, ...a });
 }
 
 function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): void {
@@ -170,7 +179,7 @@ function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): vo
     .lineTo(x + k, y - 6)
     .quadTo(x + k, y, x, y)
     .done();
-  w.leaf('path', { d, ...line, fill: 'none' });
+  w.outline('node', 'path', { d, ...line, fill: 'none' });
 }
 
 function cylinder(w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, extra: number) {
@@ -186,10 +195,10 @@ function cylinder(w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, ext
     .arcTo(rx, ry, 0, false, true, -rx, bottom)
     .close()
     .done();
-  w.leaf('path', { d, ...a });
+  w.outline('node', 'path', { d, ...a });
   const b = w.path().moveTo(-rx, top).arcTo(rx, ry, 0, false, false, rx, top);
   if (extra) b.moveTo(-rx, top + extra).arcTo(rx, ry, 0, false, false, rx, top + extra);
-  w.leaf('path', { d: b.done(), ...line, fill: 'none' });
+  w.outline('divider', 'path', { d: b.done(), ...line, fill: 'none' });
 }
 
 // v12 cylinder: the padding plus a cap height on top of the label (the body between the caps'
@@ -305,14 +314,14 @@ const S: Record<string, ShapeDef> = {
     },
     draw: (w, W, _H, a, line, p) => {
       circle(w, W / 2, a);
-      circle(w, Math.max(0, W / 2 - p.ringGap), { ...line, fill: 'none' });
+      circle(w, Math.max(0, W / 2 - p.ringGap), { ...line, fill: 'none' }, 'divider');
     },
   },
   ellipse: {
     inset: roundInset,
     span: roundSpan,
     size: (tw, th, p) => ({ w: tw * 1.3 + 2 * p.node.x, h: th * 1.2 + 2 * p.node.y, dy: 0 }),
-    draw: (w, W, H, a) => w.leaf('ellipse', { rx: W / 2, ry: H / 2, ...a }),
+    draw: (w, W, H, a) => w.outline('node', 'ellipse', { rx: W / 2, ry: H / 2, ...a }),
   },
   diam: {
     ...rhombus,
@@ -383,7 +392,7 @@ const S: Record<string, ShapeDef> = {
     size: fixed(18, 18),
     draw: (w, W, _H, a, line) => {
       circle(w, W / 2, a);
-      circle(w, W / 2 - 4, { ...line, fill: line.stroke });
+      circle(w, W / 2 - 4, { ...line, fill: line.stroke }, 'part');
     },
   },
   fork: {
@@ -539,7 +548,7 @@ const S: Record<string, ShapeDef> = {
         .lineTo(-W / 2, r)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
     },
   },
   'h-cyl': {
@@ -561,9 +570,9 @@ const S: Record<string, ShapeDef> = {
         .arcTo(rx, ry, 0, false, true, l, -ry)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
       const e = w.path().moveTo(r, -ry).arcTo(rx, ry, 0, false, false, r, ry).done();
-      w.leaf('path', { d: e, ...line, fill: 'none' });
+      w.outline('divider', 'path', { d: e, ...line, fill: 'none' });
     },
   },
   'curv-trap': {
@@ -581,7 +590,7 @@ const S: Record<string, ShapeDef> = {
         .lineTo(-x, 0)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
     },
   },
   'bow-rect': {
@@ -600,7 +609,7 @@ const S: Record<string, ShapeDef> = {
         .arcTo(k, y, 0, false, true, -x + k, -y)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
     },
   },
   doc: { inset: waveInset, size: grown(0, 10, -5), draw: (w, W, H, a) => wave(w, W, H, a) },
@@ -648,7 +657,7 @@ const S: Record<string, ShapeDef> = {
         .quadTo(-x + q, y - 10, -x, y)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
     },
   },
   brace: {
@@ -708,13 +717,13 @@ const S: Record<string, ShapeDef> = {
         .arcTo(x - t, 5, 0, false, true, -x + t, y - 5)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
       const e = w
         .path()
         .moveTo(-x, -y + 5)
         .arcTo(x, 5, 0, false, false, x, -y + 5)
         .done();
-      w.leaf('path', { d: e, ...line, fill: 'none' });
+      w.outline('divider', 'path', { d: e, ...line, fill: 'none' });
     },
   },
   console: {
@@ -735,7 +744,7 @@ const S: Record<string, ShapeDef> = {
       centred(w, W, H, a);
       lines(w, [-W / 2, -H / 2 + 12, W / 2, -H / 2 + 12], line);
       for (let i = 0; i < 3; i++)
-        circle(w, 1.5, { ...line, fill: 'none' }, -W / 2 + 8 + i * 7, -H / 2 + 6);
+        circle(w, 1.5, { ...line, fill: 'none' }, 'mark', -W / 2 + 8 + i * 7, -H / 2 + 6);
     },
   },
   person: {
@@ -746,7 +755,7 @@ const S: Record<string, ShapeDef> = {
     }),
     draw: (w, W, H, a) => {
       rect(w, -W / 2, -H / 2 + 26, W, H - 26, a, 12);
-      circle(w, 13, a, undefined, -H / 2 + 14);
+      circle(w, 13, a, 'node', undefined, -H / 2 + 14);
     },
   },
   bang: {
@@ -778,7 +787,7 @@ const S: Record<string, ShapeDef> = {
         .arcTo(r * 1.05, r * 1.05, 0, false, true, x - r, y)
         .close()
         .done();
-      w.leaf('path', { d, ...a });
+      w.outline('node', 'path', { d, ...a });
     },
   },
   // v12's collapsedGroup: a rounded card, the label above a dashed separator and an indicator
@@ -797,7 +806,7 @@ const S: Record<string, ShapeDef> = {
       rect(w, x, y, W, H, a, cardRadius(W, H, p));
       const th = H - CARD_GAP - CARD_ROW - 2 * CARD_PAD;
       const sy = y + CARD_PAD + th + CARD_GAP;
-      w.leaf('line', {
+      w.outline('divider', 'line', {
         class: 'collapsed-separator',
         x1: x + CARD_PAD,
         y1: sy,
@@ -808,7 +817,7 @@ const S: Record<string, ShapeDef> = {
         'stroke-dasharray': '3,3' as SafeValue,
       });
       for (let i = -1; i <= 1; i++)
-        w.leaf('circle', {
+        w.outline('mark', 'circle', {
           class: 'collapsed-indicator',
           cx: i * 10,
           cy: sy + CARD_ROW / 2,
