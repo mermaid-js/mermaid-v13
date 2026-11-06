@@ -1,14 +1,13 @@
 ---
 description: >-
-  Exercises every supported kanban `priority` metadata value (Very High,
-  High, Low, Very Low) side by side with a default/unset-priority item,
-  verifying each priority tier's distinct visual indicator renders
-  correctly.
+  One column with a card for each priority value v12 colours (Very High,
+  High, Low, Very Low) and one card with no priority, so each priority bar
+  on a card's left edge shows beside a card without one.
 ---
 kanban
   id2[In progress]
-  vh[Very High]@{ priority: 'Very High' }
-  h[High]@{ priority: 'High' }
-  m[Default priority]
-  l[Low]@{ priority: 'Low' }
-  vl[Very Low]@{ priority: 'Very Low' }
+    vh[Very High]@{ priority: 'Very High' }
+    h[High]@{ priority: 'High' }
+    m[Default priority]
+    l[Low]@{ priority: 'Low' }
+    vl[Very Low]@{ priority: 'Very Low' }

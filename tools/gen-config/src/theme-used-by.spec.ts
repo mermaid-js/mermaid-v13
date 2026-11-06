@@ -44,6 +44,8 @@ const TYPES = readdirSync(PACKAGES)
   .map((d) => d.slice('diagram-'.length))
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
+/** Packages with no renderer yet, so no theme reads (kanban's renderer is #457, which removes it). */
+const NOT_RENDERING_YET: readonly string[] = ['kanban'];
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
@@ -52,13 +54,18 @@ describe('theme vocabulary usedBy (#207)', () => {
       'er',
       'flowchart',
       'journey',
+      'kanban',
       'pie',
       'quadrant',
       'sequence',
       'state',
       'timeline',
     ]);
-    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    // A listed package reads nothing yet; once it does, it must leave the list.
+    for (const type of TYPES) {
+      if (NOT_RENDERING_YET.includes(type)) expect(READS.get(type)!.size).toBe(0);
+      else expect(READS.get(type)!.size).toBeGreaterThan(0);
+    }
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

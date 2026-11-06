@@ -1,0 +1,16 @@
+---
+description: >-
+  Classes (:::) and icons (::icon() and @{ icon }) on columns and cards.
+  Each decoration belongs to the item before it. v12 keeps the icon in the
+  model and does not draw it.
+---
+kanban
+  todo[Todo]
+  :::urgent
+    a[Card with classes]
+    :::m-4 p-8
+    b[Card with an icon]
+    ::icon(fa fa-book)
+    c[Card with both]@{ icon: star }
+    ::icon(mdi mdi-fire)
+    :::hot

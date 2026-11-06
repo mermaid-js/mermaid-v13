@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import { kanbanTokens } from '@mermaid-js/diagram-kanban';
+
+/**
+ * R-PARSE-7, pitfall 5: the kanban lexer is linear in input size, in every free-text state.
+ * Shape copied from `../mindmap/stress.spec.ts`: n and 8n units; linear is ~8x, quadratic
+ * ~64x, and the bar is 24x. Times are this thread's CPU time, and small and large lexes
+ * alternate.
+ */
+const KB = 'kanban\n  todo\n';
+const SHAPES: [string, (n: number) => string][] = [
+  ['blank lines', (n) => KB + '\n'.repeat(n) + '    a'],
+  ['blanks and line breaks', (n) => KB + ' \n'.repeat(n / 2) + '    a'],
+  ['a long indent', (n) => KB + ' '.repeat(n) + 'a'],
+  ['a line break, then a long indent', (n) => KB + '\n' + ' '.repeat(n) + 'a'],
+  ['trailing blanks on every line', (n) => KB + ('    a' + ' '.repeat(30) + '\n').repeat(n / 36)],
+  ['blanks then a percent comment', (n) => KB + ' '.repeat(n) + '%% c'],
+  ['bare percent lines', (n) => KB + '%%\n'.repeat(n / 3)],
+  ['percent comments after closers', (n) => KB + '    a(b) %% c\n'.repeat(n / 14)],
+  ['a long id', (n) => KB + '    ' + 'a b'.repeat(n / 3)],
+  ['a long multi-line label', (n) => KB + '    a(' + 'x\n'.repeat(n / 2) + ')'],
+  ['an unclosed label', (n) => KB + '    a[' + 'x '.repeat(n / 2)],
+  ['a label split by comment lines', (n) => KB + '    a(' + 'x\n%% c\n'.repeat(n / 7) + ')'],
+  ['braces in labels', (n) => KB + '    a(b}c d}e)\n'.repeat(n / 16)],
+  ['a long string', (n) => KB + '    a["' + 'x\n'.repeat(n / 2) + '"]'],
+  ['an unclosed markdown string', (n) => KB + '    a["`' + 'x '.repeat(n / 2)],
+  ['a long icon', (n) => KB + '    ::icon(' + 'x\n'.repeat(n / 2)],
+  ['a long class', (n) => KB + '    :::' + 'x'.repeat(n)],
+  ['bare class markers', (n) => KB + ':::\n'.repeat(n / 4)],
+  ['shapes on one line', (n) => KB + '    ' + 'a(b)'.repeat(n / 4)],
+  ['entities', (n) => KB + '    a[' + '#a;'.repeat(n / 3) + ']'],
+  ['CRLF lines', (n) => KB + '    a\r\n'.repeat(n / 7)],
+  ['CRLF lines split by comment lines', (n) => KB + '    a\r\n%% c\r\n'.repeat(n / 13)],
+  // Shape data: long blocks, quoted runs, line breaks in them, and many blocks.
+  ['long shape data', (n) => KB + '    a@{ ' + 'k: v\n'.repeat(n / 5) + '}'],
+  ['unclosed shape data', (n) => KB + '    a@{ ' + 'k: v '.repeat(n / 5)],
+  ['a long quoted run', (n) => KB + '    a@{ label: "' + 'x\n  '.repeat(n / 4) + '" }'],
+  ['an unclosed quoted run', (n) => KB + '    a@{ label: "' + 'x '.repeat(n / 2)],
+  ['many quotes', (n) => KB + '    a@{ ' + '"x"'.repeat(n / 3) + ' }'],
+  ['carets in shape data', (n) => KB + '    a@{ ' + 'x^'.repeat(n / 2) + ' }'],
+  ['many cards with data', (n) => KB + '    a@{ ticket: T-1, priority: High }\n'.repeat(n / 40)],
+  [
+    'shape data split by comment lines',
+    (n) => KB + '    a@{\n' + '  k: v\n%% c\n'.repeat(n / 13) + '}',
+  ],
+  ['lone at signs', (n) => KB + '    ' + 'a@'.repeat(n / 2)],
+  // A dropped `;` and many removed spans: each token's text is read across the cut text (at 16x
+  // size, where a walk over every run per token shows).
+  [
+    'a style line, then CRLF lines split by comment lines',
+    (n) => KB + '    style a:#f;\r\n' + '    a\r\n%% c\r\n'.repeat(n),
+  ],
+];
+
+/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
+const cpuMs = (): number => {
+  const u =
+    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
+  return (u.user + u.system) / 1000;
+};
+const cost = (run: () => unknown): number => {
+  const t0 = cpuMs();
+  run();
+  return cpuMs() - t0;
+};
+
+describe('stress: the kanban lexer is linear in input size', () => {
+  it.each(SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(4_000);
+      const large = build(32_000);
+      kanbanTokens(small); // warm up
+      kanbanTokens(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => kanbanTokens(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => kanbanTokens(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
+});

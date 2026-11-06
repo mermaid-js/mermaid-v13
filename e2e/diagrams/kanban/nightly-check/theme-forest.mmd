@@ -1,0 +1,14 @@
+---
+description: >-
+  The same small board in the forest theme, whose cScale palette gives the
+  column colours.
+config:
+  theme: forest
+---
+kanban
+  todo[Todo]
+    a[Card]@{ ticket: MC-1, assigned: knsv, priority: 'Very High' }
+    b[Second card]@{ priority: 'Low' }
+  doing[In progress]
+    c[Third card]@{ priority: 'High' }
+  done[Done]

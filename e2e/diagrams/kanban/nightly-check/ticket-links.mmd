@@ -1,0 +1,14 @@
+---
+description: >-
+  Ticket links: the ticketBaseUrl holds #TICKET# twice and only the first
+  is replaced. A ticket with a dollar sign links with the dollar literal,
+  and a card with no ticket has no link.
+config:
+  kanban:
+    ticketBaseUrl: 'https://example.com/browse/#TICKET#?from=#TICKET#'
+---
+kanban
+  todo[Todo]
+    a[Linked]@{ ticket: MC-1 }
+    b[Dollar in the ticket]@{ ticket: 'a$&b' }
+    c[No ticket]

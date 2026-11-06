@@ -5,12 +5,13 @@ import { JISON_TYPES, LEXICAL_ERROR, loadJisonLexerOracle } from './oracle.ts';
 import type { JisonType } from './oracle.ts';
 
 /**
- * The M4 jison types load into the shared oracle before their v13 lexers exist (D212): v12
- * lexes every e2e fixture of the type to the end, and every token decodes to a terminal name.
+ * The M4 and M5 jison types load into the shared oracle before their v13 lexers exist (D212):
+ * v12 lexes every e2e fixture of the type to the end, and every token decodes to a terminal
+ * name.
  */
-const M4: JisonType[] = ['gantt', 'mindmap', 'timeline', 'journey', 'quadrant'];
+const LATER: JisonType[] = ['gantt', 'mindmap', 'timeline', 'journey', 'quadrant', 'kanban'];
 
-describe.each(M4)('%s through the shared jison oracle', (type) => {
+describe.each(LATER)('%s through the shared jison oracle', (type) => {
   it('lexes the e2e fixtures', async () => {
     const oracle = await loadJisonLexerOracle(type);
     const problems: string[] = [];
