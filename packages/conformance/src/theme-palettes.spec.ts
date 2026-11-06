@@ -99,8 +99,9 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
     expect(await v13Palettes('redux', vars)).toEqual(v12Palettes('redux', vars));
   });
 
-  it('labels follow a labelTextColor override, as v12 does', async () => {
-    const vars = { labelTextColor: '#3366cc' };
+  // D334: the labels read v12's shared `scaleLabelColor`, no longer sequence's `labelTextColor`.
+  it('labels follow a scaleLabelColor override, as v12 does', async () => {
+    const vars = { scaleLabelColor: '#3366cc' };
     for (const theme of THEME_NAMES)
       expect((await v13Palettes(theme, vars)).cScaleLabel, theme).toEqual(
         v12Palettes(theme, vars).cScaleLabel
