@@ -20,7 +20,7 @@ No T0 (radar adds no core contract; the theme table comes from #414 T0a, D322, D
 
 ## Theme work waits on #414 T0a
 
-Radar's ten variables go in a package `DiagramPlugin.theme` table (D322, D331, D335, D540), from `feature/414_theme-t0`. Until the coordinator says T0a's API is pushed, T3/T4 read the variables with v12's defaults as stand-ins (one module, deleted in T5). T5 merges that branch, adds the table and integrates.
+Radar's ten variables go in a package `DiagramPlugin.theme` table (D322, D331, D335, D540), from `feature/414_theme-t0`, merged at `462aef4e9`. T4 (#448) adds the table with the plugin; T5 integrates.
 
 ## Merge order
 
