@@ -1,0 +1,108 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
+import { layered, pxProfile, validateLayout, type LayoutEngine } from '@mermaid-js/core/layout';
+import { tree } from '@mermaid-js/core/layout/tree';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import { tableMeasurer } from '@mermaid-js/core/text';
+import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
+import { layoutMindmap, parseMindmap, type MindmapModel } from '@mermaid-js/diagram-mindmap';
+import { mindmapProblems, treeProblems } from '@mermaid-js/diagram-mindmap/testing';
+import elkLayouts from '@mermaid-js/layout-elk';
+import { EDGE_CASES, LINE_SEPARATORS, mindmapCases, mindmapCorpus } from './corpus.ts';
+
+// DDLT on parser-produced mindmaps (spec #294 T3, the `ddlt` rule: parse the source, never hand
+// build the graph): the e2e corpus, the harvested v12 spec and syntax-page strings and the
+// parser cases and the lexer gate's edge cases, parsed by the v13 parser, measured with the table measurer in each
+// source's theme and laid out by `layoutMindmap`, the entry point the plugin calls, through
+// `tree` (the default, D284), `layered` and ELK (`@mermaid-js/layout-elk`, D282).
+
+interface Fixture {
+  readonly id: string;
+  readonly model: MindmapModel;
+  readonly config: ReturnType<typeof resolveConfig>;
+  readonly theme: ThemeName;
+}
+
+const fixtures: Fixture[] = [];
+let elk: LayoutEngine;
+
+beforeAll(async () => {
+  elk = await elkLayouts.find((l) => l.name === 'elk')!.loader();
+  for (const item of [
+    ...(await mindmapCorpus()),
+    ...mindmapCases(),
+    ...EDGE_CASES,
+    ...LINE_SEPARATORS,
+    // A label holding `~n:` once made two edge ids the same (#387 review).
+    { id: 'edge id probe', source: 'mindmap\n  root\n    x~n:y\n      z\n    x\n      y~n:z\n' },
+  ]) {
+    const pre = preprocess(item.source);
+    const directives = pre.directives.flatMap((d) =>
+      d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
+    );
+    const config = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, directives);
+    const colorBy = config.mindmap?.colorBy === 'depth' ? 'depth' : 'branch';
+    const parse = parseMindmap(item.source, { preprocessed: pre, colorBy });
+    if (parse.diagnostics.some((d) => d.severity === 'error')) continue;
+    const theme =
+      typeof config.theme === 'string' && isThemeName(config.theme) ? config.theme : 'default';
+    fixtures.push({ id: item.id, model: parse.model, config, theme });
+  }
+}, 60_000);
+
+const ENGINES: readonly [string, () => LayoutEngine][] = [
+  ['tree', () => tree],
+  ['layered', () => layered],
+  ['elk', () => elk],
+];
+
+async function laidOut(f: Fixture, engine: LayoutEngine) {
+  const warnings: string[] = [];
+  const layout = layoutMindmap(f.model, {
+    config: f.config,
+    measurer: tableMeasurer,
+    units: pxProfile,
+    theme: createTheme(await loadTheme(f.theme), {}),
+    layout: (graph) => engine(graph, { config: f.config }),
+    warn: (w) => warnings.push(w.code),
+  });
+  return { layout, warnings };
+}
+
+describe('mindmap layout over parser-produced fixtures', () => {
+  it('covers the corpus: every shape, icons, and the themes it names', () => {
+    expect(fixtures.length).toBeGreaterThan(100);
+    const nodes = fixtures.flatMap((f) => f.model.nodes);
+    const shapes = new Set(nodes.map((n) => n.shape));
+    expect([...shapes].sort()).toEqual(
+      ['bang', 'circle', 'cloud', 'default', 'hexagon', 'rect', 'rounded'].sort()
+    );
+    expect(nodes.filter((n) => n.icon).length).toBeGreaterThan(10);
+    expect(new Set(fixtures.map((f) => f.theme)).size).toBeGreaterThan(3);
+  });
+
+  it.each(ENGINES)(
+    '%s: no NaN or overlaps, edges on their boxes, labels and icons inside their shapes',
+    async (name, engineOf) => {
+      const engine = engineOf();
+      for (const f of fixtures) {
+        const { layout, warnings } = await laidOut(f, engine);
+        expect(validateLayout(layout.mindmap.graph, layout), f.id).toEqual([]);
+        expect(mindmapProblems(layout), f.id).toEqual([]);
+        if (name === 'tree') expect(treeProblems(layout.mindmap.graph, layout), f.id).toEqual([]);
+        expect(warnings, f.id).toEqual([]);
+      }
+    },
+    120_000
+  );
+
+  it.each(ENGINES)('%s: the same layout twice', async (_, engineOf) => {
+    const engine = engineOf();
+    const plain = (l: Awaited<ReturnType<typeof laidOut>>['layout']) =>
+      JSON.stringify([[...l.nodes], [...l.edges], l.width, l.height]);
+    for (const f of fixtures) {
+      const [a, b] = [await laidOut(f, engine), await laidOut(f, engine)];
+      expect(plain(a.layout), f.id).toBe(plain(b.layout));
+    }
+  });
+});

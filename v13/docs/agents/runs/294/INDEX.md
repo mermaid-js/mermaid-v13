@@ -7,8 +7,8 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | T0 core `tree` engine and engine selection | #380 | — | merged (ff a635d9bcb; `tree` chunk 3,407 B gz, lazy) |
 | T1 lexer parity gate | #383 | #285 (merged) | merged (ff 5bbf475e9) |
 | T2 grammar, parser, model, AST | #386 | #383 | merged (ff f106ba322) |
-| T3 layout (builder, shape sizing) | #387 | #386, #380 | in progress on hand-built fixtures (`.claude/worktrees/t387`, `feature/387_mindmap-layout`); merges after #386 |
-| T4 SVG renderer | #388 | #387 | blocked |
+| T3 layout (builder, shape sizing) | #387 | #386, #380 | merged (ff 3e8f53071) |
+| T4 SVG renderer | #388 | #387 | in progress (`.claude/worktrees/t388`, `feature/388_mindmap-renderer`) |
 | T6 language facet | #389 | #386 | in progress (`.claude/worktrees/t389`, `feature/389_mindmap-language`) |
 | T5 integration | #390 | #388, #389 | blocked |
 | icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 | blocked |
@@ -28,6 +28,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | #383 T1 | 93,551 B | 0 (no core change) |
 | #380 (tree loader, engine selection) | 93,760 B | +209 (448 B spare) |
 | merge `mermaid-v13` 586e00c8f/f246e6a0a (#410 pure theme tables; base 92,181 bench / 92,520 CDN) | 92,398 B bench, 92,756 B CDN ESM | +217 / +236 over the new base (1,810 B / 1,452 B spare) |
+| #387 T3 (`'mindmap'` in `TEXT_USERS`) | 92,398 B bench, 92,758 B CDN | +0 / +2 |
 | #386 T2 | 92,398 B bench, 92,756 B CDN ESM | 0 (no core change) |
 
 - Coordinator, 2026-11-06: `fix/theme-variables-pure` (gitGraph's find: core keeps the whole `THEME_VARIABLES` inventory) drops about 1.3 KB gz from core. Merge `mermaid-v13` when it lands. Until then, a ticket that would go over the gate records its bytes and the run continues with the tickets that don't depend on it.
