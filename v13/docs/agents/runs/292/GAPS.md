@@ -39,6 +39,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - **Shared-file edit:** `packages/conformance/src/flowchart/probe.spec.ts` timeout 60 s → 180 s (assertions and source set unchanged). The sweep probes every `PARITY_SUITES` source (≈4,200 with gitGraph's); on a loaded machine (load ~20) it ran 55–60 s and timed out. `parseFlowchart` over all of them is 0.85 s, gitGraph's no slower than the rest: a bigger sweep, not a regression.
 
+- [x] CI (run 42206560597) failed `check:grammar`: #370 never committed `packages/diagram-gitgraph/grammar/generated/*` (ignored by `.gitignore` `generated/`; other diagrams force-add theirs). Force-added in d7f6a4bce, checked identical to a Linux Node 24.16 generation.
+
 ## #371 T3 layout
 
 ## #372 T6 language facet
