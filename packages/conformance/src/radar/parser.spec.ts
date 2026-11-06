@@ -174,6 +174,7 @@ describe('radar parser on the fixtures', () => {
       ['axis', 'B', 'def'],
       ['axis', 'A', 'ref'],
       ['axis', 'A', 'ref'],
+      ['axis', 'B', 'ref'],
       ['axis', 'X', 'ref'],
       ['curve', 'c', 'def'],
       ['curve', 'd', 'def'],
