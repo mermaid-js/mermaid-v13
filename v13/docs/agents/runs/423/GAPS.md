@@ -4,11 +4,13 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## Orchestrator choices
 
+- **Escalations go in GAPS and the PR, not DECISIONS.md.** The spec's Further Notes reserve D360 and D368–D369 for the maintainer's answers. No answer has come back, so the cross-type detection change (#469), `LanguageFacet.declaredOnly` (#470) and the other choices are listed "For the maintainer" and no D-id is written.
+
 - **No T0, no T7.** Cynefin needs no core change of its own (it relies on #414's T0a) and has no ASCII output (D320).
 - **Skeleton and model first.** The orchestrator landed the package skeleton and `CynefinModel` before T1 and T3 started, so the two run in parallel (as pie's `PieModel`).
 - **Pele is not available on this machine.** Its fuzz fragment list (51 fragments, `tests/cynefin/oracle.test.ts`) and probe scripts (`scratchpad/specs/cynefin/probe/`) are not here; T2 builds its own fragment list from the spec's quirks.
 
-- **For the maintainer: D362 and v13's default `idPrefix`.** v13's default `ctx.idPrefix` is an FNV-1a hash of text + config + options (`packages/mermaid/src/config-snapshot.ts:122-136`), so with no `options.id` the default seed is in effect a hash of the source (the option D362 did not take): two identical diagrams on one page get the same waves. Implemented as decided (hash `ctx.idPrefix`); pass an `id` to vary them.
+- **For the maintainer: D362 and v13's default `idPrefix`.** `render(id, …)` sets `idPrefix`, so two renders with different ids draw different waves, as D362 intends. Only a call that passes no id falls back to v13's default `idPrefix`, an FNV-1a hash of text + config + options (`packages/mermaid/src/config-snapshot.ts:122-136`); there two identical diagrams get the same waves. Implemented as decided (hash `ctx.idPrefix`).
 - **Harvest from `fa796a943`.** That in-repo commit holds the same 12.2.0 cynefin sources as the tag, so harvest scripts read it, as the other ports do.
 
 - **Theme table in T4.** T0a landed before T4 started, so T4 (which creates the plugin) declares the 15-variable `DiagramThemeTable` inline on it, per the spec's "v13 entries" and CONTRACT.md; T5 keeps the oracle specs, `DIFFERENCES`, MIGRATION.md theme rows and baselines.
