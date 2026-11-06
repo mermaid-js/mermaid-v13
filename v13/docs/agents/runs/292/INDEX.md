@@ -9,8 +9,8 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | T2 grammar, parser, model, AST | #370 | #368 | merged (ff 7fa9ac108) |
 | T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | merged (ff e8bae97a8) |
 | T6 language facet | #372 | #370 | merged (ff da186447a) |
-| T4 SVG renderer | #373 | #371, #369 | in progress |
-| T5 integration | #374 | #373, #372 | open |
+| T4 SVG renderer | #373 | #371, #369 | merged (ff 867bf19c7) |
+| T5 integration | #374 | #373, #372 | in progress |
 
 - `01-v12-gitgraph.md`: pointer notes on v12 grammar, DB, renderer, styles, themes, corpus and the v13 seams.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
