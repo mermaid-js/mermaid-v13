@@ -681,12 +681,12 @@ export const configSchema: ConfigSchema = {
     },
     "layout": {
       "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
-      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)\nalways uses `layered`.\n",
+      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1);\nmindmap defaults to `tree`, core's two-sided tidy tree, and maps v12's\n`cose-bilkent` and `tidy-tree` to it.\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\nthe diagram's default engine and warn `ELK_NOT_INSTALLED`. Text output\n(`format: 'ascii'`) always uses `layered`.\n",
       "default": "layered",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
+        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
       }
     },
     "maxTextSize": {
@@ -2786,7 +2786,10 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "cose-bilkent",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Mindmap lays out with core's `tree` engine (D284); the top-level `layout` key chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`.",
+            "replacement": "`layout`"
           }
         }
       }

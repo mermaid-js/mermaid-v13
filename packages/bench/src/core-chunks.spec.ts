@@ -109,6 +109,17 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(coreModules(stable)).toEqual(coreModules(plain));
   });
 
+  // D280, R-LAYOUT-8: `mermaid` loads the `tree` engine lazily; none of it may reach core.
+  it('keeps the tree engine out of core, in a lazy chunk of its own', () => {
+    const isTree = (input: string) => input.includes('core/src/layout/tree/');
+    expect(coreModules(stable).filter(isTree)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isTree));
+    expect(files).toHaveLength(1);
+    const [path, file] = files[0]!;
+    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(file.inputs.every(isTree)).toBe(true);
+  });
+
   it.each(stubs)('grows core by the registry row only for one more lazy diagram (%s)', (s) => {
     const { stable: next } = withStub[s];
     expect(next.files, 'core files').toBe(stable.files);
