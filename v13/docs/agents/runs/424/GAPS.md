@@ -14,8 +14,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #455 T3 layout
 
 ## #457 T4 renderer
-- Column colours (D374) wait for the Theme T0's T0a API (#414): the package `DiagramPlugin.theme` table and the `dark` trait.
-- Exploration: khroma-style lighten/darken (`rgbToHsl`/`shiftHsl`/`hslToRgb`) is not exported from `@mermaid-js/core/theme`; `theme.dark` exists. **Choice (pending T0a):** use the T0 rule DSL's adjust if T0a provides one, else an HSL step inside the package; no core export (core size).
+- Column colours (D374): T0a (#438) is merged into this branch (`d562508ea`). **Choice:** twelve table vars (one per `cScale` slot, used for column k as slot `(k + 1) mod 12`) whose `rules.light` is `lightenHsl(cScale<n>, 10%)` and `rules.dark` `darkenHsl(cScale<n>, 10%)` (khroma's lighten/darken, as v12's `styles.ts`), so `cScale<n>` overrides recolour columns and there is no HSL code in the package or core. "No new variable" in D374 is read as no new *core* variable.
 - Exploration: in v12 cards never get `look` (`kanbanDb.ts:76-91`; `insertNode` does not default it), so only columns were sketched and the priority bar was always drawn. D379 (decided) sketches columns *and* cards through `w.outline`. **For the maintainer:** D379's premise ("v12 sketches cards, drops the bar") is not what v12 ran; we follow D379 as decided.
 - Exploration: `SvgWriter` already adds `rel="noopener noreferrer"` to `_blank` links. Kanban has no title/accessibility statements, so `-title`/`-desc` ids come only from front matter / config if core writes them.
 
