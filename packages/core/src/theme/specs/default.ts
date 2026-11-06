@@ -34,7 +34,7 @@ const theme: ThemeSpec = {
   values: {
     // v12 titles and legends: `taskTextDarkColor`.
     headingTextColor: 'black',
-    altBackground: '#f0f0f0', // v12 (#192)
+    nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)
     // v12 theme-default.js: the label ink (black), the grey muted surface and border, white
     // text on lines.
     scaleLabelColor: '#000000',
@@ -53,8 +53,8 @@ const theme: ThemeSpec = {
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
   rules: {
-    rowOdd: 'lightenHsl(primaryColor, 75%)',
-    rowEven: 'lightenHsl(primaryColor, 1%)',
+    rowBkg: 'lightenHsl(primaryColor, 75%)',
+    rowAltBkg: 'lightenHsl(primaryColor, 1%)',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.

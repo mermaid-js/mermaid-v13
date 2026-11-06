@@ -35,7 +35,7 @@ const theme: ThemeSpec = {
   values: {
     // v12 titles and legends: `mainContrastColor`.
     headingTextColor: 'lightgrey',
-    altBackground: '#555555', // v12 (#192)
+    nestedBkg: '#555555', // v12 `altBackground` (#192)
     // v12 theme-dark.js: mainContrastColor (lightgrey) for labels and links
     scaleLabelColor: '#d3d3d3', // v12: `labelTextColor` (D334)
     linkInkColor: '#d3d3d3',
@@ -53,8 +53,8 @@ const theme: ThemeSpec = {
     errorTextColor: '#dddddd',
     // v12 theme-dark sets the ER rows in its constructor, from its own mainBkg #1f2020, so they
     // never follow an override: khroma lighten(#1f2020, 5) and darken(#1f2020, 10) (D117).
-    rowOdd: '#2c2d2d',
-    rowEven: '#060606',
+    rowBkg: '#2c2d2d',
+    rowAltBkg: '#060606',
   },
   // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
   palettes: {

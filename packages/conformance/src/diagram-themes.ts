@@ -53,7 +53,8 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
  * `activationBkgColor`, …), which the oracle specs compare instead, so the neo and neo-dark specs
  * leave these out of their v12 comparison rather than listing them in `DIFFERENCES`. The
  * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
- * and frame border of T2 (read with `inline()`).
+ * and frame border of T2; the row fills, link label fill and nested body of T3 (read with
+ * `inline()`).
  */
 export const D332_INPUTS: readonly string[] = [
   'seriesColorArray',
@@ -66,6 +67,10 @@ export const D332_INPUTS: readonly string[] = [
   'lineTextColor',
   'softBorder',
   'frameBorder',
+  'rowBkg',
+  'rowAltBkg',
+  'linkLabelBkg',
+  'nestedBkg',
 ];
 
 /**

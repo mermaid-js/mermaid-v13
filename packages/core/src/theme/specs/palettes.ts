@@ -1,21 +1,7 @@
 /**
  * The redux colour palettes, from v12 `theme-redux-color.js` and `theme-redux-dark-color.js`
- * (D151). Plain data, shared by the two colour themes; with the redux family's rules and the series
- * palette helper (D332).
+ * (D151). Plain data, shared by the two colour themes; with the series palette helper (D332).
  */
-import type { ThemeRuleTable } from '../spec.ts';
-
-/**
- * Colours the redux family derives differently from the classic themes (D152). Shared by the
- * redux and neo specs. ER rows have no fill of their own in v12 neo, so they show the
- * entity's; the zero circle takes the node fill (`zero_or_one_neo`). Kept in this module, which
- * every theme loads, so it adds no chunk of its own to the default theme's closure (D161).
- */
-export const REDUX_RULES: ThemeRuleTable = {
-  rowOdd: 'mainBkg',
-  rowEven: 'mainBkg',
-  erMarkerFill: 'mainBkg',
-};
 
 /** `borderColorArray`: Tailwind-400, one per subgraph slot. */
 export const TAILWIND_400: readonly string[] = [

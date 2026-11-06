@@ -30,8 +30,6 @@ export const NEO_ARROWHEADS: Readonly<Record<ArrowheadVariable, number>> = {
   crossArrowheadSize: 10.4,
   crossArrowheadGap: 2.96,
   crossArrowheadStrokeWidth: 2,
-  // ER `zero_or_more_neo`: the circle's centre 28 out (refX 39, cx 11; the start copy has 27.5).
-  erZeroOrMoreCircleOffset: 28,
 };
 
 /**
@@ -48,8 +46,6 @@ export const CLASSIC_ARROWHEADS: Readonly<Record<ArrowheadVariable, number>> = {
   crossArrowheadSize: 9,
   crossArrowheadGap: 2,
   crossArrowheadStrokeWidth: 2,
-  // ER `zero_or_more`: refX 39, cx 9.
-  erZeroOrMoreCircleOffset: 30,
 };
 
 type PaddingToken = Extract<

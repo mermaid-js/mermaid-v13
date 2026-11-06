@@ -35,7 +35,7 @@ const theme: ThemeSpec = {
   values: {
     // v12 titles and legends: `taskTextDarkColor`.
     headingTextColor: '#333333',
-    altBackground: '#f4f4f4', // v12 (#192)
+    nestedBkg: '#f4f4f4', // v12 `altBackground` (#192)
     // v12 theme-neutral.js: the participant border is lighten(border1, 23)
     softBorder: '#d4d4d4',
     scaleLabelColor: '#333333', // v12: `labelTextColor` (D334)
@@ -56,8 +56,8 @@ const theme: ThemeSpec = {
     noteBorderColor: '#999999',
     // v12 theme-neutral sets the ER rows in its constructor, so they never follow an
     // override: khroma lighten(#eee, 75) is white (D117).
-    rowOdd: '#ffffff',
-    rowEven: '#f4f4f4',
+    rowBkg: '#ffffff',
+    rowAltBkg: '#f4f4f4',
   },
   // v12 theme-neutral.js: fixed greys; labels 0 and 2 take cScale1.
   palettes: {
