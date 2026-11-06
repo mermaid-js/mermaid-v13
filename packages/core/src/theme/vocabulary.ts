@@ -119,32 +119,6 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'leanPaddingY',
     'oddPaddingX',
     'oddPaddingY',
-    // gitGraph commit and tag label sizes (D267): 10px in every v12 theme.
-    'commitLabelFontSize',
-    'tagLabelFontSize',
-    // Mindmap nodes and edges (spec #294 T4, D288): plain nodes drawn rounded with v12's redux
-    // paints, v12 neo's outlined nodes, and edges in `nodeBorder`.
-    'mindmapRoundedNodes',
-    'mindmapOutlinedNodes',
-    'mindmapBorderEdges',
-    // gitGraph (spec #292, D266): the bullet radius, how far the LR lanes sit below v12
-    // classic's spot, the branch label box (padding, corner, the TB/BT shift left and away from
-    // the commits), the arrow width, the bullet insides, and whether the node colours and the
-    // git palettes paint the branches. Unsigned: a shift has its direction in its name.
-    'gitCommitRadius',
-    'gitLaneShift',
-    'gitBranchLabelPaddingX',
-    'gitBranchLabelPaddingY',
-    'gitBranchLabelRadius',
-    'gitBranchLabelShiftX',
-    'gitBranchLabelOffsetY',
-    'gitArrowWidth',
-    'gitHighlightInnerSize',
-    'gitMergeRadius',
-    'gitReverseCrossSize',
-    'gitCherryPickDotRadius',
-    'gitNodeColors',
-    'gitPaletteColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -233,9 +207,6 @@ const TEXT_USERS = [
   'gantt',
 ];
 
-const GIT = ['gitgraph'];
-const GANTT = ['gantt'];
-
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
@@ -244,9 +215,9 @@ const GANTT = ['gantt'];
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph']),
+  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
-  tertiaryColor: def('t', 'color', ['core']),
+  tertiaryColor: def('t', 'color', ['core', 'gantt']),
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
@@ -254,7 +225,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
-  primaryBorderColor: def('pb', 'color', ['core', 'quadrant']),
+  primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
@@ -312,41 +283,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
-  // `tagBorder` is v12's other name for `tagLabelBorder`, which an author's `tagLabelBorder`
-  // overrides; no theme sets it.
-  commitLabelColor: def('gcc', 'color', ['gitgraph']),
-  commitLabelBackground: def('glb', 'color', ['gitgraph']),
-  commitLabelFontSize: def('gcs', 'length', ['gitgraph']),
-  tagLabelColor: def('gtc', 'color', ['gitgraph']),
-  tagLabelBackground: def('gtk', 'color', ['gitgraph']),
-  tagLabelBorder: def('gtr', 'color', ['gitgraph']),
-  tagBorder: def('gtg', 'color', []),
-  tagLabelFontSize: def('gts', 'length', ['gitgraph']),
-  // v12's branch line colour (`lineColor` unless a redux theme sets it), and the cherry-pick
-  // mark (#374): white on light themes, black on dark ones.
-  commitLineColor: def('gcl', 'color', ['gitgraph']),
-  gitCherryPickInk: def('gci', 'color', ['gitgraph']),
-  // gantt (#381, v12 names from v12's gantt `styles.js`): row bands, excluded days, grid, today
-  // and `vert` lines, bars by state, and task label colours. A clickable label is v12's #003163
-  // in every theme, a renderer constant (#385).
-  sectionBkgColor: def('gb0', 'color', GANTT),
-  altSectionBkgColor: def('gb1', 'color', GANTT),
-  sectionBkgColor2: def('gb2', 'color', GANTT),
-  excludeBkgColor: def('gxb', 'color', GANTT),
-  gridColor: def('ggc', 'color', GANTT),
-  todayLineColor: def('gtl', 'color', GANTT),
-  vertLineColor: def('gvl', 'color', GANTT),
-  taskBkgColor: def('gtb', 'color', GANTT),
-  taskBorderColor: def('gto', 'color', GANTT),
-  activeTaskBkgColor: def('gab', 'color', GANTT),
-  activeTaskBorderColor: def('gao', 'color', GANTT),
-  doneTaskBkgColor: def('gdb', 'color', GANTT),
-  doneTaskBorderColor: def('gdo', 'color', GANTT),
-  critBkgColor: def('gcb', 'color', GANTT),
-  critBorderColor: def('gco', 'color', GANTT),
-  taskTextColor: def('gtt', 'color', GANTT),
-  taskTextOutsideColor: def('gtx', 'color', GANTT),
-  taskTextDarkColor: def('gtd', 'color', GANTT),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -395,23 +331,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   leanPaddingY: def('lny', 'padding', ['flowchart']),
   oddPaddingX: def('odx', 'padding', ['flowchart']),
   oddPaddingY: def('ody', 'padding', ['flowchart']),
-  mindmapRoundedNodes: def('mmr', 'flag', ['mindmap']),
-  mindmapOutlinedNodes: def('mmo', 'flag', ['mindmap']),
-  mindmapBorderEdges: def('mme', 'flag', ['mindmap']),
-  gitCommitRadius: def('gcr', 'length', GIT),
-  gitLaneShift: def('gls', 'length', GIT),
-  gitBranchLabelPaddingX: def('gpx', 'length', GIT),
-  gitBranchLabelPaddingY: def('gpy', 'length', GIT),
-  gitBranchLabelRadius: def('gbr', 'length', GIT),
-  gitBranchLabelShiftX: def('gbx', 'length', GIT),
-  gitBranchLabelOffsetY: def('gby', 'length', GIT),
-  gitArrowWidth: def('gaw', 'length', GIT),
-  gitHighlightInnerSize: def('ghi', 'length', GIT),
-  gitMergeRadius: def('gmr', 'length', GIT),
-  gitReverseCrossSize: def('grc', 'length', GIT),
-  gitCherryPickDotRadius: def('gcd', 'length', GIT),
-  gitNodeColors: def('gnc', 'flag', GIT),
-  gitPaletteColors: def('gpc', 'flag', GIT),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
@@ -448,6 +367,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   lineTextColor: def('ltx', 'color', ['sequence']),
   softBorder: def('sfb', 'color', ['sequence']),
   frameBorder: def('frb', 'color', ['sequence']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
+  // a diagram reads with `inline()`: a badge, a small label box on the secondary colour set
+  // beside an item (gitGraph's commit ids; any id or count badge), and its text; a callout, a
+  // bordered label on the primary colour pinned to an item (gitGraph's tags; flags or markers
+  // elsewhere), its text and its border. v13 names; v12 has none.
+  badgeBkg: def('bgk', 'color', ['gitgraph']),
+  badgeTextColor: def('bgt', 'color', ['gitgraph']),
+  calloutBkg: def('clk', 'color', ['gitgraph']),
+  calloutTextColor: def('clt', 'color', ['gitgraph']),
+  calloutBorder: def('clb', 'color', ['gitgraph']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

@@ -4,6 +4,7 @@ import { layoutGitGraph, type GitLayout } from './layout/index.ts';
 import type { GitModel } from './model.ts';
 import { detectGitGraph, parseGitGraph, type GitGraphParseResult } from './parser/index.ts';
 import { renderGitGraph } from './render/index.ts';
+import { theme } from './theme/table.ts';
 
 /** A `gitGraph` config key read as the type it must have, else undefined (the default). */
 function option<T extends 'string' | 'number'>(
@@ -36,4 +37,5 @@ export const gitGraph = {
   layout: (model: GitModel, ctx: RenderContext): GitLayout => layoutGitGraph(model, ctx),
   render: (model: GitModel, layout: GitLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderGitGraph(model, layout, ctx, w),
+  theme,
 } satisfies DiagramPlugin<GitModel, GitLayout>;

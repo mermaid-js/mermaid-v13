@@ -17,7 +17,10 @@ import {
 import { classDiagram } from '@mermaid-js/diagram-class';
 import { er } from '@mermaid-js/diagram-er';
 import { flowchart } from '@mermaid-js/diagram-flowchart';
+import { gantt } from '@mermaid-js/diagram-gantt';
+import { gitGraph } from '@mermaid-js/diagram-gitgraph';
 import { journey } from '@mermaid-js/diagram-journey';
+import { mindmap } from '@mermaid-js/diagram-mindmap';
 import { pie } from '@mermaid-js/diagram-pie';
 import { quadrant } from '@mermaid-js/diagram-quadrant';
 import { sequence } from '@mermaid-js/diagram-sequence';
@@ -32,7 +35,10 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
   class: table(classDiagram),
   er: table(er),
   flowchart: table(flowchart),
+  gantt: table(gantt),
+  gitgraph: table(gitGraph),
   journey: table(journey),
+  mindmap: table(mindmap),
   pie: table(pie),
   quadrant: table(quadrant),
   sequence: table(sequence),
@@ -53,7 +59,8 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
  * `activationBkgColor`, …), which the oracle specs compare instead, so the neo and neo-dark specs
  * leave these out of their v12 comparison rather than listing them in `DIFFERENCES`. The
  * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
- * and frame border of T2 (read with `inline()`).
+ * and frame border of T2 (read with `inline()`); the badge and callout of T1b, which gitGraph's
+ * commit and tag labels read.
  */
 export const D332_INPUTS: readonly string[] = [
   'seriesColorArray',
@@ -66,6 +73,11 @@ export const D332_INPUTS: readonly string[] = [
   'lineTextColor',
   'softBorder',
   'frameBorder',
+  'badgeBkg',
+  'badgeTextColor',
+  'calloutBkg',
+  'calloutTextColor',
+  'calloutBorder',
 ];
 
 /**

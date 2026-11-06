@@ -11,13 +11,7 @@ import {
   gitSources,
   hueSources,
 } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_GITGRAPH,
-  CLASSIC_PADDING,
-  TEXT_SIZES,
-  CLASSIC_MINDMAP,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const GIT = gitSources(
   'primaryColor',
@@ -49,9 +43,6 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
-    ...TEXT_SIZES,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).

@@ -26,8 +26,8 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 
 ## T1 (#440)
 
-- Fill `seriesColorArray` in each theme spec and migrate pie, journey and gitGraph slots onto it; decide whether seed rows are needed (see T0a). **T1a: done for pie and journey; gitGraph is T1b.**
-- gitGraph's `gitBranchLabel` reads `scaleLabelColor` (D334) once #404 merges.
+- Fill `seriesColorArray` in each theme spec and migrate pie, journey and gitGraph slots onto it; decide whether seed rows are needed (see T0a). **T1a: done for pie and journey; T1b: gitGraph's palettes stay core's (below).**
+- gitGraph's `gitBranchLabel` reads `scaleLabelColor` (D334): done in T1b's merge of `mermaid-v13`.
 
 ### T1a (pie, quadrant, journey, timeline)
 
@@ -40,6 +40,20 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 - **Used-by.** Table rules count as reads, so `quadrant` joins `primaryColor`, `primaryTextColor`, `primaryBorderColor` and `textColor`; the scan also counts `inline(name)` in a rule, so `pie` reads the two inks.
 - **Journey's `actor0`–`actor5`** have no rule in any theme (D249); `theme-tables.spec.ts` lists them as author-only, as `themes.spec.ts` did in core.
 - **Core opacity test.** No core row has kind `opacity` now, so `theme.spec.ts` tests the kind on a local table var.
+
+
+### T1b (gantt, gitGraph, mindmap)
+
+- **Merges.** `mermaid-v13` at `d79c50198` (gantt, gitGraph), then at `488a4bf5e` (mindmap). Wave 2's rows stayed in core through the merge. The T0 contract and the rows already moved stayed as on the integration branch. gitGraph's branch labels read `scaleLabelColor` where v12's (and #404's) read `labelTextColor` or forest's `actorTextColor` (D334), so an author's `labelTextColor` no longer reaches them: MIGRATION.md's git row. `git-palettes.spec.ts` checks that v13 under `scaleLabelColor` equals v12 under `labelTextColor`. The git palettes already read `cScale<n>`.
+- **The git palettes stay in core, as the one shared input.** gitGraph's branches and mindmap's root (`git0`, `gitBranchLabel0`) read `git`, `gitInv` and `gitBranchLabel`. With two readers they stay core palettes, with no copy in either package. They keep v12's names, so `git<n>` overrides still work; a generic rename would break them. Mindmap's three paint flags are its own and moved to its table.
+- **Five D332 inputs for the label colours**, because the classic themes write gitGraph's labels differently (default pins v12's constructor literals, base derives, forest, dark and neutral pin v12's resolved borders):
+  - `badgeBkg` and `badgeTextColor`: a small label box on the secondary colour beside an item, and its text (commit ids, or any id or count badge).
+  - `calloutBkg`, `calloutTextColor` and `calloutBorder`: a bordered label on the primary colour pinned to an item, its text and its border (tags, or flags and markers elsewhere).
+  - Each theme writes them exactly as it wrote the old row (`gitLabelRules` now writes the badge and the callout border). The table reads them with `inline()`, and `tagLabelBorder` is `ifSet(tagBorder, inline(calloutBorder))`. They are in `D332_INPUTS`, and `DIFFERENCES` is unchanged.
+- **Inks by trait.** `gitCherryPickInk` is `#000000` in every dark family entry and `#ffffff` in redux light. `commitLineColor` is `#BDBCCC` in redux, and the classic dark entry has the rule `lineColor`. Both stay unset where v12 set nothing. `theme-tables.spec.ts` gains `SOME_THEMES` for them (core's `themes.spec.ts` had it) and lists `tagBorder` as author-only.
+- **Gantt** has no family entry: its v12 theme-base rules are the table's light rules, and `doneTaskBkgColor` is its dark rule. `primaryColor`, `tertiaryColor` and `primaryBorderColor` list `gantt`. `TEXT_SIZES` and the gitGraph and mindmap geometry are gone from core.
+- **Identity and the clock.** `gantt/pr-check/should-render-vertical-markers-…` (`dateFormat HH:mm`) draws its today line at the wall-clock minute, so it differs from any baseline rendered minutes earlier (48 renders, x 264 → 265). Rendered at the same time as `b2a76631e` it is identical in all 48 renders. No `--allow` entry was added, because nothing changed.
+- **Tests that build a theme for a moved row** pass the table (`{ diagram: gitGraph.theme }`, the mindmap harness and fixtures, `gantt/theme.spec.ts`, `git-palettes.spec.ts`, the gitGraph layout specs); the neo oracle's geometry check uses `everyTable`.
 
 ## T2 (#441)
 

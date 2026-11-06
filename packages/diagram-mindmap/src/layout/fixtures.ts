@@ -8,6 +8,7 @@ import type { LayoutEngine } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme, type ThemeName } from '@mermaid-js/core/theme';
+import { theme } from '../theme/table.ts';
 import type { MindmapModel, MindmapNode, MindmapShape } from '../model.ts';
 import { mindmapSections } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
@@ -63,7 +64,7 @@ export const gridMeasurer: Measurer = {
 
 /** A fresh theme (one per layout: a theme records the variables read). */
 export async function themeNamed(name: ThemeName = 'default'): Promise<Theme> {
-  return createTheme(await loadTheme(name), {});
+  return createTheme(await loadTheme(name), { diagram: theme });
 }
 
 /** A layout context for `engine`, with `config` over the defaults. */

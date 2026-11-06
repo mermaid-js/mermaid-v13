@@ -65,27 +65,30 @@ function unresolved(
   theme: Theme,
   table: DiagramThemeTable,
   carrier?: Theme,
-  authorOnly: readonly string[] = []
+  authorOnly: readonly string[] = [],
+  someThemes: readonly string[] = []
 ): string[] {
   const out: string[] = [];
   for (const [name, { kind }] of Object.entries(table.vars)) {
     const v = theme.value(name);
     const ok = authorOnly.includes(name)
       ? v === 'currentColor'
-      : kind === 'color'
-        ? parseColor(v) !== undefined ||
-          (v === 'currentColor' &&
-            carrier !== undefined &&
-            parseColor(carrier.value(name)) !== undefined)
-        : kind === 'length'
-          ? Number.isFinite(theme.number(name))
-          : kind === 'padding'
-            ? Number.isFinite(theme.padding(name, 8))
-            : kind === 'opacity'
-              ? theme.number(name) >= 0 && theme.number(name) <= 1
-              : kind === 'flag'
-                ? v === 'true' || v === 'false'
-                : v !== '' && v !== 'currentColor';
+      : someThemes.includes(name) && v === 'currentColor'
+        ? true
+        : kind === 'color'
+          ? parseColor(v) !== undefined ||
+            (v === 'currentColor' &&
+              carrier !== undefined &&
+              parseColor(carrier.value(name)) !== undefined)
+          : kind === 'length'
+            ? Number.isFinite(theme.number(name))
+            : kind === 'padding'
+              ? Number.isFinite(theme.padding(name, 8))
+              : kind === 'opacity'
+                ? theme.number(name) >= 0 && theme.number(name) <= 1
+                : kind === 'flag'
+                  ? v === 'true' || v === 'false'
+                  : v !== '' && v !== 'currentColor';
     if (!ok) out.push(`${name}=${v}`);
   }
   return out;
@@ -93,10 +96,20 @@ function unresolved(
 
 /**
  * Rows no theme sets, only an author: journey's `actor0`–`actor5` (D249), which win over
- * `journey.actorColours` when set. Unset, they resolve to `currentColor` in every theme.
+ * `journey.actorColours` when set; gitGraph's `tagBorder` (D267), v12's other name for
+ * `tagLabelBorder`. Unset, they resolve to `currentColor` in every theme.
  */
 const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = {
   journey: ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'],
+  gitgraph: ['tagBorder'],
+};
+
+/**
+ * Rows set only in the themes v12 sets them in (#374, D331): the gitGraph renderer draws v12's
+ * fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too.
+ */
+const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
+  gitgraph: ['commitLineColor', 'gitCherryPickInk'],
 };
 
 /** The built-in theme of each family and dark trait. */
@@ -106,7 +119,8 @@ function resolve(
   spec: ThemeSpec,
   table: DiagramThemeTable,
   synthetic = false,
-  authorOnly: readonly string[] = []
+  authorOnly: readonly string[] = [],
+  someThemes: readonly string[] = []
 ): string[] {
   const warnings: ThemeWarning[] = [];
   const options = {
@@ -117,7 +131,10 @@ function resolve(
   const theme = createTheme(spec, options);
   const like = synthetic ? CARRIERS.get(`${spec.family} ${spec.dark}`) : undefined;
   const carrier = like && createTheme(like, { diagram: table, cssVariables: false });
-  return [...unresolved(theme, table, carrier, authorOnly), ...warnings.map((w) => w.message)];
+  return [
+    ...unresolved(theme, table, carrier, authorOnly, someThemes),
+    ...warnings.map((w) => w.message),
+  ];
 }
 
 describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
@@ -127,10 +144,10 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
   });
 
   it.each(TABLES)('%s: every row resolves in all eleven themes', (type, table) => {
-    const only = AUTHOR_ONLY[type];
-    expect(Object.fromEntries(specs.map((s) => [s.name, resolve(s, table, false, only)]))).toEqual(
-      Object.fromEntries(specs.map((s) => [s.name, []]))
-    );
+    const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
+    expect(
+      Object.fromEntries(specs.map((s) => [s.name, resolve(s, table, false, only, some)]))
+    ).toEqual(Object.fromEntries(specs.map((s) => [s.name, []])));
   });
 
   const synthetic = (['classic', 'redux', 'neo'] as const).flatMap((family) =>
@@ -148,9 +165,9 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
     '%s: a twelfth theme with only base colours and a family resolves every variable',
     (type, table) => {
       const name = (s: ThemeSpec) => `${s.family}${s.dark ? ' dark' : ''}`;
-      const only = AUTHOR_ONLY[type];
+      const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
       expect(
-        Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, true, only)]))
+        Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, true, only, some)]))
       ).toEqual(Object.fromEntries(synthetic.map((s) => [name(s), []])));
     }
   );

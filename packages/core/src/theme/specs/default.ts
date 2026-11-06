@@ -4,13 +4,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { paletteSlots, series } from './palettes.ts';
 import { gitSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_GITGRAPH,
-  CLASSIC_PADDING,
-  TEXT_SIZES,
-  CLASSIC_MINDMAP,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 /**
  * v12 `theme-default.js` derives its git palettes in the constructor, from its own colours, and
@@ -46,9 +40,6 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
-    ...TEXT_SIZES,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   values: {
@@ -75,12 +66,13 @@ const theme: ThemeSpec = {
   rules: {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
-    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them.
-    commitLabelColor: '#000021',
-    commitLabelBackground: '#ffffde',
-    tagLabelColor: '#131300',
-    tagLabelBackground: '#ececff',
-    tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #c7c7f1))',
+    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them:
+    // the badge and the callout (D332).
+    badgeTextColor: '#000021',
+    badgeBkg: '#ffffde',
+    calloutTextColor: '#131300',
+    calloutBkg: '#ececff',
+    calloutBorder: 'ifSet(primaryBorderColor, #c7c7f1)',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.

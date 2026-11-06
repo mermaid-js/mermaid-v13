@@ -9,7 +9,6 @@ import {
   PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
-  createTheme,
   formatColor,
   loadTheme,
   parseColor,
@@ -176,7 +175,7 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
   });
 
   it('takes classic gitGraph geometry with the node colours, as v12 theme neo drew (D266)', async () => {
-    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    const classic = everyTable(await loadTheme('default'), { cssVariables: false });
     for (const name of GITGRAPH.filter((n) => n.startsWith('git') && n !== 'gitNodeColors'))
       expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
     expect(neo.value('gitNodeColors')).toBe('true');

@@ -9,13 +9,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { BASE_SECONDARY, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { darkenedScale, gitLabelRules, hueSources } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_GITGRAPH,
-  REDUX_PADDING,
-  TEXT_SIZES,
-  NEO_MINDMAP,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { NEO_GIT, NEO_GIT_DARK_MODE, REDUX_SERIES } from './redux.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
@@ -47,9 +41,6 @@ const neo: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
-    ...TEXT_SIZES,
-    ...NEO_MINDMAP,
-    ...NEO_GITGRAPH,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
