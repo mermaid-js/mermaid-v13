@@ -1884,7 +1884,9 @@ function assignTracks(
         for (const j of after[pick]!) waiting[j]!--;
       }
     }
-    const taken = new Set<number>();
+    // The tracks the pieces clashing with list[at] hold, stamped at + 1 (a gap's pieces take
+    // tracks below `count`, so t stops at `count` at most).
+    const taken = new Int32Array(count + 1);
     const onTrack: number[][] = [];
     let rows = 0;
     for (const at of sequence) {
@@ -1892,9 +1894,11 @@ function assignTracks(
       let t = 0;
       for (const i of above[at]! ?? []) if (track[list[i]!]! >= t) t = track[list[i]!]! + 1;
       if (weighed) {
-        taken.clear();
-        for (const i of clashes[at]!) taken.add(track[list[i]!]!);
-        while (taken.has(t)) t++;
+        for (const i of clashes[at]!) {
+          const held = track[list[i]!]!;
+          if (held >= 0) taken[held] = at + 1;
+        }
+        while (taken[t] === at + 1) t++;
       } else {
         while (onTrack[t]?.some((other) => clash(k, other))) t++;
         (onTrack[t] ??= []).push(k);

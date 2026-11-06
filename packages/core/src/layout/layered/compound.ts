@@ -2,7 +2,8 @@
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
-// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The
+// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). A graph
+// without groups skips the levels and ports and is laid out in one pass (`ungrouped`, #278). The
 // algorithm is otherwise unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
@@ -661,6 +662,99 @@ function opposite(side: Side): Side {
   return ((side + 2) & 3) as Side;
 }
 
+// The room an edge-end label takes along the flow of its level, with the room before it (D102).
+function endLabelRoom(
+  size: { width: number; height: number } | undefined,
+  vertical: boolean,
+  head: boolean,
+  opt: LayeredOptions
+): number {
+  if (!size) return 0;
+  const M = opt.metrics ?? pxProfile.engine;
+  return (vertical ? size.height : size.width) + M.endLabelAlong + (head ? (opt.headRoom ?? 0) : 0);
+}
+
+// The compound layout of a graph without groups (#278): its one level has every node and edge
+// and no ports, so the nodes and edges go to `layered` and come back once, placed as `place` in
+// `compoundLayout` places the root level, with the self-loops' labels set as it sets them.
+function ungrouped(nodes: CNode[], edges: CEdge[], dir: Dir, opt: LayeredOptions): CompoundResult {
+  const M = opt.metrics ?? pxProfile.engine;
+  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
+  const vertical = dir === 'TB' || dir === 'BT';
+  const flip = dir === 'BT' || dir === 'RL';
+  const items: number[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i]!.parent = -1;
+    items.push(i);
+  }
+  items.sort((a, b) => nodes[a]!.seq - nodes[b]!.seq || a - b);
+  const local = new Int32Array(nodes.length);
+  const lnodes = items.map((item, i) => {
+    local[item] = i;
+    const node = nodes[item]!;
+    const sw = node.w + node.loopW;
+    const sh = node.h + node.loopH;
+    const ln = lnode(vertical ? sw : sh, vertical ? sh : sw);
+    ln.span = node.span;
+    return ln;
+  });
+  const drawn: number[] = [];
+  const ledges: LEdge[] = [];
+  edges.forEach((e, ei) => {
+    e.route = [];
+    if (e.src === e.dst) return;
+    const labelW = vertical ? e.labelW : e.labelH;
+    const labelH = vertical ? e.labelH : e.labelW;
+    const edge = ledge(local[e.src]!, local[e.dst]!, e.minlen, labelW, labelH);
+    edge.tailEnd = endLabelRoom(e.start, vertical, false, opt);
+    edge.headEnd = endLabelRoom(e.end, vertical, true, opt);
+    drawn.push(ei);
+    ledges.push(edge);
+  });
+  const size = layered(lnodes, ledges, opt);
+  const contentW = vertical ? size.width : size.height;
+  const contentH = vertical ? size.height : size.width;
+  const boxW = Math.max(contentW, 0);
+  const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
+  // Adding the offsets also turns a -0 into 0, as in `place`.
+  const offY = 0;
+  const across = (ly: number): number => (flip ? size.height - ly : ly);
+  const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
+  const ty = (lx: number, ly: number): number => offY + (vertical ? across(ly) : lx);
+  items.forEach((item, i) => {
+    nodes[item]!.x = tx(lnodes[i]!.x, lnodes[i]!.y);
+    nodes[item]!.y = ty(lnodes[i]!.x, lnodes[i]!.y);
+  });
+  const axis = vertical ? 0 : 1;
+  drawn.forEach((ei, k) => {
+    const e = edges[ei]!;
+    const edge = ledges[k]!;
+    const points = edge.points;
+    const route: number[] = [];
+    // A point within 0.01 of the one before it is dropped, as `append` drops it.
+    for (let i = 0; i < points.length; i += 2) {
+      const x = tx(points[i]!, points[i + 1]!);
+      const y = ty(points[i]!, points[i + 1]!);
+      const len = route.length;
+      if (len >= 3 && Math.abs(route[len - 3]! - x) < 0.01 && Math.abs(route[len - 2]! - y) < 0.01)
+        continue;
+      route.push(x, y, axis);
+    }
+    e.route = route;
+    if (e.labelW > 0) {
+      e.labelX = tx(edge.labelX, edge.labelY);
+      e.labelY = ty(edge.labelX, edge.labelY);
+    }
+  });
+  for (const e of edges) {
+    if (e.src !== e.dst) continue;
+    const node = nodes[e.src]!;
+    e.labelX = node.x + node.w / 2 + M.loopLabel + e.labelW / 2;
+    e.labelY = node.y;
+  }
+  return { width: boxW, height: contentH };
+}
+
 // Lays out a graph whose nodes may be nested in groups. Each group is laid out on its own,
 // in its own direction, and then placed in its parent as a single box. An edge that crosses
 // a group's border passes through a port on the side facing its other end.
@@ -670,6 +764,7 @@ export function compoundLayout(
   rootDir: Dir,
   opt: LayeredOptions
 ): CompoundResult {
+  if (!nodes.some((c) => c.isGroup)) return ungrouped(nodes, edges, rootDir, opt);
   const M = opt.metrics ?? pxProfile.engine;
   const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
   const n = nodes.length;
@@ -842,15 +937,11 @@ export function compoundLayout(
 
   const local = new Int32Array(n);
 
-  // The room an edge-end label takes along the flow of its level, with the room before it (D102).
   const endRoom = (
     size: { width: number; height: number } | undefined,
     vertical: boolean,
     head: boolean
-  ): number =>
-    size
-      ? (vertical ? size.height : size.width) + M.endLabelAlong + (head ? (opt.headRoom ?? 0) : 0)
-      : 0;
+  ): number => endLabelRoom(size, vertical, head, opt);
   const build = (
     level: Level,
     sized: boolean
