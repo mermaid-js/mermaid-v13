@@ -9,6 +9,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ### #375 T0 core
 - `RenderOptions` lives in `packages/mermaid/src/api.ts:85`, not in core; only `RenderContext` is in core (`core/src/pipeline/types.ts:50`). The ticket's "`RenderOptions.now` in core" reads as: the option on the `mermaid` API's `RenderOptions`, the resolved value on core's `RenderContext` (and whatever core render-input type carries it there).
+- Done (choices): `RenderContext.now` and `availableWidth` are optional, so the hand-built contexts in other packages' fixtures (state, timeline, er, conformance) need no edit. The `mermaid` API always sets `now`. `MountOptions` has no `now`: each mount render defaults it. The "no clock read" check is a lint rule over core and every diagram package's non-spec code, so it covers gantt too. Unmet: none.
 
 ### #376 D1 dates
 - Pele's source files carry no licence header; the notice comes from Pele's root `LICENSE` (MIT, "Copyright (c) 2026 kepano"). Each ported file gets a header naming Pele, the commit 3a2f075, the path and that notice.

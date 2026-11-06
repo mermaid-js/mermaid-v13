@@ -25,6 +25,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | After | Core bytes | Spare | Note |
 | --- | --- | --- | --- |
 | base 38d663b44 | 93,551 | 657 | skeleton adds nothing to core |
+| #375 T0 | 93,573 | 635 | `now`, `availableWidth` on the context (+22 B) |
 
 ## Finish rule
 
