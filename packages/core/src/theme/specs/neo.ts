@@ -9,14 +9,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  CLASSIC_TIMELINE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, CLASSIC_TIMELINE, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
 import { PIE_REDUX } from './redux.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
@@ -47,16 +40,14 @@ const neo: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
-    ...NEO_CLASS_MARKERS,
     ...TEXT_SIZES,
     ...REDUX_PADDING,
-    ...NEO_SEQUENCE,
     ...CLASSIC_TIMELINE,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
-  // v12 neo derives these as theme-redux.js does: `classText` from `textColor`, no ER row fill
-  // of its own, and the neo-look zero circle on the node fill.
+  // v12 neo derives these as theme-redux.js does: no ER row fill of its own, and the neo-look
+  // zero circle on the node fill.
   rules: { ...REDUX_RULES, ...PIE_REDUX },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)

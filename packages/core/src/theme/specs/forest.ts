@@ -4,14 +4,7 @@
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_TIMELINE, TEXT_SIZES } from './geometry.ts';
 
 /** v12 `theme-forest.js`: primary and secondary −30, then hue turns. */
 const PIE_FOREST: ThemeRuleTable = pieSlots([
@@ -52,10 +45,8 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
     useGradient: false,
   },

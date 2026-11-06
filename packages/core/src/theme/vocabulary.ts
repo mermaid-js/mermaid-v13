@@ -77,22 +77,6 @@ export const ARROWHEAD_VARIABLES = [
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
 
 /**
- * Class relationship marker geometry (D152): v12 drew `look: neo` class markers from its
- * `*-margin` variants, so the redux themes carry those and the classic themes v12 classic's.
- * Read as numbers at render time. Only the quantities that differ are variables.
- */
-export const CLASS_MARKER_VARIABLES = [
-  'classMarkerStrokeWidth',
-  'classFilledMarkerStrokeWidth',
-  'extensionMarkerLength',
-  'extensionMarkerGap',
-  'compositionMarkerGap',
-  'dependencyMarkerGap',
-] as const;
-
-export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
-
-/**
  * Name lists joined into one. Called `@__PURE__` with no spread, so a bundle drops a list that
  * nothing reads at run time (only types and tools read `TOKEN_VARIABLES`; core's size budget,
  * R-PERF-8). An array spread would keep it, as bundlers cannot prove it has no side effects.
@@ -113,11 +97,7 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'spacing3',
   ] as const,
   ARROWHEAD_VARIABLES,
-  CLASS_MARKER_VARIABLES,
   [
-    // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
-    // in every theme, a size key that keeps v12's default.
-    'classTerminalFontSize',
     // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
     'nodePaddingX',
     'nodePaddingY',
@@ -139,15 +119,6 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'leanPaddingY',
     'oddPaddingX',
     'oddPaddingY',
-    // Sequence participant boxes (v12 neo rx 6, classic 3).
-    'actorRadius',
-    // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
-    // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
-    // and the room below the drawing.
-    'actorGlyphBand',
-    'messageEndGap',
-    'labelBoxExtraHeight',
-    'actorFooterPadding',
     // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
     'pieTitleTextSize',
     'pieSectionTextSize',
@@ -241,7 +212,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core']),
+  primaryTextColor: def('pt', 'color', ['core', 'class']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
@@ -256,6 +227,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'core',
     'flowchart',
     'sequence',
+    'class',
     'state',
     'er',
     'journey',
@@ -269,8 +241,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
   titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
-  // v12 `classText`: every text of a class diagram but notes and namespace titles.
-  classText: def('ct', 'color', ['class']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),
   border1: def('b1', 'color', []),
@@ -278,17 +248,13 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
   noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
   noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
-  // sequence (v12 names, derived as v12 `theme-base.js` derives them)
-  actorBkg: def('ab', 'color', ['sequence']),
+  // sequence (v12 names): the colours whose values differ between themes of one family, which
+  // the sequence table cannot key by trait yet (GAPS.md "T2"); the rest are its own.
   actorBorder: def('ar', 'color', ['sequence']),
   actorTextColor: def('at', 'color', ['sequence']),
-  actorLineColor: def('alc', 'color', ['sequence']),
   signalColor: def('sc', 'color', ['sequence']),
   signalTextColor: def('stc', 'color', ['sequence']),
-  labelBoxBkgColor: def('lbb', 'color', ['sequence']),
   labelBoxBorderColor: def('lbr', 'color', ['sequence']),
-  labelTextColor: def('ltc', 'color', ['sequence']),
-  loopTextColor: def('lpt', 'color', ['sequence']),
   activationBkgColor: def('acb', 'color', ['sequence']),
   activationBorderColor: def('acr', 'color', ['sequence']),
   sequenceNumberColor: def('snc', 'color', ['sequence']),
@@ -355,14 +321,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   crossArrowheadSize: def('xs', 'length', ['flowchart']),
   crossArrowheadGap: def('xg', 'length', ['flowchart']),
   crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
-  // class marker geometry (numbers only)
-  classMarkerStrokeWidth: def('cmw', 'length', ['class']),
-  classFilledMarkerStrokeWidth: def('cfw', 'length', ['class']),
-  extensionMarkerLength: def('eml', 'length', ['class']),
-  extensionMarkerGap: def('emg', 'length', ['class']),
-  compositionMarkerGap: def('cmg', 'length', ['class']),
-  dependencyMarkerGap: def('dmg', 'length', ['class']),
-  classTerminalFontSize: def('ctf', 'length', ['class']),
   erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
   nodePaddingX: def('npx', 'padding', ['flowchart']),
@@ -384,11 +342,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   leanPaddingY: def('lny', 'padding', ['flowchart']),
   oddPaddingX: def('odx', 'padding', ['flowchart']),
   oddPaddingY: def('ody', 'padding', ['flowchart']),
-  actorRadius: def('arx', 'length', ['sequence']),
-  actorGlyphBand: def('agb', 'length', ['sequence']),
-  messageEndGap: def('meg', 'length', ['sequence']),
-  labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
-  actorFooterPadding: def('afp', 'length', ['sequence']),
   timelineRadius: def('tlr', 'length', ['timeline']),
   timelineLabelOffset: def('tlo', 'padding', ['timeline']),
   timelineEventLabelShift: def('tle', 'length', ['timeline']),
@@ -411,7 +364,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
-  // sequence's `labelTextColor` before.
+  // a sequence variable before.
   scaleLabelColor: def('slc', 'color', ['core']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.

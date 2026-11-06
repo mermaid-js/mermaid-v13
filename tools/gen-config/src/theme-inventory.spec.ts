@@ -122,9 +122,13 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     );
   });
 
-  it('leaves the inventory as it is while no package has a vocabulary', async () => {
-    expect(REPO.filter((p) => p.vocabulary)).toEqual([]);
-    expect(await themeInventory(REPO)).toBe(await themeInventory());
+  it("adds each package's variables to the inventory, and nothing else (T2, #441)", async () => {
+    const owners = REPO.filter((p) => p.vocabulary).map((p) => p.type);
+    expect(owners).toEqual(expect.arrayContaining(['class', 'sequence']));
+    const [core, all] = [await themeInventory(), await themeInventory(REPO)];
+    expect(all.startsWith(core.trimEnd())).toBe(true);
+    expect(all).toContain('| `classText` | | color |');
+    expect(all).toContain('| `actorRadius` | | length |');
   });
 
   it("keeps every package's generated table up to date (run `pnpm gen:theme`)", () => {

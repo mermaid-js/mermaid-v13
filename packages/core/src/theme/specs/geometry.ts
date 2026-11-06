@@ -12,7 +12,7 @@
  * `leanRight.ts`, `trapezoid.ts`, `rectLeftInvArrow.ts` at fa796a943), as totals; the rounded
  * rectangle takes `padding` per side in every theme, so it has no variable.
  */
-import type { ArrowheadVariable, ClassMarkerVariable, TokenVariable } from '../vocabulary.ts';
+import type { ArrowheadVariable, TokenVariable } from '../vocabulary.ts';
 
 /**
  * v12 neo (`*-margin` markers). Point: viewBox 11.5×14 met into 10.5×14, so 10.5 long and
@@ -120,35 +120,6 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   oddPaddingY: 'padding',
 };
 
-type SequenceGeometry = Extract<
-  TokenVariable,
-  'actorRadius' | 'actorGlyphBand' | 'messageEndGap' | 'labelBoxExtraHeight' | 'actorFooterPadding'
->;
-
-/**
- * Sequence geometry, v12 `look: neo` (#194): the participant box corner (`svgDraw.js`); the
- * glyph band of `actorBands.ts` (`GLYPH_BAND_HEIGHT`), which also turns on its band model;
- * the 3 px a message stops short of its target (`sequenceRenderer.ts` `buildMessageModel`);
- * the 15 px taller fragment label tab (`svgDraw.js` `drawLoop`); the 30 px added below a
- * diagram with participants (`sequenceRenderer.ts` viewBox).
- */
-export const NEO_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
-  actorRadius: 6,
-  actorGlyphBand: 44,
-  messageEndGap: 3,
-  labelBoxExtraHeight: 15,
-  actorFooterPadding: 30,
-};
-
-/** v12 classic: corner 3, no glyph band (per-shape symbols), and none of the neo extras. */
-export const CLASSIC_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
-  actorRadius: 3,
-  actorGlyphBand: 0,
-  messageEndGap: 0,
-  labelBoxExtraHeight: 0,
-  actorFooterPadding: 0,
-};
-
 type TimelineGeometry = Extract<
   TokenVariable,
   'timelineRadius' | 'timelineLabelOffset' | 'timelineEventLabelShift' | 'timelineScaleColors'
@@ -178,42 +149,10 @@ export const CLASSIC_TIMELINE: Readonly<Record<TimelineGeometry, number | string
 };
 
 /**
- * Class relationship markers, v12 neo (`*-margin` markers in rendering-elements/markers.js at
- * fa796a943), each measured from the node outline after `markerOffsets` shortens the line
- * (17.25 for the diamonds and the triangle, 6 for dependency, 13.5 for the lollipop).
- * Extension: polygon 10→18 with refX 9, so 8 long and its tip 17.25 − 9 = 8.25 short of the
- * outline. Composition: the diamond with refX 3.5, tip 17.25 − 14.5 = 2.75 short. Dependency:
- * refX 16, tip 6 − 2 = 4 short. Hollow markers have a 2px outline, filled ones none.
- */
-export const NEO_CLASS_MARKERS: Readonly<Record<ClassMarkerVariable, number>> = {
-  classMarkerStrokeWidth: 2,
-  classFilledMarkerStrokeWidth: 0,
-  extensionMarkerLength: 8,
-  extensionMarkerGap: 8.25,
-  compositionMarkerGap: 2.75,
-  dependencyMarkerGap: 4,
-};
-
-/**
- * v12 classic: every class marker has refX 1 (dependency 13) and a 1px outline (`styles.js`
- * `.extension { stroke-width: 1 }` and so on). The diamonds and the triangle are 17 long with
- * their tip 17.25 − 17 = 0.25 short of the outline; dependency's tip is 6 − 5 = 1 short.
- */
-export const CLASSIC_CLASS_MARKERS: Readonly<Record<ClassMarkerVariable, number>> = {
-  classMarkerStrokeWidth: 1,
-  classFilledMarkerStrokeWidth: 1,
-  extensionMarkerLength: 17,
-  extensionMarkerGap: 0.25,
-  compositionMarkerGap: 0.25,
-  dependencyMarkerGap: 1,
-};
-
-/**
- * Sizes every theme shares: v12 drew class multiplicities at 11px (`.edgeTerminals`), and every
- * v12 theme sets the same pie text sizes, stroke widths and slice opacity (`theme-*.js`, #325).
+ * Sizes every theme shares: every v12 theme sets the same pie text sizes, stroke widths and
+ * slice opacity (`theme-*.js`, #325).
  */
 export const TEXT_SIZES = {
-  classTerminalFontSize: 11,
   pieTitleTextSize: 25,
   pieSectionTextSize: 17,
   pieLegendTextSize: 17,

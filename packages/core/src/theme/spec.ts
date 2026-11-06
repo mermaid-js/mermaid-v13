@@ -55,7 +55,6 @@ export const LIGHT_RULES: ThemeRuleTable = {
   clusterBorder: 'tertiaryBorderColor',
   titleColor: 'contrast(clusterBkg, textColor, background)',
   edgeLabelBackground: 'secondaryColor',
-  classText: 'primaryTextColor',
   arrowheadColor: 'lineColor',
   defaultLinkColor: 'lineColor',
   border1: 'primaryBorderColor',
@@ -102,17 +101,12 @@ export const LIGHT_RULES: ThemeRuleTable = {
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',
   altBackground: 'tertiaryColor',
-  // sequence, as v12 `theme-base.js` derives them
-  actorBkg: 'mainBkg',
+  // sequence, as v12 `theme-base.js` derives them (its other colours are its table's)
   actorBorder: 'nodeBorder',
   actorTextColor: 'primaryTextColor',
-  actorLineColor: 'actorBorder',
   signalColor: 'textColor',
   signalTextColor: 'textColor',
-  labelBoxBkgColor: 'actorBkg',
   labelBoxBorderColor: 'actorBorder',
-  labelTextColor: 'actorTextColor',
-  loopTextColor: 'actorTextColor',
   activationBkgColor: 'secondaryColor',
   // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
   activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
