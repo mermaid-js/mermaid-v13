@@ -179,7 +179,7 @@ const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.c
 function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
   if (typeof raw === 'boolean') return kind === 'flag' ? String(raw) : undefined;
   if (typeof raw === 'number')
-    return kind === 'length' || kind === 'padding' || kind === 'weight'
+    return kind === 'length' || kind === 'padding' || kind === 'weight' || kind === 'opacity'
       ? checkValue(kind, String(raw))
       : undefined;
   if (typeof raw !== 'string') return undefined;
@@ -201,6 +201,9 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       const f = v.toLowerCase();
       return f === 'true' || f === 'false' ? f : undefined;
     }
+    case 'opacity':
+      // A plain number from 0 to 1 (D221): `RE_SIZE` without its `px`.
+      return RE_SIZE.test(v) && +v <= 1 ? v : undefined;
   }
 }
 
@@ -640,7 +643,8 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     },
     number(name) {
       const kind = def(name).kind;
-      if (kind !== 'length' && kind !== 'padding') throw new TypeError(`${name} is not a length`);
+      if (kind !== 'length' && kind !== 'padding' && kind !== 'opacity')
+        throw new TypeError(`${name} is not a length`);
       return Number(main.get(name).lit);
     },
     padding(name, padding) {

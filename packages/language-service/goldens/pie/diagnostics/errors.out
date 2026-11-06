@@ -1,0 +1,5 @@
+3:12-3:14 "-3" error PIE_NEGATIVE_VALUE: "Cats" has invalid value: -3. Negative values are not allowed in pie charts. All slice values must be >= 0.
+4:3-4:14 "\"Dogs\" : 10" warning PIE_DUPLICATE_SLICE: Section "Dogs" is repeated: the value 10 is ignored and the first value, 386, is kept. Give each section its own label.
+5:10-5:12 "15" error UNEXPECTED: Expected `:` and a value, got `15`; write a section as `"label" : value`, e.g. `"Dogs" : 42`.
+6:3-6:8 "\"Fish" error UNCLOSED_STRING: Unclosed label: the `"` at line 6 has no closing `"`. Add `"` after the label.
+8:3-8:11 "showData" error UNEXPECTED: Expected a section such as `"Dogs" : 42`, `title`, `accTitle:` or `accDescr`, a line break or the end of the text, got `showData`; `showData` goes on the `pie` line, right after `pie`.

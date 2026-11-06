@@ -18,6 +18,7 @@
     "@mermaid-js/diagram-class": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-pie": "workspace:^",
     "@mermaid-js/diagram-sequence": "workspace:^",
     "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",

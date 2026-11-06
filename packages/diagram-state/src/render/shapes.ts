@@ -1,6 +1,7 @@
 // The node shapes (v12 `stateStart`, `stateEnd`, `choice`, `forkJoin`, `rect`, `rectWithTitle`,
 // `note`), drawn centred on the node's origin from the builder's measured size (#144). Every
-// colour and stroke comes from the caller's paint, so the theme decides them (D152).
+// colour and stroke comes from the caller's paint, so the theme decides them (D152). Each goes
+// through `w.outline` (D302): states and notes as `node`, the pseudo-states as `mark`.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
 import type { StateMetrics, StateNodeView } from '../layout/index.ts';
 
@@ -31,7 +32,7 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
   const y = -height / 2;
   switch (view.shape) {
     case 'start':
-      w.leaf('circle', {
+      w.outline('mark', 'circle', {
         class: 'state-start',
         cx: 0,
         cy: 0,
@@ -41,7 +42,7 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
       });
       return;
     case 'end':
-      w.leaf('circle', {
+      w.outline('mark', 'circle', {
         class: 'state-end',
         cx: 0,
         cy: 0,
@@ -50,7 +51,7 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
         stroke: paint.ring,
         'stroke-width': END_STROKE,
       });
-      w.leaf('circle', {
+      w.outline('mark', 'circle', {
         class: 'end-state-inner',
         cx: 0,
         cy: 0,
@@ -62,19 +63,19 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
       return;
     case 'choice': {
       const s = width / 2;
-      w.leaf('polygon', { points: [0, -s, s, 0, 0, s, -s, 0], ...paint.shape });
+      w.outline('mark', 'polygon', { points: [0, -s, s, 0, 0, s, -s, 0], ...paint.shape });
       return;
     }
     case 'fork':
     case 'join':
-      w.leaf('rect', { class: 'fork-join', x, y, width, height, ...paint.solid });
+      w.outline('mark', 'rect', { class: 'fork-join', x, y, width, height, ...paint.solid });
       return;
     case 'note':
-      w.leaf('rect', { x, y, width, height, ...paint.shape });
+      w.outline('node', 'rect', { x, y, width, height, ...paint.shape });
       return;
     case 'state':
     case 'described':
-      w.leaf('rect', { x, y, width, height, rx: STATE_RADIUS, ...paint.shape });
+      w.outline('node', 'rect', { x, y, width, height, rx: STATE_RADIUS, ...paint.shape });
   }
 }
 
@@ -92,7 +93,7 @@ export function drawDescribed(
   const top = -view.h / 2 + sm.statePad.y;
   const rule = top + view.label.height + sm.descGap / 2;
   w.label(view.label, 0, top + view.label.height / 2, { class: 'state-title', ...text });
-  w.leaf('line', {
+  w.outline('divider', 'line', {
     class: 'divider',
     x1: -view.w / 2,
     y1: rule,

@@ -1,0 +1,95 @@
+# Gaps (spec #288)
+
+Unmet acceptance criteria and orchestrator choices, filed under the ticket that owns each one. Choices not covered by the spec or a D-id are also listed under "For the maintainer" in the PR body.
+
+## Orchestrator choices
+
+- **No T0.** The `opacity` theme-variable kind (D221) is additive to the core vocabulary, so it lands in T5 (#325) as the spec says, not as a contract-change T0.
+
+## #304 T1 lexer (merged)
+
+- Review findings left to later tickets (none blocking):
+  - [x] **#305:** `harvest-pie.ts` drops literals containing `${`, so the interpolated `it.each` strings of parser `pie.test.ts` are not harvested (27 of 32 kept). Expand the tables by hand into the quirks or the ported specs so those shapes reach the gate. Its `\\\n` continuation branch in `unescape` is unreachable for quoted literals.
+    - Closed by #305: all 32 `pie.test.ts` strings are in `pie-v12-specs.json`; the 5 missing from the count are duplicates within the `it.each` tables (none contains `${`). The whole file is also ported (`src/v12-specs/langium-pie.spec.ts`).
+  - [x] **#306/#325:** drop the pie exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one theme variable") once the renderer reads theme variables.
+    - Closed by #306: the exemption is gone; pie reads `fontFamily` and `textColor` (both list `pie` in `usedBy`).
+  - [x] **#325:** `LANGIUM_NAMES` (test-only) and `pieTokens` are exported from the runtime entry; move them to a test or internal subpath if they show up in the load-path size.
+    - Closed by #325: they did (with `pieLayoutViolations`, about 1 KB gz of the pie chunk); `LANGIUM_NAMES`, `pieTokens`, `PIE_TRIVIA`, `PieTokenKind` and `pieLayoutViolations` are at `@mermaid-js/diagram-pie/testing`.
+- Deviations (accepted by the orchestrator, consistent with D220): the lexer-error position is compared as the length of the text v12 read before it (entities decoded), since v12 and v13 offsets differ; unclosed `%%{` directives are a listed gate exclusion (core's `UNCLOSED_DIRECTIVE`, shared by every type). An in-body `---…---` block is its own `Yaml` trivia kind in `PIE_TRIVIA`; #305 skips it.
+
+## #305 T2 parser (merged)
+
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - fixed a #304 lexer bug: an in-body YAML block tries the regex's optional middle first, so `---\n---\n…\n---` is one block to the last closing line (three gate quirks pin it);
+  - unclosed `%%{` directives stay out of parity, as in the lexer gate (core's `UNCLOSED_DIRECTIVE`); a spec checks they differ only there;
+  - a negative section is left out of the model and does not shadow a later section with the same label (v12 rejects the whole text anyway);
+  - a repeated `title`/`accTitle`/`accDescr` statement gets `title@2`, … (pitfall 9);
+  - the parity oracle gets no front matter, so the parity parse holds the front-matter title back; the D218 fallback is covered by the package's own specs.
+- [x] **#306:** repeated-label and negative sections have AST nodes but no model section, so nothing draws them. The AST round-trip needs a rule for those nodes (e.g. the dropped repeat maps to the first slice's legend row, or such nodes are exempt with a reason).
+  - Closed by #306 (`packages/conformance/src/pie/render.spec.ts`): a `Slice` node that is a model section has exactly one `data-ast` element (its legend row); one with no section (repeat or negative) has none, and must carry a `PIE_DUPLICATE_SLICE`/`PIE_NEGATIVE_VALUE` diagnostic inside its range; header, title and accessibility nodes have no element, as in sequence.
+- [x] **#325:** `getConfig` ported spec is skipped (no DB config) until the config keys are honoured.
+  - Closed by #325: the skip is gone; the adapter's `getConfig` returns the plugin's generated `configDefaults`, compared with v12 12.2.0's `pie` defaults less the ignored `useWidth`.
+
+## #306 T4 renderer (merged)
+
+- [x] **#325:** delete the colour stand-ins in `packages/diagram-pie/src/render/paint.ts` (`pie1`…`pie12` = v12 `default` values in every theme; `pieStrokeColor`/`pieOuterStrokeColor` `black`; title/section/legend text colours = `textColor`; `pieOpacity` 0.7) once the vocabulary has the names. The renderer already prefers a vocabulary entry.
+- [x] **#325:** replace the eager `registerExternalDiagrams([pie], …)` in `packages/conformance/src/pie/render-api.ts` with the generated registry once the manifest lands.
+  - Closed by #325: the stand-ins are gone (paint.ts reads `pie1`…`pie12` and the pie variables); `pieApi` is plain `createMermaid()`.
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - `data-id` on each slice, percentage and legend row is the section's AST id (`slice:<label>`), as pie has no user ids;
+  - under `hover`, every slice keeps v12's `highlightedOnHover` class, so host CSS can still add a hover (D222 draws nothing extra);
+  - slice AST ids also percent-encode characters XML 1.0 cannot hold (`\0` → `%00`, a lone surrogate → `%D800`), so `data-ast` matches the id;
+  - the highlighted slice is written `scale(1.05,1.05)` (core's helper), the same as D222's `scale(1.05)`.
+- Shared edit: `pie` added to `textColor`'s `usedBy`.
+
+## #307 T6 language facet (merged)
+
+- [x] **#325:** drop the pie row in `packages/language-service/src/testing/unlisted-facets.ts` once the manifest has `language` (`goldens.spec.ts` fails until then); drop the eager row in `packages/conformance/src/pie/service-symbols.spec.ts` (its last test fails until then); add the `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows, run each adapter's `gen`, extend `adapters-agree.spec.ts` and the first-paint e2e specs (`language.md` step 9). Goldens stay in `packages/language-service/goldens/pie/`.
+  - Closed by #325: the unlisted row and the eager row are gone (the service loads the facet from the registry row); `LEZER_HIGHLIGHTERS` and `MONARCH_HIGHLIGHTERS` have pie rows, both `gen`s ran, `adapters-agree.spec.ts` and the CodeMirror and Monaco first-paint specs (unit and e2e) cover pie; their "no highlighter" cases use `gantt`.
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - the facet runs through the test-only `unlisted-facets.ts` row (class #159's mechanism) rather than a conformance goldens spec, so the property and round-trip specs also cover pie before the manifest;
+  - shared: `'` added to the service's `QUOTES` (`language-service/src/symbols.ts`) so `'Dogs'` labels are symbols; no other type's goldens changed except the empty-text completion goldens (er, flowchart, state) now listing `pie`;
+  - `ACC_DESCR` split into two equivalent rules in `pie.ebnf` so TextMate/Monarch colour a multi-line `accDescr { }`; multi-line labels and in-body YAML still differ in those two highlighters (pinned in `pie-agreement.spec.ts`);
+  - a label written differently from its name (escapes, entities, CRLF or a comment line inside it: 44 in the corpus) gets no definition, references or rename;
+  - the `pie` line offers only `showData` and `title`, as the ticket lists.
+
+## #335 T3 layout (merged)
+
+- [x] **Invariants on parser-produced fixtures**: closed by #305: `packages/conformance/src/pie/layout-corpus.spec.ts` (gate corpus × 5 legend positions × 3 option sets, 0 violations); `layoutPie`/`pieLayoutViolations` are now exported from the package entry for it. Was: not run, because #305 had not merged. Whoever merges second adds the corpus spec described in `tickets/335.md` (`pieLayoutViolations` over the e2e corpus parsed by the v13 parser). Owner: #305 if it merges after #335 (it does), else #306.
+- [x] **#325:** delete `PIE_THEME_DEFAULTS` in `layout/metrics.ts` (title/section/legend text sizes, stroke widths) once the pie variables exist; the layout already prefers a vocabulary entry of kind `length`.
+  - Closed by #325: the layout reads `theme.number()` for the five sizes and widths.
+- Deviations (orchestrator: accepted, consistent with P1/D226; listed for the maintainer):
+  - an empty `highlightSlice` (the default) highlights nothing; v12 highlighted a slice labelled `""` (the default `''` matched it);
+  - no sections gives legend offsets of 0 where v12 computed NaN (D226: never NaN);
+  - the bounding box also covers the stroke widths and a highlighted slice drawn at 1.05 (D224: covers what is drawn).
+- Shared edit: `pie` added to `fontFamily`'s `usedBy` (`core/src/theme/vocabulary.ts`, regenerated `theme-variables.md`).
+
+## #325 T5 integration (merged)
+
+- [x] **Theme DSL gaps** (`01-v12-pie.md` §4): no hue-rotate `adjust` in `core/src/theme/dsl.ts`; `taskTextDarkColor` and `mainContrastColor` (v12's pie title/legend colours) are not in the vocabulary; dark and neutral have no `cScale` palette. Store v12's computed values as literals where a derivation is missing (as `specs/neo-dark.ts:26` does), rather than growing the DSL; keep any vocabulary addition additive.
+  - Closed by #325: no DSL change and no `taskTextDarkColor`/`mainContrastColor`; each theme's pie table (in its spec file, `pieSlots` in `specs/palettes.ts`) keeps lightness-only slots as rules and stores hue turns, `cScale` slots and HSL-rounding cases as v12's resolved values. Oracle: `packages/conformance/src/pie/theme.spec.ts`.
+- [x] **Test-only `pie-fixture` adapter** (`packages/conformance/src/fixtures/pie-plugin.ts`): must not clash with the real `pie` adapter (#305) or the manifest (#325).
+  - No clash: it is a conformance `DiagramAdapter` (`pie-fixture`), never registered with mermaid; `runner.spec.ts` and `corpus.spec.ts` still pass.
+- [x] **Specs that assume pie is unported**: `packages/mermaid/src/cli.spec.ts:221-224`, `e2e/language/codemirror.spec.ts:254-257`, maybe `packages/mermaid/src/registry-rules.spec.ts:48`, :73.
+  - Closed by #325: the CLI spec uses `gantt` as the type this build lacks; the CodeMirror/Monaco "no highlighter" specs use `gantt`; `registry-rules.spec.ts` was right as is (pie is still first-party, and still detected as `pie`); discovery, gallery, packing and completion specs list pie.
+
+- Deviations (orchestrator: accepted, listed for the maintainer):
+  - 23 pie theme variables, not the "21" in the ticket; the ticket's own list has 23;
+  - `redux-color`/`redux-dark-color`: a `cScale<n>` override no longer recolours `pie<n+1>`, because rules cannot read a palette (MIGRATION.md says so);
+  - hue-turned slots, `default` 3/6 and `redux-dark`/`neo-dark` 5 are stored as v12's resolved values, so they do not follow an author's base colours;
+  - test-only exports (`LANGIUM_NAMES`, `pieTokens`, `PIE_TRIVIA`, `PieTokenKind`, `pieLayoutViolations`) moved to `@mermaid-js/diagram-pie/testing` (≈1 KB gz off the render chunk);
+  - `TOKEN_VARIABLES` built by a `@__PURE__` call so bundles drop it (same value and type; ≈240 B gz off core).
+- **Budget (for the maintainer):** core closure 89822 B gz (bench method); on the CDN-build measure 90061 B of 90112 B, so 51 B headroom. The pie row costs ≈330 B, ≈290 B of it because pie is the first diagram chunk that doesn't import `core/layout`, which splits a shared chunk. Journey, quadrant and timeline will push core past budget; R-PERF-8 needs a decision.
+
+## Final whole-branch review (fixed, `tickets/review-fixes.md`)
+
+- Five findings, all fixed: multi-line legend rows and titles overlapped (rows now take their label height; extra title lines grow up; `invariants.ts` checks label boxes); markdown strings were not rendered; no `language-service` (and CodeMirror/Monaco adapter) changesets; a value or sum overflowing to Infinity (now `PIE_VALUE_TOO_LARGE`, a warning and no section, and `pieSum()` scales only on overflow); the unreachable `isValidId` refusal (kept as `() => undefined`, the facet interface requires it).
+- **Orchestrator choice (for the maintainer): markdown strings render in pie labels.** #288 Q6 says "core label layout (no markdown)", while D225 (DECISIONS.md) and MIGRATION.md say markdown strings render in wave-1 labels. Followed D225, the wave-wide record, so pie behaves like journey/quadrant/timeline. A plain label is unchanged; only one written as `` `…` `` renders as markdown.
+- Deviations accepted: the title-vs-legend overlap check skips a `center` legend (v12 draws it over the pie; `many-slices` already touches its title); `PIE_VALUE_TOO_LARGE` is a warning, as v12 accepted such values (accept/reject parity); a title counts as markdown with or without its double quotes.
+- Rejected Langium oracle loads stay cached for the process (`langium-lexer.ts`): a nit, left as is.
+
+## Shared contracts
+
+- **`PieModel`** (`packages/diagram-pie/src/model.ts`): landed by the orchestrator before #305 and #335 started in parallel, shaped from the spec's model list. #305 produces it; #335 reads it. Change it only additively and note the change here.
+  - #305: unchanged. `parsePie` fills it as documented (frozen; `title` absent when neither an in-text nor a front-matter title).
+- [x] **Generated grammar files were not committed** (`generated/` is gitignored; sequence's are force-added). Fixed on the integration branch with `git add -f packages/diagram-pie/grammar/generated/`. Tickets that change `pie.ebnf` must force-add the regenerated files.

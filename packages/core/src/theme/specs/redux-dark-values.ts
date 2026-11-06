@@ -2,7 +2,8 @@
  * The values `redux-dark` and `redux-dark-color` share, from v12 `theme-redux-dark.js` and
  * `theme-redux-dark-color.js` at 12.2.0 (identical for every variable v13 reads).
  */
-import type { ThemeSpec } from '../spec.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { pieSlots } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -74,3 +75,22 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   gradientStart: '#0042eb',
   gradientStop: '#eb0042',
 };
+
+/**
+ * v12 `theme-redux-dark.js` and `theme-neo-dark.js`: base's formulas. `pie5` is v12's value,
+ * since v12 darkens the unrounded HSL secondary colour, which lands one step off the hex one.
+ */
+export const PIE_REDUX_DARK: ThemeRuleTable = pieSlots([
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  '#2e3030',
+  undefined,
+  '#060606',
+  '#060606',
+  '#201f20',
+  '#000000',
+  '#000000',
+  '#060606',
+]);

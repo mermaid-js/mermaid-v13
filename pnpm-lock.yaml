@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -177,6 +180,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -204,6 +210,9 @@ importers:
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
+      mermaid-parser-v12:
+        specifier: npm:@mermaid-js/parser@2.0.1
+        version: '@mermaid-js/parser@2.0.1'
       mermaid-v12:
         specifier: npm:mermaid@^12.2.0
         version: mermaid@12.2.0
@@ -242,6 +251,9 @@ importers:
       '@mermaid-js/layout-elk':
         specifier: workspace:^
         version: link:../layout-elk
+      '@mermaid-js/plugin-hand-drawn':
+        specifier: workspace:^
+        version: link:../plugin-hand-drawn
       '@mermaid-js/plugin-interactions':
         specifier: workspace:^
         version: link:../plugin-interactions
@@ -300,6 +312,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-pie:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
@@ -326,6 +344,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -357,6 +378,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -544,6 +568,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:*
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -557,6 +584,19 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+
+  packages/plugin-hand-drawn:
+    dependencies:
+      roughjs:
+        specifier: 4.6.6
+        version: 4.6.6
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
 
   packages/plugin-interactions:
     devDependencies:
@@ -620,6 +660,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../../packages/diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../../packages/diagram-sequence

@@ -36,9 +36,13 @@ beforeAll(async () => {
 }, 120_000);
 
 describe('core is unaffected by optional packages (R-PLUG-8, D170)', () => {
-  it('measures with and without ELK and math', () => {
+  it('measures with and without ELK, math and the hand-drawn look', () => {
     expect(hidden).toEqual(
-      expect.arrayContaining(['@mermaid-js/layout-elk', '@mermaid-js/plugin-math'])
+      expect.arrayContaining([
+        '@mermaid-js/layout-elk',
+        '@mermaid-js/plugin-math',
+        '@mermaid-js/plugin-hand-drawn',
+      ])
     );
   });
 

@@ -5,16 +5,20 @@ const base = await loadTheme('base');
 
 describe('diagram plugin rule tables (DESIGN §12.1)', () => {
   it('adds derived variables a plugin reads, overridable like the built-in ones', () => {
-    const rules = { pie1: 'lighten(primaryColor, 20%)', pie2: 'alpha(pie1, 50%)' };
+    const rules = { slice1: 'lighten(primaryColor, 20%)', slice2: 'alpha(slice1, 50%)' };
     const t = createTheme(base, { rules });
-    t.color('pie2');
+    t.color('slice2');
     expect(t.rootStyle()).toEqual({
-      '--_pie2': 'var(--mermaid-pie2,color-mix(in srgb,var(--_pie1) 50%,transparent))',
-      '--_pie1': 'var(--mermaid-pie1,color-mix(in srgb,var(--_p) 80%,white))',
+      '--_slice2': 'var(--mermaid-slice2,color-mix(in srgb,var(--_slice1) 50%,transparent))',
+      '--_slice1': 'var(--mermaid-slice1,color-mix(in srgb,var(--_p) 80%,white))',
       '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
     });
-    const lit = createTheme(base, { rules, cssVariables: false, themeVariables: { pie1: '#000' } });
-    expect(lit.color('pie2')).toBe('#00000080');
+    const lit = createTheme(base, {
+      rules,
+      cssVariables: false,
+      themeVariables: { slice1: '#000' },
+    });
+    expect(lit.color('slice2')).toBe('#00000080');
   });
 
   it('computes invert and contrast when the theme is built', () => {

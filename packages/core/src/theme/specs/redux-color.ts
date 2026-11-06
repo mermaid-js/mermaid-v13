@@ -5,13 +5,15 @@
  * (`primaryBorderColor` from `#28253D`, `clusterBkg`, `clusterBorder`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
+import { TAILWIND_300, TAILWIND_400, TAILWIND_50, pieSlots } from './palettes.ts';
 import redux from './redux.ts';
 
 const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
   // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
+  // v12 `pie<i+1> ||= cScale<i>`: the Tailwind-300 set.
+  rules: { ...redux.rules, ...pieSlots(TAILWIND_300) },
   values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
   palettes: {
     borderColorArray: TAILWIND_400,

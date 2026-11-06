@@ -56,6 +56,27 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
+  // Pie slots (#325), as v12 theme-base derives them: the base colours, then khroma `darken`
+  // by 10. The DSL has no hue turn, so 7-12 are base's resolved v12 values; the other themes
+  // set their own (`pieSlots` in their specs).
+  pie1: 'primaryColor',
+  pie2: 'secondaryColor',
+  pie3: 'tertiaryColor',
+  pie4: 'darkenHsl(primaryColor, 10%)',
+  pie5: 'darkenHsl(secondaryColor, 10%)',
+  pie6: 'darkenHsl(tertiaryColor, 10%)',
+  pie7: '#c5ffaa',
+  pie8: '#ffaac5',
+  pie9: '#ddfff4',
+  pie10: '#a3ff77',
+  pie11: '#ff77a3',
+  pie12: '#aaffe3',
+  // v12 titles and legends in `taskTextDarkColor`, sections in `textColor`, strokes black.
+  pieTitleTextColor: 'textColor',
+  pieSectionTextColor: 'textColor',
+  pieLegendTextColor: 'textColor',
+  pieStrokeColor: 'black',
+  pieOuterStrokeColor: 'black',
   // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',

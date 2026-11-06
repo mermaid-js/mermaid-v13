@@ -13,7 +13,8 @@ const SUPPORTED_TYPES = supportedTypesOf((type) => supportsFormat(type, 'svg'));
 describe('fixture discovery', () => {
   it('knows which diagram types have a v13 package', () => {
     expect(SUPPORTED_TYPES.has('flowchart-v2')).toBe(true);
-    expect(SUPPORTED_TYPES.has('pie')).toBe(false);
+    expect(SUPPORTED_TYPES.has('pie')).toBe(true);
+    expect(SUPPORTED_TYPES.has('gantt')).toBe(false);
   });
 
   it('lists the supported folders of the e2e root', () => {
@@ -22,6 +23,7 @@ describe('fixture discovery', () => {
       supportedTypes: SUPPORTED_TYPES,
     });
     expect(folders).toContain('flowchart');
-    expect(folders).not.toContain('pie');
+    expect(folders).toContain('pie');
+    expect(folders).not.toContain('gantt');
   });
 });

@@ -25,6 +25,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-class',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
+      '@mermaid-chart/diagram-pie',
       '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/mermaid',
@@ -35,6 +36,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/language-service-codemirror',
       '@mermaid-chart/language-service-monaco',
       '@mermaid-chart/layout-elk',
+      '@mermaid-chart/plugin-hand-drawn',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/plugin-math',
     ]);

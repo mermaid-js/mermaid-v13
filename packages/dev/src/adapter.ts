@@ -7,9 +7,12 @@
  * renders as paths (D176), and `prepare` loads MathJax only for a diagram with math (D178).
  * So are `@mermaid-js/layout-elk`'s layouts: `layout: elk`, `elk.<algorithm>` and the
  * `flowchart-elk` header are laid out by ELK (D171), and `prepare` loads elkjs only for them.
+ * And `@mermaid-js/plugin-hand-drawn`: `look: handDrawn` (or `handDrawn: true`) sketches the
+ * outlines of flowchart, class, state and ER (D300); without it the look would only warn.
  */
 import type { Measurer } from '@mermaid-js/core/text';
 import elkLayouts from '@mermaid-js/layout-elk';
+import handDrawn from '@mermaid-js/plugin-hand-drawn';
 import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
 
@@ -34,7 +37,7 @@ export interface RenderOutput {
 
 const mermaid = createMermaid();
 mermaid.registerLayoutLoaders(elkLayouts);
-const registered = mermaid.registerExternalDiagrams([math]);
+const registered = mermaid.registerExternalDiagrams([math, handDrawn]);
 
 export async function renderDiagram(
   text: string,

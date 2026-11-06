@@ -24,6 +24,11 @@ const PACKAGES = [
     dir: 'diagram-class',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
+  {
+    name: 'pie',
+    dir: 'diagram-pie',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

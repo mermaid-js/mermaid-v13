@@ -1,0 +1,7 @@
+@ 3:3  |
+  title keyword 3:3-3:3 "" -> "title "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  " value (a section: "label" : value) 3:3-3:3 "" -> "\""
+@ 5:10  "Rats" |
+  : operator (then the value) 5:10-5:10 "" -> ": "

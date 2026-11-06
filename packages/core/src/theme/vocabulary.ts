@@ -10,9 +10,19 @@
  * How a variable's value is checked and written. A `padding` is a px length or a multiple of
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
- * read literally at render time like geometry, so it has no CSS variable (D182).
+ * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
+ * a number from 0 to 1, read with `Theme.number` like geometry, so it has no CSS variable either
+ * (D221).
  */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding' | 'flag';
+export type ThemeVarKind =
+  | 'color'
+  | 'length'
+  | 'font'
+  | 'weight'
+  | 'filter'
+  | 'padding'
+  | 'flag'
+  | 'opacity';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -79,53 +89,73 @@ export const CLASS_MARKER_VARIABLES = [
 
 export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
 
+/**
+ * Name lists joined into one. Called `@__PURE__` with no spread, so a bundle drops a list that
+ * nothing reads at run time (only types and tools read `TOKEN_VARIABLES`; core's size budget,
+ * R-PERF-8). An array spread would keep it, as bundlers cannot prove it has no side effects.
+ */
+const joined = <L extends readonly (readonly string[])[]>(
+  ...lists: L
+): readonly L[number][number][] => lists.flat();
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
-export const TOKEN_VARIABLES = [
-  'strokeWidth',
-  'clusterStrokeWidth',
-  'radius',
-  'fontWeight',
-  'spacing1',
-  'spacing2',
-  'spacing3',
-  ...ARROWHEAD_VARIABLES,
-  ...CLASS_MARKER_VARIABLES,
-  // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
-  // in every theme, a size key that keeps v12's default.
-  'classTerminalFontSize',
-  // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
-  'nodePaddingX',
-  'nodePaddingY',
-  'stadiumPaddingX',
-  'stadiumPaddingY',
-  'hexagonPaddingX',
-  'hexagonPaddingY',
-  'hexagonSlant',
-  'doubleCircleGap',
-  'doubleCirclePadding',
-  'circlePadding',
-  'circleMinDiameter',
-  // Shapes with their own v12 padding (#89), totals added to the label box.
-  'subroutinePaddingX',
-  'subroutinePaddingY',
-  'cylinderPaddingX',
-  'cylinderPaddingY',
-  'leanPaddingX',
-  'leanPaddingY',
-  'oddPaddingX',
-  'oddPaddingY',
-  // Sequence participant boxes (v12 neo rx 6, classic 3).
-  'actorRadius',
-  // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
-  // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
-  // and the room below the drawing.
-  'actorGlyphBand',
-  'messageEndGap',
-  'labelBoxExtraHeight',
-  'actorFooterPadding',
-  // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
-  'useGradient',
-] as const;
+export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
+  [
+    'strokeWidth',
+    'clusterStrokeWidth',
+    'radius',
+    'fontWeight',
+    'spacing1',
+    'spacing2',
+    'spacing3',
+  ] as const,
+  ARROWHEAD_VARIABLES,
+  CLASS_MARKER_VARIABLES,
+  [
+    // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
+    // in every theme, a size key that keeps v12's default.
+    'classTerminalFontSize',
+    // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+    'nodePaddingX',
+    'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
+    'hexagonPaddingX',
+    'hexagonPaddingY',
+    'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
+    'circlePadding',
+    'circleMinDiameter',
+    // Shapes with their own v12 padding (#89), totals added to the label box.
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
+    // Sequence participant boxes (v12 neo rx 6, classic 3).
+    'actorRadius',
+    // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
+    // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
+    // and the room below the drawing.
+    'actorGlyphBand',
+    'messageEndGap',
+    'labelBoxExtraHeight',
+    'actorFooterPadding',
+    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
+    'pieTitleTextSize',
+    'pieSectionTextSize',
+    'pieLegendTextSize',
+    'pieStrokeWidth',
+    'pieOuterStrokeWidth',
+    'pieOpacity',
+    // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
+    'useGradient',
+  ] as const
+);
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
@@ -148,6 +178,14 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
+/**
+ * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
+ * in core's size budget (R-PERF-8).
+ */
+const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = Object.fromEntries(
+  Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
+);
+
 /** The core inventory. Order is the order of the generated table. */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
@@ -157,7 +195,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  fontFamily: def('ff', 'font', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
+  fontFamily: def('ff', 'font', ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'pie']),
   fontSize: def('fs', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
   // derived
   primaryBorderColor: def('pb', 'color', ['core']),
@@ -203,6 +241,20 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
+  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
+  // opacity, derived as each v12 theme derives them.
+  ...PIE_SLOTS,
+  pieTitleTextSize: def('pts', 'length', ['pie']),
+  pieTitleTextColor: def('ptc', 'color', ['pie']),
+  pieSectionTextSize: def('pss', 'length', ['pie']),
+  pieSectionTextColor: def('psc', 'color', ['pie']),
+  pieLegendTextSize: def('pls', 'length', ['pie']),
+  pieLegendTextColor: def('plc', 'color', ['pie']),
+  pieStrokeColor: def('pkc', 'color', ['pie']),
+  pieStrokeWidth: def('pkw', 'length', ['pie']),
+  pieOuterStrokeColor: def('poc', 'color', ['pie']),
+  pieOuterStrokeWidth: def('pow', 'length', ['pie']),
+  pieOpacity: def('pop', 'opacity', ['pie']),
   // tokens
   strokeWidth: def('sw', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),

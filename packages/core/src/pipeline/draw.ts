@@ -1,7 +1,8 @@
 /**
  * The synchronous back half of a render (DESIGN §3 `renderSync` steps 4–6): layout, render,
  * serialise, with the bench's stage brackets (R-PERF-5). With extension hooks it also runs
- * `postParse`, `postLayout` and `postRender`, then re-checks the allow-list (R-SEC-2).
+ * `postParse`, `postLayout` and `postRender`, hands the writer the active outline drawer (D302),
+ * then re-checks the allow-list (R-SEC-2).
  */
 import { asLimitError, checkOutput } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
@@ -59,11 +60,21 @@ export function drawDiagram<M, L>(
     t = stageStart();
     // The gradient is the theme's, its id the render's (D182); off, the id prefix is not read.
     const gradient = ctx.theme.gradient();
+    // The first registered outline drawer, if it is active for this render (D302).
+    const outline = run?.outline();
+    const options = outline ? { gradient, outline: outline.draw } : { gradient };
     if (run?.editsTree) {
-      const w = treeWriter({ gradient });
+      const w = treeWriter(options);
       plugin.render(model, layout, ctx, w);
       run.postRender(w.tree);
       svg = w.finish();
+    } else {
+      const w = streamWriter(options);
+      plugin.render(model, layout, ctx, w);
+      svg = w.finish();
+    }
+    // What extensions wrote is checked again, values as well as names (R-SEC-2).
+    if (run?.editsTree || outline?.wrote) {
       const problem = inertProblem(svg, {
         securityLevel: ctx.securityLevel,
         linkSchemes: ctx.linkSchemes,
@@ -73,12 +84,8 @@ export function drawDiagram<M, L>(
       if (problem !== undefined)
         throw new MermaidError(
           'INTERNAL',
-          `An extension's postRender output fails the allow-list: ${problem}`
+          `${outline && !run?.editsTree ? `Extension "${outline.id}"'s outline` : "An extension's postRender"} output fails the allow-list: ${problem}`
         );
-    } else {
-      const w = streamWriter({ gradient });
-      plugin.render(model, layout, ctx, w);
-      svg = w.finish();
     }
     stageEnd('serialise', t);
   } catch (error) {

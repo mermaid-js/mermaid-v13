@@ -1,0 +1,7 @@
+@ 4:6  "Do|gs" : 1
+  prepare: 4:4-4:8 "Dogs"; rename to "say \"hi\"":
+  refused: 'say "hi"' cannot be written inside "…".
+@ 5:13  title Pets|
+  prepare: refused: There is no id or class name here to rename.
+@ 6:5  pi|e
+  prepare: refused: There is no id or class name here to rename.

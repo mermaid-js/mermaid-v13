@@ -1,0 +1,27 @@
+@ 1:2  p|ie showData
+  1:1-1:4 "pie"
+  | **`pie`**
+  |
+  | `pie`: starts a pie chart. `pie showData` shows the values in the legend.
+@ 1:9  pie show|Data
+  1:5-1:13 "showData"
+  | **`showData`**
+  |
+  | `pie showData`: the legend shows each value after its label, as `Dogs [386]`.
+@ 2:5  ti|tle Pets
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Pets adopted`: the title drawn above the chart (the last one wins).
+@ 2:11  title Pe|ts
+  none
+@ 3:6  acc|Title: x
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr {
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
