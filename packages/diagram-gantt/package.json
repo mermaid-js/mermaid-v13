@@ -1,0 +1,55 @@
+{
+  "name": "@mermaid-js/diagram-gantt",
+  "version": "13.0.0-alpha.0",
+  "description": "Gantt diagram plugin for Mermaid: parser, model, schedule, layout, SVG renderer and language facet.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-gantt"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "gantt",
+    "types": [
+      "gantt"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "gantt",
+    "language": "./dist/language.js"
+  }
+}

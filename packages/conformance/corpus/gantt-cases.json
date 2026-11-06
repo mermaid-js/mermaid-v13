@@ -1,0 +1,222 @@
+[
+  {
+    "id": "gantt-cases/tags",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :active, a1, 2024-01-01, 3d\nb :done, crit, after a1, 2d\nc :milestone, m1, 2024-01-10, 0d\nv :vert, v1, 2024-01-05, 0d\nd :crit,milestone,done, 2024-01-02, 1d\n"
+  },
+  {
+    "id": "gantt-cases/tags-blanks-and-order",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :crit, active, 2024-01-01, 1d\nb : done , 2024-01-02 , 1d\nc :done,done, 2024-01-03, 1d\n"
+  },
+  {
+    "id": "gantt-cases/tag-case-sensitive",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :Done, 2024-01-01, 1d\n"
+  },
+  {
+    "id": "gantt-cases/tag-after-a-field",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01, crit\n"
+  },
+  {
+    "id": "gantt-cases/one-field-tasks",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :2d\nc :after a1, 1d\nd :until a1\n"
+  },
+  {
+    "id": "gantt-cases/auto-ids",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01, 1d\nb :x, 2024-01-01, 1d\nc :2024-01-02, 1d\nd :3d\n"
+  },
+  {
+    "id": "gantt-cases/repeated-ids",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :x, 2024-01-01, 1d\nb :x, 2024-01-03, 1d\nc :after x, 1d\n"
+  },
+  {
+    "id": "gantt-cases/sections",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nsection A\na :2024-01-01,1d\nsection A\nb :1d\nsection  B  \nc :1d\n"
+  },
+  {
+    "id": "gantt-cases/section-line-breaks",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nsection Line1<br>Line2<br/>Line3\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/settings",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naxisFormat %m-%d\ntickInterval 1week\ntodayMarker stroke-width:5px,stroke:#00f\ninclusiveEndDates\nweekday monday\nweekend friday\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/settings-defaults",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nweekday sunday\nweekend saturday\ntodayMarker off\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/excludes-merged",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nexcludes weekends, 2024-01-03\nexcludes Friday 2024-01-03\nincludes 2024-01-06\nincludes 2024-01-07,2024-01-06\na :2024-01-01,5d\n"
+  },
+  {
+    "id": "gantt-cases/last-setting-wins",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ndateFormat DD-MM-YYYY\naxisFormat %d\naxisFormat %m\ntickInterval 1day\ntickInterval 2day\na :01-01-2024,1d\n"
+  },
+  {
+    "id": "gantt-cases/setting-blanks",
+    "source": "gantt\ndateFormat  YYYY-MM-DD  \naxisFormat\t%d\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/title-and-accessibility",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ntitle  Plan #59; x\naccTitle:  T \naccDescr {\n  line one\n    line two\n}\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/acc-one-line",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naccTitle: Title\naccDescr: one line\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/acc-empty-block",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naccDescr {}\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/last-title-wins",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ntitle One\ntitle Two\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/front-matter-title",
+    "source": "---\ntitle: From front matter\n---\ngantt\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/front-matter-and-in-text-title",
+    "source": "---\ntitle: FM\n---\ngantt\ntitle In text\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/front-matter-display-mode",
+    "source": "---\ndisplayMode: compact\n---\ngantt\ndateFormat YYYY-MM-DD\na :2024-01-01,1d\nb :2024-01-03,1d\n"
+  },
+  {
+    "id": "gantt-cases/click-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1 href \"https://example.com\"\nclick b1 call cb()\nclick a1 call cb(\"x\", y)\nclick a1,b1 call cb(1) href \"u\"\nclick b1 href \"v\" call cb2()\nclick a1 href \"w\" call cb3(z, \"q, r\")\n"
+  },
+  {
+    "id": "gantt-cases/click-blanks",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick   a1   href   \"u\"\nclick a1 call  f (x)\nclick b1 call g(  )\n"
+  },
+  {
+    "id": "gantt-cases/click-across-lines",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1\ncall f()\nclick\nb1 href \"u\"\n"
+  },
+  {
+    "id": "gantt-cases/click-unknown-ids",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick zz href \"u\"\nclick a1,zz call f()\n"
+  },
+  {
+    "id": "gantt-cases/click-case",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nCLICK a1 HREF \"u\"\nClick b1 Call f()\n"
+  },
+  {
+    "id": "gantt-cases/click-then-task",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1 href \"u\" c :2024-01-03, 1d\n"
+  },
+  {
+    "id": "gantt-cases/crlf",
+    "source": "gantt\r\ndateFormat YYYY-MM-DD\r\nsection S\r\na :2024-01-01, 1d\r\nb :2d\r\n"
+  },
+  {
+    "id": "gantt-cases/comments-and-directives",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n%% c\na :2024-01-01,1d %% trailing\n%%{init: {}}%%\nb :1d\n"
+  },
+  {
+    "id": "gantt-cases/entities",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na #quot;b#quot; :2024-01-01,1d\nsection #amp; s\nb :1d\n"
+  },
+  {
+    "id": "gantt-cases/trailing-blanks",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nCompleted task            :done, des1, 2024-01-06,2024-01-08\n"
+  },
+  {
+    "id": "gantt-cases/hash-and-semicolon-text",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n#a :2024-01-01,1d\n;b :1d\na :2024-01-02,1d #x\n"
+  },
+  {
+    "id": "gantt-cases/no-date-format",
+    "source": "gantt\na :2024-01-01,1d\nb :2019-09-1, 2d\n"
+  },
+  {
+    "id": "gantt-cases/timestamps",
+    "source": "gantt\ndateFormat x\na :a1, 0, 20ms\nb :after a1, 5ms\n"
+  },
+  {
+    "id": "gantt-cases/empty",
+    "source": "gantt\n"
+  },
+  {
+    "id": "gantt-cases/settings-only",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naxisFormat %d\nexcludes weekends\n"
+  },
+  {
+    "id": "gantt-cases/keyword-prefixes",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ngantt plan :2024-01-01,1d\nweekend friday party :1d\ntopAxisx :1d\n"
+  },
+  {
+    "id": "gantt-cases/header-case",
+    "source": "gantt\nDATEFORMAT YYYY-MM-DD\nSECTION s\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-tags-only",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :done\n"
+  },
+  {
+    "id": "gantt-cases/reject-text-without-data",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01,1d\nb\n"
+  },
+  {
+    "id": "gantt-cases/reject-data-without-text",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n:2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-date-start",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n2024-01-01 x :1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-second-header",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01,1d\ngantt\n"
+  },
+  {
+    "id": "gantt-cases/reject-acc-description",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naccDescription text\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-click-without-action",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1\n"
+  },
+  {
+    "id": "gantt-cases/reject-unclosed-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1 href \"u\n"
+  },
+  {
+    "id": "gantt-cases/reject-call-without-parens",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1 call f\n"
+  },
+  {
+    "id": "gantt-cases/reject-empty-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2024-01-01, 1d\nb :b1, 2024-01-02, 1d\nclick a1 href \"\"\n"
+  },
+  {
+    "id": "gantt-cases/reject-unclosed-description",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naccDescr {\nnever closed\n"
+  },
+  {
+    "id": "gantt-cases/open-directive-after-line-break",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01,1d\n%%{ :1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-open-directive",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-01-01,1d\n  %%{ :1d\nb :1d\n"
+  },
+  {
+    "id": "gantt-cases/top-axis",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ntopAxis\na :2024-01-01,1d\n"
+  },
+  {
+    "id": "gantt-cases/first-task-without-start",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d\n"
+  },
+  {
+    "id": "gantt-cases/too-many-fields",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :x, 2024-01-01, 1d, 2d\n"
+  },
+  {
+    "id": "gantt-cases/invalid-date",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-13-45x, 1d\n"
+  }
+]

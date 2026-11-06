@@ -4687,11 +4687,27 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The chart's width in px (D272): `gantt.useWidth`, then the `availableWidth` render option, then 1200. v12 laid out to the container's width; v13 has no DOM in core, so the container's width arrives only with `availableWidth` (`mount(…, { availableWidth: true })`)."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "barHeight": {
@@ -4700,7 +4716,8 @@ export const configSchema: ConfigSchema = {
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "barGap": {
@@ -4709,7 +4726,8 @@ export const configSchema: ConfigSchema = {
           "default": 4,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "topPadding": {
@@ -4718,7 +4736,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "rightPadding": {
@@ -4727,7 +4746,8 @@ export const configSchema: ConfigSchema = {
           "default": 75,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "leftPadding": {
@@ -4736,7 +4756,8 @@ export const configSchema: ConfigSchema = {
           "default": 75,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "gridLineStartPadding": {
@@ -4745,7 +4766,8 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "fontSize": {
@@ -4754,7 +4776,9 @@ export const configSchema: ConfigSchema = {
           "default": 11,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The task label size. A number is px; a CSS size v12 wrote into `font-size` (`14px`) is read too. Anything else is ignored with `GANTT_CONFIG_IGNORED`."
           }
         },
         "sectionFontSize": {
@@ -4763,7 +4787,9 @@ export const configSchema: ConfigSchema = {
           "default": 11,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The section title size, read as `fontSize` is."
           }
         },
         "numberSectionStyles": {
@@ -4772,7 +4798,9 @@ export const configSchema: ConfigSchema = {
           "default": 4,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The number of section slots before they repeat, as v12. Slots past 4 are drawn as v12 drew them: no band or bar colour of their own. Less than 1 is ignored with `GANTT_CONFIG_IGNORED`."
           }
         },
         "axisFormat": {
@@ -4780,7 +4808,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "%Y-%m-%d",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "tickInterval": {
@@ -4788,7 +4817,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "pattern": "^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "topAxis": {
@@ -4796,7 +4826,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "displayMode": {
@@ -4811,7 +4842,8 @@ export const configSchema: ConfigSchema = {
           },
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "weekday": {
@@ -4828,7 +4860,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "sunday",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 never read this key, only the `weekday` statement (D279). v13 reads it; the statement wins. It sets the day a `week` tick interval starts on."
           }
         }
       }

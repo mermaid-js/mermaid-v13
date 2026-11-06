@@ -222,26 +222,26 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
 | `gantt` | object |  | pending |  | The object containing configurations specific for gantt diagrams |
-| `gantt.useWidth` | number |  | pending |  |  |
-| `gantt.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `gantt.useWidth` | number |  | honoured (13.0.0) | The chart's width in px (D272): `gantt.useWidth`, then the `availableWidth` render option, then 1200. v12 laid out to the container's width; v13 has no DOM in core, so the container's width arrives only with `availableWidth` (`mount(…, { availableWidth: true })`). |  |
+| `gantt.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `gantt.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `gantt.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `gantt.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `gantt.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
-| `gantt.barHeight` | integer | `20` | pending |  | The height of the bars in the graph |
-| `gantt.barGap` | integer | `4` | pending |  | The margin between the different activities in the gantt diagram |
-| `gantt.topPadding` | integer | `50` | pending |  | Margin between title and gantt diagram and between axis and gantt diagram. |
-| `gantt.rightPadding` | integer | `75` | pending |  | The space allocated for the section name to the right of the activities |
-| `gantt.leftPadding` | integer | `75` | pending |  | The space allocated for the section name to the left of the activities |
-| `gantt.gridLineStartPadding` | integer | `35` | pending |  | Vertical starting position of the grid lines |
-| `gantt.fontSize` | integer | `11` | pending |  | Font size |
-| `gantt.sectionFontSize` | string \\| number | `11` | pending |  | Font size for sections |
-| `gantt.numberSectionStyles` | integer | `4` | pending |  | The number of alternating section styles |
-| `gantt.axisFormat` | string | `"%Y-%m-%d"` | pending |  | Date/time format of the axis This might need adjustment to match your locale and preferences. |
-| `gantt.tickInterval` | string |  | pending |  | axis ticks Pattern is: ```javascript /^([1-9][0-9]*)(millisecond\|second\|minute\|hour\|day\|week\|month)$/ ``` |
-| `gantt.topAxis` | boolean | `false` | pending |  | When this flag is set, date labels will be added to the top of the chart |
-| `gantt.displayMode` | "" \\| "compact" | `""` | pending |  | Controls the display mode. |
-| `gantt.weekday` | "monday" \\| "tuesday" \\| "wednesday" \\| "thursday" \\| "friday" \\| "saturday" \\| "sunday" | `"sunday"` | pending |  | On which day a week-based interval should start |
+| `gantt.titleTopMargin` | integer | `25` | honoured (13.0.0) |  | Margin top for the text over the diagram |
+| `gantt.barHeight` | integer | `20` | honoured (13.0.0) |  | The height of the bars in the graph |
+| `gantt.barGap` | integer | `4` | honoured (13.0.0) |  | The margin between the different activities in the gantt diagram |
+| `gantt.topPadding` | integer | `50` | honoured (13.0.0) |  | Margin between title and gantt diagram and between axis and gantt diagram. |
+| `gantt.rightPadding` | integer | `75` | honoured (13.0.0) |  | The space allocated for the section name to the right of the activities |
+| `gantt.leftPadding` | integer | `75` | honoured (13.0.0) |  | The space allocated for the section name to the left of the activities |
+| `gantt.gridLineStartPadding` | integer | `35` | honoured (13.0.0) |  | Vertical starting position of the grid lines |
+| `gantt.fontSize` | integer | `11` | honoured (13.0.0) | The task label size. A number is px; a CSS size v12 wrote into `font-size` (`14px`) is read too. Anything else is ignored with `GANTT_CONFIG_IGNORED`. | Font size |
+| `gantt.sectionFontSize` | string \\| number | `11` | honoured (13.0.0) | The section title size, read as `fontSize` is. | Font size for sections |
+| `gantt.numberSectionStyles` | integer | `4` | honoured (13.0.0) | The number of section slots before they repeat, as v12. Slots past 4 are drawn as v12 drew them: no band or bar colour of their own. Less than 1 is ignored with `GANTT_CONFIG_IGNORED`. | The number of alternating section styles |
+| `gantt.axisFormat` | string | `"%Y-%m-%d"` | honoured (13.0.0) |  | Date/time format of the axis This might need adjustment to match your locale and preferences. |
+| `gantt.tickInterval` | string |  | honoured (13.0.0) |  | axis ticks Pattern is: ```javascript /^([1-9][0-9]*)(millisecond\|second\|minute\|hour\|day\|week\|month)$/ ``` |
+| `gantt.topAxis` | boolean | `false` | honoured (13.0.0) |  | When this flag is set, date labels will be added to the top of the chart |
+| `gantt.displayMode` | "" \\| "compact" | `""` | honoured (13.0.0) |  | Controls the display mode. |
+| `gantt.weekday` | "monday" \\| "tuesday" \\| "wednesday" \\| "thursday" \\| "friday" \\| "saturday" \\| "sunday" | `"sunday"` | honoured (13.0.0) | v12 never read this key, only the `weekday` statement (D279). v13 reads it; the statement wins. It sets the day a `week` tick interval starts on. | On which day a week-based interval should start |
 
 ## `journey`
 

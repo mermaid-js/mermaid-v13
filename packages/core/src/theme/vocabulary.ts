@@ -260,10 +260,12 @@ const TEXT_USERS = [
   'timeline',
   'quadrant',
   'gitgraph',
+  'gantt',
 ];
 
 const JOURNEY = ['journey'];
 const GIT = ['gitgraph'];
+const GANTT = ['gantt'];
 
 /**
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
@@ -306,6 +308,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'journey',
     'timeline',
     'gitgraph',
+    'gantt',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -328,7 +331,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   // v12 `classText`: every text of a class diagram but notes and namespace titles.
   classText: def('ct', 'color', ['class']),
@@ -406,6 +409,27 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // mark (#374): white on light themes, black on dark ones.
   commitLineColor: def('gcl', 'color', ['gitgraph']),
   gitCherryPickInk: def('gci', 'color', ['gitgraph']),
+  // gantt (#381, v12 names from v12's gantt `styles.js`): row bands, excluded days, grid, today
+  // and `vert` lines, bars by state, and task label colours. A clickable label is v12's #003163
+  // in every theme, a renderer constant (#385).
+  sectionBkgColor: def('gb0', 'color', GANTT),
+  altSectionBkgColor: def('gb1', 'color', GANTT),
+  sectionBkgColor2: def('gb2', 'color', GANTT),
+  excludeBkgColor: def('gxb', 'color', GANTT),
+  gridColor: def('ggc', 'color', GANTT),
+  todayLineColor: def('gtl', 'color', GANTT),
+  vertLineColor: def('gvl', 'color', GANTT),
+  taskBkgColor: def('gkb', 'color', GANTT),
+  taskBorderColor: def('gko', 'color', GANTT),
+  activeTaskBkgColor: def('gab', 'color', GANTT),
+  activeTaskBorderColor: def('gao', 'color', GANTT),
+  doneTaskBkgColor: def('gdb', 'color', GANTT),
+  doneTaskBorderColor: def('gdo', 'color', GANTT),
+  critBkgColor: def('gkc', 'color', GANTT),
+  critBorderColor: def('gco', 'color', GANTT),
+  taskTextColor: def('gtt', 'color', GANTT),
+  taskTextOutsideColor: def('gtx', 'color', GANTT),
+  taskTextDarkColor: def('gtd', 'color', GANTT),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',

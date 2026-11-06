@@ -18,6 +18,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-pie` | The pie chart plugin (SVG; `pie`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.

@@ -1,0 +1,196 @@
+/**
+ * Bars, milestones, `vert` markers and their labels (v12 `drawRects`), in v12's drawing order:
+ * by start, `vert` markers last.
+ */
+import type { ScheduledTask } from '../schedule/index.ts';
+import { byStart, isVert, resolved, type Chart } from './chart.ts';
+import { Style } from './env.ts';
+import type { GanttBar, GanttBarKind, GanttTaskLabel, LabelSide, Rect } from './types.ts';
+
+const ANCHORS: Readonly<Record<LabelSide, 'start' | 'middle' | 'end'>> = {
+  inside: 'middle',
+  right: 'start',
+  left: 'end',
+};
+
+/**
+ * Tasks a `click` names: v12's `setClass` ran at parse time, so a click marks the latest task
+ * with each id defined before it (`taskDb` held only those), none when the task comes later.
+ * Its `setLink` likewise kept a URL only for an id with such a task, the last one winning.
+ */
+function clickableTasks(c: Chart): { tasks: Set<number>; links: Map<string, string> } {
+  const out = new Set<number>();
+  const links = new Map<string, string>();
+  const { tasks, clicks } = c.model;
+  const latest = new Map<string, number>();
+  let t = 0;
+  for (const click of clicks) {
+    for (; t < tasks.length && tasks[t]!.range.start < click.range.start; t++)
+      latest.set(tasks[t]!.id, t);
+    for (const id of click.ids) {
+      const at = id === '__proto__' ? undefined : latest.get(id);
+      if (at === undefined) continue;
+      out.add(at);
+      if (click.href !== undefined) links.set(id, click.href);
+    }
+  }
+  return { tasks: out, links };
+}
+
+function kindOf(t: ScheduledTask): GanttBarKind {
+  if (isVert(t)) return 'vert';
+  return t.task.tags.includes('milestone') ? 'milestone' : 'bar';
+}
+
+/** One task's drawing: its kind, row, and the x of its start, end and drawn end. */
+interface Span {
+  readonly t: ScheduledTask;
+  readonly kind: GanttBarKind;
+  /** The `milestone` tag, also on a `vert` marker (v12 kept both). */
+  readonly milestone: boolean;
+  readonly row: number;
+  readonly start: number;
+  readonly end: number;
+  readonly renderEnd: number;
+  readonly clickable: boolean;
+}
+
+/** v12's rect: a bar to `renderEndTime`, a milestone's square at the span's middle, a marker. */
+function rectOf(c: Chart, s: Span): Rect {
+  const { env } = c;
+  const { m } = env;
+  const lp = env.leftPadding;
+  // v12 tests `milestone` first for x and width, `vert` first for y and height.
+  const shift = m.milestoneCentre * (s.end - s.start) - m.milestoneCentre * env.barHeight;
+  const x = s.milestone ? s.start + lp + shift : s.start + lp;
+  if (s.kind === 'vert') {
+    return {
+      x,
+      y: env.gridLineStartPadding,
+      width: s.milestone ? env.barHeight : m.vertWidth * env.barHeight,
+      height: c.plain.length * c.gap + m.vertOverhang * env.barHeight,
+    };
+  }
+  const y = s.row * c.gap + env.topPadding;
+  if (s.milestone) return { x, y, width: env.barHeight, height: env.barHeight };
+  // v12 drew a negative width (an `until` before the start) as nothing: 0 here.
+  return { x: s.start + lp, y, width: Math.max(0, s.renderEnd - s.start), height: env.barHeight };
+}
+
+/** v12's label rule: inside when it fits, else right of the bar unless that passes `w`. */
+function labelOf(c: Chart, s: Span): GanttTaskLabel {
+  const { env } = c;
+  const { m } = env;
+  const lp = env.leftPadding;
+  const milestone = s.milestone;
+  const font = s.kind === 'vert' ? env.fonts.vert : env.fonts.task;
+  const style = (s.clickable ? Style.Bold : 0) | (milestone ? Style.Italic : 0);
+  const text = env.label(s.t.task.text, font, style);
+  const tw = text.width;
+  const outside = (endX: number): 'left' | 'right' =>
+    endX + tw + m.labelRightRoom * lp > c.w ? 'left' : 'right';
+  // The class rule reads `endTime`; a milestone is `barHeight` wide from its start.
+  const classEnd = milestone ? s.start + env.barHeight : s.end;
+  const side: LabelSide = tw > classEnd - s.start ? outside(classEnd) : 'inside';
+  if (s.kind === 'vert') {
+    const y = env.gridLineStartPadding + c.plain.length * c.gap + m.vertLabelGap;
+    return { x: s.start + lp, y, anchor: 'middle', side, text };
+  }
+  // The position rule reads `renderEndTime`, and puts a milestone at its square.
+  let startX = s.start;
+  let endX = s.renderEnd;
+  if (milestone) {
+    startX += m.milestoneCentre * (s.end - s.start) - m.milestoneCentre * env.barHeight;
+    endX = startX + env.barHeight;
+  }
+  let x = (endX - startX) / 2 + startX + lp;
+  if (tw > endX - startX)
+    x = outside(endX) === 'left' ? startX + lp - m.labelGap : endX + lp + m.labelGap;
+  const y =
+    s.row * c.gap + env.barHeight / 2 + (env.fontSize / 2 - m.labelBaselineLift) + env.topPadding;
+  return { x, y, anchor: ANCHORS[side], side, text };
+}
+
+/**
+ * v12's `transform-origin` of a milestone: the middle of its span, on the middle of its row.
+ * A `vert` marker's row is v12's `order` −1, so a `vert` milestone turns about a point above it.
+ */
+function pivotOf(c: Chart, s: Span): { x: number; y: number } {
+  const { env } = c;
+  const row = s.kind === 'vert' ? -1 : s.row;
+  return {
+    x: s.start + env.leftPadding + env.m.milestoneCentre * (s.end - s.start),
+    y: row * c.gap + env.topPadding + env.barHeight / 2,
+  };
+}
+
+/** What v12's CSS draws: the rectangle rotated 45° and scaled about the pivot. */
+function turned(c: Chart, r: Rect, o: { x: number; y: number }): void {
+  const { m } = c.env;
+  const a = (m.milestoneRotation / m.halfTurnDegrees) * Math.PI;
+  const k = m.milestoneScale;
+  for (const [px, py] of [
+    [r.x, r.y],
+    [r.x + r.width, r.y],
+    [r.x, r.y + r.height],
+    [r.x + r.width, r.y + r.height],
+  ] as const) {
+    const dx = px - o.x;
+    const dy = py - o.y;
+    c.bounds.point(
+      o.x + k * (dx * Math.cos(a) - dy * Math.sin(a)),
+      o.y + k * (dx * Math.sin(a) + dy * Math.cos(a))
+    );
+  }
+}
+
+export function barsOf(c: Chart): GanttBar[] {
+  const clicks = clickableTasks(c);
+  const sorted = byStart(c.plan.tasks.filter(resolved));
+  const out: GanttBar[] = [];
+  for (const t of [...sorted.filter((x) => !isVert(x)), ...sorted.filter(isVert)]) {
+    const kind = kindOf(t);
+    const row = c.rows.of.get(t.index);
+    if (kind !== 'vert' && row === undefined) continue;
+    const span: Span = {
+      t,
+      kind,
+      milestone: t.task.tags.includes('milestone'),
+      row: row ?? 0,
+      start: c.scale(t.start!),
+      end: c.scale(t.end!),
+      renderEnd: c.scale(t.renderEnd ?? t.end!),
+      clickable: clicks.tasks.has(t.index),
+    };
+    const rect = rectOf(c, span);
+    const label = labelOf(c, span);
+    // The rectangle as written, and (a milestone) as v12's CSS turns it.
+    c.bounds.rect(rect);
+    const pivot = span.milestone ? pivotOf(c, span) : undefined;
+    if (pivot) turned(c, rect, pivot);
+    const href = span.clickable ? clicks.links.get(t.task.id) : undefined;
+    c.bounds.text(label);
+    const tags = t.task.tags;
+    const ast = c.model.tasks[t.index]?.ast;
+    out.push({
+      ...rect,
+      task: t.index,
+      id: t.task.id,
+      ...(ast !== undefined ? { ast } : {}),
+      kind,
+      milestone: span.milestone,
+      start: t.start!,
+      end: t.end!,
+      active: tags.includes('active'),
+      done: tags.includes('done'),
+      crit: tags.includes('crit'),
+      clickable: span.clickable,
+      ...(href !== undefined ? { href } : {}),
+      slot: c.slot(c.names[t.index]!),
+      radius: c.env.m.barRadius,
+      ...(pivot ? { scale: c.env.m.milestoneScale, pivot } : {}),
+      label,
+    });
+  }
+  return out;
+}

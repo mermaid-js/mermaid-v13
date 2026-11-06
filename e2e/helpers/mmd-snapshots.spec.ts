@@ -167,7 +167,8 @@ describe('the real fixture folders', () => {
     expect(folders).toContain('timeline');
     expect(folders).toContain('pie');
     expect(folders).toContain('git');
-    expect(folders).not.toContain('gantt');
+    expect(folders).toContain('gantt');
+    expect(folders).not.toContain('requirement');
     expect(folders).not.toContain('zenuml');
   });
 

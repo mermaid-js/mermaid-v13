@@ -47,6 +47,8 @@ describe('architecture lint rules fire', () => {
     ['global-this.ts', CORE, 'no-restricted-globals'],
     ['console.ts', CORE, 'no-console'],
     ['console.ts', DIAGRAM, 'no-console'],
+    ['clock.ts', CORE, 'no-restricted-syntax'],
+    ['clock.ts', DIAGRAM, 'no-restricted-syntax'],
     ['import-npm-package.ts', CORE, 'mermaid/import-boundaries'],
     ['import-npm-package.ts', DIAGRAM, 'mermaid/import-boundaries'],
     ['import-npm-package.ts', MERMAID, 'mermaid/import-boundaries'],
@@ -86,6 +88,8 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, CORE),
     });
     expect(config?.messages).toHaveLength(2);
+    const [clock] = await eslint.lintText(fixture('clock.ts'), { filePath: join(root, CORE) });
+    expect(clock?.messages).toHaveLength(3);
     const [chars] = await eslint.lintText(fixture('magic-char-code.ts'), {
       filePath: join(root, DIAGRAM),
     });
@@ -127,6 +131,10 @@ describe('architecture lint rules allow the intended directions', () => {
     ['linear-regex.ts', CORE],
     ['named-char-code.ts', DIAGRAM],
     ['dom-in-adapter.ts', MERMAID],
+    ['fixed-date.ts', CORE],
+    ['fixed-date.ts', DIAGRAM],
+    ['clock.ts', MERMAID],
+    ['clock.ts', 'packages/core/src/svg/fixture.spec.ts'],
   ])('%s in %s is clean', async (name, asFile) => {
     expect(await ruleIds(name, asFile)).toEqual([]);
   });
