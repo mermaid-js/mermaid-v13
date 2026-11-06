@@ -32,7 +32,9 @@ describe('render ids and links', () => {
       'flowchart LR\n  A@{ icon: "fa:user" }'
     );
     expect(warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
-    expect(warnings[1]?.message).toMatch(/^ICON_UNAVAILABLE is deprecated.*"fa:user"/);
+    expect(warnings[1]?.message).toBe(
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.'
+    );
     expect(svg).not.toMatch(/<(rect|circle)\b/);
   });
 });

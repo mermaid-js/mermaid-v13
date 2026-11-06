@@ -8,6 +8,7 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
+import type { OutlinePaint } from '../svg/types.ts';
 import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
@@ -86,7 +87,7 @@ export interface RenderContext {
   readonly icon?: (
     name: string,
     size: number,
-    options?: IconOptions
+    options?: GlyphOptions
   ) => SvgFragment | null | undefined;
   warn(warning: Warning): void;
 }
@@ -95,6 +96,16 @@ export interface RenderContext {
 export interface IconOptions {
   /** The pack a name without a prefix comes from (v12's `fallbackPrefix`); none when absent. */
   readonly fallbackPrefix?: string;
+}
+
+/** How {@link RenderContext.icon} resolves and paints a glyph. */
+export interface GlyphOptions extends IconOptions {
+  /**
+   * What the glyph's `currentColor` paints take (D298): a colour, which the provider sets as the
+   * glyph's `color`, or the render's gradient (`url(#…)`), which it puts in place of each
+   * `currentColor` fill and stroke. Absent, they stay `currentColor`.
+   */
+  readonly paint?: OutlinePaint;
 }
 
 /**

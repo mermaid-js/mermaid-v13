@@ -5,10 +5,8 @@ import {
   writeFragment,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import type { SvgFragment } from '@mermaid-js/core/text';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import type { NodeView } from './prepare.ts';
 import type { ShapeSize } from './shapes.ts';
@@ -66,42 +64,27 @@ export function drawImage(
   });
 }
 
-/** Paints the fitted glyph's `currentColor` fills and strokes with `paint` (the gradient). */
-function painted(node: SvgFragment, paint: OutlinePaint): SvgFragment {
-  const attrs = node.attrs && { ...node.attrs };
-  if (attrs) {
-    for (const key of ['fill', 'stroke'] as const)
-      if (typeof attrs[key] === 'string' && /^currentColor$/i.test(attrs[key])) attrs[key] = paint;
-  }
-  return {
-    tag: node.tag,
-    ...(attrs ? { attrs } : {}),
-    ...(node.children
-      ? { children: node.children.map((c) => (typeof c === 'string' ? c : painted(c, paint))) }
-      : {}),
-  };
-}
-
 /**
  * The frame, when the icon has a form, then the glyph an extension has for it (D293, the context's
  * `icon`), in the frame's square. With the glyph (D298) the frame is borderless (its stroke is its
- * fill) and the glyph takes `paint`: its `color`, or under `useGradient` the gradient on its
- * `currentColor` paints. Without one the frame keeps its outline, as before the icons plugin.
+ * fill) and the glyph takes `paint`, which the extension applies (`GlyphOptions.paint`): its
+ * `color`, or under `useGradient` the gradient on its `currentColor` paints. Without one the frame keeps its outline, as before the icons plugin.
  * The frame is a square of `assetHeight`, while `assetSize` widens the box to `assetWidth`.
- * Returns the glyph, or why none was drawn: `null` unresolved (the extension warned), `undefined`
- * none (no extension, a placeholder, or declined).
+ * Unresolved (no extension has glyphs, or one gave `null`), it warns as {@link iconMissed}; a
+ * placeholder or a glyph declined quietly (`undefined`) draws the frame alone, quietly.
  */
 export function drawIcon(
   w: SvgWriter,
   view: NodeView,
   a: Attrs,
   paint: OutlinePaint,
-  icon?: FlowRenderContext['icon']
-): SvgFragment | null | undefined {
+  ctx: FlowRenderContext
+): void {
   const v = view.vertex!;
   const size = asset(v.assetHeight, ICON);
   const top = assetTop(view, size);
-  const glyph = icon?.(v.icon!, size);
+  const glyph = ctx.icon?.(v.icon!, size, { paint });
+  if (glyph === null || !ctx.icon) iconMissed(ctx);
   const f: Attrs = glyph ? { ...a, stroke: a.fill } : a;
   if (v.form === 'circle') w.outline('node', 'circle', { cy: top + size / 2, r: size / 2, ...f });
   else if (v.form === 'square' || v.form === 'rounded') {
@@ -114,31 +97,20 @@ export function drawIcon(
       ...f,
     });
   }
-  if (!glyph) return glyph;
-  const gradient = paint.startsWith('url(');
-  w.open('g', {
-    transform: translate(-size / 2, top),
-    color: gradient ? undefined : (paint as Paint),
-  });
-  writeFragment(w, gradient ? painted(glyph, paint) : glyph);
+  if (!glyph) return;
+  w.open('g', { transform: translate(-size / 2, top) });
+  writeFragment(w, glyph);
   w.close();
-  return glyph;
 }
 
-/** How many icons a warning names, and how much of each. */
-const LISTED = 8;
-const QUOTE = 60;
-
 /**
- * After the nodes: the icon shapes whose glyph is unresolved (`missed`, as written). Without an
- * extension that has glyphs, every icon shape is, and flowchart says `ICON_NOT_RENDERED` itself;
- * with one, `missed` holds those it reported unresolved (`null`), and it says `ICON_NOT_RENDERED`
- * (D291), perhaps only once the render is drawn. Beside it, once per render and for one alpha,
- * the deprecated alias `ICON_UNAVAILABLE` names them (D299, as sequence's `SEQUENCE_MATH`). A
- * placeholder, or a glyph an extension declines quietly, is not in `missed`: no alias.
+ * When an icon shape's glyph is unresolved: no extension has glyphs, and flowchart says
+ * `ICON_NOT_RENDERED` itself, or one reported it (`null`) and says `ICON_NOT_RENDERED` (D291),
+ * naming it. Beside it, for one alpha, the deprecated alias `ICON_UNAVAILABLE` (D299), a fixed
+ * message as sequence's `SEQUENCE_MATH`. Both go through the render's deduplicating `warn`, so
+ * each comes once per render. A placeholder, or a glyph declined quietly, gives neither.
  */
-export function iconsNotDrawn(ctx: FlowRenderContext, missed: readonly string[]): void {
-  if (missed.length === 0) return;
+function iconMissed(ctx: FlowRenderContext): void {
   const warn = ctx.inline?.warn ?? ((x: FlowWarning) => ctx.warn(x));
   if (!ctx.icon) {
     warn({
@@ -147,13 +119,8 @@ export function iconsNotDrawn(ctx: FlowRenderContext, missed: readonly string[])
         'Icons are not rendered without an icons extension: icon shapes draw their frame alone, or nothing without a form.',
     });
   }
-  const names = [...new Set(missed)].map((n) =>
-    JSON.stringify(n.length > QUOTE ? `${n.slice(0, QUOTE)}…` : n)
-  );
-  const more = names.length > LISTED ? ` and ${String(names.length - LISTED)} more` : '';
-  const listed = names.slice(0, LISTED).join(', ') + more;
-  ctx.warn({
+  warn({
     code: 'ICON_UNAVAILABLE',
-    message: `ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: ${listed}; an icon with a form draws its frame alone.`,
+    message: 'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.',
   });
 }

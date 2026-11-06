@@ -42,3 +42,10 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - ~~Draws get `IconPackSource` with `load`.~~ Fixed: `ctx.iconPacks`, `InlineRequest.iconPacks`, `GlyphRequest.iconPacks` are a view without `load` (R-ARCH-6); `ResourceRequest.iconPacks` keeps it.
 - D296's regex stays in two places (core `FEATURES`, plugin `LABEL`), each pointing at the other: exporting it cost core 13 B gz.
 - The plugin's `resources.load` stays a no-op (core requires it; making it optional costs core bytes), with a comment.
+
+## From merging timeline (R-PERF-1, `a3c566c80`)
+
+- With pie, timeline and hand-drawn in, CI's R-PERF-1 loaded size was 124.3 KB against 124 KB (D311). Icons added 1,314 B gz to it (timeline's tip alone: 125,955 B). Cut 377 B without touching the gate, to 126,897 B (79 B under; core 93,037 of 94,208):
+  - Flowchart's `ICON_UNAVAILABLE` alias is a fixed message, as sequence's `SEQUENCE_MATH` (D299 "as `SEQUENCE_MATH`"), and goes with its own `ICON_NOT_RENDERED` through the render's deduplicating `warn` (`ctx.inline.warn`) as each icon shape misses, so flowchart keeps no list. The icons extension's `ICON_NOT_RENDERED` still names the icons. Behaviour change: without the icons extension no warning names the icon shapes any more (flowchart's `ICON_NOT_RENDERED` there was already generic).
+  - The glyph's colour is the provider's: `RenderContext.icon(name, size, { paint })` (`GlyphOptions extends IconOptions`, types only in core; `GlyphRequest.paint`). The plugin sets a colour as its glyph `<g>`'s `color` and puts the gradient in place of `currentColor` fills and strokes; flowchart no longer walks the glyph. Mindmap and M5 pass their paint the same way. The `color` attribute moved from flowchart's placing `<g>` to the glyph's own `<g>`; drawing is unchanged.
+- [maintainer] The loaded set has 79 B left after pie, timeline, hand-drawn and icons; quadrant and journey stack on this.
