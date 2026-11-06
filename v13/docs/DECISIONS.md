@@ -512,3 +512,19 @@ The maintainer accepted every recommended answer on 2026-11-06, relayed through 
 | D345 | **Packet AST ids are `field:<start>-<end>`** from the resolved range, so they survive label edits; a `+N` field's id moves when an earlier field changes width. `data-ast` goes on the first piece's `rect`; every piece's `rect` carries `data-id="<start>-<end>"`; the row `g`s stay as in v12. |
 | D346 | **Packet labels are `field` language symbols.** Each symbol's range is the quoted string (D191); each is its own definition with no references, since repeated labels are separate fields. Rename keeps the quotes and allows duplicates. Mirrors D229 without pie's duplicate rule. |
 | D347 | **Packet ASCII is one table of boxes sharing borders**, with junction glyphs and 2 columns per bit (32 bits give 65 columns). Labels are cut to the field with `…`; bit numbers go on a line above each row when `showBits`; `descending` is mirrored; the title is centred below, as in SVG. `rowHeight`, `bitWidth` and the paddings are ignored in text, with no warning. D320. |
+
+### Radar (#422)
+
+The maintainer accepted every recommended answer on 2026-11-06, relayed through the wave coordinator session: "We follow the recommendations for the questions in ticket 422." D350 stays free.
+
+| # | Decision |
+| --- | --- |
+| D351 | **`radarAxisColor = lineColor` in every theme, and it follows an author's `lineColor` override**, where v12 fixed it in the theme constructor. Redux and `neo` themes take their own `lineColor` (D333(b)) instead of theme-default's `#333333`. Classic themes are otherwise unchanged. MIGRATION.md. |
+| D352 | **All radar text is drawn in `textColor`**, as v12 actually paints it: v12's CSS `color` on SVG text paints nothing. Radar does not read `titleColor`; MIGRATION.md says so. |
+| D353 | **A radar curve's colour slot is its index mod 12**, as pie's are, so curve 13 no longer fills black. The `cScale` values stay v12's in every theme (D258). MIGRATION.md notes 13+ curves. |
+| D354 | **The radar bounding box covers what is drawn.** v12's positions stay; the box grows where axis labels, legend labels, a fractional-`ticks` ring or a large title overflowed the fixed canvas. Output changes only where v12 clipped. D224. |
+| D355 | **Radar axis labels, legend and title use core's label layout**, so `<br>` and newlines break, markdown strings render, and math (D176) and icons (D292) work; Mermaid `#…;` entities decode as before. MIGRATION.md. D225. |
+| D356 | **Invalid radar input: accept what v12 accepts, never draw NaN, one warning per kind per render** with `related` positions. `RADAR_CURVE_SKIPPED` (entry count is not the axis count; the curve is not drawn), `RADAR_UNKNOWN_AXIS` (a detailed entry names no axis; ignored), `RADAR_EMPTY_RANGE` (`max = min`; curves draw at the centre, where v12 wrote NaN paths), `RADAR_TICKS_CLAMPED` (`ticks > 32`). `Missing entry for axis …` and `Axes must be populated …` stay rejections with v12's messages; fractional ticks keep v12's rings. D226. |
+| D357 | **Radar names that start with a keyword are rejected, as in v12.** Pele's longer-name rule is not taken; T1 gates on v12's token stream. The diagnostic says the name starts with a keyword, and `isValidId` refuses such names. D325. |
+| D358 | **Radar language symbols.** Each axis name is an `axis` symbol: the `axis` statement defines it, each detailed entry's name and a repeated `axis` statement are references (as D229). Curve names are `curve` symbols with definitions only, in their own namespace. An entry naming no axis is an unresolved reference with D356's warning. Rename changes the definition and every reference, and refuses a name `isValidId` rejects or an existing axis name. |
+| D359 | **All ten radar theme keys become variables, and `radarLegendBoxSize` sizes the legend swatch**, which v12 declared but never read. With the default (12) nothing changes. |
