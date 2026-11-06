@@ -6,6 +6,7 @@
  */
 export { radar } from './plugin.ts';
 export { renderRadar } from './render/index.ts';
+export { RADAR_CONFIG_INVALID } from './config.ts';
 export type { RadarRenderContext } from './render/index.ts';
 export {
   detectRadar,

@@ -15,7 +15,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { RadarModel } from '../model.ts';
-import { radarLayoutConfig, type RadarLayoutConfig } from '../stand-ins.ts';
+import { radarLayoutConfig, type RadarLayoutConfig } from '../config.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
 import { MAX_TICKS, NORMAL_WEIGHT, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type {
@@ -71,7 +71,8 @@ function frameOf(config: RadarLayoutConfig, n: number): Frame {
 /** Lays out a radar chart in px. */
 export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLayout {
   const config = radarLayoutConfig(
-    ctx.config.radar as Readonly<Record<string, unknown>> | undefined
+    ctx.config.radar as Readonly<Record<string, unknown>> | undefined,
+    ctx.warn
   );
   const { theme } = ctx;
   const family = theme.value('fontFamily');

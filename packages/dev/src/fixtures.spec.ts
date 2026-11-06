@@ -112,6 +112,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'journey',
       'pie',
       'quadrant-chart',
+      'radar',
       'sequence',
       'state-diagram-v2',
       'timeline',

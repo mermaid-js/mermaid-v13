@@ -643,6 +643,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence

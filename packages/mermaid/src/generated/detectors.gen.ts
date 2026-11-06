@@ -29,7 +29,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'block', pattern: /^\s*block(-beta)?/ },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
   { type: 'treeView', pattern: /^\s*treeView-beta/ },
-  { type: 'radar', pattern: /^\s*radar-beta/ },
+  { type: 'radar', pattern: /^\s*radar-beta/, id: 'radar', formats: ['svg'] },
   { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
   { type: 'treemap', pattern: /^\s*treemap/ },
   { type: 'railroad', pattern: /^\s*railroad-beta/i },

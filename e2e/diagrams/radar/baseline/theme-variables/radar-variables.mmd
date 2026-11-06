@@ -1,0 +1,26 @@
+---
+config:
+  theme: neo
+  themeVariables:
+    radar:
+      axisColor: '#0b7285'
+      axisStrokeWidth: 3
+      axisLabelFontSize: 16
+      curveOpacity: 0.2
+      curveStrokeWidth: 4
+      graticuleColor: '#ffd43b'
+      graticuleOpacity: 0.6
+      legendBoxSize: 18
+      legendFontSize: 15
+    radarGraticuleStrokeWidth: 2
+    radarCurveStrokeWidth: 1
+description: >-
+  the ten radar theme variables: nine through the nested themeVariables.radar object (D335),
+  graticule stroke width as the flat radarGraticuleStrokeWidth, and the flat
+  radarCurveStrokeWidth winning over the nested curveStrokeWidth (D540)
+---
+radar-beta
+  title Nested radar variables
+  axis a["Alpha"], b["Beta"], c["Gamma"], d["Delta"]
+  curve x["Series X"]{3, 5, 2, 4}
+  curve y["Series Y"]{5, 2, 4, 1}

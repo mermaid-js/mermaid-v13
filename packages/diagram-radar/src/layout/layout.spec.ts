@@ -57,10 +57,19 @@ describe('radar layout: the frame, worked from v12 renderer.ts', () => {
     expect(lay(FIXTURES.simple!, { axisScaleFactor: 0.5 }).axisLength).toBe(150);
   });
 
-  it('falls back to v12’s default for a value outside the schema range', () => {
-    for (const width of [0, -5, Number.NaN, '300', Infinity])
-      expect(lay(FIXTURES.simple!, { width }).center.x).toBe(350);
+  it('falls back to v12’s default for a value outside the schema range, with one warning', () => {
+    for (const width of [0, -5, Number.NaN, 'wide', Infinity]) {
+      const warnings: Warning[] = [];
+      expect(lay(FIXTURES.simple!, { width }, warnings).center.x).toBe(350);
+      expect(warnings.map((w) => w.code)).toEqual(['RADAR_CONFIG_INVALID']);
+    }
     expect(lay(FIXTURES.simple!, { curveTension: 2 }).curves).toEqual(lay(FIXTURES.simple!).curves);
+  });
+
+  it('reads a numeric string as its number', () => {
+    const warnings: Warning[] = [];
+    expect(lay(FIXTURES.simple!, { width: '300' }, warnings).center.x).toBe(200);
+    expect(warnings).toEqual([]);
   });
 });
 

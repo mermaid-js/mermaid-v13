@@ -1105,7 +1105,8 @@ export const configSchema: ConfigSchema = {
     "radar": {
       "$ref": "#/$defs/RadarDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "usecase": {
@@ -5793,13 +5794,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the radar renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "The size of the radar diagram.",
           "type": "number",
           "minimum": 1,
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -5808,7 +5825,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "marginTop": {
@@ -5817,7 +5835,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "marginRight": {
@@ -5826,7 +5845,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "marginBottom": {
@@ -5835,7 +5855,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "marginLeft": {
@@ -5844,7 +5865,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "axisScaleFactor": {
@@ -5853,7 +5875,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "axisLabelFactor": {
@@ -5862,7 +5885,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 1.05,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "curveTension": {
@@ -5872,7 +5896,8 @@ export const configSchema: ConfigSchema = {
           "maximum": 1,
           "default": 0.17,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

@@ -5,6 +5,7 @@ import type { RadarModel } from './model.ts';
 import { detectRadar, parseRadar, type RadarParseResult } from './parser/index.ts';
 import { radarLabels } from './labels.ts';
 import { renderRadar } from './render/index.ts';
+import { radarConfigDefaults } from './generated/config-defaults.ts';
 
 /** v12's `radar` theme block (`theme-default.js:342-354`), the same in every theme that has one. */
 const V12_RADAR = {
@@ -31,12 +32,14 @@ const V12_RADAR = {
  * variables under the `radar` section (D335: `themeVariables.radar.axisColor` sets
  * `radarAxisColor`, the flat name winning, D540). `radarAxisColor` is the rule `lineColor` in
  * every theme (D351, D333(b)); the other nine are v12's literals, one entry for every family.
- * The manifest and the generated `configDefaults` come with #449.
+ * The registry loads it from the package's `mermaid` manifest (#449); `configDefaults` are the
+ * `radar` section's generated defaults.
  */
 export const radar = {
   id: 'radar',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: radarConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectRadar(text),
   parse: (text: string, ctx: DiagramParseContext): RadarParseResult =>
     parseRadar(text, { preprocessed: ctx.preprocessed }),

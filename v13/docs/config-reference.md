@@ -814,21 +814,21 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `radar` | object |  | pending |  | The object containing configurations specific for radar diagrams. |
-| `radar.useWidth` | number |  | pending |  |  |
-| `radar.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `radar` | object |  | honoured (13.0.0) |  | The object containing configurations specific for radar diagrams. |
+| `radar.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
+| `radar.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `radar.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `radar.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `radar.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `radar.width` | number | `600` | pending |  | The size of the radar diagram. |
-| `radar.height` | number | `600` | pending |  | The size of the radar diagram. |
-| `radar.marginTop` | number | `50` | pending |  | The margin from the top of the radar diagram. |
-| `radar.marginRight` | number | `50` | pending |  | The margin from the right of the radar diagram. |
-| `radar.marginBottom` | number | `50` | pending |  | The margin from the bottom of the radar diagram. |
-| `radar.marginLeft` | number | `50` | pending |  | The margin from the left of the radar diagram. |
-| `radar.axisScaleFactor` | number | `1` | pending |  | The scale factor of the axis. |
-| `radar.axisLabelFactor` | number | `1.05` | pending |  | The scale factor of the axis label. |
-| `radar.curveTension` | number | `0.17` | pending |  | The tension factor for the Catmull-Rom spline conversion to cubic Bézier curves. |
+| `radar.width` | number | `600` | honoured (13.0.0) |  | The size of the radar diagram. |
+| `radar.height` | number | `600` | honoured (13.0.0) |  | The size of the radar diagram. |
+| `radar.marginTop` | number | `50` | honoured (13.0.0) |  | The margin from the top of the radar diagram. |
+| `radar.marginRight` | number | `50` | honoured (13.0.0) |  | The margin from the right of the radar diagram. |
+| `radar.marginBottom` | number | `50` | honoured (13.0.0) |  | The margin from the bottom of the radar diagram. |
+| `radar.marginLeft` | number | `50` | honoured (13.0.0) |  | The margin from the left of the radar diagram. |
+| `radar.axisScaleFactor` | number | `1` | honoured (13.0.0) |  | The scale factor of the axis. |
+| `radar.axisLabelFactor` | number | `1.05` | honoured (13.0.0) |  | The scale factor of the axis label. |
+| `radar.curveTension` | number | `0.17` | honoured (13.0.0) |  | The tension factor for the Catmull-Rom spline conversion to cubic Bézier curves. |
 
 ## `usecase`
 
