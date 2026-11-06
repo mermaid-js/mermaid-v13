@@ -35,6 +35,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   class: { load: () => import('./generated/class.monarch.js').then((m) => m.default) },
   state: { load: () => import('./generated/state.monarch.js').then((m) => m.default) },
   er: { load: () => import('./generated/er.monarch.js').then((m) => m.default) },
+  journey: { load: () => import('./generated/journey.monarch.js').then((m) => m.default) },
   timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
   pie: { load: () => import('./generated/pie.monarch.js').then((m) => m.default) },
 };

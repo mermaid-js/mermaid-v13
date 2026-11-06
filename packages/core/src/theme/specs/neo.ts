@@ -7,7 +7,7 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
@@ -58,6 +58,8 @@ const neo: ThemeSpec = {
   // of its own, and the neo-look zero circle on the node fill.
   rules: { ...REDUX_RULES, ...PIE_REDUX },
   values: {
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),
     // v12 `drop-shadow( 0px 1px 2px rgba(0, 0, 0, 0.25));`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))',
     mainBkg: '#ffffff',

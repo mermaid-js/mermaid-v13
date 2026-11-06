@@ -1,0 +1,17 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:8 "journey" keyword
+3:3-3:40 "title My working day %% not a comment" keyword
+4:3-4:12 "accTitle:" keyword
+4:13-4:18 "A day" string
+5:3-5:12 "accDescr:" keyword
+5:13-5:26 "Going to work" string
+6:3-6:10 "section" keyword
+6:11-6:21 "Go to work" variable [declaration, definition]
+7:5-7:13 "Make tea" variable [declaration, definition]
+7:13-7:17 ": 5:" string
+7:18-7:20 "Me" variable [declaration, definition]
+7:20-7:21 "," string
+7:22-7:25 "Cat" variable [declaration, definition]
+8:5-8:12 "Do work" variable [declaration, definition]
+8:12-8:15 ": 1" string
+8:16-8:27 "# a comment" comment

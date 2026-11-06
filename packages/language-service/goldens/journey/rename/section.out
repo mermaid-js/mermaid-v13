@@ -1,0 +1,8 @@
+@ 3:11  section |Go to work
+  prepare: 3:11-3:21 "Go to work"; rename to "Commute":
+  %% rename-to: Commute
+  journey
+    section Commute
+      Make tea: 5: Me
+    section Commute  
+      Do work: 1: Me

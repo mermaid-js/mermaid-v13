@@ -68,6 +68,23 @@ export const TAILWIND_300: readonly string[] = [
   '#ffa1ad',
 ];
 
+/**
+ * The user journey's section fills `fillType0`–`fillType7` (#327, D241) as literal values.
+ * v12 derives them per theme as `primaryColor`, `secondaryColor` and their khroma hue turns
+ * by ±64° and 128°; redux-color takes `bkgColorArray`, redux-dark-color fixed 900 shades. The
+ * theme DSL has no hue turn, so each spec pins v12 12.2.0's resolved values (checked by
+ * `packages/conformance/src/journey/theme.spec.ts`). A custom `primaryColor` therefore does
+ * not re-derive them, apart from `base`, whose `fillType0` and `fillType1` follow
+ * `primaryColor` and `secondaryColor` through the shared rules (`spec.ts`).
+ *
+ * `colours` is the eight values, space-separated (a list costs the always-loaded core more).
+ */
+export function fillTypes(colours: string): Readonly<Record<string, string>> {
+  const out: Record<string, string> = {};
+  colours.split(' ').forEach((c, i) => (out[`fillType${i}`] = c));
+  return out;
+}
+
 /** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258). */
 export const paletteSlots = (entry: (i: number) => string): readonly string[] =>
   Array.from({ length: 12 }, (_, i) => entry(i));

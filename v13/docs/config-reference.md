@@ -236,36 +236,36 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `journey` | object |  | pending |  | The object containing configurations specific for journey diagrams |
-| `journey.useWidth` | number |  | pending |  |  |
-| `journey.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `journey` | object |  | honoured (13.0.0) |  | The object containing configurations specific for journey diagrams |
+| `journey.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the journey renderer never did. |  |
+| `journey.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `journey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `journey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `journey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `journey.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the c4 diagram, must be a positive value. |
-| `journey.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the c4 diagram, must be a positive value. |
-| `journey.leftMargin` | integer | `150` | pending |  | Margin between actors |
-| `journey.maxLabelWidth` | integer | `360` | pending |  | Maximum width of actor labels |
-| `journey.width` | integer | `150` | pending |  | Width of actor boxes |
-| `journey.height` | integer | `50` | pending |  | Height of actor boxes |
-| `journey.boxMargin` | integer | `10` | pending |  | Margin around loop boxes |
-| `journey.boxTextMargin` | integer | `5` | pending |  | Margin around the text in loop/alt/opt boxes |
-| `journey.noteMargin` | integer | `10` | pending |  | Margin around notes |
-| `journey.messageMargin` | integer | `35` | pending |  | Space between messages. |
-| `journey.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | pending |  | Multiline message alignment |
-| `journey.bottomMarginAdj` | integer | `1` | pending |  | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
-| `journey.rightAngles` | boolean | `false` | pending |  | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
-| `journey.taskFontSize` | string \\| number | `14` | pending |  |  |
-| `journey.taskFontFamily` | string | `"\"Open Sans\", sans-serif"` | pending |  |  |
-| `journey.taskMargin` | number | `50` | pending |  |  |
-| `journey.activationWidth` | number | `10` | pending |  | Width of activation box |
-| `journey.textPlacement` | string | `"fo"` | pending |  | text placement as: tspan \| fo \| old only text as before |
-| `journey.actorColours` | array | `["#8FBC8F","#7CFC00","#00FFFF","#20B2AA","#B0E0E6","#FFFFE0"]` | pending |  |  |
-| `journey.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | pending |  |  |
-| `journey.sectionColours` | array | `["#fff"]` | pending |  |  |
-| `journey.titleColor` | string | `""` | pending |  | Color of the title text in Journey Diagrams |
-| `journey.titleFontFamily` | string | `"\"trebuchet ms\", verdana, arial, sans-serif"` | pending |  | Font family to be used for the title text in Journey Diagrams |
-| `journey.titleFontSize` | string | `"4ex"` | pending |  | Font size to be used for the title text in Journey Diagrams |
+| `journey.diagramMarginX` | integer | `50` | honoured (13.0.0) | The margin left and right of what is drawn (D224, D242). v12 had no left margin and also used it as the gap between section bands and as a task's width in its bounds; bands are now `taskMargin` apart. | Margin to the right and left of the c4 diagram, must be a positive value. |
+| `journey.diagramMarginY` | integer | `10` | honoured (13.0.0) | The margin above and below what is drawn (D224). v12 fixed the top at -25 and added 70 for a title. | Margin to the over and under the c4 diagram, must be a positive value. |
+| `journey.leftMargin` | integer | `150` | honoured (13.0.0) | Where the first task starts, as in v12. It widens by the widest legend line past it, with no threshold, and is counted once in the width (D242); v12 jumped from 150 to about 230 px once a legend line passed `leftMargin / 2`, and counted it twice. | Margin between actors |
+| `journey.maxLabelWidth` | integer | `360` | honoured (13.0.0) | The width legend names wrap to (core label layout, D225). Words longer than it split without v12's hyphen. | Maximum width of actor labels |
+| `journey.width` | integer | `150` | honoured (13.0.0) |  | Width of actor boxes |
+| `journey.height` | integer | `50` | honoured (13.0.0) |  | Height of actor boxes |
+| `journey.boxMargin` | integer | `10` | ignored (13.0.0) | v12's journey renderer read it only in a loop over an empty list, so it had no effect. | Margin around loop boxes |
+| `journey.boxTextMargin` | integer | `5` | honoured (13.0.0) |  | Margin around the text in loop/alt/opt boxes |
+| `journey.noteMargin` | integer | `10` | ignored (13.0.0) | v12's journey renderer never read it. | Margin around notes |
+| `journey.messageMargin` | integer | `35` | ignored (13.0.0) | v12's journey renderer never read it. | Space between messages. |
+| `journey.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | ignored (13.0.0) | v12's journey renderer never read it. | Multiline message alignment |
+| `journey.bottomMarginAdj` | integer | `1` | ignored (13.0.0) | v12's journey renderer never read it. | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
+| `journey.rightAngles` | boolean | `false` | ignored (13.0.0) | v12's journey renderer never read it. | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
+| `journey.taskFontSize` | string \\| number |  | honoured (13.0.0) | The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect. |  |
+| `journey.taskFontFamily` | string |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect. |  |
+| `journey.taskMargin` | number | `50` | honoured (13.0.0) | The gap between tasks and, now, between section bands (D242). |  |
+| `journey.activationWidth` | number | `10` | ignored (13.0.0) | v12's journey renderer never read it. | Width of activation box |
+| `journey.textPlacement` | string | `"fo"` | ignored (13.0.0) | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. | text placement as: tspan \| fo \| old only text as before |
+| `journey.actorColours` | array |  | honoured (13.0.0) | The actor dot colours in every theme (D249); an author's `actor0`–`actor5` theme variable wins. Unset, dots take v12's six colours (`#8FBC8F`, `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`); a list set by the author replaces them (v12 appended it after them). The empty actor `''` takes no colour (D244). A value that is not a colour is dropped with `STYLE_VALUE_DROPPED`. |  |
+| `journey.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | ignored (13.0.0) | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
+| `journey.sectionColours` | array |  | honoured (13.0.0) | The default changes: unset, section and task names are `textColor`. When set, it colours them by section band (D225); v12's `['#fff']` reached only the `tspan` fallback, which its default `fo` labels did not show. |  |
+| `journey.titleColor` | string | `""` | honoured (13.0.0) | An unset (empty) value takes the theme's `textColor` (D248); v12 wrote an empty `fill`, black on dark themes. | Color of the title text in Journey Diagrams |
+| `journey.titleFontFamily` | string |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. | Font family to be used for the title text in Journey Diagrams |
+| `journey.titleFontSize` | string | `"4ex"` | honoured (13.0.0) | `4ex` of the theme `fontSize` by default, as v12 (D248). | Font size to be used for the title text in Journey Diagrams |
 
 ## `timeline`
 

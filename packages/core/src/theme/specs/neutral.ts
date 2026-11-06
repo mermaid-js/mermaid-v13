@@ -2,7 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
 import { darkModeLabels } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
@@ -65,6 +65,8 @@ const theme: ThemeSpec = {
   },
   rules: PIE_NEUTRAL,
   values: {
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
     actorBorder: '#d4d4d4',

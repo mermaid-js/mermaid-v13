@@ -1,0 +1,5 @@
+3:13-3:13 "" error UNEXPECTED: Expected `:` and a score, e.g. `Make tea: 5`, got a line break; a task is written `<name>: <score>: <actors>`, e.g. `Make tea: 5: Me`.
+4:5-4:12 ": 5: Me" error UNEXPECTED: Expected a statement such as `title`, `section` or `accTitle:` or a task such as `Make tea: 5: Me`, got `: 5: Me`; a task needs a name before its `:`, e.g. `Make tea: 5`.
+5:19-5:20 ";" error UNEXPECTED: Expected a statement such as `title`, `section` or `accTitle:` or a task such as `Make tea: 5: Me`, got `;`; `;` does not end a statement in a user journey: put each statement on its own line.
+6:3-6:10 "journey" error UNEXPECTED: Expected a statement such as `title`, `section` or `accTitle:` or a task such as `Make tea: 5: Me`, got `journey`; `journey` starts the diagram and comes only once.
+8:1-8:10 "accTitle:" error MISSING_ACC_TITLE: The text ends after `accTitle:` without a title. Write the accessible title after it, e.g. `accTitle: My working day`.

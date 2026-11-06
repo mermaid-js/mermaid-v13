@@ -200,6 +200,11 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
+/** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
+const TEXT_USERS = ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'journey', 'timeline'];
+
+const JOURNEY = ['journey'];
+
 /**
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
  * in core's size budget (R-PERF-8).
@@ -220,32 +225,24 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  fontFamily: def('ff', 'font', [
-    'core',
-    'flowchart',
-    'sequence',
-    'class',
-    'state',
-    'er',
-    'pie',
-    'timeline',
-  ]),
-  fontSize: def('fs', 'length', [
-    'core',
-    'flowchart',
-    'sequence',
-    'class',
-    'state',
-    'er',
-    'timeline',
-  ]),
+  // Pie draws in the font family but sizes its text by its own variables.
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
+  fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
   tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er', 'timeline']),
+  textColor: def('tx', 'color', [
+    'core',
+    'flowchart',
+    'sequence',
+    'state',
+    'er',
+    'journey',
+    'timeline',
+  ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
@@ -366,6 +363,14 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
+  // user journey (#290): section and task fills by slot (D241), the face, and the author's
+  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
+  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
+  ...Object.fromEntries(
+    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
+  ),
+  faceColor: def('jfc', 'color', JOURNEY),
+  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),

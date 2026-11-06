@@ -25,6 +25,11 @@ const PACKAGES = [
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'journey',
+    dir: 'diagram-journey',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
+  },
+  {
     name: 'timeline',
     dir: 'diagram-timeline',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],

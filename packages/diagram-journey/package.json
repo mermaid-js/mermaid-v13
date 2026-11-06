@@ -1,0 +1,54 @@
+{
+  "name": "@mermaid-js/diagram-journey",
+  "version": "13.0.0-alpha.0",
+  "description": "User journey diagram plugin for Mermaid: model, layout and renderer.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-journey"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "journey",
+    "types": [
+      "journey"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "journey",
+    "language": "./dist/language.js"
+  }
+}

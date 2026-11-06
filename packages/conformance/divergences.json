@@ -24,6 +24,22 @@
     "since": "2026-11-04"
   },
   {
+    "id": "parser case entity actors",
+    "inputHash": "sha256:f38132648039f4a2",
+    "kind": "model",
+    "reason": "v12 sorted actor names after `encodeEntities` had turned `#lt;` into its placeholder `ﬂ°lt¶ß` (U+FB02), so a name holding an entity sorted after plain names; v13 sorts the names as written (`&lt;b&gt;` before `b`), which only changes the legend order and colour slots of such names (#302, GAPS #302).",
+    "owner": "#302",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "parser case entity actors (CRLF)",
+    "inputHash": "sha256:2879ab0c4720ec39",
+    "kind": "model",
+    "reason": "v12 sorted actor names after `encodeEntities` had turned `#lt;` into its placeholder `ﬂ°lt¶ß` (U+FB02), so a name holding an entity sorted after plain names; v13 sorts the names as written (`&lt;b&gt;` before `b`), which only changes the legend order and colour slots of such names (#302, GAPS #302).",
+    "owner": "#302",
+    "since": "2026-11-05"
+  },
+  {
     "id": "timeline-cases/front-matter-title",
     "inputHash": "sha256:921e76548fe3789d",
     "kind": "model",

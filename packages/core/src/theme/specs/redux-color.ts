@@ -6,6 +6,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import {
+  fillTypes,
   INVERTED_SCALE,
   LABEL_SCALE,
   pieSlots,
@@ -21,7 +22,12 @@ const theme: ThemeSpec = {
   // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
   // v12 `pie<i+1> ||= cScale<i>`: the Tailwind-300 set.
   rules: { ...redux.rules, ...pieSlots(TAILWIND_300) },
-  values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
+  values: {
+    ...redux.values,
+    erEdgeLabelBackground: '#ffffff',
+    // v12 `fillType<i> || bkgColorArray[i]` for the journey section fills (`fillTypes`)
+    ...fillTypes(TAILWIND_50.slice(0, 8).join(' ')),
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,

@@ -5,6 +5,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import {
+  fillTypes,
   INVERTED_SCALE,
   paletteSlots,
   pieSlots,
@@ -21,7 +22,12 @@ const theme: ThemeSpec = {
   tokens: REDUX_DARK_TOKENS,
   // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
   rules: { ...REDUX_RULES, ...pieSlots(TAILWIND_300), pieSectionTextColor: '#28253d' },
-  values: { ...REDUX_DARK_VALUES, erEdgeLabelBackground: '#16141f' },
+  values: {
+    ...REDUX_DARK_VALUES,
+    erEdgeLabelBackground: '#16141f',
+    // v12's fixed 900 shades for the journey section fills (`fillTypes`)
+    ...fillTypes('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],

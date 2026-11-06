@@ -35,6 +35,7 @@ const DOCS = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
 };
@@ -45,6 +46,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'journey',
       'pie',
       'sequence',
       'state',
@@ -82,7 +84,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
     );
     const states = Object.keys(monarch().tokenizer);
     expect(states.some((s) => s.startsWith('flowchart__'))).toBe(true);
-    for (const other of ['sequence', 'class', 'state', 'er']) {
+    for (const other of ['sequence', 'class', 'state', 'er', 'journey']) {
       expect(states.some((s) => s.startsWith(`${other}__`))).toBe(false);
     }
     expect(spans(DOCS.sequence)).toEqual([]);

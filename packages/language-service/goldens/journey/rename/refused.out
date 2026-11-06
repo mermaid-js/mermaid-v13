@@ -1,0 +1,12 @@
+@ 4:18  Make tea: 5: |Me
+  prepare: 4:18-4:20 "Me"; rename to "Me: Cat":
+  refused: 'Me: Cat' is not an actor name.
+@ 5:8  Do |work: 1: Me
+  prepare: 5:5-5:12 "Do work"; rename to "Me: Cat":
+  refused: 'Me: Cat' is not a task name.
+@ 6:11  section |Go home
+  prepare: 6:11-6:18 "Go home"; rename to "Me: Cat":
+  refused: 'Me: Cat' is not a section name.
+@ 7:6  S|it down: 5: Me
+  prepare: 7:5-7:13 "Sit down"; rename to "Me: Cat":
+  refused: 'Me: Cat' is not a task name.

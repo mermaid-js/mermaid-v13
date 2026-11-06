@@ -1,0 +1,30 @@
+@ 3:18  Make tea: 5: |Me
+  3:18-3:20 "Me"
+  | **actor** `Me`
+  |
+  | In 3 tasks · mean score 3.3
+  |
+  | Tasks: `Make tea`, `Do work`, `Go home`
+@ 4:21  Do work: 1: Me, |Cat
+  4:21-4:24 "Cat"
+  | **actor** `Cat`
+  |
+  | In 2 tasks · mean score 1.0
+  |
+  | Tasks: `Do work`, `Sleep`
+@ 5:11  section |Go to work
+  5:11-5:21 "Go to work"
+  | **section** `Go to work`
+  |
+  | 2 tasks · mean score 3.5
+  |
+  | Actors: `Me`
+  |
+  | One of 2 `section` lines with this name.
+@ 6:5  |Go home: 4: Me
+  6:5-6:12 "Go home"
+  | **task** `Go home`
+  |
+  | Score: 4 · Section: `Go to work`
+  |
+  | Actors: `Me`
