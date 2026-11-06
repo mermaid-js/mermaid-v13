@@ -4,13 +4,7 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { BASE_SECONDARY, LABEL_SCALE, paletteSlots, series } from './palettes.ts';
-import {
-  NEO_ARROWHEADS,
-  REDUX_GITGRAPH,
-  REDUX_PADDING,
-  TEXT_SIZES,
-  REDUX_MINDMAP,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
 const mainBkgScale = (
@@ -50,11 +44,14 @@ export const NEO_GIT_DARK_MODE = {
   gitInv: neoGitInv('lightenHsl'),
   gitBranchLabel: NEO_GIT_SOURCES.map(() => 'black'),
 };
-/** v12's commit labels of `theme-base.js` with redux's fixed tag border (`gitLabelRules`). */
+/**
+ * The badge of `theme-base.js` (v12's commit labels) with redux's fixed callout border (v12's
+ * tag border, `gitLabelRules`).
+ */
 const REDUX_GIT_LABELS: ThemeRuleTable = {
-  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
-  commitLabelBackground: BASE_SECONDARY,
-  tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #171717))',
+  badgeTextColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  badgeBkg: BASE_SECONDARY,
+  calloutBorder: 'ifSet(primaryBorderColor, #171717)',
 };
 
 /**
@@ -91,19 +88,12 @@ const redux: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
-    ...TEXT_SIZES,
-    ...REDUX_MINDMAP,
-    ...REDUX_GITGRAPH,
     useGradient: false,
   },
   rules: REDUX_GIT_LABELS,
   values: {
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
-    // v12 `theme-redux*.js`: gitGraph branch lines. The cherry-pick ink white, so `theme: 'auto'`
-    // (`redux-color` light) has a light value to switch from (#374).
-    commitLineColor: '#BDBCCC',
-    gitCherryPickInk: '#ffffff',
     primaryBorderColor: '#28253d',
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',

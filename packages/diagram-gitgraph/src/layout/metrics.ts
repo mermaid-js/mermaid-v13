@@ -6,8 +6,8 @@
  *
  * Lengths that differ between the theme families are geometry theme variables (D152): v12's
  * redux geometry in the redux themes, v12 classic in the classic themes and in the two neo
- * themes (D266). They are listed in {@link GIT_GEOMETRY}, and core's theme specs carry their
- * values (#374).
+ * themes (D266). They are listed in {@link GIT_GEOMETRY}, and the package's theme table carries
+ * their values by family (`theme/table.ts`, #374, spec #414 T1b).
  */
 
 /** v12's spacing along the commit axis and across the lanes. */
@@ -217,8 +217,8 @@ export interface GitGeometry {
 
 /**
  * The names of the geometry theme variables the layout reads, each unsigned (core's lengths
- * are). The package holds no values: core's theme specs carry v12's classic and redux values
- * (`specs/geometry.ts`). `laneShift` and `branchLabelShiftX` give `GitGeometry`'s signed
+ * are). The package's theme table carries v12's classic and redux values by family
+ * (`theme/table.ts`). `laneShift` and `branchLabelShiftX` give `GitGeometry`'s signed
  * `laneOffset` and `branchLabelOffsetX`.
  */
 export const GIT_GEOMETRY = {

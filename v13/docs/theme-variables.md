@@ -12,15 +12,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
-| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
+| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
 | `background` | `--mermaid-background` | base | color | | | all | core, state |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, pie |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
@@ -42,34 +42,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state |
 | `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark, neo, neo-dark | core |
-| `commitLabelColor` | `--mermaid-commitLabelColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `commitLabelBackground` | `--mermaid-commitLabelBackground` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `commitLabelFontSize` | `--mermaid-commitLabelFontSize` | token | length | | | all | gitgraph |
-| `tagLabelColor` | `--mermaid-tagLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
-| `tagLabelBackground` | `--mermaid-tagLabelBackground` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
-| `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
-| `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all | gitgraph |
-| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark | gitgraph |
-| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark, neo-dark | gitgraph |
-| `sectionBkgColor` | `--mermaid-sectionBkgColor` | derived | color | `tertiaryColor` | `tertiaryColor` | | gantt |
-| `altSectionBkgColor` | `--mermaid-altSectionBkgColor` | derived | color | `white` | `white` | | gantt |
-| `sectionBkgColor2` | `--mermaid-sectionBkgColor2` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `excludeBkgColor` | `--mermaid-excludeBkgColor` | derived | color | `#eeeeee` | `#eeeeee` | | gantt |
-| `gridColor` | `--mermaid-gridColor` | derived | color | `lightgrey` | `lightgrey` | | gantt |
-| `todayLineColor` | `--mermaid-todayLineColor` | derived | color | `red` | `red` | | gantt |
-| `vertLineColor` | `--mermaid-vertLineColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
-| `taskBkgColor` | `--mermaid-taskBkgColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `taskBorderColor` | `--mermaid-taskBorderColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
-| `activeTaskBkgColor` | `--mermaid-activeTaskBkgColor` | derived | color | `lightenHsl(primaryColor, 23%)` | `lightenHsl(primaryColor, 23%)` | | gantt |
-| `activeTaskBorderColor` | `--mermaid-activeTaskBorderColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `doneTaskBkgColor` | `--mermaid-doneTaskBkgColor` | derived | color | `lightgrey` | `lightenHsl(mainBkg, 16%)` | | gantt |
-| `doneTaskBorderColor` | `--mermaid-doneTaskBorderColor` | derived | color | `grey` | `grey` | | gantt |
-| `critBkgColor` | `--mermaid-critBkgColor` | derived | color | `red` | `red` | | gantt |
-| `critBorderColor` | `--mermaid-critBorderColor` | derived | color | `#ff8888` | `#ff8888` | | gantt |
-| `taskTextColor` | `--mermaid-taskTextColor` | derived | color | `textColor` | `textColor` | | gantt |
-| `taskTextOutsideColor` | `--mermaid-taskTextOutsideColor` | derived | color | `textColor` | `textColor` | | gantt |
-| `taskTextDarkColor` | `--mermaid-taskTextDarkColor` | derived | color | `textColor` | `textColor` | | gantt |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap |
@@ -86,23 +58,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
 | `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
-| `mindmapRoundedNodes` | `--mermaid-mindmapRoundedNodes` | token | flag | | | all | mindmap |
-| `mindmapOutlinedNodes` | `--mermaid-mindmapOutlinedNodes` | token | flag | | | all | mindmap |
-| `mindmapBorderEdges` | `--mermaid-mindmapBorderEdges` | token | flag | | | all | mindmap |
-| `gitCommitRadius` | `--mermaid-gitCommitRadius` | token | length | | | all | gitgraph |
-| `gitLaneShift` | `--mermaid-gitLaneShift` | token | length | | | all | gitgraph |
-| `gitBranchLabelPaddingX` | `--mermaid-gitBranchLabelPaddingX` | token | length | | | all | gitgraph |
-| `gitBranchLabelPaddingY` | `--mermaid-gitBranchLabelPaddingY` | token | length | | | all | gitgraph |
-| `gitBranchLabelRadius` | `--mermaid-gitBranchLabelRadius` | token | length | | | all | gitgraph |
-| `gitBranchLabelShiftX` | `--mermaid-gitBranchLabelShiftX` | token | length | | | all | gitgraph |
-| `gitBranchLabelOffsetY` | `--mermaid-gitBranchLabelOffsetY` | token | length | | | all | gitgraph |
-| `gitArrowWidth` | `--mermaid-gitArrowWidth` | token | length | | | all | gitgraph |
-| `gitHighlightInnerSize` | `--mermaid-gitHighlightInnerSize` | token | length | | | all | gitgraph |
-| `gitMergeRadius` | `--mermaid-gitMergeRadius` | token | length | | | all | gitgraph |
-| `gitReverseCrossSize` | `--mermaid-gitReverseCrossSize` | token | length | | | all | gitgraph |
-| `gitCherryPickDotRadius` | `--mermaid-gitCherryPickDotRadius` | token | length | | | all | gitgraph |
-| `gitNodeColors` | `--mermaid-gitNodeColors` | token | flag | | | all | gitgraph |
-| `gitPaletteColors` | `--mermaid-gitPaletteColors` | token | flag | | | all | gitgraph |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
 | `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
@@ -113,6 +68,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `lineTextColor` | `--mermaid-lineTextColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
 | `softBorder` | `--mermaid-softBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
 | `frameBorder` | `--mermaid-frameBorder` | derived | color | `softBorder` | `softBorder` | redux-dark, redux-dark-color, forest | sequence |
+| `badgeBkg` | `--mermaid-badgeBkg` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `badgeTextColor` | `--mermaid-badgeTextColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `calloutBkg` | `--mermaid-calloutBkg` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
+| `calloutTextColor` | `--mermaid-calloutTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
+| `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `rowBkg` | `--mermaid-rowBkg` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | default, dark, neutral | er |
 | `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
 | `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
@@ -198,6 +158,58 @@ flags and opacities, which are read literally.
 | `oddPaddingX` | | padding | `42` | `42` | `42` | `42` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `42` | `42` |
 | `oddPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
 
+### gantt
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `altSectionBkgColor` | | color | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` |
+| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
+| `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
+| `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
+| `vertLineColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `taskBkgColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `taskBorderColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `activeTaskBkgColor` | | color | `#ffffff` | `#ffffff` | `#595c5c` | `#595c5c` | `#ffffff` | `#595c5c` | `#fafcf5` | `#ffffff` | `#ffffff` | `#ffffff` | `#595c5c` |
+| `activeTaskBorderColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `doneTaskBkgColor` | | color | `lightgrey` | `lightgrey` | `#38383e` | `#38383e` | `lightgrey` | `#474949` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `#584343` |
+| `doneTaskBorderColor` | | color | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` |
+| `critBkgColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
+| `critBorderColor` | | color | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` |
+| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextOutsideColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextDarkColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+
+### gitgraph
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `commitLabelColor` | | color | `#333333` | `#333333` | `#b8b6b6` | `#b8b6b6` | `#000021` | `#b8b6b6` | `#32004d` | `#030303` | `#0b2200` | `#333333` | `#b8b6b6` |
+| `commitLabelBackground` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f4ddff` | `#cccccc` | `#474949` |
+| `commitLabelFontSize` | | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `tagLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `tagLabelBackground` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `tagLabelBorder` | | color | `#171717` | `#171717` | `#cccccc` | `#cccccc` | `#c7c7f1` | `#cccccc` | `#abb594` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `tagBorder` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `tagLabelFontSize` | | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `commitLineColor` | | color | `#BDBCCC` | `#BDBCCC` | `#BDBCCC` | `#BDBCCC` | `currentColor` | `#d3d3d3` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `gitCherryPickInk` | | color | `#ffffff` | `#ffffff` | `#000000` | `#000000` | `currentColor` | `#000000` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#000000` |
+| `gitCommitRadius` | | length | `7` | `7` | `7` | `7` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `gitLaneShift` | | length | `9` | `9` | `9` | `9` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelPaddingX` | | length | `16` | `16` | `16` | `16` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelPaddingY` | | length | `12` | `12` | `12` | `12` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelRadius` | | length | `0` | `0` | `0` | `0` | `4` | `4` | `4` | `4` | `4` | `4` | `4` |
+| `gitBranchLabelShiftX` | | length | `11` | `11` | `11` | `11` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelOffsetY` | | length | `22` | `22` | `22` | `22` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitArrowWidth` | | length | `2` | `2` | `2` | `2` | `8` | `8` | `8` | `8` | `8` | `8` | `8` |
+| `gitHighlightInnerSize` | | length | `8` | `8` | `8` | `8` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+| `gitMergeRadius` | | length | `5` | `5` | `5` | `5` | `6` | `6` | `6` | `6` | `6` | `6` | `6` |
+| `gitReverseCrossSize` | | length | `4` | `4` | `4` | `4` | `5` | `5` | `5` | `5` | `5` | `5` | `5` |
+| `gitCherryPickDotRadius` | | length | `2.5` | `2.5` | `2.5` | `2.5` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` |
+| `gitNodeColors` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
+| `gitPaletteColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |
+
 ### journey
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
@@ -217,6 +229,14 @@ flags and opacities, which are read literally.
 | `actor3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
 | `actor4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
 | `actor5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+
+### mindmap
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `mindmapRoundedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `false` |
+| `mindmapOutlinedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
+| `mindmapBorderEdges` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `true` |
 
 ### pie
 

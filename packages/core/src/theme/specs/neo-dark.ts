@@ -11,13 +11,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_GITGRAPH,
-  REDUX_PADDING,
-  TEXT_SIZES,
-  NEO_MINDMAP,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
 
 /**
@@ -55,11 +49,6 @@ const neoDark: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
-    ...TEXT_SIZES,
-    ...NEO_MINDMAP,
-    // v12 `styles.ts`: neo-dark edges take `nodeBorder`, as the redux themes do.
-    mindmapBorderEdges: true,
-    ...NEO_GITGRAPH,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
@@ -67,8 +56,6 @@ const neoDark: ThemeSpec = {
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
   },
   values: {
-    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
-    gitCherryPickInk: '#000000',
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',
     mainBkg: '#2a2020',

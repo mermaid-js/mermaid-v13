@@ -13,6 +13,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { gitGraph } from '@mermaid-js/diagram-gitgraph';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -51,6 +52,7 @@ function v12Palettes(theme: string, themeVariables: object = {}): Palettes {
 
 async function v13Theme(theme: ThemeName, themeVariables?: object) {
   return createTheme(await loadTheme(theme), {
+    diagram: gitGraph.theme,
     cssVariables: false,
     themeVariables: themeVariables as Record<string, unknown>,
   });

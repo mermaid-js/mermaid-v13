@@ -5,13 +5,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { series } from './palettes.ts';
 import { DARK_HUE_SOURCES, gitPalettes, gitSources } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  REDUX_GITGRAPH,
-  REDUX_PADDING,
-  TEXT_SIZES,
-  REDUX_MINDMAP,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -34,9 +28,6 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   spacing3: 16,
   ...NEO_ARROWHEADS,
   ...REDUX_PADDING,
-  ...TEXT_SIZES,
-  ...REDUX_MINDMAP,
-  ...REDUX_GITGRAPH,
   useGradient: false,
 };
 
@@ -45,9 +36,6 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   frameBorder: '#bdbccc',
   // v12's drop shadow in white for a theme name with 'dark' (insertLookDefs), as a CSS filter.
   dropShadow: 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))',
-  // v12 `theme-redux*.js`: gitGraph branch lines; the cherry-pick ink of v12's `DARK_THEMES`.
-  commitLineColor: '#BDBCCC',
-  gitCherryPickInk: '#000000',
   primaryBorderColor: '#cccccc',
   secondaryBorderColor: '#2f2f2f',
   tertiaryBorderColor: '#060606',

@@ -116,17 +116,18 @@ export const gitPalettes = (
 });
 
 /**
- * gitGraph's commit label colours and tag border (D267) as one v12 theme derives them: the
- * author's `secondaryTextColor`, else v12's `invert(secondaryColor)` (`text`); `background`; the
- * author's `tagBorder`, else the author's `primaryBorderColor`, else v12's resolved border
- * (`border`, a khroma saturation step the DSL has no function for).
+ * The badge and the callout border (D332) as one v12 theme derives gitGraph's commit label
+ * colours and tag border from them (D267): the author's `secondaryTextColor`, else v12's
+ * `invert(secondaryColor)` (`text`); `background`; the author's `primaryBorderColor`, else v12's
+ * resolved border (`border`, a khroma saturation step the DSL has no function for). An author's
+ * `tagBorder` comes first (gitGraph's table).
  */
 export const gitLabelRules = (
   text: string,
   border: string,
   background = 'secondaryColor'
 ): ThemeRuleTable => ({
-  commitLabelColor: `ifSet(secondaryTextColor, ${text})`,
-  commitLabelBackground: background,
-  tagLabelBorder: `ifSet(tagBorder, ifSet(primaryBorderColor, ${border}))`,
+  badgeTextColor: `ifSet(secondaryTextColor, ${text})`,
+  badgeBkg: background,
+  calloutBorder: `ifSet(primaryBorderColor, ${border})`,
 });

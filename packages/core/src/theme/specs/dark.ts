@@ -4,13 +4,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
 import { classicGitLabels, darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_GITGRAPH,
-  CLASSIC_PADDING,
-  TEXT_SIZES,
-  CLASSIC_MINDMAP,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -36,22 +30,14 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
-    ...TEXT_SIZES,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   rules: {
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
-    // gitGraph branch lines, v12's `commitLineColor ?? lineColor`: `theme: 'auto'` pairs
-    // `redux-color` (which sets it) with this theme, so its dark side needs a value (#374).
-    commitLineColor: 'lineColor',
   },
   values: {
     // v12 titles and legends: `mainContrastColor`.
     headingTextColor: 'lightgrey',
-    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
-    gitCherryPickInk: '#000000',
     nestedBkg: '#555555', // v12 `altBackground` (#192)
     // v12 theme-dark.js: mainContrastColor (lightgrey) for labels and links
     scaleLabelColor: '#d3d3d3', // v12: `labelTextColor` (D334)
