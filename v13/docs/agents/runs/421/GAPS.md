@@ -22,7 +22,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - Follow-up, not in this spec (for the maintainer): packet's `lexer.ts` shares about 75% of its lines with pie's (the `common.langium` rules: strings, YAML, directives, accessibility closers, blanks, memos), `packetTokens` mirrors `pieTokens`, `lexer-parity.spec.ts` mirrors pie's, and `stress.spec.ts` repeats `cpuMs`/`cost`. Diagram packages cannot share code with each other, so the home is core's parser kit (a Langium-common lexer helper) and a shared Langium parity runner in conformance. Radar, cynefin and the later Langium ports would be the third and further copies.
 - Review findings fixed before the merge (`b1454682f`): a package lexer unit spec (pitfall 4), a harvest drift spec for the pie and packet corpora, the 15 sources v12 does not lex pinned by id, test names dropped from the harvest (pie unchanged), stress small runs sized past the 2 ms floor.
-- [ ] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables.
+- [x] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables. Done in #456: the layout reads `fontFamily`, which now lists `packet` in `usedBy`.
 
 ## #454 T2 parser (merged at `0739831cc`; review fixes pending)
 
