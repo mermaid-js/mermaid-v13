@@ -1,6 +1,6 @@
 # Run notes, spec #293 (gantt)
 
-Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft PR: none yet.
+Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft PR: #398.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
