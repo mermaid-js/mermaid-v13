@@ -4,7 +4,7 @@ Integration branch `feature/421_packet`, cut from `mermaid-v13` at `dd4b9d19f` (
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate on the shared Langium oracle | #452 | — | open |
+| T1 lexer parity gate on the shared Langium oracle | #452 | — | merged |
 | T2 grammar, parser, model, AST, ported specs | #454 | #452 | open |
 | T3 custom layout (`PacketLayout`) | #456 | #454 (soft) | open |
 | T4 SVG renderer | #460 | #454, #456 | open |

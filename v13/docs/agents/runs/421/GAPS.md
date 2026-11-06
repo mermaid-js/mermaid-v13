@@ -16,6 +16,12 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - **Orchestrator choice (for the maintainer): forest is a family-rule approximation (D541), not a new shared input.** v12 forest packet reads its own `primaryTextColor` (#321b67) and `mainBkg` (#cde498); default uses literals. A new generic shared input ("strong text ink", "muted surface") would grow core's vocabulary and every theme spec for one diagram, with core at R-PERF-8's limit, and no second wave-1 port needs it yet. So forest takes the light entry (`black`, `#efefef`): six forest `DIFFERENCES` entries in the theme oracle spec, and one MIGRATION.md row. A later spec that needs a strong ink can promote it.
 
-## #452 T1 lexer (in review)
+## #452 T1 lexer (merged)
 
 - Follow-up, not in this spec (for the maintainer): packet's `lexer.ts` shares about 75% of its lines with pie's (the `common.langium` rules: strings, YAML, directives, accessibility closers, blanks, memos), `packetTokens` mirrors `pieTokens`, `lexer-parity.spec.ts` mirrors pie's, and `stress.spec.ts` repeats `cpuMs`/`cost`. Diagram packages cannot share code with each other, so the home is core's parser kit (a Langium-common lexer helper) and a shared Langium parity runner in conformance. Radar, cynefin and the later Langium ports would be the third and further copies.
+- Review findings fixed before the merge (`b1454682f`): a package lexer unit spec (pitfall 4), a harvest drift spec for the pie and packet corpora, the 15 sources v12 does not lex pinned by id, test names dropped from the harvest (pie unchanged), stress small runs sized past the 2 ms floor.
+- [ ] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables.
+
+## Shared contracts
+
+- **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
