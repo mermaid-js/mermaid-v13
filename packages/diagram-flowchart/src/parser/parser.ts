@@ -38,7 +38,7 @@ import type {
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
-import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
+import { flatYamlMap, isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap } from '@mermaid-js/core/preprocess';
 import type {
   FlowDocument,
@@ -861,6 +861,9 @@ class FlowParser {
       this.i++;
     }
     const whole: Range = { start: opener.start, end: close + 1 };
+    // A flat `key: value` list on one line needs no YAML reader (#277).
+    const flat = flatYamlMap(built);
+    if (flat !== undefined) return { value: flat, range: whole };
     const inner = { start: opener.end, end: close };
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
     const inPlace = src.slice(inner.start, inner.end) === built && !built.includes('#');
