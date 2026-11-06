@@ -3,16 +3,29 @@
 // holding, per piece, `rect.packetBlock`, `text.packetLabel` and the `text.packetByte start` /
 // `end` bit numbers, then `text.packetTitle` when there is a title. v12's class names are kept.
 // A field's first piece carries its `data-ast`; every piece's rect carries `data-id`, the
-// field's `<start>-<end>` (D345, pitfall 12). Colours, sizes and the stroke come from packet's
-// theme table (`plugin.ts`) through the layout's fonts and `strokeWidth`.
+// field's `<start>-<end>` (D345, pitfall 12).
+//
+// What every piece shares is written once on the root as an inherited presentation attribute:
+// the stroke width (text has no stroke, so it ignores it), the bit numbers' font size and the
+// labels' colour. Each element writes only what differs, so a one-piece row is about 430
+// characters; the 10,000-row cap (about 4.3 MB) still passes the default `maxOutputLength`, so at
+// the default limits it is a `LIMIT` error.
 import type { RenderContext } from '@mermaid-js/core';
 import { px, styleScope, styleText, themeStyleSheet } from '@mermaid-js/core/svg';
-import type { Paint, SvgWriter } from '@mermaid-js/core/svg';
+import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { PacketLayout, PacketPieceLayout, PlacedLabel } from '../layout/index.ts';
 import type { PacketModel } from '../model.ts';
+import { paints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
 export type PacketRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
+
+/** What drawing a piece needs, besides the piece. */
+interface Parts {
+  readonly model: PacketModel;
+  readonly paint: Paints;
+  readonly w: SvgWriter;
+}
 
 /** Writes the whole `<svg>` document for a laid-out packet diagram. */
 export function renderPacket(
@@ -21,22 +34,15 @@ export function renderPacket(
   ctx: PacketRenderContext,
   w: SvgWriter
 ): void {
-  const { theme } = ctx;
-  const paint = {
-    fill: theme.color('packetBlockFillColor'),
-    stroke: theme.color('packetBlockStrokeColor'),
-    label: theme.color('packetLabelColor'),
-    start: theme.color('packetStartByteColor'),
-    end: theme.color('packetEndByteColor'),
-    title: theme.color('packetTitleColor'),
-  };
-  openRoot(model, layout, ctx, w);
+  const title = layout.title;
+  const paint = paints(ctx.theme, title !== undefined);
+  openRoot(model, layout, ctx, paint, w);
+  const parts: Parts = { model, paint, w };
   for (const row of layout.rows) {
     w.open('g');
-    for (const p of row.pieces) drawPiece(model, layout, p, paint, w);
+    for (const p of row.pieces) drawPiece(parts, p);
     w.close();
   }
-  const title = layout.title;
   // The title box is the layout's: its first line on v12's point, further lines below (D344).
   if (title)
     w.label(title.text, centreX(title), centreY(title), {
@@ -47,42 +53,32 @@ export function renderPacket(
   w.close();
 }
 
-type Paints = Record<'fill' | 'stroke' | 'label' | 'start' | 'end' | 'title', Paint>;
-
 const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
 const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 
-function drawPiece(
-  model: PacketModel,
-  layout: PacketLayout,
-  p: PacketPieceLayout,
-  paint: Paints,
-  w: SvgWriter
-): void {
+function drawPiece({ model, paint, w }: Parts, p: PacketPieceLayout): void {
   const field = model.fields[p.field]!;
   w.leaf('rect', {
     class: 'packetBlock',
     'data-id': `${field.start}-${field.end}`,
     'data-ast': p.first ? p.ast : undefined,
     ...p.box,
-    fill: paint.fill,
-    stroke: paint.stroke,
-    'stroke-width': layout.strokeWidth,
+    fill: paint.blockFill,
+    stroke: paint.blockStroke,
   });
-  // A shrunk label (D343) has its own font size.
+  // The label's colour is the root's; its size is its own (a shrunk label's, D343).
   w.label(p.label.text, centreX(p.label), centreY(p.label), {
     class: 'packetLabel',
-    fill: paint.label,
     'font-size': p.label.font.size,
   });
+  // The bit numbers' size is the root's.
   for (const n of p.bitNumbers) {
     w.open('text', {
       class: `packetByte ${n.role}`,
       x: n.x,
       y: n.y,
       'text-anchor': n.anchor,
-      fill: n.role === 'start' ? paint.start : paint.end,
-      'font-size': layout.fonts.byte.size,
+      fill: n.role === 'start' ? paint.startByte : paint.endByte,
     });
     w.text(n.text);
     w.close();
@@ -94,6 +90,7 @@ function openRoot(
   model: PacketModel,
   layout: PacketLayout,
   ctx: PacketRenderContext,
+  paint: Paints,
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
@@ -121,6 +118,10 @@ function openRoot(
     'data-p': auto ? styleScope(prefix) : undefined,
     style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
     'font-family': font,
+    // Inherited by every piece.
+    fill: paint.label,
+    'font-size': layout.fonts.byte.size,
+    'stroke-width': layout.strokeWidth,
   });
   if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
   if (title) textElement(w, 'title', title, `${prefix}-title`);

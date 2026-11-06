@@ -93,6 +93,14 @@ const rowsOf = (tree: SvgView): SvgElement[] =>
 const blocks = (tree: SvgView): SvgElement[] => tree.find({ tag: 'rect', class: 'packetBlock' });
 const attrs = (tree: SvgView, n: SvgElement, names: readonly string[]) =>
   names.map((a) => tree.getAttr(n, a));
+/** An attribute as drawn: the element's own, else the nearest ancestor's (presentation attributes inherit). */
+const inherited = (tree: SvgView, n: SvgElement, name: string): string | undefined => {
+  for (let at: SvgElement | undefined = n; at; at = at.parent) {
+    const v = tree.getAttr(at, name);
+    if (v !== undefined) return v;
+  }
+  return undefined;
+};
 
 // The cap cases' 5 MB documents make each pass over the corpus take seconds.
 describe('packet render properties over the corpus', { timeout: 120_000 }, () => {
@@ -292,8 +300,8 @@ describe('packet render: what is drawn', () => {
     const src = 'packet\n0: "a very long label for one bit"\n1-31: "ok"';
     const tree = parseSvg((await api.render('x', src)).svg);
     const [shrunk, kept] = tree.find({ tag: 'text', class: 'packetLabel' });
-    expect(tree.getAttr(shrunk!, 'font-size')).toBe('10');
-    expect(tree.getAttr(kept!, 'font-size')).toBe('12');
+    expect(inherited(tree, shrunk!, 'font-size')).toBe('10');
+    expect(inherited(tree, kept!, 'font-size')).toBe('12');
   });
 
   it('decodes entities and breaks lines in labels through core label layout (D343)', async () => {
@@ -326,16 +334,17 @@ describe('packet render: theme', () => {
     const rect = blocks(tree)[0]!;
     const one = (cls: string) =>
       tree.find((n, t) => t.tag(n) === 'text' && classOf(t, n) === cls)[0]!;
+    const get = (n: SvgElement, name: string) => inherited(tree, n, name);
     return {
-      fill: tree.getAttr(rect, 'fill'),
-      stroke: tree.getAttr(rect, 'stroke'),
-      strokeWidth: tree.getAttr(rect, 'stroke-width'),
-      label: tree.getAttr(one('packetLabel'), 'fill'),
-      start: tree.getAttr(one('packetByte start'), 'fill'),
-      end: tree.getAttr(one('packetByte end'), 'fill'),
-      title: tree.getAttr(one('packetTitle'), 'fill'),
+      fill: get(rect, 'fill'),
+      stroke: get(rect, 'stroke'),
+      strokeWidth: get(rect, 'stroke-width'),
+      label: get(one('packetLabel'), 'fill'),
+      start: get(one('packetByte start'), 'fill'),
+      end: get(one('packetByte end'), 'fill'),
+      title: get(one('packetTitle'), 'fill'),
       sizes: ['packetLabel', 'packetByte start', 'packetTitle'].map((c) =>
-        tree.getAttr(one(c), 'font-size')
+        get(one(c), 'font-size')
       ),
     };
   };

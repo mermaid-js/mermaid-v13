@@ -46,8 +46,11 @@ const DARK: DiagramThemeEntries = {
   },
 };
 
-/** One family's entries: the light lengths, and the dark colours in its dark themes. */
-const FAMILY = { tokens: LENGTHS, dark: DARK };
+/**
+ * Packet draws alike in every family (D227): v12's lengths, and the dark colours in the family's
+ * dark themes.
+ */
+const ENTRIES_FOR_EVERY_FAMILY = { tokens: LENGTHS, dark: DARK };
 
 const theme: DiagramThemeTable = {
   section: 'packet',
@@ -64,7 +67,12 @@ const theme: DiagramThemeTable = {
     packetBlockStrokeWidth: { alias: 'pkbw', kind: 'length', nested: 'blockStrokeWidth' },
   },
   rules: { light: LIGHT },
-  families: { classic: FAMILY, redux: FAMILY, neo: FAMILY },
+  families: {
+    classic: ENTRIES_FOR_EVERY_FAMILY,
+    redux: ENTRIES_FOR_EVERY_FAMILY,
+    // Not `{ fallback: 'redux' }`: the direction check reads the literal as the theme `redux`.
+    neo: ENTRIES_FOR_EVERY_FAMILY,
+  },
 };
 
 /**

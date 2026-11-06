@@ -240,7 +240,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
-  // Packet's dark entry reads both (its own table, D331).
   background: def('bg', 'color', ['core', 'packet']),
   primaryTextColor: def('pt', 'color', ['core', 'packet']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
