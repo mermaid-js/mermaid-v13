@@ -122,16 +122,15 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     );
   });
 
-  it("adds the packages' rows after core's, leaving core's part as it is (spec #414 T1)", async () => {
-    expect(REPO.filter((p) => p.vocabulary).map((p) => p.type)).toEqual([
-      'journey',
-      'pie',
-      'quadrant',
-      'timeline',
-    ]);
-    const core = (await themeInventory()).trimEnd();
-    const doc = await themeInventory(REPO);
-    expect(doc.startsWith(core + '\n\n## Diagram variables\n')).toBe(true);
+  it("adds each package's variables to the inventory, and nothing else (T1, T2)", async () => {
+    const owners = REPO.filter((p) => p.vocabulary).map((p) => p.type);
+    expect(owners).toEqual(
+      expect.arrayContaining(['class', 'journey', 'pie', 'quadrant', 'sequence', 'timeline'])
+    );
+    const [core, all] = [await themeInventory(), await themeInventory(REPO)];
+    expect(all.startsWith(core.trimEnd())).toBe(true);
+    expect(all).toContain('| `classText` | | color |');
+    expect(all).toContain('| `actorRadius` | | length |');
   });
 
   it("keeps every package's generated table up to date (run `pnpm gen:theme`)", () => {

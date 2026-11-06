@@ -4,13 +4,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { paletteSlots, series } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -35,10 +29,7 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).

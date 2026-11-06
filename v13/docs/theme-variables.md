@@ -16,7 +16,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
 | `background` | `--mermaid-background` | base | color | | | all | core |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, quadrant |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
@@ -25,7 +25,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, quadrant |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
@@ -33,7 +33,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
-| `classText` | `--mermaid-classText` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | class |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color |  |
@@ -41,16 +40,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, neutral, neo-dark | core, sequence, class, state |
 | `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state |
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state |
-| `actorBkg` | `--mermaid-actorBkg` | derived | color | `mainBkg` | `mainBkg` | | sequence |
 | `actorBorder` | `--mermaid-actorBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
 | `actorTextColor` | `--mermaid-actorTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | sequence |
-| `actorLineColor` | `--mermaid-actorLineColor` | derived | color | `actorBorder` | `actorBorder` | | sequence |
 | `signalColor` | `--mermaid-signalColor` | derived | color | `textColor` | `textColor` | redux-dark, redux-dark-color, dark, forest, neutral | sequence |
 | `signalTextColor` | `--mermaid-signalTextColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
-| `labelBoxBkgColor` | `--mermaid-labelBoxBkgColor` | derived | color | `actorBkg` | `actorBkg` | | sequence |
 | `labelBoxBorderColor` | `--mermaid-labelBoxBorderColor` | derived | color | `actorBorder` | `actorBorder` | redux-dark, redux-dark-color, forest | sequence |
-| `labelTextColor` | `--mermaid-labelTextColor` | derived | color | `actorTextColor` | `actorTextColor` | | sequence |
-| `loopTextColor` | `--mermaid-loopTextColor` | derived | color | `actorTextColor` | `actorTextColor` | | sequence |
 | `activationBkgColor` | `--mermaid-activationBkgColor` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
 | `activationBorderColor` | `--mermaid-activationBorderColor` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
 | `sequenceNumberColor` | `--mermaid-sequenceNumberColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
@@ -74,13 +68,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
-| `classMarkerStrokeWidth` | `--mermaid-classMarkerStrokeWidth` | token | length | | | all | class |
-| `classFilledMarkerStrokeWidth` | `--mermaid-classFilledMarkerStrokeWidth` | token | length | | | all | class |
-| `extensionMarkerLength` | `--mermaid-extensionMarkerLength` | token | length | | | all | class |
-| `extensionMarkerGap` | `--mermaid-extensionMarkerGap` | token | length | | | all | class |
-| `compositionMarkerGap` | `--mermaid-compositionMarkerGap` | token | length | | | all | class |
-| `dependencyMarkerGap` | `--mermaid-dependencyMarkerGap` | token | length | | | all | class |
-| `classTerminalFontSize` | `--mermaid-classTerminalFontSize` | token | length | | | all | class |
 | `erZeroOrMoreCircleOffset` | `--mermaid-erZeroOrMoreCircleOffset` | token | length | | | all | er |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |
@@ -101,11 +88,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
-| `actorRadius` | `--mermaid-actorRadius` | token | length | | | all | sequence |
-| `actorGlyphBand` | `--mermaid-actorGlyphBand` | token | length | | | all | sequence |
-| `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
-| `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
-| `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
@@ -143,6 +125,19 @@ resolves in each theme: a table is keyed by the theme's family and dark traits, 
 name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name
 wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from
 flags and opacities, which are read literally.
+
+### class
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `classText` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#cccccc` |
+| `classMarkerStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
+| `classFilledMarkerStrokeWidth` | | length | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `1` | `1` | `0` | `0` |
+| `extensionMarkerLength` | | length | `8` | `8` | `8` | `8` | `17` | `17` | `17` | `17` | `17` | `8` | `8` |
+| `extensionMarkerGap` | | length | `8.25` | `8.25` | `8.25` | `8.25` | `0.25` | `0.25` | `0.25` | `0.25` | `0.25` | `8.25` | `8.25` |
+| `compositionMarkerGap` | | length | `2.75` | `2.75` | `2.75` | `2.75` | `0.25` | `0.25` | `0.25` | `0.25` | `0.25` | `2.75` | `2.75` |
+| `dependencyMarkerGap` | | length | `4` | `4` | `4` | `4` | `1` | `1` | `1` | `1` | `1` | `4` | `4` |
+| `classTerminalFontSize` | | length | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` |
 
 ### journey
 
@@ -211,6 +206,21 @@ flags and opacities, which are read literally.
 | `quadrantInternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
 | `quadrantExternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
 | `quadrantTitleFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+
+### sequence
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `actorBkg` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `actorLineColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `labelBoxBkgColor` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `labelTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `loopTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `actorRadius` | | length | `6` | `6` | `6` | `6` | `3` | `3` | `3` | `3` | `3` | `6` | `6` |
+| `actorGlyphBand` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
+| `messageEndGap` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `3` | `3` |
+| `labelBoxExtraHeight` | | length | `15` | `15` | `15` | `15` | `0` | `0` | `0` | `0` | `0` | `15` | `15` |
+| `actorFooterPadding` | | length | `30` | `30` | `30` | `30` | `0` | `0` | `0` | `0` | `0` | `30` | `30` |
 
 ### timeline
 

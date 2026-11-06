@@ -11,13 +11,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
 
 const neoDark: ThemeSpec = {
@@ -45,15 +39,12 @@ const neoDark: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
-    ...NEO_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...REDUX_PADDING,
-    ...NEO_SEQUENCE,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
-  // As `neo`: v12 neo-dark sets `classText` from `textColor`, has no ER row fill of its own,
-  // and the neo-look zero circle takes the node fill.
+  // As `neo`: v12 neo-dark has no ER row fill of its own, and the neo-look zero circle takes
+  // the node fill.
   rules: REDUX_RULES,
   values: {
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.

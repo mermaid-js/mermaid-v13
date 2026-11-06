@@ -4,13 +4,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { series } from './palettes.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -32,10 +26,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   spacing2: 8,
   spacing3: 16,
   ...NEO_ARROWHEADS,
-  ...NEO_CLASS_MARKERS,
-  ...TEXT_SIZES,
   ...REDUX_PADDING,
-  ...NEO_SEQUENCE,
   useGradient: false,
 };
 

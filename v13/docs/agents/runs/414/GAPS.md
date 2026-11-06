@@ -12,6 +12,8 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 - **Direction rule 2 and ordinary words.** `default`, `base`, `dark` and `neutral` are also ordinary words (`classDef default`, `securityLevel: 'default'`), so they count only when compared with an expression that mentions a theme. Files under `src/generated/` (config defaults, whose `theme` key is the config default) are left out.
 - **Family `dark` entries follow the spec's `dark` trait**, as spec values do, while a table's `rules.dark` follows `darkMode` like `DARK_RULES`.
 
+- **Decided for T2's eight rows (option 1 of "T2" below):** `inline(v)` joins the DSL, and themes of one family that write a value differently get a D332 generic shared input read with `inline()`. D332 itself names "a muted surface" and "a strong text ink" as examples. The oracle specs leave the D332 inputs out of the v12 comparison (one list, `D332_INPUTS` in `packages/conformance/src/diagram-themes.ts`) rather than adding `DIFFERENCES` entries: v12 has no such names, and the diagram variables that read them are still compared with v12. So `DIFFERENCES` grows only by D333's entries.
+
 ## T0b (#439)
 
 - **Names from the vocabulary, rules from the plugin.** The direction check takes a type's names from `src/theme/vocabulary.ts` and its table's `vars`, and its rules and family entries from the plugin `src/index.ts` exports (a vocabulary holds no rules). A new rule 4 fails when both exist and differ. A plugin table with no vocabulary is still allowed ("if both exist").
@@ -26,3 +28,16 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 
 - Fill `seriesColorArray` in each theme spec and migrate pie, journey and gitGraph slots onto it; decide whether seed rows are needed (see T0a).
 - gitGraph's `gitBranchLabel` reads `scaleLabelColor` (D334) once #404 merges.
+
+## T2 (#441)
+
+- **Eight sequence rows stay in core; maintainer decision needed.** `actorBorder`, `actorTextColor`, `signalColor`, `signalTextColor`, `labelBoxBorderColor`, `activationBkgColor`, `activationBorderColor` and `sequenceNumberColor` differ between themes with the same traits (classic, light): default, forest and neutral pin v12's literals (`#f4f4f4`, `#666666`, `#ffffff`; forest's `#a6cf47` and `#326932`, neutral's `#d4d4d4`, `#333333` signals), while base derives them (`secondaryColor`, `invert(lineColor)`, `nodeBorder`). Byte identity (D339) needs the CSS shape too, not just the colour: default writes `--_acb:var(--mermaid-activationBkgColor,#f4f4f4)`, base `--_acb:var(--mermaid-activationBkgColor,var(--_s))` plus `--_s`. A family entry gives one shape to all four themes, a rule over a new shared input adds an alias of its own (`var(--_x)`), and `literal()` turns base's references into literals, so no family entry, shared input or DSL form in the contract keeps all four identical. A new shared row also adds a v13-only name to the neo and neo-dark `DIFFERENCES`, which the spec allows only for D333. The dark, redux-dark and neo values of these rows could be family entries (each cell holds one theme, or two with the same values); they stay with their rows. Options:
+  1. A DSL form that reads a shared input as the theme wrote it (value or rule, CSS included), as `seriesColorArray<n>` reads, plus generic shared inputs for the classic literals (D332's "muted surface", "strong text ink"), each a `DIFFERENCES` entry. `actorTextColor` needs no new input: in all eleven themes it is written exactly as `scaleLabelColor` is.
+  2. A D333-style exception: the classic light family takes one set of values (base's derivation or default's literals), and the other themes' sequence colours change.
+  3. Keep the eight rows in core as shared inputs (amends "What stays in core"; T5's closure scan would list them).
+- **Shared rows' `usedBy` gains the table's reads.** The used-by scan counts a table's rule as a read, so `class` joins `primaryTextColor` and `textColor` (`classText`'s rules). The sequence table reads only rows that already list `sequence`.
+- **`labelTextColor` moved**: after T0a nothing shared reads it (`cScaleLabel` reads `scaleLabelColor`). `actorTextColor` stays, as one of the eight.
+- **`TEXT_SIZES` keeps the pie sizes only.** `classTerminalFontSize` (11 in every theme) is a token in each family of the class table. `CLASS_MARKER_VARIABLES` and its type are gone from core.
+- **A first `gen:theme` needs a stub.** The plugin imports `src/theme/generated/variables.ts`, which `gen:theme` writes by importing the plugin, so a new package needs a placeholder file (`export const THEME_VARIABLE_TABLE = {};`) before the first run.
+- **`theme-inventory.spec.ts`**: T0b's "leaves the inventory as it is while no package has a vocabulary" now checks that the packages' rows are added after core's inventory, which is otherwise unchanged.
+- **`.gitignore` let no package's generated table in.** `generated/` is ignored and only `packages/diagram-*/src/generated/` was re-included, so T2 adds `!packages/diagram-*/src/theme/generated/`. Without it a clean checkout has no `THEME_VARIABLE_TABLE` for the plugin to import.

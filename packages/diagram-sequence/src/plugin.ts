@@ -6,6 +6,7 @@ import { layoutSequence, type SequenceLayout } from './layout/index.ts';
 import { detectSequence, parseSequence, type SequenceParseResult } from './parser/index.ts';
 import { renderSequence } from './render/index.ts';
 import { sequenceLabels } from './labels.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The sequence diagram plugin (DESIGN §12.1, spec #125): `layoutKind: 'custom'` with its own
@@ -27,4 +28,5 @@ export const sequence = {
   layout: (model: SequenceModel, ctx: RenderContext): SequenceLayout => layoutSequence(model, ctx),
   render: (model: SequenceModel, layout: SequenceLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderSequence(model, layout, ctx, w),
+  theme,
 } satisfies DiagramPlugin<SequenceModel, SequenceLayout>;

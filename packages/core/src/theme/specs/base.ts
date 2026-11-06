@@ -5,13 +5,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 // v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
 // that derivation, where the base variables are its hex.
@@ -42,10 +36,7 @@ const base: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
     useGradient: false,
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode).

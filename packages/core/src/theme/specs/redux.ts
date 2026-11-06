@@ -4,13 +4,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE, paletteSlots, REDUX_RULES, series } from './palettes.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
 const mainBkgScale = (
@@ -53,10 +47,7 @@ const redux: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
-    ...NEO_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...REDUX_PADDING,
-    ...NEO_SEQUENCE,
     useGradient: false,
   },
   rules: REDUX_RULES,

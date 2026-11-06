@@ -7,14 +7,11 @@ import type { ThemeRuleTable } from '../spec.ts';
 
 /**
  * Colours the redux family derives differently from the classic themes (D152). Shared by the
- * redux and neo specs. `classText`: v12's redux theme files set it to `textColor`, the classic
- * ones to `primaryTextColor` (the shared rule). ER rows have no fill of their own in v12 neo, so
- * they show the entity's; the zero circle takes the node fill (`zero_or_one_neo`). Kept in this
- * module, which every theme loads, so it adds no chunk of its own to the default theme's
- * closure (D161).
+ * redux and neo specs. ER rows have no fill of their own in v12 neo, so they show the
+ * entity's; the zero circle takes the node fill (`zero_or_one_neo`). Kept in this module, which
+ * every theme loads, so it adds no chunk of its own to the default theme's closure (D161).
  */
 export const REDUX_RULES: ThemeRuleTable = {
-  classText: 'textColor',
   rowOdd: 'mainBkg',
   rowEven: 'mainBkg',
   erMarkerFill: 'mainBkg',
@@ -90,6 +87,6 @@ export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);
 
 /**
  * `cScaleLabel` as most v12 themes derive it: v12's `scaleLabelColor`, a shared label ink, not
- * sequence's `labelTextColor` (D334).
+ * a sequence variable (D334).
  */
 export const LABEL_SCALE = paletteSlots(() => 'scaleLabelColor');

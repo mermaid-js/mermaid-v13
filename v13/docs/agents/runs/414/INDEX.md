@@ -23,3 +23,4 @@ Files: `CONTRACT.md` (the T0a API the ports use), `IMPLEMENTER.md` (ticket brief
 | Base `dd4b9d19f` | 92,181 | |
 | T0a | 92,622 | +441; themed stub +32 (≤ 64), in-core control +443 |
 | T0b | 92,619 | ±0 against its base re-measured (92,619); CDN 92,962 both |
+| T2 | 92,242 | −377 (18 of 26 rows); CDN 92,959 → 92,578 |
