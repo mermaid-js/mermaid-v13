@@ -5,7 +5,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate and corpus restore | #451 | #285 (merged) | merged (ff e3b5b9d4d; package entry 2,830 B gz, no core change) |
-| T2 grammar, parser, model, AST | #453 | #451 | in progress (`.claude/worktrees/t453`, `feature/453_kanban-parser`) |
+| T2 grammar, parser, model, AST | #453 | #451 | done on `feature/453_kanban-parser` (handoff `tickets/453.md`; package entry 7,333 B gz, no core change) |
 | T3 layout | #455 | #453 | blocked (may start on hand-built models) |
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | blocked |
 | T6 language facet | #463 | #453; #406 (`LanguageFacet.standalone`) | blocked |

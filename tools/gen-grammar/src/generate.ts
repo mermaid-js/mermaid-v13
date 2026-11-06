@@ -134,6 +134,33 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'kanban',
+    title: 'Kanban syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      unnamed: {
+        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        ClassStart: { mode: 'INITIAL', pattern: ':::', docOf: 'CLASS' },
+        ClassEnd: { mode: 'class', pattern: '\\n' },
+        IconStart: { mode: 'INITIAL', pattern: '::icon\\(', docOf: 'ICON' },
+        IconEnd: { mode: 'icon', pattern: '\\)' },
+        MdStringStart: { mode: 'node', pattern: '["][`]' },
+        MdStringEnd: { mode: 'nstr2', pattern: '[`]["]' },
+        StringStart: { mode: 'node', pattern: '["]' },
+        StringEnd: { mode: 'nstr', pattern: '["]' },
+        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
+        // One `SHAPE_DATA` rule each: the lexer keeps a kind per rule.
+        ShapeDataStart: { mode: 'INITIAL', pattern: '@\\{', terminal: 'SHAPE_DATA' },
+        ShapeDataQuote: { mode: 'shapeData', pattern: '"', terminal: 'SHAPE_DATA' },
+        ShapeDataStr: { mode: 'shapeDataStr', pattern: '[^"]+', terminal: 'SHAPE_DATA' },
+      },
+      // A `%%` comment v12 left and a blank run are both SPACELINE; `@{` and the text between
+      // quotes are Meta, the quoted values String.
+      mixed: ['SPACELINE', 'SHAPE_DATA'],
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

@@ -13,7 +13,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## #453 T2 parser
 - Exploration: the spec's "32 v12 specs" is the harvest count (29 distinct spec strings + 3 docs examples). `kanban.spec.ts` has 30 tests (two `parse` calls are commented out): T2 ports 30.
-- Exploration (oracle): `shape: 5` throws in v12 (`toLowerCase` on a number). Treat it as the bad-`shape` semantic error.
+- Exploration (oracle): `shape: 5` throws in v12 (`toLowerCase` on a number). Treat it as the bad-`shape` semantic error. Done: any truthy non-string `shape` (`5`, `true`, a list) is `KANBAN_SHAPE`.
+- Exploration (oracle): the only "not a mapping" v12 rejects is `null` (`@{⏎}`, `@{⏎ null⏎}`); a scalar or list (`@{⏎ hello⏎}`, `@{⏎ - x⏎}`) is accepted and ignored. **Choice:** follow the oracle: `KANBAN_DATA_EMPTY` for `null` only, other non-maps ignored silently (the spec's "non-mapping data" read as v12's `TypeError` case).
+- **Choice:** `priorityKind: 'other'` keeps the value's JSON text (`[1,2]`, `true`), which is YAML; the spec says "the YAML text". `'text'` for a YAML string.
+- **Choice:** the misplaced-indent message starts with v12's (`Items without section detected, found section ("b")`), then a hint, as mindmap's second-root message; one diagnostic per shallow item that another item follows, `related` at that item; diagnostics are sorted by position, since it is known only at the next item.
+- **Choice:** entities in shape data (`ticket: #35;`) are read as v12's placeholders, so `#` starts no YAML comment and `&` no anchor, then turned back into `&#35;`.
+- Core YAML gaps (listed divergences, not kanban): `parseYaml` reads `[1⏎2]` as `['1 2']` where js-yaml 4 rejects it, and rejects a tab-indented scalar document js-yaml read. Only generated variants hit them. A fix is a core change (kanban T0 / maintainer).
+- `gen-grammar`'s `unnamed` kind map gains an optional `terminal`, so the lexer's four `SHAPE_DATA` kinds map to their own rules (additive; flowchart and the others unchanged).
 
 ## #455 T3 layout
 

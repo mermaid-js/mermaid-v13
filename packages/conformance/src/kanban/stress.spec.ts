@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kanbanTokens } from '@mermaid-js/diagram-kanban';
+import { kanbanTokens, parseKanban } from '@mermaid-js/diagram-kanban';
 
 /**
  * R-PARSE-7, pitfall 5: the kanban lexer is linear in input size, in every free-text state.
@@ -88,4 +88,66 @@ describe('stress: the kanban lexer is linear in input size', () => {
     },
     30_000
   );
+});
+
+/** Lines until the text is about `n` characters long. */
+const lines = (n: number, line: (k: number) => string): string => {
+  let out = KB;
+  for (let k = 0; out.length < n; k++) out += line(k) + '\n';
+  return out;
+};
+
+/**
+ * R-PARSE-7, pitfall 19: the parser (columns, YAML reads, AST ids, statement spans, recovery)
+ * is linear in input size, with the same n and 8n ratio test as the lexer.
+ */
+const PARSE_SHAPES: [string, (n: number) => string][] = [
+  ['many cards in one column', (n) => lines(n, (k) => `    c${k}`)],
+  ['many columns', (n) => lines(n, (k) => `  col${k}\n    c${k}`)],
+  ['cards at every depth', (n) => lines(n, (k) => `${' '.repeat((k % 40) + 3)}c${k}`)],
+  ['repeated ids', (n) => lines(n, () => '    a[x]')],
+  ['data on every card', (n) => lines(n, (k) => `    c${k}@{ ticket: T-${k}, priority: 'High' }`)],
+  [
+    'multi-line data on every card',
+    (n) => lines(n, (k) => `    c${k}@{\n      ticket: T-${k}\n    }`),
+  ],
+  ['bad YAML on every card', (n) => lines(n, (k) => `    c${k}@{ x: [ }`)],
+  ['decorations on every card', (n) => lines(n, (k) => `    c${k}\n    :::a b\n    ::icon(x)`)],
+  ['misplaced indents', (n) => lines(n, (k) => ` m${k}`)],
+  ['syntax errors on every line', (n) => lines(n, (k) => `    a[b] c${k}`)],
+];
+
+describe('stress: the kanban parser is linear in input size', () => {
+  it.each(PARSE_SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(4_000);
+      const large = build(32_000);
+      parseKanban(small); // warm up
+      parseKanban(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parseKanban(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parseKanban(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
+
+  it('parses a board of 10k cards', () => {
+    const src =
+      KB + Array.from({ length: 10_000 }, (_, k) => `${' '.repeat((k % 8) + 4)}c${k}`).join('\n');
+    const r = parseKanban(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.items).toHaveLength(10_001);
+    expect(r.model.columns[0]?.cards).toHaveLength(10_000);
+  });
 });

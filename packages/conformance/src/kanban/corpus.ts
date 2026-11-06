@@ -110,3 +110,14 @@ export async function kanbanGateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/**
+ * The gate corpus less the items the parity suite already reads from its dirs and files
+ * (`registry.ts`), ids prefixed `kanban-gate/`: model parity over the whole gate corpus.
+ */
+export async function kanbanParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await kanbanCorpus()), ...kanbanCases()].map((c) => c.id));
+  return (await kanbanGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `kanban-gate/${item.id}`, source: item.source }));
+}

@@ -1,5 +1,6 @@
 /**
- * The kanban parser's public surface (so far): the lexer gated against v12's jison lexer.
+ * The kanban parser's public surface: the parser, detection, and the lexer gated against v12's
+ * jison lexer.
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as KanbanTokenKind } from './tokens.ts';
+export { parseKanban } from './parser.ts';
+export type { KanbanParseOptions, KanbanParseResult } from './parser.ts';
+export { detectKanban } from './detect.ts';
+export type * from './ast.ts';
 
 export interface KanbanToken {
   /** A `KanbanTokenKind` or a shared `Kind`. */

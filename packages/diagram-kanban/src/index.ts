@@ -1,7 +1,14 @@
 /**
- * `@mermaid-js/diagram-kanban`: the kanban diagram plugin (spec #424). The lexer is here; the
- * parser, model, layout, renderer, plugin export and manifest land with the other tickets of
- * that spec.
+ * `@mermaid-js/diagram-kanban`: the kanban diagram plugin (spec #424). The parser, its model
+ * and AST, and the lexer are here; the layout, renderer, plugin export and manifest land with
+ * the other tickets of that spec.
  */
-export { JISON_NAMES, KanbanTokenKind, kanbanTokens } from './parser/index.ts';
-export type { KanbanToken } from './parser/index.ts';
+export {
+  detectKanban,
+  JISON_NAMES,
+  KanbanTokenKind,
+  kanbanTokens,
+  parseKanban,
+} from './parser/index.ts';
+export type * from './parser/index.ts';
+export type * from './model.ts';
