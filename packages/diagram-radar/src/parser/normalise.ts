@@ -6,7 +6,7 @@
  * v12's two DB throws are error diagnostics with its messages, D356's two parse-time findings
  * warnings, one per kind with `related` positions.
  */
-import type { Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
+import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import { MAX_TICKS } from '../model.ts';
 import type { RadarAxis, RadarCurve, RadarEntry, RadarModel, RadarOptions } from '../model.ts';
 import type { RadarAxisNode, RadarCurveNode, RadarEntryNode, RadarOptionNode } from './ast.ts';
@@ -31,6 +31,8 @@ export interface RadarParts {
   readonly options: ReadonlyMap<OptionName, RadarOptionNode>;
   /** The last in-text values ('' when none). */
   readonly title: string;
+  /** The AST id of the last `title` statement, if any. */
+  readonly titleId: AstId | undefined;
   readonly accTitle: string;
   readonly accDescr: string;
   /** The front-matter title, for D218. */
@@ -69,11 +71,14 @@ export function normalise(
   const options = resolveOptions(parts, diagnostics);
   // D218: the in-text title if non-empty, else the front-matter one.
   const title = parts.title || parts.frontMatterTitle;
+  // The drawn title's `data-ast`: the last `title` statement's, when its text is the title.
+  const titleAstId = parts.title ? parts.titleId : undefined;
   return {
     axes: Object.freeze(axes),
     curves: Object.freeze(curves),
     options,
     ...(title ? { title } : {}),
+    ...(titleAstId ? { titleAstId } : {}),
     accTitle: parts.accTitle,
     accDescr: parts.accDescr,
   };

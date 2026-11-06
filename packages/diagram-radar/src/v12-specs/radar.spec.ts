@@ -6,8 +6,6 @@
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
 import { closedRoundCurve, db, Diagram, mermaidAPI, parser, relativeRadius } from './adapter.ts';
-// skipped: closedRoundCurve — the SVG path string is the renderer's (#448, T4); the layout's `closedRoundCurve` gives the segments
-// skipped: draw — v12's `draw` is the renderer's (#448, T4)
 
 const {
   clear,
@@ -206,7 +204,7 @@ describe('radar diagrams', () => {
       });
     });
 
-    describe.skip('closedRoundCurve', () => {
+    describe('closedRoundCurve', () => {
       it('should construct a polygon if tension is 0', () => {
         const points = [
           { x: 0, y: 0 },
@@ -246,7 +244,7 @@ describe('radar diagrams', () => {
       });
     });
 
-    describe.skip('draw', () => {
+    describe('draw', () => {
       it('should draw a simple radar diagram', async () => {
         const str = `radar-beta
         axis A,B,C

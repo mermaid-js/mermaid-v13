@@ -18,7 +18,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **For the maintainer (core, not radar): indented front matter closed at column 0.** `dev-diagrams/knsv/knsv2-03-radar.mmd` opens its fence with six spaces and closes it at column 0. v12 never sees front matter there (the YAML is a hidden Langium token, no title) and renders the chart; v13's preprocess reads the indented fence (#7613) and reports `UNCLOSED_FRONT_MATTER`, so v13 rejects it. It is a gate exclusion in `packages/conformance/src/radar/lexer-parity.spec.ts`, and the same divergence will show in #446's parity. It is shared core behaviour (every type), so the radar port does not change it; the D218 front-matter title is covered by a dedented copy.
 - Accepted: `commented()` copies of one- and two-line sources often cut inside the header and never reach v12, so those copies are not gated (pie's helper, same limit); `LINE_SEPARATORS` are nine hand-written cases, as pie's.
 - Shared edits: `harvest:pie` became `harvest:langium <pie|radar>|--all` (pie's corpus byte-identical; drift spec added); jison `runSpec` exported with `functionNames`.
-- [ ] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`.
+- [x] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`. Done in #448.
 
 ## T3 (#447)
 
@@ -47,9 +47,23 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review fixes (orchestrator): divergences listed in `divergences.json` (9 rows: unclosed directives and the indented-front-matter dev diagram, each plain/CRLF/commented; a spec pins them to core's codes); `RADAR_UNKNOWN_AXIS` always has `related` (its curve first); recovery set 39 cases, 13 multi-error; recovery cases in `corpus/radar-recovery.json`, multi-line diagrams in `e2e/diagrams/radar/nightly-check/parser-*.mmd`; model resolution in `normalise.ts`, one keyword table (`PREFIX_KEYWORDS`).
 - Accepted deviations: `layoutRadar` exported from the runtime entry; parser-stress spec; symbols, statements and probe hooks in the parser; `UNCLOSED_ACC_DESCR`; `@n` ids for repeated `title`/`accTitle`/`accDescr`/options; a curve with v12's semantic error stays in the model with what it has, the text still rejected (error severity).
 
+## T4 (#448)
+
+- **`RadarModel` changed additively:** `titleAstId?` (the in-text title's AST id, for its `data-ast`); set by the parser and carried through `normalise.ts` (`RadarParts.titleId`).
+- **Theme table landed** inline on `radar.theme` (ten vars, `section: 'radar'`, `radarAxisColor` = rule `lineColor`, one literal entry for every family); theme half of `stand-ins.ts` deleted. `textColor`'s `usedBy` lists `radar`.
+- `neo` computed styles checked against 12.2.0 in Chromium: equal to v13 except the axis colour (D333(b), #449's DIFFERENCES).
+- Choices: `data-id` = AST id on axis groups, curves, legend rows and swatches; labels drawn centred on the layout's boxes (legend left-aligned), not with v12's per-label anchors.
+- For #449: `render-api.ts` registers with `replace: true`; drop it with the manifest.
+
+## T4 (#448, merged)
+
+- Review fixes (orchestrator): multi-line and hostile render sources moved to `corpus/radar-cases.json` (`render-*`); round-trip comment covers superseded titles; MIGRATION.md row for label placement by measured box (D355); shared `radarTestContext()` in `./testing`.
+- Accepted deviations: `RadarModel.titleAstId` (additive); `data-id` = AST id on axis groups, curves, legend rows and swatches; labels centred on their measured boxes; no title element without a title; a skipped curve keeps its legend row (spec Layout); rings' stroke opaque, only fill-opacity, as v12's CSS; `textColor` `usedBy` lists radar.
+- Left to #449: manifest and `gen:registry`, `configDefaults`, theme oracle specs vs 12.2.0, D333(b) DIFFERENCES and MIGRATION rows, baselines, deleting `stand-ins.ts`, dropping `replace` in `conformance/src/radar/render-api.ts`.
+
 ## T6 (#450)
 
-- **Shared contract, additive:** `MAX_TICKS` (32) moved to `model.ts`; `layout/metrics.ts` re-exports it and `parser/normalise.ts` imports it from there, so the `./language` bundle holds no `layout/` file (the bench bundle row failed on `layout/metrics.ts`). `RadarModel` unchanged.
+- **Shared contract, additive:** `MAX_TICKS` (32) moved to `model.ts`; `layout/metrics.ts` re-exports it and `parser/normalise.ts` imports it from there, so the `./language` bundle holds no `layout/` file (the bench bundle row failed on `layout/metrics.ts`). `RadarModel`'s fields unchanged by T6.
 - Parser change (probe only): the line breaks inside a curve's `{ }` test what may follow them (`Number`/`Id`, `Id` after a detailed `,`, `}` at the end), so a blank line inside the braces offers the axis names. The probe spec holds the parse unchanged.
 - Choices: an entry naming no axis gets the service's default definition (its first mention: the service has no "unresolved" role), hover says it names no axis; axis-name items use the completion kind `node` (no `axis` kind exists) with the label as detail; `accTitle`/`accDescr` are refused as names although the lexer reads them as an `ID` alone (`{accTitle: 1}` lexes as a statement).
 - [ ] **#449:** delete the radar row in `language-service/src/testing/unlisted-facets.ts` once the manifest has `"language": "./dist/language.js"` (`goldens.spec.ts` then fails on "radar is still unlisted"; the goldens stay); in `conformance/src/radar/service-symbols.spec.ts` drop the eager row for `createLanguageService()` + `preload({ types: ['radar'] })` and flip its last test, as pie's #325.

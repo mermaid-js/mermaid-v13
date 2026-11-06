@@ -60,6 +60,10 @@ describe('radar parser', () => {
     expect(parse(`${fm}radar-beta\ntitle In text\ntitle\naxis A`).model.title).toBe('Front');
     expect(parse('radar-beta\ntitle   a   b   %% c').model.title).toBe('a b');
     expect('title' in parse('radar-beta\ntitle').model).toBe(false);
+    // The title's AST id (its `data-ast`): the last in-text title's, none from front matter.
+    expect(parse(`${fm}radar-beta\ntitle a\ntitle b\naxis A`).model.titleAstId).toBe('title@2');
+    expect('titleAstId' in parse(`${fm}radar-beta\ntitle a\ntitle\naxis A`).model).toBe(false);
+    expect('titleAstId' in parse(`${fm}radar-beta\naxis A`).model).toBe(false);
   });
 
   it('says why a name that starts with a keyword is no name (D357)', () => {

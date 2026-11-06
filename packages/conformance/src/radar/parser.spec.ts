@@ -62,6 +62,7 @@ describe('radar parser on the fixtures', () => {
       ],
       options: { showLegend: true, ticks: 10, max: null, min: 0, graticule: 'circle' },
       title: 'Radar diagram',
+      titleAstId: 'title',
       accTitle: 'Radar accTitle',
       accDescr: 'Radar accDescription',
       warnings: [],

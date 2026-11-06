@@ -46,11 +46,6 @@ const SOURCES: Source[] = [
 
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
 export const SKIP: Record<string, Record<string, string>> = {
-  'radar.spec.ts': {
-    closedRoundCurve:
-      "the SVG path string is the renderer's (#448, T4); the layout's `closedRoundCurve` gives the segments",
-    draw: "v12's `draw` is the renderer's (#448, T4)",
-  },
   'langium-radar.spec.ts': {
     'should report an unknown location for errors at the end of input':
       "v12's Chevrotain EOF token has no position (`line ?, column ?`); v13 locates every error, the end of the text included (R-ERR-1)",

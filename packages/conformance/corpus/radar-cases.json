@@ -614,5 +614,89 @@
   {
     "id": "radar-cases/parser-keyword-option-glued",
     "source": "radar-beta\nshowLegend trueish\ngraticule circles"
+  },
+  {
+    "id": "radar-cases/render-simple",
+    "source": "radar-beta\ntitle T\naxis A, B, C\ncurve c{1, 2, 3}\ncurve d{3, 2, 1}"
+  },
+  {
+    "id": "radar-cases/render-skipped-curve",
+    "source": "radar-beta\naxis A, B\ncurve a{1, 2}\ncurve b{1}\ncurve c{2, 1}"
+  },
+  {
+    "id": "radar-cases/render-fourteen-curves",
+    "source": "radar-beta\naxis A, B\ncurve c0{1, 2}\ncurve c1{1, 2}\ncurve c2{1, 2}\ncurve c3{1, 2}\ncurve c4{1, 2}\ncurve c5{1, 2}\ncurve c6{1, 2}\ncurve c7{1, 2}\ncurve c8{1, 2}\ncurve c9{1, 2}\ncurve c10{1, 2}\ncurve c11{1, 2}\ncurve c12{1, 2}\ncurve c13{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-polygon-graticule",
+    "source": "radar-beta\naxis A, B, C\ncurve c{1, 2, 3}\ngraticule polygon\nticks 3"
+  },
+  {
+    "id": "radar-cases/render-polygon-no-axes",
+    "source": "radar-beta\ngraticule polygon\ntitle Nothing"
+  },
+  {
+    "id": "radar-cases/render-ticks-zero",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 0"
+  },
+  {
+    "id": "radar-cases/render-ticks-fractional",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 2.5"
+  },
+  {
+    "id": "radar-cases/render-ticks-over-max",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 40"
+  },
+  {
+    "id": "radar-cases/render-empty-range",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 1}\nmax 1\nmin 1"
+  },
+  {
+    "id": "radar-cases/render-no-legend",
+    "source": "radar-beta\naxis A\ncurve c{1}\nshowLegend false"
+  },
+  {
+    "id": "radar-cases/render-repeated-title",
+    "source": "radar-beta\ntitle First\ntitle Last\naxis A"
+  },
+  {
+    "id": "radar-cases/render-front-matter-title",
+    "source": "---\ntitle: Front\n---\nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/render-label-breaks",
+    "source": "radar-beta\ntitle One<br>Two\naxis A[\"a<br>b\"], B\ncurve c[\"x<br/>y\"]{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-no-max-width",
+    "source": "%%{init: {\"radar\": {\"useMaxWidth\": false}}}%%\nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/render-visible-title",
+    "source": "radar-beta\ntitle Visible\naxis A"
+  },
+  {
+    "id": "radar-cases/render-acc-title-descr",
+    "source": "radar-beta\naccTitle: Skills\naccDescr {\n  Two axes\n}\naxis A"
+  },
+  {
+    "id": "radar-cases/render-acc-indented",
+    "source": "radar-beta\n  accTitle: T\n  accDescr: D\n  axis A"
+  },
+  {
+    "id": "radar-cases/render-hostile-title",
+    "source": "radar-beta\ntitle </text><script>alert(1)</script>\naxis A"
+  },
+  {
+    "id": "radar-cases/render-hostile-labels",
+    "source": "radar-beta\naxis A[\"<img src=x onerror=alert(1)>\"], B[\"<svg onload=alert(1)>\"]\ncurve c[\"<script>x</script>\"]{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-hostile-accessibility",
+    "source": "radar-beta\naccTitle: <script>x</script>\naccDescr: ]]><x\naxis A[\"&<>'\"]"
+  },
+  {
+    "id": "radar-cases/render-hostile-escapes",
+    "source": "radar-beta\naxis A[\"\\u0000\\0\\b\"]\ncurve c[\"javascript:alert(1)\"]{1}"
   }
 ]
