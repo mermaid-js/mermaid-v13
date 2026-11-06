@@ -2,7 +2,13 @@
 /**
  * Mindmap parser: recursive descent over the {@link lex} tokens (gated against v12's jison
  * lexer, #383), producing a {@link MindmapModel}, the typed AST, statement spans and diagnostics
- * (DESIGN §4.3). Symbols are the language facet's (T6).
+ * (DESIGN §4.3).
+ *
+ * Symbols (D289): each node id is a `node` definition of its own (ids repeat and nothing refers
+ * to one), recorded with the range of the id without the blanks around it; each word of a
+ * `:::` line is a `class` reference. With a probe (R-LANG-7, D95) the parser records what it
+ * would accept at the probed token: the header, a statement start, a shape after an id, a
+ * shape's text and closer.
  *
  * The grammar is v12's `mindmap.jison` (LALR), ported rule for rule; `grammar/mindmap.ebnf` is
  * the normative form:
@@ -32,6 +38,8 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -83,6 +91,21 @@ const SKIPPED = kindSet(
   T.MdStringEnd
 );
 
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** What may start a statement (an indent, a node, a decoration, a blank line). */
+const STATEMENT_KINDS = [T.SpaceList, T.NodeId, T.NodeDStart, T.Icon, T.Class, T.SpaceLine];
+/** What may follow an indent. */
+const AFTER_INDENT = [T.NodeId, T.NodeDStart, T.Icon, T.Class];
+/** What ends a statement. */
+const STOP_KINDS = [Kind.Newline, T.Eof, T.SpaceLine];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset: blanks
+ * and blank lines (the indent before a node), the shape delimiters, and a shape's text (after
+ * it comes the closer).
+ */
+const PROBE_FOLLOWS = kindSet(T.SpaceList, T.SpaceLine, T.NodeDStart, T.NodeDescr, T.NodeDEnd);
+
 /** What a closer the opener reads best with is, for messages (any closer parses, as in v12). */
 const CLOSERS: Readonly<Record<string, string>> = {
   '[': ']',
@@ -94,6 +117,10 @@ const CLOSERS: Readonly<Record<string, string>> = {
   '-)': '(-',
   '(-': '-)',
 };
+
+/** A word of a `:::` line: the model splits it at these blanks (HTML class-attribute words). */
+const CLASS_WORD = /[^\t\n\f\r ]+/g;
+const CLASS_BLANK = /[\t\n\f\r ]/;
 
 const HEADER = ['`mindmap`'];
 const STATEMENT = ['a node such as `root` or `id[text]`', 'a `::icon(…)` or `:::class` line'];
@@ -151,6 +178,8 @@ class MindmapParser {
   private readonly view: SourceView;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly children: MindmapNodeNode[] = [];
   private readonly nodes: OpenNode[] = [];
   /** The chain of open nodes: the root, …, the last node added. */
@@ -182,7 +211,14 @@ class MindmapParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+    if (options.probe === undefined) {
+      this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(lex(src, pre.bodyStart, this.view, probe), probe, SKIPPED);
   }
 
   parse(): MindmapParseResult {
@@ -208,7 +244,7 @@ class MindmapParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.c.tokens, this.options);
+    return st.result(model, ast, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -222,6 +258,87 @@ class MindmapParser {
   private range(j: number): Range {
     const t = this.c.tokens;
     return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
+  }
+
+  /**
+   * `[start, end)` of token `j` without the blanks around `text` (its v12 text), when the
+   * source there reads as `text`; else the token's range (the service then drops the symbol).
+   */
+  private exact(j: number, text: string, from = 0, to = text.length): Range {
+    const r = this.range(j);
+    if (this.src.slice(r.start, r.end) !== text) return r;
+    return { start: r.start + from, end: r.start + to };
+  }
+
+  /** A node id: a definition of its own (D289), without the blanks around it. */
+  private idSymbol(id: string, j: number): void {
+    const name = id.trim();
+    if (name === '') return;
+    const from = id.length - id.trimStart().length;
+    this.st.symbol(name, 'node', this.exact(j, id, from, from + name.length), 'def');
+  }
+
+  /**
+   * Each word of a `:::` line: a class reference; the words rename together (D289). Where the
+   * source differs from v12's text (a directive or comment cut out of the line), each word is
+   * looked up in the source in order; one not found there (and every one after it) keeps the
+   * token's range, which the service drops.
+   */
+  private classSymbols(text: string, j: number): void {
+    const r = this.range(j);
+    const same = this.src.slice(r.start, r.end) === text;
+    const holes = same ? [] : this.holesIn(r);
+    let from = r.start;
+    for (const m of text.matchAll(CLASS_WORD)) {
+      const name = m[0];
+      let range = r;
+      if (same) range = { start: r.start + m.index, end: r.start + m.index + name.length };
+      else if (from >= 0) {
+        // After a word not found (an entity in it), the rest keep the token's range: each
+        // lookup then stays short, so the line is read in linear time.
+        const at = this.wordIn(name, from, r, holes);
+        if (at >= 0) range = { start: at, end: (from = at + name.length) };
+        else from = -1;
+      }
+      this.st.symbol(name, 'class', range, 'ref');
+    }
+  }
+
+  /** The removed spans that overlap `r`, found by binary search (they are in source order). */
+  private holesIn(r: Range): readonly Range[] {
+    const { holes } = this.view;
+    let lo = 0;
+    let hi = holes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((holes[mid]?.end ?? 0) <= r.start) lo = mid + 1;
+      else hi = mid;
+    }
+    let end = lo;
+    while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
+    return holes.slice(lo, end);
+  }
+
+  /**
+   * The first source offset at or after `from` in `within` where `word` stands as a word of its
+   * own (blanks, a removed span or `within`'s ends around it) outside the removed spans
+   * (`holes`, those in `within`), or -1.
+   */
+  private wordIn(word: string, from: number, within: Range, holes: readonly Range[]): number {
+    const { src } = this;
+    // Searched in the token's own text, so each lookup costs the token's length at most.
+    const token = src.slice(within.start, within.end);
+    const edge = (at: number, side: number) =>
+      at === (side < 0 ? within.start : within.end) ||
+      CLASS_BLANK.test(src.charAt(side < 0 ? at - 1 : at)) ||
+      holes.some((h) => (side < 0 ? h.end : h.start) === at);
+    for (let k = token.indexOf(word, from - within.start); k >= 0; k = token.indexOf(word, k + 1)) {
+      const at = within.start + k;
+      const end = at + word.length;
+      if (holes.some((h) => h.start < end && at < h.end)) continue;
+      if (edge(at, -1) && edge(end, 1)) return at;
+    }
+    return -1;
   }
 
   /**
@@ -358,6 +475,7 @@ class MindmapParser {
       c.next();
       while (c.kind === T.SpaceLine || c.kind === Kind.Newline) c.next();
     }
+    c.tested(T.Mindmap);
     if (c.kind === T.Mindmap) this.header();
     else this.report(HEADER, HEADER_HINT);
   }
@@ -373,7 +491,9 @@ class MindmapParser {
   /** `document`: statements, each followed by a separator, to the end. */
   private document(): void {
     const { c } = this;
-    while (c.kind !== Kind.EOF) {
+    for (;;) {
+      if (this.headerSeen) c.tested(STATEMENT_KINDS);
+      if (c.kind === Kind.EOF) break;
       // The missing header was reported; one error, one diagnostic.
       if (!this.headerSeen && c.kind === T.Mindmap) {
         this.header();
@@ -398,6 +518,7 @@ class MindmapParser {
       this.lineEnded = false;
       return;
     }
+    c.tested(STOP_KINDS);
     if (this.isStop(c.kind)) {
       this.separator();
       return;
@@ -409,6 +530,8 @@ class MindmapParser {
     const bareClass = this.beside(c.pos, -1, T.ClassEnd) >= 0;
     if (this.afterBlank || bareClass) {
       this.report(LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
+      // What the next line starts with is an error here: not an expectation.
+      this.probePassed();
       return;
     }
     let hint: string | undefined;
@@ -425,7 +548,24 @@ class MindmapParser {
     const { c } = this;
     if (c.kind === Kind.EOF) return;
     c.next();
-    while (c.kind === Kind.Newline || c.kind === T.Eof) c.next();
+    // A statement may start after each of them.
+    while (c.kind === Kind.Newline || c.kind === T.Eof) {
+      if (this.headerSeen) c.tested(STATEMENT_KINDS);
+      c.next();
+    }
+  }
+
+  /**
+   * Stop recording when the probed token is on the line at the cursor, or before it: an error
+   * was reported for that line, so the parser's later tests there are recovery, not
+   * expectations.
+   */
+  private probePassed(): void {
+    const { probe, c } = this;
+    if (!probe) return;
+    let end = c.pos;
+    while (end < c.tokens.length - 1 && !this.isStop(c.tokens.kind[end] ?? Kind.EOF)) end++;
+    if (probe.targetIn(c.tokens, 0, SKIPPED) <= end) probe.freeze(true);
   }
 
   /**
@@ -461,11 +601,13 @@ class MindmapParser {
   /** `statement`. */
   private statement(): void {
     const { c } = this;
+    c.tested(STATEMENT_KINDS);
     const k = c.kind;
     this.afterBlank = false;
     if (k === T.SpaceList) {
       const j = c.next();
       const indent = this.raw(j).length;
+      c.tested(AFTER_INDENT);
       const n = c.kind;
       if (this.isNodeStart(n)) this.node(indent);
       else if (n === T.Icon || n === T.Class) this.decoration();
@@ -500,7 +642,10 @@ class MindmapParser {
     let nodeId: string | undefined;
     const first = c.pos;
     if (c.kind === T.NodeId) {
-      nodeId = this.raw(c.next());
+      const j = c.next();
+      nodeId = this.raw(j);
+      this.idSymbol(nodeId, j);
+      c.tested(T.NodeDStart);
     }
     const parts: NodeParts = {
       nodeId,
@@ -531,6 +676,7 @@ class MindmapParser {
     const opener = this.raw(open);
     parts.shape = shapeOf(opener, '');
     parts.range = { start: parts.range.start, end: this.range(open).end };
+    c.tested(T.NodeDescr);
     if (c.kind !== T.NodeDescr) {
       if (c.kind === Kind.EOF) this.endsOpen();
       this.fail(TEXT);
@@ -538,6 +684,7 @@ class MindmapParser {
     const text = c.next();
     parts.label = this.raw(text);
     parts.range = { start: parts.range.start, end: this.range(text).end };
+    c.tested(T.NodeDEnd);
     if (c.kind !== T.NodeDEnd) {
       if (c.kind === Kind.EOF) this.endsOpen();
       this.fail([`\`${CLOSERS[opener] ?? ')'}\``]);
@@ -619,6 +766,7 @@ class MindmapParser {
     const inner = this.range(j);
     const range = this.decorationRange(j);
     const { end } = range;
+    if (!icon) this.classSymbols(text, j);
     const target = this.lastAst;
     if (!target) {
       this.st.diagnostics.error(

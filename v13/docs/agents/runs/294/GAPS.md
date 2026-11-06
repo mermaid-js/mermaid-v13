@@ -38,6 +38,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## #389 T6 language facet
 
+- **Choice:** D289's "each node id is a definition with no references, so rename changes only it" cannot hold with ids that repeat while the service groups occurrences by name. `LanguageFacet` gains an optional `standalone?: readonly string[]` (core type only, 0 B; DESIGN §4.5 and language.md step 5): an occurrence of such a kind is a symbol of its own, so definition and references give it alone and a rename edits only it. Mindmap sets `standalone: ['node']`; renaming a node to an id another node has is then no clash (ids repeat in v12).
+- **Choice:** the rename round-trip spec drops mindmap's `ast` field before comparing models, next to journey's name-order normaliser: the AST id encodes the node id (`%3E` for `>`) and numbers repeats (`n:a@2`), so renaming the first `a` renumbers the second. Not a known entry; the `id` field is still compared.
+- **Choice:** completion inserts `::icon()` (not `::icon(`, which swallows the following lines until a `)`), and offers shapes as the id inside each one (`a` → `a[a]`), as flowchart does: an empty shape is an error in v12. Closers are offered after a shape's text at a line end. Class names come from the other `:::` lines.
+- **Choice:** astAt on a `::icon()` or `:::` line gives nothing: the decoration is on its node's AST node (D289) but outside the node's range, which is the node statement (T2).
+- Class words cut by a mid-line directive or comment are found in the source one by one, so they still rename; a node id cut by one keeps the token range and the service drops it (no rename there).
+
 ## #390 T5 integration
 - Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three).
 

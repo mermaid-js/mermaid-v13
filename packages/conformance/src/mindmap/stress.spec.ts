@@ -97,6 +97,14 @@ const PARSE_SHAPES: [string, (n: number) => string][] = [
   ['decorations on every node', (n) => lines(n, (k) => `  n${k}\n  :::a b\n  ::icon(fa fa-x)`)],
   ['second roots', (n) => lines(n, (k) => `r${k}`)],
   ['syntax errors on every line', (n) => lines(n, (k) => `  a[b] c${k}`)],
+  // Class words looked up in the source around the cut directive (#389), on many lines and on
+  // one long line, one with an entity word that is not found.
+  ['class lines cut by directives', (n) => lines(n, (k) => `  :::a${k} %%{init: {}}%% b c`)],
+  [
+    'a long class line cut by a directive',
+    (n) => `${MM}  :::x %%{init: {}}%% ${'a b '.repeat(n / 4)}`,
+  ],
+  ['a long class line with an entity', (n) => `${MM}  :::x %%{a}%% #35; ${'a '.repeat(n / 2)}`],
 ];
 
 describe('stress: the mindmap parser is linear in input size', () => {

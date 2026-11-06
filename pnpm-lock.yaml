@@ -113,6 +113,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:^
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
@@ -438,6 +441,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:*
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
@@ -762,6 +768,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../../packages/diagram-pie

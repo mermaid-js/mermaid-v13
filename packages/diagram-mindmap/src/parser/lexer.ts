@@ -43,7 +43,7 @@ import {
   SourceOffsets,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of mindmap.jison.
@@ -56,6 +56,9 @@ const S = {
   CLASS: 5,
 } as const;
 
+/** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
+const S_NAMES = ['INITIAL', 'NODE', 'NSTR', 'NSTR2', 'ICON', 'CLASS'];
+
 /** What a regex `.` does not match, once CRs are LFs. */
 const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 
@@ -64,10 +67,11 @@ const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
 
 /**
  * Lex the mindmap body `src[from…]`. `view` comes from {@link sourceView}. The stream ends in
- * `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it.
+ * `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it. With a `probe`, the start
+ * condition at the probe's offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new MindmapLexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): TokenStream {
+  return new MindmapLexer(src, from, view).run(probe);
 }
 
 /**
@@ -149,11 +153,22 @@ class MindmapLexer {
     return !o || o.source(q + 1) === o.source(q) + 1;
   }
 
-  run(): TokenStream {
+  run(probe?: Probe): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) this.step(text.charCodeAt(this.p));
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
+    else {
+      while (this.p < n) {
+        const before = this.source(this.p);
+        const state = this.state;
+        this.step(text.charCodeAt(this.p));
+        // An opener's text is read in the state before it, a closer's in the one it leaves.
+        probe.lexed(before, this.source(this.p), S_NAMES[state] ?? '');
+      }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
+    }
     // At the end jison tries the rules once more on the empty input: only INITIAL's `<<EOF>>`
     // matches it; in any other state jison ends with `$end` alone.
     if (this.state === S.INITIAL) this.emit(T.Eof, this.len, this.len);

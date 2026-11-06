@@ -1,0 +1,16 @@
+@ 2:3  |root((Root))
+  n:root 2:3-2:15 "root((Root))"
+@ 2:11  root((Ro|ot))
+  n:root 2:3-2:15 "root((Root))"
+@ 3:5  |a
+  n:a 3:5-3:6 "a"
+@ 4:15  ::icon(fa |fa-book)
+  none
+@ 5:8  :::|urgent
+  none
+@ 6:5  |a[Again]
+  n:a@2 6:5-6:13 "a[Again]"
+@ 7:7  |["`**md** string`"]
+  n:**md** string 7:7-7:26 "[\"`**md** string`\"]"
+@ 8:3  |
+  none
