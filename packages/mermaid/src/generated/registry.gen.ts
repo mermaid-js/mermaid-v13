@@ -32,7 +32,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     loadAscii: () => import('@mermaid-js/diagram-er/ascii').then((m) => m.ascii),
   },
   { type: 'gantt', pattern: /^\s*gantt/ },
-  { type: 'info', pattern: /^\s*info/ },
+  {
+    type: 'info',
+    pattern: /^\s*info/,
+    id: 'info',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-info').then((m) => m.info),
+    loadAscii: () => import('@mermaid-js/diagram-info/ascii').then((m) => m.ascii),
+  },
   {
     type: 'pie',
     pattern: /^\s*pie/,
