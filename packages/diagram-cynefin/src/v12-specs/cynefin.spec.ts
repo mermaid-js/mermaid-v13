@@ -5,9 +5,16 @@
 // @ts-nocheck
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './adapter.ts';
-// skipped: Cynefin Boundaries — the boundary generator is the layout's (T3, #467): `conformance/src/cynefin/boundaries.spec.ts` compares its paths with v12's own generator
-// skipped: resolveSeed — the boundary generator is the layout's (T3, #467): `conformance/src/cynefin/boundaries.spec.ts` compares its paths with v12's own generator
+import {
+  db,
+  generateCliffPath,
+  generateConfusionPath,
+  generateFoldPath,
+  generateHorizontalBoundary,
+  hashString,
+  resolveSeed,
+  seededRandom,
+} from './adapter.ts';
 
 /** Test helper: build a partial DomainBlock with just the fields the DB reads. */
 const block = (domain: string, items: { label: string }[] = []): DomainBlock =>
@@ -100,7 +107,7 @@ describe('Cynefin Database', () => {
   });
 });
 
-describe.skip('Cynefin Boundaries', () => {
+describe('Cynefin Boundaries', () => {
   it('seededRandom should return deterministic values', () => {
     expect(seededRandom(42)).toBe(seededRandom(42));
   });
@@ -160,7 +167,7 @@ describe.skip('Cynefin Boundaries', () => {
   });
 });
 
-describe.skip('resolveSeed', () => {
+describe('resolveSeed', () => {
   it('returns the configured seed when it is a non-zero number', () => {
     expect(resolveSeed(42, 'mermaid-1')).toBe(42);
     expect(resolveSeed(-3, 'mermaid-2')).toBe(-3);

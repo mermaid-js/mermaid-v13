@@ -9,10 +9,48 @@
  * - `db.setDomains(blocks)` and `db.setTransitions(transitions)` take v12's Langium AST shapes
  *   (`{ domain, items: [{ label }] }`, `{ from, to, label }`): the adapter writes them out as
  *   cynefin text and parses it, so the DB cases run through the v13 parser too. Blocks add up
- *   over calls and transitions are replaced, as in v12's DB; `null` is ignored.
+ *   over calls and transitions are replaced, as in v12's DB; `null` is ignored;
+ * - `seededRandom`, `hashString`, `resolveSeed` and the `generate…Path` functions stand for
+ *   v12's `cynefinBoundaries.ts`: the layout's (T3, #467) PRNG, seed and curves, written out as
+ *   path data as the renderer writes them (two decimals).
  */
+import {
+  CYNEFIN_DEFAULTS,
+  cliffCurve,
+  curveData,
+  ellipseData,
+  foldCurve,
+  hashString,
+  horizonCurve,
+  resolveSeed as resolve,
+  seededRandom,
+} from '../layout/index.ts';
 import type { CynefinModel } from '../model.ts';
 import { parseCynefin } from '../parser/index.ts';
+
+export { hashString, seededRandom };
+
+/** v12's `resolveSeed(seed | undefined, id)`: no seed counts as 0. */
+export const resolveSeed = (seed: number | undefined, id: string): number => resolve(seed ?? 0, id);
+
+/** v12's amplitude fallback when none is passed (`cynefinBoundaries.ts:59`, `:101`). */
+const FALLBACK_AMPLITUDE = 0.015;
+
+export const generateFoldPath = (w: number, h: number, seed: number, amplitude?: number): string =>
+  String(curveData(foldCurve(w, h, seed, amplitude ?? w * FALLBACK_AMPLITUDE)));
+
+export const generateHorizontalBoundary = (
+  w: number,
+  h: number,
+  seed: number,
+  amplitude?: number
+): string => String(curveData(horizonCurve(w, h, seed, amplitude ?? h * FALLBACK_AMPLITUDE)));
+
+export const generateCliffPath = (w: number, h: number): string =>
+  String(curveData(cliffCurve(w, h)));
+
+export const generateConfusionPath = (cx: number, cy: number, rx: number, ry: number): string =>
+  String(ellipseData({ center: { x: cx, y: cy }, rx, ry, strokeWidth: 0 }));
 
 interface Block {
   domain: string;
@@ -27,20 +65,6 @@ interface Transition {
 
 /** A label as a cynefin string: `"…"`, with `\` and `"` escaped (Langium unescapes them). */
 const quote = (label: string) => `"${label.replace(/[\\"]/g, (c) => `\\${c}`)}"`;
-
-/**
- * v12's `getConfig()`: the 12.2.0 `cynefin` defaults. v13 honours the keys in T5 (#469); until
- * then this is v12's object, which the DB spec only checks is an object.
- */
-const V12_CONFIG = {
-  useMaxWidth: true,
-  width: 800,
-  height: 600,
-  padding: 40,
-  showDomainDescriptions: true,
-  boundaryAmplitude: 8,
-  seed: 0,
-};
 
 class CynefinDB {
   private model: CynefinModel | undefined;
@@ -97,8 +121,9 @@ class CynefinDB {
     return (this.model?.transitions ?? []).map((t) => ({ from: t.from, to: t.to, label: t.label }));
   }
 
+  /** v12's `getConfig()`: the `cynefin` defaults (T5, #469, honours the keys). */
   getConfig(): Record<string, unknown> {
-    return { ...V12_CONFIG };
+    return { ...CYNEFIN_DEFAULTS };
   }
 
   getDiagramTitle(): string {

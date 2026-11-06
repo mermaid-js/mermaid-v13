@@ -1,7 +1,8 @@
 /**
  * Ports v12's cynefin specs (R-TEST-3) into `src/v12-specs/`, run against v13's parser through
  * `src/v12-specs/adapter.ts`: v12's `parser` and cynefin DB (#465). The spec bodies are copied
- * unchanged from the last v12 commit; only imports are rewritten, and tests listed in `SKIP`
+ * unchanged from the last v12 commit; only imports are rewritten (the boundary cases run against
+ * the layout's generator, T3 #467), and tests listed in `SKIP`
  * (with a reason) are turned into `it.skip` / `describe.skip`.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-cynefin port:v12-specs` (also runs prettier).
@@ -33,7 +34,16 @@ const SOURCES: Source[] = [
     name: 'cynefin.spec.ts',
     imports: [
       "import { beforeEach, describe, expect, it } from 'vitest';",
-      "import { db } from './adapter.ts';",
+      'import {',
+      '  db,',
+      '  generateCliffPath,',
+      '  generateConfusionPath,',
+      '  generateFoldPath,',
+      '  generateHorizontalBoundary,',
+      '  hashString,',
+      '  resolveSeed,',
+      '  seededRandom,',
+      "} from './adapter.ts';",
     ],
   },
   {
@@ -46,16 +56,8 @@ const SOURCES: Source[] = [
   },
 ];
 
-const BOUNDARIES =
-  "the boundary generator is the layout's (T3, #467): `conformance/src/cynefin/boundaries.spec.ts` compares its paths with v12's own generator";
-
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
-export const SKIP: Record<string, Record<string, string>> = {
-  'cynefin.spec.ts': {
-    'Cynefin Boundaries': BOUNDARIES,
-    resolveSeed: BOUNDARIES,
-  },
-};
+export const SKIP: Record<string, Record<string, string>> = {};
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });
