@@ -112,6 +112,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'gantt',
       'git',
       'journey',
+      'mindmap',
       'pie',
       'quadrant-chart',
       'sequence',

@@ -351,7 +351,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `gitGraph.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did. |  |
@@ -381,7 +383,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | v13 default | Reason |
 | --- | --- | --- |
 | `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12 `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. |
-| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
+| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
@@ -517,6 +519,9 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
 | `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
 | `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
+| `mindmapRoundedNodes` (mindmap: a node written without a shape is drawn rounded, D288; with `mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text, and without a `borderColorArray` every node takes `mainBkg` with a `nodeBorder` outline and text) | `true` (`neo`, `neo-dark`: `false`) | `false` |
+| `mindmapOutlinedNodes` (mindmap: an outline at `strokeWidth` and `dropShadow`, flat-bottomed plain nodes, `cScaleLabel0` root text, edges `max(10 − 2d, 2)` px at depth class `d`) | `true` | `false`: no outline or shadow, four rounded corners, `gitBranchLabel0` root text, edges `14 − 3d` px (3 px from depth class 5) |
+| `mindmapBorderEdges` (mindmap edges in `nodeBorder` rather than their section's `cScale<n>`; read with `mindmapOutlinedNodes`) | `true` (`neo`: `false`) | `false` |
 | `gitCommitRadius` (gitGraph bullet radius; half a highlight square's side) | 7 (`neo`, `neo-dark`: 10, D266) | 10 |
 | `gitLaneShift` (gitGraph LR: how far a branch's line and commits sit below 2 px above its lane, v12 classic's spot) | 9, so 7 below the lane (`neo`, `neo-dark`: 0) | 0 |
 | `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` (gitGraph: room the branch label box adds) | 16 / 12 (`neo`, `neo-dark`: 0 / 0) | 0 / 0 |
@@ -553,6 +558,12 @@ so it counts twice towards the diameter compared with the per-side node padding.
   the same as in v12. Sizes are what v12 draws, not its marker boxes: a v12 cross does not fill
   its box, so `crossArrowheadSize` is the arm span (10.4 neo, 9 classic) and the neo stroke is
   v12's 2.5 scaled by the marker's 0.8.
+- **Mindmap shapes take the same padding variables** as the flowchart's (spec #294 T4): a rectangle
+  `nodePaddingX` / `nodePaddingY` of 10 (v12's renderer fixed it; 16 / 12 in the redux family), a
+  circle `circlePadding` of `mindmap.padding` (16, with no minimum diameter), a hexagon
+  `hexagonPaddingX` / `hexagonPaddingY` of `2 × mindmap.padding` and `hexagonSlant`. The rounded
+  shape keeps 15 on each side with the theme's `radius` corner; the plain, cloud and bang shapes
+  have no family difference.
 - **Hexagon padding axes are corrected.** v12 adds the X padding to the height and the Y padding
   to the width; v13 applies X to the width and Y to the height, so a hexagon in a redux theme is
   wider and less tall than in v12 (D151).
@@ -673,12 +684,13 @@ npm install @mermaid-js/plugin-hand-drawn
 - **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
-  transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
-  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
-  sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
-  State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
-  fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
-  plain element.
+  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines) and
+  mindmap (every node shape, the rule under a plain node, edges). v12 did not sketch mindmap's
+  plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text
+  are never sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for
+  edges. State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline
+  with no fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays
+  the plain element.
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
@@ -690,8 +702,9 @@ npm install @mermaid-js/plugin-hand-drawn
   8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
 - **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
   `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
-  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
-  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  for a 40-node flowchart; 5–14×, about 10× typically, for mindmaps), most for large filled
+  shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000 characters) and fail
+  with a `LIMIT` error. The integrator can raise it with
   `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
   ([Limits](#limits)); diagram text cannot.
 
@@ -716,6 +729,7 @@ classes works the same with the look on.
 | Default layout `elk` (12.2.0), formerly `dagre` | Default `layered`, the engine built into core | DESIGN §6.1 |
 | `layout: dagre`, `layout: elk`, `elk.<algorithm>`, `flowchart-elk` header | `dagre` is drawn with `layered`, silently. The ELK names and the `flowchart-elk` header are drawn with `layered` and one `ELK_NOT_INSTALLED` warning until `@mermaid-js/layout-elk` is registered | R-PLUG-8, D173 |
 | An unknown layout name falls back to `dagre` with a console warning | Falls back to `layered` with a `LAYOUT_UNKNOWN` warning | R-ERR-4 |
+| Mindmap lays out with `cose-bilkent` (not deterministic), or `tidy-tree` with its plugin; `mindmap.layoutAlgorithm` is never read | Mindmap lays out with `tree`, core's two-sided tidy tree (loaded lazily), when no config sets `layout`. `cose-bilkent` and `tidy-tree` map to `tree` silently; `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns. The mindmap key `layoutAlgorithm` is ignored | D280–D285 |
 | `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
 | `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves | |
 | dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
@@ -880,10 +894,14 @@ mermaid.registerIconPacks([
   changed; about one `logos` icon in five uses a gradient and is drawn flatter than in v12.
 - **Icon shapes** (`@{ icon: … }`) draw their glyph with the plugin, as in v12; an icon not drawn
   keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
-- **Mindmap** is not ported yet (`UNSUPPORTED_DIAGRAM`). When it is, `::icon(fa fa-book)` and
-  `::icon(mdi:fire)` draw from the registered packs, placed as v12's older mindmap renderer
-  placed them (D297). 12.2.0 parsed `::icon()` but drew nothing, so any mindmap icon is new; one
-  that does not resolve is shown as written in the icon's place, with `ICON_NOT_RENDERED` (D286).
+- **Mindmap** `::icon(fa fa-book)` and `::icon(mdi:fire)` get the slot v12's older mindmap
+  renderer reserved (D297): beside the label, or above it in a circle. 12.2.0 parsed `::icon()`
+  but drew nothing, so any mindmap icon is new. With the plugin the glyph is drawn there, 40 px,
+  in the colour of the node's label: `fa fa-book` is `fa:book`, `mdi mdi-fire` is `mdi:fire`,
+  looked up in the registered packs. Only those two forms are icon names: `fa-book` or `bomb`
+  is shown as written. An icon that does not resolve, any other form, or any icon without the
+  plugin is shown as written in the slot, sized to fit it, with one `ICON_NOT_RENDERED` per
+  render (D286, D291); while its pack loads, the slot is empty.
 - **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
   (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
 - **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
@@ -1340,6 +1358,81 @@ Legend entries carry `data-id="a:<name>"` only.
   slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
   D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
   needs `theme: 'default'` to keep its colours.
+
+## Mindmap
+
+- **SVG only:** `mindmap` is detected by v12's case-sensitive `mindmap` detector, second after
+  `flowchart-elk` as in v12, where it shipped only in the large-feature build. `format: 'ascii'`
+  throws `UnsupportedFormatError` (D216). The language service, CodeMirror and Monaco know it.
+  For `renderSync`, `preload({ types: ['mindmap'] })` (or `prepare()`) also loads the `tree`
+  engine; `layouts` is needed only for another engine, such as an `elk.*` one.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
+  spec and docs examples, and the grammar is in [syntax/mindmap.md](./syntax/mindmap.md). Every
+  error is reported, not only the first, with messages in words (R-PARSE-4). A second root
+  (`There can be only one root …`) and an `::icon()` or `:::` line before any node are errors,
+  as in v12 (the second was a `TypeError` there). v12 also rejects a node right after a blank
+  line under the `mindmap` line (`mindmap`, a blank line, then `root`), and after some runs
+  where a comment line sits between blank lines (a blank line, `%%`, a blank line, then the
+  node); v13 rejects exactly the same texts, and the message says to remove a blank line. Other
+  blank and comment lines, two or more in a row included, are accepted as in v12.
+- **Layout.** v12 laid mindmaps out with `cose-bilkent`, force-directed and different on every
+  render, or with `tidy-tree` when that plugin was registered. v13 uses `tree`, core's two-sided
+  tidy tree, so positions differ from both and are the same on every render ([Layout](#layout)):
+  the root sits in the middle, the first branches go right and the rest left, split where the
+  two sides' heights are closest (D283), and each side keeps source order. Siblings are 20 px
+  apart and each level 40 px further out, tidy-tree's gaps; the root's own extra clearance in
+  tidy-tree is not reproduced. Cloud and bang nodes are laid out at the box their outline covers.
+  With `layout: layered` (or `dagre`) or an installed `elk.*` the same tree is drawn top-down.
+- **Config.** Honoured in the `mindmap` section, with v12's defaults: `colorBy` (`branch`; eleven
+  sections, as v12), `padding` (10), `maxNodeWidth` (200) and `useMaxWidth` (true). `padding`
+  reaches what v12's renderer let it reach (D287): the margin round the drawing and default,
+  cloud and bang nodes in every theme, and in the classic themes circles too, and hexagons twice
+  over. In the redux family, `neo` and `neo-dark` circles and hexagons take the theme's
+  `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` instead
+  ([Theme geometry](#theme-geometry)). Square and rounded nodes keep their own paddings (v12's
+  fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check
+  never matched, so `padding` sized classic circles there too and does here. `maxNodeWidth` wraps every shape: v12 wrapped square, rounded
+  and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default, so nothing changes
+  unless one of them is set). A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
+  is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
+  (`"20"`, not `"20px"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
+  read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
+  the mindmap when `@mermaid-js/plugin-hand-drawn` is installed
+  ([Hand-drawn look](#hand-drawn-look)). `mindmap.layout` picks the engine for mindmaps and wins
+  over the top-level `layout`, with the same names and fallbacks.
+- **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
+  (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
+  ([Mindmap SVG structure](#mindmap-svg-structure)).
+- **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
+  nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
+  at the bottom in `neo` and `neo-dark` ([Theme geometry](#theme-geometry)).
+- **Edge widths** follow v12's `edge-depth-<d>` CSS, from the raw indent rather than the tree
+  depth, so with two-space indents classic edges are 11, 5 and 3 px wide
+  ([Mindmap SVG structure](#mindmap-svg-structure)).
+- **Limits** (R-SEC-5): a mindmap may have up to `limits.maxNodes` nodes (10,000) and nest up to
+  `limits.maxDepth` levels below the root (100); over either, render rejects with a `LIMIT`
+  `MermaidError`. v12 had no such limit. Only the integrator can raise them
+  ([Limits](#limits)).
+
+## Mindmap SVG structure
+
+What changed in the mindmap's SVG compared with v12 12.2.0 (`mindmapRenderer.ts` through the
+shared `rendering-util` shapes and edges, `styles.ts`), and why (DESIGN §7.2, spec #294). v12's
+class names are kept where the element still exists: `mindmap-node`, `section-<n>`,
+`section-root`, `node-bkg`, `edge`, `section-edge-<n>`, `edge-depth-<d>`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="mindmapDiagram"`, a `<style>` scoped by the id; colours from CSS rules per section | No root `id`; `class="mermaid mermaid-mindmap"`, `role="img"`, `aria-roledescription="mindmap"`, `data-mermaid-version`; colours are presentation attributes, theme variables as `var(--_x)` aliases and palette slots as literal colours | Inert output (R-SEC-2), D152 |
+| Node `<g id="node_<n>" class="mindmap-node section-<n>" data-look>` placed by `transform`, the shape inside with `id`; edges in `g.edgePaths`, nodes in `g.nodes` | `<g class="mindmap-node section-<n> <author classes>" data-id="n:<id>" data-ast="n:<id>">` (the root `section-root section--1`), coordinates absolute, no `transform`, no ids, no `data-look`; edges in `g.mindmap-edges` under nodes in `g.mindmap-nodes`. An edge is `<path class="edge section-edge-<n> edge-depth-<d>" data-id="edge:n:<child>">` | One element per node maps it to its source (R-PARSE-8, D289); D308 |
+| Labels in `<foreignObject>` HTML (`htmlLabels`), every label markdown | `<text class="mindmap-node-label">` with a `<tspan>` per line from core's label layout; markdown kept (bold, italic, line breaks, D225) | No `foreignObject` (R-SEC-2) |
+| `edge-depth-<d>` from the parent's raw indent plus 1 (two-space indents give 1, 3, 5 …); widths from CSS: classic `17 − 3i`, so 11, 8, 5, 2 and 3 px from class 5 on (the browser drops the negative ones), neo `max(10 − 2d, 2)` | The same class numbering and widths, written as `stroke-width` on each edge; with two-space indents classic edges are 11, 5 and 3 px wide, not 11, 8, 5 | P2: author CSS for `edge-depth-<d>` keeps matching (GAPS #388) |
+| Edges `curve: 'basis'` through cose-bilkent's three points, or tidy-tree's elbows | `tree`'s port-to-port routes as one cubic leaving and entering along the ports; `layered` and ELK routes as the basis spline through their points | D280–D282 |
+| A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |
+| Neo nodes in `[data-look="neo"]` rules by theme name (`redux`, `redux-dark`, `neutral`, `neo-dark`, `includes('redux')`); `filter: url(#<id>-drop-shadow)` on the node's group | The flags and `borderColorArray` decide (`redux` and `redux-dark` carry none); the shadow is the `dropShadow` CSS filter on the shape, so labels are not shadowed. `neutral` is a classic theme, so v12's neo-only `neutral` label rule has nothing to apply to | D152, D153, D227 |
+| Under `useGradient` a second `<linearGradient id="<id>-gradient">`, a duplicate id | One scoped gradient (D182) | Unique ids |
+| `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); with the icons plugin the glyph, 40 px, in the label's colour (`g.mindmap-icon`); otherwise, or in neither D297 form, the reference as written, smaller to fit 40 px (`text.mindmap-icon`), with one `ICON_NOT_RENDERED` | D286, D291, D297 |
+| No hand-drawn sketch of the plain node | Every outline and edge goes through the outline hook, the plain node too | D302, D308, D309 |
 
 ## Timeline SVG structure
 

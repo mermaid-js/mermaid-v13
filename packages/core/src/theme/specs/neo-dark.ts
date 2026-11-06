@@ -16,6 +16,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   CLASSIC_TIMELINE,
+  NEO_MINDMAP,
   NEO_GITGRAPH,
   REDUX_PADDING,
   TEXT_SIZES,
@@ -60,6 +61,9 @@ const neoDark: ThemeSpec = {
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...NEO_MINDMAP,
+    // v12 `styles.ts`: neo-dark edges take `nodeBorder`, as the redux themes do.
+    mindmapBorderEdges: true,
     ...NEO_GITGRAPH,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,

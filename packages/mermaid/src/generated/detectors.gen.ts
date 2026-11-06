@@ -4,7 +4,7 @@ import type { FirstPartyEntry } from '../registry.ts';
 /** First-party detectors in v12 detection order, without loaders (`mermaid/slim`). */
 export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'] },
-  { type: 'mindmap', pattern: /^\s*mindmap/ },
+  { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
   { type: 'architecture', pattern: /^\s*architecture/ },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },

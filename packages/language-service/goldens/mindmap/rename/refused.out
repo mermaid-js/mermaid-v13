@@ -1,0 +1,19 @@
+@ 3:3  |root
+  prepare: 3:3-3:7 "root"; rename to "a[b]":
+  refused: A node id cannot hold `(`, `)`, `[`, `{` or `}`: they write the shape.
+@ 4:6  [|no id]
+  prepare: refused: There is no id or class name here to rename.
+@ 5:12  ::icon(|fa fa-book)
+  prepare: refused: There is no id or class name here to rename.
+@ 7:8  :::|x
+  prepare: 7:8-7:9 "x"; rename to "a[b]":
+  %% rename-to: a[b]
+  mindmap
+    root
+      [no id]
+      ::icon(fa fa-book)
+      a
+      :::a[b]
+    mindmap
+@ 8:6  min|dmap
+  prepare: refused: There is no id or class name here to rename.

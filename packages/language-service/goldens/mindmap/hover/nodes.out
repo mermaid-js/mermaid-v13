@@ -1,0 +1,60 @@
+@ 2:5  ro|ot((The root))
+  2:3-2:19 "root((The root))"
+  | **node** `root`
+  |
+  | Shape: circle, written `((…))`
+  |
+  | The root · 3 children
+@ 3:5  |a[Square]
+  3:5-3:14 "a[Square]"
+  | **node** `a`
+  |
+  | Shape: square, written `[…]`
+  |
+  | Depth 1, under `root` · 0 children
+  |
+  | Class: `urgent`
+  |
+  | Icon: `fa fa-book`
+@ 6:7  b(|Rounded)
+  6:5-6:15 "b(Rounded)"
+  | **node** `b`
+  |
+  | Shape: rounded, written `(…)`
+  |
+  | Depth 1, under `root` · 3 children
+@ 7:7  |c
+  7:7-7:8 "c"
+  | **node** `c`
+  |
+  | Shape: default
+  |
+  | Depth 2, under `b` · 0 children
+@ 8:13  ))Bang|((
+  8:7-8:15 "))Bang(("
+  | **node**
+  |
+  | Shape: bang, written `))…((`
+  |
+  | Depth 2, under `b` · 0 children
+@ 9:8  [|no id]
+  9:7-9:14 "[no id]"
+  | **node**
+  |
+  | Shape: square, written `[…]`
+  |
+  | Depth 2, under `b` · 0 children
+@ 10:12  d{{"quo|ted"}}
+  10:5-10:18 "d{{\"quoted\"}}"
+  | **node** `d`
+  |
+  | Shape: hexagon, written `{{…}}`
+  |
+  | Depth 1, under `root` · 0 children
+@ 11:6  sec|ond root
+  11:3-11:14 "second root"
+  | **node** `second root`
+  |
+  | Shape: default
+  |
+  | Not in the tree: a mindmap has one root.

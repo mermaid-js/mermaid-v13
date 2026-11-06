@@ -265,7 +265,9 @@ export class SiteConfigs {
     if (!hit) {
       const pluginDefaults: Plain = {};
       if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
-      // v12's flowchart-elk detector sets `layout: 'elk'` below the user's config.
+      // The plugin's engine (D284), and v12's flowchart-elk detector's `layout: 'elk'`, sit
+      // below the user's config.
+      if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;
       if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
       const recorded: Warning[] = [];
       const site = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {

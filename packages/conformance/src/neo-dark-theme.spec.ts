@@ -110,6 +110,11 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
   ),
   ...Object.fromEntries(
+    Object.keys(THEME_VARIABLES)
+      .filter((n) => n.startsWith('mindmap'))
+      .map((n) => [n, 'D288, D152: v12 has no variable; it chose mindmap paint by look and theme'])
+  ),
+  ...Object.fromEntries(
     GITGRAPH.map((n) => [n, 'D266: v12 has no value; theme neo drew classic gitGraph geometry'])
   ),
 };

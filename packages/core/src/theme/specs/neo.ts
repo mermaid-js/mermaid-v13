@@ -14,6 +14,7 @@ import {
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   CLASSIC_TIMELINE,
+  NEO_MINDMAP,
   NEO_GITGRAPH,
   REDUX_PADDING,
   TEXT_SIZES,
@@ -52,6 +53,7 @@ const neo: ThemeSpec = {
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...NEO_MINDMAP,
     ...NEO_GITGRAPH,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,

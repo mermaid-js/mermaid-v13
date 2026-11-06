@@ -76,6 +76,12 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   readonly namespaces: readonly (readonly string[])[];
   /**
+   * Symbol kinds whose every occurrence is a symbol of its own, though names repeat (mindmap
+   * node ids, D289): definition and references give the occurrence alone, rename changes only
+   * it, and another occurrence with the new name is no clash. None when omitted.
+   */
+  readonly standalone?: readonly string[];
+  /**
    * `undefined` when `name` can be used as an identifier of symbol kind `kind` (a kind the
    * parser records, e.g. `node`, `class`, `edge`; the facet's main id kind when omitted),
    * else the reason it cannot (D92).

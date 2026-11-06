@@ -18,16 +18,16 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, pie |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, pie |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
 | `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, gitgraph, gantt |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, gitgraph |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, gitgraph |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
@@ -125,9 +125,9 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `taskTextColor` | `--mermaid-taskTextColor` | derived | color | `textColor` | `textColor` | | gantt |
 | `taskTextOutsideColor` | `--mermaid-taskTextOutsideColor` | derived | color | `textColor` | `textColor` | | gantt |
 | `taskTextDarkColor` | `--mermaid-taskTextDarkColor` | derived | color | `textColor` | `textColor` | | gantt |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, gitgraph |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
-| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
+| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline, gitgraph |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
@@ -148,16 +148,16 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `dependencyMarkerGap` | `--mermaid-dependencyMarkerGap` | token | length | | | all | class |
 | `classTerminalFontSize` | `--mermaid-classTerminalFontSize` | token | length | | | all | class |
 | `erZeroOrMoreCircleOffset` | `--mermaid-erZeroOrMoreCircleOffset` | token | length | | | all | er |
-| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
-| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |
+| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap |
+| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap |
 | `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
 | `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
-| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart |
-| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart |
-| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart |
+| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap |
+| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
+| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
 | `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
 | `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
-| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart |
+| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
 | `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
 | `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
 | `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
@@ -176,6 +176,9 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
 | `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
 | `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
+| `mindmapRoundedNodes` | `--mermaid-mindmapRoundedNodes` | token | flag | | | all | mindmap |
+| `mindmapOutlinedNodes` | `--mermaid-mindmapOutlinedNodes` | token | flag | | | all | mindmap |
+| `mindmapBorderEdges` | `--mermaid-mindmapBorderEdges` | token | flag | | | all | mindmap |
 | `gitCommitRadius` | `--mermaid-gitCommitRadius` | token | length | | | all | gitgraph |
 | `gitLaneShift` | `--mermaid-gitLaneShift` | token | length | | | all | gitgraph |
 | `gitBranchLabelPaddingX` | `--mermaid-gitBranchLabelPaddingX` | token | length | | | all | gitgraph |
@@ -209,7 +212,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `actor3` | `--mermaid-actor3` | derived | color | | | | journey |
 | `actor4` | `--mermaid-actor4` | derived | color | | | | journey |
 | `actor5` | `--mermaid-actor5` | derived | color | | | | journey |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, gitgraph |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
