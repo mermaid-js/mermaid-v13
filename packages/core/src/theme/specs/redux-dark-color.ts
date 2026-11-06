@@ -21,7 +21,12 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   rules: REDUX_RULES,
-  values: { ...REDUX_DARK_VALUES, erEdgeLabelBackground: '#16141f' },
+  values: {
+    ...REDUX_DARK_VALUES,
+    erEdgeLabelBackground: '#16141f',
+    // v12 draws labels on its series colours in the light ink here.
+    seriesTextColor: '#28253d',
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],
@@ -29,13 +34,10 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
     cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
-    // The Tailwind-300 set, v12's fixed 900 shades as tints, and v12's light ink for labels on the
-    // series colours.
+    // The Tailwind-300 set, then v12's fixed 900 shades as tints.
     seriesColorArray: [
       ...TAILWIND_300,
-      ...series(
-        '#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12 textColor #28253d'
-      ),
+      ...series('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
     ],
   },
 };

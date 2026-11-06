@@ -85,6 +85,10 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
+  // Shared inputs that name no diagram (D332): the ink of a diagram's own titles and legends,
+  // and of labels on the series colours; the theme's text ink unless a theme pins them.
+  headingTextColor: 'textColor',
+  seriesTextColor: 'textColor',
   // A shared input that names no diagram (D334): v12's `scaleLabelColor`, the ink `cScaleLabel`
   // and any per-slot label take; the theme's text ink unless a theme pins it.
   scaleLabelColor: 'primaryTextColor',

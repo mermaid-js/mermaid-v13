@@ -48,7 +48,11 @@ function readsOf(type: string): Set<string> {
   const text = sources(join(PACKAGES, `diagram-${type}`, 'src'))
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n');
-  const names = [...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!);
+  const names = [
+    ...[...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!),
+    // A table rule's `inline(name)`: a shared input read as the theme wrote it (D332).
+    ...[...text.matchAll(/\binline\((\w+)\)/g)].map((m) => m[1]!),
+  ];
   return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));
 }
 

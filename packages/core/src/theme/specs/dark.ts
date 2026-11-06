@@ -33,6 +33,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
+    // v12 titles and legends: `mainContrastColor`.
+    headingTextColor: 'lightgrey',
     altBackground: '#555555', // v12 (#192)
     // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)
     actorTextColor: '#d3d3d3',
@@ -74,11 +76,10 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 theme-dark.js: series colour `i` is `cScale<i>`, so slot 0 is `cScale1`; v12 leaves the
-    // twelfth unset and v13 gives it `cScale0`, as `neutral` has (D228). Then the tints and v12's
-    // lightgrey title ink (`mainContrastColor`).
+    // twelfth unset and v13 gives it `cScale0`, as `neutral` has (D228). Then the tints.
     seriesColorArray: series(
       '#0b0000 #4d1037 #3f5258 #4f2f1b #6e0a0a #3b0048 #995a01 #154706 #161722 #00296f #01629c #1f2020 ' +
-        '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749 lightgrey textColor'
+        '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
     ),
     // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),

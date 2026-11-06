@@ -76,7 +76,7 @@ const theme: ThemeSpec = {
     // tints, v12's resolved values.
     seriesColorArray: series(
       'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) #33b42f #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
-        '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff textColor textColor'
+        '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'
     ),
   },
 };

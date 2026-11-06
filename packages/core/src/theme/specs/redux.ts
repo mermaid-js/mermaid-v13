@@ -21,7 +21,7 @@ const mainBkgScale = (
  */
 export const REDUX_SERIES = series(
   '#ececfe #e9e9f1 #ffffff #bcbcfb #cacadd #fcfccf #fbbcfb #bcfbfb #feecec #f98bf9 #8bf9f9 #fbbcbc ' +
-    '#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9 textColor textColor'
+    '#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'
 );
 
 const redux: ThemeSpec = {

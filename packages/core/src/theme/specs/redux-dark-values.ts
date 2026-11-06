@@ -74,5 +74,5 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
  */
 export const REDUX_DARK_SERIES = series(
   'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) #2e3030 darkenHsl(tertiaryColor,10%) #060606 #060606 #201f20 #000000 #000000 #060606 ' +
-    '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749 textColor textColor'
+    '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
 );

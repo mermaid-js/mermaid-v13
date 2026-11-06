@@ -27,7 +27,7 @@ const theme: ThemeSpec = {
     cScaleLabel: LABEL_SCALE,
     // v12 `pie<i+1> ||= cScale<i>` and `fillType<i> || bkgColorArray[i]`: the Tailwind-300 set,
     // then the Tailwind-50 tints.
-    seriesColorArray: [...TAILWIND_300, ...TAILWIND_50.slice(0, 8), 'textColor', 'textColor'],
+    seriesColorArray: [...TAILWIND_300, ...TAILWIND_50.slice(0, 8)],
   },
   // v12 theme-redux-color.js does not darken its fixed cScale under darkMode.
   darkModePalettes: {},

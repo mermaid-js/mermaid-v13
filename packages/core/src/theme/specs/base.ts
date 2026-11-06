@@ -48,7 +48,7 @@ const base: ThemeSpec = {
     // resolved ±64° and 128° turns of base's own.
     seriesColorArray: series(
       'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #c5ffaa #ffaac5 #ddfff4 #a3ff77 #ff77a3 #aaffe3 ' +
-        'primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd textColor textColor'
+        'primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'
     ),
   },
   darkModePalettes: darkenedScale(SOURCES, 75),

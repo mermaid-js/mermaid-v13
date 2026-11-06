@@ -32,6 +32,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: 'black',
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-default.js)
     actorTextColor: '#000000',
@@ -61,10 +63,10 @@ const theme: ThemeSpec = {
     // v12 theme-default.js: the base colours, tertiary −40, secondary −30, tertiary −20, then hue
     // turns. Slots 2 and 5 are v12's values: v12 darkens its unrounded HSL tertiary colour, which
     // lands a few steps off the hex one. Then the tints (±64° and 128° turns of the primary and
-    // secondary colours) and v12's black title ink.
+    // secondary colours).
     seriesColorArray: series(
       'primaryColor secondaryColor #b5ff20 darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,30%) #d7ff86 #ff86ff #20ffff #ff2020 #ff20ff #20ff8f #ff5353 ' +
-        '#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff black textColor'
+        '#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'
     ),
     cScale: [
       '#8686ff',

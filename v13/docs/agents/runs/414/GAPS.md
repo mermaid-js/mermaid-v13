@@ -26,8 +26,20 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 
 ## T1 (#440)
 
-- Fill `seriesColorArray` in each theme spec and migrate pie, journey and gitGraph slots onto it; decide whether seed rows are needed (see T0a).
+- Fill `seriesColorArray` in each theme spec and migrate pie, journey and gitGraph slots onto it; decide whether seed rows are needed (see T0a). **T1a: done for pie and journey; gitGraph is T1b.**
 - gitGraph's `gitBranchLabel` reads `scaleLabelColor` (D334) once #404 merges.
+
+### T1a (pie, quadrant, journey, timeline)
+
+- **`seriesColorArray` layout: 0–11 series colours, 12–19 series tints.** The pie slots are 0–11 (`pie<n>` reads slot `n − 1`); journey's `fillType0`–`7` read 12–19, the paler fills (redux-color's are its Tailwind-50 `bkgColorArray`, redux-dark-color's v12's 900 shades). A separate palette for the tints would have one reader, so per the D332 rule they share the series palette. Entries are v12's resolved values as each theme pinned them, rules kept as written (`darkenHsl(secondaryColor,30%)`), so CSS is byte-identical. A whole-list reader should take 0–11.
+- **Two D332 inputs read with `inline()`: `headingTextColor` and `seriesTextColor`** (shared rule `textColor`). Pie's titles and legends (v12 `taskTextDarkColor`, which gantt reads too) are pinned in default (`black`), dark (`lightgrey`) and neutral (`#333333`); its slice labels in redux-dark-color (`#28253d`). No family entry separates those themes. They are in `D332_INPUTS` (`packages/conformance/src/diagram-themes.ts`, with `seriesColorArray` and `plotColorArray`), which the neo and neo-dark specs leave out of the v12 comparison; `DIFFERENCES` is unchanged. Reconcile with T2's list at merge.
+- **No seed pair.** The series entries carry v12's resolved values (redux's `#ececfe`, `#e9e9f1` and their turns), so no diagram needs seeds to derive from; adding them would only add rows.
+- **No D333(a) fix taken, no `literal()` hue turns.** Default `pie3`/`pie6`, forest `pie6` and the dark `pie5` stay v12's pinned values: nothing was re-derived, so nothing "fell out", and identity is 0 differing with no `--allow`. Deriving the hue turns with `literal(adjustHue(…))` would give the same bytes in a longer source; left as is.
+- **`theme: 'auto'`**: the dark spec's resolver now gets its own palettes (`paletteSource(options.dark, …)`); before, a `seriesColorArray` read in the dark half was `currentColor`. No render changed (nothing read a slot there before).
+- **Quadrant's redux and neo `#ececfe`** is a `redux` family *rule*, with a `dark` rule back to `primaryColor`: a family value would also apply to redux-dark and neo-dark, and a dark entry cannot unset a value.
+- **Used-by.** Table rules count as reads, so `quadrant` joins `primaryColor`, `primaryTextColor`, `primaryBorderColor` and `textColor`; the scan also counts `inline(name)` in a rule, so `pie` reads the two inks.
+- **Journey's `actor0`–`actor5`** have no rule in any theme (D249); `theme-tables.spec.ts` lists them as author-only, as `themes.spec.ts` did in core.
+- **Core opacity test.** No core row has kind `opacity` now, so `theme.spec.ts` tests the kind on a local table var.
 
 ## T2 (#441)
 

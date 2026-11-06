@@ -8,6 +8,7 @@
 import {
   DARK_RULES,
   NUMBERED_PALETTES,
+  PALETTE_VARIABLES,
   PALETTE_LIMIT,
   contrastRatio,
   formatColor,
@@ -17,7 +18,7 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { V12_PALETTES, VOCABULARY, everyTable } from './diagram-themes.ts';
+import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -137,8 +138,8 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
   });
 
   it('differs from v12 only where a decision says so', () => {
-    const vocabulary = Object.keys(VOCABULARY).filter((n) => !same(n));
-    const palettes = V12_PALETTES.filter(
+    const vocabulary = Object.keys(VOCABULARY).filter((n) => !D332_INPUTS.includes(n) && !same(n));
+    const palettes = PALETTE_VARIABLES.filter((p) => !D332_INPUTS.includes(p)).filter(
       (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neoDark.palette(p).map(hex))
     );
     expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());

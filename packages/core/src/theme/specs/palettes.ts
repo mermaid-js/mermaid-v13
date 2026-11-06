@@ -67,10 +67,9 @@ export const TAILWIND_300: readonly string[] = [
 
 /**
  * A theme's `seriesColorArray` (D332), a shared input that names no diagram: entries 0–11 are its
- * series colours, 12–19 its series tints (paler fills, darker in a dark theme), 20 its strong ink
- * for chart titles and legends (v12 `taskTextDarkColor`) and 21 its ink for labels on the series
- * colours. A diagram reads a slot as the theme wrote the entry, CSS included, so an entry that is
- * a rule over the base colours follows them as the rule does. The values are v12 12.2.0's, which
+ * series colours and 12–19 its series tints (paler fills, darker in a dark theme). A diagram reads
+ * a slot as the theme wrote the entry, CSS included, so an entry that is a rule over the base
+ * colours follows them as the rule does. The values are v12 12.2.0's, which
  * the oracle specs check (`packages/conformance/src/{pie,journey}/theme.spec.ts`).
  *
  * `entries` is the entries space-separated (a list costs the always-loaded core more), so an

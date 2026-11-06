@@ -33,6 +33,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: '#333333',
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
     actorBorder: '#d4d4d4',
@@ -77,10 +79,10 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`; then the
-    // tints and v12's #333 title ink.
+    // tints.
     seriesColorArray: series(
       '#f4f4f4 #555555 #bbbbbb #777777 #999999 #dddddd #ffffff #dddddd #bbbbbb #999999 #777777 #555555 ' +
-        '#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #333333 textColor'
+        '#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'
     ),
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
