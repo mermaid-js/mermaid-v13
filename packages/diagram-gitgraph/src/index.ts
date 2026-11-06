@@ -19,7 +19,6 @@ export type * from './model.ts';
 export { GIT_GEOMETRY, GIT_METRICS, layoutGitGraph } from './layout/index.ts';
 export type * from './layout/types.ts';
 export type {
-  GeometryVariable,
   GitGeometry,
   GitGeometryVariables,
   GitLayoutContext,
@@ -27,5 +26,5 @@ export type {
 } from './layout/index.ts';
 // T4 (#373): the renderer and the plugin object.
 export { GIT_PAINT, renderGitGraph } from './render/index.ts';
-export type { GitPaintVariable, GitPaintVariables, GitRenderContext } from './render/index.ts';
+export type { GitPaintVariables, GitRenderContext } from './render/index.ts';
 export { gitGraph } from './plugin.ts';

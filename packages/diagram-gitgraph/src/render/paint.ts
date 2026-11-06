@@ -18,7 +18,7 @@ import type {
   SafeValue,
   ThemeRef,
 } from '@mermaid-js/core/svg';
-import { GIT_PAINT, type GitFlagVariable, type GitLengthVariable } from './variables.ts';
+import { GIT_PAINT } from './variables.ts';
 
 type Theme = RenderContext['theme'];
 type PaletteName = Parameters<Theme['palette']>[0];
@@ -92,11 +92,10 @@ const UNSET = 'currentColor';
 /** v12's cherry-pick ink where a theme sets none: white (v12 `isDark ? '#000000' : '#fff'`). */
 const CHERRY_INK = '#ffffff' as SafeColor;
 
-const flagOf = (theme: Theme, v: GitFlagVariable): boolean => theme.value(v.name) === 'true';
+const flagOf = (theme: Theme, name: string): boolean => theme.value(name) === 'true';
 /** A colour variable, or `fallback` where the theme gives it no value (v12's `??`). */
 const colorOr = (theme: Theme, name: string, fallback: Paint): Paint =>
   theme.value(name) === UNSET ? fallback : theme.color(name);
-const numberOf = (theme: Theme, v: GitLengthVariable): number => theme.number(v.name);
 
 const weightOf = (value: string): SafeValue | undefined =>
   value === 'normal' || value === '400' ? undefined : (value as SafeValue);
@@ -182,10 +181,10 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     crossWidth: nodeColors ? strokeWidth : CLASSIC_CROSS_WIDTH,
     cherry: {
       fill: nodeColors ? nodeBorder : undefined,
-      ink: colorOr(theme, GIT_PAINT.cherryPickInk.name, CHERRY_INK),
+      ink: colorOr(theme, GIT_PAINT.cherryPickInk, CHERRY_INK),
     },
     line: {
-      stroke: colorOr(theme, GIT_PAINT.commitLineColor.name, theme.color('lineColor')),
+      stroke: colorOr(theme, GIT_PAINT.commitLineColor, theme.color('lineColor')),
       dash: nodeColors ? NODE_DASH : CLASSIC_DASH,
     },
     commitLabel: { ...commitLabel, size: theme.length('commitLabelFontSize') },
@@ -198,9 +197,9 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     boxFilter: shadow,
     weight: weightOf(theme.value('fontWeight')),
     title: titled ? theme.color('textColor') : 'none',
-    highlightInner: numberOf(theme, GIT_PAINT.highlightInner),
-    mergeRadius: numberOf(theme, GIT_PAINT.mergeRadius),
-    reverseCross: numberOf(theme, GIT_PAINT.reverseCross),
-    cherryPickDot: numberOf(theme, GIT_PAINT.cherryPickDot),
+    highlightInner: theme.number(GIT_PAINT.highlightInner),
+    mergeRadius: theme.number(GIT_PAINT.mergeRadius),
+    reverseCross: theme.number(GIT_PAINT.reverseCross),
+    cherryPickDot: theme.number(GIT_PAINT.cherryPickDot),
   };
 }

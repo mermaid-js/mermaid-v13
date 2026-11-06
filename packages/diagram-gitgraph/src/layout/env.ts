@@ -4,13 +4,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { FontKey } from '@mermaid-js/core/text';
-import {
-  GIT_GEOMETRY,
-  GIT_METRICS,
-  type GeometryVariable,
-  type GitGeometry,
-  type GitMetrics,
-} from './metrics.ts';
+import { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
 import type { GitText, Point, Rect, Transform } from './types.ts';
 
 /** What the layout reads from the render context. */
@@ -47,7 +41,7 @@ function lengthOf(
 
 /** The geometry variables (D152), as the layout uses them. */
 export function geometryOf(theme: GitLayoutContext['theme']): GitGeometry {
-  const n = (v: GeometryVariable): number => theme.number(v.name);
+  const n = (name: string): number => theme.number(name);
   const g = GIT_GEOMETRY;
   return {
     commitRadius: n(g.commitRadius),

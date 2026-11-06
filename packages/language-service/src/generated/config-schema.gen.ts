@@ -134,7 +134,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "v12's values in every theme (D267): `primaryColor`, `secondaryColor`, `tertiaryColor` and the primary turned by −30, −60, −90, 60 and 120 degrees, darkened by 25 (lightened under `darkMode`) in `base`, `forest`, `redux-dark` and `redux-dark-color`; the same steps from fixed colours in `neo`, `redux` and `redux-color`; the dark pie colours lightened by 25 in `neo-dark`; `pie2`–`pie8` lightened in `dark` and as given in `neutral`; fixed in `default`. Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`."
+            "reason": "v12's values in every theme (D267): `primaryColor`, `secondaryColor`, `tertiaryColor` and the primary turned by −30, −60, −90, 60 and 120 degrees, darkened by 25 (lightened under `darkMode`) in `base`, `forest`, `redux-dark` and `redux-dark-color`; the same steps from fixed colours in `neo`, `redux` and `redux-color`; the dark pie colours lightened by 25 in `neo-dark`; `cScale2`–`cScale8` (v12's `pie2`–`pie8`, D334) lightened in `dark` and as given in `neutral`; fixed in `default`. Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`."
           }
         },
         "gitInv": {
@@ -2669,7 +2669,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "As v12: LR commit ids at −45 degrees, with 40 px more between the lanes."
+            "reason": "As v12: commit ids at −45 degrees (LR, TB and BT), with 40 px more between the lanes."
           }
         },
         "parallelCommits": {
@@ -2700,25 +2700,33 @@ export const configSchema: ConfigSchema = {
         "width": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "height": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "x": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "y": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         }
       }

@@ -200,7 +200,13 @@ function arrowPath(w: SvgWriter, path: readonly PathCommand[]) {
   return b.done();
 }
 
-/** v12 `drawArrows`: one per parent, in its lane's colour, round caps. */
+/** A commit id in an arrow's `data-id`: `%` and `>` percent-encoded, so the `>` is unambiguous. */
+const arrowEnd = (id: string): string => id.replace(/[%>]/g, (c) => (c === '%' ? '%25' : '%3E'));
+
+/**
+ * v12 `drawArrows`: one per parent (a repeated parent once), in its lane's colour, round caps;
+ * `data-id="<parent>><child>"`.
+ */
 function drawArrows(scene: Scene): void {
   const { w, paint, layout } = scene;
   w.open('g', { class: 'commit-arrows' });
@@ -208,7 +214,7 @@ function drawArrows(scene: Scene): void {
     const slot = scene.slots[a.lane]!;
     w.leaf('path', {
       class: `arrow arrow${slot}`,
-      'data-id': `${a.from}>${a.to}`,
+      'data-id': `${arrowEnd(a.from)}>${arrowEnd(a.to)}`,
       d: arrowPath(w, a.path),
       fill: 'none',
       stroke: paint.lane(slot).ink,

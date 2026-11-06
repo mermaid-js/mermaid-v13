@@ -215,40 +215,24 @@ export interface GitGeometry {
   readonly arrowWidth: number;
 }
 
-export interface GeometryVariable {
-  /** The theme variable's name. */
-  readonly name: string;
-  /** v12 classic, also the neo themes' (D266). */
-  readonly classic: number;
-  /** v12 redux geometry (the four redux themes). */
-  readonly redux: number;
-}
-
 /**
- * The geometry variables, each unsigned (core's lengths are), with its v12 classic and redux
- * values as core's theme specs carry them (`specs/geometry.ts`). `laneShift` and
- * `branchLabelShiftX` give `GitGeometry`'s signed `laneOffset` and `branchLabelOffsetX`.
+ * The names of the geometry theme variables the layout reads, each unsigned (core's lengths
+ * are). The package holds no values: core's theme specs carry v12's classic and redux values
+ * (`specs/geometry.ts`). `laneShift` and `branchLabelShiftX` give `GitGeometry`'s signed
+ * `laneOffset` and `branchLabelOffsetX`.
  */
-export interface GitGeometryVariables {
-  readonly commitRadius: GeometryVariable;
-  /** LR: the lanes' shift down from v12 classic's spot: 0 classic, 9 redux. */
-  readonly laneShift: GeometryVariable;
-  readonly branchLabelPaddingX: GeometryVariable;
-  readonly branchLabelPaddingY: GeometryVariable;
-  readonly branchLabelRadius: GeometryVariable;
-  /** TB/BT: the branch label box's shift to the left: 0 classic, 11 redux. */
-  readonly branchLabelShiftX: GeometryVariable;
-  readonly branchLabelOffsetY: GeometryVariable;
-  readonly arrowWidth: GeometryVariable;
-}
+export const GIT_GEOMETRY = {
+  commitRadius: 'gitCommitRadius',
+  /** LR: the lanes' shift down from v12 classic's spot. */
+  laneShift: 'gitLaneShift',
+  branchLabelPaddingX: 'gitBranchLabelPaddingX',
+  branchLabelPaddingY: 'gitBranchLabelPaddingY',
+  branchLabelRadius: 'gitBranchLabelRadius',
+  /** TB/BT: the branch label box's shift to the left. */
+  branchLabelShiftX: 'gitBranchLabelShiftX',
+  branchLabelOffsetY: 'gitBranchLabelOffsetY',
+  arrowWidth: 'gitArrowWidth',
+} as const;
 
-export const GIT_GEOMETRY: GitGeometryVariables = {
-  commitRadius: { name: 'gitCommitRadius', classic: 10, redux: 7 },
-  laneShift: { name: 'gitLaneShift', classic: 0, redux: 9 },
-  branchLabelPaddingX: { name: 'gitBranchLabelPaddingX', classic: 0, redux: 16 },
-  branchLabelPaddingY: { name: 'gitBranchLabelPaddingY', classic: 0, redux: 12 },
-  branchLabelRadius: { name: 'gitBranchLabelRadius', classic: 4, redux: 0 },
-  branchLabelShiftX: { name: 'gitBranchLabelShiftX', classic: 0, redux: 11 },
-  branchLabelOffsetY: { name: 'gitBranchLabelOffsetY', classic: 0, redux: 22 },
-  arrowWidth: { name: 'gitArrowWidth', classic: 8, redux: 2 },
-};
+/** The layout's geometry theme variable names, by what they do. */
+export type GitGeometryVariables = typeof GIT_GEOMETRY;

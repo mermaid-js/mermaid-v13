@@ -3,11 +3,17 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GitModel } from '../model.ts';
 import * as fx from './fixtures.ts';
-import { gitLayoutViolations, layoutGitGraph, type GitLayout } from './index.ts';
+import { GIT_GEOMETRY, gitLayoutViolations, layoutGitGraph, type GitLayout } from './index.ts';
 
 let classic: ThemeSpec;
+/** The `redux` theme's geometry variables, laid over `default` (its fonts) by `redux: true`. */
+let reduxGeometry: Record<string, number>;
 beforeAll(async () => {
   classic = await loadTheme('default');
+  const redux = createTheme(await loadTheme('redux'));
+  reduxGeometry = Object.fromEntries(
+    Object.values(GIT_GEOMETRY).map((name) => [name, redux.number(name)])
+  );
 });
 
 interface Options {
@@ -16,7 +22,7 @@ interface Options {
 }
 
 function lay(model: GitModel, gitGraph: Record<string, unknown> = {}, o: Options = {}): GitLayout {
-  const themeVariables = { ...(o.redux ? fx.REDUX_GEOMETRY : {}), ...o.themeVariables };
+  const themeVariables = { ...(o.redux ? reduxGeometry : {}), ...o.themeVariables };
   return layoutGitGraph(model, {
     config: { gitGraph } as ResolvedConfig,
     measurer: fx.halfEm,
@@ -49,11 +55,8 @@ describe('lanes follow setBranchPosition', () => {
 
 describe('lanes make room where v12 drew branch labels over each other', () => {
   // v12 spaces a TB lane by half the previous name only, so a long next name ran into it.
-  const long = (dir: 'TB' | 'LR', names: string[]) => {
-    const g = new fx.Git(dir).commit();
-    for (const n of names) g.checkout('main').branch(n).commit();
-    return g.model();
-  };
+  const long = (dir: 'TB' | 'LR', names: string[]) =>
+    fx.git(dir, 'commit', ...names.flatMap((n) => ['checkout main', `branch "${n}"`, 'commit']));
 
   it('moves a lane out where its label would overlap, until it clears the previous one by 10', () => {
     // 'main' box spans -26…24; the 184-wide name's box starts 102 left of its lane.
@@ -84,15 +87,17 @@ describe('lanes make room where v12 drew branch labels over each other', () => {
 
 describe('commits follow drawCommits without parallelCommits', () => {
   it('steps 50 from 40 in TB, in seq order, on the lane (v12 commitPosition table)', () => {
-    expect(at(lay(fx.v12Positions('TB')))).toEqual({
+    const m = fx.v12Positions('TB');
+    const [cp1, cp2] = m.commits.filter((c) => c.type === 'CHERRY_PICK').map((c) => c.id);
+    expect(at(lay(m))).toEqual({
       ZERO: [0, 40],
       A: [106, 90],
       B: [106, 140],
       M: [0, 190],
       C: [224, 240],
-      '5-fx': [224, 290],
+      [cp1!]: [224, 290],
       D: [224, 340],
-      '7-fx': [224, 390],
+      [cp2!]: [224, 390],
     });
   });
 
@@ -238,8 +243,7 @@ describe('commit labels follow drawCommitLabel', () => {
 });
 
 describe('tags follow drawCommitTags', () => {
-  const tagged = (dir: 'LR' | 'TB') =>
-    new fx.Git(dir).commit({ id: 'T', tags: ['v1', 'v22'] }).model();
+  const tagged = (dir: 'LR' | 'TB') => fx.git(dir, 'commit id:"T" tag:"v1" tag:"v22"');
 
   // 10px: 'v1' 10 wide, 'v22' 15, both 12.5 tall (ascent 8); the flags take the widest.
   it('LR: stacked upward 20 apart, the last nearest the commit, as flags pointing left', () => {
@@ -287,13 +291,14 @@ describe('arrows follow drawArrow', () => {
       .join(' ');
 
   const merged = (dir: 'LR' | 'TB' | 'BT') =>
-    new fx.Git(dir)
-      .commit({ id: 'c0' })
-      .branch('dev')
-      .commit({ id: 'd1' })
-      .checkout('main')
-      .merge('dev', { id: 'm' })
-      .model();
+    fx.git(
+      dir,
+      'commit id:"c0"',
+      'branch dev',
+      'commit id:"d1"',
+      'checkout main',
+      'merge dev id:"m"'
+    );
 
   it('LR: down into a branch with a 20 px corner, straight along a lane, across into a merge', () => {
     const l = lay(merged('LR'));
@@ -314,14 +319,15 @@ describe('arrows follow drawArrow', () => {
   });
 
   it('reroutes round a commit in the way on a free lane, coloured by the source going up', () => {
-    const m = new fx.Git('LR')
-      .commit({ id: 'c0' })
-      .branch('dev')
-      .commit({ id: 'd1' })
-      .commit({ id: 'd2' })
-      .checkout('main')
-      .cherryPick('d1')
-      .model();
+    const m = fx.git(
+      'LR',
+      'commit id:"c0"',
+      'branch dev',
+      'commit id:"d1"',
+      'commit id:"d2"',
+      'checkout main',
+      'cherry-pick id:"d1"'
+    );
     const cp = m.commits.at(-1)!.id;
     const l = lay(m);
     // Lanes taken: the branch lines (-2, 88); the free lane halfway, 43; then x 110.
@@ -331,21 +337,29 @@ describe('arrows follow drawArrow', () => {
   });
 
   it('takes the branch lines as lanes only with showBranches, as v12 did', () => {
-    const m = new fx.Git('LR')
-      .commit({ id: 'c0' })
-      .branch('dev')
-      .commit({ id: 'd1' })
-      .checkout('main')
-      .branch('rel')
-      .commit({ id: 'r1' })
-      .commit({ id: 'r2' })
-      .checkout('main')
-      .cherryPick('r1')
-      .model();
+    const m = fx.git(
+      'LR',
+      'commit id:"c0"',
+      'branch dev',
+      'commit id:"d1"',
+      'checkout main',
+      'branch rel',
+      'commit id:"r1"',
+      'commit id:"r2"',
+      'checkout main',
+      'cherry-pick id:"r1"'
+    );
     const laneY = (l: GitLayout) => l.arrows.find((x) => x.from === 'r1' && x.rerouted)!.path[2]!.y;
     // Halfway between the outer lanes is dev's line (88): one try further in, 70.
     expect(laneY(lay(m))).toBe(70);
     expect(laneY(lay(m, { showBranches: false }))).toBe(88);
+  });
+
+  it('draws one arrow for a repeated parent (a cherry-pick of the head it sits on)', () => {
+    const m = fx.git('LR', 'commit id:"A"', 'branch dev', 'cherry-pick id:"A"');
+    const cp = m.commits.at(-1)!;
+    expect(cp.parents).toEqual(['A', 'A']);
+    expect(lay(m).arrows.map((a) => [a.from, a.to])).toEqual([['A', cp.id]]);
   });
 
   it('draws no arrow for a self-parent (D264) and ends on parent cycles', () => {
@@ -360,7 +374,8 @@ describe('arrows follow drawArrow', () => {
 });
 
 describe('bounds and title (D224, D265)', () => {
-  const one = (title?: string) => new fx.Git('LR', title).commit({ id: 'c' }).model();
+  const one = (title?: string) =>
+    fx.git('LR', ...(title !== undefined ? [`title ${title}`] : []), 'commit id:"c"');
   const bare = { showBranches: false, showCommitLabel: false };
 
   it('hold what is drawn plus diagramPadding (8 by default)', () => {

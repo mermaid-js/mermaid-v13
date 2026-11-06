@@ -312,6 +312,16 @@ describe('gitGraph hover (D93)', () => {
     expect(hover('gitGraph\ncommit id:"X¦"\ncommit id:"X"')).toBe(
       '"X" => **commit** `X`\n\nA later commit takes this id, so this one is not drawn.'
     );
+    // A merge may not reuse an id: it is rejected and the earlier commit is drawn.
+    expect(
+      hover('gitGraph\ncommit id:"A"\nbranch dev\ncommit\ncheckout main\nmerge dev id:"A¦"')
+    ).toBe(
+      '"A" => **commit** `A`\n\nAn earlier commit has this id, so this merge is rejected and the earlier commit is drawn.'
+    );
+    // A merge that a later commit replaces is still the later commit's story (D264).
+    expect(
+      hover('gitGraph\nbranch dev\ncommit\ncheckout main\nmerge dev id:"M¦"\ncommit id:"M"')
+    ).toBe('"M" => **commit** `M`\n\nA later commit takes this id, so this one is not drawn.');
     expect(hover('gitGraph\ncherry-pick id:"no¦pe"')).toBe(
       '"nope" => **commit** `nope`\n\nNo commit has this id.'
     );

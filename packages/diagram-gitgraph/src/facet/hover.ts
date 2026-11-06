@@ -65,6 +65,15 @@ function commitFacts(commit: GitCommit, node: GitStatementNode | undefined): str
   return facts;
 }
 
+/** Whether a commit or merge statement before `node` writes `id:"<id>"`. */
+function writtenBefore(ast: GitGraphDocument, node: GitStatementNode, id: string): boolean {
+  for (const n of ast.children) {
+    if (n === node) return false;
+    if ((n.type === 'Commit' || n.type === 'Merge') && n.commitId?.value === id) return true;
+  }
+  return false;
+}
+
 function commitHover(
   id: string,
   model: GitModel,
@@ -74,9 +83,11 @@ function commitHover(
   const commit = model.commits.find((c) => c.id === id);
   const head = `**commit** ${code(id)}`;
   if (!commit) return `${head}\n\nNo commit has this id.`;
-  const defines = node.type === 'Commit' || node.type === 'Merge';
+  if (node.type === 'Merge' && commit.astId !== node.id && writtenBefore(ast, node, id))
+    // v12: a merge may not reuse an id; it is rejected (GIT_MERGE_DUPLICATE_ID).
+    return `${head}\n\nAn earlier commit has this id, so this merge is rejected and the earlier commit is drawn.`;
   // D264: a later commit with the same id replaced this one.
-  if (defines && commit.astId !== node.id)
+  if ((node.type === 'Commit' || node.type === 'Merge') && commit.astId !== node.id)
     return `${head}\n\nA later commit takes this id, so this one is not drawn.`;
   const facts = commitFacts(
     commit,

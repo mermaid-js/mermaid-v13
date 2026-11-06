@@ -11,8 +11,8 @@ import { gitApi } from './render-api.ts';
  * is seen to take the variable v12's style sheet gave it.
  */
 let api: Mermaid;
-beforeAll(async () => {
-  api = await gitApi();
+beforeAll(() => {
+  api = gitApi();
 });
 
 /** Node colours an author sets, so the literal output shows which one a part took. */
@@ -39,7 +39,7 @@ const GIT = {
 
 const draw = async (src: string, m: Mermaid = api): Promise<SvgView> =>
   parseSvg((await m.render('g', src)).svg);
-const literal = (theme: string, extra: Record<string, unknown> = {}): Promise<Mermaid> =>
+const literal = (theme: string, extra: Record<string, unknown> = {}): Mermaid =>
   gitApi({
     theme,
     output: { cssVariables: false },
@@ -113,6 +113,17 @@ describe('gitGraph render: structure and ids', () => {
     expect(byClass(two, 'arrow').map((n) => two.getAttr(n, 'data-id'))).toEqual(['A>B', 'B>C']);
   });
 
+  it('draws a repeated parent once and percent-encodes % and > in an arrow data-id', async () => {
+    // dev's head is A, so the cherry-pick's parents are [A, A]: v12 drew two coincident paths.
+    const pick = await draw('gitGraph\ncommit id:"A"\nbranch dev\ncherry-pick id:"A"');
+    const ids = byClass(pick, 'arrow').map((n) => pick.getAttr(n, 'data-id'));
+    expect(ids).toHaveLength(1);
+    expect(ids[0]).toMatch(/^A>[^>]+$/);
+    // `a>b` → `c` and `a` → `b>c` would both have read `a>b>c`.
+    const odd = await draw('gitGraph\ncommit id:"a>b"\ncommit id:"c%d"');
+    expect(byClass(odd, 'arrow').map((n) => odd.getAttr(n, 'data-id'))).toEqual(['a%3Eb>c%25d']);
+  });
+
   it('stacks lanes, arrows, bullets, labels and the title in v12 order', async () => {
     const tree = await draw('gitGraph\ntitle T\ncommit tag:"t"\ncommit');
     const root = tree.find({ tag: 'svg' })[0]!;
@@ -151,7 +162,7 @@ describe('gitGraph render: structure and ids', () => {
 
 describe('gitGraph render: classic themes (v12 normalTheme)', () => {
   it('paints each branch from git, gitInv and gitBranchLabel, one slot for all its parts (D267)', async () => {
-    const tree = await draw(EVERY, await literal('default'));
+    const tree = await draw(EVERY, literal('default'));
     const [circle] = bullet(tree, 'd');
     expect(attrs(tree, circle!, 'class', 'fill', 'stroke')).toEqual({
       class: 'commit commit1',
@@ -202,7 +213,7 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
   });
 
   it('draws v12 classic geometry and label paints', async () => {
-    const tree = await draw(EVERY, await literal('default'));
+    const tree = await draw(EVERY, literal('default'));
     expect(tree.getAttr(bullet(tree, 'n')[0]!, 'r')).toBe('10');
     expect(attrs(tree, bullet(tree, 'm')[1]!, 'r', 'fill')).toEqual({
       r: '6',
@@ -236,7 +247,7 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
   });
 
   it('leaves a cherry-pick body unpainted (black, as v12) with white marks, black on a dark theme', async () => {
-    const light = await draw(EVERY, await literal('default'));
+    const light = await draw(EVERY, literal('default'));
     const cp = (tree: SvgView) =>
       tree.children(byClass(tree, 'commit-cherry-pick').find((n) => tree.tag(n) === 'g')!);
     const [body, dot, , stem] = cp(light);
@@ -246,7 +257,7 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
       '#ffffff',
     ]);
     expect(attr(light, dot!, 'r')).toBe('2.75');
-    const dark = await draw(EVERY, await literal('dark'));
+    const dark = await draw(EVERY, literal('dark'));
     expect(attr(dark, cp(dark)[1]!, 'fill')).toBe('#000000');
   });
 
@@ -256,7 +267,7 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
       'commit',
       ...Array.from({ length: 8 }, (_, i) => `branch b${i}\ncommit`),
     ];
-    const tree = await draw(src.join('\n'), await literal('default'));
+    const tree = await draw(src.join('\n'), literal('default'));
     const slots = byClass(tree, 'branchLabelBkg').map((n) => cls(tree, n)[1]);
     expect(slots).toEqual([...Array.from({ length: 8 }, (_, i) => `label${i}`), 'label0']);
     const last = byClass(tree, 'commit-bullet').at(-1)!;
@@ -271,7 +282,7 @@ function attr(t: SvgView, n: SvgElement, name: string): string | undefined {
 
 describe('gitGraph render: neo themes (v12 genColor, NEO_THEMES)', () => {
   it('draws the first branch in nodeBorder and the others from the git palettes, classic geometry (D266)', async () => {
-    const t = await draw(EVERY, await literal('neo'));
+    const t = await draw(EVERY, literal('neo'));
     expect(attrs(t, bullet(t, 'n')[0]!, 'fill', 'stroke', 'r')).toEqual({
       fill: NODE.nodeBorder,
       stroke: NODE.nodeBorder,
@@ -290,7 +301,7 @@ describe('gitGraph render: neo themes (v12 genColor, NEO_THEMES)', () => {
   });
 
   it('boxes branch names in mainBkg with the gradient outline and the shadow (D182)', async () => {
-    const t = await draw(EVERY, await literal('neo'));
+    const t = await draw(EVERY, literal('neo'));
     for (const box of byClass(t, 'branchLabelBkg')) {
       expect(attr(t, box, 'fill')).toBe(NODE.mainBkg);
       expect(attr(t, box, 'stroke')).toBe('url(#g-gradient)');
@@ -300,7 +311,7 @@ describe('gitGraph render: neo themes (v12 genColor, NEO_THEMES)', () => {
   });
 
   it('takes the node colours for labels, tags and bullet insides, and a 4 2 dash', async () => {
-    const t = await draw(EVERY, await literal('neo'));
+    const t = await draw(EVERY, literal('neo'));
     expect(attr(t, byClass(t, 'commit-label')[0]!, 'fill')).toBe(NODE.nodeBorder);
     expect(attrs(t, byClass(t, 'commit-label-bkg')[0]!, 'fill', 'opacity')).toEqual({
       fill: 'none',
@@ -319,7 +330,7 @@ describe('gitGraph render: neo themes (v12 genColor, NEO_THEMES)', () => {
 
 describe('gitGraph render: redux themes (v12 REDUX_GEOMETRY_THEMES)', () => {
   it('draws every branch in nodeBorder, with redux geometry', async () => {
-    const t = await draw(EVERY, await literal('redux'));
+    const t = await draw(EVERY, literal('redux'));
     for (const id of ['n', 'd'])
       expect(attrs(t, bullet(t, id)[0]!, 'fill', 'stroke', 'r')).toEqual({
         fill: NODE.nodeBorder,
@@ -354,7 +365,7 @@ describe('gitGraph render: redux themes (v12 REDUX_GEOMETRY_THEMES)', () => {
   });
 
   it('draws branch lines in the redux commitLineColor of v12, #BDBCCC', async () => {
-    const t = await draw(EVERY, await literal('redux'));
+    const t = await draw(EVERY, literal('redux'));
     expect(attrs(t, byClass(t, 'branch')[0]!, 'stroke', 'stroke-dasharray')).toEqual({
       stroke: '#BDBCCC',
       'stroke-dasharray': '4 2',
@@ -377,10 +388,7 @@ describe('gitGraph render: redux themes (v12 REDUX_GEOMETRY_THEMES)', () => {
       'commit',
       ...Array.from({ length: 8 }, (_, i) => `branch b${i}\ncommit`),
     ];
-    const t = await draw(
-      src.join('\n'),
-      await literal('redux-color', { borderColorArray: border })
-    );
+    const t = await draw(src.join('\n'), literal('redux-color', { borderColorArray: border }));
     const fills = byClass(t, 'commit-bullet').map((g) => attr(t, t.children(g)[0]!, 'fill'));
     expect(fills).toEqual([NODE.nodeBorder, ...border.slice(1), border[1]]);
     const boxes = byClass(t, 'branchLabelBkg');
@@ -396,7 +404,7 @@ describe('gitGraph render: redux themes (v12 REDUX_GEOMETRY_THEMES)', () => {
     expect(byClass(t, 'branch-label2').map((n) => attr(t, n, 'fill'))).toEqual([NODE.nodeBorder]);
     const dark = await draw(
       src.join('\n'),
-      await literal('redux-dark-color', { borderColorArray: border })
+      literal('redux-dark-color', { borderColorArray: border })
     );
     expect(attrs(dark, byClass(dark, 'branchLabelBkg')[2]!, 'fill', 'stroke')).toEqual({
       fill: NODE.mainBkg,
@@ -431,7 +439,7 @@ describe('gitGraph render: text', () => {
       'gitGraph\ntitle In text\ncommit',
       '---\ntitle: Front\n---\ngitGraph\ncommit',
     ]) {
-      const t = await draw(src, await literal('default'));
+      const t = await draw(src, literal('default'));
       const title = one(t, 'gitTitleText');
       expect(textOf(t, title)).toMatch(/In text|Front/);
       expect(attrs(t, title, 'fill', 'font-size')).toEqual({

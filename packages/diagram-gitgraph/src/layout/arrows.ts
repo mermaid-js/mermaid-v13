@@ -51,9 +51,11 @@ export function arrowsOf(env: Env, model: GitModel, p: Placed): GitArrow[] {
 
   const out: GitArrow[] = [];
   commits.forEach((b, bi) => {
-    for (const parent of b.parents) {
+    for (const [k, parent] of b.parents.entries()) {
       const ai = index.get(parent);
-      if (ai === undefined || ai === bi) continue;
+      // A self-parent (D264) draws nothing; a repeated parent (a cherry-pick onto the branch
+      // whose head is its source, `[A, A]`) one arrow, as v12's two coincide.
+      if (ai === undefined || ai === bi || b.parents.indexOf(parent) !== k) continue;
       const a = commits[ai]!;
       const p1 = p.points[ai]!;
       const p2 = p.points[bi]!;

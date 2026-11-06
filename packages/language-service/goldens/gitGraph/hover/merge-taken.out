@@ -1,0 +1,5 @@
+@ 6:18  merge dev id:"A|"
+  6:16-6:19 "\"A\""
+  | **commit** `A`
+  |
+  | An earlier commit has this id, so this merge is rejected and the earlier commit is drawn.

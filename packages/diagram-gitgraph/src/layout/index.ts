@@ -8,7 +8,6 @@ export { gitLayoutViolations, type ViolationOptions } from './invariants.ts';
 export {
   GIT_GEOMETRY,
   GIT_METRICS,
-  type GeometryVariable,
   type GitGeometry,
   type GitGeometryVariables,
   type GitMetrics,
