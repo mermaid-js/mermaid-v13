@@ -9,14 +9,16 @@
  * `max(25, tallest title)`, shared by all; cards `W − 15` wide, centred, 5 apart; a card's height
  * `title + 20 + a`, with `a` half the taller of ticket and assignee (0 without either: checked
  * on a v12 render); the priority bar 2 in from the left, top and bottom. Changed: the margin is
- * `kanban.padding` (D378) and the bounds are what is drawn (D224).
+ * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), and the bounds are what
+ * is drawn (D224).
  */
 import { fromPx } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { KanbanLayoutContext } from './context.ts';
-import { drawnRects, union } from './extent.ts';
+import { drawnRects, inflate, union } from './extent.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 import {
+  COLUMN_TOP,
   configLengths,
   FONT_WEIGHT,
   KANBAN_METRICS,
@@ -39,36 +41,40 @@ const PRIORITIES: ReadonlySet<string> = new Set<KanbanPriority>([
   'Very Low',
 ]);
 
-/** The metrics in the render's units, across (`x`) or down (`y`). */
+/** The metrics table in the render's units. */
 type Lengths = { readonly [K in keyof KanbanMetrics]: number };
 
 interface Env {
-  readonly m: Lengths;
-  /** `W`. */
-  readonly width: number;
+  readonly lengths: Lengths;
+  /** `W`, in the render's units. */
+  readonly sectionWidth: number;
   readonly padding: number;
-  measure(text: string | undefined, max: number): MeasuredLabel | undefined;
+  readonly font: FontKey;
+  /** Lays out `text` wrapped at `wrap`; undefined when there is no text. */
+  measure(text: string | undefined, wrap: number): MeasuredLabel | undefined;
 }
 
 function envOf(ctx: KanbanLayoutContext): Env {
-  const lengths = configLengths(ctx.config.kanban ?? {}, (w) => ctx.warn(w));
-  const px = (v: number, axis: 'x' | 'y'): number => fromPx(ctx.units, v, axis);
-  const m = {} as Record<keyof KanbanMetrics, number>;
+  const config = configLengths(ctx.config.kanban ?? {}, (w) => ctx.warn(w));
+  const convert = (px: number, axis: 'x' | 'y'): number => fromPx(ctx.units, px, axis);
+  const lengths = {} as Record<keyof KanbanMetrics, number>;
   for (const key of Object.keys(KANBAN_METRICS) as (keyof KanbanMetrics)[])
-    m[key] =
-      METRIC_AXIS[key] === 'W' ? KANBAN_METRICS[key] : px(KANBAN_METRICS[key], METRIC_AXIS[key]);
+    lengths[key] = convert(KANBAN_METRICS[key], METRIC_AXIS[key]);
+  // Rounding to whole cells must not undo `MIN_SECTION_WIDTH`.
+  lengths.minWrap = fromPx(ctx.units, KANBAN_METRICS.minWrap, 'x', KANBAN_METRICS.minWrap);
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),
     size: ctx.theme.number('fontSize'),
     weight: FONT_WEIGHT,
   };
   return {
-    m,
-    width: px(lengths.sectionWidth, 'x'),
-    padding: px(lengths.padding, 'x'),
-    measure: (text, max) => {
+    lengths,
+    sectionWidth: Math.max(convert(config.sectionWidth, 'x'), lengths.wrapInset + lengths.minWrap),
+    padding: convert(config.padding, 'x'),
+    font,
+    measure: (text, wrap) => {
       if (text === undefined) return undefined;
-      const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
+      const label = layoutLabel(text, font, wrap, ctx.measurer, {
         markdown: true,
         ...(ctx.inline ? { inline: ctx.inline } : {}),
       });
@@ -85,36 +91,36 @@ const placed = (text: MeasuredLabel, x: number, y: number): PlacedLabel => ({
   text,
 });
 
-const height = (label: MeasuredLabel | undefined): number => label?.height ?? 0;
+const heightOf = (label: MeasuredLabel | undefined): number => label?.height ?? 0;
 
-/** One card, its top at `top`, centred on `cx`. */
+/** One card, its top at `top`, centred on `centre`. */
 function cardOf(
   env: Env,
   source: KanbanLayoutCard,
   column: number,
   index: number,
-  cx: number,
+  centre: number,
   top: number
 ): CardLayout {
-  const { m } = env;
-  const wrap = env.width - m.wrapInset;
+  const { lengths } = env;
+  const wrap = env.sectionWidth - lengths.wrapInset;
   const title = env.measure(source.title, wrap);
   const ticket = env.measure(source.ticket, wrap);
   const assignee = env.measure(source.assigned, wrap);
   // v12 `heightAdj`: an empty label measures 0 high, so a card without either adds nothing.
-  const adj = Math.max(height(ticket), height(assignee)) / 2;
-  const width = env.width - m.cardInset;
-  const x = cx - width / 2;
-  const h = height(title) + 2 * m.cardPadY + adj;
-  const titleTop = top + m.cardPadY - adj / 2;
-  const row = titleTop + height(title);
+  const metaHalf = Math.max(heightOf(ticket), heightOf(assignee)) / 2;
+  const width = env.sectionWidth - lengths.cardInset;
+  const left = centre - width / 2;
+  const height = heightOf(title) + 2 * lengths.cardPadY + metaHalf;
+  const titleTop = top + lengths.cardPadY - metaHalf / 2;
+  const metaTop = titleTop + heightOf(title);
   const bar: PriorityBar | undefined =
     source.priority !== undefined && PRIORITIES.has(source.priority)
       ? {
-          x: x + m.barInset,
-          y1: top + m.barInset,
-          y2: top + h - m.barInset,
-          width: m.barWidth,
+          x: left + lengths.barInsetX,
+          y1: top + lengths.barInsetY,
+          y2: top + height - lengths.barInsetY,
+          width: lengths.barWidth,
           priority: source.priority as KanbanPriority,
         }
       : undefined;
@@ -122,14 +128,16 @@ function cardOf(
     ast: source.ast,
     column,
     index,
-    x,
+    x: left,
     y: top,
     width,
-    height: h,
-    ...(title ? { title: placed(title, x + m.labelInset, titleTop) } : {}),
-    ...(ticket ? { ticket: placed(ticket, x + m.labelInset, row) } : {}),
+    height,
+    ...(title ? { title: placed(title, left + lengths.labelInset, titleTop) } : {}),
+    ...(ticket ? { ticket: placed(ticket, left + lengths.labelInset, metaTop) } : {}),
     ...(assignee
-      ? { assignee: placed(assignee, x + width - m.labelInset - assignee.width, row) }
+      ? {
+          assignee: placed(assignee, left + width - lengths.labelInset - assignee.width, metaTop),
+        }
       : {}),
     ...(bar ? { bar } : {}),
   };
@@ -137,51 +145,48 @@ function cardOf(
 
 export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext): KanbanLayout {
   const env = envOf(ctx);
-  const { m } = env;
-  const W = env.width;
-  const top = -m.columnTop * W;
+  const { lengths, sectionWidth: W } = env;
+  const top = -COLUMN_TOP * W;
   // Titles first: the tallest sets the row every column shares.
   const titles = input.columns.map((c) => env.measure(c.title, W));
-  const titleRow = Math.max(m.titleRow, ...titles.map(height));
+  const titleRow = Math.max(lengths.titleRow, ...titles.map(heightOf));
   const columns: ColumnLayout[] = [];
   const cards: CardLayout[] = [];
+  let slot = 0;
   input.columns.forEach((source, k) => {
-    // v12: column k (from 1) is centred at `W·k + 5(k − 1)`.
-    const cx = W * (k + 1) + m.columnGap * k;
-    let y = top + titleRow;
-    source.cards.forEach((c, i) => {
-      const laid = cardOf(env, c, k, i, cx, y);
+    slot++;
+    // v12 centres column k (from 1) at `W·k + 5(k − 1)`: the first one's left edge is at W / 2.
+    const left = W / 2 + k * (W + lengths.columnGap);
+    const centre = left + W / 2;
+    const stackTop = top + titleRow;
+    let y = stackTop;
+    source.cards.forEach((card, i) => {
+      const laid = cardOf(env, card, k, i, centre, y);
       cards.push(laid);
-      y += laid.height + m.cardGap;
+      y += laid.height + lengths.cardGap;
     });
-    const stack = y - (top + titleRow);
     const title = titles[k];
     columns.push({
       ast: source.ast,
-      slot: k + 1,
-      x: cx - W / 2,
+      slot,
+      x: left,
       y: top,
       width: W,
-      height: Math.max(stack + m.stackEnd, m.stackMin) + titleRow - m.titleRow,
-      ...(title ? { title: placed(title, cx - title.width / 2, top) } : {}),
+      height:
+        Math.max(y - stackTop + lengths.stackEnd, lengths.stackMin) + titleRow - lengths.titleRow,
+      ...(title ? { title: placed(title, centre - title.width / 2, top) } : {}),
     });
   });
-  const stroke = m.stroke;
-  const box = union(drawnRects({ columns, cards, stroke }));
-  const pad = env.padding;
+  const stroke = lengths.stroke;
   return {
     units: ctx.units.id,
+    font: env.font,
     sectionWidth: W,
     titleRow,
-    radius: m.radius,
+    radius: lengths.radius,
     stroke,
     columns,
     cards,
-    bounds: {
-      x: box.x - pad,
-      y: box.y - pad,
-      width: box.width + 2 * pad,
-      height: box.height + 2 * pad,
-    },
+    bounds: inflate(union(drawnRects({ columns, cards, stroke })), env.padding),
   };
 }

@@ -5,7 +5,7 @@
  * `W·k + 5(k − 1)` and every column's top is at `−1.5 W`. Colours are left to the renderer.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
 
 export interface Rect {
   readonly x: number;
@@ -57,6 +57,8 @@ export interface ColumnLayout extends Rect {
 
 export interface KanbanLayout {
   readonly units: 'px' | 'cell';
+  /** The font every label was measured in, and so is drawn in (pitfall 16). */
+  readonly font: FontKey;
   /** `W`: every column's width. */
   readonly sectionWidth: number;
   /** The title row every column shares: its height (`max(25, tallest title)`). */

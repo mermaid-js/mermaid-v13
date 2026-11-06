@@ -4,7 +4,8 @@
  * column and card of the input laid out, in order; columns apart, left to right; every card
  * inside its column, below the shared title row, and clear of the next; every column title in
  * the title row at its column's top; a card's title above its ticket row; the priority bar's
- * line inside its card (in cells its stroke sits on the card's edge); the bounds holding everything drawn (D224). Each violation is one readable
+ * line inside its card (in cells its stroke sits on the card's edge); no box of negative size
+ * (pitfall 22); the bounds holding everything drawn (D224). Each violation is one readable
  * line. Comparisons allow a float tolerance.
  *
  * Not invariants, because v12 does them too: a title word wider than its wrap width overflows
@@ -49,26 +50,33 @@ export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanL
   if (layout.cards.length !== expected.length)
     out.push(`${layout.cards.length} cards laid out for ${expected.length} in the input`);
 
-  layout.columns.forEach((c, k) => {
-    const where = `column ${c.ast}`;
+  let slot = 0;
+  let previousColumn: KanbanLayout['columns'][number] | undefined;
+  layout.columns.forEach((column, k) => {
+    slot++;
+    const where = `column ${column.ast}`;
     const source = input.columns[k];
-    if (source && c.ast !== source.ast) out.push(`column ${k} is ${c.ast}, not ${source.ast}`);
-    if (c.slot !== k + 1) out.push(`${where} has slot ${c.slot}, not ${k + 1}`);
-    if (Math.abs(c.width - layout.sectionWidth) > EPS)
-      out.push(`${where} is ${c.width} wide, not W = ${layout.sectionWidth}`);
-    if (c.height < layout.titleRow - EPS) out.push(`${where} is shorter than the title row`);
-    if (c.title) {
-      if (Math.abs(c.title.y - c.y) > EPS) out.push(`${where}: its title is not at its top`);
-      if (c.title.height > layout.titleRow + EPS)
+    if (source && column.ast !== source.ast)
+      out.push(`column ${k} is ${column.ast}, not ${source.ast}`);
+    if (column.slot !== slot) out.push(`${where} has slot ${column.slot}, not ${slot}`);
+    if (Math.abs(column.width - layout.sectionWidth) > EPS)
+      out.push(`${where} is ${column.width} wide, not W = ${layout.sectionWidth}`);
+    if (column.height < layout.titleRow - EPS) out.push(`${where} is shorter than the title row`);
+    if (column.title) {
+      if (Math.abs(column.title.y - column.y) > EPS)
+        out.push(`${where}: its title is not at its top`);
+      if (column.title.height > layout.titleRow + EPS)
         out.push(`${where}: its title is taller than the title row`);
-      const centre = c.title.x + c.title.width / 2;
-      if (Math.abs(centre - (c.x + c.width / 2)) > EPS)
+      const centre = column.title.x + column.title.width / 2;
+      if (Math.abs(centre - (column.x + column.width / 2)) > EPS)
         out.push(`${where}: its title is off its centre`);
     }
-    const next = layout.columns[k + 1];
-    if (next && c.x + c.width > next.x + EPS) out.push(`${where} overlaps ${next.ast}`);
+    if (previousColumn && previousColumn.x + previousColumn.width > column.x + EPS)
+      out.push(`column ${previousColumn.ast} overlaps ${column.ast}`);
+    previousColumn = column;
   });
 
+  let previousCard: KanbanLayout['cards'][number] | undefined;
   layout.cards.forEach((card, n) => {
     const where = `card ${card.ast}`;
     const want = expected[n];
@@ -76,13 +84,14 @@ export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanL
       out.push(
         `card ${n} is ${card.ast} (column ${card.column}, place ${card.index}), not ${want.card.ast} (column ${want.k}, place ${want.i})`
       );
-    const col = layout.columns[card.column];
-    if (!col) {
+    const column = layout.columns[card.column];
+    if (!column) {
       out.push(`${where} names column ${card.column}, which is not laid out`);
       return;
     }
-    if (!contains(col, card)) out.push(`${where} ${box(card)} is outside its column ${box(col)}`);
-    const rowEnd = col.y + layout.titleRow;
+    if (!contains(column, card))
+      out.push(`${where} ${box(card)} is outside its column ${box(column)}`);
+    const rowEnd = column.y + layout.titleRow;
     if (card.y < rowEnd - EPS) out.push(`${where} reaches into the title row`);
     if (card.index === 0 && Math.abs(card.y - rowEnd) > EPS)
       out.push(`${where}: the first card does not start under the shared title row`);
@@ -90,21 +99,39 @@ export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanL
       for (const below of [card.ticket, card.assignee])
         if (below && below.y < card.title.y + card.title.height - EPS)
           out.push(`${where}: its ticket row overlaps its title`);
+    if (previousCard && previousCard.column === card.column) {
+      if (overlaps(previousCard, card)) out.push(`card ${previousCard.ast} overlaps ${card.ast}`);
+      if (card.y < previousCard.y + previousCard.height - EPS)
+        out.push(`${card.ast} is above ${previousCard.ast}`);
+    }
+    previousCard = card;
     if (card.bar) {
-      const b = card.bar;
+      const { bar } = card;
       if (
-        !within(b.x, card.x, card.x + card.width) ||
-        !within(b.y1, card.y, card.y + card.height) ||
-        !within(b.y2, b.y1, card.y + card.height)
+        !within(bar.x, card.x, card.x + card.width) ||
+        !within(bar.y1, card.y, card.y + card.height) ||
+        !within(bar.y2, bar.y1, card.y + card.height)
       )
         out.push(`${where}: its priority bar is outside it`);
     }
-    const next = layout.cards[n + 1];
-    if (next && next.column === card.column) {
-      if (overlaps(card, next)) out.push(`${where} overlaps ${next.ast}`);
-      if (next.y < card.y + card.height - EPS) out.push(`${next.ast} is above ${card.ast}`);
-    }
   });
+
+  // Pitfall 22: no box comes out with a negative size, whatever the config.
+  const boxes: [string, Rect | undefined][] = [['the bounds', layout.bounds]];
+  for (const c of layout.columns)
+    boxes.push([`column ${c.ast}`, c], [`column ${c.ast}'s title`, c.title]);
+  for (const c of layout.cards)
+    boxes.push(
+      [`card ${c.ast}`, c],
+      [`card ${c.ast}'s title`, c.title],
+      [`card ${c.ast}'s ticket`, c.ticket],
+      [`card ${c.ast}'s assignee`, c.assignee]
+    );
+  for (const [name, r] of boxes)
+    if (r && (r.width < 0 || r.height < 0)) out.push(`${name} has a negative size ${box(r)}`);
+  for (const c of layout.cards)
+    if (c.bar && (c.bar.width < 0 || c.bar.y2 < c.bar.y1))
+      out.push(`card ${c.ast}'s priority bar has a negative size`);
 
   for (const r of drawnRects(layout))
     if (!contains(layout.bounds, r)) out.push(`the bounds do not hold ${box(r)}`);

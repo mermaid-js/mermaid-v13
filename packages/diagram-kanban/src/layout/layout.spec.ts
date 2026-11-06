@@ -158,6 +158,17 @@ describe('kanban layout: the shared title row', () => {
   });
 });
 
+describe('kanban layout: font', () => {
+  it('carries the font it measured in, for the renderer to draw in (pitfall 16)', () => {
+    const theme = createTheme(spec);
+    expect(lay(board()).font).toEqual({
+      family: theme.value('fontFamily'),
+      size: theme.number('fontSize'),
+      weight: 400,
+    });
+  });
+});
+
 describe('kanban layout: config', () => {
   it('takes kanban.sectionWidth as W, wrapping card titles at W − 25', () => {
     const title = 'aaaa bbbb cccc dddd eeee ffff gggg hhhh';
@@ -181,6 +192,21 @@ describe('kanban layout: config', () => {
     ]);
   });
 
+  it('raises a sectionWidth too narrow for its cards to the least width, with a warning', () => {
+    for (const sectionWidth of [1, 10, 25.5]) {
+      const warnings: Warning[] = [];
+      const layout = lay(board(column('a', 'A', card('x', 'a b'))), { sectionWidth }, warnings);
+      expect(layout.sectionWidth).toBe(26);
+      // W − 15 wide, its title wrapped at W − 25 = 1: one word a line.
+      expect(layout.cards[0]!.width).toBe(11);
+      expect(layout.cards[0]!.title!.text.lines.length).toBe(2);
+      expect(warnings.map((w) => [w.code, w.path])).toEqual([
+        ['KANBAN_CONFIG_IGNORED', 'kanban.sectionWidth'],
+      ]);
+    }
+    expect(lay(board(column('a')), { sectionWidth: 26 }).sectionWidth).toBe(26);
+  });
+
   it('takes a numeric string as v12 did, and sectionWidth 0 as 200 with no warning', () => {
     const warnings: Warning[] = [];
     expect(lay(board(column('a')), { sectionWidth: '300' }, warnings).sectionWidth).toBe(300);
@@ -194,6 +220,7 @@ describe('kanban layout invariants', () => {
     for (const [variant, extra] of [
       ['fixture config', {}],
       ['sectionWidth 80, padding 0', { sectionWidth: 80, padding: 0 }],
+      ['sectionWidth 10 (raised to the least)', { sectionWidth: 10 }],
     ] as const)
       it(`${name}, ${variant}`, () => {
         const layout = lay(input, { ...config, ...extra });
@@ -254,5 +281,15 @@ describe('kanban layout in cells', () => {
     });
     // 200 px and 5 px at 8 px a cell.
     expect([sectionWidth, radius]).toEqual([25, 1]);
+    // The least W in cells still leaves card labels a cell to wrap at.
+    const narrow = layoutKanban(board(column('a', 'A', card('x'))), {
+      config: { kanban: { sectionWidth: 26 } } as unknown as ResolvedConfig,
+      measurer: cellMeasurer,
+      units: cellProfile(),
+      theme: createTheme(spec),
+      warn: () => {},
+    });
+    expect(narrow.sectionWidth - narrow.cards[0]!.width).toBe(2);
+    expect(narrow.sectionWidth).toBe(4);
   });
 });
