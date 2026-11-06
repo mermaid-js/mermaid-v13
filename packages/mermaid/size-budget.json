@@ -1,8 +1,8 @@
 {
   "core": {
-    "description": "R-PERF-8 / D161: the mermaid entry's static import closure (@mermaid-js/core plus the public API, registry, detectors and DOM adapter, no diagram chunk), measured on the CDN build's ESM entry (src/cdn.ts, which is src/index.ts plus the CDN queue and cdnBase; spec #218 T6), bundled with the bench's production esbuild options, gzip level 9. Enforced by packages/bench/src/core-size.spec.ts in pnpm check.",
+    "description": "R-PERF-8 / D161, D310: the mermaid entry's static import closure (@mermaid-js/core plus the public API, registry, detectors and DOM adapter, no diagram chunk), measured on the CDN build's ESM entry (src/cdn.ts, which is src/index.ts plus the CDN queue and cdnBase; spec #218 T6), bundled with the bench's production esbuild options, gzip level 9. Enforced by packages/bench/src/core-size.spec.ts in pnpm check.",
     "entry": "packages/mermaid/src/cdn.ts",
-    "gzipBytes": 90112
+    "gzipBytes": 94208
   },
   "loaded": {
     "description": "R-PERF-1 / D160: core + flowchart as a browser page loads them for one flowchart render, gzip level 9. Gated by the bench (packages/bench/src/gates.ts, gate `size`).",
