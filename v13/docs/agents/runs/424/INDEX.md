@@ -8,7 +8,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T2 grammar, parser, model, AST | #453 | #451 | blocked |
 | T3 layout | #455 | #453 | blocked (may start on hand-built models) |
 | T4 SVG renderer | #457 | #455; colours #414 T0a | blocked |
-| T6 language facet | #463 | #453 | blocked |
+| T6 language facet | #463 | #453; #406 (`LanguageFacet.standalone`) | blocked |
 | T5 integration | #459 | #457, #463, #414 T0a | blocked |
 | T7 ascii (Should) | #466 | #459 | blocked |
 
@@ -26,7 +26,7 @@ M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#4
 
 | After | Core gz | Δ |
 | --- | --- | --- |
-| base (dd4b9d19f) | (measure) | — |
+| base (dd4b9d19f) | 91,530 B | — (2,678 B spare) |
 
 ## Finish rule
 
