@@ -4,7 +4,7 @@
 - **Notes:** this folder. Read `INDEX.md`, `01-v12-packet.md`, `GAPS.md` (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
 - **Repo rules:** pnpm; no TS enums; no console in shipped packages. `@mermaid-js/diagram-packet` imports only `@mermaid-js/core` subpaths, zero dependencies, never another diagram package. Test sources go in `.mmd` fixtures under `e2e/diagrams/packet/`, failing or lexer-only inputs in `packages/conformance/corpus/packet-cases.json`, not in hand-written TS arrays.
 - **Worktree:** `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_<short>`. Work only there with absolute paths; stay out of other worktrees. Run `pnpm install` first (and again after merging a base that adds a package; then delete `.eslintcache`).
-- **Integration branch:** `feature/421_packet`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/421-packet-849c7d`. Read only from it; never write there.
+- **Integration branch:** `feature/421_packet`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/421-packet-849c7d`. Read only from it; never write there. Merge only `feature/421_packet` into your branch, never `mermaid-v13` or `feature/414_theme-t0`: until the Theme T0 PR (#472) merges, the base arrives only through the T0 branch, merged by the orchestrator.
 - **Parallel sessions** (Theme T0 #414, info, radar, cynefin, kanban; M4 wave 2 finishing) edit shared files: the theme vocabulary, the conformance registry, the generated registry and config, `langium-lexer.ts`. Keep shared edits small and additive. Never hand-edit generated files (D112); run the `gen:*` script.
 - **Theme:** packet's theme rows belong in the package's `DiagramPlugin.theme` table (T4 builds it on #414's T0a, merged here; API `v13/docs/agents/runs/414/CONTRACT.md`). Never add packet rows to core's vocabulary. A diagram never names a theme, and shared theme code never names a diagram-only variable (D331). Core size is near R-PERF-8's limit.
 - **No AI attribution** in commits (no Co-Authored-By, no "Generated with"). Never edit `.github/workflows/*`. Never loosen a gate.
@@ -23,5 +23,5 @@
 ## Machine-wide locks (many sessions share one machine)
 
 - Every full `pnpm check`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
-- Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`.
+- Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`. While the wave coordinator's load rule is on (AI-Max overloaded), `pnpm e2e` and pushes take `m3-check.lock` too, so all heavy runs queue.
 - A timing test that fails under load is not a regression: rerun it under the lock before acting on it. `language-budget-sequence.spec.ts` (R-LANG-4) is a known timing flake.
