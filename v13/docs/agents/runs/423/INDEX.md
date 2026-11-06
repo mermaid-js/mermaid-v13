@@ -21,6 +21,10 @@ Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/merm
 - **`CynefinModel`** (`packages/diagram-cynefin/src/model.ts`): landed by the orchestrator with the package skeleton before T1 and T3 started. T2 produces it; T3 reads it. Change it only additively and note the change in GAPS.md.
 - **Theme table** (#414 T0a, `feature/414_theme-t0` at `462aef4e9`, merged here in `b926c9994`): `DiagramThemeTable` on `DiagramPlugin.theme`. API: `v13/docs/agents/runs/414/CONTRACT.md`. T4 declares cynefin's table inline on the plugin (T0b's per-package `src/theme/vocabulary.ts` convention is still in progress and will be additive); T5 adds the theme oracle specs, nested-override fixtures and baselines. Never add cynefin rows to core.
 
+## Base rule (coordinator, until #472 Theme T0 merges)
+
+Take `mermaid-v13` only through `feature/414_theme-t0`, never directly (M4 wave 2 on `mermaid-v13` conflicts with T0a in 11 core theme files; the T0 session resolves them once and pushes a new tip). Build on `462aef4e9` until the coordinator sends the new sha.
+
 ## Finish rule
 
 The integration PR stays a draft until all of these hold; then `gh pr ready <PR> -R mermaid-js/mermaid-v13` (never merge it):
