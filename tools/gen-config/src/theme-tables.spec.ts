@@ -61,12 +61,18 @@ const twelfth = (family: ThemeFamily, dark: boolean): ThemeSpec => ({
  * every slot past the end, as `currentColor` (D332): that counts as resolved where `carrier`, a
  * built-in theme with the same traits (so the same entries apply) and palettes, gives a colour.
  */
-function unresolved(theme: Theme, table: DiagramThemeTable, carrier?: Theme): string[] {
+function unresolved(
+  theme: Theme,
+  table: DiagramThemeTable,
+  carrier?: Theme,
+  authorOnly: readonly string[] = []
+): string[] {
   const out: string[] = [];
   for (const [name, { kind }] of Object.entries(table.vars)) {
     const v = theme.value(name);
-    const ok =
-      kind === 'color'
+    const ok = authorOnly.includes(name)
+      ? v === 'currentColor'
+      : kind === 'color'
         ? parseColor(v) !== undefined ||
           (v === 'currentColor' &&
             carrier !== undefined &&
@@ -85,10 +91,23 @@ function unresolved(theme: Theme, table: DiagramThemeTable, carrier?: Theme): st
   return out;
 }
 
+/**
+ * Rows no theme sets, only an author: journey's `actor0`–`actor5` (D249), which win over
+ * `journey.actorColours` when set. Unset, they resolve to `currentColor` in every theme.
+ */
+const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = {
+  journey: ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'],
+};
+
 /** The built-in theme of each family and dark trait. */
 const CARRIERS = new Map(specs.map((s) => [`${s.family} ${s.dark}`, s]));
 
-function resolve(spec: ThemeSpec, table: DiagramThemeTable, synthetic = false): string[] {
+function resolve(
+  spec: ThemeSpec,
+  table: DiagramThemeTable,
+  synthetic = false,
+  authorOnly: readonly string[] = []
+): string[] {
   const warnings: ThemeWarning[] = [];
   const options = {
     diagram: table,
@@ -98,7 +117,7 @@ function resolve(spec: ThemeSpec, table: DiagramThemeTable, synthetic = false): 
   const theme = createTheme(spec, options);
   const like = synthetic ? CARRIERS.get(`${spec.family} ${spec.dark}`) : undefined;
   const carrier = like && createTheme(like, { diagram: table, cssVariables: false });
-  return [...unresolved(theme, table, carrier), ...warnings.map((w) => w.message)];
+  return [...unresolved(theme, table, carrier, authorOnly), ...warnings.map((w) => w.message)];
 }
 
 describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
@@ -107,8 +126,9 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
     expect(specs.map((s) => s.name)).toEqual([...THEME_NAMES]);
   });
 
-  it.each(TABLES)('%s: every row resolves in all eleven themes', (_type, table) => {
-    expect(Object.fromEntries(specs.map((s) => [s.name, resolve(s, table)]))).toEqual(
+  it.each(TABLES)('%s: every row resolves in all eleven themes', (type, table) => {
+    const only = AUTHOR_ONLY[type];
+    expect(Object.fromEntries(specs.map((s) => [s.name, resolve(s, table, false, only)]))).toEqual(
       Object.fromEntries(specs.map((s) => [s.name, []]))
     );
   });
@@ -126,11 +146,12 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
 
   it.each(TABLES)(
     '%s: a twelfth theme with only base colours and a family resolves every variable',
-    (_type, table) => {
+    (type, table) => {
       const name = (s: ThemeSpec) => `${s.family}${s.dark ? ' dark' : ''}`;
-      expect(Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, true)]))).toEqual(
-        Object.fromEntries(synthetic.map((s) => [name(s), []]))
-      );
+      const only = AUTHOR_ONLY[type];
+      expect(
+        Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, true, only)]))
+      ).toEqual(Object.fromEntries(synthetic.map((s) => [name(s), []])));
     }
   );
 

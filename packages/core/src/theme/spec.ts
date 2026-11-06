@@ -4,7 +4,6 @@
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
 import type { ThemeFamily } from './diagram.ts';
-import { fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -70,34 +69,6 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
-  // v12 journey `.face { fill: faceColor or #FFF8DC }`; no v12 theme sets faceColor.
-  faceColor: '#fff8dc',
-  // Journey section fills (#327, D241): v12 theme-base takes primaryColor, secondaryColor and
-  // their hue turns by +64, -64 and 128 degrees. 2-7 are base's resolved v12 values; every other
-  // theme pins all eight (`fillTypes`, specs/palettes.ts). A rule can now write a hue turn as a
-  // literal (`literal(adjustHue(primaryColor, 64))`, D332), which the T0 migration uses.
-  ...fillTypes('primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'),
-  // Pie slots (#325), as v12 theme-base derives them: the base colours, then khroma `darken`
-  // by 10. 7-12 are base's resolved v12 values (hue turns, which `literal()` can now derive,
-  // D332); the other themes set their own (`pieSlots` in their specs).
-  pie1: 'primaryColor',
-  pie2: 'secondaryColor',
-  pie3: 'tertiaryColor',
-  pie4: 'darkenHsl(primaryColor, 10%)',
-  pie5: 'darkenHsl(secondaryColor, 10%)',
-  pie6: 'darkenHsl(tertiaryColor, 10%)',
-  pie7: '#c5ffaa',
-  pie8: '#ffaac5',
-  pie9: '#ddfff4',
-  pie10: '#a3ff77',
-  pie11: '#ff77a3',
-  pie12: '#aaffe3',
-  // v12 titles and legends in `taskTextDarkColor`, sections in `textColor`, strokes black.
-  pieTitleTextColor: 'textColor',
-  pieSectionTextColor: 'textColor',
-  pieLegendTextColor: 'textColor',
-  pieStrokeColor: 'black',
-  pieOuterStrokeColor: 'black',
   // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',

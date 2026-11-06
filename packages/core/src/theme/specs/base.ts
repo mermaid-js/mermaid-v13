@@ -3,7 +3,7 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE } from './palettes.ts';
+import { LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
@@ -49,7 +49,17 @@ const base: ThemeSpec = {
     useGradient: false,
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode).
-  palettes: { ...darkenedScale(SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  palettes: {
+    ...darkenedScale(SOURCES, 25),
+    cScaleLabel: LABEL_SCALE,
+    // v12 theme-base.js: the base colours, then khroma `darken` by 10, then hue turns, which are
+    // base's resolved v12 values; the tints are the primary and secondary colours and v12's
+    // resolved ±64° and 128° turns of base's own.
+    seriesColorArray: series(
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #c5ffaa #ffaac5 #ddfff4 #a3ff77 #ff77a3 #aaffe3 ' +
+        'primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd textColor textColor'
+    ),
+  },
   darkModePalettes: darkenedScale(SOURCES, 75),
 };
 

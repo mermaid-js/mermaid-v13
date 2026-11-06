@@ -148,13 +148,6 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'messageEndGap',
     'labelBoxExtraHeight',
     'actorFooterPadding',
-    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
-    'pieTitleTextSize',
-    'pieSectionTextSize',
-    'pieLegendTextSize',
-    'pieStrokeWidth',
-    'pieOuterStrokeWidth',
-    'pieOpacity',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -175,9 +168,10 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
-  // Shared inputs that name no diagram (D332, D381): a theme's series colours, which charts
-  // and slotted diagrams read by slot (`seriesColorArray3`), and a ten-colour chart palette
-  // (v12's xychart `plotColorPalette`), empty until a theme supplies it.
+  // Shared inputs that name no diagram (D332, D381): a theme's series colours, tints and inks,
+  // which charts and slotted diagrams read by slot (`seriesColorArray3`; the layout is
+  // `series` in specs/palettes.ts), and a ten-colour chart palette (v12's xychart
+  // `plotColorPalette`), empty until a theme supplies it.
   'seriesColorArray',
   'plotColorArray',
 ] as const;
@@ -212,22 +206,11 @@ const TEXT_USERS = [
   'quadrant',
 ];
 
-const JOURNEY = ['journey'];
-
-/**
- * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
- * in core's size budget (R-PERF-8).
- */
-const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
-  Object.fromEntries(
-    Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
-  ))();
-
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
- * Built in a pure call: its spreads (`PIE_SLOTS`, the journey rows) made the object literal
- * look side-effecting, so the CDN core kept the whole table with its `usedBy` lists (R-PERF-8).
+ * Built in a pure call: spreads once made the object literal look side-effecting, so the CDN
+ * core kept the whole table with its `usedBy` lists (R-PERF-8).
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
@@ -294,20 +277,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
-  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
-  // opacity, derived as each v12 theme derives them.
-  ...PIE_SLOTS,
-  pieTitleTextSize: def('pts', 'length', ['pie']),
-  pieTitleTextColor: def('ptc', 'color', ['pie']),
-  pieSectionTextSize: def('pss', 'length', ['pie']),
-  pieSectionTextColor: def('psc', 'color', ['pie']),
-  pieLegendTextSize: def('pls', 'length', ['pie']),
-  pieLegendTextColor: def('plc', 'color', ['pie']),
-  pieStrokeColor: def('pkc', 'color', ['pie']),
-  pieStrokeWidth: def('pkw', 'length', ['pie']),
-  pieOuterStrokeColor: def('poc', 'color', ['pie']),
-  pieOuterStrokeWidth: def('pow', 'length', ['pie']),
-  pieOpacity: def('pop', 'opacity', ['pie']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -373,14 +342,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
-  // user journey (#290): section and task fills by slot (D241), the face, and the author's
-  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
-  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
-  ...Object.fromEntries(
-    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
-  ),
-  faceColor: def('jfc', 'color', JOURNEY),
-  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),

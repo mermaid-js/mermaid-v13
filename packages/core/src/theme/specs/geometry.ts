@@ -180,16 +180,7 @@ export const CLASSIC_CLASS_MARKERS: Readonly<Record<ClassMarkerVariable, number>
   dependencyMarkerGap: 1,
 };
 
-/**
- * Sizes every theme shares: v12 drew class multiplicities at 11px (`.edgeTerminals`), and every
- * v12 theme sets the same pie text sizes, stroke widths and slice opacity (`theme-*.js`, #325).
- */
+/** Sizes every theme shares: v12 drew class multiplicities at 11px (`.edgeTerminals`). */
 export const TEXT_SIZES = {
   classTerminalFontSize: 11,
-  pieTitleTextSize: 25,
-  pieSectionTextSize: 17,
-  pieLegendTextSize: 17,
-  pieStrokeWidth: 2,
-  pieOuterStrokeWidth: 2,
-  pieOpacity: 0.7,
 } as const;

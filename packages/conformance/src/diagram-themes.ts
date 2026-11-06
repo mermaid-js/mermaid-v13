@@ -6,6 +6,7 @@
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import {
+  PALETTE_VARIABLES,
   THEME_VARIABLES,
   createTheme,
   type DiagramThemeTable,
@@ -46,6 +47,15 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
     ...Object.entries(THEME_VARIABLES),
     ...Object.values(DIAGRAM_TABLES).flatMap((t) => Object.entries(t?.vars ?? {})),
   ]);
+
+/**
+ * The palettes v12 has. The shared inputs of D332 and D381 (`seriesColorArray`, `plotColorArray`)
+ * are v13's, with no v12 counterpart: a theme fills them with v12's values of the diagram
+ * variables that read them (`pie1`, `fillType0`, …), which the oracle specs compare instead.
+ */
+export const V12_PALETTES: readonly (typeof PALETTE_VARIABLES)[number][] = PALETTE_VARIABLES.filter(
+  (p) => p !== 'seriesColorArray' && p !== 'plotColorArray'
+);
 
 /**
  * One theme over every table: each method that takes a variable name answers from the theme

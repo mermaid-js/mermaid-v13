@@ -1,8 +1,8 @@
 /**
  * `forest`: v12 `theme-forest.js`.
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { paletteSlots, series } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
@@ -11,22 +11,6 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
-
-/** v12 `theme-forest.js`: primary and secondary −30, then hue turns. */
-const PIE_FOREST: ThemeRuleTable = pieSlots([
-  undefined,
-  undefined,
-  undefined,
-  'darkenHsl(primaryColor, 30%)',
-  'darkenHsl(secondaryColor, 30%)',
-  '#33b42f',
-  '#70d990',
-  '#d99070',
-  '#98cde4',
-  '#1a6330',
-  '#63301a',
-  '#1a4d63',
-]);
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -58,10 +42,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)', ...PIE_FOREST },
+  rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
     actorBorder: '#a6cf47',
@@ -99,6 +81,12 @@ const theme: ThemeSpec = {
     ),
     // v12 sets labelTextColor to actorTextColor before the labels: `scaleLabelColor` (D334).
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
+    // v12 theme-forest.js: the base colours, primary and secondary −30, then hue turns; then the
+    // tints, v12's resolved values.
+    seriesColorArray: series(
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) #33b42f #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
+        '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff textColor textColor'
+    ),
   },
 };
 

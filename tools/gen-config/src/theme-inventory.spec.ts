@@ -123,7 +123,12 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
   });
 
   it("adds the packages' rows after core's, leaving core's part as it is (spec #414 T1)", async () => {
-    expect(REPO.filter((p) => p.vocabulary).map((p) => p.type)).toEqual(['quadrant', 'timeline']);
+    expect(REPO.filter((p) => p.vocabulary).map((p) => p.type)).toEqual([
+      'journey',
+      'pie',
+      'quadrant',
+      'timeline',
+    ]);
     const core = (await themeInventory()).trimEnd();
     const doc = await themeInventory(REPO);
     expect(doc.startsWith(core + '\n\n## Diagram variables\n')).toBe(true);
