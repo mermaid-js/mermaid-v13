@@ -29,15 +29,19 @@ export function rotation<T>(items: readonly T[], index: number): T[] {
 const brief = (r: DiagramResult) =>
   r.status === 'ok' && r.warmMs !== null ? `${r.warmMs.toFixed(3)} ms` : r.status;
 
+/** Runs on the sessions after the last fixture, before they close (the page-history pass). */
+export type Finish = (sessions: Session[]) => Promise<void>;
+
 /**
- * Measures every fixture on every session, alternating, and closes the sessions. Returns the
- * runs in the order the sessions were given.
+ * Measures every fixture on every session, alternating, then runs `finish`, and closes the
+ * sessions. Returns the runs in the order the sessions were given.
  */
 export async function interleave(
   sessions: Session[],
   fixtures: Fixture[],
   log: (line: string) => void,
-  env: string
+  env: string,
+  finish?: Finish
 ): Promise<RendererRun[]> {
   try {
     for (const [i, f] of fixtures.entries()) {
@@ -49,6 +53,7 @@ export async function interleave(
       }
       log(`  ${env} ${i + 1}/${fixtures.length} ${f.id}: ${parts.join(', ')}`);
     }
+    await finish?.(sessions);
   } finally {
     await Promise.all(sessions.map((s) => s.close()));
   }
@@ -64,7 +69,8 @@ export async function runAll(
   open: (renderer: RendererId) => Promise<Session | RendererRun>,
   fixtures: Fixture[],
   log: (line: string) => void,
-  env: string
+  env: string,
+  finish?: Finish
 ): Promise<RendererRun[]> {
   const opened: (Session | RendererRun)[] = [];
   for (const r of renderers) opened.push(await open(r));
@@ -73,6 +79,6 @@ export async function runAll(
     log(
       `Running ${sessions.map((s) => s.renderer).join(', ')} in ${env}, alternating, over ${fixtures.length} fixtures`
     );
-  await interleave(sessions, fixtures, log, env);
+  await interleave(sessions, fixtures, log, env, finish);
   return opened.map((x) => ('measure' in x ? x.run : x));
 }

@@ -32,6 +32,7 @@ const GATE_IDS: readonly GateId[] = [
   'stage-regression',
   'ready-at',
   'ascii-size',
+  'pele-ratchet',
 ];
 
 /** Gate ids from a comma list (`--report-only`, else BENCH_REPORT_ONLY) that never fail the job. */

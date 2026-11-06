@@ -42,6 +42,12 @@ export const LIMITS = {
    * A soft budget (D87): the `ascii-size` gate reports it and never fails the job.
    */
   asciiGzipBytes: 15 * 1024,
+  /**
+   * R-PERF-10 / D206: the warm geomean of v13 against default Pele at the last close-out, and how
+   * much worse a run may be. Each close-out records a new ratio here. Recorded before #265.
+   */
+  peleRatio: 1.45,
+  peleSlack: 1.05,
 } as const;
 
 export type GateMode = 'report' | 'enforce';
@@ -53,7 +59,8 @@ export type GateId =
   | 'ok-count'
   | 'stage-regression'
   | 'ready-at'
-  | 'ascii-size';
+  | 'ascii-size'
+  | 'pele-ratchet';
 export type GateStatus = 'pass' | 'fail' | 'skip';
 
 export interface GateResult {
@@ -104,6 +111,16 @@ export function speedup(
   renderer: RendererId = 'v13',
   against: RendererId = 'v12-frozen'
 ): { value: number | null; common: number } {
+  const { value, common } = warmRatio(report, renderer, against);
+  return { value: value === null ? null : round(value), common };
+}
+
+/** `speedup` before rounding. */
+function warmRatio(
+  report: BenchReport,
+  renderer: RendererId,
+  against: RendererId
+): { value: number | null; common: number } {
   const base = new Map(
     (rendererRun(report, against)?.results ?? []).filter(okWarm).map((r) => [r.id, r.warmMs])
   );
@@ -112,8 +129,7 @@ export function speedup(
     const b = base.get(r.id);
     if (b !== undefined) ratios.push(b / r.warmMs);
   }
-  const g = geomean(ratios);
-  return { value: g === null ? null : round(g), common: ratios.length };
+  return { value: geomean(ratios), common: ratios.length };
 }
 
 /** Per stage, the geomean of `current / baseline` over diagrams timed in both. */
@@ -139,6 +155,42 @@ export function stageRatios(
 }
 
 const kb = (bytes: number) => `${round(bytes / 1024, 1)} KB`;
+
+/** Marks the gates this run did not measure as skipped, with the reason. */
+function skipUnmeasured(gates: GateResult[], skip: GateInput['skip'] = {}): void {
+  for (const g of gates) {
+    const reason = skip[g.id];
+    if (reason === undefined) continue;
+    Object.assign(g, { status: 'skip', enforced: false, actual: null, detail: reason });
+  }
+}
+
+/**
+ * R-PERF-10: v13's warm geomean against default Pele, no worse than the recorded close-out ratio
+ * plus 5%. It shares R-PERF-3's enforcement (D150, D206): local runs enforce it, CI reports it.
+ */
+function peleGate(report: BenchReport, enforced: boolean): GateResult {
+  const pele =
+    rendererRun(report, 'pele')?.status === 'ready' ? warmRatio(report, 'v13', 'pele') : undefined;
+  const ratio = pele?.value ? round(1 / pele.value) : null;
+  const limit = round(LIMITS.peleRatio * LIMITS.peleSlack);
+  let status: GateStatus = 'skip';
+  if (ratio !== null) status = ratio <= limit ? 'pass' : 'fail';
+  return {
+    id: 'pele-ratchet',
+    title: 'Warm geomean against Pele, no worse than the last close-out',
+    requirement: 'R-PERF-10 (Should)',
+    level: 'should',
+    status,
+    enforced: ratio !== null && enforced,
+    actual: ratio,
+    limit,
+    detail:
+      ratio === null
+        ? 'Pele did not run'
+        : `v13 ${ratio}× Pele's warm time over ${pele!.common} common diagrams (recorded ${LIMITS.peleRatio}×, limit ${limit}×)`,
+  };
+}
 
 function stageStatus(compared: number, regressed: number): GateStatus {
   if (compared === 0) return 'skip';
@@ -258,6 +310,8 @@ export function evaluateGates({
     });
   }
 
+  gates.push(peleGate(report, enforces('speed') && enforces('pele-ratchet')));
+
   const ready = v13?.readyAtMs ?? null;
   gates.push({
     id: 'ready-at',
@@ -297,11 +351,7 @@ export function evaluateGates({
         : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})${byType(report.asciiSizeByType)}`,
   });
 
-  for (const g of gates) {
-    const reason = skip[g.id];
-    if (reason === undefined) continue;
-    Object.assign(g, { status: 'skip', enforced: false, actual: null, detail: reason });
-  }
+  skipUnmeasured(gates, skip);
   const exitCode = gates.some((g) => g.enforced && g.status === 'fail') ? 1 : 0;
   return { mode, gates, exitCode };
 }

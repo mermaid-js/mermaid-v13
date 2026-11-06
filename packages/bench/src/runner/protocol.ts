@@ -26,6 +26,10 @@ export type RenderReply =
       batch: number;
       /** Per-render ms of each stage, one entry per warm sample; empty without stage timing. */
       stageSamples: Partial<Record<Stage, number[]>>;
+      /** Per-render ms in the renderer's `render()`, one entry per warm sample (D204). */
+      renderSamples?: number[];
+      /** Per-render ms inserting the SVG and laying it out (`getBBox`), one per warm sample. */
+      browserSamples?: number[];
     }
   | { ok: false; error: string };
 
