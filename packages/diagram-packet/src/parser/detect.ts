@@ -1,3 +1,4 @@
+// cspell:words packetx
 /**
  * Packet detection, as v12's detector saw the text (`/^\s*packet(-beta)?/`, case-sensitive):
  * after the front matter, with directives and `%%` comments removed. `packetx` is detected too,
