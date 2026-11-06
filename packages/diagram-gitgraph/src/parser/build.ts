@@ -21,6 +21,8 @@ interface CherryPickInput {
   tags?: readonly string[];
   astId: AstId;
   keyword: Range;
+  /** Where a missing `id:` would go: zero-width after the statement and its blanks. */
+  missing: Range;
 }
 
 /** The 32-bit golden-ratio constant of Pele's `nextId` (D260). */
@@ -276,7 +278,7 @@ export class GitBuilder {
         sourceId
           ? `There is no commit \`${sourceId}\` to cherry-pick. Name the commit with \`id:\` where it is made, and cherry-pick it after that.`
           : 'A cherry-pick needs the id of the commit to copy, e.g. `cherry-pick id:"A"`.',
-        input.id?.range ?? input.keyword
+        input.id?.range ?? input.missing
       );
       return undefined;
     }
@@ -295,7 +297,7 @@ export class GitBuilder {
       d.error(
         'GIT_CHERRY_PICK_MERGE_PARENT',
         `\`${source.id}\` is a merge commit: say which of its parents to follow with \`parent:\`, e.g. \`cherry-pick id:"${source.id}" parent:"${source.parents[0] ?? ''}"\`.`,
-        input.id?.range ?? input.keyword
+        input.id?.range ?? input.missing
       );
       return undefined;
     }
@@ -303,7 +305,7 @@ export class GitBuilder {
       d.error(
         'GIT_CHERRY_PICK_SAME_BRANCH',
         `\`${source.id}\` is already on the current branch \`${current}\`. Check out another branch before cherry-picking it.`,
-        input.id?.range ?? input.keyword
+        input.id?.range ?? input.missing
       );
       return undefined;
     }
@@ -311,7 +313,7 @@ export class GitBuilder {
       d.error(
         'GIT_CHERRY_PICK_NO_COMMITS',
         `Cannot cherry-pick onto \`${current}\`: the current branch has no commits yet. Add a \`commit\` on \`${current}\` first.`,
-        input.id?.range ?? input.keyword
+        input.id?.range ?? input.missing
       );
       return undefined;
     }

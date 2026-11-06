@@ -1,0 +1,10 @@
+@ 8:13  switch dev|elop
+  prepare: 8:10-8:17 "develop"; rename to "feature/login":
+  %% rename-to: feature/login
+  gitGraph
+    commit id:"develop"
+    branch feature/login
+    commit
+    checkout main
+    merge feature/login
+    switch feature/login
