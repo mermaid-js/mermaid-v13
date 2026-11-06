@@ -31,6 +31,7 @@ export interface LangiumLexerDescriptor {
 /** The Langium types, by v13 diagram id. */
 export const LANGIUM_LEXERS = {
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
+  cynefin: { probe: 'cynefin-beta\ncomplex', factory: 'createCynefinServices', key: 'Cynefin' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;
