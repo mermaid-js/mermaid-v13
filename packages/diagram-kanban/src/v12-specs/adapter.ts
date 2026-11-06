@@ -6,11 +6,13 @@
  * - `kanban.parse(text)` throws on an error diagnostic, as v12 threw on a syntax error and its
  *   DB on a misplaced indent, else hands the model to `kanban.yy`;
  * - `kanbanDB.getSections()` returns the columns as v12's nodes (`id`, `label`, `level`,
- *   `cssClasses` as one string, `icon`, `ticket`, `assigned`, `priority` as v12's YAML value);
+ *   `cssClasses` as one string, `icon`, `ticket`, `assigned`, `priority` as v13 keeps it: a
+ *   string, or another value's YAML text);
  * - `kanbanDB.getData()` returns each column, then its cards (by position, D373), with
  *   `parentId` and the fields v12's `getData` kept.
  */
 import { parseKanban } from '../parser/index.ts';
+import { kanbanBoardOrder } from '../model.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 
 /** A node of v12's `getSections()` and `getData()`, the fields the spec reads. */
@@ -24,12 +26,8 @@ export interface KanbanNode {
   icon?: string;
   ticket?: string;
   assigned?: string;
-  priority?: unknown;
+  priority?: string;
 }
-
-/** v12's raw `priority`: v13 keeps a non-string as its JSON text. */
-const priorityOf = (n: KanbanItem): unknown =>
-  n.priorityKind === 'other' && n.priority !== undefined ? JSON.parse(n.priority) : n.priority;
 
 function v12Node(n: KanbanItem): KanbanNode {
   const node: KanbanNode = { id: n.id, label: n.label, level: n.level, isGroup: n.isColumn };
@@ -38,7 +36,7 @@ function v12Node(n: KanbanItem): KanbanNode {
   if (n.icon !== undefined) node.icon = n.icon;
   if (n.ticket !== undefined) node.ticket = n.ticket;
   if (n.assigned !== undefined) node.assigned = n.assigned;
-  if (n.priority !== undefined) node.priority = priorityOf(n);
+  if (n.priority !== undefined) node.priority = n.priority;
   return node;
 }
 
@@ -59,14 +57,7 @@ class KanbanDB {
   }
 
   getData(): { nodes: KanbanNode[]; edges: [] } {
-    const m = this.model;
-    const nodes: KanbanNode[] = [];
-    for (const c of m?.columns ?? []) {
-      for (const k of [c.item, ...c.cards]) {
-        const item = m?.items[k];
-        if (item) nodes.push(v12Node(item));
-      }
-    }
+    const nodes = this.model ? kanbanBoardOrder(this.model).map(v12Node) : [];
     return { nodes, edges: [] };
   }
 }

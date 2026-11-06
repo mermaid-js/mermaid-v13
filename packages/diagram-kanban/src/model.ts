@@ -10,8 +10,8 @@
  *   is removed here. Every label is markdown (v12 set `labelType: 'markdown'`);
  * - `@{ … }` data as v12's `addNode` read it: a truthy `label` replaces the text; truthy
  *   `ticket`, `assigned` and `icon` are kept as JavaScript strings (`[x, y]` reads `x,y`); a
- *   truthy `priority` is kept, a string as it is and any other value as its JSON text
- *   (`priorityKind: 'other'`); `shape` is checked and otherwise ignored; other keys are ignored;
+ *   truthy `priority` is kept, a string as it is and any other value as its YAML text as
+ *   written (`priorityKind: 'other'`, `[1, 2]`); `shape` is checked and otherwise ignored; other keys are ignored;
  * - a card belongs to the column it follows (D373: by position, where v12 listed every card of
  *   every column with the same id under each), and keeps v12's `parentId`, its column's id.
  *
@@ -43,7 +43,10 @@ export interface KanbanItem {
   readonly ticket?: string;
   /** `@{ assigned }`. */
   readonly assigned?: string;
-  /** `@{ priority }`: the string, or with `priorityKind: 'other'` the value's JSON text. */
+  /**
+   * `@{ priority }`: the string, or with `priorityKind: 'other'` the value's YAML text as the
+   * author wrote it (entities as `&…;`; lines after the first lose their shared indent).
+   */
   readonly priority?: string;
   /** Set with `priority`. */
   readonly priorityKind?: KanbanPriorityKind;
@@ -67,4 +70,19 @@ export interface KanbanModel {
   readonly columns: readonly KanbanColumn[];
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
+}
+
+/**
+ * The items in board order: each column, then its cards (D373), as v12's `getData()` listed
+ * them for columns with distinct ids.
+ */
+export function kanbanBoardOrder(model: KanbanModel): KanbanItem[] {
+  const out: KanbanItem[] = [];
+  for (const column of model.columns) {
+    for (const k of [column.item, ...column.cards]) {
+      const item = model.items[k];
+      if (item) out.push(item);
+    }
+  }
+  return out;
 }

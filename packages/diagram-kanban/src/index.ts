@@ -11,4 +11,5 @@ export {
   parseKanban,
 } from './parser/index.ts';
 export type * from './parser/index.ts';
+export { kanbanBoardOrder } from './model.ts';
 export type * from './model.ts';

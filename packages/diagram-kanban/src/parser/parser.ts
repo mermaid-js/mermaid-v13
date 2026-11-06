@@ -42,8 +42,14 @@ import type {
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult, YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
-import type { KanbanColumn, KanbanItem, KanbanModel, KanbanPriorityKind } from '../model.ts';
+import type {
+  PreprocessResult,
+  YamlMap,
+  YamlOptions,
+  YamlResult,
+  YamlValue,
+} from '@mermaid-js/core/preprocess';
+import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
@@ -123,21 +129,24 @@ export function parseKanban(src: string, options: KanbanParseOptions = {}): Kanb
   return new KanbanParser(src, options).parse();
 }
 
-/** A model item while the board is built. */
-interface OpenItem {
-  ast: string;
-  id: string;
-  label: string;
-  level: number;
-  isColumn: boolean;
-  column: number;
-  parentId?: string;
-  ticket?: string;
-  assigned?: string;
-  priority?: string;
-  priorityKind?: KanbanPriorityKind;
-  icon?: string;
-  classes: string[];
+/** A model item while the board is built: the same fields, writable. */
+type OpenItem = { -readonly [K in keyof KanbanItem]: KanbanItem[K] };
+
+/** How an item's data is read as YAML, and what the ranges of the read point into. */
+interface YamlRead {
+  /** The text `parseYaml` reads: the source (in place), or v12's wrapped data text. */
+  text: string;
+  options: YamlOptions;
+  /** The read is of the source, so its ranges are source ranges. */
+  inPlace: boolean;
+  /** Entities were read as v12's placeholders, to be turned back into `&…;`. */
+  placed: boolean;
+}
+
+/** Data read as a mapping, with the read it came from (for the `priority` text). */
+interface ItemData {
+  value: YamlMap;
+  read: YamlRead;
 }
 
 /** The parts of an item statement (pitfall 10). */
@@ -149,7 +158,7 @@ interface ItemParts {
   range: Range;
   data?: KanbanData;
   /** The data's mapping, when it was read and is one. */
-  value?: YamlMap;
+  value?: ItemData;
 }
 
 /**
@@ -208,8 +217,8 @@ class KanbanParser {
     // A misplaced indent is reported when the item after it is read: keep source order.
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const model: KanbanModel = {
-      items: this.items as KanbanItem[],
-      columns: this.columns as KanbanColumn[],
+      items: this.items,
+      columns: this.columns,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
     const ast: KanbanDocument = {
@@ -575,11 +584,46 @@ class KanbanParser {
     parts.text = this.raw(text);
     parts.range = { start: parts.range.start, end: this.range(text).end };
     if (c.kind !== T.NodeDEnd) {
+      const closer = `\`${CLOSERS[opener] ?? ')'}\``;
+      // v12's `<NODE>.+` at a `}`: the rest of the line is text, and so is all after it up to a
+      // closer, maybe the rest of the board.
+      if (this.raw(text).startsWith('}')) this.swallowed(closer, text);
+      if (c.kind === T.NodeDescr && this.raw(c.pos).startsWith('}')) this.swallowed(closer, c.pos);
       if (c.kind === Kind.EOF) this.endsOpen();
-      this.fail([`\`${CLOSERS[opener] ?? ')'}\``]);
+      this.fail([closer]);
     }
     const close = c.next();
     parts.range = { start: parts.range.start, end: this.range(close).end };
+  }
+
+  /**
+   * A `}` in a shape's text at token `from` took the rest of its line, and the text ran on past
+   * it (v12's tokens): report the shape as not closed, over all the text read into it, so the
+   * author sees why the items there are missing.
+   */
+  private swallowed(closer: string, from: number): never {
+    const t = this.c.tokens;
+    let last = from;
+    for (let j = this.nextSignificant(from); t.kind[j] === T.NodeDescr; j = this.nextSignificant(j))
+      last = j;
+    const range = { start: this.range(from).start, end: this.range(last).end };
+    const lines = this.lineOf(range.end) - this.lineOf(range.start);
+    const next = t.kind[this.nextSignificant(last)];
+    let reach = 'the end of its line';
+    if (lines > 0)
+      reach =
+        next === T.NodeDEnd
+          ? `the closer on line ${this.lineOf(range.end)}, taking in the items before it`
+          : 'the end of the board, taking in every item after it';
+    const head = /^[^\n\r\u2028\u2029]*/.exec(this.src.slice(range.start, range.end))?.[0] ?? '';
+    const shown = head.length > 24 ? `${head.slice(0, 24)}…` : head;
+    this.st.diagnostics.error(
+      'UNEXPECTED',
+      `Expected ${closer}, got \`${shown}\`: a \`}\` in an item's text takes the rest of its line into the text, as in mermaid@12, so the shape is not closed and its text runs on to ${reach}. Write the text in quotes, as \`["a}b"]\`, or close the shape before the \`}\`.`,
+      range,
+      { expected: [closer] }
+    );
+    throw STOP;
   }
 
   /**
@@ -613,59 +657,88 @@ class KanbanParser {
   }
 
   /** v12 `addNode`'s YAML read of `text`, the data at `range`: the mapping, or undefined. */
-  private readData(text: string, range: Range): YamlMap | undefined {
-    const { src, st } = this;
+  private readData(text: string, range: Range): ItemData | undefined {
+    const read = this.yamlInput(text, range);
+    const result = parseYaml(read.text, read.options);
+    if (this.yamlErrors(result, read, range)) return undefined;
+    const value = read.placed ? fromPlaceholders(result.value) : result.value;
+    if (value === null) {
+      this.st.diagnostics.error(
+        'KANBAN_DATA_EMPTY',
+        'The `@{ … }` data is empty or `null`. Write `key: value` pairs in it, such as `ticket: T-1`, or remove it.',
+        range
+      );
+      return undefined;
+    }
+    // v12 ignored a scalar or a list (only `null` made it throw).
+    if (!isYamlMap(value) || !this.shapeOk(value.shape, range)) return undefined;
+    return { value, read };
+  }
+
+  /**
+   * What `parseYaml` reads for the data `text` at `range`: the source in place when the text is
+   * the source's, so diagnostic ranges are exact; else v12's wrapping of it (`{\n<data>\n}` on
+   * one line, `<data>\n` over several), with `#name;` entities as v12's placeholders.
+   */
+  private yamlInput(text: string, range: Range): YamlRead {
+    const { src } = this;
     const inner = { start: range.start + 2, end: range.end - 1 };
     const multiline = text.includes('\n');
-    // In place when the text is the source's, so diagnostic ranges are exact. v12 parsed
-    // `{\n<data>\n}`; a `#` comment reads differently without those newlines.
-    const inPlace = src.slice(inner.start, inner.end) === text && !text.includes('#');
-    let placed = false;
-    let yaml = text;
-    if (!inPlace && /#\w+;/.test(src.slice(range.start, range.end))) {
-      // `#name;` entities read `&name;` (`cook`); v12 read its placeholders, which YAML takes as
-      // plain text.
-      yaml = text.replace(ENTITY, (_m, num: string, name: string) =>
-        num ? `ﬂ°°${name}¶ß` : `ﬂ°${name}¶ß`
-      );
-      placed = true;
+    // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
+    if (src.slice(inner.start, inner.end) === text && !text.includes('#')) {
+      const options = multiline ? inner : { start: range.start + 1, end: range.end };
+      return { text: src, options, inPlace: true, placed: false };
     }
-    const result = inPlace
-      ? parseYaml(src, multiline ? inner : { start: range.start + 1, end: range.end })
-      : parseYaml(multiline ? yaml + '\n' : `{\n${yaml}\n}`);
+    // `#name;` entities read `&name;` (`cook`); v12 read its placeholders, which YAML takes as
+    // plain text (no `#` comment, no `&` anchor).
+    const placed = /#\w+;/.test(src.slice(range.start, range.end));
+    const data = placed
+      ? text.replace(ENTITY, (_m, num: string, name: string) =>
+          num ? `ﬂ°°${name}¶ß` : `ﬂ°${name}¶ß`
+        )
+      : text;
+    const wrapped = multiline ? data + '\n' : `{\n${data}\n}`;
+    return { text: wrapped, options: {}, inPlace: false, placed };
+  }
+
+  /**
+   * Record the YAML diagnostics of `result`: errors as `SHAPE_DATA` (over the whole block when
+   * the read was not in place). Whether there was an error.
+   */
+  private yamlErrors(result: YamlResult, read: YamlRead, range: Range): boolean {
     let failed = false;
     for (const d of result.diagnostics) {
-      const r = inPlace ? d.range : range;
+      const r = read.inPlace ? d.range : range;
       if (d.severity === 'error') {
-        st.diagnostics.error('SHAPE_DATA', d.message, r);
+        this.st.diagnostics.error('SHAPE_DATA', d.message, r);
         failed = true;
-      } else st.diagnostics.warning(d.code, d.message, r);
+      } else this.st.diagnostics.warning(d.code, d.message, r);
     }
-    if (failed) return undefined;
-    const value = placed ? fromPlaceholders(result.value) : result.value;
-    if (value === null) {
-      st.diagnostics.error(
-        'KANBAN_DATA_EMPTY',
-        'The `@{ … }` data is empty. Write `key: value` pairs in it, such as `ticket: T-1`, or remove it.',
-        range
-      );
-      return undefined;
-    }
-    if (!isYamlMap(value)) return undefined;
-    const shape = value.shape;
-    if (
-      shape !== undefined &&
-      truthy(shape) &&
-      (typeof shape !== 'string' || shape !== shape.toLowerCase() || shape.includes('_'))
-    ) {
-      st.diagnostics.error(
-        'KANBAN_SHAPE',
-        `No such shape: ${jsString(shape)}. Shape names are lower case, with no \`_\`; a card's shape is ignored, so the \`shape\` key can be removed.`,
-        range
-      );
-      return undefined;
-    }
-    return value;
+    return failed;
+  }
+
+  /** v12's shape check: a set `shape` must be a lower-case string with no `_`; else an error. */
+  private shapeOk(shape: YamlValue | undefined, range: Range): boolean {
+    if (shape === undefined || !truthy(shape)) return true;
+    if (typeof shape === 'string' && shape === shape.toLowerCase() && !shape.includes('_'))
+      return true;
+    this.st.diagnostics.error(
+      'KANBAN_SHAPE',
+      `No such shape: ${jsString(shape)}. Shape names are lower case, with no \`_\`; a card's shape is ignored, so the \`shape\` key can be removed.`,
+      range
+    );
+    return false;
+  }
+
+  /** The source text of the `priority` value in `read`, as the author wrote it. */
+  private priorityText(read: YamlRead): string {
+    const tree = parseYaml(read.text, { ...read.options, tree: true });
+    const root = tree.root;
+    const pair = root?.kind === 'map' ? root.pairs.find((p) => p.key === 'priority') : undefined;
+    const r = pair?.value?.range;
+    if (!r) return '';
+    const text = valueText(read.text, r.start, r.end);
+    return read.placed ? entitiesBack(text) : text;
   }
 
   /** v12 `addNode`: the item's column, its data, and the misplaced-indent error. */
@@ -705,7 +778,7 @@ class KanbanParser {
       column: isColumn ? this.columns.length : this.columns.length - 1,
       classes: [],
     };
-    if (value) applyData(item, value);
+    if (value) applyData(item, value.value, () => this.priorityText(value.read));
     if (indent < this.base) this.shallow.push({ label: item.label, range });
     const index = this.items.length;
     this.items.push(item);
@@ -764,27 +837,43 @@ function jsString(v: YamlValue): string {
   return String(v);
 }
 
-/** `addNode`'s reading of the data `doc` onto `item`. */
-function applyData(item: OpenItem, doc: YamlMap): void {
+/**
+ * `addNode`'s reading of the data `doc` onto `item`. A priority that is not a string keeps its
+ * source text, from `priorityText`.
+ */
+function applyData(item: OpenItem, doc: YamlMap, priorityText: () => string): void {
   if (truthy(doc.label)) item.label = jsString(doc.label ?? '');
   if (truthy(doc.icon)) item.icon = jsString(doc.icon ?? '');
   if (truthy(doc.assigned)) item.assigned = jsString(doc.assigned ?? '');
   if (truthy(doc.ticket)) item.ticket = jsString(doc.ticket ?? '');
   const priority = doc.priority;
-  if (priority !== undefined && truthy(priority)) {
-    const text = typeof priority === 'string';
-    item.priority = text ? priority : JSON.stringify(priority);
-    item.priorityKind = text ? 'text' : 'other';
-  }
+  if (priority === undefined || !truthy(priority)) return;
+  const text = typeof priority === 'string';
+  item.priority = text ? priority : priorityText();
+  item.priorityKind = text ? 'text' : 'other';
 }
+
+/**
+ * The YAML text `src[start, end)` of one value, standing on its own: lines after the first
+ * lose the indent they share with it.
+ */
+function valueText(src: string, start: number, end: number): string {
+  const column = start - (src.lastIndexOf('\n', start - 1) + 1);
+  const lines = (' '.repeat(column) + src.slice(start, end)).split('\n');
+  const indents = lines.filter((l) => l.trim() !== '').map((l) => l.length - l.trimStart().length);
+  const cut = Math.min(...indents);
+  return lines.map((l) => l.slice(cut)).join('\n');
+}
+
+/** `s` with v12's entity placeholders turned back into `&…;`. */
+const entitiesBack = (s: string): string => s.replace(PLACEHOLDER, (m) => PLACEHOLDER_TEXT[m] ?? m);
 
 /** `value` with v12's entity placeholders in its strings and keys turned back into `&…;`. */
 function fromPlaceholders(value: YamlValue): YamlValue {
-  const back = (s: string) => s.replace(PLACEHOLDER, (m) => PLACEHOLDER_TEXT[m] ?? m);
-  if (typeof value === 'string') return back(value);
+  if (typeof value === 'string') return entitiesBack(value);
   if (Array.isArray(value)) return value.map(fromPlaceholders);
   if (typeof value !== 'object' || value === null) return value;
   const out: YamlMap = {};
-  for (const [k, v] of Object.entries(value)) out[back(k)] = fromPlaceholders(v);
+  for (const [k, v] of Object.entries(value)) out[entitiesBack(k)] = fromPlaceholders(v);
   return out;
 }

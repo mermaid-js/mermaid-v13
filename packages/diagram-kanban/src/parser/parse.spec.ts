@@ -126,6 +126,17 @@ describe('kanban parser: shape data', () => {
     ]);
   });
 
+  it('keeps a priority that is not a string as the author wrote it', () => {
+    const m = model(
+      'kanban\n  a\n    b@{ priority: [1,  2] }\n    c@{\n      priority:\n        - 1\n        - x\n    }\n    d@{ priority: true, ticket: #35; }'
+    );
+    expect(m.items.slice(1).map((i) => [i.priority, i.priorityKind])).toEqual([
+      ['[1,  2]', 'other'],
+      ['- 1\n- x', 'other'],
+      ['true', 'other'],
+    ]);
+  });
+
   it('reads multi-line data and quoted line breaks', () => {
     const m = model(
       'kanban\n  a\n    b@{\n      icon: star\n      assigned: knsv\n    }\n    c@{ label: "x\n   y" }'
@@ -153,6 +164,8 @@ describe('kanban parser: shape data', () => {
     expect(errors('kanban\n  a\n    b@{ a: 1, a: 2 }')).toEqual(['SHAPE_DATA']);
     expect(errors('kanban\n  a\n    b@{x: 1}@{y: 2}')).toEqual(['SHAPE_DATA']);
     expect(errors('kanban\n  a\n    b@{\n}')).toEqual(['KANBAN_DATA_EMPTY']);
+    const [empty] = parseKanban('kanban\n  a\n    b@{\n      ~\n    }').diagnostics;
+    expect(empty?.message).toMatch(/^The `@\{ … \}` data is empty or `null`\./);
     for (const shape of ['Rect', 'my_shape', '5', 'true'])
       expect(errors(`kanban\n  a\n    b@{ shape: ${shape} }`), shape).toEqual(['KANBAN_SHAPE']);
     const r = parseKanban('kanban\n  a\n    b@{ shape: Rect, ticket: X }\n    c');
@@ -210,6 +223,22 @@ describe('kanban parser: syntax v12 rejects', () => {
     ['a lone at', 'kanban\n  a@b'],
   ])('%s', (_name, src) => {
     expect(errors(src)).toHaveLength(1);
+  });
+
+  it('says a `}` took the rest of the board into a label, over what it took', () => {
+    const src = 'kanban\n  a\n  d[x}y]\n  e[p}q]\n  f';
+    const r = parseKanban(src);
+    expect(r.diagnostics).toHaveLength(1);
+    const [d] = r.diagnostics;
+    expect(src.slice(d?.range.start, d?.range.end)).toBe('}y]\n  e[p}q]\n  f');
+    expect(d?.message).toMatch(/runs on to the end of the board, taking in every item after it/);
+    // v12's tokens are kept: the items it swallowed are not in the model.
+    expect(r.model.items.map((i) => i.id)).toEqual(['a', 'd']);
+    const [line] = parseKanban('kanban\n  a[x}y]').diagnostics;
+    expect(line?.message).toMatch(/runs on to the end of its line\./);
+    const closed = parseKanban('kanban\n  a(b}c\n  e)\n  f');
+    expect(closed.diagnostics[0]?.message).toMatch(/the closer on line 3, taking in the items/);
+    expect(closed.model.items.map((i) => i.id)).toEqual(['a', 'f']);
   });
 
   it('names no token in messages', () => {

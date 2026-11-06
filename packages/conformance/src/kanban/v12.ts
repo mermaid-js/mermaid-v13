@@ -7,7 +7,7 @@
  * - ids, labels and `parentId` with v12's `encodeEntities` placeholders decoded, as v13 reads
  *   them (the oracle's DOMPurify is the identity, so `sanitizeText` changes nothing);
  * - `ticket`, `assigned` and `icon` as stored (v12 `toString()`ed them), `priority` as a string
- *   or, for any other value, its JSON text (v13's `priorityKind: 'other'`);
+ *   or, for any other value, as JSON (`v13.ts` reads v13's YAML text back to compare values);
  * - classes split into words, for columns only: `getData` keeps none for cards.
  *
  * v12 lists every card whose `parentId` is a column's id under that column, so columns that
@@ -61,7 +61,7 @@ const classWords = (text = ''): string[] => text.split(/[\t\n\f\r ]+/).filter((w
 
 const text = (v: unknown): string | null => (typeof v === 'string' ? decodeEntities(v) : null);
 
-/** A priority as v13 keeps it: a string, or the JSON text of any other value. */
+/** A priority by value: a string as it is (placeholders decoded), any other value as JSON. */
 export function priorityText(v: unknown): string | null {
   if (v === undefined || v === null) return null;
   return typeof v === 'string' ? decodeEntities(v) : JSON.stringify(v);
