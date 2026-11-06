@@ -12,6 +12,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **No Pele packet source** on this machine; Pele is not used as a reference.
 - **Theme T0a merged** (`feature/414_theme-t0` at `462aef4e9`, contract `v13/docs/agents/runs/414/CONTRACT.md`). Packet's table is declared inline on the plugin (`theme: DiagramThemeTable`, section `packet`, per-variable `nested`) until T0b's per-package `src/theme/vocabulary.ts` convention lands; adopt it then.
 
+- **Base merge goes through #414.** M4 wave 2 (#398, #404, #406) merged into `mermaid-v13` at `488a4bf5e`. Merging it here directly conflicts in 15 files, almost all core theme files where T0a and M4 wave 2 both edit (`theme.ts`, `vocabulary.ts`, `spec.ts`, `specs/*.ts`, generated variables). That resolution belongs to #414, so this branch takes the new base through `feature/414_theme-t0` once it has merged `mermaid-v13`, rather than resolving T0's conflicts twice. The wave coordinator made this the rule for every M5a port until the Theme T0 PR (#472) merges; the coordinator sends the new T0 tip. Packet-owned conflicts left for that merge: `langium-lexer.ts` (gitGraph's row and packet's: keep both), `conformance/package.json`, `theme-used-by.spec.ts`, `pnpm-lock.yaml` (regenerate).
+
 ## #462 T5 integration (open)
 
 - **Orchestrator choice (for the maintainer): forest is a family-rule approximation (D541), not a new shared input.** v12 forest packet reads its own `primaryTextColor` (#321b67) and `mainBkg` (#cde498); default uses literals. A new generic shared input ("strong text ink", "muted surface") would grow core's vocabulary and every theme spec for one diagram, with core at R-PERF-8's limit, and no second wave-1 port needs it yet. So forest takes the light entry (`black`, `#efefef`): six forest `DIFFERENCES` entries in the theme oracle spec, and one MIGRATION.md row. A later spec that needs a strong ink can promote it.
@@ -21,6 +23,25 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Follow-up, not in this spec (for the maintainer): packet's `lexer.ts` shares about 75% of its lines with pie's (the `common.langium` rules: strings, YAML, directives, accessibility closers, blanks, memos), `packetTokens` mirrors `pieTokens`, `lexer-parity.spec.ts` mirrors pie's, and `stress.spec.ts` repeats `cpuMs`/`cost`. Diagram packages cannot share code with each other, so the home is core's parser kit (a Langium-common lexer helper) and a shared Langium parity runner in conformance. Radar, cynefin and the later Langium ports would be the third and further copies.
 - Review findings fixed before the merge (`b1454682f`): a package lexer unit spec (pitfall 4), a harvest drift spec for the pie and packet corpora, the 15 sources v12 does not lex pinned by id, test names dropped from the harvest (pie unchanged), stress small runs sized past the 2 ms floor.
 - [ ] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables.
+
+## #454 T2 parser (merged at `0739831cc`; review fixes pending)
+
+Merged before its review fixes so T3 could build on it while the load rule allows one ticket agent; the T2 agent fixes these on a new branch once T3 is done, before T4 starts.
+
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - a field the 10,000-row cap drops whole is left out of `fields`; a field it cuts keeps its written `end`/`bits` (`model.ts` doc change only, no type change). T3's "pieces cover the field" invariant allows that one case, flagged by `PACKET_TRUNCATED`;
+  - `PACKET_CONFIG_INVALID`: one warning per bad key, zero-width at the body start; defaults hand-kept until T5's `gen:config`;
+  - `DiagramAdapter.v12ConfigFor(text)` (optional, conformance): the oracle applies neither front matter nor directives, and rows depend on `bitsPerRow`;
+  - recovery cases live in `packet-cases.json` with `errors`/`keeps` fields;
+  - a `Header` AST node with id `packet`, as pie has `pie`.
+- [ ] **Review fix (spec): a stray line resets the bit count.** After a field whose bits failed to parse, restarting the count is right (one error per broken field); after text that was never a field it hides a real gap (`0-7: "a"\n@\n20: "b"` reports only the stray character). Only a failed field should reset; add that recovery case.
+- [ ] **Review fix (spec): D342 config cases against the oracle.** Add invalid-config cases (`bitsPerRow: 0`, `-4`, `10.5`, `"8"`, `rowHeight: 0`, negative padding) to `packet-cases.json` and list each as a parity divergence with its reason (D342), instead of leaving the difference unexercised.
+- [ ] **Review fix (spec): pin escapes.** A `packet-cases` entry for `\n`, `\t` and `\x` in labels, so the control-character conversion is oracle-checked, not only v13-checked.
+- [ ] **Review fix (standards): no side channel.** `parser.ts`'s `lost` flag travels between `field()`, `document()` and `resolve()` (pitfall 6); return it or pass it.
+- [ ] **Review fix (standards): row splitting out of the grammar class.** Move `place()` and the `word`/`row`/`truncated`/`rows` state to `normalise.ts` (parser-method §4).
+- [ ] **Review fix (standards): one "whole field" helper.** `packetV13Snapshot` (conformance) and `v12-specs/adapter.ts` both test whether a piece is its whole field; export one helper. Export the semantic codes once rather than repeating them in `adapter.ts`'s `SEMANTIC`.
+- Smells left as is (pie has the same shape): `VALUE_WORDS`/`KIND_OF`/`ID_OF` triple table, `WrittenBits` optional fields, positional `undefined` in `fail()`; follow-up with the lexer duplication above.
+- Early T6 work in T2 (D346 symbols, probe hooks) follows pie's pattern; T6 owns them from here.
 
 ## Shared contracts
 

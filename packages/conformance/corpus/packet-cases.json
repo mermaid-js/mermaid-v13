@@ -434,5 +434,240 @@
   {
     "id": "packet-cases/unclosed-directive-brace",
     "source": "packet\n%%{init: {\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/recovery-no-colon",
+    "source": "packet\n0-7 \"a\"\n8: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-no-label",
+    "source": "packet\n0-7:\n8: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-unquoted-label",
+    "source": "packet\n0-7: a\n8: \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-unclosed-label",
+    "source": "packet\n0-7: \"a\"\n8: \"b",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/recovery-two-fields-one-line",
+    "source": "packet\n0-7: \"a\" 8-15: \"b\"\n8: \"c\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-semicolon",
+    "source": "packet\n0-7: \"a\";\n8: \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-leading-zero",
+    "source": "packet\n0-7: \"a\"\n08: \"b\"\n9: \"c\"",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-fraction",
+    "source": "packet\n0-7: \"a\"\n8.5: \"b\"\n9: \"c\"",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-exponent",
+    "source": "packet\n0-7: \"a\"\n8e3: \"b\"\n9: \"c\"",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-dash-without-end",
+    "source": "packet\n0-: \"a\"\n0-7: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-plus-without-count",
+    "source": "packet\n0-7: \"a\"\n+: \"b\"\n8: \"c\"",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-reversed",
+    "source": "packet\n0-7: \"a\"\n15-8: \"b\"\n16: \"c\"",
+    "errors": [["PACKET_END_BEFORE_START", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-gap",
+    "source": "packet\n0-7: \"a\"\n10-15: \"b\"\n16: \"c\"",
+    "errors": [["PACKET_NOT_CONTIGUOUS", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-overlap",
+    "source": "packet\n0-7: \"a\"\n4-15: \"b\"\n16: \"c\"",
+    "errors": [["PACKET_NOT_CONTIGUOUS", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-plus-zero",
+    "source": "packet\n0-7: \"a\"\n+0: \"b\"\n8: \"c\"",
+    "errors": [["PACKET_ZERO_BITS", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-repeated-range",
+    "source": "packet\n0-7: \"a\"\n0-7: \"a\"\n8: \"c\"",
+    "errors": [["PACKET_NOT_CONTIGUOUS", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-gap-then-syntax",
+    "source": "packet\n0-7: \"a\"\n9-15 \"b\"\n16: \"c\"",
+    "errors": [
+      ["PACKET_NOT_CONTIGUOUS", 3],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "packet-cases/recovery-three-semantic",
+    "source": "packet\n0-7: \"a\"\n9: \"b\"\n10-15: \"c\"\n20-16: \"d\"\n21: \"e\"\n+0: \"f\"\n22: \"g\"",
+    "errors": [
+      ["PACKET_NOT_CONTIGUOUS", 3],
+      ["PACKET_END_BEFORE_START", 5],
+      ["PACKET_ZERO_BITS", 7]
+    ],
+    "keeps": ["a", "c", "e", "g"]
+  },
+  {
+    "id": "packet-cases/recovery-mixed-errors",
+    "source": "packet\n0-7: \"a\"\n8 \"b\"\n9-12: \"c\"\n14: \"d\"\n15: x\n16: \"e\"",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["PACKET_NOT_CONTIGUOUS", 5],
+      ["UNEXPECTED_CHARACTER", 6]
+    ],
+    "keeps": ["a", "c", "e"]
+  },
+  {
+    "id": "packet-cases/recovery-stray-character",
+    "source": "packet\n0-7: \"a\"\n@\n8: \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "packet-cases/recovery-acc-title-no-colon",
+    "source": "packet\naccTitle x\n0: \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/recovery-acc-descr-unclosed",
+    "source": "packet\naccDescr { x\n0: \"a\"",
+    "errors": [["UNCLOSED_ACC_DESCR", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/recovery-second-header",
+    "source": "packet\npacket\n0: \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/recovery-glued-header",
+    "source": "packetx\n0: \"a\"\n1: \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 1]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "packet-cases/recovery-glued-title",
+    "source": "packet\ntitlex\n0: \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/recovery-label-alone",
+    "source": "packet\n\"a\"\n0: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-field-after-acc-descr",
+    "source": "packet\naccDescr {x} 0: \"a\"\n0: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/recovery-colon-alone",
+    "source": "packet\n: \"a\"\n0: \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "packet-cases/parser-split-default",
+    "source": "packet\n0-10: \"a\"\n11-90: \"b\"\n+40: \"c\""
+  },
+  {
+    "id": "packet-cases/parser-split-front-matter",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: 8\n---\npacket\n0-15: \"a\"\n+12: \"b\"\n28: \"c\"\n29-40: \"d\""
+  },
+  {
+    "id": "packet-cases/parser-split-directive",
+    "source": "%%{init: {\"packet\": {\"bitsPerRow\": 16}}}%%\npacket\n0-31: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/parser-split-one-bit-rows",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: 1\n---\npacket\n0-3: \"a\"\n+2: \"b\""
+  },
+  {
+    "id": "packet-cases/parser-split-string-bits-per-row",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: \"4\"\n---\npacket\n0-9: \"a\""
+  },
+  {
+    "id": "packet-cases/parser-plus-chain",
+    "source": "packet\n+8: \"a\"\n+8: \"b\"\n+16: \"c\"\n+1: \"d\"\n+31: \"e\""
+  },
+  {
+    "id": "packet-cases/parser-plus-after-range",
+    "source": "packet\n0-3: \"a\"\n+4: \"b\"\n8: \"c\"\n9-15: \"d\"\n+16: \"e\""
+  },
+  {
+    "id": "packet-cases/parser-labels-repeat",
+    "source": "packet\n0-7: \"Reserved\"\n8-15: \"Reserved\"\n16: \"Reserved\""
+  },
+  {
+    "id": "packet-cases/parser-row-cap",
+    "source": "packet\n0-99999999: \"a\"\n+1: \"b\""
+  },
+  {
+    "id": "packet-cases/parser-row-cap-exact",
+    "source": "packet\n0-319999: \"a\""
+  },
+  {
+    "id": "packet-cases/parser-row-cap-then-error",
+    "source": "packet\n0-319999: \"a\"\n+40: \"b\"\n5: \"c\""
+  },
+  {
+    "id": "packet-cases/parser-huge-bits",
+    "source": "packet\n+99999999999999999999: \"a\"\n+1: \"b\""
+  },
+  {
+    "id": "packet-cases/parser-title-and-fields",
+    "source": "---\ntitle: FM\n---\npacket\ntitle In text\naccTitle: A\naccDescr: D\n0-7: \"a\""
+  },
+  {
+    "id": "packet-cases/parser-header-beta-plus",
+    "source": "packet-beta\n+16: \"a\"\n+16: \"b\""
   }
 ]

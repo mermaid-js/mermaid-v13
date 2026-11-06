@@ -1,5 +1,6 @@
 /**
- * The packet parser's public surface: the lexer gated against v12's Langium lexer (#452).
+ * The packet parser's public surface: the parser (#454), detection, and the lexer gated against
+ * v12's Langium lexer (#452).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, PACKET_TRIVIA, T as PacketTokenKind } from './tokens.ts';
+export { MAX_PACKET_ROWS, parsePacket } from './parser.ts';
+export type { PacketParseOptions, PacketParseResult } from './parser.ts';
+export { detectPacket } from './detect.ts';
+export type * from './ast.ts';
 
 export interface PacketToken {
   /** A `PacketTokenKind` or a shared `Kind`. */
