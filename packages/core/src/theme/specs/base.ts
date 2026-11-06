@@ -23,6 +23,7 @@ const SOURCES = hueSources(true, 'primaryColor', SECONDARY, TERTIARY);
 const base: ThemeSpec = {
   name: 'base',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#fff4dd',
     secondaryColor: '#f4ddff',
