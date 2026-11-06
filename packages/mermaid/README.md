@@ -20,7 +20,7 @@ const { text } = await mermaid.render('id', 'flowchart LR\n  A --> B', { format:
 
 Every first-party diagram type is included. Bundlers split each type into its own chunk, so a page downloads only the types it renders.
 
-The size budget is in [`size-budget.json`](./size-budget.json): core, everything the `mermaid` entry loads before any diagram chunk, is at most 92 KB gzip, and core plus flowchart, as loaded for one flowchart render, at most 124 KB gzip.
+The size budget is in [`size-budget.json`](./size-budget.json): core, everything the `mermaid` entry loads before any diagram chunk, is at most 92 KB gzip, and core plus flowchart, as loaded for one flowchart render, at most 128 KB gzip.
 
 ## Pick your diagrams
 
