@@ -97,14 +97,6 @@
       "count": 1
     }
   },
-  "packages/conformance/src/cli/harvest-flowchart.ts": {
-    "@typescript-eslint/no-implied-eval": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unsafe-call": {
-      "count": 1
-    }
-  },
   "packages/conformance/src/flowchart-layout.spec.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
@@ -126,14 +118,6 @@
     }
   },
   "packages/conformance/src/flowchart/grammar/sentences.spec.ts": {
-    "tsdoc/syntax": {
-      "count": 1
-    }
-  },
-  "packages/conformance/src/flowchart/jison-lexer.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
