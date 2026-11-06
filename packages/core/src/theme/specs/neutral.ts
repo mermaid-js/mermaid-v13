@@ -3,8 +3,14 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
-import { darkModeLabels } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -30,8 +36,12 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
+  rules: gitLabelRules('#030303', '#d4d4d4'),
   values: {
     // v12 titles and legends: `taskTextDarkColor`.
     headingTextColor: '#333333',
@@ -84,6 +94,11 @@ const theme: ThemeSpec = {
     ),
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
+    // v12 theme-neutral.js: pie1 darkened by 25, then pie2–pie8; labels 1 and 3 white, the
+    // others its own text colour, as for cScaleLabel. v12's `pie<i>` is `cScale<i>` here; the
+    // shared palette reads `cScale<i>`, never pie's (D334).
+    ...fixedGit(['darkenHsl(cScale1, 25%)', ...[2, 3, 4, 5, 6, 7, 8].map((n) => `cScale${n}`)]),
+    gitBranchLabel: paletteSlots((i) => (i === 1 || i === 3 ? 'white' : '#333333'), 8),
   },
   darkModePalettes: { cScaleLabel: darkModeLabels({ 0: 'cScale1', 2: 'cScale1' }) },
 };

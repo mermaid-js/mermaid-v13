@@ -4,6 +4,7 @@
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
 import type { ThemeFamily } from './diagram.ts';
+import { BASE_SECONDARY } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -63,6 +64,36 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
+  // gitGraph labels, as v12 theme-base derives them (D267); the built-in themes set their own
+  // commit label and border rules (`gitLabelRules`). An author's `tagBorder` fills
+  // `tagLabelBorder` unless the author sets that too.
+  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  commitLabelBackground: BASE_SECONDARY,
+  tagLabelColor: 'primaryTextColor',
+  tagLabelBackground: 'primaryColor',
+  tagLabelBorder: 'ifSet(tagBorder, primaryBorderColor)',
+  // gantt (#381, #385): v12 theme-base's derivation, from shared variables and literals only
+  // (D331); no theme spec names a gantt variable. `vertLineColor` is the redux family's
+  // `primaryBorderColor` (v12 theme-base: navy). Values only a per-theme literal could give are
+  // listed in the spec #293 notes (GAPS #385).
+  sectionBkgColor: 'tertiaryColor',
+  altSectionBkgColor: 'white',
+  sectionBkgColor2: 'primaryColor',
+  excludeBkgColor: '#eeeeee',
+  taskBorderColor: 'primaryBorderColor',
+  taskBkgColor: 'primaryColor',
+  activeTaskBorderColor: 'primaryColor',
+  activeTaskBkgColor: 'lightenHsl(primaryColor, 23%)',
+  gridColor: 'lightgrey',
+  doneTaskBkgColor: 'lightgrey',
+  doneTaskBorderColor: 'grey',
+  critBorderColor: '#ff8888',
+  critBkgColor: 'red',
+  todayLineColor: 'red',
+  vertLineColor: 'primaryBorderColor',
+  taskTextColor: 'textColor',
+  taskTextOutsideColor: 'textColor',
+  taskTextDarkColor: 'textColor',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
@@ -109,4 +140,7 @@ export const DARK_RULES: ThemeRuleTable = {
   // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
   rowBkg: 'lightenHsl(mainBkg, 5%)',
   rowAltBkg: 'darkenHsl(mainBkg, 10%)',
+  // gantt: v12 theme-redux-dark and theme-neo-dark fill done tasks with `secondBkg`, khroma
+  // lighten(mainBkg, 16) (#385).
+  doneTaskBkgColor: 'lightenHsl(mainBkg, 16%)',
 };

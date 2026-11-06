@@ -52,6 +52,7 @@ import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
+  GIT_PALETTE_LIMIT,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   type PaletteVariable,
@@ -621,10 +622,11 @@ function checkOverrides(
 
 const MAX_PALETTE = 64;
 /**
- * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`.
- * v12 reads no leading zero, so `cScale05` is an unknown name, ignored (R-CONF-5).
+ * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`,
+ * `git3`, `gitInv3`, `gitBranchLabel3`. v12 reads no leading zero, so `cScale05` is an unknown
+ * name, ignored (R-CONF-5).
  */
-const RE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
+const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
 /** A rule's read of one palette entry: any palette's slot (`bkgColorArray2`, D332). */
 const RE_READ = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
 
@@ -656,7 +658,14 @@ function numberedOverrides(
   for (const key of Object.keys(vars)) {
     const m = RE_SLOT.exec(key);
     const raw = vars[key];
-    if (!m || Number(m[2]) >= PALETTE_LIMIT || raw === undefined || raw === null || raw === '')
+    if (
+      !m ||
+      // The git palettes have eight slots, the others twelve (D267, D258).
+      Number(m[2]) >= (m[1]!.startsWith('g') ? GIT_PALETTE_LIMIT : PALETTE_LIMIT) ||
+      raw === undefined ||
+      raw === null ||
+      raw === ''
+    )
       continue;
     const c = typeof raw === 'string' ? checkColor(raw) : undefined;
     if (c === undefined) drop(key, raw);
@@ -667,9 +676,10 @@ function numberedOverrides(
 
 /**
  * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
- * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>` and
- * `cScaleLabel<n>` replace one entry. Any unsafe colour drops that override with a warning.
- * The theme's own entries are evaluated when a renderer reads the palette.
+ * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
+ * `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>` and `gitBranchLabel<n>` replace one entry. Any
+ * unsafe colour drops that override with a warning. The theme's own entries are evaluated when a
+ * renderer reads the palette.
  */
 function paletteSource(
   spec: ThemeSpec,

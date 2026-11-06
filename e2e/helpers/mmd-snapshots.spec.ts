@@ -165,8 +165,11 @@ describe('the real fixture folders', () => {
     expect(folders).toContain('state-diagram-v2');
     expect(folders).toContain('journey');
     expect(folders).toContain('timeline');
+    expect(folders).toContain('mindmap');
     expect(folders).toContain('pie');
-    expect(folders).not.toContain('gantt');
+    expect(folders).toContain('git');
+    expect(folders).toContain('gantt');
+    expect(folders).not.toContain('requirement');
     expect(folders).not.toContain('zenuml');
   });
 

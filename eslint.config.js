@@ -23,6 +23,8 @@ const DOM_GLOBALS = [
   'globalThis',
 ];
 
+const NO_ENUM = { selector: 'TSEnumDeclaration', message: 'Use a union type instead of an enum.' };
+
 export default tseslint.config(
   {
     ignores: [
@@ -80,10 +82,7 @@ export default tseslint.config(
     },
     rules: {
       'no-only-tests/no-only-tests': 'error',
-      'no-restricted-syntax': [
-        'error',
-        { selector: 'TSEnumDeclaration', message: 'Use a union type instead of an enum.' },
-      ],
+      'no-restricted-syntax': ['error', NO_ENUM],
 
       // Carried over from v12.
       '@typescript-eslint/consistent-type-imports': 'error',
@@ -203,7 +202,10 @@ export default tseslint.config(
       'packages/diagram-journey/src/v12-specs/*.spec.ts',
       'packages/diagram-quadrant/src/v12-specs/**',
       'packages/diagram-timeline/src/v12-specs/**',
+      'packages/diagram-mindmap/src/v12-specs/*.spec.ts',
+      'packages/diagram-gantt/src/v12-specs/*.spec.ts',
       'packages/diagram-pie/src/v12-specs/*.spec.ts',
+      'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',
@@ -258,6 +260,26 @@ export default tseslint.config(
       ],
       'no-console': 'error',
       'mermaid/no-global-config': 'error',
+    },
+  },
+  {
+    // Core and diagram code never read the clock (DESIGN §1, D270): `now` is on the render
+    // context. Specs may time themselves.
+    files: ['packages/core/src/**/*.{ts,js}', 'packages/diagram-*/src/**/*.{ts,js}'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        NO_ENUM,
+        ...[
+          "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+          "NewExpression[callee.name='Date'][arguments.length=0]",
+          "CallExpression[callee.name='Date']",
+        ].map((selector) => ({
+          selector,
+          message: 'Core and diagram code never read the clock (D270); use `ctx.now`.',
+        })),
+      ],
     },
   },
   prettier

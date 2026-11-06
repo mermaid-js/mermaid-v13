@@ -63,9 +63,16 @@ export const TAILWIND_300: readonly string[] = [
  */
 export const series = (entries: string): readonly string[] => entries.split(' ');
 
-/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258). */
-export const paletteSlots = (entry: (i: number) => string): readonly string[] =>
-  Array.from({ length: 12 }, (_, i) => entry(i));
+/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258; 8 for the git palettes). */
+export const paletteSlots = (entry: (i: number) => string, length = 12): readonly string[] =>
+  Array.from({ length }, (_, i) => entry(i));
+
+/**
+ * v12 `theme-base.js`'s `secondaryColor`, a hue turn of `primaryColor` unless the author sets it:
+ * what the shared rules (`LIGHT_RULES`) derive the commit labels from (the text is its inverse),
+ * as `neo` and the light redux themes do.
+ */
+export const BASE_SECONDARY = 'ifSet(secondaryColor, adjustHue(primaryColor, -120))';
 
 /** `cScaleInv` as v12 derives it from a fixed `cScale`: `invert(cScale<n>)`. */
 export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);

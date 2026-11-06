@@ -1,0 +1,13 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: every day but Friday is excluded ("weekend
+  saturday" makes the weekend Saturday and Sunday), so the 7d task runs
+  over seven Fridays. Excluding Friday too is a schedule error
+  (gantt-cases/reject-excluding-every-day).
+---
+gantt
+  dateFormat YYYY-MM-DD
+  excludes weekends,monday,tuesday,wednesday,thursday
+  weekend saturday
+  section weekends skip test
+  test1 :id1,2019-02-01,7d

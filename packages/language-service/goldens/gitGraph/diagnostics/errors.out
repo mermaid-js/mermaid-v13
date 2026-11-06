@@ -1,0 +1,8 @@
+3:13-3:14 "A" error UNEXPECTED: Expected a quoted text such as `"text"`, got `A`; id: takes a quoted text, as `id:"text"`.
+4:12-4:19 "nowhere" error GIT_UNKNOWN_BRANCH: There is no branch `nowhere` to check out yet. Create it first with `branch nowhere`.
+5:10-5:15 "title" error UNEXPECTED: Expected a branch name or a quoted text such as `"text"`, got `title`; a name that starts with `title` must be quoted, as `branch "titled"`.
+6:9-6:13 "main" error GIT_MERGE_INTO_ITSELF: Cannot merge `main` here: the head of the current branch `main` is a commit of `main`, so the branch would be merged into itself. Add a commit on `main` first.
+7:13-7:16 "\"A\"" warning GIT_DUPLICATE_ID: The commit id `A` is already used: this commit replaces the earlier one, which is no longer drawn. Give each commit its own id.
+9:10-9:13 "dev" error GIT_BRANCH_EXISTS: The branch `dev` already exists. Give the new branch another name, or write `checkout dev` to switch to it.
+10:18-10:27 "\"missing\"" error GIT_CHERRY_PICK_UNKNOWN_COMMIT: There is no commit `missing` to cherry-pick. Name the commit with `id:` where it is made, and cherry-pick it after that.
+11:9-11:10 ";" error UNEXPECTED_CHARACTER: Unexpected character `;`; `;` does not end a statement in a git graph: put each statement on a line of its own.

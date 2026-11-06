@@ -1,0 +1,40 @@
+# Run notes, spec #292 (gitGraph)
+
+Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft PR: opened after the first ticket merge.
+
+| Ticket | Issue | Blocked by | State |
+| --- | --- | --- | --- |
+| T1 lexer parity gate | #368 | — | merged (ff 189662975) |
+| T4a `git`, `gitInv`, `gitBranchLabel` palettes | #369 | — (on #410) | merged (--no-ff, branch 64e08434c) |
+| T2 grammar, parser, model, AST | #370 | #368 | merged (ff 7fa9ac108) |
+| T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | merged (ff e8bae97a8) |
+| T6 language facet | #372 | #370 | merged (ff da186447a) |
+| T4 SVG renderer | #373 | #371, #369 | merged (ff 867bf19c7) |
+| T5 integration | #374 | #373, #372 | merged (--no-ff 962c6cfee, branch 1a56cd440) |
+
+- `01-v12-gitgraph.md`: pointer notes on v12 grammar, DB, renderer, styles, themes, corpus and the v13 seams.
+- `IMPLEMENTER.md`: the brief every ticket agent reads.
+- `GAPS.md`: unmet criteria and choices per ticket.
+- `tickets/<n>.md`: handoffs.
+
+## Core size (R-PERF-8, `packages/bench/src/core-size.spec.ts`, limit 94,208 B gz)
+
+| Point | Bench `core-size.spec.ts` | CDN `cdn-build.spec.ts` |
+| --- | --- | --- |
+| `mermaid-v13` 38d663b44 (start) | 93,551 | 93,901 |
+| after T1 #368 | unchanged | unchanged |
+| #369 palettes alone (not merged) | ~94,080 | 94,452 (over by 244) |
+| #410 alone (`mermaid-v13` 0f831fcc8 + fix) | 92,181 | 92,520 |
+| after T4a #369 (on #410) | 92,645 | 93,011 |
+| after T5 #374 | 93,027 | 93,416 |
+| combined with gantt (570624bd0), 72ceaf354 | 93,124 | 93,570 |
+| after T4 #373 (start of T5) | 92,646 | 93,012 |
+| T5 #374 (registry row, 16 theme variables) | 93,037 | 93,418 |
+
+## Wave 2 merge order (coordinator)
+
+gantt (#398) → gitGraph (#404) → mindmap (#406): each PR contains the one before it. When gantt's PR is ready, merge `mermaid-js/feature/293_gantt` (sha from the coordinator) into `feature/292_gitgraph`, regenerate generated files (D112), `pnpm check`, push, CI; measure both core gates on the combined tree; then the final whole-branch review. Mindmap stacks on this tip and copies the `git` palette blocks: keep them stable. Report the ready sha to the coordinator.
+
+## Finish rule
+
+The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` (Playwright image) and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.

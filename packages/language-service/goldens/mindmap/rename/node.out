@@ -1,0 +1,16 @@
+@ 3:3  |root((The root))
+  prepare: 3:3-3:7 "root"; rename to "Start":
+  %% rename-to: Start
+  mindmap
+    Start((The root))
+      a[First]
+      a(Second)
+        b
+@ 4:5  |a[First]
+  prepare: 4:5-4:6 "a"; rename to "Start":
+  %% rename-to: Start
+  mindmap
+    root((The root))
+      Start[First]
+      a(Second)
+        b

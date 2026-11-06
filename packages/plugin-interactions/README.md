@@ -1,6 +1,6 @@
 # @mermaid-js/plugin-interactions (v13 alpha)
 
-Brings back the v12 click callbacks (flowchart `click A callback`, `call fn()`; class `callback A "fn"`, `click A call fn()`) and the sequence actor menus (`link`, `links`, `properties`, `details`) as a Mermaid v13 extension plugin. Links (`click A "url"`, class `link A "url"`) and tooltips work without it. Without it, actor menus are ignored and the svg is the same either way.
+Brings back the v12 click callbacks (flowchart `click A callback`, `call fn()`; class `callback A "fn"`, `click A call fn()`; gantt `click a call fn()`, on the task's bar and label) and the sequence actor menus (`link`, `links`, `properties`, `details`) as a Mermaid v13 extension plugin. Links (`click A "url"`, class `link A "url"`, gantt `click a href "url"`) and tooltips work without it. Without it, actor menus are ignored and the svg is the same either way.
 
 ```js
 import mermaid from 'mermaid';

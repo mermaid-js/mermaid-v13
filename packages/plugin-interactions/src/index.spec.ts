@@ -121,6 +121,7 @@ describe('callbackArgs (v12 FlowDB.setClickFun)', () => {
     [' "x, y" , 2 ', ['x, y', '2']],
     ['"a"b", c', ['a"b', 'c']],
     ['"odd, one', ['"odd', 'one']],
+    ['"', ['']],
     ['', ['']],
   ])('%j', (args, expected) => {
     expect(callbackArgs('N', args)).toEqual(expected);

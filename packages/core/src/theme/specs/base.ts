@@ -3,15 +3,22 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, series } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
+import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 // v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
 // that derivation, where the base variables are its hex.
-const SECONDARY = 'ifSet(secondaryColor, adjustHue(primaryColor, -120))';
+const SECONDARY = BASE_SECONDARY;
 const TERTIARY = 'ifSet(tertiaryColor, lightenHsl(adjustHue(primaryColor, 180), 5%))';
 const SOURCES = hueSources(true, 'primaryColor', SECONDARY, TERTIARY);
+const GIT = gitSources('primaryColor', SECONDARY, TERTIARY);
 
 const base: ThemeSpec = {
   name: 'base',
@@ -37,9 +44,13 @@ const base: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
-  // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode).
+  // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode); git darkened by 25
+  // (lightened under darkMode, with black branch labels).
   palettes: {
     ...darkenedScale(SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
@@ -50,8 +61,12 @@ const base: ThemeSpec = {
       'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #c5ffaa #ffaac5 #ddfff4 #a3ff77 #ff77a3 #aaffe3 ' +
         'primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'
     ),
+    ...gitPalettes(GIT),
   },
-  darkModePalettes: darkenedScale(SOURCES, 75),
+  darkModePalettes: {
+    ...darkenedScale(SOURCES, 75),
+    ...gitPalettes(GIT, 'lightenHsl', 'black'),
+  },
 };
 
 export default base;

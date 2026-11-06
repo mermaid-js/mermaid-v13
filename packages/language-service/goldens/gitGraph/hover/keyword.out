@@ -1,0 +1,40 @@
+@ 1:11  gitGraph T|B:
+  1:10-1:12 "TB"
+  | **`TB`**
+  |
+  | `gitGraph TB:`: branches run top to bottom.
+@ 2:5  ti|tle Release flow
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Release flow`: the title drawn above the graph (the last one wins).
+@ 3:6  com|mit id:"A" type: HIGHLIGHT
+  3:3-3:9 "commit"
+  | **`commit`**
+  |
+  | `commit id: "A" msg: "Fix" tag: "v1" type: HIGHLIGHT`: a commit on the current branch. The last `id:`, message and `type:` count; every `tag:` is drawn.
+@ 3:19  commit id:"A" ty|pe: HIGHLIGHT
+  3:17-3:22 "type:"
+  | **`type:`**
+  |
+  | `type: HIGHLIGHT`: how a commit or merge is drawn: `NORMAL`, `REVERSE` or `HIGHLIGHT`.
+@ 3:27  commit id:"A" type: HIGH|LIGHT
+  3:23-3:32 "HIGHLIGHT"
+  | **`HIGHLIGHT`**
+  |
+  | `type: HIGHLIGHT`: a commit drawn as a filled square.
+@ 4:16  branch dev or|der: 2
+  4:14-4:20 "order:"
+  | **`order:`**
+  |
+  | `order: 2`: where a branch is drawn among the others (lower first; 0 without one).
+@ 6:24  cherry-pick id:"A" pa|rent:"M"
+  6:22-6:29 "parent:"
+  | **`parent:`**
+  |
+  | `parent: "B"`: which parent of a merge commit a cherry-pick follows.
+@ 7:6  acc|Descr: x
+  7:3-7:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.

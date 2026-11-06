@@ -53,15 +53,14 @@ function splitArgs(args: string): string[] {
 
 /**
  * v12's argument list: split on commas outside double quotes, trim, drop one pair of
- * surrounding quotes; no arguments means the node id.
+ * surrounding quotes (a lone `"` both starts and ends with one, so it becomes `''`, as v12's
+ * `substr(1, -1)` gave); no arguments means the node id.
  */
 export function callbackArgs(id: string, args: string | undefined): string[] {
   if (args === undefined) return [id];
   const list = splitArgs(args).map((a) => {
     const item = a.trim();
-    return item.length >= 2 && item.startsWith('"') && item.endsWith('"')
-      ? item.slice(1, -1)
-      : item;
+    return item.startsWith('"') && item.endsWith('"') ? item.slice(1, -1) : item;
   });
   return list.length === 0 ? [id] : list;
 }
@@ -97,8 +96,23 @@ function drawsNode(g: Element, id: string): boolean {
 }
 
 /**
+ * The `clickable` elements of `svg` whose `data-id` is in `ids`: a gantt task's bar and label
+ * (v12 bound both, `<id>` and `<id>-text`), which are not `g.node` groups.
+ */
+function clickableElements(svg: Element, ids: ReadonlySet<string>): Map<string, Element[]> {
+  const out = new Map<string, Element[]>();
+  for (const el of svg.querySelectorAll('[data-id]')) {
+    const id = el.getAttribute('data-id') ?? '';
+    if (ids.has(id) && (el.getAttribute('class') ?? '').split(' ').includes('clickable'))
+      out.set(id, [...(out.get(id) ?? []), el]);
+  }
+  return out;
+}
+
+/**
  * `click … callback` / `call` (`AstCallback`), bound to the nodes' `g.node[data-id]`: flowchart
- * nodes and class boxes alike (the class parser emits the same field).
+ * nodes and class boxes alike (the class parser emits the same field). An id with no such node
+ * binds its `clickable` elements instead (gantt's bar and label).
  */
 const callbacks = defineFeature<Binding[]>({
   field: 'callback',
@@ -118,7 +132,11 @@ const callbacks = defineFeature<Binding[]>({
       const isNode = (g: Element) =>
         (g.getAttribute('class') ?? '').split(' ').includes('node') &&
         drawsNode(g, g.getAttribute('data-id') ?? '');
-      const anchors = scope.anchors(new Set(bindings.map((b) => b.id)), isNode);
+      const ids = new Set(bindings.map((b) => b.id));
+      const anchors = scope.anchors(ids, isNode);
+      const rest = new Set([...ids].filter((id) => !anchors.has(id)));
+      if (rest.size > 0)
+        for (const [id, els] of clickableElements(scope.svg, rest)) anchors.set(id, els);
       for (const b of bindings)
         for (const node of anchors.get(b.id) ?? [])
           scope.listen(node, 'click', () => runFunction(b.name, b.args));

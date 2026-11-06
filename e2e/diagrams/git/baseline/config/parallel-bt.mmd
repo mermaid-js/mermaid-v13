@@ -1,0 +1,15 @@
+---
+config:
+  theme: default
+  gitGraph:
+    parallelCommits: true
+description: parallelCommits bottom to top
+---
+gitGraph BT:
+  commit id: "1"
+  branch a
+  commit id: "a1"
+  commit id: "a2"
+  checkout main
+  commit id: "2"
+  merge a id: "3"

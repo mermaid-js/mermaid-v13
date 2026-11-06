@@ -1,0 +1,17 @@
+@ 2:13  Design :cr|it, a1, 2024-01-01, 3d
+  2:11-2:15 "crit"
+  | **`crit`**
+  |
+  | A tag: the task is drawn as critical.
+@ 3:16  Build :b1, af|ter a1, 2d
+  3:14-3:19 "after"
+  | **`after`**
+  |
+  | `after <ids>`: the task starts when the last of these tasks ends.
+@ 4:27  Test :c1, 2024-01-01, un|til b1
+  4:25-4:30 "until"
+  | **`until`**
+  |
+  | `until <ids>`: the task ends when the first of these tasks starts.
+@ 5:10  Ship :1|d
+  none

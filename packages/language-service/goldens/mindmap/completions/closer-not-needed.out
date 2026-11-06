@@ -1,0 +1,6 @@
+@ 3:10  {{hex|]
+  none
+@ 4:7  a[|]
+  none
+@ 5:11  b[text|
+  ] shape (square) 5:11-5:11 "" -> "]"

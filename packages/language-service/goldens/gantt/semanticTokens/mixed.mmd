@@ -1,0 +1,11 @@
+%%{init: {"theme": "dark"}}%%
+gantt
+  dateFormat YYYY-MM-DD
+  title Plan
+  %% a comment
+  section A
+  Design :crit, a1, 2024-01-01, 3d
+  Build :after a1, 2d
+  click a1 href "https://example.com" call show(a1)
+  accTitle: Plan
+  accDescr { A plan }

@@ -5,7 +5,14 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { INVERTED_SCALE, paletteSlots, series, TAILWIND_300, TAILWIND_400 } from './palettes.ts';
-import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
+import { gitLabelRules } from './scales.ts';
+import {
+  REDUX_DARK_BASE,
+  REDUX_DARK_GIT,
+  REDUX_DARK_GIT_DARK_MODE,
+  REDUX_DARK_TOKENS,
+  REDUX_DARK_VALUES,
+} from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark-color',
@@ -13,6 +20,9 @@ const theme: ThemeSpec = {
   family: 'redux',
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
+  rules: {
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
     ...REDUX_DARK_VALUES,
     // v12 draws ER edge labels on a plain fill here.
@@ -32,7 +42,9 @@ const theme: ThemeSpec = {
       ...TAILWIND_300,
       ...series('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
     ],
+    ...REDUX_DARK_GIT,
   },
+  darkModePalettes: REDUX_DARK_GIT_DARK_MODE,
 };
 
 export default theme;
