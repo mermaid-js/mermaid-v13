@@ -42,6 +42,7 @@ const DOCS = {
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
   gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
+  packet: 'packet\n  0-15: "Source Port"\n  +16: "Length"\n',
   radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
 };
@@ -58,6 +59,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'info',
       'journey',
       'mindmap',
+      'packet',
       'pie',
       'quadrantChart',
       'radar',

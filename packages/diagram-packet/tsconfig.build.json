@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "customConditions": []
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.fixtures.ts",
+    "src/layout/fixtures.ts",
+    "src/v12-specs/**"
+  ]
+}

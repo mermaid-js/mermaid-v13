@@ -80,6 +80,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-info',
       '@mermaid-js/diagram-journey',
       '@mermaid-js/diagram-mindmap',
+      '@mermaid-js/diagram-packet',
       '@mermaid-js/diagram-pie',
       '@mermaid-js/diagram-quadrant',
       '@mermaid-js/diagram-radar',

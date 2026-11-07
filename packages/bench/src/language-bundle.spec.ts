@@ -56,6 +56,11 @@ const PACKAGES = [
     renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'packet',
+    dir: 'diagram-packet',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
+  },
+  {
     name: 'cynefin',
     dir: 'diagram-cynefin',
     renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],

@@ -1241,7 +1241,8 @@ export const configSchema: ConfigSchema = {
     "packet": {
       "$ref": "#/$defs/PacketDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "block": {
@@ -5877,13 +5878,30 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the packet renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "rowHeight": {
           "description": "The height of each row in the packet diagram.",
           "type": "number",
           "minimum": 1,
           "default": 32,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value below 1, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12 drew it."
           }
         },
         "bitWidth": {
@@ -5892,7 +5910,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 32,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value below 1, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12 drew it."
           }
         },
         "bitsPerRow": {
@@ -5901,7 +5921,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 32,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value below 1, a fraction, or one that is not a number falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342), where v12 drew fractional bit numbers or nothing."
           }
         },
         "showBits": {
@@ -5909,7 +5931,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "bitOrder": {
@@ -5925,7 +5948,8 @@ export const configSchema: ConfigSchema = {
           },
           "default": "ascending",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "paddingX": {
@@ -5934,7 +5958,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a padding wider than a piece draws it 0 wide, where v12 drew a negative width."
           }
         },
         "paddingY": {
@@ -5943,7 +5969,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342)."
           }
         }
       }

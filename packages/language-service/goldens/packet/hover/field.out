@@ -1,0 +1,35 @@
+@ 2:6  0-1|5: "Source Port"
+  2:3-2:7 "0-15"
+  | **field** `Source Port`
+  |
+  | Bits 0-15 · 16 bits
+@ 3:5  +1|6: "Destination Port"
+  3:3-3:6 "+16"
+  | **field** `Destination Port`
+  |
+  | Bits 16-31 · 16 bits
+@ 4:5  32|: "Flag"
+  4:3-4:5 "32"
+  | **field** `Flag`
+  |
+  | Bit 32 · 1 bit
+@ 5:14  33-63: "Seq|uence"
+  5:11-5:19 "Sequence"
+  | **field** `Sequence`
+  |
+  | Bits 33-63 · 31 bits
+@ 6:13  +8: "Data"|
+  6:7-6:13 "\"Data\""
+  | **field** `Data`
+  |
+  | Bits 64-71 · 8 bits
+@ 7:14  80-90: "Gap|"
+  7:11-7:14 "Gap"
+  | **field** `Gap`
+  |
+  | Not drawn: Packet block 80 - 90 is not contiguous. It should start from 72.
+@ 8:4  +|0: "Empty"
+  8:3-8:5 "+0"
+  | **field** `Empty`
+  |
+  | Not drawn: Packet block 91 is invalid. Cannot have a zero bit field.

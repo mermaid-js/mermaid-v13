@@ -41,6 +41,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'info',
       'journey',
       'mindmap',
+      'packet',
       'pie',
       'quadrantChart',
       'radar',
@@ -125,6 +126,20 @@ describe('the per-type first-paint highlighters (D134)', () => {
         'section Build:keyword',
         'Code:variable',
         ':crit, a1, 2024-01-01, 3d:string',
+      ]);
+    });
+
+    it('highlights a packet diagram with the packet grammar', () => {
+      const out = spans('packet\n  title UDP\n  0-15: "Source Port"\n  +16: "Length"\n');
+      expect(out).toEqual([
+        'packet:keyword',
+        'title UDP:keyword',
+        '-:punctuation',
+        '::punctuation',
+        '"Source Port":string',
+        '+:punctuation',
+        '::punctuation',
+        '"Length":string',
       ]);
     });
 
