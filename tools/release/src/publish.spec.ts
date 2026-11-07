@@ -35,6 +35,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-packet',
       '@mermaid-chart/diagram-pie',
       '@mermaid-chart/diagram-quadrant',
+      '@mermaid-chart/diagram-radar',
       '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/diagram-timeline',

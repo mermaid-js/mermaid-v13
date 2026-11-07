@@ -84,6 +84,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-packet',
       '@mermaid-js/diagram-pie',
       '@mermaid-js/diagram-quadrant',
+      '@mermaid-js/diagram-radar',
       '@mermaid-js/diagram-sequence',
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',

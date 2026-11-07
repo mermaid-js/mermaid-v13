@@ -372,6 +372,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `radar.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
 | `radar.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `usecase.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `venn.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1947,6 +1948,49 @@ order. Every column and card carries `data-id` and `data-ast`, its item's AST id
 | `look: neo` put the global `[data-look="neo"].cluster rect` gradient stroke and shadow on column rects | `look` is ignored; kanban differs between the four families by colour only, with no gradient and no shadow | D153, D227 |
 | `look: handDrawn` sketched columns only (cards never got the look), and the card code that would have sketched them dropped the priority bar | With `@mermaid-js/plugin-hand-drawn`, columns (`group`) and cards (`node`) are sketched through `w.outline`; the priority bar, the link and the text are not, and the bar is kept | D379 |
 | The mindmap rules v12's kanban style sheet carried (`.edge`, `.section-edge-*`, `.edge-depth-*`, `.node-icon-*`, `.section-root`, `.disabled`, `.kanban-label`, `.icon-container`, `.section-<k> line`, `.section-<k> text`) | Not ported: they matched nothing in a kanban board | — |
+
+## Radar chart
+
+The radar parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; grammar in [syntax/radar.md](./syntax/radar.md)). What changes in the drawing
+(spec #422):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `radar.axisColor` was each classic theme's `lineColor`, but an author's `lineColor` override moved the axes only in `forest`, `neutral` and `base`: `default` kept `#333333`, and `dark`'s `updateColors()` resets `lineColor` to `mainContrastColor` (`lightgrey`) before it builds the `radar` block, so the axes stayed `lightgrey` | `radarAxisColor` is the rule `lineColor` in every theme, so the axes follow an author's `lineColor` (an explicit `radarAxisColor` or `themeVariables.radar.axisColor` still wins) | D351 |
+| `redux`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
+| `redux-color`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
+| `redux-dark`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
+| `redux-dark-color`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
+| `neo`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
+| `neo-dark`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
+| `themeVariables.radar.*` (nested only) | Each key is also the flat variable `radar<Key>` (`radarAxisColor`, … `radarLegendFontSize`); the nested key still works, and the flat name wins when both are set | D335, D540 |
+| A `radar` config value of the wrong type or outside its range (`width: "wide"`, `curveTension: 3`) was used as it was (a value that is not a number drew `NaN`) | A number, or a numeric string as its number, inside the key's schema range; anything else draws with the default and one `RADAR_CONFIG_INVALID` warning per key | D356 |
+| `.radarTitle` and `.radarAxisLabel` set CSS `color` (`titleColor`, `axisColor`), which paints no SVG text, so all text filled with the root `textColor` | All radar text is drawn in `textColor`, as v12 drew it; radar does not read `titleColor` | D352 |
+| Curves past the twelfth (`radarCurve-12`, …) had no rule and filled opaque black with no stroke | Curve *i* takes slot *i* mod 12 (`radarCurve-0` again for the thirteenth), as pie's slices | D353 |
+| `max` equal to `min` wrote `NaN` paths; a curve whose entry count is not the axis count was skipped silently; `ticks` over 32 was only logged | Curves drawn at the centre with one `RADAR_EMPTY_RANGE` warning; the curve is still left out, with one `RADAR_CURVE_SKIPPED` warning naming every such curve; `RADAR_TICKS_CLAMPED`. A detailed entry naming no axis is still ignored, with `RADAR_UNKNOWN_AXIS` | D356 |
+| `radar.legendBoxSize` (12) was declared and never read: the swatch was always 12 px | `radarLegendBoxSize` sizes the swatch, and the legend text stays 4 px right of it; with the default, nothing changes | D359 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+## Radar SVG structure
+
+What changed in the radar chart's SVG compared with v12 (spec #422, DESIGN §7.2). The v12 class
+names are kept (`radarGraticule`, `radarAxisLine`, `radarAxisLabel`, `radarCurve-<i>`,
+`radarLegendBox-<i>`, `radarLegendText`, `radarTitle`) and so is v12's draw order: rings, axes,
+curves, legend, title.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="radar"`, `overflow="visible"`, a `<style>` scoped by the id | No root `id` and no `overflow`; `class="mermaid mermaid-radar"`, `role="img"`, `aria-roledescription="radar"`, `data-mermaid-version`; colours, opacities, stroke widths and font sizes are presentation attributes on each element, theme colours reading `var(--_x)` aliases on the root `style` (the `cScale` slots are literal colours) | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Everything in one `<g transform="translate(cx, cy)">`; the legend rows in `<g transform="translate(x,y)">` | No transforms: every element in root coordinates | The layout places everything |
+| Each axis a `<line>` and a `<text text-anchor dominant-baseline>`, siblings | Each axis a `<g data-id data-ast="axis:<name>">` holding its `line.radarAxisLine` and `text.radarAxisLabel`; the label's box sits where v12's anchor and baseline put it | One element per axis maps it to its source (R-PARSE-8) |
+| Axis labels placed by `text-anchor` (`start`/`end`/`middle` by the angle) and `dominant-baseline` (`hanging`/`auto`/`central`) at a point; the legend text `start`-anchored, `hanging` | Every label is placed by its measured box (core label layout): the box sits where v12's anchor and baseline put one line, and the text is drawn in it (`text-anchor="middle"` at the box centre, the legend `start` at its left edge), with no `dominant-baseline`. One line lands where v12's did; extra lines grow away from the chart | D355 |
+| Curves: `<path class="radarCurve-<i>">` (circle graticule) or `<polygon>`, no source mapping | The same, with `data-id` and `data-ast="curve:<name>"`; a skipped curve has no element but keeps its index, colour slot and legend row | R-PARSE-8, pitfall 12 |
+| Legend row: `<g transform>` with `<rect class="radarLegendBox-<i>" width="12" height="12">` and `<text x="16" class="radarLegendText">` | `<g data-id="curve:<name>">` with the `rect` (`data-id` too) and a start-anchored `text`, in root coordinates; no `data-ast` (the curve's shape carries it) | R-PARSE-8, D359 |
+| `<text class="radarTitle">` always written, empty when there is no title | Written only when there is a title, with `data-ast="title"` (`title@2`, … for the last of several) when it comes from the text; a front-matter title (D218) has no `data-ast` | Nothing invisible is drawn |
+| Labels, legend and title set with d3 `.text()`: `<br>` and tags printed as written, a newline collapsed to a space | Core's label layout: `<br>` and newlines break the line, markdown strings render, math and icons work, entities decode. A label of several lines grows away from the chart; legend rows below it move down | D355 |
+| A fixed `viewBox` (the 700 × 700 canvas by default) that axis labels, wide legend labels, a fractional-`ticks` ring and a large title overflowed (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`. A chart where everything fits keeps v12's canvas | D354 |
+| `look: neo` and the redux themes: the same chart as the classic themes | The same: radar differs between families by colour only (computed styles checked in `neo` and `neo-dark`) | D227 |
 
 ## Cynefin SVG structure
 

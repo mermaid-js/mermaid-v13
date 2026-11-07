@@ -1,0 +1,1014 @@
+[
+  {
+    "id": "radar-cases/keyword-names-split",
+    "source": "radar-beta\naxis circles, trueish, titleX"
+  },
+  {
+    "id": "radar-cases/keyword-names-longer",
+    "source": "radar-beta\naxis maxi, max5, axisB, curves, showLegendX, min-1, ticks_, graticules"
+  },
+  {
+    "id": "radar-cases/keyword-names-terminals",
+    "source": "radar-beta\naxis polygonal, falsehood, title, circle"
+  },
+  {
+    "id": "radar-cases/keyword-names-curve",
+    "source": "radar-beta\naxis A\ncurve circle{1}, true{2}, titled{3}"
+  },
+  {
+    "id": "radar-cases/keyword-names-dash",
+    "source": "radar-beta\naxis max-, axis-, max-x"
+  },
+  {
+    "id": "radar-cases/keyword-names-entry",
+    "source": "radar-beta\naxis A, B\ncurve c{max 1, maxi 2}"
+  },
+  {
+    "id": "radar-cases/keyword-names-header",
+    "source": "radar-beta\naxis radar-beta, radar-betas, radar-beta-x"
+  },
+  {
+    "id": "radar-cases/names-unicode",
+    "source": "radar-beta\naxis über"
+  },
+  {
+    "id": "radar-cases/names-trailing-dash",
+    "source": "radar-beta\naxis a-"
+  },
+  {
+    "id": "radar-cases/names-digit-start",
+    "source": "radar-beta\naxis 1st, 2"
+  },
+  {
+    "id": "radar-cases/names-dashes",
+    "source": "radar-beta\naxis a--b, _x, a_-_b, a---"
+  },
+  {
+    "id": "radar-cases/names-emoji",
+    "source": "radar-beta\naxis A\ncurve c😀{1}"
+  },
+  {
+    "id": "radar-cases/number-negative",
+    "source": "radar-beta\naxis A\ncurve c{-1}"
+  },
+  {
+    "id": "radar-cases/number-negative-min",
+    "source": "radar-beta\nmin -5"
+  },
+  {
+    "id": "radar-cases/number-leading-zero",
+    "source": "radar-beta\naxis A\ncurve c{01}"
+  },
+  {
+    "id": "radar-cases/number-trailing-dot",
+    "source": "radar-beta\naxis A\ncurve c{1.}"
+  },
+  {
+    "id": "radar-cases/number-leading-dot",
+    "source": "radar-beta\naxis A\ncurve c{.5}"
+  },
+  {
+    "id": "radar-cases/number-exponent",
+    "source": "radar-beta\naxis A\ncurve c{1e3}"
+  },
+  {
+    "id": "radar-cases/number-fraction-ticks",
+    "source": "radar-beta\nticks 1.5"
+  },
+  {
+    "id": "radar-cases/number-zero-dot",
+    "source": "radar-beta\naxis A\ncurve c{0.}"
+  },
+  {
+    "id": "radar-cases/number-digits-dot",
+    "source": "radar-beta\naxis A\ncurve c{12.}"
+  },
+  {
+    "id": "radar-cases/number-fraction-dot",
+    "source": "radar-beta\naxis A\ncurve c{1.23.}"
+  },
+  {
+    "id": "radar-cases/number-two-dots",
+    "source": "radar-beta\naxis A\ncurve c{1.2.3}"
+  },
+  {
+    "id": "radar-cases/number-zero-fractions",
+    "source": "radar-beta\naxis A, B, C, D\ncurve c{00.5, 000, 0.0, 10.5}"
+  },
+  {
+    "id": "radar-cases/number-forms",
+    "source": "radar-beta\naxis A, B, C\ncurve c{100, 0, 99999999999999999999}"
+  },
+  {
+    "id": "radar-cases/number-glued-name",
+    "source": "radar-beta\naxis A\ncurve c{1x}"
+  },
+  {
+    "id": "radar-cases/statements-one-line",
+    "source": "radar-beta\naxis A curve c{1}"
+  },
+  {
+    "id": "radar-cases/statements-option-after-curve",
+    "source": "radar-beta\naxis A\ncurve c{A:1} ticks 3"
+  },
+  {
+    "id": "radar-cases/statements-header-title",
+    "source": "radar-beta title Hi\naxis A"
+  },
+  {
+    "id": "radar-cases/list-break-after-comma-axis",
+    "source": "radar-beta\naxis A,\nB"
+  },
+  {
+    "id": "radar-cases/list-break-after-comma-curve",
+    "source": "radar-beta\naxis A, B\ncurve c{1,2},\nd{3,4}"
+  },
+  {
+    "id": "radar-cases/entries-newlines",
+    "source": "radar-beta\naxis A, B\ncurve c{\n1,\n2\n}"
+  },
+  {
+    "id": "radar-cases/entries-newline-before-comma",
+    "source": "radar-beta\naxis A, B\ncurve c{1\n,2}"
+  },
+  {
+    "id": "radar-cases/entries-mixed",
+    "source": "radar-beta\naxis A, B\ncurve c{1, A 2}"
+  },
+  {
+    "id": "radar-cases/entries-empty",
+    "source": "radar-beta\naxis A\ncurve c{}"
+  },
+  {
+    "id": "radar-cases/entries-double-colon",
+    "source": "radar-beta\naxis A\ncurve c{A::1}"
+  },
+  {
+    "id": "radar-cases/entries-no-colon",
+    "source": "radar-beta\naxis A\ncurve c{A 1}"
+  },
+  {
+    "id": "radar-cases/entries-unknown-axis",
+    "source": "radar-beta\naxis A\ncurve c{B: 1}"
+  },
+  {
+    "id": "radar-cases/entries-reordered",
+    "source": "radar-beta\naxis A, B, C\ncurve c{C: 3, A: 1, B: 2, A: 9}"
+  },
+  {
+    "id": "radar-cases/string-quotes",
+    "source": "radar-beta\naxis A['single'], B[\"double\"]"
+  },
+  {
+    "id": "radar-cases/string-escapes",
+    "source": "radar-beta\naxis A[\"a\\\"b\"], B['c\\'d'], C[\"e\\nf\"], D[\"g\\\\\"]"
+  },
+  {
+    "id": "radar-cases/string-multiline",
+    "source": "radar-beta\naxis A[\"multi\nline\"], B['x\n\ny']"
+  },
+  {
+    "id": "radar-cases/string-empty",
+    "source": "radar-beta\naxis A[\"\"]\ncurve c['']{1}"
+  },
+  {
+    "id": "radar-cases/string-unclosed",
+    "source": "radar-beta\naxis A[\"unclosed]\naxis B"
+  },
+  {
+    "id": "radar-cases/string-unclosed-single",
+    "source": "radar-beta\naxis A['unclosed]"
+  },
+  {
+    "id": "radar-cases/string-tag-quotes",
+    "source": "radar-beta\naxis A[\"<b class=\"x\">bold</b>\"]"
+  },
+  {
+    "id": "radar-cases/string-backslash-newline",
+    "source": "radar-beta\naxis A[\"a\\\nb\"]"
+  },
+  {
+    "id": "radar-cases/string-spaced-label",
+    "source": "radar-beta\naxis A [\"Label\"], B\t[\"Tab\"]"
+  },
+  {
+    "id": "radar-cases/title-blanks-comment",
+    "source": "radar-beta\ntitle   a   b   %% c\naxis A"
+  },
+  {
+    "id": "radar-cases/title-empty",
+    "source": "radar-beta\ntitle\naxis A"
+  },
+  {
+    "id": "radar-cases/title-comment-glued",
+    "source": "radar-beta\ntitle%%x\naxis A"
+  },
+  {
+    "id": "radar-cases/title-trailing-blank",
+    "source": "radar-beta\ntitle \naxis A"
+  },
+  {
+    "id": "radar-cases/title-glued",
+    "source": "radar-beta\ntitlex\naxis A"
+  },
+  {
+    "id": "radar-cases/title-repeated",
+    "source": "radar-beta\ntitle one\ntitle two\naxis A"
+  },
+  {
+    "id": "radar-cases/title-front-matter",
+    "source": "---\ntitle: Front\n---\nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/title-front-matter-empty",
+    "source": "---\ntitle: Front\n---\nradar-beta\ntitle\naxis A"
+  },
+  {
+    "id": "radar-cases/title-front-matter-in-text",
+    "source": "---\ntitle: Front\n---\nradar-beta title In text\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-title-no-colon",
+    "source": "radar-beta\naccTitle x\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-comments",
+    "source": "radar-beta\naccDescr: a %% b\naccTitle : c %% d\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-empty",
+    "source": "radar-beta\n  accTitle:\n  accDescr:\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-descr-block",
+    "source": "radar-beta\naccDescr {\n  line one\n\n  line two\n}\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-descr-glued",
+    "source": "radar-beta accDescr{x}\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-descr-brace-later",
+    "source": "radar-beta\naccDescr\n\n{\nx\n}\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-descr-unclosed",
+    "source": "radar-beta\naccDescr { never closed\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-descr-unclosed-lines",
+    "source": "radar-beta\naccDescr {\naccDescr {\naccDescr {\naxis A"
+  },
+  {
+    "id": "radar-cases/acc-description",
+    "source": "radar-beta\naccDescription: x"
+  },
+  {
+    "id": "radar-cases/header-glued-name",
+    "source": "radar-betax\naxis A"
+  },
+  {
+    "id": "radar-cases/header-colon",
+    "source": "radar-beta:\naxis A"
+  },
+  {
+    "id": "radar-cases/header-spaced-colon",
+    "source": " radar-beta :\naxis A"
+  },
+  {
+    "id": "radar-cases/header-colon-glued",
+    "source": "radar-beta:axis A"
+  },
+  {
+    "id": "radar-cases/header-comment",
+    "source": "radar-beta%%c\naxis A"
+  },
+  {
+    "id": "radar-cases/header-colon-comment",
+    "source": "radar-beta:%%c\naxis A"
+  },
+  {
+    "id": "radar-cases/header-dash",
+    "source": "radar-beta-\naxis A"
+  },
+  {
+    "id": "radar-cases/header-twice",
+    "source": "radar-beta radar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/header-only",
+    "source": "radar-beta"
+  },
+  {
+    "id": "radar-cases/header-blank-lines",
+    "source": "radar-beta\n\n\n"
+  },
+  {
+    "id": "radar-cases/header-blanks",
+    "source": "   radar-beta   \n\t\n  axis  A  \n"
+  },
+  {
+    "id": "radar-cases/semicolons",
+    "source": "radar-beta\naxis A;\ncurve c{1};"
+  },
+  {
+    "id": "radar-cases/semicolon-header",
+    "source": "radar-beta;"
+  },
+  {
+    "id": "radar-cases/not-radar-upper-case",
+    "source": "RADAR-BETA\naxis A"
+  },
+  {
+    "id": "radar-cases/not-radar-word",
+    "source": "radar\naxis A"
+  },
+  {
+    "id": "radar-cases/curves-before-axes",
+    "source": "radar-beta\ncurve c{1,2}\naxis A,B"
+  },
+  {
+    "id": "radar-cases/options-repeated",
+    "source": "radar-beta\nticks 3\nticks 40\nmax 10, min 2\nmax 5"
+  },
+  {
+    "id": "radar-cases/options-all",
+    "source": "radar-beta\nshowLegend false, graticule polygon\nticks 0\nmax 1\nmin 1"
+  },
+  {
+    "id": "radar-cases/options-bad-values",
+    "source": "radar-beta\nshowLegend yes\ngraticule square\nticks x"
+  },
+  {
+    "id": "radar-cases/duplicates",
+    "source": "radar-beta\naxis A, A\ncurve c{1,2}, c{3,4}"
+  },
+  {
+    "id": "radar-cases/entities",
+    "source": "radar-beta\ntitle a #amp; b #9829;\naxis A[\"#quot;x#quot;\"], B[\"&amp;\"]"
+  },
+  {
+    "id": "radar-cases/entities-semicolon",
+    "source": "radar-beta\naxis A[\"a#x;\"]"
+  },
+  {
+    "id": "radar-cases/hidden-trailing",
+    "source": "radar-beta\naxis A %% c\ncurve c{1} %%{init: {}}%%\n%%"
+  },
+  {
+    "id": "radar-cases/hidden-yaml",
+    "source": "radar-beta\n---\nx: 1\n---\naxis A"
+  },
+  {
+    "id": "radar-cases/hidden-yaml-unclosed",
+    "source": "radar-beta\n---\nnever closed\naxis A"
+  },
+  {
+    "id": "radar-cases/hidden-directive-glued",
+    "source": "radar-beta\naxis A %%{ x }%%y\naxis B"
+  },
+  {
+    "id": "radar-cases/stray-at",
+    "source": "radar-beta\naxis A\n@\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/stray-symbols",
+    "source": "radar-beta\naxis A\ncurve c{1} = (x)"
+  },
+  {
+    "id": "radar-cases/cr-only",
+    "source": "radar-beta\raxis A\rcurve c{1}"
+  },
+  {
+    "id": "radar-cases/crlf",
+    "source": "radar-beta\r\naxis A\r\n\r\ncurve c{1}\r\n"
+  },
+  {
+    "id": "radar-cases/unclosed-directive",
+    "source": "radar-beta\n%%{ never closed\naxis A"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init",
+    "source": "radar-beta\n%%{init: {\naxis A"
+  },
+  {
+    "id": "radar-cases/dev-diagram-dedented",
+    "source": "---\ntitle: \"Grades\"\n---\nradar-beta\n  axis m[\"Math\"], s[\"Science\"], e[\"English\"]\n  axis h[\"History\"], g[\"Geography\"], a[\"Art\"]\n  curve a[\"Alice\"]{85, 90, 80, 70, 75, 90}\n  curve b[\"Bob\"]{70, 75, 85, 80, 90, 85}\n\n  max 100\n  min 0\n"
+  },
+  {
+    "id": "radar-cases/line-separators-header",
+    "source": "radar-beta\u2028axis A"
+  },
+  {
+    "id": "radar-cases/line-separators-list",
+    "source": "radar-beta\naxis A,\u2028B"
+  },
+  {
+    "id": "radar-cases/line-separators-title",
+    "source": "radar-beta\ntitle a\u2028b\naxis A"
+  },
+  {
+    "id": "radar-cases/line-separators-acc-descr",
+    "source": "radar-beta\naccDescr {\na\u2028b\n}"
+  },
+  {
+    "id": "radar-cases/line-separators-acc-title",
+    "source": "radar-beta\naccTitle: a\u2029b\naxis A"
+  },
+  {
+    "id": "radar-cases/line-separators-statements",
+    "source": "radar-beta\naxis A\u2029curve c{1}"
+  },
+  {
+    "id": "radar-cases/line-separators-comment",
+    "source": "radar-beta\naxis A\n\u2028%% c\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/line-separators-string",
+    "source": "radar-beta\naxis A[\"a\u2028b\"]"
+  },
+  {
+    "id": "radar-cases/line-separators-entries",
+    "source": "radar-beta\naxis A\ncurve c{\u20281\u2029}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry-label",
+    "source": "radar-beta\naxis A[\"Alpha\"], B[\"Beta\"]\ncurve c{A 1}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry-later-axis",
+    "source": "radar-beta\naxis A\ncurve c{A: 1}\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-no-axes-detailed",
+    "source": "radar-beta\ncurve c{A: 1}"
+  },
+  {
+    "id": "radar-cases/parser-no-axes-positional",
+    "source": "radar-beta\ncurve c{1, 2}"
+  },
+  {
+    "id": "radar-cases/parser-skipped-curve",
+    "source": "radar-beta\naxis A, B\ncurve c{1}\ncurve d{1, 2, 3}\ncurve e{1, 2}"
+  },
+  {
+    "id": "radar-cases/parser-duplicate-axis-entries",
+    "source": "radar-beta\naxis A, A\ncurve c{A: 1, A: 2}"
+  },
+  {
+    "id": "radar-cases/parser-unknown-among-known",
+    "source": "radar-beta\naxis A, B\ncurve c{B 2, X 5, A 1}\ncurve d{Y 1, A 2, B 3}"
+  },
+  {
+    "id": "radar-cases/parser-detailed-and-positional-curves",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1, B: 2}, d{3, 4}"
+  },
+  {
+    "id": "radar-cases/parser-ticks-at-limit",
+    "source": "radar-beta\nticks 32"
+  },
+  {
+    "id": "radar-cases/parser-ticks-over-limit",
+    "source": "radar-beta\naxis A\ncurve c{1}\nticks 33"
+  },
+  {
+    "id": "radar-cases/parser-ticks-fraction-over-limit",
+    "source": "radar-beta\nticks 100.5"
+  },
+  {
+    "id": "radar-cases/parser-ticks-zero",
+    "source": "radar-beta\nticks 0"
+  },
+  {
+    "id": "radar-cases/parser-empty-range",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nmax 3\nmin 3"
+  },
+  {
+    "id": "radar-cases/parser-max-zero",
+    "source": "radar-beta\nmax 0"
+  },
+  {
+    "id": "radar-cases/parser-options-list",
+    "source": "radar-beta\nticks 3, showLegend true, graticule circle, min 1, max 9"
+  },
+  {
+    "id": "radar-cases/parser-options-last-wins",
+    "source": "radar-beta\nshowLegend true, showLegend false\ngraticule polygon\ngraticule circle"
+  },
+  {
+    "id": "radar-cases/parser-options-break-after-comma",
+    "source": "radar-beta\nticks 3,\nmax 4"
+  },
+  {
+    "id": "radar-cases/parser-option-without-value",
+    "source": "radar-beta\nticks\nmax 4"
+  },
+  {
+    "id": "radar-cases/parser-title-after-axis",
+    "source": "radar-beta\naxis A title x\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/parser-axis-after-title",
+    "source": "radar-beta\ntitle x axis A\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-acc-between",
+    "source": "radar-beta\naxis A\naccTitle: t\ncurve c{1}\naccDescr: d"
+  },
+  {
+    "id": "radar-cases/parser-curve-labels",
+    "source": "radar-beta\naxis A\ncurve c[\"Label\"]{1}, d ['L'] {2}"
+  },
+  {
+    "id": "radar-cases/parser-curve-brace-next-line",
+    "source": "radar-beta\naxis A\ncurve c\n{1}"
+  },
+  {
+    "id": "radar-cases/parser-curve-label-next-line",
+    "source": "radar-beta\naxis A\ncurve c\n[\"L\"]{1}"
+  },
+  {
+    "id": "radar-cases/parser-axis-two-labels",
+    "source": "radar-beta\naxis A[\"x\"][\"y\"]"
+  },
+  {
+    "id": "radar-cases/parser-axis-label-unquoted",
+    "source": "radar-beta\naxis A[x]"
+  },
+  {
+    "id": "radar-cases/parser-axis-label-unclosed-bracket",
+    "source": "radar-beta\naxis A[\"x\"\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-curve-unclosed-brace",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2\naxis C\ncurve d{1, 2, 3}"
+  },
+  {
+    "id": "radar-cases/parser-curve-unclosed-end",
+    "source": "radar-beta\naxis A\ncurve c{1,"
+  },
+  {
+    "id": "radar-cases/parser-curve-trailing-comma",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2,}"
+  },
+  {
+    "id": "radar-cases/parser-curve-entry-label",
+    "source": "radar-beta\naxis A\ncurve c{A[\"x\"] 1}"
+  },
+  {
+    "id": "radar-cases/parser-many-curves",
+    "source": "radar-beta\naxis A, B\ncurve c0{0, 1}\ncurve c1{1, 2}\ncurve c2{2, 3}\ncurve c3{3, 4}\ncurve c4{4, 5}\ncurve c5{5, 6}\ncurve c6{6, 7}\ncurve c7{7, 8}\ncurve c8{8, 9}\ncurve c9{9, 10}\ncurve c10{10, 11}\ncurve c11{11, 12}\ncurve c12{12, 13}\ncurve c13{13, 14}"
+  },
+  {
+    "id": "radar-cases/parser-huge-number",
+    "source": "radar-beta\naxis A\ncurve c{99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}\nmax 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+  },
+  {
+    "id": "radar-cases/parser-several-errors",
+    "source": "radar-beta\naxis A,\naxis B C\ncurve c{1 2}\ncurve d{A}\nticks x\naxis D"
+  },
+  {
+    "id": "radar-cases/parser-statement-glued-brace",
+    "source": "radar-beta\naxis A curve c{1}curve d{2}ticks 2"
+  },
+  {
+    "id": "radar-cases/parser-comma-start",
+    "source": "radar-beta\n, axis A"
+  },
+  {
+    "id": "radar-cases/parser-number-statement",
+    "source": "radar-beta\n42\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-colon-after-header-line",
+    "source": "radar-beta\n:\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-header-after-statement",
+    "source": "radar-beta\naxis A\nradar-beta"
+  },
+  {
+    "id": "radar-cases/parser-missing-header",
+    "source": "axis A\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/parser-leading-blank-lines",
+    "source": "\n\n  \nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-detailed-colon-spaced",
+    "source": "radar-beta\naxis A, B\ncurve c{ A : 1 , B:2 }"
+  },
+  {
+    "id": "radar-cases/parser-entry-number-name",
+    "source": "radar-beta\naxis A\ncurve c{1 A}"
+  },
+  {
+    "id": "radar-cases/parser-keyword-entry-name",
+    "source": "radar-beta\naxis A\ncurve c{circle 1}"
+  },
+  {
+    "id": "radar-cases/parser-keyword-option-glued",
+    "source": "radar-beta\nshowLegend trueish\ngraticule circles"
+  },
+  {
+    "id": "radar-cases/render-simple",
+    "source": "radar-beta\ntitle T\naxis A, B, C\ncurve c{1, 2, 3}\ncurve d{3, 2, 1}"
+  },
+  {
+    "id": "radar-cases/render-skipped-curve",
+    "source": "radar-beta\naxis A, B\ncurve a{1, 2}\ncurve b{1}\ncurve c{2, 1}"
+  },
+  {
+    "id": "radar-cases/render-fourteen-curves",
+    "source": "radar-beta\naxis A, B\ncurve c0{1, 2}\ncurve c1{1, 2}\ncurve c2{1, 2}\ncurve c3{1, 2}\ncurve c4{1, 2}\ncurve c5{1, 2}\ncurve c6{1, 2}\ncurve c7{1, 2}\ncurve c8{1, 2}\ncurve c9{1, 2}\ncurve c10{1, 2}\ncurve c11{1, 2}\ncurve c12{1, 2}\ncurve c13{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-polygon-graticule",
+    "source": "radar-beta\naxis A, B, C\ncurve c{1, 2, 3}\ngraticule polygon\nticks 3"
+  },
+  {
+    "id": "radar-cases/render-polygon-no-axes",
+    "source": "radar-beta\ngraticule polygon\ntitle Nothing"
+  },
+  {
+    "id": "radar-cases/render-ticks-zero",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 0"
+  },
+  {
+    "id": "radar-cases/render-ticks-fractional",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 2.5"
+  },
+  {
+    "id": "radar-cases/render-ticks-over-max",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nticks 40"
+  },
+  {
+    "id": "radar-cases/render-empty-range",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 1}\nmax 1\nmin 1"
+  },
+  {
+    "id": "radar-cases/render-no-legend",
+    "source": "radar-beta\naxis A\ncurve c{1}\nshowLegend false"
+  },
+  {
+    "id": "radar-cases/render-repeated-title",
+    "source": "radar-beta\ntitle First\ntitle Last\naxis A"
+  },
+  {
+    "id": "radar-cases/render-front-matter-title",
+    "source": "---\ntitle: Front\n---\nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/render-label-breaks",
+    "source": "radar-beta\ntitle One<br>Two\naxis A[\"a<br>b\"], B\ncurve c[\"x<br/>y\"]{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-no-max-width",
+    "source": "%%{init: {\"radar\": {\"useMaxWidth\": false}}}%%\nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/render-visible-title",
+    "source": "radar-beta\ntitle Visible\naxis A"
+  },
+  {
+    "id": "radar-cases/render-acc-title-descr",
+    "source": "radar-beta\naccTitle: Skills\naccDescr {\n  Two axes\n}\naxis A"
+  },
+  {
+    "id": "radar-cases/render-acc-indented",
+    "source": "radar-beta\n  accTitle: T\n  accDescr: D\n  axis A"
+  },
+  {
+    "id": "radar-cases/render-hostile-title",
+    "source": "radar-beta\ntitle </text><script>alert(1)</script>\naxis A"
+  },
+  {
+    "id": "radar-cases/render-hostile-labels",
+    "source": "radar-beta\naxis A[\"<img src=x onerror=alert(1)>\"], B[\"<svg onload=alert(1)>\"]\ncurve c[\"<script>x</script>\"]{1, 2}"
+  },
+  {
+    "id": "radar-cases/render-hostile-accessibility",
+    "source": "radar-beta\naccTitle: <script>x</script>\naccDescr: ]]><x\naxis A[\"&<>'\"]"
+  },
+  {
+    "id": "radar-cases/render-hostile-escapes",
+    "source": "radar-beta\naxis A[\"\\u0000\\0\\b\"]\ncurve c[\"javascript:alert(1)\"]{1}"
+  },
+  {
+    "id": "v12-run/radar.spec.ts#6",
+    "source": "\n    %%{init: {'radar': {'marginTop': 80, 'axisLabelFactor': 1.25}}}%%\n    radar-beta\n    axis A,B,C\n    curve mycurve{1,2,3}\n    "
+  },
+  {
+    "id": "v12-run/radar.spec.ts#7",
+    "source": "\n    %%{init: { \"theme\": \"base\", \"themeVariables\": {'fontSize': 80, 'cScale0': '#123456' }}}%%\n    radar-beta:\n    axis A,B,C\n    curve mycurve{1,2,3}\n    "
+  },
+  {
+    "id": "v12-run/radar.spec.ts#8",
+    "source": "\n    %%{init: { \"theme\": \"base\", \"themeVariables\": {'fontSize': 10, 'radar': { 'axisColor': '#FF0000' }}}}%%\n    radar-beta\n    axis A,B,C\n    curve mycurve{1,2,3}\n    "
+  },
+  {
+    "id": "v12-run/radar.spec.ts#9",
+    "source": "radar-beta\n      ticks 12\n      "
+  },
+  {
+    "id": "v12-run/radar.spec.ts#12",
+    "source": "radar-beta\n      ticks 32\n      "
+  },
+  {
+    "id": "v12-run/radar.spec.ts#13",
+    "source": "radar-beta\n      ticks 33\n      "
+  },
+  {
+    "id": "v12-run/radar.test.ts#2",
+    "source": "  radar-beta  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#3",
+    "source": "\tradar-beta\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#4",
+    "source": "\n    \tradar-beta\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#6",
+    "source": "  radar-beta:  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#7",
+    "source": "\tradar-beta:\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#8",
+    "source": "\n    \tradar-beta:\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#10",
+    "source": "  radar-beta :  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#11",
+    "source": "\tradar-beta :\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#12",
+    "source": "\n    \tradar-beta :\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#13",
+    "source": "radar-beta title My Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#14",
+    "source": "radar-beta   title My Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#15",
+    "source": "radar-beta\t title My Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#16",
+    "source": "radar-beta\n    \t title My Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#17",
+    "source": "radar-beta\n  title My Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#18",
+    "source": "radar-beta  \n  title My Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#19",
+    "source": "radar-beta\t\n  title My Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#20",
+    "source": "radar-beta\n    \t\n  title My Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#21",
+    "source": "radar-beta accDescr: My Accessible Description"
+  },
+  {
+    "id": "v12-run/radar.test.ts#22",
+    "source": "radar-beta   accDescr: My Accessible Description  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#23",
+    "source": "radar-beta\t accDescr: My Accessible Description\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#24",
+    "source": "radar-beta\n    \t accDescr: My Accessible Description\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#25",
+    "source": "radar-beta\n  accDescr: My Accessible Description"
+  },
+  {
+    "id": "v12-run/radar.test.ts#26",
+    "source": "radar-beta  \n  accDescr: My Accessible Description  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#27",
+    "source": "radar-beta\t\n  accDescr: My Accessible Description\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#28",
+    "source": "radar-beta\n    \t\n  accDescr: My Accessible Description\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#29",
+    "source": "radar-beta accTitle: My Accessible Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#30",
+    "source": "radar-beta   accTitle: My Accessible Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#31",
+    "source": "radar-beta\t accTitle: My Accessible Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#32",
+    "source": "radar-beta\n    \t accTitle: My Accessible Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#33",
+    "source": "radar-beta\n  accTitle: My Accessible Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#34",
+    "source": "radar-beta  \n  accTitle: My Accessible Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#35",
+    "source": "radar-beta\t\n  accTitle: My Accessible Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#36",
+    "source": "radar-beta\n    \t\n  accTitle: My Accessible Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#37",
+    "source": "radar-beta title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#38",
+    "source": "radar-beta   title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#39",
+    "source": "radar-beta\t title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#40",
+    "source": "radar-beta\n    \t title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#41",
+    "source": "radar-beta\n  title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title"
+  },
+  {
+    "id": "v12-run/radar.test.ts#42",
+    "source": "radar-beta  \n  title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title  "
+  },
+  {
+    "id": "v12-run/radar.test.ts#43",
+    "source": "radar-beta\t\n  title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title\t"
+  },
+  {
+    "id": "v12-run/radar.test.ts#44",
+    "source": "radar-beta\n    \t\n  title My Title\n  accDescr: My Accessible Description\n  accTitle: My Accessible Title\n    "
+  },
+  {
+    "id": "v12-run/radar.test.ts#45",
+    "source": "radar-beta\naxis my-axis"
+  },
+  {
+    "id": "v12-run/radar.test.ts#46",
+    "source": "radar-beta\naxis my-axis[\"My Axis Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#47",
+    "source": "radar-beta\naxis my-axis[\"My Axis Label\"]\n      axis my-axis2"
+  },
+  {
+    "id": "v12-run/radar.test.ts#48",
+    "source": "radar-beta\naxis my-axis, my-axis2"
+  },
+  {
+    "id": "v12-run/radar.test.ts#49",
+    "source": "radar-beta\naxis my-axis[\"My Axis Label\"], my-axis2"
+  },
+  {
+    "id": "v12-run/radar.test.ts#50",
+    "source": "radar-beta\naxis my-axis, my-axis2[\"My Second Axis Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#51",
+    "source": "radar-beta\naxis my-axis[\"My Axis Label\"]\n      axis my-axis2[\"My Second Axis Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#52",
+    "source": "radar-beta\naxis my-axis [\"My Axis Label\"], my-axis2\t[\"My Second Axis Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#55",
+    "source": "radar-betaradar-beta\n      curve my-curve"
+  },
+  {
+    "id": "v12-run/radar.test.ts#56",
+    "source": "radar-betaradar-beta\n      curve my-curve[\"My Curve Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#57",
+    "source": "radar-betaradar-beta\n      axis my-axis\n      curve my-curve"
+  },
+  {
+    "id": "v12-run/radar.test.ts#58",
+    "source": "radar-betaradar-beta\n      axis my-axis\n      curve my-curve[\"My Curve Label\"]"
+  },
+  {
+    "id": "v12-run/radar.test.ts#59",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve { 1 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#60",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve {\n        1\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#61",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve {\n\n      1\n\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#62",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve { my-axis 1 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#63",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve { my-axis : 1 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#64",
+    "source": "radar-beta\naxis my-axis\ncurve my-curve {\n        my-axis: 1\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#65",
+    "source": "radar-beta\naxis ax1, ax1\ncurve my-curve { ax1 1, ax2 2 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#66",
+    "source": "radar-beta\naxis ax1, ax1\ncurve my-curve {\n        ax1 1,\n        ax2 2\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#67",
+    "source": "radar-beta\naxis ax1, ax1\ncurve my-curve[\"My Curve Label\"] {\n        ax1: 1, ax2: 2\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#68",
+    "source": "radar-beta\naxis ax1, ax1\ncurve c1 { ax1 1, ax2 2 }\n      curve c2 { ax1 3, ax2 4 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#69",
+    "source": "radar-beta\naxis ax1, ax1\ncurve c1 {\n        ax1 1,\n        ax2 2\n      }\n      curve c2 {\n        ax1 3,\n        ax2 4\n      }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#70",
+    "source": "radar-beta\naxis ax1, ax1\ncurve c1{ 1, 2 }, c2{ 3, 4 }"
+  },
+  {
+    "id": "v12-run/radar.test.ts#74",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      ticks 5"
+  },
+  {
+    "id": "v12-run/radar.test.ts#75",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      min 50"
+  },
+  {
+    "id": "v12-run/radar.test.ts#76",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      max 50"
+  },
+  {
+    "id": "v12-run/radar.test.ts#77",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      graticule circle"
+  },
+  {
+    "id": "v12-run/radar.test.ts#78",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      graticule polygon"
+  },
+  {
+    "id": "v12-run/radar.test.ts#79",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      showLegend true"
+  },
+  {
+    "id": "v12-run/radar.test.ts#80",
+    "source": "radar-beta\n      axis ax1, ax2\n      curve c1 { ax1 1, ax2 2 }\n      showLegend false"
+  }
+]

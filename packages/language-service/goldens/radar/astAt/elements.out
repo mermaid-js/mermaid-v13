@@ -1,0 +1,25 @@
+@ 1:9  radar-be|ta
+  radar 1:1-1:11 "radar-beta"
+@ 2:5  ti|tle Skills
+  title 2:3-2:15 "title Skills"
+@ 3:8  axis |A["Speed"], B
+  axis:A 3:8-3:18 "A[\"Speed\"]"
+@ 3:13  axis A["Sp|eed"], B
+  axis:A 3:8-3:18 "A[\"Speed\"]"
+@ 5:11  curve on|e{1, 2}
+  curve:one 5:9-5:18 "one{1, 2}"
+@ 5:16  curve one{1, |2}
+  curve:one#1 5:16-5:17 "2"
+  curve:one 5:9-5:18 "one{1, 2}"
+@ 6:14  curve two{A|: 1, B: 2}
+  curve:two>A 6:13-6:17 "A: 1"
+  curve:two 6:9-6:24 "two{A: 1, B: 2}"
+@ 6:22  curve two{A: 1, B: |2}
+  curve:two>B 6:19-6:23 "B: 2"
+  curve:two 6:9-6:24 "two{A: 1, B: 2}"
+@ 7:7  show|Legend true
+  opt:showLegend 7:3-7:18 "showLegend true"
+@ 9:10  long |text
+  accDescr 8:3-10:4 "accDescr {\n    long text\n  }"
+@ 11:1  |
+  none

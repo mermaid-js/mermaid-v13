@@ -1,0 +1,106 @@
+# Gaps (spec #422)
+
+Unmet acceptance criteria and orchestrator choices, filed under the ticket that owns each one. Choices not covered by the spec or a D-id are also listed under "For the maintainer" in the PR body.
+
+## Orchestrator choices
+
+- **No T0, no T7.** Radar adds no core contract (the theme table and the `radar` section come from #414 T0a); no ASCII ticket (D320).
+- **Theme stand-ins until T0a.** T3/T4 read the ten `radar*` variables through one stand-in module with v12's defaults; T5 deletes it when the package theme table lands. No radar row goes into core's vocabulary (R-PERF-8), so the spec's pure-call-rows fallback is not used unless T0a slips past T4.
+
+## Shared contracts
+
+- **`RadarModel`** (`packages/diagram-radar/src/model.ts`): landed by the orchestrator before #446 and #447 started in parallel, shaped from the spec's model list. #446 produces it; #447 reads it. Change it only additively and note the change here.
+- **Package skeleton** (`packages/diagram-radar`, private, no manifest until #449): landed with the model. #445 adds the lexer to it.
+
+## T1 (#445, merged)
+
+- Review (orchestrator): no hard standards violations. Accepted judgement calls: the lexer plumbing mirrors pie's (extract a parser-kit base if a third Langium lexer copies it); `radar/corpus.ts` imports `commented` from `../sequence/corpus.ts`, as pie's does.
+- **For the maintainer (core, not radar): indented front matter closed at column 0.** `dev-diagrams/knsv/knsv2-03-radar.mmd` opens its fence with six spaces and closes it at column 0. v12 never sees front matter there (the YAML is a hidden Langium token, no title) and renders the chart; v13's preprocess reads the indented fence (#7613) and reports `UNCLOSED_FRONT_MATTER`, so v13 rejects it. It is a gate exclusion in `packages/conformance/src/radar/lexer-parity.spec.ts`, and the same divergence will show in #446's parity. It is shared core behaviour (every type), so the radar port does not change it; the D218 front-matter title is covered by a dedented copy.
+- Accepted: `commented()` copies of one- and two-line sources often cut inside the header and never reach v12, so those copies are not gated (pie's helper, same limit); `LINE_SEPARATORS` are nine hand-written cases, as pie's.
+- Shared edits: `harvest:pie` became `harvest:langium <pie|radar>|--all`; jison `runSpec` exported with `functionNames`. **Superseded (coordinator, 2026-11-07):** the wave uses packet's generic `conformance/src/cli/harvest-v12.ts` (`HARVESTS` table, `harvest:<type>`, drift spec `cli/harvest-v12.spec.ts`), copied from `feature/421_packet` at `5be2820a3` with `pie` and `radar` rows; `harvest-langium.ts`, `langium-harvest.ts` and its spec are gone, and `jison/harvest.ts` is back to the base. Literal harvesting yields 29 radar sources instead of 101: the 78 the old spec-running harvest also found (`mutateGlobalSpacing` and template loops) are kept as `v12-run/*` cases in `radar-cases.json`, so the gate corpus loses nothing. Pie's corpus is byte-identical.
+- [x] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`. Done in #448.
+
+## T3 (#447)
+
+- [x] **Invariants on parser-produced fixtures.** Closed by #446: `packages/conformance/src/radar/layout-corpus.spec.ts` runs `radarLayoutViolations` (from `./testing`) over the gate corpus parsed by `parseRadar`, both graticules × 4 configs, 0 violations.
+- Review fixes (orchestrator): Infinity entries never give NaN; >4-param helpers take a `Frame`; names. Accepted deviations: no title element when there is no title (no empty element); multi-line legend labels push later rows down (as pie's final review); out-of-range config values fall back to v12's default silently until #449.
+- **`RadarModel` unchanged** by T3.
+- **Stand-ins** in `packages/diagram-radar/src/stand-ins.ts` (theme variables and `radar` config defaults); #448 replaces the theme half with the radar `DiagramThemeTable`, #449 the config half.
+
+## T2 (#446)
+
+- **`RadarModel` unchanged** by T2. Additive export: `layoutRadar` and the `RadarLayout` types from the runtime entry (for the layout corpus spec, as pie's #305).
+- Parity over the gate corpus: 0 unlisted. The core divergences (unclosed directives, the indented-front-matter dev diagram, each plain/CRLF/commented) are 9 rows in `divergences.json` (owner #446), and the parity spec asserts nothing else differs.
+- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse, `related` its curve and the other unknown entries (D356).
+- Skipped ported specs: `closedRoundCurve` path strings and `draw` (#448 ports them, edit `SKIP` in `scripts/port-v12-specs.ts`); v12's "unknown location at the end of input" (v13 locates it).
+
+## Theme T0a merged (2026-11-06)
+
+- `origin/feature/414_theme-t0` at `462aef4e9` merged into `feature/422_radar` (API: `v13/docs/agents/runs/414/CONTRACT.md`). **Orchestrator choice:** the radar `DiagramThemeTable` (ten `radar*` vars, `section: 'radar'` with `nested` keys, `radarAxisColor` the rule `lineColor`) lands in #448 (T4) with the plugin object, declared inline on the plugin until T0b's per-package file convention lands; #448 deletes the theme half of `stand-ins.ts`. #449 (T5) keeps the theme oracle specs, the D333(b) differences and the nested-override fixture.
+
+## Base sync (2026-11-06)
+
+- `mermaid-v13` gained gantt #398 and gitGraph #404. Merging it here conflicts in 11 core theme files between T0a and M4 wave 2 (`theme/spec.ts`, `theme.ts`, `vocabulary.ts`, `specs/*`, `generated/variables.ts`): the T0's to resolve. Aborted; coordinator rule (until #472 merges): M5a ports take `mermaid-v13` only through `feature/414_theme-t0`, never directly; the T0 session merges all three wave-2 types (mindmap #406 too) and the coordinator sends the sha. Radar-owned conflicts expected then: `conformance/package.json`, `jison/harvest.ts` (gitGraph's harvest vs #445's `harvest:langium`), `langium-lexer.ts` row order, `theme-used-by.spec.ts`. Hosted CI does not run on #474 until the conflicts are gone.
+- `origin/mermaid-v13` `f9005267c` (packet #475) merged at `c617933e4`: 26 conflicts, both sides' rows kept, packet before radar (v12 detector order); `divergences.json` takes mermaid-v13's rows then radar's. `facets.gen.ts`, `theme-variables.md` regenerated; the twelve `completions/empty` goldens regenerated with `-u`, all identical. `pnpm check` green under the lock (15974 tests); `pnpm e2e --grep "radar|Radar|language|Language|packet|Packet"` in `mcr.microsoft.com/playwright:v1.62.1-noble` (`CI=true`, `RUN_VISUAL_TEST=true`, copy outside the worktree, e2e lock): 104 passed.
+
+## T2 (#446, merged)
+
+- Review fixes (orchestrator): divergences listed in `divergences.json` (9 rows: unclosed directives and the indented-front-matter dev diagram, each plain/CRLF/commented; a spec pins them to core's codes); `RADAR_UNKNOWN_AXIS` always has `related` (its curve first); recovery set 39 cases, 13 multi-error; recovery cases in `corpus/radar-recovery.json`, multi-line diagrams in `e2e/diagrams/radar/nightly-check/parser-*.mmd`; model resolution in `normalise.ts`, one keyword table (`PREFIX_KEYWORDS`).
+- Accepted deviations: `layoutRadar` exported from the runtime entry; parser-stress spec; symbols, statements and probe hooks in the parser; `UNCLOSED_ACC_DESCR`; `@n` ids for repeated `title`/`accTitle`/`accDescr`/options; a curve with v12's semantic error stays in the model with what it has, the text still rejected (error severity).
+
+## T4 (#448)
+
+- **`RadarModel` changed additively:** `titleAstId?` (the in-text title's AST id, for its `data-ast`); set by the parser and carried through `normalise.ts` (`RadarParts.titleId`).
+- **Theme table landed** inline on `radar.theme` (ten vars, `section: 'radar'`, `radarAxisColor` = rule `lineColor`, one literal entry for every family); theme half of `stand-ins.ts` deleted. `textColor`'s `usedBy` lists `radar`.
+- `neo` computed styles checked against 12.2.0 in Chromium: equal to v13 except the axis colour (D333(b), #449's DIFFERENCES).
+- Choices: `data-id` = AST id on axis groups, curves, legend rows and swatches; labels drawn centred on the layout's boxes (legend left-aligned), not with v12's per-label anchors.
+- For #449: `render-api.ts` registers with `replace: true`; drop it with the manifest.
+
+## T4 (#448, merged)
+
+- Review fixes (orchestrator): multi-line and hostile render sources moved to `corpus/radar-cases.json` (`render-*`); round-trip comment covers superseded titles; MIGRATION.md row for label placement by measured box (D355); shared `radarTestContext()` in `./testing`.
+- Accepted deviations: `RadarModel.titleAstId` (additive); `data-id` = AST id on axis groups, curves, legend rows and swatches; labels centred on their measured boxes; no title element without a title; a skipped curve keeps its legend row (spec Layout); rings' stroke opaque, only fill-opacity, as v12's CSS; `textColor` `usedBy` lists radar.
+- Left to #449: manifest and `gen:registry`, `configDefaults`, theme oracle specs vs 12.2.0, D333(b) DIFFERENCES and MIGRATION rows, baselines, deleting `stand-ins.ts`, dropping `replace` in `conformance/src/radar/render-api.ts`.
+
+## T6 (#450)
+
+- **Shared contract, additive:** `MAX_TICKS` (32) moved to `model.ts`; `layout/metrics.ts` re-exports it and `parser/normalise.ts` imports it from there, so the `./language` bundle holds no `layout/` file (the bench bundle row failed on `layout/metrics.ts`). `RadarModel`'s fields unchanged by T6.
+- Parser change (probe only): the line breaks inside a curve's `{ }` test what may follow them (`Number`/`Id`, `Id` after a detailed `,`, `}` at the end), so a blank line inside the braces offers the axis names. The probe spec holds the parse unchanged.
+- Choices: an entry naming no axis gets **no symbol** (the service has no unresolved role; a `ref` would act resolved: definition at its first mention, references across curves, rename offered): the parser drops those refs once the axes are known (`unresolved()` in `parser.ts`), so no definition, references or rename; hover still says it names no axis, and `RADAR_UNKNOWN_AXIS` stays. A repeated `axis A` hovers with the first axis's label (D358) and a "Repeated" note. Axis-name items use the completion kind `node` (no `axis` kind exists) with the label as detail; `accDescr` is offered in both forms, `accDescr: ` and `accDescr { }` (a bare `accDescr` fails `completion-validity.spec.ts`); an axis may not be named `accTitle`/`accDescr` (`{accTitle: 1}` lexes as a statement), a curve may.
+- [x] **#449:** delete the radar row in `language-service/src/testing/unlisted-facets.ts` once the manifest has `"language": "./dist/language.js"` (`goldens.spec.ts` then fails on "radar is still unlisted"; the goldens stay); in `conformance/src/radar/service-symbols.spec.ts` drop the eager row for `createLanguageService()` + `preload({ types: ['radar'] })` and flip its last test, as pie's #325.
+  Closed by #449 (its language follow-ups after the #450 merge).
+- [x] **#449:** adapter rows `LEZER_HIGHLIGHTERS` (`language-service-codemirror/src/grammars.ts`) and `MONARCH_HIGHLIGHTERS` (`language-service-monaco/src/grammars.ts`), which need `FirstPartyFacetId` from `gen:registry`; run each adapter's `gen`; extend `language-service-monaco/src/adapters-agree.spec.ts` and both first-paint e2e specs with a radar document.
+  Closed by #449 (its language follow-ups after the #450 merge).
+- Budget (R-LANG-4): one cycle on a 50k-character radar (678 multi-line curves), best of 15, about 24 ms; in the same run flowchart's committed 50k fixture was 21 ms best (`pnpm --filter bench language`, over budget too): *not measured on a steady machine*. No bench script added (as pie).
+
+## T6 (#450, merged) and the #449/#450 order
+
+- Review fixes (orchestrator): an entry naming no axis gets no symbol (the service has no unresolved role; D358's "unresolved reference" is approximated by no definition/references/rename, the `RADAR_UNKNOWN_AXIS` warning and its hover stay); a repeated `axis A` hovers the first axis's label; `accTitle`/`accDescr` refused only as axis names; `accDescr:` and `accDescr {` both offered; agreement fixtures read from `radar-cases.json`; keyword set derived from the generated categories and `PREFIX_KEYWORDS`; one `declaredAxes(doc)`.
+- **Order:** #450 merged before #449, so #449's temporary `NO_LANGUAGE_YET` exemption in `packages/mermaid/src/cdn-build.spec.ts` never lands on this branch; #449 adds the manifest `language` key and every language registry follow-up after merging #450.
+- #449 commits: some were made with `--no-verify` (skipping lint-staged); prettier and eslint verified clean on its diff by the orchestrator; later commits use the hooks.
+
+## T5 (#449, merged)
+
+- Review fixes (orchestrator): D351 wording (v12 `default` fixes the block in its constructor; `dark` resets `lineColor` to `mainContrastColor` before building it; forest, neutral and base already followed a `lineColor` override); one MIGRATION.md row per D333(b) theme; `warn` required; named config ranges.
+- After #450: manifest `language`, `gen:registry`, highlighter rows, first-paint and adapter specs; no `NO_LANGUAGE_YET` exemption on this branch.
+- **For the maintainer:** `RADAR_CONFIG_INVALID` (quadrant's pattern): a `radar.*` value outside its schema range now falls back to v12's default with a warning, where v12 drew it as given (e.g. `curveTension: 3`); legend text sits `legendTextGap` (4) right of the swatch (x = 16 at the default 12 px swatch, as v12); legend rows stay 20 apart, so a swatch over 20 px overlaps the next row; a multi-line top-axis label grows up into the title; `parser-symbols.mmd` was made renderable; five theme baselines (redux-dark-color added).
+- Sizes (D217): core CDN measure 92,963 → 92,981 B gz (budget 94,208; the registry row); radar load path 109,293 B gz, radar's chunks 16,646 B gz; warm render v12/v13 geomean 20.4× over 26 fixtures (not measured on a steady machine).
+- Checks on `0f516d2b7`: `pnpm check` 12394 tests; `pnpm e2e` (Playwright image) 1799 passed.
+
+## Final whole-branch review
+
+Fixed on `fix/422_radar-final-review` (handoff `tickets/review-fixes.md`):
+- **D356 for every kind:** `RADAR_CURVE_SKIPPED` and `RADAR_EMPTY_RANGE` are parse warnings (`normalise.ts`), one per kind, with ranges and `related` (the other skipped curves and the first axis; the other written option and the drawn curves). The `RADAR_EMPTY_RANGE` message names only the options written (`max`/`min`, or "every value is 0"). The layout keeps its NaN guards and warns about neither; goldens `language-service/goldens/radar/diagnostics/warnings.*` show all four warnings with positions.
+- `legendOf` takes a parts object (pitfall 10); the 32-tick clamp is the model's only (the layout guards non-finite and negative ticks); `largestEntry` in `model.ts` is the one `max` fallback for the parser and the layout.
+- `bench/src/language-bundle.spec.ts`: the radar list names `config.ts`, `testing.ts`, `test-context.ts` (not the deleted `stand-ins.ts`), and `test-context.ts` is asserted out of the mermaid and `./language` bundles.
+- Stale comments (`layout/types.ts` legend label, `layout/fixtures.ts`, `layout/index.ts`); one `TEXT_STATEMENTS` table in `parser/tokens.ts` for the parser and hover; every `RADAR_*` code exported from the runtime entry (pie exports its warning code); `RadarOptions['graticule']` in the layout; `radarUseMaxWidth` in `config.ts`; `radarApi` returns the API object (no Promise); `NO_SLOT` is `CURRENT_COLOR`; `RadarParts.titleAstId`; unused `layout/index.ts` re-exports removed.
+
+## Theme T0 merge (f025e1841)
+
+- `origin/feature/414_theme-t0` at `f025e1841` (T0a–T5, M4 wave 2 gantt/gitGraph/mindmap, `mermaid-v13` `c6ad88562`) merged at `62e932c48`; 21 conflicts, both sides' rows kept in registry order (radar after the wave-2 types). Generated files taken from one side and regenerated (`gen:registry`, `gen:config`, `gen:theme`, `gen:grammar`, both adapters' `gen`): `facets.gen.ts` gains radar's row, `theme-variables.md` its `usedBy`.
+- `conformance/package.json`: `harvest:pie` and `harvest:radar` on the shared `cli/harvest-v12.ts` (`HARVESTS`: pie, radar), plus gitGraph's own `harvest:gitgraph` (`cli/harvest-gitgraph.ts`, a jison harvester, not a `HARVESTS` row). T0's `harvest-pie.ts` stays deleted.
+- Core `vocabulary.ts`: T0's structure; radar adds only `usedBy` entries (`TEXT_USERS`, `lineColor`, `textColor`). `theme-used-by.spec.ts` takes T0's `NOT_DRAWN_YET` form.
+- **Adaptation (T0b convention):** radar's table moved off the plugin into `diagram-radar/src/theme/vocabulary.ts` (ten rows, `usedBy: ['radar']`, `nested` keys) and `theme/table.ts` (`vars: THEME_VARIABLE_TABLE` from the generated `theme/generated/variables.ts`); `radar.theme` is that table, deep-equal to the old inline one (checked), so no render changes and `theme-identity` was not run. `radarAxisColor` stays the rule `lineColor` (an author's `lineColor` override still moves the axes, D351), not `inline(lineColor)`. No new D332 input; no radar key in core. `theme-variables.md` now lists radar's ten variables per theme. The bench `./language` bundle row also forbids `theme/`.
+- The spec `conformance/src/radar/theme.spec.ts` reads the generated table's types (`nested` optional; a var without one maps to `''`, so the coverage test still fails on it).
+- Then `origin/mermaid-v13` merged three times: `7826e952e` at `73b5a2c21` (#472, the same tree as `f025e1841`; no changes), `3d32b9769` at `07867dfa8` (#473 info; info before radar in every table; the `yaml-tree` digest takes mermaid-v13's rows and radar's own) and `af08bf61a` at `39e36b50a` (#479 cynefin, #481; radar before cynefin, v12 detector order). Each time `facets.gen.ts` and `theme-variables.md` regenerated. The `completions/empty` goldens (every type's) list every header: regenerated with `-u` after each merge, all eleven identical; `theme-direction.spec.ts` (#481) passes with radar.
+- Checks on `39e36b50a`: `pnpm check` green under the lock (15550 tests); radar + language e2e (`pnpm e2e --grep "radar|Radar|language|Language"`) in `mcr.microsoft.com/playwright:v1.62.1-noble` on a copy under the e2e lock (`CI=true`, `RUN_VISUAL_TEST=true`): 77 passed. An e2e copy inside the worktree's `.tmp/` breaks `pnpm lint:knip` (`--no-gitignore`); keep copies outside the worktree.

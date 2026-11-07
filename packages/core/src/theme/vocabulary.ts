@@ -192,6 +192,7 @@ const TEXT_USERS = [
   'gitgraph',
   'gantt',
   'kanban',
+  'radar',
 ];
 
 /**
@@ -207,7 +208,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
   background: def('bg', 'color', ['core', 'state', 'packet', 'kanban']),
   primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet', 'cynefin']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'cynefin']),
+  lineColor: def('l', 'color', [
+    'flowchart',
+    'class',
+    'state',
+    'er',
+    'gitgraph',
+    'radar',
+    'cynefin',
+  ]),
   // Pie, packet, cynefin and info draw in the font family but size their text by their own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info']),
   fontSize: def('fs', 'length', TEXT_USERS),
@@ -232,6 +241,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'kanban',
     'cynefin',
     'info',
+    'radar',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',

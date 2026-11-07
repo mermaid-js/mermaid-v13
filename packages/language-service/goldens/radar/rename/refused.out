@@ -1,0 +1,10 @@
+@ 3:8  axis |A, B
+  prepare: 3:8-3:9 "A"; rename to "circles":
+  refused: `circles` starts with the keyword `circle`, and a name cannot start with `circle`, `polygon`, `true`, `false` or `title`.
+@ 4:9  curve |one{1, 2}
+  prepare: 4:9-4:12 "one"; rename to "circles":
+  refused: `circles` starts with the keyword `circle`, and a name cannot start with `circle`, `polygon`, `true`, `false` or `title`.
+@ 5:5  ti|tle Skills
+  prepare: refused: There is no id or class name here to rename.
+@ 6:5  ma|x 5
+  prepare: refused: There is no id or class name here to rename.

@@ -262,5 +262,77 @@
     "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
     "owner": "#454",
     "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd",
+    "inputHash": "sha256:a7fbd7450c573476",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd (CRLF)",
+    "inputHash": "sha256:847729cbb21c6773",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd (commented)",
+    "inputHash": "sha256:6437a36a3067d441",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive",
+    "inputHash": "sha256:1e2438179a83eeaa",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:59f3959d35732aa8",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:8fd1183baf3d05dc",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init",
+    "inputHash": "sha256:716b4275413c19b9",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init (CRLF)",
+    "inputHash": "sha256:69aa5f628b1255a4",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init (commented)",
+    "inputHash": "sha256:3b1bd142c4793e46",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
   }
 ]
