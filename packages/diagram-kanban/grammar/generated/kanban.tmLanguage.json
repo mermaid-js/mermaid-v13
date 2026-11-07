@@ -1,0 +1,718 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-kanban",
+  "scopeName": "source.mermaid-kanban",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-kanban"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-kanban"
+    },
+    "rule-0": {
+      "begin": "(?i)@\\{",
+      "end": "((?i)\\})",
+      "patterns": [
+        {
+          "include": "#mode-shapeData"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "meta.embedded.mermaid-kanban"
+        }
+      }
+    },
+    "rule-6": {
+      "match": "(?i)\\s*%%.*",
+      "name": "comment.line.mermaid-kanban"
+    },
+    "rule-7": {
+      "match": "(?i)kanban\\b",
+      "name": "keyword.control.mermaid-kanban"
+    },
+    "rule-8": {
+      "begin": "(?i):::",
+      "end": "((?i).+)|((?i)\\n)",
+      "patterns": [
+        {
+          "include": "#mode-class"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-kanban"
+        }
+      }
+    },
+    "rule-11": {
+      "begin": "(?i)::icon\\(",
+      "end": "((?i)\\))",
+      "patterns": [
+        {
+          "include": "#mode-icon"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-12": {
+      "match": "(?i)[\\s]+[\\n]"
+    },
+    "rule-13": {
+      "match": "(?i)[\\n]+"
+    },
+    "rule-16": {
+      "begin": "(?i)-\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-17": {
+      "begin": "(?i)\\(-",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-18": {
+      "begin": "(?i)\\)\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-19": {
+      "begin": "(?i)\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-20": {
+      "begin": "(?i)\\(\\(",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-21": {
+      "begin": "(?i)\\{\\{",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-22": {
+      "begin": "(?i)\\(",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-23": {
+      "begin": "(?i)\\[",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-kanban"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-kanban"
+        }
+      }
+    },
+    "rule-24": {
+      "match": "(?i)[\\s]+"
+    },
+    "rule-25": {
+      "match": "(?i)[^\\(\\[\\n\\)\\{\\}@]+",
+      "name": "variable.other.mermaid-kanban"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        }
+      ]
+    },
+    "mode-class": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-14": {
+      "match": "(?i)[^\\)]+",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "mode-icon": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-14"
+        }
+      ]
+    },
+    "rule-27": {
+      "begin": "(?i)[\"][`]",
+      "end": "((?i)[`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-nstr2"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      }
+    },
+    "rule-30": {
+      "begin": "(?i)[\"]",
+      "end": "((?i)[\"])",
+      "patterns": [
+        {
+          "include": "#mode-nstr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      }
+    },
+    "rule-41": {
+      "match": "(?i)[^\\)\\]\\(\\}]+",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "rule-42": {
+      "match": "(?i).+(?!\\(\\()",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "mode-node": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        }
+      ]
+    },
+    "rule-31": {
+      "match": "(?i)[^\"]+",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "mode-nstr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-31"
+        }
+      ]
+    },
+    "rule-28": {
+      "match": "(?i)[^`\"]+",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "mode-nstr2": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-28"
+        }
+      ]
+    },
+    "rule-1": {
+      "begin": "(?i)\"",
+      "end": "((?i)\")",
+      "patterns": [
+        {
+          "include": "#mode-shapeDataStr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-kanban"
+        }
+      }
+    },
+    "rule-4": {
+      "match": "(?i)[^}^\"]+",
+      "name": "meta.embedded.mermaid-kanban"
+    },
+    "mode-shapeData": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        }
+      ]
+    },
+    "rule-3": {
+      "match": "(?i)[^\"]+",
+      "name": "string.quoted.mermaid-kanban"
+    },
+    "mode-shapeDataStr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-3"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-kanban"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-kanban"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-kanban"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-kanban"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}
