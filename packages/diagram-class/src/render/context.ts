@@ -6,6 +6,8 @@ import type { ClassLayoutContext } from '../layout/index.ts';
 export interface ClassWarning {
   readonly code: string;
   readonly message: string;
+  /** Config key path, for config warnings. */
+  readonly path?: string;
   /** AST ids of what the warning is about. */
   readonly astIds?: readonly string[];
 }

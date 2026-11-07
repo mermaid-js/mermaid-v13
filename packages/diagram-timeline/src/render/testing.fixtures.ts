@@ -8,7 +8,7 @@
  * sources go through `createMermaid().render()` instead (`packages/mermaid/src/timeline.spec.ts`,
  * `packages/conformance/src/timeline/render.spec.ts`).
  */
-import type { RenderContext, Warning } from '@mermaid-js/core';
+import type { DiagramPlugin, RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
 import { pxProfile } from '@mermaid-js/core/layout';
 import { resolveLimits } from '@mermaid-js/core/limits';
@@ -18,6 +18,10 @@ import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme
 import { layoutTimeline, type TimelineLayout } from '../layout/index.ts';
 import type { TimelineModel } from '../model.ts';
 import { renderTimeline } from './render.ts';
+import { timeline as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 export interface RenderForTestOptions {
   /** Integrator config, as `initialize()` would get it. */
@@ -53,6 +57,7 @@ export async function renderForTest(
   const idPrefix = options.idPrefix ?? 'mermaid-0';
   const choice = resolveThemeName(config.theme, warn);
   const theme = createTheme(await loadTheme(choice.name), {
+    diagram: diagramTheme,
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
     warn,

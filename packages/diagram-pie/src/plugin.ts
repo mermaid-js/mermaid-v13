@@ -6,6 +6,7 @@ import { detectPie, parsePie, type PieParseResult } from './parser/index.ts';
 import { renderPie } from './render/index.ts';
 import { pieLabels } from './labels.ts';
 import { pieConfigDefaults } from './generated/config-defaults.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The pie chart plugin (DESIGN §12.1, spec #288): `layoutKind: 'custom'` with its own
@@ -23,6 +24,7 @@ export const pie = {
   parse: (text: string, ctx: DiagramParseContext): PieParseResult =>
     parsePie(text, { preprocessed: ctx.preprocessed }),
   labels: pieLabels,
+  theme,
   layout: (model: PieModel, ctx: RenderContext): PieLayout => layoutPie(model, ctx),
   render: (model: PieModel, layout: PieLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderPie(model, layout, ctx, w),

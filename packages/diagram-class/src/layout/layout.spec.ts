@@ -1,15 +1,20 @@
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { parseClass } from '../index.ts';
 import { layoutClass, type ClassLayout, type ClassLayoutContext } from './index.ts';
+import { classDiagram as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 let theme: Theme | undefined;
 
 /** Lays `src` out with the table measurer (16 px trebuchet: line height 18.576). */
 async function lay(src: string, config: Record<string, unknown> = {}): Promise<ClassLayout> {
-  theme ??= createTheme(await loadTheme('default'), {});
+  theme ??= createTheme(await loadTheme('default'), { diagram: diagramTheme });
   const parse = parseClass(src);
   expect(parse.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   const ctx: ClassLayoutContext = {

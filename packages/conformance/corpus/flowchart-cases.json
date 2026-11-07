@@ -1,0 +1,118 @@
+[
+  {
+    "id": "flowchart-cases/line separators 0",
+    "note": "U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.",
+    "source": "flowchart LR\nA\u2028direction TB\nB"
+  },
+  {
+    "id": "flowchart-cases/line separators 1",
+    "source": "flowchart LR\nsubgraph S\nx\u2028direction TB\nA\nend"
+  },
+  {
+    "id": "flowchart-cases/line separators 2",
+    "source": "flowchart LR\naccTitle: hi\u2028there\nA"
+  },
+  {
+    "id": "flowchart-cases/line separators 3",
+    "source": "flowchart LR\naccDescr: hi\u2029there\nA"
+  },
+  {
+    "id": "flowchart-cases/line separators 4",
+    "source": "flowchart LR\nA\n%% c\u2028B\nC"
+  },
+  {
+    "id": "flowchart-cases/line separators 5",
+    "source": "flowchart LR\nA\n\u2028%% c\nB"
+  },
+  {
+    "id": "flowchart-cases/line separators 6",
+    "source": "flowchart LR\nA\u2028%% c\nB"
+  },
+  {
+    "id": "flowchart-cases/line separators 7",
+    "source": "flowchart LR\nA\u2028  %% c\u2028B\nC"
+  },
+  {
+    "id": "flowchart-cases/line separators 8",
+    "source": "flowchart LR\nA\nclick A\u2028call f()\n"
+  },
+  {
+    "id": "flowchart-cases/line separators 9",
+    "source": "flowchart LR\nA-->B\u2028C"
+  },
+  {
+    "id": "flowchart-cases/line separators 10",
+    "source": "flowchart LR\nA[a\u2028b]"
+  },
+  {
+    "id": "flowchart-cases/line separators 11",
+    "source": "flowchart LR\nstyle A fill:#f00;\u2028B;\n"
+  },
+  {
+    "id": "flowchart-cases/line separators 12",
+    "source": "flowchart LR\nclassDef x fill:#f00;\u2029A;\n"
+  },
+  {
+    "id": "flowchart-cases/line separators 13",
+    "source": "graph\u2028TD\nA"
+  },
+  {
+    "id": "flowchart-cases/line separators 14",
+    "source": "graph TD\u2028\nA"
+  },
+  {
+    "id": "flowchart-cases/line separators 15",
+    "source": "flowchart LR\nA -- x\u2028--> B"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 0",
+    "note": "Directives that start partway through a line (#185). v12 removed directives first, then line comments from what was left, then dropped `style`/`classDef` semicolons from that.",
+    "source": "flowchart LR\nA %%{init: {\n  %%x \"a\": 1}}%%\nB"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 1",
+    "source": "flowchart LR\nA[\"x %%{init: {\"a\":\"style\"}}%% :#y; z\"]\nB"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 2",
+    "source": "flowchart LR\nA %%{init: {\"a\":\"style\"}}%% :#y;\nB"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 3",
+    "source": "flowchart LR\nA\n%% c %%{init:\n{}}%% d\nB"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 4",
+    "source": "flowchart LR\nA\n%%%%{init: {}}%%\nB"
+  },
+  {
+    "id": "flowchart-cases/mid-line directive 5",
+    "source": "flowchart LR\nsty%%{init: {}}%%le A fill:#f00;\nB"
+  },
+  {
+    "id": "flowchart-cases/edge text entity 0",
+    "note": "Entities in edge text (#208): jison splits EDGE_TEXT per character, so v12's placeholders (`ﬂ°°`, `¶ß`) only decode once the run is merged.",
+    "source": "flowchart LR\nA -- x:#y; --> B"
+  },
+  {
+    "id": "flowchart-cases/edge text entity 1",
+    "source": "flowchart LR\nA -- #quot;q#quot; and #9829; --> B"
+  },
+  {
+    "id": "flowchart-cases/edge text entity 2",
+    "source": "flowchart LR\nA == #35; ==> B"
+  },
+  {
+    "id": "flowchart-cases/edge text entity 3",
+    "source": "flowchart LR\nA -. #amp; .-> B"
+  },
+  {
+    "id": "flowchart-cases/skipped appended newline 0",
+    "note": "v12's appended `\\n` taken by a rule that returns no token (`\"click\"[\\s]+` here, #212 §4): the line break before it is the source's own, and keeps its image on both sides.",
+    "source": "flowchart LR\nA\nclick\n"
+  },
+  {
+    "id": "flowchart-cases/skipped appended newline 1",
+    "source": "flowchart LR\nA-->B\nclick "
+  }
+]

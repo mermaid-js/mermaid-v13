@@ -26,7 +26,12 @@ function sources(dir: string): string[] {
 }
 
 describe('no theme names or look in the ER package (D152)', () => {
-  const files = sources(SRC).map((path) => ({ path, text: readFileSync(path, 'utf8') }));
+  // A theme table's `fallback` names a family (D331), not a theme, though `redux` and `neo` are
+  // both; the direction check (`tools/gen-config/src/theme-direction.ts`) checks those.
+  const files = sources(SRC).map((path) => ({
+    path,
+    text: readFileSync(path, 'utf8').replace(/\bfallback:\s*['"`](?:classic|redux|neo)['"`]/g, ''),
+  }));
 
   it('scans the renderer', () => {
     expect(files.some((f) => f.path.endsWith(join('render', 'render.ts')))).toBe(true);

@@ -1,3 +1,4 @@
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
@@ -5,6 +6,10 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { TimelineModel } from '../model.ts';
 import * as fx from './fixtures.ts';
 import { layoutTimeline, timelineLayoutViolations, type TimelineLayout } from './index.ts';
+import { timeline as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 // Classic and redux differ in the label font weight the boxes are measured in.
 const THEMES = ['default', 'redux'] as const;
@@ -23,7 +28,7 @@ function lay(
   return layoutTimeline(model, {
     config: { timeline } as ResolvedConfig,
     measurer: tableMeasurer,
-    theme: createTheme(specs.get(theme)!, { themeVariables }),
+    theme: createTheme(specs.get(theme)!, { diagram: diagramTheme, themeVariables }),
   });
 }
 
@@ -264,7 +269,7 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
       {
         config: { timeline: {}, fontSize: 20 } as ResolvedConfig,
         measurer: tableMeasurer,
-        theme: createTheme(specs.get('default')!, {}),
+        theme: createTheme(specs.get('default')!, { diagram: diagramTheme }),
       }
     );
     expect(big.axis.y1).toBe(50 - 40);

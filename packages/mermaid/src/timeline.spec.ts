@@ -91,6 +91,12 @@ const viewBox = (svg: string): number[] =>
   (/viewBox="([^"]*)"/.exec(svg)?.[1] ?? '').split(' ').map(Number);
 
 describe('timeline config (#315, spec #291 "Config")', () => {
+  it('honours timeline.theme, over the top-level theme', async () => {
+    const plain = await withInit({ theme: 'default' });
+    expect(plain.svg).not.toBe((await withInit({})).svg);
+    expect((await withInit({ timeline: { theme: 'default' } })).svg).toBe(plain.svg);
+    expect((await withInit({ theme: 'dark', timeline: { theme: 'default' } })).svg).toBe(plain.svg);
+  });
   it('takes v12’s effective values when a key is unset', async () => {
     const { svg } = await withInit({});
     // v12 12.2.0 with its default config merged: leftMargin 150, padding 50 (the renderer's

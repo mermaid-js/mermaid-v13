@@ -12,7 +12,13 @@
       ]
     },
     "packages/*": {
-      "entry": ["src/index.ts", "src/*/index.ts", "src/cli/*.ts", "src/cli.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/*/index.ts",
+        "src/cli/*.ts",
+        "src/cli.ts",
+        "src/theme/vocabulary.ts"
+      ],
       "project": ["src/**/*.ts"]
     },
     "packages/mermaid": {

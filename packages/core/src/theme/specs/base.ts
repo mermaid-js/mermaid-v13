@@ -3,18 +3,9 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, LABEL_SCALE } from './palettes.ts';
+import { BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
-  CLASSIC_MINDMAP,
-  CLASSIC_GITGRAPH,
-  TEXT_SIZES,
-} from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 // v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
 // that derivation, where the base variables are its hex.
@@ -26,6 +17,7 @@ const GIT = gitSources('primaryColor', SECONDARY, TERTIARY);
 const base: ThemeSpec = {
   name: 'base',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#fff4dd',
     secondaryColor: '#f4ddff',
@@ -45,13 +37,7 @@ const base: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
-    ...CLASSIC_TIMELINE,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode); git darkened by 25
@@ -59,6 +45,13 @@ const base: ThemeSpec = {
   palettes: {
     ...darkenedScale(SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
+    // v12 theme-base.js: the base colours, then khroma `darken` by 10, then hue turns, which are
+    // base's resolved v12 values; the tints are the primary and secondary colours and v12's
+    // resolved ±64° and 128° turns of base's own.
+    seriesColorArray: series(
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #c5ffaa #ffaac5 #ddfff4 #a3ff77 #ff77a3 #aaffe3 ' +
+        'primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'
+    ),
     ...gitPalettes(GIT),
   },
   darkModePalettes: {

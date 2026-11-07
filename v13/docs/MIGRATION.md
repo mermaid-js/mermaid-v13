@@ -422,6 +422,13 @@ ported (status `pending`, R-CONF-5).
   source. `initialize()` keeps unknown keys but still warns.
 - **Warnings, not logs.** Every config warning is in `RenderResult.warnings` (and
   `parse()`'s `warnings`) with a `code` and a `path`.
+- **Config lengths are numbers.** A length key in the `class`, `er`, `state` and `flowchart`
+  sections (`padding`, `nodeSpacing`, `rankSpacing`, `diagramPadding`, `wrappingWidth`,
+  `minNodeWidth`, `minEntityWidth`, `entityPadding`) takes a number, or a whole numeric string
+  as its number (`"20"`, `" 2.5 "`), from 0 up to 10000. Earlier v13 alphas read `"20px"` as 20
+  without a warning; v13 now lays anything else (`"20px"`, `-5`, `true`) out as if the key were unset, with one
+  `CLASS_CONFIG_IGNORED`, `ER_CONFIG_IGNORED`, `STATE_CONFIG_IGNORED` or
+  `FLOWCHART_CONFIG_IGNORED` warning naming the key, as the other ported types do.
 - **An init `config` key** is moved into the detected diagram's section, as in v12
   (`%%{init: {"config": {"curve": "linear"}}}%%` in a flowchart sets `flowchart.curve`).
 - **`fontFamily`** from `initialize()` or diagram text also sets `themeVariables.fontFamily`,
@@ -468,6 +475,8 @@ Sequence diagrams (`sequence` section, #145):
 | — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
+| Nested `themeVariables` sections (`themeVariables.packet.startByteColor`), read by v12 packet, radar, cynefin, wardley and xychart | Each nested key maps onto one flat theme variable of the diagram (`packetStartByteColor`), listed beside it in the [theme variable inventory](theme-variables.md); the flat name is the CSS variable's. When both are set, the flat name wins, with no warning. An unknown nested key is ignored | D335, D540 |
+| A plugin's config fragment declaring a theme variable | Unchanged (colour-only, global), but when a diagram's own theme table defines the same name, the diagram's table wins in that diagram's renders | D336, D337 |
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
@@ -477,8 +486,8 @@ Sequence diagrams (`sequence` section, #145):
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
 | Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
 | Numbered palettes (`pie*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)). | R-CONF-5 |
-| `git0`–`git7`, `gitInv0`–`gitInv7`, `gitBranchLabel0`–`gitBranchLabel7`, `commitLabelColor`, `commitLabelBackground`, `commitLabelFontSize`, `tagLabelColor`, `tagLabelBackground`, `tagLabelBorder`, `tagBorder`, `tagLabelFontSize` | The same names with v12's values in every theme. `git`, `gitInv` and `gitBranchLabel` are palettes of eight slots: a numbered name replaces one slot and `git: [...]` (or a comma-separated string) the whole list. They follow `primaryColor`, `secondaryColor` and `tertiaryColor` where v12's theme does (`base`, `forest`, `redux-dark`, `redux-dark-color`; `cScale2`–`cScale8` in `dark` and `neutral`, which v12 read as `pie2`–`pie8`, so an author's `cScale<n>` moves them and `pie<n>` does not, D334), the lighter step under `darkMode`, and a `gitInv` slot follows an author's `git<n>` where v12's does. `tagLabelBorder` wins over `tagBorder`, as in v12. v12's `branchLabelColor` is not read: set `gitBranchLabel`. In `base`, `tagLabelBorder` takes v13's `primaryBorderColor` (v12's border step changes saturation, which the derivation DSL has none of), and under `darkMode` `base`, `neo`, `redux` and `redux-color` keep their tag text colour where v12 turned it to `#eee`. A gitGraph with nine or more branches reuses the slots from the ninth on: every part of a branch (bullets, line, arrows, label) takes the same slot, where v12's redux themes cycled the labels over twelve | D267 |
-| `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11`, `cScaleLabel0`–`cScaleLabel11` | Three palettes, `cScale`, `cScaleInv` and `cScaleLabel`, with v12's values in every theme, derived as v12 derives them: they follow `primaryColor` (and the secondary and tertiary colours) where v12's theme does (`base`, `forest`, `dark` slot 0, `neo-dark`, `redux-dark`; `mainBkg` in `redux`), the darker steps under `darkMode`, and an override of one slot or of the whole list (`cScale: [...]`). A `cScaleInv` or `cScaleLabel` slot that v12 derived from the `cScale` slot follows its override as in v12. `THEME_COLOR_LIMIT` is ignored: twelve slots, cycling. `scaleLabelColor` is not read: set `cScaleLabel` or `labelTextColor`. Under `darkMode`, v12 also turned the unset text colour of `base`, `neo`, `redux` and `redux-color` to `#eee`, which their labels followed; v13 keeps the theme's `labelTextColor`. The timeline paints with them only in the classic themes, and with `cScaleLabel` in the neo themes ([Timeline config](#timeline-config)) | D258 |
+| `git0`–`git7`, `gitInv0`–`gitInv7`, `gitBranchLabel0`–`gitBranchLabel7`, `commitLabelColor`, `commitLabelBackground`, `commitLabelFontSize`, `tagLabelColor`, `tagLabelBackground`, `tagLabelBorder`, `tagBorder`, `tagLabelFontSize` | The same names with v12's values in every theme. `git`, `gitInv` and `gitBranchLabel` are palettes of eight slots: a numbered name replaces one slot and `git: [...]` (or a comma-separated string) the whole list. They follow `primaryColor`, `secondaryColor` and `tertiaryColor` where v12's theme does (`base`, `forest`, `redux-dark`, `redux-dark-color`; `cScale2`–`cScale8` in `dark` and `neutral`, which v12 read as `pie2`–`pie8`, so an author's `cScale<n>` moves them and `pie<n>` does not, D334), the lighter step under `darkMode`, and a `gitInv` slot follows an author's `git<n>` where v12's does. `tagLabelBorder` wins over `tagBorder`, as in v12. v12's `branchLabelColor` is not read: set `gitBranchLabel`. Where v12's branch labels read `labelTextColor` they read the shared label ink `scaleLabelColor` (D334), so an author's `labelTextColor` no longer reaches them. In `base`, `tagLabelBorder` takes v13's `primaryBorderColor` (v12's border step changes saturation, which the derivation DSL has none of), and under `darkMode` `base`, `neo`, `redux` and `redux-color` keep their tag text colour where v12 turned it to `#eee`. A gitGraph with nine or more branches reuses the slots from the ninth on: every part of a branch (bullets, line, arrows, label) takes the same slot, where v12's redux themes cycled the labels over twelve | D267 |
+| `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11`, `cScaleLabel0`–`cScaleLabel11` | Three palettes, `cScale`, `cScaleInv` and `cScaleLabel`, with v12's values in every theme, derived as v12 derives them: they follow `primaryColor` (and the secondary and tertiary colours) where v12's theme does (`base`, `forest`, `dark` slot 0, `neo-dark`, `redux-dark`; `mainBkg` in `redux`), the darker steps under `darkMode`, and an override of one slot or of the whole list (`cScale: [...]`). A `cScaleInv` or `cScaleLabel` slot that v12 derived from the `cScale` slot follows its override as in v12. `THEME_COLOR_LIMIT` is ignored: twelve slots, cycling. The labels read v12's `scaleLabelColor`, a shared label ink, so setting it recolours them as in v12; `labelTextColor` and `actorTextColor` are sequence's own and no longer reach `cScaleLabel` (D334), so set `scaleLabelColor` or `cScaleLabel` instead. Under `darkMode`, v12 also turned the unset text colour of `base`, `neo`, `redux` and `redux-color` to `#eee`, which their labels followed; v13 keeps the theme's `scaleLabelColor`. The timeline paints with them only in the classic themes, and with `cScaleLabel` in the neo themes ([Timeline config](#timeline-config)) | D258, D334 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
 contrast, v13 changes it (for example the dark theme's `edgeLabelBackground`).
@@ -602,6 +611,7 @@ Every other colour is v12 12.2.0's. To get a v12 value back, set it in `themeVar
 | `strokeWidth` | 1 | 2, as in `neo` | D183 |
 | `secondaryTextColor` | `#b8b6b6` (4.49:1 on `secondaryColor`) | `#b9b7b7` (AA) | D183, R-THEME-9 |
 | `altBackground` (state: a nested composite's body) | `#f0f0f0`, on which the `#cccccc` transitions and arrowheads all but vanish | `#404040` | D189, D183 |
+| `pie5` | `#2e3030`, a rounding artefact | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a); [Pie chart](#pie-chart) |
 
 The shadow is v12's, written `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. The ER row,
 ER marker and palette differences are those of `neo` (D152, D181).
@@ -1464,6 +1474,37 @@ where the element still exists: `timeline-node`, `section-<n>`, `node-bkg`, `nod
 | LR: the axis ended at `width + 3 × leftMargin`, short of the last period below a `leftMargin` of 25 | The axis ends there or at the last period's right edge, whichever is further; the default `leftMargin` (150) draws as v12 | #337 |
 | `timeline.useMaxWidth` fell back to `false` in the renderer, but v12's default config set it to `true` | Unchanged by default: `true` sets `width="100%"` and `max-width`; `false` writes the drawing's width and height. `leftMargin` (150), `padding` (50 when unset) and `disableMulticolor` likewise take v12's effective values, and the top-level `fontSize` still adds `0.55 × fontSize` to each box and sets the TD axis ends while the text is drawn at `themeVariables.fontSize`. The keys v12's timeline never read are ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | #315 |
 
+## Info diagram
+
+The info parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; grammar in [syntax/info.md](./syntax/info.md)). An info diagram still draws one line,
+the version. The differences:
+
+- **The version** is `v` and the version of the `mermaid` package that renders it
+  (`v13.0.0-alpha.1`), the same value as the root's `data-mermaid-version`. v12's `-tiny`
+  suffix is gone: v13 has no tiny build.
+- **`showInfo`** is accepted and draws nothing extra, as in v12, with no warning.
+- **`title`**, in the text or the front matter, is drawn nowhere, as in v12 (D218).
+  **`accTitle` and `accDescr`**, which v12 parsed and then ignored, now give the SVG its
+  `<title>` and `<desc>` (D133).
+- **Error messages** are new, as for flowchart, and every error is reported, not only the first.
+- **`format: 'ascii'`** draws the same one line, `v13.0.0-alpha.1`, in both charsets. v12 had no
+  text output.
+- **Theme.** Info has no theme variables of its own. The line takes the shared `textColor` and
+  `fontFamily`, as v12's root style gave it.
+
+## Info SVG structure
+
+What changed in the info diagram's SVG compared with v12 (#420, DESIGN §7.2). The v12 class name
+`version` is kept.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="info"`, `width="100%"` and `style="max-width: 400px;"`, no `viewBox` | No root `id`; `class="mermaid mermaid-info"`, `role="img"`, `aria-roledescription="info"`, `data-mermaid-version`; `viewBox="0 0 400 100"`, grown to hold the version text, and `max-width` its width | Inert output (R-SEC-2), no colliding ids (R-A11Y-1). Without a `viewBox` v12's SVG was 150 px high whatever its width, and a version longer than `v12.2.0` ran past its left edge |
+| `<g><text x="100" y="40" class="version" font-size="32" style="text-anchor: middle;">` | `<text class="version" data-ast="info" x="100" y="40" font-size="32" text-anchor="middle" fill>`, no `<g>` | Presentation attributes (no style sheet); `data-ast` maps the line to the `info` statement (R-PARSE-8) |
+| The text colour from the root `<style>` (`textColor`) | `fill` reads the `textColor` alias on the root `style` | Host re-theming with `--mermaid-*` (R-THEME-3) |
+| No `<title>` or `<desc>`: `accTitle` and `accDescr` were parsed and dropped | `<title>` and `<desc>` from `accTitle` and `accDescr` | D133 |
+
 ## Pie chart
 
 The pie parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
@@ -1489,13 +1530,25 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
   ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values, so in `redux-color` and
+  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
   `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
   slice drew black; it is now `cScale0`, as in `neutral`.
+- **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
+  which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
+  by v12's own formula, so it also follows that base colour's override:
+
+  | Theme | Variable | v12 12.2.0 | v13 | Why |
+  | --- | --- | --- | --- | --- |
+  | `default` | `pie3` | `#b5ff20` | `#b9ff20` (`tertiaryColor` darkened 40) | D333(a) |
+  | `default` | `pie6` | `#d7ff86` | `#d9ff86` (`tertiaryColor` darkened 20) | D333(a) |
+  | `forest` | `pie6` | `#33b42f` | `#33b52e` (`tertiaryColor` turned 40°, darkened 40) | D333(a) |
+  | `redux-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+  | `neo-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+
 - **`format: 'ascii'`** throws `UnsupportedFormatError`: pie has no text output (D216).
 
 ## Pie SVG structure

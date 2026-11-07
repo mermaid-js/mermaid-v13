@@ -7,6 +7,7 @@ import { withCallbackClaims } from './parser/callbacks.ts';
 import { detectGantt, parseGantt } from './parser/index.ts';
 import { renderGantt } from './render/index.ts';
 import { ganttLabels } from './labels.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The gantt plugin (DESIGN §12.1, spec #293): `layoutKind: 'custom'` with its own
@@ -26,4 +27,5 @@ export const gantt = {
   layout: (model: GanttModel, ctx: RenderContext): GanttLayout => layoutGantt(model, ctx),
   render: (model: GanttModel, layout: GanttLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderGantt(model, layout, ctx, w),
+  theme,
 } satisfies GanttPlugin;

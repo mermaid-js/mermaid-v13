@@ -1,3 +1,4 @@
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import {
@@ -16,6 +17,10 @@ import {
   type CompleteStateLayout,
   type StateRenderContext,
 } from '../index.ts';
+import { state as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 // The state graph builder (#144) at its seam: StateModel → LayoutGraph → LayoutModel. The
 // context records the graph the builder hands the engine.
@@ -38,7 +43,7 @@ function run(src: string, options: { units?: UnitProfile; config?: ConfigInput }
     config: resolveConfig(CORE_DEFAULTS, options.config),
     measurer: tableMeasurer,
     units: options.units ?? pxProfile,
-    theme: createTheme(spec, {}),
+    theme: createTheme(spec, { diagram: diagramTheme }),
     warn: () => {},
     layout: (g) => {
       graph = g;

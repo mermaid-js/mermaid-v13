@@ -2,9 +2,10 @@
  * The CDN build (D162, D163; spec #218 T6): the real esbuild build into a temporary directory.
  * The browser behaviour (loader, `cdnBase`, plugin queue) is in e2e/platform/cdn.spec.ts.
  */
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   buildCdn,
@@ -107,4 +108,43 @@ describe('the CDN build (D162)', () => {
     const seen = staticClosure();
     for (const p of seen) expect(read(p), p).not.toMatch(/\busedBy\b/);
   });
+
+  // The diagram packages' own theme variables (spec #414, D331) load with their diagram chunk.
+  // Core's sources never name one (`tools/gen-config/src/theme-direction.spec.ts`); this checks
+  // the built closure, so a name that reaches core through a dependency, a generated file or a
+  // re-export fails too (R-PERF-8).
+  it('keeps every diagram package theme variable out of the ESM entry static closure', async () => {
+    const names = await packageThemeNames();
+    expect(new Set(names.values()).size).toBeGreaterThanOrEqual(12);
+    const closure = [...staticClosure()].map((p) => [p, read(p)] as const);
+    const found = (owners: ReadonlyMap<string, string>) =>
+      closure.flatMap(([p, text]) =>
+        namesIn(text, [...owners.keys()]).map((n) => `${p}: ${n} (${owners.get(n)})`)
+      );
+    expect(found(names)).toEqual([]);
+    // Planted: `arrowheadGap` is a shared row (flowchart and state read it), so it is in core.
+    const planted = found(new Map([...names, ['arrowheadGap', 'planted']]));
+    expect(planted.length).toBeGreaterThan(0);
+    for (const f of planted) expect(f).toMatch(/: arrowheadGap \(planted\)$/);
+  });
 });
+
+/** Every name in a diagram package's `src/theme/vocabulary.ts`, with the package owning it. */
+async function packageThemeNames(): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const packages = fileURLToPath(new URL('../../', import.meta.url));
+  for (const dir of readdirSync(packages).filter((d) => d.startsWith('diagram-'))) {
+    const path = join(packages, dir, 'src/theme/vocabulary.ts');
+    if (!existsSync(path)) continue;
+    const { THEME_VARIABLES } = (await import(path)) as {
+      THEME_VARIABLES: Readonly<Record<string, unknown>>;
+    };
+    for (const name of Object.keys(THEME_VARIABLES)) names.set(name, dir);
+  }
+  return names;
+}
+
+/** The names that occur in `text` as a whole word, in the order given. */
+function namesIn(text: string, names: readonly string[]): string[] {
+  return names.filter((n) => new RegExp(`(?<![\\w$])${n}(?![\\w$])`).test(text));
+}

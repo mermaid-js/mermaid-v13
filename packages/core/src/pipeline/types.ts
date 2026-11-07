@@ -13,6 +13,7 @@ import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
+import type { DiagramThemeTable } from '../theme/diagram.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
 import type { IconPacks } from './icon-packs.ts';
@@ -92,14 +93,22 @@ export interface RenderContext {
    * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), drawn in a `size` px square at
    * the origin (the provider fits it, xMidYMid meet); `null` when an extension reported it
    * unresolved (and warns `ICON_NOT_RENDERED`, D291); `undefined` when none has it (or it is a
-   * placeholder). Absent when no extension has `glyphs`, and in text output.
+   * placeholder). Asked with `pending: true`, a placeholder is `'pending'` instead (an extension
+   * has the glyph, but its data is still loading, D299), so `undefined` is only a name no
+   * extension has. Absent when no extension has `glyphs`, and in text output.
    */
-  readonly icon?: (
+  readonly icon?: IconLookup;
+  warn(warning: Warning): void;
+}
+
+/** {@link RenderContext.icon}: `'pending'` (a placeholder) only for a caller that asks for it. */
+export interface IconLookup {
+  (
     name: string,
     size: number,
-    options?: GlyphOptions
-  ) => SvgFragment | null | undefined;
-  warn(warning: Warning): void;
+    options: GlyphOptions & { readonly pending: true }
+  ): SvgFragment | 'pending' | null | undefined;
+  (name: string, size: number, options?: GlyphOptions): SvgFragment | null | undefined;
 }
 
 /** How {@link RenderContext.icon} resolves a name. */
@@ -160,6 +169,11 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   };
   /** Its config section's defaults. */
   readonly configDefaults?: Readonly<Record<string, unknown>>;
+  /**
+   * Its own theme variables (D331, spec #414): plain data, loaded with the diagram, keyed by theme
+   * traits and never by theme name. Core passes it to `createTheme` for the diagram's renders.
+   */
+  readonly theme?: DiagramThemeTable;
   /** `text` is the whole source; every range is into it. Never throws. */
   parse(text: string, ctx: DiagramParseContext): ParseResult<M, AstNode>;
   /** Resources the parsed diagram needs beyond the plugin and the layout engine. */

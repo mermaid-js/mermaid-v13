@@ -15,6 +15,7 @@ import {
   parseColor,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { gantt } from '@mermaid-js/diagram-gantt';
 import { REPO_ROOT } from '../index.ts';
 import { loadOracle } from '../oracle.ts';
 
@@ -154,7 +155,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
 describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
   it.each(THEME_NAMES.map((n) => [n]))('%s: v12’s values but the listed ones', async (name) => {
     const old = v12Vars(name);
-    const theme = createTheme(await loadTheme(name), { cssVariables: false });
+    const theme = createTheme(await loadTheme(name), { diagram: gantt.theme, cssVariables: false });
     const differs: Record<string, [string, string]> = {};
     for (const v of GANTT) {
       const pair: [string, string] = [hex(old[v]), hex(theme.value(v))];
