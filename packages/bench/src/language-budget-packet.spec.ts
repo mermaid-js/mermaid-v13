@@ -50,12 +50,14 @@ describe('the R-LANG-4 budget for packet, as ratios', () => {
   /**
    * 4.5, as for sequence: a cycle holds three structural parses (`update`, the rename's
    * read-back and the completion probe), semantic tokens, and the next start bit's parse of the
-   * lines since the last field (a few lines). Best runs sit at 4.0–4.1 bare parses under vitest.
+   * lines since the last field (a few lines). Best runs sat at 4.0–4.1 bare parses under vitest
+   * before `bestOfEach` warmed up and collected the young generation (#480); it takes the best
+   * of 60, as sequence's does.
    */
   it('a cycle costs at most four and a half bare parses', () => {
     const texts = typing(PACKET_FIXTURE);
     const [parse, full] = bestOfEach(
-      25,
+      60,
       (i) => packetLanguage.parse(texts(i), { keepTokens: true }),
       (i) => packetCycle(service, texts(i))
     );
