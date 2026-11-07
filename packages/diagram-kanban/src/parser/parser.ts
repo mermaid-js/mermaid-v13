@@ -59,6 +59,7 @@ import type {
   YamlNode,
   YamlValue,
 } from '@mermaid-js/core/preprocess';
+import * as codes from '../codes.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
 import { lex } from './lexer.ts';
@@ -138,7 +139,7 @@ const CLOSERS: Readonly<Record<string, string>> = {
 
 const HEADER = ['`kanban`'];
 const STATEMENT = ['an item such as `todo` or `id[text]`', 'a `::icon(…)` or `:::class` line'];
-const LINE_BREAK = ['a line break'];
+const EXPECT_LINE_BREAK = ['a line break'];
 const TEXT = ['the text of the item'];
 const HEADER_HINT = 'a kanban board starts with `kanban`';
 const ONE_HEADER = '`kanban` starts the diagram and comes only once';
@@ -624,7 +625,7 @@ class KanbanParser {
     // one error, and the line after it is still read.
     const bareClass = this.beside(c.pos, -1, T.ClassEnd) >= 0;
     if (this.afterBlank || bareClass) {
-      this.report(LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
+      this.report(EXPECT_LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
       // What the next line starts with is an error here: not an expectation.
       this.probePassed();
       return;
@@ -633,7 +634,7 @@ class KanbanParser {
     const after = this.afterIndent();
     if (after === T.Icon || after === T.Class) hint = DECORATION_HINT;
     else if (this.isNodeStart(after)) hint = ONE_ITEM_HINT;
-    this.fail(LINE_BREAK, hint);
+    this.fail(EXPECT_LINE_BREAK, hint);
   }
 
   /** The separator tokens at the cursor: one of `stop`'s, then line breaks and the end. */
@@ -674,7 +675,7 @@ class KanbanParser {
       )
         break;
     }
-    this.fail(LINE_BREAK);
+    this.fail(EXPECT_LINE_BREAK);
   }
 
   private unclosed(code: string, what: string, open: string, close: string, j: number): never {
@@ -702,7 +703,7 @@ class KanbanParser {
       else if (n === T.Icon || n === T.Class) this.decoration();
       else if (n === T.SpaceList && this.beside(c.pos, -1, T.ClassEnd) >= 0) {
         // A bare `:::` took the line break: one error, and the next line is still read.
-        this.report(LINE_BREAK, BARE_CLASS_HINT);
+        this.report(EXPECT_LINE_BREAK, BARE_CLASS_HINT);
         this.lineEnded = true;
       } else if (!this.isStop(n) && n !== Kind.EOF) this.badStatement();
       return;
@@ -856,7 +857,7 @@ class KanbanParser {
     const value = read.placed ? fromPlaceholders(result.value) : result.value;
     if (value === null) {
       this.st.diagnostics.error(
-        'KANBAN_DATA_EMPTY',
+        codes.KANBAN_DATA_EMPTY,
         'The `@{ … }` data is empty or `null`. Write `key: value` pairs in it, such as `ticket: T-1`, or remove it.',
         range
       );
@@ -916,7 +917,7 @@ class KanbanParser {
     if (typeof shape === 'string' && shape === shape.toLowerCase() && !shape.includes('_'))
       return true;
     this.st.diagnostics.error(
-      'KANBAN_SHAPE',
+      codes.KANBAN_SHAPE,
       `No such shape: ${jsString(shape)}. Shape names are lower case, with no \`_\`; a card's shape is ignored, so the \`shape\` key can be removed.`,
       range
     );
@@ -953,7 +954,7 @@ class KanbanParser {
     // v12's `getSection` throws at any item after one indented less than the first.
     for (const s of this.shallow.splice(0)) {
       this.st.diagnostics.error(
-        'KANBAN_ITEM_WITHOUT_COLUMN',
+        codes.KANBAN_ITEM_WITHOUT_COLUMN,
         `Items without section detected, found section ("${s.label}"): it is indented less than the first column. Indent it as deep as the columns, or deeper for a card.`,
         s.range,
         { related: [{ message: 'mermaid@12 rejects the board from this item on', range }] }
@@ -1013,7 +1014,7 @@ class KanbanParser {
     const item = this.last;
     if (!target || !item) {
       this.st.diagnostics.error(
-        'KANBAN_DECORATION_BEFORE_ITEM',
+        codes.KANBAN_DECORATION_BEFORE_ITEM,
         `${icon ? 'An `::icon(…)`' : 'A `:::class`'} line decorates the item before it, and there is none here. Write it on the line after its item.`,
         range
       );

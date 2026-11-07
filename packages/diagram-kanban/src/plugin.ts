@@ -8,17 +8,25 @@ import { renderKanban } from './render/render.ts';
 import { theme } from './theme/table.ts';
 import { kanbanConfigDefaults } from './generated/config-defaults.ts';
 
-/** v12's detector (`detector.ts:9`): case-sensitive, no word boundary. */
+/**
+ * v12's detector (`detector.ts:9`): case-sensitive, no word boundary, on the text the pipeline
+ * hands `detector` (front matter, directives and `%%` comments already removed). The generated
+ * registry row has the same pattern. `detectKanban` (`parser/detect.ts`) is the same test on a
+ * raw source, through `diagramStart`, for callers that hold the text before preprocessing
+ * (conformance, editors).
+ */
 const DETECT = /^\s*kanban/;
 
-/** Every text the layout hands to core's label layout (D176): titles, tickets and assignees. */
-export function kanbanLabels(model: KanbanModel): string[] {
+/**
+ * Every text the layout hands to core's label layout (D176): read off `kanbanLayoutInput`, so
+ * it is exactly the drawn titles, tickets and assignees.
+ */
+function kanbanLabels(model: KanbanModel): string[] {
   const out: string[] = [];
-  for (const c of model.columns) {
-    out.push(model.items[c.item]!.label);
-    for (const k of c.cards) {
-      const card = model.items[k]!;
-      out.push(card.label);
+  for (const column of kanbanLayoutInput(model).columns) {
+    out.push(column.title);
+    for (const card of column.cards) {
+      out.push(card.title);
       if (card.ticket !== undefined) out.push(card.ticket);
       if (card.assigned !== undefined) out.push(card.assigned);
     }

@@ -17,6 +17,7 @@
 import type { Warning } from '@mermaid-js/core';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { isBarPriority } from '../priority.ts';
 import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, inflate, union } from './extent.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
@@ -34,21 +35,7 @@ import {
   type KanbanUnits,
   type MetaRow,
 } from './metrics.ts';
-import type {
-  CardLayout,
-  ColumnLayout,
-  KanbanLayout,
-  KanbanPriority,
-  PlacedLabel,
-  PriorityBar,
-} from './types.ts';
-
-const PRIORITIES: ReadonlySet<string> = new Set<KanbanPriority>([
-  'Very High',
-  'High',
-  'Low',
-  'Very Low',
-]);
+import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel, PriorityBar } from './types.ts';
 
 /** The metrics table in the render's units. */
 type Lengths = { readonly [K in keyof KanbanLengths]: number };
@@ -172,13 +159,13 @@ function cardOf(
   const titleTop = top + lengths.cardPadY - metaRow * meta.lift;
   const metaTop = titleTop + heightOf(title);
   const bar: PriorityBar | undefined =
-    source.priority !== undefined && PRIORITIES.has(source.priority)
+    source.priority !== undefined && isBarPriority(source.priority)
       ? {
           x: left + lengths.barInsetX,
           y1: top + lengths.barInsetY,
           y2: top + height - lengths.barInsetY,
           width: lengths.barWidth,
-          priority: source.priority as KanbanPriority,
+          priority: source.priority,
         }
       : undefined;
   return {
@@ -213,9 +200,9 @@ export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext)
   const titleRow = Math.max(lengths.titleRow, ...titles.map(heightOf));
   const columns: ColumnLayout[] = [];
   const cards: CardLayout[] = [];
-  let slot = 0;
+  let ordinal = 0;
   input.columns.forEach((source, k) => {
-    slot++;
+    ordinal++;
     // v12 centres column k (from 1) at `W·k + 5(k − 1)`: the first one's left edge is at W / 2.
     const left = W / 2 + k * (W + lengths.columnGap);
     const centre = left + W / 2;
@@ -229,7 +216,7 @@ export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext)
     const title = titles[k];
     columns.push({
       ast: source.ast,
-      slot,
+      ordinal,
       x: left,
       y: top,
       width: W,

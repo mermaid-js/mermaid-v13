@@ -34,9 +34,6 @@ export const DATA_KEYS: readonly (readonly [key: string, doc: string])[] = [
 /** Hover doc of each `@{ … }` key. */
 export const KEY_DOCS: Readonly<Record<string, string>> = Object.fromEntries(DATA_KEYS);
 
-/** The priorities a card draws a bar for (D375), most urgent first. */
-export const PRIORITIES: readonly string[] = ['Very High', 'High', 'Low', 'Very Low'];
-
 /** Markdown inline code holding `text` as written, whatever backticks it has. */
 export function code(text: string): string {
   const runs = text.match(/`+/g) ?? [];

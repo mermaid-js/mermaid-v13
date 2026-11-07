@@ -5,10 +5,10 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate and corpus restore | #451 | #285 (merged) | merged (ff e3b5b9d4d; package entry 2,830 B gz, no core change) |
-| T2 grammar, parser, model, AST | #453 | #451 | done on `feature/453_kanban-parser` (handoff `tickets/453.md`; package entry 7,985 B gz, no core change) |
+| T2 grammar, parser, model, AST | #453 | #451 | merged (ff 90b7fef77; package entry 7,985 B gz, no core change) |
 | T3 layout | #455 | #453 | merged (ff b5e02727e; package entry 10,785 B gz, core unchanged) |
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | merged (ff 194da70d7; package entry 12,706 B gz, core 92,619 unchanged) |
-| T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | done on `feature/463_kanban-language` (handoff `tickets/463.md`; package entry 14,176 B gz, `./language` 12,623 B gz, no core change) |
+| T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | merged (74b5f0d58, at 308fa870f; package entry 14,176 B gz, `./language` 12,623 B gz, no core change) |
 | T5 integration | #459 | #457, #463 | merged (ff dd96fc647; CDN core 92,309 B gz, +25 B registry row; package entry 14,421 B gz) |
 | T7 ascii (Should) | #466 | #459 | in progress (`.claude/worktrees/t466`, `feature/466_kanban-ascii`) |
 
@@ -31,6 +31,13 @@ M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#4
 | base (dd4b9d19f) | 91,530 B | — (2,678 B spare) |
 | #451 T1 | 91,530 B | 0 (no core change) |
 | #453 T2 | 92,619 B (bench measure) | 0 (no core change) |
+| #455 T3 | 92,619 B (bench) | 0 (`usedBy` is not in the runtime table) |
+| #457 T4 | 92,619 B (bench) | 0 (`usedBy` is tool-side) |
+| #463 T6 | — | 0 (no core or registry file changed) |
+| #459 T5 | bench 91,874 → 91,900 B; CDN ESM closure 92,284 → 92,309 B | +25 (the registry row); 1,899 B spare |
+| final review | — | 0 (no core or registry file changed) |
+
+The bench numbers move with each `mermaid-v13` merge (91,874 at T5's base is after the M4 merges, below T2's 92,619); compare within a row. The CDN closure (`cdn-build.spec.ts`) is the one the 94,208 B limit applies to.
 
 ## Finish rule
 

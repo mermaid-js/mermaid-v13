@@ -10,8 +10,9 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { checkColor, type Paint } from '@mermaid-js/core/svg';
-import type { KanbanLayout, KanbanPriority } from '../layout/index.ts';
-import { columnSlot, columnVar } from './slots.ts';
+import type { KanbanLayout } from '../layout/index.ts';
+import type { KanbanPriority } from '../priority.ts';
+import { columnSlot, columnVar } from '../theme/columns.ts';
 
 type Theme = RenderContext['theme'];
 
@@ -32,8 +33,8 @@ export interface CardPaint {
 }
 
 export interface Paints {
-  /** Column `slot` (from 1, `ColumnLayout.slot`): its fill and stroke. */
-  column(slot: number): Paint;
+  /** Column `ordinal` (from 1, `ColumnLayout.ordinal`): its fill and stroke. */
+  column(ordinal: number): Paint;
   readonly text: Paint;
   /** Undefined on a board with no card, so its root declares neither variable. */
   readonly card?: CardPaint;
@@ -43,7 +44,7 @@ export function paints(theme: Theme, layout: KanbanLayout): Paints {
   // Only the slots drawn, so the root declares no alias it does not use.
   const columns = new Map<number, Paint>();
   for (const c of layout.columns) {
-    const n = columnSlot(c.slot);
+    const n = columnSlot(c.ordinal);
     if (!columns.has(n)) columns.set(n, theme.color(columnVar(n)));
   }
   const text = theme.color('textColor');
@@ -52,7 +53,7 @@ export function paints(theme: Theme, layout: KanbanLayout): Paints {
       ? { fill: theme.color('background'), stroke: theme.color('nodeBorder') }
       : undefined;
   return {
-    column: (slot) => columns.get(columnSlot(slot))!,
+    column: (ordinal) => columns.get(columnSlot(ordinal))!,
     text,
     ...(card ? { card } : {}),
   };

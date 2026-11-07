@@ -12,7 +12,13 @@ import {
   sourceRange,
 } from '@mermaid-js/gen-grammar';
 import type { AstShape, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
-import { parseKanban } from '@mermaid-js/diagram-kanban';
+import {
+  KANBAN_DATA_EMPTY,
+  KANBAN_DECORATION_BEFORE_ITEM,
+  KANBAN_ITEM_WITHOUT_COLUMN,
+  KANBAN_SHAPE,
+  parseKanban,
+} from '@mermaid-js/diagram-kanban';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { grammarTokens, kanbanGrammar } from './kanban-grammar.ts';
 
@@ -68,12 +74,12 @@ export function referenceVerdict(source: string): Verdict {
  * Errors from checks beyond the syntax: v12's DB threw on a misplaced indent, a decoration
  * first, bad YAML, empty data and a bad `shape`.
  */
-const SEMANTIC = new Set([
-  'KANBAN_ITEM_WITHOUT_COLUMN',
-  'KANBAN_DECORATION_BEFORE_ITEM',
+const SEMANTIC: ReadonlySet<string> = new Set([
+  KANBAN_ITEM_WITHOUT_COLUMN,
+  KANBAN_DECORATION_BEFORE_ITEM,
   'SHAPE_DATA',
-  'KANBAN_DATA_EMPTY',
-  'KANBAN_SHAPE',
+  KANBAN_DATA_EMPTY,
+  KANBAN_SHAPE,
 ]);
 
 /**

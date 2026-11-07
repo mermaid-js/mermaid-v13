@@ -2,8 +2,7 @@
  * Which names each kanban symbol kind can take (`LanguageFacet.isValidId`, D92): a name is valid
  * when, written where that kind is written, it reads back as exactly that one symbol.
  */
-import { parseKanban } from '../parser/parser.ts';
-import { kanbanTokens } from '../parser/index.ts';
+import { kanbanTokens, parseKanban } from '../parser/index.ts';
 import { CLASS_BLANK, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 

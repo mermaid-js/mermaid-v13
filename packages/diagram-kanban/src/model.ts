@@ -5,9 +5,11 @@
  * - items in source order. The first item's indent is the column level: an item at that indent
  *   is a column, and any other item is a card of the last column before it, at any depth (v12
  *   `getSection`; a card is never a child of a card);
- * - ids and labels as v12's grammar handed them to its DB, entities decoded and line breaks
- *   kept. v12 passed them through `sanitizeText`; v13 writes text escaped instead, so nothing
- *   is removed here. Every label is markdown (v12 set `labelType: 'markdown'`);
+ * - ids and labels as v12's grammar handed them to its DB, line breaks kept and entities as
+ *   written (`&amp;` stays `&amp;`; v12's `#35;` form reads `&#35;`): nothing here decodes them,
+ *   core's label layout does when the text is laid out. v12 passed them through `sanitizeText`;
+ *   v13 writes text escaped instead, so nothing is removed here. Every label is markdown (v12
+ *   set `labelType: 'markdown'`);
  * - `@{ … }` data as v12's `addNode` read it: a truthy `label` replaces the text; truthy
  *   `ticket`, `assigned` and `icon` are kept as JavaScript strings (`[x, y]` reads `x,y`); a
  *   truthy `priority` is kept, a string as it is and any other value as its YAML text as

@@ -24,10 +24,11 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { kanbanDocs } from '../generated/docs.ts';
 import type { KanbanDocument } from '../parser/ast.ts';
+import { BAR_PRIORITIES } from '../priority.ts';
 import { CLASS_BLANK, isBlockData, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { invalidReason } from './names.ts';
-import { DATA_KEYS, dataPlace, lineAfter, lineBefore, PRIORITIES, span } from './tables.ts';
+import { DATA_KEYS, dataPlace, lineAfter, lineBefore, span } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;
 /** A key written in data: after `@{`, a line break or a `,`, before a `:`. */
@@ -161,7 +162,7 @@ function dataItems(
   let names: string[] = [];
   let detail: string | undefined;
   if (value.key === 'priority') {
-    names = [...PRIORITIES];
+    names = [...BAR_PRIORITIES];
     detail = 'priority';
   } else if (value.key === 'assigned') {
     names = namesOf(doc, 'assignee', span(open, blockEnd), range).filter(

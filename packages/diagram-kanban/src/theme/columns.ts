@@ -1,8 +1,9 @@
 /**
  * Kanban's column colour variables (D374): `kanbanColumn<n>` is v12's `adjuster(cScale<n>, 10)`
- * (`styles.ts:18-30`), one per `cScale` slot; column k (from 1) takes slot `(k + 1) mod 12`, so
- * past column 10 the slots cycle where v12 had no rule and drew black. The rows are in
- * `theme/vocabulary.ts`, the rules on the theme table (`theme/table.ts`).
+ * (`styles.ts:18-30`), one per `cScale` slot; column k (from 1, `ColumnLayout.ordinal`) takes
+ * slot `(k + 1) mod 12`, so past column 10 the slots cycle where v12 had no rule and drew black.
+ * The rows are in `vocabulary.ts`, the rules on the theme table (`table.ts`); the renderer reads
+ * the variables (`render/paint.ts`).
  */
 import { PALETTE_LIMIT } from '@mermaid-js/core/theme';
 
