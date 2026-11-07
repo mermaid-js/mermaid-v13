@@ -31,6 +31,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   ),
   // `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
   pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
+  // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
+  kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
 };
 
 function sources(dir: string): string[] {

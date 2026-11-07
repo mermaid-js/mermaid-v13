@@ -1,28 +1,13 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { kanbanLayoutInput, layoutKanban, type KanbanLayout } from './layout/index.ts';
 import type { KanbanModel } from './model.ts';
 import { parseKanban, type KanbanParseResult } from './parser/index.ts';
 import { renderKanban } from './render/render.ts';
-import { perSlot } from './render/slots.ts';
+import { theme } from './theme/table.ts';
 
 /** v12's detector (`detector.ts:9`): case-sensitive, no word boundary. */
 const DETECT = /^\s*kanban/;
-
-/**
- * Kanban's own theme variables (D331, D374; `v13/docs/agents/runs/414/CONTRACT.md`): one column
- * colour per `cScale` slot, `kanbanColumn<n>`, v12's `adjuster(cScale<n>, 10)` (`styles.ts`):
- * khroma's `lighten` by 10, or its `darken` under a dark theme or `themeVariables.darkMode`
- * (the `dark` trait, never a theme name). An author's `cScale<n>` recolours its columns.
- */
-const theme: DiagramThemeTable = {
-  vars: perSlot((n) => ({ alias: `kbc${n}`, kind: 'color' as const })),
-  rules: {
-    light: perSlot((n) => `lightenHsl(cScale${n}, 10%)`),
-    dark: perSlot((n) => `darkenHsl(cScale${n}, 10%)`),
-  },
-};
 
 /** Every text the layout hands to core's label layout (D176): titles, tickets and assignees. */
 export function kanbanLabels(model: KanbanModel): string[] {
