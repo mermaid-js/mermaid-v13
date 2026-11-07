@@ -227,4 +227,29 @@ describe('theme direction (D331)', () => {
     );
     expect(v.map((x) => x.name)).toEqual(['redux-dark', 'neo']);
   });
+
+  it('lets a family through as const, satisfies, parentheses or a quoted families key', () => {
+    const v = checkThemeDirection(
+      planted({
+        diagrams: {
+          demo: [
+            file(
+              "const t = { families: { 'redux': { tokens: {} }, neo: { fallback: 'redux' as const } } };"
+            ),
+            file(
+              "const t = { families: { neo: { fallback: ('neo' satisfies ThemeFamily) } } };",
+              'b.ts'
+            ),
+            // Real theme names in the same places are still themes.
+            file(
+              "const t = { families: { 'redux-dark': {} }, x: { fallback: 'neo-dark' as const } };",
+              'c.ts'
+            ),
+            file("const t = { other: { 'redux': {} } };", 'd.ts'),
+          ],
+        },
+      })
+    );
+    expect(v.map((x) => x.name)).toEqual(['redux-dark', 'neo-dark', 'redux']);
+  });
 });

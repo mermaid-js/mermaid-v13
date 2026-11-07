@@ -132,14 +132,32 @@ function comparedWithTheme(node: ts.Node): boolean {
   return false;
 }
 
-/** Whether a literal is a table's `fallback: '<family>'`. */
+/** A property's name as written, without quotes. */
+const propName = (p: ts.PropertyAssignment): string => p.name.getText().replace(/['"`]/g, '');
+
+/**
+ * Whether a literal names a family where a table may (D331): a `fallback: '<family>'` value,
+ * through `as const`, `satisfies` or parentheses, or a quoted family key of `families`.
+ */
 function isFallback(node: ts.StringLiteralLike): boolean {
-  const p = node.parent;
+  if (!FAMILIES.has(node.text)) return false;
+  let value: ts.Node = node;
+  while (
+    ts.isAsExpression(value.parent) ||
+    ts.isSatisfiesExpression(value.parent) ||
+    ts.isParenthesizedExpression(value.parent)
+  )
+    value = value.parent;
+  const p = value.parent;
+  if (ts.isPropertyAssignment(p) && p.initializer === value) return propName(p) === 'fallback';
+  // `families: { 'redux': { … } }`: the key of an entry of the table's `families`.
+  const owner = p.parent;
   return (
-    FAMILIES.has(node.text) &&
     ts.isPropertyAssignment(p) &&
-    p.initializer === node &&
-    p.name.getText().replace(/['"]/g, '') === 'fallback'
+    p.name === node &&
+    ts.isObjectLiteralExpression(owner) &&
+    ts.isPropertyAssignment(owner.parent) &&
+    propName(owner.parent) === 'families'
   );
 }
 
