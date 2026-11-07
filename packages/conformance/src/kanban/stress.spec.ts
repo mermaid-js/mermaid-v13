@@ -145,7 +145,8 @@ describe('stress: the kanban parser is linear in input size', () => {
   it('parses a board of 10k cards', () => {
     const src =
       KB + Array.from({ length: 10_000 }, (_, k) => `${' '.repeat((k % 8) + 4)}c${k}`).join('\n');
-    const r = parseKanban(src);
+    // 10,001 items: one over core's default `maxNodes` (#459), which this test is not about.
+    const r = parseKanban(src, { maxNodes: 20_000 });
     expect(r.diagnostics).toEqual([]);
     expect(r.model.items).toHaveLength(10_001);
     expect(r.model.columns[0]?.cards).toHaveLength(10_000);

@@ -1,0 +1,12 @@
+---
+config:
+  kanban:
+    padding: 30
+    sectionWidth: 260
+description: kanban.padding 30 is the margin round the board and kanban.sectionWidth 260 the width of each column (D378)
+---
+kanban
+  todo[Todo]
+    a[A card title long enough to wrap at the default width but not at 260]@{ assigned: 'knsv' }
+  done[Done]
+    b[Short card]@{ ticket: MC-7, priority: 'High' }

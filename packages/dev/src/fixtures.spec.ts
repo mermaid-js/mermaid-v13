@@ -114,6 +114,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'git',
       'info',
       'journey',
+      'kanban',
       'mindmap',
       'pie',
       'quadrant-chart',

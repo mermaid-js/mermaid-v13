@@ -22,7 +22,13 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   { type: 'architecture', id: 'architecture', pattern: /^\s*architecture/, detector: (text) => /^\s*architecture/.test(text) },
   { type: 'agentflow', id: 'agentflow', pattern: /^\s*agentflow-beta\b/, detector: (text) => /^\s*agentflow-beta\b/.test(text) },
   { type: 'c4', id: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/, detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
-  { type: 'kanban', id: 'kanban', pattern: /^\s*kanban/, detector: (text) => /^\s*kanban/.test(text) },
+  {
+    type: 'kanban',
+    id: 'kanban',
+    section: 'kanban',
+    pattern: /^\s*kanban/,
+    detector: (text) => /^\s*kanban/.test(text),
+  },
   {
     type: 'classDiagram',
     id: 'class',

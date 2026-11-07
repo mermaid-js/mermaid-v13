@@ -67,7 +67,8 @@ describe('kanban layout invariants on parsed models', () => {
             failures.push(`${item.id} ${units.id} ${JSON.stringify(extra)}: ${v.join('; ')}`);
         }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(30);
+    // The 30 restored fixtures and the 23 baselines (#459).
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(53);
     // The acceptance cases are in the corpus: an empty board, empty columns, 15 columns.
     expect(seen.emptyBoard).toBeGreaterThan(0);
     expect(seen.emptyColumn).toBeGreaterThan(0);

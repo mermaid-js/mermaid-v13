@@ -10,6 +10,9 @@ import {
   v12Syntax,
 } from './reference.ts';
 
+/** A leading front-matter block. */
+const FRONT_MATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
+
 /** Sentences per run; seeds are 1…N, so a failure names a reproducible seed. */
 const SENTENCES = 3000;
 
@@ -21,8 +24,11 @@ const SENTENCES = 3000;
  */
 describe('kanban grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
+    // Each body once: the baselines repeat one board per theme (#459), which would weight its
+    // rules eleven times over.
     const corpus = [...(await kanbanCorpus()), ...kanbanCases()];
-    const model = learnSentenceModel(corpus.map((c) => c.source));
+    const bodies = new Set(corpus.map((c) => c.source.replace(FRONT_MATTER, '')));
+    const model = learnSentenceModel([...bodies]);
     const generator = buildGenerator(referenceParser(), model);
     const oracle = await loadOracle();
     const diffs: string[] = [];

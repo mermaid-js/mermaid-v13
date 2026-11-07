@@ -554,15 +554,15 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `kanban` | object |  | pending |  | The object containing configurations specific for kanban diagrams |
-| `kanban.useWidth` | number |  | pending |  |  |
-| `kanban.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `kanban` | object |  | honoured (13.0.0) |  | The object containing configurations specific for kanban diagrams |
+| `kanban.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the kanban renderer never did. |  |
+| `kanban.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12's kanban read `mindmap.useMaxWidth` instead (D378). True draws `width="100%"` and a `max-width`; false draws the board's own `width` and `height`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `kanban.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `kanban.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `kanban.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `kanban.padding` | number | `8` | pending |  |  |
-| `kanban.sectionWidth` | number | `200` | pending |  |  |
-| `kanban.ticketBaseUrl` | string | `""` | pending |  |  |
+| `kanban.padding` | number | `8` | honoured (13.0.0) | v12's kanban took its outer margin from `mindmap.padding` (10) and never read this key; v13 draws this margin, so a board is 2 px tighter on each side by default (D378). A number or a numeric string (`"20"`, not `"20px"`) from 0 to 10,000; anything else lays out with the default and warns `KANBAN_CONFIG_IGNORED`. | The margin round the board, in px. |
+| `kanban.sectionWidth` | number | `200` | honoured (13.0.0) | As v12's `sectionWidth \|\| 200`. A number or a numeric string from 0 to 10,000; a width above 0 and below 26 is raised to 26, so cards keep a width, and anything else lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning. | The width of each column, in px. 0 means the default, as in v12. |
+| `kanban.ticketBaseUrl` | string | `""` | honoured (13.0.0) | The ticket replaces only the first `#TICKET#`, taken literally (`$&` stays `$&`), and the URL passes the link check (`securityLevel`, `linkSchemes`); a refused URL draws the ticket as plain text with a `URL_REFUSED` warning (D377). v12 linked any URL, opening it in a new tab. | The link of each card's ticket: the first `#TICKET#` is replaced by the card's `ticket`. Empty (the default) draws tickets as plain text. |
 
 ## `gitGraph`
 

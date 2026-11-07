@@ -1,0 +1,19 @@
+---
+config:
+  theme: default
+  kanban:
+    ticketBaseUrl: 'https://github.com/mermaid-js/mermaid/issues/#TICKET#'
+description: one representative kanban board in the default theme, with five columns (one empty of cards), wrapping titles, tickets linked through ticketBaseUrl, assignees and all four drawn priorities
+---
+kanban
+  backlog[Backlog]
+    research[Research how other tools draw boards]@{ assigned: 'knsv' }
+  todo[Todo]
+    docs[Write the documentation]@{ ticket: 2041, priority: 'Low' }
+    blog[Blog post about the new diagram]@{ priority: 'Very Low' }
+  doing[In progress]
+    renderer[Improve the renderer for edge cases]@{ ticket: 2039, assigned: 'knsv', priority: 'High' }
+  review[Ready for review]
+    tests[Parser tests]@{ ticket: 2038, assigned: 'K.Sveidqvist', priority: 'Very High' }
+  done[Done]
+    grammar[Design the grammar]

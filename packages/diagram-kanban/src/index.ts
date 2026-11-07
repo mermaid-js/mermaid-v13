@@ -1,7 +1,7 @@
 /**
  * `@mermaid-js/diagram-kanban`: the kanban diagram plugin (spec #424): the parser, its model and
- * AST, the lexer, the layout, the SVG renderer and the plugin with its theme table. The manifest
- * and the language facet land with the other tickets of that spec.
+ * AST, the lexer, the layout, the SVG renderer and the plugin with its theme table and config
+ * defaults. `mermaid` loads it from the package's `mermaid` manifest.
  */
 export {
   detectKanban,

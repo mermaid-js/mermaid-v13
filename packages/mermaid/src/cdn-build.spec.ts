@@ -21,15 +21,19 @@ const budget = JSON.parse(
 ) as { core: { gzipBytes: number } };
 const ids = [...new Set(DETECTORS.flatMap((d) => (d.id ? [d.id] : [])))];
 /** Plugin id → the package directory chunks are named after (`quadrantChart` → `diagram-quadrant`). */
-const packageDir = new Map(
-  readdirSync(new URL('../../', import.meta.url)).flatMap((dir) => {
-    if (!dir.startsWith('diagram-')) return [];
-    const pkg = JSON.parse(
-      readFileSync(new URL(`../../${dir}/package.json`, import.meta.url), 'utf8')
-    ) as { mermaid?: { id?: string } };
-    return pkg.mermaid?.id ? [[pkg.mermaid.id, dir] as const] : [];
-  })
-);
+const packageDir = new Map<string, string>();
+/** Plugin ids whose package has a `./language` entry (one still being ported may not yet). */
+const withLanguage = new Set<string>();
+for (const dir of readdirSync(new URL('../../', import.meta.url))) {
+  if (!dir.startsWith('diagram-')) continue;
+  const pkg = JSON.parse(
+    readFileSync(new URL(`../../${dir}/package.json`, import.meta.url), 'utf8')
+  ) as { mermaid?: { id?: string }; exports?: Record<string, unknown> };
+  const id = pkg.mermaid?.id;
+  if (!id) continue;
+  packageDir.set(id, dir);
+  if (pkg.exports?.['./language']) withLanguage.add(id);
+}
 const chunk = (id: string) => `chunks/${packageDir.get(id) ?? `diagram-${id}`}`;
 let out: CdnBuild;
 
@@ -58,7 +62,7 @@ describe('the CDN build (D162)', () => {
   it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
     for (const id of ids) {
       expect(file(`${chunk(id)}.mjs`), id).toBeDefined();
-      expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
+      if (withLanguage.has(id)) expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
     }
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
       expect(file(`${chunk(id!)}-ascii.mjs`), id).toBeDefined();

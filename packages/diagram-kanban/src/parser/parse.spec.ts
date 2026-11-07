@@ -285,3 +285,23 @@ describe('kanban parser: AST', () => {
     ]);
   });
 });
+
+describe('kanban parser: the node limit (R-SEC-5, #459)', () => {
+  const limitErrors = (src: string, maxNodes?: number) =>
+    parseKanban(src, { maxNodes }).diagnostics.map((d) => `${d.code} ${d.range.start}`);
+  const board = 'kanban\n  c1\n    card1\n    card2\n  c2\n    card3\n    card4\n';
+
+  it('counts columns and cards, and reports the cap once, at the first item over it', () => {
+    expect(limitErrors(board, 3)).toEqual([`NODE_LIMIT ${board.indexOf('c2')}`]);
+    expect(limitErrors(board, 2.5)).toEqual([`NODE_LIMIT ${board.indexOf('card2')}`]);
+    expect(limitErrors(board, 6)).toEqual([]);
+    expect(parseKanban(board, { maxNodes: 3 }).diagnostics[0]?.message).toMatch(
+      /more than 3 items \(columns and cards\), the limit\. The limit is set by the page or app/
+    );
+  });
+
+  it("defaults to core's maxNodes", () => {
+    const many = 'kanban\n' + Array.from({ length: 10_001 }, (_, i) => `  c${i}`).join('\n');
+    expect(limitErrors(many)).toEqual([`NODE_LIMIT ${many.indexOf('c10000')}`]);
+  });
+});

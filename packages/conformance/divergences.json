@@ -112,6 +112,46 @@
     "since": "2026-11-06"
   },
   {
+    "id": "e2e/diagrams/kanban/baseline/columns/shared-ids.mmd",
+    "inputHash": "sha256:e7948fe11f2bc782",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (commented)",
+    "inputHash": "sha256:7d9c1e96629108a4",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (CRLF)",
+    "inputHash": "sha256:4781dc06831ee31f",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (tabs)",
+    "inputHash": "sha256:075667fa9ae4f7bb",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (mid-line directive)",
+    "inputHash": "sha256:2dc774395495d39a",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
     "id": "kanban-gate/kanban-cases/priority-kinds (multi-line shape data)",
     "inputHash": "sha256:8cbc312bdab2d904",
     "kind": "accept",

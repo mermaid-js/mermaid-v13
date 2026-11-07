@@ -41,6 +41,7 @@ import type {
   SourceView,
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
+import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,
@@ -58,6 +59,8 @@ import { T } from './tokens.ts';
 export interface KanbanParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** Item cap, columns and cards together (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type KanbanParseResult = ParseResult<KanbanModel, KanbanDocument>;
@@ -192,6 +195,8 @@ class KanbanParser {
   private lineEnded = false;
   /** `kanban` was read; a missing one was reported once, so a later one is the header. */
   private headerSeen = false;
+  /** The item cap was reported. */
+  private tooMany = false;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -783,6 +788,7 @@ class KanbanParser {
     const index = this.items.length;
     this.items.push(item);
     this.last = item;
+    this.checkLimit(range);
     const before = this.lastEnd;
     this.lastEnd = range.end;
     if (isColumn) {
@@ -798,6 +804,18 @@ class KanbanParser {
       column.cards.push(index);
     }
     this.st.statement('card', range);
+  }
+
+  /** The integrator's item cap (R-SEC-5): reported once, at the first item over it. */
+  private checkLimit(range: Range): void {
+    const max = this.options.maxNodes ?? DEFAULT_LIMITS.maxNodes;
+    if (this.items.length <= max || this.tooMany) return;
+    this.tooMany = true;
+    this.st.diagnostics.error(
+      LIMIT_CODES.maxNodes,
+      `The board has more than ${max} items (columns and cards), the limit. The limit is set by the page or app that renders the diagram.`,
+      range
+    );
   }
 
   /** `ICON` or `CLASS`: v12 `decorateNode`, on the last item in source order. */

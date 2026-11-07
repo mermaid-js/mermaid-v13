@@ -4,9 +4,14 @@
  * length through the render's unit profile, along the axis `METRIC_AXIS` gives.
  *
  * The values are v12's (`kanbanRenderer.ts:42-89`, `shapes/kanbanItem.ts:32-152`,
- * `clusters.js:308-418`) and the `kanban` config defaults of the v12 schema.
+ * `clusters.js:308-418`); `sectionWidth` and `padding` are the generated `kanban` config defaults
+ * of the schema (v12's).
  */
 import type { Warning } from '@mermaid-js/core';
+import { kanbanConfigDefaults } from '../generated/config-defaults.ts';
+
+/** Every key of the generated defaults is set: the schema gives each one a `default`. */
+const GIVEN = kanbanConfigDefaults as Required<typeof kanbanConfigDefaults>;
 
 export interface KanbanMetrics {
   /** `W` when `kanban.sectionWidth` is unset or 0 (`sectionWidth || 200`). */
@@ -45,8 +50,9 @@ export interface KanbanMetrics {
 }
 
 export const KANBAN_METRICS: KanbanMetrics = {
-  sectionWidth: 200,
-  padding: 8,
+  // The `kanban` config defaults (`pnpm gen:config`, the plugin's `configDefaults`).
+  sectionWidth: GIVEN.sectionWidth,
+  padding: GIVEN.padding,
   columnGap: 5,
   titleRow: 25,
   cardInset: 15,

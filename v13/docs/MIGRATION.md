@@ -355,6 +355,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `kanban.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the kanban renderer never did. |  |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `gitGraph.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did. |  |
 | `gitGraph.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1789,6 +1790,60 @@ Class lists are written with single spaces and no trailing blank.
 | Section titles `<text dy="−(n−1)/2 em">` with `alignment-baseline: central` `<tspan dy="1em">`s | One `<text>` with a `<tspan>` per `<br>` line at an absolute `y`, 1em apart, each line centred on its own row as v12 drew it | `alignment-baseline` is not an allowed attribute |
 | Slots past `section3` (`numberSectionStyles` over 4) had no rule, so their bands, bars and inside labels took the root's `fill: textColor`, bars no stroke, and outside labels `taskTextDarkColor` (`.taskTextOutsideLeft`/`Right`) | Kept | P2 |
 | `look: neo` changed only colour variables | Every theme draws gantt without gradient outline or shadow | D278 |
+
+## Kanban
+
+- **SVG only:** `kanban` is detected by v12's case-sensitive detector with no word boundary
+  (`kanban`, `kanbanBoard`; not `Kanban`), between `c4` and `classDiagram` as in v12.
+  `format: 'ascii'` throws `UnsupportedFormatError`.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
+  spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
+  error is reported, not only the first, with messages in words (R-PARSE-4). As in v12, an item
+  indented less than the first column is an error once another item follows it (the message
+  starts with v12's `Items without section detected`), and so is an item whose text starts with
+  the word `kanban` in any case. Errors v12 raised as a `TypeError` or not at all are now
+  diagnostics with a range: an `::icon()` or `:::` line before any item, shape data that is
+  empty or `null` (`@{ }`), and a `shape` that is not a lower-case string (`shape: 5`). Every
+  label is markdown, as in v12.
+- **Columns that share an id** (D373): v12 listed the cards of every column with that id under
+  each of them, so two `docs` columns both drew both columns' cards. A card now belongs to the
+  column it follows. Repeated ids are allowed for columns and cards alike.
+- **Labels** (D372) are SVG text from core's label layout, measured in the theme's font, instead
+  of HTML in `<foreignObject>`: `**bold**`, `<br>`, entities, math and `fa:` icons work in column
+  titles, card titles, tickets and assignees. Column titles wrap at `sectionWidth` and card
+  labels 25 px inside it, as in v12. A raw line break inside a quoted label breaks the line,
+  where v12's HTML folded it to a space.
+- **Metadata v12 parsed but never drew is still not drawn** (D376), with no warning: an item's
+  icon (`::icon()` or `@{ icon }`), and a column's `ticket`, `assigned` and `priority`. It stays
+  in the model and the AST.
+- **Priority** (D375): `Very High`, `High`, `Low` and `Very Low`, matched exactly, draw v12's
+  bar in `red`, `orange`, `blue` and `lightblue` in every theme. Anything else draws no bar
+  (v12 drew one with no stroke), and one `KANBAN_PRIORITY` warning per render names the card
+  values that are none of those four nor `Medium`.
+- **Ticket links** (D377) pass the link check, and a refused URL draws the ticket as plain text
+  with a `URL_REFUSED` warning; the first `#TICKET#` is replaced with the ticket taken literally
+  ([Kanban SVG structure](#kanban-svg-structure)).
+- **Column colours** (D374) come from the `cScale` palette in every theme, lightened by 10 or
+  darkened under a dark theme, and cycle through the twelve slots, so v12's black columns past
+  the tenth are gone and `neo-dark` darkens where v12 left it light
+  ([Kanban SVG structure](#kanban-svg-structure)).
+- **Config** (D378). The `kanban` section is honoured with v12's defaults: `sectionWidth` (200),
+  `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true). v12's kanban
+  read `mindmap.padding` (10) as its margin and `mindmap.useMaxWidth`, and never read
+  `kanban.padding` or `kanban.useMaxWidth`; v13 reads the `kanban` keys and no `mindmap` key, so
+  the default margin round a board is 2 px tighter on each side, and a `mindmap` setting no
+  longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
+  strings (`"300"`, not `"300px"`) are read as numbers, as in v12. A `sectionWidth` above 0 and
+  below 26 is raised to 26, where v12 drew cards of negative width, and a value that is not a
+  number from 0 to 10,000 lays out with the default; each warns `KANBAN_CONFIG_IGNORED`.
+  `useWidth` is ignored (v12 never read it), and `look` is ignored as everywhere (D153), except
+  that `look: handDrawn` sketches the board when `@mermaid-js/plugin-hand-drawn` is installed.
+- **Hand-drawn** (D379): columns and cards are sketched. v12 sketched columns only (cards never
+  got the look), and its card code would have dropped the priority bar; v13 keeps the bar
+  ([Hand-drawn look](#hand-drawn-look)).
+- **Limits** (R-SEC-5): a board may have up to `limits.maxNodes` items, columns and cards
+  together (10,000); over it, render rejects with a `LIMIT` `MermaidError`. v12 had no such
+  limit. Only the integrator can raise it ([Limits](#limits)).
 
 ## Kanban SVG structure
 

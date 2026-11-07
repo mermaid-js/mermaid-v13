@@ -7,9 +7,9 @@ import { REPO_ROOT, corpusFromDir } from './index.ts';
 
 /**
  * Flowchart, class, state and ER draw their outlines through `w.outline` with a role (D302,
- * #340). With T0's fixture drawer over each type's corpus: every role the type has reaches the
- * drawer, every shape does (only arrowheads, label backgrounds and text stay plain), and no
- * arrowhead or text does.
+ * #340), and kanban its columns and cards (D379, #459). With T0's fixture drawer over each
+ * type's corpus: every role the type has reaches the drawer, every shape does (only arrowheads,
+ * label backgrounds, kanban's priority bar and text stay plain), and no arrowhead or text does.
  */
 
 interface Call {
@@ -18,7 +18,16 @@ interface Call {
   readonly attrs: Attrs;
 }
 
-const TYPES: Readonly<Record<string, { dirs: string[]; roles: OutlineRole[] }>> = {
+interface TypeCase {
+  dirs: string[];
+  roles: OutlineRole[];
+  /** Shapes the type keeps plain besides `PLAIN`. */
+  plain?: RegExp[];
+  /** The least number of corpus files it renders. */
+  min?: number;
+}
+
+const TYPES: Readonly<Record<string, TypeCase>> = {
   flowchart: { dirs: ['flowchart'], roles: ['node', 'part', 'divider', 'mark', 'group', 'edge'] },
   class: { dirs: ['class-diagram'], roles: ['node', 'divider', 'group', 'edge'] },
   state: {
@@ -26,6 +35,13 @@ const TYPES: Readonly<Record<string, { dirs: string[]; roles: OutlineRole[] }>> 
     roles: ['node', 'part', 'divider', 'mark', 'group', 'edge'],
   },
   er: { dirs: ['er-diagram'], roles: ['node', 'part', 'divider', 'group', 'edge'] },
+  // The priority bar is a plain line, kept under hand-drawn (D379).
+  kanban: {
+    dirs: ['kanban'],
+    roles: ['group', 'node'],
+    plain: [/<line class="kanban-priority"[^>]*\/>/g],
+    min: 40,
+  },
 };
 
 /** `<g class="outline-…">` around its one path: what the fixture drew. */
@@ -59,8 +75,8 @@ async function api(...extensions: ExtensionPlugin[]) {
   return m;
 }
 
-describe('flowchart, class, state and ER outline through the hook (D302, #340)', () => {
-  for (const [type, { dirs, roles }] of Object.entries(TYPES)) {
+describe('flowchart, class, state, ER and kanban outline through the hook (D302, #340)', () => {
+  for (const [type, { dirs, roles, plain: own = [], min = 50 }] of Object.entries(TYPES)) {
     it(`${type}: each role reaches the drawer, and no arrowhead, label or text does`, async () => {
       const calls: Call[] = [];
       const recording: ExtensionPlugin = {
@@ -89,16 +105,16 @@ describe('flowchart, class, state and ER outline through the hook (D302, #340)',
           await drawn.prepare(item.source, { id: 'm' });
           const svg = drawn.renderSync(item.source, { id: 'm' }).svg;
           // Arrowheads, label backgrounds and text are written as before.
-          for (const re of [...PLAIN, /<text\b/g, /<tspan\b/g])
+          for (const re of [...PLAIN, ...own, /<text\b/g, /<tspan\b/g])
             expect(count(svg, re), `${item.id}: ${String(re)}`).toBe(count(expected, re));
           expect(ends(svg), item.id).toEqual(ends(expected));
           // Every other shape went to the drawer.
           let rest = withoutEnds(svg).replace(OUTLINED, '');
-          for (const re of PLAIN) rest = rest.replace(re, '');
+          for (const re of [...PLAIN, ...own]) rest = rest.replace(re, '');
           expect(SHAPE.exec(rest)?.[0], item.id).toBeUndefined();
           compared++;
         }
-      expect(compared).toBeGreaterThan(50);
+      expect(compared).toBeGreaterThan(min);
       expect([...new Set(calls.map((c) => c.role))].sort()).toEqual([...roles].sort());
       for (const c of calls) expect(String(c.attrs.class ?? '')).not.toMatch(/\bmarker\b/);
     }, 300_000);
