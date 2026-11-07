@@ -58,14 +58,15 @@ describe('the language-service bench fixture', () => {
 
 /**
  * Robust under machine load (a parallel `pnpm test`, another build): each ratio takes the best
- * of many runs, measured alternately so load hits both sides alike, and leaves room for noise
- * while staying far below what a regression gives.
+ * of many runs, measured alternately so load hits both sides alike, after warm-up rounds and
+ * with a minor GC before each run (`bestOfEach`), and leaves room for noise while staying far
+ * below what a regression gives.
  */
 describe('the R-LANG-4 budget, as ratios', () => {
   it('a cycle costs at most four bare parses', () => {
     const texts = typing(LANGUAGE_FIXTURE);
     const [parse, full] = bestOfEach(
-      25,
+      60,
       (i) => flowchartLanguage.parse(texts(i), { keepTokens: true }),
       (i) => cycle(service, texts(i))
     );
