@@ -1,4 +1,3 @@
-// cspell:words cnds cnis cnbw cnlw cnaw
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 
 /** `usedBy` of every row: cynefin reads them all. */
