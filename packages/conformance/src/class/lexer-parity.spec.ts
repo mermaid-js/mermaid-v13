@@ -12,8 +12,8 @@ import type { JisonToken } from '../jison/oracle.ts';
  * Lexer-parity gate (#153, parser-method.md §1): the v13 class lexer emits the same terminals,
  * with the same images, as mermaid 12's `classDiagram.jison` lexer on the text v12 lexed.
  * Corpus: the e2e class fixtures, the strings harvested from the v12 class specs
- * (`corpus/class-v12-specs.json`, `src/cli/harvest-class.ts`), generated line-separator cases,
- * and every one of those again with comment lines added (v12 removed them before lexing).
+ * (`corpus/class-v12-specs.json`, `src/cli/harvest-class.ts`), the line-separator and lexer
+ * cases of `corpus/class-cases.json`, and every one of those again with comment lines added (v12 removed them before lexing).
  *
  * Images are compared as v12's parser read them, entity placeholders decoded, including the
  * `\n` v12 appended (v13 lexes it too; `tokenValue` clips it off for consumers).
@@ -46,62 +46,6 @@ function v13Tokens(source: string): JisonToken[] {
   return cut(out);
 }
 
-// U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.
-const LINE_SEPARATORS: CorpusItem[] = [
-  'classDiagram\nA direction TB\nB',
-  'classDiagram\nclass A {\n+x y\n}',
-  'classDiagram\naccTitle: hi there\nA',
-  'classDiagram\naccDescr: hi there\nA',
-  'classDiagram\nA\n%% c B\nC',
-  'classDiagram\nA\n %% c\nB',
-  'classDiagram\nA %% c\nB',
-  'classDiagram\nA : x y',
-  'classDiagram\nnamespace N {\nclass A\n}',
-  'classDiagram\nnote "a b"',
-  'classDiagram\nA <|-- B',
-  'classDiagram direction LR\nA',
-  'classDiagram\r\nclass A {\r\n  +int x\r\n}\r\nA --> B\r',
-  'classDiagram\nclass A["<b class="x">y</b>"]\nstyle A fill:#f00;\nA : #35; x',
-].map((source, i) => ({ id: `line separators ${i}`, source }));
-
-/**
- * Hand-written cases: every reachable jison rule, the start-condition edges (an unclosed body,
- * `less(0)` out of a namespace) and preprocessing shapes found in review.
- */
-const LEXER_CASES: CorpusItem[] = [
-  'classDiagram\n[*] --> A\nnamespace N {\n[*] --> B\n}\nclass C {\n[*]\n{\n}\n',
-  'classDiagram\nnamespace N { } }\nA',
-  'classDiagram\nnamespace N {',
-  'classDiagram\nclass A {',
-  'classDiagram\nclass A {\n+x',
-  'classDiagram\nA : \nB :\nC # % = x',
-  'classDiagram\nA :;',
-  'classDiagram\nA %% c\n\n B',
-  'classDiagram\nA é 中文',
-  'classDiagram\nA\n%%',
-  'classDiagram\naccDescr {',
-  'classDiagram\naccDescr {\n  two\n  lines\n}\nA',
-  'classDiagram\naccTitle',
-  'classDiagram\nclick A call',
-  'classDiagram\nclick A call f(',
-  'classDiagram\nclick A call f() "tip"',
-  'classDiagram\nnote "open',
-  'classDiagram\nclass A~T',
-  'classDiagram\nclass `A',
-  'classDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB',
-  'classDiagram\nA : x %%{init: {"a":"style"}}%% :#y;\nB',
-  'classDiagram\nstyle A fill:#f00;stroke:#0f0;\nclassDef x fill:#f00;\nA : #quot;y#35;',
-  'classDiagram\n%%{init: {\n  %% c\n  "x": 1}}%%\nA',
-  '%%{init: {"theme": "dark"}}%%\n  %% c\n\nclassDiagram\nA',
-  'classDiagram\nclass A {\n  %% not a comment in a body\n}',
-  'classDiagram\nA direction TB\nB direction LR x\nC',
-  'classDiagram\ndirection\n\nRL extra\nA',
-  // `#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).
-  'classDiagram\nA : x:#y; z\nA <|-- B : #y;\nclass C~#y;~\nnote "#y;"\nclass D["#y;"]',
-  'classDiagram\nclass A {\n+x #y; y\n}\nA "#y;" --> "#9829;" B\naccTitle: #y;',
-  'classDiagram\nA #y; B',
-].map((source, i) => ({ id: `lexer case ${i}`, source }));
-
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/class-diagram'), 'e2e')) {
@@ -110,7 +54,10 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/class-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [...items, ...specs, ...LINE_SEPARATORS, ...LEXER_CASES];
+  const cases = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/class-cases.json'), 'utf8')
+  ) as CorpusItem[];
+  const all = [...items, ...specs, ...cases];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),

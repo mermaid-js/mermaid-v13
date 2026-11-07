@@ -20,7 +20,7 @@ import {
 
 /**
  * Builder parity (spec #289 T3): `layoutQuadrant` equals v12's `getQuadrantData()` to 0.01 px on
- * rects, lines, text anchors, radii and styled point paints, over the corpus and the cases below.
+ * rects, lines, text anchors, radii and styled point paints, over the e2e fixtures.
  * Theme colours are left out: the oracle's default point fill is `hsl(240, 100%, NaN%)` (D231),
  * and v13 reads them from the theme. The models are the v13 parser's (#301), so the layout
  * invariants also run on parser-produced fixtures (T3's done-when).
@@ -29,39 +29,6 @@ import {
  * them. v12's default (its `quadrantPointFill`, `hsl(240, 100%, NaN%)`) reads as `null`, the
  * layout's "use the theme".
  */
-const EXTRA: CorpusItem[] = [
-  {
-    id: 'extra/single-arrow-labels',
-    source: 'quadrantChart\n  x-axis Low -->\n  y-axis Bottom -->\n  P: [0.1, 0.9]\n',
-  },
-  {
-    id: 'extra/top-axis-title-no-points',
-    source: 'quadrantChart\n  title T\n  x-axis A --> B\n  y-axis C\n  quadrant-2 two\n',
-  },
-  {
-    id: 'extra/non-square-bottom-right',
-    source:
-      '%%{init: {"quadrantChart": {"chartWidth": 700, "chartHeight": 300, "xAxisPosition": "bottom", "yAxisPosition": "right", "pointRadius": 3}}}%%\n' +
-      'quadrantChart\n  title Wide\n  x-axis L --> R\n  y-axis B --> T\n  A: [0, 0]\n  B: [1, 1]\n  C: [0.33, 0.66]\n',
-  },
-  {
-    id: 'extra/classes-repeats-unknown',
-    source:
-      'quadrantChart\n  A:::c1: [0.2, 0.2] radius: 12\n  A: [0.8, 0.8]\n  B:::nope: [0.5, 0.5]\n' +
-      '  C:::c1: [0.4, 0.6] stroke-width: 2px\n  classDef c1 color: #ff0000, radius: 9, stroke-width: 4px\n  classDef c1 radius: 6\n',
-  },
-  {
-    id: 'extra/zero-config',
-    source:
-      '%%{init: {"quadrantChart": {"quadrantPadding": 0, "titlePadding": 0, "pointRadius": 0, "pointTextPadding": 0, "xAxisLabelPadding": 0, "quadrantExternalBorderStrokeWidth": 0}}}%%\n' +
-      'quadrantChart\n  title Z\n  x-axis L --> R\n  y-axis B\n  A: [0, 1]\n  B: [1, 0] color: 00ff00, stroke-color: abc\n',
-  },
-  {
-    id: 'extra/axis-merge',
-    source:
-      'quadrantChart\n  x-axis A --> B\n  x-axis C\n  y-axis D --> E\n  y-axis F\n  P: [0.5, 0.5]\n',
-  },
-];
 
 /** The v13 parser's model of `source`; it must parse without errors. */
 function model(source: string): QuadrantModel {
@@ -75,7 +42,7 @@ async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   const dir = 'e2e/diagrams/quadrant-chart';
   for await (const item of corpusFromDir(join(REPO_ROOT, dir), dir)) items.push(item);
-  return [...items, ...EXTRA];
+  return items;
 }
 
 type Flat = Record<string, number | string>;
@@ -181,10 +148,10 @@ function differences(a: unknown, b: unknown): string[] {
 }
 
 describe('quadrant layout parity with v12 getQuadrantData()', () => {
-  it('equals v12 on the corpus and the extra cases, to 0.01 px', async () => {
+  it('equals v12 on the corpus, to 0.01 px', async () => {
     const items = await corpus();
     // v12's 14 e2e fixtures and the 12 baselines (#317).
-    expect(items.length).toBe(14 + 12 + EXTRA.length);
+    expect(items.length).toBe(14 + 17);
     const problems: string[] = [];
     for (const item of items) {
       // The oracle's getDiagramFromText skips front matter, so v12 here never sees a front-matter

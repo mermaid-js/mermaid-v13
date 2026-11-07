@@ -22,7 +22,9 @@ const SENTENCES = 3000;
 describe('pie grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
     // Unclosed directives are core's (see `differential.spec.ts`): no token text from them.
-    const corpus = (await pieGateCorpus()).filter((c) => !c.id.startsWith('unclosed directive '));
+    const corpus = (await pieGateCorpus()).filter(
+      (c) => !c.id.startsWith('pie-cases/unclosed directive ')
+    );
     const model = learnSentenceModel(corpus.map((c) => c.source));
     const generator = buildGenerator(referenceParser(), model);
     const oracle = await loadOracle();

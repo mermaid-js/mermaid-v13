@@ -42,56 +42,6 @@ function v13Tokens(source: string): JisonToken[] {
   return cut(erTokens(source).map((t): JisonToken => [jisonName(t.kind, t.text), t.text]));
 }
 
-// U+2028 and U+2029: a regex `.` stops at them and `^` follows them; `[^\n]` does not stop.
-const LINE_SEPARATORS: CorpusItem[] = [
-  'erDiagram\nA\u2028direction TB\nB',
-  'erDiagram\nA ||--o{ B : has\u2028direction LR',
-  'erDiagram\naccTitle: hi\u2028there\nA',
-  'erDiagram\naccDescr: hi\u2029there\nA',
-  'erDiagram\nA\n%% c\u2028B\nC',
-  'erDiagram\nA\n\u2028%% c\nB',
-  'erDiagram\nA\u2028%% c\nB',
-  'erDiagram\nA\u2028  %% c\u2028B\nC',
-  'erDiagram\nA {\nstring a~b\u2028c~ x\n}',
-  'erDiagram\nA {\nstring a\u2028b\n}',
-  'erDiagram\nstyle A fill:#f00;\u2028B;\n',
-  'erDiagram\nclassDef x fill:#f00;\u2029A;\n',
-  'erDiagram\u2028A',
-  'erDiagram\nA ||--|| B : "x\u2028y"',
-].map((source, k) => ({ id: `line separators ${k}`, source }));
-
-// What v12's preprocessing and `encodeEntities` did to the text before its lexer saw it.
-const PREPROCESSING: CorpusItem[] = [
-  'erDiagram\nA ||--o{ B : "a #amp; b"',
-  'erDiagram\n"A#35;B" ||--o{ B : x',
-  'erDiagram\nA#amp;B\nA {\nstring x#amp;y\n}',
-  'erDiagram\nstyle A fill:#f00;',
-  'erDiagram\nstyle A fill:#f00;stroke:#00f;\nB',
-  'erDiagram\nclassDef c fill:#f00;;\nB',
-  'erDiagram\nclassDef c fill:#f00,color:#fff;\nclass A c',
-  'erDiagram\nclassDef c fill:#f00; style x:#0;y;\nB',
-  'erDiagram\nA ||--o{ B : "<b class="x">y</b>"',
-  'erDiagram\n%%{init: {"theme": "dark"}}%%\nA',
-  'erDiagram\nA %%{init: {}}%% ||--o{ B : x',
-  '%%{init: {}}%%\n\n  %% c\n\n erDiagram\nA',
-  '---\ntitle: T\n---\nerDiagram\nA',
-  'erDiagram\n%%\nA\n%%%\nB',
-  'erDiagram\nA\n  \n\t%% c\nB',
-  'erDiagram\r\nA\rB\r\n',
-  'erDiagram\naccTitle:',
-  'erDiagram\naccDescr {\nunclosed',
-  'erDiagram\nA {\nstring x',
-  'erDiagram\nA {\n`unclosed',
-  'erDiagram\nstyle A fill:rgb(1,2,3)\nB',
-  'erDiagram\nA ||--o{ B : "direction TB"',
-  'erDiagram\nA { string x "direction LR" }\nB direction RL x',
-  // Directives that start mid-line (#186): a `%%` line inside one, and `"style"` before a `;`.
-  'erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB',
-  'erDiagram\nA %%{init: {\n%% c\n"theme": "dark"}}%% ||--o{ B : x',
-  'erDiagram\nA %%{init: {"style": "x;y"}}%%\nB',
-  'erDiagram\nA %%{init: {"x": "style A fill:#f00;"}}%% ||--o{ B : x;\nC',
-].map((source, k) => ({ id: `preprocessing ${k}`, source }));
-
 /**
  * Every UTF-16 code unit in each character-class position: in the initial state, at the start
  * and in the middle of a block word, and (ASCII, one source each, as jison stops at the first
@@ -129,7 +79,10 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/er-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [...items, ...specs, ...LINE_SEPARATORS, ...PREPROCESSING];
+  const cases = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/er-cases.json'), 'utf8')
+  ) as CorpusItem[];
+  const all = [...items, ...specs, ...cases];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
@@ -182,7 +135,7 @@ describe('ER lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(
       `ER lexer parity: ${compared} of ${items.length} sources lexed by v12; not: ${skipped.join(', ')}\n`
     );
-    // 206 fixtures + 581 spec strings + the cases above, three variants each, + code units.
+    // 206 fixtures + 581 spec strings + `corpus/er-cases.json`, three variants each, + code units.
     expect(compared).toBeGreaterThan(2400);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
