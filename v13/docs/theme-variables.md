@@ -125,6 +125,26 @@ flags and opacities, which are read literally.
 | `dependencyMarkerGap` | | length | `4` | `4` | `4` | `4` | `1` | `1` | `1` | `1` | `1` | `4` | `4` |
 | `classTerminalFontSize` | | length | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` |
 
+### cynefin
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cynefinComplexBg` | `cynefin.complexBg` | color | `#E8F5E9` | `#E8F5E9` | `#1B5E20` | `#1B5E20` | `#E8F5E9` | `#1B5E20` | `#E8F5E9` | `#E8F5E9` | `#E8F5E9` | `#E8F5E9` | `#1B5E20` |
+| `cynefinComplicatedBg` | `cynefin.complicatedBg` | color | `#E3F2FD` | `#E3F2FD` | `#0D47A1` | `#0D47A1` | `#E3F2FD` | `#0D47A1` | `#E3F2FD` | `#E3F2FD` | `#E3F2FD` | `#E3F2FD` | `#0D47A1` |
+| `cynefinChaoticBg` | `cynefin.chaoticBg` | color | `#FBE9E7` | `#FBE9E7` | `#BF360C` | `#BF360C` | `#FBE9E7` | `#BF360C` | `#FBE9E7` | `#FBE9E7` | `#FBE9E7` | `#FBE9E7` | `#BF360C` |
+| `cynefinClearBg` | `cynefin.clearBg` | color | `#FFF8E1` | `#FFF8E1` | `#F57F17` | `#F57F17` | `#FFF8E1` | `#F57F17` | `#FFF8E1` | `#FFF8E1` | `#FFF8E1` | `#FFF8E1` | `#F57F17` |
+| `cynefinConfusionBg` | `cynefin.confusionBg` | color | `#F3E5F5` | `#F3E5F5` | `#4A148C` | `#4A148C` | `#F3E5F5` | `#4A148C` | `#F3E5F5` | `#F3E5F5` | `#F3E5F5` | `#F3E5F5` | `#4A148C` |
+| `cynefinBoundaryColor` | `cynefin.boundaryColor` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `cynefinCliffColor` | `cynefin.cliffColor` | color | `#8B0000` | `#8B0000` | `#FF6B6B` | `#FF6B6B` | `#8B0000` | `#FF6B6B` | `#8B0000` | `#8B0000` | `#8B0000` | `#8B0000` | `#FF6B6B` |
+| `cynefinArrowColor` | `cynefin.arrowColor` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `cynefinTextColor` | `cynefin.textColor` | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `cynefinLabelColor` | `cynefin.labelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `cynefinDomainFontSize` | `cynefin.domainFontSize` | length | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` |
+| `cynefinItemFontSize` | `cynefin.itemFontSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+| `cynefinBoundaryWidth` | `cynefin.boundaryWidth` | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `cynefinCliffWidth` | `cynefin.cliffWidth` | length | `4` | `4` | `4` | `4` | `4` | `4` | `4` | `4` | `4` | `4` | `4` |
+| `cynefinArrowWidth` | `cynefin.arrowWidth` | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+
 ### er
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |

@@ -1,9 +1,8 @@
-// cspell:words cnds cnis cnbw cnlw cnaw
 /**
  * Cynefin's own theme table, `DiagramPlugin.theme` (D331, spec #414 T0a, CONTRACT.md): v12's
- * fifteen `themeVariables.cynefin.*` variables (the cynefin block of `theme-*.js`) as flat
- * `cynefin…` names under the nested section `cynefin` (D335, D540), keyed by theme trait, never
- * by theme name:
+ * fifteen `themeVariables.cynefin.*` variables (the cynefin block of `theme-*.js`), declared in
+ * `vocabulary.ts` as flat `cynefin…` names under the nested section `cynefin` (D335, D540),
+ * keyed by theme trait, never by theme name:
  *
  * - **light** (every family, the fallback): v12 `default`'s five backgrounds and cliff, the
  *   boundaries and arrows in `lineColor`, text in `textColor`, labels in `primaryTextColor`;
@@ -17,26 +16,11 @@
  * the light entry (T5's oracle lists it, D333(b), D541).
  */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
+import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
 export const theme: DiagramThemeTable = {
   section: 'cynefin',
-  vars: {
-    cynefinComplexBg: { alias: 'cnx', kind: 'color', nested: 'complexBg' },
-    cynefinComplicatedBg: { alias: 'cnp', kind: 'color', nested: 'complicatedBg' },
-    cynefinChaoticBg: { alias: 'cnh', kind: 'color', nested: 'chaoticBg' },
-    cynefinClearBg: { alias: 'cnc', kind: 'color', nested: 'clearBg' },
-    cynefinConfusionBg: { alias: 'cnf', kind: 'color', nested: 'confusionBg' },
-    cynefinBoundaryColor: { alias: 'cnb', kind: 'color', nested: 'boundaryColor' },
-    cynefinCliffColor: { alias: 'cnl', kind: 'color', nested: 'cliffColor' },
-    cynefinArrowColor: { alias: 'cna', kind: 'color', nested: 'arrowColor' },
-    cynefinTextColor: { alias: 'cnt', kind: 'color', nested: 'textColor' },
-    cynefinLabelColor: { alias: 'cnn', kind: 'color', nested: 'labelColor' },
-    cynefinDomainFontSize: { alias: 'cnds', kind: 'length', nested: 'domainFontSize' },
-    cynefinItemFontSize: { alias: 'cnis', kind: 'length', nested: 'itemFontSize' },
-    cynefinBoundaryWidth: { alias: 'cnbw', kind: 'length', nested: 'boundaryWidth' },
-    cynefinCliffWidth: { alias: 'cnlw', kind: 'length', nested: 'cliffWidth' },
-    cynefinArrowWidth: { alias: 'cnaw', kind: 'length', nested: 'arrowWidth' },
-  },
+  vars: THEME_VARIABLE_TABLE,
   rules: {
     // v12 theme-default.js :298-315.
     light: {
