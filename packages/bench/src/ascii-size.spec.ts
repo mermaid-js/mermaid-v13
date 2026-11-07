@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +13,7 @@ import {
 } from './ascii-size.ts';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
+import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
 
@@ -39,6 +40,26 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(leaked).toEqual([]);
   });
 
+  // #464: packet's text entry is its own lazily imported chunk, apart from its plugin; nor does
+  // the plugin carry what only `./testing` exports (v12's token names, the layout invariants).
+  it('a packet SVG render loads the packet plugin, and no ascii or testing-only module', () => {
+    const plugin = chunkOf(prod, 'packages/diagram-packet/src/index.ts');
+    expect(plugin).toBeDefined();
+    const { svg } = splitByFormat(prod);
+    expect(svg).toContain(plugin);
+    const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+    const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+    expect(inputs).toContain('packages/diagram-packet/src/plugin.ts');
+    expect(inputs.filter(isAsciiModule)).toEqual([]);
+    // The table's own strings, in case it moves back into a module the parser imports.
+    const code = loaded.map((f) => readFileSync(join(prod.outdir, f), 'utf8')).join('\n');
+    expect(code).not.toContain('SINGLE_LINE_COMMENT');
+    const testingOnly = ['parser/langium-names.ts', 'layout/invariants.ts', 'layout/fixtures.ts'];
+    expect(
+      inputs.filter((i) => testingOnly.some((t) => i.endsWith(`diagram-packet/src/${t}`)))
+    ).toEqual([]);
+  });
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -49,7 +70,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'info', 'kanban'])
+    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -57,7 +78,14 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    expect(paths.map((p) => p.diagram)).toEqual(['er', 'flowchart', 'info', 'kanban', 'sequence']);
+    expect(paths.map((p) => p.diagram)).toEqual([
+      'er',
+      'flowchart',
+      'info',
+      'kanban',
+      'packet',
+      'sequence',
+    ]);
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
       expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
@@ -74,7 +102,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // depend on the working directory, or the gate measures nothing.
   it('finds the ascii chunks when built from the bench package directory', () => {
     const probe = [
-      "import { mkdtempSync } from 'node:fs';",
+      "import { mkdtempSync, readFileSync } from 'node:fs';",
       "import { tmpdir } from 'node:os';",
       "import { join } from 'node:path';",
       "import { bundle } from './src/build.ts';",

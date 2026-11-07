@@ -1,0 +1,18 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:12 "packet-beta" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:12 "title TCP" keyword
+5:3-5:16 "accTitle: TCP" keyword
+6:3-8:4 "accDescr {\n    multi\n  }" keyword
+9:3-9:4 "0" number
+9:4-9:5 "-" operator
+9:5-9:7 "15" number
+9:7-9:8 ":" operator
+9:9-9:22 "\"Source Port\"" variable [declaration, definition]
+10:3-10:4 "+" operator
+10:4-10:6 "16" number
+10:6-10:7 ":" operator
+10:8-10:26 "'Destination Port'" variable [declaration, definition]
+10:27-10:35 "%% after" comment
+11:3-11:5 "32" number
+11:5-11:6 ":" operator

@@ -129,7 +129,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     load: () => import('@mermaid-js/diagram-quadrant/language').then((m) => m.language),
   },
   { type: 'sankey', id: 'sankey', pattern: /^\s*sankey(-beta)?/, detector: (text) => /^\s*sankey(-beta)?/.test(text) },
-  { type: 'packet', id: 'packet', pattern: /^\s*packet(-beta)?/, detector: (text) => /^\s*packet(-beta)?/.test(text) },
+  {
+    type: 'packet',
+    id: 'packet',
+    section: 'packet',
+    pattern: /^\s*packet(-beta)?/,
+    detector: (text) => /^\s*packet(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-packet/language').then((m) => m.language),
+  },
   { type: 'xychart', id: 'xychart', pattern: /^\s*xychart(-beta)?/, detector: (text) => /^\s*xychart(-beta)?/.test(text) },
   { type: 'block', id: 'block', pattern: /^\s*block(-beta)?/, detector: (text) => /^\s*block(-beta)?/.test(text) },
   { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
@@ -158,4 +165,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'packet' | 'cynefin';

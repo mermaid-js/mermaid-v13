@@ -190,5 +190,77 @@
     "reason": "The `topAxis` statement (D273): v12's grammar calls `yy.TopAxis()`, which its DB does not define, so the text fails; v13 accepts it and draws the top axis.",
     "owner": "#385",
     "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero",
+    "inputHash": "sha256:f3612c8bd83bd160",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero (CRLF)",
+    "inputHash": "sha256:eb92883aadcb749d",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero (commented)",
+    "inputHash": "sha256:0a0c37a1130471e9",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative",
+    "inputHash": "sha256:c067bb582d02c4fe",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative (CRLF)",
+    "inputHash": "sha256:a6dcd1aeaf174b09",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative (commented)",
+    "inputHash": "sha256:fcbaee556b8fa360",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction",
+    "inputHash": "sha256:16fed0931aeaaf12",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction (CRLF)",
+    "inputHash": "sha256:65ff0b0b72d66d6c",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction (commented)",
+    "inputHash": "sha256:0e1fec67e12b4eb3",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
   }
 ]

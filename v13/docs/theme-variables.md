@@ -15,10 +15,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, kanban |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, cynefin |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, cynefin |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, pie, cynefin, info |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, pie, packet, cynefin, info |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
@@ -274,6 +274,21 @@ flags and opacities, which are read literally.
 | `mindmapRoundedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `false` |
 | `mindmapOutlinedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
 | `mindmapBorderEdges` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `true` |
+
+### packet
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `packetStartByteColor` | `packet.startByteColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetEndByteColor` | `packet.endByteColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetLabelColor` | `packet.labelColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetTitleColor` | `packet.titleColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetBlockStrokeColor` | `packet.blockStrokeColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetBlockFillColor` | `packet.blockFillColor` | color | `#efefef` | `#efefef` | `#333333` | `#333333` | `#efefef` | `#333333` | `#efefef` | `#efefef` | `#efefef` | `#efefef` | `#333333` |
+| `packetByteFontSize` | `packet.byteFontSize` | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `packetLabelFontSize` | `packet.labelFontSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+| `packetTitleFontSize` | `packet.titleFontSize` | length | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` |
+| `packetBlockStrokeWidth` | `packet.blockStrokeWidth` | length | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` |
 
 ### pie
 

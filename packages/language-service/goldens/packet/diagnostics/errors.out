@@ -1,0 +1,7 @@
+3:3-3:8 "20-31" error PACKET_NOT_CONTIGUOUS: Packet block 20 - 31 is not contiguous. It should start from 16.
+4:3-4:8 "40-35" error PACKET_END_BEFORE_START: Packet block 40 - 35 is invalid. End must be greater than start.
+5:3-5:5 "+0" error PACKET_ZERO_BITS: Packet block 41 is invalid. Cannot have a zero bit field.
+6:6-6:16 "\"No colon\"" error UNEXPECTED: Expected `:` and a label, got `"No colon"`; write a field as `0-15: "label"`, `16: "label"` or `+8: "label"`.
+7:7-7:15 "Unquoted" error UNEXPECTED_CHARACTER: Unexpected character `Unquoted`; a label goes in quotes, such as `"Source Port"`.
+8:7-8:16 "\"Unclosed" error UNCLOSED_STRING: Unclosed label: the `"` at line 8 has no closing `"`. Add `"` after the label.
+10:3-10:9 "packet" error UNEXPECTED: Expected a field such as `0-15: "Source Port"` or `+16: "Data"`, `title`, `accTitle:` or `accDescr`, a line break or the end of the text, got `packet`; a diagram has one `packet`, at its start.

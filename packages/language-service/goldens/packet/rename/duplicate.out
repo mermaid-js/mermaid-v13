@@ -1,0 +1,6 @@
+@ 4:12  8-15: "Fl|ag"
+  prepare: 4:10-4:14 "Flag"; rename to "Data":
+  %% rename-to: Data
+  packet
+    0-7: "Data"
+    8-15: "Data"

@@ -1,0 +1,9 @@
+@ 3:11  0-7: "Da|ta"
+  prepare: 3:9-3:13 "Data"; rename to "say \"hi\"":
+  refused: 'say "hi"' cannot be written inside "…".
+@ 4:6  8-1|5: "Flag"
+  prepare: refused: There is no id or class name here to rename.
+@ 5:12  title TCP|
+  prepare: refused: There is no id or class name here to rename.
+@ 6:7  pack|et
+  prepare: refused: There is no id or class name here to rename.

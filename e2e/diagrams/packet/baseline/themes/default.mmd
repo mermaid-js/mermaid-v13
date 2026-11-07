@@ -1,0 +1,18 @@
+---
+config:
+  theme: default
+description: >-
+  one representative packet diagram in the default theme: a title, a field split across
+  rows, +N fields and one-bit fields, so every packet colour and size shows
+---
+packet
+  title Header in default
+  0-15: "Source Port"
+  16-23: "Flags"
+  24-39: "Split across rows"
+  +8: "Urgent"
+  48: "U"
+  49: "A"
+  +6: "Reserved"
+  +8: "Window"
+  64-95: "Sequence Number"

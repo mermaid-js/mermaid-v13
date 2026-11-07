@@ -21,6 +21,12 @@ export interface DiagramAdapter<M = unknown> {
    * from the plain parse.
    */
   v12Config?: Record<string, unknown>;
+  /**
+   * Like {@link v12Config}, from the source: for config its text sets, which the oracle does not
+   * apply (packet's rows depend on the front matter's `packet.bitsPerRow`). Wins over
+   * `v12Config` when it returns one.
+   */
+  v12ConfigFor?(text: string): Record<string, unknown> | undefined;
   normaliseV12(db: unknown): unknown;
 }
 
