@@ -222,6 +222,34 @@ describe('kanban layout: config', () => {
   });
 });
 
+// The spec (and v12, `clusters.js:346`) let a word wider than its wrap width overflow, unbroken;
+// Pele's "words broken between characters" is a divergence not to follow. Core's label layout
+// has no option to keep a word whole, so the word is split today (GAPS #455, for the
+// maintainer). This pins that, and that the bounds hold every label, until core has the option.
+describe('kanban layout: a word wider than its wrap width', () => {
+  const word = 'Supercalifragilisticexpialidociousandevenlongerwordhere';
+  const input = board(`  e[${word}]`, `    c[${word}]@{ ticket: ${word}, assigned: ${word} }`);
+
+  it('is split between characters by core, in every label kind (not as v12)', () => {
+    const layout = lay(input);
+    const column = layout.columns[0]!;
+    const card = layout.cards[0]!;
+    const wrap = layout.sectionWidth - 25;
+    const labels = [
+      [column.title!, layout.sectionWidth],
+      [card.title!, wrap],
+      [card.ticket!, wrap],
+      [card.assignee!, wrap],
+    ] as const;
+    for (const [label, max] of labels) {
+      expect(label.text.lines.length).toBeGreaterThan(1);
+      expect(label.text.lines.map((l) => l.map((r) => r.text).join('')).join('')).toBe(word);
+      expect(label.width).toBeLessThanOrEqual(max);
+    }
+    expect(kanbanLayoutViolations(input, layout)).toEqual([]);
+  });
+});
+
 // The corpus files and cases are swept by conformance's `src/kanban/layout-corpus.spec.ts`.
 const CASES = Object.entries(EDGE_CASES).map(([name, src]) => [name, parsed(src)] as const);
 

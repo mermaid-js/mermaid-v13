@@ -8,8 +8,10 @@
  * (pitfall 22); the bounds holding everything drawn (D224). Each violation is one readable
  * line. Comparisons allow a float tolerance.
  *
- * Not invariants, because v12 does them too: a title word wider than its wrap width overflows
- * its column or card, and a ticket or assignee over 40 px high sticks out of the card's bottom.
+ * Not an invariant, because v12 does it too: a ticket or assignee over 40 px high sticks out of
+ * the card's bottom. Nor is a label inside its column or card: core's label layout splits a
+ * word wider than the wrap width between characters (v12 let it overflow; GAPS #455), but a
+ * single character can still be wider than a narrow `kanban.sectionWidth` allows.
  */
 import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';

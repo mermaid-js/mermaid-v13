@@ -84,6 +84,30 @@ describe('structure (spec #424 Renderer)', () => {
     ]);
   });
 
+  it('left-aligns the title and ticket, and right-aligns the assignee at the right inset 10', async () => {
+    const { svg, layout } = await renderKanbanForTest(BOARD);
+    const card = layout.cards.find((c) => c.ast === 'n:b')!;
+    const node = /<g class="node" data-id="n:b"[^>]*>(.*?)<\/g><g class="node"/.exec(svg)![1]!;
+    const texts = elements(node, 'text');
+    expect(texts.map((t) => t['text-anchor'])).toEqual(['start', 'start', 'end']);
+    expect(Number(texts[0]!.x)).toBeCloseTo(card.x + 10);
+    expect(Number(texts[1]!.x)).toBeCloseTo(card.x + 10);
+    expect(Number(texts[2]!.x)).toBeCloseTo(card.x + card.width - 10);
+  });
+
+  it('ends every line of a wrapped assignee at the right inset', async () => {
+    const { svg, layout } = await renderKanbanForTest(
+      "kanban\n  a[Todo]\n    x[Card]@{ assigned: 'a very long assignee name that wraps' }"
+    );
+    const card = layout.cards[0]!;
+    const lines = card.assignee!.text.lines.length;
+    expect(lines).toBeGreaterThan(1);
+    const label = /<text text-anchor="end" xml:space="preserve">(.*?)<\/text>/.exec(svg)![1]!;
+    const xs = elements(label, 'tspan').map((t) => Number(t.x));
+    expect(xs).toHaveLength(lines);
+    for (const x of xs) expect(x).toBeCloseTo(card.x + card.width - 10);
+  });
+
   it('draws an empty board as an empty svg with the 8 px margin box', async () => {
     const { svg } = await renderKanbanForTest('kanban\n');
     expect(svg).toMatch(/viewBox="-8 -8 16 16"/);

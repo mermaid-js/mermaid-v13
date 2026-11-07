@@ -14,7 +14,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanRenderContext } from './context.ts';
@@ -158,9 +158,45 @@ function drawColumn({ w, layout, paint, items }: Scene, c: ColumnLayout): void {
   w.close();
 }
 
-/** A card's title, ticket or assignee: left-aligned in its box, in `textColor`. */
+/** A card's title or ticket: left-aligned in its box, in `textColor`. */
 function drawCardLabel({ w, paint }: Scene, label: PlacedLabel): void {
   drawLabel(w, label, 'label', paint.text, true);
+}
+
+/** A run drawn as bare text: no style, no attributes, not an inline box. */
+const plain = (r: Run): boolean =>
+  r.kind !== 'box' && !r.bold && !r.italic && !r.underline && !r.strike && !r.attrs;
+
+/**
+ * A card's assignee: right-aligned at the card's right inset, the right edge of its box, in
+ * `textColor`. Plain text is one `<text text-anchor="end">`, every line ending at that edge. A
+ * label with styled runs, an inline box or bullets goes through the writer's label, which has
+ * no right alignment: it is left-aligned in its box, so its widest line ends at the edge.
+ */
+function drawAssignee(scene: Scene, label: PlacedLabel): void {
+  const { w, paint } = scene;
+  const t = label.text;
+  if (t.left || !t.lines.every((line) => line.every(plain))) {
+    drawCardLabel(scene, label);
+    return;
+  }
+  const x = label.x + label.width;
+  const y = (i: number): number => label.y + i * t.lineHeight + t.baseline;
+  const line = (i: number): string => t.lines[i]!.map((r) => r.text).join('') || ' ';
+  w.open('g', { class: 'label', fill: paint.text });
+  if (t.lines.length === 1) {
+    w.open('text', { x, y: y(0), 'text-anchor': 'end' });
+    w.text(line(0));
+  } else {
+    w.open('text', { 'text-anchor': 'end', 'xml:space': 'preserve' });
+    for (let i = 0; i < t.lines.length; i++) {
+      w.open('tspan', { x, y: y(i) });
+      w.text(line(i));
+      w.close();
+    }
+  }
+  w.close();
+  w.close();
 }
 
 function drawCards(scene: Scene): void {
@@ -219,6 +255,6 @@ function drawCard(scene: Scene, card: CardLayout, rect: CardPaint): void {
       w.close();
     } else drawCardLabel(scene, card.ticket);
   }
-  if (card.assignee) drawCardLabel(scene, card.assignee);
+  if (card.assignee) drawAssignee(scene, card.assignee);
   w.close();
 }
