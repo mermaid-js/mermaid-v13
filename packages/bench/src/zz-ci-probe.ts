@@ -1,5 +1,7 @@
 // TEMPORARY CI probe helper (removed before the PR is ready): one cold measurement per process,
 // after the same nine cycles the real spec files run before their ratio test.
+import { existsSync, readFileSync } from 'node:fs';
+import { availableParallelism, loadavg } from 'node:os';
 import { setFlagsFromString } from 'node:v8';
 import { runInNewContext } from 'node:vm';
 import { createLanguageService } from '@mermaid-js/language-service';
@@ -29,7 +31,8 @@ const METHODS = {
 export async function probeOne(
   which: 'flowchart' | 'sequence',
   method: keyof typeof METHODS,
-  copy: number
+  copy: number,
+  mode = 'cold'
 ): Promise<void> {
   const m = METHODS[method];
   const flow = which === 'flowchart';
@@ -62,7 +65,10 @@ export async function probeOne(
     }
   }
   const ms = Math.round(performance.now() - t0);
+  const cpu = existsSync('/proc/cpuinfo')
+    ? /model name\s*:\s*(.*)/.exec(readFileSync('/proc/cpuinfo', 'utf8'))?.[1]
+    : undefined;
   console.log(
-    `R-LANG-4-RAW ${JSON.stringify({ mode: 'cold', rep: copy, which, method, k: 1, ms, p, c })}`
+    `R-LANG-4-RAW ${JSON.stringify({ mode, rep: copy, which, method, k: 1, ms, p, c, cpu, cores: availableParallelism(), load: loadavg()[0] })}`
   );
 }

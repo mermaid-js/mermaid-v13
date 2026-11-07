@@ -40,7 +40,19 @@ export default defineConfig({
             'e2e/helpers/argos-metadata.spec.ts',
             'e2e/helpers/platform-harness.spec.ts',
           ],
-          exclude: [...exclude, ...GANTT_SPECS],
+          exclude: [...exclude, ...GANTT_SPECS, 'packages/bench/src/zz-quiet/**'],
+        },
+      },
+      // TEMPORARY (R-LANG-4 probe): the quiet copies run alone, after every other file.
+      {
+        resolve,
+        ssr,
+        test: {
+          name: 'zz-quiet',
+          environment: 'node',
+          include: ['packages/bench/src/zz-quiet/*.quiet.spec.ts'],
+          sequence: { groupOrder: 1 },
+          maxWorkers: 1,
         },
       },
       ...Object.entries(GANTT_ZONES).map(([name, TZ]) => ({
