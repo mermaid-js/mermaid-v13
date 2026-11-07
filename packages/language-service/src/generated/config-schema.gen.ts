@@ -6501,13 +6501,30 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the cynefin renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "The width of the Cynefin diagram.",
           "type": "number",
           "minimum": 1,
           "default": 800,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not a finite number of at least 1 draws the default 800, with one `CYNEFIN_CONFIG_INVALID` warning (D366)."
           }
         },
         "height": {
@@ -6516,7 +6533,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not a finite number of at least 1 draws the default 600, with one `CYNEFIN_CONFIG_INVALID` warning (D366)."
           }
         },
         "padding": {
@@ -6525,7 +6544,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 40,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not a finite number of at least 0 draws the default 40, with one `CYNEFIN_CONFIG_INVALID` warning (D366)."
           }
         },
         "showDomainDescriptions": {
@@ -6533,7 +6554,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boundaryAmplitude": {
@@ -6543,15 +6565,19 @@ export const configSchema: ConfigSchema = {
           "maximum": 50,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Clamped to [0, 50], with one `CYNEFIN_CONFIG_INVALID` warning (D366); v12 drew any value."
           }
         },
         "seed": {
-          "description": "Deterministic seed for boundary waviness. When 0 (default) the seed is derived\nfrom the diagram's SVG element id, which varies per render. Set any non-zero\nnumber to produce identical boundaries on every render — required for visual\nregression tests to be stable.\n",
+          "description": "Seed for the boundary waviness. When 0 (the default) the seed is a hash of the\nrender's id prefix (the `id` render option, or one derived from the text and config),\nso a render is deterministic for a given id and two diagrams on one page differ. Set\nany non-zero number to draw the same boundaries as v12 for that seed, whatever the id.\n",
           "type": "number",
           "default": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 hashed the SVG element id, which changed with every render id; v13 hashes the render's `idPrefix` with v12's hash (D362). A value that is not a finite number counts as 0, with one `CYNEFIN_CONFIG_INVALID` warning (D366)."
           }
         }
       }

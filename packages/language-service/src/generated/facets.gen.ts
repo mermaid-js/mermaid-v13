@@ -143,7 +143,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   { type: 'railroadPeg', id: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i, detector: (text) => /^\s*railroad-peg-beta/i.test(text) },
   { type: 'venn', id: 'venn', pattern: /^\s*venn-beta/, detector: (text) => /^\s*venn-beta/.test(text) },
   { type: 'wardley', id: 'wardley', pattern: /^\s*wardley-beta/i, detector: (text) => /^\s*wardley-beta/i.test(text) },
-  { type: 'cynefin', id: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, detector: (text) => /^\s*cynefin-beta(?:[\s:]|$)/.test(text) },
+  {
+    type: 'cynefin',
+    id: 'cynefin',
+    section: 'cynefin',
+    pattern: /^\s*cynefin-beta(?:[\s:]|$)/,
+    detector: (text) => /^\s*cynefin-beta(?:[\s:]|$)/.test(text),
+    load: () => import('@mermaid-js/diagram-cynefin/language').then((m) => m.language),
+  },
   { type: 'usecase', id: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, detector: (text) => /^\s*usecase-beta(?:\s|$)/.test(text) },
 ];
 
@@ -151,4 +158,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'packet';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'packet' | 'cynefin';

@@ -24,6 +24,11 @@ classdefid
 classentity
 classname
 clazz
+cnaw
+cnbw
+cnds
+cnis
+cnlw
 CODEOWNERS
 COLONSEP
 COMPOSIT_STATE

@@ -3,7 +3,12 @@
  * `update(uri, text)` re-parses the whole text and returns an immutable snapshot.
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
-import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
+import {
+  detectText,
+  diagramStart,
+  firstPartyDetects,
+  preprocess,
+} from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
 import type { DocumentContext } from './context.ts';
@@ -44,29 +49,6 @@ export interface LanguageService {
   get(uri: string): DocumentSnapshot | undefined;
   /** Forget `uri`. */
   close(uri: string): void;
-}
-
-/**
- * v12 detectType's cleaning of the text after front matter (as the renderer's registry does
- * it): directives removed, and each `%%` comment cut from its line.
- */
-function detectText(src: string, start: number, pre: PreprocessResult): string {
-  let text = '';
-  let at = start;
-  for (const { range } of pre.directives) {
-    if (range.end <= at) continue;
-    text += src.slice(at, Math.max(at, range.start));
-    at = range.end;
-  }
-  text += src.slice(at);
-  if (!text.includes('%%')) return text;
-  return text
-    .split('\n')
-    .map((line) => {
-      const c = line.indexOf('%%');
-      return c < 0 ? line : line.slice(0, c).trimEnd();
-    })
-    .join('\n');
 }
 
 /** A row's facet once loaded, or why loading failed. */
@@ -114,14 +96,19 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     ));
 
   const firstParty = new Set<FacetEntry>(firstPartyFacets);
-  /** First-party rows test the text from the diagram's first line; third-party rows get the
-   * cleaned text and the front-matter config, as v12 and the renderer's registry give them. */
+  /**
+   * As the renderer's registry detects: first-party rows test the text from the diagram's first
+   * line, then v12's comment-cut text (`firstPartyDetects`); third-party rows get the cleaned
+   * text and the front-matter config, as v12 gave them.
+   */
   const detect = (text: string, pre: PreprocessResult, start: number): FacetEntry | undefined => {
     const body = text.slice(start);
     let clean: string | undefined;
+    let old: string | undefined;
+    const v12 = () => (old ??= detectText(text, start, pre, { keepLastLineComment: true }));
     return entries.find((e) => {
       try {
-        if (firstParty.has(e)) return e.detector(body);
+        if (firstParty.has(e)) return firstPartyDetects((t) => e.detector(t), body, v12);
         return e.detector((clean ??= detectText(text, start, pre)), pre.frontMatter?.config);
       } catch {
         return false;

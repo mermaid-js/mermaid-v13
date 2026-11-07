@@ -1,0 +1,762 @@
+[
+  {
+    "id": "cynefin-cases/domain-no-boundary",
+    "source": "cynefin-beta\ncomplexity\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/domain-no-boundary-clear",
+    "source": "cynefin-beta\nclearly"
+  },
+  {
+    "id": "cynefin-cases/domain-case",
+    "source": "cynefin-beta\nComplex\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/domain-prefix",
+    "source": "cynefin-beta\ncompl"
+  },
+  {
+    "id": "cynefin-cases/domain-all-names",
+    "source": "cynefin-beta\ncomplicated \"a\"\nchaotic \"b\"\nconfusion \"c\"\ncomplex\nclear"
+  },
+  {
+    "id": "cynefin-cases/domain-glued",
+    "source": "cynefin-beta\ncomplexclear"
+  },
+  {
+    "id": "cynefin-cases/items-on-header-line",
+    "source": "cynefin-beta complex \"a\" clear \"b\" chaotic"
+  },
+  {
+    "id": "cynefin-cases/blank-lines-between-items",
+    "source": "cynefin-beta\ncomplex\n\n\"a\"\n\n\n\"b\""
+  },
+  {
+    "id": "cynefin-cases/item-before-domain",
+    "source": "cynefin-beta\n\"a\"\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/block-ends-at-title",
+    "source": "cynefin-beta\ncomplex\n\"a\"\ntitle X\n\"b\""
+  },
+  {
+    "id": "cynefin-cases/title-after-domain",
+    "source": "cynefin-beta\ncomplex title X\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/acc-after-domain",
+    "source": "cynefin-beta\ncomplex accTitle: t\nclear accDescr: d"
+  },
+  {
+    "id": "cynefin-cases/acc-block-after-domain",
+    "source": "cynefin-beta\ncomplex accDescr { a\nb }\n\"c\""
+  },
+  {
+    "id": "cynefin-cases/repeated-block",
+    "source": "cynefin-beta\ncomplex\n\"a\"\nclear\n\"b\"\ncomplex\n\"c\""
+  },
+  {
+    "id": "cynefin-cases/indented",
+    "source": "cynefin-beta\n  complex\n    \"a\"\n  clear\n    \"b\"\n"
+  },
+  {
+    "id": "cynefin-cases/header-colon",
+    "source": "cynefin-beta:\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-colon-glued",
+    "source": "cynefin-beta:complex \"a\""
+  },
+  {
+    "id": "cynefin-cases/header-glued-word",
+    "source": "cynefin-betax\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-comment",
+    "source": "cynefin-beta%% c\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-directive",
+    "source": "cynefin-beta %%{init: {}}%%\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-after-blank-lines",
+    "source": "\n\ncynefin-beta\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-blanks",
+    "source": "  cynefin-beta  \ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-twice",
+    "source": "cynefin-beta cynefin-beta"
+  },
+  {
+    "id": "cynefin-cases/header-colon-later",
+    "source": "cynefin-beta\ncynefin-beta:"
+  },
+  {
+    "id": "cynefin-cases/header-upper",
+    "source": "CYNEFIN-BETA\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/header-colon-space",
+    "source": "cynefin-beta :\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/transition-glued",
+    "source": "cynefin-beta\ncomplex-->clear"
+  },
+  {
+    "id": "cynefin-cases/transition-tabs",
+    "source": "cynefin-beta\ncomplex\t-->\tclear"
+  },
+  {
+    "id": "cynefin-cases/transition-long-arrow",
+    "source": "cynefin-beta\ncomplex ---> clear"
+  },
+  {
+    "id": "cynefin-cases/transition-short-arrow",
+    "source": "cynefin-beta\ncomplex -> clear"
+  },
+  {
+    "id": "cynefin-cases/transition-bare-label",
+    "source": "cynefin-beta\ncomplex --> clear : x"
+  },
+  {
+    "id": "cynefin-cases/transition-bare-colon",
+    "source": "cynefin-beta\ncomplex --> clear :"
+  },
+  {
+    "id": "cynefin-cases/transition-self-loop",
+    "source": "cynefin-beta\ncomplex --> complex"
+  },
+  {
+    "id": "cynefin-cases/transition-empty-label",
+    "source": "cynefin-beta\ncomplex --> clear : \"\""
+  },
+  {
+    "id": "cynefin-cases/transition-trailing",
+    "source": "cynefin-beta\ncomplex --> clear : \"a\" clear"
+  },
+  {
+    "id": "cynefin-cases/transition-quotes",
+    "source": "cynefin-beta\ncomplex --> clear: \"a\"\nclear --> complex: 'b'"
+  },
+  {
+    "id": "cynefin-cases/transition-repeated",
+    "source": "cynefin-beta\ncomplex --> clear\ncomplex --> clear\nclear --> complex"
+  },
+  {
+    "id": "cynefin-cases/transition-confusion",
+    "source": "cynefin-beta\nconfusion --> chaotic : \"x\"\ncomplex --> clear : \"diagonal\""
+  },
+  {
+    "id": "cynefin-cases/transition-split",
+    "source": "cynefin-beta\ncomplex -->\nclear"
+  },
+  {
+    "id": "cynefin-cases/transition-comment",
+    "source": "cynefin-beta\ncomplex --> clear %% c\nclear --> chaotic"
+  },
+  {
+    "id": "cynefin-cases/transition-glued-label",
+    "source": "cynefin-beta\ncomplex-->clear:\"a\""
+  },
+  {
+    "id": "cynefin-cases/transition-two-labels",
+    "source": "cynefin-beta\ncomplex --> clear : \"a\" : \"b\""
+  },
+  {
+    "id": "cynefin-cases/transition-bad-target",
+    "source": "cynefin-beta\ncomplex --> clearly"
+  },
+  {
+    "id": "cynefin-cases/transition-eof",
+    "source": "cynefin-beta\ncomplex --> clear : \"a\""
+  },
+  {
+    "id": "cynefin-cases/string-quotes",
+    "source": "cynefin-beta\ncomplex\n'a'\n\"b\""
+  },
+  {
+    "id": "cynefin-cases/string-multiline",
+    "source": "cynefin-beta\ncomplex\n\"a\nb\"\n'c\n\nd'"
+  },
+  {
+    "id": "cynefin-cases/string-escapes",
+    "source": "cynefin-beta\ncomplex\n\"a\\nb\\tc\\\\d\\qe\""
+  },
+  {
+    "id": "cynefin-cases/string-empty",
+    "source": "cynefin-beta\ncomplex\n\"\"\n''"
+  },
+  {
+    "id": "cynefin-cases/string-doubled-quote",
+    "source": "cynefin-beta\ncomplex\n'it''s'"
+  },
+  {
+    "id": "cynefin-cases/string-unterminated",
+    "source": "cynefin-beta\ncomplex\n\"never closed\nclear\n\"b\""
+  },
+  {
+    "id": "cynefin-cases/string-unterminated-single",
+    "source": "cynefin-beta\ncomplex\n'never closed"
+  },
+  {
+    "id": "cynefin-cases/string-escaped-line-break",
+    "source": "cynefin-beta\ncomplex\n\"a\\\nb\""
+  },
+  {
+    "id": "cynefin-cases/string-several",
+    "source": "cynefin-beta\ncomplex\n\"a\" \"b\" \"c\""
+  },
+  {
+    "id": "cynefin-cases/string-tag-quotes",
+    "source": "cynefin-beta\ncomplex\n\"<b class=\"x\">bold</b>\""
+  },
+  {
+    "id": "cynefin-cases/string-escaped-quote",
+    "source": "cynefin-beta\ncomplex\n\"a\\\"b\"\n'c\\'d'"
+  },
+  {
+    "id": "cynefin-cases/string-blanks",
+    "source": "cynefin-beta\ncomplex\n\"  a  \""
+  },
+  {
+    "id": "cynefin-cases/title-blanks-comment",
+    "source": "cynefin-beta\ntitle   a   b   %% c\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-empty",
+    "source": "cynefin-beta\ntitle\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-glued-comment",
+    "source": "cynefin-beta\ntitle%%x\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-glued-domain",
+    "source": "cynefin-beta\ntitlecomplex"
+  },
+  {
+    "id": "cynefin-cases/title-repeated",
+    "source": "cynefin-beta\ntitle one\ntitle two\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-trailing-blank",
+    "source": "cynefin-beta\ntitle \ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-on-header",
+    "source": "cynefin-beta title T\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/title-indented",
+    "source": "cynefin-beta\n  title X\n  complex"
+  },
+  {
+    "id": "cynefin-cases/title-tabs",
+    "source": "cynefin-beta\ntitle a\t\tb \t c\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/front-matter-title",
+    "source": "---\ntitle: Front\n---\ncynefin-beta\ncomplex\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/front-matter-empty-title",
+    "source": "---\ntitle: Front\n---\ncynefin-beta\ntitle\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/front-matter-in-text-title",
+    "source": "---\ntitle: Front\n---\ncynefin-beta title In text\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-descr-block",
+    "source": "cynefin-beta\naccDescr {\n  line one\n\n  line two\n}\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-comments",
+    "source": "cynefin-beta\naccDescr: a %% b\naccTitle : c %% d\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-descr-unclosed",
+    "source": "cynefin-beta\naccDescr { never closed\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-title-no-colon",
+    "source": "cynefin-beta\naccTitle x"
+  },
+  {
+    "id": "cynefin-cases/acc-descr-brace-later",
+    "source": "cynefin-beta\naccDescr\n\n{\nx\n}"
+  },
+  {
+    "id": "cynefin-cases/acc-descr-glued",
+    "source": "cynefin-beta accDescr{x}\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-empty",
+    "source": "cynefin-beta\n  accTitle:\n  accDescr:\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/acc-descr-block-trailing",
+    "source": "cynefin-beta\naccDescr {a} complex"
+  },
+  {
+    "id": "cynefin-cases/acc-description-word",
+    "source": "cynefin-beta\naccDescription: x"
+  },
+  {
+    "id": "cynefin-cases/semicolon",
+    "source": "cynefin-beta\ncomplex;\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/nbsp",
+    "source": "cynefin-beta\ncomplex\u00a0\"a\""
+  },
+  {
+    "id": "cynefin-cases/line-separator",
+    "source": "cynefin-beta\ncomplex\u2028\"a\""
+  },
+  {
+    "id": "cynefin-cases/lone-cr",
+    "source": "cynefin-beta\rcomplex\r\"a\""
+  },
+  {
+    "id": "cynefin-cases/stray-character",
+    "source": "cynefin-beta\ncomplex\n\"a\"\n@\nclear"
+  },
+  {
+    "id": "cynefin-cases/non-ascii-item",
+    "source": "cynefin-beta\ncomplex\n\"é\""
+  },
+  {
+    "id": "cynefin-cases/astral",
+    "source": "cynefin-beta\ncomplex\n\"😀\"\n😀"
+  },
+  {
+    "id": "cynefin-cases/tab-only-lines",
+    "source": "cynefin-beta\ncomplex\n\t\n  \n\"a\""
+  },
+  {
+    "id": "cynefin-cases/mid-line-directive",
+    "source": "cynefin-beta\ncomplex %%{x}%%\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/mid-line-comment",
+    "source": "cynefin-beta\ncomplex %% c\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/mid-line-init",
+    "source": "cynefin-beta\ncomplex %%{init: {}}%%\n\"a\"\nclear"
+  },
+  {
+    "id": "cynefin-cases/directive-glued",
+    "source": "cynefin-beta\ncomplex %%{ x }%%y\n\"a\""
+  },
+  {
+    "id": "cynefin-cases/comment-lines",
+    "source": "cynefin-beta\n%% c\ncomplex\n  %% c\n  \"a\""
+  },
+  {
+    "id": "cynefin-cases/yaml-in-body",
+    "source": "cynefin-beta\n---\nbody: yaml\n---\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/yaml-empty",
+    "source": "cynefin-beta\n---\n---\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/yaml-mid-line",
+    "source": "cynefin-beta\ncomplex ---\n---"
+  },
+  {
+    "id": "cynefin-cases/yaml-unclosed",
+    "source": "cynefin-beta\n---\nnever closed\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/dashes-before-arrow",
+    "source": "cynefin-beta\ncomplex --\n--> clear"
+  },
+  {
+    "id": "cynefin-cases/entities",
+    "source": "cynefin-beta\ntitle a #quot;b#quot; #9829;\ncomplex\n\"#amp;x\""
+  },
+  {
+    "id": "cynefin-cases/entity-number",
+    "source": "cynefin-beta\ncomplex\n\"a#35;\""
+  },
+  {
+    "id": "cynefin-cases/entity-style",
+    "source": "cynefin-beta\ntitle style a:#f00;\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/entity-classdef",
+    "source": "cynefin-beta\naccTitle: classDef x:#f00; y;\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/br",
+    "source": "cynefin-beta\ncomplex\n\"<br>a<br/>b\""
+  },
+  {
+    "id": "cynefin-cases/crlf",
+    "source": "cynefin-beta\r\ncomplex\r\n\"a\"\r\n\r\nclear\r\n"
+  },
+  {
+    "id": "cynefin-cases/header-only",
+    "source": "cynefin-beta"
+  },
+  {
+    "id": "cynefin-cases/blank-lines",
+    "source": "cynefin-beta\n\n\n"
+  },
+  {
+    "id": "cynefin-cases/blanks-everywhere",
+    "source": "   cynefin-beta   \n\t\n  complex  \n  \"a\"  \n"
+  },
+  {
+    "id": "cynefin-cases/separator-header",
+    "source": "cynefin-beta\u2028complex"
+  },
+  {
+    "id": "cynefin-cases/separator-items",
+    "source": "cynefin-beta\ncomplex \"a\"\u2028\"b\""
+  },
+  {
+    "id": "cynefin-cases/separator-title",
+    "source": "cynefin-beta\ntitle a\u2028b\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/separator-acc",
+    "source": "cynefin-beta\naccTitle: a\u2029b\naccDescr: c\u2028d\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/separator-acc-block",
+    "source": "cynefin-beta\naccDescr\u2028{ a }\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/separator-in-string",
+    "source": "cynefin-beta\ncomplex\n\"a\u2028b\""
+  },
+  {
+    "id": "cynefin-cases/separator-comment",
+    "source": "cynefin-beta\ncomplex\n \"a\"\n %% c\u2028\"b\""
+  },
+  {
+    "id": "cynefin-cases/separator-mid-line-comment",
+    "source": "cynefin-beta\ncomplex \"a\" %% c\u2029\"b\""
+  },
+  {
+    "id": "cynefin-cases/separator-arrow",
+    "source": "cynefin-beta\ncomplex\u2028-->\u2029clear"
+  },
+  {
+    "id": "cynefin-cases/separator-before-header",
+    "source": "\u2028cynefin-beta\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/recovery-item-before-domain",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-items-before-domain",
+    "source": "cynefin-beta\n\"a\"\n\"b\"\ncomplex \"c\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-item-after-title",
+    "source": "cynefin-beta\ncomplex \"a\"\ntitle T\n\"b\"\nclear \"c\"",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-no-boundary",
+    "source": "cynefin-beta\ncomplexity\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-case",
+    "source": "cynefin-beta\nComplex\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-prefix",
+    "source": "cynefin-beta\ncompl \"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-semicolon",
+    "source": "cynefin-beta\ncomplex;\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-long-arrow",
+    "source": "cynefin-beta\ncomplex ---> clear\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-short-arrow",
+    "source": "cynefin-beta\ncomplex -> clear\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-arrow-first",
+    "source": "cynefin-beta\n--> clear\ncomplex \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-bare-label",
+    "source": "cynefin-beta\ncomplex --> clear : x\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-bare-colon",
+    "source": "cynefin-beta\ncomplex --> clear :\nchaotic \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-colon-after-domain",
+    "source": "cynefin-beta\ncomplex : \"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-trailing",
+    "source": "cynefin-beta\ncomplex --> clear : \"a\" clear\nchaotic \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-split",
+    "source": "cynefin-beta\ncomplex -->\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-bad-target",
+    "source": "cynefin-beta\ncomplex --> clearly\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-string",
+    "source": "cynefin-beta\ncomplex \"a\"\n\"never closed\nchaotic",
+    "errors": [
+      ["UNCLOSED_STRING", 3],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-single-quote",
+    "source": "cynefin-beta\ncomplex \"a\"\nclear 'b",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-acc-descr",
+    "source": "cynefin-beta\naccDescr { never closed\ncomplex \"a\"",
+    "errors": [
+      ["UNCLOSED_ACC_DESCR", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-acc-title-no-colon",
+    "source": "cynefin-beta\naccTitle x\ncomplex \"a\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-header-twice",
+    "source": "cynefin-beta\ncynefin-beta\ncomplex \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-title-glued-domain",
+    "source": "cynefin-beta\ntitlecomplex\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-acc-descr-trailing",
+    "source": "cynefin-beta\naccDescr {a} complex\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-stray-character",
+    "source": "cynefin-beta\ncomplex \"a\"\n@\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-nbsp",
+    "source": "cynefin-beta\ncomplex\u00a0\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-three-errors",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"\ncomplex -> clear\nclear \"c\"\nchaotic --> complex \"x\"\nconfusion \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "cynefin-cases/recovery-two-errors-names",
+    "source": "cynefin-beta\nComplex \"a\"\nclear \"b\"\nclear --> chaotic : x\nchaotic \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["b", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-two-errors-header-and-item",
+    "source": "cynefin-beta\ncynefin-beta\ncomplex \"a\"\ntitle T\n\"b\"\nclear \"c\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-three-errors-acc-block-transition",
+    "source": "cynefin-beta\naccTitle x\ncomplex \"a\" ;\n\"b\"\nclear --> chaotic \"c\"\nchaotic \"d\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b", "d"]
+  },
+  {
+    "id": "cynefin-cases/recovery-five-errors",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"\ncomplexity\nclear -> chaotic\nchaotic \"c\"\nconfusion --> clear :\naccDescr { open\nclear \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED", 7],
+      ["UNCLOSED_ACC_DESCR", 8],
+      ["UNEXPECTED_CHARACTER", 8],
+      ["UNEXPECTED_CHARACTER", 8]
+    ],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "cynefin-cases/recovery-five-errors-statements",
+    "source": "cynefin-beta\ntitlecomplex\nclear \"a\"\ncomplex --> clearly\naccDescr {x} chaotic\ncomplex : \"b\"\nchaotic 'c\nconfusion \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6],
+      ["UNCLOSED_STRING", 7]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-two-lexer-errors",
+    "source": "cynefin-beta\ncomplex \"a\" ; \"b\" Clear\nclear \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-three-lexer-errors",
+    "source": "cynefin-beta\ncomplex -> clear @ ;\nclear \"b\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-bare-label-words",
+    "source": "cynefin-beta\ncomplex --> clear : x y\nchaotic \"a\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-parse-then-lexer-error",
+    "source": "cynefin-beta\n\"a\" ; \"b\"\ncomplex \"c\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-line-lexer-error-then-unclosed",
+    "source": "cynefin-beta\ncomplex \"c\"\nclear ; \"b",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-lines-several-each",
+    "source": "cynefin-beta\ncomplex \"a\" ; @\nComplex \"b\" ;\nclear --> chaotic : x\nchaotic \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/unclosed-directive-line",
+    "source": "cynefin-beta\n%%{ never closed\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/unclosed-directive-init",
+    "source": "cynefin-beta\n%%{init: {\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/docs-syntax-template",
+    "source": "cynefin-beta\ntitle Optional Diagram Title\n\ncomplex\n\"Item label\"\n\"Another item\"\n\ncomplicated\n\"Expert analysis needed\"\n\nclear\n\"Known procedure\"\n\nchaotic\n\"Crisis response\"\n\nconfusion\n\"Item of unknown domain\"\n\ncomplex --> complicated : \"Pattern identified\"\nclear --> chaotic : \"Complacency\"\n"
+  },
+  {
+    "id": "cynefin-cases/docs-config-front-matter",
+    "source": "---\nconfig:\n  cynefin:\n    width: 1000\n    showDomainDescriptions: false\n---\ncynefin-beta\n  complex\n    \"Adaptive work\"\n"
+  },
+  {
+    "id": "cynefin-cases/docs-accessibility",
+    "source": "cynefin-beta\n  accTitle: Cynefin framework for software delivery decisions\n  accDescr: A Cynefin map categorizing software tasks by complexity domain\n\n  complex\n    \"New feature discovery\"\n"
+  }
+]

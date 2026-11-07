@@ -33,6 +33,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
   it('has a row for each v13 diagram type', () => {
     expect(Object.keys(LEZER_HIGHLIGHTERS).sort()).toEqual([
       'class',
+      'cynefin',
       'er',
       'flowchart',
       'gantt',
@@ -139,6 +140,16 @@ describe('the per-type first-paint highlighters (D134)', () => {
         '::punctuation',
         '"Length":string',
       ]);
+    });
+
+    it('highlights a cynefin diagram with the cynefin grammar', () => {
+      const out = spans(
+        'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
+      );
+      expect(out[0]).toBe('cynefin-beta:keyword');
+      expect(out).toContain('complex:keyword');
+      expect(out).toContain('"Probe":string');
+      expect(out).toContain('-->:operator');
     });
 
     it('finds the type after front matter, directives and comments', () => {

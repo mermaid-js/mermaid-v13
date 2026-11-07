@@ -13,7 +13,12 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
+import {
+  detectText,
+  diagramStart,
+  firstPartyDetects,
+  type PreprocessResult,
+} from '@mermaid-js/core/preprocess';
 import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
@@ -127,11 +132,17 @@ interface Entry {
   readonly type: string;
   readonly id: string | undefined;
   readonly formats: readonly string[];
-  /** `clean` is v12's detector text (third-party detectors), built on first use. */
+  /**
+   * `body` is the text from the diagram's start (front matter, leading directives and comments
+   * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
+   * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
+   * built on first use.
+   */
   readonly detect: (
     body: string,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined
+    config: Readonly<Record<string, unknown>> | undefined,
+    v12: () => string
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -286,27 +297,6 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
-// v12 detectType's cleaning of the text after front matter: directives removed (their ranges
-// come from preprocess), and each `%%` comment cut from its line.
-function detectText(src: string, start: number, pre: PreprocessResult): string {
-  let text = '';
-  let at = start;
-  for (const { range } of pre.directives) {
-    if (range.end <= at) continue;
-    text += src.slice(at, Math.max(at, range.start));
-    at = range.end;
-  }
-  text += src.slice(at);
-  if (!text.includes('%%')) return text;
-  return text
-    .split('\n')
-    .map((line) => {
-      const c = line.indexOf('%%');
-      return c < 0 ? line : line.slice(0, c).trimEnd();
-    })
-    .join('\n');
-}
-
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
   typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
     ? ((m as { diagram?: T }).diagram ??
@@ -426,7 +416,8 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (body) => e.pattern.test(body),
+        detect: (body, _clean, _config, v12) =>
+          firstPartyDetects((text) => e.pattern.test(text), body, v12),
         load: e.load,
         loadAscii: e.loadAscii,
       });
@@ -503,8 +494,10 @@ export class Registry {
     if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
+    let old: string | undefined;
+    const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
     for (const e of this.detectionOrder()) {
-      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
+      if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',

@@ -2459,6 +2459,14 @@ showGrid?: boolean
  * via the `definition` "CynefinDiagramConfig".
  */
 export interface CynefinDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * The width of the Cynefin diagram.
  */
@@ -2480,10 +2488,10 @@ showDomainDescriptions?: boolean
  */
 boundaryAmplitude?: number
 /**
- * Deterministic seed for boundary waviness. When 0 (default) the seed is derived
- * from the diagram's SVG element id, which varies per render. Set any non-zero
- * number to produce identical boundaries on every render — required for visual
- * regression tests to be stable.
+ * Seed for the boundary waviness. When 0 (the default) the seed is a hash of the
+ * render's id prefix (the `id` render option, or one derived from the text and config),
+ * so a render is deterministic for a given id and two diagrams on one page differ. Set
+ * any non-zero number to draw the same boundaries as v12 for that seed, whatever the id.
  * 
  */
 seed?: number

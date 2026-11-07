@@ -232,6 +232,21 @@ const DOCS: Readonly<Record<string, string>> = {
     '  64-95: "Data (variable length)"',
     '',
   ].join('\n'),
+  cynefin: [
+    'cynefin-beta',
+    '  title Incident response',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  %% the five domains',
+    '  complex',
+    '    "Probe"',
+    "    'Sense'",
+    '  clear',
+    '    "Categorise"',
+    '  complex --> clear : "stabilise"',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

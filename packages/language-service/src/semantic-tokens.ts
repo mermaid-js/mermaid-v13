@@ -65,7 +65,7 @@ const BY_SYMBOL: Readonly<Record<string, SemanticTokenType>> = {
 
 const isBlank = (c: string) => c === ' ' || c === '\t' || c === '\n' || c === '\r';
 
-function symbolTokens(list: readonly Occurrence[]): SemanticToken[] {
+function symbolTokens(list: readonly Occurrence[], declaredOnly: boolean): SemanticToken[] {
   const groups = new Map<string, Occurrence[]>();
   for (const o of list) {
     const key = `${o.space}\0${o.name}`;
@@ -74,7 +74,7 @@ function symbolTokens(list: readonly Occurrence[]): SemanticToken[] {
     g.push(o);
   }
   const defs = new Map<string, Occurrence | undefined>();
-  for (const [key, g] of groups) defs.set(key, definitionOf(g));
+  for (const [key, g] of groups) defs.set(key, definitionOf(g, declaredOnly));
   const out: SemanticToken[] = [];
   for (const o of list) {
     const def = defs.get(`${o.space}\0${o.name}`);
@@ -117,7 +117,7 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
   const { result, facet, text } = ctx;
   const tokens = result?.tokens;
   if (!facet || !tokens) return genericTokens(ctx);
-  const symbols = symbolTokens(list);
+  const symbols = symbolTokens(list, facet.declaredOnly === true);
   const out: SemanticToken[] = [];
   /** Push `[start, end)` without its surrounding blanks. */
   const push = (from: number, to: number, type: SemanticTokenType) => {

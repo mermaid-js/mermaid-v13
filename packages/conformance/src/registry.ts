@@ -1,5 +1,6 @@
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
+import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { infoAdapter } from './info/v13.ts';
@@ -111,6 +112,11 @@ export const PARITY_SUITES: ParitySuite[] = [
     corpusDirs: ['e2e/diagrams/packet'],
     // The cases run in `packet/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
     corpusFiles: ['packages/conformance/corpus/packet-v12-specs.json'],
+  },
+  {
+    adapter: cynefinAdapter,
+    corpusDirs: ['e2e/diagrams/cynefin'],
+    corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
   },
 ];
 

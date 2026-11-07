@@ -205,10 +205,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
   background: def('bg', 'color', ['core', 'state', 'packet']),
-  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
-  // Pie, packet and info draw in the font family but size their text by their own variables.
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'info']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet', 'cynefin']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'cynefin']),
+  // Pie, packet, cynefin and info draw in the font family but size their text by their own variables.
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
@@ -228,6 +228,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'quadrant',
     'gitgraph',
     'gantt',
+    'cynefin',
     'info',
   ]),
   mainBkg: def('mb', 'color', [

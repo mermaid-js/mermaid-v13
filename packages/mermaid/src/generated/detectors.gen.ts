@@ -38,6 +38,6 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i },
   { type: 'venn', pattern: /^\s*venn-beta/ },
   { type: 'wardley', pattern: /^\s*wardley-beta/i },
-  { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/ },
+  { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, id: 'cynefin', formats: ['svg'] },
   { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
 ];

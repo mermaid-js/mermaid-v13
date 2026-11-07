@@ -14,6 +14,7 @@
     "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
     "harvest:pie": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts pie",
     "harvest:gitgraph": "tsx --conditions=mermaid-source src/cli/harvest-gitgraph.ts",
+    "harvest:cynefin": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts cynefin",
     "harvest:packet": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts packet",
     "harvest:info": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts info"
   },
@@ -22,6 +23,7 @@
     "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-class": "workspace:^",
+    "@mermaid-js/diagram-cynefin": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/diagram-gantt": "workspace:^",

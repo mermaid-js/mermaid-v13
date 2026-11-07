@@ -207,6 +207,7 @@ const TYPE_DOCS: Record<string, string> = {
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
   packet: 'packet\n  0-15: "Source Port"\n',
+  cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */

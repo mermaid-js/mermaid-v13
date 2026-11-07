@@ -64,6 +64,14 @@ export const HARVESTS = {
       'packages/parser/tests/info.test.ts',
     ],
   },
+  cynefin: {
+    header: 'cynefin-beta',
+    files: [
+      'packages/mermaid/src/diagrams/cynefin/cynefin.integration.spec.ts',
+      'packages/examples/src/examples/cynefin.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/cynefin.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;

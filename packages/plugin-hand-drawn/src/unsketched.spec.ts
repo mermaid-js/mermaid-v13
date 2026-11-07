@@ -1,8 +1,9 @@
 /**
- * The seven types v12 never sketched (D301, D305), and packet (#421), which v12 never sketched
- * either, draw as before with the plugin registered and `handDrawn` on (H3, #343): over each
- * one's whole e2e corpus, the SVG is byte-identical to the render without the plugin, and no
- * warning is added. A type without a v13 package yet is skipped and joins when it is ported.
+ * The eight types v12 never sketched (D301, D305, and cynefin, #423), and packet (#421), which
+ * v12 never sketched either, draw as before with the plugin registered and `handDrawn` on (H3,
+ * #343): over each one's whole e2e corpus, the SVG is byte-identical to the render without the
+ * plugin, and no warning is added. A type without a v13 package yet is skipped and joins when it
+ * is ported.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,6 +24,7 @@ const UNSKETCHED: Readonly<Record<string, string>> = {
   quadrantChart: 'quadrant-chart',
   gitGraph: 'git',
   packet: 'packet',
+  cynefin: 'cynefin',
 };
 
 const HAND_DRAWN = /look["']?\s*:\s*["']?handDrawn/;
@@ -55,7 +57,7 @@ const withPlugin = createMermaid();
 await withPlugin.registerExternalDiagrams([handDrawn]);
 withPlugin.initialize({ deterministic: true, handDrawn: true } as never);
 
-describe('the seven unsketched types are unchanged with handDrawn on (D301, D305)', () => {
+describe('the eight unsketched types are unchanged with handDrawn on (D301, D305)', () => {
   it('include sequence, which v13 renders, while a flowchart is sketched', async () => {
     expect(plain.supportsFormat('sequence', 'svg')).toBe(true);
     const flow = 'flowchart LR\n  A --> B\n';
