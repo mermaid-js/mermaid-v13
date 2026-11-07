@@ -43,6 +43,7 @@ const DOCS = {
   gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
   gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
+  kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -56,6 +57,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'gitGraph',
       'info',
       'journey',
+      'kanban',
       'mindmap',
       'pie',
       'quadrantChart',

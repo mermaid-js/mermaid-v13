@@ -98,7 +98,8 @@ const lines = (n: number, line: (k: number) => string): string => {
 };
 
 /**
- * R-PARSE-7, pitfall 19: the parser (columns, YAML reads, AST ids, statement spans, recovery)
+ * R-PARSE-7, pitfall 19: the parser (columns, YAML reads, AST ids, statement spans, symbols,
+ * recovery)
  * is linear in input size, with the same n and 8n ratio test as the lexer.
  */
 const PARSE_SHAPES: [string, (n: number) => string][] = [
@@ -115,6 +116,17 @@ const PARSE_SHAPES: [string, (n: number) => string][] = [
   ['decorations on every card', (n) => lines(n, (k) => `    c${k}\n    :::a b\n    ::icon(x)`)],
   ['misplaced indents', (n) => lines(n, (k) => ` m${k}`)],
   ['syntax errors on every line', (n) => lines(n, (k) => `    a[b] c${k}`)],
+  // Symbols (#463): assignee reads, and class words found in a line cut by removed spans.
+  ['an assignee on every card', (n) => lines(n, (k) => `    c${k}@{ assigned: p${k % 50} }`)],
+  ['many class words', (n) => `${KB}    a\n    :::${'w '.repeat(n / 2)}`],
+  [
+    'class words cut by directives',
+    (n) => `${KB}    a\n    :::${'w%%{init: {}}%%x '.repeat(n / 18)}`,
+  ],
+  [
+    'class words after an entity',
+    (n) => `${KB}    a\n    :::#35; ${'w '.repeat(n / 2)}%%{init: {}}%%`,
+  ],
 ];
 
 describe('stress: the kanban parser is linear in input size', () => {

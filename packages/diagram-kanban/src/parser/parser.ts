@@ -2,7 +2,14 @@
 /**
  * Kanban parser: recursive descent over the {@link lex} tokens (gated against v12's jison
  * lexer, #451), producing a {@link KanbanModel}, the typed AST, statement spans and diagnostics
- * (DESIGN §4.3). Symbols are the language facet's (T6).
+ * (DESIGN §4.3).
+ *
+ * Symbols (D289): each item id is a `node` definition of its own (ids repeat and nothing refers
+ * to one), recorded with the range of the id without the blanks around it; each word of a
+ * `:::` line is a `class` reference; each `assigned` value is an `assignee` occurrence (the
+ * first of a name its definition), so a rename spans cards. With a probe (R-LANG-7, D95) the
+ * parser records what it would accept at the probed token: the header, a statement start, a
+ * shape or shape data after an id, a shape's text and closer.
  *
  * The grammar is v12's `kanban.jison` (LALR), ported rule for rule; `grammar/kanban.ebnf` is
  * the normative form:
@@ -31,6 +38,8 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -48,12 +57,15 @@ import type {
   YamlMap,
   YamlOptions,
   YamlResult,
+  YamlNode,
   YamlValue,
 } from '@mermaid-js/core/preprocess';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
+import { holesIn, sourceOffset, wordIn } from './symbols.ts';
+import { classWords, FIRST_LINE, isBlockData, isLineBreak } from './text.ts';
 import { T } from './tokens.ts';
 
 export interface KanbanParseOptions extends ParseOptions {
@@ -83,6 +95,30 @@ const SKIPPED = kindSet(
   T.MdStringStart,
   T.MdStringEnd,
   T.ShapeDataEnd
+);
+
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** What may start a statement (an indent, an item, a decoration, a blank line). */
+const STATEMENT_KINDS = [T.SpaceList, T.NodeId, T.NodeDStart, T.Icon, T.Class, T.SpaceLine];
+/** What may follow an indent. */
+const AFTER_INDENT = [T.NodeId, T.NodeDStart, T.Icon, T.Class];
+/** What ends a statement. */
+const STOP_KINDS = [Kind.Newline, T.Eof, T.SpaceLine];
+/** What may follow an item's id. */
+const AFTER_ID = [T.NodeDStart, T.ShapeDataStart];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset: blanks
+ * and blank lines (the indent before an item), the shape delimiters, a shape's text (after it
+ * comes the closer) and the `@{` of shape data.
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.SpaceList,
+  T.SpaceLine,
+  T.NodeDStart,
+  T.NodeDescr,
+  T.NodeDEnd,
+  T.ShapeDataStart
 );
 
 /** The kinds jison names `SHAPE_DATA`. */
@@ -144,12 +180,18 @@ interface YamlRead {
   inPlace: boolean;
   /** Entities were read as v12's placeholders, to be turned back into `&…;`. */
   placed: boolean;
+  /** The data text v12 read (between `@{` and `}`), and the source range it came from. */
+  data: string;
+  inner: Range;
+  /** Where the data text starts in {@link text} when the read is not in place (its wrapping). */
+  shift: number;
 }
 
-/** Data read as a mapping, with the read it came from (for the `priority` text). */
+/** Data read as a mapping, with the read it came from and its YAML tree (value ranges). */
 interface ItemData {
   value: YamlMap;
   read: YamlRead;
+  root: YamlNode | null;
 }
 
 /** The parts of an item statement (pitfall 10). */
@@ -174,10 +216,17 @@ class KanbanParser {
   private readonly lexed: Lexed;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
+  /** How many `assigned` values of each name were read: the first is the definition. */
+  private readonly assignees = new Map<string, number>();
   private readonly children: KanbanItemNode[] = [];
   private readonly items: OpenItem[] = [];
   private readonly columns: { item: number; cards: number[] }[] = [];
-  /** The open column's statement span. */
+  /**
+   * The open column's statement span. It runs to the line before the next column (blank and
+   * comment lines included, as a timeline section, D259), the last one to the end of the text.
+   */
   private columnSpan: StatementSpan | undefined;
   /** Items indented less than the first, not reported yet: v12 throws at the next item. */
   private readonly shallow: { label: string; range: Range }[] = [];
@@ -187,8 +236,6 @@ class KanbanParser {
   private last: OpenItem | undefined;
   /** The AST node of the last item statement. */
   private lastAst: KanbanItemNode | undefined;
-  /** The end of the last statement read, where an open column's span ends. */
-  private lastEnd = 0;
   /** The last statement was a blank or comment line (for the message after it). */
   private afterBlank = false;
   /** The statement reported a missing separator already: the next one starts here. */
@@ -210,14 +257,22 @@ class KanbanParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.lexed = lex(src, pre.bodyStart, this.view);
-    this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    if (options.probe === undefined) {
+      this.lexed = lex(src, pre.bodyStart, this.view);
+      this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    this.lexed = lex(src, pre.bodyStart, this.view, probe);
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
   }
 
   parse(): KanbanParseResult {
     this.start();
     this.document();
-    if (this.columnSpan) this.st.endStatement(this.columnSpan, this.lastEnd);
+    if (this.columnSpan) this.st.endStatement(this.columnSpan, this.src.length);
     const { st, pre, src } = this;
     // A misplaced indent is reported when the item after it is read: keep source order.
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
@@ -232,7 +287,7 @@ class KanbanParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.c.tokens, this.options);
+    return st.result(model, ast, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -245,6 +300,92 @@ class KanbanParser {
   private range(j: number): Range {
     const t = this.c.tokens;
     return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
+  }
+
+  /**
+   * `[start, end)` of token `j` without the blanks around `text` (its v12 text), when the
+   * source there reads as `text`; else the token's range (the service then drops the symbol).
+   */
+  private exact(j: number, text: string, from = 0, to = text.length): Range {
+    const r = this.range(j);
+    if (this.src.slice(r.start, r.end) !== text) return r;
+    return { start: r.start + from, end: r.start + to };
+  }
+
+  /** An item id: a definition of its own (D289), without the blanks around it. */
+  private idSymbol(id: string, j: number): void {
+    const name = id.trim();
+    if (name === '') return;
+    const from = id.length - id.trimStart().length;
+    this.st.symbol(name, 'node', this.exact(j, id, from, from + name.length), 'def');
+  }
+
+  /**
+   * Each word of a `:::` line: a class reference; the words rename together (D289). Where the
+   * source differs from v12's text (a directive or comment cut out of the line, an entity),
+   * each word is looked up in the source in order; one not found there (and every one after
+   * it) keeps the token's range, which the service drops.
+   */
+  private classSymbols(text: string, j: number): void {
+    const r = this.range(j);
+    const same = this.src.slice(r.start, r.end) === text;
+    const holes = same ? [] : holesIn(this.view, r);
+    let from = r.start;
+    for (const { word: name, at: index } of classWords(text)) {
+      let range = r;
+      if (same) range = { start: r.start + index, end: r.start + index + name.length };
+      else if (from >= 0) {
+        // After a word not found (an entity in it), the rest keep the token's range: each
+        // lookup then stays short, so the line is read in linear time.
+        const at = wordIn(this.src, name, from, r, holes);
+        if (at >= 0) range = { start: at, end: (from = at + name.length) };
+        else from = -1;
+      }
+      this.st.symbol(name, 'class', range, 'ref');
+    }
+  }
+
+  /**
+   * The item's `assigned` value as an `assignee` occurrence named `name` (the model's text):
+   * the value's range in the YAML tree (quotes included, which the service reads through),
+   * mapped to the source; the whole data block, which the service drops, when it cannot be.
+   */
+  private assigneeSymbol(name: string, data: ItemData, block: Range): void {
+    const { root, read } = data;
+    const pair = root?.kind === 'map' ? root.pairs.find((p) => p.key === 'assigned') : undefined;
+    const r = pair?.value?.range;
+    const range = (r && this.sourceRangeOf(read, r)) ?? block;
+    const n = (this.assignees.get(name) ?? 0) + 1;
+    this.assignees.set(name, n);
+    this.st.symbol(name, 'assignee', range, n === 1 ? 'def' : 'ref');
+  }
+
+  /**
+   * The source range of `r`, a range of `read.text`: itself for a read in place; else through
+   * v12's wrapping and its line-break normalisation, when the data text is the source's
+   * otherwise (no entity, removed span or `<br/>` in it); else undefined.
+   */
+  private sourceRangeOf(read: YamlRead, r: Range): Range | undefined {
+    if (read.inPlace) return r;
+    if (read.placed || r.start < read.shift || r.end <= r.start) return undefined;
+    const { src } = this;
+    const { data, inner } = read;
+    const start = sourceOffset(src, inner.start, inner.end, data, r.start - read.shift);
+    const last = sourceOffset(src, inner.start, inner.end, data, r.end - read.shift - 1);
+    return start < 0 || last < 0 ? undefined : { start, end: last + 1 };
+  }
+
+  /**
+   * Stop recording when the probed token is on the line at the cursor, or before it: an error
+   * was reported for that line, so the parser's later tests there are recovery, not
+   * expectations.
+   */
+  private probePassed(): void {
+    const { probe, c } = this;
+    if (!probe) return;
+    let end = c.pos;
+    while (end < c.tokens.length - 1 && !this.isStop(c.tokens.kind[end] ?? Kind.EOF)) end++;
+    if (probe.targetIn(c.tokens, 0, SKIPPED) <= end) probe.freeze(true);
   }
 
   /**
@@ -318,8 +459,8 @@ class KanbanParser {
     return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
   }
 
-  /** How an error message names the current token (the one after it, for an indent). */
-  private found(): string {
+  /** The token an error message names: the current one (the one after it, for an indent). */
+  private namedToken(): number {
     const { c } = this;
     let j = c.pos;
     if (c.kind === T.SpaceList) {
@@ -327,6 +468,20 @@ class KanbanParser {
       const after = c.tokens.kind[next] ?? Kind.EOF;
       if (!this.isStop(after) && after !== Kind.EOF) j = next;
     }
+    return j;
+  }
+
+  /** What the message names of {@link namedToken}: the decoration or data run it starts. */
+  private namedRange(j: number): Range {
+    const k = this.c.tokens.kind[j] ?? Kind.EOF;
+    if (k === T.Icon || k === T.Class) return this.decorationRange(j);
+    if (this.isData(k)) return { start: this.range(j).start, end: this.dataEnd(j) };
+    return this.range(j);
+  }
+
+  /** How an error message names token `j` ({@link namedToken}). */
+  private found(j: number): string {
+    const { c } = this;
     const k = c.tokens.kind[j] ?? Kind.EOF;
     if (k === Kind.EOF || k === T.Eof || this.onlySeparatorsFrom(j)) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
@@ -339,7 +494,7 @@ class KanbanParser {
     }
     if (k === T.SpaceLine) return t.includes('%%') ? 'a comment' : 'a blank line';
     if (t === '') return 'blanks';
-    const line = /^[^\n\r\u2028\u2029]*/.exec(t)?.[0] ?? '';
+    const line = FIRST_LINE.exec(t)?.[0] ?? '';
     const cut = line.length > 24 ? line.slice(0, 24) : line;
     return cut.length < t.length ? `\`${cut}…\`` : `\`${t}\``;
   }
@@ -358,14 +513,23 @@ class KanbanParser {
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */
-  private fail(names: string[], hint?: string, at: Range = this.c.range): never {
+  private fail(names: string[], hint?: string, at?: Range): never {
     this.report(names, hint, at);
     throw STOP;
   }
 
-  /** Report what was found where `names` were expected, and go on. */
-  private report(names: string[], hint?: string, at: Range = this.c.range): void {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
+  /**
+   * Report what was found where `names` were expected, and go on. The range is what the message
+   * names, unless `at` is given.
+   */
+  private report(names: string[], hint?: string, at?: Range): void {
+    const j = this.namedToken();
+    const d = this.st.diagnostics.unexpected(
+      'UNEXPECTED',
+      at ?? this.namedRange(j),
+      names,
+      this.found(j)
+    );
     if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
   }
 
@@ -408,6 +572,7 @@ class KanbanParser {
       c.next();
       while (c.kind === T.SpaceLine || c.kind === Kind.Newline) c.next();
     }
+    c.tested(T.Kanban);
     if (c.kind === T.Kanban) this.header();
     else this.report(HEADER, HEADER_HINT);
   }
@@ -423,7 +588,9 @@ class KanbanParser {
   /** `document`: statements, each followed by a separator, to the end. */
   private document(): void {
     const { c } = this;
-    while (c.kind !== Kind.EOF) {
+    for (;;) {
+      if (this.headerSeen) c.tested(STATEMENT_KINDS);
+      if (c.kind === Kind.EOF) break;
       // The missing header was reported; one error, one diagnostic.
       if (!this.headerSeen && c.kind === T.Kanban) {
         this.header();
@@ -448,6 +615,7 @@ class KanbanParser {
       this.lineEnded = false;
       return;
     }
+    c.tested(STOP_KINDS);
     if (this.isStop(c.kind)) {
       this.separator();
       return;
@@ -459,6 +627,8 @@ class KanbanParser {
     const bareClass = this.beside(c.pos, -1, T.ClassEnd) >= 0;
     if (this.afterBlank || bareClass) {
       this.report(LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
+      // What the next line starts with is an error here: not an expectation.
+      this.probePassed();
       return;
     }
     let hint = this.hintFor(k);
@@ -473,7 +643,11 @@ class KanbanParser {
     const { c } = this;
     if (c.kind === Kind.EOF) return;
     c.next();
-    while (c.kind === Kind.Newline || c.kind === T.Eof) c.next();
+    // A statement may start after each of them.
+    while (c.kind === Kind.Newline || c.kind === T.Eof) {
+      if (this.headerSeen) c.tested(STATEMENT_KINDS);
+      c.next();
+    }
   }
 
   /**
@@ -518,11 +692,13 @@ class KanbanParser {
   /** `statement`. */
   private statement(): void {
     const { c } = this;
+    c.tested(STATEMENT_KINDS);
     const k = c.kind;
     this.afterBlank = false;
     if (k === T.SpaceList) {
       const j = c.next();
       const indent = this.raw(j).length;
+      c.tested(AFTER_INDENT);
       const n = c.kind;
       if (this.isNodeStart(n)) this.item(indent);
       else if (n === T.Icon || n === T.Class) this.decoration();
@@ -553,7 +729,10 @@ class KanbanParser {
     let nodeId: string | undefined;
     const first = c.pos;
     if (c.kind === T.NodeId) {
-      nodeId = this.raw(c.next());
+      const j = c.next();
+      nodeId = this.raw(j);
+      this.idSymbol(nodeId, j);
+      c.tested(AFTER_ID);
     }
     const parts: ItemParts = {
       nodeId,
@@ -565,7 +744,10 @@ class KanbanParser {
     // the decorations and cards after it see it: one error, one diagnostic.
     let failed = false;
     try {
-      if (c.kind === T.NodeDStart) this.shape(parts);
+      if (c.kind === T.NodeDStart) {
+        this.shape(parts);
+        c.tested(T.ShapeDataStart);
+      }
       if (this.isData(c.kind)) this.shapeData(parts);
     } catch (error) {
       if (error !== STOP) throw error;
@@ -581,6 +763,7 @@ class KanbanParser {
     const open = c.next();
     const opener = this.raw(open);
     parts.range = { start: parts.range.start, end: this.range(open).end };
+    c.tested(T.NodeDescr);
     if (c.kind !== T.NodeDescr) {
       if (c.kind === Kind.EOF) this.endsOpen();
       this.fail(TEXT);
@@ -588,6 +771,7 @@ class KanbanParser {
     const text = c.next();
     parts.text = this.raw(text);
     parts.range = { start: parts.range.start, end: this.range(text).end };
+    c.tested(T.NodeDEnd);
     if (c.kind !== T.NodeDEnd) {
       const closer = `\`${CLOSERS[opener] ?? ')'}\``;
       // v12's `<NODE>.+` at a `}`: the rest of the line is text, and so is all after it up to a
@@ -620,7 +804,7 @@ class KanbanParser {
         next === T.NodeDEnd
           ? `the closer on line ${this.lineOf(range.end)}, taking in the items before it`
           : 'the end of the board, taking in every item after it';
-    const head = /^[^\n\r\u2028\u2029]*/.exec(this.src.slice(range.start, range.end))?.[0] ?? '';
+    const head = FIRST_LINE.exec(this.src.slice(range.start, range.end))?.[0] ?? '';
     const shown = head.length > 24 ? `${head.slice(0, 24)}…` : head;
     this.st.diagnostics.error(
       'UNEXPECTED',
@@ -664,7 +848,12 @@ class KanbanParser {
   /** v12 `addNode`'s YAML read of `text`, the data at `range`: the mapping, or undefined. */
   private readData(text: string, range: Range): ItemData | undefined {
     const read = this.yamlInput(text, range);
-    const result = parseYaml(read.text, read.options);
+    // One read in editor mode gives the tree (value ranges) too, and reads valid YAML as the
+    // default mode does; with an error, the default mode's diagnostics are v12's.
+    const tree = parseYaml(read.text, { ...read.options, tree: true });
+    const result = tree.diagnostics.some((d) => d.severity === 'error')
+      ? parseYaml(read.text, read.options)
+      : tree;
     if (this.yamlErrors(result, read, range)) return undefined;
     const value = read.placed ? fromPlaceholders(result.value) : result.value;
     if (value === null) {
@@ -677,7 +866,7 @@ class KanbanParser {
     }
     // v12 ignored a scalar or a list (only `null` made it throw).
     if (!isYamlMap(value) || !this.shapeOk(value.shape, range)) return undefined;
-    return { value, read };
+    return { value, read, root: tree.root };
   }
 
   /**
@@ -688,11 +877,11 @@ class KanbanParser {
   private yamlInput(text: string, range: Range): YamlRead {
     const { src } = this;
     const inner = { start: range.start + 2, end: range.end - 1 };
-    const multiline = text.includes('\n');
+    const multiline = isBlockData(text);
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
     if (src.slice(inner.start, inner.end) === text && !text.includes('#')) {
       const options = multiline ? inner : { start: range.start + 1, end: range.end };
-      return { text: src, options, inPlace: true, placed: false };
+      return { text: src, options, inPlace: true, placed: false, data: text, inner, shift: 0 };
     }
     // `#name;` entities read `&name;` (`cook`); v12 read its placeholders, which YAML takes as
     // plain text (no `#` comment, no `&` anchor).
@@ -703,7 +892,8 @@ class KanbanParser {
         )
       : text;
     const wrapped = multiline ? data + '\n' : `{\n${data}\n}`;
-    return { text: wrapped, options: {}, inPlace: false, placed };
+    const shift = multiline ? 0 : 2;
+    return { text: wrapped, options: {}, inPlace: false, placed, data: text, inner, shift };
   }
 
   /**
@@ -735,10 +925,8 @@ class KanbanParser {
     return false;
   }
 
-  /** The source text of the `priority` value in `read`, as the author wrote it. */
-  private priorityText(read: YamlRead): string {
-    const tree = parseYaml(read.text, { ...read.options, tree: true });
-    const root = tree.root;
+  /** The source text of the `priority` value in `data`, as the author wrote it. */
+  private priorityText({ read, root }: ItemData): string {
     const pair = root?.kind === 'map' ? root.pairs.find((p) => p.key === 'priority') : undefined;
     const r = pair?.value?.range;
     if (!r) return '';
@@ -783,16 +971,18 @@ class KanbanParser {
       column: isColumn ? this.columns.length : this.columns.length - 1,
       classes: [],
     };
-    if (value) applyData(item, value.value, () => this.priorityText(value.read));
+    if (value) {
+      applyData(item, value.value, () => this.priorityText(value));
+      if (item.assigned !== undefined && data)
+        this.assigneeSymbol(item.assigned, value, data.range);
+    }
     if (indent < this.base) this.shallow.push({ label: item.label, range });
     const index = this.items.length;
     this.items.push(item);
     this.last = item;
     this.checkLimit(range);
-    const before = this.lastEnd;
-    this.lastEnd = range.end;
     if (isColumn) {
-      if (this.columnSpan) this.st.endStatement(this.columnSpan, before);
+      if (this.columnSpan) this.endColumn(this.columnSpan, range.start);
       this.columns.push({ item: index, cards: [] });
       const span = (this.columnSpan = this.st.beginStatement('column', range.start));
       span.range.end = range.end;
@@ -818,6 +1008,13 @@ class KanbanParser {
     );
   }
 
+  /** End the column `span` at the start of the line holding `at`, the next column's start. */
+  private endColumn(span: StatementSpan, at: number): void {
+    let end = at;
+    while (end > span.range.end && !isLineBreak(this.src.charCodeAt(end - 1))) end--;
+    this.st.endStatement(span, Math.max(end, span.range.end));
+  }
+
   /** `ICON` or `CLASS`: v12 `decorateNode`, on the last item in source order. */
   private decoration(): void {
     const { c } = this;
@@ -825,6 +1022,7 @@ class KanbanParser {
     const j = c.next();
     const text = this.raw(j);
     const range = this.decorationRange(j);
+    if (!icon) this.classSymbols(text, j);
     const target = this.lastAst;
     const item = this.last;
     if (!target || !item) {
@@ -838,9 +1036,8 @@ class KanbanParser {
     const decoration: KanbanDecoration = { type: icon ? 'Icon' : 'Class', text, range };
     target.decorations.push(decoration);
     this.st.statement(icon ? 'icon' : 'class', range);
-    this.lastEnd = range.end;
     if (icon) item.icon = text;
-    else item.classes = text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
+    else item.classes = classWords(text).map((w) => w.word);
   }
 }
 

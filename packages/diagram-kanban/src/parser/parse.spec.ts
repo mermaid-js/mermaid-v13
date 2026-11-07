@@ -266,8 +266,8 @@ describe('kanban parser: AST', () => {
     expect(last?.data?.text).toBe(' ticket: X ');
   });
 
-  it('spans each column over its cards and decorations', () => {
-    const src = 'kanban\n  a\n  :::x\n    b\n  c\n    d';
+  it('spans each column over its cards and decorations, to the line before the next column', () => {
+    const src = 'kanban\n  a\n  :::x\n    b\n\n  %% c\n  c\n    d';
     const r = parseKanban(src);
     const show = (s: {
       kind: string;
@@ -276,7 +276,7 @@ describe('kanban parser: AST', () => {
     }) => [s.kind, src.slice(s.range.start, s.range.end)];
     expect(r.statements.map(show)).toEqual([
       ['header', 'kanban'],
-      ['column', 'a\n  :::x\n    b'],
+      ['column', 'a\n  :::x\n    b\n\n  %% c\n'],
       ['column', 'c\n    d'],
     ]);
     expect(r.statements[1]?.children?.map(show)).toEqual([

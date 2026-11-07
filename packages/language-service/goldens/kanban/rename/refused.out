@@ -1,0 +1,10 @@
+@ 4:6  [|no id]
+  prepare: refused: There is no id or class name here to rename.
+@ 5:12  ::icon(|fa fa-book)
+  prepare: refused: There is no id or class name here to rename.
+@ 6:9  a@{ |ticket: T-1, priority: High }
+  prepare: refused: There is no id or class name here to rename.
+@ 6:32  a@{ ticket: T-1, priority: |High }
+  prepare: refused: There is no id or class name here to rename.
+@ 7:6  kan|ban
+  prepare: refused: There is no id or class name here to rename.

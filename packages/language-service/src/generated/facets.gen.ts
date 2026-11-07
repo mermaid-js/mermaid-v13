@@ -28,6 +28,7 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     section: 'kanban',
     pattern: /^\s*kanban/,
     detector: (text) => /^\s*kanban/.test(text),
+    load: () => import('@mermaid-js/diagram-kanban/language').then((m) => m.language),
   },
   {
     type: 'classDiagram',
@@ -157,4 +158,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'cynefin';

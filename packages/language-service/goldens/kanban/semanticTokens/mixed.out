@@ -1,0 +1,32 @@
+1:1-1:7 "kanban" keyword
+2:3-2:15 "%% a comment" comment
+3:3-3:7 "todo" node [declaration, definition]
+3:7-3:8 "[" operator
+3:8-3:12 "Todo" string
+3:12-3:13 "]" operator
+4:5-4:6 "a" node [declaration, definition]
+4:6-4:7 "[" operator
+4:7-4:8 "\"" string
+4:8-4:14 "quoted" string
+4:14-4:15 "\"" string
+4:15-4:16 "]" operator
+4:16-4:18 "@{" macro
+4:19-4:41 "ticket: T-1, assigned:" macro
+4:42-4:48 "\"knsv\"" variable [declaration, definition]
+4:49-4:50 "}" macro
+5:5-5:6 "b" node [declaration, definition]
+5:6-5:7 "(" operator
+5:7-5:9 "\"`" string
+5:9-5:15 "**md**" string
+5:15-5:17 "`\"" string
+5:17-5:18 ")" operator
+6:5-6:12 "::icon(" keyword
+6:12-6:22 "fa fa-book" string
+6:22-6:23 ")" operator
+7:5-7:8 ":::" operator
+7:8-7:14 "urgent" class [definition]
+7:15-7:18 "big" class [definition]
+8:3-8:7 "done" node [declaration, definition]
+8:7-8:9 "((" operator
+8:9-8:13 "Done" string
+8:13-8:15 "))" operator

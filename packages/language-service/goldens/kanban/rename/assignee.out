@@ -1,0 +1,12 @@
+@ 4:19  a@{ assigned: |knsv, ticket: T-1 }
+  prepare: 4:19-4:23 "knsv"; rename to "Knut S":
+  %% rename-to: Knut S
+  kanban
+    todo
+      a@{ assigned: Knut S, ticket: T-1 }
+      b@{ assigned: "Knut S" }
+    done
+      c@{
+        assigned: Knut S
+      }
+      d@{ assigned: bob }

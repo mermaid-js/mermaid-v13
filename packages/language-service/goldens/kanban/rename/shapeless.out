@@ -1,0 +1,6 @@
+@ 3:3  |todo
+  prepare: 3:3-3:7 "todo"; rename to "Doing now":
+  %% rename-to: Doing now
+  kanban
+    Doing now
+      card

@@ -1,7 +1,7 @@
 {
   "name": "@mermaid-js/diagram-kanban",
   "version": "13.0.0-alpha.0",
-  "description": "Kanban diagram plugin for Mermaid: parser, model, layout and SVG renderer.",
+  "description": "Kanban diagram plugin for Mermaid: parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -15,6 +15,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
     },
     "./testing": {
       "mermaid-source": "./src/testing.ts",
@@ -48,6 +53,7 @@
     "formats": [
       "svg"
     ],
-    "export": "kanban"
+    "export": "kanban",
+    "language": "./dist/language.js"
   }
 }

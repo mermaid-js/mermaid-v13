@@ -250,6 +250,7 @@ const TYPE_DOCS: Record<string, string> = {
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
+  kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */

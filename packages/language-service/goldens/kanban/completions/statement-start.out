@@ -1,0 +1,10 @@
+@ 2:3  |
+  none
+@ 4:5  |
+  ::icon() operator 4:5-4:5 "" -> "::icon()"
+  ::: operator 4:5-4:5 "" -> ":::"
+@ 6:6  :|
+  ::icon() operator 6:5-6:6 ":" -> "::icon()"
+  ::: operator 6:5-6:6 ":" -> ":::"
+@ 7:8  ::i|
+  ::icon() operator 7:5-7:8 "::i" -> "::icon()"
