@@ -50,7 +50,6 @@ import type {
   SourceView,
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
-import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,
@@ -63,6 +62,7 @@ import type {
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
 import { lex } from './lexer.ts';
+import { checkNodeLimit } from './limits.ts';
 import type { Lexed } from './lexer.ts';
 import { holesIn, sourceOffset, wordIn } from './symbols.ts';
 import { classWords, FIRST_LINE, isBlockData, isLineBreak } from './text.ts';
@@ -242,8 +242,6 @@ class KanbanParser {
   private lineEnded = false;
   /** `kanban` was read; a missing one was reported once, so a later one is the header. */
   private headerSeen = false;
-  /** The item cap was reported. */
-  private tooMany = false;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -980,7 +978,7 @@ class KanbanParser {
     const index = this.items.length;
     this.items.push(item);
     this.last = item;
-    this.checkLimit(range);
+    checkNodeLimit(this.st, this.items.length, this.options.maxNodes, range);
     if (isColumn) {
       if (this.columnSpan) this.endColumn(this.columnSpan, range.start);
       this.columns.push({ item: index, cards: [] });
@@ -994,18 +992,6 @@ class KanbanParser {
       column.cards.push(index);
     }
     this.st.statement('card', range);
-  }
-
-  /** The integrator's item cap (R-SEC-5): reported once, at the first item over it. */
-  private checkLimit(range: Range): void {
-    const max = this.options.maxNodes ?? DEFAULT_LIMITS.maxNodes;
-    if (this.items.length <= max || this.tooMany) return;
-    this.tooMany = true;
-    this.st.diagnostics.error(
-      LIMIT_CODES.maxNodes,
-      `The board has more than ${max} items (columns and cards), the limit. The limit is set by the page or app that renders the diagram.`,
-      range
-    );
   }
 
   /** End the column `span` at the start of the line holding `at`, the next column's start. */
