@@ -73,7 +73,7 @@ describe('kanban layout: v12 label and column geometry', () => {
 
   it('places columns W + 5 apart at v12 x, top −1.5 W, each its own height', () => {
     const { columns } = lay(input);
-    expect(columns.map((c) => [c.x, c.y, c.width, c.height, c.slot])).toEqual([
+    expect(columns.map((c) => [c.x, c.y, c.width, c.height, c.ordinal])).toEqual([
       [100, -300, 200, 237, 1],
       [305, -300, 200, 50, 2],
     ]);

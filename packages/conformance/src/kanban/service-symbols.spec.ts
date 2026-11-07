@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { kanbanBoardOrder, parseKanban } from '@mermaid-js/diagram-kanban';
+import { parseKanban } from '@mermaid-js/diagram-kanban';
+import { kanbanBoardOrder } from '@mermaid-js/diagram-kanban/testing';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';

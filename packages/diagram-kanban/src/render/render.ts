@@ -1,9 +1,11 @@
-// Draws a laid-out kanban board through the SvgWriter (spec #424 T4, DESIGN §7). The layout
-// (`layoutKanban`) measured and placed everything; this file only paints it, in v12's order:
-// the columns (`g.sections`), then the cards (`g.items`). Each column and card is one group with
-// `data-id` and `data-ast` (its item's AST id, R-PARSE-8); labels carry neither. Coordinates are
-// absolute (v12's: columns from `−1.5 W`), and the viewBox is the layout's bounds (D224, D378).
-// Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
+/**
+ * Draws a laid-out kanban board through the SvgWriter (spec #424 T4, DESIGN §7). The layout
+ * (`layoutKanban`) measured and placed everything; this file only paints it, in v12's order:
+ * the columns (`g.sections`), then the cards (`g.items`). Each column and card is one group with
+ * `data-id` and `data-ast` (its item's AST id, R-PARSE-8); labels carry neither. Coordinates are
+ * absolute (v12's: columns from `−1.5 W`), and the viewBox is the layout's bounds (D224, D378).
+ * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
+ */
 import {
   checkStyle,
   px,
@@ -138,11 +140,11 @@ function drawColumns(scene: Scene): void {
 function drawColumn({ w, layout, paint, items }: Scene, c: ColumnLayout): void {
   const item = itemOf(items, c.ast);
   w.open('g', {
-    class: `cluster section-${c.slot}${userClasses(item.classes)}`,
+    class: `cluster section-${c.ordinal}${userClasses(item.classes)}`,
     'data-id': c.ast,
     'data-ast': c.ast,
   });
-  const fill = paint.column(c.slot);
+  const fill = paint.column(c.ordinal);
   w.outline('group', 'rect', {
     x: c.x,
     y: c.y,

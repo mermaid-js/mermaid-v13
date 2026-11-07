@@ -1,7 +1,7 @@
 // cspell:words knsv Pneumonoultramicroscopicsilicovolcanoconiosis
 /**
  * Layout inputs for the layout specs (spec #424 T3), produced by the v13 parser (T2 #453) and
- * the model adapter, as the plugin will produce them. The corpus files themselves are swept by
+ * the model adapter, as the plugin produces them. The corpus files themselves are swept by
  * conformance's `src/kanban/layout-corpus.spec.ts` (a diagram package reads no files); here are
  * the few cases no corpus file has, and a measurer with round numbers.
  */

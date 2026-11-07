@@ -5,7 +5,8 @@
  * config defaults under the integrator's config and the source's front matter and directives,
  * the theme with the plugin's table, its `themeVariables` and its dark half for `theme: 'auto'`,
  * the table measurer, and the stream writer with the theme's gradient and an optional outline
- * drawer. Until T5's manifest (#459) registers the plugin, this is how kanban renders.
+ * drawer. `mermaid` renders kanban through the registry (#459); this renders the plugin alone,
+ * with what the public API does not take (a model, an outline drawer, a measurer).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';

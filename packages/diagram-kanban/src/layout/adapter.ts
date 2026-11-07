@@ -1,9 +1,9 @@
 /**
  * `KanbanModel` → `KanbanLayoutInput` (spec #424 T3): the drawn part of T2's model. Columns in
- * source order with their cards by position (D373); labels as the parser gives them (raw, every
- * one markdown: core's label layout decodes the entities); `ticket` and `assigned` as the strings
- * the model keeps; `priority` only when it was a YAML string (`priorityKind: 'other'` draws no
- * bar, D375). Icons, classes and a column's metadata are not drawn (D376).
+ * source order with their cards by position (D373); labels, tickets and assignees as the model
+ * holds them (entities as written; every label is markdown, and core's label layout decodes
+ * them); `priority` only when it was a YAML string (`priorityKind: 'other'` draws no bar,
+ * D375). Icons, classes and a column's metadata are not drawn (D376).
  */
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';

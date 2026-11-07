@@ -3,7 +3,8 @@
  * the {@link KanbanSnapshot} that `v12.ts` takes from mermaid\@12's DB: each column, then its
  * cards by position (D373), and a priority that is not a string by its value.
  */
-import { detectKanban, kanbanBoardOrder, parseKanban } from '@mermaid-js/diagram-kanban';
+import { detectKanban, parseKanban } from '@mermaid-js/diagram-kanban';
+import { kanbanBoardOrder } from '@mermaid-js/diagram-kanban/testing';
 import type { KanbanItem, KanbanModel } from '@mermaid-js/diagram-kanban';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';

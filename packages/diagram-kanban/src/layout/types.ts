@@ -6,6 +6,9 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { KanbanPriority } from '../priority.ts';
+
+export type { KanbanPriority };
 
 export interface Rect {
   readonly x: number;
@@ -18,9 +21,6 @@ export interface Rect {
 export interface PlacedLabel extends Rect {
   readonly text: MeasuredLabel;
 }
-
-/** The four priorities v12 draws a bar for, matched exactly (D375). */
-export type KanbanPriority = 'Very High' | 'High' | 'Low' | 'Very Low';
 
 /** The priority bar on a card's left edge: a vertical line `width` wide, centred on `x`. */
 export interface PriorityBar {
@@ -52,8 +52,11 @@ export interface CardLayout extends Rect {
 
 export interface ColumnLayout extends Rect {
   readonly ast: AstId;
-  /** The column's number from 1: v12's `section-<slot>` class; the renderer colours by it (D374). */
-  readonly slot: number;
+  /**
+   * The column's number from 1: v12's `section-<n>` class; the renderer colours it by the
+   * `cScale` slot this number maps to (D374, `theme/columns.ts`).
+   */
+  readonly ordinal: number;
   /**
    * Wrapped at `W` and centred on the column. A word wider than `W` is split between characters
    * by core's label layout, which has no option to keep it whole; v12 let it overflow (GAPS

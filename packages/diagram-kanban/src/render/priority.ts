@@ -1,14 +1,11 @@
 /** The priority warning (D375): what the renderer checks over the cards it drew. */
 import type { Warning } from '@mermaid-js/core';
+import { KANBAN_PRIORITY } from '../codes.ts';
 import type { KanbanItem } from '../model.ts';
-
-export const KANBAN_PRIORITY = 'KANBAN_PRIORITY';
+import { isKnownPriority } from '../priority.ts';
 
 /** The characters of a value the warning shows (a non-string priority can be a long list). */
 const SHOWN = 60;
-
-/** The values v12 accepts without a bar (`Medium`) or with one (D375). Case-sensitive. */
-const KNOWN: ReadonlySet<string> = new Set(['Very High', 'High', 'Medium', 'Low', 'Very Low']);
 
 /**
  * One `KANBAN_PRIORITY` per render (D375, as D226) naming each card priority that is none of
@@ -20,7 +17,7 @@ export function priorityWarning(cards: readonly KanbanItem[]): Warning | undefin
   const values = new Map<string, string[]>();
   for (const card of cards) {
     const p = card.priority;
-    if (p === undefined || (card.priorityKind !== 'other' && KNOWN.has(p))) continue;
+    if (p === undefined || (card.priorityKind !== 'other' && isKnownPriority(p))) continue;
     let ids = values.get(p);
     if (!ids) values.set(p, (ids = []));
     ids.push(card.ast);

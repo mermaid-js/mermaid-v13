@@ -8,8 +8,8 @@
  *   as strings (v12 `toString()`s them), and `priority` only when the model holds a string
  *   (`priorityKind: 'other'` passes no priority).
  *
- * Labels are text as the model holds it (entities decoded); they are laid out as markdown
- * (D372). What v12 parses and never draws (icons, classes, a column's metadata, D376) is not
+ * Labels are text as the model holds it (entities as written, `&amp;`); they are laid out as
+ * markdown (D372), and core's label layout decodes the entities. What v12 parses and never draws (icons, classes, a column's metadata, D376) is not
  * read.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';

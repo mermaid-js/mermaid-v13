@@ -5,7 +5,7 @@ const KANBAN: readonly string[] = ['kanban'];
 
 /**
  * Kanban's theme variables (D331, D374): one column colour per `cScale` slot, `kanbanColumn<n>`
- * (column k, from 1, takes slot `(k + 1) mod 12`; `render/slots.ts`). The rules are on the table
+ * (column k, from 1, takes slot `(k + 1) mod 12`; `columns.ts`). The rules are on the table
  * (`table.ts`). `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {

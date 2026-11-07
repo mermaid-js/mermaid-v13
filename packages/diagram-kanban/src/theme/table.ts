@@ -1,5 +1,5 @@
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
-import { perSlot } from '../render/slots.ts';
+import { perSlot } from './columns.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
 /**
