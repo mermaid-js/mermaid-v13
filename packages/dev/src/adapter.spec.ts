@@ -10,7 +10,7 @@ describe('renderDiagram (the page adapter)', () => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
       expect(svg).toMatch(
-        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt)"/
+        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|info)"/
       );
     }
   );

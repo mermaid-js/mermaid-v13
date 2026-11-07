@@ -52,6 +52,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'flowchart',
       'gantt',
       'gitGraph',
+      'info',
       'journey',
       'mindmap',
       'pie',

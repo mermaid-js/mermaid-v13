@@ -1,0 +1,69 @@
+(** Info diagram syntax (R-PARSE-9, D54): the normative grammar of `info` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4). mermaid@12 parsed info with Langium (`info.langium` and `common.langium` in
+`@mermaid-js/parser`); the rules below are its token rules, in its order, and its grammar.
+
+An info diagram draws one line: the version of the `mermaid` package that renders it, as
+`v13.0.0`. Nothing in the text changes the drawing.
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive.
+
+Each statement ends at a line break (or the end of the text); `;` is not a separator. *)
+
+@lexer
+
+(** `info showInfo`: accepted, and draws nothing extra. *)
+SHOW_INFO                 /showInfo(?:(?=%%)|(?!\S))/      :keyword ;
+(** `info`: starts an info diagram, which draws the version of mermaid. *)
+INFO                      /info(?:(?=%%)|(?!\S))/          :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line. *)
+ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `title …`: accepted, and drawn nowhere, as in mermaid@12. *)
+TITLE                     /[\t ]*title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+NEWLINE                   /\r?\n/ ;
+-                         /[\t ]+/ ;
+(** A `---` … `---` block inside the body: skipped. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /[\t ]*%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /[\t ]*%%[^\n\r]*/              :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `info` (with `showInfo`, on its line or a later one), then title and
+accessibility statements, one per line. The `YAML`, `DIRECTIVE` and `COMMENT` tokens of the
+lexer are skipped before parsing. *)
+info = { NEWLINE } Header { NEWLINE } [ statement { NEWLINE { NEWLINE } statement } { NEWLINE } ] EOF ;
+Header @Header = INFO [ { NEWLINE } SHOW_INFO ] ;
+
+statement = Title | AccTitle | AccDescr ;
+
+(** `title Version`: accepted, and drawn nowhere (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;
