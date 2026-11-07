@@ -206,7 +206,10 @@ const TYPE_DOCS: Record<string, string> = {
   info: 'info showInfo\n  title Version\n',
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
+  packet: 'packet\n  0-15: "Source Port"\n',
+  radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
+  kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */

@@ -1,8 +1,8 @@
 // cspell:words unput
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
- * per diagram type that v12 parses with jison: the five M3 types and the five M4 jison types.
- * Pie and gitGraph are Langium in v12 and gate on its tokens instead (D213).
+ * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types and
+ * kanban (M5). Pie and gitGraph are Langium in v12 and gate on its tokens instead (D213).
  */
 
 /** The part of a v12 jison lexer the oracle drives. */
@@ -133,6 +133,15 @@ export const JISON_TYPES = {
         parsers: ['mindmap', 'parser'],
         specs: ['mindmap.spec.ts', 'mindmapColors.spec.ts'],
       },
+    },
+  },
+  kanban: {
+    probe: 'kanban\n  a',
+    e2e: ['kanban'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/kanban`,
+      docs: 'kanban.md',
+      method: { kind: 'run', parsers: ['kanban'], specs: ['kanban.spec.ts'] },
     },
   },
   timeline: {

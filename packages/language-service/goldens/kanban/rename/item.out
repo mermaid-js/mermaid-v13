@@ -1,0 +1,8 @@
+@ 3:3  |docs[Docs]
+  prepare: 3:3-3:7 "docs"; rename to "board":
+  %% rename-to: board
+  kanban
+    board[Docs]
+      a
+    docs[More docs]
+      b

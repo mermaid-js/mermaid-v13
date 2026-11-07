@@ -1,0 +1,121 @@
+(** Kanban syntax (R-PARSE-9, D54): the normative grammar of `kanban` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text that no rule takes apart; and a line break appended. Keywords are matched without
+regard to case.
+
+The first item's indent is the column level: an item at that indent is a column, and any other
+item is a card of the last column, at any depth; an item indented less than the first is an
+error once another item follows it. `@{ … }` after an item is its YAML data. A `:::class` or
+`::icon(…)` line decorates the last item written before it. A blank or comment line counts as a
+statement where one may start, so an item right after two of them in a row, or one right after
+`kanban`, is an error, as in mermaid@12. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes class icon node nstr nstr2 shapeData shapeDataStr ;
+
+(** Shape data `@{ … }`: the item's YAML data (`ticket`, `assigned`, `priority`, `label`,
+`icon`, `shape`); line breaks in a quoted value read as `<br/>`. *)
+SHAPE_DATA                /@\{/                            push(shapeData) empty :meta ;
+<shapeData> SHAPE_DATA    /"/                              push(shapeDataStr) :string ;
+<shapeDataStr> SHAPE_DATA /"/                              pop :string ;
+<shapeDataStr> SHAPE_DATA /[^"]+/                          fold :string ;
+<shapeData> SHAPE_DATA    /[^}^"]+/                        :meta ;
+<shapeData> -             /\}/                             pop attach-prev :meta ;
+(** A `%%` comment v12's comment removal left (after text on a line, or a bare `%%`), with the
+blanks and line breaks before it: a blank line. *)
+SPACELINE                 /\s*%%.*/                        :comment ;
+(** `kanban`: starts a kanban board; its columns and cards follow, one per line. *)
+KANBAN                    /kanban\b/                       :keyword ;
+(** `:::class …`: the classes of the last item, the rest of the line. *)
+-                         /:::/                            push(class) :operator ;
+<class> CLASS             /.+/                             pop :variable ;
+<class> -                 /\n/                             pop ;
+(** `::icon(…)`: the icon of the last item, up to `)`. Kept, but not drawn. *)
+-                         /::icon\(/                       push(icon) :keyword ;
+(** Blanks up to the last line break of their run: a blank line. *)
+SPACELINE                 /[\s]+[\n]/ ;
+NL                        /[\n]+/ ;
+<icon> ICON               /[^\)]+/                         :string ;
+<icon> -                  /\)/                             pop :punctuation ;
+
+(** A shape opener: `[`, `(`, `((`, `)`, `))`, `{{`, `-)` or `(-`. Every shape draws the same
+card or column. *)
+NODE_DSTART               /-\)/                            push(node) :punctuation ;
+NODE_DSTART               /\(-/                            push(node) :punctuation ;
+NODE_DSTART               /\)\)/                           push(node) :punctuation ;
+NODE_DSTART               /\)/                             push(node) :punctuation ;
+NODE_DSTART               /\(\(/                           push(node) :punctuation ;
+NODE_DSTART               /\{\{/                           push(node) :punctuation ;
+NODE_DSTART               /\(/                             push(node) :punctuation ;
+NODE_DSTART               /\[/                             push(node) :punctuation ;
+(** The indent before an item: the first item's sets the column level. *)
+SPACELIST                 /[\s]+/ ;
+(** An item id, which may hold blanks: the text up to a shape opener, `@` or the line end. *)
+NODE_ID                   /[^\(\[\n\)\{\}@]+/              :variable ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+(** Strings in a shape: `"…"` and markdown strings `` "`…`" ``. *)
+<node> -                  /["][`]/                         push(nstr2) attach-next :string ;
+<nstr2> NODE_DESCR        /[^`"]+/                         :string ;
+<nstr2> -                 /[`]["]/                         pop attach-prev :string ;
+<node> -                  /["]/                            push(nstr) attach-next :string ;
+<nstr> NODE_DESCR         /[^"]+/                          :string ;
+<nstr> -                  /["]/                            pop attach-prev :string ;
+(** A shape closer: any of them closes any shape. *)
+<node> NODE_DEND          /[\)]\)/                         pop :punctuation ;
+<node> NODE_DEND          /[\)]/                           pop :punctuation ;
+<node> NODE_DEND          /[\]]/                           pop :punctuation ;
+<node> NODE_DEND          /\}\}/                           pop :punctuation ;
+<node> NODE_DEND          /\(-/                            pop :punctuation ;
+<node> NODE_DEND          /-\)/                            pop :punctuation ;
+<node> NODE_DEND          /\(\(/                           pop :punctuation ;
+<node> NODE_DEND          /\(/                             pop :punctuation ;
+(** An item's text: up to a closer, over line breaks; a `}` takes the rest of its line. *)
+<node> NODE_DESCR         /[^\)\]\(\}]+/                   :string ;
+<node> NODE_DESCR         /.+(?!\(\()/                     :string ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A kanban board is `kanban`, then its statements, each followed by a line break, a blank
+line or the end. Blank and comment lines may come before `kanban`. *)
+diagram = [ SPACELINE { SPACELINE | NL } ] KANBAN [ NL ] statement stop { statement stop } ;
+stop = ( NL | EOF | SPACELINE ) { NL | EOF } ;
+
+statement = SPACELIST [ Item | Icon | Class ]
+  | SPACELINE
+  | Item
+  | Icon
+  | Class ;
+
+(** An item, a column or a card by its indent: an id, a shape with its text, or both (`todo`,
+`id[text]`, `[text]`), then optional shape data (`id@{ ticket: T-1 }`). *)
+Item @Item = node [ shapeData ] ;
+node = NODE_ID [ shape ] | shape ;
+shape = NODE_DSTART NODE_DESCR NODE_DEND ;
+(** Back-to-back blocks (`@{…}@{…}`) are joined into one before the YAML is read. *)
+shapeData = SHAPE_DATA { SHAPE_DATA } ;
+(** `::icon(…)`: the icon of the last item, on a line of its own. *)
+Icon = ICON ;
+(** `:::class …`: the classes of the last item, on a line of its own; a later one replaces them. *)
+Class = CLASS ;

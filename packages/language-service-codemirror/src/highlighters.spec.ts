@@ -40,9 +40,12 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'gitGraph',
       'info',
       'journey',
+      'kanban',
       'mindmap',
+      'packet',
       'pie',
       'quadrantChart',
+      'radar',
       'sequence',
       'state',
       'timeline',
@@ -127,6 +130,28 @@ describe('the per-type first-paint highlighters (D134)', () => {
       ]);
     });
 
+    it('highlights a packet diagram with the packet grammar', () => {
+      const out = spans('packet\n  title UDP\n  0-15: "Source Port"\n  +16: "Length"\n');
+      expect(out).toEqual([
+        'packet:keyword',
+        'title UDP:keyword',
+        '-:punctuation',
+        '::punctuation',
+        '"Source Port":string',
+        '+:punctuation',
+        '::punctuation',
+        '"Length":string',
+      ]);
+    });
+
+    it('highlights a radar chart with the radar grammar', () => {
+      const out = spans('radar-beta\n  axis a["Speed"], b\n  curve c{1, 2}\n  max 5\n');
+      expect(out[0]).toBe('radar-beta:keyword');
+      expect(out).toContain('axis:keyword');
+      expect(out).toContain('curve:keyword');
+      expect(out).toContain('"Speed":string');
+    });
+
     it('highlights a cynefin diagram with the cynefin grammar', () => {
       const out = spans(
         'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
@@ -135,6 +160,12 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('complex:keyword');
       expect(out).toContain('"Probe":string');
       expect(out).toContain('-->:operator');
+    });
+
+    it('highlights a kanban board with the kanban grammar', () => {
+      const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
+      expect(out[0]).toBe('kanban:keyword');
+      expect(out.length).toBeGreaterThan(1);
     });
 
     it('finds the type after front matter, directives and comments', () => {

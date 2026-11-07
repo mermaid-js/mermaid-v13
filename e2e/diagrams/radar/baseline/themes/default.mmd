@@ -1,0 +1,16 @@
+---
+config:
+  theme: default
+description: >-
+  one representative radar chart in the default theme (classic family, D227)
+---
+radar-beta
+  title Restaurant comparison
+  axis food["Food quality"], service["Service"], price["Price"]
+  axis ambiance["Ambiance"], speed["Speed"], drinks["Drinks"]
+  curve a["Restaurant A"]{4, 3, 2, 4, 3, 5}
+  curve b["Restaurant B"]{3, 4, 3, 3, 5, 2}
+  curve c["Restaurant C"]{5, 2, 4, 2, 2, 3}
+  showLegend true
+  max 5
+  ticks 5

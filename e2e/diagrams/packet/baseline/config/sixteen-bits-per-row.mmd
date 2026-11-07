@@ -1,0 +1,17 @@
+---
+config:
+  packet:
+    bitsPerRow: 16
+    bitWidth: 40
+    rowHeight: 40
+    paddingX: 8
+    paddingY: 10
+description: >-
+  the packet config section honoured: sixteen bits a row, wider bits, taller
+  rows and wider paddings
+---
+packet
+  0-7: "Type"
+  8-15: "Code"
+  16-31: "Checksum"
+  32-63: "Rest of header"

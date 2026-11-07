@@ -1,0 +1,23 @@
+---
+config:
+  theme: dark
+  themeVariables:
+    packet:
+      startByteColor: '#FFD54F'
+      endByteColor: '#90CAF9'
+      labelColor: '#FFFFFF'
+      blockFillColor: '#1B5E20'
+      blockStrokeColor: '#A5D6A7'
+      blockStrokeWidth: 2
+      labelFontSize: 14px
+      titleColor: '#FFD54F'
+description: >-
+  nested themeVariables.packet overrides under the dark theme (D335): both bit
+  number colours, label, block fill, stroke and its width, label size, title
+---
+packet
+  title Nested overrides in dark
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  +16: "Length"
+  +16: "Checksum"

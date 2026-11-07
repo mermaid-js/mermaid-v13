@@ -9,8 +9,8 @@ import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts'
  * A diagram reads a variable by passing its name as a string literal to a call, either a `Theme`
  * method (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
  * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
- * (D332). This spec scans each diagram package's sources for these and checks the lists both
- * ways, for core's vocabulary and for every
+ * (D332); a var's `nested:` key is v12's name, not a read. This spec scans each diagram
+ * package's sources for these and checks the lists both ways, for core's vocabulary and for every
  * package's own (`src/theme/vocabulary.ts`, spec #414 T0b), whose rows only their own type may
  * read: a row another type reads belongs in core.
  */
@@ -31,6 +31,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   ),
   // `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
   pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
+  // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
+  kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
 };
 
 function sources(dir: string): string[] {
@@ -48,7 +50,7 @@ function readsOf(type: string): Set<string> {
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n');
   const names = [
-    ...[...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!),
+    ...[...text.matchAll(/(?:\b\w+\(|\b(?!nested\b)\w+:)\s*'(\w+)'/g)].map((m) => m[1]!),
     // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
     // theme wrote it (D332).
     ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
@@ -78,9 +80,12 @@ describe('theme vocabulary usedBy (#207)', () => {
       'gitgraph',
       'info',
       'journey',
+      'kanban',
       'mindmap',
+      'packet',
       'pie',
       'quadrant',
+      'radar',
       'sequence',
       'state',
       'timeline',

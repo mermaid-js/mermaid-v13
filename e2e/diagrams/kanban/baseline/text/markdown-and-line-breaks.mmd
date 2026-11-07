@@ -1,0 +1,11 @@
+---
+description: markdown in every label kind (column titles, card titles, tickets and assignees), a <br> break, a raw line break in a quoted label and an entity, through core's label layout (D372)
+---
+kanban
+  todo["`**Todo** this _week_`"]
+    a["`A **bold** card with _italic_ words`"]@{ ticket: '**T-1**', assigned: '_knsv_' }
+    b[Line one<br>line two]
+    c["A quoted label
+with a line break"]
+  done[Done #9829;]
+    d[Shipped]

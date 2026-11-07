@@ -1,0 +1,3 @@
+@ 4:19  a@{ assigned: |knsv }
+  prepare: 4:19-4:23 "knsv"; rename to "Knut S":
+  refused: 'Knut S' would not read as the same assignee id everywhere it is used.

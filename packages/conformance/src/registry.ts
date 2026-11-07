@@ -7,11 +7,15 @@ import { infoAdapter } from './info/v13.ts';
 import { ganttAdapter } from './gantt/v13.ts';
 import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
+import { kanbanParityCorpus } from './kanban/corpus.ts';
+import { kanbanAdapter } from './kanban/v13.ts';
 import { mindmapParityCorpus } from './mindmap/corpus.ts';
 import { mindmapAdapter } from './mindmap/v13.ts';
+import { packetAdapter } from './packet/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
+import { radarAdapter } from './radar/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
@@ -105,6 +109,26 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/quadrant-cases.json',
     ],
     corpus: quadrantParityCorpus,
+  },
+  {
+    adapter: kanbanAdapter,
+    corpusDirs: ['e2e/diagrams/kanban'],
+    corpusFiles: [
+      'packages/conformance/corpus/kanban-v12-specs.json',
+      'packages/conformance/corpus/kanban-cases.json',
+    ],
+    corpus: kanbanParityCorpus,
+  },
+  {
+    adapter: packetAdapter,
+    corpusDirs: ['e2e/diagrams/packet'],
+    // The cases run in `packet/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
+    corpusFiles: ['packages/conformance/corpus/packet-v12-specs.json'],
+  },
+  {
+    adapter: radarAdapter,
+    corpusDirs: ['e2e/diagrams/radar'],
+    corpusFiles: ['packages/conformance/corpus/radar-v12-specs.json'],
   },
   {
     adapter: cynefinAdapter,

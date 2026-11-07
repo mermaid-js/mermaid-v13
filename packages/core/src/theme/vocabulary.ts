@@ -191,6 +191,8 @@ const TEXT_USERS = [
   'mindmap',
   'gitgraph',
   'gantt',
+  'kanban',
+  'radar',
 ];
 
 /**
@@ -204,11 +206,19 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state']),
-  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'cynefin']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'cynefin']),
-  // Pie draws in the font family but sizes its text by its own variables.
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'cynefin', 'info']),
+  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet', 'cynefin']),
+  lineColor: def('l', 'color', [
+    'flowchart',
+    'class',
+    'state',
+    'er',
+    'gitgraph',
+    'radar',
+    'cynefin',
+  ]),
+  // Pie, packet, cynefin and info draw in the font family but size their text by their own variables.
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
@@ -228,8 +238,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'quadrant',
     'gitgraph',
     'gantt',
+    'kanban',
     'cynefin',
     'info',
+    'radar',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -250,6 +262,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
+    'kanban',
   ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),

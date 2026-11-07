@@ -30,9 +30,11 @@ export interface LangiumLexerDescriptor {
 
 /** The Langium types, by v13 diagram id. */
 export const LANGIUM_LEXERS = {
+  radar: { probe: 'radar-beta\naxis A', factory: 'createRadarServices', key: 'Radar' },
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
   info: { probe: 'info', factory: 'createInfoServices', key: 'Info' },
   gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
+  packet: { probe: 'packet\n0: "a"', factory: 'createPacketServices', key: 'Packet' },
   cynefin: { probe: 'cynefin-beta\ncomplex', factory: 'createCynefinServices', key: 'Cynefin' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 

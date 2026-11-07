@@ -16,9 +16,10 @@ export interface KindSource {
   /**
    * Kinds the hand-written lexer emits for an unnamed (`-`) grammar rule: kind key → the
    * rule's mode and pattern source, and for a keyword the terminal whose doc it shares (an
-   * unnamed rule names no terminal for the doc table to look up).
+   * unnamed rule names no terminal for the doc table to look up). With `terminal`, the kind is
+   * one of that terminal's rules instead, when the lexer keeps a kind per rule.
    */
-  unnamed?: Record<string, { mode: string; pattern: string; docOf?: string }>;
+  unnamed?: Record<string, { mode: string; pattern: string; docOf?: string; terminal?: string }>;
   /**
    * Terminals whose rules have different scopes; the first rule's scope is used. Any other
    * mixed terminal fails generation.
@@ -95,9 +96,14 @@ export function categoryTable(g: Grammar, keys: string[], source: KindSource): C
     if (unnamed) {
       const rule = g.lexRules.find(
         (r) =>
-          r.name === undefined && r.modes.includes(unnamed.mode) && r.pattern === unnamed.pattern
+          r.name === unnamed.terminal &&
+          r.modes.includes(unnamed.mode) &&
+          r.pattern === unnamed.pattern
       );
-      if (!rule) throw new Error(`${key}: no unnamed rule /${unnamed.pattern}/ in ${unnamed.mode}`);
+      if (!rule) {
+        const what = unnamed.terminal ?? 'unnamed';
+        throw new Error(`${key}: no ${what} rule /${unnamed.pattern}/ in ${unnamed.mode}`);
+      }
       return [key, categoryOf(rule.scope)];
     }
     const rules = byName.get(fold(key));

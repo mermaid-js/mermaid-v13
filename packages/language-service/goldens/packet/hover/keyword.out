@@ -1,0 +1,22 @@
+@ 1:3  pa|cket
+  1:1-1:7 "packet"
+  | **`packet`**
+  |
+  | `packet`: starts a packet diagram.
+@ 2:5  ti|tle TCP
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title TCP header`: the title drawn below the rows (the last one wins).
+@ 2:11  title TC|P
+  none
+@ 3:6  acc|Title: x
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr {
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.

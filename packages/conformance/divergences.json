@@ -72,6 +72,110 @@
     "since": "2026-11-05"
   },
   {
+    "id": "kanban-cases/columns-share-an-id",
+    "inputHash": "sha256:bcdb4791abb13cb1",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (commented)",
+    "inputHash": "sha256:09458c2671ab7d40",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (CRLF)",
+    "inputHash": "sha256:6aeac0b044edc11a",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (tabs)",
+    "inputHash": "sha256:c81061529002987f",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (mid-line directive)",
+    "inputHash": "sha256:17c676d8650cf0a7",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "e2e/diagrams/kanban/baseline/columns/shared-ids.mmd",
+    "inputHash": "sha256:e7948fe11f2bc782",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (commented)",
+    "inputHash": "sha256:7d9c1e96629108a4",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (CRLF)",
+    "inputHash": "sha256:4781dc06831ee31f",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (tabs)",
+    "inputHash": "sha256:075667fa9ae4f7bb",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/columns/shared-ids.mmd (mid-line directive)",
+    "inputHash": "sha256:2dc774395495d39a",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453). The baseline that shows it (#459).",
+    "owner": "#459",
+    "since": "2026-11-07"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/priority-kinds (multi-line shape data)",
+    "inputHash": "sha256:8cbc312bdab2d904",
+    "kind": "accept",
+    "reason": "core's parseYaml reads a plain scalar continued on the next line inside a flow sequence (`[1⏎2]` is `['1 2']`), as the YAML 1.2 spec allows; js-yaml 4, which v12 used, rejects it (`missed comma between flow collection entries`). Only the generated multi-line variant splits a flow sequence over lines (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/shape-data-list-values (multi-line shape data)",
+    "inputHash": "sha256:b44e38765dacb714",
+    "kind": "accept",
+    "reason": "core's parseYaml reads a plain scalar continued on the next line inside a flow sequence (`[1⏎2]` is `['1 2']`), as the YAML 1.2 spec allows; js-yaml 4, which v12 used, rejects it (`missed comma between flow collection entries`). Only the generated multi-line variant splits a flow sequence over lines (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/shape-data-scalar-multi-line (tabs)",
+    "inputHash": "sha256:2dae249410387433",
+    "kind": "reject",
+    "reason": "core's parseYaml rejects a tab-indented plain scalar document (`tabs are not allowed for indentation`), where js-yaml 4, which v12 used, read it as text; v12 then ignored the non-mapping data. Only the generated tabs variant writes it (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
     "id": "gantt-cases/top-axis",
     "inputHash": "sha256:8d66e8836dc2a321",
     "kind": "accept",
@@ -85,6 +189,150 @@
     "kind": "accept",
     "reason": "The `topAxis` statement (D273): v12's grammar calls `yy.TopAxis()`, which its DB does not define, so the text fails; v13 accepts it and draws the top axis.",
     "owner": "#385",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero",
+    "inputHash": "sha256:f3612c8bd83bd160",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero (CRLF)",
+    "inputHash": "sha256:eb92883aadcb749d",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero (commented)",
+    "inputHash": "sha256:0a0c37a1130471e9",
+    "kind": "model",
+    "reason": "v12 split at `bitsPerRow: 0` (row ends at bit -1), so it filled its 10,000-row cap with empty pieces ending at bit -1; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative",
+    "inputHash": "sha256:c067bb582d02c4fe",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative (CRLF)",
+    "inputHash": "sha256:a6dcd1aeaf174b09",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative (commented)",
+    "inputHash": "sha256:fcbaee556b8fa360",
+    "kind": "model",
+    "reason": "v12's split loop never ran with `bitsPerRow: -4`, so it drew nothing; v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction",
+    "inputHash": "sha256:16fed0931aeaaf12",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction (CRLF)",
+    "inputHash": "sha256:65ff0b0b72d66d6c",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction (commented)",
+    "inputHash": "sha256:0e1fec67e12b4eb3",
+    "kind": "model",
+    "reason": "v12 split at fractional row ends with `bitsPerRow: 10.5` (bit numbers such as 9.5); v13 falls back to the default 32 with one `PACKET_CONFIG_INVALID` warning (D342).",
+    "owner": "#454",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd",
+    "inputHash": "sha256:a7fbd7450c573476",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd (CRLF)",
+    "inputHash": "sha256:847729cbb21c6773",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "dev-diagrams/knsv/knsv2-03-radar.mmd (commented)",
+    "inputHash": "sha256:6437a36a3067d441",
+    "kind": "reject",
+    "reason": "The front matter is indented (six blanks before the opening `---`, none before the closing one). v12 saw no front matter there and lexed the block as a hidden YAML token in the body; v13's preprocess reads indented front matter (#7613) and reports UNCLOSED_FRONT_MATTER. Core preprocess behaviour shared by every type, not changed by the radar port; `radar-cases/dev-diagram-dedented` covers the diagram without the indent (#445).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive",
+    "inputHash": "sha256:1e2438179a83eeaa",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:59f3959d35732aa8",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:8fd1183baf3d05dc",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init",
+    "inputHash": "sha256:716b4275413c19b9",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init (CRLF)",
+    "inputHash": "sha256:69aa5f628b1255a4",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/unclosed-directive-init (commented)",
+    "inputHash": "sha256:3b1bd142c4793e46",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
+    "owner": "#446",
     "since": "2026-11-06"
   }
 ]

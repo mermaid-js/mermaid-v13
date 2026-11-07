@@ -554,15 +554,15 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `kanban` | object |  | pending |  | The object containing configurations specific for kanban diagrams |
-| `kanban.useWidth` | number |  | pending |  |  |
-| `kanban.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `kanban.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `kanban` | object |  | honoured (13.0.0) |  | The object containing configurations specific for kanban diagrams |
+| `kanban.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the kanban renderer never did. |  |
+| `kanban.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12's kanban read `mindmap.useMaxWidth` instead (D378). True draws `width="100%"` and a `max-width`; false draws the board's own `width` and `height`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `kanban.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | honoured (13.0.0) | Set here, it wins over the top-level `theme` for kanban boards (a diagram section beats the top level within a config layer). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `kanban.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `kanban.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `kanban.padding` | number | `8` | pending |  |  |
-| `kanban.sectionWidth` | number | `200` | pending |  |  |
-| `kanban.ticketBaseUrl` | string | `""` | pending |  |  |
+| `kanban.padding` | number | `8` | honoured (13.0.0) | v12's kanban took its outer margin from `mindmap.padding` (10) and never read this key; v13 draws this margin, so a board is 2 px tighter on each side by default (D378). A number or a numeric string (`"20"`, not `"20px"`) from 0 to 10,000; anything else lays out with the default and warns `KANBAN_CONFIG_IGNORED`. | The margin round the board, in px. |
+| `kanban.sectionWidth` | number | `200` | honoured (13.0.0) | As v12's `sectionWidth \|\| 200`. A number or a numeric string from 0 to 10,000; a width above 0 and below 26 is raised to 26, so cards keep a width, and anything else lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning. | The width of each column, in px. 0 means the default, as in v12. |
+| `kanban.ticketBaseUrl` | string | `""` | honoured (13.0.0) | The ticket replaces only the first `#TICKET#`, taken literally (`$&` stays `$&`), and the URL passes the link check (`securityLevel`, `linkSchemes`); a refused URL draws the ticket as plain text with a `URL_REFUSED` warning (D377). v12 linked any URL, opening it in a new tab. | The link of each card's ticket: the first `#TICKET#` is replaced by the card's `ticket`. Empty (the default) draws tickets as plain text. |
 
 ## `gitGraph`
 
@@ -766,19 +766,19 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `packet` | object |  | pending |  | The object containing configurations specific for packet diagrams. |
-| `packet.useWidth` | number |  | pending |  |  |
-| `packet.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `packet` | object |  | honoured (13.0.0) |  | The object containing configurations specific for packet diagrams. |
+| `packet.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
+| `packet.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `packet.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `packet.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `packet.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `packet.rowHeight` | number | `32` | pending |  | The height of each row in the packet diagram. |
-| `packet.bitWidth` | number | `32` | pending |  | The width of each bit in the packet diagram. |
-| `packet.bitsPerRow` | number | `32` | pending |  | The number of bits to display per row. |
-| `packet.showBits` | boolean | `true` | pending |  | Toggle to display or hide bit numbers. |
-| `packet.bitOrder` | "ascending" \\| "descending" | `"ascending"` | pending |  | The direction each row is numbered in. `descending` mirrors every row so it reads from that row's highest bit on the left down to its lowest bit on the right, the convention used for hardware registers. Fields are still declared lowest bit first, and keep their width. |
-| `packet.paddingX` | number | `5` | pending |  | The horizontal padding between the blocks in a row. |
-| `packet.paddingY` | number | `5` | pending |  | The vertical padding between the rows. |
+| `packet.rowHeight` | number | `32` | honoured (13.0.0) | A value below 1, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12 drew it. | The height of each row in the packet diagram. |
+| `packet.bitWidth` | number | `32` | honoured (13.0.0) | A value below 1, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12 drew it. | The width of each bit in the packet diagram. |
+| `packet.bitsPerRow` | number | `32` | honoured (13.0.0) | A value below 1, a fraction, or one that is not a number falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342), where v12 drew fractional bit numbers or nothing. | The number of bits to display per row. |
+| `packet.showBits` | boolean | `true` | honoured (13.0.0) |  | Toggle to display or hide bit numbers. |
+| `packet.bitOrder` | "ascending" \\| "descending" | `"ascending"` | honoured (13.0.0) |  | The direction each row is numbered in. `descending` mirrors every row so it reads from that row's highest bit on the left down to its lowest bit on the right, the convention used for hardware registers. Fields are still declared lowest bit first, and keep their width. |
+| `packet.paddingX` | number | `5` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342); a padding wider than a piece draws it 0 wide, where v12 drew a negative width. | The horizontal padding between the blocks in a row. |
+| `packet.paddingY` | number | `5` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `PACKET_CONFIG_INVALID` warning (D342). | The vertical padding between the rows. |
 
 ## `block`
 
@@ -828,21 +828,21 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `radar` | object |  | pending |  | The object containing configurations specific for radar diagrams. |
-| `radar.useWidth` | number |  | pending |  |  |
-| `radar.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `radar` | object |  | honoured (13.0.0) |  | The object containing configurations specific for radar diagrams. |
+| `radar.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
+| `radar.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `radar.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `radar.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `radar.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `radar.width` | number | `600` | pending |  | The size of the radar diagram. |
-| `radar.height` | number | `600` | pending |  | The size of the radar diagram. |
-| `radar.marginTop` | number | `50` | pending |  | The margin from the top of the radar diagram. |
-| `radar.marginRight` | number | `50` | pending |  | The margin from the right of the radar diagram. |
-| `radar.marginBottom` | number | `50` | pending |  | The margin from the bottom of the radar diagram. |
-| `radar.marginLeft` | number | `50` | pending |  | The margin from the left of the radar diagram. |
-| `radar.axisScaleFactor` | number | `1` | pending |  | The scale factor of the axis. |
-| `radar.axisLabelFactor` | number | `1.05` | pending |  | The scale factor of the axis label. |
-| `radar.curveTension` | number | `0.17` | pending |  | The tension factor for the Catmull-Rom spline conversion to cubic Bézier curves. |
+| `radar.width` | number | `600` | honoured (13.0.0) |  | The size of the radar diagram. |
+| `radar.height` | number | `600` | honoured (13.0.0) |  | The size of the radar diagram. |
+| `radar.marginTop` | number | `50` | honoured (13.0.0) |  | The margin from the top of the radar diagram. |
+| `radar.marginRight` | number | `50` | honoured (13.0.0) |  | The margin from the right of the radar diagram. |
+| `radar.marginBottom` | number | `50` | honoured (13.0.0) |  | The margin from the bottom of the radar diagram. |
+| `radar.marginLeft` | number | `50` | honoured (13.0.0) |  | The margin from the left of the radar diagram. |
+| `radar.axisScaleFactor` | number | `1` | honoured (13.0.0) |  | The scale factor of the axis. |
+| `radar.axisLabelFactor` | number | `1.05` | honoured (13.0.0) |  | The scale factor of the axis label. |
+| `radar.curveTension` | number | `0.17` | honoured (13.0.0) |  | The tension factor for the Catmull-Rom spline conversion to cubic Bézier curves. |
 
 ## `usecase`
 

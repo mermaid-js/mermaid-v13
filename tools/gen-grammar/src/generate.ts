@@ -152,6 +152,16 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'packet',
+    title: 'Packet diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A field's label: `"` is offered after `:` (T6), with the doc.
+      documented: ['String', 'Colon'],
+    },
+  },
+  {
     type: 'cynefin',
     title: 'Cynefin diagram syntax',
     kinds: {
@@ -164,6 +174,11 @@ export const GRAMMARS: GrammarTarget[] = [
   {
     type: 'info',
     title: 'Info diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
+    type: 'radar',
+    title: 'Radar chart syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
@@ -184,6 +199,33 @@ export const GRAMMARS: GrammarTarget[] = [
         PointComma: { mode: 'point_x', pattern: '\\s*,\\s*' },
         PointEnd: { mode: 'point_start', pattern: '\\s*\\][ ]*' },
       },
+    },
+  },
+  {
+    type: 'kanban',
+    title: 'Kanban syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      unnamed: {
+        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        ClassStart: { mode: 'INITIAL', pattern: ':::', docOf: 'CLASS' },
+        ClassEnd: { mode: 'class', pattern: '\\n' },
+        IconStart: { mode: 'INITIAL', pattern: '::icon\\(', docOf: 'ICON' },
+        IconEnd: { mode: 'icon', pattern: '\\)' },
+        MdStringStart: { mode: 'node', pattern: '["][`]' },
+        MdStringEnd: { mode: 'nstr2', pattern: '[`]["]' },
+        StringStart: { mode: 'node', pattern: '["]' },
+        StringEnd: { mode: 'nstr', pattern: '["]' },
+        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
+        // One `SHAPE_DATA` rule each: the lexer keeps a kind per rule.
+        ShapeDataStart: { mode: 'INITIAL', pattern: '@\\{', terminal: 'SHAPE_DATA' },
+        ShapeDataQuote: { mode: 'shapeData', pattern: '"', terminal: 'SHAPE_DATA' },
+        ShapeDataStr: { mode: 'shapeDataStr', pattern: '[^"]+', terminal: 'SHAPE_DATA' },
+      },
+      // A `%%` comment v12 left and a blank run are both SPACELINE; `@{` and the text between
+      // quotes are Meta, the quoted values String.
+      mixed: ['SPACELINE', 'SHAPE_DATA'],
     },
   },
 ];

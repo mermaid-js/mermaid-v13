@@ -1,0 +1,25 @@
+@ 3:3  |
+  title keyword 3:3-3:3 "" -> "title "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  + operator (a width in bits: +8: "label") 3:3-3:3 "" -> "+"
+  16 value (the next free bit) 3:3-3:3 "" -> "16"
+@ 4:5  ti|
+  title keyword 4:3-4:5 "ti" -> "title "
+@ 5:6  acc|
+  accTitle keyword 5:3-5:6 "acc" -> "accTitle: "
+  accDescr keyword 5:3-5:6 "acc" -> "accDescr: "
+@ 7:4  3|
+  32 value (the next free bit) 7:3-7:4 "3" -> "32"
+@ 8:6  32 |
+  : operator (then the label) 8:6-8:6 "" -> ": "
+@ 9:9  33-40 |
+  : operator (then the label) 9:9-9:9 "" -> ": "
+@ 10:6  41:|
+  " value (a label: "Source Port") 10:6-10:6 "" -> "\""
+@ 11:7  42: |
+  " value (a label: "Source Port") 11:7-11:7 "" -> "\""
+@ 12:4  +|
+  none
+@ 13:14  +8: "Data" |
+  none

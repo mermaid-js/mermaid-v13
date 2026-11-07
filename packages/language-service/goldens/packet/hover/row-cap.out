@@ -1,0 +1,10 @@
+@ 8:17  9999-10001: "C|ut"
+  8:16-8:19 "Cut"
+  | **field** `Cut`
+  |
+  | Bits 9999-10001 · 3 bits
+@ 9:13  10002: "Pa|st"
+  9:11-9:15 "Past"
+  | **field** `Past`
+  |
+  | Not drawn: it lies past the 10000-row limit of a packet.

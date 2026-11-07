@@ -42,7 +42,10 @@ const DOCS = {
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
   gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
+  packet: 'packet\n  0-15: "Source Port"\n  +16: "Length"\n',
+  radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
+  kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -56,9 +59,12 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'gitGraph',
       'info',
       'journey',
+      'kanban',
       'mindmap',
+      'packet',
       'pie',
       'quadrantChart',
+      'radar',
       'sequence',
       'state',
       'timeline',
@@ -179,6 +185,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'erDiagram',
       'gitGraph',
       'pie',
+      'radar-beta',
       'swimlane-beta',
       'requirementDiagram',
       'info',

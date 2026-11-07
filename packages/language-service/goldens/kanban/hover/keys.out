@@ -1,0 +1,29 @@
+@ 3:9  a@{ |assigned: knsv, ticket: T-1, priority: High }
+  3:9-3:17 "assigned"
+  | **`assigned`**
+  |
+  | Who the card is assigned to, drawn at its bottom right. Not drawn on a column, as in mermaid@12.
+@ 3:27  a@{ assigned: knsv, ti|cket: T-1, priority: High }
+  3:25-3:31 "ticket"
+  | **`ticket`**
+  |
+  | The card’s ticket, drawn at its bottom left; a link when `kanban.ticketBaseUrl` is set (its `#TICKET#` is replaced by the ticket). Not drawn on a column.
+@ 3:49  a@{ assigned: knsv, ticket: T-1, priority: H|igh }
+  none
+@ 5:9  la|bel: Other text
+  5:7-5:12 "label"
+  | **`label`**
+  |
+  | The item’s text, in place of the text written with its id.
+@ 6:9  ic|on: fa-book
+  6:7-6:11 "icon"
+  | **`icon`**
+  |
+  | The item’s icon, as `::icon(…)` sets it. Kept but not drawn, as in mermaid@12.
+@ 7:9  sh|ape: rect
+  7:7-7:12 "shape"
+  | **`shape`**
+  |
+  | A shape name, lower case with no `_`. Checked, then ignored: every card is drawn as a card.
+@ 9:17  c@{ ticket: |assigned }
+  none

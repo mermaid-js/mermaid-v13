@@ -56,14 +56,39 @@ const PACKAGES = [
     renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'packet',
+    dir: 'diagram-packet',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
+  },
+  {
     name: 'cynefin',
     dir: 'diagram-cynefin',
+    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
+  },
+  {
+    name: 'kanban',
+    dir: 'diagram-kanban',
     renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
   },
   {
     name: 'info',
     dir: 'diagram-info',
     renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],
+  },
+  {
+    name: 'radar',
+    dir: 'diagram-radar',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'plugin.ts',
+      'index.ts',
+      'labels.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
   },
 ] as const;
 
@@ -122,6 +147,14 @@ describe.each(PACKAGES)('the $name ./language bundle', ({ name, dir, renderer })
     expect(all).not.toContain(`${src}language.ts`);
     expect(all).not.toContain(`${src}generated/categories.ts`);
   });
+});
+
+it('the radar test context is in no shipped bundle (only `./testing` reaches it)', () => {
+  const testContext = 'packages/diagram-radar/src/test-context.ts';
+  expect(inputs(prod)).not.toContain(testContext);
+  expect(inputs(language.get('radar')!)).not.toContain(testContext);
+  // The bundle does reach radar's runtime code, so the check above is not vacuous.
+  expect(inputs(prod)).toContain('packages/diagram-radar/src/plugin.ts');
 });
 
 it('the class ./language bundle is the entry of the class facet', () => {

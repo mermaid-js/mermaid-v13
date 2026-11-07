@@ -13,7 +13,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `architecture` | not ported | no | no |
 | `agentflow` | not ported | no | no |
 | `c4` | not ported | no | no |
-| `kanban` | not ported | no | no |
+| `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
 | `gantt` | `@mermaid-js/diagram-gantt` | yes | no |
@@ -29,12 +29,12 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `journey` | `@mermaid-js/diagram-journey` | yes | no |
 | `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |
 | `sankey` | not ported | no | no |
-| `packet` | not ported | no | no |
+| `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | not ported | no | no |
 | `block` | not ported | no | no |
 | `eventmodeling` | not ported | no | no |
 | `treeView` | not ported | no | no |
-| `radar` | not ported | no | no |
+| `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | not ported | no | no |
 | `treemap` | not ported | no | no |
 | `railroad` | not ported | no | no |

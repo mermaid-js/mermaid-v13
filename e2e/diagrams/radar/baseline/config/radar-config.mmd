@@ -1,0 +1,22 @@
+---
+config:
+  radar:
+    width: 400
+    height: 300
+    marginTop: 80
+    marginRight: 120
+    marginBottom: 20
+    marginLeft: 20
+    axisScaleFactor: 0.8
+    axisLabelFactor: 1.2
+    curveTension: 0.4
+    useMaxWidth: false
+description: >-
+  every radar config key: a 400 × 300 canvas (radius from the smaller side), uneven margins,
+  shorter axes, labels further out, a looser curve and a fixed-size svg
+---
+radar-beta
+  title Configured radar
+  axis a["North"], b["East"], c["South"], d["West"], e["Centre"]
+  curve p["Plan"]{4, 3, 5, 2, 3}
+  curve q["Actual"]{3, 4, 3, 4, 2}

@@ -110,6 +110,15 @@ const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
   gitgraph: ['commitLineColor', 'gitCherryPickInk'],
 };
 
+/**
+ * Rows that read a palette slot other than the series (D332), checked in the eleven themes only:
+ * the twelfth theme has no palettes, so the slot reads `currentColor`, as every `cScale` reader
+ * draws there. Kanban's column colours are `cScale<n>` lightened or darkened (D374).
+ */
+const PALETTE_ROWS: Readonly<Record<string, readonly string[]>> = {
+  kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
+};
+
 function resolve(
   spec: ThemeSpec,
   table: DiagramThemeTable,
@@ -154,7 +163,8 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
     '%s: a twelfth theme with only base colours and a family resolves every variable',
     (type, table) => {
       const name = (s: ThemeSpec) => `${s.family}${s.dark ? ' dark' : ''}`;
-      const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
+      const only = AUTHOR_ONLY[type];
+      const some = [...(SOME_THEMES[type] ?? []), ...(PALETTE_ROWS[type] ?? [])];
       expect(
         Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, only, some)]))
       ).toEqual(Object.fromEntries(synthetic.map((s) => [name(s), []])));

@@ -125,15 +125,24 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:^
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:^
         version: link:../diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:^
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:^
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -219,15 +228,24 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:^
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:^
         version: link:../diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:^
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:^
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -393,7 +411,19 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-kanban:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-mindmap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-packet:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -406,6 +436,12 @@ importers:
         version: link:../core
 
   packages/diagram-quadrant:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-radar:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -458,15 +494,24 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:*
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:*
         version: link:../diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:*
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -516,15 +561,24 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:*
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:*
         version: link:../diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:*
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -730,15 +784,24 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:*
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:*
         version: link:../diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:*
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -870,12 +933,21 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:^
+        version: link:../../packages/diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:^
         version: link:../../packages/diagram-mindmap
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:^
+        version: link:../../packages/diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../../packages/diagram-pie
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../../packages/diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../../packages/diagram-sequence

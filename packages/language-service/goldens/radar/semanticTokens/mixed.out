@@ -1,0 +1,36 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:11 "radar-beta" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:15 "title Skills" keyword
+5:3-5:19 "accTitle: Skills" keyword
+6:3-8:4 "accDescr {\n    multi\n  }" keyword
+9:3-9:7 "axis" keyword
+9:8-9:9 "A" variable [declaration, definition]
+9:9-9:10 "[" operator
+9:10-9:17 "\"Speed\"" string
+9:17-9:18 "]" operator
+9:18-9:19 "," operator
+9:20-9:21 "B" variable [declaration, definition]
+10:3-10:8 "curve" keyword
+10:9-10:12 "one" variable [declaration, definition]
+10:12-10:13 "[" operator
+10:13-10:20 "'First'" string
+10:20-10:21 "]" operator
+10:21-10:22 "{" operator
+10:22-10:23 "A" variable
+10:23-10:24 ":" operator
+10:25-10:26 "1" number
+10:26-10:27 "," operator
+10:28-10:29 "B" variable
+10:30-10:33 "2.5" number
+10:33-10:34 "}" operator
+11:3-11:13 "showLegend" keyword
+11:14-11:18 "true" keyword
+12:3-12:12 "graticule" keyword
+12:13-12:19 "circle" keyword
+13:3-13:8 "ticks" keyword
+13:9-13:10 "5" number
+13:11-13:19 "%% after" comment
+14:3-14:7 "axis" keyword
+14:8-14:14 "circle" keyword
+14:14-14:15 "s" variable

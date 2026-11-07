@@ -1,0 +1,9 @@
+@ 5:8  :::|hot big
+  prepare: 5:8-5:11 "hot"; rename to "urgent":
+  %% rename-to: urgent
+  kanban
+    todo
+      a
+      :::urgent big
+      b
+      :::small urgent

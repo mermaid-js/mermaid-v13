@@ -1,0 +1,323 @@
+[
+  {
+    "id": "radar-recovery/a-list-broken-after-its-comma",
+    "name": "a list broken after its comma",
+    "source": "radar-beta\naxis A,\nB\naxis C",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "radar-recovery/two-axis-names-without-a-comma",
+    "name": "two axis names without a comma",
+    "source": "radar-beta\naxis A B\naxis C",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "radar-recovery/an-axis-label-without-quotes",
+    "name": "an axis label without quotes",
+    "source": "radar-beta\naxis A[x]\naxis C",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["C"]
+  },
+  {
+    "id": "radar-recovery/an-unclosed-label",
+    "name": "an unclosed label",
+    "source": "radar-beta\naxis C\naxis A[\"x]",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["C"]
+  },
+  {
+    "id": "radar-recovery/a-curve-without-values",
+    "name": "a curve without values",
+    "source": "radar-beta\naxis A\ncurve c\ncurve d{1}",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "d"]
+  },
+  {
+    "id": "radar-recovery/a-curve-whose-is-on-the-next-line",
+    "name": "a curve whose `{` is on the next line",
+    "source": "radar-beta\naxis A\ncurve c\n{1}\ncurve d{1}",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/empty-braces",
+    "name": "empty braces",
+    "source": "radar-beta\naxis A\ncurve c{}\ncurve d{1}",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/values-without-a-comma-over-lines",
+    "name": "values without a comma, over lines",
+    "source": "radar-beta\naxis A, B\ncurve c{\n1\n2\n}\ncurve d{1, 2}",
+    "errors": [["UNEXPECTED", 5]],
+    "keeps": ["A", "B", "d"]
+  },
+  {
+    "id": "radar-recovery/a-line-break-before-a-comma",
+    "name": "a line break before a comma",
+    "source": "radar-beta\naxis A, B\ncurve c{1\n, 2}\ncurve d{1, 2}",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/mixed-positional-and-detailed-values",
+    "name": "mixed positional and detailed values",
+    "source": "radar-beta\naxis A, B\ncurve c{1, A 2}\ncurve d{1, 2}",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/an-unclosed-curve-before-the-next-statement",
+    "name": "an unclosed curve before the next statement",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2\naxis C\ncurve d{1, 2, 3}",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["C", "d"]
+  },
+  {
+    "id": "radar-recovery/a-negative-value",
+    "name": "a negative value",
+    "source": "radar-beta\naxis A\ncurve c{-1}\ncurve d{1}",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/a-value-with-a-leading-zero",
+    "name": "a value with a leading zero",
+    "source": "radar-beta\naxis A\ncurve c{01}\ncurve d{1}",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/a-value-ending-in-a-dot",
+    "name": "a value ending in a dot",
+    "source": "radar-beta\naxis A\ncurve c{1.}\ncurve d{1}",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["d"]
+  },
+  {
+    "id": "radar-recovery/a-name-starting-with-a-keyword",
+    "name": "a name starting with a keyword",
+    "source": "radar-beta\naxis circles\naxis A",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/a-non-ascii-name",
+    "name": "a non-ASCII name",
+    "source": "radar-beta\naxis über\naxis A",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/an-option-without-its-value",
+    "name": "an option without its value",
+    "source": "radar-beta\nticks\naxis A",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/a-bad-option-value",
+    "name": "a bad option value",
+    "source": "radar-beta\ngraticule square\nshowLegend yes\naxis A",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/a-statement-after-a-title-on-its-line",
+    "name": "a statement after a title on its line",
+    "source": "radar-beta\naxis A\naccTitle: x\ntitle t axis B",
+    "errors": [],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/acctitle-without-a-colon",
+    "name": "accTitle without a colon",
+    "source": "radar-beta\naccTitle x\naxis A",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/an-unclosed-accdescr-block",
+    "name": "an unclosed accDescr block",
+    "source": "radar-beta\naccDescr { x\naxis A",
+    "errors": [["UNCLOSED_ACC_DESCR", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/a-semicolon-after-a-statement",
+    "name": "a semicolon after a statement",
+    "source": "radar-beta\naxis A;\naxis B",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "radar-recovery/a-stray-character",
+    "name": "a stray character",
+    "source": "radar-beta\naxis A\n@\naxis B",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "radar-recovery/no-radar-beta-at-the-start",
+    "name": "no radar-beta at the start",
+    "source": "axis A\naxis B",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "radar-recovery/a-second-radar-beta",
+    "name": "a second radar-beta",
+    "source": "radar-beta\nradar-beta\naxis A",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/a-missing-entry-for-an-axis",
+    "name": "a missing entry for an axis",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1}\ncurve d{1, 2}",
+    "errors": [["RADAR_MISSING_ENTRY", 3]],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "radar-recovery/detailed-entries-and-no-axes",
+    "name": "detailed entries and no axes",
+    "source": "radar-beta\ncurve c{A: 1}\ncurve d{1}",
+    "errors": [["RADAR_NO_AXES", 2]],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "radar-recovery/a-missing-entry-then-a-syntax-error-after-it",
+    "name": "a missing entry, then a syntax error after it",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1}\ncurve d{1 2}",
+    "errors": [
+      ["RADAR_MISSING_ENTRY", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "radar-recovery/five-bad-statements-among-good-ones",
+    "name": "five bad statements among good ones",
+    "source": "radar-beta\naxis A,\naxis B C\ncurve c{1 2}\ncurve d{A}\nticks x\naxis D",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "D"]
+  },
+  {
+    "id": "radar-recovery/errors-in-three-different-statements",
+    "name": "errors in three different statements",
+    "source": "radar-beta\naxis A B\ncurve c{1 2}\nticks x\naxis D",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "D"]
+  },
+  {
+    "id": "radar-recovery/errors-inside-the-braces-of-two-curves",
+    "name": "errors inside the braces of two curves",
+    "source": "radar-beta\naxis A, B\ncurve c{\n1 2,\n3\n}\ncurve d{1,,2}\ncurve e{1, 2}",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "B", "e"]
+  },
+  {
+    "id": "radar-recovery/errors-in-an-axis-list-and-a-curve-list",
+    "name": "errors in an axis list and a curve list",
+    "source": "radar-beta\naxis A, , B\ncurve c{1, 2}, d{3, 4},\nticks 3\naxis E",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "c", "d", "E"]
+  },
+  {
+    "id": "radar-recovery/lexer-errors-on-three-lines",
+    "name": "lexer errors on three lines",
+    "source": "radar-beta\naxis über\ncurve c{-1}\nticks 1.\naxis A",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/two-missing-entries-and-a-syntax-error",
+    "name": "two missing entries and a syntax error",
+    "source": "radar-beta\naxis A, B\ncurve c{A 1}\ncurve d{B 1}\ncurve e{1 2}\ncurve f{1, 2}",
+    "errors": [
+      ["RADAR_MISSING_ENTRY", 3],
+      ["RADAR_MISSING_ENTRY", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["c", "d", "f"]
+  },
+  {
+    "id": "radar-recovery/an-unclosed-curve-then-errors-in-the-statements-after-it",
+    "name": "an unclosed curve, then errors in the statements after it",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2\naxis C D\ncurve e{x}\naxis F",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["C", "F"]
+  },
+  {
+    "id": "radar-recovery/keyword-names-in-two-lists",
+    "name": "keyword names in two lists",
+    "source": "radar-beta\naxis A, circles\ncurve c{1}, true{2}\naxis B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "c", "B"]
+  },
+  {
+    "id": "radar-recovery/errors-in-three-option-lists",
+    "name": "errors in three option lists",
+    "source": "radar-beta\nticks 3, max x\nshowLegend maybe, graticule circle\ngraticule square\naxis A",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "radar-recovery/errors-in-three-text-statements",
+    "name": "errors in three text statements",
+    "source": "radar-beta\naccTitle x\naccDescr {x} axis A\ntitle fine\naccDescr { never closed\naxis B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNCLOSED_ACC_DESCR", 5]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "radar-recovery/a-second-header-and-a-semicolon",
+    "name": "a second header and a semicolon",
+    "source": "radar-beta radar-beta\naxis A;\naxis B",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["A", "B"]
+  }
+]

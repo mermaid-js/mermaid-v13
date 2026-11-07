@@ -1,0 +1,7 @@
+@ 4:20  16-31: "Source Po|rt"
+  prepare: 4:11-4:22 "Source Port"; rename to "Port":
+  %% rename-to: Port
+  packet
+    0-15: "Source Port"
+    16-31: "Port"
+    +8: 'Source Port'

@@ -1595,8 +1595,33 @@ useMaxWidth?: boolean
  * via the `definition` "KanbanDiagramConfig".
  */
 export interface KanbanDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * The margin round the board, in px.
+ */
 padding?: number
+/**
+ * The width of each column, in px. 0 means the default, as in v12.
+ */
 sectionWidth?: number
+/**
+ * The link of each card's ticket: the first `#TICKET#` is replaced by the card's
+ * `ticket`. Empty (the default) draws tickets as plain text.
+ * 
+ */
 ticketBaseUrl?: string
 }
 /**
@@ -2091,6 +2116,14 @@ nodeColors?: {
  * via the `definition` "PacketDiagramConfig".
  */
 export interface PacketDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * The height of each row in the packet diagram.
  */
@@ -2220,6 +2253,14 @@ extensionIcons?: {
  * via the `definition` "RadarDiagramConfig".
  */
 export interface RadarDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * The size of the radar diagram.
  */

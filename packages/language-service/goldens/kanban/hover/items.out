@@ -1,0 +1,41 @@
+@ 2:4  t|odo[Todo]
+  2:3-2:13 "todo[Todo]"
+  | **column** `todo`
+  |
+  | Text: `Todo`
+  |
+  | Column 1 · 2 cards
+@ 2:10  todo[To|do]
+  2:3-2:13 "todo[Todo]"
+  | **column** `todo`
+  |
+  | Text: `Todo`
+  |
+  | Column 1 · 2 cards
+@ 3:5  |a[Card A]@{ ticket: T-1, assigned: knsv, priority: High }
+  3:5-3:62 "a[Card A]@{ ticket: T-1, assigned: knsv, priority: High }"
+  | **card** `a`
+  |
+  | Text: `Card A`
+  |
+  | In column `todo`
+  |
+  | Ticket: `T-1`
+  |
+  | Assigned: `knsv`
+  |
+  | Priority: `High`
+  |
+  | Classes: `urgent`, `big`
+@ 5:8  [No| id]
+  5:5-5:12 "[No id]"
+  | **card** `No id`
+  |
+  | In column `todo`
+@ 6:4  d|one@{ assigned: knsv }
+  6:3-6:26 "done@{ assigned: knsv }"
+  | **column** `done`
+  |
+  | Column 2 · 0 cards
+  |
+  | Assigned: `knsv` (not drawn on a column)

@@ -1,0 +1,14 @@
+---
+description: >-
+  A small board with tickets, an assignee and priorities in the dark
+  theme: the column colours darken instead of lightening.
+config:
+  theme: dark
+---
+kanban
+  todo[Todo]
+    a[Card]@{ ticket: MC-1, assigned: knsv, priority: 'Very High' }
+    b[Second card]@{ priority: 'Low' }
+  doing[In progress]
+    c[Third card]@{ priority: 'High' }
+  done[Done]

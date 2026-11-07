@@ -1,0 +1,546 @@
+[
+  {
+    "id": "kanban-cases/header-alone",
+    "source": "kanban"
+  },
+  {
+    "id": "kanban-cases/header-newline",
+    "source": "kanban\n"
+  },
+  {
+    "id": "kanban-cases/header-blanks",
+    "source": "kanban\n   \n\n  "
+  },
+  {
+    "id": "kanban-cases/header-line-column",
+    "source": "kanban a\n    b"
+  },
+  {
+    "id": "kanban-cases/keyword-word-bounded",
+    "source": "kanbanx\n  a"
+  },
+  {
+    "id": "kanban-cases/keyword-case-insensitive",
+    "source": "kanban\n  a\n    Kanban\n    KANBAN x\n    kanban-x\n    b kanban\n    kanban_b"
+  },
+  {
+    "id": "kanban-cases/keyword-as-item",
+    "source": "kanban\n  a\n    kanban"
+  },
+  {
+    "id": "kanban-cases/item-text-starts-with-keyword",
+    "source": "kanban\n  Kanban board"
+  },
+  {
+    "id": "kanban-cases/item-text-holds-keyword",
+    "source": "kanban\n  kanbanCard\n    mykanban\n    todo[Kanban]"
+  },
+  {
+    "id": "kanban-cases/leading-blank-header",
+    "source": "  kanban\n  a"
+  },
+  {
+    "id": "kanban-cases/decoration-before-item-icon",
+    "source": "kanban\n  ::icon(x)\n  a"
+  },
+  {
+    "id": "kanban-cases/decoration-before-item-class",
+    "source": "kanban\n  :::c\n  a"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-accepted",
+    "source": "kanban\n    a\n  b"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-rejected",
+    "source": "kanban\n    a\n  b\n  c"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-deep",
+    "source": "kanban\n    a\n      b\n  c\n        d"
+  },
+  {
+    "id": "kanban-cases/ids-blanks-colon-semicolon",
+    "source": "kanban\n  b \n    c: d; e\n    f %% g\n    h\"i\"]j"
+  },
+  {
+    "id": "kanban-cases/accessibility-words-are-columns",
+    "source": "kanban\n  accTitle: x\n  accDescr: y\n  title z"
+  },
+  {
+    "id": "kanban-cases/front-matter-title",
+    "source": "---\ntitle: Board\n---\nkanban\n  a\n    b"
+  },
+  {
+    "id": "kanban-cases/entities",
+    "source": "kanban\n  a[#59; #quot;x#quot;]\n    #amp; b\n    c[\"#lt;d\"]\n    e@{ assigned: '#amp;' }"
+  },
+  {
+    "id": "kanban-cases/style-lines",
+    "source": "kanban\n  style a:#f00;\n    b(style c:#f00;)\n    classDef d:#e;"
+  },
+  {
+    "id": "kanban-cases/any-opener-any-closer",
+    "source": "kanban\n  (-cl-)\n    a[x)\n    b(y]\n    c((z}}\n    d{{w((\n    e-)v)\n    f))u(-"
+  },
+  {
+    "id": "kanban-cases/paren-closes-label",
+    "source": "kanban\n  a[x(y)]"
+  },
+  {
+    "id": "kanban-cases/brace-takes-line",
+    "source": "kanban\n  a[x}y]"
+  },
+  {
+    "id": "kanban-cases/closer-then-text",
+    "source": "kanban\n  a(x)y"
+  },
+  {
+    "id": "kanban-cases/label-spans-lines",
+    "source": "kanban\n  a(\n  The column\n)\n    b"
+  },
+  {
+    "id": "kanban-cases/every-opener",
+    "source": "kanban\n  a((b))\n    c))d((\n    e{{f}}\n    g)h(\n    i(-j-)\n    k-)l(-\n    m[n]\n    o(p)"
+  },
+  {
+    "id": "kanban-cases/id-less-items",
+    "source": "kanban\n  [Todo]\n    (card)\n    ((circle))"
+  },
+  {
+    "id": "kanban-cases/brace-in-shape",
+    "source": "kanban\n  a(b}c)\n    d[e}}f]\n    g{{h}i}}\n    j(}\n    k)"
+  },
+  {
+    "id": "kanban-cases/brace-outside-shape",
+    "source": "kanban\n  a{b}"
+  },
+  {
+    "id": "kanban-cases/rbrace-outside-shape",
+    "source": "kanban\n  a}b"
+  },
+  {
+    "id": "kanban-cases/hexagon-unclosed",
+    "source": "kanban\n  a\n    b{{c}\n    d{{e}}"
+  },
+  {
+    "id": "kanban-cases/lbrace-line-start",
+    "source": "kanban\n  {x\n  y"
+  },
+  {
+    "id": "kanban-cases/at-alone",
+    "source": "kanban\n  a@b"
+  },
+  {
+    "id": "kanban-cases/at-end",
+    "source": "kanban\n  a\n    b@"
+  },
+  {
+    "id": "kanban-cases/strings",
+    "source": "kanban\n  a[\"b `c` d\"]\n    e[\"`md **x**`\"]\n    f(\"g\")\n    h((\"i\"))\n    j[\"k\" l]"
+  },
+  {
+    "id": "kanban-cases/strings-line-breaks",
+    "source": "kanban\n  a[\"b\n c\"]\n    d[\"`e\n f`\"]\n    g[x \"y\" z]"
+  },
+  {
+    "id": "kanban-cases/string-unclosed",
+    "source": "kanban\n  a[\"b]\n  c"
+  },
+  {
+    "id": "kanban-cases/md-string-lone-quote",
+    "source": "kanban\n  a[\"`b\"]"
+  },
+  {
+    "id": "kanban-cases/md-string-lone-backtick",
+    "source": "kanban\n  a[\"`b`c`\"]"
+  },
+  {
+    "id": "kanban-cases/md-string-unclosed",
+    "source": "kanban\n  a[\"`b`\n  c"
+  },
+  {
+    "id": "kanban-cases/strings-empty",
+    "source": "kanban\n  a[\"\"]\n    b[\"``\"]\n    c[\"`\"]"
+  },
+  {
+    "id": "kanban-cases/decorations-own-lines",
+    "source": "kanban\n  a\n  ::icon(fa fa-book)\n  :::urgent large\n    b\n::icon(x)\n:::y"
+  },
+  {
+    "id": "kanban-cases/decorations-after-item",
+    "source": "kanban\n  a ::icon(x)\n    b:::c\n    d::icon(e)\n    :::\n    f"
+  },
+  {
+    "id": "kanban-cases/icon-multi-line-and-empty",
+    "source": "kanban\n  a\n  ::ICON(x\n y)\n  ::icon()\n  :::  \n    b"
+  },
+  {
+    "id": "kanban-cases/icon-unclosed",
+    "source": "kanban\n  a\n  ::icon(never closed"
+  },
+  {
+    "id": "kanban-cases/class-bare-at-end",
+    "source": "kanban\n  a\n  :::"
+  },
+  {
+    "id": "kanban-cases/class-takes-line",
+    "source": "kanban\n  a\n  ::: x ::icon(y)\n  ::::z"
+  },
+  {
+    "id": "kanban-cases/comments-mid-line",
+    "source": "kanban\n  a(a) %% x\n    b %% c\n    %%\n    d\n%%\n\n    %%\ne"
+  },
+  {
+    "id": "kanban-cases/comments-after-closers",
+    "source": "kanban\n  a[b] %%\n    c(d)%%e\n    f\n    %% g"
+  },
+  {
+    "id": "kanban-cases/comment-then-blank-line",
+    "source": "kanban\n  todo\n    a[Card] %% c\n  %% d\n\n    b"
+  },
+  {
+    "id": "kanban-cases/blank-percent-blank",
+    "source": "kanban\n  a\n\n  %%\n   \n    b"
+  },
+  {
+    "id": "kanban-cases/blank-lines-tabs",
+    "source": "kanban\n  a\n   \n\n    b\n  \n    c  \n\td\n\t\te"
+  },
+  {
+    "id": "kanban-cases/other-blanks",
+    "source": "kanban\n a\n\u3000b\n \ufeffc"
+  },
+  {
+    "id": "kanban-cases/trailing-blanks",
+    "source": "kanban\n  a  \n    b  \n\n\n    c\n\n"
+  },
+  {
+    "id": "kanban-cases/tabs-indent",
+    "source": "kanban\n\ta\n\t\tb\n\t \tc"
+  },
+  {
+    "id": "kanban-cases/shape-data-one-line",
+    "source": "kanban\n  a\n    b@{ ticket: MC-1, assigned: knsv, priority: 'High' }"
+  },
+  {
+    "id": "kanban-cases/shape-data-no-blanks",
+    "source": "kanban\n  a\n    b@{ticket: MC-1}"
+  },
+  {
+    "id": "kanban-cases/shape-data-empty",
+    "source": "kanban\n  a\n    b@{}"
+  },
+  {
+    "id": "kanban-cases/shape-data-not-a-mapping",
+    "source": "kanban\n  a\n    b@{\n}"
+  },
+  {
+    "id": "kanban-cases/shape-data-scalar",
+    "source": "kanban\n  a\n    b@{ 1 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-multi-line",
+    "source": "kanban\n  a\n    b@{\n      ticket: MC-1\n      assigned: knsv\n    }\n    c"
+  },
+  {
+    "id": "kanban-cases/shape-data-multi-line-tabs",
+    "source": "kanban\n  a\n    b@{\n\tticket: MC-1\n\t\tassigned: knsv\n}"
+  },
+  {
+    "id": "kanban-cases/shape-data-comment-line",
+    "source": "kanban\n  a\n    b@{\n%% c\n      ticket: X\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-percent-inside",
+    "source": "kanban\n  a\n    b@{ label: '50%% done' }"
+  },
+  {
+    "id": "kanban-cases/shape-data-quotes",
+    "source": "kanban\n  a\n    b@{ label: \"x\", assigned: \"y\" }"
+  },
+  {
+    "id": "kanban-cases/shape-data-quote-breaks",
+    "source": "kanban\n  a\n    b@{ label: \"x\n   y\n z\" }"
+  },
+  {
+    "id": "kanban-cases/shape-data-quote-blank-lines",
+    "source": "kanban\n  a\n    b@{ label: \"x\n\n  \n y\" }"
+  },
+  {
+    "id": "kanban-cases/shape-data-quoted-brace",
+    "source": "kanban\n  a\n    b@{ label: \"x } y\" }"
+  },
+  {
+    "id": "kanban-cases/shape-data-quoted-caret",
+    "source": "kanban\n  a\n    b@{ label: \"x ^ y\" }"
+  },
+  {
+    "id": "kanban-cases/shape-data-single-quotes",
+    "source": "kanban\n  a\n    b@{ label: 'it''s' }"
+  },
+  {
+    "id": "kanban-cases/shape-data-caret",
+    "source": "kanban\n  a\n    b@{ label: x^y }"
+  },
+  {
+    "id": "kanban-cases/shape-data-two-blocks",
+    "source": "kanban\n  a\n    b@{x: 1}@{y: 2}"
+  },
+  {
+    "id": "kanban-cases/shape-data-then-text",
+    "source": "kanban\n  a\n    b@{ x: 1 } extra"
+  },
+  {
+    "id": "kanban-cases/shape-data-then-shape",
+    "source": "kanban\n  a\n    b@{ x: 1 }[label]"
+  },
+  {
+    "id": "kanban-cases/shape-data-after-shape",
+    "source": "kanban\n  a\n    b[label]@{ x: 1 }:::c"
+  },
+  {
+    "id": "kanban-cases/shape-data-no-id",
+    "source": "kanban\n  a\n    @{ ticket: x }"
+  },
+  {
+    "id": "kanban-cases/shape-data-no-id-first",
+    "source": "kanban\n  @{ ticket: x }"
+  },
+  {
+    "id": "kanban-cases/shape-data-label",
+    "source": "kanban\n  a\n    b[old]@{ label: 'new' }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-lower",
+    "source": "kanban\n  a\n    b@{ shape: circle }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-upper",
+    "source": "kanban\n  a\n    b@{ shape: Rect }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-underscore",
+    "source": "kanban\n  a\n    b@{ shape: my_shape }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-number",
+    "source": "kanban\n  a\n    b@{ shape: 5 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-unknown-key",
+    "source": "kanban\n  a\n    b@{ foo: bar }"
+  },
+  {
+    "id": "kanban-cases/shape-data-bad-yaml",
+    "source": "kanban\n  a\n    b@{ x: [ }"
+  },
+  {
+    "id": "kanban-cases/priority-kinds",
+    "source": "kanban\n  a\n    b@{ priority: 0 }\n    c@{ priority: [1, 2] }\n    d@{ priority: true }\n    e@{ priority: Medium }"
+  },
+  {
+    "id": "kanban-cases/column-metadata",
+    "source": "kanban\n  a@{ ticket: T-1, priority: 'High', assigned: me, icon: star }\n    b"
+  },
+  {
+    "id": "kanban-cases/shape-data-unclosed",
+    "source": "kanban\n  a\n    b@{ x: 1"
+  },
+  {
+    "id": "kanban-cases/shape-data-unclosed-quote",
+    "source": "kanban\n  a\n    b@{ x: \"abc"
+  },
+  {
+    "id": "kanban-cases/shape-data-unclosed-quote-breaks",
+    "source": "kanban\n  a\n    b@{ x: \"abc\n  def\n  "
+  },
+  {
+    "id": "kanban-cases/shape-data-quote-at-end",
+    "source": "kanban\n  a\n    b@{ x: \""
+  },
+  {
+    "id": "kanban-cases/shape-data-open-at-end",
+    "source": "kanban\n  a@{"
+  },
+  {
+    "id": "kanban-cases/shape-data-open-newline-end",
+    "source": "kanban\n  a@{\n"
+  },
+  {
+    "id": "kanban-cases/shape-data-entities",
+    "source": "kanban\n  a\n    b@{ label: \"#quot;x#quot; #59;\", ticket: #35; }"
+  },
+  {
+    "id": "kanban-cases/line-separator-id",
+    "source": "kanban\n  a\u2028b\n    c"
+  },
+  {
+    "id": "kanban-cases/line-separator-label",
+    "source": "kanban\n  a(b\u2028c)\n    d"
+  },
+  {
+    "id": "kanban-cases/line-separator-brace",
+    "source": "kanban\n  a(b}c\u2029d)\n    e"
+  },
+  {
+    "id": "kanban-cases/line-separator-class",
+    "source": "kanban\n  a\n  :::x\u2028y\n    b"
+  },
+  {
+    "id": "kanban-cases/line-separator-bare-class",
+    "source": "kanban\n  a\n  :::\u2028y\n    b"
+  },
+  {
+    "id": "kanban-cases/line-separator-icon",
+    "source": "kanban\n  a\n  ::icon(a\u2029b)\n    c"
+  },
+  {
+    "id": "kanban-cases/line-separator-comment",
+    "source": "kanban\n  a(b) %% c\u2028d\n    e"
+  },
+  {
+    "id": "kanban-cases/line-separator-comment-line",
+    "source": "kanban\n  a\n%% c\u2028d\n    e"
+  },
+  {
+    "id": "kanban-cases/line-separator-before-comment",
+    "source": "kanban\n  a\u2028%% c\n    e"
+  },
+  {
+    "id": "kanban-cases/line-separator-strings",
+    "source": "kanban\n  a[\"b\u2028c\"]\n    d[\"`e\u2029f`\"]"
+  },
+  {
+    "id": "kanban-cases/line-separator-blanks",
+    "source": "kanban\n\u2028  a\n \u2029 b\u2028\n    c"
+  },
+  {
+    "id": "kanban-cases/line-separator-header",
+    "source": "kanban\u2028a"
+  },
+  {
+    "id": "kanban-cases/line-separator-shape-data",
+    "source": "kanban\n  a\n    b@{ x: 1\u2028y: 2 }\n    c@{ label: \"d\u2029e\" }"
+  },
+  {
+    "id": "kanban-cases/crlf",
+    "source": "kanban\r\n  a\r\n\r\n    b\r\n"
+  },
+  {
+    "id": "kanban-cases/cr",
+    "source": "kanban\r  a\r\r    b(c\rd)"
+  },
+  {
+    "id": "kanban-cases/crlf-modes",
+    "source": "kanban\r\n  a(\r\n  x\r\n  )\r\n  ::icon(a\r\nb)\r\n  :::\r\n    c\r\n  \r\n"
+  },
+  {
+    "id": "kanban-cases/crlf-bare-class",
+    "source": "kanban\r\n  a\r\n  :::\r\n"
+  },
+  {
+    "id": "kanban-cases/crlf-shape-data",
+    "source": "kanban\r\n  a\r\n    b@{\r\n      ticket: X\r\n      label: \"y\r\n  z\"\r\n    }\r\n"
+  },
+  {
+    "id": "kanban-cases/cr-comment-lf",
+    "source": "kanban\n  a\r%% c\n    b"
+  },
+  {
+    "id": "kanban-cases/cr-directive-lf",
+    "source": "kanban\n  a\r%%{init:{}}%%\n    b"
+  },
+  {
+    "id": "kanban-cases/cr-comment-in-label",
+    "source": "kanban\n  a(b\r%% c\nd)"
+  },
+  {
+    "id": "kanban-cases/cr-comment-after-class",
+    "source": "kanban\n  a\n  :::\r%% c\n    b"
+  },
+  {
+    "id": "kanban-cases/cr-comment-in-shape-data",
+    "source": "kanban\n  a\n    b@{ x: 1\r%% c\ny: 2 }"
+  },
+  {
+    "id": "kanban-cases/mid-line-directive",
+    "source": "kanban\n  a %%{init: {\n  %%x \"a\": 1}}%%\n    b"
+  },
+  {
+    "id": "kanban-cases/mid-line-directive-shape",
+    "source": "kanban\n  a %%{init: {}}%% b\n    c(d %%{init: {}}%% e)"
+  },
+  {
+    "id": "kanban-cases/mid-line-directive-multi-line",
+    "source": "kanban\n  a(b\n%% c %%{init:\n{}}%% d\ne)"
+  },
+  {
+    "id": "kanban-cases/mid-line-directive-decorations",
+    "source": "kanban\n  a\n  ::icon(a %%{init: {}}%% b)\n  :::c %%{init: {}}%% d"
+  },
+  {
+    "id": "kanban-cases/mid-line-directive-shape-data",
+    "source": "kanban\n  a\n    b@{ x: 1 %%{init: {}}%% }"
+  },
+  {
+    "id": "kanban-cases/front-matter",
+    "source": "---\ntitle: t\n---\nkanban\n  a\n    b"
+  },
+  {
+    "id": "kanban-cases/directive",
+    "source": "%%{init: {\"theme\": \"forest\"}}%%\nkanban\n  a"
+  },
+  {
+    "id": "kanban-cases/columns-share-an-id",
+    "source": "kanban\n  docs\n    a\n  docs\n    b"
+  },
+  {
+    "id": "kanban-cases/shape-data-scalar-multi-line",
+    "source": "kanban\n  a\n    b@{\n      hello\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-list",
+    "source": "kanban\n  a\n    b@{\n      - x\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-boolean",
+    "source": "kanban\n  a\n    b@{ shape: true }"
+  },
+  {
+    "id": "kanban-cases/shape-data-falsy-values",
+    "source": "kanban\n  a\n    b@{ shape: 0, label: '', ticket: false, assigned: 0, icon: null }"
+  },
+  {
+    "id": "kanban-cases/shape-data-list-values",
+    "source": "kanban\n  a\n    b@{ label: [x, y], ticket: [1, 2], assigned: [me, you] }"
+  },
+  {
+    "id": "kanban-cases/shape-data-number-values",
+    "source": "kanban\n  a\n    b@{ label: 5, ticket: 2038, icon: 3 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-duplicate-key",
+    "source": "kanban\n  a\n    b@{ x: 1, x: 2 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-null-multi-line",
+    "source": "kanban\n  a\n    b@{\n      null\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-hash-comment",
+    "source": "kanban\n  a\n    b@{\n      ticket: X # the ticket\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-then-decorations",
+    "source": "kanban\n  a\n    b@{ ticket: X, icon: star }\n    ::icon(moon)\n    :::hot"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-twice",
+    "source": "kanban\n    a\n  b\n      c\n  d\n      e"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-then-decoration",
+    "source": "kanban\n    a\n  b\n  :::c"
+  }
+]
