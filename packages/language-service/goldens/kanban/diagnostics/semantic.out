@@ -1,0 +1,5 @@
+2:1-2:9 ":::early" error KANBAN_DECORATION_BEFORE_ITEM: A `:::class` line decorates the item before it, and there is none here. Write it on the line after its item.
+4:21-4:22 "}" error SHAPE_DATA: Invalid YAML: missed comma between flow collection entries.
+5:6-6:6 "@{\n    }" error KANBAN_DATA_EMPTY: The `@{ … }` data is empty or `null`. Write `key: value` pairs in it, such as `ticket: T-1`, or remove it.
+7:6-7:22 "@{ shape: Rect }" error KANBAN_SHAPE: No such shape: Rect. Shape names are lower case, with no `_`; a card's shape is ignored, so the `shape` key can be removed.
+8:2-8:9 "shallow" error KANBAN_ITEM_WITHOUT_COLUMN: Items without section detected, found section ("shallow"): it is indented less than the first column. Indent it as deep as the columns, or deeper for a card.

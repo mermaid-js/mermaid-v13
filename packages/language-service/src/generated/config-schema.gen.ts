@@ -1217,7 +1217,8 @@ export const configSchema: ConfigSchema = {
     "kanban": {
       "$ref": "#/$defs/KanbanDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "gitGraph": {
@@ -3085,25 +3086,58 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for kanban boards (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the kanban renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's kanban read `mindmap.useMaxWidth` instead (D378). True draws `width=\"100%\"` and a `max-width`; false draws the board's own `width` and `height`."
+          }
+        },
         "padding": {
+          "description": "The margin round the board, in px.",
           "type": "number",
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's kanban took its outer margin from `mindmap.padding` (10) and never read this key; v13 draws this margin, so a board is 2 px tighter on each side by default (D378). A number or a numeric string (`\"20\"`, not `\"20px\"`) from 0 to 10,000; anything else lays out with the default and warns `KANBAN_CONFIG_IGNORED`."
           }
         },
         "sectionWidth": {
+          "description": "The width of each column, in px. 0 means the default, as in v12.",
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `sectionWidth || 200`. A number or a numeric string from 0 to 10,000; a width above 0 and below 26 is raised to 26, so cards keep a width, and anything else lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning."
           }
         },
         "ticketBaseUrl": {
+          "description": "The link of each card's ticket: the first `#TICKET#` is replaced by the card's\n`ticket`. Empty (the default) draws tickets as plain text.\n",
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The ticket replaces only the first `#TICKET#`, taken literally (`$&` stays `$&`), and the URL passes the link check (`securityLevel`, `linkSchemes`); a refused URL draws the ticket as plain text with a `URL_REFUSED` warning (D377). v12 linked any URL, opening it in a new tab."
           }
         }
       }

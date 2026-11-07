@@ -40,6 +40,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'gitGraph',
       'info',
       'journey',
+      'kanban',
       'mindmap',
       'packet',
       'pie',
@@ -159,6 +160,12 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('complex:keyword');
       expect(out).toContain('"Probe":string');
       expect(out).toContain('-->:operator');
+    });
+
+    it('highlights a kanban board with the kanban grammar', () => {
+      const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
+      expect(out[0]).toBe('kanban:keyword');
+      expect(out.length).toBeGreaterThan(1);
     });
 
     it('finds the type after front matter, directives and comments', () => {

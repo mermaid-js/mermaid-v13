@@ -1,0 +1,13 @@
+@ 3:19  a@{ priority: | }
+  Very High value (priority) 3:19-3:19 "" -> "Very High"
+  High value (priority) 3:19-3:19 "" -> "High"
+  Low value (priority) 3:19-3:19 "" -> "Low"
+  Very Low value (priority) 3:19-3:19 "" -> "Very Low"
+@ 4:33  b@{ ticket: T-1, priority: v| }
+  Very High value (priority) 4:32-4:33 "v" -> "Very High"
+  Very Low value (priority) 4:32-4:33 "v" -> "Very Low"
+@ 6:17  priority: |
+  Very High value (priority) 6:17-6:17 "" -> "Very High"
+  High value (priority) 6:17-6:17 "" -> "High"
+  Low value (priority) 6:17-6:17 "" -> "Low"
+  Very Low value (priority) 6:17-6:17 "" -> "Very Low"

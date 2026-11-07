@@ -15,19 +15,19 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, packet |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, radar, pie, packet, cynefin, info |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, radar |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, cynefin, info, radar |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
@@ -249,6 +249,23 @@ flags and opacities, which are read literally.
 | `actor3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
 | `actor4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
 | `actor5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+
+### kanban
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `kanbanColumn0` | | color | `#fadbff` | `#d9d9d9` | `#000000` | `#ee75ff` | `#b9b9ff` | `#060606` | `#cde498` | `#6e6e6e` | `#ffdb90` | `#a3a3fa` | `#000000` |
+| `kanbanColumn1` | | color | `#74f1e0` | `#d9d9d9` | `#000000` | `#18e7cb` | `#ffffab` | `#000000` | `#cdffb2` | `#ffffff` | `#db90ff` | `#babad3` | `#000000` |
+| `kanbanColumn2` | | color | `#ffd09d` | `#d9d9d9` | `#000000` | `#ffa037` | `#e8ffb9` | `#230719` | `#e1efc0` | `#6e6e6e` | `#aac5ff` | `#fbfbb6` | `#000000` |
+| `kanbanColumn3` | | color | `#f3e5ff` | `#d9d9d9` | `#000000` | `#c17fff` | `#dcb9ff` | `#2a363a` | `#a7e498` | `#d4d4d4` | `#ecff90` | `#cfa3fa` | `#000000` |
+| `kanbanColumn4` | | color | `#a9f6c6` | `#d9d9d9` | `#000000` | `#4dec8a` | `#ffb9ff` | `#29180e` | `#98e4af` | `#919191` | `#b4ff90` | `#faa3fa` | `#000000` |
+| `kanbanColumn5` | | color | `#ece7ff` | `#d9d9d9` | `#000000` | `#9c81ff` | `#ffb9dc` | `#3f0606` | `#98e4d5` | `#b3b3b3` | `#90ffa4` | `#faa3cf` | `#000000` |
+| `kanbanColumn6` | | color | `#ffd5d5` | `#d9d9d9` | `#000000` | `#ff6f6f` | `#ffb9b9` | `#110015` | `#98cde4` | `#f7f7f7` | `#90ffdb` | `#faa3a3` | `#000000` |
+| `kanbanColumn7` | | color | `#ffe653` | `#d9d9d9` | `#000000` | `#ecca00` | `#ffdcb9` | `#663c01` | `#98a7e4` | `#ffffff` | `#90ecff` | `#facfa3` | `#000000` |
+| `kanbanColumn8` | | color | `#d6ddff` | `#d9d9d9` | `#a7a6a4` | `#7089ff` | `#dcffb9` | `#071802` | `#d598e4` | `#f7f7f7` | `#c0b3ff` | `#d9fbb6` | `#a7a6a4` |
+| `kanbanColumn9` | | color | `#cef781` | `#d9d9d9` | `#000000` | `#a8f121` | `#b9ffdc` | `#020203` | `#e498a7` | `#d4d4d4` | `#ff90ec` | `#a3facf` | `#000000` |
+| `kanbanColumn10` | | color | `#a7e4ff` | `#d9d9d9` | `#000000` | `#41c4ff` | `#b9ffff` | `#00163c` | `#e4af98` | `#b3b3b3` | `#ff90b4` | `#a3fafa` | `#000000` |
+| `kanbanColumn11` | | color | `#ffd4d9` | `#d9d9d9` | `#000000` | `#ff6e81` | `#b9dcff` | `#014269` | `#e4d598` | `#919191` | `#ffa490` | `#a3cffa` | `#000000` |
 
 ### mindmap
 

@@ -6,7 +6,7 @@
  *   options (H1, `sketch.spec.ts`), so this is parity with roughjs;
  * - the allow-list (R-SEC-2), determinism (R-ARCH-6, a fresh API object gives the same bytes) and
  *   no `Math.random` call, over the hand-drawn corpus and the sketched types' whole corpus
- *   (mindmap's too, #344) with `handDrawn` on;
+ *   (mindmap's too, #344, and kanban's, #459) with `handDrawn` on;
  * - v12's XSS sources and Pele's payloads stay inert with it on.
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -28,6 +28,7 @@ const TYPES = [
   'state-diagram-v2',
   'er-diagram',
   'mindmap',
+  'kanban',
 ];
 
 function mmd(dir: string): [string, string][] {
@@ -139,6 +140,8 @@ describe('the hand-drawn corpus', () => {
     expect(dirs.map((dir) => count(dir, true))).toEqual([4, 4, 4, 4]);
     // Mindmap has no hand-drawn corpus file; H4 (#344) adds one per shape and edges, × 4 families.
     expect([count('mindmap'), count('mindmap', true)]).toEqual([0, 32]);
+    // Kanban: one board per family (D379, #459).
+    expect([count('kanban'), count('kanban', true)]).toEqual([0, 4]);
   });
 
   it("sketches every outline with v12's roughjs options for its role", async () => {

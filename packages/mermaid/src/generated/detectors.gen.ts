@@ -8,7 +8,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'architecture', pattern: /^\s*architecture/ },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
-  { type: 'kanban', pattern: /^\s*kanban/ },
+  { type: 'kanban', pattern: /^\s*kanban/, id: 'kanban', formats: ['svg', 'ascii'] },
   { type: 'classDiagram', pattern: /^\s*classDiagram/, id: 'class', formats: ['svg'] },
   { type: 'er', pattern: /^\s*erDiagram/, id: 'er', formats: ['svg', 'ascii'] },
   { type: 'gantt', pattern: /^\s*gantt/, id: 'gantt', formats: ['svg'] },

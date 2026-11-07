@@ -1,0 +1,16 @@
+---
+description: >-
+  Cards at several depths. The first item's indent is the column level,
+  and every deeper item is a card of the last column whatever its depth:
+  cards never nest in cards. In Done the first card is deeper than the
+  second.
+---
+kanban
+  Todo
+    a[Card at indent 4]
+      b[Card at indent 6, still a card of Todo]
+        c[Card at indent 8]
+    d[Back at indent 4]
+  Done
+      e[First card, at indent 6]
+    f[Second card, at indent 4]

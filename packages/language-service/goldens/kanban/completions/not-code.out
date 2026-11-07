@@ -1,0 +1,12 @@
+@ 1:10  %% a comm|ent
+  none
+@ 3:7  todo|
+  none
+@ 4:16  a["in a str|ing"]
+  none
+@ 5:15  ::icon(fa |fa-book)
+  none
+@ 6:14  b[In a sh|ape]
+  none
+@ 7:20  c@{ ticket: "T-|1" }
+  none

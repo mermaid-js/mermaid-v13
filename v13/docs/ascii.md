@@ -7,8 +7,9 @@ cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN
 Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
 flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
 relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
-sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)) and the packet diagram
-(`packet`, [below](#packet-diagrams)). See [the format matrix](format-matrix.md) for every type.
+sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
+[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)) and `info`. See
+[the format matrix](format-matrix.md) for every type.
 
 ```
                ┌───◇────┐            ╭─────────╮
@@ -115,8 +116,8 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram and
-the packet diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
+the packet diagram and the kanban board render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -283,6 +284,40 @@ sequenceDiagram
 `sequence.width` to 120 and boxes are at least 15 columns wide. Wrapped text (`wrap`) wraps
 to at least 19 columns.
 
+## Kanban boards
+
+The kanban board's text entry (`@mermaid-js/diagram-kanban/ascii`, #466, D320) draws the same
+layout as SVG, computed in cells: one layout function, its lengths from a cell table of the
+kanban metrics (`KANBAN_CELL_METRICS`), with `kanban.sectionWidth` converted to cells (200 px
+is 25 columns).
+
+```
+┌──────── Todo ─────────┐ ┌──────── Done ─────────┐
+│ ┎───────────────────┐ │ │                       │
+│ ┃ Write the docs    │ │ └───────────────────────┘
+│ ┃ MC-1         knsv │ │
+│ ┖───────────────────┘ │
+│ ┌───────────────────┐ │
+│ │ Blog post         │ │
+│ └───────────────────┘ │
+└───────────────────────┘
+```
+
+- Columns are boxes side by side, one column apart, each `sectionWidth` wide, with its title
+  centred on the top border; a longer title wraps and its later lines sit inside the box.
+- Cards are boxes stacked inside their column, one column in from its sides. Titles, tickets and
+  assignees wrap at the card's width less a space either side.
+- A card's last row has the ticket on the left, as plain text (never a link), and the assignee
+  on the right; when they do not fit side by side each takes a row of its own.
+- The priority is the card's left edge: heavy (`┃`, `I`) for `Very High` and `High`, dashed
+  (`┆`, `:`) for `Low` and `Very Low`. In the `ascii` charset a tag on the card's top border
+  tells the four apart: `+-[!!]---+` (`Very High`), `[!]`, `[-]`, `[--]` (`Very Low`). Any other
+  priority draws a plain edge and warns `KANBAN_PRIORITY`, as in SVG.
+- A board wider than `ascii.maxWidth` is not folded: it is drawn whole, with `ASCII_TOO_WIDE`.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`:::` classes), `emphasis` (bold and
+  italic text) and `link` (ticket links from `kanban.ticketBaseUrl`). Column colours come from
+  the theme and are dropped silently; icons are drawn by neither output.
+
 ## Packet diagrams
 
 The packet diagram's text entry (`@mermaid-js/diagram-packet/ascii`, D347) draws from the bit
@@ -362,8 +397,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 ## Size
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
-plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's or
-the packet diagram's)
+plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
+packet diagram's, the kanban board's or info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

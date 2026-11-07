@@ -1,11 +1,11 @@
 ---
 description: >-
-  Kanban fixture exercising the `assigned` metadata key
-  (@{ assigned: 'knsv' }) on one item, alongside three plain unassigned
-  items, verifying assignee rendering.
+  Two columns with one card each; the second card has assigned metadata
+  (@{ assigned: 'knsv' }), drawn as the assignee at the card's bottom
+  right.
 ---
 kanban
   id1[Todo]
-  docs[Create Documentation]
+    docs[Create Documentation]
   id2[In progress]
-  docs[Create Blog about the new diagram]@{ assigned: 'knsv' }
+    docs[Create Blog about the new diagram]@{ assigned: 'knsv' }

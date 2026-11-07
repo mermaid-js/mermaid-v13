@@ -66,6 +66,11 @@ const PACKAGES = [
     renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
   },
   {
+    name: 'kanban',
+    dir: 'diagram-kanban',
+    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
+  },
+  {
     name: 'info',
     dir: 'diagram-info',
     renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],

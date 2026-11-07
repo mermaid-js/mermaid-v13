@@ -1,0 +1,21 @@
+---
+description: >-
+  From 12.2.0's dev diagrams: five columns with one ticketed card each,
+  titles that start with emoji, columns that are bare ids with spaces
+  (Backlog, To Do), and a ticketBaseUrl, so every ticket is a GitHub link.
+  One ticket is a number (103).
+config:
+  kanban:
+    ticketBaseUrl: 'https://github.com/your-repo/issues/#TICKET#'
+---
+kanban
+  Backlog
+    task1[📝 Define project requirements]@{ ticket: a101 }
+  To Do
+    task2[🔍 Research technologies]@{ ticket: a102 }
+  Review
+    task4[🔍 Code review for login feature]@{ ticket: a104 }
+  Done
+    task5[✅ Deploy initial version]@{ ticket: a105 }
+  In Progress
+    task3[💻 Develop login feature]@{ ticket: 103 }

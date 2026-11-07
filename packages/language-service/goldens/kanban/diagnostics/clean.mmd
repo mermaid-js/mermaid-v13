@@ -1,0 +1,16 @@
+---
+config:
+  kanban:
+    ticketBaseUrl: 'https://example.com/browse/#TICKET#'
+---
+kanban
+  todo[Todo]
+    id1[Write the docs]@{ ticket: DOC-1, assigned: knsv, priority: High }
+    id2["Quoted **title**"]
+    ::icon(fa fa-book)
+    :::urgent
+  done[Done]
+    id3@{
+      assigned: "Knut"
+      priority: Very Low
+    }

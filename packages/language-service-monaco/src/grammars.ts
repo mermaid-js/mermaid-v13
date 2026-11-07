@@ -48,4 +48,5 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   packet: { load: () => import('./generated/packet.monarch.js').then((m) => m.default) },
   radar: { load: () => import('./generated/radar.monarch.js').then((m) => m.default) },
   cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
+  kanban: { load: () => import('./generated/kanban.monarch.js').then((m) => m.default) },
 };

@@ -41,6 +41,7 @@ describe('completion', () => {
       'flowchart-elk',
       'swimlane-beta',
       'mindmap',
+      'kanban',
       'classDiagram',
       'erDiagram',
       'gantt',
@@ -67,6 +68,7 @@ describe('completion', () => {
     expect(labels('rad|')).toEqual(['radar-beta']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
+    expect(labels('kan|')).toEqual(['kanban']);
     expect(labels('cyn|')).toEqual(['cynefin-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([

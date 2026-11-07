@@ -31,6 +31,7 @@
     "@mermaid-js/diagram-gitgraph": "workspace:^",
     "@mermaid-js/diagram-info": "workspace:^",
     "@mermaid-js/diagram-journey": "workspace:^",
+    "@mermaid-js/diagram-kanban": "workspace:^",
     "@mermaid-js/diagram-mindmap": "workspace:^",
     "@mermaid-js/diagram-packet": "workspace:^",
     "@mermaid-js/diagram-pie": "workspace:^",

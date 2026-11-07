@@ -1,0 +1,12 @@
+---
+description: >-
+  The first item sets the column level at indent 4. The last item is
+  shallower (indent 2): v12 accepts it as a card of the last column, and
+  would reject any item after it.
+---
+kanban
+    Todo
+      a[Card]
+    Done
+      b[Card]
+  c[Shallower than the column level: a card of Done]

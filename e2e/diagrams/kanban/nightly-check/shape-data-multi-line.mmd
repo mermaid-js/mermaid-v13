@@ -1,0 +1,17 @@
+---
+description: >-
+  Card metadata: a block over several lines, label: replacing the text, a
+  lower-case shape: (parsed and ignored), double-quoted values, and a
+  quoted label over two lines, whose line break becomes a <br/>.
+---
+kanban
+  todo[Todo]
+    a[Card]@{
+      ticket: MC-1
+      assigned: knsv
+      priority: 'High'
+    }
+    b@{ label: 'Label from metadata', shape: rect }
+    c[Quoted values]@{ assigned: "K. Sveidqvist", ticket: "MC-2" }
+    d@{ label: "A label in quotes
+      over two lines" }

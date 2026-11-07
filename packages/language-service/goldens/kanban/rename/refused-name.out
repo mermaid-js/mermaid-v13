@@ -1,0 +1,10 @@
+@ 4:19  a@{ assigned: |knsv }
+  prepare: 4:19-4:23 "knsv"; rename to "a, b":
+  refused: 'a, b' would not read as an assignee written as `assigned: a, b`.
+@ 5:5  |card
+  prepare: 5:5-5:9 "card"; rename to "a, b":
+  %% rename-to: a, b
+  kanban
+    todo
+      a@{ assigned: knsv }
+      a, b

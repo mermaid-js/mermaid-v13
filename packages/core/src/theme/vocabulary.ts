@@ -191,6 +191,7 @@ const TEXT_USERS = [
   'mindmap',
   'gitgraph',
   'gantt',
+  'kanban',
   'radar',
 ];
 
@@ -205,7 +206,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state', 'packet']),
+  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban']),
   primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet', 'cynefin']),
   lineColor: def('l', 'color', [
     'flowchart',
@@ -237,6 +238,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'quadrant',
     'gitgraph',
     'gantt',
+    'kanban',
     'cynefin',
     'info',
     'radar',
@@ -260,6 +262,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
+    'kanban',
   ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),

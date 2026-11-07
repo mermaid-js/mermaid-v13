@@ -10,7 +10,7 @@ describe('renderDiagram (the page adapter)', () => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
       expect(svg).toMatch(
-        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|packet|cynefin|info|radar)"/
+        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|packet|cynefin|info|radar|kanban)"/
       );
     }
   );
@@ -104,7 +104,9 @@ describe('renderDiagram (the page adapter)', () => {
     // Mindmap has one per node shape, plus its edges (H4, #344).
     const mindmap = ['bang', 'circle', 'cloud', 'default', 'edges', 'hexagon', 'rounded', 'square'];
     expect(handDrawn).toEqual([
-      ...['class-diagram', 'er-diagram', 'flowchart'].flatMap((f) => each(`${f}/handdrawn`)),
+      ...['class-diagram', 'er-diagram', 'flowchart', 'kanban'].flatMap((f) =>
+        each(`${f}/handdrawn`)
+      ),
       ...mindmap.flatMap((shape) => each(`mindmap/handdrawn/${shape}`)),
       ...each('state-diagram-v2/handdrawn'),
     ]);

@@ -264,6 +264,19 @@ const DOCS: Readonly<Record<string, string>> = {
     '  complex --> clear : "stabilise"',
     '',
   ].join('\n'),
+  kanban: [
+    'kanban',
+    '  %% the board',
+    '  todo[Todo]',
+    '    docs[Write the docs]@{ ticket: MC-1, assigned: knsv, priority: High }',
+    '    blog["Blog post"]',
+    '    :::urgent',
+    '  done[Done]',
+    '    ship[Ship it]@{',
+    "      assigned: 'knsv'",
+    '    }',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

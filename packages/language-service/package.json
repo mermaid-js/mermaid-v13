@@ -37,6 +37,7 @@
     "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-info": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
+    "@mermaid-js/diagram-kanban": "workspace:*",
     "@mermaid-js/diagram-mindmap": "workspace:*",
     "@mermaid-js/diagram-packet": "workspace:*",
     "@mermaid-js/diagram-pie": "workspace:*",
@@ -69,6 +70,9 @@
       "optional": true
     },
     "@mermaid-js/diagram-journey": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-kanban": {
       "optional": true
     },
     "@mermaid-js/diagram-mindmap": {
@@ -106,6 +110,7 @@
     "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-info": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
+    "@mermaid-js/diagram-kanban": "workspace:*",
     "@mermaid-js/diagram-mindmap": "workspace:*",
     "@mermaid-js/diagram-packet": "workspace:*",
     "@mermaid-js/diagram-pie": "workspace:*",

@@ -22,7 +22,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   { type: 'architecture', id: 'architecture', pattern: /^\s*architecture/, detector: (text) => /^\s*architecture/.test(text) },
   { type: 'agentflow', id: 'agentflow', pattern: /^\s*agentflow-beta\b/, detector: (text) => /^\s*agentflow-beta\b/.test(text) },
   { type: 'c4', id: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/, detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
-  { type: 'kanban', id: 'kanban', pattern: /^\s*kanban/, detector: (text) => /^\s*kanban/.test(text) },
+  {
+    type: 'kanban',
+    id: 'kanban',
+    section: 'kanban',
+    pattern: /^\s*kanban/,
+    detector: (text) => /^\s*kanban/.test(text),
+    load: () => import('@mermaid-js/diagram-kanban/language').then((m) => m.language),
+  },
   {
     type: 'classDiagram',
     id: 'class',
@@ -165,4 +172,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'packet' | 'radar' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'packet' | 'radar' | 'cynefin';

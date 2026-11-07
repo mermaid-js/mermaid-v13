@@ -49,7 +49,8 @@
         "@mermaid-js/diagram-gantt",
         "@mermaid-js/diagram-packet",
         "@mermaid-js/diagram-radar",
-        "@mermaid-js/diagram-cynefin"
+        "@mermaid-js/diagram-cynefin",
+        "@mermaid-js/diagram-kanban"
       ]
     },
     "packages/dev": {
