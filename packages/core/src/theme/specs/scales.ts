@@ -4,7 +4,7 @@
  * chunk does not carry them.
  */
 import type { ThemeRuleTable } from '../spec.ts';
-import { paletteSlots } from './palettes.ts';
+import { LABEL_SCALE, paletteSlots } from './palettes.ts';
 
 /** v12's hue steps from the primary colour for slots 3–11 (khroma `adjust(…, { h })`). */
 const HUE_STEPS = [30, 60, 90, 120, 150, 210, 270, 300, 330] as const;
@@ -114,6 +114,34 @@ export const gitPalettes = (
   gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
   gitBranchLabel: sources.map(() => label),
 });
+
+type ScaleLists = Readonly<Record<string, readonly string[]>>;
+let baseScales: readonly [ScaleLists, ScaleLists] | undefined;
+
+/**
+ * The `cScale`, `cScaleInv`, `cScaleLabel`, `git`, `gitInv` and `gitBranchLabel` a theme spec
+ * leaves out, as v12 `theme-base.js` derives them, over the theme's own base colours: hue steps
+ * darkened by 25 (75 under `darkMode`), git darkened by 25 (lightened under `darkMode`, with
+ * black branch labels). So a theme with only base colours and a family draws every palette
+ * reader, as `BASE_SERIES` does for the series (D332). Keyed by `darkMode` (the author's, as
+ * `darkModePalettes` are), never by a theme's name (D331). Every built-in theme writes all six
+ * itself. Built on the first read, so a page whose themes write them never builds the rules.
+ */
+export function baseScalesFor(darkMode: boolean): ScaleLists {
+  if (!baseScales) {
+    const hues = hueSources(true);
+    const git = gitSources('primaryColor', 'secondaryColor', 'tertiaryColor');
+    baseScales = [
+      { ...darkenedScale(hues, 25), cScaleLabel: LABEL_SCALE, ...gitPalettes(git) },
+      {
+        ...darkenedScale(hues, 75),
+        cScaleLabel: LABEL_SCALE,
+        ...gitPalettes(git, 'lightenHsl', 'black'),
+      },
+    ];
+  }
+  return baseScales[darkMode ? 1 : 0];
+}
 
 /**
  * The badge and the callout border (D332) as one v12 theme derives gitGraph's commit label

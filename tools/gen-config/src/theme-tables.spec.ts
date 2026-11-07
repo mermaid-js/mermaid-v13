@@ -205,12 +205,34 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
         },
       },
     };
+    // cScale is derived from the base colours there as v12 theme-base derives it, so only the
+    // band read fails, as in the built-in themes.
     for (const s of synthetic)
-      expect(resolve(s, table), s.family).toEqual([
-        'scaleFill=currentColor',
-        'bandFill=currentColor',
-      ]);
-    // The built-in themes carry cScale, so only the band read fails there.
+      expect(resolve(s, table), s.family).toEqual(['bandFill=currentColor']);
     expect(resolve(specs[THEME_NAMES.indexOf('base')]!, table)).toEqual(['bandFill=currentColor']);
+  });
+
+  it.each(
+    synthetic.flatMap((s) =>
+      [false, true].map((darkMode) => [`${s.family}${s.dark ? ' dark' : ''}`, darkMode, s] as const)
+    )
+  )('%s (darkMode %s): the twelfth theme draws every scale and git palette', (_, darkMode, s) => {
+    const theme = createTheme(s, { themeVariables: { darkMode }, cssVariables: false });
+    const lengths = {
+      cScale: 12,
+      cScaleInv: 12,
+      cScaleLabel: 12,
+      git: 8,
+      gitInv: 8,
+      gitBranchLabel: 8,
+    };
+    for (const [p, n] of Object.entries(lengths)) {
+      const list = theme.palette(p as keyof typeof lengths);
+      expect(list, p).toHaveLength(n);
+      expect(
+        list.filter((c) => parseColor(c) === undefined),
+        p
+      ).toEqual([]);
+    }
   });
 });
