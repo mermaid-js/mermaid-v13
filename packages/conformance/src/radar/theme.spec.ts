@@ -50,8 +50,11 @@ function v12Radar(theme: string, themeVariables?: object): Block {
 }
 
 const VARS = radar.theme.vars;
-/** Flat v13 name → v12's nested `radar` key (the table's `nested`, D335). */
-const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested] as const);
+/**
+ * Flat v13 name → v12's nested `radar` key (the table's `nested`, D335). A var without one maps
+ * to `''`, which no v12 key equals, so the coverage test below fails on it.
+ */
+const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested ?? ''] as const);
 const isColour = (name: string): boolean => VARS[name]?.kind === 'color';
 
 const hex = (v: unknown): string | undefined => {
