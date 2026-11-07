@@ -137,6 +137,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:^
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -234,6 +237,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:^
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -423,6 +429,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-radar:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
@@ -482,6 +494,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -543,6 +558,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -760,6 +778,9 @@ importers:
       '@mermaid-js/diagram-quadrant':
         specifier: workspace:*
         version: link:../diagram-quadrant
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:*
+        version: link:../diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -900,6 +921,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../../packages/diagram-pie
+      '@mermaid-js/diagram-radar':
+        specifier: workspace:^
+        version: link:../../packages/diagram-radar
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../../packages/diagram-sequence

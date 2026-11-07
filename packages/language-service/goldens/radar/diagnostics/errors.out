@@ -1,0 +1,6 @@
+2:11-2:17 "circle" error UNEXPECTED: Expected a name such as `A`, got `circle`; `circles` starts with the keyword `circle`, and a name cannot be or start with `circle`, `polygon`, `true`, `false` or `title`: rename it.
+5:3-5:8 "curve" error UNEXPECTED: Expected `}`, got `curve`; the curve's `{` has no `}`.
+5:19-5:20 "X" warning RADAR_UNKNOWN_AXIS: `X` in curve `two` names no axis: the value is ignored. Declare the axis with `axis`, or use the name of one.
+6:9-6:20 "three{A: 1}" error RADAR_MISSING_ENTRY: Missing entry for axis B
+7:9-7:11 "40" warning RADAR_TICKS_CLAMPED: `ticks 40` is more than 32: the chart draws 32 rings.
+8:7-8:8 "-" error UNEXPECTED_CHARACTER: Unexpected character `-`; a radar chart has no negative values.

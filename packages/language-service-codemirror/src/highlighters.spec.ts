@@ -44,6 +44,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'packet',
       'pie',
       'quadrantChart',
+      'radar',
       'sequence',
       'state',
       'timeline',
@@ -140,6 +141,14 @@ describe('the per-type first-paint highlighters (D134)', () => {
         '::punctuation',
         '"Length":string',
       ]);
+    });
+
+    it('highlights a radar chart with the radar grammar', () => {
+      const out = spans('radar-beta\n  axis a["Speed"], b\n  curve c{1, 2}\n  max 5\n');
+      expect(out[0]).toBe('radar-beta:keyword');
+      expect(out).toContain('axis:keyword');
+      expect(out).toContain('curve:keyword');
+      expect(out).toContain('"Speed":string');
     });
 
     it('highlights a cynefin diagram with the cynefin grammar', () => {

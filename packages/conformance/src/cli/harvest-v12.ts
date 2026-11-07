@@ -64,6 +64,16 @@ export const HARVESTS = {
       'packages/parser/tests/info.test.ts',
     ],
   },
+  radar: {
+    header: 'radar-beta',
+    files: [
+      'packages/mermaid/src/diagrams/radar/radar.spec.ts',
+      'packages/parser/tests/radar.test.ts',
+      'packages/examples/src/examples/radar.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/radar.md',
+  },
   cynefin: {
     header: 'cynefin-beta',
     files: [

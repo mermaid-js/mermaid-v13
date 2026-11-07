@@ -2228,6 +2228,14 @@ extensionIcons?: {
  * via the `definition` "RadarDiagramConfig".
  */
 export interface RadarDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * The size of the radar diagram.
  */

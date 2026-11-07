@@ -1,0 +1,6 @@
+@ 4:13  curve one{|A: 1, B: 2}
+  prepare: 4:13-4:14 "A"; rename to "B":
+  refused: 'B' is already an axis id in this diagram.
+@ 6:10  curve o|ne{1, 2}
+  prepare: 6:9-6:12 "one"; rename to "B":
+  refused: 'B' is already a curve id in this diagram.

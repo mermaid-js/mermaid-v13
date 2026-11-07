@@ -82,6 +82,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'packet',
       'pie',
       'quadrant',
+      'radar',
       'sequence',
       'state',
       'timeline',

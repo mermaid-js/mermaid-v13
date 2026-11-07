@@ -43,6 +43,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   pie: 'packages/diagram-pie',
   packet: 'packages/diagram-packet',
   quadrantChart: 'packages/diagram-quadrant',
+  radar: 'packages/diagram-radar',
   cynefin: 'packages/diagram-cynefin',
 };
 
