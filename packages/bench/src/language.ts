@@ -166,8 +166,8 @@ const WARMUP_ROUNDS = 10;
  * so its best cycle is a few percent dearer. Second, a minor GC runs before each measured
  * call, so that call pays for the garbage it makes itself. Without it, a call pays for
  * whatever the call before it left in the young generation, a different amount every round.
- * A major GC is not used: it shrinks the heap, and the next calls then cost about three times
- * as much.
+ * A major GC is not used: on the hosted runner the calls after one cost about three times as
+ * much as the others.
  */
 export function bestOfEach(runs: number, ...fns: readonly ((run: number) => unknown)[]): number[] {
   for (let i = 0; i < WARMUP_ROUNDS; i++) for (const fn of fns) fn(i);
