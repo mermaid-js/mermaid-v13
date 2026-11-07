@@ -366,6 +366,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1571,6 +1572,72 @@ names are kept (`pieOuterCircle`, `pieCircle`, `highlighted`, `highlightedOnHove
 | Title and legend text set with d3 `.text()`: `<br>` and tags printed as written, entities decoded | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line, `<b>`/`<i>` are drawn bold and italic, entities decode; a legend label of several lines stays left-aligned | D225 |
 | The viewBox widened only for the title; many sections or a wide `top`/`bottom` legend were clipped | The viewBox covers everything drawn, and may start at a negative `x` or `y` | D224 |
 | `neo` and the redux themes: the same pie as the classic themes | The same: pie differs between families by colour only, with no gradient and no shadow | D227 |
+
+## Packet diagram
+
+The packet parser accepts the v12 language, `packet` and `packet-beta` (oracle parity over every
+e2e fixture, the v12 spec strings and the syntax page; grammar in
+[syntax/packet.md](./syntax/packet.md)). The differences:
+
+- **Error messages** for syntax errors are new, as for flowchart, and every error is reported,
+  not only the first.
+- **Misplaced fields (D341).** A field that ends before it starts, leaves a gap or overlaps the
+  previous one, or a `+0` field, gives v12's message as an error diagnostic on its bits, and
+  parsing goes on: the count resumes from that field's own end (a reversed field from its
+  start), so one misplaced field gives one error, not one per later field. The diagram is still
+  rejected, as in v12, which stopped at the first.
+- **Invalid config (D342).** A `rowHeight`, `bitWidth` or `bitsPerRow` below 1, a negative
+  padding, a fractional `bitsPerRow` or a value that is not a number falls back to the default,
+  with one `PACKET_CONFIG_INVALID` warning per key, where v12 drew fractional bit numbers,
+  negative widths or nothing. A numeric string (`"8"`) counts as its number, as v12 drew it.
+- **The 10,000-row cap (D342)** stays, now with one `PACKET_TRUNCATED` warning
+  ([Packet SVG structure](#packet-svg-structure) gives its size at the default limits).
+- **Labels and the title (D343, D344)** go through core's label layout and shrink to fit, and the
+  bounding box covers them ([Packet SVG structure](#packet-svg-structure)).
+- **Source mapping (D345).** Each field is the AST node `field:<start>-<end>`, from the range it
+  resolves to, so its id survives a label edit; a `+N` field's id moves when an earlier field
+  changes width.
+- **`format: 'ascii'`** is new (v12 had no text output): the rows as one table of boxes, two
+  columns a bit, labels cut to their field with `…`, the bit numbers above each row and the
+  title below (D347; [ASCII output](ascii.md#packet-diagrams)).
+
+### Packet theme colours
+
+v12 read `themeVariables.packet` (`startByteColor` … `blockFillColor`). v13 keeps that nested
+object and adds a flat name for each key (`packetStartByteColor` … `packetBlockStrokeWidth`, CSS
+`--mermaid-packetStartByteColor`, …); the flat name wins when both are set (D335, D540). An
+author's value wins in every theme, as in v12, and a nested key leaves the others on the
+theme's values. The lengths (10, 12 and 14 px, stroke 1) and the colours in `default`,
+`neutral`, `base`, `dark`, `neo`, `redux` and `redux-color` are v12's. What changed
+(`packages/conformance/src/packet/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `neo-dark` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: neo-dark's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
+| `redux-dark` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: redux-dark's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
+| `redux-dark-color` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: redux-dark-color's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
+| `forest` | Its own block: the five inks in `primaryTextColor` (`#321b67`), the blocks in `mainBkg` (`#cde498`), following an override of either | `default`'s black on `#efefef`, whatever forest's `primaryTextColor` and `mainBkg`. Set `themeVariables.packet` to draw v12 forest's | D541 |
+
+## Packet SVG structure
+
+What changed in the packet diagram's SVG compared with v12 (spec #421, DESIGN §7.2). v12's
+structure and class names are kept: one `<g>` per row holding, per piece of a field,
+`rect.packetBlock`, `text.packetLabel` and the `text.packetByte start` / `packetByte end` bit
+numbers, then `text.packetTitle`, so selectors that use them keep working. Every position is
+v12's.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="packet"`, a `<style>` scoped by the id that coloured and sized `.packetBlock`, `.packetLabel`, `.packetByte` and `.packetTitle` | No root `id`; `class="mermaid mermaid-packet"`, `role="img"`, `aria-roledescription="packet"`, `data-mermaid-version`. Paints are presentation attributes, colours reading `var(--_x)` aliases on the root `style`, which a host can re-theme with `--mermaid-packetLabelColor` and the other nine. What every piece shares is written once on the root and inherited: `font-family`, the labels' `fill`, the bit numbers' `font-size` and the blocks' `stroke-width`; each `rect` carries its `fill` and `stroke`, each bit number its `fill`, each label its `font-size`, the title its `fill` and `font-size`. No `<style>`, except under `theme: 'auto'`: core's light/dark sheet, scoped by `data-p` on the root, as for every type | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3); one copy of what every piece shares keeps large packets small |
+| No source mapping | Each field's first `rect.packetBlock` carries `data-ast="field:<start>-<end>"`; every piece's rect carries `data-id="<start>-<end>"` of its field, so the pieces of a field split across rows share one `data-id`. The row `<g>`s carry nothing | One `data-ast` element per AST node (R-PARSE-8, D345, pitfall 12) |
+| `text.packetTitle` always written, empty when the diagram has no title | Written only when there is a title | Nothing invisible is drawn |
+| Labels and the title set with d3 `.text()` and `dominant-baseline="middle"`: `<br>` and tags printed as written, `&amp;` printed literally | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line into `<tspan>`s, `<b>`/`<i>` render, entities decode; the text is placed by its baseline, centred where v12 centred it. A title of several lines keeps its first line where v12 drew its one line and grows down; a title taller than a row sits below the last row instead of over it. An empty label draws no `<text>` | D343 |
+| A label wider than its field ran over its neighbours | It shrinks to fit (its own `font-size`), down to the bit-number size (10 px), then overflows as in v12; each piece of a split field fits its own label | D343 |
+| Bit numbers with `dominant-baseline="auto"` | The same baseline, without the attribute (it is the default) | |
+| `viewBox="0 0 <bitWidth × bitsPerRow + 2> <height>"`: a title or label running past it was clipped | The same unless something runs past it: the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn, half the stroke included, and may start below 0 | D344 |
+| A `paddingX` wider than a piece drew a negative `width` | `width="0"` | D342 |
+| The 10,000-row cap dropped the fields past it silently and drew the rest | The same drawing, with one `PACKET_TRUNCATED` warning (D342). A diagram that reaches the cap draws about 430 characters a row, about 4.3 MB, past the default `maxOutputLength` (4,000,000), so at the default limits it fails with a `LIMIT` error; an integrator who raises `limits.maxOutputLength` gets it drawn | D342, R-SEC-5 |
+| `neo` and the redux themes: the same packet as the classic themes | The same: packet differs between families by colour and font only, with no gradient and no shadow | D227 |
 
 ## Quadrant chart SVG structure
 

@@ -1153,7 +1153,7 @@ properties:
     x-mermaid: { status: pending }
   packet:
     $ref: '#/$defs/PacketDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   block:
     $ref: '#/$defs/BlockDiagramConfig'
     x-mermaid: { status: pending }
@@ -4699,29 +4699,56 @@ $defs:
     type: object
     unevaluatedProperties: false
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the packet renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rowHeight:
         description: The height of each row in the packet diagram.
         type: number
         minimum: 1
         default: 32
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A value below 1, or one that is not a number, falls back to the default with one
+            `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12
+            drew it.
       bitWidth:
         description: The width of each bit in the packet diagram.
         type: number
         minimum: 1
         default: 32
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A value below 1, or one that is not a number, falls back to the default with one
+            `PACKET_CONFIG_INVALID` warning (D342); a numeric string counts as its number, as v12
+            drew it.
       bitsPerRow:
         description: The number of bits to display per row.
         type: number
         minimum: 1
         default: 32
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A value below 1, a fraction, or one that is not a number falls back to the default with
+            one `PACKET_CONFIG_INVALID` warning (D342), where v12 drew fractional bit numbers or
+            nothing.
       showBits:
         description: Toggle to display or hide bit numbers.
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       bitOrder:
         description: |
           The direction each row is numbered in. `descending` mirrors every row so it reads from
@@ -4736,19 +4763,30 @@ $defs:
           ascending: Number each row from its lowest bit on the left up to its highest bit on the right.
           descending: Number each row from its highest bit on the left down to its lowest bit on the right.
         default: ascending
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       paddingX:
         description: The horizontal padding between the blocks in a row.
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A negative value, or one that is not a number, falls back to the default with one
+            `PACKET_CONFIG_INVALID` warning (D342); a padding wider than a piece draws it 0 wide,
+            where v12 drew a negative width.
       paddingY:
         description: The vertical padding between the rows.
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A negative value, or one that is not a number, falls back to the default with one
+            `PACKET_CONFIG_INVALID` warning (D342).
 
   BlockDiagramConfig:
     title: Block Diagram Config

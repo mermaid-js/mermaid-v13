@@ -1,0 +1,2 @@
+6:1-6:1 "" warning PACKET_CONFIG_INVALID: packet.rowHeight is -4, not a number of 1 or more; using the default 32.
+6:1-6:1 "" warning PACKET_CONFIG_INVALID: packet.bitsPerRow is 0, not a whole number of 1 or more; using the default 32.

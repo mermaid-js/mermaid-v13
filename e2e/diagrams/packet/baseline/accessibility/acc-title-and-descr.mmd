@@ -1,0 +1,15 @@
+---
+description: >-
+  accTitle and a multi-line accDescr: drawn nothing extra, they name and
+  describe the SVG (title and desc elements)
+---
+packet
+  accTitle: UDP header
+  accDescr {
+    The four sixteen-bit fields
+    of a UDP header
+  }
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  +16: "Length"
+  +16: "Checksum"

@@ -1,0 +1,18 @@
+@ 1:5  pack|et
+  packet 1:1-1:7 "packet"
+@ 2:5  ti|tle TCP header
+  title 2:3-2:19 "title TCP header"
+@ 3:6  0-1|5: "Source Port"
+  field:0-15 3:3-3:22 "0-15: \"Source Port\""
+@ 3:18  0-15: "Source P|ort"
+  field:0-15 3:3-3:22 "0-15: \"Source Port\""
+@ 4:5  +1|6: "Destination Port"
+  field:16-31 4:3-4:26 "+16: \"Destination Port\""
+@ 5:10  32: "Fl|ag"
+  field:32-32 5:3-5:13 "32: \"Flag\""
+@ 6:6  acc|Title: x
+  accTitle 6:3-6:14 "accTitle: x"
+@ 8:10  long |text
+  accDescr 7:3-9:4 "accDescr {\n    long text\n  }"
+@ 10:1  |
+  none

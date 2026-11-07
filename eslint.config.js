@@ -206,6 +206,7 @@ export default tseslint.config(
       'packages/diagram-gantt/src/v12-specs/*.spec.ts',
       'packages/diagram-pie/src/v12-specs/*.spec.ts',
       'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
+      'packages/diagram-packet/src/v12-specs/*.spec.ts',
       'packages/diagram-cynefin/src/v12-specs/*.spec.ts',
     ],
     rules: {

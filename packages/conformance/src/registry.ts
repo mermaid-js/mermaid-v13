@@ -9,6 +9,7 @@ import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
 import { mindmapParityCorpus } from './mindmap/corpus.ts';
 import { mindmapAdapter } from './mindmap/v13.ts';
+import { packetAdapter } from './packet/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
@@ -105,6 +106,12 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/quadrant-cases.json',
     ],
     corpus: quadrantParityCorpus,
+  },
+  {
+    adapter: packetAdapter,
+    corpusDirs: ['e2e/diagrams/packet'],
+    // The cases run in `packet/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
+    corpusFiles: ['packages/conformance/corpus/packet-v12-specs.json'],
   },
   {
     adapter: cynefinAdapter,

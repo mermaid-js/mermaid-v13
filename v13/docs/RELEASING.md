@@ -17,6 +17,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-timeline` | The timeline plugin (SVG; `timeline`, `LR` and `TD`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-info` | The info diagram plugin (SVG and text; `info`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-pie` | The pie chart plugin (SVG; `pie`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-packet` | The packet diagram plugin (SVG, and text output from `/ascii`; `packet`, `packet-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-cynefin` | The Cynefin framework plugin (SVG; `cynefin-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-mindmap` | The mindmap plugin (SVG; `mindmap`). | with `mermaid/slim` |

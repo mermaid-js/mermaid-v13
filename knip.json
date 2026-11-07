@@ -47,6 +47,7 @@
         "@mermaid-js/diagram-mindmap",
         "@mermaid-js/diagram-gitgraph",
         "@mermaid-js/diagram-gantt",
+        "@mermaid-js/diagram-packet",
         "@mermaid-js/diagram-cynefin"
       ]
     },

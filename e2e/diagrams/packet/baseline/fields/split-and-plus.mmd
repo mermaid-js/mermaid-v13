@@ -1,0 +1,13 @@
+---
+description: >-
+  fields split across rows (one over three rows), +N fields after ranges and
+  after other +N fields, and single bits, with bit numbers at each piece's ends
+---
+packet
+  0-7: "Version"
+  8-47: "Split over two rows"
+  +4: "Nibble"
+  +1: "Bit"
+  +3: "Three"
+  56-159: "One field over four rows"
+  160: "Last"
