@@ -238,6 +238,21 @@ flags and opacities, which are read literally.
 | `mindmapOutlinedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
 | `mindmapBorderEdges` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `true` |
 
+### packet
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `packetStartByteColor` | `packet.startByteColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetEndByteColor` | `packet.endByteColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetLabelColor` | `packet.labelColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetTitleColor` | `packet.titleColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetBlockStrokeColor` | `packet.blockStrokeColor` | color | `black` | `black` | `#e0dfdf` | `#e0dfdf` | `black` | `#e0dfdf` | `black` | `black` | `black` | `black` | `#e0dfdf` |
+| `packetBlockFillColor` | `packet.blockFillColor` | color | `#efefef` | `#efefef` | `#333333` | `#333333` | `#efefef` | `#333333` | `#efefef` | `#efefef` | `#efefef` | `#efefef` | `#333333` |
+| `packetByteFontSize` | `packet.byteFontSize` | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `packetLabelFontSize` | `packet.labelFontSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+| `packetTitleFontSize` | `packet.titleFontSize` | length | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` |
+| `packetBlockStrokeWidth` | `packet.blockStrokeWidth` | length | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` |
+
 ### pie
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
