@@ -38,4 +38,4 @@ The integration PR stays a draft until every ticket is merged, the final whole-b
 
 ## Environment notes
 
-- `check:grammar` twice reported kanban's four generated grammar files stale right after a merge (push of 9a0a28b67, and T3 part 2); `gen:grammar` changed nothing and the next run passed. Seen only right after `pnpm install`; rerun before regenerating.
+- `check:grammar` "stale kanban grammar" was real, not a flake: `grammar/generated/` is gitignored and the four files were never committed, so local runs passed against the files on disk and CI's clean checkout failed. Fixed in a3cd2e0fb (`git add -f`, as mindmap and info do). Any new generated file under a `generated/` folder needs `git add -f`.
