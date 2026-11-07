@@ -4,6 +4,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## Orchestrator choices
 
+- **Shared v12 harvester (coordinator decision, 2026-11-07).** Cynefin's own `harvest-cynefin.ts`/`cynefin/harvest.ts` are replaced by packet's generic `conformance/src/cli/harvest-v12.ts` (`HARVESTS` table, `harvest-v12.spec.ts` drift check), copied verbatim from `feature/421_packet` at `5be2820a3` with a `cynefin` row in place of packet's (packet's corpus is not on this branch; the two merge as a union of rows). `harvest-pie.ts` goes as on packet's branch; pie's corpus is unchanged. Three valid doc sources the generic fence rule skips moved to `cynefin-cases.json`.
+
 - **Escalations go in GAPS and the PR, not DECISIONS.md.** The spec's Further Notes reserve D360 and D368–D369 for the maintainer's answers. No answer has come back, so the cross-type detection change (#469), `LanguageFacet.declaredOnly` (#470) and the other choices are listed "For the maintainer" and no D-id is written.
 
 - **No T0, no T7.** Cynefin needs no core change of its own (it relies on #414's T0a) and has no ASCII output (D320).

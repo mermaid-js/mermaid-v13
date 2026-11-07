@@ -58,7 +58,6 @@ const EXCLUDED: ReadonlyMap<string, string> = new Map([
 ]);
 /** Why v12 never detects a source as cynefin: header-less, or the header is not `cynefin-beta`. */
 const UNDETECTED = {
-  fragment: 'a doc fragment with no header (v12 docs show it inside a diagram)',
   glued: '`cynefin-betax`: the detector wants a blank, `:` or the end after the header',
   upper: '`CYNEFIN-BETA`: the detector is case-sensitive',
   cut: '`commented()` splits a source of two lines or fewer mid-text, cutting the header in half',
@@ -66,8 +65,6 @@ const UNDETECTED = {
 /** Every gate source v12 never lexes, by id, and why. The dropped set must equal it. */
 const NOT_DETECTED: ReadonlyMap<string, string> = new Map([
   ...['', ' (CRLF)', ' (commented)'].flatMap((v): [string, string][] => [
-    [`v12-docs/cynefin.md#2${v}`, UNDETECTED.fragment],
-    [`v12-docs/cynefin.md#3${v}`, UNDETECTED.fragment],
     [`cynefin-cases/header-glued-word${v}`, UNDETECTED.glued],
     [`cynefin-cases/header-upper${v}`, UNDETECTED.upper],
   ]),

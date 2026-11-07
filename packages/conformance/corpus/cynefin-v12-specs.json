@@ -73,34 +73,14 @@
   },
   {
     "id": "v12-docs/cynefin.md#1",
-    "source": "cynefin-beta\ntitle Optional Diagram Title\n\ncomplex\n\"Item label\"\n\"Another item\"\n\ncomplicated\n\"Expert analysis needed\"\n\nclear\n\"Known procedure\"\n\nchaotic\n\"Crisis response\"\n\nconfusion\n\"Item of unknown domain\"\n\ncomplex --> complicated : \"Pattern identified\"\nclear --> chaotic : \"Complacency\"\n"
-  },
-  {
-    "id": "v12-docs/cynefin.md#2",
-    "source": "complex\n  \"Investigate root cause\"\n  \"Run chaos experiment\"\n"
-  },
-  {
-    "id": "v12-docs/cynefin.md#3",
-    "source": "complex --> complicated : \"Pattern identified\"\nclear --> chaotic : \"Complacency\"\nchaotic --> complex : \"Stabilized\"\n"
-  },
-  {
-    "id": "v12-docs/cynefin.md#4",
     "source": "cynefin-beta\n  title Incident Response\n\n  complex\n    \"Investigate root cause\"\n    \"Run chaos experiment\"\n\n  complicated\n    \"Analyze performance data\"\n    \"Expert review needed\"\n\n  clear\n    \"Restart service\"\n    \"Apply known fix\"\n\n  chaotic\n    \"Page on-call immediately\"\n\n  confusion\n    \"Unknown failure mode\"\n"
   },
   {
-    "id": "v12-docs/cynefin.md#5",
+    "id": "v12-docs/cynefin.md#2",
     "source": "cynefin-beta\n  title Strategy Categorization\n\n  complex\n    \"Market research\"\n\n  complicated\n    \"Competitive analysis\"\n\n  clear\n    \"Standard pricing\"\n\n  chaotic\n    \"Crisis management\"\n\n  complex --> complicated : \"Pattern identified\"\n  complicated --> clear : \"Best practice codified\"\n  clear --> chaotic : \"Complacency\"\n  chaotic --> complex : \"Stabilized\"\n"
   },
   {
-    "id": "v12-docs/cynefin.md#6",
+    "id": "v12-docs/cynefin.md#3",
     "source": "cynefin-beta\n  title Cynefin Framework\n\n  complex\n  complicated\n  clear\n  chaotic\n"
-  },
-  {
-    "id": "v12-docs/cynefin.md#7",
-    "source": "---\nconfig:\n  cynefin:\n    width: 1000\n    showDomainDescriptions: false\n---\ncynefin-beta\n  complex\n    \"Adaptive work\"\n"
-  },
-  {
-    "id": "v12-docs/cynefin.md#8",
-    "source": "cynefin-beta\n  accTitle: Cynefin framework for software delivery decisions\n  accDescr: A Cynefin map categorizing software tasks by complexity domain\n\n  complex\n    \"New feature discovery\"\n"
   }
 ]

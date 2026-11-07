@@ -746,5 +746,17 @@
   {
     "id": "cynefin-cases/unclosed-directive-init",
     "source": "cynefin-beta\n%%{init: {\ncomplex"
+  },
+  {
+    "id": "cynefin-cases/docs-syntax-template",
+    "source": "cynefin-beta\ntitle Optional Diagram Title\n\ncomplex\n\"Item label\"\n\"Another item\"\n\ncomplicated\n\"Expert analysis needed\"\n\nclear\n\"Known procedure\"\n\nchaotic\n\"Crisis response\"\n\nconfusion\n\"Item of unknown domain\"\n\ncomplex --> complicated : \"Pattern identified\"\nclear --> chaotic : \"Complacency\"\n"
+  },
+  {
+    "id": "cynefin-cases/docs-config-front-matter",
+    "source": "---\nconfig:\n  cynefin:\n    width: 1000\n    showDomainDescriptions: false\n---\ncynefin-beta\n  complex\n    \"Adaptive work\"\n"
+  },
+  {
+    "id": "cynefin-cases/docs-accessibility",
+    "source": "cynefin-beta\n  accTitle: Cynefin framework for software delivery decisions\n  accDescr: A Cynefin map categorizing software tasks by complexity domain\n\n  complex\n    \"New feature discovery\"\n"
   }
 ]
