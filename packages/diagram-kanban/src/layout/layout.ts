@@ -15,6 +15,7 @@
  * side by side are stacked; the px layout is unchanged.
  */
 import type { Warning } from '@mermaid-js/core';
+import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { isBarPriority } from '../priority.ts';
@@ -26,7 +27,6 @@ import {
   COLUMN_TOP,
   configLengths,
   FONT_WEIGHT,
-  KANBAN_CONFIG_IGNORED,
   KANBAN_METRICS,
   LENGTH_KEYS,
   METRIC_AXIS,

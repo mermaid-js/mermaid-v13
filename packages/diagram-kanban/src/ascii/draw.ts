@@ -15,7 +15,8 @@ import {
   type CellRect,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
-import type { KanbanLayout, KanbanPriority, PlacedLabel, Rect } from '../layout/index.ts';
+import type { KanbanLayout, PlacedLabel, Rect } from '../layout/index.ts';
+import type { KanbanPriority } from '../priority.ts';
 
 /** The tag a priority puts on a card's top border in the `ascii` charset, in brackets. */
 const PRIORITY_TAGS: Readonly<Record<KanbanPriority, string>> = {
