@@ -1,0 +1,188 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-cynefin",
+  "scopeName": "source.mermaid-cynefin",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-cynefin"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-cynefin"
+    },
+    "rule-0": {
+      "match": "cynefin-beta:",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-1": {
+      "match": "cynefin-beta(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-2": {
+      "match": "-->",
+      "name": "keyword.operator.mermaid-cynefin"
+    },
+    "rule-3": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-cynefin"
+    },
+    "rule-4": {
+      "match": "complex|complicated|clear|chaotic|confusion",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-5": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-6": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-7": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-8": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-cynefin"
+    },
+    "rule-9": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-cynefin"
+    },
+    "rule-10": {
+      "match": "\\r?\\n"
+    },
+    "rule-11": {
+      "match": "[\\t ]+"
+    },
+    "rule-12": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-cynefin"
+    },
+    "rule-13": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-cynefin"
+    },
+    "rule-14": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-cynefin"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-cynefin"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-cynefin"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-cynefin"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-cynefin"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

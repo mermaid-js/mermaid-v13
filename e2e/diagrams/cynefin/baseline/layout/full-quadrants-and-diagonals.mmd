@@ -1,0 +1,24 @@
+---
+config:
+  cynefin:
+    seed: 99
+description: five items in a quadrant (the fifth crosses the horizon as in v12, D361), a label wider than its quadrant, diagonal transitions through the confusion ellipse, a reverse pair and a label-less transition
+---
+cynefin-beta
+  title Busy quadrants
+  complex
+    "One"
+    "Two"
+    "Three"
+    "Four"
+    "Five"
+  complicated
+    "A label much wider than the quadrant it sits in, to show the box growing"
+  chaotic
+    "Act"
+  clear
+    "Categorise"
+  complex --> clear : "diagonal"
+  clear --> complex : "back again"
+  chaotic --> complicated
+  complicated --> chaotic : "crisis"

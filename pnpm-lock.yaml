@@ -104,6 +104,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:^
+        version: link:../diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
@@ -198,6 +201,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:^
+        version: link:../diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
@@ -351,6 +357,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-cynefin:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-er:
     devDependencies:
       '@mermaid-js/core':
@@ -437,6 +449,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:*
+        version: link:../diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
@@ -495,6 +510,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:*
+        version: link:../diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
@@ -709,6 +727,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:*
+        version: link:../diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
@@ -849,6 +870,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class
+      '@mermaid-js/diagram-cynefin':
+        specifier: workspace:^
+        version: link:../../packages/diagram-cynefin
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../../packages/diagram-er

@@ -1,5 +1,6 @@
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
+import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { infoAdapter } from './info/v13.ts';
@@ -110,6 +111,11 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: radarAdapter,
     corpusDirs: ['e2e/diagrams/radar'],
     corpusFiles: ['packages/conformance/corpus/radar-v12-specs.json'],
+  },
+  {
+    adapter: cynefinAdapter,
+    corpusDirs: ['e2e/diagrams/cynefin'],
+    corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
   },
 ];
 

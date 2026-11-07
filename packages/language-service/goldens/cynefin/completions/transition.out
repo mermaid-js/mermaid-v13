@@ -1,0 +1,15 @@
+@ 2:12  complex -|
+  --> operator (then a domain) 2:11-2:12 "-" -> "--> "
+@ 3:15  complex --> |
+  complicated keyword (Sense → Analyse → Respond · Good Practices) 3:15-3:15 "" -> "complicated"
+  clear keyword (Sense → Categorise → Respond · Best Practices) 3:15-3:15 "" -> "clear"
+  chaotic keyword (Act → Sense → Respond · Novel Practices) 3:15-3:15 "" -> "chaotic"
+  confusion keyword (Disorder) 3:15-3:15 "" -> "confusion"
+@ 4:17  complex --> ch|
+  chaotic keyword (Act → Sense → Respond · Novel Practices) 4:15-4:17 "ch" -> "chaotic"
+@ 5:21  complex --> clear |
+  : operator (then the label) 5:21-5:21 "" -> ": "
+@ 6:23  complex --> clear : |
+  " value (an item such as "Probe") 6:23-6:23 "" -> "\""
+@ 7:39  complex --> clear : "Pattern found" |
+  none

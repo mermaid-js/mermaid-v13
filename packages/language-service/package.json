@@ -30,6 +30,7 @@
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
+    "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-gantt": "workspace:*",
@@ -46,6 +47,9 @@
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-class": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-cynefin": {
       "optional": true
     },
     "@mermaid-js/diagram-er": {
@@ -91,6 +95,7 @@
   "devDependencies": {
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
+    "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-gantt": "workspace:*",

@@ -23,4 +23,5 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   mindmap: () => import('./generated/mindmap.parser.js').then((m) => m.parser),
   gantt: () => import('./generated/gantt.parser.js').then((m) => m.parser),
   radar: () => import('./generated/radar.parser.js').then((m) => m.parser),
+  cynefin: () => import('./generated/cynefin.parser.js').then((m) => m.parser),
 };
