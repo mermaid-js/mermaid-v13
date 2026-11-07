@@ -51,12 +51,13 @@ describe('the sequence language-service bench fixture', () => {
 describe('the R-LANG-4 budget for sequence, as ratios', () => {
   /**
    * 4.5, not 4 as for flowchart. A cycle holds three structural parses (`update`, the rename's
-   * read-back of the renamed text, and the completions probe) plus semantic tokens, so its
-   * best runs sit at 3.6–3.85 bare parses under vitest; `cpuUsage` counts GC, and under load
-   * single best-of-25 runs reach 4.05–4.2. `isValidId` is one small parse (about 0.03 ms) and
-   * no longer a factor. Outside vitest (tsx) a bare parse is about three times faster while
-   * semantic tokens are not, so the same cycle is about five bare parses there: the ratio is
-   * only meaningful under the runner that measures it.
+   * read-back of the renamed text, and the completions probe) plus semantic tokens, so it
+   * measures 3.5–3.9 bare parses under vitest, locally and on the hosted runner. Before
+   * `bestOfEach` warmed up and collected the young generation, a cold best of 25 read up to 4.1
+   * on a slow hosted runner, and failed at 4.68 (#348). `isValidId` is one small parse (about
+   * 0.03 ms) and no longer a factor. Outside vitest (tsx) a bare parse is about three times
+   * faster while semantic tokens are not, so the same cycle is about five bare parses there:
+   * the ratio is only meaningful under the runner that measures it.
    */
   it('a cycle costs at most four and a half bare parses', () => {
     const texts = typing(SEQUENCE_FIXTURE);
