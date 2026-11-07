@@ -1795,7 +1795,8 @@ Class lists are written with single spaces and no trailing blank.
 
 - **SVG only:** `kanban` is detected by v12's case-sensitive detector with no word boundary
   (`kanban`, `kanbanBoard`; not `Kanban`), between `c4` and `classDiagram` as in v12.
-  `format: 'ascii'` throws `UnsupportedFormatError`.
+  `format: 'ascii'` throws `UnsupportedFormatError`. The language service, CodeMirror and Monaco
+  know it.
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
   error is reported, not only the first, with messages in words (R-PARSE-4). As in v12, an item
