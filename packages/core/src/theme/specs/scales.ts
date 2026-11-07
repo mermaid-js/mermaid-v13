@@ -62,6 +62,16 @@ export const DARK_HUE_SOURCES = hueSources(
 );
 
 /**
+ * `cScaleLabel` of `redux-dark` (D544): v12's label ink `scaleLabelColor` where it reads on the
+ * slot's fill (AA), else black where black reads better. Its fills are v12's (D258): all black
+ * but slot 8, a light grey on which v12's `#e0dfdf` is 1.38:1. Not `neo-dark`, whose mindmap and
+ * timeline draw the label on `mainBkg` under the gradient, where black would be about 1.3:1.
+ */
+export const CONTRAST_LABELS = paletteSlots(
+  (i) => `contrast(cScale${i}, scaleLabelColor, #000000)`
+);
+
+/**
  * `cScaleLabel` where v12 writes `scaleLabelColor || 'black'` under `darkMode` (`theme-dark.js`,
  * `theme-neutral.js`).
  */
