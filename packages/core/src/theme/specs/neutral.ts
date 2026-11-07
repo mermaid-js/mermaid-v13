@@ -1,44 +1,15 @@
 /**
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
 import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
-  CLASSIC_MINDMAP,
-  CLASSIC_GITGRAPH,
-  TEXT_SIZES,
-} from './geometry.ts';
-
-/** v12 `theme-neutral.js`: `pie<i>` is `cScale<i>`, `pie12` is `cScale0`. */
-const PIE_NEUTRAL: ThemeRuleTable = {
-  ...pieSlots([
-    '#f4f4f4',
-    '#555555',
-    '#bbbbbb',
-    '#777777',
-    '#999999',
-    '#dddddd',
-    '#ffffff',
-    '#dddddd',
-    '#bbbbbb',
-    '#999999',
-    '#777777',
-    '#555555',
-  ]),
-  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
-  pieTitleTextColor: '#333333',
-  pieLegendTextColor: '#333333',
-};
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#eeeeee',
     secondaryColor: '#fcfcfc',
@@ -58,28 +29,21 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
-    ...CLASSIC_TIMELINE,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
-  rules: { ...PIE_NEUTRAL, ...gitLabelRules('#030303', '#d4d4d4') },
+  rules: gitLabelRules('#030303', '#d4d4d4'),
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
-    altBackground: '#f4f4f4', // v12 (#192)
-    // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
-    actorBorder: '#d4d4d4',
-    actorTextColor: '#333333',
-    signalColor: '#333333',
-    signalTextColor: '#333333',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: '#333333',
+    nestedBkg: '#f4f4f4', // v12 `altBackground` (#192)
+    // v12 theme-neutral.js: the participant border is lighten(border1, 23)
+    softBorder: '#d4d4d4',
+    scaleLabelColor: '#333333', // v12: `labelTextColor` (D334)
+    linkInkColor: '#333333',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#999999',
     clusterBkg: '#fcfcfc',
@@ -93,8 +57,8 @@ const theme: ThemeSpec = {
     noteBorderColor: '#999999',
     // v12 theme-neutral sets the ER rows in its constructor, so they never follow an
     // override: khroma lighten(#eee, 75) is white (D117).
-    rowOdd: '#ffffff',
-    rowEven: '#f4f4f4',
+    rowBkg: '#ffffff',
+    rowAltBkg: '#f4f4f4',
   },
   // v12 theme-neutral.js: fixed greys; labels 0 and 2 take cScale1.
   palettes: {
@@ -113,8 +77,14 @@ const theme: ThemeSpec = {
       '#777777',
     ],
     cScaleInv: INVERTED_SCALE,
+    // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`; then the
+    // tints.
+    seriesColorArray: series(
+      '#f4f4f4 #555555 #bbbbbb #777777 #999999 #dddddd #ffffff #dddddd #bbbbbb #999999 #777777 #555555 ' +
+        '#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'
+    ),
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
-    cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : '#333333')),
+    cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
     // v12 theme-neutral.js: pie1 darkened by 25, then pie2–pie8; labels 1 and 3 white, the
     // others its own text colour, as for cScaleLabel. v12's `pie<i>` is `cScale<i>` here; the
     // shared palette reads `cScale<i>`, never pie's (D334).

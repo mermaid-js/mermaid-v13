@@ -6,6 +6,7 @@ import type { UnitProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import type { ThemeSpec } from '@mermaid-js/core/theme';
 import {
   detectSequence,
@@ -66,7 +67,7 @@ describe('sequence layout invariants on parsed models', () => {
             config: { sequence } as unknown as ResolvedConfig,
             measurer,
             units,
-            theme: createTheme(spec, {}),
+            theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
             warn: () => {},
           });
           laid++;
@@ -91,7 +92,7 @@ describe('sequence layout invariants on parsed models', () => {
       config: { sequence: {} } as unknown as ResolvedConfig,
       measurer: tableMeasurer,
       units: pxProfile,
-      theme: createTheme(spec, {}),
+      theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
       warn: () => {},
     });
     const found = sequenceLayoutViolations(result.model, layout);
@@ -112,7 +113,7 @@ describe('sequence message labels in cells', () => {
       config: { sequence: { wrap } } as unknown as ResolvedConfig,
       measurer: cellMeasurer,
       units: cellProfile(),
-      theme: createTheme(spec, {}),
+      theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
       warn: () => {},
     });
 

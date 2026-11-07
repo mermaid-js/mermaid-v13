@@ -3,6 +3,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { journeyLayoutViolations, layoutJourney, parseJourney } from '@mermaid-js/diagram-journey';
 import type { CorpusItem } from '../types.ts';
 import { journeyGrammarCorpus } from './corpus.ts';
@@ -49,7 +50,7 @@ describe('journey layout invariants on parsed models', () => {
           const layout = layoutJourney(model, {
             config: { journey: { ...own, ...extra } } as unknown as ResolvedConfig,
             measurer: tableMeasurer,
-            theme: createTheme(specs.get(theme) as ThemeSpec),
+            theme: createTheme(specs.get(theme) as ThemeSpec, { diagram: DIAGRAM_TABLES.journey }),
             warn: () => {},
           });
           const v = journeyLayoutViolations(model, layout);

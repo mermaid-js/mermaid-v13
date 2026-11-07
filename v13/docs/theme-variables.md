@@ -12,28 +12,27 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, gitgraph |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
-| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
-| `background` | `--mermaid-background` | base | color | | | all | core |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
+| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
+| `background` | `--mermaid-background` | base | color | | | all | core, state |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, pie, info |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, gitgraph, gantt, info |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, info |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
-| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
+| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
-| `classText` | `--mermaid-classText` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | class |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color |  |
@@ -41,90 +40,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, neutral, neo-dark | core, sequence, class, state |
 | `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state |
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state |
-| `actorBkg` | `--mermaid-actorBkg` | derived | color | `mainBkg` | `mainBkg` | | sequence |
-| `actorBorder` | `--mermaid-actorBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
-| `actorTextColor` | `--mermaid-actorTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | sequence |
-| `actorLineColor` | `--mermaid-actorLineColor` | derived | color | `actorBorder` | `actorBorder` | | sequence |
-| `signalColor` | `--mermaid-signalColor` | derived | color | `textColor` | `textColor` | redux-dark, redux-dark-color, dark, forest, neutral | sequence |
-| `signalTextColor` | `--mermaid-signalTextColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
-| `labelBoxBkgColor` | `--mermaid-labelBoxBkgColor` | derived | color | `actorBkg` | `actorBkg` | | sequence |
-| `labelBoxBorderColor` | `--mermaid-labelBoxBorderColor` | derived | color | `actorBorder` | `actorBorder` | redux-dark, redux-dark-color, forest | sequence |
-| `labelTextColor` | `--mermaid-labelTextColor` | derived | color | `actorTextColor` | `actorTextColor` | | sequence |
-| `loopTextColor` | `--mermaid-loopTextColor` | derived | color | `actorTextColor` | `actorTextColor` | | sequence |
-| `activationBkgColor` | `--mermaid-activationBkgColor` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
-| `activationBorderColor` | `--mermaid-activationBorderColor` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
-| `sequenceNumberColor` | `--mermaid-sequenceNumberColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
 | `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark, neo, neo-dark | core |
-| `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
-| `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
-| `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
-| `pie1` | `--mermaid-pie1` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
-| `pie2` | `--mermaid-pie2` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
-| `pie3` | `--mermaid-pie3` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark-color, default, dark, neutral, neo | pie |
-| `pie4` | `--mermaid-pie4` | derived | color | `darkenHsl(primaryColor, 10%)` | `darkenHsl(primaryColor, 10%)` | redux-color, redux, redux-dark-color, dark, forest, neutral, neo | pie |
-| `pie5` | `--mermaid-pie5` | derived | color | `darkenHsl(secondaryColor, 10%)` | `darkenHsl(secondaryColor, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie6` | `--mermaid-pie6` | derived | color | `darkenHsl(tertiaryColor, 10%)` | `darkenHsl(tertiaryColor, 10%)` | redux-color, redux, redux-dark-color, default, dark, forest, neutral, neo | pie |
-| `pie7` | `--mermaid-pie7` | derived | color | `#c5ffaa` | `#c5ffaa` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie8` | `--mermaid-pie8` | derived | color | `#ffaac5` | `#ffaac5` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie9` | `--mermaid-pie9` | derived | color | `#ddfff4` | `#ddfff4` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie10` | `--mermaid-pie10` | derived | color | `#a3ff77` | `#a3ff77` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie11` | `--mermaid-pie11` | derived | color | `#ff77a3` | `#ff77a3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie12` | `--mermaid-pie12` | derived | color | `#aaffe3` | `#aaffe3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pieTitleTextSize` | `--mermaid-pieTitleTextSize` | token | length | | | all | pie |
-| `pieTitleTextColor` | `--mermaid-pieTitleTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
-| `pieSectionTextSize` | `--mermaid-pieSectionTextSize` | token | length | | | all | pie |
-| `pieSectionTextColor` | `--mermaid-pieSectionTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
-| `pieLegendTextSize` | `--mermaid-pieLegendTextSize` | token | length | | | all | pie |
-| `pieLegendTextColor` | `--mermaid-pieLegendTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
-| `pieStrokeColor` | `--mermaid-pieStrokeColor` | derived | color | `black` | `black` | | pie |
-| `pieStrokeWidth` | `--mermaid-pieStrokeWidth` | token | length | | | all | pie |
-| `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
-| `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
-| `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
-| `quadrant1Fill` | `--mermaid-quadrant1Fill` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, neo | quadrant |
-| `quadrant2Fill` | `--mermaid-quadrant2Fill` | derived | color | `adjust(quadrant1Fill, 5, 5, 5)` | `adjust(quadrant1Fill, 5, 5, 5)` | | quadrant |
-| `quadrant3Fill` | `--mermaid-quadrant3Fill` | derived | color | `adjust(quadrant1Fill, 10, 10, 10)` | `adjust(quadrant1Fill, 10, 10, 10)` | | quadrant |
-| `quadrant4Fill` | `--mermaid-quadrant4Fill` | derived | color | `adjust(quadrant1Fill, 15, 15, 15)` | `adjust(quadrant1Fill, 15, 15, 15)` | | quadrant |
-| `quadrant1TextFill` | `--mermaid-quadrant1TextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrant2TextFill` | `--mermaid-quadrant2TextFill` | derived | color | `adjust(primaryTextColor, -5, -5, -5)` | `adjust(primaryTextColor, -5, -5, -5)` | | quadrant |
-| `quadrant3TextFill` | `--mermaid-quadrant3TextFill` | derived | color | `adjust(primaryTextColor, -10, -10, -10)` | `adjust(primaryTextColor, -10, -10, -10)` | | quadrant |
-| `quadrant4TextFill` | `--mermaid-quadrant4TextFill` | derived | color | `adjust(primaryTextColor, -15, -15, -15)` | `adjust(primaryTextColor, -15, -15, -15)` | | quadrant |
-| `quadrantPointFill` | `--mermaid-quadrantPointFill` | derived | color | `textColor` | `textColor` | | quadrant |
-| `quadrantPointTextFill` | `--mermaid-quadrantPointTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantXAxisTextFill` | `--mermaid-quadrantXAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantYAxisTextFill` | `--mermaid-quadrantYAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `commitLabelColor` | `--mermaid-commitLabelColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `commitLabelBackground` | `--mermaid-commitLabelBackground` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `commitLabelFontSize` | `--mermaid-commitLabelFontSize` | token | length | | | all | gitgraph |
-| `tagLabelColor` | `--mermaid-tagLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
-| `tagLabelBackground` | `--mermaid-tagLabelBackground` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
-| `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
-| `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
-| `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all | gitgraph |
-| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark | gitgraph |
-| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark, neo-dark | gitgraph |
-| `sectionBkgColor` | `--mermaid-sectionBkgColor` | derived | color | `tertiaryColor` | `tertiaryColor` | | gantt |
-| `altSectionBkgColor` | `--mermaid-altSectionBkgColor` | derived | color | `white` | `white` | | gantt |
-| `sectionBkgColor2` | `--mermaid-sectionBkgColor2` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `excludeBkgColor` | `--mermaid-excludeBkgColor` | derived | color | `#eeeeee` | `#eeeeee` | | gantt |
-| `gridColor` | `--mermaid-gridColor` | derived | color | `lightgrey` | `lightgrey` | | gantt |
-| `todayLineColor` | `--mermaid-todayLineColor` | derived | color | `red` | `red` | | gantt |
-| `vertLineColor` | `--mermaid-vertLineColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
-| `taskBkgColor` | `--mermaid-taskBkgColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `taskBorderColor` | `--mermaid-taskBorderColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
-| `activeTaskBkgColor` | `--mermaid-activeTaskBkgColor` | derived | color | `lightenHsl(primaryColor, 23%)` | `lightenHsl(primaryColor, 23%)` | | gantt |
-| `activeTaskBorderColor` | `--mermaid-activeTaskBorderColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
-| `doneTaskBkgColor` | `--mermaid-doneTaskBkgColor` | derived | color | `lightgrey` | `lightenHsl(mainBkg, 16%)` | | gantt |
-| `doneTaskBorderColor` | `--mermaid-doneTaskBorderColor` | derived | color | `grey` | `grey` | | gantt |
-| `critBkgColor` | `--mermaid-critBkgColor` | derived | color | `red` | `red` | | gantt |
-| `critBorderColor` | `--mermaid-critBorderColor` | derived | color | `#ff8888` | `#ff8888` | | gantt |
-| `taskTextColor` | `--mermaid-taskTextColor` | derived | color | `textColor` | `textColor` | | gantt |
-| `taskTextOutsideColor` | `--mermaid-taskTextOutsideColor` | derived | color | `textColor` | `textColor` | | gantt |
-| `taskTextDarkColor` | `--mermaid-taskTextDarkColor` | derived | color | `textColor` | `textColor` | | gantt |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap |
@@ -135,84 +52,31 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state |
 | `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state |
 | `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state |
-| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart |
-| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart |
-| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
-| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
-| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
-| `classMarkerStrokeWidth` | `--mermaid-classMarkerStrokeWidth` | token | length | | | all | class |
-| `classFilledMarkerStrokeWidth` | `--mermaid-classFilledMarkerStrokeWidth` | token | length | | | all | class |
-| `extensionMarkerLength` | `--mermaid-extensionMarkerLength` | token | length | | | all | class |
-| `extensionMarkerGap` | `--mermaid-extensionMarkerGap` | token | length | | | all | class |
-| `compositionMarkerGap` | `--mermaid-compositionMarkerGap` | token | length | | | all | class |
-| `dependencyMarkerGap` | `--mermaid-dependencyMarkerGap` | token | length | | | all | class |
-| `classTerminalFontSize` | `--mermaid-classTerminalFontSize` | token | length | | | all | class |
-| `erZeroOrMoreCircleOffset` | `--mermaid-erZeroOrMoreCircleOffset` | token | length | | | all | er |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap |
-| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
-| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
 | `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap |
 | `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
 | `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
-| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
-| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
-| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
-| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
-| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
-| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart |
-| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart |
-| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
-| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
-| `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
-| `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
-| `actorRadius` | `--mermaid-actorRadius` | token | length | | | all | sequence |
-| `actorGlyphBand` | `--mermaid-actorGlyphBand` | token | length | | | all | sequence |
-| `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
-| `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
-| `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
-| `timelineRadius` | `--mermaid-timelineRadius` | token | length | | | all | timeline |
-| `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
-| `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
-| `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
-| `mindmapRoundedNodes` | `--mermaid-mindmapRoundedNodes` | token | flag | | | all | mindmap |
-| `mindmapOutlinedNodes` | `--mermaid-mindmapOutlinedNodes` | token | flag | | | all | mindmap |
-| `mindmapBorderEdges` | `--mermaid-mindmapBorderEdges` | token | flag | | | all | mindmap |
-| `gitCommitRadius` | `--mermaid-gitCommitRadius` | token | length | | | all | gitgraph |
-| `gitLaneShift` | `--mermaid-gitLaneShift` | token | length | | | all | gitgraph |
-| `gitBranchLabelPaddingX` | `--mermaid-gitBranchLabelPaddingX` | token | length | | | all | gitgraph |
-| `gitBranchLabelPaddingY` | `--mermaid-gitBranchLabelPaddingY` | token | length | | | all | gitgraph |
-| `gitBranchLabelRadius` | `--mermaid-gitBranchLabelRadius` | token | length | | | all | gitgraph |
-| `gitBranchLabelShiftX` | `--mermaid-gitBranchLabelShiftX` | token | length | | | all | gitgraph |
-| `gitBranchLabelOffsetY` | `--mermaid-gitBranchLabelOffsetY` | token | length | | | all | gitgraph |
-| `gitArrowWidth` | `--mermaid-gitArrowWidth` | token | length | | | all | gitgraph |
-| `gitHighlightInnerSize` | `--mermaid-gitHighlightInnerSize` | token | length | | | all | gitgraph |
-| `gitMergeRadius` | `--mermaid-gitMergeRadius` | token | length | | | all | gitgraph |
-| `gitReverseCrossSize` | `--mermaid-gitReverseCrossSize` | token | length | | | all | gitgraph |
-| `gitCherryPickDotRadius` | `--mermaid-gitCherryPickDotRadius` | token | length | | | all | gitgraph |
-| `gitNodeColors` | `--mermaid-gitNodeColors` | token | flag | | | all | gitgraph |
-| `gitPaletteColors` | `--mermaid-gitPaletteColors` | token | flag | | | all | gitgraph |
-| `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
-| `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
-| `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
-| `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
-| `fillType0` | `--mermaid-fillType0` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType1` | `--mermaid-fillType1` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType2` | `--mermaid-fillType2` | derived | color | `#e6ffdd` | `#e6ffdd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType3` | `--mermaid-fillType3` | derived | color | `#ffdde6` | `#ffdde6` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType4` | `--mermaid-fillType4` | derived | color | `#ffddea` | `#ffddea` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType5` | `--mermaid-fillType5` | derived | color | `#ddeaff` | `#ddeaff` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType6` | `--mermaid-fillType6` | derived | color | `#ddfff9` | `#ddfff9` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType7` | `--mermaid-fillType7` | derived | color | `#fff9dd` | `#fff9dd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `faceColor` | `--mermaid-faceColor` | derived | color | `#fff8dc` | `#fff8dc` | | journey |
-| `actor0` | `--mermaid-actor0` | derived | color | | | | journey |
-| `actor1` | `--mermaid-actor1` | derived | color | | | | journey |
-| `actor2` | `--mermaid-actor2` | derived | color | | | | journey |
-| `actor3` | `--mermaid-actor3` | derived | color | | | | journey |
-| `actor4` | `--mermaid-actor4` | derived | color | | | | journey |
-| `actor5` | `--mermaid-actor5` | derived | color | | | | journey |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
+| `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
+| `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
+| `mutedBkg` | `--mermaid-mutedBkg` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
+| `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
+| `linkInkColor` | `--mermaid-linkInkColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
+| `lineTextColor` | `--mermaid-lineTextColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
+| `softBorder` | `--mermaid-softBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
+| `frameBorder` | `--mermaid-frameBorder` | derived | color | `softBorder` | `softBorder` | redux-dark, redux-dark-color, forest | sequence |
+| `badgeBkg` | `--mermaid-badgeBkg` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `badgeTextColor` | `--mermaid-badgeTextColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `calloutBkg` | `--mermaid-calloutBkg` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
+| `calloutTextColor` | `--mermaid-calloutTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
+| `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `rowBkg` | `--mermaid-rowBkg` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | default, dark, neutral | er |
+| `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
+| `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
+| `nestedBkg` | `--mermaid-nestedBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | state |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -233,6 +97,231 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScale` | `cScale`, `cScale0`–`cScale11` | all |
 | `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
+| `seriesColorArray` | `seriesColorArray` | all |
+| `plotColorArray` | `plotColorArray` |  |
 | `git` | `git`, `git0`–`git7` | all |
 | `gitInv` | `gitInv`, `gitInv0`–`gitInv7` | all |
 | `gitBranchLabel` | `gitBranchLabel`, `gitBranchLabel0`–`gitBranchLabel7` | all |
+
+## Diagram variables
+
+Each diagram package's own variables (D331), listed in its `src/theme/vocabulary.ts` and
+loaded with the diagram, never with core. The values are what `createTheme(spec, { diagram })`
+resolves in each theme: a table is keyed by the theme's family and dark traits, never by its
+name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name
+wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from
+flags and opacities, which are read literally.
+
+### class
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `classText` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#cccccc` |
+| `classMarkerStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
+| `classFilledMarkerStrokeWidth` | | length | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `1` | `1` | `0` | `0` |
+| `extensionMarkerLength` | | length | `8` | `8` | `8` | `8` | `17` | `17` | `17` | `17` | `17` | `8` | `8` |
+| `extensionMarkerGap` | | length | `8.25` | `8.25` | `8.25` | `8.25` | `0.25` | `0.25` | `0.25` | `0.25` | `0.25` | `8.25` | `8.25` |
+| `compositionMarkerGap` | | length | `2.75` | `2.75` | `2.75` | `2.75` | `0.25` | `0.25` | `0.25` | `0.25` | `0.25` | `2.75` | `2.75` |
+| `dependencyMarkerGap` | | length | `4` | `4` | `4` | `4` | `1` | `1` | `1` | `1` | `1` | `4` | `4` |
+| `classTerminalFontSize` | | length | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` |
+
+### er
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `rowOdd` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#2c2d2d` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
+| `rowEven` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#f1f1ff` | `#060606` | `#f4f9e9` | `#f4f4f4` | `#fffcf6` | `#ffffff` | `#2a2020` |
+| `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
+| `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
+| `erZeroOrMoreCircleOffset` | | length | `28` | `28` | `28` | `28` | `30` | `30` | `30` | `30` | `30` | `28` | `28` |
+
+### flowchart
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `circleArrowheadSize` | | length | `14` | `14` | `14` | `14` | `11` | `11` | `11` | `11` | `11` | `14` | `14` |
+| `circleArrowheadGap` | | length | `3.15` | `3.15` | `3.15` | `3.15` | `1.1` | `1.1` | `1.1` | `1.1` | `1.1` | `3.15` | `3.15` |
+| `crossArrowheadSize` | | length | `10.4` | `10.4` | `10.4` | `10.4` | `9` | `9` | `9` | `9` | `9` | `10.4` | `10.4` |
+| `crossArrowheadGap` | | length | `2.96` | `2.96` | `2.96` | `2.96` | `2` | `2` | `2` | `2` | `2` | `2.96` | `2.96` |
+| `crossArrowheadStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `stadiumPaddingX` | | padding | `40` | `40` | `40` | `40` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `40` | `40` |
+| `stadiumPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
+| `doubleCircleGap` | | length | `12` | `12` | `12` | `12` | `5` | `5` | `5` | `5` | `5` | `12` | `12` |
+| `doubleCirclePadding` | | padding | `16` | `16` | `16` | `16` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `16` | `16` |
+| `circleMinDiameter` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
+| `subroutinePaddingX` | | padding | `28` | `28` | `28` | `28` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `28` | `28` |
+| `subroutinePaddingY` | | padding | `12` | `12` | `12` | `12` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `12` | `12` |
+| `cylinderPaddingX` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
+| `cylinderPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
+| `leanPaddingX` | | padding | `2*padding` | `2*padding` | `2*padding` | `2*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `2*padding` | `2*padding` |
+| `leanPaddingY` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` |
+| `oddPaddingX` | | padding | `42` | `42` | `42` | `42` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `42` | `42` |
+| `oddPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
+
+### gantt
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `altSectionBkgColor` | | color | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` |
+| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
+| `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
+| `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
+| `vertLineColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `taskBkgColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `taskBorderColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `activeTaskBkgColor` | | color | `#ffffff` | `#ffffff` | `#595c5c` | `#595c5c` | `#ffffff` | `#595c5c` | `#fafcf5` | `#ffffff` | `#ffffff` | `#ffffff` | `#595c5c` |
+| `activeTaskBorderColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `doneTaskBkgColor` | | color | `lightgrey` | `lightgrey` | `#38383e` | `#38383e` | `lightgrey` | `#474949` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `#584343` |
+| `doneTaskBorderColor` | | color | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` |
+| `critBkgColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
+| `critBorderColor` | | color | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` |
+| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextOutsideColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextDarkColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+
+### gitgraph
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `commitLabelColor` | | color | `#333333` | `#333333` | `#b8b6b6` | `#b8b6b6` | `#000021` | `#b8b6b6` | `#32004d` | `#030303` | `#0b2200` | `#333333` | `#b8b6b6` |
+| `commitLabelBackground` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f4ddff` | `#cccccc` | `#474949` |
+| `commitLabelFontSize` | | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `tagLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `tagLabelBackground` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `tagLabelBorder` | | color | `#171717` | `#171717` | `#cccccc` | `#cccccc` | `#c7c7f1` | `#cccccc` | `#abb594` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `tagBorder` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `tagLabelFontSize` | | length | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `commitLineColor` | | color | `#BDBCCC` | `#BDBCCC` | `#BDBCCC` | `#BDBCCC` | `currentColor` | `#d3d3d3` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `gitCherryPickInk` | | color | `#ffffff` | `#ffffff` | `#000000` | `#000000` | `currentColor` | `#000000` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#000000` |
+| `gitCommitRadius` | | length | `7` | `7` | `7` | `7` | `10` | `10` | `10` | `10` | `10` | `10` | `10` |
+| `gitLaneShift` | | length | `9` | `9` | `9` | `9` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelPaddingX` | | length | `16` | `16` | `16` | `16` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelPaddingY` | | length | `12` | `12` | `12` | `12` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelRadius` | | length | `0` | `0` | `0` | `0` | `4` | `4` | `4` | `4` | `4` | `4` | `4` |
+| `gitBranchLabelShiftX` | | length | `11` | `11` | `11` | `11` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitBranchLabelOffsetY` | | length | `22` | `22` | `22` | `22` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `gitArrowWidth` | | length | `2` | `2` | `2` | `2` | `8` | `8` | `8` | `8` | `8` | `8` | `8` |
+| `gitHighlightInnerSize` | | length | `8` | `8` | `8` | `8` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+| `gitMergeRadius` | | length | `5` | `5` | `5` | `5` | `6` | `6` | `6` | `6` | `6` | `6` | `6` |
+| `gitReverseCrossSize` | | length | `4` | `4` | `4` | `4` | `5` | `5` | `5` | `5` | `5` | `5` | `5` |
+| `gitCherryPickDotRadius` | | length | `2.5` | `2.5` | `2.5` | `2.5` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` | `2.75` |
+| `gitNodeColors` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
+| `gitPaletteColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |
+
+### journey
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `fillType0` | | color | `#fdf4ff` | `#ececfe` | `#1f2020` | `#701a75` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `fillType1` | | color | `#f0fdfa` | `#e9e9f1` | `#474949` | `#134e4a` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f4ddff` | `#e9e9f1` | `#474949` |
+| `fillType2` | | color | `#fff7ed` | `#feecfd` | `#1f1f20` | `#7c2d12` | `#ffecfe` | `#1f1f20` | `#98e4b4` | `#eeeeee` | `#e6ffdd` | `#feecfd` | `#1f1f20` |
+| `fillType3` | | color | `#ecfeff` | `#f1e9f0` | `#474749` | `#581c87` | `#deffe0` | `#474749` | `#b2ffe9` | `#fcfcfc` | `#ffdde6` | `#f1e9f0` | `#474749` |
+| `fillType4` | | color | `#f0fdf4` | `#ecfefd` | `#1f201f` | `#14532d` | `#ecfffe` | `#1f201f` | `#e4aa98` | `#eeeeee` | `#ffddea` | `#ecfefd` | `#1f201f` |
+| `fillType5` | | color | `#f5f3ff` | `#e9f1f0` | `#474947` | `#4c1d95` | `#ffdee0` | `#474947` | `#ffdfb2` | `#fcfcfc` | `#ddeaff` | `#e9f1f0` | `#474947` |
+| `fillType6` | | color | `#fef2f2` | `#feeeec` | `#201f20` | `#7f1d1d` | `#ffefec` | `#201f20` | `#98c3e4` | `#eeeeee` | `#ddfff9` | `#feeeec` | `#201f20` |
+| `fillType7` | | color | `#fefce8` | `#f1eae9` | `#494749` | `#713f12` | `#defbff` | `#494749` | `#b2c3ff` | `#fcfcfc` | `#fff9dd` | `#f1eae9` | `#494749` |
+| `faceColor` | | color | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` |
+| `actor0` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor1` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor2` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+
+### mindmap
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `mindmapRoundedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `false` |
+| `mindmapOutlinedNodes` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |
+| `mindmapBorderEdges` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `false` | `true` |
+
+### pie
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pie1` | | color | `#f4a8ff` | `#ececfe` | `#1f2020` | `#f4a8ff` | `#ececff` | `#0b0000` | `#cde498` | `#f4f4f4` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `pie2` | | color | `#46ecd5` | `#e9e9f1` | `#474949` | `#46ecd5` | `#ffffde` | `#4d1037` | `#cdffb2` | `#555555` | `#f4ddff` | `#e9e9f1` | `#474949` |
+| `pie3` | | color | `#ffb86a` | `#ffffff` | `#201f1f` | `#ffb86a` | `#b9ff20` | `#3f5258` | `#e1efc0` | `#bbbbbb` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `pie4` | | color | `#dab2ff` | `#bcbcfb` | `#060606` | `#dab2ff` | `#b9b9ff` | `#4f2f1b` | `#8cb42f` | `#777777` | `#ffe3aa` | `#bcbcfb` | `#060606` |
+| `pie5` | | color | `#7bf1a8` | `#cacadd` | `#2e2f2f` | `#7bf1a8` | `#ffff45` | `#6e0a0a` | `#6aff19` | `#999999` | `#e3aaff` | `#cacadd` | `#2e2f2f` |
+| `pie6` | | color | `#c4b4ff` | `#fcfccf` | `#060606` | `#c4b4ff` | `#d9ff86` | `#3b0048` | `#33b52e` | `#dddddd` | `#c3d7ff` | `#fcfccf` | `#060606` |
+| `pie7` | | color | `#ffa2a2` | `#fbbcfb` | `#060606` | `#ffa2a2` | `#ff86ff` | `#995a01` | `#70d990` | `#ffffff` | `#c5ffaa` | `#fbbcfb` | `#060606` |
+| `pie8` | | color | `#ffdf20` | `#bcfbfb` | `#060606` | `#ffdf20` | `#20ffff` | `#154706` | `#d99070` | `#dddddd` | `#ffaac5` | `#bcfbfb` | `#060606` |
+| `pie9` | | color | `#a3b3ff` | `#feecec` | `#201f20` | `#a3b3ff` | `#ff2020` | `#161722` | `#98cde4` | `#bbbbbb` | `#ddfff4` | `#feecec` | `#201f20` |
+| `pie10` | | color | `#bbf451` | `#f98bf9` | `#000000` | `#bbf451` | `#ff20ff` | `#00296f` | `#1a6330` | `#999999` | `#a3ff77` | `#f98bf9` | `#000000` |
+| `pie11` | | color | `#74d4ff` | `#8bf9f9` | `#000000` | `#74d4ff` | `#20ff8f` | `#01629c` | `#63301a` | `#777777` | `#ff77a3` | `#8bf9f9` | `#000000` |
+| `pie12` | | color | `#ffa1ad` | `#fbbcbc` | `#060606` | `#ffa1ad` | `#ff5353` | `#1f2020` | `#1a4d63` | `#555555` | `#aaffe3` | `#fbbcbc` | `#060606` |
+| `pieTitleTextSize` | | length | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` |
+| `pieTitleTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `lightgrey` | `#000000` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `pieSectionTextSize` | | length | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` |
+| `pieSectionTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#28253d` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `pieLegendTextSize` | | length | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` |
+| `pieLegendTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `lightgrey` | `#000000` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `pieStrokeColor` | | color | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` |
+| `pieStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `pieOuterStrokeColor` | | color | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` |
+| `pieOuterStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `pieOpacity` | | opacity | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` |
+
+### quadrant
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `quadrant1Fill` | | color | `#ececfe` | `#ececfe` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `quadrant2Fill` | | color | `#f1f1ff` | `#f1f1ff` | `#242525` | `#242525` | `#f1f1ff` | `#242525` | `#d2e99d` | `#f3f3f3` | `#fff9e2` | `#f1f1ff` | `#242525` |
+| `quadrant3Fill` | | color | `#f6f6ff` | `#f6f6ff` | `#292a2a` | `#292a2a` | `#f6f6ff` | `#292a2a` | `#d7eea2` | `#f8f8f8` | `#fffee7` | `#f6f6ff` | `#292a2a` |
+| `quadrant4Fill` | | color | `#fbfbff` | `#fbfbff` | `#2e2f2f` | `#2e2f2f` | `#fbfbff` | `#2e2f2f` | `#dcf3a7` | `#fdfdfd` | `#ffffec` | `#fbfbff` | `#2e2f2f` |
+| `quadrant1TextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrant2TextFill` | | color | `#232038` | `#232038` | `#dbdada` | `#dbdada` | `#0e0e00` | `#dbdada` | `#2d1662` | `#0c0c0c` | `#2e2e2e` | `#2e2e2e` | `#dbdada` |
+| `quadrant3TextFill` | | color | `#1e1b33` | `#1e1b33` | `#d6d5d5` | `#d6d5d5` | `#090900` | `#d6d5d5` | `#28115d` | `#070707` | `#292929` | `#292929` | `#d6d5d5` |
+| `quadrant4TextFill` | | color | `#19162e` | `#19162e` | `#d1d0d0` | `#d1d0d0` | `#040400` | `#d1d0d0` | `#230c58` | `#020202` | `#242424` | `#242424` | `#d1d0d0` |
+| `quadrantPointFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `quadrantPointTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantXAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantYAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantInternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantExternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantTitleFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+
+### sequence
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `actorBkg` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `actorBorder` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `actorTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `actorLineColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `signalColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#333333` | `#d3d3d3` | `#333333` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `signalTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#333333` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `labelBoxBkgColor` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `labelBoxBorderColor` | | color | `#28253d` | `#28253d` | `#bdbccc` | `#bdbccc` | `#9370db` | `#cccccc` | `#326932` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `labelTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `loopTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `activationBkgColor` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#f4f4f4` | `#474949` | `#f4f4f4` | `#f4f4f4` | `#f4ddff` | `#cccccc` | `#474949` |
+| `activationBorderColor` | | color | `#b3b3b3` | `#b3b3b3` | `#3e4040` | `#3e4040` | `#666666` | `#cccccc` | `#666666` | `#666666` | `#d6c1df` | `#b3b3b3` | `#2e3030` |
+| `sequenceNumberColor` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#000000` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `actorRadius` | | length | `6` | `6` | `6` | `6` | `3` | `3` | `3` | `3` | `3` | `6` | `6` |
+| `actorGlyphBand` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
+| `messageEndGap` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `3` | `3` |
+| `labelBoxExtraHeight` | | length | `15` | `15` | `15` | `15` | `0` | `0` | `0` | `0` | `0` | `15` | `15` |
+| `actorFooterPadding` | | length | `30` | `30` | `30` | `30` | `0` | `0` | `0` | `0` | `0` | `30` | `30` |
+
+### state
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `compositeBackground` | | color | `#ffffff` | `#ffffff` | `#16141f` | `#16141f` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `compositeTitleBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `altBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#f0f0f0` | `#555555` | `#f0f0f0` | `#f4f4f4` | `#f6f9ff` | `#f0f0f0` | `#404040` |
+
+### timeline
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `timelineRadius` | | length | `0` | `0` | `0` | `0` | `5` | `5` | `5` | `5` | `5` | `5` | `5` |
+| `timelineLabelOffset` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` |
+| `timelineEventLabelShift` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `timelineScaleColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |

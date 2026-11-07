@@ -12,6 +12,14 @@ export {
   type Rgba,
 } from './color.ts';
 export { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
+export type {
+  DiagramThemeEntries,
+  DiagramThemeFamily,
+  DiagramThemeTable,
+  DiagramThemeVar,
+  DiagramThemeVarDef,
+  ThemeFamily,
+} from './diagram.ts';
 export {
   ARROWHEAD_VARIABLES,
   BASE_VARIABLES,

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { theme } from '../theme/table.ts';
 import type { GitModel } from '../model.ts';
 import * as fx from './fixtures.ts';
 import { GIT_GEOMETRY, gitLayoutViolations, layoutGitGraph, type GitLayout } from './index.ts';
@@ -10,7 +11,7 @@ let classic: ThemeSpec;
 let reduxGeometry: Record<string, number>;
 beforeAll(async () => {
   classic = await loadTheme('default');
-  const redux = createTheme(await loadTheme('redux'));
+  const redux = createTheme(await loadTheme('redux'), { diagram: theme });
   reduxGeometry = Object.fromEntries(
     Object.values(GIT_GEOMETRY).map((name) => [name, redux.number(name)])
   );
@@ -26,7 +27,7 @@ function lay(model: GitModel, gitGraph: Record<string, unknown> = {}, o: Options
   return layoutGitGraph(model, {
     config: { gitGraph } as ResolvedConfig,
     measurer: fx.halfEm,
-    theme: createTheme(classic, { themeVariables }),
+    theme: createTheme(classic, { diagram: theme, themeVariables }),
   });
 }
 
@@ -391,7 +392,7 @@ describe('bounds and title (D224, D265)', () => {
 
   it('warns once and uses the default for a length that is not a number of at least 0', () => {
     const warnings: string[] = [];
-    const base = createTheme(classic, {});
+    const base = createTheme(classic, { diagram: theme });
     const l = layoutGitGraph(one(), {
       config: { gitGraph: { ...bare, diagramPadding: -3 } } as ResolvedConfig,
       measurer: fx.halfEm,
