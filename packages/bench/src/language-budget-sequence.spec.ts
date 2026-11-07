@@ -45,7 +45,8 @@ describe('the sequence language-service bench fixture', () => {
 
 /**
  * Robust under machine load: each ratio takes the best of many runs, measured alternately so
- * load hits both sides alike, in CPU time.
+ * load hits both sides alike, in CPU time, after warm-up rounds and with a minor GC before each
+ * run (`bestOfEach`).
  */
 describe('the R-LANG-4 budget for sequence, as ratios', () => {
   /**
@@ -60,7 +61,7 @@ describe('the R-LANG-4 budget for sequence, as ratios', () => {
   it('a cycle costs at most four and a half bare parses', () => {
     const texts = typing(SEQUENCE_FIXTURE);
     const [parse, full] = bestOfEach(
-      25,
+      60,
       (i) => sequenceLanguage.parse(texts(i), { keepTokens: true }),
       (i) => sequenceCycle(service, texts(i))
     );

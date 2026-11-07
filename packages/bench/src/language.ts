@@ -8,6 +8,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import type { DocumentSnapshot, LanguageService, Range } from '@mermaid-js/language-service';
 import { FIXTURES_DIR } from './fixtures.ts';
 import { median } from './stats.ts';
@@ -114,24 +116,68 @@ export function bestOf(runs: number, fn: (run: number) => unknown): number {
   return best;
 }
 
-/** CPU time of this process in ms (user + system): another process's load does not count. */
+/**
+ * CPU time of this process in ms (user + system): another process's load does not count.
+ * The process and not the thread: V8 does much of a parse's garbage collection on helper
+ * threads (on the hosted runner a bare parse costs a fifth to a third less CPU on the main
+ * thread alone), and leaving that out would make the ratios a different measure.
+ */
 function cpuMs(): number {
   const { user, system } = process.cpuUsage();
   return (user + system) / 1000;
 }
 
+type Gc = (options: { type: 'minor' }) => void;
+let collect: Gc | null | undefined;
+
+/**
+ * V8's `gc`: the global one under `--expose-gc`, else one from a new context after
+ * `setFlagsFromString('--expose-gc')`, which turns it on for contexts made after it; null
+ * where neither works.
+ */
+function minorGc(): Gc | null {
+  if (collect === undefined) {
+    let gc: unknown = (globalThis as { gc?: unknown }).gc;
+    try {
+      if (typeof gc !== 'function') {
+        setFlagsFromString('--expose-gc');
+        gc = runInNewContext('gc') as unknown;
+      }
+    } catch {
+      gc = undefined;
+    }
+    collect = typeof gc === 'function' ? (gc as Gc) : null;
+  }
+  return collect;
+}
+
+/** Rounds run unmeasured before `bestOfEach` measures. */
+const WARMUP_ROUNDS = 10;
+
 /**
  * The best CPU time of each function over `runs` rounds, called alternately (a, b, a, b, …),
  * in ms and in the order given. For ratio checks that must hold on a loaded machine: CPU time
  * leaves out the time the worker waits for a core, and alternating lets the noise that stays
- * (caches, GC) hit both sides alike.
+ * (caches) hit both sides alike.
+ *
+ * Two more sources of noise are taken out. First, ten unmeasured rounds run before any is
+ * measured: V8 compiles hot code on helper threads, and `cpuUsage` bills that CPU to whatever
+ * runs meanwhile. A cold process is still compiling the cycle's code when it starts measuring,
+ * so its best cycle is a few percent dearer. Second, a minor GC runs before each measured
+ * call, so that call pays for the garbage it makes itself. Without it, a call pays for
+ * whatever the call before it left in the young generation, a different amount every round.
+ * A major GC is not used: it shrinks the heap, and the next calls then cost about three times
+ * as much.
  */
 export function bestOfEach(runs: number, ...fns: readonly ((run: number) => unknown)[]): number[] {
+  for (let i = 0; i < WARMUP_ROUNDS; i++) for (const fn of fns) fn(i);
+  const gc = minorGc();
   const best = fns.map(() => Infinity);
   for (let i = 0; i < runs; i++) {
     for (const [k, fn] of fns.entries()) {
+      gc?.({ type: 'minor' });
       const t = cpuMs();
-      fn(i);
+      fn(WARMUP_ROUNDS + i);
       best[k] = Math.min(best[k]!, cpuMs() - t);
     }
   }
