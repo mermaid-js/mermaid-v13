@@ -1,0 +1,10 @@
+@ 3:3  |
+  commit keyword 3:3-3:3 "" -> "commit"
+  branch keyword 3:3-3:3 "" -> "branch "
+  merge keyword 3:3-3:3 "" -> "merge "
+  checkout keyword 3:3-3:3 "" -> "checkout "
+  switch keyword 3:3-3:3 "" -> "switch "
+  cherry-pick keyword 3:3-3:3 "" -> "cherry-pick "
+  title keyword 3:3-3:3 "" -> "title "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "

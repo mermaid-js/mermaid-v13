@@ -1,0 +1,8 @@
+@ 2:15  commit id:"X|"
+  2:13-2:16 "\"X\""
+  | **commit** `X`
+  |
+  | A later commit takes this id, so this one is not drawn.
+@ 3:15  commit id:"X|"
+  3:13-3:16 "\"X\""
+  | **commit** `X` on `main`

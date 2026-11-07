@@ -1,0 +1,3 @@
+@ 4:11  Design :|a1, 2024-01-01, 3d
+  prepare: 4:11-4:13 "a1"; rename to "a.b":
+  refused: 'a.b' would not read as the same task id everywhere it is used.

@@ -103,7 +103,7 @@ const SIMPLE: Record<string, string> = {
 };
 
 /** The value of a JS string literal's body: its escapes decoded, line continuations dropped. */
-function unescape(raw: string): string {
+export function unescape(raw: string): string {
   return raw.replace(
     /\\(?:u\{([0-9a-fA-F]+)\}|u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|(\r\n|[\s\S]))/g,
     decodeEscape
@@ -208,9 +208,9 @@ function inert(): unknown {
  * Runs v12 spec `text` with its imports stubbed: the `describe`/`it` callbacks are called in
  * order, `expect` is inert (it calls a function passed to it, for `toThrow`), and
  * `<name>.parser.parse` / `<name>.parse` call `record` with their argument, for each of
- * `parserNames`.
+ * `parserNames`. gitGraph's harvest (`../gitgraph/harvest.ts`) runs its spec with it too.
  */
-function runSpec(
+export function runSpec(
   text: string,
   parserNames: readonly string[],
   record: (source: unknown) => void
@@ -219,7 +219,9 @@ function runSpec(
   const hooks: Fn[][] = [[]];
   const call = (fn: Fn, ...args: unknown[]) => {
     try {
-      fn(...args);
+      // An async body fails after its first `await`, past this `try`.
+      const result = fn(...args);
+      if (result instanceof Promise) result.catch(noop);
     } catch {
       // An assertion on the inert DB, or an expected parse error: the source is recorded.
     }

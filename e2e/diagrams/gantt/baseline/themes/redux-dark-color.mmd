@@ -1,0 +1,20 @@
+---
+config:
+  theme: redux-dark-color
+description: the representative gantt (bars in every state, excludes, vert, milestone, today line) in the redux-dark-color theme
+---
+gantt
+  title Release plan
+  dateFormat YYYY-MM-DD
+  excludes weekends
+  section Design
+    Research          :done, d1, 2024-01-02, 3d
+    Sketches          :active, d2, after d1, 3d
+  section Build
+    Core              :crit, b1, 2024-01-08, 5d
+    Docs              :b2, after d2, 4d
+    Review            :crit, active, b3, after b1, 2d
+  section Ship
+    Freeze            :vert, f1, 2024-01-12, 0d
+    Release           :milestone, r1, after b3, 0d
+    Announce          :done, r2, after r1, 2d

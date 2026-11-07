@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { layoutPie, parsePie } from '@mermaid-js/diagram-pie';
 import { pieLayoutViolations } from '@mermaid-js/diagram-pie/testing';
 import type { CorpusItem } from '../types.ts';
@@ -30,7 +31,7 @@ beforeAll(async () => {
 
 describe('pie layout invariants on parser-produced fixtures', () => {
   it('hold over the corpus, every legend position and option set', () => {
-    const theme = createTheme(spec);
+    const theme = createTheme(spec, { diagram: DIAGRAM_TABLES.pie });
     const failures: string[] = [];
     let sections = 0;
     for (const item of corpus) {

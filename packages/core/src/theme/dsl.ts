@@ -21,10 +21,19 @@
  *                       `var(--mermaid-v, b)`
  *   literal(a)          a's computed colour as a literal, so a hue turn or a palette read writes
  *                       the value a theme would pin (D332)
+ *   inline(v)           the variable v as the theme wrote it (its value or rule), CSS included,
+ *                       with no alias of its own: a diagram reads a shared input in each theme's
+ *                       own shape (D332). The author's override of v is not read; references in
+ *                       v's rule stay `var(--_x)`, so they follow their own overrides
+ *   inline(v, b)        the same when the theme wrote v (the theme spec's base, tokens, values or
+ *                       rules, or a diagram table's family entry), else b; a shared or diagram
+ *                       light/dark rule for v, or the author's override of v, does not count
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as
- * the theme wrote the entry, so its CSS follows the base colours.
+ * the theme wrote the entry, so its CSS follows the base colours. A series entry the theme leaves
+ * out is v12 theme-base's derivation from the base colours (`BASE_SERIES`, slots 0–19); past
+ * that, and past the end of any other palette, the read is `currentColor`.
  *
  * An identifier is a theme variable when the table knows it, otherwise a CSS colour name.
  * Each rule compiles to a CSS expression over the private aliases (DESIGN §8.1 item 2) and to the same value in
@@ -50,7 +59,8 @@ export type Fn =
   | 'adjust'
   | 'adjustHue'
   | 'ifSet'
-  | 'literal';
+  | 'literal'
+  | 'inline';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -65,6 +75,7 @@ const ARITY: Readonly<Record<Fn, number>> = {
   adjustHue: 2,
   ifSet: 2,
   literal: 1,
+  inline: 1,
 };
 
 const RE_TOKEN =
@@ -105,7 +116,9 @@ export function parseRule(source: string): Expr {
       if (p === ')') break;
       if (p !== ',') fail('expected , or )');
     }
-    if (args.length !== ARITY[fn]) fail(`${fn} takes ${ARITY[fn]} arguments`);
+    // `inline` takes an optional fallback, `inline(v, b)`.
+    const ok = args.length === ARITY[fn] || (fn === 'inline' && args.length === 2);
+    if (!ok) fail(`${fn} takes ${ARITY[fn]} arguments`);
     return { k: 'call', fn, args };
   };
   const e = expr(0);

@@ -1,0 +1,8 @@
+@ 4:5  |a
+  prepare: 4:5-4:6 "a"; rename to "b":
+  %% rename-to: b
+  mindmap
+    root
+      b
+      a
+      b

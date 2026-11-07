@@ -1,0 +1,22 @@
+@ 2:10  commit |
+  id: keyword 2:10-2:10 "" -> "id: "
+  msg: keyword 2:10-2:10 "" -> "msg: "
+  tag: keyword 2:10-2:10 "" -> "tag: "
+  type: keyword 2:10-2:10 "" -> "type: "
+@ 3:18  commit id:"A" t|
+  tag: keyword 3:17-3:18 "t" -> "tag: "
+  type: keyword 3:17-3:18 "t" -> "type: "
+@ 4:14  branch dev |
+  order: keyword 4:14-4:14 "" -> "order: "
+@ 5:13  merge dev |
+  id: keyword 5:13-5:13 "" -> "id: "
+  tag: keyword 5:13-5:13 "" -> "tag: "
+  type: keyword 5:13-5:13 "" -> "type: "
+@ 6:15  cherry-pick |
+  id: keyword 6:15-6:15 "" -> "id: "
+  parent: keyword 6:15-6:15 "" -> "parent: "
+  tag: keyword 6:15-6:15 "" -> "tag: "
+@ 7:16  commit type: |
+  NORMAL constant 7:16-7:16 "" -> "NORMAL"
+  REVERSE constant 7:16-7:16 "" -> "REVERSE"
+  HIGHLIGHT constant 7:16-7:16 "" -> "HIGHLIGHT"

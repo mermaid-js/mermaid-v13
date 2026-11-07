@@ -11,6 +11,7 @@ used under the MIT License:
   src/layout/layered/compound.ts
   src/layout/layered/index.ts
   src/layout/layered/layered.ts
+  src/layout/tree/tree.ts
   src/parser-kit/chars.ts
   src/preprocess/yaml.ts
   src/svg/escape.ts

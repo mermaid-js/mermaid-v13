@@ -1,0 +1,10 @@
+@ 4:20  Build :b1, after |a1, 5d
+  -> 7:10-7:12 "a1"
+@ 5:22  Test :t1, after a1 |b1, until c9
+  -> 4:10-4:12 "b1"
+@ 5:32  Test :t1, after a1 b1, until |c9
+  -> 5:32-5:34 "c9"
+@ 6:12  click a1,|b1 href "https://example.com"
+  -> 4:10-4:12 "b1"
+@ 7:10  Draft :|a1, 2024-01-02, 1d
+  -> 7:10-7:12 "a1"

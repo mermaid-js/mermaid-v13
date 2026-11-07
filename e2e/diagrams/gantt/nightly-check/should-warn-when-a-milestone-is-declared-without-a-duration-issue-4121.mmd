@@ -1,0 +1,9 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: without a duration, m1 is read as the end,
+  not as the id; it is no date or duration, so the milestone ends where
+  it starts and v12 warns.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  M1 :milestone, 2023-01-01, m1

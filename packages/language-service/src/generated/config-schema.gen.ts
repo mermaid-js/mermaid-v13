@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -122,13 +122,136 @@ export const configSchema: ConfigSchema = {
             "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables. The timeline reads it only where `timelineScaleColors` is true: an override changes nothing in the redux themes (the default `redux-color` included) or `theme: 'auto'`; in `neo` and `neo-dark` it is the box text and (slot 11) the axis and connectors (v12's redux and neo paint, D227, D257)."
           }
         },
+        "git": {
+          "description": "gitGraph branch colours (commit bullets, branch lines, arrows, label backgrounds), eight\nslots. A list of colours, or one comma-separated string; `git0`–`git7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): `primaryColor`, `secondaryColor`, `tertiaryColor` and the primary turned by −30, −60, −90, 60 and 120 degrees, darkened by 25 (lightened under `darkMode`) in `base`, `forest`, `redux-dark` and `redux-dark-color`; the same steps from fixed colours in `neo`, `redux` and `redux-color`; the dark pie colours lightened by 25 in `neo-dark`; `cScale2`–`cScale8` (v12's `pie2`–`pie8`, D334) lightened in `dark` and as given in `neutral`; fixed in `default`. Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`."
+          }
+        },
+        "gitInv": {
+          "description": "gitGraph highlight colour against each `git` slot, eight slots. A list of colours, or one\ncomma-separated string; `gitInv0`–`gitInv7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): the inverse of the slot (darkened by 25 in slot 0 of `default`). Where v12 steps an author's `git<n>` before it inverts it, so does v13; `default`, `dark` and `neutral` ignore it, as in v12. Read as literal colours, not CSS variables."
+          }
+        },
+        "gitBranchLabel": {
+          "description": "gitGraph branch label text colour on each `git` slot, eight slots. A list of colours, or\none comma-separated string; `gitBranchLabel0`–`gitBranchLabel7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): `labelTextColor` (black under `darkMode`) in `base`, `neo`, `neo-dark` and the redux themes; slots 0 and 3 inverted in `default` (fixed), `forest` (from `actorTextColor`) and `dark`; slots 1 and 3 white in `neutral`. v12's `branchLabelColor` is not read: set `gitBranchLabel`. Read as literal colours, not CSS variables."
+          }
+        },
         "THEME_COLOR_LIMIT": {
           "description": "v12's number of colour-scale slots.\n",
           "type": "number",
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "The numbered palettes always have twelve slots, and a diagram cycles through them (D258)."
+            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267)."
+          }
+        },
+        "commitLabelColor": {
+          "description": "gitGraph commit label text.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "commitLabelBackground": {
+          "description": "gitGraph commit label background.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "commitLabelFontSize": {
+          "description": "gitGraph commit label font size in px.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "tagLabelColor": {
+          "description": "gitGraph tag label text.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "tagLabelBackground": {
+          "description": "gitGraph tag label background.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "tagLabelBorder": {
+          "description": "gitGraph tag label outline. Wins over `tagBorder`.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "tagBorder": {
+          "description": "v12's other name for `tagLabelBorder`, used when `tagLabelBorder` is not set. No theme\nsets it.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
+          }
+        },
+        "tagLabelFontSize": {
+          "description": "gitGraph tag label font size in px.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "gitGraph label variable (D267), derived as each v12 theme derives it: `commitLabelColor` the author's `secondaryTextColor`, else v12's inverse of the theme's `secondaryColor`; `commitLabelBackground` `secondaryColor`; `tagLabelColor` `primaryTextColor`; `tagLabelBackground` `primaryColor`; `tagLabelBorder` the author's `tagBorder`, else `primaryBorderColor`; both font sizes 10px. `default` fixes all but the border, as v12 does."
           }
         },
         "arrowheadGap": {
@@ -658,6 +781,42 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0",
             "reason": "`false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable."
           }
+        },
+        "mindmapRoundedNodes": {
+          "description": "`true`: a mindmap node written without a shape is drawn rounded (D288), and with\n`mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text and, where\n`borderColorArray` is empty, every node takes `mainBkg` with a `nodeBorder` outline and\ntext. `false`: plain nodes are v12's default shape, and the root takes `git0`.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux themes, `false` in the classic and neo themes (v12 `mindmapDb.ts` and `styles.ts` for a theme name with `redux`, D288). Read literally at render time, so it has no CSS variable."
+          }
+        },
+        "mindmapOutlinedNodes": {
+          "description": "`true`: mindmap nodes take an outline at `strokeWidth` (`cScale<n>`, `nodeBorder` or the\ngradient) and the theme's `dropShadow`, plain nodes are flat-bottomed, labels take\n`cScaleLabel<n>` (the root `cScaleLabel0`), and edges are `max(10 − 2d, 2)` px wide at\ndepth class `d`. `false`: no outline or shadow, four rounded corners, the root label\n`gitBranchLabel0`, and edges `14 − 3d` px wide (3 px from depth class 5).\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux and neo themes, `false` in the classic themes (v12 `look: neo`, `styles.ts`, D288). Read literally at render time, so it has no CSS variable."
+          }
+        },
+        "mindmapBorderEdges": {
+          "description": "`true`: mindmap edges are drawn in `nodeBorder`; `false`: in their section's `cScale<n>`.\nRead only with `mindmapOutlinedNodes`, as in v12.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux themes and `neo-dark`, `false` in the classic themes and `neo` (v12 `styles.ts`). Read literally at render time, so it has no CSS variable."
+          }
         }
       }
     },
@@ -681,12 +840,12 @@ export const configSchema: ConfigSchema = {
     },
     "layout": {
       "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
-      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)\nalways uses `layered`.\n",
+      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1);\nmindmap defaults to `tree`, core's two-sided tidy tree, and maps v12's\n`cose-bilkent` and `tidy-tree` to it.\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\nthe diagram's default engine and warn `ELK_NOT_INSTALLED`. Text output\n(`format: 'ascii'`) always uses `layered`.\n",
       "default": "layered",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
+        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
       }
     },
     "maxTextSize": {
@@ -1045,7 +1204,8 @@ export const configSchema: ConfigSchema = {
     "mindmap": {
       "$ref": "#/$defs/MindmapDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "ishikawa": {
@@ -2450,20 +2610,40 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12 (default true): `width=\"100%\"` and a `max-width`; `false` gives the drawing's own width and height."
+          }
+        },
         "titleTopMargin": {
           "description": "Margin top for the text over the diagram",
           "type": "integer",
           "default": 25,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: a `title` (in the text or front matter, D265) has its baseline this far above the drawing. A value that is not a number of at least 0 warns `GIT_CONFIG_IGNORED` and draws with 25."
           }
         },
         "diagramPadding": {
           "type": "number",
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the room around the drawing in the viewBox. A value that is not a number of at least 0 warns `GIT_CONFIG_IGNORED` and draws with 8."
           }
         },
         "nodeLabel": {
@@ -2480,49 +2660,63 @@ export const configSchema: ConfigSchema = {
             "y": 0
           },
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read it."
           }
         },
         "mainBranchName": {
           "type": "string",
           "default": "main",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the name of the branch the graph starts on. The language service reads it from the document's front matter and `init` directives (the site config is not in the text)."
           }
         },
         "mainBranchOrder": {
           "type": "number",
           "default": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the main branch's place among the branches' `order:` values."
           }
         },
         "showCommitLabel": {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: `false` draws no commit ids."
           }
         },
         "showBranches": {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: `false` draws no branch lines and labels; each lane keeps its (empty) group."
           }
         },
         "rotateCommitLabel": {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: commit ids at −45 degrees (LR, TB and BT), with 40 px more between the lanes."
           }
         },
         "parallelCommits": {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: a commit is placed one step after its latest parent, so branches run side by side, not in written order."
           }
         },
         "arrowMarkerAbsolute": {
@@ -2544,25 +2738,33 @@ export const configSchema: ConfigSchema = {
         "width": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "height": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "x": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         },
         "y": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's gitGraph never read `nodeLabel`."
           }
         }
       }
@@ -2752,6 +2954,38 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for mindmaps (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the mindmap renderer never did."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `layout` for mindmaps. Unset in both, mindmaps lay out with `tree`, core's two-sided tidy tree (D284). v12's `cose-bilkent` and `tidy-tree` map to `tree` silently (D282); `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
         "colorBy": {
           "description": "Color nodes by their top-level branch or by their depth in the tree.\nDepth is counted from the root, independently of indentation width.\n",
           "type": "string",
@@ -2765,21 +2999,29 @@ export const configSchema: ConfigSchema = {
           },
           "default": "branch",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: eleven sections, by top-level branch or by depth below the root; any other value colours by branch."
           }
         },
         "padding": {
+          "description": "Padding in px inside default, cloud and bang nodes (and, in the classic themes,\ncircles, and twice this inside hexagons), and the margin around the drawing.\n",
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Where v12 read it (D287): the margin around the drawing, and the padding inside default, cloud and bang nodes in every theme. In the classic themes it also pads circles, and twice it pads hexagons; in the redux family, `neo` and `neo-dark` the theme's `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` take over there. Square and rounded nodes keep their own paddings. Numeric strings are read as numbers; anything else, or a value below 0, lays out with 10 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "maxNodeWidth": {
+          "description": "The width in px at which node labels wrap.\n",
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "layoutAlgorithm": {
@@ -2787,7 +3029,10 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "cose-bilkent",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`.",
+            "replacement": "`mindmap.layout` or `layout`"
           }
         }
       }
@@ -4531,11 +4776,27 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The chart's width in px (D272): `gantt.useWidth`, then the `availableWidth` render option, then 1200. v12 laid out to the container's width; v13 has no DOM in core, so the container's width arrives only with `availableWidth` (`mount(…, { availableWidth: true })`)."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "barHeight": {
@@ -4544,7 +4805,8 @@ export const configSchema: ConfigSchema = {
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "barGap": {
@@ -4553,7 +4815,8 @@ export const configSchema: ConfigSchema = {
           "default": 4,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "topPadding": {
@@ -4562,7 +4825,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "rightPadding": {
@@ -4571,7 +4835,8 @@ export const configSchema: ConfigSchema = {
           "default": 75,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "leftPadding": {
@@ -4580,7 +4845,8 @@ export const configSchema: ConfigSchema = {
           "default": 75,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "gridLineStartPadding": {
@@ -4589,7 +4855,8 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "fontSize": {
@@ -4598,7 +4865,9 @@ export const configSchema: ConfigSchema = {
           "default": 11,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The task label size. A number is px; a CSS size v12 wrote into `font-size` (`14px`) is read too. Anything else is ignored with `GANTT_CONFIG_IGNORED`."
           }
         },
         "sectionFontSize": {
@@ -4607,7 +4876,9 @@ export const configSchema: ConfigSchema = {
           "default": 11,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The section title size, read as `fontSize` is."
           }
         },
         "numberSectionStyles": {
@@ -4616,7 +4887,9 @@ export const configSchema: ConfigSchema = {
           "default": 4,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The number of section slots before they repeat, as v12. Slots past 4 are drawn as v12 drew them: no band or bar colour of their own. Less than 1 is ignored with `GANTT_CONFIG_IGNORED`."
           }
         },
         "axisFormat": {
@@ -4624,7 +4897,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "%Y-%m-%d",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "tickInterval": {
@@ -4632,7 +4906,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "pattern": "^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "topAxis": {
@@ -4640,7 +4915,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "displayMode": {
@@ -4655,7 +4931,8 @@ export const configSchema: ConfigSchema = {
           },
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "weekday": {
@@ -4672,7 +4949,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "sunday",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 never read this key, only the `weekday` statement (D279). v13 reads it; the statement wins. It sets the day a `week` tick interval starts on."
           }
         }
       }

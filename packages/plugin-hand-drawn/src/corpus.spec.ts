@@ -5,8 +5,8 @@
  *   below from v12 at fa796a943). `sketch` itself equals roughjs's `RoughGenerator` for the same
  *   options (H1, `sketch.spec.ts`), so this is parity with roughjs;
  * - the allow-list (R-SEC-2), determinism (R-ARCH-6, a fresh API object gives the same bytes) and
- *   no `Math.random` call, over the hand-drawn corpus and the four types' whole corpus with
- *   `handDrawn` on;
+ *   no `Math.random` call, over the hand-drawn corpus and the sketched types' whole corpus
+ *   (mindmap's too, #344) with `handDrawn` on;
  * - v12's XSS sources and Pele's payloads stay inert with it on.
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -21,7 +21,14 @@ import { handDrawn } from './index.ts';
 import { sketch, type SketchOptions } from './sketch.ts';
 
 const DIAGRAMS = fileURLToPath(new URL('../../../e2e/diagrams/', import.meta.url));
-const TYPES = ['flowchart', 'class-diagram', 'state-diagram', 'state-diagram-v2', 'er-diagram'];
+const TYPES = [
+  'flowchart',
+  'class-diagram',
+  'state-diagram',
+  'state-diagram-v2',
+  'er-diagram',
+  'mindmap',
+];
 
 function mmd(dir: string): [string, string][] {
   return readdirSync(join(DIAGRAMS, dir), { recursive: true, encoding: 'utf8' })
@@ -130,6 +137,8 @@ describe('the hand-drawn corpus', () => {
     expect(count('state-diagram-v2')).toBe(5);
     const dirs = ['class-diagram', 'er-diagram', 'flowchart', 'state-diagram-v2'];
     expect(dirs.map((dir) => count(dir, true))).toEqual([4, 4, 4, 4]);
+    // Mindmap has no hand-drawn corpus file; H4 (#344) adds one per shape and edges, × 4 families.
+    expect([count('mindmap'), count('mindmap', true)]).toEqual([0, 32]);
   });
 
   it("sketches every outline with v12's roughjs options for its role", async () => {

@@ -153,8 +153,13 @@ warning (`feature: 'icon'`), and an icon shape is a box with its label. See
 
 ## Mindmap
 
-Mindmap is not ported to v13 yet. When it is, `::icon(fa fa-book)` and `::icon(mdi:fire)` draw
-from the registered packs, and an icon that does not resolve is shown as written.
+A mindmap node's `::icon()` takes the slot v12's older mindmap renderer reserved (D297): beside
+the label, or above it in a circle. Two forms are icon names: `pack:name` (`::icon(mdi:fire)`)
+and `<pack> <pack>-<name>`, or `fa-<name>` after a Font Awesome pack (`::icon(fa fa-book)` is
+`fa:book`). With the plugin, the glyph is drawn in the slot, 40 px, in the colour of the node's
+label. An icon that does not resolve, any other form (`fa-book`, `bomb`), or any icon without the
+plugin is shown as written in the slot, sized to fit it, with one `ICON_NOT_RENDERED` warning per
+render. While its pack loads, the slot is empty.
 
 ## Coming from v12
 

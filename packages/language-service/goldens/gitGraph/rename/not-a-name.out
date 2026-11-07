@@ -1,0 +1,6 @@
+@ 2:6  com|mit msg:"abc"
+  prepare: refused: There is no id or class name here to rename.
+@ 2:16  commit msg:"a|bc"
+  prepare: refused: There is no id or class name here to rename.
+@ 3:11  title Re|lease
+  prepare: refused: There is no id or class name here to rename.

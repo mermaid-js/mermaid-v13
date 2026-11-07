@@ -1,0 +1,10 @@
+@ 7:15  checkout dev|elop
+  -> 3:10-3:17 "develop"
+@ 8:13  merge "my |feature"
+  -> 5:11-5:21 "my feature"
+@ 9:14  checkout ma|in
+  -> none
+@ 10:15  merge develo|p
+  -> 3:10-3:17 "develop"
+@ 11:24  checkout "my feature"|
+  -> none

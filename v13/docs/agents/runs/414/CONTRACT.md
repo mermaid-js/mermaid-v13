@@ -41,15 +41,38 @@ Read the variables as any other: `ctx.theme.color('packetStartByteColor')`, `ctx
 ## DSL additions (D332)
 
 - `bkgColorArray<n>`, `borderColorArray<n>` and every other palette's slots read as literal colours, like `cScale<n>`. Past the end of a palette: `currentColor`.
-- `seriesColorArray<n>` reads the entry as the theme wrote it, CSS included (for the T1 pie migration).
+- `seriesColorArray<n>` reads the entry as the theme wrote it, CSS included (for the T1 pie migration). Where the theme has no entry, slots 0–19 read v12 theme-base's derivation from the base colours (`BASE_SERIES` in `core/theme/specs/palettes.ts`: pie's twelve, then journey's eight tints), so a theme with only base colours and a family fills every series (review fixes, user story 5).
 - `literal(x)`: x's computed colour as a literal (no CSS variable, no dependency). Use for hue turns that must equal a v12 resolved value: `literal(adjustHue(primaryColor, 64))`.
+- `inline(v)`: the variable v as the theme wrote it (its value or rule, CSS included), with no alias of its own. Use to read a D332 shared input that themes of one family write differently (default pins `#f4f4f4`, base derives `secondaryColor`), byte-identically. The author's override of v is never read (review fixes): an author's `scaleLabelColor` recolours `cScaleLabel`, not sequence's text. References inside v's rule stay `var(--_x)`, so they still follow their own overrides, and an override of the diagram's own variable still wins.
+- `inline(v, b)`: the same where the theme wrote v, else b, evaluated as usual. Written means the theme spec's base, tokens, values or rules, or a table family entry; a shared or table light/dark rule for v does not count, nor does the author's override of v. A forest-only `frameBorder` gives sequence's fragment tab its colour there, and `actorBorder` (as `var(--_ar)`) elsewhere: `inline(frameBorder, actorBorder)`. Give such an input a shared rule anyway, so it resolves in every theme.
 
 ## Shared inputs added (D332, D334, D381)
 
 - `scaleLabelColor` (v12's name): the label ink `cScaleLabel` reads. Use it instead of sequence's `labelTextColor`.
-- Palettes `seriesColorArray` (a theme's series colours; empty until T1 fills it) and `plotColorArray` (D381's ten-colour chart palette; empty until xychart fills it).
+- Palettes `seriesColorArray` (a theme's series colours in slots 0–11 and tints in 12–19, filled by every theme since T1a; pie and journey read it) and `plotColorArray` (D381's ten-colour chart palette; empty until xychart fills it).
+- `badgeBkg`, `badgeTextColor` (a small label box on the secondary colour beside an item: gitGraph's commit ids) and `calloutBkg`, `calloutTextColor`, `calloutBorder` (a bordered label on the primary colour pinned to an item: gitGraph's tags), T1b. Read with `inline()`.
+- The `git`, `gitInv` and `gitBranchLabel` palettes stay core's shared palettes: gitGraph's branches and mindmap's root read them.
+- `headingTextColor` (a diagram's own titles and legends on the page) and `seriesTextColor` (labels on the series colours), rule `textColor` unless a theme pins them (T1a). Read with `inline()`. Every D332 input is listed in `D332_INPUTS` (`packages/conformance/src/diagram-themes.ts`), which the neo and neo-dark oracles leave out of the v12 comparison.
 
 ## Tests and tools
 
 - `createTheme(spec, { diagram: theme })` resolves a table in unit tests and tools.
 - `pnpm --filter @mermaid-js/bench theme-identity --out <file> [--compare <base file>]` renders every e2e `.mmd` and bench fixture in all eleven themes and `auto`, under four variants, and compares digests.
+
+## Vocabulary and generation (T0b, #439)
+
+A port that moves rows writes `packages/diagram-<type>/src/theme/vocabulary.ts`:
+
+```ts
+import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
+
+export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
+  packetStartByteColor: { alias: 'pkb', kind: 'color', usedBy: ['packet'], nested: 'startByteColor' },
+};
+```
+
+- `usedBy` is `['<type>']` (the package directory without `diagram-`) when the package's sources read the row, else `[]`. A row another type reads belongs in core.
+- `pnpm gen:theme` writes `src/theme/generated/variables.ts` (`THEME_VARIABLE_TABLE`, the rows without `usedBy`, built in a `@__PURE__` call). The table takes it: `vars: THEME_VARIABLE_TABLE`. It also adds the package to `v13/docs/theme-variables.md` ("Diagram variables": each variable's value in every theme, with its nested form).
+- `gen:theme` fails, and so does `theme-inventory.spec.ts`, when a name or alias is core's or another package's, or a nested key repeats (D337).
+- Checks that pick the package up with no edit: `theme-direction.spec.ts` (rule 4: the plugin's `theme.vars` equal the vocabulary), `theme-used-by.spec.ts`, `theme-tables.spec.ts` (every row in eleven themes and a twelfth), and the conformance specs, which pass `plugin.theme` already (`packages/conformance/src/diagram-themes.ts`; the neo and neo-dark specs read every table through `everyTable`).
+- knip treats `src/theme/vocabulary.ts` as an entry.

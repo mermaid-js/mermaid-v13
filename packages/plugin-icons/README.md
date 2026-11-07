@@ -1,10 +1,11 @@
 # @mermaid-js/plugin-icons (v13 alpha)
 
 Draws [Iconify](https://iconify.design/) icon packs in Mermaid v13: label icons such as
-`fa:fa-car` in every diagram type, and the glyphs of flowchart icon shapes
-(`A@{ icon: "logos:aws" }`). Icons are rebuilt as plain SVG shapes, so a pack cannot put script
-or styles into a diagram. Without the plugin, icons are shown as written with an
-`ICON_NOT_RENDERED` warning, and the SVG is otherwise the same.
+`fa:fa-car` in every diagram type, the glyphs of flowchart icon shapes
+(`A@{ icon: "logos:aws" }`) and mindmap's `::icon(fa fa-book)` and `::icon(mdi:fire)`. Icons are
+rebuilt as plain SVG shapes, so a pack cannot put script or styles into a diagram. Without the
+plugin, icons are shown as written with an `ICON_NOT_RENDERED` warning, and the SVG is otherwise
+the same.
 
 ```js
 import mermaid from 'mermaid';

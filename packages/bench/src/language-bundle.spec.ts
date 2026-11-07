@@ -41,6 +41,21 @@ const PACKAGES = [
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'mindmap',
+    dir: 'diagram-mindmap',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'icons.ts'],
+  },
+  {
+    name: 'gitGraph',
+    dir: 'diagram-gitgraph',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],
+  },
+  {
+    name: 'gantt',
+    dir: 'diagram-gantt',
+    renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
+  },
+  {
     name: 'packet',
     dir: 'diagram-packet',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],

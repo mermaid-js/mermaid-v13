@@ -1,33 +1,23 @@
 /**
  * `forest`: v12 `theme-forest.js`.
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { paletteSlots, series } from './palettes.ts';
 import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
-  TEXT_SIZES,
-} from './geometry.ts';
+  classicGitLabels,
+  darkenedScale,
+  gitLabelRules,
+  gitPalettes,
+  gitSources,
+  hueSources,
+} from './scales.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
-/** v12 `theme-forest.js`: primary and secondary −30, then hue turns. */
-const PIE_FOREST: ThemeRuleTable = pieSlots([
-  undefined,
-  undefined,
-  undefined,
-  'darkenHsl(primaryColor, 30%)',
-  'darkenHsl(secondaryColor, 30%)',
-  '#33b42f',
-  '#70d990',
-  '#d99070',
-  '#98cde4',
-  '#1a6330',
-  '#63301a',
-  '#1a4d63',
-]);
+const GIT = gitSources(
+  'primaryColor',
+  'secondaryColor',
+  'ifSet(tertiaryColor, lightenHsl(#cde498, 10%))'
+);
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -52,29 +42,25 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
-    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)', ...PIE_FOREST },
+  rules: {
+    rowAltBkg: 'lightenHsl(mainBkg, 20%)',
+    ...gitLabelRules('#32004d', '#abb594'),
+  },
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),
-    altBackground: '#f0f0f0', // v12 (#192)
-    // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
-    actorBorder: '#a6cf47',
-    actorTextColor: '#000000',
-    scaleLabelColor: '#000000', // v12: `labelTextColor`, set to `actorTextColor`
-    signalColor: '#333333',
-    signalTextColor: '#333333',
-    labelBoxBorderColor: '#326932',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)
+    // v12 theme-forest.js: the participant border is darken(mainBkg, 20), the fragment tab's
+    // a dark green
+    softBorder: '#a6cf47',
+    frameBorder: '#326932',
+    scaleLabelColor: '#000000', // v12: its label ink, black
+    linkInkColor: '#333333',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#13540c',
     clusterBkg: '#cdffb2',
@@ -99,8 +85,23 @@ const theme: ThemeSpec = {
       10,
       (c) => `adjustHue(${c}, 180)`
     ),
-    // v12 sets labelTextColor to actorTextColor before the labels: `scaleLabelColor` (D334).
+    // v12 sets its label ink before the labels: `scaleLabelColor` (D334).
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
+    // v12 theme-forest.js: the base colours, primary and secondary −30, the tertiary colour turned
+    // by 40° and −40 (derived from the hex tertiary colour, where v12 stepped its unrounded HSL
+    // one, D333(a)), then hue turns; then the tints, v12's resolved values.
+    seriesColorArray: series(
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) darkenHsl(adjustHue(tertiaryColor,40),40%) #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
+        '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'
+    ),
+    // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted; the label is
+    // v12's `labelTextColor`, which forest sets to its label ink (`scaleLabelColor`, D334).
+    ...gitPalettes(GIT),
+    gitBranchLabel: classicGitLabels('scaleLabelColor'),
+  },
+  darkModePalettes: {
+    ...gitPalettes(GIT, 'lightenHsl'),
+    gitBranchLabel: classicGitLabels('scaleLabelColor'),
   },
 };
 

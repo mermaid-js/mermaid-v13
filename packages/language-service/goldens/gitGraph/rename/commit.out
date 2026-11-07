@@ -1,0 +1,10 @@
+@ 7:19  cherry-pick id:"|A"
+  prepare: 7:19-7:20 "A"; rename to "first fix":
+  %% rename-to: first fix
+  gitGraph
+    commit id:"first fix"
+    branch dev
+    commit id:"B"
+    checkout main
+    cherry-pick id:"first fix"
+    cherry-pick id:"B" tag:"A"

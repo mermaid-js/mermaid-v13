@@ -17,6 +17,9 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   journey: () => import('./generated/journey.parser.js').then((m) => m.parser),
   quadrantChart: () => import('./generated/quadrantChart.parser.js').then((m) => m.parser),
   timeline: () => import('./generated/timeline.parser.js').then((m) => m.parser),
+  gitGraph: () => import('./generated/gitGraph.parser.js').then((m) => m.parser),
   pie: () => import('./generated/pie.parser.js').then((m) => m.parser),
+  mindmap: () => import('./generated/mindmap.parser.js').then((m) => m.parser),
+  gantt: () => import('./generated/gantt.parser.js').then((m) => m.parser),
   packet: () => import('./generated/packet.parser.js').then((m) => m.parser),
 };

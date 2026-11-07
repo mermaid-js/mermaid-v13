@@ -1,12 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { Warning } from '@mermaid-js/core';
+import type { DiagramPlugin, Warning } from '@mermaid-js/core';
 import { num } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { JourneyModel } from '../model.ts';
 import { FIXTURES, journey, section, task } from './fixtures.ts';
 import { journeyLayoutViolations, layoutJourney, type JourneyLayout } from './index.ts';
+import { journey as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 const THEMES = ['default', 'redux'] as const;
 type ThemeName = (typeof THEMES)[number];
@@ -24,7 +28,7 @@ function lay(
   return layoutJourney(model, {
     config: { journey: journeyConfig } as ResolvedConfig,
     measurer: tableMeasurer,
-    theme: createTheme(specs.get(theme)!),
+    theme: createTheme(specs.get(theme)!, { diagram: diagramTheme }),
     warn: (w) => warnings.push(w),
   });
 }

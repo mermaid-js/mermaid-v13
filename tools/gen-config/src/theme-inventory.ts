@@ -1,7 +1,8 @@
 /**
  * The theme variable inventory (DESIGN §8.3, O-1): name, CSS variable, base/derived/token,
  * the shared light and dark rules, the built-in themes that set a literal value, and the
- * diagram types that read it. Written to `v13/docs/theme-variables.md`.
+ * diagram types that read it; then each diagram package's own variables (spec #414 T0b), with
+ * their value in every theme. Written to `v13/docs/theme-variables.md`.
  */
 import { fileURLToPath } from 'node:url';
 import {
@@ -9,13 +10,17 @@ import {
   DARK_RULES,
   LIGHT_RULES,
   NUMBERED_PALETTES,
-  PALETTE_LIMIT,
+  PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_NAMES,
   THEME_VARIABLES,
   TOKEN_VARIABLES,
+  createTheme,
   loadTheme,
+  type ThemeSpec,
+  type NumberedPalette,
 } from '../../../packages/core/src/theme/index.ts';
+import { runtimeVars, type ThemePackage } from './theme-packages.ts';
 
 export const INVENTORY_PATH = fileURLToPath(
   new URL('../../../v13/docs/theme-variables.md', import.meta.url)
@@ -54,7 +59,33 @@ export function themeTable(): string {
 
 const code = (s: string | undefined): string => (s === undefined ? '' : '`' + s + '`');
 
-export async function themeInventory(): Promise<string> {
+/**
+ * A package's variables, each resolved through `createTheme(spec, { diagram })` in every theme
+ * (the theme's family and dark traits pick the table's entries), with the nested form (D540).
+ */
+function packageSection(pkg: ThemePackage, specs: readonly ThemeSpec[]): string[] {
+  const vars = runtimeVars(pkg.vocabulary ?? {});
+  const diagram = pkg.table ?? { vars, rules: { light: {} } };
+  const themes = specs.map((spec) => createTheme(spec, { diagram, cssVariables: false }));
+  const rows = Object.entries(vars).map(([name, d]) => {
+    const nested =
+      d.nested === undefined || diagram.section === undefined
+        ? ''
+        : code(`${diagram.section}.${d.nested}`);
+    const cells = [code(name), nested, d.kind, ...themes.map((t) => code(t.value(name)))];
+    return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
+  });
+  return [
+    '',
+    `### ${pkg.type}`,
+    '',
+    `| Variable | Nested | Kind | ${specs.map((s) => s.name).join(' | ')} |`,
+    `| --- | --- | --- | ${specs.map(() => '---').join(' | ')} |`,
+    ...rows,
+  ];
+}
+
+export async function themeInventory(packages: readonly ThemePackage[] = []): Promise<string> {
   const specs = await Promise.all(THEME_NAMES.map((n) => loadTheme(n)));
   const base = new Set<string>(BASE_VARIABLES);
   const tokens = new Set<string>(TOKEN_VARIABLES);
@@ -80,8 +111,8 @@ export async function themeInventory(): Promise<string> {
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
   const palettes = PALETTE_VARIABLES.map((name) => {
-    const names = NUMBERED_PALETTES.includes(name as (typeof NUMBERED_PALETTES)[number])
-      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
+    const names = NUMBERED_PALETTES.includes(name as NumberedPalette)
+      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMITS[name as NumberedPalette] - 1))}`
       : code(name);
     const carriers = specs.filter((s) => (s.palettes?.[name]?.length ?? 0) > 0);
     const setBy = carriers.length === specs.length ? 'all' : carriers.map((s) => s.name).join(', ');
@@ -116,6 +147,24 @@ export async function themeInventory(): Promise<string> {
     '| Palette | `themeVariables` names | Set by themes |',
     '| --- | --- | --- |',
     ...palettes,
+    ...diagramSections(packages, specs),
     '',
   ].join('\n');
+}
+
+function diagramSections(packages: readonly ThemePackage[], specs: readonly ThemeSpec[]): string[] {
+  const owners = packages.filter((p) => p.vocabulary !== undefined);
+  if (owners.length === 0) return [];
+  return [
+    '',
+    '## Diagram variables',
+    '',
+    "Each diagram package's own variables (D331), listed in its `src/theme/vocabulary.ts` and",
+    'loaded with the diagram, never with core. The values are what `createTheme(spec, { diagram })`',
+    "resolves in each theme: a table is keyed by the theme's family and dark traits, never by its",
+    'name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name',
+    'wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from',
+    'flags and opacities, which are read literally.',
+    ...owners.flatMap((p) => packageSection(p, specs)),
+  ];
 }

@@ -1,0 +1,5 @@
+@ 3:11  Design :|a1, 2024-01-01, 3d
+  prepare: 3:11-3:13 "a1"; rename to "done":
+  refused: 'done' is not a task id (no `,`, `#` or `;`, and not a tag such as `done`).
+@ 5:5  Te|st :2d
+  prepare: refused: There is no id or class name here to rename.
