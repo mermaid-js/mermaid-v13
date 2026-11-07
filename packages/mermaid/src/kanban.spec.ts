@@ -206,10 +206,10 @@ describe('kanban boards through the public API (#459)', () => {
     expect(result.text).toBe(
       [
         '+-------- Doing --------+',
-        '| +- !! --------------+ |',
+        '| +-[!!]--------------+ |',
         '| I Fix the login bug | |',
         '| +-------------------+ |',
-        '| +- - ---------------+ |',
+        '| +-[-]---------------+ |',
         '| : Tidy              | |',
         '| : MC-2037           | |',
         '| :      K.Sveidqvist | |',
@@ -217,6 +217,42 @@ describe('kanban boards through the public API (#459)', () => {
         '+-----------------------+',
       ].join('\n')
     );
+  });
+
+  it('right-aligns each line of a wrapped assignee', async () => {
+    const text = [
+      'kanban',
+      '  todo[Todo]',
+      "    a[Conquer]@{ assigned: 'Alexander the Great of Macedon' }",
+    ];
+    const result = await createMermaid().render('k11', text.join('\n'), { format: 'ascii' });
+    expect(result.text).toBe(
+      [
+        '┌──────── Todo ─────────┐',
+        '│ ┌───────────────────┐ │',
+        '│ │ Conquer           │ │',
+        '│ │     Alexander the │ │',
+        '│ │  Great of Macedon │ │',
+        '│ └───────────────────┘ │',
+        '└───────────────────────┘',
+      ].join('\n')
+    );
+  });
+
+  it('drops a ticket link only where the SVG draws one: a refused URL is plain text in both', async () => {
+    const text = [
+      '---',
+      'config:',
+      '  kanban:',
+      "    ticketBaseUrl: 'javascript:alert(#TICKET#)'",
+      '---',
+      'kanban',
+      '  todo[Todo]',
+      '    a[Docs]@{ ticket: MC-1 }',
+    ].join('\n');
+    const m = createMermaid();
+    expect((await m.render('k12', text)).warnings.map((w) => w.code)).toEqual(['URL_REFUSED']);
+    expect((await m.render('k12', text, { format: 'ascii' })).warnings).toEqual([]);
   });
 
   it('warns for what text cannot show, and when the board is wider than ascii.maxWidth (not folded)', async () => {

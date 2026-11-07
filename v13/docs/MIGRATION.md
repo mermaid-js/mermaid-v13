@@ -1804,7 +1804,7 @@ Class lists are written with single spaces and no trailing blank.
   ticket on the left (plain text, never a link) and the assignee on the right, or each on a row
   of its own when they do not fit side by side. The priority is the card's left edge: heavy
   for `Very High` and `High`, dashed for `Low` and `Very Low`; in the `ascii` charset a tag on
-  the card's top border (`!!`, `!`, `-`, `--`) tells the four apart. `:::` classes, bold and
+  the card's top border (`[!!]`, `[!]`, `[-]`, `[--]`) tells the four apart. `:::` classes, bold and
   italic text and ticket links are dropped with one `ASCII_DROPPED` warning each (`style`,
   `emphasis`, `link`); a board wider than `ascii.maxWidth` is not folded and adds
   `ASCII_TOO_WIDE` ([ASCII output](./ascii.md#kanban-boards)).

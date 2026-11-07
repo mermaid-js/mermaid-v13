@@ -18,6 +18,7 @@ import type { FontKey } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanRenderContext } from './context.ts';
+import { userClasses } from './classes.ts';
 import { ticketUrl } from './links.ts';
 import { paints, PRIORITY_COLORS, type CardPaint, type Paints } from './paint.ts';
 import { priorityWarning } from './priority.ts';
@@ -36,16 +37,6 @@ function itemOf(items: ReadonlyMap<string, KanbanItem>, ast: string): KanbanItem
   const item = items.get(ast);
   if (!item) throw new Error(`kanban: no item for ${ast}`);
   return item;
-}
-
-/** An author's `:::` classes as class names: characters outside `[\w-]` dropped. */
-function userClasses(names: readonly string[]): string {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
 }
 
 /** Writes the whole `<svg>` document for a laid-out kanban board. */

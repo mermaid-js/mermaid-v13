@@ -311,4 +311,30 @@ describe('kanban layout in cells', () => {
     expect(narrow.sectionWidth - narrow.cards[0]!.width).toBe(4);
     expect(narrow.sectionWidth).toBe(9);
   });
+
+  // Pitfall 22: the cell least raises widths px allows (26 to 67 px), so it says so, once.
+  it('warns once when the cell least widens the column, in place of the px raise', () => {
+    const cells = (sectionWidth: number) => {
+      const warnings: Warning[] = [];
+      const layout = layoutKanban(board('  a[A]', '    x'), {
+        config: { kanban: { sectionWidth } } as unknown as ResolvedConfig,
+        measurer: cellMeasurer,
+        units: cellProfile(),
+        theme: createTheme(spec),
+        warn: (w) => warnings.push(w),
+      });
+      return { width: layout.sectionWidth, warnings };
+    };
+    const raised = {
+      code: 'KANBAN_CONFIG_IGNORED',
+      path: 'kanban.sectionWidth',
+      message:
+        'Ignored kanban.sectionWidth: a column narrower than 9 cells (72 px) leaves its cards no width; using 9',
+    };
+    // 40 px is fine in px and 5 cells in text; 10 px is raised to 26 px, 3 cells.
+    expect(cells(40)).toEqual({ width: 9, warnings: [raised] });
+    expect(cells(10)).toEqual({ width: 9, warnings: [raised] });
+    // 72 px is 9 cells: nothing raised, nothing said.
+    expect(cells(72)).toEqual({ width: 9, warnings: [] });
+  });
 });

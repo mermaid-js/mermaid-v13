@@ -14,21 +14,24 @@
  * ticket row is a row of its own (`CELL_META_ROW`), and a ticket and assignee that do not fit
  * side by side are stacked; the px layout is unchanged.
  */
-import { fromPx } from '@mermaid-js/core/layout';
+import type { Warning } from '@mermaid-js/core';
+import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, inflate, union } from './extent.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 import {
-  CELL_META_ROW,
+  CELL_UNITS,
   COLUMN_TOP,
   configLengths,
   FONT_WEIGHT,
-  KANBAN_CELL_METRICS,
+  KANBAN_CONFIG_IGNORED,
   KANBAN_METRICS,
+  LENGTH_KEYS,
   METRIC_AXIS,
   PX_META_ROW,
-  type KanbanMetrics,
+  type KanbanLengths,
+  type KanbanUnits,
   type MetaRow,
 } from './metrics.ts';
 import type {
@@ -48,7 +51,17 @@ const PRIORITIES: ReadonlySet<string> = new Set<KanbanPriority>([
 ]);
 
 /** The metrics table in the render's units. */
-type Lengths = { readonly [K in keyof KanbanMetrics]: number };
+type Lengths = { readonly [K in keyof KanbanLengths]: number };
+
+/** The lengths and ticket row of a profile: cells have their own (#466); px converts the table. */
+function unitsOf(units: UnitProfile): KanbanUnits {
+  if (units.id === 'cell') return CELL_UNITS;
+  const lengths = {} as Record<keyof KanbanLengths, number>;
+  for (const key of LENGTH_KEYS)
+    lengths[key] = fromPx(units, KANBAN_METRICS[key], METRIC_AXIS[key]);
+  lengths.minWrap = fromPx(units, KANBAN_METRICS.minWrap, 'x', KANBAN_METRICS.minWrap);
+  return { lengths, meta: PX_META_ROW };
+}
 
 interface Env {
   readonly lengths: Lengths;
@@ -61,17 +74,42 @@ interface Env {
   measure(text: string | undefined, wrap: number): MeasuredLabel | undefined;
 }
 
+/**
+ * `W` in the render's units: the config's, at least what leaves card labels `minWrap` to wrap
+ * at. In px that least is `MIN_SECTION_WIDTH`, which `configLengths` already raised to; in
+ * cells it is wider than 26 px converts to, so a raise there is its own `KANBAN_CONFIG_IGNORED`
+ * in place of `configLengths`' one (pitfall 22: one warning per render, naming what is drawn).
+ */
+function sectionWidthOf(
+  ctx: KanbanLayoutContext,
+  lengths: Lengths,
+  asked: number,
+  warnings: Warning[]
+): number {
+  const width = fromPx(ctx.units, asked, 'x');
+  const least = lengths.wrapInset + lengths.minWrap;
+  if (width >= least) return width;
+  const path = 'kanban.sectionWidth';
+  const at = warnings.findIndex((w) => w.path === path);
+  const px = least * ctx.units.pxPerUnit.x;
+  const warning: Warning = {
+    code: KANBAN_CONFIG_IGNORED,
+    message: `Ignored kanban.sectionWidth: a column narrower than ${least} ${ctx.units.id === 'cell' ? 'cells' : 'px'} (${px} px) leaves its cards no width; using ${least}`,
+    path,
+  };
+  // `sectionWidth` is read first, so a warning of its own goes first.
+  if (at < 0) warnings.unshift(warning);
+  else warnings[at] = warning;
+  return least;
+}
+
 function envOf(ctx: KanbanLayoutContext): Env {
-  const config = configLengths(ctx.config.kanban ?? {}, (w) => ctx.warn(w));
+  const warnings: Warning[] = [];
+  const config = configLengths(ctx.config.kanban ?? {}, (w) => warnings.push(w));
   const convert = (px: number, axis: 'x' | 'y'): number => fromPx(ctx.units, px, axis);
-  // Cells have their own table (#466); any other profile converts the px one.
-  const cells = ctx.units.id === 'cell';
-  const lengths: Record<keyof KanbanMetrics, number> = { ...KANBAN_CELL_METRICS };
-  if (!cells) {
-    for (const key of Object.keys(KANBAN_METRICS) as (keyof KanbanMetrics)[])
-      lengths[key] = convert(KANBAN_METRICS[key], METRIC_AXIS[key]);
-    lengths.minWrap = fromPx(ctx.units, KANBAN_METRICS.minWrap, 'x', KANBAN_METRICS.minWrap);
-  }
+  const { lengths, meta } = unitsOf(ctx.units);
+  const sectionWidth = sectionWidthOf(ctx, lengths, config.sectionWidth, warnings);
+  for (const w of warnings) ctx.warn(w);
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),
     size: ctx.theme.number('fontSize'),
@@ -79,8 +117,8 @@ function envOf(ctx: KanbanLayoutContext): Env {
   };
   return {
     lengths,
-    meta: cells ? CELL_META_ROW : PX_META_ROW,
-    sectionWidth: Math.max(convert(config.sectionWidth, 'x'), lengths.wrapInset + lengths.minWrap),
+    meta,
+    sectionWidth,
     padding: convert(config.padding, 'x'),
     font,
     measure: (text, wrap) => {

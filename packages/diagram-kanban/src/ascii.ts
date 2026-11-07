@@ -16,14 +16,13 @@ import { priorityWarning } from './render/priority.ts';
 import { drawKanban } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
 
-export { PRIORITY_TAGS } from './ascii/draw.ts';
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 
 /**
  * Lays a board out in cells: the cell measurer and the cell profile (`ascii.padding`), whatever
  * `ctx` carries.
  */
-export function layoutAscii(model: KanbanModel, ctx: TextRenderContext): KanbanLayout {
+function layoutAscii(model: KanbanModel, ctx: TextRenderContext): KanbanLayout {
   const { padding } = asciiOptions(ctx.config);
   return layoutKanban(kanbanLayoutInput(model), {
     ...ctx,
@@ -40,9 +39,10 @@ export function layoutAscii(model: KanbanModel, ctx: TextRenderContext): KanbanL
 export function ascii(model: KanbanModel, layout: KanbanLayout, ctx: TextRenderContext): string {
   const laid = layout.units === 'cell' ? layout : layoutAscii(model, ctx);
   const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
-  const cards = model.columns.flatMap((c) => c.cards.map((k) => model.items[k]!));
-  const priority = priorityWarning(cards);
+  // The cards the layout placed, in its order, as the SVG renderer checks them.
+  const items = new Map(model.items.map((item) => [item.ast, item]));
+  const priority = priorityWarning(laid.cards.flatMap((c) => items.get(c.ast) ?? []));
   if (priority) ctx.warn(priority);
-  for (const w of asciiWarnings(model, laid, ctx.config)) ctx.warn(w);
+  for (const w of asciiWarnings(model, laid, ctx)) ctx.warn(w);
   return drawKanban(laid, glyphs);
 }

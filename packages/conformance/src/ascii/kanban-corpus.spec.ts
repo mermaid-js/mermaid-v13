@@ -222,7 +222,7 @@ describe('kanban ascii corpus properties (#466, R-ASCII-9)', () => {
       unicode: { heavy: '┃', dashed: '┆', plain: '│' },
       ascii: { heavy: 'I', dashed: ':', plain: '|' },
     };
-    const tags = { 'Very High': ' !! ', High: ' ! ', Low: ' - ', 'Very Low': ' -- ' };
+    const tags = { 'Very High': '[!!]', High: '[!]', Low: '[-]', 'Very Low': '[--]' };
     expect(
       perCharset((c, cs) => {
         const { text, layout } = c.out[cs];

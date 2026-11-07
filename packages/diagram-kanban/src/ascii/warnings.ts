@@ -1,11 +1,14 @@
 // What the kanban text output cannot show (D82, R-ASCII-5): one `ASCII_DROPPED` warning per
-// feature kind, naming the AST ids of the items it dropped it for, in board order. Column
-// colours come from the theme, not the author, so they are not named; icons are drawn by
-// neither output (D376).
+// feature kind, naming the AST ids of the items it dropped it for, in board order. Each rule is
+// the SVG renderer's own: `userClasses` for the classes it writes and `ticketUrl` for the links
+// it draws. Column colours come from the theme, not the author, so they are not named; icons
+// are drawn by neither output (D376).
 import type { Warning } from '@mermaid-js/core';
 import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
-import type { KanbanModel } from '../model.ts';
+import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
+import { userClasses } from '../render/classes.ts';
+import { ticketUrl, type LinkContext } from '../render/links.ts';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';
@@ -30,36 +33,41 @@ const emphasised = (label: MeasuredLabel | undefined): boolean =>
     line.some((run) => (run.style & (Style.Bold | Style.Italic)) !== 0)
   ) ?? false;
 
-/** Whether the SVG gives the item a class: a word with a character of `[\w-]` (`render.ts`). */
-const styled = (classes: readonly string[] | undefined): boolean =>
-  classes?.some((c) => /[\w-]/.test(c)) ?? false;
+/** What the layout drew for one item: its labels, and a card's ticket. */
+interface Drawn {
+  readonly labels: readonly (PlacedLabel | undefined)[];
+  readonly ticket?: PlacedLabel;
+}
 
 /**
- * The warnings for one drawing: the items with `:::` classes, those whose text is bold or
- * italic, and, with a `kanban.ticketBaseUrl`, the cards whose ticket the SVG links.
+ * The warnings for one drawing: the items the SVG gives a class, those whose text is bold or
+ * italic, and the cards whose ticket the SVG links. The link check runs as in SVG, but its
+ * `URL_REFUSED` is not repeated: text draws no link either way.
  */
 export function asciiWarnings(
   model: KanbanModel,
   layout: KanbanLayout,
-  config: { readonly kanban?: { readonly ticketBaseUrl?: unknown } }
+  ctx: Omit<LinkContext, 'warn'>
 ): AsciiWarning[] {
   const found: Record<AsciiDroppedFeature, string[]> = { style: [], emphasis: [], link: [] };
-  const classes = new Map(model.items.map((item) => [item.ast, item.classes]));
-  const base = config.kanban?.ticketBaseUrl;
-  const linked = typeof base === 'string' && base !== '';
-  const check = (ast: string, labels: readonly (PlacedLabel | undefined)[]): void => {
-    if (styled(classes.get(ast))) found.style.push(ast);
-    if (labels.some((l) => emphasised(l?.text))) found.emphasis.push(ast);
-  };
-  // `cards` is column by column: walk both in step for board order.
-  let n = 0;
-  layout.columns.forEach((column, k) => {
-    check(column.ast, [column.title]);
-    for (let card = layout.cards[n]; card?.column === k; card = layout.cards[++n]) {
-      check(card.ast, [card.title, card.ticket, card.assignee]);
-      if (linked && card.ticket) found.link.push(card.ast);
-    }
-  });
+  const drawnAs = new Map<string, Drawn>();
+  for (const c of layout.columns) drawnAs.set(c.ast, { labels: [c.title] });
+  for (const c of layout.cards)
+    drawnAs.set(c.ast, {
+      labels: [c.title, c.ticket, c.assignee],
+      ...(c.ticket ? { ticket: c.ticket } : {}),
+    });
+  // The check's own `URL_REFUSED` is the SVG's to give: text draws no link either way.
+  const refused: Warning[] = [];
+  const linkCtx: LinkContext = { ...ctx, warn: (w) => void refused.push(w) };
+  for (const item of kanbanBoardOrder(model)) {
+    const drawn = drawnAs.get(item.ast);
+    if (!drawn) continue;
+    if (userClasses(item.classes) !== '') found.style.push(item.ast);
+    if (drawn.labels.some((l) => emphasised(l?.text))) found.emphasis.push(item.ast);
+    // As `drawCard`: a drawn ticket whose URL passes the check is a link.
+    if (drawn.ticket && ticketUrl(item.ticket, linkCtx)) found.link.push(item.ast);
+  }
   const out: AsciiWarning[] = [];
   for (const feature of Object.keys(found) as AsciiDroppedFeature[]) {
     const astIds = found[feature];

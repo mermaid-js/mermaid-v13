@@ -101,17 +101,23 @@ export const METRIC_AXIS: { readonly [K in keyof KanbanMetrics]: 'x' | 'y' } = {
   stroke: 'x',
 };
 
+/** The lengths the layout takes from a table; `sectionWidth` and `padding` come from config. */
+export type KanbanLengths = Omit<KanbanMetrics, 'sectionWidth' | 'padding'>;
+
+/** The keys of `KanbanLengths`, the ones a px table converts. */
+export const LENGTH_KEYS = (Object.keys(KANBAN_METRICS) as (keyof KanbanMetrics)[]).filter(
+  (k): k is keyof KanbanLengths => k !== 'sectionWidth' && k !== 'padding'
+);
+
 /**
- * The metrics in cells, for the text output (#466): v12's px values scaled to cells would put
- * labels on the borders, so cells have their own. A border takes a cell: a column is
- * `┌─ title ─┐` (the title on its top border, a rule and a space either side), its cards one
- * cell in from its sides and stacked with no row between, each card's text one space in from
- * its border, and nothing between the last card and the column's bottom border. `sectionWidth`
- * and `padding` are the px defaults in cells; the layout converts the config's px values.
+ * The lengths in cells, for the text output (#466): v12's px values scaled to cells would put
+ * labels on the borders, so cells have their own (as sequence's cell column, D108). A border
+ * takes a cell: a column is `┌─ title ─┐` (the title on its top border, a rule and a space
+ * either side), its cards one cell in from its sides and stacked with no row between, each
+ * card's text one space in from its border, and nothing between the last card and the column's
+ * bottom border. `sectionWidth` and `padding` are the config's px values, converted.
  */
-export const KANBAN_CELL_METRICS: KanbanMetrics = {
-  sectionWidth: 25,
-  padding: 1,
+export const KANBAN_CELL_METRICS: KanbanLengths = {
   titleInset: 6,
   columnGap: 1,
   titleRow: 1,
@@ -144,6 +150,15 @@ export const PX_META_ROW: MetaRow = { grow: 0.5, lift: 0.25, stack: false };
 
 /** In cells the row is a row of its own, under the title and inside the card's border. */
 export const CELL_META_ROW: MetaRow = { grow: 1, lift: 0, stack: true };
+
+/** What one unit profile lays out with: its lengths and its ticket row. */
+export interface KanbanUnits {
+  readonly lengths: KanbanLengths;
+  readonly meta: MetaRow;
+}
+
+/** The text output's (`units.id === 'cell'`). */
+export const CELL_UNITS: KanbanUnits = { lengths: KANBAN_CELL_METRICS, meta: CELL_META_ROW };
 
 /** v12 places every column's top at `−COLUMN_TOP × W`: a multiple of `W`, not a length. */
 export const COLUMN_TOP = 1.5;

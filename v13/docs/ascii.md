@@ -310,7 +310,7 @@ is 25 columns).
   on the right; when they do not fit side by side each takes a row of its own.
 - The priority is the card's left edge: heavy (`┃`, `I`) for `Very High` and `High`, dashed
   (`┆`, `:`) for `Low` and `Very Low`. In the `ascii` charset a tag on the card's top border
-  tells the four apart: `+- !! ---+` (`Very High`), `!`, `-`, `--` (`Very Low`). Any other
+  tells the four apart: `+-[!!]---+` (`Very High`), `[!]`, `[-]`, `[--]` (`Very Low`). Any other
   priority draws a plain edge and warns `KANBAN_PRIORITY`, as in SVG.
 - A board wider than `ascii.maxWidth` is not folded: it is drawn whole, with `ASCII_TOO_WIDE`.
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`:::` classes), `emphasis` (bold and
