@@ -10,7 +10,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | merged (ff 194da70d7; package entry 12,706 B gz, core 92,619 unchanged) |
 | T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | merged (74b5f0d58, at 308fa870f; package entry 14,176 B gz, `./language` 12,623 B gz, no core change) |
 | T5 integration | #459 | #457, #463 | merged (ff dd96fc647; CDN core 92,309 B gz, +25 B registry row; package entry 14,421 B gz) |
-| T7 ascii (Should) | #466 | #459 | in progress (`.claude/worktrees/t466`, `feature/466_kanban-ascii`) |
+| T7 ascii (Should) | #466 | #459 | merged (ff 218d444b9; text path 7,976 B gz; CDN core 92,316 B gz, +7 B `loadAscii`) |
 
 - `01-v12-kanban.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, corpus, the mindmap lexer to copy, Pele.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams (labels, `checkUrl`, `w.outline`, palette, warnings, config, size guards).
@@ -38,6 +38,12 @@ M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#4
 | final review | — | 0 (no core or registry file changed) |
 
 The bench numbers move with each `mermaid-v13` merge (91,874 at T5's base is after the M4 merges, below T2's 92,619); compare within a row. The CDN closure (`cdn-build.spec.ts`) is the one the 94,208 B limit applies to.
+
+## Final state (2026-11-07)
+
+- Final whole-branch review (standards and spec) fixed in 3afd797e4 (`feature/424_kanban-final-review`, ff). `mermaid-v13` f9005267c (packet #475) merged in 29e618b95; the two empty-document completion goldens fixed in 42b48084e.
+- `pnpm check` at 42b48084e: 718 files, 15,725 tests, 0 failed. `pnpm e2e` at 29e618b95 (Playwright v1.62.1 container): 2,298 passed; 11 failed in `platform/` and `dev/` from the Docker VM running out of memory (exit 137, page crashes), all 40 tests of those files pass at `--workers=2`; kanban 55, packet 27, `language/` 53 passed. Hosted CI on #476 green at 42b48084e (packet's parser-stress ratio failed once under runner load and passed on rerun; `mermaid-v13` passed it at f9005267c).
+- Ticket worktrees removed after checking each was clean and merged.
 
 ## Finish rule
 
