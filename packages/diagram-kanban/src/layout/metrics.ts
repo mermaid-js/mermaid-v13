@@ -8,10 +8,16 @@
  * of the schema (v12's).
  */
 import type { Warning } from '@mermaid-js/core';
+import type { KanbanDiagramConfig } from '@mermaid-js/core/config';
 import { kanbanConfigDefaults } from '../generated/config-defaults.ts';
 
-/** Every key of the generated defaults is set: the schema gives each one a `default`. */
-const GIVEN = kanbanConfigDefaults as Required<typeof kanbanConfigDefaults>;
+/**
+ * The generated `kanban` section defaults, with every key set: the schema gives each of
+ * `sectionWidth` and `padding` a `default`, so the generated object has both.
+ */
+const SCHEMA_DEFAULTS = kanbanConfigDefaults as Required<
+  Pick<KanbanDiagramConfig, 'sectionWidth' | 'padding'>
+>;
 
 export interface KanbanMetrics {
   /** `W` when `kanban.sectionWidth` is unset or 0 (`sectionWidth || 200`). */
@@ -51,8 +57,8 @@ export interface KanbanMetrics {
 
 export const KANBAN_METRICS: KanbanMetrics = {
   // The `kanban` config defaults (`pnpm gen:config`, the plugin's `configDefaults`).
-  sectionWidth: GIVEN.sectionWidth,
-  padding: GIVEN.padding,
+  sectionWidth: SCHEMA_DEFAULTS.sectionWidth,
+  padding: SCHEMA_DEFAULTS.padding,
   columnGap: 5,
   titleRow: 25,
   cardInset: 15,

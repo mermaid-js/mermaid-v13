@@ -13,7 +13,10 @@ export function checkNodeLimit(
   range: Range
 ): void {
   const max = cap ?? DEFAULT_LIMITS.maxNodes;
-  if (count <= max || count - 1 > max) return;
+  const overCap = count > max;
+  // Called once per item, so the first item over the cap is the one whose predecessor wasn't.
+  const wasOverBefore = count - 1 > max;
+  if (!overCap || wasOverBefore) return;
   st.diagnostics.error(
     LIMIT_CODES.maxNodes,
     `The board has more than ${max} items (columns and cards), the limit. The limit is set by the page or app that renders the diagram.`,

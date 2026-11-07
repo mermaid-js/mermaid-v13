@@ -64,7 +64,23 @@ describe('kanban boards through the public API (#459)', () => {
     // Case-sensitive, with no word boundary, as v12's `/^\s*kanban/`.
     expect(m.detectType('  kanban\n  todo')).toBe('kanban');
     expect(m.detectType('kanbanBoard\n  todo')).toBe('kanban');
+    expect(m.detectType('kanbanx\n  todo')).toBe('kanban');
     expect(() => m.detectType('Kanban\n  todo')).toThrow();
+    expect(() => m.detectType('KANBAN\n  todo')).toThrow();
+  });
+
+  it('rejects a header the detector takes but the grammar does not, as v12 does', async () => {
+    const m = createMermaid();
+    for (const header of ['kanbanBoard', 'kanbanx']) {
+      const e = await rejection(m.render('k9', `${header}\n  todo\n`));
+      expect(e, header).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).code, header).toBe('SYNTAX');
+    }
+    for (const header of ['Kanban', 'KANBAN']) {
+      const e = await rejection(m.render('k9', `${header}\n  todo\n`));
+      expect(e, header).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).code, header).toBe('UNSUPPORTED_DIAGRAM');
+    }
   });
 
   it('rejects what v12 rejects', async () => {
@@ -81,8 +97,10 @@ describe('kanban boards through the public API (#459)', () => {
     // `padding` is the margin round the board.
     const padded = await m.render('k4', '%%{init: {"kanban": {"padding": 20}}}%%\n' + TEXT);
     expect(box(padded.svg)[2]! - box(plain.svg)[2]!).toBe(24);
-    // v12 read `mindmap.padding` and `mindmap.useMaxWidth` for kanban; v13 reads neither.
-    const mindmap = '%%{init: {"mindmap": {"padding": 50, "useMaxWidth": false}}}%%\n';
+    // v12 read `mindmap.padding`, `mindmap.useMaxWidth` and `mindmap.maxNodeWidth` for kanban;
+    // v13 reads none of them.
+    const mindmap =
+      '%%{init: {"mindmap": {"padding": 50, "useMaxWidth": false, "maxNodeWidth": 30}}}%%\n';
     expect((await m.render('k4', mindmap + TEXT)).svg).toBe(plain.svg);
     const fm = [
       '---',
@@ -99,6 +117,25 @@ describe('kanban boards through the public API (#459)', () => {
     expect(links(svg)).toEqual(['https://tickets.example/browse/MC-1']);
     expect(svg).toMatch(/<svg [^>]*width="\d+" height="\d+"/);
     expect(svg).not.toContain('max-width');
+  });
+
+  it('ignores kanban.useWidth, which v12’s kanban never read', async () => {
+    const base = await createMermaid().render('k10', TEXT);
+    const set = await createMermaid().render(
+      'k10',
+      '%%{init: {"kanban": {"useWidth": 99}}}%%\n' + TEXT
+    );
+    expect(set.svg).toBe(base.svg);
+    expect(set.warnings).toEqual([]);
+  });
+
+  it('takes kanban.theme over the top-level theme', async () => {
+    const m = createMermaid();
+    m.initialize({ theme: 'default' });
+    const dark = await createMermaid().render('k11', '---\nconfig:\n  theme: dark\n---\n' + TEXT);
+    const scoped = await m.render('k11', '---\nconfig:\n  kanban:\n    theme: dark\n---\n' + TEXT);
+    expect(scoped.svg).toBe(dark.svg);
+    expect(scoped.svg).not.toBe((await m.render('k11', TEXT)).svg);
   });
 
   it('refuses a ticket link the link check refuses, drawing the ticket as text (D377)', async () => {

@@ -23,8 +23,6 @@ interface TypeCase {
   roles: OutlineRole[];
   /** Shapes the type keeps plain besides `PLAIN`. */
   plain?: RegExp[];
-  /** The least number of corpus files it renders. */
-  min?: number;
 }
 
 const TYPES: Readonly<Record<string, TypeCase>> = {
@@ -35,12 +33,13 @@ const TYPES: Readonly<Record<string, TypeCase>> = {
     roles: ['node', 'part', 'divider', 'mark', 'group', 'edge'],
   },
   er: { dirs: ['er-diagram'], roles: ['node', 'part', 'divider', 'group', 'edge'] },
-  // The priority bar is a plain line, kept under hand-drawn (D379).
+  // The priority bar is a vertical line (x1 = x2): a zero-width box, which an outline
+  // cannot fill or hachure (as D185's lines), so it stays a plain line, kept under hand-drawn
+  // (D379). Every other kanban shape goes to the drawer.
   kanban: {
     dirs: ['kanban'],
     roles: ['group', 'node'],
-    plain: [/<line class="kanban-priority"[^>]*\/>/g],
-    min: 40,
+    plain: [/<line class="kanban-priority" x1="([^"]+)" y1="[^"]+" x2="\1"[^>]*\/>/g],
   },
 };
 
@@ -76,7 +75,7 @@ async function api(...extensions: ExtensionPlugin[]) {
 }
 
 describe('flowchart, class, state, ER and kanban outline through the hook (D302, #340)', () => {
-  for (const [type, { dirs, roles, plain: own = [], min = 50 }] of Object.entries(TYPES)) {
+  for (const [type, { dirs, roles, plain: own = [] }] of Object.entries(TYPES)) {
     it(`${type}: each role reaches the drawer, and no arrowhead, label or text does`, async () => {
       const calls: Call[] = [];
       const recording: ExtensionPlugin = {
@@ -114,7 +113,7 @@ describe('flowchart, class, state, ER and kanban outline through the hook (D302,
           expect(SHAPE.exec(rest)?.[0], item.id).toBeUndefined();
           compared++;
         }
-      expect(compared).toBeGreaterThan(min);
+      expect(compared).toBeGreaterThan(50);
       expect([...new Set(calls.map((c) => c.role))].sort()).toEqual([...roles].sort());
       for (const c of calls) expect(String(c.attrs.class ?? '')).not.toMatch(/\bmarker\b/);
     }, 300_000);

@@ -1793,8 +1793,10 @@ Class lists are written with single spaces and no trailing blank.
 
 ## Kanban
 
-- **SVG only:** `kanban` is detected by v12's case-sensitive detector with no word boundary
-  (`kanban`, `kanbanBoard`; not `Kanban`), between `c4` and `classDiagram` as in v12.
+- **SVG only:** `kanban` is detected by v12's case-sensitive detector with no word boundary,
+  between `c4` and `classDiagram` as in v12. So `kanbanBoard` or `kanbanx` is detected as a
+  kanban board and then rejected as a syntax error (`SYNTAX`), and `Kanban` or `KANBAN` is not
+  detected at all (`UNSUPPORTED_DIAGRAM`), as in v12.
   `format: 'ascii'` throws `UnsupportedFormatError`. The language service, CodeMirror and Monaco
   know it.
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
@@ -1829,11 +1831,12 @@ Class lists are written with single spaces and no trailing blank.
   the tenth are gone and `neo-dark` darkens where v12 left it light
   ([Kanban SVG structure](#kanban-svg-structure)).
 - **Config** (D378). The `kanban` section is honoured with v12's defaults: `sectionWidth` (200),
-  `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true). v12's kanban
-  read `mindmap.padding` (10) as its margin and `mindmap.useMaxWidth`, and never read
-  `kanban.padding` or `kanban.useMaxWidth`; v13 reads the `kanban` keys and no `mindmap` key, so
-  the default margin round a board is 2 px tighter on each side, and a `mindmap` setting no
-  longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
+  `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true); `kanban.theme`
+  wins over the top-level `theme` for kanban boards. v12's kanban read three `mindmap` keys:
+  `mindmap.padding` (10) as its margin, `mindmap.useMaxWidth`, and `mindmap.maxNodeWidth` (in
+  its DB), and it never read `kanban.padding` or `kanban.useMaxWidth`. v13 reads the `kanban`
+  keys and none of the three `mindmap` keys, so the default margin round a board is 2 px
+  tighter on each side, and a `mindmap` setting no longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
   strings (`"300"`, not `"300px"`) are read as numbers, as in v12. A `sectionWidth` above 0 and
   below 26 is raised to 26, where v12 drew cards of negative width, and a value that is not a
   number from 0 to 10,000 lays out with the default; each warns `KANBAN_CONFIG_IGNORED`.

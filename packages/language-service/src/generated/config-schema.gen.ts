@@ -3084,6 +3084,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for kanban boards (a diagram section beats the top level within a config layer)."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
