@@ -1,0 +1,15 @@
+@ 3:21  a@{ assigned: kn|sv }
+  3:19-3:23 "knsv"
+  | **assignee** `knsv`
+  |
+  | Assigned 2 cards and 1 column (not drawn)
+@ 4:9  :::h|ot
+  4:8-4:11 "hot"
+  | **class** `hot`
+  |
+  | Used by 2 items
+@ 5:22  b@{ assigned: "kn|sv" }
+  5:20-5:24 "knsv"
+  | **assignee** `knsv`
+  |
+  | Assigned 2 cards and 1 column (not drawn)

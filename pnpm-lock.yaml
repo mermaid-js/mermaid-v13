@@ -125,6 +125,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:^
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:^
         version: link:../diagram-mindmap
@@ -525,6 +528,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:*
+        version: link:../diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:*
         version: link:../diagram-mindmap
@@ -879,6 +885,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey
+      '@mermaid-js/diagram-kanban':
+        specifier: workspace:^
+        version: link:../../packages/diagram-kanban
       '@mermaid-js/diagram-mindmap':
         specifier: workspace:^
         version: link:../../packages/diagram-mindmap

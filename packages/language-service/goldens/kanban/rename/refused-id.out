@@ -1,0 +1,10 @@
+@ 3:3  |todo
+  prepare: 3:3-3:7 "todo"; rename to "a[b]":
+  refused: An item id cannot hold `(`, `)`, `[`, `{`, `}` or `@`: they write the shape and its data.
+@ 5:8  :::|hot
+  prepare: 5:8-5:11 "hot"; rename to "a[b]":
+  %% rename-to: a[b]
+  kanban
+    todo
+      card
+      :::a[b]

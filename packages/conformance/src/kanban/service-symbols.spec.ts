@@ -1,0 +1,173 @@
+import { describe, expect, it } from 'vitest';
+import { detectKanban, kanbanBoardOrder, parseKanban } from '@mermaid-js/diagram-kanban';
+import { kanbanLanguage } from '@mermaid-js/diagram-kanban/language';
+import type { Range } from '@mermaid-js/core/parser-kit';
+import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
+import { loadOracle } from '../oracle.ts';
+import { kanbanGateCorpus } from './corpus.ts';
+import { kanbanV12Snapshot } from './v12.ts';
+
+/**
+ * The oracle expectations re-run through the language service for kanban (language.md step 8,
+ * D99 suite 2, R-LANG-1, #463), checked against the mermaid v12 DB over the kanban gate corpus:
+ * - item ids (as D289): every v12 item written with an id has exactly one `node` occurrence,
+ *   its id without the blanks around it; its definition is that occurrence and its references
+ *   are that occurrence alone, also when another item has the same id;
+ * - classes: every class v12 gives a column has occurrences, those the service keeps (all but a
+ *   word a directive cuts) resolving to one definition with the same references from each, and the column's last class line holds them;
+ * - assignees: every item v12 gives an `assigned` has one `assignee` occurrence in its data,
+ *   named as v12 stored it; the occurrences of a name (those the service can rename) are one
+ *   symbol, as many as the items v12 assigns that name to;
+ * - folding per column: every v12 column with a card on a later line has a `column` fold
+ *   starting at it that holds its cards and no later column.
+ *
+ * Sources whose columns share an id are left out: v12 lists the cards of each under every one
+ * of them (D373, a listed divergence), so its items do not line up with the board.
+ *
+ * The service gets the facet as an eager row, as a host bundling it would, until kanban's
+ * manifest has its `language` entry (#459); the last test then fails: drop the row.
+ */
+const service = createLanguageService({
+  facets: [
+    { type: 'kanban', id: 'kanban', detector: (t) => detectKanban(t), facet: kanbanLanguage },
+  ],
+});
+
+const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
+const key = (r: Range) => `${r.start}:${r.end}`;
+const classWords = (text: string) => text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
+
+describe('kanban symbols and folding through the service match v12', () => {
+  it('over the gate corpus', async () => {
+    const oracle = await loadOracle();
+    const problems: string[] = [];
+    let checked = 0;
+    let repeats = 0;
+    let classes = 0;
+    let assignees = 0;
+    let shared = 0;
+    let folds = 0;
+    for (const item of await kanbanGateCorpus()) {
+      const v12 = await oracle.parse(item.source);
+      if (!v12.accepted || v12.diagramType !== 'kanban') continue;
+      const doc = service.update(`corpus:///${item.id}`, item.source);
+      if (doc.facet?.id !== 'kanban') continue;
+      if (doc.diagnostics().some((d) => d.severity === 'error')) continue;
+      const model = kanbanV12Snapshot(v12.db);
+      const parsed = parseKanban(item.source);
+      const board = kanbanBoardOrder(parsed.model);
+      if (board.length !== model.nodes.length) continue;
+      checked++;
+      const fail = (what: string) => problems.push(`${item.id}: ${what}`);
+      const astOf = new Map(parsed.ast.children.map((n) => [n.id, n]));
+      const asts = board.map((b) => astOf.get(b.ast)!);
+      const nodeSymbols = parsed.symbols.filter((s) => s.kind === 'node');
+      const seen = new Map<string, number>();
+
+      model.nodes.forEach((v, k) => {
+        const ast = asts[k]!;
+        if (ast.nodeId === undefined || ast.nodeId.trim() === '') return;
+        const name = v.id.trim();
+        const mine = nodeSymbols.filter((s) => inside(s.range, ast.range));
+        if (mine.length !== 1 || mine[0]!.name !== name) {
+          return fail(`item ${name}: ${mine.length} occurrences`);
+        }
+        const at = mine[0]!.range;
+        if (doc.text.slice(at.start, at.end) !== name) return;
+        if ((seen.get(name) ?? 0) > 0) repeats++;
+        seen.set(name, (seen.get(name) ?? 0) + 1);
+        const d = doc.definition(at.start);
+        if (!d || key(d) !== key(at)) fail(`item ${name}: definition ${d && key(d)}`);
+        const refs = doc.references(at.start).map(key);
+        if (refs.length !== 1 || refs[0] !== key(at))
+          fail(`item ${name}: references ${refs.join(' ')}`);
+        if (doc.references(at.start, false).length > 0) fail(`item ${name}: has references`);
+      });
+
+      const classSymbols = parsed.symbols.filter((s) => s.kind === 'class');
+      for (const name of new Set(model.nodes.flatMap((v) => v.classes ?? []))) {
+        const all = classSymbols.filter((s) => s.name === name);
+        if (all.length === 0) {
+          fail(`class ${name} has no occurrence`);
+          continue;
+        }
+        // A word a directive cuts in two keeps the line's range, which the service drops.
+        const at = all.filter((s) => doc.text.slice(s.range.start, s.range.end) === name);
+        if (at.length === 0) continue;
+        classes++;
+        const defs = new Set(at.map((s) => doc.definition(s.range.start)).map((d) => d && key(d)));
+        if (defs.size !== 1 || defs.has(undefined)) fail(`class ${name}: ${defs.size} definitions`);
+        const lists = new Set(at.map((s) => JSON.stringify(doc.references(s.range.start))));
+        if (lists.size !== 1) fail(`class ${name}: references differ by occurrence`);
+        const refs = doc.references(at[0]!.range.start);
+        if (refs.length !== at.length) fail(`class ${name}: ${refs.length} of ${at.length}`);
+      }
+      model.nodes.forEach((v, k) => {
+        if (!v.classes || v.classes.length === 0) return;
+        const lines = asts[k]!.decorations.filter((d) => d.type === 'Class');
+        const kept = lines[lines.length - 1];
+        if (!kept || classWords(kept.text).join(' ') !== v.classes.join(' '))
+          fail(`column ${v.id}: v12 classes ${v.classes.join(' ')} are not its last class line`);
+      });
+
+      const assigneeSymbols = parsed.symbols.filter((s) => s.kind === 'assignee');
+      const exact = new Map<string, number>();
+      model.nodes.forEach((v, k) => {
+        const data = asts[k]!.data;
+        const mine = data ? assigneeSymbols.filter((s) => inside(s.range, data.range)) : [];
+        if (v.assigned === null) {
+          if (mine.length > 0) fail(`item ${v.id}: an assignee v12 does not have`);
+          return;
+        }
+        if (mine.length !== 1 || mine[0]!.name !== v.assigned) {
+          return fail(`item ${v.id}: ${mine.length} assignee occurrences for ${v.assigned}`);
+        }
+        assignees++;
+        // Past an opening quote; an occurrence the service dropped (a value it cannot place in
+        // the source) has no references.
+        if (doc.references(mine[0]!.range.start + 1).length > 0)
+          exact.set(v.assigned, (exact.get(v.assigned) ?? 0) + 1);
+      });
+      for (const [name, count] of exact) {
+        const at = assigneeSymbols.find(
+          (s) => s.name === name && doc.references(s.range.start + 1).length > 0
+        )!;
+        const refs = doc.references(at.range.start + 1);
+        if (refs.length !== count) fail(`assignee ${name}: ${refs.length} of ${count}`);
+        if (count > 1) shared++;
+      }
+
+      const ranges = doc.foldingRanges().filter((f) => f.kind === 'column');
+      const lineOf = (offset: number) => doc.text.slice(0, offset).split('\n').length;
+      model.nodes.forEach((v, k) => {
+        if (!v.column) return;
+        let last = k;
+        while (last + 1 < model.nodes.length && !model.nodes[last + 1]!.column) last++;
+        const start = asts[k]!.range;
+        if (last === k || lineOf(asts[last]!.range.end) === lineOf(start.start)) return;
+        folds++;
+        const f = ranges.find((x) => x.range.start === start.start);
+        if (!f) return fail(`column ${v.id} has no fold`);
+        for (let d = k + 1; d <= last; d++) {
+          if (!inside(asts[d]!.range, f.range))
+            fail(`column ${v.id}: ${model.nodes[d]!.id} outside`);
+        }
+        const next = asts[last + 1];
+        if (next && next.range.start < f.range.end)
+          fail(`column ${v.id}: fold holds a later column`);
+      });
+    }
+    expect(checked).toBeGreaterThan(500);
+    expect(repeats).toBeGreaterThan(20);
+    expect(classes).toBeGreaterThan(30);
+    expect(assignees).toBeGreaterThan(150);
+    expect(shared).toBeGreaterThan(10);
+    expect(folds).toBeGreaterThan(500);
+    expect(problems).toEqual([]);
+  }, 300_000);
+
+  it('runs with an eager row only while kanban has no manifest `language` entry', () => {
+    const row = firstPartyFacets.find((e) => e.type === 'kanban');
+    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+  });
+});

@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #424: the manifest comes with T5 (#459).
+  {
+    type: 'kanban',
+    id: 'kanban',
+    section: 'kanban',
+    pattern: /^\s*kanban/,
+    detector: (text) => /^\s*kanban/.test(text),
+    load: () => import('@mermaid-js/diagram-kanban/language').then((m) => m.language),
+  },
+];

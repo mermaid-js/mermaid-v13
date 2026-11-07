@@ -1,0 +1,23 @@
+@ 3:8  a@{|}
+  assigned property 3:8-3:8 "" -> "assigned: "
+  ticket property 3:8-3:8 "" -> "ticket: "
+  priority property 3:8-3:8 "" -> "priority: "
+  label property 3:8-3:8 "" -> "label: "
+  icon property 3:8-3:8 "" -> "icon: "
+  shape property 3:8-3:8 "" -> "shape: "
+@ 4:22  b@{ ticket: T-1, |}
+  assigned property 4:22-4:22 "" -> "assigned: "
+  priority property 4:22-4:22 "" -> "priority: "
+  label property 4:22-4:22 "" -> "label: "
+  icon property 4:22-4:22 "" -> "icon: "
+  shape property 4:22-4:22 "" -> "shape: "
+@ 5:12  c@{ pri| }
+  priority property 5:9-5:12 "pri" -> "priority: "
+@ 8:7  |
+  ticket property 8:7-8:7 "" -> "ticket: "
+  priority property 8:7-8:7 "" -> "priority: "
+  label property 8:7-8:7 "" -> "label: "
+  icon property 8:7-8:7 "" -> "icon: "
+  shape property 8:7-8:7 "" -> "shape: "
+@ 10:12  e@{ tic|ket: T-2 }
+  ticket property 10:9-10:15 "ticket" -> "ticket"

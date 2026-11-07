@@ -8,7 +8,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T2 grammar, parser, model, AST | #453 | #451 | done on `feature/453_kanban-parser` (handoff `tickets/453.md`; package entry 7,985 B gz, no core change) |
 | T3 layout | #455 | #453 | merged (ff b5e02727e; package entry 10,785 B gz, core unchanged) |
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | merged (ff 194da70d7; package entry 12,706 B gz, core 92,619 unchanged) |
-| T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | blocked on T0 taking `mermaid-v13` |
+| T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | done on `feature/463_kanban-language` (handoff `tickets/463.md`; package entry 14,128 B gz, `./language` 12,521 B gz, no core change) |
 | T5 integration | #459 | #457, #463 (T0a merged in) | blocked |
 | T7 ascii (Should) | #466 | #459 | blocked |
 

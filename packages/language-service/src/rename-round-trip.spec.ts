@@ -71,6 +71,12 @@ const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
     const m = model as { nodes: { ast: string }[] };
     return { ...m, nodes: m.nodes.map(({ ast: _, ...node }) => node) };
   },
+  // Kanban's `ast` ids are mindmap's (D289): `n:<id>`, the k-th repeat `n:<id>@k`, so renaming
+  // the first of two columns `docs` renumbers the second. `id` is compared as it is.
+  kanban: (model) => {
+    const m = model as { items: { ast: string }[] };
+    return { ...m, items: m.items.map(({ ast: _, ...item }) => item) };
+  },
 };
 
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */

@@ -49,7 +49,15 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Not done here (needs T5's manifest): `outline-roles.spec.ts`/`outline-identity.spec.ts` run through `createMermaid`; add `kanban: { dirs: ['kanban'], roles: ['group', 'node'] }` there in T5.
 
 ## #463 T6 language facet
-- Exploration: `LanguageFacet.standalone` (D289: rename changes one repeated id) exists only on `feature/294_mindmap` (#406). T6 starts after #406 merges into `mermaid-v13` and that is merged here; do not add a second copy of the core field.
+- Closed: `LanguageFacet.standalone` came in with #406 (mindmap); kanban sets `standalone: ['node']`, no core change.
+- **Choice:** an assignee occurrence is the `assigned` value's source range (quotes included, which the service reads through), found by a text scan of the block (`parser/symbols.ts`, the only pair naming `assigned`) and else by the YAML tree. Data read from v12's wrapped text (a `#` in it, an entity, a directive or CRLF inside) gives the block's range, which the service drops: such an assignee is not renamed with the others. The scan keeps the 50k parse at 2.8 ms (4.3 ms with a tree read per card).
+- **Choice:** an assignee on a column (kept, not drawn, D376) is an occurrence too: the spec's "an occurrence per `assigned:` value". Hover says it is not drawn there.
+- **Choice:** columns fold to the line before the next column, blank and comment lines included, the last to the end of the text (the spec's rule, read as D259's timeline sections). T2's column span ended at its last card; `parse.spec.ts` updated.
+- **Choice:** completion inserts `::icon()` (mindmap's choice: `::icon(` takes the lines after it to a `)`), a key as `key: ` (only the word when its `:` is written), and offers only keys the block lacks. Priorities are the four D375 draws (not `Medium`, which draws none); after `assigned:` the other cards' assignees that read back bare. Nothing in a quoted run of data.
+- **Choice:** `isValidId` reads a name back where its kind is written: an item id as a card's id; an assignee bare in a one-line and a multi-line block, so `a, b`, `a: b`, `#x`, `null` and quoted text are refused (a rename of a quoted occurrence keeps its quotes, but the name must hold bare everywhere).
+- **Choice:** hover on an item (id, shape or text) names column or card, its column, and the ticket, assignee, priority and classes its data sets, beyond the spec's keywords and keys (as mindmap's node hover).
+- **Choice:** the rename round-trip spec drops kanban's `ast` field before comparing models, as mindmap's (`n:<id>@k` renumbers); no known entry added.
+- **For T5 (#459):** manifest `language` entry `./dist/language.js`, `gen:registry`; then delete the kanban row in `language-service/src/testing/unlisted-facets.ts` and the eager row in `conformance/src/kanban/service-symbols.spec.ts` (both specs fail until you do). Adapter rows `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` need `FirstPartyFacetId` from the manifest: left to T5 with each adapter's `gen`, `adapters-agree.spec.ts` and both first-paint e2e specs. The service has kanban as a dev dependency only (private package).
 
 ## #459 T5 integration
 - Waits for #414 T0a (theme table) as well as T4 and T6.

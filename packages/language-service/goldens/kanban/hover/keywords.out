@@ -1,0 +1,15 @@
+@ 1:2  k|anban
+  1:1-1:7 "kanban"
+  | **`kanban`**
+  |
+  | `kanban`: starts a kanban board; its columns and cards follow, one per line.
+@ 4:9  ::ic|on(fa fa-book)
+  4:5-4:12 "::icon("
+  | **`::icon(`**
+  |
+  | `::icon(…)`: the icon of the last item, on a line of its own.
+@ 5:6  :|::urgent
+  5:5-5:8 ":::"
+  | **`:::`**
+  |
+  | `:::class …`: the classes of the last item, on a line of its own; a later one replaces them.
