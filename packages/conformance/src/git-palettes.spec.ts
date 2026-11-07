@@ -13,6 +13,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { gitGraph } from '@mermaid-js/diagram-gitgraph';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -51,6 +52,7 @@ function v12Palettes(theme: string, themeVariables: object = {}): Palettes {
 
 async function v13Theme(theme: ThemeName, themeVariables?: object) {
   return createTheme(await loadTheme(theme), {
+    diagram: gitGraph.theme,
     cssVariables: false,
     themeVariables: themeVariables as Record<string, unknown>,
   });
@@ -86,12 +88,18 @@ describe('git, gitInv and gitBranchLabel against v12 12.2.0 (#369, D267)', () =>
     expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
   });
 
-  it.each(THEME_NAMES)('%s: labels follow a labelTextColor override as v12 does', async (theme) => {
-    const vars = { labelTextColor: '#3366cc' };
-    expect((await v13Palettes(theme, vars)).gitBranchLabel).toEqual(
-      v12Palettes(theme, vars).gitBranchLabel
-    );
-  });
+  // D334: v12's branch labels read sequence's `labelTextColor` (forest sets it from
+  // `actorTextColor`); v13's read the shared label ink `scaleLabelColor`, which an author's
+  // override moves where v12's label colour moved.
+  it.each(THEME_NAMES)(
+    '%s: labels follow a scaleLabelColor override as v12 follows labelTextColor',
+    async (theme) => {
+      const ink = '#3366cc';
+      expect((await v13Palettes(theme, { scaleLabelColor: ink })).gitBranchLabel).toEqual(
+        v12Palettes(theme, { labelTextColor: ink, actorTextColor: ink }).gitBranchLabel
+      );
+    }
+  );
 
   it.each(THEME_NAMES)('%s: a numbered override replaces its slot verbatim', async (theme) => {
     const vars = { git4: '#123456', gitInv5: '#654321', gitBranchLabel6: '#abcdef' };

@@ -1,44 +1,10 @@
 /**
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { paletteSlots, series } from './palettes.ts';
 import { gitSources } from './scales.ts';
-import {
-  CLASSIC_ARROWHEADS,
-  CLASSIC_CLASS_MARKERS,
-  CLASSIC_PADDING,
-  CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
-  CLASSIC_MINDMAP,
-  CLASSIC_GITGRAPH,
-  TEXT_SIZES,
-} from './geometry.ts';
-
-/**
- * v12 `theme-default.js`: tertiary −40, secondary −30, tertiary −20, then hue turns. `pie3` and
- * `pie6` are v12's values: v12 darkens its unrounded HSL tertiary colour, which lands a few steps
- * off the hex one.
- */
-const PIE_DEFAULT: ThemeRuleTable = {
-  ...pieSlots([
-    undefined,
-    undefined,
-    '#b5ff20',
-    undefined,
-    'darkenHsl(secondaryColor, 30%)',
-    '#d7ff86',
-    '#ff86ff',
-    '#20ffff',
-    '#ff2020',
-    '#ff20ff',
-    '#20ff8f',
-    '#ff5353',
-  ]),
-  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
-  pieTitleTextColor: 'black',
-  pieLegendTextColor: 'black',
-};
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 /**
  * v12 `theme-default.js` derives its git palettes in the constructor, from its own colours, and
@@ -53,6 +19,7 @@ const DEFAULT_GIT = gitSources('#ececff', '#ffffde', 'adjustHue(#ececff, -160)')
 const theme: ThemeSpec = {
   name: 'default',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#ececff',
     secondaryColor: '#ffffde',
@@ -72,24 +39,19 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...CLASSIC_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_SEQUENCE,
-    ...CLASSIC_TIMELINE,
-    ...CLASSIC_MINDMAP,
-    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'),
-    altBackground: '#f0f0f0', // v12 (#192)
-    // sequence (v12 theme-default.js)
-    actorTextColor: '#000000',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: 'black',
+    nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)
+    // v12 theme-default.js: the label ink (black), the grey muted surface and border, white
+    // text on lines.
+    scaleLabelColor: '#000000',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#333333',
     nodeBorder: '#9370db',
     clusterBkg: '#ffffde',
@@ -102,19 +64,27 @@ const theme: ThemeSpec = {
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
   rules: {
-    rowOdd: 'lightenHsl(primaryColor, 75%)',
-    rowEven: 'lightenHsl(primaryColor, 1%)',
-    ...PIE_DEFAULT,
-    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them.
-    commitLabelColor: '#000021',
-    commitLabelBackground: '#ffffde',
-    tagLabelColor: '#131300',
-    tagLabelBackground: '#ececff',
-    tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #c7c7f1))',
+    rowBkg: 'lightenHsl(primaryColor, 75%)',
+    rowAltBkg: 'lightenHsl(primaryColor, 1%)',
+    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them:
+    // the badge and the callout (D332).
+    badgeTextColor: '#000021',
+    badgeBkg: '#ffffde',
+    calloutTextColor: '#131300',
+    calloutBkg: '#ececff',
+    calloutBorder: 'ifSet(primaryBorderColor, #c7c7f1)',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
   palettes: {
+    // v12 theme-default.js: the base colours, tertiary −40, primary −10, secondary −30, tertiary
+    // −20, then hue turns. Slots 2 and 5 derive from the hex tertiary colour, where v12 darkened
+    // its unrounded HSL one, a few steps off (D333(a): #b9ff20 against v12's #b5ff20). Then the
+    // tints (±64° and 128° turns of the primary and secondary colours).
+    seriesColorArray: series(
+      'primaryColor secondaryColor darkenHsl(tertiaryColor,40%) darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,30%) darkenHsl(tertiaryColor,20%) #ff86ff #20ffff #ff2020 #ff20ff #20ff8f #ff5353 ' +
+        '#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'
+    ),
     cScale: [
       '#8686ff',
       '#ffff78',
@@ -143,9 +113,9 @@ const theme: ThemeSpec = {
       '#ffb9b9',
       '#ffdcb9',
     ],
-    cScaleLabel: paletteSlots((i) =>
-      i === 0 || i === 3 ? 'invert(labelTextColor)' : 'labelTextColor'
-    ),
+    // v12 inverts its label ink (black) in slots 0 and 3 and ignores
+    // `scaleLabelColor`: the resolved colours, so no sequence variable is read (D334).
+    cScaleLabel: paletteSlots((i) => (i === 0 || i === 3 ? '#ffffff' : '#000000')),
     git: DEFAULT_GIT.map((c) => `darkenHsl(${c}, 25%)`),
     gitInv: DEFAULT_GIT.map((c, i) => (i ? `invert(${c})` : `darkenHsl(invert(${c}), 25%)`)),
     gitBranchLabel: paletteSlots((i) => (i === 0 || i === 3 ? 'white' : 'black'), 8),

@@ -9,6 +9,7 @@ import type { MindmapModel } from './model.ts';
 import { detectMindmap, parseMindmap, type MindmapParseResult } from './parser/index.ts';
 import type { MindmapRenderContext } from './render/context.ts';
 import { renderMindmap } from './render/render.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The mindmap plugin (DESIGN §12.1, spec #294): `layoutKind: 'graph'`, laid out by the engine
@@ -45,4 +46,5 @@ export const mindmap = {
     ctx: MindmapRenderContext,
     w: SvgWriter
   ): void => renderMindmap(model, layout, ctx, w),
+  theme,
 } satisfies DiagramPlugin<MindmapModel, MindmapLayout>;

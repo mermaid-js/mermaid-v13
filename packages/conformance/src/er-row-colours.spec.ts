@@ -6,6 +6,7 @@
  * with each theme's own colours and with an author's `primaryColor`/`mainBkg`.
  */
 import { createTheme, formatColor, loadTheme, parseColor } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from './oracle.ts';
 
@@ -42,7 +43,11 @@ async function v13Rows(
   fill: string | undefined
 ): Promise<[string, string]> {
   const themeVariables = fill === undefined ? {} : { primaryColor: fill, mainBkg: fill };
-  const t = createTheme(await loadTheme(theme), { cssVariables: false, themeVariables });
+  const t = createTheme(await loadTheme(theme), {
+    diagram: DIAGRAM_TABLES.er,
+    cssVariables: false,
+    themeVariables,
+  });
   return [hex(t.color('rowOdd')), hex(t.color('rowEven'))];
 }
 

@@ -11,7 +11,8 @@
     "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
     "typecheck": "tsc -p tsconfig.json",
     "language": "tsx --conditions=mermaid-source src/cli/language.ts",
-    "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts"
+    "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts",
+    "theme-identity": "tsx --conditions=mermaid-source src/cli/theme-identity.ts"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",

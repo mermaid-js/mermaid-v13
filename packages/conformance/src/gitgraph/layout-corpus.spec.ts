@@ -2,7 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutGitGraph, parseGitGraph, type GitDirection } from '@mermaid-js/diagram-gitgraph';
+import {
+  gitGraph as plugin,
+  layoutGitGraph,
+  parseGitGraph,
+  type GitDirection,
+} from '@mermaid-js/diagram-gitgraph';
 import { gitLayoutViolations } from '@mermaid-js/diagram-gitgraph/testing';
 import type { CorpusItem } from '../types.ts';
 import { gitGraphGateCorpus } from './corpus.ts';
@@ -27,8 +32,8 @@ beforeAll(async () => {
   const classic: ThemeSpec = await loadTheme('default');
   const redux: ThemeSpec = await loadTheme('redux');
   themes.push(
-    { name: 'classic', theme: () => createTheme(classic) },
-    { name: 'redux', theme: () => createTheme(redux) }
+    { name: 'classic', theme: () => createTheme(classic, { diagram: plugin.theme }) },
+    { name: 'redux', theme: () => createTheme(redux, { diagram: plugin.theme }) }
   );
   corpus = await gitGraphGateCorpus();
 });

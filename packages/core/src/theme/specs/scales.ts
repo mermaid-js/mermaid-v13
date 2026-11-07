@@ -61,14 +61,17 @@ export const DARK_HUE_SOURCES = hueSources(
   'ifSet(tertiaryColor, adjustHue(#1f2020, -160))'
 );
 
-/** `cScaleLabel` where v12 writes `black` under `darkMode` (`theme-dark.js`, `theme-neutral.js`). */
+/**
+ * `cScaleLabel` where v12 writes `scaleLabelColor || 'black'` under `darkMode` (`theme-dark.js`,
+ * `theme-neutral.js`).
+ */
 export const darkModeLabels = (keep: Readonly<Record<number, string>> = {}): readonly string[] =>
-  paletteSlots((i) => keep[i] ?? '#000000');
+  paletteSlots((i) => keep[i] ?? 'ifSet(scaleLabelColor, #000000)');
 
 /**
  * `gitBranchLabel` of `theme-forest.js` and `theme-dark.js`: v12's `labelTextColor`, inverted in
- * slots 0 and 3. Both set `labelTextColor` themselves before the labels (forest to
- * `actorTextColor`, dark to its `mainContrastColor`), so `label` is that rule.
+ * slots 0 and 3. Both set `labelTextColor` themselves before the labels (forest to its label ink
+ * `scaleLabelColor`, dark to its `mainContrastColor`), so `label` is that rule.
  */
 export const classicGitLabels = (label: string): readonly string[] =>
   paletteSlots((i) => (i === 0 || i === 3 ? `invert(${label})` : label), 8);
@@ -98,13 +101,14 @@ export const gitSources = (p: string, s: string, t: string): readonly string[] =
 /**
  * v12's `git`, `gitInv` and `gitBranchLabel` (`theme-base.js` and the themes that copy it): each
  * source darkened by 25 points of HSL lightness (`lightenHsl` under `darkMode`), the inverse of
- * that step, and one label rule in every slot. v12 steps an author's `git<n>` too before it inverts
+ * that step, and one label rule in every slot (v12's `labelTextColor`, the label ink
+ * `scaleLabelColor`, D334). v12 steps an author's `git<n>` too before it inverts
  * it, then draws the author's colour as given; `ifSet` keeps both.
  */
 export const gitPalettes = (
   sources: readonly string[],
   step = 'darkenHsl',
-  label = 'labelTextColor'
+  label = 'scaleLabelColor'
 ): Readonly<Record<'git' | 'gitInv' | 'gitBranchLabel', readonly string[]>> => ({
   git: sources.map((c) => `${step}(${c}, 25%)`),
   gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
@@ -112,17 +116,18 @@ export const gitPalettes = (
 });
 
 /**
- * gitGraph's commit label colours and tag border (D267) as one v12 theme derives them: the
- * author's `secondaryTextColor`, else v12's `invert(secondaryColor)` (`text`); `background`; the
- * author's `tagBorder`, else the author's `primaryBorderColor`, else v12's resolved border
- * (`border`, a khroma saturation step the DSL has no function for).
+ * The badge and the callout border (D332) as one v12 theme derives gitGraph's commit label
+ * colours and tag border from them (D267): the author's `secondaryTextColor`, else v12's
+ * `invert(secondaryColor)` (`text`); `background`; the author's `primaryBorderColor`, else v12's
+ * resolved border (`border`, a khroma saturation step the DSL has no function for). An author's
+ * `tagBorder` comes first (gitGraph's table).
  */
 export const gitLabelRules = (
   text: string,
   border: string,
   background = 'secondaryColor'
 ): ThemeRuleTable => ({
-  commitLabelColor: `ifSet(secondaryTextColor, ${text})`,
-  commitLabelBackground: background,
-  tagLabelBorder: `ifSet(tagBorder, ifSet(primaryBorderColor, ${border}))`,
+  badgeTextColor: `ifSet(secondaryTextColor, ${text})`,
+  badgeBkg: background,
+  calloutBorder: `ifSet(primaryBorderColor, ${border})`,
 });

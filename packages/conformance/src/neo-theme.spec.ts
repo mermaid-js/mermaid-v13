@@ -9,7 +9,6 @@ import {
   PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
-  createTheme,
   formatColor,
   loadTheme,
   parseColor,
@@ -17,6 +16,7 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -37,30 +37,27 @@ function v12Vars(theme: string): Record<string, unknown> {
 }
 
 const OLD = v12Vars('neo');
-const neo = createTheme(await loadTheme('neo'), { cssVariables: false });
-const redux = createTheme(await loadTheme('redux'), { cssVariables: false });
+const neo = everyTable(await loadTheme('neo'), { cssVariables: false });
+const redux = everyTable(await loadTheme('redux'), { cssVariables: false });
 
 /** Owned by #223 (GAPS.md "Contracts"): compared like the rest once the vocabulary has them. */
 const GRADIENT = ['useGradient', 'gradientStart', 'gradientStop'] as const;
-const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, n));
+const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(VOCABULARY, n));
 
 /** Geometry v12 takes from `look: neo`, not from a theme variable; v13 carries it as tokens. */
 /**
  * Timeline's box variables (spec #291): v12 chose its timeline geometry and paint by a theme
  * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
  */
-const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+const TIMELINE = Object.keys(VOCABULARY).filter((n) => n.startsWith('timeline'));
 /**
  * gitGraph's v13 variables (#374): v12 chose its gitGraph geometry by a theme name with `redux`
  * and its node colours by `NEO_COLOR_GEN_THEMES`, so `theme: neo` drew classic geometry with the
  * node colours (D266). `commitLineColor` is v12's, which no neo theme sets (`?? lineColor`).
  */
-const GITGRAPH = [
-  ...Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('git')),
-  'commitLineColor',
-];
+const GITGRAPH = [...Object.keys(VOCABULARY).filter((n) => n.startsWith('git')), 'commitLineColor'];
 
-const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
+const LOOK_GEOMETRY = Object.entries(VOCABULARY)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
   .filter(([name]) => !TIMELINE.includes(name) && !GITGRAPH.includes(name))
   .map(([name]) => name);
@@ -99,7 +96,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
   ),
   ...Object.fromEntries(
-    Object.keys(THEME_VARIABLES)
+    Object.keys(VOCABULARY)
       .filter((n) => n.startsWith('mindmap'))
       .map((n) => [n, 'D288, D152: v12 has no variable; it chose mindmap paint by look and theme'])
   ),
@@ -115,7 +112,7 @@ const hex = (v: unknown): string | undefined => {
 };
 
 function v13Value(t: Theme, name: string): string | number {
-  const kind = THEME_VARIABLES[name]?.kind;
+  const kind = VOCABULARY[name]?.kind;
   if (kind === 'padding') return t.padding(name, 15);
   if (kind === 'length') return t.number(name);
   return t.value(name);
@@ -125,7 +122,7 @@ function same(name: string): boolean {
   const old = OLD[name];
   if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
   const now = v13Value(neo, name);
-  const kind = THEME_VARIABLES[name]?.kind;
+  const kind = VOCABULARY[name]?.kind;
   if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
   if (kind === 'length') return Number.parseFloat(String(old)) === now;
   return String(old).trim() === String(now).trim();
@@ -148,8 +145,8 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
   });
 
   it('differs from v12 only where a decision says so', () => {
-    const vocabulary = Object.keys(THEME_VARIABLES).filter((n) => !same(n));
-    const palettes = PALETTE_VARIABLES.filter(
+    const vocabulary = Object.keys(VOCABULARY).filter((n) => !D332_INPUTS.includes(n) && !same(n));
+    const palettes = PALETTE_VARIABLES.filter((p) => !D332_INPUTS.includes(p)).filter(
       (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neo.palette(p).map(hex))
     );
     expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());
@@ -172,13 +169,13 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
   });
 
   it('takes the classic timeline values, as v12 theme neo drew (D227)', async () => {
-    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    const classic = everyTable(await loadTheme('default'), { cssVariables: false });
     expect(TIMELINE.length).toBe(4);
     for (const name of TIMELINE) expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
   });
 
   it('takes classic gitGraph geometry with the node colours, as v12 theme neo drew (D266)', async () => {
-    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    const classic = everyTable(await loadTheme('default'), { cssVariables: false });
     for (const name of GITGRAPH.filter((n) => n.startsWith('git') && n !== 'gitNodeColors'))
       expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
     expect(neo.value('gitNodeColors')).toBe('true');

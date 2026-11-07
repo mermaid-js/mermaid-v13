@@ -5,7 +5,12 @@ import { tree } from '@mermaid-js/core/layout/tree';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
-import { layoutMindmap, parseMindmap, type MindmapModel } from '@mermaid-js/diagram-mindmap';
+import {
+  layoutMindmap,
+  mindmap,
+  parseMindmap,
+  type MindmapModel,
+} from '@mermaid-js/diagram-mindmap';
 import { mindmapProblems, treeProblems } from '@mermaid-js/diagram-mindmap/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
 import { mindmapCases, mindmapCorpus } from './corpus.ts';
@@ -57,7 +62,7 @@ async function laidOut(f: Fixture, engine: LayoutEngine) {
     config: f.config,
     measurer: tableMeasurer,
     units: pxProfile,
-    theme: createTheme(await loadTheme(f.theme), {}),
+    theme: createTheme(await loadTheme(f.theme), { diagram: mindmap.theme }),
     layout: (graph) => engine(graph, { config: f.config }),
     warn: (w) => warnings.push(w.code),
   });

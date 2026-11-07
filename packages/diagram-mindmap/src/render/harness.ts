@@ -16,6 +16,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
+import { theme as table } from '../theme/table.ts';
 import { layoutMindmap, type MindmapLayout } from '../layout/layout.ts';
 import type { MindmapModel } from '../model.ts';
 import { parseMindmap, type MindmapDocument } from '../parser/index.ts';
@@ -84,6 +85,7 @@ export async function renderMindmapForTest(
   const idPrefix = options.idPrefix ?? 'mermaid-0';
   const choice = resolveThemeName(config.theme, warn);
   const theme = createTheme(await loadTheme(choice.name), {
+    diagram: table,
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
     warn,
