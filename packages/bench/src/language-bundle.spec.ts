@@ -61,6 +61,7 @@ const PACKAGES = [
     renderer: [
       'render/',
       'layout/',
+      'theme/',
       'plugin.ts',
       'index.ts',
       'labels.ts',

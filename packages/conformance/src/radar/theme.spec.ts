@@ -52,7 +52,7 @@ function v12Radar(theme: string, themeVariables?: object): Block {
 const VARS = radar.theme.vars;
 /** Flat v13 name → v12's nested `radar` key (the table's `nested`, D335). */
 const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested] as const);
-const isColour = (name: string): boolean => VARS[name as keyof typeof VARS].kind === 'color';
+const isColour = (name: string): boolean => VARS[name]?.kind === 'color';
 
 const hex = (v: unknown): string | undefined => {
   if (typeof v !== 'string') return undefined;
