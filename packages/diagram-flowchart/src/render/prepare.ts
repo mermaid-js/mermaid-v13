@@ -14,6 +14,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
+import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
@@ -93,12 +94,6 @@ function vertexShape(v: FlowVertex): string {
 
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** A config number (v12 also took numeric strings), capped; `fallback` when not one. */
-function size(value: unknown, fallback = 0): number {
-  const n = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof n === 'number' && n >= 0 && n < 1e4 ? n : fallback;
-}
-
 function arrows(type: string, stroke: string): [string, string] {
   if (stroke === 'invisible' || type === 'arrow_open') return ['none', 'none'];
   if (type.startsWith('double_')) {
@@ -151,13 +146,14 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     weight: 400,
   };
   // flowchart.padding: the classic themes' padding variables are multiples of it (D152).
-  const pad = size(flow.padding, flowchartConfigDefaults.padding);
+  const length = configLengths(flow, flowchartConfigDefaults, (w) => ctx.warn(w));
+  const pad = length('padding') ?? flowchartConfigDefaults.padding!;
   const m: Measure = {
     ctx,
     font,
     pads: padsOf(ctx.theme, pad),
-    wrap: fromPx(units, size(flow.wrappingWidth), 'x') || units.builder.wrapWidth,
-    minWidth: size(flow.minNodeWidth),
+    wrap: fromPx(units, length('wrappingWidth') ?? 0, 'x') || units.builder.wrapWidth,
+    minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
     label: (text, markdown, f, max, bits = 0) =>
@@ -168,7 +164,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const nest = nesting(model, rootDir);
   const { views, groups, nodes } = nodeViews(model, nest, m);
   const edges = edgeViews(model, nest.collapsedInto, views, m);
-  const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m);
+  const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m, length);
   return { graph, groups, nodes, edges, views, pads: m.pads };
 }
 
@@ -365,22 +361,23 @@ function layoutGraph(
   rootDir: Dir,
   nest: Nesting,
   { groups, nodes, edges }: Pick<Prepared, 'groups' | 'nodes' | 'edges'>,
-  m: Measure
+  m: Measure,
+  length: ConfigLength
 ): LayoutGraph {
   const units = m.ctx.units ?? pxProfile;
   const b = units.builder;
   const flow = m.ctx.config.flowchart ?? {};
   // Config numbers may arrive as strings from front matter, as v12 accepted them. They are px:
   // node spacing runs across the flow and rank spacing along it.
-  const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = size(value, NaN);
-    return Number.isNaN(px) ? fallback : fromPx(units, px, axis, min);
+  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
+    const px = length(key);
+    return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   const along = sideways(rootDir) ? 'x' : 'y';
   const across = along === 'x' ? 'y' : 'x';
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(flow.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig(flow.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
+    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
+    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
     edge: b.spacing.edge,
   });
   const spacing = spacingOn(along, across);
@@ -441,7 +438,7 @@ function layoutGraph(
     // `availableWidth` (`ascii.maxWidth`, D84): the profile's own (0) applies.
     diagramPadding:
       units.grid === undefined
-        ? fromConfig(flow.diagramPadding, b.diagramPadding, 'x', 0)
+        ? fromConfig('diagramPadding', b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // On the grid routes are always square (D78): curves have no text form (D82).
     routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',

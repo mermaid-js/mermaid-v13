@@ -324,17 +324,26 @@ describe('the glyph slot (D293)', () => {
     expect(asked).toEqual(['none', 'some']);
   });
 
-  it('keeps the frame-only drawing when no extension has the glyph', async () => {
+  it('keeps the frame-only drawing, and says so, when no extension has the glyph', async () => {
     const without = await api().m.render('x', SHAPE);
     const { m, ready } = api({ id: 'none', glyphs: { glyph: () => undefined } });
     await ready;
     const declined = await m.render('x', SHAPE);
     expect(declined.svg).toBe(without.svg);
-    // The extension that has glyphs warns about one it cannot draw (D291), so one that declines
-    // silently (as the icons extension does for a placeholder) leaves the render quiet.
-    expect(codes(declined.warnings)).toEqual([]);
-    // Without one, flowchart says ICON_NOT_RENDERED itself, with the deprecated alias (D299).
+    // No extension warned about it (they warn only for `null`, D291), so flowchart says
+    // ICON_NOT_RENDERED itself, with the deprecated alias (D299), as it does without one.
+    expect(codes(declined.warnings)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
+    expect(declined.warnings[0]?.message).toMatch(/no icons extension has/);
     expect(codes(without.warnings)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
+  });
+
+  it('draws the frame alone, quietly, for a placeholder (D299)', async () => {
+    const without = await api().m.render('x', SHAPE);
+    const { m, ready } = api({ id: 'loading', glyphs: { glyph: () => 'pending' } });
+    await ready;
+    const pending = await m.render('x', SHAPE);
+    expect(pending.svg).toBe(without.svg);
+    expect(codes(pending.warnings)).toEqual([]);
   });
 
   it("gives a provider's warning once per render", async () => {

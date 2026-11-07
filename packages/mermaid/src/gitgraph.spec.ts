@@ -92,6 +92,12 @@ describe('git graphs through the public API (#374)', () => {
 });
 
 describe('gitGraph config (#374, spec #292 "Config")', () => {
+  it('honours gitGraph.theme, over the top-level theme', async () => {
+    const plain = await withInit({ theme: 'default' });
+    expect(plain.svg).not.toBe((await withInit({})).svg);
+    expect((await withInit({ gitGraph: { theme: 'default' } })).svg).toBe(plain.svg);
+    expect((await withInit({ theme: 'dark', gitGraph: { theme: 'default' } })).svg).toBe(plain.svg);
+  });
   it('takes v12’s defaults when a key is unset', async () => {
     const { svg } = await withInit({});
     const explicit = await withInit({
