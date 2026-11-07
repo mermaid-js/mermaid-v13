@@ -74,56 +74,6 @@ function cutEntityError(tokens: JisonToken[]): JisonToken[] {
   return i < 0 ? tokens : [...tokens.slice(0, i), ['INVALID', '']];
 }
 
-// U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.
-const LINE_SEPARATORS: CorpusItem[] = [
-  { id: 'line separators 0', source: 'flowchart LR\nA\u2028direction TB\nB' },
-  { id: 'line separators 1', source: 'flowchart LR\nsubgraph S\nx\u2028direction TB\nA\nend' },
-  { id: 'line separators 2', source: 'flowchart LR\naccTitle: hi\u2028there\nA' },
-  { id: 'line separators 3', source: 'flowchart LR\naccDescr: hi\u2029there\nA' },
-  { id: 'line separators 4', source: 'flowchart LR\nA\n%% c\u2028B\nC' },
-  { id: 'line separators 5', source: 'flowchart LR\nA\n\u2028%% c\nB' },
-  { id: 'line separators 6', source: 'flowchart LR\nA\u2028%% c\nB' },
-  { id: 'line separators 7', source: 'flowchart LR\nA\u2028  %% c\u2028B\nC' },
-  { id: 'line separators 8', source: 'flowchart LR\nA\nclick A\u2028call f()\n' },
-  { id: 'line separators 9', source: 'flowchart LR\nA-->B\u2028C' },
-  { id: 'line separators 10', source: 'flowchart LR\nA[a\u2028b]' },
-  { id: 'line separators 11', source: 'flowchart LR\nstyle A fill:#f00;\u2028B;\n' },
-  { id: 'line separators 12', source: 'flowchart LR\nclassDef x fill:#f00;\u2029A;\n' },
-  { id: 'line separators 13', source: 'graph\u2028TD\nA' },
-  { id: 'line separators 14', source: 'graph TD\u2028\nA' },
-  { id: 'line separators 15', source: 'flowchart LR\nA -- x\u2028--> B' },
-];
-
-// Directives that start partway through a line (#185). v12 removed directives first, then line
-// comments from what was left, then dropped `style`/`classDef` semicolons from that.
-const MID_LINE_DIRECTIVES: CorpusItem[] = [
-  { id: 'mid-line directive 0', source: 'flowchart LR\nA %%{init: {\n  %%x "a": 1}}%%\nB' },
-  {
-    id: 'mid-line directive 1',
-    source: 'flowchart LR\nA["x %%{init: {"a":"style"}}%% :#y; z"]\nB',
-  },
-  { id: 'mid-line directive 2', source: 'flowchart LR\nA %%{init: {"a":"style"}}%% :#y;\nB' },
-  { id: 'mid-line directive 3', source: 'flowchart LR\nA\n%% c %%{init:\n{}}%% d\nB' },
-  { id: 'mid-line directive 4', source: 'flowchart LR\nA\n%%%%{init: {}}%%\nB' },
-  { id: 'mid-line directive 5', source: 'flowchart LR\nsty%%{init: {}}%%le A fill:#f00;\nB' },
-];
-
-// Entities in edge text (#208): jison splits EDGE_TEXT per character, so v12's placeholders
-// (`ﬂ°°`, `¶ß`) only decode once the run is merged.
-const EDGE_TEXT_ENTITIES: CorpusItem[] = [
-  { id: 'edge text entity 0', source: 'flowchart LR\nA -- x:#y; --> B' },
-  { id: 'edge text entity 1', source: 'flowchart LR\nA -- #quot;q#quot; and #9829; --> B' },
-  { id: 'edge text entity 2', source: 'flowchart LR\nA == #35; ==> B' },
-  { id: 'edge text entity 3', source: 'flowchart LR\nA -. #amp; .-> B' },
-];
-
-// v12's appended `\n` taken by a rule that returns no token (`"click"[\s]+` here, #212 §4): the
-// line break before it is the source's own, and keeps its image on both sides.
-const SKIPPED_APPENDED_NEWLINE: CorpusItem[] = [
-  { id: 'skipped appended newline 0', source: 'flowchart LR\nA\nclick\n' },
-  { id: 'skipped appended newline 1', source: 'flowchart LR\nA-->B\nclick ' },
-];
-
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
@@ -132,14 +82,10 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [
-    ...items,
-    ...specs,
-    ...LINE_SEPARATORS,
-    ...MID_LINE_DIRECTIVES,
-    ...EDGE_TEXT_ENTITIES,
-    ...SKIPPED_APPENDED_NEWLINE,
-  ];
+  const cases = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-cases.json'), 'utf8')
+  ) as CorpusItem[];
+  const all = [...items, ...specs, ...cases];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),

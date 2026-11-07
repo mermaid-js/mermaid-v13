@@ -1,0 +1,378 @@
+[
+  {
+    "id": "header 0",
+    "source": "info"
+  },
+  {
+    "id": "header 1",
+    "source": "  info  "
+  },
+  {
+    "id": "header 2",
+    "source": "\n\ninfo\n\n"
+  },
+  {
+    "id": "header 3",
+    "source": "info showInfo"
+  },
+  {
+    "id": "header 4",
+    "source": "info  showInfo  "
+  },
+  {
+    "id": "header 5",
+    "source": "info\n\n\nshowInfo\n"
+  },
+  {
+    "id": "header 6",
+    "source": "info%%c"
+  },
+  {
+    "id": "header 7",
+    "source": "info %%c\nshowInfo %%d"
+  },
+  {
+    "id": "header 8",
+    "source": "info%c"
+  },
+  {
+    "id": "header 9",
+    "source": "infox"
+  },
+  {
+    "id": "header 10",
+    "source": "information"
+  },
+  {
+    "id": "header 11",
+    "source": "info."
+  },
+  {
+    "id": "header 12",
+    "source": "info:"
+  },
+  {
+    "id": "header 13",
+    "source": "info;"
+  },
+  {
+    "id": "header 14",
+    "source": "INFO"
+  },
+  {
+    "id": "header 15",
+    "source": "Info"
+  },
+  {
+    "id": "header 16",
+    "source": "info showinfo"
+  },
+  {
+    "id": "header 17",
+    "source": "info ShowInfo"
+  },
+  {
+    "id": "header 18",
+    "source": "info showInfox"
+  },
+  {
+    "id": "header 19",
+    "source": "info showInfo showInfo"
+  },
+  {
+    "id": "header 20",
+    "source": "info\nshowInfo\nshowInfo"
+  },
+  {
+    "id": "header 21",
+    "source": "info info"
+  },
+  {
+    "id": "header 22",
+    "source": "info\ninfo"
+  },
+  {
+    "id": "header 23",
+    "source": "info unsupported"
+  },
+  {
+    "id": "header 24",
+    "source": "info 12"
+  },
+  {
+    "id": "header 25",
+    "source": "info \"x\""
+  },
+  {
+    "id": "header 26",
+    "source": "info\n  showInfo\n  title t"
+  },
+  {
+    "id": "header 27",
+    "source": "info showInfo title t"
+  },
+  {
+    "id": "statements 0",
+    "source": "info title Version"
+  },
+  {
+    "id": "statements 1",
+    "source": "info\ntitle Version"
+  },
+  {
+    "id": "statements 2",
+    "source": "info\ntitle   a   b   %% c"
+  },
+  {
+    "id": "statements 3",
+    "source": "info\ntitle"
+  },
+  {
+    "id": "statements 4",
+    "source": "info\ntitle%%x"
+  },
+  {
+    "id": "statements 5",
+    "source": "info\ntitle \n"
+  },
+  {
+    "id": "statements 6",
+    "source": "info\ntitlex"
+  },
+  {
+    "id": "statements 7",
+    "source": "info\ntitle one\ntitle two"
+  },
+  {
+    "id": "statements 8",
+    "source": "info\ntitle a\nshowInfo"
+  },
+  {
+    "id": "statements 9",
+    "source": "info\naccTitle: Version\naccDescr: The build"
+  },
+  {
+    "id": "statements 10",
+    "source": "info\n  accTitle:\n  accDescr:"
+  },
+  {
+    "id": "statements 11",
+    "source": "info\naccTitle x"
+  },
+  {
+    "id": "statements 12",
+    "source": "info\naccTitle : a %% b"
+  },
+  {
+    "id": "statements 13",
+    "source": "info\naccDescr: a %% b"
+  },
+  {
+    "id": "statements 14",
+    "source": "info\naccDescr {\n  line one\n\n  line two\n}"
+  },
+  {
+    "id": "statements 15",
+    "source": "info accDescr{x}"
+  },
+  {
+    "id": "statements 16",
+    "source": "info\naccDescr\n\n{\nx\n}"
+  },
+  {
+    "id": "statements 17",
+    "source": "info\naccDescr { never closed"
+  },
+  {
+    "id": "statements 18",
+    "source": "info\naccDescr {a} title x"
+  },
+  {
+    "id": "statements 19",
+    "source": "info\naccDescr {a}\ttitle x"
+  },
+  {
+    "id": "statements 20",
+    "source": "info\naccDescription: x"
+  },
+  {
+    "id": "statements 21",
+    "source": "info\naccTitle: x\naccTitle: \n"
+  },
+  {
+    "id": "statements 22",
+    "source": "info\naccDescr: a\naccDescr {b}"
+  },
+  {
+    "id": "statements 23",
+    "source": "info\naccDescr {b}\naccDescr: a"
+  },
+  {
+    "id": "statements 24",
+    "source": "info\ntitle a\n\n\naccTitle: b\n\naccDescr: c\n\n"
+  },
+  {
+    "id": "statements 25",
+    "source": "info title x accTitle: y"
+  },
+  {
+    "id": "statements 26",
+    "source": "info\ntitle a #quot;b#quot; #9829;"
+  },
+  {
+    "id": "statements 27",
+    "source": "info\ntitle style a:#f00;"
+  },
+  {
+    "id": "statements 28",
+    "source": "info\naccTitle: classDef x:#f00; y;"
+  },
+  {
+    "id": "statements 29",
+    "source": "info\naccDescr {  a     b  }"
+  },
+  {
+    "id": "statements 30",
+    "source": "info\naccDescr {a    \n   b   c  \n\n}"
+  },
+  {
+    "id": "statements 31",
+    "source": "info\naccDescr {}"
+  },
+  {
+    "id": "statements 32",
+    "source": "info\ntitle <b class=\"x\">bold</b>"
+  },
+  {
+    "id": "statements 33",
+    "source": "---\ntitle: Front\n---\ninfo"
+  },
+  {
+    "id": "statements 34",
+    "source": "---\ntitle: Front\n---\ninfo\ntitle In text"
+  },
+  {
+    "id": "statements 35",
+    "source": "---\ntitle: Front\n---\ninfo\ntitle"
+  },
+  {
+    "id": "statements 36",
+    "source": "info\ntitle a\nunsupported\naccTitle: b"
+  },
+  {
+    "id": "statements 37",
+    "source": "info\ntitle a\n\"x\""
+  },
+  {
+    "id": "statements 38",
+    "source": "info\n@\ntitle a"
+  },
+  {
+    "id": "statements 39",
+    "source": "info\n😀"
+  },
+  {
+    "id": "statements 40",
+    "source": "info\ntitle 😀"
+  },
+  {
+    "id": "hidden 0",
+    "source": "info %% trailing\ntitle a %% c"
+  },
+  {
+    "id": "hidden 1",
+    "source": "info %%{init: {}}%%\ntitle a"
+  },
+  {
+    "id": "hidden 2",
+    "source": "info %%{ x }%%y"
+  },
+  {
+    "id": "hidden 3",
+    "source": "info\n---\nbody: yaml\n---\ntitle a"
+  },
+  {
+    "id": "hidden 4",
+    "source": "info\n---\n---\n"
+  },
+  {
+    "id": "hidden 5",
+    "source": "info\n---  \nx\n---x\n---\n"
+  },
+  {
+    "id": "hidden 6",
+    "source": "info\n---\nnever closed"
+  },
+  {
+    "id": "hidden 7",
+    "source": "info ---\n---"
+  },
+  {
+    "id": "hidden 8",
+    "source": "info\n---\n---\ntitle a\n---\n---\n"
+  },
+  {
+    "id": "hidden 9",
+    "source": "%% c\ninfo"
+  },
+  {
+    "id": "hidden 10",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\ninfo"
+  },
+  {
+    "id": "hidden 11",
+    "source": "info\n%% c\nshowInfo\n%% d\ntitle t"
+  },
+  {
+    "id": "line ends 0",
+    "source": "info\rshowInfo\rtitle a"
+  },
+  {
+    "id": "line ends 1",
+    "source": "info\r\nshowInfo\r\n\r\ntitle a\r\n"
+  },
+  {
+    "id": "line ends 2",
+    "source": "info\t\n\t\n"
+  },
+  {
+    "id": "line ends 3",
+    "source": "info\n\t\n  \ntitle a"
+  },
+  {
+    "id": "line separators 0",
+    "source": "info showInfo"
+  },
+  {
+    "id": "line separators 1",
+    "source": "info showInfo title a"
+  },
+  {
+    "id": "line separators 2",
+    "source": "info\ntitle a b"
+  },
+  {
+    "id": "line separators 3",
+    "source": "info\naccTitle: a b"
+  },
+  {
+    "id": "line separators 4",
+    "source": "info\naccDescr { a b }"
+  },
+  {
+    "id": "line separators 5",
+    "source": " info "
+  },
+  {
+    "id": "line separators 6",
+    "source": "info %% c showInfo"
+  },
+  {
+    "id": "unclosed directive 0",
+    "source": "info\n%%{ never closed\ntitle a"
+  },
+  {
+    "id": "unclosed directive 1",
+    "source": "info\n%%{init: {\nshowInfo"
+  }
+]

@@ -154,5 +154,274 @@
   {
     "id": "timeline-cases/reject-many-errors",
     "source": "timeline\n  : a\n  2002 :b\n  2003 : c\n  2004 : \n"
+  },
+  {
+    "id": "timeline-cases/line separators 0",
+    "note": "U+2028 and U+2029: `\\s` and a regex `.` treat them as line terminators, `[^\\n]` does not; v12's comment removal (`^`, multiline) starts a line after them.",
+    "source": "timeline\n2002\u2028x : a\u2029b\n2003 : c"
+  },
+  {
+    "id": "timeline-cases/line separators 1",
+    "source": "timeline\ntitle a\u2028b\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 2",
+    "source": "timeline\ntitle\u2028b\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 3",
+    "source": "timeline\nsection\u2029s\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 4",
+    "source": "timeline\n2002 :\u2028x\n2003 : y"
+  },
+  {
+    "id": "timeline-cases/line separators 5",
+    "source": "timeline\naccTitle: hi\u2028there\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 6",
+    "source": "timeline\naccDescr:\u2028hi\u2029there\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 7",
+    "source": "timeline\n2002 : x\n%% c\u2028y\n2003 : z"
+  },
+  {
+    "id": "timeline-cases/line separators 8",
+    "source": "timeline\n2002 : x\n\u2028%% c\n2003 : z"
+  },
+  {
+    "id": "timeline-cases/line separators 9",
+    "source": "timeline\n2002 : x\u2028%% c\n2003 : z"
+  },
+  {
+    "id": "timeline-cases/line separators 10",
+    "source": "timeline\n\u2028\u2029 2002 : x"
+  },
+  {
+    "id": "timeline-cases/line separators 11",
+    "source": "timeline\u2028LR\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 0",
+    "note": "`\\s` takes a line break: a bare `title`/`section` takes the next line.",
+    "source": "timeline\ntitle\nfoo\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 1",
+    "source": "timeline\nsection\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 2",
+    "source": "timeline\ntitle \n2002 : x\ntitle"
+  },
+  {
+    "id": "timeline-cases/edge case 3",
+    "source": "timeline\nsection \n2002 : x\nsection"
+  },
+  {
+    "id": "timeline-cases/edge case 4",
+    "source": "timeline\ntitlex : y\nsections : z\ntitle:x\nsection: y"
+  },
+  {
+    "id": "timeline-cases/edge case 5",
+    "source": "timeline\ntitle  two  blanks  \nsection  s  : 1\n  section a b : c"
+  },
+  {
+    "id": "timeline-cases/edge case 6",
+    "note": "Keywords, case-insensitive and word-bounded.",
+    "source": "timeline RL\n x"
+  },
+  {
+    "id": "timeline-cases/edge case 7",
+    "source": "timeline LRx\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 8",
+    "source": "timeline\tTD\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 9",
+    "source": "timeline  lr  \n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 10",
+    "source": "timeline td\nTITLE T\nSection S\nTIMELINE\nTimeline LR\ntimelines : x"
+  },
+  {
+    "id": "timeline-cases/edge case 11",
+    "source": "timeline\ntimeline : x\ntimeline TD : y"
+  },
+  {
+    "id": "timeline-cases/edge case 12",
+    "note": "`#` ends a period (a comment to the line end) and is text elsewhere.",
+    "source": "timeline\n2002 #c : x\n# whole line\n  #x\n2003 : y"
+  },
+  {
+    "id": "timeline-cases/edge case 13",
+    "source": "timeline\ntitle a #b # c\nsection #s# : 1\n2002 : #e# : f#"
+  },
+  {
+    "id": "timeline-cases/edge case 14",
+    "note": "The first rule compiles to a single `%`; `x%%` is a comment at any token start.",
+    "source": "timeline\n%abc : x\n%{abc : x\n50% done : x\na%%b : x\nab%%c : x\n}%%x : y\n2002 : x %% y"
+  },
+  {
+    "id": "timeline-cases/edge case 15",
+    "source": "timeline\n2002 : x\n%%\n2003 : y\n %%\n2004 : z %%"
+  },
+  {
+    "id": "timeline-cases/edge case 16",
+    "note": "Events: a `:` with a blank after it ends one; otherwise `:` is INVALID.",
+    "source": "timeline\na :b : c\n : d:e\n: : x\n::y\n2002 : x::y : z: w"
+  },
+  {
+    "id": "timeline-cases/edge case 17",
+    "source": "timeline\n2002 :\nfoo\n2003 :\n\n2004 : x :"
+  },
+  {
+    "id": "timeline-cases/edge case 18",
+    "source": "timeline\n2002 : x\n2003:x\n2004 :x\n: x\n  : y"
+  },
+  {
+    "id": "timeline-cases/edge case 19",
+    "note": "Whitespace is kept in periods and events.",
+    "source": "timeline\n  2002   :   x   :  y  \n\n   \n  2003\t: \tz\t\n"
+  },
+  {
+    "id": "timeline-cases/edge case 20",
+    "note": "Accessibility states.",
+    "source": "timeline\naccTitle: a;b#c\naccDescr: d;e#f\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 21",
+    "source": "timeline\naccTitle:\n\nT\naccDescr :  D\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 22",
+    "source": "timeline\naccDescr{x}\naccDescr\n{\n y \n}\naccDescr {\n}\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 23",
+    "source": "timeline\nACCTITLE: x\nACCDESCR: y\nAccDescr { z }"
+  },
+  {
+    "id": "timeline-cases/edge case 24",
+    "source": "timeline\naccTitle x\naccDescr x\naccDescr : \naccTitle :"
+  },
+  {
+    "id": "timeline-cases/edge case 25",
+    "source": "timeline\naccDescr {\nnever closed"
+  },
+  {
+    "id": "timeline-cases/edge case 26",
+    "source": "timeline\naccTitle: "
+  },
+  {
+    "id": "timeline-cases/edge case 27",
+    "source": "timeline\naccTitle:"
+  },
+  {
+    "id": "timeline-cases/edge case 28",
+    "source": "timeline\naccDescr: "
+  },
+  {
+    "id": "timeline-cases/edge case 29",
+    "note": "Entities and `style…:#…;` lines, as `encodeEntities` rewrote them.",
+    "source": "timeline\n2002 : #quot;hi#59; #9829; #x;\n#amp; : x\ntitle #lt;t\nsection #a;b : c"
+  },
+  {
+    "id": "timeline-cases/edge case 30",
+    "source": "timeline\nstyle x:#f00; : y\n2002 : style x:#f00;\nclassDef a:#b; c"
+  },
+  {
+    "id": "timeline-cases/edge case 31",
+    "note": "CRs: v12 turned CRLF and CR into LF.",
+    "source": "timeline\r\n2002 : x\r\n\r\n2003 : y\r\n"
+  },
+  {
+    "id": "timeline-cases/edge case 32",
+    "source": "timeline\r2002 : x\r\r2003 : y"
+  },
+  {
+    "id": "timeline-cases/edge case 33",
+    "source": "timeline\r\ntitle\r\nfoo\r\nsection\r\nbar : x\r\n2002 :\r\nz"
+  },
+  {
+    "id": "timeline-cases/edge case 34",
+    "source": "timeline\r\naccDescr {\r\na\r\nb\r\n}\r\naccTitle:\r\nT\r\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 35",
+    "source": "timeline TD\r\n2002 : x"
+  },
+  {
+    "id": "timeline-cases/edge case 36",
+    "note": "A CR and an LF that a removed comment or directive left side by side: two line ends to v12.",
+    "source": "timeline\ntitle\r%%{init:{}}%%\nfoo"
+  },
+  {
+    "id": "timeline-cases/edge case 37",
+    "source": "timeline\ntitle\r%% c\n\nfoo"
+  },
+  {
+    "id": "timeline-cases/edge case 38",
+    "source": "timeline\nsection\r%% c\n\nfoo : x"
+  },
+  {
+    "id": "timeline-cases/edge case 39",
+    "source": "timeline\n2002 :\r%% c\n\nx"
+  },
+  {
+    "id": "timeline-cases/edge case 40",
+    "source": "timeline\naccTitle:\r%% c\n\nx"
+  },
+  {
+    "id": "timeline-cases/edge case 41",
+    "source": "timeline\n2002 : x\r%% c\n\n2003 : y"
+  },
+  {
+    "id": "timeline-cases/edge case 42",
+    "source": "timeline\na\r%% c\n%%\nb"
+  },
+  {
+    "id": "timeline-cases/edge case 43",
+    "source": "timeline\r\n2002 : x\r\n%%\r\n2003 : y\r\n}%%\r\n2004 : z\r\n%%"
+  },
+  {
+    "id": "timeline-cases/edge case 44",
+    "source": "timeline\r\naccDescr\r\n{\r\nx\r\n}\r\nsection\r\n:\r\n2002 :\r\n:\r\nx"
+  },
+  {
+    "id": "timeline-cases/edge case 45",
+    "note": "An empty body, and blanks only.",
+    "source": "timeline"
+  },
+  {
+    "id": "timeline-cases/edge case 47",
+    "source": "timeline\n   \n\n  "
+  },
+  {
+    "id": "timeline-cases/edge case 48",
+    "source": "timeline LR"
+  },
+  {
+    "id": "timeline-cases/mid-line directive 0",
+    "note": "Directives that start partway through a line (#185).",
+    "source": "timeline\n2002 : x %%{init: {\n  %%x \"a\": 1}}%%\n2003 : y"
+  },
+  {
+    "id": "timeline-cases/mid-line directive 1",
+    "source": "timeline\n2002 %%{init: {}}%% : x\n2003 : y"
+  },
+  {
+    "id": "timeline-cases/mid-line directive 2",
+    "source": "timeline\ntitle a %%{init: {}}%% b\nsection s %%{init: {}}%% t : x"
+  },
+  {
+    "id": "timeline-cases/mid-line directive 3",
+    "source": "timeline\n2002 : x\n%% c %%{init:\n{}}%% d\n2003 : y"
   }
 ]

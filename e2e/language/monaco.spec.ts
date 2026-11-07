@@ -246,6 +246,7 @@ const TYPE_DOCS: Record<string, string> = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
   pie: 'pie\n  "Dogs" : 386\n',
+  info: 'info showInfo\n  title Version\n',
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
   radar: 'radar-beta\n  axis A, B\n',

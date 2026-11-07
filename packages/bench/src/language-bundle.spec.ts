@@ -56,6 +56,11 @@ const PACKAGES = [
     renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'info',
+    dir: 'diagram-info',
+    renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],
+  },
+  {
     name: 'radar',
     dir: 'diagram-radar',
     renderer: [

@@ -1,0 +1,534 @@
+[
+  {
+    "id": "pie-cases/line separators 0",
+    "note": "U+2028 and U+2029: `\\s` and v12's comment removal (`^`, multiline) treat them as line terminators; NEWLINE and `[^\\n\\r]` do not.",
+    "source": "pie\u2028\"a\": 1"
+  },
+  {
+    "id": "pie-cases/line separators 1",
+    "source": "pie\n\"a\": 1\u2028\"b\": 2"
+  },
+  {
+    "id": "pie-cases/line separators 2",
+    "source": "pie\ntitle a\u2028b\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/line separators 3",
+    "source": "pie\naccTitle: a\u2028b\naccDescr: c\u2029d\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/line separators 4",
+    "source": "pie\naccDescr {\u2028a\u2029}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/line separators 5",
+    "source": "pie\n\"a\u2028b\": 1"
+  },
+  {
+    "id": "pie-cases/line separators 6",
+    "source": "pie\n\"a\": 1\n\u2028%% c\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/line separators 7",
+    "source": "pie\n\"a\": 1 %% c\u2028\"b\": 2"
+  },
+  {
+    "id": "pie-cases/line separators 8",
+    "source": "pie showData\u2029title t"
+  },
+  {
+    "id": "pie-cases/line separators 9",
+    "source": "\u2028pie\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 0",
+    "note": "Strings: either quote, escapes, line breaks inside, not trimmed; tag quotes; unterminated.",
+    "source": "pie\n'a': 1\n\"b\": 2\n' c ': 3"
+  },
+  {
+    "id": "pie-cases/quirk 1",
+    "source": "pie\n\"a\\\"b\": 1\n'c\\'d': 2\n\"e\\\\\": 3\n\"f\\x\": 4"
+  },
+  {
+    "id": "pie-cases/quirk 2",
+    "source": "pie\n\"a\nb\": 1\n'c\n\nd': 2"
+  },
+  {
+    "id": "pie-cases/quirk 3",
+    "source": "pie\n\"<b class=\"x\">bold</b>\": 1\n\"<i a=\"1\" b=\"2\">\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 4",
+    "source": "pie\n\"a\\\nb\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 5",
+    "source": "pie\n\"never closed: 1\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 6",
+    "source": "pie\n'never closed: 1"
+  },
+  {
+    "id": "pie-cases/quirk 7",
+    "source": "pie\n\"a\" : 1 \"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 8",
+    "note": "Accessibility: `{}` bodies, colons, `%%` ends, blanks before.",
+    "source": "pie\naccDescr {\n  line one\n\n  line two\n}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 9",
+    "source": "pie accDescr{x}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 10",
+    "source": "pie\naccDescr\n\n{\nx\n}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 11",
+    "source": "pie\naccDescr: a %% b\naccTitle : c %% d\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 12",
+    "source": "pie\n  accTitle:\n  accDescr:\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 13",
+    "source": "pie\naccTitle x\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 14",
+    "source": "pie\naccDescr { never closed\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 15",
+    "source": "pie\naccDescription: x"
+  },
+  {
+    "id": "pie-cases/quirk 16",
+    "note": "Titles: blanks, `%%`, empty, glued, repeated.",
+    "source": "pie\ntitle   a   b   %% c\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 17",
+    "source": "pie\ntitle\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 18",
+    "source": "pie\ntitle%%x\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 19",
+    "source": "pie\ntitle \n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 20",
+    "source": "pie\ntitlex\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 21",
+    "source": "pie\ntitle one\ntitle two\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 22",
+    "source": "pie title t\n\"a\": 1 title u"
+  },
+  {
+    "id": "pie-cases/quirk 23",
+    "source": "---\ntitle: Front\n---\npie\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 24",
+    "source": "---\ntitle: Front\n---\npie\ntitle\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 26",
+    "note": "Duplicates and zero sums.",
+    "source": "pie\n\"a\": 1\n\"a\": 2\n\"b\": 3"
+  },
+  {
+    "id": "pie-cases/quirk 28",
+    "source": "pie showData\n\"a\": 0"
+  },
+  {
+    "id": "pie-cases/quirk 29",
+    "note": "Numbers.",
+    "source": "pie\n\"a\": 12."
+  },
+  {
+    "id": "pie-cases/quirk 30",
+    "source": "pie\n\"a\": 01"
+  },
+  {
+    "id": "pie-cases/quirk 31",
+    "source": "pie\n\"a\": 1e3"
+  },
+  {
+    "id": "pie-cases/quirk 32",
+    "source": "pie\n\"a\": -0"
+  },
+  {
+    "id": "pie-cases/quirk 33",
+    "source": "pie\n\"a\": 1;"
+  },
+  {
+    "id": "pie-cases/quirk 34",
+    "source": "pie\n\"a\": 1;\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 35",
+    "source": "pie\n\"a\": 1.23."
+  },
+  {
+    "id": "pie-cases/quirk 36",
+    "source": "pie\n\"a\": 1.2.3"
+  },
+  {
+    "id": "pie-cases/quirk 37",
+    "source": "pie\n\"a\": 0.5\n\"b\": 00.5\n\"c\": 000\n\"d\": -12.50"
+  },
+  {
+    "id": "pie-cases/quirk 38",
+    "source": "pie\n\"a\": .5"
+  },
+  {
+    "id": "pie-cases/quirk 39",
+    "source": "pie\n\"a\": 1.\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 40",
+    "source": "pie\n\"a\": --1"
+  },
+  {
+    "id": "pie-cases/quirk 41",
+    "source": "pie\n\"a\": 0."
+  },
+  {
+    "id": "pie-cases/quirk 42",
+    "source": "pie\n\"a\": 10.5"
+  },
+  {
+    "id": "pie-cases/quirk 43",
+    "source": "pie\n\"a\": 100"
+  },
+  {
+    "id": "pie-cases/quirk 44",
+    "source": "pie\n\"a\": -60.67"
+  },
+  {
+    "id": "pie-cases/quirk 45",
+    "note": "Keywords: boundaries, case, places.",
+    "source": "pie showData\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 46",
+    "source": "pie  showData  %% c\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 47",
+    "source": "pie%%c\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 48",
+    "source": "pie%c\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 49",
+    "source": "pieChart\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 50",
+    "source": "pie\nshowData\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 51",
+    "source": "pie \"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 52",
+    "source": "pie\n\"a\": 1 showData"
+  },
+  {
+    "id": "pie-cases/quirk 53",
+    "source": "PIE\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 54",
+    "source": "pie\nshowdata"
+  },
+  {
+    "id": "pie-cases/quirk 55",
+    "source": "pie\u00a0\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 56",
+    "note": "Hidden tokens left in the text v12 lexed.",
+    "source": "pie\n\"a\": 1 %% trailing\n\"b\": 2 %%"
+  },
+  {
+    "id": "pie-cases/quirk 57",
+    "source": "pie\n\"a\": 1 %%{init: {}}%%\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 58",
+    "source": "pie\n\"a\": 1 %%{ x }%%y\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 59",
+    "source": "pie\n---\nbody: yaml\n---\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 60",
+    "source": "pie\n---\n---\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 61",
+    "source": "pie\n---  \nx\n---x\n---\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 62",
+    "source": "pie\n---\nnever closed\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 63",
+    "source": "pie\n\"a\": 1 ---\n---"
+  },
+  {
+    "id": "pie-cases/quirk 64",
+    "note": "The optional body is tried first: an empty block closes only if no later line does.",
+    "source": "pie\n\"a\": 1\n---\n---\n\"b\": 2\n---\n---\n"
+  },
+  {
+    "id": "pie-cases/quirk 65",
+    "source": "pie\n---\n---\n\"a\": 1\n---"
+  },
+  {
+    "id": "pie-cases/quirk 66",
+    "source": "pie\n\"a\": 1\n---\n---\n\"b\": 2\n--- \n\"c\": 3"
+  },
+  {
+    "id": "pie-cases/quirk 67",
+    "note": "Entities and dropped semicolons.",
+    "source": "pie\ntitle a #quot;b#quot; #9829;\n\"#amp;x\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 68",
+    "source": "pie\n\"a\": 1#x;"
+  },
+  {
+    "id": "pie-cases/quirk 69",
+    "source": "pie\ntitle style a:#f00;\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 70",
+    "source": "pie\naccTitle: classDef x:#f00; y;\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 72",
+    "note": "Blank-only bodies, stray characters.",
+    "source": "pie\n\n\n"
+  },
+  {
+    "id": "pie-cases/quirk 73",
+    "source": "   pie   \n\t\n  \"a\"  :  1  \n"
+  },
+  {
+    "id": "pie-cases/quirk 74",
+    "source": "pie\n\"a\": 1\n@\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 75",
+    "source": "pie\n\"a\": 1\n\t\n  \n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 76",
+    "source": "pie\n\"a\": 1\n\"b\": 😀"
+  },
+  {
+    "id": "pie-cases/quirk 77",
+    "source": "pie\n\"a😀\": 1"
+  },
+  {
+    "id": "pie-cases/quirk 78",
+    "source": "pie\r\"a\": 1\r\"b\": 2"
+  },
+  {
+    "id": "pie-cases/quirk 79",
+    "source": "pie\r\n\"a\": 1\r\n\r\n\"b\": 2\r\n"
+  },
+  {
+    "id": "pie-cases/parser case 0",
+    "note": "Negative values: a semantic error; the statement and the next ones go on.",
+    "source": "pie\n\"a\": -1\n\"b\": 2"
+  },
+  {
+    "id": "pie-cases/parser case 1",
+    "source": "pie\n\"a\": -1 \"b\": 2"
+  },
+  {
+    "id": "pie-cases/parser case 2",
+    "source": "pie\n\"a\": -1\n\"a\": 2"
+  },
+  {
+    "id": "pie-cases/parser case 3",
+    "source": "pie\n\"a\": -0.5\n\"b\": -2\n\"c\": 3"
+  },
+  {
+    "id": "pie-cases/parser case 4",
+    "note": "Repeats: the first section, the last title and accessibility values.",
+    "source": "pie\n\"#amp;\": 1\n\"#amp;\": 2"
+  },
+  {
+    "id": "pie-cases/parser case 5",
+    "source": "pie\n\"a@2\": 1\n\"a\": 2\n\"a\": 3\n\"a#b\": 4"
+  },
+  {
+    "id": "pie-cases/parser case 6",
+    "source": "pie\naccTitle: x\naccTitle: \n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 7",
+    "source": "pie\naccDescr: a\naccDescr {b}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 8",
+    "source": "pie\naccDescr {b}\naccDescr: a"
+  },
+  {
+    "id": "pie-cases/parser case 9",
+    "source": "---\ntitle: Front\n---\npie\ntitle one\ntitle\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 10",
+    "note": "Conversion: escapes, blanks other than space and tab, `{}` bodies.",
+    "source": "pie\n\"\\0\\b\\f\\v\\r\\u0041\\%\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 11",
+    "source": "pie\n\"a\\nb\\tc\": 1\n' d \\' ': 2"
+  },
+  {
+    "id": "pie-cases/parser case 12",
+    "source": "pie\ntitle \u00a0 x \u00a0\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 13",
+    "source": "pie\ntitle a\t\tb \t c\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 14",
+    "source": "pie\naccDescr {\u00a0a\u00a0\n\u00a0\n\u00a0b  \n\n\n c}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 15",
+    "source": "pie\naccDescr {}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 16",
+    "source": "pie\naccDescr {\n}\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 17",
+    "source": "pie\naccDescr {  a  \u2028  b  }\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 18",
+    "source": "pie\naccDescr {a    \n   b   c  \n\n}"
+  },
+  {
+    "id": "pie-cases/parser case 19",
+    "source": "pie\naccDescr {a} \"b\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 20",
+    "source": "pie\naccDescr {a}\ttitle x"
+  },
+  {
+    "id": "pie-cases/parser case 21",
+    "source": "pie\n\"a\": 99999999999999999999"
+  },
+  {
+    "id": "pie-cases/parser case 22",
+    "source": "pie\n\"a\": 0.1000000000000000000001"
+  },
+  {
+    "id": "pie-cases/parser case 23",
+    "source": "pie\n\"\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 24",
+    "note": "Places: the header line, line breaks inside a section, values without a label.",
+    "source": "pie showData showData"
+  },
+  {
+    "id": "pie-cases/parser case 25",
+    "source": "pie pie"
+  },
+  {
+    "id": "pie-cases/parser case 26",
+    "source": "pie\n\n\"a\": 1\n\n"
+  },
+  {
+    "id": "pie-cases/parser case 27",
+    "source": "pie showData\n\n"
+  },
+  {
+    "id": "pie-cases/parser case 28",
+    "source": "pie title x accTitle: y"
+  },
+  {
+    "id": "pie-cases/parser case 29",
+    "source": "pie accTitle: a\ntitle b\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 30",
+    "source": "pie showData accDescr {\nx\n}"
+  },
+  {
+    "id": "pie-cases/parser case 31",
+    "source": "pie\n\"a\":\n1"
+  },
+  {
+    "id": "pie-cases/parser case 32",
+    "source": "pie\n\"a\"\n: 1"
+  },
+  {
+    "id": "pie-cases/parser case 33",
+    "source": "pie\n: 1"
+  },
+  {
+    "id": "pie-cases/parser case 34",
+    "source": "pie\n1"
+  },
+  {
+    "id": "pie-cases/parser case 35",
+    "source": "pie\n\"a\": \"b\""
+  },
+  {
+    "id": "pie-cases/parser case 36",
+    "source": "pie\n\"a\" \"b\": 1"
+  },
+  {
+    "id": "pie-cases/parser case 37",
+    "source": "pie\ntitle a\n\"x\": 1 %% c\n\"y\": 2"
+  },
+  {
+    "id": "pie-cases/parser case 38",
+    "source": "pie\n\"a\": 1\n\"b\": 2 ---\n---"
+  },
+  {
+    "id": "pie-cases/parser case 39",
+    "source": "pie\n\"a\": 1\n\"b\": 2\n\"c\" 3\n\"d\": 4\n\"e\": x\n\"f\": 6"
+  },
+  {
+    "id": "pie-cases/unclosed directive 0",
+    "note": "Unclosed `%%{` directives. Core's preprocess ends one at its line end and reports `UNCLOSED_DIRECTIVE` (an error, so v13 rejects the source); v12's directive regex removed the line break after it too, or every line after it. That is core's reading of directives for every type, not a pie lexer rule, so the gate leaves these out (see the spec).",
+    "source": "pie\n%%{ never closed\n\"a\": 1"
+  },
+  {
+    "id": "pie-cases/unclosed directive 1",
+    "source": "pie\n%%{init: {\n\"a\": 1"
+  }
+]

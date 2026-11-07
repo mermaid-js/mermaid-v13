@@ -12,7 +12,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'classDiagram', pattern: /^\s*classDiagram/, id: 'class', formats: ['svg'] },
   { type: 'er', pattern: /^\s*erDiagram/, id: 'er', formats: ['svg', 'ascii'] },
   { type: 'gantt', pattern: /^\s*gantt/, id: 'gantt', formats: ['svg'] },
-  { type: 'info', pattern: /^\s*info/ },
+  { type: 'info', pattern: /^\s*info/, id: 'info', formats: ['svg', 'ascii'] },
   { type: 'pie', pattern: /^\s*pie/, id: 'pie', formats: ['svg'] },
   { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
   { type: 'sequence', pattern: /^\s*sequenceDiagram/, id: 'sequence', formats: ['svg', 'ascii'] },

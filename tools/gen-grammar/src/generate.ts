@@ -152,6 +152,11 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'info',
+    title: 'Info diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'radar',
     title: 'Radar chart syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },

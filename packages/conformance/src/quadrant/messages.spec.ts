@@ -27,12 +27,17 @@ const TOKENS = [
 ];
 const BANNED = new RegExp(`\\b(?:${[...RULES, ...TOKENS].join('|')})\\b`);
 
+const LEXER_CASE = /^quadrant-cases\/(db styles|lexer case|line separators) /;
+
 const FRAGMENTS = [':', ':::', '[', ']', ',', '"', '"`', '`"', '\n', ';', '-->', '(', '{', '}'];
 const FRAGMENTS_MORE = ['x-axis', 'quadrant-1', 'classDef x', 'title', 'accDescr {', '2', '0.5'];
 
 describe('quadrant error messages', () => {
   it('never name a token or grammar rule', async () => {
-    const corpus = [...(await quadrantCorpus()), ...quadrantCases()].map((c) => c.source);
+    // Seeded with the corpus and the parser cases; the lexer gate's cases (style lists, lexer and
+    // line-separator cases) stay out.
+    const parserCases = quadrantCases().filter((c) => !LEXER_CASE.test(c.id));
+    const corpus = [...(await quadrantCorpus()), ...parserCases].map((c) => c.source);
     const next = mutator(corpus, [...FRAGMENTS, ...FRAGMENTS_MORE], random(289));
     const bad: string[] = [];
     let errors = 0;

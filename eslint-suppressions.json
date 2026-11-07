@@ -469,9 +469,6 @@
     }
   },
   "packages/diagram-flowchart/src/render/prepare.ts": {
-    "@typescript-eslint/no-shadow": {
-      "count": 1
-    },
     "@typescript-eslint/unbound-method": {
       "count": 1
     }

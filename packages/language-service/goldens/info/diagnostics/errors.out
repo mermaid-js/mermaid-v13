@@ -1,0 +1,4 @@
+1:6-1:17 "unsupported" error UNEXPECTED_CHARACTER: Unexpected text `unsupported`; an info diagram holds `info`, an optional `showInfo`, and `title`, `accTitle:` or `accDescr` statements.
+3:3-3:11 "showInfo" error UNEXPECTED: Expected `title`, `accTitle:` or `accDescr`, a line break or the end of the text, got `showInfo`; `showInfo` goes once, after `info` and before any other statement.
+4:3-4:11 "accTitle" error UNEXPECTED_CHARACTER: Expected `:` after `accTitle`; write it as `accTitle: …`.
+5:15-5:23 " title b" error UNEXPECTED: Expected a line break or the end of the text, got `title b`; put each statement on a line of its own.
