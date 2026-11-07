@@ -1,0 +1,22 @@
+@ 3:17  Design :crit, |a1, 2024-01-01, 3d
+  3:17-3:19 "a1"
+  | **task** `a1`
+  |
+  | Task: `Design` · Section: `Plan` · Tags: `crit`
+@ 4:20  Build :b1, after |a1, 2d
+  4:20-4:22 "a1"
+  | **task** `a1`
+  |
+  | Task: `Design` · Section: `Plan` · Tags: `crit`
+@ 5:9  click |b1,zz href "https://example.com"
+  5:9-5:11 "b1"
+  | **task** `b1`
+  |
+  | Task: `Build` · Section: `Plan`
+@ 5:12  click b1,|zz href "https://example.com"
+  5:12-5:14 "zz"
+  | **task** `zz`
+  |
+  | No task with this id is written before this click, so the click does nothing.
+@ 6:5  De|sign again :2d
+  none

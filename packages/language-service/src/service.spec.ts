@@ -101,14 +101,14 @@ describe('diagnostics (D91)', () => {
   });
 
   it('gives a v12 type with no facet one info diagnostic on its header', async () => {
-    const doc = await open('%% hi\ngantt\n  title T\n');
+    const doc = await open('%% hi\nrequirementDiagram\n  element E {\n  }\n');
     expect(doc.facet).toBeUndefined();
-    expect(doc.type).toBe('gantt');
+    expect(doc.type).toBe('requirement');
     const [d, ...rest] = doc.diagnostics();
     expect(rest).toEqual([]);
     expect(d?.severity).toBe('info');
     expect(d?.code).toBe('NO_LANGUAGE_SUPPORT');
-    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('gantt');
+    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('requirementDiagram');
   });
 
   it('gives an unknown type UNSUPPORTED_DIAGRAM, as the renderer does', async () => {
@@ -242,12 +242,36 @@ describe('definition, references and rename (D92)', () => {
     expect(await renamed(cls, at(cls, 'b'), 'c')).toBe(cls.replace(/\bb\b/g, 'c'));
   });
 
+  it('keeps each occurrence of a `standalone` kind a symbol of its own (D289)', () => {
+    const own = createLanguageService({
+      facets: [
+        {
+          type: 'flowchart-v2',
+          id: 'flowchart',
+          detector: (t) => t.startsWith('flowchart'),
+          facet: { ...flowchartLanguage, standalone: ['node'] },
+        },
+      ],
+    });
+    const text = 'flowchart TD\n  A --> B\n  A --> C\n';
+    const doc = own.update('file:///standalone.mmd', text);
+    const second = at(text, 'A', 2);
+    const itself = { start: second, end: second + 1 };
+    expect(doc.definition(second)).toEqual(itself);
+    expect(doc.references(second)).toEqual([itself]);
+    expect(doc.references(second, false)).toEqual([]);
+    // Only that occurrence is renamed, and a name another occurrence has is no clash.
+    expect(doc.rename(second, 'B')).toEqual({ edits: [{ range: itself, newText: 'B' }] });
+    // Other kinds still group by name.
+    expect(doc.rename(second, 'a b')).toEqual({ refused: 'An id cannot contain spaces.' });
+  });
+
   it('refuses everything on a type with no facet', async () => {
-    const doc = await open('gantt\n  title T\n');
+    const doc = await open('requirementDiagram\n  element E {\n  }\n');
     expect(doc.definition(11)).toBeUndefined();
     expect(doc.references(11)).toEqual([]);
     expect(doc.rename(11, 'X')).toEqual({
-      refused: 'gantt diagrams are not supported by the v13 language service yet.',
+      refused: 'requirement diagrams are not supported by the v13 language service yet.',
     });
   });
 });

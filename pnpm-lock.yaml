@@ -110,9 +110,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:^
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:^
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
@@ -192,9 +201,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:^
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:^
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
@@ -339,7 +357,25 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-gantt:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-gitgraph:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-journey:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-mindmap:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -395,9 +431,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:*
+        version: link:../diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:*
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:*
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
@@ -441,9 +486,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:*
+        version: link:../diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:*
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:*
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
@@ -643,9 +697,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:*
+        version: link:../diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:*
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:*
+        version: link:../diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
@@ -771,9 +834,18 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../../packages/diagram-gantt
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:^
+        version: link:../../packages/diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey
+      '@mermaid-js/diagram-mindmap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-mindmap
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../../packages/diagram-pie

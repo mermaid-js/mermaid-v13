@@ -1,0 +1,16 @@
+---
+config:
+  theme: redux-color
+  gitGraph:
+    rotateCommitLabel: false
+    mainBranchName: trunk
+    mainBranchOrder: 2
+description: commit labels not rotated; the main branch renamed to trunk and ordered after develop
+---
+gitGraph
+  commit id: "first"
+  branch develop order: 1
+  commit id: "second"
+  checkout trunk
+  commit id: "third"
+  merge develop id: "fourth"

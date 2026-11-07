@@ -12,6 +12,7 @@ import type { StateModel, StateParseResult } from './parser/index.ts';
 import { renderState } from './render/render.ts';
 import { stateConfigDefaults } from './generated/config-defaults.ts';
 import { stateLabels } from './labels.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The state diagram plugin (DESIGN §12.1): `stateDiagram` and `stateDiagram-v2`, one renderer
@@ -36,4 +37,5 @@ export const state = {
     layoutState(model, ctx),
   render: (model: StateModel, layout: StateLayout, ctx: StateRenderContext, w: SvgWriter): void =>
     renderState(model, layout, ctx, w),
+  theme,
 } satisfies DiagramPlugin<StateModel, StateLayout>;

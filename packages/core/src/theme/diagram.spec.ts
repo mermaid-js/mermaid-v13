@@ -5,9 +5,11 @@ import {
   THEME_NAMES,
   type DiagramThemeTable,
   type ThemeFamily,
+  type ThemeOptions,
   type ThemeSpec,
   type ThemeWarning,
 } from './index.ts';
+import { parseRule } from './dsl.ts';
 
 /**
  * The diagram theme table (D331, spec #414 T0a): a diagram's own variables, keyed by theme traits,
@@ -147,6 +149,19 @@ describe('DiagramThemeTable (D331, spec #414 T0a)', () => {
     });
     expect(t.color('mainBkg')).toBe('#fff4dd');
   });
+
+  it("keeps a fragment's rule for a core name the table shadows (D337)", () => {
+    // The table's mainBkg is ignored (a core name), so it does not take the fragment's rule away.
+    const rules = { mainBkg: 'red' };
+    const plain = createTheme(spec.base, { cssVariables: false, rules });
+    const shadowed = createTheme(spec.base, {
+      cssVariables: false,
+      rules,
+      diagram: { vars: { mainBkg: { alias: 'zz', kind: 'color' } }, rules: { light: {} } },
+    });
+    expect(plain.value('mainBkg')).toBe('red');
+    expect(shadowed.value('mainBkg')).toBe('red');
+  });
 });
 
 describe('nested theme sections (D335, D540)', () => {
@@ -275,6 +290,129 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
       themeVariables: { seriesColorArray: ['#abcdef'] },
     });
     expect(user.value('a')).toBe('#abcdef');
+  });
+
+  it('derives a series slot the theme leaves out from its base colours (v12 theme-base)', () => {
+    // A theme with no series entries: v12 theme-base's pie and journey derivation, the seed
+    // pair being the primary and secondary colours.
+    const { palettes: _, ...bare } = spec.base;
+    const read = (s: ThemeSpec, slot: number, themeVariables?: Record<string, unknown>) =>
+      createTheme(s, {
+        cssVariables: false,
+        diagram: table({ a: `seriesColorArray${slot}` }),
+        themeVariables,
+      }).value('a');
+    const at = (rule: string) =>
+      createTheme(bare, { cssVariables: false, diagram: table({ a: rule }) }).value('a');
+    expect(read(bare, 0)).toBe(at('primaryColor'));
+    expect(read(bare, 1)).toBe(at('secondaryColor'));
+    expect(read(bare, 5)).toBe(at('darkenHsl(tertiaryColor, 10%)'));
+    expect(read(bare, 6)).toBe(at('darkenHsl(adjustHue(primaryColor, 60), 10%)'));
+    expect(read(bare, 11)).toBe(at('darkenHsl(adjustHue(primaryColor, 120), 10%)'));
+    expect(read(bare, 12)).toBe(at('primaryColor'));
+    expect(read(bare, 19)).toBe(at('adjustHue(secondaryColor, 128)'));
+    // It follows the base colours, and the theme's own entry wins where there is one.
+    expect(read(bare, 0, { primaryColor: '#123456' })).toBe('#123456');
+    const one: ThemeSpec = { ...bare, palettes: { seriesColorArray: ['#abcdef'] } };
+    expect([read(one, 0), read(one, 1)]).toEqual(['#abcdef', at('secondaryColor')]);
+    // Past the twenty slots: currentColor.
+    expect(read(bare, 20)).toBe('currentColor');
+    const css = createTheme(bare, { diagram: table({ a: 'seriesColorArray1' }) });
+    css.color('a');
+    expect(css.rootStyle()['--_x0']).toBe('var(--mermaid-a,var(--_s))');
+  });
+
+  it("reads the dark spec's seriesColorArray under theme: 'auto'", () => {
+    const night: ThemeSpec = {
+      ...spec.dark,
+      palettes: { ...spec.dark.palettes, seriesColorArray: ['#123456', 'textColor'] },
+    };
+    const t = createTheme(spec['redux-color'], {
+      dark: night,
+      diagram: table({ a: 'seriesColorArray0', b: 'seriesColorArray1' }),
+    });
+    t.color('a');
+    t.color('b');
+    const dark = t.autoDeclarations()!.dark;
+    expect(dark['--_x0']).toBe('var(--mermaid-a,#123456)');
+    expect(dark['--_x1']).toBe('var(--mermaid-b,var(--_tx))');
+  });
+
+  it('writes inline(v) as the theme wrote v, with no alias of its own', () => {
+    const derived = createTheme(spec.base, { diagram: table({ a: 'inline(mainBkg)' }) });
+    derived.color('a');
+    expect(derived.rootStyle()).toEqual({
+      '--_x0': 'var(--mermaid-a,var(--_p))',
+      '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
+    });
+    const pinned: ThemeSpec = { ...spec.base, values: { ...spec.base.values, mainBkg: '#f4f4f4' } };
+    const asPinned = createTheme(pinned, { diagram: table({ a: 'inline(mainBkg)' }) });
+    asPinned.color('a');
+    expect(asPinned.rootStyle()).toEqual({ '--_x0': 'var(--mermaid-a,#f4f4f4)' });
+    expect(() =>
+      createTheme(spec.base, { cssVariables: false, diagram: table({ a: 'inline(red)' }) }).value(
+        'a'
+      )
+    ).toThrow(/inline needs a variable/);
+  });
+
+  it("reads inline(v) as the theme wrote v, not the author's override of v", () => {
+    const of = (themeVariables: Record<string, string>) => {
+      const t = createTheme(spec.base, {
+        diagram: table({ a: 'inline(mainBkg)' }),
+        themeVariables,
+      });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    // The author's mainBkg does not reach a; the rule's own references follow their overrides.
+    expect(of({ mainBkg: '#123456' })).toBe('var(--mermaid-a,var(--_p))');
+    const t = createTheme(spec.base, {
+      cssVariables: false,
+      diagram: table({ a: 'inline(mainBkg)' }),
+      themeVariables: { mainBkg: '#123456', primaryColor: '#abcdef' },
+    });
+    expect(t.value('a')).toBe('#abcdef');
+    // An override of the diagram's own variable still wins.
+    const own = createTheme(spec.base, {
+      cssVariables: false,
+      diagram: table({ a: 'inline(mainBkg)' }),
+      themeVariables: { mainBkg: '#123456', a: '#654321' },
+    });
+    expect(own.value('a')).toBe('#654321');
+  });
+
+  it('writes inline(v, b) as v when the theme wrote v, else as b', () => {
+    const rule = { a: 'inline(edgeLabelBackground, lineColor)' };
+    const decl = (s: ThemeSpec, options: ThemeOptions = {}) => {
+      const t = createTheme(s, { ...options, diagram: table(rule) });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    // base leaves it to the shared rule (secondaryColor), which does not count as set.
+    expect(decl(spec.base)).toBe('var(--mermaid-a,var(--_l))');
+    const values: ThemeSpec = { ...spec.base, values: { edgeLabelBackground: '#eeeeee' } };
+    expect(decl(values)).toBe('var(--mermaid-a,#eeeeee)');
+    const rules: ThemeSpec = { ...spec.base, rules: { edgeLabelBackground: 'tertiaryColor' } };
+    expect(decl(rules)).toBe('var(--mermaid-a,var(--_t))');
+    // The author's override of v is not the theme writing it.
+    const user = decl(spec.base, { themeVariables: { edgeLabelBackground: '#123456' } });
+    expect(user).toBe('var(--mermaid-a,var(--_l))');
+    // A family entry of the diagram's own table counts too (base is classic).
+    const own: DiagramThemeTable = {
+      vars: { a: { alias: 'x0', kind: 'color' }, b: { alias: 'x1', kind: 'color' } },
+      rules: { light: { a: 'inline(b, lineColor)' } },
+      families: { classic: { values: { b: '#abcdef' } }, redux: { rules: { b: 'mainBkg' } } },
+    };
+    const of = (s: ThemeSpec) => {
+      const t = createTheme(s, { diagram: own });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    expect(of(spec.base)).toBe('var(--mermaid-a,#abcdef)');
+    expect(of(spec.redux)).toBe('var(--mermaid-a,var(--_mb))');
+    expect(() => parseRule('inline(a, b, c)')).toThrow(/inline takes 1 arguments/);
+    expect(() => parseRule('literal(a, b)')).toThrow(/literal takes 1 arguments/);
   });
 
   it('writes literal(x) as the computed colour, with no dependencies', () => {

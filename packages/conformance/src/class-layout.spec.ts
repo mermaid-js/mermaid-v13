@@ -6,6 +6,7 @@ import { countCrossings, validateLayout } from '@mermaid-js/core/layout';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { layoutClass, parseClass, type ClassLayout } from '@mermaid-js/diagram-class';
 import {
   MARKER_ACROSS,
@@ -168,7 +169,7 @@ function markerProblems(layout: ClassLayout, geometries: readonly Markers[]): st
 /** The marker geometry of every built-in theme: the layout is the same in all of them. */
 async function allMarkers(): Promise<Markers[]> {
   const themes = await Promise.all(
-    THEME_NAMES.map(async (n) => createTheme(await loadTheme(n), {}))
+    THEME_NAMES.map(async (n) => createTheme(await loadTheme(n), { diagram: DIAGRAM_TABLES.class }))
   );
   return themes.map((t) => markers(t, 'none', 'none'));
 }
@@ -183,7 +184,7 @@ describe('layered over parser-produced class graphs', () => {
   });
 
   it('lays out every corpus graph validly, nested and flat, and records crossings', async () => {
-    const theme = createTheme(await loadTheme('default'), {});
+    const theme = createTheme(await loadTheme('default'), { diagram: DIAGRAM_TABLES.class });
     const geometries = await allMarkers();
     const crossings: Record<string, number> = {};
     let laid = 0;
@@ -222,7 +223,7 @@ describe('layered over parser-produced class graphs', () => {
   });
 
   it('lays out generated graphs with fans of multiplicities, lollipops, notes and namespaces', async () => {
-    const theme = createTheme(await loadTheme('default'), {});
+    const theme = createTheme(await loadTheme('default'), { diagram: DIAGRAM_TABLES.class });
     const geometries = await allMarkers();
     // Deterministic generator (mulberry32).
     let seed = 155;

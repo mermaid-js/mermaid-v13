@@ -39,6 +39,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   er: 'packages/diagram-er',
   state: 'packages/diagram-state',
   journey: 'packages/diagram-journey',
+  mindmap: 'packages/diagram-mindmap',
   pie: 'packages/diagram-pie',
   quadrantChart: 'packages/diagram-quadrant',
   radar: 'packages/diagram-radar',

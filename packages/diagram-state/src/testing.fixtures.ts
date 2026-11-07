@@ -5,7 +5,7 @@
  * and the tree-backed writer, so the package's specs can query the views. Cross-package specs
  * render through `createMermaid()` instead (`packages/conformance/src/state/render.spec.ts`).
  */
-import type { RenderContext, Warning } from '@mermaid-js/core';
+import type { DiagramPlugin, RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, pxProfile } from '@mermaid-js/core/layout';
 import { resolveLimits } from '@mermaid-js/core/limits';
@@ -16,6 +16,9 @@ import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme
 import type { CompleteStateLayout } from './layout/index.ts';
 import type { StateParseResult } from './parser/index.ts';
 import { state } from './plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = state;
 
 export interface RenderForTestOptions {
   /** Integrator config, as `initialize()` would get it. */
@@ -61,6 +64,7 @@ export async function renderForTest(
   if (errors.length > 0) throw new Error(`parse failed: ${errors[0]!.message}`);
   const choice = resolveThemeName(config.theme, warn);
   const theme = createTheme(await loadTheme(choice.name), {
+    diagram: diagramTheme,
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
     warn,

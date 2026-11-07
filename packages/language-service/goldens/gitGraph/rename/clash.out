@@ -1,0 +1,14 @@
+@ 7:14  checkout de|v
+  prepare: 7:12-7:15 "dev"; rename to "hotfix":
+  refused: 'hotfix' is already a branch id in this diagram.
+@ 8:19  cherry-pick id:"|A"
+  prepare: 8:19-8:20 "A"; rename to "hotfix":
+  %% rename-to: hotfix
+  gitGraph
+    commit id:"hotfix"
+    branch dev
+    commit id:"B"
+    branch hotfix
+    checkout dev
+    cherry-pick id:"hotfix"
+    commit

@@ -201,7 +201,10 @@ const TYPE_DOCS: Record<string, string> = {
   journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
   pie: 'pie\n  "Dogs" : 386\n',
+  mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
+  gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
   radar: 'radar-beta\n  axis A, B\n',
 };
 
@@ -256,10 +259,10 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   page,
 }) => {
   await open(page);
-  await setDoc(page, 'gantt\n  title Plan\n');
-  // Past the debounce, so semantic tokens (none for gantt) would have come too.
+  await setDoc(page, 'requirementDiagram\n  element E {\n  }\n');
+  // Past the debounce, so semantic tokens (none for requirementDiagram) would have come too.
   await page.waitForTimeout(500);
-  expect(await headerColour(page, 'gantt')).not.toBe(KEYWORD);
+  expect(await headerColour(page, 'requirementDiagram')).not.toBe(KEYWORD);
   // Back to a flowchart: re-picked, coloured again.
   await setDoc(page, TYPE_DOCS.flowchart!);
   await expect.poll(() => headerColour(page, 'flowchart')).toBe(KEYWORD);

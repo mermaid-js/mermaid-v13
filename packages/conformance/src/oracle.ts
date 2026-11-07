@@ -2,6 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { patchGanttOracle } from './gantt/oracle-env.ts';
 import { patchQuadrantOracle } from './quadrant/oracle-env.ts';
 import { patchSequenceOracle } from './sequence/oracle-env.ts';
 
@@ -78,6 +79,8 @@ async function load(): Promise<Oracle> {
   await patchSequenceOracle(mermaid);
   // The quadrant DB hides its builder's data; record the grammar's calls (quadrant/oracle-env.ts).
   await patchQuadrantOracle(mermaid);
+  // Gantt acceptance includes `getTasks()`, and its clicks are recorded (gantt/oracle-env.ts).
+  await patchGanttOracle(mermaid);
 
   return {
     version,

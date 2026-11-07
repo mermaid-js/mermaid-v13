@@ -1,0 +1,16 @@
+---
+config:
+  gantt:
+    displayMode: compact
+description: displayMode compact puts tasks that do not overlap on one row
+---
+gantt
+  title Compact rows
+  dateFormat YYYY-MM-DD
+  section A
+    One   :a1, 2024-01-02, 2d
+    Two   :a2, 2024-01-05, 2d
+    Three :a3, 2024-01-03, 3d
+  section B
+    Four  :b1, 2024-01-02, 1d
+    Five  :b2, after b1, 1d

@@ -1,0 +1,23 @@
+---
+config:
+  theme: neo-dark
+description: the representative git graph TB in the neo-dark theme
+---
+gitGraph TB:
+  commit id: "init"
+  commit id: "setup" tag: "v0.1"
+  branch develop
+  checkout develop
+  commit id: "feat-a"
+  commit id: "feat-b" type: HIGHLIGHT
+  branch feature
+  checkout feature
+  commit id: "wip" type: REVERSE
+  checkout main
+  commit id: "hotfix"
+  cherry-pick id: "feat-a"
+  checkout develop
+  merge feature id: "merge-feature"
+  checkout main
+  merge develop id: "release" tag: "v1.0"
+  commit id: "after"

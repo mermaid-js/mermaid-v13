@@ -11,7 +11,7 @@ import {
   type LayoutManifest,
   type PluginManifest,
 } from '@mermaid-js/core';
-import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
+import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
@@ -184,11 +184,37 @@ const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
 /**
+ * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
+ * closure (R-PERF-8). A diagram reaches one only when it is its `layoutEngine.default` (D285),
+ * unless a loader of the same name is registered.
+ */
+const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
+  ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
+]);
+
+/** The engine a render asks for: `layout`, through the diagram's aliases (D284). */
+export function layoutName(config: ResolvedConfig, plugin: AnyPlugin): string {
+  const name = String(config.layout ?? 'layered');
+  const aliases = plugin.layoutEngine?.aliases;
+  return aliases && Object.hasOwn(aliases, name) ? aliases[name]! : name;
+}
+
+/**
  * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw
  * with the built-in engine and warn `ELK_NOT_INSTALLED` (D173). Core never names the package.
  */
 /** `elk` or `elk.<anything>`: a name only an ELK layout plugin lays out (D171, D173). */
 export const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
+
+/** A `layout` name's engine (`Registry.layout`). */
+export interface LayoutFound {
+  readonly engine: LayoutEngine;
+  readonly state: 'ready' | 'missing' | 'unknown' | 'elk';
+  /** The engine to load before a synchronous render can draw. */
+  readonly need?: string;
+  /** The diagram's default, drawing in place of an unknown or uninstalled engine. */
+  readonly standIn?: string;
+}
 
 /** The plugin a loaded entry module holds: `manifest.export`, the default export, or itself. */
 function entryExport(module: unknown, manifest: PluginManifest): unknown {
@@ -810,7 +836,8 @@ export class Registry {
       const owner = this.discoveredLayouts.find((d) => d.name === name);
       if (typeof (name as unknown) !== 'string' || name === '') reason = 'a layout name is empty';
       else if (known.has(key)) reason = `layout "${name}" was already discovered`;
-      else if (FIRST_PARTY_LAYOUTS.has(name)) reason = `"${name}" is a first-party layout`;
+      else if (FIRST_PARTY_LAYOUTS.has(name) || LAZY_LAYOUTS.has(name))
+        reason = `"${name}" is a first-party layout`;
       else if (owner && byPackage(owner, { package: pkg }) < 0)
         reason = `layout "${name}" belongs to "${owner.package}"`;
       if (reason !== undefined) {
@@ -862,19 +889,35 @@ export class Registry {
 
   private layoutLoader(name: string): LayoutLoader['loader'] | undefined {
     return (
-      this.layoutLoaders.get(name) ?? this.discoveredLayouts.find((d) => d.name === name)?.value
+      this.layoutLoaders.get(name) ??
+      this.discoveredLayouts.find((d) => d.name === name)?.value ??
+      LAZY_LAYOUTS.get(name)
     );
   }
 
   /**
    * The engine for a `layout` name: `ready` when loaded, `missing` when registered but not
-   * loaded, `unknown` (the built-in engine stands in) when nobody registered it, and `elk` (the
-   * built-in engine stands in too) for an ELK name while no ELK engine is registered at all.
+   * loaded, `unknown` when nobody registered it, and `elk` for an ELK name while no ELK engine
+   * is registered at all. For the last two the diagram's own default stands in (D282), else
+   * the built-in engine. `need` is the engine to load first. A lazy first-party engine is
+   * `unknown` to a diagram whose default it is not (D285).
    */
-  layout(name: string): { engine: LayoutEngine; state: 'ready' | 'missing' | 'unknown' | 'elk' } {
+  layout(name: string, own?: DiagramPlugin['layoutEngine']): LayoutFound {
+    const found = this.find(name, name === own?.default);
+    if (found.state === 'ready' || found.state === 'missing' || !own || own.default === name)
+      return found;
+    const standIn = this.find(own.default, true);
+    return { ...standIn, state: found.state, standIn: own.default };
+  }
+
+  private find(name: string, declares: boolean): LayoutFound {
+    const loader = this.layoutLoader(name);
+    // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285).
+    if (!declares && loader !== undefined && loader === LAZY_LAYOUTS.get(name))
+      return { engine: layered, state: 'unknown' };
     const engine = this.layouts.get(name);
     if (engine) return { engine, state: 'ready' };
-    if (this.layoutLoader(name)) return { engine: layered, state: 'missing' };
+    if (loader) return { engine: layered, state: 'missing', need: name };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
   }

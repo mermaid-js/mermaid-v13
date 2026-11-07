@@ -9,17 +9,19 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  CLASSIC_TIMELINE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
-import { PIE_REDUX_DARK } from './redux-dark-values.ts';
+import { LABEL_SCALE } from './palettes.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
+import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
+
+/**
+ * v12 `theme-neo-dark.js`: fixed `git0`–`git7` (the dark theme's pie colours), always lightened
+ * by 25 (`gitDarkMode`), whatever `darkMode` is (D267).
+ */
+const NEO_DARK_GIT = gitPalettes(
+  ['#0b0000', '#4d1037', '#3f5258', '#4f2f1b', '#6e0a0a', '#3b0048', '#995a01', '#154706'],
+  'lightenHsl'
+);
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
@@ -46,20 +48,14 @@ const neoDark: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
-    ...NEO_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...REDUX_PADDING,
-    ...NEO_SEQUENCE,
-    ...CLASSIC_TIMELINE,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
-  // As `neo`: v12 neo-dark sets `classText` from `textColor`, has no ER row fill of its own,
-  // and the neo-look zero circle takes the node fill.
-  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
+  rules: {
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',
     mainBkg: '#2a2020',
@@ -74,19 +70,24 @@ const neoDark: ThemeSpec = {
     border2: '#ffffff40',
     noteBkgColor: '#fff5ad',
     // khroma darken(secondaryColor, 10), whatever the mode.
-    activationBorderColor: '#2e3030',
+    mutedBorder: '#2e3030',
     errorBkgColor: '#201f1f',
     errorTextColor: '#dfe0e0',
-    // v12 kept the light theme's #f0f0f0, on which the #cccccc lines of a nested composite all
-    // but vanished (D189).
-    altBackground: '#404040',
     // v12 theme-neo-dark.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
   // v12 theme-neo-dark.js: hue steps darkened by 25 (75 under darkMode).
-  palettes: { ...darkenedScale(DARK_HUE_SOURCES, 25), cScaleLabel: LABEL_SCALE },
-  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
+  palettes: {
+    ...darkenedScale(DARK_HUE_SOURCES, 25),
+    cScaleLabel: LABEL_SCALE,
+    seriesColorArray: REDUX_DARK_SERIES,
+    ...NEO_DARK_GIT,
+  },
+  darkModePalettes: {
+    ...darkenedScale(DARK_HUE_SOURCES, 75),
+    gitBranchLabel: NEO_DARK_GIT.gitBranchLabel.map(() => 'black'),
+  },
 };
 
 export default neoDark;

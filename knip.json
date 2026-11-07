@@ -12,7 +12,13 @@
       ]
     },
     "packages/*": {
-      "entry": ["src/index.ts", "src/*/index.ts", "src/cli/*.ts", "src/cli.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/*/index.ts",
+        "src/cli/*.ts",
+        "src/cli.ts",
+        "src/theme/vocabulary.ts"
+      ],
       "project": ["src/**/*.ts"]
     },
     "packages/mermaid": {
@@ -38,6 +44,9 @@
         "@mermaid-js/diagram-journey",
         "@mermaid-js/diagram-timeline",
         "@mermaid-js/diagram-pie",
+        "@mermaid-js/diagram-mindmap",
+        "@mermaid-js/diagram-gitgraph",
+        "@mermaid-js/diagram-gantt",
         "@mermaid-js/diagram-radar"
       ]
     },

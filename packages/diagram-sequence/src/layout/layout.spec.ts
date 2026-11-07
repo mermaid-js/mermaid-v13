@@ -1,3 +1,4 @@
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
@@ -7,6 +8,10 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
 import { FIXTURES, hello, model as modelOf, msg, p as part } from './fixtures.ts';
 import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
+import { sequence as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 // The two geometry sets (D152, #194): `redux` carries v12 `look: neo`, `default` v12 classic.
 const THEMES = ['redux', 'default'] as const;
@@ -50,7 +55,7 @@ function lay(
     config: { sequence } as ResolvedConfig,
     measurer,
     units,
-    theme: createTheme(specs.get(theme)!, { themeVariables }),
+    theme: createTheme(specs.get(theme)!, { diagram: diagramTheme, themeVariables }),
     warn: () => {},
   });
 }

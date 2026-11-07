@@ -1,0 +1,12 @@
+---
+config:
+  gantt:
+    weekday: monday
+    tickInterval: 1week
+description: gantt.weekday in config starts week ticks on Monday (D279)
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section A
+    One :a1, 2024-01-02, 10d
+    Two :a2, after a1, 12d

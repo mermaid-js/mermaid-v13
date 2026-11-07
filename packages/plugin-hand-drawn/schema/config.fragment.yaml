@@ -47,8 +47,8 @@ properties:
   handDrawn:
     description: |
       Draws the outlines of nodes, groups and edges hand-drawn, sketched by roughjs, in
-      flowchart, class, state and ER diagrams. Other types draw as usual. The layout does not
-      change: the sketch follows the outlines the plain drawing has. Text output is never
+      flowchart, class, state, ER and mindmap diagrams. Other types draw as usual. The layout
+      does not change: the sketch follows the outlines the plain drawing has. Text output is never
       sketched (one `ASCII_DROPPED` warning, `feature: 'handDrawn'`). v12's `look: handDrawn`
       sets it, at the top level or in a diagram section.
     type: boolean

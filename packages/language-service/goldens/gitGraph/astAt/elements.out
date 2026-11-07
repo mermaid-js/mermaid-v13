@@ -1,0 +1,18 @@
+@ 1:5  gitG|raph TB:
+  st:1 1:1-1:13 "gitGraph TB:"
+@ 2:5  ti|tle T
+  st:2 2:3-2:10 "title T"
+@ 3:6  com|mit id:"A"
+  c:A 3:3-3:16 "commit id:\"A\""
+@ 5:6  com|mit
+  c#2 5:3-5:9 "commit"
+@ 6:11  branch d|ev
+  b:dev 6:3-6:13 "branch dev"
+@ 7:13  checkout d|ev
+  co:dev#1 7:3-7:15 "checkout dev"
+@ 8:9  merge |main id:"M"
+  m:main#1 8:3-8:20 "merge main id:\"M\""
+@ 9:15  cherry-pick |id:"A"
+  cp:A#1 9:3-9:21 "cherry-pick id:\"A\""
+@ 10:6  acc|Title: x
+  st:3 10:3-10:14 "accTitle: x"

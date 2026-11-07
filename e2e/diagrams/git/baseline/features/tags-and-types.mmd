@@ -1,0 +1,14 @@
+---
+config:
+  theme: neo
+description: every commit type, several tags on one commit and a custom merge type, in neo
+---
+gitGraph
+  commit id: "normal"
+  commit id: "reverse" type: REVERSE tag: "revert"
+  commit id: "highlight" type: HIGHLIGHT tag: "v1" tag: "stable" tag: "lts"
+  branch side
+  commit id: "side-1"
+  checkout main
+  merge side id: "merged" type: HIGHLIGHT tag: "v2"
+  cherry-pick id: "side-1" tag: "picked"

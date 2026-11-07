@@ -93,13 +93,16 @@ export function monarchCategorise(json: string): Categorise {
   const def = JSON.parse(json) as {
     start?: string;
     includeLF?: boolean;
+    ignoreCase?: boolean;
     tokenizer: Record<string, MonarchRule[]>;
   };
   const states = def.tokenizer;
+  // Monaco applies `ignoreCase` to every rule (mindmap's `::ICON(`).
+  const flags = def.ignoreCase ? 'iy' : 'y';
   const compiled = Object.fromEntries(
     Object.entries(states).map(([s, rules]) => [
       s,
-      rules.map(([p, a]) => [new RegExp(p, 'y'), a] as const),
+      rules.map(([p, a]) => [new RegExp(p, flags), a] as const),
     ])
   );
   return (text) => {

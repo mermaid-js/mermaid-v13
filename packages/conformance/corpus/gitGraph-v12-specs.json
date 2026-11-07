@@ -1,0 +1,526 @@
+[
+  {
+    "id": "v12-specs/gitGraph.spec.ts#1",
+    "source": "gitGraph:\n commit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#2",
+    "source": "gitGraph TB:\ncommit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#3",
+    "source": "gitGraph BT:\ncommit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#4",
+    "source": "gitGraph:\nbranch new\ncheckout new\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#5",
+    "source": "gitGraph:\nbranch new\nswitch new\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#6",
+    "source": "gitGraph:\nbranch new\ncheckout new\ncommit\ncommit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#7",
+    "source": "gitGraph:\ncommit \"a commit\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#8",
+    "source": "gitGraph:\ncommit\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\nreset main\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#9",
+    "source": "gitGraph:\ncommit\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\nreset main^\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#10",
+    "source": "gitGraph:\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\ncommit\ncheckout main\nmerge newbranch\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#11",
+    "source": "gitGraph:\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\ncommit\nmerge main\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#12",
+    "source": "gitGraph:\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\ncommit\ncheckout main\ncommit\nmerge newbranch\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#13",
+    "source": "gitGraph:\ncommit\nbranch newbranch\ncheckout newbranch\ncommit\ncommit\ncheckout main\ncommit\nmerge newbranch\ncommit\ncheckout newbranch\nmerge main\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#14",
+    "source": "gitGraph:\ncommit\nbranch b1\ncheckout b1\ncommit\ncommit\nbranch b2\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#15",
+    "source": "gitGraph:\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#16",
+    "source": "gitGraph:\n        commit id:\"1111\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#17",
+    "source": "gitGraph:\n        commit tag:\"test\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#18",
+    "source": "gitGraph:\n        commit type: HIGHLIGHT\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#19",
+    "source": "gitGraph:\n        commit type: REVERSE\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#20",
+    "source": "gitGraph:\n        commit type: NORMAL\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#21",
+    "source": "gitGraph:\n        commit \"test commit\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#22",
+    "source": "gitGraph:\n        commit msg: \"test commit\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#23",
+    "source": "gitGraph:\n        commit id:\"1111\" tag: \"test tag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#24",
+    "source": "gitGraph:\n        commit type:HIGHLIGHT tag: \"test tag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#25",
+    "source": "gitGraph:\n        commit tag: \"test tag\" type:HIGHLIGHT\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#26",
+    "source": "gitGraph:\n        commit id:\"1111\" type:REVERSE tag: \"test tag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#27",
+    "source": "gitGraph:\n        commit id:\"1111\" type:REVERSE tag: \"test tag\" msg:\"test msg\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#28",
+    "source": "gitGraph:\n        commit type:REVERSE tag: \"test tag\" msg: \"test msg\" id: \"1111\"\n\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#29",
+    "source": "gitGraph:\n        commit  tag: \"test tag\" msg:\"test msg\" id:\"1111\" type:REVERSE\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#30",
+    "source": "gitGraph:\n        commit msg:\"test msg\" id:\"1111\" type:REVERSE tag: \"test tag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#31",
+    "source": "gitGraph:\n        commit\n        commit\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#32",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#33",
+    "source": "gitGraph:\n        commit\n        branch \"branch\"\n        checkout \"branch\"\n        commit\n        checkout main\n        merge \"branch\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#34",
+    "source": "gitGraph:\n        commit\n        branch azAZ_-./test\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#35",
+    "source": "gitGraph:\n        commit\n        %% branch names starting with numbers are not recommended, but are supported by git\n        branch 1.0.1\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#36",
+    "source": "gitGraph:\n        commit\n        %% branch names starting with numbers are not recommended, but are supported by git\n        branch branch01\n        branch checkout02\n        branch cherry-pick03\n        branch branch/example-branch\n        branch merge/test_merge\n        %% single character branch name\n        branch A\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#37",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        checkout testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#38",
+    "source": "gitGraph:\n        commit\n        branch test1 order: 3\n        branch test2 order: 2\n        branch test3 order: 1\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#39",
+    "source": "gitGraph:\n        commit\n        branch test1 order: 1\n        branch test2\n        branch test3\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#40",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        checkout testBranch\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#41",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        checkout testBranch\n        commit\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#42",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        switch testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#43",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        switch testBranch\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#44",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        switch testBranch\n        commit\n        commit\n        switch main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#45",
+    "source": "gitGraph:\n        commit\n        branch testBranch\n        checkout testBranch\n        commit\n        checkout main\n        merge testBranch tag: \"merge-tag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#46",
+    "source": "gitGraph:\n          commit\n          branch testBranch\n          checkout testBranch\n          commit\n          checkout main\n          %% Merge Tag and ID\n          merge testBranch tag: \"merge-tag\" id: \"2-222\"\n          branch testBranch2\n          checkout testBranch2\n          commit\n          checkout main\n          %% Merge ID and Tag (reverse order)\n          merge testBranch2 id: \"4-444\" tag: \"merge-tag2\" type:HIGHLIGHT\n          branch testBranch3\n          checkout testBranch3\n          commit\n          checkout main\n          %% just Merge ID\n          merge testBranch3 id: \"6-666\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#47",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch develop\n        commit id:\"A\"\n        checkout main\n        cherry-pick id:\"A\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#48",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch develop\n        commit id:\"A\"\n        checkout main\n        cherry-pick id:\"A\" tag:\"MyTag\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#49",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch develop\n        commit id:\"A\"\n        checkout main\n        cherry-pick id:\"A\" tag:\"\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#50",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        cherry-pick id: \"M\" parent:\"B\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#51",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        cherry-pick id: \"M\" parent:\"ZERO\" tag: \"v1.0\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#52",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        commit id: \"C\"\n        cherry-pick id: \"M\" tag: \"v2.1:ZERO\" parent:\"ZERO\"\n        commit id: \"D\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#53",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        commit id: \"C\"\n        cherry-pick id:\"M\" parent: \"ZERO\" tag:\"\"\n        commit id: \"D\"\n        cherry-pick id:\"M\" tag:\"\" parent: \"B\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#54",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        commit id: \"C\"\n        cherry-pick id:\"M\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#55",
+    "source": "gitGraph\n        commit id: \"ZERO\"\n        branch feature\n        branch release\n        checkout feature\n        commit id: \"A\"\n        commit id: \"B\"\n        checkout main\n        merge feature id: \"M\"\n        checkout release\n        commit id: \"C\"\n        cherry-pick id:\"M\" parent: \"A\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#56",
+    "source": "gitGraph\n        commit\n        branch testBranch\n        commit\n        branch main\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#57",
+    "source": "gitGraph\n        commit\n        branch testBranch\n        commit\n        branch testBranch\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#58",
+    "source": "gitGraph\n        commit\n        checkout testBranch\n        commit\n        branch testBranch\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#59",
+    "source": "gitGraph\n        merge testBranch\n        commit\n        checkout testBranch\n        commit\n        branch testBranch\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#60",
+    "source": "gitGraph\n        commit\n        merge testBranch\n        commit\n        checkout testBranch\n        commit\n        branch testBranch\n        commit\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#61",
+    "source": "gitGraph\n        commit\n        branch testBranch\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#62",
+    "source": "gitGraph\n        commit id: \"1-111\"\n        branch testBranch\n        commit id: \"2-222\"\n        commit id: \"3-333\"\n        checkout main\n        merge testBranch id: \"1-111\"\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#63",
+    "source": "gitGraph\n        commit\n        branch testBranch\n        checkout main\n        merge testBranch\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#64",
+    "source": "gitGraph\n        branch test1\n\n        checkout main\n        commit\n        merge test1\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#65",
+    "source": "gitGraph:\n          accTitle: This is a title\n          accDescr: This is a description\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#66",
+    "source": "gitGraph:\n          accTitle: This is a title\n          accDescr {\n            This is a description\n            using multiple lines\n          }\n        commit\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#67",
+    "source": "gitGraph\n        commit id:\"__proto__\"\n        branch __proto__\n        checkout __proto__\n        commit\n        checkout main\n        merge __proto__\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#68",
+    "source": "gitGraph\n        commit id:\"constructor\"\n        branch constructor\n        checkout constructor\n        commit\n        checkout main\n        merge constructor\n        "
+  },
+  {
+    "id": "v12-specs/gitGraph.spec.ts#69",
+    "source": "gitGraph\n     commit id:\"initial commit\"\n     commit id:\"work on first release\"\n     commit id:\"design freeze from here\"\n     branch v1-rc\n     checkout v1-rc\n     commit id:\"bugfix 1\"\n     commit id:\"bigfix 2\" tag:\"v1.0.1\"\n     branch FORK-v1.0-MDR\n     checkout FORK-v1.0-MDR\n     commit id:\"working on MDR\"\n     checkout v1-rc\n     commit id:\"minor design changes for MDR\" tag:\"v1.0.2\"\n     checkout FORK-v1.0-MDR\n     merge v1-rc\n     checkout main\n     commit id:\"new feature for v1.1…\"\n     checkout FORK-v1.0-MDR\n     commit id:\"working on MDR\"\n     commit id:\"finishing MDR\"\n     branch v1.0-MDR\n     checkout v1.0-MDR\n     commit id:\"brush up release\" tag:\"v1.0.2-MDR\"\n     checkout v1-rc\n     commit id:\"bugfix without MDR\"\n     checkout main\n     commit id:\"work on v1.1\"\n  "
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#1",
+    "source": "gitGraph\n  commit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#2",
+    "source": "gitGraph\n  commit\n  commit\n  commit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#3",
+    "source": "gitGraph\n  commit id:\"1\" msg:\"Fix bug\" tag:\"v1.2\" type:NORMAL\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#4",
+    "source": "gitGraph\n  commit msg:\"Fix issue #123: Handle errors\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#5",
+    "source": "gitGraph\n  commit msg:\"Initial release\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#6",
+    "source": "gitGraph\n  commit id:\"2\" msg:\"Malformed commit\" oops:\"ignored\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#7",
+    "source": "gitGraph\n  commit type:NORMAL\n  commit type:REVERSE\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#8",
+    "source": "gitGraph\n commit\n commit\n branch master\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#9",
+    "source": "gitGraph\n commit\n branch 1.0.1\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#10",
+    "source": "gitGraph\n commit\n  branch feature order:1\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#11",
+    "source": "gitGraph\n  branch feature/test-branch\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#12",
+    "source": "gitGraph\n  branch my-feature_branch\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#13",
+    "source": "gitGraph\n  branch feature\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#14",
+    "source": "gitGraph\n merge master\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#15",
+    "source": "gitGraph\n  merge feature id:\"m1\" tag:\"release\" type:HIGHLIGHT\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#16",
+    "source": "gitGraph\n  merge feature\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#17",
+    "source": "gitGraph\n  merge feature random:\"ignored\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#18",
+    "source": "gitGraph\n commit id:\"1\"\n branch develop\n branch fun\n checkout develop\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#19",
+    "source": "gitGraph\n  checkout hotfix-123\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#20",
+    "source": "gitGraph\n  checkout release-2021\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#21",
+    "source": "gitGraph\n commit id:\"123\" commit id:\"321\" cherry-pick id:\"123\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#22",
+    "source": "gitGraph\n  cherry-pick id:\"123\" tag:\"urgent\" parent:\"100\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#23",
+    "source": "gitGraph\n  accTitle: Accessible Graph\n  commit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#24",
+    "source": "gitGraph\n  accDescr {\n    Detailed description\n    across multiple lines\n  }\n  commit\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#25",
+    "source": "\n        gitGraph TB:\n        accTitle: Complex Example\n        commit id:\"init\" type:NORMAL\n        branch feature\n        commit id:\"feat1\" msg:\"Add feature\"\n        checkout main\n        merge feature tag:\"v1.0\"\n        cherry-pick id:\"feat1\" tag:\"critical fix\"\n      "
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#26",
+    "source": "gitGraph\n  commit unknown:\"oops\"\n"
+  },
+  {
+    "id": "v12-specs/gitGraph.test.ts#27",
+    "source": "gitGraph\n  branch feature order:xyz\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#1",
+    "source": "---\ntitle: Example Git diagram\n---\ngitGraph\n   commit\n   commit\n   branch develop\n   checkout develop\n   commit\n   commit\n   checkout main\n   merge develop\n   commit\n   commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#2",
+    "source": "    gitGraph\n       commit\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#3",
+    "source": "    gitGraph\n       commit id: \"Alpha\"\n       commit id: \"Beta\"\n       commit id: \"Gamma\"\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#4",
+    "source": "    gitGraph\n       commit id: \"Normal\"\n       commit\n       commit id: \"Reverse\" type: REVERSE\n       commit\n       commit id: \"Highlight\" type: HIGHLIGHT\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#5",
+    "source": "    gitGraph\n       commit\n       commit id: \"Normal\" tag: \"v1.0.0\"\n       commit\n       commit id: \"Reverse\" type: REVERSE tag: \"RC_1\"\n       commit\n       commit id: \"Highlight\" type: HIGHLIGHT tag: \"8.8.4\"\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#6",
+    "source": "    gitGraph\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#7",
+    "source": "    gitGraph\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       commit\n       checkout main\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#8",
+    "source": "    gitGraph\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       commit\n       checkout main\n       commit\n       commit\n       merge develop\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#9",
+    "source": "    gitGraph\n       commit id: \"1\"\n       commit id: \"2\"\n       branch nice_feature\n       checkout nice_feature\n       commit id: \"3\"\n       checkout main\n       commit id: \"4\"\n       checkout nice_feature\n       branch very_nice_feature\n       checkout very_nice_feature\n       commit id: \"5\"\n       checkout main\n       commit id: \"6\"\n       checkout nice_feature\n       commit id: \"7\"\n       checkout main\n       merge nice_feature id: \"customID\" tag: \"customTag\" type: REVERSE\n       checkout very_nice_feature\n       commit id: \"8\"\n       checkout main\n       commit id: \"9\"\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#10",
+    "source": "    gitGraph\n        commit id: \"ZERO\"\n        branch develop\n        branch release\n        commit id:\"A\"\n        checkout main\n        commit id:\"ONE\"\n        checkout develop\n        commit id:\"B\"\n        checkout main\n        merge develop id:\"MERGE\"\n        commit id:\"TWO\"\n        checkout release\n        cherry-pick id:\"MERGE\" parent:\"B\"\n        commit id:\"THREE\"\n        checkout develop\n        commit id:\"C\"\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#11",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    showBranches: false\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#12",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    rotateCommitLabel: true\n---\ngitGraph\n  commit id: \"feat(api): ...\"\n  commit id: \"a\"\n  commit id: \"b\"\n  commit id: \"fix(client): .extra long label..\"\n  branch c2\n  commit id: \"feat(modules): ...\"\n  commit id: \"test(client): ...\"\n  checkout main\n  commit id: \"fix(api): ...\"\n  commit id: \"ci: ...\"\n  branch b1\n  commit\n  branch b2\n  commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#13",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    rotateCommitLabel: false\n---\ngitGraph\n  commit id: \"feat(api): ...\"\n  commit id: \"a\"\n  commit id: \"b\"\n  commit id: \"fix(client): .extra long label..\"\n  branch c2\n  commit id: \"feat(modules): ...\"\n  commit id: \"test(client): ...\"\n  checkout main\n  commit id: \"fix(api): ...\"\n  commit id: \"ci: ...\"\n  branch b1\n  commit\n  branch b2\n  commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#14",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    showBranches: false\n    showCommitLabel: false\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#15",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    showBranches: true\n    showCommitLabel: true\n    mainBranchName: 'MetroLine1'\n---\n      gitGraph\n        commit id:\"NewYork\"\n        commit id:\"Dallas\"\n        branch MetroLine2\n        commit id:\"LosAngeles\"\n        commit id:\"Chicago\"\n        commit id:\"Houston\"\n        branch MetroLine3\n        commit id:\"Phoenix\"\n        commit type: HIGHLIGHT id:\"Denver\"\n        commit id:\"Boston\"\n        checkout MetroLine1\n        commit id:\"Atlanta\"\n        merge MetroLine3\n        commit id:\"Miami\"\n        commit id:\"Washington\"\n        merge MetroLine2 tag:\"MY JUNCTION\"\n        commit id:\"Boston\"\n        commit id:\"Detroit\"\n        commit type:REVERSE id:\"SanFrancisco\"\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#16",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    showBranches: true\n    showCommitLabel: true\n---\n      gitGraph\n      commit\n      branch test1 order: 3\n      branch test2 order: 2\n      branch test3 order: 1\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#17",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n  gitGraph:\n    showBranches: true\n    showCommitLabel: true\n    mainBranchOrder: 2\n---\n      gitGraph\n      commit\n      branch test1 order: 3\n      branch test2\n      branch test3\n      branch test4 order: 1\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#18",
+    "source": "    gitGraph LR:\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       checkout main\n       commit\n       commit\n       merge develop\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#19",
+    "source": "    gitGraph TB:\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       checkout main\n       commit\n       commit\n       merge develop\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#20",
+    "source": "    gitGraph BT:\n       commit\n       commit\n       branch develop\n       commit\n       commit\n       checkout main\n       commit\n       commit\n       merge develop\n       commit\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#21",
+    "source": "---\nconfig:\n  gitGraph:\n    parallelCommits: false\n---\ngitGraph:\n  commit\n  branch develop\n  commit\n  commit\n  checkout main\n  commit\n  commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#22",
+    "source": "---\nconfig:\n  gitGraph:\n    parallelCommits: true\n---\ngitGraph:\n  commit\n  branch develop\n  commit\n  commit\n  checkout main\n  commit\n  commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#23",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'base'\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#24",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'forest'\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#25",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n---\n      gitGraph\n        commit type:HIGHLIGHT\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#26",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'dark'\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#27",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'neutral'\n---\n      gitGraph\n        commit\n        branch hotfix\n        checkout hotfix\n        commit\n        branch develop\n        checkout develop\n        commit id:\"ash\" tag:\"abc\"\n        branch featureB\n        checkout featureB\n        commit type:HIGHLIGHT\n        checkout main\n        checkout hotfix\n        commit type:NORMAL\n        checkout develop\n        commit type:REVERSE\n        checkout featureB\n        commit\n        checkout main\n        merge hotfix\n        checkout featureB\n        commit\n        checkout develop\n        branch featureA\n        commit\n        checkout develop\n        merge hotfix\n        checkout featureA\n        commit\n        checkout featureB\n        commit\n        checkout develop\n        merge featureA\n        branch release\n        checkout release\n        commit\n        checkout main\n        commit\n        checkout release\n        merge main\n        checkout develop\n        merge release\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#28",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#29",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n      'git0': '#ff0000'\n      'git1': '#00ff00'\n      'git2': '#0000ff'\n      'git3': '#ff00ff'\n      'git4': '#00ffff'\n      'git5': '#ffff00'\n      'git6': '#ff00ff'\n      'git7': '#00ffff'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#30",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    'gitBranchLabel0': '#ffffff'\n    'gitBranchLabel1': '#ffffff'\n    'gitBranchLabel2': '#ffffff'\n    'gitBranchLabel3': '#ffffff'\n    'gitBranchLabel4': '#ffffff'\n    'gitBranchLabel5': '#ffffff'\n    'gitBranchLabel6': '#ffffff'\n    'gitBranchLabel7': '#ffffff'\n    'gitBranchLabel8': '#ffffff'\n    'gitBranchLabel9': '#ffffff'\n---\n  gitGraph\n    checkout main\n    branch branch1\n    branch branch2\n    branch branch3\n    branch branch4\n    branch branch5\n    branch branch6\n    branch branch7\n    branch branch8\n    branch branch9\n    checkout branch1\n    commit\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#31",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    commitLabelColor: '#ff0000'\n    commitLabelBackground: '#00ff00'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#32",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    commitLabelColor: '#ff0000'\n    commitLabelBackground: '#00ff00'\n    commitLabelFontSize: '16px'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#33",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    commitLabelColor: '#ff0000'\n    commitLabelBackground: '#00ff00'\n    tagLabelFontSize: '16px'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#34",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    tagLabelColor: '#ff0000'\n    tagLabelBackground: '#00ff00'\n    tagLabelBorder: '#0000ff'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  },
+  {
+    "id": "v12-docs/gitgraph.md#35",
+    "source": "---\nconfig:\n  logLevel: 'debug'\n  theme: 'default'\n  themeVariables:\n    'gitInv0': '#ff0000'\n---\n       gitGraph\n       commit\n       branch develop\n       commit tag:\"v1.0.0\"\n       commit\n       checkout main\n       commit type: HIGHLIGHT\n       commit\n       merge develop\n       commit\n       branch featureA\n       commit\n\n"
+  }
+]

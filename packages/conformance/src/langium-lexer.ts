@@ -32,6 +32,7 @@ export interface LangiumLexerDescriptor {
 export const LANGIUM_LEXERS = {
   radar: { probe: 'radar-beta\naxis A', factory: 'createRadarServices', key: 'Radar' },
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
+  gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;
