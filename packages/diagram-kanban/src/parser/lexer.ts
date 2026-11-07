@@ -70,16 +70,9 @@ const S = {
 } as const;
 
 /** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
-const S_NAMES = [
-  'INITIAL',
-  'NODE',
-  'NSTR',
-  'NSTR2',
-  'ICON',
-  'CLASS',
-  'SHAPE_DATA',
-  'SHAPE_DATA_STR',
-];
+const S_NAMES: readonly string[] = Object.entries(S)
+  .sort((a, b) => a[1] - b[1])
+  .map(([name]) => name);
 
 /** What a regex `.` does not match, once CRs are LFs. */
 const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;

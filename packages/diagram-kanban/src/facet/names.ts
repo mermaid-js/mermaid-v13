@@ -4,11 +4,9 @@
  */
 import { parseKanban } from '../parser/parser.ts';
 import { kanbanTokens } from '../parser/index.ts';
+import { CLASS_BLANK, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 
-const LINE_BREAK = /[\n\r\u2028\u2029]/;
-/** The blanks the model splits a `:::` line at (HTML class-attribute words). */
-const CLASS_BLANK = /[\t\n\f\r ]/;
 /** What ends an item id: a shape opener or closer, `{`, `}` or `@` (`]` is part of an id). */
 const DELIMITERS = /[()[{}@]/;
 

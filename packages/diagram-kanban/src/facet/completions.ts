@@ -24,14 +24,12 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { kanbanDocs } from '../generated/docs.ts';
 import type { KanbanDocument } from '../parser/ast.ts';
+import { CLASS_BLANK, isBlockData, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { invalidReason } from './names.ts';
-import { DATA_KEYS, dataPlace, lineBefore, PRIORITIES, span } from './tables.ts';
+import { DATA_KEYS, dataPlace, lineAfter, lineBefore, PRIORITIES, span } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;
-/** A class word's end: the blanks a `:::` line is split at. */
-const CLASS_BLANK = /[\t\n\f\r ]/;
-const LINE_END = /[\n\r\u2028\u2029]/;
 /** A key written in data: after `@{`, a line break or a `,`, before a `:`. */
 const WRITTEN_KEY = /(?:^|[\n\r,])[\t ]*([A-Za-z]+)[\t ]*:/g;
 
@@ -104,12 +102,12 @@ function classItems(
     .map((name) => ({ label: name, kind: 'class', insertText: name, range }));
 }
 
-/** The end of the value being written at `at`: the line's end, or (one line) a `,` or `}`. */
-function valueEnd(text: string, at: number, multiline: boolean): number {
+/** The end of the value being written at `at`: the line's end, or (flow data) a `,` or `}`. */
+function valueEnd(text: string, at: number, block: boolean): number {
   let end = at;
   while (end < text.length) {
     const ch = text.charAt(end);
-    if (LINE_END.test(ch) || (!multiline && (ch === ',' || ch === '}'))) break;
+    if (LINE_BREAK.test(ch) || (!block && (ch === ',' || ch === '}'))) break;
     end++;
   }
   while (end > at && /[\t ]/.test(text.charAt(end - 1))) end--;
@@ -126,12 +124,13 @@ function dataItems(
   const j = lastBefore(tokens, at, T.ShapeDataStart);
   if (j < 0) return [];
   const open = tokens.start[j] ?? 0;
-  // Read as block pairs once a line break is between `@{` and the cursor.
-  const multiline = LINE_END.test(text.slice(open, at));
-  const place = dataPlace(text, open, at, multiline);
-  const block = doc.result.ast.children.find((n) => n.data && n.data.range.start === open)?.data
-    ?.range;
-  const blockEnd = block ? block.end : at;
+  // Block pairs or a flow mapping, by the parser's rule (`isBlockData`) on the data as it reads
+  // it; data still open is taken to the end of the cursor's line, as typed so far.
+  const data = doc.result.ast.children.find((n) => n.data?.range.start === open)?.data;
+  const closed = data !== undefined && text.charAt(data.range.end - 1) === '}';
+  const blockEnd = closed ? data.range.end : at + lineAfter(text, at).length;
+  const block = isBlockData(closed ? data.text : text.slice(open + 2, blockEnd));
+  const place = dataPlace(text, open, at, block);
   if (place.key) {
     const prefix = text.slice(place.key.start, at).toLowerCase();
     let to = at;
@@ -157,7 +156,7 @@ function dataItems(
   }
   const value = place.value;
   if (!value) return [];
-  const range = span(value.range.start, valueEnd(text, at, multiline));
+  const range = span(value.range.start, valueEnd(text, at, block));
   const typed = text.slice(value.range.start, at).toLowerCase();
   let names: string[] = [];
   let detail: string | undefined;

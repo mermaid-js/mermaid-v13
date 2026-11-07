@@ -56,13 +56,15 @@ import type {
   YamlMap,
   YamlOptions,
   YamlResult,
+  YamlNode,
   YamlValue,
 } from '@mermaid-js/core/preprocess';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
-import { holesIn, wordIn, writtenValue } from './symbols.ts';
+import { holesIn, sourceOffset, wordIn } from './symbols.ts';
+import { classWords, FIRST_LINE, isBlockData, isLineBreak } from './text.ts';
 import { T } from './tokens.ts';
 
 export interface KanbanParseOptions extends ParseOptions {
@@ -115,9 +117,6 @@ const PROBE_FOLLOWS = kindSet(
   T.NodeDEnd,
   T.ShapeDataStart
 );
-
-/** A word of a `:::` line: the model splits it at these blanks (HTML class-attribute words). */
-const CLASS_WORD = /[^\t\n\f\r ]+/g;
 
 /** The kinds jison names `SHAPE_DATA`. */
 const SHAPE_DATA = kindSet(T.ShapeDataStart, T.ShapeData, T.ShapeDataQuote, T.ShapeDataStr);
@@ -178,12 +177,18 @@ interface YamlRead {
   inPlace: boolean;
   /** Entities were read as v12's placeholders, to be turned back into `&…;`. */
   placed: boolean;
+  /** The data text v12 read (between `@{` and `}`), and the source range it came from. */
+  data: string;
+  inner: Range;
+  /** Where the data text starts in {@link text} when the read is not in place (its wrapping). */
+  shift: number;
 }
 
-/** Data read as a mapping, with the read it came from (for the `priority` text). */
+/** Data read as a mapping, with the read it came from and its YAML tree (value ranges). */
 interface ItemData {
   value: YamlMap;
   read: YamlRead;
+  root: YamlNode | null;
 }
 
 /** The parts of an item statement (pitfall 10). */
@@ -321,10 +326,9 @@ class KanbanParser {
     const same = this.src.slice(r.start, r.end) === text;
     const holes = same ? [] : holesIn(this.view, r);
     let from = r.start;
-    for (const m of text.matchAll(CLASS_WORD)) {
-      const name = m[0];
+    for (const { word: name, at: index } of classWords(text)) {
       let range = r;
-      if (same) range = { start: r.start + m.index, end: r.start + m.index + name.length };
+      if (same) range = { start: r.start + index, end: r.start + index + name.length };
       else if (from >= 0) {
         // After a word not found (an entity in it), the rest keep the token's range: each
         // lookup then stays short, so the line is read in linear time.
@@ -338,25 +342,32 @@ class KanbanParser {
 
   /**
    * The item's `assigned` value as an `assignee` occurrence named `name` (the model's text):
-   * the value's range when the data was read in place (quotes included, which the service
-   * reads through), else the whole data block, which the service drops.
+   * the value's range in the YAML tree (quotes included, which the service reads through),
+   * mapped to the source; the whole data block, which the service drops, when it cannot be.
    */
-  private assigneeSymbol(name: string, read: YamlRead, data: Range): void {
-    let range = data;
-    if (read.inPlace) {
-      const found = writtenValue(this.src, 'assigned', name, data);
-      if (found) range = found;
-      else {
-        // Written another way (a quoted key, an escape, a scalar over lines): the YAML tree.
-        const root = parseYaml(read.text, { ...read.options, tree: true }).root;
-        const pairs = root?.kind === 'map' ? root.pairs.filter((p) => p.key === 'assigned') : [];
-        const r = pairs[pairs.length - 1]?.value?.range;
-        if (r) range = r;
-      }
-    }
+  private assigneeSymbol(name: string, data: ItemData, block: Range): void {
+    const { root, read } = data;
+    const pair = root?.kind === 'map' ? root.pairs.find((p) => p.key === 'assigned') : undefined;
+    const r = pair?.value?.range;
+    const range = (r && this.sourceRangeOf(read, r)) ?? block;
     const n = (this.assignees.get(name) ?? 0) + 1;
     this.assignees.set(name, n);
     this.st.symbol(name, 'assignee', range, n === 1 ? 'def' : 'ref');
+  }
+
+  /**
+   * The source range of `r`, a range of `read.text`: itself for a read in place; else through
+   * v12's wrapping and its line-break normalisation, when the data text is the source's
+   * otherwise (no entity, removed span or `<br/>` in it); else undefined.
+   */
+  private sourceRangeOf(read: YamlRead, r: Range): Range | undefined {
+    if (read.inPlace) return r;
+    if (read.placed || r.start < read.shift || r.end <= r.start) return undefined;
+    const { src } = this;
+    const { data, inner } = read;
+    const start = sourceOffset(src, inner.start, inner.end, data, r.start - read.shift);
+    const last = sourceOffset(src, inner.start, inner.end, data, r.end - read.shift - 1);
+    return start < 0 || last < 0 ? undefined : { start, end: last + 1 };
   }
 
   /**
@@ -443,8 +454,8 @@ class KanbanParser {
     return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
   }
 
-  /** How an error message names the current token (the one after it, for an indent). */
-  private found(): string {
+  /** The token an error message names: the current one (the one after it, for an indent). */
+  private namedToken(): number {
     const { c } = this;
     let j = c.pos;
     if (c.kind === T.SpaceList) {
@@ -452,6 +463,20 @@ class KanbanParser {
       const after = c.tokens.kind[next] ?? Kind.EOF;
       if (!this.isStop(after) && after !== Kind.EOF) j = next;
     }
+    return j;
+  }
+
+  /** What the message names of {@link namedToken}: the decoration or data run it starts. */
+  private namedRange(j: number): Range {
+    const k = this.c.tokens.kind[j] ?? Kind.EOF;
+    if (k === T.Icon || k === T.Class) return this.decorationRange(j);
+    if (this.isData(k)) return { start: this.range(j).start, end: this.dataEnd(j) };
+    return this.range(j);
+  }
+
+  /** How an error message names token `j` ({@link namedToken}). */
+  private found(j: number): string {
+    const { c } = this;
     const k = c.tokens.kind[j] ?? Kind.EOF;
     if (k === Kind.EOF || k === T.Eof || this.onlySeparatorsFrom(j)) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
@@ -464,7 +489,7 @@ class KanbanParser {
     }
     if (k === T.SpaceLine) return t.includes('%%') ? 'a comment' : 'a blank line';
     if (t === '') return 'blanks';
-    const line = /^[^\n\r\u2028\u2029]*/.exec(t)?.[0] ?? '';
+    const line = FIRST_LINE.exec(t)?.[0] ?? '';
     const cut = line.length > 24 ? line.slice(0, 24) : line;
     return cut.length < t.length ? `\`${cut}…\`` : `\`${t}\``;
   }
@@ -483,14 +508,23 @@ class KanbanParser {
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */
-  private fail(names: string[], hint?: string, at: Range = this.c.range): never {
+  private fail(names: string[], hint?: string, at?: Range): never {
     this.report(names, hint, at);
     throw STOP;
   }
 
-  /** Report what was found where `names` were expected, and go on. */
-  private report(names: string[], hint?: string, at: Range = this.c.range): void {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
+  /**
+   * Report what was found where `names` were expected, and go on. The range is what the message
+   * names, unless `at` is given.
+   */
+  private report(names: string[], hint?: string, at?: Range): void {
+    const j = this.namedToken();
+    const d = this.st.diagnostics.unexpected(
+      'UNEXPECTED',
+      at ?? this.namedRange(j),
+      names,
+      this.found(j)
+    );
     if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
   }
 
@@ -765,7 +799,7 @@ class KanbanParser {
         next === T.NodeDEnd
           ? `the closer on line ${this.lineOf(range.end)}, taking in the items before it`
           : 'the end of the board, taking in every item after it';
-    const head = /^[^\n\r\u2028\u2029]*/.exec(this.src.slice(range.start, range.end))?.[0] ?? '';
+    const head = FIRST_LINE.exec(this.src.slice(range.start, range.end))?.[0] ?? '';
     const shown = head.length > 24 ? `${head.slice(0, 24)}…` : head;
     this.st.diagnostics.error(
       'UNEXPECTED',
@@ -809,7 +843,12 @@ class KanbanParser {
   /** v12 `addNode`'s YAML read of `text`, the data at `range`: the mapping, or undefined. */
   private readData(text: string, range: Range): ItemData | undefined {
     const read = this.yamlInput(text, range);
-    const result = parseYaml(read.text, read.options);
+    // One read in editor mode gives the tree (value ranges) too, and reads valid YAML as the
+    // default mode does; with an error, the default mode's diagnostics are v12's.
+    const tree = parseYaml(read.text, { ...read.options, tree: true });
+    const result = tree.diagnostics.some((d) => d.severity === 'error')
+      ? parseYaml(read.text, read.options)
+      : tree;
     if (this.yamlErrors(result, read, range)) return undefined;
     const value = read.placed ? fromPlaceholders(result.value) : result.value;
     if (value === null) {
@@ -822,7 +861,7 @@ class KanbanParser {
     }
     // v12 ignored a scalar or a list (only `null` made it throw).
     if (!isYamlMap(value) || !this.shapeOk(value.shape, range)) return undefined;
-    return { value, read };
+    return { value, read, root: tree.root };
   }
 
   /**
@@ -833,11 +872,11 @@ class KanbanParser {
   private yamlInput(text: string, range: Range): YamlRead {
     const { src } = this;
     const inner = { start: range.start + 2, end: range.end - 1 };
-    const multiline = text.includes('\n');
+    const multiline = isBlockData(text);
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
     if (src.slice(inner.start, inner.end) === text && !text.includes('#')) {
       const options = multiline ? inner : { start: range.start + 1, end: range.end };
-      return { text: src, options, inPlace: true, placed: false };
+      return { text: src, options, inPlace: true, placed: false, data: text, inner, shift: 0 };
     }
     // `#name;` entities read `&name;` (`cook`); v12 read its placeholders, which YAML takes as
     // plain text (no `#` comment, no `&` anchor).
@@ -848,7 +887,8 @@ class KanbanParser {
         )
       : text;
     const wrapped = multiline ? data + '\n' : `{\n${data}\n}`;
-    return { text: wrapped, options: {}, inPlace: false, placed };
+    const shift = multiline ? 0 : 2;
+    return { text: wrapped, options: {}, inPlace: false, placed, data: text, inner, shift };
   }
 
   /**
@@ -880,10 +920,8 @@ class KanbanParser {
     return false;
   }
 
-  /** The source text of the `priority` value in `read`, as the author wrote it. */
-  private priorityText(read: YamlRead): string {
-    const tree = parseYaml(read.text, { ...read.options, tree: true });
-    const root = tree.root;
+  /** The source text of the `priority` value in `data`, as the author wrote it. */
+  private priorityText({ read, root }: ItemData): string {
     const pair = root?.kind === 'map' ? root.pairs.find((p) => p.key === 'priority') : undefined;
     const r = pair?.value?.range;
     if (!r) return '';
@@ -929,9 +967,9 @@ class KanbanParser {
       classes: [],
     };
     if (value) {
-      applyData(item, value.value, () => this.priorityText(value.read));
+      applyData(item, value.value, () => this.priorityText(value));
       if (item.assigned !== undefined && data)
-        this.assigneeSymbol(item.assigned, value.read, data.range);
+        this.assigneeSymbol(item.assigned, value, data.range);
     }
     if (indent < this.base) this.shallow.push({ label: item.label, range });
     const index = this.items.length;
@@ -981,11 +1019,9 @@ class KanbanParser {
     target.decorations.push(decoration);
     this.st.statement(icon ? 'icon' : 'class', range);
     if (icon) item.icon = text;
-    else item.classes = text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
+    else item.classes = classWords(text).map((w) => w.word);
   }
 }
-
-const isLineBreak = (c: number) => c === 10 || c === 13;
 
 /** JavaScript truthiness of a YAML value, as v12's `if (doc?.x)` tested it. */
 const truthy = (v: YamlValue | undefined): boolean =>

@@ -4,6 +4,7 @@
  * grammar tokens, so their docs are written here.
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
+import { LINE_BREAK } from '../parser/text.ts';
 
 /**
  * The `@{ … }` keys v12's `addNode` reads (spec #424 story 4, D375, D376), in the order
@@ -46,19 +47,17 @@ export function code(text: string): string {
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
-const LINE_END = /[\n\r\u2028\u2029]/;
-
 /** The text of `at`'s line before `at`. */
 export function lineBefore(text: string, at: number): string {
   let start = at;
-  while (start > 0 && !LINE_END.test(text.charAt(start - 1))) start--;
+  while (start > 0 && !LINE_BREAK.test(text.charAt(start - 1))) start--;
   return text.slice(start, at);
 }
 
 /** The text of `at`'s line from `at` on. */
 export function lineAfter(text: string, at: number): string {
   let end = at;
-  while (end < text.length && !LINE_END.test(text.charAt(end))) end++;
+  while (end < text.length && !LINE_BREAK.test(text.charAt(end))) end++;
   return text.slice(at, end);
 }
 
@@ -71,16 +70,15 @@ export interface DataPlace {
 }
 
 /**
- * Where `at` is in the `@{ … }` data whose `@` is at `open`. `multiline`: the block spans lines,
- * so it is read as YAML block pairs, one a line; on one line it is a flow mapping, pairs split
- * at `,`.
+ * Where `at` is in the `@{ … }` data whose `@` is at `open`. `block`: the data is read as YAML
+ * block pairs, one a line (`isBlockData`); else it is a flow mapping, pairs split at `,`.
  */
-export function dataPlace(text: string, open: number, at: number, multiline: boolean): DataPlace {
+export function dataPlace(text: string, open: number, at: number, block: boolean): DataPlace {
   const first = open + 2;
   let from = at;
   while (from > first) {
     const ch = text.charAt(from - 1);
-    if (LINE_END.test(ch) || (!multiline && ch === ',')) break;
+    if (LINE_BREAK.test(ch) || (!block && ch === ',')) break;
     from--;
   }
   const pair = text.slice(from, at);

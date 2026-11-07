@@ -16,8 +16,10 @@ import { kanbanV12Snapshot } from './v12.ts';
  * - classes: every class v12 gives a column has occurrences, those the service keeps (all but a
  *   word a directive cuts) resolving to one definition with the same references from each, and the column's last class line holds them;
  * - assignees: every item v12 gives an `assigned` has one `assignee` occurrence in its data,
- *   named as v12 stored it; the occurrences of a name (those the service can rename) are one
- *   symbol, as many as the items v12 assigns that name to;
+ *   named as v12 stored it; those the service keeps read exactly the name and are one symbol;
+ *   renaming it to a fresh name, v12 reads the new text with each `assigned` of that name
+ *   changed and nothing else; with an occurrence the service could not place, the rename is
+ *   refused (GAPS #463);
  * - folding per column: every v12 column with a card on a later line has a `column` fold
  *   starting at it that holds its cards and no later column.
  *
@@ -35,6 +37,14 @@ const service = createLanguageService({
 
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
 const key = (r: Range) => `${r.start}:${r.end}`;
+const FRESH = 'renamedZq7';
+
+function apply(text: string, edits: readonly { range: Range; newText: string }[]): string {
+  let out = text;
+  for (const e of [...edits].sort((a, b) => b.range.start - a.range.start))
+    out = out.slice(0, e.range.start) + e.newText + out.slice(e.range.end);
+  return out;
+}
 const classWords = (text: string) => text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
 
 describe('kanban symbols and folding through the service match v12', () => {
@@ -46,6 +56,8 @@ describe('kanban symbols and folding through the service match v12', () => {
     let classes = 0;
     let assignees = 0;
     let shared = 0;
+    let renames = 0;
+    let refusals = 0;
     let folds = 0;
     for (const item of await kanbanGateCorpus()) {
       const v12 = await oracle.parse(item.source);
@@ -111,7 +123,8 @@ describe('kanban symbols and folding through the service match v12', () => {
       });
 
       const assigneeSymbols = parsed.symbols.filter((s) => s.kind === 'assignee');
-      const exact = new Map<string, number>();
+      /** Per name: the items v12 assigns it to, and the occurrences the service keeps. */
+      const names = new Map<string, { items: number; kept: Range[] }>();
       model.nodes.forEach((v, k) => {
         const data = asts[k]!.data;
         const mine = data ? assigneeSymbols.filter((s) => inside(s.range, data.range)) : [];
@@ -123,18 +136,44 @@ describe('kanban symbols and folding through the service match v12', () => {
           return fail(`item ${v.id}: ${mine.length} assignee occurrences for ${v.assigned}`);
         }
         assignees++;
+        const entry = names.get(v.assigned) ?? { items: 0, kept: [] };
+        names.set(v.assigned, entry);
+        entry.items++;
         // Past an opening quote; an occurrence the service dropped (a value it cannot place in
         // the source) has no references.
-        if (doc.references(mine[0]!.range.start + 1).length > 0)
-          exact.set(v.assigned, (exact.get(v.assigned) ?? 0) + 1);
+        const refs = doc.references(mine[0]!.range.start + 1);
+        const own = refs.find((r) => inside(r, mine[0]!.range));
+        if (!own) return;
+        if (doc.text.slice(own.start, own.end) !== v.assigned)
+          fail(`item ${v.id}: assignee range reads ${doc.text.slice(own.start, own.end)}`);
+        entry.kept.push(own);
       });
-      for (const [name, count] of exact) {
-        const at = assigneeSymbols.find(
-          (s) => s.name === name && doc.references(s.range.start + 1).length > 0
-        )!;
-        const refs = doc.references(at.range.start + 1);
-        if (refs.length !== count) fail(`assignee ${name}: ${refs.length} of ${count}`);
-        if (count > 1) shared++;
+      for (const [name, { items, kept }] of names) {
+        if (kept.length === 0) continue;
+        const refs = doc.references(kept[0]!.start);
+        if (refs.length !== kept.length) fail(`assignee ${name}: ${refs.length} of ${kept.length}`);
+        if (kept.length > 1) shared++;
+        // A rename edits each `assigned` value and nothing else, as v12 reads the result; with an
+        // occurrence the service cannot place, it is refused.
+        const renamed = doc.rename(kept[0]!.start, FRESH);
+        if ('refused' in renamed) {
+          if (kept.length === items) fail(`assignee ${name}: rename refused: ${renamed.refused}`);
+          else refusals++;
+          continue;
+        }
+        if (kept.length < items) {
+          fail(`assignee ${name}: renamed with ${items - kept.length} occurrences left out`);
+          continue;
+        }
+        const after = await oracle.parse(apply(item.source, renamed.edits));
+        const want = model.nodes.map((v) => ({
+          ...v,
+          assigned: v.assigned === name ? FRESH : v.assigned,
+        }));
+        const got = after.accepted ? kanbanV12Snapshot(after.db).nodes : undefined;
+        if (JSON.stringify(got) !== JSON.stringify(want))
+          fail(`assignee ${name}: rename changes more`);
+        else renames++;
       }
 
       const ranges = doc.foldingRanges().filter((f) => f.kind === 'column');
@@ -162,6 +201,8 @@ describe('kanban symbols and folding through the service match v12', () => {
     expect(classes).toBeGreaterThan(30);
     expect(assignees).toBeGreaterThan(150);
     expect(shared).toBeGreaterThan(10);
+    expect(renames).toBeGreaterThan(100);
+    expect(refusals).toBeLessThan(renames / 4);
     expect(folds).toBeGreaterThan(500);
     expect(problems).toEqual([]);
   }, 300_000);

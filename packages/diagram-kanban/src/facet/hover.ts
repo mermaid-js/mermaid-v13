@@ -8,6 +8,7 @@ import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-k
 import { kanbanDocs } from '../generated/docs.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanDocument, KanbanItemNode } from '../parser/ast.ts';
+import { FIRST_LINE } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, KEY_DOCS, span } from './tables.ts';
 
@@ -42,7 +43,7 @@ function itemAt(doc: DocumentView<KanbanDocument>, at: number): KanbanItemNode |
 
 /** One line: the first, cut at 40 characters. */
 function short(text: string): string {
-  const line = /^[^\n\r\u2028\u2029]*/.exec(text.trim())?.[0] ?? '';
+  const line = FIRST_LINE.exec(text.trim())?.[0] ?? '';
   return line.length > 40 || line.length < text.trim().length ? `${line.slice(0, 40)}…` : line;
 }
 

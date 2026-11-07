@@ -50,12 +50,6 @@ describe('the kanban facet', () => {
     ]);
   });
 
-  it('gives the data block as the range of an assignee it cannot place (the service drops it)', () => {
-    // A `#` in data is read from v12's wrapped text, not in place.
-    const text = 'kanban\n  todo\n    a@{ assigned: knsv, ticket: "#35;1" }';
-    expect(symbols(text).at(-1)).toBe('assignee def knsv = @{ assigned: knsv, ticket: "#35;1" }');
-  });
-
   it('records no assignee v12 does not keep (a falsy value)', () => {
     expect(symbols('kanban\n  todo\n    a@{ assigned: 0 }\n    b@{ assigned: null }')).toEqual([
       'node def todo = todo',
@@ -96,6 +90,65 @@ describe('the kanban facet', () => {
     // A blank line right after `kanban` is an error at the item after it.
     expect(complete('kanban\n\n  ¦todo\n    a')).toEqual([]);
     expect(complete('kanban\n\n  todo\n    ¦')).toEqual(['::icon()', ':::']);
+  });
+});
+
+/** The source range of each assignee occurrence of `text`. */
+function assignees(text: string): [name: string, start: number, end: number][] {
+  const r = kanbanLanguage.parse(text, { keepTokens: true });
+  return r.symbols
+    .filter((s) => s.kind === 'assignee')
+    .map((s) => [s.name, s.range.start, s.range.end]);
+}
+
+/** `[name, start, end]` of the last `written` in `text`, the value the YAML pair holds. */
+function last(text: string, written: string, name = written): [string, number, number] {
+  const at = text.lastIndexOf(written);
+  return [name, at, at + written.length];
+}
+
+describe('kanban assignee ranges are the `assigned` value', () => {
+  it('in a pair whose text an earlier value repeats (one line, a quoted key)', () => {
+    const text = `kanban\n  todo\n    a@{ label: 'x, assigned: bob, y', "assigned": bob }`;
+    expect(assignees(text)).toEqual([last(text, 'bob')]);
+  });
+
+  it('in a pair a multi-line quoted value before it repeats (block data)', () => {
+    const text = `kanban\n  todo\n    a@{\n      label: 'q\n        assigned: bob\n        '\n      "assigned": bob\n    }`;
+    expect(assignees(text)).toEqual([last(text, 'bob')]);
+  });
+
+  it('quoted, with the quotes', () => {
+    const text = `kanban\n  todo\n    a@{ assigned: 'knsv' }\n    b@{\n      assigned: "knsv"\n    }`;
+    const one = text.indexOf("'knsv'");
+    expect(assignees(text)).toEqual([['knsv', one, one + 6], last(text, '"knsv"', 'knsv')]);
+  });
+
+  it('none for a repeated key: the data is bad YAML', () => {
+    expect(assignees('kanban\n  todo\n    a@{ assigned: a, assigned: b }')).toEqual([]);
+  });
+
+  it('read from v12 text: CRLF and CR line breaks, a `#` in a quoted value, a comment', () => {
+    for (const text of [
+      'kanban\r\n  todo\r\n    a@{\r\n      assigned: knsv\r\n    }\r\n',
+      'kanban\r  todo\r    a@{\r      ticket: x\r      assigned: knsv\r    }\r',
+      'kanban\n  todo\n    a@{ ticket: "#1", assigned: knsv }',
+      'kanban\n  todo\n    a@{ assigned: knsv # who }',
+      'kanban\n  todo\n    a@{\n      assigned: knsv # who\n    }',
+      'kanban\n  todo\n    a@{ assigned: knsv, %%{init: {}}%% ticket: x }',
+    ]) {
+      expect(assignees(text), JSON.stringify(text)).toEqual([last(text, 'knsv')]);
+    }
+  });
+
+  it('the data block (dropped by the service) where the value cannot be placed in the source', () => {
+    // An entity anywhere in the data (v12 read placeholders), and a block scalar, whose range
+    // holds its indicator.
+    const entity = 'kanban\n  todo\n    a@{ assigned: knsv, ticket: "#35;1" }';
+    const data = entity.indexOf('@{');
+    expect(assignees(entity)).toEqual([['knsv', data, entity.length]]);
+    const folded = 'kanban\n  todo\n    a@{\n      assigned: >-\n        knsv\n    }';
+    expect(assignees(folded)).toEqual([['knsv', folded.indexOf('>-'), last(folded, 'knsv')[2]]]);
   });
 });
 
