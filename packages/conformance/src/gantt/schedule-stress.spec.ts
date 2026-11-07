@@ -111,10 +111,13 @@ const SHAPES: [string, (n: number) => Chart][] = [
     },
   ],
   [
+    // A fixed set of tasks over a span that grows with n: only the drawn span scales. Growing
+    // the task count and each task's length together makes the work tasks x days, quadratic
+    // in n by construction, and the ratio then depends on the CPU (8x-64x).
     'drawn exclude ranges',
     (n) => {
       const f = fixture().setExcludes('weekends');
-      for (let i = 0; i < n / 50; i++) f.addTask(`t${i}`, `t${i},2020-01-01,${n / 4}d`);
+      for (let i = 0; i < 10; i++) f.addTask(`t${i}`, `t${i},2020-01-01,${n / 4}d`);
       return f;
     },
   ],
