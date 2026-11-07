@@ -41,6 +41,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Base sync (2026-11-06)
 
 - `mermaid-v13` gained gantt #398 and gitGraph #404. Merging it here conflicts in 11 core theme files between T0a and M4 wave 2 (`theme/spec.ts`, `theme.ts`, `vocabulary.ts`, `specs/*`, `generated/variables.ts`): the T0's to resolve. Aborted; coordinator rule (until #472 merges): M5a ports take `mermaid-v13` only through `feature/414_theme-t0`, never directly; the T0 session merges all three wave-2 types (mindmap #406 too) and the coordinator sends the sha. Radar-owned conflicts expected then: `conformance/package.json`, `jison/harvest.ts` (gitGraph's harvest vs #445's `harvest:langium`), `langium-lexer.ts` row order, `theme-used-by.spec.ts`. Hosted CI does not run on #474 until the conflicts are gone.
+- `origin/mermaid-v13` `f9005267c` (packet #475) merged at `c617933e4`: 26 conflicts, both sides' rows kept, packet before radar (v12 detector order); `divergences.json` takes mermaid-v13's rows then radar's. `facets.gen.ts`, `theme-variables.md` regenerated; the twelve `completions/empty` goldens regenerated with `-u`, all identical. `pnpm check` green under the lock (15974 tests); `pnpm e2e --grep "radar|Radar|language|Language|packet|Packet"` in `mcr.microsoft.com/playwright:v1.62.1-noble` (`CI=true`, `RUN_VISUAL_TEST=true`, copy outside the worktree, e2e lock): 104 passed.
 
 ## T2 (#446, merged)
 
