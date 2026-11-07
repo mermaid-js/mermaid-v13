@@ -6,7 +6,7 @@
  * through `createMermaid().render()` on the corpus.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Warning } from '@mermaid-js/core';
+import type { DiagramPlugin, Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import {
   assertInert,
@@ -23,6 +23,10 @@ import { FIXTURES, journey, section, task } from '../layout/fixtures.ts';
 import { layoutJourney, type JourneyLayout } from '../layout/index.ts';
 import type { JourneyModel } from '../model.ts';
 import { renderJourney } from './render.ts';
+import { journey as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 const THEMES = ['default', 'dark', 'neutral', 'redux', 'redux-color', 'redux-dark-color'] as const;
 type ThemeName = (typeof THEMES)[number];
@@ -51,6 +55,7 @@ interface Rendered {
 function render(model: JourneyModel, o: Options = {}): Rendered {
   const warnings: Warning[] = [];
   const theme = createTheme(specs.get(o.theme ?? 'default')!, {
+    diagram: diagramTheme,
     themeVariables: o.themeVariables,
     cssVariables: o.cssVariables,
     dark: o.auto ? specs.get('dark') : undefined,

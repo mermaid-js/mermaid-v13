@@ -63,6 +63,9 @@ function sources(): [id: string, text: string][] {
   return filter ? all.filter(([id]) => id.includes(filter)) : all;
 }
 
+/** A fixed instant, so gantt's `today` line and `today`-relative dates repeat (D270). */
+const NOW = Date.UTC(2026, 0, 15, 12);
+
 const digest = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 24);
 
 async function run(): Promise<Record<string, string>> {
@@ -77,8 +80,8 @@ async function run(): Promise<Record<string, string>> {
       for (const [id, text] of items) {
         const key = `${id} ${theme} ${variant}`;
         try {
-          await m.prepare(text, { id: 'mermaid-0' });
-          const { svg } = m.renderSync(text, { id: 'mermaid-0' });
+          await m.prepare(text, { id: 'mermaid-0', now: NOW });
+          const { svg } = m.renderSync(text, { id: 'mermaid-0', now: NOW });
           out[key] = digest(svg);
           rendered.set(key, svg);
         } catch (e) {

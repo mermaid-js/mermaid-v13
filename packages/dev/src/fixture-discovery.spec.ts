@@ -14,7 +14,8 @@ describe('fixture discovery', () => {
   it('knows which diagram types have a v13 package', () => {
     expect(SUPPORTED_TYPES.has('flowchart-v2')).toBe(true);
     expect(SUPPORTED_TYPES.has('pie')).toBe(true);
-    expect(SUPPORTED_TYPES.has('gantt')).toBe(false);
+    expect(SUPPORTED_TYPES.has('gantt')).toBe(true);
+    expect(SUPPORTED_TYPES.has('requirement')).toBe(false);
   });
 
   it('lists the supported folders of the e2e root', () => {
@@ -24,6 +25,7 @@ describe('fixture discovery', () => {
     });
     expect(folders).toContain('flowchart');
     expect(folders).toContain('pie');
-    expect(folders).not.toContain('gantt');
+    expect(folders).toContain('gantt');
+    expect(folders).not.toContain('requirement');
   });
 });

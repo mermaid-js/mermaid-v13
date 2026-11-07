@@ -1,0 +1,3 @@
+@ 3:11  Design :|a1, 2024-01-01, 3d
+  prepare: 3:11-3:13 "a1"; rename to "b1":
+  refused: 'b1' is already a task id in this diagram.

@@ -2,9 +2,13 @@ import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
+import { ganttAdapter } from './gantt/v13.ts';
+import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
 import { kanbanParityCorpus } from './kanban/corpus.ts';
 import { kanbanAdapter } from './kanban/v13.ts';
+import { mindmapParityCorpus } from './mindmap/corpus.ts';
+import { mindmapAdapter } from './mindmap/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
@@ -59,9 +63,34 @@ export const PARITY_SUITES: ParitySuite[] = [
     ],
   },
   {
+    adapter: mindmapAdapter,
+    corpusDirs: ['e2e/diagrams/mindmap'],
+    corpusFiles: [
+      'packages/conformance/corpus/mindmap-v12-specs.json',
+      'packages/conformance/corpus/mindmap-cases.json',
+    ],
+    corpus: mindmapParityCorpus,
+  },
+  {
+    adapter: ganttAdapter,
+    corpusDirs: ['e2e/diagrams/gantt'],
+    corpusFiles: [
+      'packages/conformance/corpus/gantt-v12-specs.json',
+      'packages/conformance/corpus/gantt-cases.json',
+    ],
+  },
+  {
     adapter: pieAdapter,
     corpusDirs: ['e2e/diagrams/pie'],
     corpusFiles: ['packages/conformance/corpus/pie-v12-specs.json'],
+  },
+  {
+    adapter: gitGraphAdapter,
+    corpusDirs: ['e2e/diagrams/git'],
+    corpusFiles: [
+      'packages/conformance/corpus/gitGraph-v12-specs.json',
+      'packages/conformance/corpus/gitGraph-cases.json',
+    ],
   },
   {
     adapter: quadrantAdapter,

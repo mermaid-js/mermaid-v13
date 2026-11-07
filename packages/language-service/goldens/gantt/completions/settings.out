@@ -1,0 +1,21 @@
+@ 2:11  weekday |
+  monday constant 2:11-2:11 "" -> "monday"
+  tuesday constant 2:11-2:11 "" -> "tuesday"
+  wednesday constant 2:11-2:11 "" -> "wednesday"
+  thursday constant 2:11-2:11 "" -> "thursday"
+  friday constant 2:11-2:11 "" -> "friday"
+  saturday constant 2:11-2:11 "" -> "saturday"
+  sunday constant 2:11-2:11 "" -> "sunday"
+@ 3:12  weekend s|
+  saturday constant 3:11-3:12 "s" -> "saturday"
+@ 4:22  excludes weekends, |
+  weekends constant 4:22-4:22 "" -> "weekends"
+  monday constant 4:22-4:22 "" -> "monday"
+  tuesday constant 4:22-4:22 "" -> "tuesday"
+  wednesday constant 4:22-4:22 "" -> "wednesday"
+  thursday constant 4:22-4:22 "" -> "thursday"
+  friday constant 4:22-4:22 "" -> "friday"
+  saturday constant 4:22-4:22 "" -> "saturday"
+  sunday constant 4:22-4:22 "" -> "sunday"
+@ 6:15  includes fri|
+  none

@@ -6,6 +6,7 @@ import { layoutJourney, type JourneyLayout } from './layout/index.ts';
 import type { JourneyModel } from './model.ts';
 import { parseJourney, type JourneyParseResult } from './parser/index.ts';
 import { renderJourney } from './render/index.ts';
+import { theme } from './theme/table.ts';
 
 /** v12's detector (`journeyDetector`): case-sensitive, no word boundary. */
 const DETECT = /^\s*journey/;
@@ -25,6 +26,7 @@ export const journey = {
   parse: (text: string, ctx: DiagramParseContext): JourneyParseResult =>
     parseJourney(text, { preprocessed: ctx.preprocessed }),
   labels: journeyLabels,
+  theme,
   layout: (model: JourneyModel, ctx: RenderContext): JourneyLayout => layoutJourney(model, ctx),
   render: (model: JourneyModel, layout: JourneyLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderJourney(model, layout, ctx, w),

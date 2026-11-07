@@ -36,6 +36,11 @@
       "types": "./dist/layout/index.d.ts",
       "default": "./dist/layout/index.js"
     },
+    "./layout/tree": {
+      "mermaid-source": "./src/layout/tree/index.ts",
+      "types": "./dist/layout/tree/index.d.ts",
+      "default": "./dist/layout/tree/index.js"
+    },
     "./svg": {
       "mermaid-source": "./src/svg/index.ts",
       "types": "./dist/svg/index.d.ts",

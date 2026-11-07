@@ -50,9 +50,12 @@ import {
 import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
+import { BASE_SERIES } from './specs/palettes.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
+  GIT_PALETTE_LIMIT,
   PALETTE_LIMIT,
+  PALETTE_SLOT,
   PALETTE_VARIABLES,
   type PaletteVariable,
   type ThemeVarEntry,
@@ -235,8 +238,8 @@ function rule(source: string): Expr {
   return e;
 }
 
-/** A call of a colour function; `literal()` is handled by `evaluate`. */
-type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal'> };
+/** A call of a colour function; `literal()` and `inline()` are handled by `evaluate`. */
+type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal' | 'inline'> };
 
 /** Resolves every variable of one spec under one set of overrides. */
 class Resolver {
@@ -246,8 +249,12 @@ class Resolver {
   constructor(
     private readonly spec: ThemeSpec,
     private readonly rules: ThemeRuleTable,
-    /** The diagram's family values and tokens (D331), which beat every rule as spec values do. */
-    private readonly lits: Literals,
+    /**
+     * What the theme writes beyond its base, tokens and values: the diagram's family values and
+     * tokens (D331), which beat every rule as spec values do, and the names the spec's rules and
+     * the family's rules write, for `inline(v, b)`.
+     */
+    private readonly writes: { readonly lits: Literals; readonly rules: ReadonlySet<string> },
     private readonly overrides: ReadonlyMap<string, string>,
     private readonly defs: Readonly<Record<string, ThemeVarEntry>>,
     private readonly palettes: PaletteSource = NO_PALETTES
@@ -257,14 +264,18 @@ class Resolver {
 
   /**
    * Entry `i` of a palette: the author's numbered override, else the author's list, else the
-   * theme's colour or rule. Undefined past the end of every list.
+   * theme's colour or rule, else for the series v12 theme-base's derivation (`BASE_SERIES`).
+   * Undefined past the end of every list.
    */
   slot(p: PaletteVariable, i: number): Resolved | undefined {
     const key = `${p}${i}`;
     // Only theme specs write palette rules, so no author input can make a cycle here.
     if (this.slots.has(key)) return this.slots.get(key);
     const user = this.palettes.slots.get(key) ?? this.palettes.user[p]?.[i];
-    const entry = user === undefined ? this.palettes.spec[p]?.[i] : undefined;
+    const entry =
+      user === undefined
+        ? (this.palettes.spec[p]?.[i] ?? (p === 'seriesColorArray' ? BASE_SERIES[i] : undefined))
+        : undefined;
     let r: Resolved | undefined;
     if (user !== undefined) r = this.literal('', user);
     else if (entry !== undefined) r = this.evaluate(rule(entry));
@@ -283,6 +294,14 @@ class Resolver {
     });
   }
 
+  /**
+   * Whether the theme wrote `name`: the spec's base, tokens, values or rules, or a family entry.
+   * A shared or diagram light/dark rule does not count, nor does the author's override.
+   */
+  private isSet(name: string): boolean {
+    return this.source(name) !== undefined || this.writes.rules.has(name);
+  }
+
   /** The spec's own value or rule, ignoring overrides. */
   private source(name: string): string | undefined {
     const s = this.spec;
@@ -290,18 +309,36 @@ class Resolver {
     if (own(s.tokens, name))
       return String((s.tokens as Record<string, number | string | boolean>)[name]);
     if (s.values && own(s.values, name)) return s.values[name];
-    return own(this.lits, name) ? String(this.lits[name]) : undefined;
+    const { lits } = this.writes;
+    return own(lits, name) ? String(lits[name]) : undefined;
   }
 
   get(name: string): Resolved {
-    const hit = this.memo.get(name);
+    return this.once(name, name, () => this.compute(name));
+  }
+
+  /**
+   * `name` as the theme wrote it, for `inline()`: its value or rule, never the author's override
+   * of it. The rule's own references still follow their overrides.
+   */
+  private written(name: string): Resolved {
+    return this.once(' ' + name, name, () => this.fromSpec(name) ?? this.unset(name));
+  }
+
+  private once(key: string, name: string, f: () => Resolved): Resolved {
+    const hit = this.memo.get(key);
     if (hit) return hit;
-    if (this.active.has(name)) throw new Error(`Theme rule cycle through ${name}`);
-    this.active.add(name);
-    const r = this.compute(name);
-    this.active.delete(name);
-    this.memo.set(name, r);
+    if (this.active.has(key)) throw new Error(`Theme rule cycle through ${name}`);
+    this.active.add(key);
+    const r = f();
+    this.active.delete(key);
+    this.memo.set(key, r);
     return r;
+  }
+
+  private unset(name: string): Resolved {
+    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
+    return { css: fallback, lit: fallback, rgba: undefined, deps: [] };
   }
 
   private literal(name: string, text: string): Resolved {
@@ -329,8 +366,7 @@ class Resolver {
       if (r.rgba !== undefined || this.defs[name]?.kind !== 'color') return r;
       return { ...r, rgba: this.fromSpec(name)?.rgba };
     }
-    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
-    return this.fromSpec(name) ?? { css: fallback, lit: fallback, rgba: undefined, deps: [] };
+    return this.fromSpec(name) ?? this.unset(name);
   }
 
   private fromSpec(name: string): Resolved | undefined {
@@ -351,7 +387,7 @@ class Resolver {
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
-        const slot = own(this.defs, e.name) ? undefined : RE_READ.exec(e.name);
+        const slot = own(this.defs, e.name) ? undefined : PALETTE_SLOT.exec(e.name);
         if (slot) {
           const r = this.slot(slot[1] as PaletteVariable, Number(slot[2]));
           // A series entry reads as the theme wrote it, so its CSS follows the base colours as
@@ -375,10 +411,23 @@ class Resolver {
         };
       }
       case 'call': {
+        const [x] = e.args as [Expr];
+        if (e.fn === 'inline') {
+          // A shared input as the theme wrote it (D332): its value or rule, CSS included, with
+          // no alias of its own, so a diagram reads each theme's own shape byte-identically. The
+          // author's override of the input is not read: it reaches only what reads the input
+          // itself, as in v12 (an author's scaleLabelColor recolours cScaleLabel, not sequence).
+          if (x.k !== 'ref' || !own(this.defs, x.name))
+            throw new SyntaxError('inline needs a variable');
+          // `inline(v, b)`: b where the theme did not write v.
+          const b = e.args[1];
+          if (b !== undefined && !this.isSet(x.name)) return this.evaluate(b);
+          return this.written(x.name);
+        }
         if (e.fn !== 'literal') return this.call(e as Call);
         // The computed colour, written as a literal (D332): a hue turn stays byte-identical
         // to the value a theme pinned.
-        const a = this.evaluate(e.args[0] as Expr);
+        const a = this.evaluate(x);
         return { css: a.lit, lit: a.lit, rgba: a.rgba, hsl: a.hsl, deps: [] };
       }
     }
@@ -479,7 +528,7 @@ class Resolver {
 
   /** v12's `this.v || derived`: the author's value, else the theme's derivation (D258). */
   private ifSet(v: Expr, fallback: Expr): Resolved {
-    const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_READ.exec(v.name) : null;
+    const slot = v.k === 'ref' && !own(this.defs, v.name) ? PALETTE_SLOT.exec(v.name) : null;
     if (v.k !== 'ref' || (!slot && !own(this.defs, v.name)))
       throw new SyntaxError('ifSet needs a variable');
     const set = slot
@@ -595,12 +644,11 @@ function checkOverrides(
 
 const MAX_PALETTE = 64;
 /**
- * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`.
- * v12 reads no leading zero, so `cScale05` is an unknown name, ignored (R-CONF-5).
+ * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`,
+ * `git3`, `gitInv3`, `gitBranchLabel3`. v12 reads no leading zero, so `cScale05` is an unknown
+ * name, ignored (R-CONF-5).
  */
-const RE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
-/** A rule's read of one palette entry: any palette's slot (`bkgColorArray2`, D332). */
-const RE_READ = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
+const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
 
 type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 
@@ -630,7 +678,14 @@ function numberedOverrides(
   for (const key of Object.keys(vars)) {
     const m = RE_SLOT.exec(key);
     const raw = vars[key];
-    if (!m || Number(m[2]) >= PALETTE_LIMIT || raw === undefined || raw === null || raw === '')
+    if (
+      !m ||
+      // The git palettes have eight slots, the others twelve (D267, D258).
+      Number(m[2]) >= (m[1]!.startsWith('g') ? GIT_PALETTE_LIMIT : PALETTE_LIMIT) ||
+      raw === undefined ||
+      raw === null ||
+      raw === ''
+    )
       continue;
     const c = typeof raw === 'string' ? checkColor(raw) : undefined;
     if (c === undefined) drop(key, raw);
@@ -641,9 +696,10 @@ function numberedOverrides(
 
 /**
  * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
- * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>` and
- * `cScaleLabel<n>` replace one entry. Any unsafe colour drops that override with a warning.
- * The theme's own entries are evaluated when a renderer reads the palette.
+ * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
+ * `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>` and `gitBranchLabel<n>` replace one entry. Any
+ * unsafe colour drops that override with a warning. The theme's own entries are evaluated when a
+ * renderer reads the palette.
  */
 function paletteSource(
   spec: ThemeSpec,
@@ -771,10 +827,11 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     if (hit) return hit;
   }
   const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
-  // A fragment's rule for a name the diagram's own table defines loses to the table (D337).
+  // A fragment's rule for a name the diagram's own table defines loses to the table (D337). A
+  // table var that shadows a core name is ignored, so it takes no fragment rule away either.
   const fragment: Record<string, string> = {};
   for (const [name, r] of Object.entries(options.rules ?? {})) {
-    if (table && own(table.vars, name)) continue;
+    if (table && own(table.vars, name) && !own(THEME_VARIABLE_TABLE, name)) continue;
     fragment[name] = r;
     if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
   }
@@ -795,12 +852,16 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
       ...fam.rules,
       ...fragment,
     };
-    return new Resolver(s, rules, fam.lits, overrides, defs, palettes);
+    const written = new Set([...Object.keys(s.rules ?? {}), ...Object.keys(fam.rules)]);
+    return new Resolver(s, rules, { lits: fam.lits, rules: written }, overrides, defs, palettes);
   };
   const parts: ThemeParts = {
     darkMode,
     main: resolver(spec, darkMode, paletteSource(spec, tv, options.warn, authorDark)),
-    night: options.dark ? resolver(options.dark, true) : undefined,
+    // The dark spec's own palettes, so a series slot read follows it there (D332).
+    night: options.dark
+      ? resolver(options.dark, true, paletteSource(options.dark, tv, undefined, authorDark))
+      : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),
     rootTexts: new Map(),

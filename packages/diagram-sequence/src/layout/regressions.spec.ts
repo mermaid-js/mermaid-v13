@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Warning } from '@mermaid-js/core';
+import type { DiagramPlugin, Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
@@ -8,6 +8,10 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
 import { FIXTURES, act, frag, model, msg, note, p } from './fixtures.ts';
 import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
+import { sequence as diagramPlugin } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
 
 // Inputs from the #141 review and its config fuzz, each of which broke an invariant.
 
@@ -30,7 +34,10 @@ function lay(
     config: { sequence } as ResolvedConfig,
     measurer: cell ? cellMeasurer : tableMeasurer,
     units: cell ? cellProfile() : pxProfile,
-    theme: createTheme(theme.classic ? classicSpec : spec, { themeVariables: theme.vars ?? {} }),
+    theme: createTheme(theme.classic ? classicSpec : spec, {
+      diagram: diagramTheme,
+      themeVariables: theme.vars ?? {},
+    }),
     warn: (w) => warnings.push(w),
   });
 }

@@ -187,6 +187,7 @@ is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects 
 | `maxNodes` | 10,000 | none |
 | `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
 | `maxOutputLength` | 4,000,000 characters of SVG | none |
+| `maxLayoutWork` | 1,500,000 steps of a layout loop the text can make long (`MAX_STEPS`, D542); gantt counts each day its schedule walks for excluded days, on every pass | none |
 
 ### Errors and the error image
 
@@ -258,7 +259,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
-| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered palettes always have twelve slots, and a diagram cycles through them (D258). |  |
+| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). |  |
 | `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
@@ -350,10 +351,18 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `gitGraph.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did. |  |
 | `gitGraph.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `gitGraph.nodeLabel` | ignored | v12's gitGraph never read it. |  |
+| `gitGraph.nodeLabel.width` | ignored | v12's gitGraph never read `nodeLabel`. |  |
+| `gitGraph.nodeLabel.height` | ignored | v12's gitGraph never read `nodeLabel`. |  |
+| `gitGraph.nodeLabel.x` | ignored | v12's gitGraph never read `nodeLabel`. |  |
+| `gitGraph.nodeLabel.y` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -374,7 +383,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | v13 default | Reason |
 | --- | --- | --- |
 | `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12 `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. |
-| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
+| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
@@ -469,7 +478,8 @@ Sequence diagrams (`sequence` section, #145):
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. `neo` keeps v12's blurred shadow, `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`, and `neo-dark` its own, `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. Under `neo` and `neo-dark`, sequence participants take the theme's drop shadow, as notes and fragment labels do; v12 drew them with a separate 6% white offset filter that did not show on `neo` (D184). The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152, D181, D184 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
 | Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
-| Numbered palettes (`pie*`, `git*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)); `git*` come with gitGraph. | R-CONF-5 |
+| Numbered palettes (`pie*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)). | R-CONF-5 |
+| `git0`–`git7`, `gitInv0`–`gitInv7`, `gitBranchLabel0`–`gitBranchLabel7`, `commitLabelColor`, `commitLabelBackground`, `commitLabelFontSize`, `tagLabelColor`, `tagLabelBackground`, `tagLabelBorder`, `tagBorder`, `tagLabelFontSize` | The same names with v12's values in every theme. `git`, `gitInv` and `gitBranchLabel` are palettes of eight slots: a numbered name replaces one slot and `git: [...]` (or a comma-separated string) the whole list. They follow `primaryColor`, `secondaryColor` and `tertiaryColor` where v12's theme does (`base`, `forest`, `redux-dark`, `redux-dark-color`; `cScale2`–`cScale8` in `dark` and `neutral`, which v12 read as `pie2`–`pie8`, so an author's `cScale<n>` moves them and `pie<n>` does not, D334), the lighter step under `darkMode`, and a `gitInv` slot follows an author's `git<n>` where v12's does. `tagLabelBorder` wins over `tagBorder`, as in v12. v12's `branchLabelColor` is not read: set `gitBranchLabel`. Where v12's branch labels read `labelTextColor` they read the shared label ink `scaleLabelColor` (D334), so an author's `labelTextColor` no longer reaches them. In `base`, `tagLabelBorder` takes v13's `primaryBorderColor` (v12's border step changes saturation, which the derivation DSL has none of), and under `darkMode` `base`, `neo`, `redux` and `redux-color` keep their tag text colour where v12 turned it to `#eee`. A gitGraph with nine or more branches reuses the slots from the ninth on: every part of a branch (bullets, line, arrows, label) takes the same slot, where v12's redux themes cycled the labels over twelve | D267 |
 | `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11`, `cScaleLabel0`–`cScaleLabel11` | Three palettes, `cScale`, `cScaleInv` and `cScaleLabel`, with v12's values in every theme, derived as v12 derives them: they follow `primaryColor` (and the secondary and tertiary colours) where v12's theme does (`base`, `forest`, `dark` slot 0, `neo-dark`, `redux-dark`; `mainBkg` in `redux`), the darker steps under `darkMode`, and an override of one slot or of the whole list (`cScale: [...]`). A `cScaleInv` or `cScaleLabel` slot that v12 derived from the `cScale` slot follows its override as in v12. `THEME_COLOR_LIMIT` is ignored: twelve slots, cycling. The labels read v12's `scaleLabelColor`, a shared label ink, so setting it recolours them as in v12; `labelTextColor` and `actorTextColor` are sequence's own and no longer reach `cScaleLabel` (D334), so set `scaleLabelColor` or `cScaleLabel` instead. Under `darkMode`, v12 also turned the unset text colour of `base`, `neo`, `redux` and `redux-color` to `#eee`, which their labels followed; v13 keeps the theme's `scaleLabelColor`. The timeline paints with them only in the classic themes, and with `cScaleLabel` in the neo themes ([Timeline config](#timeline-config)) | D258, D334 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
@@ -511,6 +521,19 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
 | `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
 | `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
+| `mindmapRoundedNodes` (mindmap: a node written without a shape is drawn rounded, D288; with `mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text, and without a `borderColorArray` every node takes `mainBkg` with a `nodeBorder` outline and text) | `true` (`neo`, `neo-dark`: `false`) | `false` |
+| `mindmapOutlinedNodes` (mindmap: an outline at `strokeWidth` and `dropShadow`, flat-bottomed plain nodes, `cScaleLabel0` root text, edges `max(10 − 2d, 2)` px at depth class `d`) | `true` | `false`: no outline or shadow, four rounded corners, `gitBranchLabel0` root text, edges `14 − 3d` px (3 px from depth class 5) |
+| `mindmapBorderEdges` (mindmap edges in `nodeBorder` rather than their section's `cScale<n>`; read with `mindmapOutlinedNodes`) | `true` (`neo`: `false`) | `false` |
+| `gitCommitRadius` (gitGraph bullet radius; half a highlight square's side) | 7 (`neo`, `neo-dark`: 10, D266) | 10 |
+| `gitLaneShift` (gitGraph LR: how far a branch's line and commits sit below 2 px above its lane, v12 classic's spot) | 9, so 7 below the lane (`neo`, `neo-dark`: 0) | 0 |
+| `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` (gitGraph: room the branch label box adds) | 16 / 12 (`neo`, `neo-dark`: 0 / 0) | 0 / 0 |
+| `gitBranchLabelRadius` (gitGraph branch label box corner) | 0 (`neo`, `neo-dark`: 4) | 4 |
+| `gitBranchLabelShiftX` / `gitBranchLabelOffsetY` (gitGraph TB/BT: the branch label box moved left and away from the commits) | 11 / 22 (`neo`, `neo-dark`: 0 / 0) | 0 / 0 |
+| `gitArrowWidth` (gitGraph arrows) | 2, v12's `strokeWidth`, which an author's `strokeWidth` no longer moves (`neo`, `neo-dark`: 8) | 8 |
+| `gitHighlightInnerSize` / `gitMergeRadius` / `gitReverseCrossSize` / `gitCherryPickDotRadius` (gitGraph bullet insides: highlight square side, merge circle radius, half the reverse cross, cherry-pick dot radius) | 8 / 5 / 4 / 2.5 (`neo`, `neo-dark`: classic) | 12 / 6 / 5 / 2.75 |
+| `gitNodeColors` (gitGraph: the first branch, the commit and tag labels and the bullet insides take `nodeBorder` / `mainBkg`, label boxes `mainBkg` with an outline, tags the shadow, branch lines a `4 2` dash and reverse crosses `strokeWidth`) | `true` (`neo`, `neo-dark` too) | `false`: the git label variables and `primaryColor`, a `2` dash and 3 px crosses |
+| `gitPaletteColors` (gitGraph: the `git`, `gitInv` and `gitBranchLabel` palettes colour the branches; a non-empty `borderColorArray` colours them in every theme) | `false`: every branch in `nodeBorder` (`neo`, `neo-dark`: `true`) | `true` |
+| `commitLineColor` (colour: gitGraph branch lines, v12's name) | `#BDBCCC` (`neo`, `neo-dark`: not set) | not set: the lines take `lineColor`, as v12's `commitLineColor ?? lineColor` (an author's value wins in every theme) |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -537,6 +560,12 @@ so it counts twice towards the diameter compared with the per-side node padding.
   the same as in v12. Sizes are what v12 draws, not its marker boxes: a v12 cross does not fill
   its box, so `crossArrowheadSize` is the arm span (10.4 neo, 9 classic) and the neo stroke is
   v12's 2.5 scaled by the marker's 0.8.
+- **Mindmap shapes take the same padding variables** as the flowchart's (spec #294 T4): a rectangle
+  `nodePaddingX` / `nodePaddingY` of 10 (v12's renderer fixed it; 16 / 12 in the redux family), a
+  circle `circlePadding` of `mindmap.padding` (16, with no minimum diameter), a hexagon
+  `hexagonPaddingX` / `hexagonPaddingY` of `2 × mindmap.padding` and `hexagonSlant`. The rounded
+  shape keeps 15 on each side with the theme's `radius` corner; the plain, cloud and bang shapes
+  have no family difference.
 - **Hexagon padding axes are corrected.** v12 adds the X padding to the height and the Y padding
   to the width; v13 applies X to the width and Y to the height, so a hexagon in a redux theme is
   wider and less tall than in v12 (D151).
@@ -575,6 +604,7 @@ Every other colour is v12 12.2.0's. To get a v12 value back, set it in `themeVar
 | `strokeWidth` | 1 | 2, as in `neo` | D183 |
 | `secondaryTextColor` | `#b8b6b6` (4.49:1 on `secondaryColor`) | `#b9b7b7` (AA) | D183, R-THEME-9 |
 | `altBackground` (state: a nested composite's body) | `#f0f0f0`, on which the `#cccccc` transitions and arrowheads all but vanish | `#404040` | D189, D183 |
+| `pie5` | `#2e3030`, a rounding artefact | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a); [Pie chart](#pie-chart) |
 
 The shadow is v12's, written `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. The ER row,
 ER marker and palette differences are those of `neo` (D152, D181).
@@ -657,16 +687,16 @@ npm install @mermaid-js/plugin-hand-drawn
 - **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
-  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines) and kanban
-  (columns and cards; the priority bar is kept, D379).
-  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
-  sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
-  State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
-  fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
-  plain element.
-- **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
-  (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
-  ported. Types v12 sketched that v13 has not ported yet (requirement, block, swimlanes,
+  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
+  mindmap (every node shape, the rule under a plain node, edges) and kanban (columns and cards;
+  the priority bar is kept, D379). v12 did not sketch mindmap's plain node in the classic themes;
+  v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
+  Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
+  at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
+  (flowchart's `text` and brace hit boxes, state's region frame) stays the plain element.
+- **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
+  and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
+  later. Types v12 sketched that v13 has not ported yet (requirement, block, swimlanes,
   venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -675,8 +705,9 @@ npm install @mermaid-js/plugin-hand-drawn
   8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
 - **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
   `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
-  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
-  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  for a 40-node flowchart; 5–14×, about 10× typically, for mindmaps), most for large filled
+  shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000 characters) and fail
+  with a `LIMIT` error. The integrator can raise it with
   `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
   ([Limits](#limits)); diagram text cannot.
 
@@ -701,6 +732,7 @@ classes works the same with the look on.
 | Default layout `elk` (12.2.0), formerly `dagre` | Default `layered`, the engine built into core | DESIGN §6.1 |
 | `layout: dagre`, `layout: elk`, `elk.<algorithm>`, `flowchart-elk` header | `dagre` is drawn with `layered`, silently. The ELK names and the `flowchart-elk` header are drawn with `layered` and one `ELK_NOT_INSTALLED` warning until `@mermaid-js/layout-elk` is registered | R-PLUG-8, D173 |
 | An unknown layout name falls back to `dagre` with a console warning | Falls back to `layered` with a `LAYOUT_UNKNOWN` warning | R-ERR-4 |
+| Mindmap lays out with `cose-bilkent` (not deterministic), or `tidy-tree` with its plugin; `mindmap.layoutAlgorithm` is never read | Mindmap lays out with `tree`, core's two-sided tidy tree (loaded lazily), when no config sets `layout`. `cose-bilkent` and `tidy-tree` map to `tree` silently; `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns. The mindmap key `layoutAlgorithm` is ignored | D280–D285 |
 | `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
 | `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves | |
 | dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
@@ -865,10 +897,14 @@ mermaid.registerIconPacks([
   changed; about one `logos` icon in five uses a gradient and is drawn flatter than in v12.
 - **Icon shapes** (`@{ icon: … }`) draw their glyph with the plugin, as in v12; an icon not drawn
   keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
-- **Mindmap** is not ported yet (`UNSUPPORTED_DIAGRAM`). When it is, `::icon(fa fa-book)` and
-  `::icon(mdi:fire)` draw from the registered packs, placed as v12's older mindmap renderer
-  placed them (D297). 12.2.0 parsed `::icon()` but drew nothing, so any mindmap icon is new; one
-  that does not resolve is shown as written in the icon's place, with `ICON_NOT_RENDERED` (D286).
+- **Mindmap** `::icon(fa fa-book)` and `::icon(mdi:fire)` get the slot v12's older mindmap
+  renderer reserved (D297): beside the label, or above it in a circle. 12.2.0 parsed `::icon()`
+  but drew nothing, so any mindmap icon is new. With the plugin the glyph is drawn there, 40 px,
+  in the colour of the node's label: `fa fa-book` is `fa:book`, `mdi mdi-fire` is `mdi:fire`,
+  looked up in the registered packs. Only those two forms are icon names: `fa-book` or `bomb`
+  is shown as written. An icon that does not resolve, any other form, or any icon without the
+  plugin is shown as written in the slot, sized to fit it, with one `ICON_NOT_RENDERED` per
+  render (D286, D291); while its pack loads, the slot is empty.
 - **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
   (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
 - **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
@@ -1326,6 +1362,81 @@ Legend entries carry `data-id="a:<name>"` only.
   D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
   needs `theme: 'default'` to keep its colours.
 
+## Mindmap
+
+- **SVG only:** `mindmap` is detected by v12's case-sensitive `mindmap` detector, second after
+  `flowchart-elk` as in v12, where it shipped only in the large-feature build. `format: 'ascii'`
+  throws `UnsupportedFormatError` (D216). The language service, CodeMirror and Monaco know it.
+  For `renderSync`, `preload({ types: ['mindmap'] })` (or `prepare()`) also loads the `tree`
+  engine; `layouts` is needed only for another engine, such as an `elk.*` one.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
+  spec and docs examples, and the grammar is in [syntax/mindmap.md](./syntax/mindmap.md). Every
+  error is reported, not only the first, with messages in words (R-PARSE-4). A second root
+  (`There can be only one root …`) and an `::icon()` or `:::` line before any node are errors,
+  as in v12 (the second was a `TypeError` there). v12 also rejects a node right after a blank
+  line under the `mindmap` line (`mindmap`, a blank line, then `root`), and after some runs
+  where a comment line sits between blank lines (a blank line, `%%`, a blank line, then the
+  node); v13 rejects exactly the same texts, and the message says to remove a blank line. Other
+  blank and comment lines, two or more in a row included, are accepted as in v12.
+- **Layout.** v12 laid mindmaps out with `cose-bilkent`, force-directed and different on every
+  render, or with `tidy-tree` when that plugin was registered. v13 uses `tree`, core's two-sided
+  tidy tree, so positions differ from both and are the same on every render ([Layout](#layout)):
+  the root sits in the middle, the first branches go right and the rest left, split where the
+  two sides' heights are closest (D283), and each side keeps source order. Siblings are 20 px
+  apart and each level 40 px further out, tidy-tree's gaps; the root's own extra clearance in
+  tidy-tree is not reproduced. Cloud and bang nodes are laid out at the box their outline covers.
+  With `layout: layered` (or `dagre`) or an installed `elk.*` the same tree is drawn top-down.
+- **Config.** Honoured in the `mindmap` section, with v12's defaults: `colorBy` (`branch`; eleven
+  sections, as v12), `padding` (10), `maxNodeWidth` (200) and `useMaxWidth` (true). `padding`
+  reaches what v12's renderer let it reach (D287): the margin round the drawing and default,
+  cloud and bang nodes in every theme, and in the classic themes circles too, and hexagons twice
+  over. In the redux family, `neo` and `neo-dark` circles and hexagons take the theme's
+  `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` instead
+  ([Theme geometry](#theme-geometry)). Square and rounded nodes keep their own paddings (v12's
+  fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check
+  never matched, so `padding` sized classic circles there too and does here. `maxNodeWidth` wraps every shape: v12 wrapped square, rounded
+  and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default, so nothing changes
+  unless one of them is set). A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
+  is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
+  (`"20"`, not `"20px"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
+  read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
+  the mindmap when `@mermaid-js/plugin-hand-drawn` is installed
+  ([Hand-drawn look](#hand-drawn-look)). `mindmap.layout` picks the engine for mindmaps and wins
+  over the top-level `layout`, with the same names and fallbacks.
+- **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
+  (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
+  ([Mindmap SVG structure](#mindmap-svg-structure)).
+- **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
+  nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
+  at the bottom in `neo` and `neo-dark` ([Theme geometry](#theme-geometry)).
+- **Edge widths** follow v12's `edge-depth-<d>` CSS, from the raw indent rather than the tree
+  depth, so with two-space indents classic edges are 11, 5 and 3 px wide
+  ([Mindmap SVG structure](#mindmap-svg-structure)).
+- **Limits** (R-SEC-5): a mindmap may have up to `limits.maxNodes` nodes (10,000) and nest up to
+  `limits.maxDepth` levels below the root (100); over either, render rejects with a `LIMIT`
+  `MermaidError`. v12 had no such limit. Only the integrator can raise them
+  ([Limits](#limits)).
+
+## Mindmap SVG structure
+
+What changed in the mindmap's SVG compared with v12 12.2.0 (`mindmapRenderer.ts` through the
+shared `rendering-util` shapes and edges, `styles.ts`), and why (DESIGN §7.2, spec #294). v12's
+class names are kept where the element still exists: `mindmap-node`, `section-<n>`,
+`section-root`, `node-bkg`, `edge`, `section-edge-<n>`, `edge-depth-<d>`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="mindmapDiagram"`, a `<style>` scoped by the id; colours from CSS rules per section | No root `id`; `class="mermaid mermaid-mindmap"`, `role="img"`, `aria-roledescription="mindmap"`, `data-mermaid-version`; colours are presentation attributes, theme variables as `var(--_x)` aliases and palette slots as literal colours | Inert output (R-SEC-2), D152 |
+| Node `<g id="node_<n>" class="mindmap-node section-<n>" data-look>` placed by `transform`, the shape inside with `id`; edges in `g.edgePaths`, nodes in `g.nodes` | `<g class="mindmap-node section-<n> <author classes>" data-id="n:<id>" data-ast="n:<id>">` (the root `section-root section--1`), coordinates absolute, no `transform`, no ids, no `data-look`; edges in `g.mindmap-edges` under nodes in `g.mindmap-nodes`. An edge is `<path class="edge section-edge-<n> edge-depth-<d>" data-id="edge:n:<child>">` | One element per node maps it to its source (R-PARSE-8, D289); D308 |
+| Labels in `<foreignObject>` HTML (`htmlLabels`), every label markdown | `<text class="mindmap-node-label">` with a `<tspan>` per line from core's label layout; markdown kept (bold, italic, line breaks, D225) | No `foreignObject` (R-SEC-2) |
+| `edge-depth-<d>` from the parent's raw indent plus 1 (two-space indents give 1, 3, 5 …); widths from CSS: classic `17 − 3i`, so 11, 8, 5, 2 and 3 px from class 5 on (the browser drops the negative ones), neo `max(10 − 2d, 2)` | The same class numbering and widths, written as `stroke-width` on each edge; with two-space indents classic edges are 11, 5 and 3 px wide, not 11, 8, 5 | P2: author CSS for `edge-depth-<d>` keeps matching (GAPS #388) |
+| Edges `curve: 'basis'` through cose-bilkent's three points, or tidy-tree's elbows | `tree`'s port-to-port routes as one cubic leaving and entering along the ports; `layered` and ELK routes as the basis spline through their points | D280–D282 |
+| A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |
+| Neo nodes in `[data-look="neo"]` rules by theme name (`redux`, `redux-dark`, `neutral`, `neo-dark`, `includes('redux')`); `filter: url(#<id>-drop-shadow)` on the node's group | The flags and `borderColorArray` decide (`redux` and `redux-dark` carry none); the shadow is the `dropShadow` CSS filter on the shape, so labels are not shadowed. `neutral` is a classic theme, so v12's neo-only `neutral` label rule has nothing to apply to | D152, D153, D227 |
+| Under `useGradient` a second `<linearGradient id="<id>-gradient">`, a duplicate id | One scoped gradient (D182) | Unique ids |
+| `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); with the icons plugin the glyph, 40 px, in the label's colour (`g.mindmap-icon`); otherwise, or in neither D297 form, the reference as written, smaller to fit 40 px (`text.mindmap-icon`), with one `ICON_NOT_RENDERED` | D286, D291, D297 |
+| No hand-drawn sketch of the plain node | Every outline and edge goes through the outline hook, the plain node too | D302, D308, D309 |
+
 ## Timeline SVG structure
 
 What changed in the timeline's SVG compared with v12's `timelineRenderer.ts` (LR) and
@@ -1381,13 +1492,25 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
   ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values, so in `redux-color` and
+  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
   `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
   slice drew black; it is now `cScale0`, as in `neutral`.
+- **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
+  which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
+  by v12's own formula, so it also follows that base colour's override:
+
+  | Theme | Variable | v12 12.2.0 | v13 | Why |
+  | --- | --- | --- | --- | --- |
+  | `default` | `pie3` | `#b5ff20` | `#b9ff20` (`tertiaryColor` darkened 40) | D333(a) |
+  | `default` | `pie6` | `#d7ff86` | `#d9ff86` (`tertiaryColor` darkened 20) | D333(a) |
+  | `forest` | `pie6` | `#33b42f` | `#33b52e` (`tertiaryColor` turned 40°, darkened 40) | D333(a) |
+  | `redux-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+  | `neo-dark` | `pie5` | `#2e3030` | `#2e2f2f` (`secondaryColor` darkened 10) | D333(a) |
+
 - **`format: 'ascii'`** throws `UnsupportedFormatError`: pie has no text output (D216).
 
 ## Pie SVG structure
@@ -1446,6 +1569,187 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
+
+## gitGraph syntax and config
+
+- **SVG only:** `gitGraph`, `gitGraph LR:`, `gitGraph TB:` and `gitGraph BT:` are detected by
+  v12's case-sensitive `gitGraph` detector, after `timeline` and before `stateDiagram`.
+  `format: 'ascii'` throws `UnsupportedFormatError` (D216).
+- **Commit ids are derived, not random** (D260). A commit with no `id:` is still
+  `<seq>-<7 hex digits>`, but the digits come from a fixed hash of the sequence number instead
+  of `Math.random`, so the same text gives the same ids and the same SVG on every render. A
+  derived id never takes an id that a `commit` or `merge` writes anywhere in the text.
+- **Text is drawn as written** (D263). v12 stored `<`, `>` and `=` in ids, messages, tags and
+  branch names as `&lt;`, `&gt;` and `&equals;` and broke branch names on `<br>`; v13 keeps the
+  source text, escapes it in the SVG, and breaks a branch name only on a newline. Labels are
+  plain text (D268): `$$…$$` and `fa:` stay as written, as in v12.
+- **A repeated commit id** keeps v12's model (D264): the later commit replaces the earlier and
+  lists itself as a parent. v13 warns `GIT_DUPLICATE_ID` on the second id, with the first as a
+  related location, and draws no arrow for the self-parent. Where the repeat makes a parent
+  cycle (`A`, `B`, `A`), only parents written earlier count for `parallelCommits`, and a commit
+  with none is placed as a root; v12 threw in BT with `parallelCommits` and placed such commits
+  differently from pass to pass elsewhere.
+- **Branch names starting with `title`** are rejected, as in v12, with a hint to quote them
+  (D269). A statement with a syntax error changes nothing; one that breaks a rule (an unknown
+  branch, a merge of a branch into itself, …) keeps its place in the text but changes nothing
+  either, and its error message is v13's own wording.
+- **Titles are drawn** (D265): the in-text `title` and a front-matter `title` (the in-text one
+  wins), 18 px in `textColor`, `gitGraph.titleTopMargin` above the drawing.
+- **Overlapping branch labels are moved apart.** Where v12 drew branch labels over each other
+  (TB and BT: a long name after a short one, since v12 spaces lanes by the previous name only;
+  LR: names of four or more lines), the lane moves out until the boxes are 10 px apart.
+  Elsewhere every position is v12's. In TB with a redux theme the branch name sits 1 px lower
+  than v12's.
+- **Arrows are drawn in commit order**; v12 used its commit map's insertion order, which differs
+  only for repeated ids.
+- **The default theme is `redux-color`** (D151): a v12 diagram without a `theme` drew in
+  `default`. Add `theme: 'default'` for v12's look. `look` is ignored, with one `LOOK_REMOVED`
+  warning (D153): the redux themes carry v12's `look: neo` gitGraph geometry and colours, the
+  classic themes v12 classic, and `neo` / `neo-dark` classic geometry with the neo colours, as
+  v12 drew them (D266). Each difference is a theme variable ([Theme geometry](#theme-geometry)).
+- **Honoured** in the `gitGraph` section, with v12's defaults: `titleTopMargin` (25),
+  `diagramPadding` (8), `mainBranchName` (`main`), `mainBranchOrder` (0), `showCommitLabel`,
+  `showBranches`, `rotateCommitLabel` (true), `parallelCommits` (false) and `useMaxWidth` (true).
+  A `titleTopMargin` or `diagramPadding` that is not a number of at least 0 draws with the
+  default and a `GIT_CONFIG_IGNORED` warning. The language service reads `mainBranchName` and
+  `mainBranchOrder` from the document's front matter and `init` directives; renaming the main
+  branch is refused there, as its name is config, not text.
+- **Ignored**, as v12's gitGraph never read them: `nodeLabel`, `arrowMarkerAbsolute` and
+  `useWidth`.
+
+## gitGraph SVG structure
+
+What changed in the gitGraph's SVG compared with v12's `gitGraphRenderer.ts` and `styles.js`
+(spec #292, DESIGN §7.2). v12's class names are kept where the element still exists:
+`commit-bullets`, `commit-labels`, `commit-arrows`, `commit`, `commit<n>`,
+`commit-highlight<n>`, `commit-<type>`, `commit-<type>-outer` / `-inner`, `branch`,
+`branch<n>`, `branchLabelBkg`, `label<n>`, `branchLabel`, `label`, `branch-label<n>`,
+`commit-label-bkg`, `commit-label`, `tag-label-bkg`, `tag-hole`, `tag-label`, `arrow`,
+`arrow<n>`, `gitTitleText`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id, `aria-roledescription="gitGraph"` | No root `id`; `class="mermaid mermaid-gitGraph"`, `role="img"`, `aria-roledescription="gitGraph"` (kept), `data-mermaid-version`; colours, widths, dashes and sizes are presentation attributes, colours reading `var(--_x)` aliases on the root `style`. `accTitle` and `accDescr` give `<title id="<id>-title">` and `<desc id="<id>-desc">` | Inert output (R-SEC-2), only the title and description ids (R-A11Y-1) |
+| The measuring pass left an empty `g.commit-bullets` and `g.commit-labels` at the top | One of each, after the branches and arrows, in v12's stacking order | Nothing invisible is drawn |
+| Branches: one unclassed `<g>` holding each branch's `line`, `rect` and `g.branchLabel > g.label.branch-label<n> > text > tspan.row`, only with `showBranches` | `g.branches` holds one `g.branch-lane` per branch with `data-id="<branch name>"` and, for a `branch` statement, `data-ast="b:<name>"` (the implicit main branch has `data-id` only); inside, the `line`, the `rect` and `g.branchLabel > text.label.branch-label<n>`. Without `showBranches` the lane groups are written empty | One element per statement maps it to its source (R-PARSE-8) |
+| The commit id in the class list: `commit <id> commit<n>`, so an id with a space or a dot made odd classes | The id leaves the class list. Each commit is a `g.commit-bullet.commit-<type>` group with `data-id="<id>"` and the `data-ast` of the statement that made it (`c:<id>`, `c#<k>`, `m:<branch>#<k>`, `cp:<source>#<k>`); its circles, squares, cross and cherry-pick marks keep v12's other classes | R-SVG-2, R-PARSE-8 |
+| `path.arrow.arrow<n>`, one per parent; a commit that lists itself as parent (a repeated id) drew a zero-length path, and a parent listed twice (a cherry-pick onto the branch whose head is its source) two coincident paths | The same, with `data-id="<parent>><child>"` (`%` and `>` inside an id percent-encoded as `%25` and `%3E`, so `a>b` → `c` and `a` → `b>c` differ), `fill="none"`, round caps and the width as attributes; no path for a self-parent, one for a repeated parent | D264 |
+| Commit labels and tags carried no id | The commit label's wrapper `<g>` (which keeps v12's rotation `transform`) and each tag's `polygon`, `circle` and `text` carry the commit's `data-id` | R-SVG-2; labels carry `data-id` only (pitfall 12) |
+| Colour classes from `calcColorIndex` with v12's moduli: bullets and arrows over 8 slots, branch labels over 12 in the redux themes, slot 0 skipped only in `redux-color` and `redux-dark-color` | `<n>` is the branch's one slot for every part (D267): its index mod 8, or, with a non-empty `borderColorArray`, slot 0 for the first branch and 1–7 round the rest, as v12's bullets | D267 |
+| Text set with d3 `.text()` after the DB's `&lt;`, `&gt;`, `&equals;`; branch names split on `\n` and `<br>` into `tspan.row` with `dy="1em"` | Each label is one `<text>` start-anchored where the layout measured it, in the font it measured; a branch name's lines are `<tspan x y>`. Ids, tags and names are drawn as written and escaped by the writer, a branch name breaks only on a newline, and `$$…$$` or `fa:` stays as written | D263, D268 |
+| Colours from a `<style>` chosen by theme name (`REDUX_GEOMETRY_THEMES`, `COLOR_THEMES`, `NEO_THEMES`, `DARK_THEMES`, `NEO_COLOR_GEN_THEMES`) | The same colours from theme variables, read in every theme: the `git`, `gitInv` and `gitBranchLabel` palettes, `borderColorArray` when non-empty, the node colours (`nodeBorder`, `mainBkg`) where v12's neo and redux themes used them, the label variables, `primaryColor`, `textColor` and `commitLineColor`. The redux and neo differences are the flags `gitNodeColors` and `gitPaletteColors` and the bullet sizes `gitHighlightInnerSize`, `gitMergeRadius`, `gitReverseCrossSize` and `gitCherryPickDotRadius`, next to the layout's geometry variables ([Theme geometry](#theme-geometry)). A classic cherry-pick body is still unpainted (black), as in v12 | D152, D153 |
+| `look: neo` gave branch label boxes `style="filter: …"` (a `<filter id="<id>-drop-shadow">` in the redux themes) and `data-look="neo"`; `useGradient` wrote `<linearGradient id="<id>-gradient">` whatever the look | The box takes the theme's `dropShadow` as a `filter` attribute wherever it is not `none`, whatever the look, and no `data-look`; the neo outline is core's gradient (`<prefix>-gradient`, written only when referred to). Tags take the shadow in the neo and redux themes, as v12's `.tag-label-bkg` did | D153, D182 |
+| Branch names and ids at `noteFontWeight` in the redux themes (CSS) | `font-weight` from the theme's `fontWeight`, which the layout measures with: the same weight in every v12 theme. An author's `noteFontWeight` is not read; set `fontWeight` | Measure in the font drawn (pitfall 16) |
+| The cherry-pick mark white, black in `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` | The colour variable `gitCherryPickInk`: `#000000` set by those four themes, white where a theme sets none (so `darkMode: true` on a light theme stays white, as in v12); under `theme: 'auto'` it switches with the colour scheme | D152 |
+| `utils.insertTitle`: `text.gitTitleText` centred by the svg's `getBBox`, 18px and `textColor` from CSS | `text.gitTitleText` where the layout centred it over the drawing, with `fill` and `font-size="18"` attributes. The in-text `title` and a front-matter `title` are both drawn | D265 |
+
+## Gantt chart
+
+The gantt parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; the schedule is compared with v12's DB at a fixed instant). The differences:
+
+### Time and now
+
+- **Host local time (D270):** dates, `today` and the time axis use the host time zone, with
+  daylight saving handled as d3-time does, as in v12. There is no dayjs or d3 any more: the date
+  code is a port of Pele's (D271), with v12's dayjs quirks kept.
+- **`now` is a render option (D270, D275):** the instant the chart treats as today is
+  `render(id, text, { now })` (a number or a `Date`); `mermaid` defaults it to `Date.now()` at
+  each call, in the browser, Node and the CLI. Diagram text cannot set it. The today line is
+  drawn only when `now` lies in the chart's time domain.
+- **Schedule errors (D274):** an invalid date, a first task with no start, more than three
+  fields in a task, or excludes that leave no day reject the render as `SEMANTIC` at the task's
+  position (`GANTT_INVALID_DATE`, `GANTT_NO_START`, `GANTT_TOO_MANY_FIELDS`,
+  `GANTT_EXCLUDED_ALL`), with v12's messages. v12 threw from its renderer. Parsing no longer
+  depends on `now`, so a cached parse stays valid.
+- **Scheduling work limit (D542, R-SEC-5):** a chart whose schedule walks more than
+  `maxLayoutWork` days (default 1,500,000; every day a task spans is walked for its excluded
+  days, on each pass) is refused with a `LIMIT` error. v12 rendered it, after minutes: about
+  2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
+  walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
+  `config.limits`.
+- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
+  only a task written before it, as v12 bound it while reading the line) and data that
+  is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
+  logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
+  10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
+  draws no excluded days, as v12) and `GANTT_CONFIG_IGNORED`.
+- **Nothing at NaN (D277, R-LAYOUT-3):** a chart with nothing to schedule draws its title and
+  an empty plot with no ticks; a task in a cycle of `after`/`until` keeps its row but draws no
+  bar; an `x`/`X` timestamp past the `Date` range is an invalid date; a bar whose `until` is
+  before its start is 0 wide. v12 drew NaN coordinates in each case.
+
+### Syntax
+
+- **`topAxis` works (D273):** v12's grammar called a DB function that does not exist, so any
+  text with the `topAxis` statement failed. v13 accepts it and draws the top axis, as
+  `gantt.topAxis` does. A listed parity divergence; nothing that rendered in v12 changes.
+
+### Config
+
+- **Honoured:** `titleTopMargin`, `barHeight`, `barGap`, `topPadding`, `rightPadding`,
+  `leftPadding`, `gridLineStartPadding`, `fontSize`, `sectionFontSize`, `numberSectionStyles`,
+  `axisFormat`, `tickInterval`, `topAxis`, `displayMode`, `useWidth`, `useMaxWidth` and
+  `weekday`. Unset, each takes v12 12.2.0's merged default. `look` is ignored (D153).
+- **Width (D272):** the chart is laid out `gantt.useWidth` px wide, else to the
+  `availableWidth` render option, else 1200 px. v12 laid out to its container's
+  `offsetWidth`; v13 has no DOM in core, so it fills the container only with
+  `mount(…, { availableWidth: true })`. Otherwise `useMaxWidth` (on by default) scales the
+  1200 px chart down to the container, so a narrow page shows smaller text than v12 did.
+- **`gantt.weekday` (D279):** the day a `week` tick interval starts on, the `weekday`
+  statement winning. v12 never read the config key.
+- **Checked values:** a length that is not a number of at least 0, a `numberSectionStyles`
+  below 1 or a font size that is no CSS size keeps the default, with one `GANTT_CONFIG_IGNORED`
+  warning per key. `fontSize` and `sectionFontSize` take a number (px) or a CSS size such as
+  `14px`, as v12 wrote them into `font-size`.
+- **Text output:** `format: 'ascii'` is not available for gantt charts; it throws
+  `UnsupportedFormatError` (D216).
+
+### Themes
+
+- The gantt variables keep v12's names (`sectionBkgColor`, `altSectionBkgColor`,
+  `sectionBkgColor2`, `excludeBkgColor`, `gridColor`, `todayLineColor`, `vertLineColor`,
+  `taskBkgColor`, `taskBorderColor`, `activeTaskBkgColor`, `activeTaskBorderColor`,
+  `doneTaskBkgColor`, `doneTaskBorderColor`, `critBkgColor`, `critBorderColor`,
+  `taskTextColor`, `taskTextOutsideColor`, `taskTextDarkColor`), and `themeVariables`
+  override each one in every theme ([theme-variables.md](./theme-variables.md)).
+- **Derived in every theme (D331):** each is derived from the shared variables as v12's
+  `theme-base.js` derives it (`vertLineColor` from `primaryBorderColor`, as v12's redux and neo
+  themes do; dark themes fill done tasks with `mainBkg` lightened, v12's `secondBkg`). v12's
+  classic themes set their own gantt colours, and `redux-color` and `redux-dark-color` took
+  the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
+  most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
+  `textColor`). Set the variables in `themeVariables` for v12's look.
+- **`taskTextClickableColor` is gone:** a clickable label is v12's `#003163` in every theme, a
+  constant. The variable is ignored (R-CONF-5).
+- **No gradient or shadow (D278):** `neo` and `neo-dark` take neo colours only, as v12.
+
+## Gantt SVG structure
+
+What changed in the gantt's SVG compared with v12's `ganttRenderer.js` and `styles.js`, and why
+(DESIGN §7.2, spec #293). v12's classes stay on the elements they were on: `section sectionN`,
+`task`, `milestone`, `vert`, `task|active|done|crit|activeCrit|doneCrit` + N, `clickable`,
+`taskText`, `taskTextOutsideLeft|Right`, the `taskTextN`, `taskTextOutsideN`, `activeTextN`,
+`doneTextN`, `critTextN`, `activeCritTextN`, `doneCritTextN`, `milestoneText` and `vertText`
+classes, `sectionTitle sectionTitleN`, `grid`, `tick`, `today`, `exclude-range` and `titleText`.
+Class lists are written with single spaces and no trailing blank.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id that gave every element its colour; `viewBox="0 0 w h"` fixed | No root `id`; `class="mermaid mermaid-gantt"`, `role="img"`, `aria-roledescription="gantt"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases of v12's gantt theme variables. The `viewBox` is `0 0 w h` grown to cover what is drawn (an outside label, a wide title) | Inert output (R-SEC-2), R-A11Y-1, D224 |
+| Element ids `<id>-<task id>` on bars, `<id>-<task id>-text` on labels, `<id>-exclude-<date>` on excluded days | No ids. A bar carries `data-id="<task id>"` and `data-ast="t:<id>"`, its label `data-id` only; a section title `data-id="<section>"` and `data-ast="s:<section>"`. A section statement v12 drew no title for (a repeated name, a section of only `vert` markers) gets an empty `<g class="sectionTitle" data-id data-ast>` | R-PARSE-8, no colliding ids |
+| `width-<n>` classes on labels | Dropped | They held the measured width, which depends on the measurer |
+| A linked task wrapped in `<a xlink:href target="_top">` only under `securityLevel: sandbox`; otherwise `href` was a `window.open(url, '_self')` handler on the bar and label. v12's sanitizer rewrote the URL (`https://example.com` → `…com/`) | The bar and label of a task a `click … href` names sit in one `<a href>`, after the other tasks, in every security level, with no `target`. The URL is kept as written and checked by core: an unsafe one draws the task unlinked with one `URL_REFUSED` warning | R-SVG-4, R-SEC-4, D23, D62 |
+| `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (the statement stops at `;`, so none reaches the value) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
+| A `transform-origin` attribute on every bar and every excluded-day rect; milestones turned by CSS, `transform: rotate(45deg) scale(0.8, 0.8)` about it | No `transform-origin`. A milestone carries the same geometry as a `transform` attribute about v12's origin (its square's centre; above the marker for a task tagged both `vert` and `milestone`, which keeps both, as in v12) | No CSS in the output |
+| `<g class="grid" transform="translate(leftPadding, h − 50)">` (top axis: `translate(leftPadding, topPadding)`) and d3's `<g class="tick" transform="translate(x, 0)">` per tick | The same elements at absolute coordinates, without `transform` | The renderer writes absolute coordinates |
+| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant; `shape-rendering` is not an allowed attribute |
+| `cursor: pointer` on clickable bars and labels; `text-height` on labels | Dropped; the `clickable` class stays for host CSS | No CSS in the output |
+| A `<text class="titleText">` always, empty without a title | Only when there is a title | Nothing invisible is drawn |
+| An HCL colour scale (`#00B9FA` → `#F95002`) built and never used | Dropped | It never reached the output |
+| Section titles `<text dy="−(n−1)/2 em">` with `alignment-baseline: central` `<tspan dy="1em">`s | One `<text>` with a `<tspan>` per `<br>` line at an absolute `y`, 1em apart, each line centred on its own row as v12 drew it | `alignment-baseline` is not an allowed attribute |
+| Slots past `section3` (`numberSectionStyles` over 4) had no rule, so their bands, bars and inside labels took the root's `fill: textColor`, bars no stroke, and outside labels `taskTextDarkColor` (`.taskTextOutsideLeft`/`Right`) | Kept | P2 |
+| `look: neo` changed only colour variables | Every theme draws gantt without gradient outline or shadow | D278 |
 
 ## Kanban SVG structure
 

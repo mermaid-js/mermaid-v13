@@ -1,0 +1,11 @@
+@ 9:18  cherry-pick id:|
+  "A" value (commit) 9:18-9:18 "" -> "\"A\""
+  "C" value (commit) 9:18-9:18 "" -> "\"C\""
+@ 10:19  cherry-pick id:"|"
+  "A" value (commit) 10:18-10:20 "\"\"" -> "\"A\""
+  "C" value (commit) 10:18-10:20 "\"\"" -> "\"C\""
+@ 11:30  cherry-pick id:"M" parent:"|"
+  "A" value (commit) 11:29-11:31 "\"\"" -> "\"A\""
+  "two words" value (commit) 11:29-11:31 "\"\"" -> "\"two words\""
+@ 12:13  commit id:|
+  none

@@ -1,0 +1,19 @@
+---
+config:
+  theme: default
+  themeVariables:
+    gitCommitRadius: 7
+    gitLaneShift: 9
+    gitBranchLabelPaddingX: 16
+    gitBranchLabelPaddingY: 12
+    gitBranchLabelRadius: 0
+    gitArrowWidth: 2
+    gitNodeColors: true
+description: redux geometry and node colours on the classic default theme, from themeVariables
+---
+gitGraph
+  commit id: "a"
+  branch develop
+  commit id: "b" type: HIGHLIGHT
+  checkout main
+  merge develop id: "c" tag: "v1"

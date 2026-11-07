@@ -74,11 +74,13 @@ look?: ("classic" | "handDrawn" | "neo")
 /**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
- * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
+ * Defaults to `layered`, the layout engine built into core (DESIGN §6.1);
+ * mindmap defaults to `tree`, core's two-sided tidy tree, and maps v12's
+ * `cose-bilkent` and `tidy-tree` to it.
  * The v12 name `dagre` is still accepted and maps to `layered`. `elk` and
  * `elk.<algorithm>` need an ELK layout plugin; without one they draw with
- * `layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)
- * always uses `layered`.
+ * the diagram's default engine and warn `ELK_NOT_INSTALLED`. Text output
+ * (`format: 'ascii'`) always uses `layered`.
  * 
  */
 layout?: string
@@ -683,6 +685,14 @@ actorFont?: FontCalculator
  * via the `definition` "GanttDiagramConfig".
  */
 export interface GanttDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin top for the text over the diagram
  */
@@ -1511,12 +1521,40 @@ seed?: number
  */
 export interface MindmapDiagramConfig extends BaseDiagramConfig {
 /**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
  * Color nodes by their top-level branch or by their depth in the tree.
  * Depth is counted from the root, independently of indentation width.
  * 
  */
 colorBy?: ("branch" | "depth")
+/**
+ * Padding in px inside default, cloud and bang nodes (and, in the classic themes,
+ * circles, and twice this inside hexagons), and the margin around the drawing.
+ * 
+ */
 padding?: number
+/**
+ * The width in px at which node labels wrap.
+ * 
+ */
 maxNodeWidth?: number
 /**
  * Layout algorithm to use for positioning mindmap nodes
@@ -1554,6 +1592,14 @@ ticketBaseUrl?: string
  * via the `definition` "GitGraphDiagramConfig".
  */
 export interface GitGraphDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin top for the text over the diagram
  */

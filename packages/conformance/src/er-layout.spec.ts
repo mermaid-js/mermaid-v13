@@ -15,6 +15,7 @@ import {
 } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { detectEr, layoutEr, parseEr, type ErModel } from '@mermaid-js/diagram-er';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 
@@ -35,7 +36,7 @@ beforeAll(async () => {
   }
 }, 60_000);
 
-const theme = createTheme(await loadTheme('redux'), {});
+const theme = createTheme(await loadTheme('redux'), { diagram: DIAGRAM_TABLES.er });
 const config = resolveConfig(CORE_DEFAULTS);
 
 function build(model: ErModel, units: UnitProfile): { graph: LayoutGraph; laid: LayoutModel } {

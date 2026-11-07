@@ -1,0 +1,640 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-mindmap",
+  "scopeName": "source.mermaid-mindmap",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-mindmap"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-mindmap"
+    },
+    "rule-0": {
+      "match": "(?i)\\s*%%.*",
+      "name": "comment.line.mermaid-mindmap"
+    },
+    "rule-1": {
+      "match": "(?i)mindmap\\b",
+      "name": "keyword.control.mermaid-mindmap"
+    },
+    "rule-2": {
+      "begin": "(?i):::",
+      "end": "((?i).+)|((?i)\\n)",
+      "patterns": [
+        {
+          "include": "#mode-class"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-5": {
+      "begin": "(?i)::icon\\(",
+      "end": "((?i)\\))",
+      "patterns": [
+        {
+          "include": "#mode-icon"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-6": {
+      "match": "(?i)[\\s]+[\\n]"
+    },
+    "rule-7": {
+      "match": "(?i)[\\n]+"
+    },
+    "rule-10": {
+      "begin": "(?i)-\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-11": {
+      "begin": "(?i)\\(-",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-12": {
+      "begin": "(?i)\\)\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-13": {
+      "begin": "(?i)\\)",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-14": {
+      "begin": "(?i)\\(\\(",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-15": {
+      "begin": "(?i)\\{\\{",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-16": {
+      "begin": "(?i)\\(",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-17": {
+      "begin": "(?i)\\[",
+      "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
+      "patterns": [
+        {
+          "include": "#mode-node"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-18": {
+      "match": "(?i)[\\s]+"
+    },
+    "rule-19": {
+      "match": "(?i)[^\\(\\[\\n\\)\\{\\}]+",
+      "name": "variable.other.mermaid-mindmap"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        }
+      ]
+    },
+    "mode-class": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-8": {
+      "match": "(?i)[^\\)]+",
+      "name": "string.quoted.mermaid-mindmap"
+    },
+    "mode-icon": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-8"
+        }
+      ]
+    },
+    "rule-21": {
+      "begin": "(?i)[\"][`]",
+      "end": "((?i)[`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-nstr2"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-24": {
+      "begin": "(?i)[\"]",
+      "end": "((?i)[\"])",
+      "patterns": [
+        {
+          "include": "#mode-nstr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-mindmap"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-mindmap"
+        }
+      }
+    },
+    "rule-35": {
+      "match": "(?i)[^\\)\\]\\(\\}]+",
+      "name": "string.quoted.mermaid-mindmap"
+    },
+    "rule-36": {
+      "match": "(?i).+(?!\\(\\()",
+      "name": "string.quoted.mermaid-mindmap"
+    },
+    "mode-node": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        }
+      ]
+    },
+    "rule-25": {
+      "match": "(?i)[^\"]+",
+      "name": "string.quoted.mermaid-mindmap"
+    },
+    "mode-nstr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-25"
+        }
+      ]
+    },
+    "rule-22": {
+      "match": "(?i)[^`\"]+",
+      "name": "string.quoted.mermaid-mindmap"
+    },
+    "mode-nstr2": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-22"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-mindmap"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-mindmap"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-mindmap"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-mindmap"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

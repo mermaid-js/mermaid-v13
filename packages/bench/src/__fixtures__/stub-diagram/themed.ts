@@ -29,7 +29,7 @@ const theme: DiagramThemeTable = {
       stubTitle: 'primaryTextColor',
       stubAxis: 'lineColor',
       stubGrid: 'mix(lineColor, background, 70%)',
-      stubPoint: 'cScale2',
+      stubPoint: 'seriesColorArray2',
       stubLegend: 'contrast(background, textColor, primaryTextColor)',
     },
     dark: { stubGrid: 'mix(lineColor, background, 50%)' },

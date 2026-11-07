@@ -3,6 +3,7 @@ import {
   DEFAULT_LIMITS,
   LIMIT_CODES,
   LimitError,
+  MAX_STEPS,
   asLimitError,
   checkOutput,
   checkSource,
@@ -18,7 +19,9 @@ describe('DEFAULT_LIMITS (R-SEC-5, D31)', () => {
       maxNodes: 10_000,
       maxDepth: 100,
       maxOutputLength: 4_000_000,
+      maxLayoutWork: MAX_STEPS,
     });
+    expect(MAX_STEPS).toBeGreaterThan(1_000_000);
     expect(Object.isFrozen(DEFAULT_LIMITS)).toBe(true);
   });
 });
@@ -26,6 +29,11 @@ describe('DEFAULT_LIMITS (R-SEC-5, D31)', () => {
 describe('resolveLimits', () => {
   it('takes the defaults when the integrator sets nothing', () => {
     expect(resolveLimits()).toEqual(DEFAULT_LIMITS);
+  });
+
+  it('lets the integrator raise or lower the layout work limit', () => {
+    expect(resolveLimits(undefined, { maxLayoutWork: 10 }).maxLayoutWork).toBe(10);
+    expect(resolveLimits(undefined, { maxLayoutWork: Infinity }).maxLayoutWork).toBe(Infinity);
   });
 
   it("maps v12's integrator keys maxTextSize and maxEdges onto the limits", () => {
@@ -93,6 +101,7 @@ describe('limit diagnostics and thrown errors', () => {
       maxNodes: 'NODE_LIMIT',
       maxDepth: 'DEPTH_LIMIT',
       maxOutputLength: 'OUTPUT_LIMIT',
+      maxLayoutWork: 'LAYOUT_LIMIT',
     });
     expect(isLimitCode('EDGE_LIMIT')).toBe(true);
     expect(isLimitCode('UNEXPECTED')).toBe(false);

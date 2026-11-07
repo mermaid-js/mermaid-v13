@@ -1,0 +1,20 @@
+@ 1:5  mind|map
+  1:1-1:8 "mindmap"
+  | **`mindmap`**
+  |
+  | `mindmap`: starts a mindmap; the nodes follow, one per line.
+@ 4:9  ::ic|on(fa fa-book)
+  4:5-4:12 "::icon("
+  | **`::icon(`**
+  |
+  | `::icon(…)`: the icon of the last node, on a line of its own.
+@ 5:6  :|::urgent large
+  5:5-5:8 ":::"
+  | **`:::`**
+  |
+  | `:::class …`: the classes of the last node, on a line of its own; a later one replaces them.
+@ 7:11  :::lar|ge
+  7:8-7:13 "large"
+  | **class** `large`
+  |
+  | Used by 2 nodes

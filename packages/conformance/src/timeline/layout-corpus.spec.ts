@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import {
   layoutTimeline,
   parseTimeline,
@@ -46,7 +47,7 @@ describe('timeline layout invariants on parser-produced fixtures', () => {
             const layout = layoutTimeline(m, {
               config: { timeline } as unknown as ResolvedConfig,
               measurer: tableMeasurer,
-              theme: createTheme(specs.get(name)!),
+              theme: createTheme(specs.get(name)!, { diagram: DIAGRAM_TABLES.timeline }),
             });
             const v = timelineLayoutViolations(m, layout, timeline);
             if (v.length > 0)

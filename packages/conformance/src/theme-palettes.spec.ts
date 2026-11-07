@@ -12,6 +12,7 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from './oracle.ts';
 
@@ -89,7 +90,12 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
     else
       expect(now.cScaleLabel).toEqual(
         Array(12).fill(
-          hex(createTheme(await loadTheme(theme), { cssVariables: false }).value('labelTextColor'))
+          hex(
+            createTheme(await loadTheme(theme), {
+              diagram: DIAGRAM_TABLES.sequence,
+              cssVariables: false,
+            }).value('labelTextColor')
+          )
         )
       );
   });
@@ -106,6 +112,22 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
       expect((await v13Palettes(theme, vars)).cScaleLabel, theme).toEqual(
         v12Palettes(theme, vars).cScaleLabel
       );
+  });
+
+  // v12 derives sequence's actor text from labelTextColor, never from scaleLabelColor.
+  it("a scaleLabelColor override leaves sequence's text as the theme draws it", async () => {
+    const names = ['actorTextColor', 'labelTextColor', 'loopTextColor'];
+    for (const theme of THEME_NAMES) {
+      const at = async (themeVariables?: Record<string, unknown>) => {
+        const t = createTheme(await loadTheme(theme), {
+          diagram: DIAGRAM_TABLES.sequence,
+          cssVariables: false,
+          themeVariables,
+        });
+        return names.map((n) => t.value(n));
+      };
+      expect(await at({ scaleLabelColor: '#3366cc' }), theme).toEqual(await at());
+    }
   });
 
   it.each(THEME_NAMES)('%s: a numbered override replaces its slot verbatim', async (theme) => {

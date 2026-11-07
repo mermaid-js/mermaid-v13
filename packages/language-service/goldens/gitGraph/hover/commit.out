@@ -1,0 +1,15 @@
+@ 7:19  cherry-pick id:"|A"
+  7:18-7:21 "\"A\""
+  | **commit** `A` on `main`
+  |
+  | Message: `first` · tags: `v1`
+@ 8:20  cherry-pick id:"M|" parent:"B"
+  8:18-8:21 "\"M\""
+  | **commit** `M` on `main`
+  |
+  | Merge of `dev` · type: REVERSE · parents: `A`, `B`
+@ 9:21  cherry-pick id:"no|ne"
+  9:18-9:24 "\"none\""
+  | **commit** `none`
+  |
+  | No commit has this id.
