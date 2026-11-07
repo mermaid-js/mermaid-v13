@@ -19,11 +19,11 @@ Integration PR: #479 (draft). Integration branch `feature/423_cynefin`, checked 
 ## Shared contracts
 
 - **`CynefinModel`** (`packages/diagram-cynefin/src/model.ts`): landed by the orchestrator with the package skeleton before T1 and T3 started. T2 produces it; T3 reads it. Change it only additively and note the change in GAPS.md.
-- **Theme table** (#414 T0a, `feature/414_theme-t0` at `462aef4e9`, merged here in `b926c9994`): `DiagramThemeTable` on `DiagramPlugin.theme`. API: `v13/docs/agents/runs/414/CONTRACT.md`. T4 declares cynefin's table inline on the plugin (T0b's per-package `src/theme/vocabulary.ts` convention is still in progress and will be additive); T5 adds the theme oracle specs, nested-override fixtures and baselines. Never add cynefin rows to core.
+- **Theme table** (#414 T0a, `feature/414_theme-t0` at `462aef4e9`, merged here in `b926c9994`; T0b at `f025e1841`, merged in `a1dfa857b`): `DiagramThemeTable` on `DiagramPlugin.theme`. API: `v13/docs/agents/runs/414/CONTRACT.md`. Cynefin's 15 variables are declared in `packages/diagram-cynefin/src/theme/vocabulary.ts` (T0b) and the table in `src/theme/table.ts` takes `vars: THEME_VARIABLE_TABLE` from `pnpm gen:theme`; T5 adds the theme oracle specs, nested-override fixtures and baselines. Never add cynefin rows to core.
 
-## Base rule (coordinator, until #472 Theme T0 merges)
+## Base rule
 
-Take `mermaid-v13` only through `feature/414_theme-t0`, never directly (M4 wave 2 on `mermaid-v13` conflicts with T0a in 11 core theme files; the T0 session resolves them once and pushes a new tip). Build on `462aef4e9` until the coordinator sends the new sha. Until then #479 conflicts with `mermaid-v13` (T0a vs M4 wave 2), so GitHub runs no `pull_request` CI on it; hosted CI starts once the resolved T0 tip is merged here.
+#472 merged; take mermaid-v13 directly. (The Theme T0 tip `f025e1841`, which carried M4 wave 2 and `mermaid-v13` `c6ad88562`, was merged here in `a1dfa857b`; `mermaid-v13` at `7826e952e`, #472's merge, followed in `e735c4bd0`.)
 
 - Pushing: the pre-push `pnpm check` timed out twice on `conformance/src/flowchart/probe.spec.ts` (80–95 s of 60 s) at load ~30 on 10 cores; it passes alone in 44 s. Push with `VITEST_MAX_WORKERS=4` (every test still runs).
 
