@@ -14,12 +14,12 @@ import { pieAdapter } from './v13.ts';
  * Accept/reject and the normalised model (`v12.ts`, `v13.ts`) must agree, except listed
  * divergences.
  *
- * Excluded ({@link EXCLUDED}), with the reason the lexer gate gives: `unclosed directive …`.
+ * Excluded ({@link EXCLUDED}), with the reason the lexer gate gives: `pie-cases/unclosed directive …`.
  * Core's preprocess ends an unclosed `%%{` at its line end and reports `UNCLOSED_DIRECTIVE`, so
  * v13 rejects what v12 accepted with the rest of the line (or the text) removed. That is core's
  * directive reading, shared by every type; the test below checks it still holds.
  */
-const EXCLUDED = 'unclosed directive ';
+const EXCLUDED = 'pie-cases/unclosed directive ';
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
   yield* items;

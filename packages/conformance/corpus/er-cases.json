@@ -1,0 +1,169 @@
+[
+  {
+    "id": "er-cases/line separators 0",
+    "note": "U+2028 and U+2029: a regex `.` stops at them and `^` follows them; `[^\\n]` does not stop.",
+    "source": "erDiagram\nA\u2028direction TB\nB"
+  },
+  {
+    "id": "er-cases/line separators 1",
+    "source": "erDiagram\nA ||--o{ B : has\u2028direction LR"
+  },
+  {
+    "id": "er-cases/line separators 2",
+    "source": "erDiagram\naccTitle: hi\u2028there\nA"
+  },
+  {
+    "id": "er-cases/line separators 3",
+    "source": "erDiagram\naccDescr: hi\u2029there\nA"
+  },
+  {
+    "id": "er-cases/line separators 4",
+    "source": "erDiagram\nA\n%% c\u2028B\nC"
+  },
+  {
+    "id": "er-cases/line separators 5",
+    "source": "erDiagram\nA\n\u2028%% c\nB"
+  },
+  {
+    "id": "er-cases/line separators 6",
+    "source": "erDiagram\nA\u2028%% c\nB"
+  },
+  {
+    "id": "er-cases/line separators 7",
+    "source": "erDiagram\nA\u2028  %% c\u2028B\nC"
+  },
+  {
+    "id": "er-cases/line separators 8",
+    "source": "erDiagram\nA {\nstring a~b\u2028c~ x\n}"
+  },
+  {
+    "id": "er-cases/line separators 9",
+    "source": "erDiagram\nA {\nstring a\u2028b\n}"
+  },
+  {
+    "id": "er-cases/line separators 10",
+    "source": "erDiagram\nstyle A fill:#f00;\u2028B;\n"
+  },
+  {
+    "id": "er-cases/line separators 11",
+    "source": "erDiagram\nclassDef x fill:#f00;\u2029A;\n"
+  },
+  {
+    "id": "er-cases/line separators 12",
+    "source": "erDiagram\u2028A"
+  },
+  {
+    "id": "er-cases/line separators 13",
+    "source": "erDiagram\nA ||--|| B : \"x\u2028y\""
+  },
+  {
+    "id": "er-cases/preprocessing 0",
+    "note": "What v12's preprocessing and `encodeEntities` did to the text before its lexer saw it.",
+    "source": "erDiagram\nA ||--o{ B : \"a #amp; b\""
+  },
+  {
+    "id": "er-cases/preprocessing 1",
+    "source": "erDiagram\n\"A#35;B\" ||--o{ B : x"
+  },
+  {
+    "id": "er-cases/preprocessing 2",
+    "source": "erDiagram\nA#amp;B\nA {\nstring x#amp;y\n}"
+  },
+  {
+    "id": "er-cases/preprocessing 3",
+    "source": "erDiagram\nstyle A fill:#f00;"
+  },
+  {
+    "id": "er-cases/preprocessing 4",
+    "source": "erDiagram\nstyle A fill:#f00;stroke:#00f;\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 5",
+    "source": "erDiagram\nclassDef c fill:#f00;;\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 6",
+    "source": "erDiagram\nclassDef c fill:#f00,color:#fff;\nclass A c"
+  },
+  {
+    "id": "er-cases/preprocessing 7",
+    "source": "erDiagram\nclassDef c fill:#f00; style x:#0;y;\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 8",
+    "source": "erDiagram\nA ||--o{ B : \"<b class=\"x\">y</b>\""
+  },
+  {
+    "id": "er-cases/preprocessing 9",
+    "source": "erDiagram\n%%{init: {\"theme\": \"dark\"}}%%\nA"
+  },
+  {
+    "id": "er-cases/preprocessing 10",
+    "source": "erDiagram\nA %%{init: {}}%% ||--o{ B : x"
+  },
+  {
+    "id": "er-cases/preprocessing 11",
+    "source": "%%{init: {}}%%\n\n  %% c\n\n erDiagram\nA"
+  },
+  {
+    "id": "er-cases/preprocessing 12",
+    "source": "---\ntitle: T\n---\nerDiagram\nA"
+  },
+  {
+    "id": "er-cases/preprocessing 13",
+    "source": "erDiagram\n%%\nA\n%%%\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 14",
+    "source": "erDiagram\nA\n  \n\t%% c\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 15",
+    "source": "erDiagram\r\nA\rB\r\n"
+  },
+  {
+    "id": "er-cases/preprocessing 16",
+    "source": "erDiagram\naccTitle:"
+  },
+  {
+    "id": "er-cases/preprocessing 17",
+    "source": "erDiagram\naccDescr {\nunclosed"
+  },
+  {
+    "id": "er-cases/preprocessing 18",
+    "source": "erDiagram\nA {\nstring x"
+  },
+  {
+    "id": "er-cases/preprocessing 19",
+    "source": "erDiagram\nA {\n`unclosed"
+  },
+  {
+    "id": "er-cases/preprocessing 20",
+    "source": "erDiagram\nstyle A fill:rgb(1,2,3)\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 21",
+    "source": "erDiagram\nA ||--o{ B : \"direction TB\""
+  },
+  {
+    "id": "er-cases/preprocessing 22",
+    "source": "erDiagram\nA { string x \"direction LR\" }\nB direction RL x"
+  },
+  {
+    "id": "er-cases/preprocessing 23",
+    "note": "Directives that start mid-line (#186): a `%%` line inside one, and `\"style\"` before a `;`.",
+    "source": "erDiagram\nA %%{init: {\n  %%x \"a\": 1}}%%\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 24",
+    "source": "erDiagram\nA %%{init: {\n%% c\n\"theme\": \"dark\"}}%% ||--o{ B : x"
+  },
+  {
+    "id": "er-cases/preprocessing 25",
+    "source": "erDiagram\nA %%{init: {\"style\": \"x;y\"}}%%\nB"
+  },
+  {
+    "id": "er-cases/preprocessing 26",
+    "source": "erDiagram\nA %%{init: {\"x\": \"style A fill:#f00;\"}}%% ||--o{ B : x;\nC"
+  }
+]

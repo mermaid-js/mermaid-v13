@@ -3,8 +3,7 @@ import { JISON_NAMES, sequenceTokens } from '@mermaid-js/diagram-sequence';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
-import { commented, sequenceGateCorpus } from './corpus.ts';
-import type { CorpusItem } from '../types.ts';
+import { sequenceGateCorpus } from './corpus.ts';
 
 /**
  * Lexer-parity gate (parser-method §1): the v13 sequence lexer emits the same terminals, with
@@ -18,7 +17,7 @@ import type { CorpusItem } from '../types.ts';
  *   (v13 writes an `Error` token there and carries on).
  *
  * Every source is also lexed with comment lines added, which v12 removed before lexing, and
- * a set of line-separator cases.
+ * the cases of `corpus/sequence-cases.json` (line-separator, edge and entity cases) are added.
  *
  * Exclusions (v13 kinds with no jison name, left out of the v13 stream):
  * - the `accDescr {` opener and its closing `}`: jison matches them and returns no token;
@@ -42,19 +41,10 @@ function v13Tokens(source: string): JisonToken[] {
   return out;
 }
 
-// `#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).
-const ENTITIES: CorpusItem[] = [
-  'sequenceDiagram\nA#y;->>B: x:#y; z\nparticipant #y;\nparticipant C as #y;\nloop #y;\nend',
-  'sequenceDiagram\ntitle #y;\nNote over A: #y;\nlinks A: {"#y;": "x"}\n#y;->>B: x',
-].flatMap((source, k) => [
-  { id: `entity ${k}`, source },
-  { id: `entity ${k} (commented)`, source: commented(source) },
-]);
-
 describe('sequence lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
     const oracle = await loadJisonLexerOracle('sequence');
-    const items = [...(await sequenceGateCorpus()), ...ENTITIES];
+    const items = await sequenceGateCorpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     let e2e = 0;

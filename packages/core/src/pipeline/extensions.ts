@@ -42,7 +42,7 @@ import type {
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
-import type { DiagramIcon, GlyphOptions, RenderContext } from './types.ts';
+import type { DiagramIcon, GlyphOptions, IconLookup, RenderContext } from './types.ts';
 
 /**
  * What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`.
@@ -173,10 +173,11 @@ export interface GlyphProvider {
    * The glyph `name` (as written, `fa:bell`) names, drawn in the `size` px square at the origin
    * (fitted by the provider, as `xMidYMid meet`); `null` when it does not resolve and the
    * extension warns `ICON_NOT_RENDERED` for it (D291), so the diagram may give its own alias
-   * (flowchart's `ICON_UNAVAILABLE`, D299); `undefined` when it has none to give (a placeholder
-   * for a pack still loading, or a name it leaves to others).
+   * (flowchart's `ICON_UNAVAILABLE`, D299); `'pending'` for a placeholder, a glyph whose data is
+   * still loading (D299); `undefined` when it has none to give (a name it leaves to others).
+   * A provider that gives `undefined` for a placeholder is read as having none.
    */
-  glyph(name: string, request: GlyphRequest): SvgFragment | null | undefined;
+  glyph(name: string, request: GlyphRequest): SvgFragment | 'pending' | null | undefined;
 }
 
 /** What a glyph provider gets with each name. */
@@ -502,27 +503,33 @@ export class HookRunner<El = unknown, R = unknown> {
   /**
    * One render's `RenderContext.icon` (D293), or `undefined` when no extension has `glyphs`. It
    * asks each extension in registration order and returns the first glyph, checked (its size is
-   * the provider's to honour); else `null` when one reported the name unresolved. `spans` gives
-   * the render's once-per-render warnings and scratch (`InlineSpans`).
+   * the provider's to honour); else `null` when one reported the name unresolved; else, for a
+   * caller that asks (`pending: true`), `'pending'` when one has it as a placeholder. `spans`
+   * gives the render's once-per-render warnings and scratch (`InlineSpans`).
    */
   icon(spans: Pick<InlineSpans, 'warn' | 'scratch'>, iconPacks?: IconPacks): RenderContext['icon'] {
     const list = this.list.filter((p) => p.glyphs);
     if (!list[0]) return undefined;
     const { warn, scratch } = spans;
-    return (name: string, size: number, options?: GlyphOptions) => {
-      const request: GlyphRequest = { ...options, size, warn, iconPacks, scratch };
-      let unresolved;
+    const lookup = (name: string, size: number, options?: GlyphOptions & { pending?: true }) => {
+      const { pending: asked, ...rest } = options ?? {};
+      const request: GlyphRequest = { ...rest, size, warn, iconPacks, scratch };
+      let unresolved = false;
+      let pending = false;
       for (const p of list) {
         try {
           const glyph = p.glyphs!.glyph(name, request);
-          if (glyph) return (checkFragment(glyph), glyph);
-          if (glyph === null) unresolved = glyph;
+          if (glyph === 'pending') pending = true;
+          else if (glyph) return (checkFragment(glyph), glyph);
+          else if (glyph === null) unresolved = true;
         } catch (e) {
           throw failed(p, 'glyphs', e);
         }
       }
-      return unresolved;
+      if (unresolved) return null;
+      return asked && pending ? 'pending' : undefined;
     };
+    return lookup as IconLookup;
   }
 
   get size(): number {
