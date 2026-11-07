@@ -107,10 +107,12 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
     const folders = new Set(galleryFixtures().map((f) => f.path.split('/')[0]));
     expect([...folders].sort()).toEqual([
       'class-diagram',
+      'cynefin',
       'er-diagram',
       'flowchart',
       'gantt',
       'git',
+      'info',
       'journey',
       'mindmap',
       'pie',

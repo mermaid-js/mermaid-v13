@@ -23,10 +23,12 @@ describe('packAll (this workspace)', () => {
     expect(names).toEqual([
       '@mermaid-chart/core',
       '@mermaid-chart/diagram-class',
+      '@mermaid-chart/diagram-cynefin',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/diagram-gantt',
       '@mermaid-chart/diagram-gitgraph',
+      '@mermaid-chart/diagram-info',
       '@mermaid-chart/diagram-journey',
       '@mermaid-chart/diagram-mindmap',
       '@mermaid-chart/diagram-pie',

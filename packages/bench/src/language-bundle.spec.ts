@@ -55,6 +55,16 @@ const PACKAGES = [
     dir: 'diagram-gantt',
     renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
   },
+  {
+    name: 'cynefin',
+    dir: 'diagram-cynefin',
+    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
+  },
+  {
+    name: 'info',
+    dir: 'diagram-info',
+    renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

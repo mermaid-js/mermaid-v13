@@ -1,0 +1,54 @@
+[
+  {
+    "id": "v12-specs/info.spec.ts#1",
+    "source": "info"
+  },
+  {
+    "id": "v12-specs/info.spec.ts#3",
+    "source": "info showInfo"
+  },
+  {
+    "id": "v12-specs/info.spec.ts#4",
+    "source": "info unsupported"
+  },
+  {
+    "id": "v12-specs/info.test.ts#3",
+    "source": "\n    info"
+  },
+  {
+    "id": "v12-specs/info.test.ts#4",
+    "source": "info\n    "
+  },
+  {
+    "id": "v12-specs/info.test.ts#5",
+    "source": "\n    info\n    "
+  },
+  {
+    "id": "v12-specs/info.test.ts#7",
+    "source": "info showInfo\n    "
+  },
+  {
+    "id": "v12-specs/info.test.ts#8",
+    "source": "\n    info showInfo"
+  },
+  {
+    "id": "v12-specs/info.test.ts#9",
+    "source": "info\n    showInfo"
+  },
+  {
+    "id": "v12-specs/info.test.ts#10",
+    "source": "info\n    showInfo\n    "
+  },
+  {
+    "id": "v12-specs/info.test.ts#11",
+    "source": "\n    info\n    showInfo\n    "
+  },
+  {
+    "id": "v12-specs/info.test.ts#12",
+    "source": "\n    info\n    showInfo"
+  },
+  {
+    "id": "v12-specs/info.test.ts#13",
+    "source": "\n    info showInfo\n    "
+  }
+]

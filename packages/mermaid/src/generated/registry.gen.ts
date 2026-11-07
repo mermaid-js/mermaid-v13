@@ -44,7 +44,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-gantt').then((m) => m.gantt),
   },
-  { type: 'info', pattern: /^\s*info/ },
+  {
+    type: 'info',
+    pattern: /^\s*info/,
+    id: 'info',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-info').then((m) => m.info),
+    loadAscii: () => import('@mermaid-js/diagram-info/ascii').then((m) => m.ascii),
+  },
   {
     type: 'pie',
     pattern: /^\s*pie/,
@@ -120,6 +127,12 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   { type: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i },
   { type: 'venn', pattern: /^\s*venn-beta/ },
   { type: 'wardley', pattern: /^\s*wardley-beta/i },
-  { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/ },
+  {
+    type: 'cynefin',
+    pattern: /^\s*cynefin-beta(?:[\s:]|$)/,
+    id: 'cynefin',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-cynefin').then((m) => m.cynefin),
+  },
   { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
 ];

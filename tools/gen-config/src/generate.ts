@@ -42,6 +42,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   mindmap: 'packages/diagram-mindmap',
   pie: 'packages/diagram-pie',
   quadrantChart: 'packages/diagram-quadrant',
+  cynefin: 'packages/diagram-cynefin',
 };
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */

@@ -17,7 +17,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
 | `gantt` | `@mermaid-js/diagram-gantt` | yes | no |
-| `info` | not ported | no | no |
+| `info` | `@mermaid-js/diagram-info` | yes | yes |
 | `pie` | `@mermaid-js/diagram-pie` | yes | no |
 | `requirement` | not ported | no | no |
 | `sequence` | `@mermaid-js/diagram-sequence` | yes | yes |
@@ -43,5 +43,5 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `railroadPeg` | not ported | no | no |
 | `venn` | not ported | no | no |
 | `wardley` | not ported | no | no |
-| `cynefin` | not ported | no | no |
+| `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |
 | `usecase` | not ported | no | no |

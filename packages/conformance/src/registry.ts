@@ -1,7 +1,9 @@
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
+import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
+import { infoAdapter } from './info/v13.ts';
 import { ganttAdapter } from './gantt/v13.ts';
 import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
@@ -93,6 +95,11 @@ export const PARITY_SUITES: ParitySuite[] = [
     ],
   },
   {
+    adapter: infoAdapter,
+    corpusDirs: ['e2e/diagrams/info'],
+    corpusFiles: ['packages/conformance/corpus/info-v12-specs.json'],
+  },
+  {
     adapter: quadrantAdapter,
     corpusDirs: ['e2e/diagrams/quadrant-chart'],
     corpusFiles: [
@@ -109,6 +116,11 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/kanban-cases.json',
     ],
     corpus: kanbanParityCorpus,
+  },
+  {
+    adapter: cynefinAdapter,
+    corpusDirs: ['e2e/diagrams/cynefin'],
+    corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
   },
 ];
 

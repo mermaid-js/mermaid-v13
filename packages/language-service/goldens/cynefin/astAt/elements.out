@@ -1,0 +1,22 @@
+@ 1:9  cynefin-|beta
+  header 1:1-1:13 "cynefin-beta"
+@ 2:5  ti|tle Incident response
+  title 2:3-2:26 "title Incident response"
+@ 3:6  com|plex
+  d:complex 3:3-5:12 "complex\n    \"Probe\"\n    \"Sense\""
+@ 4:9  "Pro|be"
+  i:complex/Probe 4:5-4:12 "\"Probe\""
+  d:complex 3:3-5:12 "complex\n    \"Probe\"\n    \"Sense\""
+@ 6:17  complex --> cl|ear : "Pattern"
+  t:complex>clear 6:3-6:32 "complex --> clear : \"Pattern\""
+@ 6:27  complex --> clear : "Pat|tern"
+  t:complex>clear 6:3-6:32 "complex --> clear : \"Pattern\""
+@ 7:16  complex "Late|r"
+  i:complex/Later 7:11-7:18 "\"Later\""
+  d:complex@2 7:3-7:18 "complex \"Later\""
+@ 8:6  acc|Title: x
+  accTitle 8:3-8:14 "accTitle: x"
+@ 10:10  long |text
+  accDescr 9:3-11:4 "accDescr {\n    long text\n  }"
+@ 12:1  |
+  none

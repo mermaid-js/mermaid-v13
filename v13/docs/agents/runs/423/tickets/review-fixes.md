@@ -1,0 +1,25 @@
+# #423 final review fixes: handoff
+
+Branch `feature/423_cynefin-review-fixes` (cut from `feature/423_cynefin` at `1a4fc5013`).
+
+**1. Every lexer error reported (US2, T2).** `CynefinParser.recover()` reports each error token in the span it skips to the line end (`badCharacters(j)` no longer throws); parse errors still resync once per line. `complex "a" ; "b" Clear` now gives two diagnostics. Six new recovery cases with two to five errors on a line (`cynefin-cases/recovery-line-*`, `recovery-lines-several-each`); five old cases now list the extra lexer errors (`accTitle x`: `accTitle` and `x`; unclosed `accDescr {`: four). `recovery.spec.ts` also checks, for every case, that the lexer-error diagnostics (`UNEXPECTED_CHARACTER`, `UNCLOSED_STRING`, `UNCLOSED_ACC_DESCR`) are as many as the `Lexer error` lines of mermaid@12's message (all 37 agree), and that ≥ 5 cases have two errors on one line.
+
+**2. One detection rule.** The service and mermaid disagreed on 364 of the detection spec's cases (`cynefin-beta%% c⏎…`, `usecase-beta%% c⏎…`, a keyword split by a directive, `flowchart%%{…}%%-elk`). `detectText(src, start, pre, { keepLastLineComment })` and `firstPartyDetects(test, body, v12Text)` now live in `@mermaid-js/core/preprocess` (`detect-text.ts`); `packages/mermaid/src/registry.ts` and `packages/language-service/src/service.ts` both call them (the service's own copy is gone). `conformance/src/detection.spec.ts`: the service's `type` equals mermaid's `detectType` for every case and 1,000 seeded mixes. **Core 92,724 B gz** (was 92,687: +37 B, the helper and the options object; budget 94,208).
+
+**3.** MIGRATION.md "Cynefin SVG structure": "no `<style>` (except `theme: 'auto'`)".
+
+**4.** `conformance/src/cynefin/boundaries.spec.ts`: `createMermaid().render()` of the `seed: 42` e2e fixture, two render ids, writes v12's fold, horizon (`seed + 100`, as v12's renderer), cliff and ellipse (`v12-boundaries.ts`), after `num()` rounding.
+
+**5. Parsed fixtures.** `layout/cynefin.fixtures.ts` is gone; `layout/mmd.fixtures.ts` (spec helper, not built) parses every `e2e/diagrams/cynefin/**/*.mmd` with Vite's `import.meta.glob` (no Node types in the package) and fails on an error diagnostic. `invariants.spec.ts` runs over all 32; `layout.spec.ts` names the ones it works by hand. The hand-built cases the corpus missed are new baselines: `baseline/layout/crowded-and-wide.mmd` (12 + 6 items, wide title and items), `every-transition.mmd` (all 20 ordered pairs), `repeated-transitions.mmd` (three repeats, an empty item). Counts 29 → 32 in `lexer-parity`, `layout-corpus`; YAML digest snapshot updated. **Only synthetic case left:** a self-loop transition reaching the layout (inline in `layout.spec.ts`): the parser always leaves self-loops out (D365).
+
+**6. Cleanups.** `index.ts` manifest note; `layout/index.ts` drops `DOMAIN_META`, `domainTitle`, `CYNEFIN_DEFAULTS` (and the path re-exports); `domainTitle` moves to `src/domains.ts`, `layout/meta.ts` deleted; `CYNEFIN_TRIVIA` off `./testing` and `parser/index.ts`; `drawnItems()` (`layout/layout.ts`) is the one confusion cap (labels, badges, invariants); metrics `ITEMS` → `BADGES` (facet's `ITEMS` kept, as pie's); `layout/path.ts` → `render/path.ts` (`./testing` re-exports `curveData`, `ellipseData`); the renderer writes `bold` at `FONTS.bold` (its own `BOLD = 600` gone); config defaults and schema bounds move from `metrics.ts` to `layout/config.ts`; `registry.ts` comments say nothing of cynefin.
+- **Spelling:** identifiers are `center` throughout (`canvas.center()`, `centered()`, `centers`), matching the public layout fields `CynefinQuadrant.center` / `CynefinEllipse.center` and pie's `center`. The package is unpublished, so renaming the fields would not break anyone, but `center` matches the sibling packages; prose and messages keep the repo's British "centre".
+
+**Checks.** `pnpm check` green under the lock, `VITEST_MAX_WORKERS=4` (515 files, 12,313 tests; the first run's `flowchart/probe.spec.ts` 60 s timeout under load passed on the rerun). E2E in `mcr.microsoft.com/playwright:v1.62.1-noble` (copy `.tmp/t423rf-e2e`, `--shm-size=2g`, under the e2e lock), `rendering/mmd-snapshots.spec.ts` + `browser/` + `language/` (chromium): 1739/1739 passed (fresh PNG store, so snapshots were written, not compared).
+
+**Deviations (for the maintainer).**
+- The literals gate (`cynefin-layout-literals.spec.ts`) gains a per-file allowance: `config.ts` alone may write `50` (the schema's `boundaryAmplitude` maximum), since the bounds moved there as asked; no literal is allowed anywhere else.
+- After an unclosed `accDescr {` or string, the words v12's lexer also skipped are reported as unexpected characters (v12 lists them too); this is noisier than one diagnostic per cause.
+- New layout baselines add three gallery images (Argos), each with a `seed`.
+
+**Left as they were (recorded):** `prepareRename` returning the range; `:` before `"` completion order; the bench harness copies; `declaredOnly` threading; the forest approximation.

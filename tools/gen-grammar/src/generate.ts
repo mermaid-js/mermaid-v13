@@ -152,6 +152,21 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'cynefin',
+    title: 'Cynefin diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // An item starts with its quote; completion offers it after a domain, with the doc.
+      documented: ['String', 'Colon'],
+    },
+  },
+  {
+    type: 'info',
+    title: 'Info diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {
