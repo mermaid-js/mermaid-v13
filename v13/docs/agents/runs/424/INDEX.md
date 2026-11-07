@@ -9,7 +9,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T3 layout | #455 | #453 | merged (ff b5e02727e; package entry 10,785 B gz, core unchanged) |
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | merged (ff 194da70d7; package entry 12,706 B gz, core 92,619 unchanged) |
 | T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | done on `feature/463_kanban-language` (handoff `tickets/463.md`; package entry 14,176 B gz, `./language` 12,623 B gz, no core change) |
-| T5 integration | #459 | #457, #463 (T0a merged in) | blocked |
+| T5 integration | #459 | #457, #463 | in progress (`.claude/worktrees/t459`, `feature/459_kanban-integration`) |
 | T7 ascii (Should) | #466 | #459 | blocked |
 
 - `01-v12-kanban.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, corpus, the mindmap lexer to copy, Pele.
