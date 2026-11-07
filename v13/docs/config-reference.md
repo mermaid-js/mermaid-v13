@@ -906,17 +906,17 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
 | `cynefin` | object |  | pending |  | Configuration for Cynefin framework diagrams. |
-| `cynefin.useWidth` | number |  | pending |  |  |
-| `cynefin.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `cynefin.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the cynefin renderer never did. |  |
+| `cynefin.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `cynefin.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `cynefin.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `cynefin.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `cynefin.width` | number | `800` | pending |  | The width of the Cynefin diagram. |
-| `cynefin.height` | number | `600` | pending |  | The height of the Cynefin diagram. |
-| `cynefin.padding` | number | `40` | pending |  | Padding around the diagram. |
-| `cynefin.showDomainDescriptions` | boolean | `true` | pending |  | Show decision model and practice type labels. |
-| `cynefin.boundaryAmplitude` | number | `8` | pending |  | Waviness amplitude of domain boundaries (0 for straight). |
-| `cynefin.seed` | number | `0` | pending |  | Deterministic seed for boundary waviness. When 0 (default) the seed is derived from the diagram's SVG element id, which varies per render. Set any non-zero number to produce identical boundaries on every render — required for visual regression tests to be stable. |
+| `cynefin.width` | number | `800` | honoured (13.0.0) | A value that is not a finite number of at least 1 draws the default 800, with one `CYNEFIN_CONFIG_INVALID` warning (D366). | The width of the Cynefin diagram. |
+| `cynefin.height` | number | `600` | honoured (13.0.0) | A value that is not a finite number of at least 1 draws the default 600, with one `CYNEFIN_CONFIG_INVALID` warning (D366). | The height of the Cynefin diagram. |
+| `cynefin.padding` | number | `40` | honoured (13.0.0) | A value that is not a finite number of at least 0 draws the default 40, with one `CYNEFIN_CONFIG_INVALID` warning (D366). | Padding around the diagram. |
+| `cynefin.showDomainDescriptions` | boolean | `true` | honoured (13.0.0) |  | Show decision model and practice type labels. |
+| `cynefin.boundaryAmplitude` | number | `8` | honoured (13.0.0) | Clamped to [0, 50], with one `CYNEFIN_CONFIG_INVALID` warning (D366); v12 drew any value. | Waviness amplitude of domain boundaries (0 for straight). |
+| `cynefin.seed` | number | `0` | honoured (13.0.0) | v12 hashed the SVG element id, which changed with every render id; v13 hashes the render's `idPrefix` with v12's hash (D362). A value that is not a finite number counts as 0, with one `CYNEFIN_CONFIG_INVALID` warning (D366). | Seed for the boundary waviness. When 0 (the default) the seed is a hash of the render's id prefix (the `id` render option, or one derived from the text and config), so a render is deterministic for a given id and two diagrams on one page differ. Set any non-zero number to draw the same boundaries as v12 for that seed, whatever the id. |
 
 ## `railroad`
 

@@ -82,6 +82,12 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   readonly standalone?: readonly string[];
   /**
+   * When true, only a `def` occurrence defines a symbol: a name the parser records only as
+   * `ref`s (a cynefin domain no block declares, D367) has no definition, and all its mentions
+   * are references. When absent or false, such a name's first mention is its definition.
+   */
+  readonly declaredOnly?: boolean;
+  /**
    * `undefined` when `name` can be used as an identifier of symbol kind `kind` (a kind the
    * parser records, e.g. `node`, `class`, `edge`; the facet's main id kind when omitted),
    * else the reason it cannot (D92).

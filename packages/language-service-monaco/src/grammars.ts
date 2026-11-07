@@ -45,4 +45,5 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   info: { load: () => import('./generated/info.monarch.js').then((m) => m.default) },
   mindmap: { load: () => import('./generated/mindmap.monarch.js').then((m) => m.default) },
   gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
+  cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
 };

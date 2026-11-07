@@ -5,6 +5,8 @@
 export { preprocess } from './preprocess.ts';
 export type { PreprocessResult } from './preprocess.ts';
 export { diagramStart } from './diagram-start.ts';
+export { detectText, firstPartyDetects } from './detect-text.ts';
+export type { DetectTextOptions } from './detect-text.ts';
 export type { FrontMatter } from './frontmatter.ts';
 export { MAX_DIRECTIVE_DEPTH } from './directives.ts';
 export type { Directive, DirectiveKind } from './directives.ts';

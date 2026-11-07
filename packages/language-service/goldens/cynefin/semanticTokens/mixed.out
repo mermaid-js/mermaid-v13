@@ -1,0 +1,16 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:13 "cynefin-beta" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:26 "title Incident response" keyword
+5:3-5:21 "accTitle: Response" keyword
+6:3-8:4 "accDescr {\n    multi\n  }" keyword
+9:3-9:10 "complex" variable [declaration, definition]
+9:11-9:18 "\"Probe\"" string
+9:19-9:26 "'Sense'" string
+10:3-10:10 "complex" variable
+10:11-10:14 "-->" operator
+10:15-10:20 "clear" variable
+10:21-10:22 ":" operator
+10:23-10:38 "\"Pattern found\"" string
+11:3-11:8 "clear" variable [declaration, definition]
+11:9-11:21 "\"Categorise\"" string

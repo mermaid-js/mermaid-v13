@@ -1,5 +1,6 @@
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
+import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { infoAdapter } from './info/v13.ts';
@@ -104,6 +105,11 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/quadrant-cases.json',
     ],
     corpus: quadrantParityCorpus,
+  },
+  {
+    adapter: cynefinAdapter,
+    corpusDirs: ['e2e/diagrams/cynefin'],
+    corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
   },
 ];
 

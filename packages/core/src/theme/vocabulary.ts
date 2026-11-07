@@ -205,10 +205,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
   background: def('bg', 'color', ['core', 'state']),
-  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'cynefin']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'cynefin']),
   // Pie draws in the font family but sizes its text by its own variables.
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'info']),
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'cynefin', 'info']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
@@ -228,6 +228,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'quadrant',
     'gitgraph',
     'gantt',
+    'cynefin',
     'info',
   ]),
   mainBkg: def('mb', 'color', [

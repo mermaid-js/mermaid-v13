@@ -43,5 +43,5 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `railroadPeg` | not ported | no | no |
 | `venn` | not ported | no | no |
 | `wardley` | not ported | no | no |
-| `cynefin` | not ported | no | no |
+| `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |
 | `usecase` | not ported | no | no |

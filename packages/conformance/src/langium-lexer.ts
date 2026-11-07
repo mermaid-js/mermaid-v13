@@ -33,6 +33,7 @@ export const LANGIUM_LEXERS = {
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
   info: { probe: 'info', factory: 'createInfoServices', key: 'Info' },
   gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
+  cynefin: { probe: 'cynefin-beta\ncomplex', factory: 'createCynefinServices', key: 'Cynefin' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

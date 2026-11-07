@@ -216,6 +216,21 @@ const DOCS: Readonly<Record<string, string>> = {
     '  click a1 href "https://example.com"',
     '',
   ].join('\n'),
+  cynefin: [
+    'cynefin-beta',
+    '  title Incident response',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  %% the five domains',
+    '  complex',
+    '    "Probe"',
+    "    'Sense'",
+    '  clear',
+    '    "Categorise"',
+    '  complex --> clear : "stabilise"',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */
