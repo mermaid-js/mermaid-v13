@@ -29,14 +29,14 @@ export function kanbanLabels(model: KanbanModel): string[] {
 /**
  * The kanban plugin (DESIGN §12.1, spec #424): `layoutKind: 'custom'` with its own
  * `KanbanLayout`. `parse` takes the whole source and the integrator's node limit (R-SEC-5);
- * `layout` measures and places everything; `render` writes the whole `<svg>` document. SVG only
- * (D320; text output is T7). The registry loads it from the package's `mermaid` manifest (#459);
+ * `layout` measures and places everything; `render` writes the whole `<svg>` document. Text
+ * output is the separate `./ascii` entry (#466, D320), which draws the layout in cells. The registry loads it from the package's `mermaid` manifest (#459);
  * `configDefaults` are the `kanban` section's generated defaults, and `theme` is the diagram's
  * own theme table (`theme/table.ts`, D331).
  */
 export const kanban = {
   id: 'kanban',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: kanbanConfigDefaults as Readonly<Record<string, unknown>>,
   theme,

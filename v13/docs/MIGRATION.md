@@ -1793,12 +1793,21 @@ Class lists are written with single spaces and no trailing blank.
 
 ## Kanban
 
-- **SVG only:** `kanban` is detected by v12's case-sensitive detector with no word boundary,
+- **Detection:** `kanban` is detected by v12's case-sensitive detector with no word boundary,
   between `c4` and `classDiagram` as in v12. So `kanbanBoard` or `kanbanx` is detected as a
   kanban board and then rejected as a syntax error (`SYNTAX`), and `Kanban` or `KANBAN` is not
-  detected at all (`UNSUPPORTED_DIAGRAM`), as in v12.
-  `format: 'ascii'` throws `UnsupportedFormatError`. The language service, CodeMirror and Monaco
-  know it.
+  detected at all (`UNSUPPORTED_DIAGRAM`), as in v12. The language service, CodeMirror and
+  Monaco know it.
+- **Text output** (`format: 'ascii'`, new; v12 had none) draws the columns side by side as boxes,
+  `sectionWidth` in cells wide (200 px is 25 columns), with each column's title on its top
+  border and its cards stacked inside, labels wrapped to the card. A card's last row has the
+  ticket on the left (plain text, never a link) and the assignee on the right, or each on a row
+  of its own when they do not fit side by side. The priority is the card's left edge: heavy
+  for `Very High` and `High`, dashed for `Low` and `Very Low`; in the `ascii` charset a tag on
+  the card's top border (`!!`, `!`, `-`, `--`) tells the four apart. `:::` classes, bold and
+  italic text and ticket links are dropped with one `ASCII_DROPPED` warning each (`style`,
+  `emphasis`, `link`); a board wider than `ascii.maxWidth` is not folded and adds
+  `ASCII_TOO_WIDE` ([ASCII output](./ascii.md#kanban-boards)).
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
   error is reported, not only the first, with messages in words (R-PARSE-4). As in v12, an item

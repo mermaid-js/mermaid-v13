@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { kanban } from '@mermaid-js/diagram-kanban';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -167,12 +167,88 @@ describe('kanban boards through the public API (#459)', () => {
     expect((await m.render('k7', TEXT)).diagramType).toBe('kanban');
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError', async () => {
+  it('draws as text (#466): columns side by side, cards stacked, the priority in the left edge', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('kanban', 'svg')).toBe(true);
-    expect(m.supportsFormat('kanban', 'ascii')).toBe(false);
-    const e = await rejection(m.render('k8', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('kanban');
+    expect(m.supportsFormat('kanban', 'ascii')).toBe(true);
+    const result = await m.render('k8', TEXT, { format: 'ascii' });
+    expect(result.format).toBe('ascii');
+    expect(result.diagramType).toBe('kanban');
+    expect(result.warnings).toEqual([]);
+    expect(result.text).toBe(
+      [
+        '┌──────── Todo ─────────┐ ┌──────── Done ─────────┐',
+        '│ ┎───────────────────┐ │ │                       │',
+        '│ ┃ Write the docs    │ │ └───────────────────────┘',
+        '│ ┃ MC-1         knsv │ │',
+        '│ ┖───────────────────┘ │',
+        '│ ┌───────────────────┐ │',
+        '│ │ Blog post         │ │',
+        '│ └───────────────────┘ │',
+        '└───────────────────────┘',
+      ].join('\n')
+    );
+    expect([result.columns, result.rows]).toEqual([51, 9]);
+  });
+
+  it('tags the priority on the card in the ascii charset, and stacks a ticket and assignee that do not fit side by side', async () => {
+    const text = [
+      'kanban',
+      '  doing[Doing]',
+      "    a[Fix the login bug]@{ priority: 'Very High' }",
+      "    b[Tidy]@{ priority: 'Low', ticket: MC-2037, assigned: 'K.Sveidqvist' }",
+    ].join('\n');
+    const result = await createMermaid().render('k9', text, {
+      format: 'ascii',
+      ascii: { charset: 'ascii' },
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.text).toBe(
+      [
+        '+-------- Doing --------+',
+        '| +- !! --------------+ |',
+        '| I Fix the login bug | |',
+        '| +-------------------+ |',
+        '| +- - ---------------+ |',
+        '| : Tidy              | |',
+        '| : MC-2037           | |',
+        '| :      K.Sveidqvist | |',
+        '| +-------------------+ |',
+        '+-----------------------+',
+      ].join('\n')
+    );
+  });
+
+  it('warns for what text cannot show, and when the board is wider than ascii.maxWidth (not folded)', async () => {
+    const text = [
+      '---',
+      'config:',
+      '  kanban:',
+      "    ticketBaseUrl: 'https://example.com/#TICKET#'",
+      '---',
+      'kanban',
+      '  todo[**Todo**]',
+      "    a[Docs]@{ ticket: MC-1, priority: 'Urgent' }",
+      '  done[Done]',
+      '  :::urgent',
+    ].join('\n');
+    const result = await createMermaid().render('k10', text, {
+      format: 'ascii',
+      ascii: { maxWidth: 30 },
+    });
+    expect(result.columns).toBe(51);
+    expect(result.text.split('\n')[0]).toBe('┌──────── Todo ─────────┐ ┌──────── Done ─────────┐');
+    expect(result.warnings.map((w) => [w.code, (w as { feature?: string }).feature])).toEqual([
+      ['KANBAN_PRIORITY', undefined],
+      ['ASCII_DROPPED', 'style'],
+      ['ASCII_DROPPED', 'emphasis'],
+      ['ASCII_DROPPED', 'link'],
+      ['ASCII_TOO_WIDE', undefined],
+    ]);
+    expect(result.warnings.slice(1, 4).map((w) => w.astIds)).toEqual([
+      ['n:done'],
+      ['n:todo'],
+      ['n:a'],
+    ]);
   });
 });

@@ -24,6 +24,8 @@ export interface KanbanMetrics {
   readonly sectionWidth: number;
   /** `kanban.padding`'s default: the outer margin (D378). */
   readonly padding: number;
+  /** Column titles wrap at `W − titleInset` (v12: at `W`). */
+  readonly titleInset: number;
   /** Between two columns (v12 `padding / 2`). */
   readonly columnGap: number;
   /** The least title-row height (v12 `maxLabelHeight` starts at 25). */
@@ -59,6 +61,7 @@ export const KANBAN_METRICS: KanbanMetrics = {
   // The `kanban` config defaults (`pnpm gen:config`, the plugin's `configDefaults`).
   sectionWidth: SCHEMA_DEFAULTS.sectionWidth,
   padding: SCHEMA_DEFAULTS.padding,
+  titleInset: 0,
   columnGap: 5,
   titleRow: 25,
   cardInset: 15,
@@ -80,6 +83,7 @@ export const KANBAN_METRICS: KanbanMetrics = {
 export const METRIC_AXIS: { readonly [K in keyof KanbanMetrics]: 'x' | 'y' } = {
   sectionWidth: 'x',
   padding: 'x',
+  titleInset: 'x',
   columnGap: 'x',
   titleRow: 'y',
   cardInset: 'x',
@@ -96,6 +100,50 @@ export const METRIC_AXIS: { readonly [K in keyof KanbanMetrics]: 'x' | 'y' } = {
   barWidth: 'x',
   stroke: 'x',
 };
+
+/**
+ * The metrics in cells, for the text output (#466): v12's px values scaled to cells would put
+ * labels on the borders, so cells have their own. A border takes a cell: a column is
+ * `┌─ title ─┐` (the title on its top border, a rule and a space either side), its cards one
+ * cell in from its sides and stacked with no row between, each card's text one space in from
+ * its border, and nothing between the last card and the column's bottom border. `sectionWidth`
+ * and `padding` are the px defaults in cells; the layout converts the config's px values.
+ */
+export const KANBAN_CELL_METRICS: KanbanMetrics = {
+  sectionWidth: 25,
+  padding: 1,
+  titleInset: 6,
+  columnGap: 1,
+  titleRow: 1,
+  cardInset: 4,
+  cardGap: 0,
+  wrapInset: 8,
+  minWrap: 1,
+  labelInset: 2,
+  cardPadY: 1,
+  stackEnd: 2,
+  stackMin: 3,
+  radius: 0,
+  barInsetX: 0,
+  barInsetY: 0,
+  barWidth: 1,
+  stroke: 0,
+};
+
+/** How a card's ticket row adds to its height: shares of the row, not lengths. */
+export interface MetaRow {
+  /** The share of the row's height the card grows by (v12 `heightAdj`: a half). */
+  readonly grow: number;
+  /** The share of the row's height the title moves up by (v12: a quarter). */
+  readonly lift: number;
+  /** A ticket and assignee that do not fit side by side go on rows of their own (v12 overlaps them). */
+  readonly stack: boolean;
+}
+
+export const PX_META_ROW: MetaRow = { grow: 0.5, lift: 0.25, stack: false };
+
+/** In cells the row is a row of its own, under the title and inside the card's border. */
+export const CELL_META_ROW: MetaRow = { grow: 1, lift: 0, stack: true };
 
 /** v12 places every column's top at `−COLUMN_TOP × W`: a multiple of `W`, not a length. */
 export const COLUMN_TOP = 1.5;

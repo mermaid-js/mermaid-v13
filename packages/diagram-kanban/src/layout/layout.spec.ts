@@ -278,7 +278,7 @@ describe('kanban layout invariants', () => {
 });
 
 describe('kanban layout in cells', () => {
-  it('converts every length through the unit profile, and holds the invariants', () => {
+  it('takes its lengths from the cell table and the config through the profile, and holds the invariants', () => {
     for (const [, { input, config }] of CASES) {
       const layout = layoutKanban(input, {
         config: { kanban: config } as ResolvedConfig,
@@ -297,9 +297,10 @@ describe('kanban layout in cells', () => {
       theme: createTheme(spec),
       warn: () => {},
     });
-    // 200 px and 5 px at 8 px a cell.
-    expect([sectionWidth, radius]).toEqual([25, 1]);
-    // The least W in cells still leaves card labels a cell to wrap at.
+    // 200 px at 8 px a cell; text corners are square (KANBAN_CELL_METRICS, #466).
+    expect([sectionWidth, radius]).toEqual([25, 0]);
+    // The least W in cells still leaves card labels a cell to wrap at: 26 px is 3 cells, raised
+    // to the cell table's `wrapInset` (8) + `minWrap` (1); cards are `cardInset` (4) narrower.
     const narrow = layoutKanban(board('  a[A]', '    x'), {
       config: { kanban: { sectionWidth: 26 } } as unknown as ResolvedConfig,
       measurer: cellMeasurer,
@@ -307,7 +308,7 @@ describe('kanban layout in cells', () => {
       theme: createTheme(spec),
       warn: () => {},
     });
-    expect(narrow.sectionWidth - narrow.cards[0]!.width).toBe(2);
-    expect(narrow.sectionWidth).toBe(4);
+    expect(narrow.sectionWidth - narrow.cards[0]!.width).toBe(4);
+    expect(narrow.sectionWidth).toBe(9);
   });
 });

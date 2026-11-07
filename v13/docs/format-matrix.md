@@ -13,7 +13,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `architecture` | not ported | no | no |
 | `agentflow` | not ported | no | no |
 | `c4` | not ported | no | no |
-| `kanban` | `@mermaid-js/diagram-kanban` | yes | no |
+| `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
 | `gantt` | `@mermaid-js/diagram-gantt` | yes | no |

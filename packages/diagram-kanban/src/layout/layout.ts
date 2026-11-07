@@ -10,7 +10,9 @@
  * `title + 20 + a`, with `a` half the taller of ticket and assignee (0 without either: checked
  * on a v12 render); the priority bar 2 in from the left, top and bottom. Changed: the margin is
  * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), and the bounds are what
- * is drawn (D224).
+ * is drawn (D224). In cells (the text output, #466) the lengths are `KANBAN_CELL_METRICS`, the
+ * ticket row is a row of its own (`CELL_META_ROW`), and a ticket and assignee that do not fit
+ * side by side are stacked; the px layout is unchanged.
  */
 import { fromPx } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
@@ -18,12 +20,16 @@ import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, inflate, union } from './extent.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 import {
+  CELL_META_ROW,
   COLUMN_TOP,
   configLengths,
   FONT_WEIGHT,
+  KANBAN_CELL_METRICS,
   KANBAN_METRICS,
   METRIC_AXIS,
+  PX_META_ROW,
   type KanbanMetrics,
+  type MetaRow,
 } from './metrics.ts';
 import type {
   CardLayout,
@@ -46,6 +52,7 @@ type Lengths = { readonly [K in keyof KanbanMetrics]: number };
 
 interface Env {
   readonly lengths: Lengths;
+  readonly meta: MetaRow;
   /** `W`, in the render's units. */
   readonly sectionWidth: number;
   readonly padding: number;
@@ -57,11 +64,14 @@ interface Env {
 function envOf(ctx: KanbanLayoutContext): Env {
   const config = configLengths(ctx.config.kanban ?? {}, (w) => ctx.warn(w));
   const convert = (px: number, axis: 'x' | 'y'): number => fromPx(ctx.units, px, axis);
-  const lengths = {} as Record<keyof KanbanMetrics, number>;
-  for (const key of Object.keys(KANBAN_METRICS) as (keyof KanbanMetrics)[])
-    lengths[key] = convert(KANBAN_METRICS[key], METRIC_AXIS[key]);
-  // Rounding to whole cells must not undo `MIN_SECTION_WIDTH`.
-  lengths.minWrap = fromPx(ctx.units, KANBAN_METRICS.minWrap, 'x', KANBAN_METRICS.minWrap);
+  // Cells have their own table (#466); any other profile converts the px one.
+  const cells = ctx.units.id === 'cell';
+  const lengths: Record<keyof KanbanMetrics, number> = { ...KANBAN_CELL_METRICS };
+  if (!cells) {
+    for (const key of Object.keys(KANBAN_METRICS) as (keyof KanbanMetrics)[])
+      lengths[key] = convert(KANBAN_METRICS[key], METRIC_AXIS[key]);
+    lengths.minWrap = fromPx(ctx.units, KANBAN_METRICS.minWrap, 'x', KANBAN_METRICS.minWrap);
+  }
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),
     size: ctx.theme.number('fontSize'),
@@ -69,6 +79,7 @@ function envOf(ctx: KanbanLayoutContext): Env {
   };
   return {
     lengths,
+    meta: cells ? CELL_META_ROW : PX_META_ROW,
     sectionWidth: Math.max(convert(config.sectionWidth, 'x'), lengths.wrapInset + lengths.minWrap),
     padding: convert(config.padding, 'x'),
     font,
@@ -102,17 +113,25 @@ function cardOf(
   centre: number,
   top: number
 ): CardLayout {
-  const { lengths } = env;
+  const { lengths, meta } = env;
   const wrap = env.sectionWidth - lengths.wrapInset;
   const title = env.measure(source.title, wrap);
   const ticket = env.measure(source.ticket, wrap);
   const assignee = env.measure(source.assigned, wrap);
-  // v12 `heightAdj`: an empty label measures 0 high, so a card without either adds nothing.
-  const metaHalf = Math.max(heightOf(ticket), heightOf(assignee)) / 2;
   const width = env.sectionWidth - lengths.cardInset;
   const left = centre - width / 2;
-  const height = heightOf(title) + 2 * lengths.cardPadY + metaHalf;
-  const titleTop = top + lengths.cardPadY - metaHalf / 2;
+  const stacked =
+    meta.stack &&
+    ticket !== undefined &&
+    assignee !== undefined &&
+    ticket.width + assignee.width >= width - 2 * lengths.labelInset;
+  // The ticket row's height: an empty label measures 0 high, so a card without either adds
+  // nothing (v12 `heightAdj`, of which the card grows by `meta.grow`).
+  const metaRow = stacked
+    ? heightOf(ticket) + heightOf(assignee)
+    : Math.max(heightOf(ticket), heightOf(assignee));
+  const height = heightOf(title) + 2 * lengths.cardPadY + metaRow * meta.grow;
+  const titleTop = top + lengths.cardPadY - metaRow * meta.lift;
   const metaTop = titleTop + heightOf(title);
   const bar: PriorityBar | undefined =
     source.priority !== undefined && PRIORITIES.has(source.priority)
@@ -136,7 +155,11 @@ function cardOf(
     ...(ticket ? { ticket: placed(ticket, left + lengths.labelInset, metaTop) } : {}),
     ...(assignee
       ? {
-          assignee: placed(assignee, left + width - lengths.labelInset - assignee.width, metaTop),
+          assignee: placed(
+            assignee,
+            left + width - lengths.labelInset - assignee.width,
+            stacked ? metaTop + heightOf(ticket) : metaTop
+          ),
         }
       : {}),
     ...(bar ? { bar } : {}),
@@ -148,7 +171,7 @@ export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext)
   const { lengths, sectionWidth: W } = env;
   const top = -COLUMN_TOP * W;
   // Titles first: the tallest sets the row every column shares.
-  const titles = input.columns.map((c) => env.measure(c.title, W));
+  const titles = input.columns.map((c) => env.measure(c.title, W - lengths.titleInset));
   const titleRow = Math.max(lengths.titleRow, ...titles.map(heightOf));
   const columns: ColumnLayout[] = [];
   const cards: CardLayout[] = [];

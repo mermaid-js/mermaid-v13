@@ -25,8 +25,9 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'kanban',
     pattern: /^\s*kanban/,
     id: 'kanban',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-kanban').then((m) => m.kanban),
+    loadAscii: () => import('@mermaid-js/diagram-kanban/ascii').then((m) => m.ascii),
   },
   {
     type: 'classDiagram',
