@@ -294,5 +294,290 @@
   {
     "id": "quadrant-cases/err-many",
     "source": "quadrantChart\nquadrant-1\nP: [2, 0]\nclassDef c\nx-axis a --> b --> c\nquadrant-2 ok\n"
+  },
+  {
+    "id": "quadrant-cases/db styles 0 (point)",
+    "note": "`quadrantDb.spec.ts`'s style lists (it parses none), as point and classDef styles.",
+    "source": "quadrantChart\nP: [0.1, 0.2] radius: 10, color: #ff0000, stroke-color: #ff00ff, stroke-width: 10px"
+  },
+  {
+    "id": "quadrant-cases/db styles 0 (classDef)",
+    "source": "quadrantChart\nclassDef c radius: 10, color: #ff0000, stroke-color: #ff00ff, stroke-width: 10px"
+  },
+  {
+    "id": "quadrant-cases/db styles 1 (point)",
+    "source": "quadrantChart\nP: [0.1, 0.2] test_name: value"
+  },
+  {
+    "id": "quadrant-cases/db styles 1 (classDef)",
+    "source": "quadrantChart\nclassDef c test_name: value"
+  },
+  {
+    "id": "quadrant-cases/db styles 2 (point)",
+    "source": "quadrantChart\nP: [0.1, 0.2] radius: f"
+  },
+  {
+    "id": "quadrant-cases/db styles 2 (classDef)",
+    "source": "quadrantChart\nclassDef c radius: f"
+  },
+  {
+    "id": "quadrant-cases/db styles 3 (point)",
+    "source": "quadrantChart\nP: [0.1, 0.2] color: ffaa"
+  },
+  {
+    "id": "quadrant-cases/db styles 3 (classDef)",
+    "source": "quadrantChart\nclassDef c color: ffaa"
+  },
+  {
+    "id": "quadrant-cases/db styles 4 (point)",
+    "source": "quadrantChart\nP: [0.1, 0.2] stroke-color: #f677779"
+  },
+  {
+    "id": "quadrant-cases/db styles 4 (classDef)",
+    "source": "quadrantChart\nclassDef c stroke-color: #f677779"
+  },
+  {
+    "id": "quadrant-cases/db styles 5 (point)",
+    "source": "quadrantChart\nP: [0.1, 0.2] stroke-width: 30"
+  },
+  {
+    "id": "quadrant-cases/db styles 5 (classDef)",
+    "source": "quadrantChart\nclassDef c stroke-width: 30"
+  },
+  {
+    "id": "quadrant-cases/lexer case 0",
+    "note": "Every jison rule and state edge, plus preprocessing shapes.",
+    "source": "quadrantChart\nx-axis a ---> b\ny-axis  c  --  d"
+  },
+  {
+    "id": "quadrant-cases/lexer case 1",
+    "note": "A failed `-->` at a lone dash: the space after it starts a new one (review of #300).",
+    "source": "quadrantChart\nx-axis Low - --> High"
+  },
+  {
+    "id": "quadrant-cases/lexer case 2",
+    "source": "quadrantChart\nx-axis Low -- --> High"
+  },
+  {
+    "id": "quadrant-cases/lexer case 3",
+    "source": "quadrantChart\ny-axis a - -->b"
+  },
+  {
+    "id": "quadrant-cases/lexer case 4",
+    "source": "quadrantChart\nx-axis a -   --> b"
+  },
+  {
+    "id": "quadrant-cases/lexer case 5",
+    "note": "A lexical error inside an entity placeholder, and a comment after the last line break.",
+    "source": "quadrantChart\nP:::#12;x"
+  },
+  {
+    "id": "quadrant-cases/lexer case 6",
+    "source": "quadrantChart\nquadrant-1 a\n%% c"
+  },
+  {
+    "id": "quadrant-cases/lexer case 7",
+    "source": "quadrantChart\nX-AXIS A\nY-Axis B\nQUADRANT-2 C\nquadrant-3 D\nQuadrant-4 E\nTITLE T"
+  },
+  {
+    "id": "quadrant-cases/lexer case 8",
+    "source": "quadrantChart\nquadrant-5 x\nquadrant- y\nx-axisy-axis"
+  },
+  {
+    "id": "quadrant-cases/lexer case 9",
+    "source": "quadrantChart\naccTitle : t\naccDescr:d\naccDescr {\n  two\n  lines\n}\nquadrant-1 a"
+  },
+  {
+    "id": "quadrant-cases/lexer case 10",
+    "source": "quadrantChart\naccDescr {"
+  },
+  {
+    "id": "quadrant-cases/lexer case 11",
+    "source": "quadrantChart\naccDescr {\nopen"
+  },
+  {
+    "id": "quadrant-cases/lexer case 12",
+    "source": "quadrantChart\naccTitle"
+  },
+  {
+    "id": "quadrant-cases/lexer case 13",
+    "source": "quadrantChart\naccTitle:"
+  },
+  {
+    "id": "quadrant-cases/lexer case 14",
+    "source": "quadrantChart\ntitle"
+  },
+  {
+    "id": "quadrant-cases/lexer case 15",
+    "source": "quadrantChart\ntitle\n"
+  },
+  {
+    "id": "quadrant-cases/lexer case 16",
+    "source": "quadrantChart\nquadrant-1 \"open"
+  },
+  {
+    "id": "quadrant-cases/lexer case 17",
+    "source": "quadrantChart\nquadrant-1 \"`md **b**`\"\nquadrant-2 \"`open"
+  },
+  {
+    "id": "quadrant-cases/lexer case 18",
+    "source": "quadrantChart\nquadrant-1 \"`a\""
+  },
+  {
+    "id": "quadrant-cases/lexer case 19",
+    "source": "quadrantChart\nquadrant-1 \"`a`b`\""
+  },
+  {
+    "id": "quadrant-cases/lexer case 20",
+    "source": "quadrantChart\nP:::"
+  },
+  {
+    "id": "quadrant-cases/lexer case 21",
+    "source": "quadrantChart\nP:::\n"
+  },
+  {
+    "id": "quadrant-cases/lexer case 22",
+    "source": "quadrantChart\nP: ["
+  },
+  {
+    "id": "quadrant-cases/lexer case 23",
+    "source": "quadrantChart\nP: [0.1"
+  },
+  {
+    "id": "quadrant-cases/lexer case 24",
+    "source": "quadrantChart\nP: [0.1,"
+  },
+  {
+    "id": "quadrant-cases/lexer case 25",
+    "source": "quadrantChart\nP: [0.1, 0.2"
+  },
+  {
+    "id": "quadrant-cases/lexer case 26",
+    "source": "quadrantChart\nP: [0.1 , 0.2 ]   \nQ :  [ 1 ,1 ]"
+  },
+  {
+    "id": "quadrant-cases/lexer case 27",
+    "source": "quadrantChart\nP: [1, 1] radius: 10, color: #ff0000, stroke-color: #00ff00, stroke-width: 2px"
+  },
+  {
+    "id": "quadrant-cases/lexer case 28",
+    "source": "quadrantChart\nP:::cls: [0, 0]\nclassDef cls color:#fff, radius : 3"
+  },
+  {
+    "id": "quadrant-cases/lexer case 29",
+    "source": "quadrantChart\na + b, c = d == e * f # g _ h . i & j - k 12 ; l ! m $ n % o ' p ` q ? r \\ s / t"
+  },
+  {
+    "id": "quadrant-cases/lexer case 30",
+    "source": "quadrantChart\né 中文 😀 Ünïcödé x\u00a0y\u3000z"
+  },
+  {
+    "id": "quadrant-cases/lexer case 31",
+    "source": "quadrantChart\né%% c\nA"
+  },
+  {
+    "id": "quadrant-cases/lexer case 32",
+    "source": "quadrantChart\nA\n%%\nB"
+  },
+  {
+    "id": "quadrant-cases/lexer case 33",
+    "source": "quadrantChart\nA %%{-\nB"
+  },
+  {
+    "id": "quadrant-cases/lexer case 34",
+    "source": "quadrantChart\nA}%% c\nB"
+  },
+  {
+    "id": "quadrant-cases/lexer case 35",
+    "source": "quadrantChart\nA}%%{-\nB"
+  },
+  {
+    "id": "quadrant-cases/lexer case 36",
+    "source": "quadrantChart\nA\u007fB"
+  },
+  {
+    "id": "quadrant-cases/lexer case 37",
+    "source": "quadrantChart\nA\u0001B"
+  },
+  {
+    "id": "quadrant-cases/lexer case 38",
+    "source": "quadrantChart\nx-axis a #quot; b --> c#9829;é\nquadrant-1 \"#amp; #35;\"\ntitle #y; t"
+  },
+  {
+    "id": "quadrant-cases/lexer case 39",
+    "source": "quadrantChart\nP#y;: [0.1, 0.2]\nclassDef c color: #ff0000;\nquadrant-2 x;y;"
+  },
+  {
+    "id": "quadrant-cases/lexer case 40",
+    "source": "quadrantChart\nquadrant-1 <b class=\"x\">y</b>"
+  },
+  {
+    "id": "quadrant-cases/lexer case 41",
+    "source": "%%{init: {\"quadrantChart\": {\"chartWidth\": 400}}}%%\nquadrantChart\nquadrant-1 a"
+  },
+  {
+    "id": "quadrant-cases/lexer case 42",
+    "source": "---\ntitle: front\n---\nquadrantChart\nquadrant-1 a"
+  },
+  {
+    "id": "quadrant-cases/lexer case 43",
+    "source": "\n\n   quadrantChart\nquadrant-1 a"
+  },
+  {
+    "id": "quadrant-cases/lexer case 45",
+    "source": "quadrantChart "
+  },
+  {
+    "id": "quadrant-cases/lexer case 46",
+    "source": "quadrantChart\tx"
+  },
+  {
+    "id": "quadrant-cases/lexer case 47",
+    "source": "quadrantChartx-axis a"
+  },
+  {
+    "id": "quadrant-cases/lexer case 48",
+    "source": "quadrantChart\nquadrantChart\nquadrantChart"
+  },
+  {
+    "id": "quadrant-cases/lexer case 49",
+    "source": "quadrantChart\n\t\u000b\f x"
+  },
+  {
+    "id": "quadrant-cases/lexer case 50",
+    "source": "quadrantChart\n;;\n\n;"
+  },
+  {
+    "id": "quadrant-cases/line separators 0",
+    "note": "U+2028 and U+2029: a regex `.` stops at them and `\\s` takes them. CR and CRLF read as LF.",
+    "source": "quadrantChart\ntitle a\u2028b"
+  },
+  {
+    "id": "quadrant-cases/line separators 1",
+    "source": "quadrantChart\nP: [0\u20285, 0.1]"
+  },
+  {
+    "id": "quadrant-cases/line separators 2",
+    "source": "quadrantChart\nP:\u2028[0.1,\u20290.2]"
+  },
+  {
+    "id": "quadrant-cases/line separators 3",
+    "source": "quadrantChart\nquadrant-1 a\u2028b"
+  },
+  {
+    "id": "quadrant-cases/line separators 4",
+    "source": "quadrantChart\naccTitle: a\u2029b"
+  },
+  {
+    "id": "quadrant-cases/line separators 5",
+    "source": "quadrantChart\r\nx-axis a --> b\r\nP: [0.1,\r\n0.2]\r\n%%\r\nB\r"
+  },
+  {
+    "id": "quadrant-cases/line separators 6",
+    "source": "quadrantChart\rtitle t\rquadrant-1 \"a\r\nb\"\r"
+  },
+  {
+    "id": "quadrant-cases/line separators 7",
+    "source": "quadrantChart\r\nquadrant-1 a\r\n%% c\r\n%%\r\nb"
   }
 ]

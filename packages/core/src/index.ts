@@ -56,6 +56,7 @@ export type {
   DiagramParseContext,
   DiagramPlugin,
   GlyphOptions,
+  IconLookup,
   IconOptions,
   RenderContext,
   TextRenderContext,

@@ -1,0 +1,181 @@
+[
+  {
+    "id": "class-cases/line separators 0",
+    "note": "U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.",
+    "source": "classDiagram\nA\u2028direction TB\nB"
+  },
+  {
+    "id": "class-cases/line separators 1",
+    "source": "classDiagram\nclass A {\n+x\u2028y\n}"
+  },
+  {
+    "id": "class-cases/line separators 2",
+    "source": "classDiagram\naccTitle: hi\u2028there\nA"
+  },
+  {
+    "id": "class-cases/line separators 3",
+    "source": "classDiagram\naccDescr: hi\u2029there\nA"
+  },
+  {
+    "id": "class-cases/line separators 4",
+    "source": "classDiagram\nA\n%% c\u2028B\nC"
+  },
+  {
+    "id": "class-cases/line separators 5",
+    "source": "classDiagram\nA\n\u2028%% c\nB"
+  },
+  {
+    "id": "class-cases/line separators 6",
+    "source": "classDiagram\nA\u2028%% c\nB"
+  },
+  {
+    "id": "class-cases/line separators 7",
+    "source": "classDiagram\nA : x\u2028y"
+  },
+  {
+    "id": "class-cases/line separators 8",
+    "source": "classDiagram\nnamespace N\u2028{\nclass A\n}"
+  },
+  {
+    "id": "class-cases/line separators 9",
+    "source": "classDiagram\nnote \"a\u2028b\""
+  },
+  {
+    "id": "class-cases/line separators 10",
+    "source": "classDiagram\nA <|--\u2028B"
+  },
+  {
+    "id": "class-cases/line separators 11",
+    "source": "classDiagram\u2028direction LR\nA"
+  },
+  {
+    "id": "class-cases/line separators 12",
+    "source": "classDiagram\r\nclass A {\r\n  +int x\r\n}\r\nA --> B\r"
+  },
+  {
+    "id": "class-cases/line separators 13",
+    "source": "classDiagram\nclass A[\"<b class=\"x\">y</b>\"]\nstyle A fill:#f00;\nA : #35; x"
+  },
+  {
+    "id": "class-cases/lexer case 0",
+    "note": "Hand-written cases: every reachable jison rule, the start-condition edges (an unclosed body, `less(0)` out of a namespace) and preprocessing shapes found in review.",
+    "source": "classDiagram\n[*] --> A\nnamespace N {\n[*] --> B\n}\nclass C {\n[*]\n{\n}\n"
+  },
+  {
+    "id": "class-cases/lexer case 1",
+    "source": "classDiagram\nnamespace N { } }\nA"
+  },
+  {
+    "id": "class-cases/lexer case 2",
+    "source": "classDiagram\nnamespace N {"
+  },
+  {
+    "id": "class-cases/lexer case 3",
+    "source": "classDiagram\nclass A {"
+  },
+  {
+    "id": "class-cases/lexer case 4",
+    "source": "classDiagram\nclass A {\n+x"
+  },
+  {
+    "id": "class-cases/lexer case 5",
+    "source": "classDiagram\nA : \nB :\nC # % = x"
+  },
+  {
+    "id": "class-cases/lexer case 6",
+    "source": "classDiagram\nA :;"
+  },
+  {
+    "id": "class-cases/lexer case 7",
+    "source": "classDiagram\nA %% c\n\n B"
+  },
+  {
+    "id": "class-cases/lexer case 8",
+    "source": "classDiagram\nA é 中文"
+  },
+  {
+    "id": "class-cases/lexer case 9",
+    "source": "classDiagram\nA\n%%"
+  },
+  {
+    "id": "class-cases/lexer case 10",
+    "source": "classDiagram\naccDescr {"
+  },
+  {
+    "id": "class-cases/lexer case 11",
+    "source": "classDiagram\naccDescr {\n  two\n  lines\n}\nA"
+  },
+  {
+    "id": "class-cases/lexer case 12",
+    "source": "classDiagram\naccTitle"
+  },
+  {
+    "id": "class-cases/lexer case 13",
+    "source": "classDiagram\nclick A call"
+  },
+  {
+    "id": "class-cases/lexer case 14",
+    "source": "classDiagram\nclick A call f("
+  },
+  {
+    "id": "class-cases/lexer case 15",
+    "source": "classDiagram\nclick A call f() \"tip\""
+  },
+  {
+    "id": "class-cases/lexer case 16",
+    "source": "classDiagram\nnote \"open"
+  },
+  {
+    "id": "class-cases/lexer case 17",
+    "source": "classDiagram\nclass A~T"
+  },
+  {
+    "id": "class-cases/lexer case 18",
+    "source": "classDiagram\nclass `A"
+  },
+  {
+    "id": "class-cases/lexer case 19",
+    "source": "classDiagram\nA %%{init: {\n  %%x \"a\": 1}}%%\nB"
+  },
+  {
+    "id": "class-cases/lexer case 20",
+    "source": "classDiagram\nA : x %%{init: {\"a\":\"style\"}}%% :#y;\nB"
+  },
+  {
+    "id": "class-cases/lexer case 21",
+    "source": "classDiagram\nstyle A fill:#f00;stroke:#0f0;\nclassDef x fill:#f00;\nA : #quot;y#35;"
+  },
+  {
+    "id": "class-cases/lexer case 22",
+    "source": "classDiagram\n%%{init: {\n  %% c\n  \"x\": 1}}%%\nA"
+  },
+  {
+    "id": "class-cases/lexer case 23",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\n  %% c\n\nclassDiagram\nA"
+  },
+  {
+    "id": "class-cases/lexer case 24",
+    "source": "classDiagram\nclass A {\n  %% not a comment in a body\n}"
+  },
+  {
+    "id": "class-cases/lexer case 25",
+    "source": "classDiagram\nA direction TB\nB direction LR x\nC"
+  },
+  {
+    "id": "class-cases/lexer case 26",
+    "source": "classDiagram\ndirection\n\nRL extra\nA"
+  },
+  {
+    "id": "class-cases/lexer case 27",
+    "note": "`#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).",
+    "source": "classDiagram\nA : x:#y; z\nA <|-- B : #y;\nclass C~#y;~\nnote \"#y;\"\nclass D[\"#y;\"]"
+  },
+  {
+    "id": "class-cases/lexer case 28",
+    "source": "classDiagram\nclass A {\n+x #y; y\n}\nA \"#y;\" --> \"#9829;\" B\naccTitle: #y;"
+  },
+  {
+    "id": "class-cases/lexer case 29",
+    "source": "classDiagram\nA #y; B"
+  }
+]

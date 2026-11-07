@@ -29,13 +29,16 @@ import { pieGateCorpus } from './corpus.ts';
  * WHITESPACE is a skipped Chevrotain token that v13 writes no token for.
  *
  * Exclusions ({@link EXCLUDED}, by id prefix, with every variant of the source):
- * - `unclosed directive …`: core's preprocess ends an unclosed `%%{` at its line end and
+ * - `pie-cases/unclosed directive …`: core's preprocess ends an unclosed `%%{` at its line end and
  *   reports `UNCLOSED_DIRECTIVE`, so v13 rejects the source; v12's directive regex also removed
  *   the line break after it (or, with a `{` argument, the rest of the text). The difference is
  *   in core's directive reading, shared by every type, not in a pie lexer rule.
  */
 const EXCLUDED: ReadonlyMap<string, string> = new Map([
-  ['unclosed directive ', 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)'],
+  [
+    'pie-cases/unclosed directive ',
+    'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)',
+  ],
 ]);
 const ERROR = 'LEXICAL_ERROR';
 const HIDDEN = new Set(['YAML', 'DIRECTIVE', 'SINGLE_LINE_COMMENT']);
@@ -122,7 +125,7 @@ describe('pie lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
       `pie lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the pie lexer.
-    expect(e2e).toBe(47);
+    expect(e2e).toBe(49);
     expect(compared).toBeGreaterThan(450);
     expect(diffs).toEqual([]);
   }, 120_000);

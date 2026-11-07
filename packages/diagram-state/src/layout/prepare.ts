@@ -14,6 +14,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
+import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
@@ -89,12 +90,6 @@ export interface StatePrepared {
 
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** A config number (v12 also took numeric strings), capped; NaN when not one. */
-function num(value: unknown): number {
-  const n = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof n === 'number' && n >= 0 && n < 1e4 ? n : NaN;
-}
-
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
   const weight = t['font-weight'];
@@ -130,10 +125,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const units = ctx.units ?? pxProfile;
   const b = units.builder;
   const cfg = ctx.config.state ?? {};
-  const pxOr = (value: unknown, fallback: number): number => {
-    const n = num(value);
-    return Number.isNaN(n) ? fallback : n;
-  };
+  const length = configLengths(cfg, stateConfigDefaults, (w) => ctx.warn(w));
   const m: Measure = {
     units,
     sm: stateMetrics(units),
@@ -143,8 +135,8 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       size: ctx.theme.number('fontSize'),
       weight: 400,
     },
-    wrap: fromPx(units, pxOr(cfg.wrappingWidth, stateConfigDefaults.wrappingWidth!), 'x'),
-    minWidth: fromPx(units, pxOr(cfg.minNodeWidth, stateConfigDefaults.minNodeWidth!), 'x'),
+    wrap: fromPx(units, length('wrappingWidth') ?? stateConfigDefaults.wrappingWidth!, 'x'),
+    minWidth: fromPx(units, length('minNodeWidth') ?? stateConfigDefaults.minNodeWidth!, 'x'),
     label: (text, style, max) => {
       const [f, bits] = textStyle(style, m.font);
       // v12 gives every state, note and transition label `labelType: 'markdown'`.
@@ -245,7 +237,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       })
     ),
   ];
-  const graph = layoutGraph(model, { nodes, groups, edges }, regionsOf, groupDir, m, cfg);
+  const graph = layoutGraph(model, { nodes, groups, edges }, regionsOf, groupDir, m, length);
   return { graph, nodes, groups, edges, views, regions: regionsOf };
 }
 
@@ -414,19 +406,19 @@ function layoutGraph(
   regionsOf: ReadonlyMap<string, readonly string[]>,
   groupDir: ReadonlyMap<string, Dir | undefined>,
   m: Measure,
-  cfg: NonNullable<StateRenderContext['config']['state']>
+  length: ConfigLength
 ): LayoutGraph {
   const { units } = m;
   const b = units.builder;
-  const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = num(value);
-    return Number.isNaN(px) ? fallback : fromPx(units, px, axis, min);
+  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
+    const px = length(key);
+    return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   const along = sideways(model.direction) ? 'x' : 'y';
   const across = along === 'x' ? 'y' : 'x';
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(cfg.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig(cfg.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
+    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
+    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
     edge: b.spacing.edge,
   });
   const spacing = spacingOn(along, across);

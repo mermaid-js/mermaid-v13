@@ -880,6 +880,12 @@ titleFontSize?: string
  * via the `definition` "TimelineDiagramConfig".
  */
 export interface TimelineDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%
@@ -1198,6 +1204,12 @@ fontSize?: number
  * via the `definition` "PieDiagramConfig".
  */
 export interface PieDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%
@@ -1592,6 +1604,12 @@ ticketBaseUrl?: string
  * via the `definition` "GitGraphDiagramConfig".
  */
 export interface GitGraphDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%

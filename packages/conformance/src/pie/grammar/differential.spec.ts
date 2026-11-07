@@ -17,7 +17,7 @@ describe('pie grammar differential', () => {
     const diffs: string[] = [];
     let compared = 0;
     for (const item of await pieGateCorpus()) {
-      if (item.id.startsWith('unclosed directive ') || !detectPie(item.source)) continue;
+      if (item.id.startsWith('pie-cases/unclosed directive ') || !detectPie(item.source)) continue;
       compared++;
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
