@@ -7,6 +7,11 @@ import { DETECTORS } from './generated/detectors.gen.ts';
 // the generated registry, right after `info` as in v12's detector order.
 const TEXT = 'pie title Pets\n  "Dogs" : 386\n  "Cats" : 85\n  "Rats" : 15\n';
 
+async function withInit(config: object): Promise<{ svg: string }> {
+  const r = await createMermaid().render('pc', `%%{init: ${JSON.stringify(config)}}%%\n${TEXT}`);
+  return { svg: r.svg };
+}
+
 const rejection = (p: Promise<unknown>): Promise<unknown> =>
   p.then(
     () => undefined,
@@ -78,5 +83,14 @@ describe('pie charts through the public API (#325)', () => {
     const e = await rejection(m.render('p5', TEXT, { format: 'ascii' }));
     expect(e).toBeInstanceOf(UnsupportedFormatError);
     expect((e as UnsupportedFormatError).diagramType).toBe('pie');
+  });
+});
+
+describe('pie config (#325)', () => {
+  it('honours pie.theme, over the top-level theme', async () => {
+    const plain = await withInit({ theme: 'default' });
+    expect(plain.svg).not.toBe((await withInit({})).svg);
+    expect((await withInit({ pie: { theme: 'default' } })).svg).toBe(plain.svg);
+    expect((await withInit({ theme: 'dark', pie: { theme: 'default' } })).svg).toBe(plain.svg);
   });
 });

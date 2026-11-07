@@ -422,6 +422,13 @@ ported (status `pending`, R-CONF-5).
   source. `initialize()` keeps unknown keys but still warns.
 - **Warnings, not logs.** Every config warning is in `RenderResult.warnings` (and
   `parse()`'s `warnings`) with a `code` and a `path`.
+- **Config lengths are numbers.** A length key in the `class`, `er`, `state` and `flowchart`
+  sections (`padding`, `nodeSpacing`, `rankSpacing`, `diagramPadding`, `wrappingWidth`,
+  `minNodeWidth`, `minEntityWidth`, `entityPadding`) takes a number, or a whole numeric string
+  as its number (`"20"`, `" 2.5 "`), from 0 up to 10000. Earlier v13 alphas read `"20px"` as 20
+  without a warning; v13 now lays anything else (`"20px"`, `-5`, `true`) out as if the key were unset, with one
+  `CLASS_CONFIG_IGNORED`, `ER_CONFIG_IGNORED`, `STATE_CONFIG_IGNORED` or
+  `FLOWCHART_CONFIG_IGNORED` warning naming the key, as the other ported types do.
 - **An init `config` key** is moved into the detected diagram's section, as in v12
   (`%%{init: {"config": {"curve": "linear"}}}%%` in a flowchart sets `flowchart.curve`).
 - **`fontFamily`** from `initialize()` or diagram text also sets `themeVariables.fontFamily`,
