@@ -26,6 +26,7 @@ import type {
   ErRelationship,
   ErSubgraph,
 } from '../parser/index.ts';
+import { configLengths, type ConfigLength } from './config-length.ts';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
 
@@ -109,12 +110,6 @@ export interface ErPrepared {
 
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** A config number (v12 also took numeric strings), capped; undefined when not one. */
-function configNumber(value: unknown): number | undefined {
-  const n = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof n === 'number' && n >= 0 && n < 1e4 ? n : undefined;
-}
-
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
   const weight = t['font-weight'];
@@ -184,12 +179,8 @@ type SizeKey = 'nodeSpacing' | 'rankSpacing' | 'minEntityWidth';
  * already carries the section defaults, so a value equal to the generated default counts as
  * not set (D124: setting it to exactly that value draws as not setting it).
  */
-function sizeKey(
-  units: UnitProfile,
-  er: Readonly<Record<string, unknown>>,
-  key: SizeKey
-): number | undefined {
-  const px = configNumber(er[key]);
+function sizeKey(units: UnitProfile, length: ConfigLength, key: SizeKey): number | undefined {
+  const px = length(key);
   if (px === undefined || units.grid === undefined) return px;
   return px === erConfigDefaults[key] ? undefined : px;
 }
@@ -198,9 +189,9 @@ function sizeKey(
  * D116: `er.entityPadding` (px) pads every table cell, across and down, in place of the
  * layout's node padding. Text output keeps the cell profile's 1-cell padding.
  */
-function cellPad(units: UnitProfile, er: Readonly<Record<string, unknown>>): Measure['pad'] {
-  const px = configNumber(er.entityPadding);
-  if (units.grid !== undefined || px === undefined) return units.builder.nodePad;
+function cellPad(units: UnitProfile, length: ConfigLength): Measure['pad'] {
+  const px = units.grid === undefined ? length('entityPadding') : undefined;
+  if (px === undefined) return units.builder.nodePad;
   return { x: fromPx(units, px, 'x'), y: fromPx(units, px, 'y') };
 }
 
@@ -217,17 +208,17 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const er = ctx.config.er ?? {};
+  const length = configLengths(ctx.config.er ?? {}, erConfigDefaults, (w) => ctx.warn(w));
   const m: Measure = {
     font,
-    pad: cellPad(units, er),
+    pad: cellPad(units, length),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
     label: (text, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline }),
     styleOf: styleCache(model, ctx),
   };
-  const minWidth = sizeKey(units, er, 'minEntityWidth');
+  const minWidth = sizeKey(units, length, 'minEntityWidth');
   const nest = nesting(model);
 
   const entities = model.entities.map((e, order) =>
@@ -269,7 +260,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
       label: m.label(r.label, m.font, edgeWrap),
     });
   }
-  const graph = layoutGraph(model, { entities, groups, edges }, ctx);
+  const graph = layoutGraph(model, { entities, groups, edges }, ctx, length);
   return { graph, entities, edges, groups, pad: m.pad };
 }
 
@@ -452,11 +443,11 @@ function entityView(
 function layoutGraph(
   model: ErModel,
   { entities, groups, edges }: Pick<ErPrepared, 'entities' | 'groups' | 'edges'>,
-  ctx: ErRenderContext
+  ctx: ErRenderContext,
+  length: ConfigLength
 ): LayoutGraph {
   const units = ctx.units ?? pxProfile;
   const b = units.builder;
-  const er = ctx.config.er ?? {};
   // er.nodeSpacing runs across the flow, er.rankSpacing along it (px config values).
   const fromConfig = (
     px: number | undefined,
@@ -472,9 +463,14 @@ function layoutGraph(
   // engine's self-loop and port pitch instead (`erMetrics`).
   const endRoom = units.grid === undefined ? 0 : ENDS_GAP;
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(sizeKey(units, er, 'nodeSpacing'), b.spacing.node, node, b.minSpacing.node),
+    node: fromConfig(
+      sizeKey(units, length, 'nodeSpacing'),
+      b.spacing.node,
+      node,
+      b.minSpacing.node
+    ),
     rank: Math.max(
-      fromConfig(sizeKey(units, er, 'rankSpacing'), b.spacing.rank, rank, b.minSpacing.rank),
+      fromConfig(sizeKey(units, length, 'rankSpacing'), b.spacing.rank, rank, b.minSpacing.rank),
       endRoom
     ),
     edge: b.spacing.edge,
@@ -526,7 +522,7 @@ function layoutGraph(
     // empty margin, so in cells the profile's own applies (as the flowchart).
     diagramPadding:
       units.grid === undefined
-        ? fromConfig(configNumber(er.diagramPadding), b.diagramPadding, 'x', 0)
+        ? fromConfig(length('diagramPadding'), b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // v12's default ELK layout draws orthogonal routes; on the grid they are square anyway.
     routing: 'stepped',

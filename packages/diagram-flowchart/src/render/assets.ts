@@ -68,10 +68,11 @@ export function drawImage(
  * The frame, when the icon has a form, then the glyph an extension has for it (D293, the context's
  * `icon`), in the frame's square. With the glyph (D298) the frame is borderless (its stroke is its
  * fill) and the glyph takes `paint`, which the extension applies (`GlyphOptions.paint`): its
- * `color`, or under `useGradient` the gradient on its `currentColor` paints. Without one the frame keeps its outline, as before the icons plugin.
- * The frame is a square of `assetHeight`, while `assetSize` widens the box to `assetWidth`.
- * Unresolved (no extension has glyphs, or one gave `null`), it warns as {@link iconMissed}; a
- * placeholder or a glyph declined quietly (`undefined`) draws the frame alone, quietly.
+ * `color`, or under `useGradient` the gradient on its `currentColor` paints. Without one the frame
+ * keeps its outline, as before the icons plugin. The frame is a square of `assetHeight`, while
+ * `assetSize` widens the box to `assetWidth`. Not drawn (no extension has glyphs, one gave
+ * `null`, or none has this one), it warns as {@link iconMissed}; a placeholder (`'pending'`, D299)
+ * draws the frame alone, quietly.
  */
 export function drawIcon(
   w: SvgWriter,
@@ -83,8 +84,9 @@ export function drawIcon(
   const v = view.vertex!;
   const size = asset(v.assetHeight, ICON);
   const top = assetTop(view, size);
-  const glyph = ctx.icon?.(v.icon!, size, { paint });
-  if (glyph === null || !ctx.icon) iconMissed(ctx);
+  const found = ctx.icon?.(v.icon!, size, { paint, pending: true });
+  if (found === null || found === undefined) iconMissed(ctx, found);
+  const glyph = found === 'pending' ? undefined : found;
   const f: Attrs = glyph ? { ...a, stroke: a.fill } : a;
   if (v.form === 'circle') w.outline('node', 'circle', { cy: top + size / 2, r: size / 2, ...f });
   else if (v.form === 'square' || v.form === 'rounded') {
@@ -104,19 +106,26 @@ export function drawIcon(
 }
 
 /**
- * When an icon shape's glyph is unresolved: no extension has glyphs, and flowchart says
- * `ICON_NOT_RENDERED` itself, or one reported it (`null`) and says `ICON_NOT_RENDERED` (D291),
- * naming it. Beside it, for one alpha, the deprecated alias `ICON_UNAVAILABLE` (D299), a fixed
- * message as sequence's `SEQUENCE_MATH`. Both go through the render's deduplicating `warn`, so
- * each comes once per render. A placeholder, or a glyph declined quietly, gives neither.
+ * When an icon shape's glyph is not drawn: no extension has glyphs, or none has this one
+ * (`undefined`), and flowchart says `ICON_NOT_RENDERED` itself; or one reported it unresolved
+ * (`null`) and says `ICON_NOT_RENDERED` (D291), naming it. Beside it, for one alpha, the
+ * deprecated alias `ICON_UNAVAILABLE` (D299), a fixed message as sequence's `SEQUENCE_MATH`. Both
+ * go through the render's deduplicating `warn`, so each comes once per render. A placeholder
+ * gives neither.
  */
-function iconMissed(ctx: FlowRenderContext): void {
+function iconMissed(ctx: FlowRenderContext, found: null | undefined): void {
   const warn = ctx.inline?.warn ?? ((x: FlowWarning) => ctx.warn(x));
   if (!ctx.icon) {
     warn({
       code: 'ICON_NOT_RENDERED',
       message:
         'Icons are not rendered without an icons extension: icon shapes draw their frame alone, or nothing without a form.',
+    });
+  } else if (found === undefined) {
+    warn({
+      code: 'ICON_NOT_RENDERED',
+      message:
+        'Icons not rendered: no icons extension has a glyph for an icon shape, which draws its frame alone, or nothing without a form.',
     });
   }
   warn({

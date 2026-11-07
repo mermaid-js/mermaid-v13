@@ -38,6 +38,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'flowchart',
       'gantt',
       'gitGraph',
+      'info',
       'journey',
       'mindmap',
       'pie',

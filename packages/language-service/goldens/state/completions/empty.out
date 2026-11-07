@@ -7,6 +7,7 @@
   classDiagram keyword 1:1-1:1 "" -> "classDiagram"
   erDiagram keyword 1:1-1:1 "" -> "erDiagram"
   gantt keyword 1:1-1:1 "" -> "gantt"
+  info keyword 1:1-1:1 "" -> "info"
   pie keyword 1:1-1:1 "" -> "pie"
   sequenceDiagram keyword 1:1-1:1 "" -> "sequenceDiagram"
   timeline keyword 1:1-1:1 "" -> "timeline"

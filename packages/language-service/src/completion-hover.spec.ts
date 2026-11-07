@@ -44,6 +44,7 @@ describe('completion', () => {
       'classDiagram',
       'erDiagram',
       'gantt',
+      'info',
       'pie',
       'sequenceDiagram',
       'timeline',

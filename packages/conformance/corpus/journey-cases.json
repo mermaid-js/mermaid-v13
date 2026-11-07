@@ -1,0 +1,414 @@
+[
+  {
+    "id": "journey-cases/line separators 0",
+    "note": "U+2028 and U+2029: `\\s` takes them, `[^\\n]` and `[^#:\\n;]` do not stop at them; v12's comment removal (`^`, multiline) starts a line after them.",
+    "source": "journey\ntitle a\u2028b\nsection S"
+  },
+  {
+    "id": "journey-cases/line separators 1",
+    "source": "journey\nsection a\u2029b\nT: 1"
+  },
+  {
+    "id": "journey-cases/line separators 2",
+    "source": "journey\nTask\u2028one: 5: Me"
+  },
+  {
+    "id": "journey-cases/line separators 3",
+    "source": "journey\nT: 5: A,\u2028B"
+  },
+  {
+    "id": "journey-cases/line separators 4",
+    "source": "journey\naccTitle: hi\u2028there\nT: 1"
+  },
+  {
+    "id": "journey-cases/line separators 5",
+    "source": "journey\naccDescr: hi\u2029there\nT: 1"
+  },
+  {
+    "id": "journey-cases/line separators 6",
+    "source": "journey\nT: 1\u2028%% c\nU: 2"
+  },
+  {
+    "id": "journey-cases/line separators 7",
+    "source": "journey\nT: 1\n\u2028%% c\nU: 2"
+  },
+  {
+    "id": "journey-cases/line separators 8",
+    "source": "journey\ntitle\u2028x\nsection\u2029y"
+  },
+  {
+    "id": "journey-cases/line separators 9",
+    "source": "journey\u2028title x"
+  },
+  {
+    "id": "journey-cases/line separators 10",
+    "source": "journey\nT: 1 \u2028\nU: 2"
+  },
+  {
+    "id": "journey-cases/line separators 11",
+    "source": "journey\naccDescr {\na\u2028b\n}"
+  },
+  {
+    "id": "journey-cases/edge case 0",
+    "note": "`\\s` after `title`/`section` matches a line break.",
+    "source": "journey\ntitle\nfoo\nsection\nbar\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 1",
+    "source": "journey\ntitle\n\nfoo\nsection\n\nbar"
+  },
+  {
+    "id": "journey-cases/edge case 2",
+    "source": "journey\ntitle \nT: 1\nsection \nU: 2"
+  },
+  {
+    "id": "journey-cases/edge case 3",
+    "source": "journey\ntitle\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 4",
+    "source": "journey\ntitle\nsection A"
+  },
+  {
+    "id": "journey-cases/edge case 5",
+    "note": "`accTitle:`/`accDescr:` at a line end take the next line.",
+    "source": "journey\naccTitle:\nsection A\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 6",
+    "source": "journey\naccDescr:\n\n  T: 1"
+  },
+  {
+    "id": "journey-cases/edge case 7",
+    "source": "journey\naccTitle :  \t\nx\naccDescr\t: y"
+  },
+  {
+    "id": "journey-cases/edge case 8",
+    "note": "`\\s+` takes a line break after blanks.",
+    "source": "journey\nA: 1  \n  B: 2\nC: 3\t\n\nD: 4"
+  },
+  {
+    "id": "journey-cases/edge case 9",
+    "source": "journey  \ntitle x"
+  },
+  {
+    "id": "journey-cases/edge case 10",
+    "note": "`%%` is a comment only where a token starts.",
+    "source": "journey\nT: 5 %% note\nTask:%% x\nU: 1"
+  },
+  {
+    "id": "journey-cases/edge case 11",
+    "source": "journey\nMake%% tea: 5\nM%%x: 1\nN %% y: 2"
+  },
+  {
+    "id": "journey-cases/edge case 12",
+    "source": "journey\nT: 1;%% c\nU: 2; %% d\nV: 3"
+  },
+  {
+    "id": "journey-cases/edge case 13",
+    "source": "journey\nT: 1\n%%\nU: 2\n%%%\nV: 3"
+  },
+  {
+    "id": "journey-cases/edge case 14",
+    "source": "journey\nsection A%%x\ntitle t%%y\nW: 1"
+  },
+  {
+    "id": "journey-cases/edge case 15",
+    "source": "journey\n%x: 1\n%{y: 2\nT: 1;%z\nU: 50% done: 3\n%\nV: 4"
+  },
+  {
+    "id": "journey-cases/edge case 16",
+    "source": "journey\naccDescr {\n%% kept\n}\n}%%x\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 17",
+    "note": "Keyword lines and their traps.",
+    "source": "journey planning: 5"
+  },
+  {
+    "id": "journey-cases/edge case 18",
+    "source": "journey\ntitle a: b\nsection A: b\nMake tea # c: 5\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 19",
+    "source": "journey\nTitle X: 5\nSECTION s\nAccTitle : y\naccdescr: z\nJOURNEY: 3"
+  },
+  {
+    "id": "journey-cases/edge case 20",
+    "source": "journey\njourney_x: 1\njourney-x: 2\njourneys: 3\njourney: 4\njourney1: 5"
+  },
+  {
+    "id": "journey-cases/edge case 21",
+    "source": "journey\ntitles x: 1\nsections y: 2\naccTitleX: 3\naccDescr x: 4\ntitle\tx\nsection\ty"
+  },
+  {
+    "id": "journey-cases/edge case 22",
+    "source": "journey\nsection A #c\ntitle t # c\nT: 1 # c\nU # c\n# whole"
+  },
+  {
+    "id": "journey-cases/edge case 23",
+    "note": "`taskData` needs a character after the `:`.",
+    "source": "journey\nT:\nU: 1\nV::\nW: 1:\nX: :"
+  },
+  {
+    "id": "journey-cases/edge case 24",
+    "source": "journey\nT: 5: A, B: C: D\n: 5\n:\n::x"
+  },
+  {
+    "id": "journey-cases/edge case 25",
+    "note": "`;` is INVALID; entities hide their `#` and `;`.",
+    "source": "journey\nT: 5;U: 2\n;\nV;W: 1"
+  },
+  {
+    "id": "journey-cases/edge case 26",
+    "source": "journey\nT: #59; x\nMake #amp; tea: 5: #lt;b#gt;\nsection #quot;S#quot;\ntitle #35;1"
+  },
+  {
+    "id": "journey-cases/edge case 27",
+    "source": "journey\nstyle x:#f00;\nclassDef y:#f00; z\nT: style a:#b;c"
+  },
+  {
+    "id": "journey-cases/edge case 28",
+    "source": "journey\nT: <b class=\"x\">y</b>: 1\nsection <span style=\"c\">s</span>"
+  },
+  {
+    "id": "journey-cases/edge case 29",
+    "note": "Multi-line descriptions.",
+    "source": "journey\naccDescr {\n  a\n  b\n}\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 30",
+    "source": "journey\naccDescr{x}title t\naccDescr\n{\n y \n}"
+  },
+  {
+    "id": "journey-cases/edge case 31",
+    "source": "journey\naccDescr {}\nT: 1\naccDescr { }"
+  },
+  {
+    "id": "journey-cases/edge case 32",
+    "note": "Accessibility states at the end of the text, and other ends.",
+    "source": "journey\naccTitle:"
+  },
+  {
+    "id": "journey-cases/edge case 33",
+    "source": "journey\naccTitle: "
+  },
+  {
+    "id": "journey-cases/edge case 34",
+    "source": "journey\naccDescr:"
+  },
+  {
+    "id": "journey-cases/edge case 35",
+    "source": "journey\naccDescr: x"
+  },
+  {
+    "id": "journey-cases/edge case 36",
+    "source": "journey\naccDescr {\nunclosed"
+  },
+  {
+    "id": "journey-cases/edge case 37",
+    "source": "journey\naccDescr {"
+  },
+  {
+    "id": "journey-cases/edge case 38",
+    "source": "journey\ntitle"
+  },
+  {
+    "id": "journey-cases/edge case 39",
+    "source": "journey\nsection"
+  },
+  {
+    "id": "journey-cases/edge case 40",
+    "source": "journey\nT:"
+  },
+  {
+    "id": "journey-cases/edge case 41",
+    "source": "journey"
+  },
+  {
+    "id": "journey-cases/edge case 42",
+    "source": "journey\n"
+  },
+  {
+    "id": "journey-cases/edge case 43",
+    "note": "CRs: v12 turned CRLF and CR into LF.",
+    "source": "journey\r\ntitle\r\nfoo\r\nsection\r\nbar\r\nT: 5\r\n"
+  },
+  {
+    "id": "journey-cases/edge case 44",
+    "source": "journey\rtitle x\rT: 1\r\rU: 2"
+  },
+  {
+    "id": "journey-cases/edge case 45",
+    "source": "journey\r\naccTitle:\r\nx\r\naccDescr {\r\na\r\nb\r\n}\r\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 46",
+    "source": "journey\r\nT: 1\r\n%%\r\nU: 2 \r\n V: 3"
+  },
+  {
+    "id": "journey-cases/edge case 47",
+    "source": "journey\r\nT: 1;\r\n%%x\r\nU: 2"
+  },
+  {
+    "id": "journey-cases/edge case 48",
+    "note": "Directives, front matter and comment lines that v12 removed first.",
+    "source": "---\ntitle: T\n---\njourney\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 49",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\njourney\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 50",
+    "source": "journey\nT: 1 %%{init: {}}%% x\nU: 2"
+  },
+  {
+    "id": "journey-cases/edge case 51",
+    "source": "journey\nMake %%{init: {}}%%tea: 5\nT%%{init: {}}%%: 1"
+  },
+  {
+    "id": "journey-cases/edge case 52",
+    "source": "journey\n  %% c\ntitle x\n%% c\n\n%% c\nT: 1"
+  },
+  {
+    "id": "journey-cases/edge case 53",
+    "source": "%% c\n  journey\n%% d\n  section S"
+  },
+  {
+    "id": "journey-cases/parser case 0",
+    "note": "Scores: `Number()` of the first piece.",
+    "source": "journey\nA: 0\nB:  \nC: 0x10\nD: 2rem\nE: -2\nF: 2.5\nG: 1e1\nH: Infinity\nI: 0b11\nJ: 5 5"
+  },
+  {
+    "id": "journey-cases/parser case 1",
+    "source": "journey\nA: 7: X\nB: +3: Y\nC: .5\nD: 00012\nE: 5 %% c"
+  },
+  {
+    "id": "journey-cases/parser case 2",
+    "note": "People: the second piece split on `,` and trimmed; `''` kept; later pieces dropped.",
+    "source": "journey\nA: 5:\nB: 5: ,\nC: 5: x,,y\nD: 5:  b , a ,b\nE: 5: a: b: c\nF: 5::x"
+  },
+  {
+    "id": "journey-cases/parser case 3",
+    "source": "journey\nA: 1: Zed, zed, Äb, 10, 9, _x\nB: 2: zed"
+  },
+  {
+    "id": "journey-cases/parser case 4",
+    "source": "journey\nA: 1: x #amp; y, z\nsection #quot;S#quot;\n#lt;b#gt;: 2: y"
+  },
+  {
+    "id": "journey-cases/parser case 5",
+    "note": "Sections: every line kept, empty and repeated ones too; tasks before the first.",
+    "source": "journey\nT0: 1\nsection A\nsection A\nT1: 2\nsection B\nsection A\nT2: 3\nsection C"
+  },
+  {
+    "id": "journey-cases/parser case 6",
+    "source": "journey\nsection  A \nT: 1\nsection A\nU: 2"
+  },
+  {
+    "id": "journey-cases/parser case 7",
+    "source": "journey\nsection A@2\nsection A\nT: 1\nsection A%>#x\nU: 2"
+  },
+  {
+    "id": "journey-cases/parser case 8",
+    "note": "Titles and accessibility values: the last wins; values trimmed.",
+    "source": "journey\ntitle  a  \ntitle b: c\naccTitle:  x  \naccTitle: y\naccDescr: p  \naccDescr:  q"
+  },
+  {
+    "id": "journey-cases/parser case 9",
+    "source": "journey\naccDescr {\n   line one\n     line two\n\n  three  }\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 10",
+    "source": "journey\naccDescr { one }accDescr: two\naccTitle: t"
+  },
+  {
+    "id": "journey-cases/parser case 11",
+    "source": "journey\naccDescr: one\naccDescr {\ntwo\n}"
+  },
+  {
+    "id": "journey-cases/parser case 12",
+    "note": "Statements need no separator.",
+    "source": "journey title t\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 13",
+    "source": "journey\naccDescr { d }title t\naccDescr {x}section S\naccDescr {y}T: 1: A"
+  },
+  {
+    "id": "journey-cases/parser case 14",
+    "note": "Front matter and directives.",
+    "source": "---\ntitle: Front\n---\njourney\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 15",
+    "source": "---\ntitle: Front\n---\njourney\ntitle In text\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 16",
+    "source": "---\nconfig:\n  journey:\n    leftMargin: 10\n---\njourney\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 17",
+    "note": "Errors (rejected by both), one or several per source.",
+    "source": "journey\nMake tea"
+  },
+  {
+    "id": "journey-cases/parser case 18",
+    "source": "journey\nMake tea:\nGo: 5"
+  },
+  {
+    "id": "journey-cases/parser case 19",
+    "source": "journey\nsection A: b\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 20",
+    "source": "journey\n: 5\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 21",
+    "source": "journey\nT: 5; U: 4"
+  },
+  {
+    "id": "journey-cases/parser case 22",
+    "source": "journey\njourney\nT: 1"
+  },
+  {
+    "id": "journey-cases/parser case 23",
+    "source": "journey\nA\nB: 1\nC\n;\nD: 2"
+  },
+  {
+    "id": "journey-cases/parser case 24",
+    "source": "journey\ntitle\n"
+  },
+  {
+    "id": "journey-cases/parser case 25",
+    "source": "journey\nT: 1\naccTitle:  "
+  },
+  {
+    "id": "journey-cases/parser case 26",
+    "source": "journey\nT: 1\naccDescr:\n\n"
+  },
+  {
+    "id": "journey-cases/parser case 27",
+    "source": "journey\nT: 1\naccDescr {\n  never closed"
+  },
+  {
+    "id": "journey-cases/parser case 28",
+    "source": "journey\naccDescr {\n%% c\n"
+  },
+  {
+    "id": "journey-cases/parser case 29",
+    "source": "journey\nMake tea # c: 5"
+  },
+  {
+    "id": "journey-cases/parser case 30",
+    "source": "journey\nTask:%% x\nU: 1"
+  },
+  {
+    "id": "journey-cases/parser case entity actors",
+    "note": "Actors whose names hold `#…;` entities: v12 sorted them by its entity placeholders (`ﬂ°lt¶ß`), v13 by the names as written (a listed divergence, `divergences.json`).",
+    "source": "journey\nA: 1: #lt;b#gt;, b, #35;1"
+  }
+]

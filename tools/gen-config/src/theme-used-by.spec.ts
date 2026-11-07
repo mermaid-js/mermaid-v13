@@ -76,6 +76,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'flowchart',
       'gantt',
       'gitgraph',
+      'info',
       'journey',
       'mindmap',
       'pie',

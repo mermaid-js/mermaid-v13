@@ -1,0 +1,27 @@
+@ 1:3  in|fo showInfo
+  1:1-1:5 "info"
+  | **`info`**
+  |
+  | `info`: starts an info diagram, which draws the version of mermaid.
+@ 1:10  info show|Info
+  1:6-1:14 "showInfo"
+  | **`showInfo`**
+  |
+  | `info showInfo`: accepted, and draws nothing extra.
+@ 2:5  ti|tle Version
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Version`: accepted, and drawn nowhere (the last one wins).
+@ 2:12  title Ver|sion
+  none
+@ 3:6  acc|Title: x
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr {
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.

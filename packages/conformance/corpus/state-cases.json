@@ -1,0 +1,148 @@
+[
+  {
+    "id": "state-cases/edge/crlf",
+    "note": "Lexer edge cases the corpus does not reach.",
+    "source": "stateDiagram-v2\r\n  A --> B : go\r\n  note left of A\r\n  x\r\n  end note\r\n"
+  },
+  {
+    "id": "state-cases/edge/lone cr",
+    "source": "stateDiagram-v2\r  A --> B\r  B --> C"
+  },
+  {
+    "id": "state-cases/edge/leading blank lines",
+    "source": "\n\n  \nstateDiagram-v2\n  A"
+  },
+  {
+    "id": "state-cases/edge/uppercase keywords",
+    "source": "STATEDIAGRAM-V2\n  STATE A {\n  B\n  }\n  NOTE LEFT OF A : hi\n"
+  },
+  {
+    "id": "state-cases/edge/entity in descr",
+    "source": "stateDiagram-v2\n  A : a #colon; b #35; c\n  #x; --> B\n"
+  },
+  {
+    "id": "state-cases/edge/entity in note",
+    "source": "stateDiagram-v2\n  note left of A : one #semi; two\n"
+  },
+  {
+    "id": "state-cases/edge/hash comment",
+    "source": "stateDiagram-v2\n  A --> B\n  # a comment\n  state C { \n # x\n D }\n"
+  },
+  {
+    "id": "state-cases/edge/inline percent comment",
+    "source": "stateDiagram-v2\n  A %% c\n  B%%d\n  state E as F%%g\n"
+  },
+  {
+    "id": "state-cases/edge/note id with comment",
+    "source": "stateDiagram-v2\n  note left of A%%c\n  t\n  end note\n"
+  },
+  {
+    "id": "state-cases/edge/style semicolon drop",
+    "source": "stateDiagram-v2\n  style A fill:#f00;\n  classDef c fill:#0f0;stroke:#00f;\n"
+  },
+  {
+    "id": "state-cases/edge/style word elsewhere",
+    "source": "stateDiagram-v2\n  A : mystyle:#1 here;\n"
+  },
+  {
+    "id": "state-cases/edge/direction anywhere",
+    "source": "stateDiagram-v2\n  A --> B : direction TB then direction LR\n"
+  },
+  {
+    "id": "state-cases/edge/direction across lines",
+    "source": "stateDiagram-v2\n  direction\n  RL\n  A\n"
+  },
+  {
+    "id": "state-cases/edge/struct direction",
+    "source": "stateDiagram-v2\n  state A {\n    direction BT\n    B\n  }\n"
+  },
+  {
+    "id": "state-cases/edge/fork join choice",
+    "source": "stateDiagram-v2\n  state f <<fork>>\n  state j [[join]]\n  state c <<choice>> x <<fork>>\n"
+  },
+  {
+    "id": "state-cases/edge/state forms",
+    "source": "stateDiagram-v2\n  state \"long desc\" as L\n  state \"x\" as Y {\n  Z\n  }\n  state Q {\n  }\n"
+  },
+  {
+    "id": "state-cases/edge/multi word state",
+    "source": "stateDiagram-v2\n  state a b {\n  }\n"
+  },
+  {
+    "id": "state-cases/edge/floating note",
+    "source": "stateDiagram-v2\n  note \"floating\" as N1\n  note \"assume\" as N2\n"
+  },
+  {
+    "id": "state-cases/edge/unclosed floating note",
+    "source": "stateDiagram-v2\n  note \"never closed"
+  },
+  {
+    "id": "state-cases/edge/unclosed state string",
+    "source": "stateDiagram-v2\n  state \"never closed"
+  },
+  {
+    "id": "state-cases/edge/scale",
+    "source": "stateDiagram-v2\n  scale 350 width\n  A\n"
+  },
+  {
+    "id": "state-cases/edge/scale without width",
+    "source": "stateDiagram-v2\n  scale 350\n  A\n"
+  },
+  {
+    "id": "state-cases/edge/acc values",
+    "source": "stateDiagram-v2\n  accTitle:\n  accDescr: d\n  accDescr {\n  multi\n  line\n  }\n  A"
+  },
+  {
+    "id": "state-cases/edge/acc at end",
+    "source": "stateDiagram-v2\n  accTitle: t"
+  },
+  {
+    "id": "state-cases/edge/class forms",
+    "source": "stateDiagram-v2\n  class a,b , c,  d x\n  class a,\n  classDef default fill:red\n"
+  },
+  {
+    "id": "state-cases/edge/style ids",
+    "source": "stateDiagram-v2\n  style a,b fill:red\n  style a\n"
+  },
+  {
+    "id": "state-cases/edge/separators",
+    "source": "stateDiagram-v2\n  A:::c --> B:::d\n  A ::x\n  - x\n  C : a:b::c\n"
+  },
+  {
+    "id": "state-cases/edge/concurrency",
+    "source": "stateDiagram-v2\n  state A {\n  B\n  --\n  C\n  -- \n  }\n  --\n"
+  },
+  {
+    "id": "state-cases/edge/struct oddities",
+    "source": "stateDiagram-v2\n  state A {\n  B {\n  }\n"
+  },
+  {
+    "id": "state-cases/edge/click and strings",
+    "source": "stateDiagram-v2\n  click A href \"x\"\n  default\n  \"unclosed\n"
+  },
+  {
+    "id": "state-cases/edge/hide empty",
+    "source": "stateDiagram-v2\n  hide empty description\n  hide empty descriptions\n"
+  },
+  {
+    "id": "state-cases/edge/line separator",
+    "source": "stateDiagram-v2\n  A --> B\u2028direction LR\n  C : x\u2028y\n"
+  },
+  {
+    "id": "state-cases/edge/note end forms",
+    "source": "stateDiagram-v2\n  note right of A\n  a\n  \n  END NOTE\n  note left of B\n  x end note\n  end notes\n  end note\n"
+  },
+  {
+    "id": "state-cases/edge/note odd text",
+    "source": "stateDiagram-v2\n  note left of A :t\n  note left of A\n  : spaced\n"
+  },
+  {
+    "id": "state-cases/edge/comment line in mid-line directive",
+    "note": "Mid-line directives (#185, fixed in core `sourceView` by #186).",
+    "source": "stateDiagram\nA %%{init: {\n  %%x \"a\": 1}}%%\nB"
+  },
+  {
+    "id": "state-cases/edge/style word in directive",
+    "source": "stateDiagram\nA : x %%{init: {\"a\":\"style\"}}%% :#y;"
+  }
+]

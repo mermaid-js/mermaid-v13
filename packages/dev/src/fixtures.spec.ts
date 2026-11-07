@@ -112,6 +112,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'flowchart',
       'gantt',
       'git',
+      'info',
       'journey',
       'mindmap',
       'pie',

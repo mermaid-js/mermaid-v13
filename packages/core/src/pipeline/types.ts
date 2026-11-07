@@ -93,14 +93,22 @@ export interface RenderContext {
    * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), drawn in a `size` px square at
    * the origin (the provider fits it, xMidYMid meet); `null` when an extension reported it
    * unresolved (and warns `ICON_NOT_RENDERED`, D291); `undefined` when none has it (or it is a
-   * placeholder). Absent when no extension has `glyphs`, and in text output.
+   * placeholder). Asked with `pending: true`, a placeholder is `'pending'` instead (an extension
+   * has the glyph, but its data is still loading, D299), so `undefined` is only a name no
+   * extension has. Absent when no extension has `glyphs`, and in text output.
    */
-  readonly icon?: (
+  readonly icon?: IconLookup;
+  warn(warning: Warning): void;
+}
+
+/** {@link RenderContext.icon}: `'pending'` (a placeholder) only for a caller that asks for it. */
+export interface IconLookup {
+  (
     name: string,
     size: number,
-    options?: GlyphOptions
-  ) => SvgFragment | null | undefined;
-  warn(warning: Warning): void;
+    options: GlyphOptions & { readonly pending: true }
+  ): SvgFragment | 'pending' | null | undefined;
+  (name: string, size: number, options?: GlyphOptions): SvgFragment | null | undefined;
 }
 
 /** How {@link RenderContext.icon} resolves a name. */

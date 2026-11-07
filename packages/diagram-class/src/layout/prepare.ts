@@ -27,6 +27,8 @@ import {
 } from '../parser/model.ts';
 import { MARKER_ACROSS } from '../render/markers.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
+import { configDefaults } from '../config-defaults.ts';
+import { configLengths, type ConfigLength } from './config-length.ts';
 import type { ClassLayoutContext } from './context.ts';
 
 /** A class, as laid out. */
@@ -170,12 +172,6 @@ const ROUTING: Readonly<Partial<Record<ClassCurve, 'straight' | 'curved'>>> = {
 const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** A config number (v12 also took numeric strings), capped; NaN when not one. */
-function num(value: unknown): number {
-  const n = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof n === 'number' && n >= 0 && n < 1e4 ? n : NaN;
-}
-
 /** What the view builders share. */
 interface Build {
   readonly model: ClassModel;
@@ -240,8 +236,9 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     classIds: new Map(),
     interfaceIds: new Map(),
   };
-  const padding = num(conf.padding);
-  const boxPad = Number.isNaN(padding) ? BOX_PAD : padding;
+  const length = configLengths(conf, configDefaults, (w) => ctx.warn?.(w));
+  const padding = length('padding');
+  const boxPad = padding ?? BOX_PAD;
   const metrics: BoxMetrics = {
     pad: { x: build.px(boxPad, 'x'), y: build.px(boxPad, 'y') },
     rowGap: build.px(ROW_GAP, 'y'),
@@ -250,11 +247,17 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const groups = groupViews(nsGroups, build);
   const boxes = model.classes.map((node) => boxView(node, font, metrics, build));
   const edges: ClassEdgeView[] = [];
-  const notes = noteViews(Number.isNaN(padding) ? NOTE_PAD : padding, build, edges);
+  const notes = noteViews(padding ?? NOTE_PAD, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
   const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded');
-  const graph = layoutGraph(model, ctx, units, curve, { boxes, notes, interfaces, groups, edges });
+  const graph = layoutGraph(model, ctx, units, curve, length, {
+    boxes,
+    notes,
+    interfaces,
+    groups,
+    edges,
+  });
   return { graph, boxes, notes, interfaces, groups, edges, views: build.views, curve };
 }
 
@@ -409,22 +412,22 @@ function layoutGraph(
   ctx: ClassLayoutContext,
   units: UnitProfile,
   curve: ClassCurve,
+  configLength: ConfigLength,
   parts: Pick<ClassPrepared, 'boxes' | 'notes' | 'interfaces' | 'groups' | 'edges'>
 ): LayoutGraph {
   const b = units.builder;
-  const conf = ctx.config.class ?? {};
   const direction: Dir = DIRS.has(model.direction) ? (model.direction as Dir) : 'TB';
-  const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const v = num(value);
-    return Number.isNaN(v) ? fallback : fromPx(units, v, axis, min);
+  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
+    const v = configLength(key);
+    return v === undefined ? fallback : fromPx(units, v, axis, min);
   };
   const along = sideways(direction) ? 'x' : 'y';
   const across = along === 'x' ? 'y' : 'x';
   // `class.nodeSpacing` runs across the flow and `class.rankSpacing` along it (v12 fell back
   // to 50 for both).
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(conf.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig(conf.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
+    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
+    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
     edge: b.spacing.edge,
   });
   const spacing = spacingOn(along, across);
@@ -432,8 +435,7 @@ function layoutGraph(
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
   const headRoom = b.headRoom;
   // v12 padded namespaces with `class.padding ?? 16` on every side; the title adds its height.
-  const padding = num(conf.padding);
-  const groupPx = Number.isNaN(padding) ? GROUP_PAD : padding;
+  const groupPx = configLength('padding') ?? GROUP_PAD;
   const groupPad = { x: fromPx(units, groupPx, 'x'), y: fromPx(units, groupPx, 'y') };
   const size = (l: MeasuredLabel) => ({ width: l.width, height: l.height });
   // Only where end labels are placed in px (class has no text output).
@@ -494,7 +496,7 @@ function layoutGraph(
     ...(turned ? { turnedSpacing: down } : {}),
     diagramPadding:
       units.grid === undefined
-        ? fromConfig(conf.diagramPadding, b.diagramPadding, 'x', 0)
+        ? fromConfig('diagramPadding', b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // `flowchart.curve`, as v12 drew class edges with it; `rounded` (right angles) by default.
     // On the grid routes are always square (D78).

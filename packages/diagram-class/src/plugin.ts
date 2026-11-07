@@ -6,21 +6,13 @@ import { detectClass, parseClass } from './parser/index.ts';
 import type { ClassModel, ClassParseResult } from './parser/index.ts';
 import type { ClassRenderContext } from './render/context.ts';
 import { renderClass } from './render/render.ts';
-import { classConfigDefaults } from './generated/config-defaults.ts';
+import { configDefaults } from './config-defaults.ts';
 import { classLabels } from './labels.ts';
 import { theme } from './theme/table.ts';
 
 /** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
   ctx.limits ?? resolveLimits(ctx.config);
-
-/**
- * The `class` section's defaults, less `padding` (D125): its documented default, 12, is what
- * v12 padded class boxes with, but v12 padded namespaces 16 and notes 6 when the key was unset
- * (`padding ?? 16`, `?? 6`). Left out, the layout still sees "unset" and draws all three as v12
- * did; an author's `padding` pads all three, as in v12.
- */
-const { padding: _documented, ...configDefaults } = classConfigDefaults;
 
 /**
  * The class diagram plugin (DESIGN §12.1). Its id is its config section, `class`. `parse` takes
