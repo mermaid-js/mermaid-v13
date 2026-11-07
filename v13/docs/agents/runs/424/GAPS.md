@@ -46,12 +46,17 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Exploration: v12's entity placeholders mean a ticket written `&#106;…` reaches the URL as `&&#106;…` (a relative link, harmless); the entity-hidden case is a ticket written `#106;avascript:…`, which `checkUrl` refuses. Both are in `render.spec.ts`.
 - **For the maintainer:** `neo-dark` and `redux-dark` have `cScale` black in every slot but 8, so D374's darken gives black columns and one `#a7a6a4` column (slot 8, column 7) under the `#cccccc` titles (about 1.6:1). A theme-palette question; not changed here. v12 12.2.0 (the `mermaid-v12-frozen` build, headless Chromium, 11 columns) did not darken in either theme: columns about `#1a1919` (black lightened by 10), column 7 `#d9d9d8` under the same `#cccccc` titles (about 1.2:1), and column 11, with no rule, in `textColor` (`#cccccc`; `#333333` under `default`, the spec's "black").
 - **For the maintainer:** T0's twelfth-theme check (`tools/gen-config/src/theme-tables.spec.ts`, merged from #414) finds the `kanbanColumn<n>` rows. A theme with only base colours has no `cScale`, so they read `currentColor`, as every `cScale` reader does there. They are listed in that spec's `PALETTE_ROWS` (twelfth theme only). Kanban's columns stay as they are until core derives `cScale` for such a theme.
-- Not done here (needs T5's manifest): `outline-roles.spec.ts`/`outline-identity.spec.ts` run through `createMermaid`; add `kanban: { dirs: ['kanban'], roles: ['group', 'node'] }` there in T5.
+- Closed in #459: `outline-roles.spec.ts` has `kanban: { dirs: ['kanban'], roles: ['group', 'node'] }` (the priority line listed as plain, at least 40 files), and `outline-identity.spec.ts` covers kanban.
 
 ## #463 T6 language facet
 - Exploration: `LanguageFacet.standalone` (D289: rename changes one repeated id) exists only on `feature/294_mindmap` (#406). T6 starts after #406 merges into `mermaid-v13` and that is merged here; do not add a second copy of the core field.
 
 ## #459 T5 integration
-- Waits for #414 T0a (theme table) as well as T4 and T6.
+- **Choice:** no `language` entry in the manifest: `./language` (T6, #463) was not on `feature/424_kanban` when #459 merged it. T6 adds the entry and the language wiring (unlisted-facet row or `language-service` optional peer, `language-server` dependency, highlighters, both first-paint e2e specs, bench language). `cdn-build.spec.ts` now asks for a `-language` chunk only of a package with a `./language` export, so it asks for kanban's once T6 lands.
+- **Choice:** `limits.maxNodes` applies to columns and cards together (T2's handoff named it T5's, as mindmap's #390): one `NODE_LIMIT` at the first item over the cap. Kanban has no nesting past cards, so `maxDepth` does not apply. The 10k-card stress board (10,001 items) passes `maxNodes: 20_000`.
+- **Choice:** the `kanban` section is `honoured`, as mindmap's (cynefin left its section `pending`); `theme`, `layout` and `look` keep their inherited rows. `KANBAN_METRICS.sectionWidth`/`padding` read the generated defaults.
+- **Choice:** `kanban/grammar/sentences.spec.ts` learns its sentence model from each corpus body once, front matter cut: the eleven theme and four hand-drawn baselines repeat one board, which dropped the accepted share to 1415 of 3000 (under the half the spec needs); deduplicated, 1624.
+- The D373 baseline (`baseline/columns/shared-ids.mmd`) is listed in `divergences.json` with its four gate variants (owner #459), as T2's case.
+- Exploration: the `theme-identity` tool, base `feature/424_kanban` (40ecf6963) against this branch over every e2e and bench fixture × 11 themes and `auto` × 4 variants: 2,544 renders differ, all kanban (30 fixtures that were `UNSUPPORTED_DIAGRAM`, 23 new baselines); no other diagram changes.
 
 ## #466 T7 ascii (Should)
