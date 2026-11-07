@@ -1,0 +1,160 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-info",
+  "scopeName": "source.mermaid-info",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-info"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-info"
+    },
+    "rule-0": {
+      "match": "showInfo(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-1": {
+      "match": "info(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-2": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-3": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-4": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-5": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-info"
+    },
+    "rule-6": {
+      "match": "\\r?\\n"
+    },
+    "rule-7": {
+      "match": "[\\t ]+"
+    },
+    "rule-8": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-info"
+    },
+    "rule-9": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-info"
+    },
+    "rule-10": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-info"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-info"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-info"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-info"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-info"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

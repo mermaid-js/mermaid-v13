@@ -1,0 +1,5 @@
+@ 1:6  info |
+  showInfo keyword 1:6-1:6 "" -> "showInfo"
+  title keyword 1:6-1:6 "" -> "title "
+  accTitle keyword 1:6-1:6 "" -> "accTitle: "
+  accDescr keyword 1:6-1:6 "" -> "accDescr: "

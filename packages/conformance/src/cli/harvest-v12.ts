@@ -31,8 +31,8 @@ interface Harvest {
   header: string;
   /** The files whose string literals are harvested. */
   files: readonly string[];
-  /** The syntax page whose fences are harvested. */
-  docs: string;
+  /** The syntax page whose fences are harvested; none when v12 had no page (info). */
+  docs?: string;
 }
 
 /** The Langium types harvested, by v13 diagram id. */
@@ -56,6 +56,13 @@ export const HARVESTS = {
       'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
     ],
     docs: 'packages/mermaid/src/docs/syntax/packet.md',
+  },
+  info: {
+    header: 'info',
+    files: [
+      'packages/mermaid/src/diagrams/info/info.spec.ts',
+      'packages/parser/tests/info.test.ts',
+    ],
   },
 } as const satisfies Record<string, Harvest>;
 
@@ -122,6 +129,7 @@ export function harvest(type: HarvestType): CorpusItem[] {
       add(`v12-specs/${name}#${++n}`, source);
     }
   }
+  if (spec.docs === undefined) return items;
   const docs = git('show', `${V12_COMMIT}:${spec.docs}`);
   const page = spec.docs.slice(spec.docs.lastIndexOf('/') + 1);
   const comments = [...docs.matchAll(HTML_COMMENT)].map((m) => [m.index, m.index + m[0].length]);

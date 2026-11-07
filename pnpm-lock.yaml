@@ -116,6 +116,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:^
         version: link:../diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:^
+        version: link:../diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -207,6 +210,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:^
         version: link:../diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:^
+        version: link:../diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -369,6 +375,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-info:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-journey:
     devDependencies:
       '@mermaid-js/core':
@@ -437,6 +449,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:*
         version: link:../diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:*
+        version: link:../diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -492,6 +507,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:*
         version: link:../diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:*
+        version: link:../diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -703,6 +721,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:*
         version: link:../diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:*
+        version: link:../diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -840,6 +861,9 @@ importers:
       '@mermaid-js/diagram-gitgraph':
         specifier: workspace:^
         version: link:../../packages/diagram-gitgraph
+      '@mermaid-js/diagram-info':
+        specifier: workspace:^
+        version: link:../../packages/diagram-info
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey

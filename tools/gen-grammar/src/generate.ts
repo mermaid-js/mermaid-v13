@@ -162,6 +162,11 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'info',
+    title: 'Info diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {

@@ -2,6 +2,7 @@ import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
+import { infoAdapter } from './info/v13.ts';
 import { ganttAdapter } from './gantt/v13.ts';
 import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
@@ -90,6 +91,11 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/gitGraph-v12-specs.json',
       'packages/conformance/corpus/gitGraph-cases.json',
     ],
+  },
+  {
+    adapter: infoAdapter,
+    corpusDirs: ['e2e/diagrams/info'],
+    corpusFiles: ['packages/conformance/corpus/info-v12-specs.json'],
   },
   {
     adapter: quadrantAdapter,

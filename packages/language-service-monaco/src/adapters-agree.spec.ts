@@ -171,6 +171,18 @@ const DOCS: Readonly<Record<string, string>> = {
     "  'Cats' : 85.5",
     '',
   ].join('\n'),
+  info: [
+    'info showInfo',
+    '  title Version',
+    '  accDescr {',
+    '    The version',
+    '    of mermaid',
+    '  }',
+    '  %% drawn as one line',
+    '  %%{init: {"theme": "dark"}}%%',
+    '  accTitle: Mermaid version',
+    '',
+  ].join('\n'),
   mindmap: [
     'mindmap',
     '  root((mindmap))',
