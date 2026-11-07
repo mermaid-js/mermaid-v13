@@ -76,6 +76,12 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   readonly namespaces: readonly (readonly string[])[];
   /**
+   * Symbol kinds whose every occurrence is a symbol of its own, though names repeat (mindmap
+   * node ids, D289): definition and references give the occurrence alone, rename changes only
+   * it, and another occurrence with the new name is no clash. None when omitted.
+   */
+  readonly standalone?: readonly string[];
+  /**
    * When true, only a `def` occurrence defines a symbol: a name the parser records only as
    * `ref`s (a cynefin domain no block declares, D367) has no definition, and all its mentions
    * are references. When absent or false, such a name's first mention is its definition.

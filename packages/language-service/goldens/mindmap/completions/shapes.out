@@ -1,0 +1,16 @@
+@ 2:7  root|
+  root[root] shape (square) 2:3-2:7 "root" -> "root[root]"
+  root(root) shape (rounded) 2:3-2:7 "root" -> "root(root)"
+  root((root)) shape (circle) 2:3-2:7 "root" -> "root((root))"
+  root)root( shape (cloud) 2:3-2:7 "root" -> "root)root("
+  root))root(( shape (bang) 2:3-2:7 "root" -> "root))root(("
+  root{{root}} shape (hexagon) 2:3-2:7 "root" -> "root{{root}}"
+@ 3:14  two words|
+  two words[two words] shape (square) 3:5-3:14 "two words" -> "two words[two words]"
+  two words(two words) shape (rounded) 3:5-3:14 "two words" -> "two words(two words)"
+  two words((two words)) shape (circle) 3:5-3:14 "two words" -> "two words((two words))"
+  two words)two words( shape (cloud) 3:5-3:14 "two words" -> "two words)two words("
+  two words))two words(( shape (bang) 3:5-3:14 "two words" -> "two words))two words(("
+  two words{{two words}} shape (hexagon) 3:5-3:14 "two words" -> "two words{{two words}}"
+@ 4:8  id[|
+  none

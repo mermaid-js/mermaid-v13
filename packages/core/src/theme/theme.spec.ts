@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, streamWriter, styleText } from '../svg/index.ts';
-import { createTheme, loadTheme, type ThemeWarning } from './index.ts';
+import { createTheme, loadTheme, type DiagramThemeTable, type ThemeWarning } from './index.ts';
 
 const base = await loadTheme('base');
 
@@ -88,12 +88,19 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
 });
 
 describe('createTheme: opacity (D221)', () => {
+  // A diagram's opacity variable, 0.7 in the classic family (as pie's slices, #325).
+  const OPACITY: DiagramThemeTable = {
+    vars: { sliceOpacity: { alias: 'so', kind: 'opacity' } },
+    rules: { light: {} },
+    families: { classic: { tokens: { sliceOpacity: 0.7 } } },
+  };
+
   it('reads an opacity as a number in [0, 1], with no CSS variable', () => {
-    const t = createTheme(base);
-    expect(t.number('pieOpacity')).toBe(0.7);
+    const t = createTheme(base, { diagram: OPACITY });
+    expect(t.number('sliceOpacity')).toBe(0.7);
     expect(t.rootStyle()).toEqual({});
-    expect(() => t.color('pieOpacity')).toThrow(TypeError);
-    expect(() => t.length('pieOpacity')).toThrow(TypeError);
+    expect(() => t.color('sliceOpacity')).toThrow(TypeError);
+    expect(() => t.length('sliceOpacity')).toThrow(TypeError);
   });
 
   it('takes a number or a numeric string between 0 and 1', () => {
@@ -105,8 +112,8 @@ describe('createTheme: opacity (D221)', () => {
       [' 0.5 ', 0.5],
       ['1.0', 1],
     ] as const) {
-      const t = createTheme(base, { themeVariables: { pieOpacity: given } });
-      expect(t.number('pieOpacity'), String(given)).toBe(read);
+      const t = createTheme(base, { diagram: OPACITY, themeVariables: { sliceOpacity: given } });
+      expect(t.number('sliceOpacity'), String(given)).toBe(read);
     }
   });
 
@@ -114,10 +121,11 @@ describe('createTheme: opacity (D221)', () => {
     for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
       const warnings: ThemeWarning[] = [];
       const t = createTheme(base, {
-        themeVariables: { pieOpacity: given },
+        diagram: OPACITY,
+        themeVariables: { sliceOpacity: given },
         warn: (w) => warnings.push(w),
       });
-      expect(t.number('pieOpacity'), String(given)).toBe(0.7);
+      expect(t.number('sliceOpacity'), String(given)).toBe(0.7);
       expect(
         warnings.map((w) => w.code),
         String(given)
@@ -183,71 +191,6 @@ describe('createTheme: drop shadow (#85)', () => {
       expect(warnings.map((w) => w.code)).toEqual(['THEME_VARIABLE_DROPPED']);
     }
   );
-});
-
-describe('createTheme: composite state backgrounds (#192, D120)', () => {
-  // v12 12.2.0 theme-*.js: the redux themes pin both; the classic ones derive the title strip
-  // from mainBkg and give altBackground a literal (base: tertiaryColor). neo-dark: D189.
-  it.each([
-    ['redux', '#f9f9fb', '#f9f9fb'],
-    ['redux-color', '#f9f9fb', '#f9f9fb'],
-    ['redux-dark', '#16141f', '#16141f'],
-    ['redux-dark-color', '#16141f', '#16141f'],
-    ['default', '#ececff', '#f0f0f0'],
-    ['dark', '#1f2020', '#555555'],
-    ['forest', '#cde498', '#f0f0f0'],
-    ['neutral', '#eeeeee', '#f4f4f4'],
-    ['base', '#fff4dd', '#f6f9ff'],
-    ['neo', '#ffffff', '#f0f0f0'],
-    ['neo-dark', '#2a2020', '#404040'], // D189
-  ] as const)('%s: compositeTitleBackground %s, altBackground %s', async (name, title, alt) => {
-    const t = createTheme(await loadTheme(name), { cssVariables: false });
-    expect(t.value('compositeTitleBackground')).toBe(title);
-    expect(t.value('altBackground')).toBe(alt);
-  });
-
-  // D126: v12's compositeBackground is the theme background, except on the dark redux themes.
-  it.each([
-    ['redux', '#ffffff'],
-    ['redux-color', '#ffffff'],
-    ['redux-dark', '#16141f'],
-    ['redux-dark-color', '#16141f'],
-    ['default', '#ffffff'],
-    ['dark', '#333333'],
-    ['forest', '#ffffff'],
-    ['neutral', '#ffffff'],
-    ['base', '#f4f4f4'],
-    ['neo', '#ffffff'],
-    ['neo-dark', '#333333'],
-  ] as const)('%s: compositeBackground %s (D126)', async (name, body) => {
-    const t = createTheme(await loadTheme(name), { cssVariables: false });
-    expect(t.value('compositeBackground')).toBe(body);
-  });
-
-  it('derives the composite body from background, as v12 does (D126)', async () => {
-    const t = createTheme(await loadTheme('default'), {
-      themeVariables: { background: '#abcdef' },
-      cssVariables: false,
-    });
-    expect(t.value('compositeBackground')).toBe('#abcdef');
-  });
-
-  it('derives the classic title strip from mainBkg, as v12 does', async () => {
-    const t = createTheme(await loadTheme('default'), {
-      themeVariables: { mainBkg: '#123456' },
-      cssVariables: false,
-    });
-    expect(t.value('compositeTitleBackground')).toBe('#123456');
-  });
-
-  it('takes themeVariables overrides', async () => {
-    const t = createTheme(await loadTheme('redux-color'), {
-      themeVariables: { compositeTitleBackground: '#ff0000', altBackground: '#00ff00' },
-      cssVariables: false,
-    });
-    expect(t.value('compositeTitleBackground')).toBe('#ff0000');
-    expect(t.value('altBackground')).toBe('#00ff00');
-  });
 });
 
 describe('createTheme: author fills get contrasting ink (R-THEME-12)', () => {

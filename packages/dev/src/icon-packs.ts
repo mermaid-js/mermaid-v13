@@ -1,8 +1,10 @@
+// cspell:words Pictogrammers
 /**
  * The icon packs the e2e page and the gallery register (`registerIconPacks`, D294), with
  * `@mermaid-js/plugin-icons` active: the static packs v12's `e2e/platform/viewer.js`
- * registered (`fa` with `bell`, `fluent-emoji`, `aws`, `material-icon-theme`), and `fal`, a
- * stand-in whose icon is drawn with `currentColor` strokes (I3 #324). Static data, so baselines
+ * registered (`fa` with `bell`, `fluent-emoji`, `aws`, `material-icon-theme`), `fal`, a
+ * stand-in whose icon is drawn with `currentColor` strokes (I3 #324), and for the mindmap
+ * corpus's `::icon()` references (#328) `fa`'s `book` and an `mdi` pack with `fire`. Static data, so baselines
  * do not depend on a network or a pack version.
  */
 import type { IconLoader } from 'mermaid';
@@ -17,6 +19,11 @@ const staticBellIconPack = {
   icons: {
     bell: {
       body: '<path fill="currentColor" d="M224 0c-17.7 0-32 14.3-32 32v19.2C119 66 64 130.6 64 208v25.4c0 45.4-15.5 89.5-43.8 124.9L5.3 377c-5.8 7.2-6.9 17.1-2.9 25.4S14.8 416 24 416h400c9.2 0 17.6-5.3 21.6-13.6s2.9-18.2-2.9-25.4l-14.9-18.6c-28.3-35.5-43.8-79.6-43.8-125V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32m0 96c61.9 0 112 50.1 112 112v25.4c0 47.9 13.9 94.6 39.7 134.6H72.3c25.8-40 39.7-86.7 39.7-134.6V208c0-61.9 50.1-112 112-112m64 352H160c0 17 6.7 33.3 18.7 45.3S207 512 224 512s33.3-6.7 45.3-18.7S288 465 288 448"/>',
+      width: 448,
+    },
+    // https://fontawesome.com/icons/book?f=classic&s=solid
+    book: {
+      body: '<path fill="currentColor" d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96zm0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>',
       width: 448,
     },
   },
@@ -112,10 +119,26 @@ const staticStrokeIconPack = {
   height: 24,
 };
 
+/**
+ *  Apache-2.0
+ *  Copyright (c) Pictogrammers - https://pictogrammers.com/library/mdi/icon/fire/
+ */
+const staticMdiIconPack = {
+  prefix: 'mdi',
+  icons: {
+    fire: {
+      body: '<path fill="currentColor" d="M17.66 11.2c-.23-.3-.51-.56-.77-.82c-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32c-2.59 2.08-3.61 5.75-2.39 8.9c.04.1.08.2.08.33c0 .22-.15.42-.35.5c-.23.1-.47.04-.66-.12a.6.6 0 0 1-.14-.17c-1.13-1.43-1.31-3.48-.55-5.12C5.78 10 4.87 12.3 5 14.47c.06.5.12 1 .29 1.5c.14.6.41 1.2.71 1.73c1.08 1.73 2.95 2.97 4.96 3.22c2.14.27 4.43-.12 6.07-1.6c1.83-1.66 2.47-4.32 1.53-6.6l-.13-.26c-.21-.46-.77-1.26-.77-1.26m-3.16 6.3c-.28.24-.74.5-1.1.6c-1.12.4-2.24-.16-2.9-.82c1.19-.28 1.9-1.16 2.11-2.05c.17-.8-.15-1.46-.28-2.23c-.12-.74-.1-1.37.17-2.06c.19.38.39.76.63 1.06c.77 1 1.98 1.44 2.24 2.8c.04.14.06.28.06.43c.03.82-.33 1.72-.93 2.27"/>',
+    },
+  },
+  width: 24,
+  height: 24,
+};
+
 export const iconPacks: IconLoader[] = [
   { name: 'fa', loader: () => Promise.resolve(staticBellIconPack) },
   { name: 'fal', loader: () => Promise.resolve(staticStrokeIconPack) },
   { name: 'fluent-emoji', loader: () => Promise.resolve(staticAwsLogoIconPack) },
   { name: 'aws', loader: () => Promise.resolve(staticAwsIconPack) },
   { name: 'material-icon-theme', loader: () => Promise.resolve(staticMaterialIconPack) },
+  { name: 'mdi', loader: () => Promise.resolve(staticMdiIconPack) },
 ];

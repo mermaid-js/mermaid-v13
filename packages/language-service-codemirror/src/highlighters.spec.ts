@@ -36,7 +36,10 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'cynefin',
       'er',
       'flowchart',
+      'gantt',
+      'gitGraph',
       'journey',
+      'mindmap',
       'pie',
       'quadrantChart',
       'sequence',
@@ -110,6 +113,19 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('-->:operator');
     });
 
+    it('highlights a gantt chart with the gantt grammar', () => {
+      const text =
+        'gantt\n  dateFormat YYYY-MM-DD\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n';
+      // A setting and a section are one token each, value included (the jison terminals).
+      expect(spans(text)).toEqual([
+        'gantt:keyword',
+        'dateFormat YYYY-MM-DD:keyword',
+        'section Build:keyword',
+        'Code:variable',
+        ':crit, a1, 2024-01-01, 3d:string',
+      ]);
+    });
+
     it('highlights a cynefin diagram with the cynefin grammar', () => {
       const out = spans(
         'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
@@ -126,7 +142,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
     });
 
     it.each([
-      ['a type with no v13 highlighter', 'gantt\n  title Plan\n'],
+      ['a type with no v13 highlighter', 'requirementDiagram\n  element E {\n  }\n'],
       ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
       ['an empty text', ''],
       ['a header being typed', 'flo'],
@@ -148,7 +164,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(spans(state.doc.toString(), treeOf(state))).toEqual(spans(state.doc.toString()));
       expect(spans(state.doc.toString(), treeOf(state))[0]).toBe('flowchart:keyword');
       state = state.update({
-        changes: { from: 0, to: 'flowchart LR'.length, insert: 'gantt' },
+        changes: { from: 0, to: 'flowchart LR'.length, insert: 'requirementDiagram' },
       }).state;
       expect(spans(state.doc.toString(), treeOf(state))).toEqual([]);
     });

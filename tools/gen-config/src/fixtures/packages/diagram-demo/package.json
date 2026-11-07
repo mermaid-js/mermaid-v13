@@ -1,0 +1,10 @@
+{
+  "name": "diagram-demo-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts"
+    }
+  }
+}

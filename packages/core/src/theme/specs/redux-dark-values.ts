@@ -2,16 +2,10 @@
  * The values `redux-dark` and `redux-dark-color` share, from v12 `theme-redux-dark.js` and
  * `theme-redux-dark-color.js` at 12.2.0 (identical for every variable v13 reads).
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { pieSlots } from './palettes.ts';
-import {
-  NEO_ARROWHEADS,
-  NEO_CLASS_MARKERS,
-  NEO_SEQUENCE,
-  REDUX_TIMELINE,
-  REDUX_PADDING,
-  TEXT_SIZES,
-} from './geometry.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { series } from './palettes.ts';
+import { DARK_HUE_SOURCES, gitPalettes, gitSources } from './scales.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -33,18 +27,13 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   spacing2: 8,
   spacing3: 16,
   ...NEO_ARROWHEADS,
-  ...NEO_CLASS_MARKERS,
-  ...TEXT_SIZES,
   ...REDUX_PADDING,
-  ...NEO_SEQUENCE,
-  ...REDUX_TIMELINE,
   useGradient: false,
 };
 
 export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
-  // sequence (v12 theme-redux-dark.js pins these two)
-  signalColor: '#ffffff',
-  labelBoxBorderColor: '#bdbccc',
+  // v12 theme-redux-dark.js: the fragment tab's border, as the cluster border
+  frameBorder: '#bdbccc',
   // v12's drop shadow in white for a theme name with 'dark' (insertLookDefs), as a CSS filter.
   dropShadow: 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))',
   primaryBorderColor: '#cccccc',
@@ -59,11 +48,6 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   nodeTextColor: '#e0dfdf',
   clusterBkg: '#1e1a2e',
   clusterBorder: '#bdbccc',
-  // v12 pins the composite-state backgrounds (#192, D126); not clusterBkg (#1e1a2e) or
-  // background (#333333).
-  compositeBackground: '#16141f',
-  compositeTitleBackground: '#16141f',
-  altBackground: '#16141f',
   titleColor: '#dfe0e0',
   edgeLabelBackground: '#474949',
   border1: '#cccccc',
@@ -79,20 +63,20 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
 };
 
 /**
- * v12 `theme-redux-dark.js` and `theme-neo-dark.js`: base's formulas. `pie5` is v12's value,
- * since v12 darkens the unrounded HSL secondary colour, which lands one step off the hex one.
+ * The series palette (D332) of v12 `theme-redux-dark.js` and `theme-neo-dark.js`: base's formulas.
+ * Entry 4 derives from the hex secondary colour, where v12 darkened its unrounded HSL one, which
+ * lands one step off (D333(a): v12's #2e3030). Then the tints, v12's resolved values.
  */
-export const PIE_REDUX_DARK: ThemeRuleTable = pieSlots([
-  undefined,
-  undefined,
-  undefined,
-  undefined,
-  '#2e3030',
-  undefined,
-  '#060606',
-  '#060606',
-  '#201f20',
-  '#000000',
-  '#000000',
-  '#060606',
-]);
+export const REDUX_DARK_SERIES = series(
+  'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) #060606 #060606 #201f20 #000000 #000000 #060606 ' +
+    '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
+);
+
+/**
+ * v12 `theme-redux-dark.js` and `theme-redux-dark-color.js` derive `git0`–`git7` from
+ * `primaryColor` and their own secondary and tertiary steps, darkened by 25 (lightened under
+ * `darkMode`, with black branch labels), as `theme-base.js` does (D267).
+ */
+const GIT_SOURCES = gitSources(...(DARK_HUE_SOURCES.slice(0, 3) as [string, string, string]));
+export const REDUX_DARK_GIT = gitPalettes(GIT_SOURCES);
+export const REDUX_DARK_GIT_DARK_MODE = gitPalettes(GIT_SOURCES, 'lightenHsl', 'black');

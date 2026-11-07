@@ -1,0 +1,12 @@
+---
+description: section titles break on <br>, <br/> and </br> as in v12
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section One<br>two
+    a :a1, 2024-01-02, 3d
+    b :a2, after a1, 3d
+  section Three<br/>four</br>five
+    c :c1, after a2, 3d
+    d :c2, after c1, 3d
+    e :c3, after c2, 3d

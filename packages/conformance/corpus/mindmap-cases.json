@@ -1,0 +1,344 @@
+[
+  {
+    "id": "mindmap-cases/class-blank-replaces",
+    "source": "mindmap\n  root\n    a\n    :::x\n    ::: \n"
+  },
+  {
+    "id": "mindmap-cases/class-tabs",
+    "source": "mindmap\n  root\n  :::a\tb  c\n"
+  },
+  {
+    "id": "mindmap-cases/icon-multi-line",
+    "source": "mindmap\n  root\n  ::icon(a\n  b)\n    c\n"
+  },
+  {
+    "id": "mindmap-cases/shape-mismatched",
+    "source": "mindmap\n  root\n    b(x]\n    c[y)\n    d)z)\n    e(w((\n    f((v)\n"
+  },
+  {
+    "id": "mindmap-cases/shape-dash",
+    "source": "mindmap\n  root\n    (-x-)\n    k-)l(-\n    -)m(-\n"
+  },
+  {
+    "id": "mindmap-cases/trailing-blanks",
+    "source": "mindmap\n  root  \n    a  \n"
+  },
+  {
+    "id": "mindmap-cases/crlf",
+    "source": "mindmap\r\n  root\r\n    a\r\n    :::x\r\n"
+  },
+  {
+    "id": "mindmap-cases/entities",
+    "source": "mindmap\n  root[#quot;hi#quot;]\n    #amp; b\n"
+  },
+  {
+    "id": "mindmap-cases/empty-body-line-break",
+    "source": "mindmap\n"
+  },
+  {
+    "id": "mindmap-cases/reject-second-root",
+    "source": "mindmap\n  root\n  fakeRoot\n"
+  },
+  {
+    "id": "mindmap-cases/reject-decoration-first",
+    "source": "mindmap\n  ::icon(x)\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-class-first",
+    "source": "mindmap\n:::a\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-header-only",
+    "source": "mindmap"
+  },
+  {
+    "id": "mindmap-cases/reject-blank-after-header",
+    "source": "mindmap\n\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-two-blank-runs",
+    "source": "mindmap\n  root\n\n%%\n\n    b\n"
+  },
+  {
+    "id": "mindmap-cases/reject-icon-same-line",
+    "source": "mindmap\n  root\n    a[b] ::icon(x)\n"
+  },
+  {
+    "id": "mindmap-cases/reject-two-nodes-one-line",
+    "source": "mindmap\n  root\n    a[b] c\n"
+  },
+  {
+    "id": "mindmap-cases/reject-empty-shape",
+    "source": "mindmap\n  root\n    a[]\n"
+  },
+  {
+    "id": "mindmap-cases/reject-unclosed-shape",
+    "source": "mindmap\n  root\n    a(b\n"
+  },
+  {
+    "id": "mindmap-cases/reject-unclosed-icon",
+    "source": "mindmap\n  root\n  ::icon(x\n"
+  },
+  {
+    "id": "mindmap-cases/reject-brace",
+    "source": "mindmap\n  root\n    a{b}\n"
+  },
+  {
+    "id": "mindmap-cases/reject-keyword-child",
+    "source": "mindmap\n  root\n    mindmap\n"
+  },
+  {
+    "id": "mindmap-cases/reject-bare-class-then-node",
+    "source": "mindmap\n  root\n    a\n  :::\n    b\n"
+  },
+  {
+    "id": "mindmap-cases/line separators 0",
+    "source": "mindmap\nroot\n  a\u2028b\n  c",
+    "note": "U+2028 and U+2029: `\\s` and a regex `.` treat them as line terminators, `[^\\n]` does not; v12's comment removal (`^`, multiline) starts a line after them."
+  },
+  {
+    "id": "mindmap-cases/line separators 1",
+    "source": "mindmap\nroot\n  a(b\u2028c)\n  d"
+  },
+  {
+    "id": "mindmap-cases/line separators 2",
+    "source": "mindmap\nroot\n  a(b}c\u2029d)\n  e"
+  },
+  {
+    "id": "mindmap-cases/line separators 3",
+    "source": "mindmap\nroot\n  :::x\u2028y\n  b"
+  },
+  {
+    "id": "mindmap-cases/line separators 4",
+    "source": "mindmap\nroot\n  :::\u2028y\n  b"
+  },
+  {
+    "id": "mindmap-cases/line separators 5",
+    "source": "mindmap\nroot\n  ::icon(a\u2029b)\n  c"
+  },
+  {
+    "id": "mindmap-cases/line separators 6",
+    "source": "mindmap\nroot\n  a(b) %% c\u2028d\n  e"
+  },
+  {
+    "id": "mindmap-cases/line separators 7",
+    "source": "mindmap\nroot\n%% c\u2028d\n  e"
+  },
+  {
+    "id": "mindmap-cases/line separators 8",
+    "source": "mindmap\nroot\n  a\u2028%% c\n  e"
+  },
+  {
+    "id": "mindmap-cases/line separators 9",
+    "source": "mindmap\nroot\n  a[\"b\u2028c\"]\n  d[\"`e\u2029f`\"]"
+  },
+  {
+    "id": "mindmap-cases/line separators 10",
+    "source": "mindmap\n\u2028  root\n \u2029 a\u2028\n  b"
+  },
+  {
+    "id": "mindmap-cases/line separators 11",
+    "source": "mindmap\u2028root"
+  },
+  {
+    "id": "mindmap-cases/edge case 1",
+    "source": "mindmap\nroot\n  a b c\n  d: e%f]g\"h\n  i:::j\n  k %% l",
+    "note": "A shape's text spans line breaks; ids hold blanks, `:`, `%`, `]` and quotes."
+  },
+  {
+    "id": "mindmap-cases/edge case 2",
+    "source": "mindmap\nroot\n  a(\n\n  b\n  c)\n  [\n]"
+  },
+  {
+    "id": "mindmap-cases/edge case 3",
+    "source": "mindmap\nroot\n  a((b))\n  c))d((\n  e{{f}}\n  g)h(\n  i(-j-)\n  k-)l(-\n  m[n]\n  o(p)",
+    "note": "Every opener and closer, mismatched ones too, and ids ending in `-`."
+  },
+  {
+    "id": "mindmap-cases/edge case 4",
+    "source": "mindmap\nroot\n  b(x]\n  a[b)\n  a)b)\n  c((d)\n  e(f((\n  g[h}}\n  i-x)\n  -)y(-\n  (-z-)"
+  },
+  {
+    "id": "mindmap-cases/edge case 6",
+    "source": "mindmap\nroot\n  a(b(c)\n  d[e[f]]\n  g(h)i\n  j(k))l\n  m[n]o p(q)"
+  },
+  {
+    "id": "mindmap-cases/edge case 7",
+    "source": "mindmap\nroot\n  a(b}c)\n  d[e}}f]\n  g{{h}i}}\n  j(}\n  k)",
+    "note": "A `}` in a shape takes the rest of its line; `{` and `}` outside one are errors."
+  },
+  {
+    "id": "mindmap-cases/edge case 8",
+    "source": "mindmap\nroot\n  a{b}"
+  },
+  {
+    "id": "mindmap-cases/edge case 9",
+    "source": "mindmap\nroot\n  a}b"
+  },
+  {
+    "id": "mindmap-cases/edge case 10",
+    "source": "mindmap\nroot\n  {x\n  y"
+  },
+  {
+    "id": "mindmap-cases/edge case 11",
+    "source": "mindmap\nroot\n  a[\"b `c` d\"]\n  e[\"`md **x**`\"]\n  f(\"g\")\n  h((\"i\"))\n  j[\"k\" l]",
+    "note": "Strings and markdown strings."
+  },
+  {
+    "id": "mindmap-cases/edge case 12",
+    "source": "mindmap\nroot\n  a[\"b\n c\"]\n  d[\"`e\n f`\"]\n  g[x \"y\" z]"
+  },
+  {
+    "id": "mindmap-cases/edge case 13",
+    "source": "mindmap\nroot\n  a[\"b]\n  c"
+  },
+  {
+    "id": "mindmap-cases/edge case 14",
+    "source": "mindmap\nroot\n  a[\"`b\"]"
+  },
+  {
+    "id": "mindmap-cases/edge case 15",
+    "source": "mindmap\nroot\n  a[\"`b`c`\"]"
+  },
+  {
+    "id": "mindmap-cases/edge case 16",
+    "source": "mindmap\nroot\n  a[\"`b`\n  c"
+  },
+  {
+    "id": "mindmap-cases/edge case 17",
+    "source": "mindmap\nroot\n  a[\"\"]\n  b[\"``\"]\n  c[\"`\"]"
+  },
+  {
+    "id": "mindmap-cases/edge case 18",
+    "source": "mindmap\nroot\n  a\n  ::icon(fa fa-book)\n  :::urgent large\n  b\n::icon(x)\n:::y",
+    "note": "Icons and classes, on their own lines and after a node."
+  },
+  {
+    "id": "mindmap-cases/edge case 19",
+    "source": "mindmap\nroot\n  a ::icon(x)\n  b:::c\n  d::icon(e)\n  :::\n  f"
+  },
+  {
+    "id": "mindmap-cases/edge case 20",
+    "source": "mindmap\nroot\n  a\n  ::ICON(x\n y)\n  ::icon()\n  :::  \n  b"
+  },
+  {
+    "id": "mindmap-cases/edge case 21",
+    "source": "mindmap\nroot\n  a\n  ::icon(never closed"
+  },
+  {
+    "id": "mindmap-cases/edge case 22",
+    "source": "mindmap\nroot\n  a\n  :::"
+  },
+  {
+    "id": "mindmap-cases/edge case 23",
+    "source": "mindmap\nroot\n  a\n  ::: x ::icon(y)\n  ::::z"
+  },
+  {
+    "id": "mindmap-cases/edge case 24",
+    "source": "mindmap\nroot\n  a(a) %% x\n  b %% c\n  %%\n  d\n%%\n\n  %%\ne",
+    "note": "The `%%` v12's comment removal left: mid-line, after a closer, bare `%%` lines."
+  },
+  {
+    "id": "mindmap-cases/edge case 25",
+    "source": "mindmap\nroot\n  a[b] %%\n  c(d)%%e\n  f\n  %% g"
+  },
+  {
+    "id": "mindmap-cases/edge case 26",
+    "source": "mindmap\nroot\n  a\n\n  %%\n   \n  b"
+  },
+  {
+    "id": "mindmap-cases/edge case 27",
+    "source": "mindmap\nroot\n  a\n   \n\n  b\n  \n  c  \n\td\n\t\te",
+    "note": "Blank lines, trailing blanks, tabs and other `\\s`."
+  },
+  {
+    "id": "mindmap-cases/edge case 28",
+    "source": "mindmap\nroot\n\u00a0a\n\u3000b\n \ufeffc"
+  },
+  {
+    "id": "mindmap-cases/edge case 29",
+    "source": "mindmap\nroot  \n  a  \n\n\n  b\n\n"
+  },
+  {
+    "id": "mindmap-cases/edge case 31",
+    "source": "mindmapx\n  a",
+    "note": "The keyword: case-insensitive, word-bounded, and a token anywhere one starts."
+  },
+  {
+    "id": "mindmap-cases/edge case 32",
+    "source": "mindmap\n  mindmap\n  Mindmap\n  MINDMAP x\n  mindmap-x\n  a mindmap\n  mindmap_b"
+  },
+  {
+    "id": "mindmap-cases/edge case 33",
+    "source": "  mindmap\n  root"
+  },
+  {
+    "id": "mindmap-cases/edge case 34",
+    "source": "mindmap\nroot\n  a[#quot;hi#59; #9829;]\n  #amp; b\n  c[\"#lt;d\"]",
+    "note": "Entities and `style…:#…;` lines, as `encodeEntities` rewrote them."
+  },
+  {
+    "id": "mindmap-cases/edge case 35",
+    "source": "mindmap\nroot\n  style a:#f00;\n  b(style c:#f00;)\n  classDef d:#e;"
+  },
+  {
+    "id": "mindmap-cases/edge case 36",
+    "source": "mindmap\r\n  root\r\n\r\n  a\r\n",
+    "note": "CRs: v12 turned CRLF and CR into LF."
+  },
+  {
+    "id": "mindmap-cases/edge case 37",
+    "source": "mindmap\r  root\r\r  a(b\rc)"
+  },
+  {
+    "id": "mindmap-cases/edge case 38",
+    "source": "mindmap\r\n  root(\r\n  x\r\n  )\r\n  ::icon(a\r\nb)\r\n  :::\r\n  c\r\n  \r\n"
+  },
+  {
+    "id": "mindmap-cases/edge case 39",
+    "source": "mindmap\r\n  root\r\n  :::\r\n"
+  },
+  {
+    "id": "mindmap-cases/edge case 40",
+    "source": "mindmap\nroot\r%% c\n  a",
+    "note": "A CR and an LF that a removed comment or directive left side by side: two line ends to v12."
+  },
+  {
+    "id": "mindmap-cases/edge case 41",
+    "source": "mindmap\nroot\r%%{init:{}}%%\n  a"
+  },
+  {
+    "id": "mindmap-cases/edge case 42",
+    "source": "mindmap\nroot\n  a(b\r%% c\nd)"
+  },
+  {
+    "id": "mindmap-cases/edge case 43",
+    "source": "mindmap\nroot\n  :::\r%% c\n  a"
+  },
+  {
+    "id": "mindmap-cases/edge case 46",
+    "source": "mindmap",
+    "note": "An empty body, blanks only."
+  },
+  {
+    "id": "mindmap-cases/edge case 48",
+    "source": "mindmap\n   \n\n  "
+  },
+  {
+    "id": "mindmap-cases/mid-line directive 0",
+    "source": "mindmap\nroot\n  a %%{init: {\n  %%x \"a\": 1}}%%\n  b",
+    "note": "Directives that start partway through a line (#185)."
+  },
+  {
+    "id": "mindmap-cases/mid-line directive 1",
+    "source": "mindmap\nroot\n  a %%{init: {}}%% b\n  c(d %%{init: {}}%% e)"
+  },
+  {
+    "id": "mindmap-cases/mid-line directive 2",
+    "source": "mindmap\nroot\n  a(b\n%% c %%{init:\n{}}%% d\ne)"
+  },
+  {
+    "id": "mindmap-cases/mid-line directive 3",
+    "source": "mindmap\nroot\n  ::icon(a %%{init: {}}%% b)\n  :::c %%{init: {}}%% d"
+  }
+]

@@ -1,0 +1,15 @@
+---
+description: >-
+  A merge commit cherry-picked onto a new branch with parent:, then a main commit the branch already descends from cherry-picked too.
+---
+gitGraph
+commit id:"A"
+branch a
+commit id:"B"
+checkout main
+commit id:"C"
+merge a id:"M"
+branch b
+commit
+cherry-pick id:"M" parent:"B"
+cherry-pick id:"C"

@@ -1,0 +1,8 @@
+%% rename-to: first fix
+gitGraph
+  commit id:"A"
+  branch dev
+  commit id:"B"
+  checkout main
+  cherry-pick id:"|A"
+  cherry-pick id:"B" tag:"A"

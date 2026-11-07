@@ -65,6 +65,16 @@ export interface RenderContext {
   readonly linkSchemes?: readonly string[];
   /** The layout engine named by `layout` config. */
   layout(graph: LayoutGraph): LayoutModel;
+  /**
+   * The instant the diagram treats as now, in ms since the epoch (D270): `RenderOptions.now`,
+   * or the clock the `mermaid` API read at the call (D275). Core never reads the clock.
+   */
+  readonly now?: number;
+  /**
+   * `RenderOptions.availableWidth` in the profile's units (R-LAYOUT-5, D272), for a custom
+   * layout; `ctx.layout()` already passes it to the graph engine. Absent unless asked for.
+   */
+  readonly availableWidth?: number;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
   /**
@@ -139,6 +149,16 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   /** Output formats; `['svg']` when absent. */
   readonly formats?: readonly ('svg' | 'ascii')[];
   readonly layoutKind: 'graph' | 'custom';
+  /**
+   * The layout engine a graph diagram is drawn with (D284): `default` when no config layer sets
+   * `layout`, and in place of an unknown or uninstalled one; `aliases` map `layout` names (v12's)
+   * to engines before lookup. A first-party engine other than `layered` (`tree`) is reached only
+   * by plugins that name it here (D285). Without it, `layered`.
+   */
+  readonly layoutEngine?: {
+    readonly default: string;
+    readonly aliases?: Readonly<Record<string, string>>;
+  };
   /** Its config section's defaults. */
   readonly configDefaults?: Readonly<Record<string, unknown>>;
   /**

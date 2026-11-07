@@ -1,9 +1,11 @@
 /**
- * The theme variable inventory (DESIGN §8.3, O-1): every v12 theme variable that core and
- * the ported diagrams read, with its private alias, its kind and who reads it. Names are
- * v12's, so the public CSS variable is `--mermaid-<name>` (R-THEME-2). Diagram plugins add
- * their own variables through `ThemeRuleTable`s (DESIGN §12.1); a variable no ported
- * diagram reads is accepted and ignored (R-CONF-5).
+ * Core's theme variable inventory (DESIGN §8.3, O-1): the shared vocabulary, with each
+ * variable's private alias, its kind and who reads it. A row is here when core reads it, two or
+ * more diagram types read it, or it is a shared input (D332) or a v12 compatibility row (D337).
+ * Names are v12's where v12 has one, so the public CSS variable is `--mermaid-<name>`
+ * (R-THEME-2). A variable one diagram type reads is that package's own, in its
+ * `src/theme/vocabulary.ts` and its plugin's `theme` table (D331, DESIGN §12.1), and core never
+ * names it. A variable no ported diagram reads is accepted and ignored (R-CONF-5).
  */
 
 /**
@@ -57,40 +59,14 @@ export const BASE_VARIABLES = [
 export type BaseVariable = (typeof BASE_VARIABLES)[number];
 
 /**
- * Arrowhead geometry (D152): sizes and gaps of the point, circle and cross arrowheads, read
- * as numbers at render time (`Theme.number`), so overriding their CSS variables has no effect.
- * Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
+ * Arrowhead geometry (D152): the size and gap of the point arrowhead, which flowchart and state
+ * both read, as numbers at render time (`Theme.number`), so overriding their CSS variables has
+ * no effect. Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
+ * Flowchart's circle and cross arrowheads are in its own table (spec #414 T4).
  */
-export const ARROWHEAD_VARIABLES = [
-  'arrowheadGap',
-  'arrowheadLength',
-  'arrowheadWidth',
-  'circleArrowheadSize',
-  'circleArrowheadGap',
-  'crossArrowheadSize',
-  'crossArrowheadGap',
-  'crossArrowheadStrokeWidth',
-  // ER crow's-foot ends: where the zero-or-more circle sits, out from the outline.
-  'erZeroOrMoreCircleOffset',
-] as const;
+export const ARROWHEAD_VARIABLES = ['arrowheadGap', 'arrowheadLength', 'arrowheadWidth'] as const;
 
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
-
-/**
- * Class relationship marker geometry (D152): v12 drew `look: neo` class markers from its
- * `*-margin` variants, so the redux themes carry those and the classic themes v12 classic's.
- * Read as numbers at render time. Only the quantities that differ are variables.
- */
-export const CLASS_MARKER_VARIABLES = [
-  'classMarkerStrokeWidth',
-  'classFilledMarkerStrokeWidth',
-  'extensionMarkerLength',
-  'extensionMarkerGap',
-  'compositionMarkerGap',
-  'dependencyMarkerGap',
-] as const;
-
-export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
 
 /**
  * Name lists joined into one. Called `@__PURE__` with no spread, so a bundle drops a list that
@@ -113,54 +89,15 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'spacing3',
   ] as const,
   ARROWHEAD_VARIABLES,
-  CLASS_MARKER_VARIABLES,
   [
-    // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
-    // in every theme, a size key that keeps v12's default.
-    'classTerminalFontSize',
     // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+    // The shapes flowchart and mindmap share; flowchart's other shapes are in its own table.
     'nodePaddingX',
     'nodePaddingY',
-    'stadiumPaddingX',
-    'stadiumPaddingY',
     'hexagonPaddingX',
     'hexagonPaddingY',
     'hexagonSlant',
-    'doubleCircleGap',
-    'doubleCirclePadding',
     'circlePadding',
-    'circleMinDiameter',
-    // Shapes with their own v12 padding (#89), totals added to the label box.
-    'subroutinePaddingX',
-    'subroutinePaddingY',
-    'cylinderPaddingX',
-    'cylinderPaddingY',
-    'leanPaddingX',
-    'leanPaddingY',
-    'oddPaddingX',
-    'oddPaddingY',
-    // Sequence participant boxes (v12 neo rx 6, classic 3).
-    'actorRadius',
-    // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
-    // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
-    // and the room below the drawing.
-    'actorGlyphBand',
-    'messageEndGap',
-    'labelBoxExtraHeight',
-    'actorFooterPadding',
-    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
-    'pieTitleTextSize',
-    'pieSectionTextSize',
-    'pieLegendTextSize',
-    'pieStrokeWidth',
-    'pieOuterStrokeWidth',
-    'pieOpacity',
-    // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
-    // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
-    'timelineRadius',
-    'timelineLabelOffset',
-    'timelineEventLabelShift',
-    'timelineScaleColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -169,11 +106,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * Palettes (D151, D152, D258, D267): lists of colours a theme carries as data. `themeVariables`
  * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
- * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
- * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
- * variables.
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>`,
+ * `gitBranchLabel<n>`) replace one entry of the palette they name. Palettes are read as literal
+ * colours, not CSS variables.
  */
 export const PALETTE_VARIABLES = [
   'borderColorArray',
@@ -181,20 +118,55 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
-  // Shared inputs that name no diagram (D332, D381): a theme's series colours, which charts
-  // and slotted diagrams read by slot (`seriesColorArray3`), and a ten-colour chart palette
-  // (v12's xychart `plotColorPalette`), empty until a theme supplies it.
+  // Shared inputs that name no diagram (D332, D381): a theme's series colours and tints,
+  // which charts and slotted diagrams read by slot (`seriesColorArray3`; the layout is
+  // `series` in specs/palettes.ts; an entry a theme leaves out is `BASE_SERIES`, derived from
+  // the base colours), and a ten-colour chart palette (v12's xychart
+  // `plotColorPalette`), empty until a theme supplies it.
   'seriesColorArray',
   'plotColorArray',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
 ] as const;
 
-/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
-export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
+/**
+ * A rule's read of one palette entry: any palette's name and a slot number with no leading zero
+ * (`bkgColorArray2`, `seriesColorArray19`, D332). Group 1 is the palette, group 2 the slot.
+ */
+export const PALETTE_SLOT = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
+
+/** The palettes with v12's numbered names, `<name>0` up to `PALETTE_LIMITS[name] - 1`. */
+export const NUMBERED_PALETTES = [
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
+] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
+export type NumberedPalette = (typeof NUMBERED_PALETTES)[number];
 
-/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
+/**
+ * How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`,
+ * D258).
+ */
 export const PALETTE_LIMIT = 12;
+
+/** How many numbered names the git palettes have (v12 `git0`–`git7`, D267). */
+export const GIT_PALETTE_LIMIT = 8;
+
+/** How many numbered names each of `NUMBERED_PALETTES` has. */
+export const PALETTE_LIMITS: Readonly<Record<NumberedPalette, number>> = {
+  cScale: PALETTE_LIMIT,
+  cScaleInv: PALETTE_LIMIT,
+  cScaleLabel: PALETTE_LIMIT,
+  git: GIT_PALETTE_LIMIT,
+  gitInv: GIT_PALETTE_LIMIT,
+  gitBranchLabel: GIT_PALETTE_LIMIT,
+};
 
 // Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
 // runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
@@ -216,38 +188,30 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'mindmap',
+  'gitgraph',
+  'gantt',
 ];
-
-const JOURNEY = ['journey'];
-
-/**
- * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
- * in core's size budget (R-PERF-8).
- */
-const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
-  Object.fromEntries(
-    Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
-  ))();
 
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
- * Built in a pure call: its spreads (`PIE_SLOTS`, the journey rows) made the object literal
- * look side-effecting, so the CDN core kept the whole table with its `usedBy` lists (R-PERF-8).
+ * Built in a pure call: spreads once made the object literal look side-effecting, so the CDN
+ * core kept the whole table with its `usedBy` lists (R-PERF-8).
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
-  tertiaryColor: def('t', 'color', ['core']),
-  background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core', 'cynefin']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'cynefin']),
+  tertiaryColor: def('t', 'color', ['core', 'gantt']),
+  background: def('bg', 'color', ['core', 'state']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'cynefin']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'cynefin']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'cynefin']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
-  primaryBorderColor: def('pb', 'color', ['core']),
+  primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
@@ -256,22 +220,42 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'core',
     'flowchart',
     'sequence',
+    'class',
     'state',
     'er',
     'journey',
     'timeline',
+    'quadrant',
+    'gitgraph',
+    'gantt',
     'cynefin',
   ]),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  mainBkg: def('mb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
-  // v12 `classText`: every text of a class diagram but notes and namespace titles.
-  classText: def('ct', 'color', ['class']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),
   border1: def('b1', 'color', []),
@@ -279,58 +263,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
   noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
   noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
-  // sequence (v12 names, derived as v12 `theme-base.js` derives them)
-  actorBkg: def('ab', 'color', ['sequence']),
-  actorBorder: def('ar', 'color', ['sequence']),
-  actorTextColor: def('at', 'color', ['sequence']),
-  actorLineColor: def('alc', 'color', ['sequence']),
-  signalColor: def('sc', 'color', ['sequence']),
-  signalTextColor: def('stc', 'color', ['sequence']),
-  labelBoxBkgColor: def('lbb', 'color', ['sequence']),
-  labelBoxBorderColor: def('lbr', 'color', ['sequence']),
-  labelTextColor: def('ltc', 'color', ['sequence']),
-  loopTextColor: def('lpt', 'color', ['sequence']),
-  activationBkgColor: def('acb', 'color', ['sequence']),
-  activationBorderColor: def('acr', 'color', ['sequence']),
-  sequenceNumberColor: def('snc', 'color', ['sequence']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
-  // composite states (#192, D120, D126): the body, the title strip and the alternate
-  // (nested) body.
-  compositeBackground: def('cbg', 'color', ['state']),
-  compositeTitleBackground: def('ctb', 'color', ['state']),
-  altBackground: def('alb', 'color', ['state']),
-  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
-  // opacity, derived as each v12 theme derives them.
-  ...PIE_SLOTS,
-  pieTitleTextSize: def('pts', 'length', ['pie']),
-  pieTitleTextColor: def('ptc', 'color', ['pie']),
-  pieSectionTextSize: def('pss', 'length', ['pie']),
-  pieSectionTextColor: def('psc', 'color', ['pie']),
-  pieLegendTextSize: def('pls', 'length', ['pie']),
-  pieLegendTextColor: def('plc', 'color', ['pie']),
-  pieStrokeColor: def('pkc', 'color', ['pie']),
-  pieStrokeWidth: def('pkw', 'length', ['pie']),
-  pieOuterStrokeColor: def('poc', 'color', ['pie']),
-  pieOuterStrokeWidth: def('pow', 'length', ['pie']),
-  pieOpacity: def('pop', 'opacity', ['pie']),
-  // quadrant chart (v12 names, derived as v12's `/* quadrant-graph */` block derives them;
-  // D231, D232)
-  quadrant1Fill: def('q1f', 'color', ['quadrant']),
-  quadrant2Fill: def('q2f', 'color', ['quadrant']),
-  quadrant3Fill: def('q3f', 'color', ['quadrant']),
-  quadrant4Fill: def('q4f', 'color', ['quadrant']),
-  quadrant1TextFill: def('q1t', 'color', ['quadrant']),
-  quadrant2TextFill: def('q2t', 'color', ['quadrant']),
-  quadrant3TextFill: def('q3t', 'color', ['quadrant']),
-  quadrant4TextFill: def('q4t', 'color', ['quadrant']),
-  quadrantPointFill: def('qpf', 'color', ['quadrant']),
-  quadrantPointTextFill: def('qpt', 'color', ['quadrant']),
-  quadrantXAxisTextFill: def('qxt', 'color', ['quadrant']),
-  quadrantYAxisTextFill: def('qyt', 'color', ['quadrant']),
-  quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
-  quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
-  quadrantTitleFill: def('qtf', 'color', ['quadrant']),
+
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -340,10 +275,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
+    'gitgraph',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
-  radius: def('r', 'length', ['core', 'flowchart', 'state']),
-  fontWeight: def('fw', 'weight', ['core', 'timeline']),
+  radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),
@@ -351,69 +288,62 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   arrowheadGap: def('ag', 'length', ['flowchart', 'state']),
   arrowheadLength: def('al', 'length', ['flowchart', 'state']),
   arrowheadWidth: def('aw', 'length', ['flowchart', 'state']),
-  circleArrowheadSize: def('ocs', 'length', ['flowchart']),
-  circleArrowheadGap: def('ocg', 'length', ['flowchart']),
-  crossArrowheadSize: def('xs', 'length', ['flowchart']),
-  crossArrowheadGap: def('xg', 'length', ['flowchart']),
-  crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
-  // class marker geometry (numbers only)
-  classMarkerStrokeWidth: def('cmw', 'length', ['class']),
-  classFilledMarkerStrokeWidth: def('cfw', 'length', ['class']),
-  extensionMarkerLength: def('eml', 'length', ['class']),
-  extensionMarkerGap: def('emg', 'length', ['class']),
-  compositionMarkerGap: def('cmg', 'length', ['class']),
-  dependencyMarkerGap: def('dmg', 'length', ['class']),
-  classTerminalFontSize: def('ctf', 'length', ['class']),
-  erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  nodePaddingX: def('npx', 'padding', ['flowchart']),
-  nodePaddingY: def('npy', 'padding', ['flowchart']),
-  stadiumPaddingX: def('spx', 'padding', ['flowchart']),
-  stadiumPaddingY: def('spy', 'padding', ['flowchart']),
-  hexagonPaddingX: def('hpx', 'padding', ['flowchart']),
-  hexagonPaddingY: def('hpy', 'padding', ['flowchart']),
-  hexagonSlant: def('hs', 'length', ['flowchart']),
-  doubleCircleGap: def('dcg', 'length', ['flowchart']),
-  doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
-  circlePadding: def('cp', 'padding', ['flowchart']),
-  circleMinDiameter: def('cmd', 'length', ['flowchart']),
-  subroutinePaddingX: def('srx', 'padding', ['flowchart']),
-  subroutinePaddingY: def('sry', 'padding', ['flowchart']),
-  cylinderPaddingX: def('cyx', 'padding', ['flowchart']),
-  cylinderPaddingY: def('cyy', 'padding', ['flowchart']),
-  leanPaddingX: def('lnx', 'padding', ['flowchart']),
-  leanPaddingY: def('lny', 'padding', ['flowchart']),
-  oddPaddingX: def('odx', 'padding', ['flowchart']),
-  oddPaddingY: def('ody', 'padding', ['flowchart']),
-  actorRadius: def('arx', 'length', ['sequence']),
-  actorGlyphBand: def('agb', 'length', ['sequence']),
-  messageEndGap: def('meg', 'length', ['sequence']),
-  labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
-  actorFooterPadding: def('afp', 'length', ['sequence']),
-  timelineRadius: def('tlr', 'length', ['timeline']),
-  timelineLabelOffset: def('tlo', 'padding', ['timeline']),
-  timelineEventLabelShift: def('tle', 'length', ['timeline']),
-  timelineScaleColors: def('tls', 'flag', ['timeline']),
-  // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
-  // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
-  rowOdd: def('ro', 'color', ['er']),
-  rowEven: def('re', 'color', ['er']),
-  erEdgeLabelBackground: def('eel', 'color', ['er']),
-  erMarkerFill: def('emf', 'color', ['er']),
-  // user journey (#290): section and task fills by slot (D241), the face, and the author's
-  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
-  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
-  ...Object.fromEntries(
-    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
-  ),
-  faceColor: def('jfc', 'color', JOURNEY),
-  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
+  // Flowchart's own shapes and its circle and cross arrowheads are in its table (#414 T4).
+  nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
+  nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
+  hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
+  circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  dropShadow: def('ds', 'filter', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
+  // Shared inputs that name no diagram (D332), read with `inline()`: the ink of a diagram's own
+  // titles and legends on the page, and the ink of labels on the series colours.
+  headingTextColor: def('hdt', 'color', ['pie']),
+  seriesTextColor: def('sxt', 'color', ['pie']),
   // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
-  // sequence's `labelTextColor` before.
-  scaleLabelColor: def('slc', 'color', ['core']),
+  // a sequence variable before.
+  scaleLabelColor: def('slc', 'color', ['core', 'sequence']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
+  // a diagram reads with `inline()`: a quiet fill for a highlighted span and its outline, the
+  // ink of links and their labels, text on a `lineColor` fill (as `secondaryTextColor` is text
+  // on `secondaryColor`), a softer outline than `nodeBorder` for boxes that frame rather than
+  // hold content, and the outline of a frame's label tab. v13 names; v12 has none.
+  mutedBkg: def('mbk', 'color', ['sequence']),
+  mutedBorder: def('mbd', 'color', ['sequence']),
+  linkInkColor: def('lki', 'color', ['sequence']),
+  lineTextColor: def('ltx', 'color', ['sequence']),
+  softBorder: def('sfb', 'color', ['sequence']),
+  frameBorder: def('frb', 'color', ['sequence']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
+  // a diagram reads with `inline()`: a badge, a small label box on the secondary colour set
+  // beside an item (gitGraph's commit ids; any id or count badge), and its text; a callout, a
+  // bordered label on the primary colour pinned to an item (gitGraph's tags; flags or markers
+  // elsewhere), its text and its border. v13 names; v12 has none.
+  badgeBkg: def('bgk', 'color', ['gitgraph']),
+  badgeTextColor: def('bgt', 'color', ['gitgraph']),
+  calloutBkg: def('clk', 'color', ['gitgraph']),
+  calloutTextColor: def('clt', 'color', ['gitgraph']),
+  calloutBorder: def('clb', 'color', ['gitgraph']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
+  // a diagram reads with `inline()`: the fills of a table's odd and even rows, the fill behind a
+  // label on a link drawn on a plain surface rather than the edge label chip, and the body of a
+  // region nested in another of its kind. v13 names; v12 has none.
+  rowBkg: def('rbk', 'color', ['er']),
+  rowAltBkg: def('rab', 'color', ['er']),
+  linkLabelBkg: def('llb', 'color', ['er']),
+  nestedBkg: def('nbk', 'color', ['state']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

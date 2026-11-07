@@ -1,0 +1,2 @@
+2:3-2:21 "::icon(fa fa-book)" error MINDMAP_DECORATION_BEFORE_NODE: An `::icon(…)` line decorates the node before it, and there is none here. Write it on the line after its node.
+4:6-4:7 "{" error UNEXPECTED: Expected a line break, got `{`; a hexagon is written `{{text}}`.

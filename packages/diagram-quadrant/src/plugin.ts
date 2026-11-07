@@ -7,6 +7,7 @@ import { quadrantLayoutConfig } from './config.ts';
 import { detectQuadrant, parseQuadrant, type QuadrantParseResult } from './parser/index.ts';
 import { quadrantLabels } from './labels.ts';
 import { renderQuadrant } from './render/index.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The quadrant chart plugin (DESIGN §12.1, spec #289): `layoutKind: 'custom'` with its own
@@ -24,6 +25,7 @@ export const quadrant = {
   parse: (text: string, ctx: DiagramParseContext): QuadrantParseResult =>
     parseQuadrant(text, { preprocessed: ctx.preprocessed }),
   labels: quadrantLabels,
+  theme,
   layout: (model: QuadrantModel, ctx: RenderContext): QuadrantLayout => {
     const warn = (w: Warning): void => ctx.warn(w);
     const section = ctx.config.quadrantChart as Readonly<Record<string, unknown>> | undefined;

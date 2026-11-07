@@ -11,7 +11,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*flowchart-elk/.test(text),
     load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
   },
-  { type: 'mindmap', id: 'mindmap', pattern: /^\s*mindmap/, detector: (text) => /^\s*mindmap/.test(text) },
+  {
+    type: 'mindmap',
+    id: 'mindmap',
+    section: 'mindmap',
+    pattern: /^\s*mindmap/,
+    detector: (text) => /^\s*mindmap/.test(text),
+    load: () => import('@mermaid-js/diagram-mindmap/language').then((m) => m.language),
+  },
   { type: 'architecture', id: 'architecture', pattern: /^\s*architecture/, detector: (text) => /^\s*architecture/.test(text) },
   { type: 'agentflow', id: 'agentflow', pattern: /^\s*agentflow-beta\b/, detector: (text) => /^\s*agentflow-beta\b/.test(text) },
   { type: 'c4', id: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/, detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
@@ -32,7 +39,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*erDiagram/.test(text),
     load: () => import('@mermaid-js/diagram-er/language').then((m) => m.language),
   },
-  { type: 'gantt', id: 'gantt', pattern: /^\s*gantt/, detector: (text) => /^\s*gantt/.test(text) },
+  {
+    type: 'gantt',
+    id: 'gantt',
+    section: 'gantt',
+    pattern: /^\s*gantt/,
+    detector: (text) => /^\s*gantt/.test(text),
+    load: () => import('@mermaid-js/diagram-gantt/language').then((m) => m.language),
+  },
   { type: 'info', id: 'info', pattern: /^\s*info/, detector: (text) => /^\s*info/.test(text) },
   {
     type: 'pie',
@@ -68,7 +82,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*timeline/.test(text),
     load: () => import('@mermaid-js/diagram-timeline/language').then((m) => m.language),
   },
-  { type: 'gitGraph', id: 'gitGraph', pattern: /^\s*gitGraph/, detector: (text) => /^\s*gitGraph/.test(text) },
+  {
+    type: 'gitGraph',
+    id: 'gitGraph',
+    section: 'gitGraph',
+    pattern: /^\s*gitGraph/,
+    detector: (text) => /^\s*gitGraph/.test(text),
+    load: () => import('@mermaid-js/diagram-gitgraph/language').then((m) => m.language),
+  },
   {
     type: 'stateDiagram',
     id: 'state',
@@ -123,4 +144,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'class' | 'er' | 'pie' | 'sequence' | 'timeline' | 'state' | 'journey' | 'quadrantChart' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'class' | 'er' | 'gantt' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'cynefin';

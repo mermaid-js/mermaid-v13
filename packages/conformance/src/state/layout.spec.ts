@@ -14,6 +14,7 @@ import {
 } from '@mermaid-js/core/layout';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import {
   layoutState,
   parseState,
@@ -56,7 +57,7 @@ function run(
     config: resolveConfig(CORE_DEFAULTS),
     measurer,
     units,
-    theme: createTheme(spec, {}),
+    theme: createTheme(spec, { diagram: DIAGRAM_TABLES.state }),
     warn: () => {},
     layout: (g) => {
       graph = g;

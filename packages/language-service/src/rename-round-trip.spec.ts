@@ -64,6 +64,13 @@ const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
     const m = model as { actors: string[] };
     return { ...m, actors: [...m.actors].sort() };
   },
+  // Not ordered but derived from the names alone, so dropped: mindmap's `ast` ids encode the
+  // node id (`%3E` for `>`) and number the repeats of an id (`n:a@2`, D289), so a rename
+  // re-encodes and renumbers them. The id itself is in `id`, compared as it is.
+  mindmap: (model) => {
+    const m = model as { nodes: { ast: string }[] };
+    return { ...m, nodes: m.nodes.map(({ ast: _, ...node }) => node) };
+  },
 };
 
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */

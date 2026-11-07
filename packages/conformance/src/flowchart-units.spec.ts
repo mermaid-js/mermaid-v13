@@ -9,6 +9,7 @@ import {
   type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { flowchart, type FlowModel, type FlowRenderContext } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError, type Prepared } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
@@ -34,7 +35,7 @@ beforeAll(async () => {
 
 /** The graph the builder hands the engine for a cell profile, measured in cells. */
 async function build(prepared: Prepared, units: UnitProfile): Promise<LayoutGraph> {
-  const theme = createTheme(await loadTheme('redux'), {});
+  const theme = createTheme(await loadTheme('redux'), { diagram: DIAGRAM_TABLES.flowchart });
   let graph: LayoutGraph | undefined;
   const ctx: FlowRenderContext = {
     config: prepared.config,
