@@ -26,4 +26,4 @@
 - Every full `pnpm check`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
 - Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`.
 - A timing test that fails under load is not a regression: rerun it under the lock. If `conformance/src/flowchart/probe.spec.ts` times out, run the check with `VITEST_MAX_WORKERS=4`.
-- If `check:grammar` reports kanban's generated grammar stale right after `pnpm install`, rerun it before regenerating (seen three times; nothing changed). Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
+- `generated/` folders are gitignored: every new generated file (grammar highlighters, `config-defaults.ts`, …) must be added with `git add -f`, or CI's clean checkout fails `check:*` while local runs pass. Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
