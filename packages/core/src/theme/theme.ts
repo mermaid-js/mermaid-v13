@@ -51,6 +51,7 @@ import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagr
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { BASE_SERIES } from './specs/palettes.ts';
+import { baseScalesFor } from './specs/scales.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   GIT_PALETTE_LIMIT,
@@ -694,6 +695,21 @@ function numberedOverrides(
   return out;
 }
 
+const SCALE_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel', 'git', 'gitInv', 'gitBranchLabel'];
+
+/**
+ * `lists` with the scale and git palettes it leaves out taken from v12 theme-base's derivation
+ * over the base colours (`baseScalesFor`). An inverse whose palette the theme writes inverts
+ * that palette's slots, as v12 derives one from a fixed `cScale`; the built-in themes write all
+ * six, so they read none of these.
+ */
+function withBaseScales(lists: PaletteLists, darkMode: boolean): PaletteLists {
+  if (SCALE_PALETTES.every((p) => own(lists, p))) return lists;
+  const inverted = (p: 'cScale' | 'git') =>
+    lists[p] && { [`${p}Inv`]: lists[p].map((_, i) => `invert(${p}${i})`) };
+  return { ...baseScalesFor(darkMode), ...inverted('cScale'), ...inverted('git'), ...lists };
+}
+
 /**
  * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
  * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
@@ -713,9 +729,10 @@ function paletteSource(
       code: 'THEME_VARIABLE_DROPPED',
       message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
     });
-  const lists: PaletteLists = darkMode
-    ? { ...spec.palettes, ...spec.darkModePalettes }
-    : (spec.palettes ?? {});
+  const lists = withBaseScales(
+    darkMode ? { ...spec.palettes, ...spec.darkModePalettes } : (spec.palettes ?? {}),
+    darkMode
+  );
   const user: Partial<Record<PaletteVariable, readonly SafeColor[]>> = {};
   const slots = new Map<string, SafeColor>();
   if (!vars) return { spec: lists, user, slots };

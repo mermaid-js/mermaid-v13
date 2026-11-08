@@ -322,6 +322,40 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(css.rootStyle()['--_x0']).toBe('var(--mermaid-a,var(--_s))');
   });
 
+  it('derives the scale and git palettes a theme leaves out from its base colours (v12 theme-base)', () => {
+    const { palettes: _, darkModePalettes: __, ...bare } = spec.base;
+    const read = (s: ThemeSpec, slot: string, themeVariables?: Record<string, unknown>) =>
+      createTheme(s, { cssVariables: false, diagram: table({ a: slot }), themeVariables }).value(
+        'a'
+      );
+    const at = (rule: string) => read(bare, rule);
+    const dark = { darkMode: true };
+    // Hue steps darkened by 25, 75 under darkMode; slot 8 lightened first. Its own base colours.
+    expect(read(bare, 'cScale0')).toBe(at('darkenHsl(primaryColor, 25%)'));
+    expect(read(bare, 'cScale1')).toBe(at('darkenHsl(secondaryColor, 25%)'));
+    expect(read(bare, 'cScale2')).toBe(at('darkenHsl(tertiaryColor, 25%)'));
+    expect(read(bare, 'cScale3')).toBe(at('darkenHsl(adjustHue(primaryColor, 30), 25%)'));
+    expect(read(bare, 'cScale8')).toBe(
+      at('darkenHsl(lightenHsl(adjustHue(primaryColor, 210), 100%), 25%)')
+    );
+    expect(read(bare, 'cScale0', dark)).toBe(at('darkenHsl(primaryColor, 75%)'));
+    expect(read(bare, 'cScaleInv0')).toBe(at('invert(darkenHsl(primaryColor, 25%))'));
+    expect(read(bare, 'cScaleLabel0')).toBe(at('scaleLabelColor'));
+    // git darkened by 25, lightened under darkMode with black branch labels.
+    expect(read(bare, 'git3')).toBe(at('darkenHsl(adjustHue(primaryColor, -30), 25%)'));
+    expect(read(bare, 'git0', dark)).toBe(at('lightenHsl(primaryColor, 25%)'));
+    expect(read(bare, 'gitBranchLabel0', dark)).toBe('black');
+    // An author's slot is drawn as given, its inverse derived from it as v12 does.
+    const own = { cScale3: '#123456' };
+    expect(read(bare, 'cScale3', own)).toBe('#123456');
+    expect(read(bare, 'cScaleInv3', own)).toBe(at('invert(darkenHsl(#123456, 25%))'));
+    // A theme that writes cScale but no inverse inverts its own slots.
+    const one: ThemeSpec = { ...bare, palettes: { cScale: ['#abcdef'] } };
+    expect([read(one, 'cScale0'), read(one, 'cScaleInv0')]).toEqual(['#abcdef', '#543210']);
+    expect(createTheme(one).palette('cScale')).toEqual(['#abcdef']);
+    expect(createTheme(bare).palette('git')).toHaveLength(8);
+  });
+
   it("reads the dark spec's seriesColorArray under theme: 'auto'", () => {
     const night: ThemeSpec = {
       ...spec.dark,
