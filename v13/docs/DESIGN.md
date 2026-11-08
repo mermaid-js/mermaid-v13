@@ -509,6 +509,7 @@ interface SvgWriter {
   text(content: string): void;                       // always escaped
   label(box: LabelBox, x: number, y: number, attrs?: Attrs): void;
   path(): PathBuilder;                               // numbers formatted via num(); returns d-string token, not a raw string
+  linearGradient(g: LinearGradient): GradientRef;    // a user-space gradient (D391), as url(#…) paint
 }
 type Attrs = Partial<Record<AllowedAttr, string | number | ThemeRef | SafeUrl>>;
 ```
@@ -516,6 +517,7 @@ type Attrs = Partial<Record<AllowedAttr, string | number | ThemeRef | SafeUrl>>;
 - Tag and attribute names are compile-time unions taken from the security allow-list, which is the same list R-SEC-2 tests. A plugin cannot emit `<script>`, `on*` or `foreignObject`, because those types don't exist.
 - Values are escaped in `finish`. URLs must be `SafeUrl`, a branded type produced only by `checkUrl()` (R-SEC-4). Colours from user styles must be `SafeColor`, produced only by the style allow-list (R-SEC-3).
 - Output is a string buffer. `num()` uses integer-table formatting to 2 decimals, the fast-path escape is taken from Pele, and there are no `<defs>` or `<marker>`: arrowheads are inline paths, so no ids are needed.
+- Gradients are the writer's own, the one exception to "no `<defs>`, no ids": `finish()` writes one `<defs>` as the root's first child, holding the render's gradient (D182, `<scope>-gradient`, `objectBoundingBox`, written only when an outline refers to it) and then any user-space gradients a renderer asked for with `SvgWriter.linearGradient({ x1, x2, y?, from, to })` (D391). That call returns the `url(#…)` paint for `fill`/`stroke`; the element is `gradientUnits="userSpaceOnUse"`, numeric `x1`/`x2`, `y1 = y2`, two stops, with the id `<scope>-g-<FNV-1a of the written ends and stops>`, so equal gradients share one element and two renders (different id prefixes) never share an id. `assertInert` accepts exactly those two shapes, ids in the render's scope, and references only to declared ids. `mix-blend-mode` is kept with `normal` and `multiply` only (D392): `checkStyle` writes it as the shape's `style` (it is not a presentation attribute), `styleText` and `assertInert` refuse any other value.
 - Element ids: only `${idPrefix}-title` / `-desc` (R-A11Y-1). Everything else uses `data-id`, `data-ast` (§4.2) and classes (R-SVG-2, -3).
 - Links (R-SVG-4, D62): `<a href>` takes a `SafeUrl`. The v12 `target` (`_self`, `_blank`, `_parent`, `_top`) is kept; any other value is dropped with a warning, and `_blank` always adds `rel="noopener noreferrer"`. The URL check follows `securityLevel` (§10).
 

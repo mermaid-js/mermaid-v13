@@ -43,6 +43,7 @@ const plainLeaves = (w: SvgWriter): SvgWriter => ({
   label: (box, x, y, attrs) => w.label(box, x, y, attrs),
   path: () => w.path(),
   styleSheet: (css) => w.styleSheet(css),
+  linearGradient: (g) => w.linearGradient(g),
 });
 
 /** `plugin`, as it drew before adopting the hook. */
