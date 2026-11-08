@@ -231,6 +231,7 @@ describe('an outline drawer that breaks the sink rules', () => {
       label: (box, x, y, attrs) => w.label(box, x, y, attrs),
       path: () => w.path(),
       styleSheet: (css) => w.styleSheet(css),
+      linearGradient: (g) => w.linearGradient(g),
     });
     const unoutlined: DiagramPlugin<unknown, unknown> = {
       ...(flowchart as DiagramPlugin<unknown, unknown>),

@@ -223,29 +223,45 @@ describe('kanban layout: config', () => {
 });
 
 // The spec (and v12, `clusters.js:346`) let a word wider than its wrap width overflow, unbroken;
-// Pele's "words broken between characters" is a divergence not to follow. Core's label layout
-// has no option to keep a word whole, so the word is split today (GAPS #455, for the
-// maintainer). This pins that, and that the bounds hold every label, until core has the option.
+// Pele's "words broken between characters" is a divergence not to follow. Core's `keepWords`
+// keeps it whole in px; the text output, in cells, still splits it to keep it inside its box.
 describe('kanban layout: a word wider than its wrap width', () => {
   const word = 'Supercalifragilisticexpialidociousandevenlongerwordhere';
   const input = board(`  e[${word}]`, `    c[${word}]@{ ticket: ${word}, assigned: ${word} }`);
 
-  it('is split between characters by core, in every label kind (not as v12)', () => {
+  it('overflows whole in every label kind, as v12, and the bounds hold it', () => {
     const layout = lay(input);
     const column = layout.columns[0]!;
     const card = layout.cards[0]!;
-    const wrap = layout.sectionWidth - 25;
-    const labels = [
-      [column.title!, layout.sectionWidth],
-      [card.title!, wrap],
-      [card.ticket!, wrap],
-      [card.assignee!, wrap],
-    ] as const;
-    for (const [label, max] of labels) {
-      expect(label.text.lines.length).toBeGreaterThan(1);
-      expect(label.text.lines.map((l) => l.map((r) => r.text).join('')).join('')).toBe(word);
-      expect(label.width).toBeLessThanOrEqual(max);
+    // 55 characters at 8 px.
+    const wide = word.length * 8;
+    for (const label of [column.title!, card.title!, card.ticket!, card.assignee!]) {
+      expect(label.text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([word]);
+      expect(label.width).toBe(wide);
     }
+    // The column title is centred, so it sticks out on both sides; the card title and ticket
+    // start 10 px in from the card's left edge, and the assignee ends 10 px in from its right.
+    expect(column.title!.x).toBe(column.x + (column.width - wide) / 2);
+    expect(card.title!.x).toBe(card.x + 10);
+    expect(card.title!.x + wide).toBeGreaterThan(card.x + card.width);
+    expect(card.assignee!.x + wide).toBe(card.x + card.width - 10);
+    const b = layout.bounds;
+    expect(b.x).toBeLessThanOrEqual(card.assignee!.x);
+    expect(b.x + b.width).toBeGreaterThanOrEqual(card.title!.x + wide);
+    expect(kanbanLayoutViolations(input, layout)).toEqual([]);
+  });
+
+  it('is split between characters in cells, so the text output keeps it in its box', () => {
+    const layout = layoutKanban(input, {
+      config: {} as ResolvedConfig,
+      measurer: cellMeasurer,
+      units: cellProfile(),
+      theme: createTheme(spec),
+      warn: () => {},
+    });
+    const card = layout.cards[0]!;
+    expect(card.title!.text.lines.length).toBeGreaterThan(1);
+    expect(card.title!.width).toBeLessThanOrEqual(layout.sectionWidth);
     expect(kanbanLayoutViolations(input, layout)).toEqual([]);
   });
 });
