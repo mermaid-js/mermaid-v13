@@ -14,7 +14,7 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  *   never read): the fills `mainBkg`, the evolution `#ff6b6b`.
  *
  * This equals v12 in the five classic themes, but for neutral's grid (below). The redux and neo
- * families take the same entries (`fallback: 'classic'`): v12 leaves them unthemed, so their
+ * families take the same entries (`fallback: 'classic'`): v12 gives them no block, so their
  * values are D333(b) (T5's oracle lists them). `wardleyGridColor` is the literal `lightgrey`,
  * as gantt's `gridColor` (a gantt row a wardley rule may not read): v12's value in default, base,
  * dark and forest; neutral's `hsl(0, 0%, 90%)` is a family-rule approximation (GAPS #430).
