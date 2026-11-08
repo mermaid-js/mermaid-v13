@@ -1,7 +1,8 @@
 /**
  * The wardley corpora (#430): the e2e fixtures and the harvested v12 spec strings, and the
- * lexer gate's set, which adds the hand-written cases of `corpus/wardley-cases.json` (the spec's
- * quirks, line separators) and a CRLF and a commented copy of every source.
+ * gates' set, which adds the hand-written cases of `corpus/wardley-cases.json` (the spec's
+ * quirks, line separators, the parser's cases) and `corpus/wardley-recovery.json`, and a CRLF
+ * and a commented copy of every source.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,9 +22,17 @@ export async function wardleyCorpus(): Promise<CorpusItem[]> {
   return [...items, ...readItems('packages/conformance/corpus/wardley-v12-specs.json')];
 }
 
-/** The hand-written cases: the spec's quirks and the rules' other corners. */
+/**
+ * The hand-written cases: the spec's quirks and the rules' other corners, the parser's cases
+ * (`parser-*`), and the parser's recovery set (`wardley-recovery.json`, whose expected
+ * diagnostics `recovery.spec.ts` checks).
+ */
 export function wardleyCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/wardley-cases.json');
+  const recovery = readItems('packages/conformance/corpus/wardley-recovery.json');
+  return [
+    ...readItems('packages/conformance/corpus/wardley-cases.json'),
+    ...recovery.map(({ id, source }) => ({ id, source })),
+  ];
 }
 
 /** The corpus, the cases, and a CRLF and a commented copy of each. */

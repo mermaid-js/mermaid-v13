@@ -18,7 +18,12 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Trends from a pipeline parent** are not horizontal in v12 (origin moved, target on the parent's original line, `:540-547`). Follow v12; the T3 "trends horizontal" invariant excepts trends from pipeline parents.
 - **Extra group** `g.wardley-pipeline-links` (`.wardley-pipeline-evolution-link`, dashed `4 4`) between pipelines and links: kept (T4, class list in MIGRATION.md).
 - **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table.
-- **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order.
+- **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order. **Closed (#489):** every v12 message is an error with its text, in source order (`parity.spec.ts` checks all 11 contexts word for word); an out-of-range value is kept as 100, so it causes no second error.
+
+## T2 (#489)
+
+- Choices (also in `tickets/489.md`): D425's three warnings are raised by the parser, one per kind with the other places in `related`; v12's child→own-parent link filter is the renderer's (T3/T4 skip those links, no warning). Only the first `annotations` is range-checked (v12 read only it). Ids beyond D427: `wardley`, `annotations`, `accTitle`, `accDescr`; `note:<k>` is an ordinal; link ids use the names as written.
+- For T3: `WardleyModel` keeps v12's node field names; annotations carry `x`/`y` (not `coordinates[]`); `evolution` replaces v12's `axes` (absent: v12's default stages).
 
 ## T1 (#487, merged)
 

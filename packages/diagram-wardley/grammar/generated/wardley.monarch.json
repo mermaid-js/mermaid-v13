@@ -1,0 +1,361 @@
+{
+  "tokenPostfix": ".mermaid-wardley",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "spanRule33": [
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\})[\\s\\S])+",
+        {
+          "token": "keyword"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\[",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\]",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "@",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\/",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\(",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "-(?!>|->|\\.->|--[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S)))",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "[0-9]+\\.[0-9]+",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "->",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "\\+<>|\\+>|\\+<",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "-->|-\\.->|>|\\+'[^']*'<>|\\+'[^']*'<|\\+'[^']*'>",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ";[^\\n\\r]+",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "build|buy|outsource|market",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "wardley-beta",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "size",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "evolution",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "anchor",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "component",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "label",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "inertia",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "evolve",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "pipeline",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "note",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "annotations",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "annotation",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accelerator",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "deaccelerator",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?!title\\s|accTitle|accDescr)[A-Za-z](?:[A-Za-z0-9_()&]|-(?!>))*(?:[\\t ]+[A-Za-z(](?:[A-Za-z0-9_()&]|-(?!>))*)*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[\\t ]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[\\t ]*accDescr\\s*\\{",
+        {
+          "token": "keyword",
+          "next": "@spanRule33"
+        }
+      ],
+      [
+        "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "0|[1-9][0-9]*(?!\\.)",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "\\w(?:[-\\w]*\\w)?",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\r?\\n",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[\\t ]*%%[^\\n\\r]*",
+        {
+          "token": "comment"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

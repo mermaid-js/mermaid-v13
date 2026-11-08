@@ -1,10 +1,25 @@
-/** The wardley parser's public surface so far: the lexer gated against v12's Langium lexer (#487). */
+/**
+ * The wardley parser's public surface: the parser (#489), detection, and the lexer gated against
+ * v12's Langium lexer (#487).
+ */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, T as WardleyTokenKind, WARDLEY_TRIVIA } from './tokens.ts';
+export { parseWardley } from './parser.ts';
+export type { WardleyParseOptions, WardleyParseResult } from './parser.ts';
+export {
+  WARDLEY_COORDINATE_AMBIGUOUS,
+  WARDLEY_LINK_DROPPED,
+  WARDLEY_OUT_OF_RANGE,
+  WARDLEY_PIPELINE_REPLACED,
+  WARDLEY_UNKNOWN_PARENT,
+  WARDLEY_UNKNOWN_TARGET,
+} from './normalise.ts';
+export { detectWardley } from './detect.ts';
+export type * from './ast.ts';
 
 export interface WardleyToken {
   /** A `WardleyTokenKind` or a shared `Kind`. */
