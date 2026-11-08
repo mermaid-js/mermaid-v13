@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-xychart",
   "version": "0.0.0",
   "private": true,
-  "description": "XY chart plugin for Mermaid: lexer, parser and model (layout and renderer to follow).",
+  "description": "XY chart plugin for Mermaid: lexer, parser, model and layout (renderer to follow).",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -16,6 +16,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "mermaid-source": "./src/testing.ts",
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "files": [

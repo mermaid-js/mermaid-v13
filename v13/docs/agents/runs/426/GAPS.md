@@ -25,8 +25,16 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** `orientation` is only `horizontal` when written in lower case (v12's `setOrientation` compares the token text), so `xychart HORIZONTAL` is vertical.
 
 ## #509 T3 layout
-- Exploration: `labelRotation` outside ±90 becomes 0 in v12, not clamped (`baseAxis.ts:37–40`); the spec says "clamped". Follow v12 (`label-rotation-clamped-*` fixtures).
-- Exploration: v12's builder runs headless (text measured as `len × fontSize`), so a layout-parity spec against it is possible, as quadrant's `layout-parity.spec.ts`. The exact d3 oracle is local: `d3-array@3.2.4/src/ticks.js`, `d3-scale@4.0.2/src/band.js`.
+- Closed: `labelRotation` outside ±90 is 0, as v12 (`config.ts` reads a key only inside its schema range; `layout.spec.ts`, the `label-rotation-clamped-*` fixtures in parity).
+- Closed: layout parity with v12's headless builder (`conformance/src/xychart/layout-parity.spec.ts`, 0.01 px) over the e2e corpus, seven config variants of it, and 1,254 corpus sources and statement orders both accept. Listed there: a missing band value (D383) and a line break in a text (D385). d3 parity (`ticks-parity.spec.ts`) against v12's own d3 7.9.0: `ticks` on 5,000+ ranges, both scales, `line()`.
+- **Choice (for the maintainer):** a bar is held inside the plot box: its value end at the box edge, its sides cut there. v12 drew a value under an explicit minimum with a negative height, one over the maximum past the plot, and a plot written before a linear `x-axis` outside it. The invariant asks for it; output changes only for such values.
+- **Choice:** a missing band value breaks a line (d3's `defined` gap), rather than joining its neighbours.
+- **Choice:** legend markers get no data labels (v12 labelled every `rect`, so plot 0's values sat on legend swatches).
+- **Choice:** point labels go through core label layout too (D385 lists the title, axis titles, categories and legend; point labels are author text like them).
+- **Choice:** a config key is read when it is a number (or numeric string) in its schema range, else its default, silently (T5 decides warnings, as radar's T5 did). A non-numeric x on a linear axis (a plot before its range) draws at the axis start, as D386 does on a band axis. Values past ±1e300 (a 309-digit Infinity) are drawn there.
+- **Deviation (for the maintainer):** v12, not the spec's wording, on two lengths (oracle-checked): outer padding is at most 0.2 of the space the axis is given (what is left beside the plot's reserved share), not of the axis; a bar is `0.95 · min(2 · outerPadding, tickDistance)` wide, not 0.95 of the band step.
+- Limit: legend rows are `legendFontSize` apart (v12, the spec), so a legend name with `<br>` overlaps the next row.
+- Pele (`pele@1.13.0`, `364JUB4J.js`) differs from v12's orchestrator: canvas clamped to 100–4000 px and scaled to the container; fixed paddings, font sizes (`0.875`/`0.75` of 16) and 4 px ticks instead of the `xyChart` config; adaptive tick count (`span/56` or `/80`, 2–10) and a "niced" y range that includes 0 with bars, ignoring an empty given range; band labels thinned and wrapped; bars grouped side by side from 0, clipped to the plot; lines clipped, with dots; legend rows 26 px, cut when they overflow; no `plotReservedSpacePercent`, `labelRotation` or data-label font search.
 
 ## #510 T4 renderer and theme table
 - Exploration: `ThemeVarKind` has no palette kind for diagram table vars, and `flatten()` maps nested keys only onto table vars, so `xyChart.plotColorPalette` has no carrier yet; T4 picks one (record it). `theme-direction.spec.ts:113–118` asserts `plotColorArray` is unread; T4 updates it.

@@ -1,0 +1,30 @@
+/**
+ * The layout context the XY chart tests lay out with (the package specs, the conformance layout
+ * corpus and parity): the `default` theme, the table measurer unless one is given, warnings
+ * collected, and an `xyChart` config section.
+ */
+import type { Warning } from '@mermaid-js/core';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
+import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { XyChartLayoutContext } from './layout/index.ts';
+
+/** The `default` theme (xychart has no theme table until T4, #510; the layout reads only `fontFamily`). */
+export async function xyChartTestTheme(): Promise<Theme> {
+  return createTheme(await loadTheme('default'));
+}
+
+/** A layout context over `theme` with the `xyChart` section `section`; warnings go to `warnings`. */
+export function xyChartTestContext(
+  theme: Theme,
+  section: Readonly<Record<string, unknown>> = {},
+  options: { measurer?: Measurer; warnings?: Warning[] } = {}
+): XyChartLayoutContext {
+  const warnings = options.warnings;
+  return {
+    config: { xyChart: section } as unknown as ResolvedConfig,
+    theme,
+    measurer: options.measurer ?? tableMeasurer,
+    warn: (w) => warnings?.push(w),
+  };
+}
