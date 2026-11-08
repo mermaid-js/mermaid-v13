@@ -6,11 +6,11 @@
  */
 import { execFileSync } from 'node:child_process';
 import { stripTypeScriptTypes } from 'node:module';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import { REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { JISON_TYPES } from './types.ts';
-import type { JisonType } from './types.ts';
+import type { JisonType, JisonTypeDescriptor } from './types.ts';
 
 /** The last v12 commit of mermaid's own history in this repo. */
 export const V12_COMMIT = 'fa796a943';
@@ -35,7 +35,7 @@ export function hasV12History(): boolean {
 
 /** The corpus `harvest <type>` writes, in file order, without duplicate sources. */
 export function harvest(type: JisonType): CorpusItem[] {
-  const { dir, docs, method } = JISON_TYPES[type].harvest;
+  const { dir, docs, method }: JisonTypeDescriptor['harvest'] = JISON_TYPES[type].harvest;
   const items: CorpusItem[] = [];
   const seen = new Set<string>();
   const add = (id: string, source: string) => {
@@ -73,10 +73,18 @@ export function harvest(type: JisonType): CorpusItem[] {
       let n = 0;
       const text = show(file);
       const js = file.endsWith('.ts') ? stripTypeScriptTypes(text) : text;
-      runSpec(js, method.parsers, (source) => {
-        n++;
-        if (typeof source === 'string') add(idOf(file, n), source);
-      });
+      const globals: Record<string, unknown> = {};
+      for (const name of method.identity ?? []) globals[name] = (s: unknown) => s;
+      if (method.readsFiles) Object.assign(globals, gitFiles(posix.dirname(file), show));
+      runSpec(
+        js,
+        method.parsers,
+        (source) => {
+          n++;
+          if (typeof source === 'string') add(idOf(file, n), source);
+        },
+        globals
+      );
     }
   }
 
@@ -186,6 +194,18 @@ function keywordsOf(text: string): string[] {
 
 // --- run -------------------------------------------------------------------------------------
 
+/**
+ * `fs`, `path` and `__dirname` for a spec in `dir` (repo-relative) that reads files next to it:
+ * `fs.readFileSync` reads a repo-relative path from git through `show`.
+ */
+function gitFiles(dir: string, show: (file: string) => string): Record<string, unknown> {
+  return {
+    __dirname: dir,
+    path: { resolve: (...parts: string[]) => posix.join(...parts) },
+    fs: { readFileSync: (file: string) => show(file) },
+  };
+}
+
 type Fn = (...args: unknown[]) => unknown;
 const noop = (): undefined => undefined;
 /** A constructible function, as a Proxy target that `new` may be used on. */
@@ -208,12 +228,14 @@ function inert(): unknown {
  * Runs v12 spec `text` with its imports stubbed: the `describe`/`it` callbacks are called in
  * order, `expect` is inert (it calls a function passed to it, for `toThrow`), and
  * `<name>.parser.parse` / `<name>.parse` call `record` with their argument, for each of
- * `parserNames`. gitGraph's harvest (`../gitgraph/harvest.ts`) runs its spec with it too.
+ * `parserNames`. `globals` are more names in the spec's scope (real helpers in place of inert
+ * imports). gitGraph's harvest (`../gitgraph/harvest.ts`) runs its spec with it too.
  */
 export function runSpec(
   text: string,
   parserNames: readonly string[],
-  record: (source: unknown) => void
+  record: (source: unknown) => void,
+  globals: Readonly<Record<string, unknown>> = {}
 ): void {
   const queue: Fn[] = [];
   const hooks: Fn[][] = [[]];
@@ -268,6 +290,7 @@ export function runSpec(
     afterEach: noop,
     expect,
     ...Object.fromEntries(parserNames.map((name) => [name, parser()])),
+    ...globals,
   };
   const body = stripImports(text);
   const names = Object.keys(scope);

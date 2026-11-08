@@ -64,9 +64,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
+ * must read none (so it is removed as soon as it reads one). Sankey until its renderer (#502).
  */
-const NOT_DRAWN_YET = new Set<string>([]);
+const NOT_DRAWN_YET = new Set<string>(['sankey']);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -86,6 +86,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'pie',
       'quadrant',
       'radar',
+      'sankey',
       'sequence',
       'state',
       'timeline',

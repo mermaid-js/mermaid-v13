@@ -5,10 +5,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #492 T0 core gradients and blend mode
 
 ## #494 T1 lexer and corpus
-- Exploration: `sankey.spec.ts` has 6 `parse` calls (not ~20), all through `prepareTextForParsing`; the `run` harvest stubs that import and records 0 strings. T1 extends the harvest (record the argument of the real `prepareTextForParsing`, or the parser's input) so `sankey-v12-specs.json` holds them, `energy.csv` included.
-- Exploration (oracle): non-ASCII characters and tabs are not lexer errors in v12: `{TEXTDATA}*` matches the empty string forever, so the oracle yields empty `NON_ESCAPED_TEXT` tokens (until its cap) and no `LEXICAL_ERROR`; the parser rejects. The gate needs a justified exclusion for that loop (compare up to the first empty token, then assert v13 rejects). Also unlisted in the spec: blanks after the header (`sankey   ⏎…`) are rejected.
-- Exploration: `lexedText` needs no oracle change (the dist sets `parser.parser = parser`, so the wrapped `setInput` sees the text after `prepareTextForParsing`, which has no trailing `\n`).
-- Exploration: the corpus does use `prefix`/`suffix` and `width`/`height` (the financial-flow file: 800×500, `$`, `B`; the four align files: width 410), unlike the spec's coverage list.
+- Closed: the harvest's `run` method gains `identity` (`prepareTextForParsing`, `cleanupComments` stubbed as the identity, since the oracle runs v12's preprocessing again) and `readsFiles` (`energy.csv` read from git): `sankey-v12-specs.json` holds the 6 spec sources (energy with its `%%` lines) and 8 docs examples.
+- Closed (exclusion in `conformance/src/sankey/lexer-parity.spec.ts`): v12's `{TEXTDATA}*` / `ESCAPED_TEXT` stall on characters outside printable ASCII (tabs, `é`, U+2028, NBSP, entities, whose placeholders are non-ASCII). v13 writes one `Kind.Error` per run; the gate cuts v12 at the first empty text token and asserts each stall runs to the oracle's cap and is rejected by v12. Blanks after the header (`sankey   ⏎`) are `Text` (v12 rejects), in `sankey-cases.json`.
+- Closed: `lexedText` needed no oracle change.
+- Note: the corpus does use `prefix`/`suffix` and `width`/`height` (the financial-flow file: 800×500, `$`, `B`; the four align files: width 410), unlike the spec's coverage list.
+- Note for #496: v12 rejects entities (`#9829;`) and an empty quoted field `""`; a mid-line `%%` is field text; a bare `%%` line is a row.
 
 ## #496 T2 parser
 - **Choice:** D394's "listing every such row in `related`": the parse diagnostic keeps `related`; core's render `Warning` has no `related` (`toWarning` drops it), so the render warning lists the rows through `astIds` (each row's `link:` id). No core change.

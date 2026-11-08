@@ -246,6 +246,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-sankey':
+        specifier: workspace:^
+        version: link:../diagram-sankey
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -442,6 +445,12 @@ importers:
         version: link:../core
 
   packages/diagram-radar:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^

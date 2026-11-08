@@ -1,0 +1,462 @@
+[
+  {
+    "id": "sankey-cases/header-alone",
+    "source": "sankey"
+  },
+  {
+    "id": "sankey-cases/header-newline-only",
+    "source": "sankey\n"
+  },
+  {
+    "id": "sankey-cases/header-beta",
+    "source": "sankey-beta\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-beta-mixed-case",
+    "source": "sankey-Beta\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-keyword-case-insensitive-in-initial",
+    "source": "sankeyx\nSANKEY\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-same-line",
+    "source": "sankey a,b,1"
+  },
+  {
+    "id": "sankey-cases/header-word-bounded",
+    "source": "sankeyx\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-beta-word-bounded",
+    "source": "sankey-betax\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-beta-underscore",
+    "source": "sankey_beta\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-trailing-blanks",
+    "source": "sankey   \na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-trailing-tab",
+    "source": "sankey\t\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-leading-blanks",
+    "source": "   sankey\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-leading-blank-lines",
+    "source": "\n\n  \nsankey\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-twice",
+    "source": "sankey\nsankey\na,b,1"
+  },
+  {
+    "id": "sankey-cases/header-keyword-as-field",
+    "source": "sankey\nsankey,sankey-beta,1"
+  },
+  {
+    "id": "sankey-cases/header-keyword-quoted",
+    "source": "sankey\n\"sankey\",b,1"
+  },
+  {
+    "id": "sankey-cases/header-then-comma",
+    "source": "sankey,a,b,1"
+  },
+  {
+    "id": "sankey-cases/header-non-ascii-after",
+    "source": "sankeyé\na,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-four",
+    "source": "sankey\na,b,1,2"
+  },
+  {
+    "id": "sankey-cases/fields-two",
+    "source": "sankey\na,b"
+  },
+  {
+    "id": "sankey-cases/fields-one",
+    "source": "sankey\na"
+  },
+  {
+    "id": "sankey-cases/fields-empty-first",
+    "source": "sankey\n,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-empty-middle",
+    "source": "sankey\na,,1"
+  },
+  {
+    "id": "sankey-cases/fields-empty-value",
+    "source": "sankey\na,b,"
+  },
+  {
+    "id": "sankey-cases/fields-trailing-comma",
+    "source": "sankey\na,b,1,"
+  },
+  {
+    "id": "sankey-cases/fields-blanks-trimmed",
+    "source": "sankey\n  a , b , 1  "
+  },
+  {
+    "id": "sankey-cases/fields-blank-after-quote",
+    "source": "sankey\n\"a\" ,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-text-after-quote",
+    "source": "sankey\n\"a\"x,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-blank-before-quote",
+    "source": "sankey\n a,\"b\",1"
+  },
+  {
+    "id": "sankey-cases/fields-blank-then-quote",
+    "source": "sankey\na, \"b\",1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-all",
+    "source": "sankey\n\"a\",\"b\",\"1\""
+  },
+  {
+    "id": "sankey-cases/fields-quoted-empty",
+    "source": "sankey\n\"\",b,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-comma",
+    "source": "sankey\n\"a,1\",\"b \"\"q\"\"\",3"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-doubled-only",
+    "source": "sankey\n\"\"\"\"\"\",b,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-triple",
+    "source": "sankey\n\"\"\"a\"\"\",b,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-line-break",
+    "source": "sankey\n\"a\nb\",c,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-blank-lines",
+    "source": "sankey\n\"a\n\n\nb\",c,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-blank-line-with-blanks",
+    "source": "sankey\n\"a\n  \nb\",c,1"
+  },
+  {
+    "id": "sankey-cases/fields-quoted-trailing-line-break",
+    "source": "sankey\n\"c\n\",d,2\n"
+  },
+  {
+    "id": "sankey-cases/fields-unterminated-quote",
+    "source": "sankey\n\"abc,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-unterminated-quote-at-end",
+    "source": "sankey\na,b,\""
+  },
+  {
+    "id": "sankey-cases/fields-unterminated-quote-rows",
+    "source": "sankey\n\"a,b,1\nc,d,2"
+  },
+  {
+    "id": "sankey-cases/fields-quote-mid-field",
+    "source": "sankey\na\"b,c,1"
+  },
+  {
+    "id": "sankey-cases/fields-quote-in-value",
+    "source": "sankey\na,b,1\"\""
+  },
+  {
+    "id": "sankey-cases/fields-quote-close-then-quote",
+    "source": "sankey\n\"a\"\"b\",c,1"
+  },
+  {
+    "id": "sankey-cases/fields-apostrophes",
+    "source": "sankey\nAgricultural 'waste',b,1"
+  },
+  {
+    "id": "sankey-cases/fields-punctuation",
+    "source": "sankey\na!#$%&()*+-./:;<=>?@[\\]^_`{|}~,b,1"
+  },
+  {
+    "id": "sankey-cases/fields-html",
+    "source": "sankey\n<b>y</b>,&lt;x,1"
+  },
+  {
+    "id": "sankey-cases/fields-html-attribute-quotes",
+    "source": "sankey\n<b c=\"x\">,d,2"
+  },
+  {
+    "id": "sankey-cases/fields-html-attribute-quotes-quoted",
+    "source": "sankey\n\"<b c=\"x\">\",d,2"
+  },
+  {
+    "id": "sankey-cases/fields-proto",
+    "source": "sankey\n__proto__,constructor,1\nconstructor,prototype,2"
+  },
+  {
+    "id": "sankey-cases/characters-non-ascii",
+    "source": "sankey\nZürich,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-non-ascii-quoted",
+    "source": "sankey\n\"Zürich\",b,1"
+  },
+  {
+    "id": "sankey-cases/characters-non-ascii-target",
+    "source": "sankey\na,é,1"
+  },
+  {
+    "id": "sankey-cases/characters-non-ascii-value",
+    "source": "sankey\na,b,1é"
+  },
+  {
+    "id": "sankey-cases/characters-tab",
+    "source": "sankey\na\tb,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-tab-quoted",
+    "source": "sankey\n\"a\tb\",c,1"
+  },
+  {
+    "id": "sankey-cases/characters-tab-indent",
+    "source": "sankey\n\ta,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-nbsp",
+    "source": "sankey\na b,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-nbsp-at-end",
+    "source": "sankey\na,b,1 "
+  },
+  {
+    "id": "sankey-cases/characters-emoji",
+    "source": "sankey\na😀,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-control",
+    "source": "sankey\na\u0001b,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-del",
+    "source": "sankey\nab,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-bom-row",
+    "source": "sankey\n﻿a,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-run",
+    "source": "sankey\naéè\tàb,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-entity",
+    "source": "sankey\na#9829;b,c,1"
+  },
+  {
+    "id": "sankey-cases/characters-entity-named",
+    "source": "sankey\n#amp;,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-entity-quoted",
+    "source": "sankey\n\"a#9829;\",c,1"
+  },
+  {
+    "id": "sankey-cases/characters-hash-not-entity",
+    "source": "sankey\na#b,#1,1\n#;,c,2\n# x;,d,3"
+  },
+  {
+    "id": "sankey-cases/characters-style-semicolon",
+    "source": "sankey\nstyle a:#f;,b,1"
+  },
+  {
+    "id": "sankey-cases/characters-style-semicolon-value",
+    "source": "sankey\nstyle,b,1 :#f;"
+  },
+  {
+    "id": "sankey-cases/characters-classdef-semicolon",
+    "source": "sankey\nclassDef a:#f;b,c,1"
+  },
+  {
+    "id": "sankey-cases/lines-blank-collapse",
+    "source": "sankey\n\n\na,b,1\n\n\nc,d,2\n\n"
+  },
+  {
+    "id": "sankey-cases/lines-blank-only-line",
+    "source": "sankey\na,b,1\n   \nc,d,2"
+  },
+  {
+    "id": "sankey-cases/lines-blank-only-line-after-header",
+    "source": "sankey\n  \na,b,1"
+  },
+  {
+    "id": "sankey-cases/lines-trailing-blank-lines",
+    "source": "sankey\na,b,1\n\n  \n\n"
+  },
+  {
+    "id": "sankey-cases/lines-trailing-blanks",
+    "source": "sankey\na,b,1   "
+  },
+  {
+    "id": "sankey-cases/lines-crlf",
+    "source": "sankey\r\na,b,1\r\nc,d,2\r\n"
+  },
+  {
+    "id": "sankey-cases/lines-cr",
+    "source": "sankey\ra,b,1\rc,d,2"
+  },
+  {
+    "id": "sankey-cases/lines-crlf-blank",
+    "source": "sankey\r\n\r\na,b,1\r\n\r\n\r\nc,d,2"
+  },
+  {
+    "id": "sankey-cases/lines-crlf-quoted",
+    "source": "sankey\n\"a\r\nb\",c,1"
+  },
+  {
+    "id": "sankey-cases/lines-indented-rows",
+    "source": "sankey\n  a,b,1\n    c,d,2"
+  },
+  {
+    "id": "sankey-cases/lines-no-rows-blank",
+    "source": "sankey\n\n\n"
+  },
+  {
+    "id": "sankey-cases/lines-form-feed",
+    "source": "sankey\na,b,1\fc,d,2"
+  },
+  {
+    "id": "sankey-cases/lines-vertical-tab-at-end",
+    "source": "sankey\na,b,1\n\u000b"
+  },
+  {
+    "id": "sankey-cases/values-exponent",
+    "source": "sankey\na,b,1e3"
+  },
+  {
+    "id": "sankey-cases/values-semicolon",
+    "source": "sankey\na,b,1;"
+  },
+  {
+    "id": "sankey-cases/values-two-numbers",
+    "source": "sankey\na,b,1 2"
+  },
+  {
+    "id": "sankey-cases/values-comment",
+    "source": "sankey\na,b,1 %% c"
+  },
+  {
+    "id": "sankey-cases/values-nan",
+    "source": "sankey\na,b,abc"
+  },
+  {
+    "id": "sankey-cases/values-negative-zero",
+    "source": "sankey\nc,c,-3\nd,e,0"
+  },
+  {
+    "id": "sankey-cases/values-decimal",
+    "source": "sankey\na,b,.5\nb,c,5.\nc,d,+2"
+  },
+  {
+    "id": "sankey-cases/values-quoted",
+    "source": "sankey\na,b,\" 7 \""
+  },
+  {
+    "id": "sankey-cases/values-infinity",
+    "source": "sankey\na,b,Infinity"
+  },
+  {
+    "id": "sankey-cases/comments-line",
+    "source": "sankey\n%% c\na,b,1\n%% d"
+  },
+  {
+    "id": "sankey-cases/comments-indented",
+    "source": "sankey\n  %% x\na,b,1"
+  },
+  {
+    "id": "sankey-cases/comments-mid-field",
+    "source": "sankey\na,b %% c,1"
+  },
+  {
+    "id": "sankey-cases/comments-bare-percent",
+    "source": "sankey\na,b,1\n%%\nc,d,2"
+  },
+  {
+    "id": "sankey-cases/comments-bare-percent-at-end",
+    "source": "sankey\na,b,1\n%% c\n%%\n"
+  },
+  {
+    "id": "sankey-cases/comments-in-quotes",
+    "source": "sankey\n\"a\n%% c\nb\",d,1"
+  },
+  {
+    "id": "sankey-cases/comments-before-header",
+    "source": "%% c\nsankey\na,b,1"
+  },
+  {
+    "id": "sankey-cases/comments-after-header-same-line",
+    "source": "sankey %% c\na,b,1"
+  },
+  {
+    "id": "sankey-cases/comments-only-rows",
+    "source": "sankey\n%% a\n%% b"
+  },
+  {
+    "id": "sankey-cases/directive-line",
+    "source": "%%{init: {\"sankey\": {\"showValues\": false}}}%%\nsankey\na,b,1"
+  },
+  {
+    "id": "sankey-cases/directive-mid-line",
+    "source": "sankey\na,%%{init: {}}%%b,1"
+  },
+  {
+    "id": "sankey-cases/directive-in-quotes",
+    "source": "sankey\n\"a%%{init: {}}%%b\",c,1"
+  },
+  {
+    "id": "sankey-cases/front-matter-title",
+    "source": "---\ntitle: T\n---\nsankey\n\n  a , b , 1  \n%% c\n\n\nb,c,2"
+  },
+  {
+    "id": "sankey-cases/front-matter-config",
+    "source": "---\nconfig:\n  sankey:\n    width: 800\n---\nsankey-beta\na,b,1"
+  },
+  {
+    "id": "sankey-cases/title-is-a-field",
+    "source": "sankey\ntitle T\na,b,1"
+  },
+  {
+    "id": "sankey-cases/acc-title-is-a-field",
+    "source": "sankey\naccTitle: x\na,b,1"
+  },
+  {
+    "id": "sankey-cases/acc-descr-is-a-row",
+    "source": "sankey\naccDescr: x,y,1"
+  },
+  {
+    "id": "sankey-cases/links-repeated",
+    "source": "sankey\na,b,1\na,b,2"
+  },
+  {
+    "id": "sankey-cases/links-self",
+    "source": "sankey\na,a,1"
+  },
+  {
+    "id": "sankey-cases/links-cycle",
+    "source": "sankey\na,b,1\nb,a,1"
+  },
+  {
+    "id": "sankey-cases/nodes-trimmed-same",
+    "source": "sankey\na,b,1\n a ,c,2\n\" a \",d,3"
+  }
+]
