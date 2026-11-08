@@ -6,7 +6,7 @@
  * strokes, dashes and opacities the renderer draws with are in `WARDLEY_METRICS`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
 import type { WardleyFlow, WardleyNodeClass, WardleyStrategy } from '../model.ts';
 
 export interface Point {
@@ -33,15 +33,18 @@ export type WardleyTextAnchor = 'start' | 'middle';
 export type WardleyBaseline = 'auto' | 'middle' | 'central';
 
 /**
- * A measured text: v12's anchor point, alignment and rotation, and the box it fills before the
- * rotation. One line sits on `at` as v12's `text-anchor` and `dominant-baseline` place it; more
- * lines (a quoted name with `\n`) grow up from an `auto` baseline, both ways about a `middle` or
- * `central` one. Its first baseline is at `y + text.baseline`.
+ * A measured text, one literal line as v12's `.text()` drew it: v12's anchor point, alignment
+ * and rotation, and the box the line fills before the rotation. The string is the model's with
+ * its white space collapsed as SVG draws a text node; nothing in it is markup, an entity or a
+ * line break.
  */
 export interface PlacedText extends Rect {
-  readonly text: MeasuredLabel;
+  /** What is drawn, as measured. */
+  readonly text: string;
   /** The font it was measured in, and so is drawn in. */
   readonly font: FontKey;
+  /** From the box's top to the line's baseline (the font's ascent). */
+  readonly ascent: number;
   /** v12's `x`, `y`. */
   readonly at: Point;
   readonly anchor: WardleyTextAnchor;
@@ -52,7 +55,10 @@ export interface PlacedText extends Rect {
 
 /** One evolution stage: its span on the x axis, its label, and the divider at its start. */
 export interface WardleyStageLayout {
-  /** The span in px; custom boundaries are clamped to the chart (`WARDLEY_STAGE_CLAMPED`). */
+  /**
+   * The span in px; custom boundaries are clamped to the chart (`WARDLEY_STAGE_CLAMPED`). With
+   * decreasing boundaries `end` is left of `start`, as v12 drew them.
+   */
   readonly start: number;
   readonly end: number;
   readonly label: PlacedText;
@@ -156,10 +162,7 @@ export interface WardleyLayout {
   readonly height: number;
   readonly padding: number;
   readonly nodeRadius: number;
-  /**
-   * The plotting area, inset by `padding`. Its width or height is negative when the padding is
-   * more than half the canvas (the schema allows it; v12 drew the map mirrored, and so does v13).
-   */
+  /** The plotting area, inset by `padding`; never empty (D424). */
   readonly chart: Rect;
   readonly title?: PlacedText;
   readonly axes: {

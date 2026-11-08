@@ -76,6 +76,27 @@ describe('wardley layout: the canvas and the projection (:80-88, :147-166)', () 
     expect(warnings).toHaveLength(1);
   });
 
+  it('falls back from a nodeRadius of 0, which draws nothing (D424)', () => {
+    const warnings: Warning[] = [];
+    expect(lay('', { nodeRadius: 0 }, warnings).nodeRadius).toBe(6);
+    expect(warnings.map((w) => w.path)).toEqual(['wardley-beta.nodeRadius']);
+  });
+
+  it('falls back from a padding that leaves no chart, to the default or else 0 (D424)', () => {
+    const warnings: Warning[] = [];
+    expect(lay('', { padding: 300 }, warnings).padding).toBe(48);
+    expect(lay('', { padding: 299 }).padding).toBe(299);
+    expect(lay('size [80, 400]', {}, warnings).padding).toBe(0);
+    expect(warnings.map((w) => [w.code, w.path])).toEqual([
+      ['WARDLEY_CONFIG_INVALID', 'wardley-beta.padding'],
+      ['WARDLEY_CONFIG_INVALID', 'wardley-beta.padding'],
+    ]);
+    // One warning for a padding that is both invalid and too large.
+    const one: Warning[] = [];
+    expect(lay('size [50, 50]', { padding: 'x' }, one).padding).toBe(0);
+    expect(one).toHaveLength(1);
+  });
+
   it('falls back from a size of 0 to the configured canvas, with one warning (D424)', () => {
     const warnings: Warning[] = [];
     const l = lay('size [0, 0]', { width: 500 }, warnings);
@@ -111,13 +132,13 @@ describe('wardley layout: title, axes, stages and grid', () => {
     expect(axes.y).toEqual({ from: { x: 48, y: 48 }, to: { x: 48, y: 552 } });
     expect(axes.xLabel).toMatchObject({ at: { x: 450, y: 588 }, anchor: 'middle', rotate: 0 });
     expect(axes.yLabel).toMatchObject({ at: { x: 16, y: 300 }, rotate: -90 });
-    expect(axes.yLabel.text.lines[0]![0]!.text).toBe('Visibility');
+    expect(axes.yLabel.text).toBe('Visibility');
     expect(axes.xLabel.font).toMatchObject({ size: 12, weight: 700 });
   });
 
   it('draws v12’s four stages in equal quarters, a divider before each but the first', () => {
     const { stages } = lay('');
-    expect(stages.map((s) => s.label.text.lines[0]![0]!.text)).toEqual([
+    expect(stages.map((s) => s.label.text)).toEqual([
       'Genesis',
       'Custom Built',
       'Product',
@@ -145,6 +166,12 @@ describe('wardley layout: title, axes, stages and grid', () => {
     const some = lay('evolution A@0.1 -> B -> C@1.0').stages;
     expect(some.map((s) => s.start)).toEqual([48, 48 + 268, 48 + 536]);
     const warnings: Warning[] = [];
+    // Decreasing boundaries draw as v12 does: the second stage runs right to left.
+    const back = lay('evolution A@0.8 -> B@0.3').stages;
+    expect(back.map((s) => [s.start, s.end])).toEqual([
+      [48, 48 + 0.8 * 804],
+      [48 + 0.8 * 804, 48 + 0.3 * 804],
+    ]);
     const clamped = lay('evolution A@0.5 -> B@40.0', {}, warnings).stages;
     expect(clamped.map((s) => s.end)).toEqual([450, 852]);
     expect(warnings.map((w) => [w.code, w.astIds])).toEqual([
@@ -288,8 +315,35 @@ describe('wardley layout: links and trends (:382-582)', () => {
   });
 
   it('drops self-links, links to unknown names and links between coincident nodes', () => {
-    const l = lay('component A [0.5, 0.5]\ncomponent B [0.5, 0.5]\nA -> A\nA -> Z\nA -> B');
+    const warnings: Warning[] = [];
+    const l = lay(
+      'component A [0.5, 0.5]\ncomponent B [0.5, 0.5]\nA -> A\nA -> Z\nA -> B',
+      {},
+      warnings
+    );
     expect(l.links).toEqual([]);
+    // The parser's WARDLEY_LINK_DROPPED names all three; the layout adds none (D425).
+    expect(warnings).toEqual([]);
+  });
+
+  it('raises WARDLEY_LINK_DROPPED for coincident ends only when the parser raised none', () => {
+    const { model } = parseWardley(
+      'wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.5, 0.5]\nA -> B\n'
+    );
+    expect(model.warnings.map((w) => w.code)).toEqual(['WARDLEY_LINK_DROPPED']);
+    const warnings: Warning[] = [];
+    layoutWardley(
+      { ...model, warnings: [] },
+      {
+        config: {} as unknown as ResolvedConfig,
+        measurer: tenPx,
+        theme,
+        warn: (w) => warnings.push(w),
+      }
+    );
+    expect(warnings.map((w) => [w.code, w.astIds])).toEqual([
+      ['WARDLEY_LINK_DROPPED', ['link:A->B']],
+    ]);
   });
 
   it('draws a trend to its target on the same line, shortened by r + 2, with a 6 px head', () => {
@@ -325,7 +379,7 @@ describe('wardley layout: annotations, notes, accelerators', () => {
     expect(box.box.height).toBeCloseTo(58.6);
     expect(box.box.x).toBe(852 - 175);
     expect(box.box.y).toBeCloseTo(48 + 0.1 * 504);
-    expect(box.lines.map((t) => t.text.lines[0]![0]!.text)).toEqual(['1. a', '2. bb']);
+    expect(box.lines.map((t) => t.text)).toEqual(['1. a', '2. bb']);
     expect(box.lines[1]!.at).toEqual({ x: 677 + 10, y: box.box.y + 10 + 32 });
     expect(box.lines[0]!.font.size).toBe(11);
   });
@@ -351,6 +405,18 @@ describe('wardley layout: annotations, notes, accelerators', () => {
     expect(acc!.label).toMatchObject({ at: { x: 480, y: 330 }, anchor: 'middle' });
     expect(l.deaccelerators[0]!.outline[3]).toEqual({ x: 450, y: 300 });
     expect(l.deaccelerators[0]!.outline[0]).toEqual({ x: 510, y: 285 });
+  });
+});
+
+describe('wardley layout: text as v12’s .text() drew it', () => {
+  it('measures one literal line: no markup, entity or break, white space collapsed', () => {
+    const l = lay(
+      'component "a\\nb" [0.5, 0.2]\ncomponent "a<br>b" [0.3, 0.5]\ncomponent "x &lt; y" [0.7, 0.5]'
+    );
+    const [ab, br, lt] = l.nodes.map((n) => n.label);
+    expect([ab!.text, ab!.width, ab!.height]).toEqual(['a b', 30, 12]);
+    expect([br!.text, br!.width]).toEqual(['a<br>b', 60]);
+    expect([lt!.text, lt!.width]).toEqual(['x &lt; y', 80]);
   });
 });
 

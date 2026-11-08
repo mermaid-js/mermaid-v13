@@ -223,7 +223,7 @@ class Populate {
       else if (a.type === 'Deaccelerator')
         deaccelerators.push(this.accelerator(a, 'Deaccelerator'));
     }
-    this.drops(read);
+    this.drops(read, pipelines);
     const links = read.map((r) => r.link);
     this.flush();
 
@@ -464,8 +464,21 @@ class Populate {
 
   // ---- warnings -------------------------------------------------------------------------
 
-  /** D425: a link not drawn because an end names no node, or because it links a node to itself. */
-  private drops(links: readonly ReadLink[]): void {
+  /**
+   * D425: a link not drawn because an end names no node, because it links a node to itself, or
+   * because its ends are at the same place (v12 drew NaN; #490). Parents whose pipeline moves
+   * them are left out of the last: their place is the layout's, which raises the warning when
+   * none is raised here.
+   */
+  private drops(links: readonly ReadLink[], pipelines: readonly WardleyPipeline[]): void {
+    const moved = new Set(pipelines.filter((p) => p.componentIds.length > 0).map((p) => p.nodeId));
+    const children = new Map(pipelines.map((p) => [p.nodeId, new Set(p.componentIds)]));
+    const together = (a: string, b: string): boolean => {
+      const s = this.nodes.get(a);
+      const t = this.nodes.get(b);
+      if (!s || !t || moved.has(a) || moved.has(b) || children.get(b)?.has(a)) return false;
+      return s.x === t.x && s.y === t.y;
+    };
     for (const { link, range, from, to } of links) {
       const unknown: string[] = [];
       if (!this.nodes.has(link.source)) unknown.push(`\`${from}\``);
@@ -474,6 +487,8 @@ class Populate {
       if (unknown.length > 0) {
         why = `${unknown.join(' and ')} ${unknown.length > 1 ? 'name' : 'names'} no anchor or component`;
       } else if (link.source === link.target) why = `it links \`${from}\` to itself`;
+      else if (together(link.source, link.target))
+        why = `\`${from}\` and \`${to}\` are at the same place`;
       if (!why) continue;
       this.raise(WARDLEY_LINK_DROPPED, {
         message: `The link \`${from} -> ${to}\` is not drawn: ${why}.`,

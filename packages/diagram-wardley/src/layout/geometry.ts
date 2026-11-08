@@ -8,15 +8,15 @@ import type { PlacedText, Point, Rect } from './types.ts';
 export const HALF_TURN = 180;
 const DEGREES = Math.PI / HALF_TURN;
 
-/** The point `p` turned `degrees` clockwise (SVG's y points down) about `c`. */
-function rotated(p: Point, c: Point, degrees: number): Point {
-  if (degrees === 0) return p;
+/** `point` turned `degrees` clockwise (SVG's y points down) about `centre`. */
+function rotated(point: Point, centre: Point, degrees: number): Point {
+  if (degrees === 0) return point;
   const a = degrees * DEGREES;
   const cos = Math.cos(a);
   const sin = Math.sin(a);
-  const dx = p.x - c.x;
-  const dy = p.y - c.y;
-  return { x: c.x + dx * cos - dy * sin, y: c.y + dx * sin + dy * cos };
+  const dx = point.x - centre.x;
+  const dy = point.y - centre.y;
+  return { x: centre.x + dx * cos - dy * sin, y: centre.y + dx * sin + dy * cos };
 }
 
 /** A rectangle's corners, clockwise from the top left. */
@@ -45,11 +45,11 @@ export class Box {
     this.point({ x: r.x, y: r.y });
     this.point({ x: r.x + r.width, y: r.y + r.height });
   }
-  point(p: Point): void {
-    this.x0 = Math.min(this.x0, p.x);
-    this.y0 = Math.min(this.y0, p.y);
-    this.x1 = Math.max(this.x1, p.x);
-    this.y1 = Math.max(this.y1, p.y);
+  point(point: Point): void {
+    this.x0 = Math.min(this.x0, point.x);
+    this.y0 = Math.min(this.y0, point.y);
+    this.x1 = Math.max(this.x1, point.x);
+    this.y1 = Math.max(this.y1, point.y);
   }
   /** The square around the disc of radius `r` about `center`. */
   disc(center: Point, r: number): void {

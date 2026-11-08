@@ -14,7 +14,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - **Token order** (T1): after `NAME_WITH_SPACES`, 2.0.1 orders `WS, ACC_DESCR, ACC_TITLE, TITLE, INT, STRING, ID, NEWLINE, WHITESPACE, YAML, DIRECTIVE, SINGLE_LINE_COMMENT`; there is no `FLOAT`. The runtime dump decides, not the spec's list. **Closed (#487):** the lexer follows the dump (43 types; `-` has LONGER_ALT ARROW, LINK_ARROW, YAML) and the gate is green.
 - **Pipeline parent** (T3): x is the box centre, y is box top − square/6 (`wardleyRenderer.ts:359-364`), not the box centre. Follow v12. **Closed (#490):** as v12; a later pipeline sees an earlier one's move.
-- **Self-links** (T3): v12 writes a `<line>` with NaN coordinates. v13 drops them with D425's `WARDLEY_LINK_DROPPED` (never NaN, D424/D226). **Closed (#490):** the layout drops them (the parser warns), and also a link whose ends coincide (v12: NaN), silently.
+- **Self-links** (T3): v12 writes a `<line>` with NaN coordinates. v13 drops them with D425's `WARDLEY_LINK_DROPPED` (never NaN, D424/D226). **Closed (#490):** the layout drops them (the parser warns), and also a link whose ends coincide (v12: NaN), under the same `WARDLEY_LINK_DROPPED`.
 - **Trends from a pipeline parent** are not horizontal in v12 (origin moved, target on the parent's original line, `:540-547`). Follow v12; the T3 "trends horizontal" invariant excepts trends from pipeline parents. **Closed (#490):** as v12; the invariant excepts parents a pipeline moved.
 - **Extra group** `g.wardley-pipeline-links` (`.wardley-pipeline-evolution-link`, dashed `4 4`) between pipelines and links: kept (T4, class list in MIGRATION.md).
 - **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table. **Closed (#490):** all in `layout/metrics.ts`, with v12's line numbers.
@@ -22,8 +22,15 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## T3 (#490)
 
-- Choices (also in `tickets/490.md`): `WARDLEY_CONFIG_INVALID` is one warning per bad key (and one for `size`), as radar's and cynefin's; a numeric string reads as its number. A link between coincident nodes is dropped without a warning (the parser cannot see positions). Text is measured with core's label layout, plain (entities decoded, `\n` breaks), like cynefin's fixed texts. The stage font is `max(0, axisFontSize − 2)`. A padding past half the canvas draws the chart mirrored, as v12.
-- For T4: no colours in the layout (no stand-in module was needed); strokes, dashes and opacities are in `WARDLEY_METRICS`; draw arrowheads from the layout's triangles; the viewBox is `bounds`.
+- Orchestrator choices (review of #490, also in `tickets/490.md`):
+  - Labels follow v12's `.text()`: one literal line, the model string with white space collapsed as a text node draws it; no `\n`/`<br>` breaks, no entity decoding (`layout-label-literal`, v12 DB probed).
+  - D424 "never NaN or nothing": a padding with 2·padding ≥ width or height falls back to 48 (0 where 48 leaves none); `nodeRadius` must be above 0; a link with coincident ends is dropped under D425's one `WARDLEY_LINK_DROPPED` (the parser lists the ones it can see from the model; the layout raises it only when the parser did not) (`layout-link-coincident`).
+  - Decreasing custom boundaries are valid v12 input and draw backwards, clamped to [0, 1] only (`layout-stages-decreasing`).
+  - A pipeline box off its parent's line (last child merged by a later pipeline) is checked on the last child's line, a named skip (`layout-pipeline-merged-child`).
+  - `WARDLEY_CONFIG_INVALID` stays once per bad key, as radar and cynefin. **For the maintainer:** D424 says "one warning".
+- Also: the stage font is `max(0, axisFontSize − 2)`; no colours in the layout (no stand-in module needed).
+- **For the maintainer (T2 model):** `#amp;` and a literal `&amp;` both reach the model as `&amp;`; v12 draws `&` for the first, `&amp;` for the second. The layout measures the model string.
+- For T4: strokes, dashes and opacities are in `WARDLEY_METRICS`; draw arrowheads from the layout's triangles; the viewBox is `bounds`; write `PlacedText.text` with `SvgWriter.text()`.
 
 ## T2 (#489, merged)
 
