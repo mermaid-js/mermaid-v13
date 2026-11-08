@@ -14,7 +14,9 @@
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
  * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
  * a number from 0 to 1, read with `Theme.number` like geometry, so it has no CSS variable either
- * (D221).
+ * (D221). A `palette` is a diagram table's list of colours, set as palettes are (an array or a
+ * comma-separated string) and read with `Theme.palette` as literal colours, so it has no CSS
+ * variable either; its rule names the shared palette it reads (`PALETTE_VARIABLES`, D545).
  */
 export type ThemeVarKind =
   | 'color'
@@ -24,7 +26,8 @@ export type ThemeVarKind =
   | 'filter'
   | 'padding'
   | 'flag'
-  | 'opacity';
+  | 'opacity'
+  | 'palette';
 
 /** What the theme reads at render time: a variable's alias and kind. */
 export type ThemeVarEntry = Pick<ThemeVarDef, 'alias' | 'kind'>;
@@ -121,8 +124,8 @@ export const PALETTE_VARIABLES = [
   // Shared inputs that name no diagram (D332, D381): a theme's series colours and tints,
   // which charts and slotted diagrams read by slot (`seriesColorArray3`; the layout is
   // `series` in specs/palettes.ts; an entry a theme leaves out is `BASE_SERIES`, derived from
-  // the base colours), and a ten-colour chart palette (v12's xychart
-  // `plotColorPalette`), empty until a theme supplies it.
+  // the base colours), and a ten-colour chart palette (v12's `plotColorPalette` colours; a
+  // theme that leaves it out reads `BASE_PLOT`, D381, D545).
   'seriesColorArray',
   'plotColorArray',
   'git',

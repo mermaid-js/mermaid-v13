@@ -26,7 +26,7 @@ The flowchart introduced these variables. Reuse them before adding any. Values p
 
 | Group | Variables | Read with |
 | --- | --- | --- |
-| Palette | `borderColorArray`, `bkgColorArray` | `theme.palette()` |
+| Palette | `borderColorArray`, `bkgColorArray`; the series palettes `seriesColorArray`, `plotColorArray` (D332, D381) | `theme.palette()`, or a slot in a rule (`seriesColorArray3`) |
 | Point arrowhead | `arrowheadGap`, `arrowheadLength`, `arrowheadWidth` | `theme.number()` |
 | Padding | `nodePaddingX`, `nodePaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `circlePadding` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
 | Shadow | `dropShadow` | `theme.filter()` |
@@ -42,7 +42,7 @@ Add a new variable only when the redux and classic values differ (D152). If v12 
 
 To add one (the contract is DESIGN §8.1 and §12.1, D331):
 
-1. **Pick its owner.** A variable only this type reads is the package's own: list it in `packages/diagram-<type>/src/theme/vocabulary.ts` with its alias, kind (`length`, `padding`, `color`, `filter`, …) and `usedBy: ['<type>']`, plus `nested` when v12 reads it under `themeVariables.<section>` (D335, D540). Core and the theme specs never name it. A variable that core or a second type reads is a row in `packages/core/src/theme/vocabulary.ts`; the second type moves an existing package row there.
+1. **Pick its owner.** A variable only this type reads is the package's own: list it in `packages/diagram-<type>/src/theme/vocabulary.ts` with its alias, kind (`length`, `padding`, `color`, `filter`, `palette`, …) and `usedBy: ['<type>']`, plus `nested` when v12 reads it under `themeVariables.<section>` (D335, D540). A `palette` (D545) is the type's own list of colours, such as v12 xychart's `xyChart.plotColorPalette`. Its rule in the table names the shared palette it reads (`rules.light: { <var>: 'plotColorArray' }`; a family rule may name another). Read it with `ctx.theme.palette('<var>')`, as literal colours, with no CSS variable. The author sets it as an array or a comma-separated string, by the flat name or the nested key; the flat name wins, and an empty list counts as unset. Core and the theme specs never name it. A variable that core or a second type reads is a row in `packages/core/src/theme/vocabulary.ts`; the second type moves an existing package row there.
 2. **Give it values in the package's table** (`src/theme/table.ts`, the plugin's `theme`, `vars: THEME_VARIABLE_TABLE`): `rules.light` (and `rules.dark`) over core's shared vocabulary, and family entries, `classic` for v12 classic and `redux` for v12 neo, with `neo` usually `fallback: 'redux'` (D181). Key by family and dark, never by theme name. Never add a diagram variable to a theme spec under `packages/core/src/theme/specs/`.
 3. **Where themes of one family write it differently**, read a shared input with `inline()` (DESIGN §8.3 "Shared inputs" lists them). Adding an input is a decision for the port's spec (D541); otherwise use a family-rule approximation listed in the oracle's `DIFFERENCES`.
 4. **Generate.** A new package needs the stub `src/theme/generated/variables.ts` (`export const THEME_VARIABLE_TABLE = {};`) before the first `pnpm gen:theme`, which writes it and `v13/docs/theme-variables.md`. Document the variable under `themeVariables` in `packages/core/schema/config.schema.yaml` with both values, then run `pnpm gen:config`.

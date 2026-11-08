@@ -61,6 +61,9 @@ const theme: ThemeSpec = {
   },
   // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
   palettes: {
+    plotColorArray: series(
+      '#3498db #2ecc71 #e74c3c #f1c40f #bdc3c7 #ffffff #34495e #9b59b6 #1abc9c #e67e22'
+    ),
     cScale: [
       'primaryColor',
       '#0b0000',
