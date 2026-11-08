@@ -20,7 +20,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table. **Closed (#490):** all in `layout/metrics.ts`, with v12's line numbers.
 - **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order. **Closed (#489):** every v12 message is an error with its text, in source order (`parity.spec.ts` checks all 11 contexts word for word); an out-of-range value is kept as 100, so it causes no second error.
 
-## T3 (#490)
+## T3 (#490, merged)
 
 - Orchestrator choices (review of #490, also in `tickets/490.md`):
   - Labels follow v12's `.text()`: one literal line, the model string with white space collapsed as a text node draws it; no `\n`/`<br>` breaks, no entity decoding (`layout-label-literal`, v12 DB probed).
@@ -29,7 +29,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - A pipeline box off its parent's line (last child merged by a later pipeline) is checked on the last child's line, a named skip (`layout-pipeline-merged-child`).
   - `WARDLEY_CONFIG_INVALID` stays once per bad key, as radar and cynefin. **For the maintainer:** D424 says "one warning".
 - Also: the stage font is `max(0, axisFontSize − 2)`; no colours in the layout (no stand-in module needed).
-- **For the maintainer (T2 model):** `#amp;` and a literal `&amp;` both reach the model as `&amp;`; v12 draws `&` for the first, `&amp;` for the second. The layout measures the model string.
+- `#amp;` and a literal `&amp;` both reach the model as `&amp;`; v12 draws `&` for the first, `&amp;` for the second. The layout measures the model string. [ ] **#493** owns it: the drawn (and measured) text must equal v12's displayed text for both forms (fix the model's text conversion in `parser/convert.ts` so `#name;` decodes and a literal entity stays literal), with a corpus case.
+- Review (#490) fixed: pitfall 10 parts objects (`Typesetter`), explicit pipeline positions, invariants on the e2e maps, config from `WardleyDiagramConfig`. Accepted: one `WARDLEY_CONFIG_INVALID` per key (for the maintainer); runtime entry 18.4 KB gz, layout 5.5 KB gz; core 93,426 B gz unchanged.
 - For T4: strokes, dashes and opacities are in `WARDLEY_METRICS`; draw arrowheads from the layout's triangles; the viewBox is `bounds`; write `PlacedText.text` with `SvgWriter.text()`.
 
 ## T2 (#489, merged)
