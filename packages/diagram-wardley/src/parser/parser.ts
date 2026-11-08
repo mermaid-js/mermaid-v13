@@ -980,7 +980,7 @@ class WardleyParser {
   private unresolved(): void {
     const { symbols } = this.st;
     const pass = { symbols, src: this.src, defined: this.defined, statements: this.children };
-    symbols.splice(0, symbols.length, ...resolveSymbols(pass));
+    resolveSymbols(pass);
   }
 
   // ---- the model ----------------------------------------------------------------------

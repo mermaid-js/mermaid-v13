@@ -12,7 +12,8 @@ import type {
   WardleyPipelineComponentNode,
   WardleyStatementNode,
 } from '../parser/ast.ts';
-import { STRATEGIES, T } from '../parser/tokens.ts';
+import { KEYWORD_STARTS } from '../parser/tables.ts';
+import { KEYWORDS, STRATEGIES, T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -44,42 +45,46 @@ const operator = (kind: number, label: string, detail: string): KeywordItem => (
   detail,
 });
 
+/** A keyword's word, from the lexer's table. */
+const word = (kind: number): string => KEYWORDS.find(([, k]) => k === kind)?.[0] ?? '';
+
+/** The text statements' words, from the parser's table. */
+const textWord = (kind: number): string => TEXT_STATEMENTS[kind]?.word ?? '';
+
+/** The statement keywords (every keyword but `label` and `inertia`), in the lexer's order. */
+const STATEMENT_KEYWORDS = KEYWORDS.filter(([, k]) => KEYWORD_STARTS.includes(k));
+
 /**
  * Everything completion offers but node names, in the order it is offered. After a component's
  * coordinates, in v12's order: `label`, a strategy, `inertia` (each optional, in that order).
+ * After a link's first name, every arrow and flow v12 reads (`LINK_ARROW`, `ARROW`, `LINK_PORT`).
  */
 export const ITEMS: readonly KeywordItem[] = [
   { kind: T.WardleyBeta, label: 'wardley-beta', item: 'keyword' },
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
+  statement(T.Title, textWord(T.Title)),
+  statement(T.AccTitle, textWord(T.AccTitle), `${textWord(T.AccTitle)}: `),
   // `accDescr` takes one line or a block: both forms are offered.
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
-  statement(T.Size, 'size'),
-  statement(T.Evolution, 'evolution'),
-  statement(T.Anchor, 'anchor'),
-  statement(T.Component, 'component'),
-  statement(T.Evolve, 'evolve'),
-  statement(T.Pipeline, 'pipeline'),
-  statement(T.Note, 'note'),
-  statement(T.Annotations, 'annotations'),
-  statement(T.Annotation, 'annotation'),
-  statement(T.Accelerator, 'accelerator'),
-  statement(T.Deaccelerator, 'deaccelerator'),
-  { kind: T.Label, label: 'label', item: 'keyword', insert: 'label ' },
+  statement(T.AccDescr, `${textWord(T.AccDescr)}:`, `${textWord(T.AccDescr)}: `),
+  statement(T.AccDescr, `${textWord(T.AccDescr)} {`, `${textWord(T.AccDescr)} { }`),
+  ...STATEMENT_KEYWORDS.map(([w, k]) => statement(k, w)),
+  { kind: T.Label, label: word(T.Label), item: 'keyword', insert: `${word(T.Label)} ` },
   ...STRATEGIES.map(
     (s): KeywordItem => ({ kind: T.LParen, label: `(${s})`, item: 'constant', strategy: true })
   ),
   // Inside a component's `(`, where a strategy or `inertia` goes.
   ...STRATEGIES.map((s): KeywordItem => ({ kind: T.Strategy, label: s, item: 'constant' })),
-  { kind: T.Inertia, label: 'inertia', item: 'keyword' },
-  { kind: T.LParen, label: '(inertia)', item: 'keyword' },
+  { kind: T.Inertia, label: word(T.Inertia), item: 'keyword' },
+  { kind: T.LParen, label: `(${word(T.Inertia)})`, item: 'keyword' },
   operator(T.Arrow, '->', 'link'),
   operator(T.LinkArrow, '-.->', 'dashed link'),
+  operator(T.LinkArrow, '-->', 'link, drawn as `->`'),
+  operator(T.LinkArrow, '>', 'link, drawn as `->`'),
   operator(T.LinkPort, '+>', 'flow forward'),
   operator(T.LinkPort, '+<', 'flow backward'),
   operator(T.LinkPort, '+<>', 'flow both ways'),
-  operator(T.LinkArrow, "+'label'>", 'labelled flow'),
+  operator(T.LinkArrow, "+'label'>", 'labelled flow forward'),
+  operator(T.LinkArrow, "+'label'<", 'labelled flow backward'),
+  operator(T.LinkArrow, "+'label'<>", 'labelled flow both ways'),
 ];
 
 /** What declares a node name: an anchor, a component or a pipeline's component. */
@@ -140,9 +145,6 @@ export function referencesOf(n: WardleyStatementNode): WardleyName[] {
   }
   return [];
 }
-
-/** v12's `toPercent`: up to 1 a fraction of the axis, above it a percentage. */
-export const percent = (value: number): number => (value <= 1 ? value * 100 : value);
 
 /** A percentage for text: at most two decimals, no trailing zeros (`43 %`, `12.5 %`). */
 export const showPercent = (value: number): string => `${Number(value.toFixed(2))} %`;

@@ -159,7 +159,18 @@ describe('wardley completions (D95)', () => {
   });
 
   it('offers the arrows and flows after a name, the flows after the second', () => {
-    const arrows = ['->', '-.->', '+>', '+<', '+<>', "+'label'>"];
+    const arrows = [
+      '->',
+      '-.->',
+      '-->',
+      '>',
+      '+>',
+      '+<',
+      '+<>',
+      "+'label'>",
+      "+'label'<",
+      "+'label'<>",
+    ];
     expect(complete(`${MAP}Tea ¦`)).toEqual(arrows);
     expect(complete(`${MAP}Tea -> User ¦`)).toEqual(['+>', '+<', '+<>']);
     expect(complete('wardley-beta\nevolution Genesis ¦')).toEqual(['->']);
@@ -169,7 +180,8 @@ describe('wardley completions (D95)', () => {
     const names = ['User', 'Tea', 'notebook'];
     expect(complete(`${MAP}Tea -> ¦`)).toEqual(names);
     expect(complete(`${MAP}Tea -.-> T¦`)).toEqual(['Tea']);
-    expect(complete(`${MAP}Tea +> ¦`)).toEqual(['->', '-.->', "+'label'>", ...names]);
+    const arrowsAfterFlow = ['->', '-.->', '-->', '>', "+'label'>", "+'label'<", "+'label'<>"];
+    expect(complete(`${MAP}Tea +> ¦`)).toEqual([...arrowsAfterFlow, ...names]);
     for (const kw of ['evolve', 'pipeline', 'accelerator', 'deaccelerator'])
       expect(complete(`${MAP}${kw} ¦`), kw).toEqual(names);
     // A new name goes after `anchor` and `component`, and evolution stages are no nodes.
@@ -241,6 +253,10 @@ describe('wardley hover (D93, D428)', () => {
       '**evolution** `1.5`\n\n1.5 % of the axis: a value above 1 is a percentage (`1.0` is 100 %).'
     );
     expect(at('[1¦, 0]')).toMatch(/^\*\*visibility\*\* `1`\n\n100 % of the axis/);
+    // What the model holds: out of range, kept as 100.
+    expect(hover('wardley-beta\ncomponent A [0.5, 12¦0.0]')).toBe(
+      '**evolution** `120.0`\n\n100 % of the axis: a value above 100 is out of range, and the map draws it at 100 %.'
+    );
   });
 
   it('shows the keyword docs of the grammar file, only the keyword of a text statement', () => {

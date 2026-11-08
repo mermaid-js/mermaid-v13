@@ -16,6 +16,17 @@
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** A component's `(build)`, `(buy)`, `(outsource)` or `(market)`. */
+/**
+ * A coordinate as the model holds it (v12 `toPercent`): up to 1 a fraction of the axis, above
+ * it a percentage; outside 0–100 out of range (`WARDLEY_OUT_OF_RANGE`) and kept as 100.
+ */
+export function toPercent(value: number): { percent: number; inRange: boolean } {
+  const percent = value <= 1 ? value * 100 : value;
+  return percent < 0 || percent > 100
+    ? { percent: 100, inRange: false }
+    : { percent, inRange: true };
+}
+
 export type WardleyStrategy = 'build' | 'buy' | 'outsource' | 'market';
 
 /** Which way a link's flow arrow points (`+>`, `+<`, `+<>`, `+'label'>` …). */

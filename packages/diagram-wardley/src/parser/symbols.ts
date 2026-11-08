@@ -10,8 +10,8 @@ import type { SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import type { WardleyStatementNode } from './ast.ts';
 
 export interface SymbolPass {
-  /** The occurrences the parser recorded, in order. */
-  readonly symbols: readonly SymbolOccurrence[];
+  /** The occurrences the parser recorded, in order: replaced by those kept. */
+  readonly symbols: SymbolOccurrence[];
   readonly src: string;
   /** The names an anchor or component declares. */
   readonly defined: ReadonlySet<string>;
@@ -20,13 +20,8 @@ export interface SymbolPass {
 
 type ChildIds = ReadonlyMap<string, readonly [parent: string, name: string]>;
 
-/** The occurrences to keep, with each pipeline component id split in two. */
-export function resolveSymbols({
-  symbols,
-  src,
-  defined,
-  statements,
-}: SymbolPass): SymbolOccurrence[] {
+/** Keep the occurrences that name a node, each pipeline component id split in two. */
+export function resolveSymbols({ symbols, src, defined, statements }: SymbolPass): void {
   const ids = childIds(statements);
   const out: SymbolOccurrence[] = [];
   for (const s of symbols) {
@@ -37,9 +32,12 @@ export function resolveSymbols({
     const { start, end } = s.range;
     // The name as written, between its quotes when it has them; else (an escape) no symbol.
     const at = end - start === s.name.length ? start : start + 1;
-    if (src.slice(at, at + s.name.length) === s.name) out.push(...parts(s.name, at, ids, defined));
+    if (src.slice(at, at + s.name.length) !== s.name) continue;
+    for (const part of parts(s.name, at, ids, defined)) out.push(part);
   }
-  return out;
+  // In place, one push at a time (a spread is unbounded on a large map).
+  symbols.length = 0;
+  for (const s of out) symbols.push(s);
 }
 
 /** Each pipeline component's node id, with its parent's name and its own (the first wins). */

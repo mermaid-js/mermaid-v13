@@ -25,6 +25,7 @@ import type {
   WardleyStrategy,
   WardleyTrend,
 } from '../model.ts';
+import { toPercent } from '../model.ts';
 import type {
   WardleyAcceleratorNode,
   WardleyAnchorNode,
@@ -253,14 +254,14 @@ class Populate {
   /** v12 `toPercent`: a fraction up to 1, else a percentage; above 100 an error (kept as 100). */
   private percent(n: WardleyNumber, context: string): number {
     const { value, range } = n;
-    const normalized = value <= 1 ? value * 100 : value;
-    if (normalized < 0 || normalized > 100) {
+    const { percent, inRange } = toPercent(value);
+    if (!inRange) {
       this.diagnostics.error(
         WARDLEY_OUT_OF_RANGE,
         `${context} must be between 0-1 (decimal) or 0-100 (percentage). Received: ${value}`,
         range
       );
-      return 100;
+      return percent;
     }
     if (value > 1 && value < 2) {
       this.raise(WARDLEY_COORDINATE_AMBIGUOUS, {
@@ -269,7 +270,7 @@ class Populate {
         also: `\`${value}\` is read as ${value} % too`,
       });
     }
-    return normalized;
+    return percent;
   }
 
   /** v12 `toCoordinates`: `[visibility, evolution]` as `{ x: evolution, y: visibility }`. */

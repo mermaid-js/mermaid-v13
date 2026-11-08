@@ -8,6 +8,7 @@
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { wardleyDocs } from '../generated/docs.ts';
+import { toPercent } from '../model.ts';
 import type { WardleyModel, WardleyNode } from '../model.ts';
 import type { WardleyDocument, WardleyName } from '../parser/ast.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
@@ -17,7 +18,6 @@ import {
   declarationKind,
   declaredNodes,
   inside,
-  percent,
   referencesOf,
   showPercent,
   span,
@@ -62,13 +62,12 @@ function coordinateHover(doc: DocumentView<WardleyDocument>, offset: number): Ho
     if (!inside(offset, n.range)) continue;
     for (const { axis, number } of coordinatesOf(n)) {
       if (!inside(offset, number.range)) continue;
-      const v = number.value;
-      const how =
-        v <= 1
-          ? 'a value up to 1 is a fraction of it'
-          : 'a value above 1 is a percentage (`1.0` is 100 %)';
+      const { percent, inRange } = toPercent(number.value);
+      let how = 'a value above 1 is a percentage (`1.0` is 100 %)';
+      if (!inRange) how = 'a value above 100 is out of range, and the map draws it at 100 %';
+      else if (number.value <= 1) how = 'a value up to 1 is a fraction of it';
       const written = doc.text.slice(number.range.start, number.range.end);
-      const contents = `**${axis}** ${code(written)}\n\n${showPercent(percent(v))} of the axis: ${how}.`;
+      const contents = `**${axis}** ${code(written)}\n\n${showPercent(percent)} of the axis: ${how}.`;
       return { range: number.range, contents };
     }
   }

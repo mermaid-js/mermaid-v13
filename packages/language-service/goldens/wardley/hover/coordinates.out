@@ -25,3 +25,8 @@
   | 100 % of the axis: a value up to 1 is a fraction of it.
 @ 6:9  size [11|00, 800]
   none
+@ 7:23  component Big [0.5, 12|0.0]
+  7:21-7:26 "120.0"
+  | **evolution** `120.0`
+  |
+  | 100 % of the axis: a value above 100 is out of range, and the map draws it at 100 %.
