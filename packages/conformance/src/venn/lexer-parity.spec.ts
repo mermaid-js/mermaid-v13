@@ -106,18 +106,23 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
       `venn lexer parity: ${compared} of ${items.length} sources lexed by v12\n`
     );
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer (the
-    // two cases v12 does not detect and the two excluded ones aside).
+    // three cases v12 does not detect and the two excluded ones aside; #488 added 22 recovery
+    // cases, one of them without the header).
     expect(e2e).toBe(40);
     expect(specs).toBe(25);
-    expect(cases).toBe(195);
+    expect(cases).toBe(216);
     expect(diffs).toEqual([]);
     // The excluded sources: the two unclosed-directive cases and their variants.
     expect(excluded.filter((id) => !VARIANT.test(id))).toHaveLength(2);
-    // The only sources v12 does not lex: the two cases with no `-beta` or an upper-case header
-    // (and their variants), and commented copies of a body of two lines or fewer, where
-    // `%% cut` goes through the middle of the `venn-beta` header.
+    // The only sources v12 does not lex: the three cases with no header, no `-beta` or an
+    // upper-case header (and their variants), and commented copies of a body of two lines or
+    // fewer, where `%% cut` goes through the middle of the `venn-beta` header.
     const byId = new Map(items.map((item) => [item.id, item.source]));
-    const undetected = new Set(['venn-cases/header-no-suffix', 'venn-cases/header-upper-case']);
+    const undetected = new Set([
+      'venn-cases/header-no-suffix',
+      'venn-cases/header-upper-case',
+      'venn-cases/recovery-missing-header',
+    ]);
     expect(
       skipped.filter((id) => {
         const base = id.replace(VARIANT, '');
@@ -128,6 +133,6 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
         return !(header && !/^\s*venn-beta/.test(cut));
       })
     ).toEqual([]);
-    expect(skipped.length).toBeLessThan(30);
+    expect(skipped.length).toBeLessThan(40);
   }, 300_000);
 });

@@ -334,5 +334,21 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
     "owner": "#446",
     "since": "2026-11-06"
+  },
+  {
+    "id": "venn-cases/unclosed-directive-line",
+    "inputHash": "sha256:85606c74ded53195",
+    "kind": "reject",
+    "reason": "Unclosed directive: core's preprocess ends an unclosed `%%{` at its line end and reports UNCLOSED_DIRECTIVE, where v12's directive regex removed the rest of the text, so v13 rejects what v12 accepted. Core's directive reading, shared by every type (as quadrant-cases/unclosed-directive and radar-cases/unclosed-directive); the venn lexer gate excludes these cases for the same reason (#486).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-cases/unclosed-directive-mid-line",
+    "inputHash": "sha256:b976f1536fd95eaa",
+    "kind": "reject",
+    "reason": "Unclosed directive: core's preprocess ends an unclosed `%%{` at its line end and reports UNCLOSED_DIRECTIVE, where v12's directive regex removed the rest of the text, so v13 rejects what v12 accepted. Core's directive reading, shared by every type (as quadrant-cases/unclosed-directive and radar-cases/unclosed-directive); the venn lexer gate excludes these cases for the same reason (#486).",
+    "owner": "#488",
+    "since": "2026-11-08"
   }
 ]

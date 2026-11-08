@@ -87,3 +87,18 @@ export async function vennGateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/** The cases core reads otherwise (`UNCLOSED_DIRECTIVE`), as the lexer gate excludes them. */
+export const UNCLOSED = 'venn-cases/unclosed-directive-';
+
+/**
+ * The gate's generated variants for the parity suite (the e2e fixtures, spec strings and cases
+ * themselves are in the suite's dirs and files), ids prefixed `venn-gate/`. The unclosed
+ * directives are left out: the two cases are listed divergences of core's directive reading.
+ */
+export async function vennParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await vennCorpus()), ...vennCases()].map((c) => c.id));
+  return (await vennGateCorpus())
+    .filter((item) => !listed.has(item.id) && !item.id.startsWith(UNCLOSED))
+    .map((item) => ({ id: `venn-gate/${item.id}`, source: item.source }));
+}

@@ -794,5 +794,212 @@
   {
     "id": "venn-cases/line-separator-after-colon",
     "source": "venn-beta\n  set A: 1"
+  },
+  {
+    "id": "venn-cases/recovery-two-bad-lines",
+    "source": "venn-beta\n  set A B\n  set C\n  union ,\n  set D",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "C", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-union-checks",
+    "source": "venn-beta\n  set A\n  union A\n  union A,Q\n  set B\n  union A,B",
+    "errors": [
+      ["VENN_UNION_ONE_SET", 3],
+      ["VENN_UNKNOWN_SET", 4]
+    ],
+    "keeps": ["A", "B", "A+B"]
+  },
+  {
+    "id": "venn-cases/recovery-union-check-and-syntax-on-one-line",
+    "source": "venn-beta\n  set A\n  union A,Q set ;\n  set B",
+    "errors": [
+      ["VENN_UNKNOWN_SET", 3],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-unclosed-string",
+    "source": "venn-beta\n  set \"A\n  set B\n  set C:x",
+    "errors": [
+      ["UNCLOSED_STRING", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-unclosed-and-empty-labels",
+    "source": "venn-beta\n  set C[]\n  set D\n  set A[abc",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED_LABEL", 4]
+    ],
+    "keeps": ["C", "D", "A"]
+  },
+  {
+    "id": "venn-cases/recovery-missing-header",
+    "source": "set A\n  set B",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-header-twice",
+    "source": "venn-beta\n  venn-beta\n  set A\n  set B,C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-text-errors",
+    "source": "venn-beta\nset A\ntext A\ntext A t1[x] y\ntext 12\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-style-errors",
+    "source": "venn-beta\nset A\nstyle A\nstyle A fill red\nstyle A fill:, color:red\nstyle A fill:red,\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-size-errors",
+    "source": "venn-beta\nset A:\nset B:x\nset C:1.\nset D:1e3\nset E",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["C", "D", "E"]
+  },
+  {
+    "id": "venn-cases/recovery-bad-characters",
+    "source": "venn-beta\nset Ä\nset A;\nset @B\nset C",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-statements-on-one-line",
+    "source": "venn-beta\nset A set B set ; set C\nunion A,Q union B\nset D",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["VENN_UNKNOWN_SET", 3],
+      ["VENN_UNION_ONE_SET", 3]
+    ],
+    "keeps": ["A", "B", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-five-errors",
+    "source": "venn-beta\nset A\nset\nunion A\nset B[]\ntext Z\nstyle B fill\nset C",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["VENN_UNION_ONE_SET", 4],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED", 6],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-indented-text",
+    "source": "venn-beta\nset A\ntitle T\n  text a1\nset B\n  text\n  text b1",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-colon-and-comma",
+    "source": "venn-beta\nset A\n: 3\n, B\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-label-without-id",
+    "source": "venn-beta\nset [\"a\"]\nset A[\"a\"] [\"b\"]\nset B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-union-commas",
+    "source": "venn-beta\nset A\nset B\nunion A,\nunion ,B\nunion A,B,\nunion A,B",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "A+B"]
+  },
+  {
+    "id": "venn-cases/recovery-text-ids",
+    "source": "venn-beta\nset A\ntext A 12[l]\ntext A, t1\ntext A 12\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-character-runs",
+    "source": "venn-beta\nset A\n@@@\nset B ~~ set C\n{x}\nset D",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["A", "B", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-glued-comments",
+    "source": "venn-beta\nset A%% c\nset B\nunion B,%% c\nset C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["VENN_UNION_ONE_SET", 4]
+    ],
+    "keeps": ["B", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-title-errors",
+    "source": "venn-beta\ntitle\nset A\ntitle a;b\ntitle x#y\nset B",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-header-word",
+    "source": "venn-betax\nset A\nset B,",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
   }
 ]
