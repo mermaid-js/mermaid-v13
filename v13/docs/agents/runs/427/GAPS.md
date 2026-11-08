@@ -3,6 +3,11 @@
 Unmet acceptance criteria and open choices, filed under the ticket that owns each one. Choices made without the maintainer (not covered by the spec or a D-id) are marked **Choice** and repeated under "For the maintainer" in the integration PR body.
 
 ## #492 T0 core gradients and blend mode
+- **Choice:** user-space gradients take no `stop-opacity` (sankey puts opacity on the element), so the inert shape stays exact.
+- **Choice:** user-space gradients are written whether or not a hook removed every reference to them (writer-owned and deterministic); D182's stays "only when referred to".
+- **For the maintainer:** D392's allow-list change reaches every type: author `style`/`classDef` keep `mix-blend-mode: normal|multiply` where they used to drop it with a warning. Output is unchanged for inputs without it. `SvgWriter` gains a required `linearGradient` member, so third-party writer wrappers must forward it.
+- **For the maintainer:** core +823 B gz (CDN closure 92,988 → 93,811 on 0a472e044), 397 B under the 94,208 B gate. About 320 B is the `assertInert` re-check of the new shapes.
+- Exploration: a `var()` in `stop-color` resolves in Chromium (D182 already ships it); Firefox and Safari were not checked locally (CI covers WebKit).
 
 ## #494 T1 lexer and corpus
 - Exploration: `sankey.spec.ts` has 6 `parse` calls (not ~20), all through `prepareTextForParsing`; the `run` harvest stubs that import and records 0 strings. T1 extends the harvest (record the argument of the real `prepareTextForParsing`, or the parser's input) so `sankey-v12-specs.json` holds them, `energy.csv` included.
