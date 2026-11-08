@@ -41,6 +41,9 @@ const SHAPES: [string, (n: number) => string][] = [
   ['nested brackets', (n) => H + 'bar ' + '['.repeat(n)],
   ['keywords without a boundary', (n) => H + 'title ' + 'barx'.repeat(n / 4)],
   ['characters no rule takes', (n) => H + 'title a' + '('.repeat(n)],
+  ['unclosed directives with word arguments', (n) => H + 'bar [1] %%{x y\n'.repeat(n / 15)],
+  ['directive openers without a name', (n) => H + 'bar [1] ' + '%%{ '.repeat(n / 4)],
+  ['an unclosed directive', (n) => H + 'bar [1] %%{x ' + 'a\n'.repeat(n / 2)],
   ['CRLF plots', (n) => 'xychart\r\n' + 'bar [1]\r\n'.repeat(n / 9)],
   ['entities in a string', (n) => H + 'title "' + '#a;'.repeat(n / 3) + '"'],
 ];

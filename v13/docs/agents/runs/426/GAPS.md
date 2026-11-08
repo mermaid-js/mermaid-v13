@@ -11,6 +11,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #507 T1 lexer
 - **Choice:** the dead `md_string` rules are ported as the one literal rule jison built from them (`T.DeadMdRule`, rule 26), so v13 skips that exact text as v12 does instead of dropping the rule; `md-string-dead-rule-*` cases fire it.
 - `NOT_DRAWN_YET` in `theme-used-by.spec.ts` holds `xychart` until #510 reads a theme variable.
+- Review fix: `v12-text.ts` cuts directives as v12's regex does (`v12Directives`), not by core's ranges, so an unclosed `%%{` takes the rest of the text (or ends after a word argument) as in v12. Quadrant's copy has the same gap (coordinator files it). #508: core still reports `UNCLOSED_DIRECTIVE` there; decide acceptance against the recorded quadrant/radar divergence.
 
 ## #508 T2 parser
 - Exploration: v12 infers the x range from the **first** plot, not the longest as the spec says: inferring calls `setXAxisRangeData`, which sets `hasSetXAxis` (`xychartDb.ts:93, 130–134`). Probe the oracle and follow it.

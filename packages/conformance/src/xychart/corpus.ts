@@ -38,12 +38,23 @@ export const commented = (src: string): string =>
 /** Every line break a CRLF. */
 export const crlf = (src: string): string => body(src, (b) => b.replace(/\r?\n/g, '\r\n'));
 
-/** Every line break after the header line preceded by U+2028 (`\s`, but not `\n`). */
-export const lineSeparators = (src: string): string =>
-  body(src, (b) => {
-    const nl = b.indexOf('\n');
-    return nl < 0 ? b : b.slice(0, nl + 1) + b.slice(nl + 1).replace(/\n/g, ' \n');
-  });
+/**
+ * Every line break after the header line preceded by `sep` (U+2028 or U+2029: `\s`, but not
+ * `\n`, and the end of a regex `.`).
+ */
+const separated =
+  (sep: string) =>
+  (src: string): string =>
+    body(src, (b) => {
+      const nl = b.indexOf('\n');
+      return nl < 0 ? b : b.slice(0, nl + 1) + b.slice(nl + 1).replace(/\n/g, sep + '\n');
+    });
+
+/** Every line break after the header line preceded by U+2028. */
+export const lineSeparators = separated('\u2028');
+
+/** Every line break after the header line preceded by U+2029. */
+export const paragraphSeparators = separated('\u2029');
 
 /** A directive v12 removes, wherever in a line it is. */
 const DIRECTIVE = '%%{init: {}}%%';
@@ -75,6 +86,7 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],
   ['line separators', lineSeparators],
+  ['paragraph separators', paragraphSeparators],
   ['mid-line directive', midLineDirective],
 ];
 

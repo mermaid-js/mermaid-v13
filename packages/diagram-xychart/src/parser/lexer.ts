@@ -83,13 +83,17 @@ const A = {
   pop: 2,
 } as const;
 
+type Action = (typeof A)[keyof typeof A];
+type State = (typeof S)[keyof typeof S];
+
 interface Rule {
   /** End of the match at `p`, or -1. */
   readonly match: (x: Scan, p: number) => number;
   /** The token kind written for the match (a trivia kind for the skipped comments). */
   readonly kind: number;
-  readonly action: number;
-  readonly state: number;
+  readonly action: Action;
+  /** The state `A.begin` enters. */
+  readonly state: State;
 }
 
 /** The text being lexed and its length (appended `\n` included). */
@@ -246,8 +250,8 @@ const isNewline = (c: number) => c === LF || c === CR;
 const rule = (
   match: Rule['match'],
   kind: number,
-  action: number = A.none,
-  state: number = S.INITIAL
+  action: Action = A.none,
+  state: State = S.INITIAL
 ): Rule => ({ match, kind, action, state });
 
 /** The rules of the generated xychart lexer; index = its rule number (from 0). */
@@ -301,23 +305,31 @@ const RULES: readonly Rule[] = [
   /* 46 */ rule((x, p) => (p === x.n ? p : -1), T.Eof),
 ];
 
-/** The rules with no state, which the inclusive states share. */
-const COMMON = [0, 1, 4, 5, 6, 7, 9, 11, 14, 15, 16, 17, 18, 21, 22];
-const COMMON_TAIL = [26, 27, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46];
+/**
+ * The rules with no state, which the inclusive states share, in runs split where a state's own
+ * rules go between them by rule number (as in the generated lexer's `conditions`): the comment
+ * rules 0 and 1 (before the line-break rules 2 and 3 of `axis_data` and `data`), the keyword
+ * rules up to `y-axis` (before 19 and 20 of `axis_data`), `line` and `bar` (before 23–25), and
+ * the rest.
+ */
+const COMMENTS = [0, 1];
+const KEYWORDS = [4, 5, 6, 7, 9, 11, 14, 15, 16, 17, 18];
+const PLOTS = [21, 22];
+const REST = [26, 27, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46];
 
 /** Rule numbers of each start condition, in order (the generated lexer's `conditions`). */
 const CONDITIONS: readonly (readonly number[])[] = [
-  /* INITIAL */ [...COMMON, ...COMMON_TAIL],
+  /* INITIAL */ [...COMMENTS, ...KEYWORDS, ...PLOTS, ...REST],
   /* title */ [],
   /* acc_title */ [8],
   /* acc_descr */ [10],
   /* acc_descr_multiline */ [12, 13],
   /* md_string */ [],
   /* string */ [28, 29],
-  /* axis_data */ [0, 1, 2, ...COMMON.slice(2), 19, 20, 24, ...COMMON_TAIL],
-  /* axis_band_data */ [...COMMON, 25, ...COMMON_TAIL],
-  /* data */ [0, 1, 3, ...COMMON.slice(2), 23, ...COMMON_TAIL],
-  /* data_inner */ [...COMMON, 24, 25, ...COMMON_TAIL],
+  /* axis_data */ [...COMMENTS, 2, ...KEYWORDS, 19, 20, ...PLOTS, 24, ...REST],
+  /* axis_band_data */ [...COMMENTS, ...KEYWORDS, ...PLOTS, 25, ...REST],
+  /* data */ [...COMMENTS, 3, ...KEYWORDS, ...PLOTS, 23, ...REST],
+  /* data_inner */ [...COMMENTS, ...KEYWORDS, ...PLOTS, 24, 25, ...REST],
 ];
 
 /** A lex: the tokens (source offsets), and each token's range in v12's text. */

@@ -183,6 +183,18 @@ describe('xychart lexer', () => {
     ]);
   });
 
+  it('cuts an unclosed directive as v12 did: to the end, or after a word argument', () => {
+    expect(dump(H + 'bar [1] %%{x}\nline [2]').slice(-3)).toEqual([
+      `${T.Blanks}@15-16`,
+      'directive@16-30',
+      'EOF@30-30',
+    ]);
+    expect(named(H + 'bar [1] %%{x y\nline [2]').slice(5, 7)).toEqual([
+      'SQUARE_BRACES_END:]',
+      'LINE:line',
+    ]);
+  });
+
   it('writes an error token where jison throws, then lexes on from the initial state', () => {
     expect(named(H + 'title a(b\nbar [1]')).toEqual([
       'XYCHART:xychart',

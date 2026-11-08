@@ -1,7 +1,7 @@
 /**
  * The text v12's XY chart lexer saw, from the shared v12 source view (D114, `sourceView` in the
- * parser kit): comments and directives cut, tag quotes converted, dropped `;` cut. The XY chart
- * lexer lexes that text with jison's rules as they are, so three more of v12's steps are applied
+ * parser kit): directives cut as v12's regex reads them ({@link v12Directives}), comments cut,
+ * tag quotes converted, dropped `;` cut. The XY chart lexer lexes that text with jison's rules as they are, so three more of v12's steps are applied
  * here, on a copy that keeps every character's source range: CR and CRLF read as LF, leading
  * blanks trimmed (`cleanupComments`), and `#name;` / `#123;` replaced by v12's entity
  * placeholders (`encodeEntities`; outside quotes no jison rule takes a placeholder's first
@@ -9,7 +9,7 @@
  * scan (R-PARSE-7).
  *
  * A copy of diagram-quadrant's `v12-text.ts` (no cross-diagram imports; only core's T0 edits the
- * parser kit): a candidate for the kit.
+ * parser kit) plus {@link v12Directives}: a candidate for the kit.
  */
 import {
   CR,
@@ -19,7 +19,9 @@ import {
   isWord,
   LF,
   localOffset,
+  COLON,
   QUOTE,
+  RBRACE,
   SEMI,
   SourceOffsets,
   sourceView,
@@ -44,6 +46,9 @@ export interface V12Text {
   /** Comments and directives v12 removed, in source order (trivia). */
   holes: Hole[];
 }
+
+const LINE_SEPARATOR = 0x2028;
+const PARAGRAPH_SEPARATOR = 0x2029;
 
 const PLACEHOLDER_OPEN = 'ﬂ°';
 const PLACEHOLDER_CLOSE = '¶ß';
@@ -98,9 +103,9 @@ class Builder {
   }
 }
 
-/** v12's text for the body `src[from…]`, given the directive ranges core's preprocess found. */
-export function v12Text(src: string, from: number, directives: readonly Range[]): V12Text {
-  const view = sourceView(src, from, directives);
+/** v12's text for the body `src[from…]` (the text after the front matter). */
+export function v12Text(src: string, from: number): V12Text {
+  const view = sourceView(src, from, v12Directives(src, from));
   const holes = view.holes.filter((h) => h.kind !== 'drop' && h.start >= from);
   if (
     view.holes.length === 0 &&
@@ -140,6 +145,55 @@ export function v12Text(src: string, from: number, directives: readonly Range[])
     from: 0,
     holes,
   };
+}
+
+/**
+ * The spans v12's directive regex removed from the body `src[from…]`, in order:
+ * `%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?`, global.
+ * Core's preprocess locates the same spans for well-formed directives, but not where v12's
+ * regex reads text core does not: an unclosed `%%{` (core ends it at the end of its line; v12
+ * ends it after a word argument and the blanks after that, line breaks too, or else runs it
+ * to the end of the text), or a word argument followed by more text before `}%%` (v12 stops
+ * after the word). A non-word argument runs over line breaks up to `}%%`, a U+2028 or U+2029,
+ * or the end. Linear: the scan resumes after each span.
+ */
+function v12Directives(src: string, from: number): Range[] {
+  const out: Range[] = [];
+  for (let at = src.indexOf('%%{', from); at !== -1; ) {
+    const nameStart = skipBlanks(src, at + 3);
+    const nameEnd = skipWord(src, nameStart);
+    if (nameEnd === nameStart) {
+      at = src.indexOf('%%{', at + 1);
+      continue;
+    }
+    const colon = skipBlanks(src, nameEnd);
+    let i = skipBlanks(src, src.charCodeAt(colon) === COLON ? colon + 1 : nameEnd);
+    const word = skipWord(src, i);
+    if (word > i) i = word;
+    else {
+      for (let c = src.charCodeAt(i); i < src.length; c = src.charCodeAt(++i)) {
+        if (c === LINE_SEPARATOR || c === PARAGRAPH_SEPARATOR) break;
+        if (c === RBRACE && src.startsWith('%%', i + 1)) break;
+      }
+    }
+    i = skipBlanks(src, i);
+    if (src.charCodeAt(i) === RBRACE && src.startsWith('%%', i + 1)) i += 3;
+    out.push({ start: at, end: i });
+    at = src.indexOf('%%{', i);
+  }
+  return out;
+}
+
+/** End of the run of `\s` from `i`. */
+function skipBlanks(src: string, i: number): number {
+  while (i < src.length && isSpace(src.charCodeAt(i))) i++;
+  return i;
+}
+
+/** End of the run of `\w` from `i`. */
+function skipWord(src: string, i: number): number {
+  while (i < src.length && isWord(src.charCodeAt(i))) i++;
+  return i;
 }
 
 function appendEnd(a: Uint32Array, end: number): Uint32Array {

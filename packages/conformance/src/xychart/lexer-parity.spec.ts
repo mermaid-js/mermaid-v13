@@ -1,7 +1,7 @@
 // cspell:words xychart barchart
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { JISON_NAMES, lexXyChart } from '@mermaid-js/diagram-xychart';
+import { JISON_NAMES, lexXyChart, tokenValue } from '@mermaid-js/diagram-xychart';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
@@ -13,18 +13,18 @@ import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
  * lexed (`loadJisonLexerOracle('xychart')`).
  *
  * Corpus (`corpus.ts`, {@link xyChartGateCorpus}): the 48 e2e fixtures, the 70 harvested v12
- * spec and syntax-page strings and the cases of `corpus/xychart-cases.json` (the spec's quirks:
- * uppercase keywords, `xychartx`, unquoted text, the unreachable `MD_STR`, glued comments,
- * number forms, both orientations, `;`, plot before axis, missing band values, duplicate
- * categories, reversed ranges, `accTitle`/`accDescr`; line-separator, CR and error cases), each
- * again in every generated variant that changes it (`VARIANTS`: comment lines added or one
- * through the middle of a short body, every line break a CR followed by a removed comment or
- * directive line, CRLF, U+2028 before every line break, a directive through the middle of every
- * line).
+ * spec and syntax-page strings and the 141 cases of `corpus/xychart-cases.json` (the spec's
+ * quirks: uppercase keywords, `xychartx`, `barchart`, unquoted text, the unreachable `MD_STR`,
+ * glued comments, number forms, both orientations, `;`, plot before axis, missing band values,
+ * duplicate categories, reversed ranges, `accTitle`/`accDescr`; unclosed and odd directives,
+ * U+2028/U+2029, CR and error cases), each again in every generated variant that changes it
+ * (`VARIANTS`: comment lines added or one through the middle of a short body, every line break
+ * a CR followed by a removed comment or directive line, CRLF, U+2028 or U+2029 before every
+ * line break, a directive through the middle of every line).
  *
- * Images are compared as v12's lexer matched them, entity placeholders decoded, including the
- * `\n` v12 appended (v13 lexes it too; `xyChartTokens` clips it off for consumers). The text v13
- * rebuilt is also checked against the exact text the oracle saw, and every source is compared
+ * Images are compared as v12's parser read them: the oracle's images with entity placeholders
+ * decoded and the `\n` v12 appended taken off the token that matched it, against the package's
+ * `tokenValue` (which does both, so the gate exercises it). The text v13 rebuilt is also checked against the exact text the oracle saw, and every source is compared
  * but the ones listed in {@link NOT_DETECTED}. A separate check holds every token's source range
  * to the contract ({@link rangeViolations}).
  *
@@ -45,15 +45,14 @@ function cut(tokens: JisonToken[]): JisonToken[] {
   return i < 0 ? tokens : [...tokens.slice(0, i), [LEXICAL_ERROR, '']];
 }
 
-/** v13's stream as jison names and images (the span of v12's text each token matched). */
+/** v13's stream as jison names and the package's own token values (`tokenValue`). */
 function v13Tokens(source: string): JisonToken[] {
   const l = lexXyChart(source);
   const out: JisonToken[] = [];
   for (let i = 0; i < l.tokens.length - 1; i++) {
     const name = JISON_NAMES[l.tokens.kind[i] ?? -1];
-    const s = l.textStart[i] ?? -1;
-    if (!name || s < 0) continue;
-    out.push([name, decodeEntities(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
+    if (!name || (l.textStart[i] ?? -1) < 0) continue;
+    out.push([name, tokenValue(l, i)]);
   }
   return cut(out);
 }
@@ -73,7 +72,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
     let specs = 0;
     let cases = 0;
     for (const item of items) {
-      const v12 = await oracle.tokens(item.source, { keepAppendedNewline: true });
+      const v12 = await oracle.tokens(item.source);
       if (!v12) {
         undetected.push(item.id);
         continue;
@@ -101,7 +100,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture, harvested string and case reaches the lexer, but the listed cases.
     expect(e2e).toBe(48);
     expect(specs).toBe(70);
-    expect(cases).toBe(120);
+    expect(cases).toBe(141);
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());
     expect(compared).toBe(items.length - NOT_DETECTED.size);
     expect(diffs).toEqual([]);
@@ -151,6 +150,7 @@ const DETECTION_EXCLUSIONS: readonly (readonly [string, string, readonly string[
       'CR cut by a directive',
       'CRLF',
       'line separators',
+      'paragraph separators',
       'mid-line directive',
     ],
   ],

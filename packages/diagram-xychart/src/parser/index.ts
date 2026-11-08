@@ -22,13 +22,12 @@ export interface XyChartToken {
 }
 
 /**
- * Lex a whole XY chart source (front matter and directives located first). `onRule` is told the
+ * Lex a whole XY chart source (front matter located first; directives as v12's regex reads
+ * them, `v12-text.ts`). `onRule` is told the
  * rule number of every rule that matches (dev use: the rule-coverage gate).
  */
 export function lexXyChart(src: string, onRule?: (rule: number) => void): XyChartLex {
-  const pre = preprocess(src);
-  const directives = pre.directives.map((d) => d.range);
-  return lex(src, v12Text(src, pre.bodyStart, directives), onRule);
+  return lex(src, v12Text(src, preprocess(src).bodyStart), onRule);
 }
 
 /** Undo v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`). */
