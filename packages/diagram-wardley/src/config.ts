@@ -149,3 +149,14 @@ function paddingFor(
   );
   return used;
 }
+
+/**
+ * `wardley-beta.useMaxWidth`, for the renderer, as v12 read it (`?? true`, then for truth):
+ * unset or truthy scales to the container.
+ */
+export function wardleyUseMaxWidth(
+  section: Readonly<Record<string, unknown>> | undefined
+): boolean {
+  const value = section?.useMaxWidth;
+  return value === undefined ? true : Boolean(value);
+}

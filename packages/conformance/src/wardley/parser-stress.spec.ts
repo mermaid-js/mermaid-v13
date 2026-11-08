@@ -61,6 +61,18 @@ const SHAPES: [string, (n: number) => string, number][] = [
     900,
   ],
   [
+    // `#name;` codes beside literal `&name;`s, decoded piece by piece (GAPS #493), then lines
+    // with no `#` before one at the very end.
+    'entity codes beside literal entities',
+    (n) =>
+      W +
+      lines(n, (k) => `note "a #amp; b &amp; c${k}" [0.5, 0.5]`) +
+      '\n' +
+      lines(n, (k) => `component C${k} [0.5, 0.5]`) +
+      '\n%% #end;',
+    1_000,
+  ],
+  [
     'a long name of many words',
     (n) => `${W}component ${lines(n, (k) => `w${k}`).replace(/\n/g, ' ')} [0.5, 0.5]`,
     3_000,

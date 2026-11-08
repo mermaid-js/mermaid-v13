@@ -89,17 +89,18 @@ describe('wardley layout invariants on parser-produced fixtures', () => {
     expect(failures).toEqual([]);
   });
 
-  it('measures labels as v12’s built data holds them, one literal line', () => {
+  it('measures labels as v12 drew them, one literal line', () => {
     // v12's DB (12.2.0, probed): "a\nb", "a<br>b", "x &lt; y" as written; `.text()` draws them
-    // as one line, the newline as a space.
+    // as one line, the newline as a space. Its `#name;` codes show as their characters, a
+    // literal `&amp;` as written (GAPS #493).
     const { layout } = lay(item('wardley-cases/layout-label-literal').source);
     expect(layout.nodes.map((n) => n.label.text)).toEqual([
       'a b',
       'a<br>b',
       'x &lt; y',
-      'Tea &amp; &quot;Cups&quot;',
+      'Tea & "Cups"',
     ]);
-    expect(layout.notes[0]!.label.text).toBe('&#9829; love<br/>x');
+    expect(layout.notes[0]!.label.text).toBe('♥ love<br/>x');
     expect(layout.links[0]!.label!.text).toBe('x &amp; *y* <br> z');
   });
 

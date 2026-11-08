@@ -34,4 +34,28 @@ describe('wardley parse', () => {
     expect(parseWardley('wardley-beta', { keepTokens: true }).tokens?.length).toBeGreaterThan(0);
     expect(parseWardley('wardley-beta').tokens).toBeUndefined();
   });
+
+  it("decodes v12's #name; codes as v12 drew them and keeps a literal &name; (GAPS #493)", () => {
+    const { model } = parseWardley(
+      [
+        'wardley-beta',
+        'title A #amp; B &amp; C',
+        'component "Tea #amp; &amp; #quot;Cups#quot;" [0.5, 0.5]',
+        'component "X #y; #9829; #x41;" [0.1, 0.1]',
+        'note "#9829; love &lt;3" [0.1, 0.2]',
+        '"Tea #amp; &amp; #quot;Cups#quot;" -> "X #y; #9829; #x41;" ; a #lt; b &gt; c',
+      ].join('\n')
+    );
+    expect(model.title).toBe('A & B &amp; C');
+    expect(model.nodes.map((n) => n.label)).toEqual(['Tea & &amp; "Cups"', 'X &y; ♥ &x41;']);
+    expect(model.notes[0]!.text).toBe('♥ love &lt;3');
+    expect(model.links[0]).toMatchObject({
+      source: 'Tea & &amp; "Cups"',
+      target: 'X &y; ♥ &x41;',
+      label: 'a < b &gt; c',
+    });
+    // An `&` in a comment inside the range is dropped with the comment.
+    const block = parseWardley('wardley-beta\naccDescr {\n a #amp; b\n%% c & d\n e &amp;\n}');
+    expect(block.model.accDescr).toBe('a & b\ne &amp;');
+  });
 });

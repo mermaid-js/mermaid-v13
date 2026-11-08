@@ -31,7 +31,6 @@
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
 import {
-  cook,
   formatExpected,
   Kind,
   LineIndex,
@@ -67,6 +66,7 @@ import type {
 import {
   accDescrValue,
   accTitleValue,
+  displayText,
   linkLabelValue,
   stringValue,
   titleValue,
@@ -218,10 +218,13 @@ class WardleyParser {
     return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
   }
 
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
+  /**
+   * A token's text as v12's lexer read it (removed spans dropped), with v12's `#name;` codes as
+   * the characters v12 drew (`displayText`).
+   */
   private raw(j = this.i): string {
     const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
+    return displayText(this.src, start, end, this.view);
   }
 
   /**

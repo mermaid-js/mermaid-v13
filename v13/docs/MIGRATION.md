@@ -2036,3 +2036,36 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo`, `redux`, `redux-color` | No cynefin block: `default`'s literals, so boundaries and arrows `#333333`, text `#333`, labels `#131300`, whatever the theme's own colours, and a `lineColor` override changed nothing | Boundaries and arrows in the theme's `lineColor`, text in its `textColor`, labels in its `primaryTextColor` (`#000000`, `#333333`/`#28253d`, `#333333`/`#28253d`); a `lineColor` override moves them | D333(b), R-THEME-11 |
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
+
+## Wardley SVG structure
+
+What changed in the Wardley map's SVG compared with v12 (spec #430, #493). v12's groups and
+classes are kept, in v12's order, as the children of `g.wardley-map`: `rect.wardley-background`,
+`text.wardley-title`, `g.wardley-axes` (two lines, `text.wardley-axis-label
+wardley-axis-label-x`, `-y`), `g.wardley-stages` (each divider line before its
+`text.wardley-stage-label`), `g.wardley-grid`, `g.wardley-pipelines` (`rect.wardley-pipeline-box`),
+`g.wardley-pipeline-links` (`line.wardley-pipeline-evolution-link`), `g.wardley-links`
+(`line.wardley-link`, `wardley-link--dashed`, then every `text.wardley-link-label`),
+`g.wardley-trends` (`line.wardley-trend`), `g.wardley-nodes` (`g.wardley-node
+wardley-node--<anchor|component|pipeline-component>` holding the strategy overlay
+`circle.wardley-<build|buy|outsource|market>-overlay`, the circle, `line.wardley-market-line` and
+`circle.wardley-market-dot`, the pipeline parent's square, `line.wardley-inertia` and
+`text.wardley-node-label`), `g.wardley-annotations` (`g.wardley-annotation` per marker, then
+`g.wardley-annotations-box`), `g.wardley-notes`, `g.wardley-accelerators` and
+`g.wardley-deaccelerators`. Selectors that use these classes keep working.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="wardley"`; the renderer wiped the SVG first, so Mermaid's `<style>` was gone and every colour, width and font size was a presentation attribute | No root `id`; `class="mermaid mermaid-wardley"`, `role="img"`, `aria-roledescription="wardley"` (kept), `data-mermaid-version`; still presentation attributes, the theme colours reading `var(--_x)` aliases on the root `style`; `<style>` only for `theme: 'auto'` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Arrowheads: `<defs>` with three `<marker>`s (`arrow-<id>`, `link-arrow-end-<id>`, `link-arrow-start-<id>`) after `g.wardley-map`, referenced by `marker-start`/`marker-end` | No `<defs>`, `<marker>` or id: `path.wardley-link-head` after a link's line for each end that flows (`+>`, `+<`, both for `+<>`), `path.wardley-trend-head` after each trend's line, v12's marker triangle (5 × 5 and 6 × 6, the tip a tenth past the line end as `refX 9` put it), filled in the line's colour | `<marker>` is not in the allow-list, and the ids broke R-SEC-2 (R-ARCH-6) |
+| No source mapping | `data-ast` (with the same `data-id`) on each node's `g.wardley-node`, each link's and trend's line, each pipeline box, note, annotation marker `g` and (de)accelerator outline, the annotation box `g`, the in-text title (`title@2`, … for the last of several; a front-matter title has none) and, for an `evolution`, `g.wardley-stages`; the parts drawn for them (labels, heads, joins) carry its `data-id` only. A repeated `component`, which v12 merged, and a dropped link have no element | One `data-ast` element per AST node (R-PARSE-8, pitfall 12) |
+| `g.wardley-links`, `g.wardley-trends` and `g.wardley-nodes` always written, and `g.wardley-pipeline-links` with any pipeline, empty when there was nothing to draw | A group with nothing in it is left out | No empty elements |
+| A `viewBox` and background of the canvas (`0 0 width height`): labels and accelerators near an edge ran off it (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`, and the background covers the `viewBox`. A map where everything fits keeps v12's canvas | D224 |
+| No font: with the `<style>` wiped, text took the browser's default (often a serif) | The theme's `fontFamily` on the root; v12's sizes and weights | D422 |
+| Texts set with d3 `.text()`; `font-weight="normal"` and `dominant-baseline="auto"` written on component labels | The same one literal line (no `<br>` or markup; a `#amp;` code shows as `&`, a literal `&amp;` as written), at v12's anchor and alignment; the default `normal` and `auto` are left out | v12's `.text()` (#490, #493) |
+| Anchor labels and stage dividers `#000` in every theme, black on `dark`'s `#333` | Anchor labels in `wardleyAxisTextColor`, stage dividers in `wardleyAxisColor`, as the other labels and the axes: near v12's black in the light themes (labels / dividers `#131300` / `#333333` in `default`, `#333` / `#0b0b0b` in `base`, `#321b67` / `#000000` in `forest`, `#111111` / `#666` in `neutral`), readable in `dark` (`#e0dfdf` / `lightgrey`) | D426 |
+| Annotation markers and box filled `white`, stroked `axisColor`, their text `axisTextColor`; `annotationStroke`, `annotationTextColor` and `annotationFill` read and never used | The three annotation variables colour them: the same in `default`, `forest` and `neutral`; `#f4f4f4` in `base`; in `dark` filled `mainBkg` (`#1f2020`) | D426 |
+| Strategy overlays (`#666`, `#ccc`, `#eee` with a `#000` stroke), market circles and (de)accelerators (`white`) | Kept as v12's literals in every theme | D426 |
+| `themeVariables.wardley.*` (nested only) and the flat `wardleyEvolutionColor` | Each key is also the flat variable `wardley<Key>` (`wardleyAxisColor`, … `wardleyAnnotationFill`); the nested key still works, the flat name wins when both are set, and `wardleyEvolutionColor` still feeds `wardleyEvolutionStroke` | D335, D540 |
+| `look: neo`, hand-drawn and the redux and neo themes: the classic drawing | The same shapes: wardley differs between families by colour only, with no gradient, shadow or hand-drawn outline | D227, D301 |
+| `format: 'ascii'` | Throws `UnsupportedFormatError`: wardley has no text output | D320 |

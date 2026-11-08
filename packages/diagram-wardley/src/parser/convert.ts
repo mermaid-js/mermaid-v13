@@ -7,7 +7,61 @@
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here.
  */
-import { BACKSLASH, isBlank, isLineEnd, isSpace } from '@mermaid-js/core/parser-kit';
+import {
+  AMP,
+  BACKSLASH,
+  HASH,
+  cook,
+  isBlank,
+  isLineEnd,
+  isSpace,
+  type SourceView,
+} from '@mermaid-js/core/parser-kit';
+import { entityAt } from '@mermaid-js/core/text';
+
+/**
+ * The text of the source range `[start, end)` as v12 drew it: v12's lexer's text (`cook()`),
+ * with each `#name;` / `#123;` code written as its character (GAPS #493). v12 turned a code
+ * into a placeholder, wrote the text with `.text()` and turned the placeholders into `&name;`
+ * in the SVG markup, so the page showed the character; an `&name;` the author wrote was escaped
+ * by `.text()` and shows as written. `cook()` gives both as `&name;`, so the range is cooked in
+ * pieces between the author's `&`s, and only the references inside a piece (`cook()`'s) are
+ * decoded. A name core does not know (`#y;`) stays `&y;`, as a browser shows it.
+ */
+export function displayText(src: string, start: number, end: number, view: SourceView): string {
+  if (!has(src, start, end, HASH)) return cook(src, start, end, view);
+  let out = '';
+  let from = start;
+  for (let p = start; p < end; p++) {
+    if (src.charCodeAt(p) !== AMP) continue;
+    // The `&` itself through cook(), which drops it inside a removed span.
+    out += decodeReferences(cook(src, from, p, view)) + cook(src, p, p + 1, view);
+    from = p + 1;
+  }
+  return out + decodeReferences(cook(src, from, end, view));
+}
+
+/** Whether `src[start…end)` holds the character `c` (a scan of the range only, R-PARSE-7). */
+function has(src: string, start: number, end: number, c: number): boolean {
+  for (let i = start; i < end; i++) if (src.charCodeAt(i) === c) return true;
+  return false;
+}
+
+/** Every character reference core knows in `text`, as its character. */
+function decodeReferences(text: string): string {
+  let i = text.indexOf('&');
+  if (i < 0) return text;
+  let out = '';
+  let from = 0;
+  for (; i >= 0; i = text.indexOf('&', i + 1)) {
+    const ref = entityAt(text, i);
+    if (ref === undefined) continue;
+    out += text.slice(from, i) + ref[0];
+    from = i + ref[1];
+    i = from - 1;
+  }
+  return out + text.slice(from);
+}
 
 /** Langium's `convertEscapeCharacter`: the control escapes, and any other `\x` as `x`. */
 const ESCAPES: Readonly<Record<string, string>> = {

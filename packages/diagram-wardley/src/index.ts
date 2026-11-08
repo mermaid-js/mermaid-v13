@@ -1,9 +1,13 @@
 /**
  * `@mermaid-js/diagram-wardley`: the Wardley map plugin (spec #430), in progress. The runtime
- * entry has the parser and detection, the model and the AST (#489) and the layout (#490); the
- * renderer lands with T4, the manifest with T5. The lexer, its parity gate's helpers and the
- * layout invariants are in `./testing` (#487, #490).
+ * entry has the parser and detection, the model and the AST (#489), the layout (#490), and the
+ * SVG renderer and the plugin object with wardley's theme table (#493); the manifest lands with
+ * T5. The lexer, its parity gate's helpers, the layout invariants and the test context are in
+ * `./testing` (#487, #490, #493).
  */
+export { wardley } from './plugin.ts';
+export { renderWardley } from './render/index.ts';
+export type { WardleyRenderContext } from './render/index.ts';
 export { WARDLEY_CONFIG_INVALID } from './config.ts';
 export { layoutWardley, WARDLEY_STAGE_CLAMPED } from './layout/index.ts';
 export type { WardleyLayoutContext } from './layout/index.ts';
