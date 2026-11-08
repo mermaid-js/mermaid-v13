@@ -4,7 +4,7 @@ Integration branch `feature/429_venn` (from `mermaid-v13` at 12ba676cb). Draft P
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate | #486 | #285 (merged) | open |
+| T1 lexer parity gate | #486 | #285 (merged) | merged (ff d614349d7; package entry 3,043 B gz, no core change) |
 | T2 grammar, parser, model, AST | #488 | #486 | open |
 | T3 layout and venn.js solver | #491 | #488 | open |
 | T4 SVG renderer and theme table | #495 | #491 | open |
@@ -28,6 +28,11 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 | After | Core gz | Δ |
 | --- | --- | --- |
 | base (12ba676cb) | — | — |
+| #486 T1 | unchanged | 0 (no core or registry change) |
+
+## Merge log
+
+- 2026-11-08: `mermaid-v13` 0a472e044 (#482, core `cScale`/git palette derivation, D544) merged in 1d9ca69b7, clean. The brief still says not to depend on it for venn's palette rows.
 
 ## Finish rule
 
