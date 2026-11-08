@@ -9,7 +9,7 @@ import type { FontKey } from '@mermaid-js/core/text';
 import type { XyChartAxisOptions } from '../config.ts';
 import { XYCHART_METRICS } from './metrics.ts';
 import { bandScale, linearScale, ticks as d3Ticks } from './scale.ts';
-import { place, type Measured, type TextKit } from './text.ts';
+import { place, type Measured, type TextMeasure } from './text.ts';
 import type { Rect, Segment, XyAxisLayout, XyAxisPosition, XyText, XyTick } from './types.ts';
 
 interface Dimension {
@@ -29,20 +29,21 @@ export interface AxisInput {
   readonly options: XyChartAxisOptions;
   readonly family: string;
   readonly weight: number;
-  readonly kit: TextKit;
+  readonly texts: TextMeasure;
 }
 
-const { maxOuterPadding, barToTick, tickCount } = XYCHART_METRICS;
+const { maxOuterPadding, barToTick, tickCount, initialAxisLength } = XYCHART_METRICS;
 
 export class Axis {
   private position: XyAxisPosition = 'left';
-  private range: [number, number] = [0, tickCount];
+  private range: [number, number] = [0, initialAxisLength];
   private readonly box = { x: 0, y: 0, width: 0, height: 0 };
   private showTitle = false;
   private showLabel = false;
   private showTick = false;
   private showLine = false;
-  private outerPadding = 0;
+  /** v12's `outerPadding`: the range's inset at each end. */
+  private padding = 0;
   private titleHeight = 0;
   /** v12's `normalizedLabelRotationInRad`: the config is already within ±90 (`config.ts`). */
   private readonly rotation: number;
@@ -56,7 +57,7 @@ export class Axis {
   private scaleOf: (value: string | number) => number = () => 0;
 
   constructor(private readonly input: AxisInput) {
-    const { options, family, weight, kit, data } = input;
+    const { options, family, weight, texts, data } = input;
     this.rotation = (options.labelRotation * Math.PI) / 180;
     this.labelFont = { family, size: options.labelFontSize, weight };
     this.titleFont = { family, size: options.titleFontSize, weight };
@@ -64,11 +65,11 @@ export class Axis {
       data.kind === 'band' ? data.categories : d3Ticks(data.domain[0], data.domain[1], tickCount);
     this.labels = this.values.map((v) =>
       data.kind === 'band'
-        ? kit.label(String(v), this.labelFont)
-        : kit.plain(String(v), this.labelFont)
+        ? texts.label(String(v), this.labelFont)
+        : texts.plain(String(v), this.labelFont)
     );
-    this.labelSize = kit.max(this.labels, this.labelFont);
-    this.titleText = input.title ? kit.label(input.title, this.titleFont) : undefined;
+    this.labelSize = texts.max(this.labels, this.labelFont);
+    this.titleText = input.title ? texts.label(input.title, this.titleFont) : undefined;
     this.rescale();
   }
 
@@ -91,7 +92,7 @@ export class Axis {
 
   /** The scale's range: the given range less the outer padding at each end. */
   private paddedRange(): [number, number] {
-    return [this.range[0] + this.outerPadding, this.range[1] - this.outerPadding];
+    return [this.range[0] + this.padding, this.range[1] - this.padding];
   }
 
   /** v12 `getTickDistance`: the padded length over the tick count (duplicates counted). */
@@ -100,14 +101,15 @@ export class Axis {
     return Math.abs(a - b) / Math.max(1, this.tickValues().length);
   }
 
-  getOuterPadding(): number {
-    return this.outerPadding;
+  /** v12 `getAxisOuterPadding`. */
+  outerPadding(): number {
+    return this.padding;
   }
 
   /** v12 `recalculateOuterPaddingToDrawBar`: room for a bar at each end. */
   padForBars(): void {
-    if (barToTick * this.tickDistance() > this.outerPadding * 2) {
-      this.outerPadding = Math.floor((barToTick * this.tickDistance()) / 2);
+    if (barToTick * this.tickDistance() > this.padding * 2) {
+      this.padding = Math.floor((barToTick * this.tickDistance()) / 2);
     }
     this.rescale();
   }
@@ -153,84 +155,58 @@ export class Axis {
       : this.labels;
   }
 
-  /** v12 `calculateSpace`: what the axis takes of `available`, dropping parts that do not fit. */
+  /**
+   * v12 `calculateSpace` (`calculateSpaceIfDrawnHorizontally`/`…Vertical`, one shape): what the
+   * axis takes across `available`, dropping parts that do not fit, in v12's order: the axis line,
+   * the labels (whose half size along the axis sets the outer padding), the ticks, the title.
+   */
   calculateSpace(available: Dimension): Dimension {
-    if (this.position === 'left') this.spaceVertical(available);
-    else this.spaceHorizontal(available);
+    const options = this.input.options;
+    const left = this.position === 'left';
+    const across = left ? 'width' : 'height';
+    const along = left ? 'height' : 'width';
+    let room = available[across];
+    if (options.showAxisLine && room > options.axisLineWidth) {
+      room -= options.axisLineWidth;
+      this.showLine = true;
+    }
+    if (options.showLabel) {
+      const size = this.labelSize;
+      this.padding = Math.min(size[along] / 2, maxOuterPadding * available[along]);
+      const need = this.labelDepth() + options.labelPadding * 2;
+      if (need <= room) {
+        room -= need;
+        this.showLabel = true;
+      }
+    }
+    if (options.showTick && room >= options.tickLength) {
+      this.showTick = true;
+      room -= options.tickLength;
+    }
+    if (options.showTitle && this.titleText) {
+      const need = this.titleText.height + options.titlePadding * 2;
+      this.titleHeight = this.titleText.height;
+      if (need <= room) {
+        room -= need;
+        this.showTitle = true;
+      }
+    }
+    this.box[across] = available[across] - room;
+    this.box[along] = available[along];
     this.rescale();
     return { width: this.box.width, height: this.box.height };
   }
 
-  private spaceHorizontal(available: Dimension): void {
-    const o = this.input.options;
-    let height = available.height;
-    if (o.showAxisLine && height > o.axisLineWidth) {
-      height -= o.axisLineWidth;
-      this.showLine = true;
-    }
-    if (o.showLabel) {
-      const size = this.labelSize;
-      this.outerPadding = Math.min(size.width / 2, maxOuterPadding * available.width);
-      let need = size.height;
-      if (this.position === 'bottom' && this.rotation !== 0) {
-        need = Math.max(
-          need,
-          Math.abs(Math.sin(this.rotation) * size.width) +
-            Math.abs(Math.cos(this.rotation) * size.height)
-        );
-      }
-      need += o.labelPadding * 2;
-      if (need <= height) {
-        height -= need;
-        this.showLabel = true;
-      }
-    }
-    if (o.showTick && height >= o.tickLength) {
-      this.showTick = true;
-      height -= o.tickLength;
-    }
-    if (o.showTitle && this.titleText) {
-      const need = this.titleText.height + o.titlePadding * 2;
-      this.titleHeight = this.titleText.height;
-      if (need <= height) {
-        height -= need;
-        this.showTitle = true;
-      }
-    }
-    this.box.width = available.width;
-    this.box.height = available.height - height;
-  }
-
-  private spaceVertical(available: Dimension): void {
-    const o = this.input.options;
-    let width = available.width;
-    if (o.showAxisLine && width > o.axisLineWidth) {
-      width -= o.axisLineWidth;
-      this.showLine = true;
-    }
-    if (o.showLabel) {
-      const size = this.labelSize;
-      this.outerPadding = Math.min(size.height / 2, maxOuterPadding * available.height);
-      const need = size.width + o.labelPadding * 2;
-      if (need <= width) {
-        width -= need;
-        this.showLabel = true;
-      }
-    }
-    if (o.showTick && width >= o.tickLength) {
-      this.showTick = true;
-      width -= o.tickLength;
-    }
-    if (o.showTitle && this.titleText) {
-      const need = this.titleText.height + o.titlePadding * 2;
-      this.titleHeight = this.titleText.height;
-      if (need <= width) {
-        width -= need;
-        this.showTitle = true;
-      }
-    }
-    this.box.width = available.width - width;
-    this.box.height = available.height;
+  /** How deep the labels are across the axis: their width on a left axis, else their (rotated) height. */
+  private labelDepth(): number {
+    const size = this.labelSize;
+    if (this.position === 'left') return size.width;
+    if (this.position !== 'bottom' || this.rotation === 0) return size.height;
+    return Math.max(
+      size.height,
+      Math.abs(Math.sin(this.rotation) * size.width) +
+        Math.abs(Math.cos(this.rotation) * size.height)
+    );
   }
 
   /** v12 `calculateOffsetByRotation`: a rotated label's shift, from the widest/tallest label. */
@@ -241,11 +217,11 @@ export class Axis {
 
   /** The axis's parts as v12 drew them (`getDrawableElementsFor{Left,Bottom,Top}Axis`). */
   result(): XyAxisLayout {
-    const o = this.input.options;
+    const options = this.input.options;
     const { data, ast } = this.input;
     const box: Rect = { ...this.box };
-    const line = o.axisLineWidth;
-    const tickLen = o.tickLength;
+    const line = options.axisLineWidth;
+    const tickLen = options.tickLength;
     const lineIn = this.showLine ? line : 0;
     const values = this.tickValues();
     const labels = this.tickLabels();
@@ -265,13 +241,13 @@ export class Axis {
     };
     const labelAt = (at: number, m: Measured): XyText => {
       if (this.position === 'left') {
-        const x = box.x + box.width - o.labelPadding - (this.showTick ? tickLen : 0) - lineIn;
+        const x = box.x + box.width - options.labelPadding - (this.showTick ? tickLen : 0) - lineIn;
         return place(m, { x, y: at }, 'end', 'middle');
       }
       if (this.position === 'bottom') {
         const y =
           box.y +
-          o.labelPadding +
+          options.labelPadding +
           (this.showTick ? tickLen : 0) +
           lineIn +
           Math.abs(this.rotationOffset('width'));
@@ -279,7 +255,9 @@ export class Axis {
         return place(m, { x, y }, 'middle', 'top', (this.rotation * 180) / Math.PI);
       }
       const y =
-        box.y + (this.showTitle ? this.titleHeight + o.titlePadding * 2 : 0) + o.labelPadding;
+        box.y +
+        (this.showTitle ? this.titleHeight + options.titlePadding * 2 : 0) +
+        options.labelPadding;
       return place(m, { x: at, y }, 'middle', 'top');
     };
     if (this.position === 'left') {
@@ -288,7 +266,7 @@ export class Axis {
         axisLine = { x1: x, y1: box.y, x2: x, y2: box.y + box.height };
       }
       if (this.showTitle && this.titleText) {
-        const at = { x: box.x + o.titlePadding, y: box.y + box.height / 2 };
+        const at = { x: box.x + options.titlePadding, y: box.y + box.height / 2 };
         title = place(this.titleText, at, 'middle', 'top', 270);
       }
     } else if (this.position === 'bottom') {
@@ -299,7 +277,7 @@ export class Axis {
       if (this.showTitle && this.titleText) {
         const at = {
           x: this.range[0] + (this.range[1] - this.range[0]) / 2,
-          y: box.y + box.height - o.titlePadding - this.titleHeight,
+          y: box.y + box.height - options.titlePadding - this.titleHeight,
         };
         title = place(this.titleText, at, 'middle', 'top');
       }
@@ -309,7 +287,7 @@ export class Axis {
         axisLine = { x1: box.x, y1: y, x2: box.x + box.width, y2: y };
       }
       if (this.showTitle && this.titleText) {
-        const at = { x: box.x + box.width / 2, y: box.y + o.titlePadding };
+        const at = { x: box.x + box.width / 2, y: box.y + options.titlePadding };
         title = place(this.titleText, at, 'middle', 'top');
       }
     }
@@ -328,10 +306,10 @@ export class Axis {
       ...(ast === undefined ? {} : { ast }),
       box,
       range: this.paddedRange(),
-      outerPadding: this.outerPadding,
+      outerPadding: this.padding,
       ...(data.kind === 'linear' ? { domain: this.domain() } : { categories: data.categories }),
       ticks,
-      tickWidth: o.tickWidth,
+      tickWidth: options.tickWidth,
       ...(axisLine ? { line: axisLine } : {}),
       lineWidth: line,
       ...(title ? { title } : {}),

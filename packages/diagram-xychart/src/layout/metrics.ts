@@ -34,6 +34,11 @@ export interface XyChartMetrics {
   /** d3 `scale.ticks()`'s default count (`axis/linearAxis.ts:24`). */
   readonly tickCount: number;
   /**
+   * The range an axis starts with, `[0, initialAxisLength]`, before the chart gives it one
+   * (`axis/baseAxis.ts:33`); its scale is rebuilt before anything reads it.
+   */
+  readonly initialAxisLength: number;
+  /**
    * Values and ranges past this magnitude are drawn at it, so a 309-digit value (Infinity) or a
    * range that overflows a double never reaches the scales (D383: never NaN or Infinity).
    */
@@ -55,6 +60,7 @@ export const XYCHART_METRICS: XyChartMetrics = {
   dataLabelStart: 0.7,
   dataLabelStep: 1,
   tickCount: 10,
+  initialAxisLength: 10,
   valueLimit: 1e300,
 };
 

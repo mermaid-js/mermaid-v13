@@ -7,13 +7,16 @@
  * plot. Bars, lines, point labels and data labels follow v12's components and renderer. Lengths
  * come from the `xyChart` config, the measurer and the metrics table (pitfall 13).
  *
- * Fixed on the way (D382, D383): each bar plot's data labels are its own values, not plot 0's;
- * a missing value draws no bar, point or label (`XYCHART_MISSING_VALUE`); an empty range maps
- * every value to the axis middle (`XYCHART_EMPTY_RANGE`); data labels with no room are left out
- * (`XYCHART_LABEL_TOO_SMALL`); a bar is held inside the plot box (v12 drew one past the axis
- * with a negative size, or out of the plot); legend markers get no data labels (v12 labelled
- * every `rect`, `xychartRenderer.ts:102`). One warning per
- * kind per layout.
+ * Changed from v12 by decision:
+ * - each bar plot's data labels are its own values, not plot 0's (D382);
+ * - a missing value draws no bar, point or label (`XYCHART_MISSING_VALUE`); an empty range maps
+ *   every value to the axis middle (`XYCHART_EMPTY_RANGE`); data labels with no room are left
+ *   out (`XYCHART_LABEL_TOO_SMALL`); one warning per kind (D383);
+ * - a legend name of several lines (D385) pushes the rows after it down by its extra lines;
+ * - by the T3 invariant ("bars inside the plot box from axis to value"), not a D-id: a bar is
+ *   held inside the plot box, where v12 drew a value past an end of the range with a negative
+ *   size or out of the plot; and legend markers get no data labels (v12 labelled every `rect`,
+ *   `xychartRenderer.ts:102`). Both are maintainer choices (`GAPS.md` #509).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
@@ -23,11 +26,10 @@ import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { Axis, type AxisData } from './axis.ts';
 import { NORMAL_WEIGHT, XYCHART_METRICS } from './metrics.ts';
 import { linePath } from './scale.ts';
-import { place, textBounds, textKit, type Measured, type TextKit } from './text.ts';
+import { place, textMeasure, type Measured, type TextMeasure } from './text.ts';
 import type {
   Point,
   Rect,
-  Segment,
   XyBar,
   XyBarPlotLayout,
   XyChartLayout,
@@ -37,6 +39,7 @@ import type {
   XyLinePoint,
   XyText,
 } from './types.ts';
+import { clamp, visitDrawn, type UnboundedLayout } from './walk.ts';
 
 /** What the layout reads from the render context. */
 export type XyChartLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -46,20 +49,38 @@ export const XYCHART_MISSING_VALUE = 'XYCHART_MISSING_VALUE';
 export const XYCHART_EMPTY_RANGE = 'XYCHART_EMPTY_RANGE';
 export const XYCHART_LABEL_TOO_SMALL = 'XYCHART_LABEL_TOO_SMALL';
 
-const M = XYCHART_METRICS;
+const {
+  barPadding,
+  legendMarker,
+  legendItemSpacing,
+  legendMarkerSpacing,
+  pointLabelFontSize,
+  pointLabelOffset,
+  lineStrokeWidth,
+  dataLabelCharWidth,
+  dataLabelMargin,
+  dataLabelStart,
+  dataLabelStep,
+  valueLimit,
+} = XYCHART_METRICS;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
 
 /** `v` held to ±`valueLimit` (a 309-digit value is Infinity). */
-const held = (v: number): number => Math.min(Math.max(v, -M.valueLimit), M.valueLimit);
+const finiteValue = (v: number): number => clamp(v, -valueLimit, valueLimit);
+
+interface Size {
+  width: number;
+  height: number;
+}
 
 /** Lays out an XY chart in px. */
 export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): XyChartLayout {
   const options = xyChartOptions(ctx.config.xyChart as Readonly<Record<string, unknown>>);
   const warn = once(ctx.warn ?? ignoreWarning);
   const family = ctx.theme.value('fontFamily');
-  const kit = textKit(ctx.measurer, ctx.inline);
+  const texts = textMeasure(ctx.measurer, ctx.inline);
   const orientation = model.orientation ?? options.chartOrientation;
   const horizontal = orientation === 'horizontal';
 
@@ -68,10 +89,10 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
   const xData: AxisData =
     x.kind === 'band'
       ? { kind: 'band', categories: x.categories }
-      : { kind: 'linear', domain: [held(x.min), held(x.max)] };
+      : { kind: 'linear', domain: [finiteValue(x.min), finiteValue(x.max)] };
   const yData: AxisData = {
     kind: 'linear',
-    domain: [held(model.yAxis.min), held(model.yAxis.max)],
+    domain: [finiteValue(model.yAxis.min), finiteValue(model.yAxis.max)],
   };
   const emptyAxes = [
     ...(xData.kind === 'linear' && xData.domain[0] === xData.domain[1] ? [x.ast] : []),
@@ -86,39 +107,36 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
 
   // Measure first: the title, both axes' labels and titles (in the axes), the legend names.
   const font = (size: number): FontKey => ({ family, size, weight: NORMAL_WEIGHT });
-  const titleFont = font(options.titleFontSize);
-  const titleText = model.title ? kit.label(model.title, titleFont) : undefined;
-  const xAxis = new Axis({
-    data: xData,
-    title: x.title,
-    ...(x.ast === undefined ? {} : { ast: x.ast }),
-    options: options.xAxis,
-    family,
-    weight: NORMAL_WEIGHT,
-    kit,
-  });
-  const yAxis = new Axis({
-    data: yData,
-    title: model.yAxis.title,
-    ...(model.yAxis.ast === undefined ? {} : { ast: model.yAxis.ast }),
-    options: options.yAxis,
-    family,
-    weight: NORMAL_WEIGHT,
-    kit,
-  });
-  const legend = new Legend(model, options, font(options.legendFontSize), kit);
+  const axisOf = (
+    data: AxisData,
+    title: string,
+    ast: AstId | undefined,
+    which: 'xAxis' | 'yAxis'
+  ) =>
+    new Axis({
+      data,
+      title,
+      ...(ast === undefined ? {} : { ast }),
+      options: options[which],
+      family,
+      weight: NORMAL_WEIGHT,
+      texts,
+    });
+  const xAxis = axisOf(xData, x.title, x.ast, 'xAxis');
+  const yAxis = axisOf(yData, model.yAxis.title, model.yAxis.ast, 'yAxis');
+  const legend = new Legend(model, options, font(options.legendFontSize), texts);
+  const titleText = model.title ? texts.label(model.title, font(options.titleFontSize)) : undefined;
   const title = new Title(titleText, options);
 
-  const frame = horizontal
-    ? horizontalSpace(options, title, xAxis, yAxis, legend)
-    : verticalSpace(options, title, xAxis, yAxis, legend);
+  const plot = allotSpace(options, horizontal, { title, xAxis, yAxis, legend });
   if (model.plots.some((p) => p.kind === 'bar')) xAxis.padForBars();
 
   const missing = new Set<AstId>();
-  const plots = model.plots.map((plot) =>
-    plot.kind === 'bar'
-      ? barPlot(plot, frame.plot, xAxis, yAxis, horizontal, missing)
-      : linePlot(plot, xAxis, yAxis, horizontal, { font: font(M.pointLabelFontSize), kit }, missing)
+  const pointLabels = { font: font(pointLabelFontSize), texts };
+  const plots = model.plots.map((p) =>
+    p.kind === 'bar'
+      ? barPlot(p, plot, { xAxis, yAxis }, horizontal, missing)
+      : linePlot(p, { xAxis, yAxis }, horizontal, pointLabels, missing)
   );
   if (missing.size > 0)
     warn(
@@ -127,7 +145,9 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
       [...missing]
     );
   const labelled = options.showDataLabel
-    ? plots.map((p) => (p.kind === 'bar' ? withDataLabels(p, options, horizontal, family, kit) : p))
+    ? plots.map((p) =>
+        p.kind === 'bar' ? withDataLabels(p, options, horizontal, family, texts) : p
+      )
     : plots;
   const tooSmall = labelled.filter(
     (p) => p.kind === 'bar' && p.dataLabels.length === 0 && p.bars.length > 0
@@ -139,11 +159,11 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
       tooSmall.map((p) => p.ast)
     );
 
-  const layout = {
+  const layout: UnboundedLayout = {
     orientation,
     width: options.width,
     height: options.height,
-    plot: frame.plot,
+    plot,
     xAxis: xAxis.result(),
     yAxis: yAxis.result(),
     plots: labelled,
@@ -176,7 +196,7 @@ class Title {
     private readonly options: XyChartOptions
   ) {}
 
-  calculateSpace(available: { width: number; height: number }): { width: number; height: number } {
+  calculateSpace(available: Size): Size {
     const t = this.text;
     if (t) {
       const width = Math.max(t.width, available.width);
@@ -206,7 +226,13 @@ class Title {
   }
 }
 
-/** v12 `ChartLegend`: the named plots, right of the plot, dropped whole when it does not fit. */
+/** How much taller than one line a text is: 0 for one line. */
+const extraLines = (m: Measured): number => Math.max(0, m.height - m.lineHeight);
+
+/**
+ * v12 `ChartLegend`: the named plots, right of the plot, dropped whole when it does not fit.
+ * A row is `legendFontSize` high, as v12's, plus a name's extra lines (D385).
+ */
 class Legend {
   private rows: { plot: XyChartPlot; text: Measured }[] = [];
   private readonly box = { x: 0, y: 0, width: 0, height: 0 };
@@ -218,29 +244,31 @@ class Legend {
     model: XyChartModel,
     private readonly options: XyChartOptions,
     private readonly font: FontKey,
-    private readonly kit: TextKit
+    private readonly texts: TextMeasure
   ) {
     const size = options.legendFontSize;
-    this.marker = size * M.legendMarker;
-    this.markerSpacing = size * M.legendMarkerSpacing;
-    this.itemSpacing = size * M.legendItemSpacing;
+    this.marker = size * legendMarker;
+    this.markerSpacing = size * legendMarkerSpacing;
+    this.itemSpacing = size * legendItemSpacing;
     this.named = options.showLegend
       ? model.plots
           .filter((p) => p.name)
-          .map((plot) => ({ plot, text: kit.label(plot.name, font) }))
+          .map((plot) => ({ plot, text: texts.label(plot.name, font) }))
       : [];
   }
 
-  calculateSpace(available: { width: number; height: number }): { width: number; height: number } {
+  calculateSpace(available: Size): Size {
     const n = this.named.length;
     if (n === 0) return { width: 0, height: 0 };
-    const text = this.kit.max(
+    const text = this.texts.max(
       this.named.map((r) => r.text),
       this.font
     );
     const pad = this.options.legendPadding;
     const width = pad * 2 + this.marker + this.markerSpacing + text.width;
-    const height = pad * 2 + n * this.options.legendFontSize + (n - 1) * this.itemSpacing;
+    let extra = 0;
+    for (const r of this.named) extra += extraLines(r.text);
+    const height = pad * 2 + n * this.options.legendFontSize + extra + (n - 1) * this.itemSpacing;
     if (width <= available.width && height <= available.height) {
       this.box.width = width;
       this.box.height = height;
@@ -257,105 +285,97 @@ class Legend {
   result(): { legend: XyLegendLayout } | undefined {
     if (this.rows.length === 0) return undefined;
     const pad = this.options.legendPadding;
-    const row = this.options.legendFontSize + this.itemSpacing;
     const x = this.box.x + pad;
-    const y0 = this.box.y + pad;
-    const rows = this.rows.map(({ plot, text }, i): XyLegendRow => {
-      const y = y0 + i * row;
+    let y = this.box.y + pad;
+    const rows = this.rows.map(({ plot, text }): XyLegendRow => {
       const mid = y + this.marker / 2;
-      const label = place(
-        text,
-        { x: x + this.marker + this.markerSpacing, y: mid },
-        'start',
-        'middle'
-      );
+      // A name of several lines keeps its first line where one line sits, and grows down.
+      const at = { x: x + this.marker + this.markerSpacing, y: mid + extraLines(text) / 2 };
       const marker =
         plot.kind === 'bar'
           ? { swatch: { x, y, width: this.marker, height: this.marker } }
-          : { stroke: { x1: x, y1: mid, x2: x + this.marker, y2: mid } };
-      return { index: plot.index, ast: plot.ast, kind: plot.kind, ...marker, label };
+          : {
+              stroke: { x1: x, y1: mid, x2: x + this.marker, y2: mid },
+              strokeWidth: lineStrokeWidth,
+            };
+      const row: XyLegendRow = {
+        index: plot.index,
+        ast: plot.ast,
+        kind: plot.kind,
+        ...marker,
+        label: place(text, at, 'start', 'middle'),
+      };
+      y += this.options.legendFontSize + extraLines(text) + this.itemSpacing;
+      return row;
     });
     return { legend: { box: { ...this.box }, rows } };
   }
 }
 
-interface Frame {
-  readonly plot: Rect;
+interface Components {
+  readonly title: Title;
+  readonly xAxis: Axis;
+  readonly yAxis: Axis;
+  readonly legend: Legend;
 }
 
-/** v12 `calculateVerticalSpace` (`orchestrator.ts:61-128`): x axis bottom, y axis left. */
-function verticalSpace(
-  options: XyChartOptions,
-  title: Title,
-  xAxis: Axis,
-  yAxis: Axis,
-  legend: Legend
-): Frame {
+/**
+ * v12 `calculateVerticalSpace`/`calculateHorizontalSpace` (`orchestrator.ts:61-199`): the plot
+ * reserves its share, the title takes a row, the axes take what they need (x bottom and y left,
+ * or x left and y top), the legend takes its width, and the plot grows into what is left.
+ */
+function allotSpace(options: XyChartOptions, horizontal: boolean, c: Components): Rect {
+  const { title, xAxis, yAxis, legend } = c;
   let width = options.width;
   let height = options.height;
   let plotWidth = Math.floor((width * options.plotReservedSpacePercent) / 100);
   let plotHeight = Math.floor((height * options.plotReservedSpacePercent) / 100);
   width -= plotWidth;
   height -= plotHeight;
-  const plotY = title.calculateSpace({ width: options.width, height }).height;
-  height -= plotY;
-  xAxis.setPosition('bottom');
-  height -= xAxis.calculateSpace({ width, height }).height;
-  yAxis.setPosition('left');
-  const plotX = yAxis.calculateSpace({ width, height }).width;
-  width -= plotX;
-  const legendSpace = legend.calculateSpace({ width, height: plotHeight });
-  width -= legendSpace.width;
+  const titleHeight = title.calculateSpace({ width: options.width, height }).height;
+  height -= titleHeight;
+  let plotX: number;
+  let plotY: number;
+  if (horizontal) {
+    xAxis.setPosition('left');
+    plotX = xAxis.calculateSpace({ width, height }).width;
+    width -= plotX;
+    yAxis.setPosition('top');
+    const yHeight = yAxis.calculateSpace({ width, height }).height;
+    height -= yHeight;
+    plotY = titleHeight + yHeight;
+  } else {
+    plotY = titleHeight;
+    xAxis.setPosition('bottom');
+    height -= xAxis.calculateSpace({ width, height }).height;
+    yAxis.setPosition('left');
+    plotX = yAxis.calculateSpace({ width, height }).width;
+    width -= plotX;
+  }
+  const legendSize = legend.calculateSpace({ width, height: plotHeight });
+  width -= legendSize.width;
   if (width > 0) plotWidth += width;
   if (height > 0) plotHeight += height;
   title.alignTo(plotX, plotX + plotWidth);
-  legend.setOrigin(plotX + plotWidth, plotY + Math.max((plotHeight - legendSpace.height) / 2, 0));
-  xAxis.setRange([plotX, plotX + plotWidth]);
-  xAxis.setOrigin(plotX, plotY + plotHeight);
-  yAxis.setRange([plotY, plotY + plotHeight]);
-  yAxis.setOrigin(0, plotY);
-  return { plot: { x: plotX, y: plotY, width: plotWidth, height: plotHeight } };
+  legend.setOrigin(plotX + plotWidth, plotY + Math.max((plotHeight - legendSize.height) / 2, 0));
+  if (horizontal) {
+    yAxis.setRange([plotX, plotX + plotWidth]);
+    yAxis.setOrigin(plotX, titleHeight);
+    xAxis.setRange([plotY, plotY + plotHeight]);
+    xAxis.setOrigin(0, plotY);
+  } else {
+    xAxis.setRange([plotX, plotX + plotWidth]);
+    xAxis.setOrigin(plotX, plotY + plotHeight);
+    yAxis.setRange([plotY, plotY + plotHeight]);
+    yAxis.setOrigin(0, plotY);
+  }
+  return { x: plotX, y: plotY, width: plotWidth, height: plotHeight };
 }
 
-/** v12 `calculateHorizontalSpace` (`orchestrator.ts:130-199`): x axis left, y axis top. */
-function horizontalSpace(
-  options: XyChartOptions,
-  title: Title,
-  xAxis: Axis,
-  yAxis: Axis,
-  legend: Legend
-): Frame {
-  let width = options.width;
-  let height = options.height;
-  let plotWidth = Math.floor((width * options.plotReservedSpacePercent) / 100);
-  let plotHeight = Math.floor((height * options.plotReservedSpacePercent) / 100);
-  width -= plotWidth;
-  height -= plotHeight;
-  const titleEnd = title.calculateSpace({ width: options.width, height }).height;
-  height -= titleEnd;
-  xAxis.setPosition('left');
-  const plotX = xAxis.calculateSpace({ width, height }).width;
-  width -= plotX;
-  yAxis.setPosition('top');
-  const yHeight = yAxis.calculateSpace({ width, height }).height;
-  height -= yHeight;
-  const plotY = titleEnd + yHeight;
-  const legendSpace = legend.calculateSpace({ width, height: plotHeight });
-  width -= legendSpace.width;
-  if (width > 0) plotWidth += width;
-  if (height > 0) plotHeight += height;
-  title.alignTo(plotX, plotX + plotWidth);
-  legend.setOrigin(plotX + plotWidth, plotY + Math.max((plotHeight - legendSpace.height) / 2, 0));
-  yAxis.setRange([plotX, plotX + plotWidth]);
-  yAxis.setOrigin(plotX, titleEnd);
-  xAxis.setRange([plotY, plotY + plotHeight]);
-  xAxis.setOrigin(0, plotY);
-  return { plot: { x: plotX, y: plotY, width: plotWidth, height: plotHeight } };
+interface Axes {
+  readonly xAxis: Axis;
+  readonly yAxis: Axis;
 }
-
-/** `v` held inside `[a, b]` either way round. */
-const within = (v: number, a: number, b: number): number =>
-  Math.min(Math.max(v, Math.min(a, b)), Math.max(a, b));
 
 /**
  * v12 `BarPlot` (`plot/barPlot.ts`): bars `0.95 · min(2 · outerPadding, tickDistance)` wide,
@@ -366,12 +386,11 @@ const within = (v: number, a: number, b: number): number =>
 function barPlot(
   plot: XyChartPlot,
   box: Rect,
-  xAxis: Axis,
-  yAxis: Axis,
+  { xAxis, yAxis }: Axes,
   horizontal: boolean,
   missing: Set<AstId>
 ): XyBarPlotLayout {
-  const size = Math.min(xAxis.getOuterPadding() * 2, xAxis.tickDistance()) * (1 - M.barPadding);
+  const size = Math.min(xAxis.outerPadding() * 2, xAxis.tickDistance()) * (1 - barPadding);
   const right = box.x + box.width;
   const bottom = box.y + box.height;
   const bars: XyBar[] = [];
@@ -380,31 +399,37 @@ function barPlot(
       missing.add(plot.ast);
       return;
     }
-    const value = held(d.y);
-    const at = xAxis.scale(d.x);
-    const lo = at - size / 2;
+    const value = finiteValue(d.y);
+    const lo = xAxis.scale(d.x) - size / 2;
     if (horizontal) {
-      const end = within(yAxis.scale(value), box.x, right);
-      const y = within(lo, box.y, bottom);
-      const height = within(lo + size, box.y, bottom) - y;
+      const end = clamp(yAxis.scale(value), box.x, right);
+      const [y, height] = within(lo, size, box.y, bottom);
       bars.push({ datum, value, x: box.x, y, width: end - box.x, height });
     } else {
-      const end = within(yAxis.scale(value), box.y, bottom);
-      const x = within(lo, box.x, right);
-      const width = within(lo + size, box.x, right) - x;
+      const end = clamp(yAxis.scale(value), box.y, bottom);
+      const [x, width] = within(lo, size, box.x, right);
       bars.push({ datum, value, x, y: end, width, height: bottom - end });
     }
   });
   return { kind: 'bar', index: plot.index, ast: plot.ast, bars, dataLabels: [] };
 }
 
+/**
+ * The span `[start, start + size]` cut to `[lo, hi]`, as `[start, size]`: as given (bit for
+ * bit, so v12's data-label fit sees the same sizes) when it is inside.
+ */
+function within(start: number, size: number, lo: number, hi: number): [number, number] {
+  if (start >= lo && start + size <= hi) return [start, size];
+  const a = clamp(start, lo, hi);
+  return [a, clamp(start + size, lo, hi) - a];
+}
+
 /** v12 `LinePlot` (`plot/linePlot.ts`): d3 `line()` through the points, and the point labels. */
 function linePlot(
   plot: XyChartPlot,
-  xAxis: Axis,
-  yAxis: Axis,
+  { xAxis, yAxis }: Axes,
   horizontal: boolean,
-  labels: { readonly font: FontKey; readonly kit: TextKit },
+  labels: { readonly font: FontKey; readonly texts: TextMeasure },
   missing: Set<AstId>
 ): XyLinePlotLayout {
   const all: (XyLinePoint | undefined)[] = plot.data.map((d, datum) => {
@@ -413,7 +438,7 @@ function linePlot(
       return undefined;
     }
     const along = xAxis.scale(d.x);
-    const across = yAxis.scale(held(d.y));
+    const across = yAxis.scale(finiteValue(d.y));
     return horizontal ? { datum, x: across, y: along } : { datum, x: along, y: across };
   });
   const points = all.filter((p): p is XyLinePoint => p !== undefined);
@@ -421,11 +446,11 @@ function linePlot(
   for (const p of points) {
     const text = plot.pointLabels?.[p.datum];
     if (!text) continue;
-    const m = labels.kit.label(text, labels.font);
+    const m = labels.texts.label(text, labels.font);
     pointLabels.push(
       horizontal
-        ? place(m, { x: p.x + M.pointLabelOffset, y: p.y }, 'start', 'middle')
-        : place(m, { x: p.x, y: p.y - M.pointLabelOffset }, 'middle', 'middle')
+        ? place(m, { x: p.x + pointLabelOffset, y: p.y }, 'start', 'middle')
+        : place(m, { x: p.x, y: p.y - pointLabelOffset }, 'middle', 'middle')
     );
   }
   return {
@@ -434,7 +459,7 @@ function linePlot(
     ast: plot.ast,
     points,
     path: linePath(all),
-    strokeWidth: M.lineStrokeWidth,
+    strokeWidth: lineStrokeWidth,
     pointLabels,
   };
 }
@@ -450,35 +475,33 @@ function withDataLabels(
   options: XyChartOptions,
   horizontal: boolean,
   family: string,
-  kit: TextKit
+  texts: TextMeasure
 ): XyBarPlotLayout {
   const items = layout.bars
     .filter((b) => b.width > 0 && b.height > 0)
     .map((bar) => ({ bar, text: String(bar.value) }));
   if (items.length === 0) return layout;
-  const char = M.dataLabelCharWidth;
-  const margin = M.dataLabelMargin;
-  const sizes = items.map(({ bar, text }) => {
-    const n = text.length;
-    if (horizontal) {
-      // The largest fitting size: `size · n · 0.7 ≤ width − margin`.
-      return fit(bar.height * M.dataLabelStart, (f) => f * n * char <= bar.width - margin);
-    }
-    return fit(bar.width / (n * char), (f) => {
-      const w = f * n * char;
-      const center = bar.x + bar.width / 2;
-      const across = center - w / 2 >= bar.x && center + w / 2 <= bar.x + bar.width;
-      return across && bar.y + margin + f <= bar.y + bar.height;
-    });
-  });
+  const char = dataLabelCharWidth;
+  const margin = dataLabelMargin;
   let smallest = Infinity;
-  for (const f of sizes) smallest = Math.min(smallest, f);
+  for (const { bar, text } of items) {
+    const n = text.length;
+    const size = horizontal
+      ? fit(bar.height * dataLabelStart, (f) => f * n * char <= bar.width - margin)
+      : fit(bar.width / (n * char), (f) => {
+          const w = f * n * char;
+          const center = bar.x + bar.width / 2;
+          const across = center - w / 2 >= bar.x && center + w / 2 <= bar.x + bar.width;
+          return across && bar.y + margin + f <= bar.y + bar.height;
+        });
+    smallest = Math.min(smallest, size);
+  }
   const size = Math.floor(smallest);
   if (!(size > 0)) return layout;
   const font: FontKey = { family, size, weight: NORMAL_WEIGHT };
   const outside = options.showDataLabelOutsideBar;
   const dataLabels = items.map(({ bar, text }) => {
-    const m = kit.plain(text, font);
+    const m = texts.plain(text, font);
     if (horizontal) {
       const x = outside ? bar.x + bar.width + margin : bar.x + bar.width - margin;
       return place(m, { x, y: bar.y + bar.height / 2 }, outside ? 'start' : 'end', 'middle');
@@ -497,73 +520,30 @@ function fit(start: number, fits: (f: number) => boolean): number {
   let f = start;
   // Jump close to the bound by halving the distance, then step as v12 did.
   let skip = Math.floor(f / 2);
-  while (skip >= M.dataLabelStep) {
+  while (skip >= dataLabelStep) {
     if (!fits(f - skip)) f -= skip;
     skip = Math.floor(skip / 2);
   }
   // A size past 2^53 does not move by a step; v12 looped for ever there.
-  while (!fits(f) && f > 0 && f - M.dataLabelStep !== f) f -= M.dataLabelStep;
+  while (!fits(f) && f > 0 && f - dataLabelStep !== f) f -= dataLabelStep;
   return f;
 }
 
-type Laid = Omit<XyChartLayout, 'bounds'>;
-
 /** The canvas grown to cover everything drawn, strokes included (D224). */
-function boundsOf(l: Laid): Rect {
-  const b = new Box();
-  b.add({ x: 0, y: 0, width: l.width, height: l.height });
-  const text = (t: XyText | undefined): void => {
-    if (t) b.add(textBounds(t));
+function boundsOf(l: UnboundedLayout): Rect {
+  let x0 = 0;
+  let y0 = 0;
+  let x1 = l.width;
+  let y1 = l.height;
+  const add = (r: Rect): void => {
+    x0 = Math.min(x0, r.x);
+    y0 = Math.min(y0, r.y);
+    x1 = Math.max(x1, r.x + r.width);
+    y1 = Math.max(y1, r.y + r.height);
   };
-  const stroke = (s: Segment | undefined, w: number): void => {
-    if (!s) return;
-    b.addDisc({ x: s.x1, y: s.y1 }, w / 2);
-    b.addDisc({ x: s.x2, y: s.y2 }, w / 2);
-  };
-  for (const axis of [l.xAxis, l.yAxis]) {
-    stroke(axis.line, axis.lineWidth);
-    for (const t of axis.ticks) {
-      stroke(t.line, axis.tickWidth);
-      text(t.label);
-    }
-    text(axis.title);
-  }
-  for (const p of l.plots) {
-    if (p.kind === 'bar') {
-      for (const bar of p.bars) b.add(bar);
-      for (const t of p.dataLabels) text(t);
-    } else {
-      for (const pt of p.points) b.addDisc(pt, p.strokeWidth / 2);
-      for (const t of p.pointLabels) text(t);
-    }
-  }
-  if (l.legend) {
-    for (const r of l.legend.rows) {
-      if (r.swatch) b.add(r.swatch);
-      stroke(r.stroke, M.lineStrokeWidth);
-      text(r.label);
-    }
-  }
-  text(l.title);
-  return b.rect();
-}
-
-/** The union of what is drawn. */
-class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  add(r: Rect): void {
-    this.x0 = Math.min(this.x0, r.x);
-    this.y0 = Math.min(this.y0, r.y);
-    this.x1 = Math.max(this.x1, r.x + r.width);
-    this.y1 = Math.max(this.y1, r.y + r.height);
-  }
-  addDisc(c: Point, r: number): void {
-    this.add({ x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r });
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
-  }
+  visitDrawn(l, {
+    box: add,
+    dot: (p, w) => add({ x: p.x - w / 2, y: p.y - w / 2, width: w, height: w }),
+  });
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }

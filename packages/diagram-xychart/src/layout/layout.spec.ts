@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { Theme } from '@mermaid-js/core/theme';
 import { parseXyChart } from '../parser/index.ts';
+import { xyChartOptions } from '../config.ts';
 import { xyChartTestContext, xyChartTestTheme } from '../test-context.ts';
 import type { XyChartModel } from '../model.ts';
 import { xyChartLayoutViolations } from './invariants.ts';
@@ -100,6 +101,63 @@ describe('layoutXyChart: the frame', () => {
     expect(second!.label!.label!.lines.length).toBe(1);
   });
 
+  it('breaks the title and the axis titles at `<br>` too, and gives them the room (D385)', () => {
+    const one = lay(
+      'xychart\n  title "T"\n  x-axis "X" [a]\n  y-axis "Y" 0 --> 5\n  bar [1]\n'
+    ).layout;
+    const two = lay(
+      'xychart\n  title "T<br>t"\n  x-axis "X<br>x" [a]\n  y-axis "Y<br>y" 0 --> 5\n  bar [1]\n'
+    ).layout;
+    for (const t of [two.title, two.xAxis.title, two.yAxis.title])
+      expect(t!.label!.lines.length).toBe(2);
+    expect(two.plot.y).toBeGreaterThan(one.plot.y);
+    expect(two.xAxis.box.height).toBeGreaterThan(one.xAxis.box.height);
+    expect(two.yAxis.box.width).toBeGreaterThan(one.yAxis.box.width);
+  });
+
+  it("spaces legend rows by a name's extra lines, single lines as v12 (D385)", () => {
+    const src = (a: string) =>
+      `xychart\n  line "${a}" [1, 2]\n  line "b" [2, 1]\n  bar "c" [1, 1]\n`;
+    const plain = lay(src('a')).layout.legend!.rows;
+    const step = plain[1]!.label.y - plain[0]!.label.y;
+    // v12: legendFontSize + 0.5 · legendFontSize.
+    expect(step).toBe(14 * 1.5);
+    const broken = lay(src('a<br>two<br>three')).layout.legend!.rows;
+    expect(broken[0]!.label.label!.lines.length).toBe(3);
+    expect(broken[1]!.label.box.y).toBeGreaterThanOrEqual(
+      broken[0]!.label.box.y + broken[0]!.label.box.height
+    );
+    expect(broken[2]!.label.y - broken[1]!.label.y).toBe(step);
+  });
+
+  it('takes config values outside the schema as v12 did (story 6), and others as the default', () => {
+    const o = xyChartOptions({
+      plotReservedSpacePercent: 20,
+      titlePadding: -5,
+      width: 'wide',
+      height: '300',
+      showLegend: 'no',
+      xAxis: { labelPadding: -3, labelRotation: 120, labelFontSize: 400 },
+      yAxis: { labelRotation: -45 },
+    });
+    expect([o.plotReservedSpacePercent, o.titlePadding, o.width, o.height, o.showLegend]).toEqual([
+      20,
+      -5,
+      700,
+      300,
+      true,
+    ]);
+    expect([o.xAxis.labelPadding, o.xAxis.labelRotation, o.xAxis.labelFontSize]).toEqual([
+      -3, 0, 400,
+    ]);
+    expect(o.yAxis.labelRotation).toBe(-45);
+    // The layout follows: a negative title padding pulls the plot up by twice it.
+    const src = 'xychart\n  title "T"\n  bar [1]\n';
+    const at = (titlePadding: number) =>
+      layoutXyChart(parse(src), xyChartTestContext(theme, { titlePadding })).plot.y;
+    expect(at(10) - at(-2)).toBe(24);
+  });
+
   it('covers every drawn part with the bounds, past the canvas when a label sticks out', () => {
     const { layout } = lay('xychart\n  x-axis [a, b]\n  line [1, 2]\n', {
       width: 200,
@@ -190,6 +248,17 @@ describe('layoutXyChart: D383, never NaN or Infinity, one warning per kind', () 
     expect(warnings.map((w) => [w.code, w.astIds])).toEqual([
       [XYCHART_EMPTY_RANGE, ['x-axis', 'y-axis']],
     ]);
+  });
+
+  it('warns XYCHART_EMPTY_RANGE for an inferred empty range too', () => {
+    // One value: x is inferred 1 --> 1, y 4 --> 4; neither axis is written, so no ids.
+    const one = lay('xychart\n  line [4]\n');
+    expect(one.warnings.map((w) => [w.code, w.astIds])).toEqual([[XYCHART_EMPTY_RANGE, undefined]]);
+    // A band axis with one value: y is inferred 5 --> 5.
+    const band = lay('xychart\n  x-axis [a]\n  bar [5]\n');
+    expect(band.warnings.map((w) => w.code)).toEqual([XYCHART_EMPTY_RANGE]);
+    const { plot } = band.layout;
+    expect(bars(band.layout).bars[0]!.y).toBeCloseTo(plot.y + plot.height / 2, 6);
   });
 
   it('draws a 309-digit value at a finite place', () => {

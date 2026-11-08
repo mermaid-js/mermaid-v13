@@ -6,11 +6,13 @@ import type { Theme } from '@mermaid-js/core/theme';
 import {
   layoutXyChart,
   parseXyChart,
+  type Segment,
   type XyChartLayout,
   type XyChartModel,
   type XyText,
 } from '@mermaid-js/diagram-xychart';
 import {
+  configNumber,
   xyChartLayoutViolations,
   xyChartTestContext,
   xyChartTestTheme,
@@ -20,20 +22,30 @@ import { decodeEntities } from '../flowchart/v12.ts';
 import { loadOracle } from '../oracle.ts';
 import type { CorpusItem } from '../types.ts';
 import { xyChartCases, xyChartCorpus, xyChartOrderCorpus } from './corpus.ts';
+import { v12DataLabels, type V12Rect } from './v12-data-labels.ts';
 
 /**
- * Builder parity (spec #426 T3): `layoutXyChart` equals v12's chart builder
- * (`XYChartBuilder.build`, through the DB's `getDrawableElem()`) to 0.01 px on every drawn part
- * (axis lines, ticks, tick labels, axis titles, bars, line paths, point labels, legend markers
- * and labels, the title) over the e2e fixtures, with their `xyChart` config. v12's builder runs
- * headless in the oracle (no SVG group: text is `length × fontSize` wide and `fontSize` high,
- * `textDimensionCalculator.ts:12-17`), so v13 lays out with that measurer. The models are the
- * v13 parser's, so the layout invariants also run on parser-produced fixtures.
+ * Layout parity (spec #426 T3): `layoutXyChart` equals v12 to 0.01 px on every drawn part: what
+ * v12's chart builder gives (`XYChartBuilder.build`, through the DB's `getDrawableElem()`: axis
+ * lines, ticks and their stroke widths, tick labels, axis titles, bars, line paths as strings,
+ * point labels, legend markers and labels, the title), and the data labels v12's renderer adds
+ * (`v12-data-labels.ts`, its block ported verbatim): text, place, anchor, baseline, font size.
+ * v12's builder runs headless in the oracle (no SVG group: text is `length × fontSize` wide and
+ * `fontSize` high, `textDimensionCalculator.ts:12-17`), so v13 lays out with that measurer. The
+ * models are the v13 parser's, so the layout invariants also run on parser-produced fixtures.
  *
- * One listed difference: v13 holds a bar inside the plot box (D383, the invariant), where v12
- * drew a value under the axis minimum with a negative height or one over the maximum past the
- * plot. v12's bars are held the same way before comparing (the e2e corpus has no such bar; the
- * package's `layout.spec.ts` covers it). Every fixture is also compared under config variants.
+ * v12's output is compared as it is. Where v13 differs by decision, the source is listed with
+ * its reason, and each list must stay what the test says:
+ * - `bar held in the plot box` (T3 invariant, a maintainer choice): v12 drew a bar past an end of
+ *   the range with a negative size, or out of the plot box; v13 holds it inside. Its data labels
+ *   then differ too.
+ * - `D383 label too small`: v12 wrote labels at a size of 0 or less; v13 draws none.
+ * - `D383 missing value`, `D385 line break`: the source is not compared (v12 wrote NaN; v12
+ *   printed `<br>` and line breaks in one line).
+ * - `v12: a negative titlePadding …`: a value outside the schema, taken as v12 takes it; v12
+ *   itself then draws the title over the plot, which the invariant reports.
+ * Data labels use each bar plot's own values (D382; v12 used plot 0's), and legend swatches get
+ * none (a maintainer choice; v12 labelled every `rect`).
  */
 
 /** v12's headless text measure: `length × fontSize` by `fontSize`. */
@@ -52,14 +64,9 @@ interface V12Text {
   verticalPos: 'top' | 'middle';
   horizontalPos: 'left' | 'center' | 'right';
 }
-interface V12Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 interface V12Path {
   path: string;
+  strokeWidth: number;
 }
 type V12Elem =
   | { groupTexts: string[]; type: 'text'; data: V12Text[] }
@@ -70,14 +77,27 @@ interface XyChartDb {
   getDrawableElem(): V12Elem[];
   getDiagramTitle(): string;
   setDiagramTitle(title: string): void;
+  getXYChartData(): { plots: { data: [string, number | undefined][] }[] };
+  getChartConfig(): {
+    chartOrientation: string;
+    showDataLabel: boolean;
+    showDataLabelOutsideBar: boolean;
+  };
+}
+
+/** What v12 drew for a source: the builder's drawables, the data labels, and the plots' values. */
+interface V12Drawn {
+  elems: V12Elem[];
+  /** Per bar plot index, its data labels (when `showDataLabel`). */
+  dataLabels: Map<number, ReturnType<typeof v12DataLabels>>;
 }
 
 /**
- * Why v13 draws `m` other than v12 by decision, if it does: a band value missing (D383: v12
- * wrote NaN), or a line break in a text core label layout breaks (D385: v12 printed it in one
- * line).
+ * Why v13 draws `m` other than v12 by decision, so that it is not compared at all: a band value
+ * missing (D383: v12 wrote NaN), or a line break in a text core label layout breaks (D385: v12
+ * printed it in one line).
  */
-function listedDifference(m: XyChartModel): string | undefined {
+function notCompared(m: XyChartModel): string | undefined {
   if (m.plots.some((p) => p.data.some((d) => d.y === undefined))) return 'D383 missing value';
   const texts = [
     m.title ?? '',
@@ -110,13 +130,14 @@ function section(source: string): Record<string, unknown> {
 }
 
 /**
- * `section` with numeric strings as numbers: v12 measured text in the DOM, where a font size of
- * `"20"` is 20 px; its headless measure would add the string (`"20" + 10` is `"2010"`).
+ * `options` with numeric strings read as the package reads them (`configNumber`): v12 measured
+ * text in the DOM, where a font size of `"20"` is 20 px; its headless measure would add the
+ * string (`"20" + 10` is `"2010"`).
  */
 function numeric(options: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(options)) {
-    if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) out[k] = Number(v);
+    if (typeof v === 'string') out[k] = configNumber(v) ?? v;
     else if (v && typeof v === 'object') out[k] = numeric(v as Record<string, unknown>);
     else out[k] = v;
   }
@@ -124,20 +145,35 @@ function numeric(options: Record<string, unknown>): Record<string, unknown> {
 }
 
 /**
- * v12's drawables for `source`. The oracle's `getDiagramFromText` skips front matter, where v12's
- * render set its title before the parse; so a front-matter title is set when the text has none.
+ * What v12 drew for `source`, or undefined when it rejects it. The oracle's `getDiagramFromText`
+ * skips front matter, where v12's render set its title before the parse; so a front-matter
+ * title is set when the text has none.
  */
-async function v12Elems(
+async function v12Drawn(
   source: string,
   xyChart: Record<string, unknown>
-): Promise<V12Elem[] | undefined> {
+): Promise<V12Drawn | undefined> {
   const oracle = await loadOracle();
   const result = await oracle.parse(source, { xyChart: numeric(xyChart) });
   if (!result.accepted) return undefined;
   const db = result.db as XyChartDb;
   const front = preprocess(source).frontMatter?.title;
   if (front !== undefined && db.getDiagramTitle() === '') db.setDiagramTitle(front);
-  return structuredClone(db.getDrawableElem());
+  const elems = structuredClone(db.getDrawableElem());
+  const config = db.getChartConfig();
+  const plots = db.getXYChartData().plots;
+  const dataLabels = new Map<number, ReturnType<typeof v12DataLabels>>();
+  // v12 threw on a missing value here (`.toString()` of undefined); such a source is not compared.
+  const complete = plots.every((p) => p.data.every((d) => d[1] !== undefined));
+  if (config.showDataLabel && complete)
+    for (const e of elems) {
+      const bar = e.type === 'rect' ? /^bar-plot-(\d+)$/.exec(e.groupTexts[1] ?? '') : null;
+      if (!bar || e.type !== 'rect' || e.groupTexts[0] !== 'plot') continue;
+      const index = Number(bar[1]);
+      const own = plots[index]!.data.map((d) => d[1]);
+      dataLabels.set(index, v12DataLabels(e.data, own, config));
+    }
+  return { elems, dataLabels };
 }
 
 /** The v13 parser's model of `source`, or undefined when it rejects it. */
@@ -146,11 +182,20 @@ function model(source: string): XyChartModel | undefined {
   return result.diagnostics.some((d) => d.severity === 'error') ? undefined : result.model;
 }
 
-/** Every number in a path, in order. */
-const numbers = (path: string): number[] =>
-  (path.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? []).map(Number);
+/** A path as its commands: each letter with its numbers. */
+const commands = (path: string): (string | number)[][] =>
+  [...path.matchAll(/([A-Za-z])([^A-Za-z]*)/g)].map((m) => [
+    m[1]!,
+    ...(m[2]!.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? []).map(Number),
+  ]);
+
+const segment = (s: Segment): (string | number)[][] => [
+  ['M', s.x1, s.y1],
+  ['L', s.x2, s.y2],
+];
 
 const ANCHOR = { left: 'start', center: 'middle', right: 'end' } as const;
+const BASELINE = { top: 'top', middle: 'middle', hanging: 'top', auto: 'alphabetic' } as const;
 
 // v12's renderer decoded its `encodeEntities` placeholders before drawing; v13 keeps the text
 // as written and core label layout decodes it.
@@ -161,7 +206,7 @@ const v12Text = (t: V12Text) => ({
   size: t.fontSize,
   rotation: t.rotation,
   anchor: ANCHOR[t.horizontalPos],
-  baseline: t.verticalPos,
+  baseline: BASELINE[t.verticalPos],
 });
 const v13Text = (t: XyText) => ({
   text: t.text,
@@ -175,48 +220,41 @@ const v13Text = (t: XyText) => ({
 
 type Flat = Record<string, number | string>;
 
-/** v12's drawables in a shape both sides map to, keyed by v12's group path. */
-function v12Shape(elems: V12Elem[], plot: XyChartLayout['plot'], horizontal: boolean): Flat {
+/** v12's drawing in a shape both sides map to, keyed by v12's group path. */
+function v12Shape(drawn: V12Drawn): Flat {
   const out: Record<string, unknown[]> = {};
   const push = (key: string, v: unknown): void => {
     (out[key] ??= []).push(v);
   };
-  for (const e of elems) {
+  for (const e of drawn.elems) {
     const key = e.groupTexts.join('/');
     for (const d of e.data) {
       if (e.type === 'text') push(key, v12Text(d as V12Text));
-      else if (e.type === 'path') push(key, numbers((d as V12Path).path));
-      else push(key, held(d as V12Rect, plot, horizontal, key.startsWith('plot/')));
+      else if (e.type === 'rect') {
+        const r = d as V12Rect;
+        push(key, { x: r.x, y: r.y, width: r.width, height: r.height });
+      } else {
+        const p = d as V12Path;
+        const isLine = key.startsWith('plot/line-plot-');
+        push(key, {
+          d: commands(p.path),
+          strokeWidth: p.strokeWidth,
+          ...(isLine ? { path: p.path } : {}),
+        });
+      }
     }
   }
+  for (const [index, labels] of drawn.dataLabels)
+    for (const l of labels)
+      push(`plot/bar-plot-${index}/data-labels`, {
+        text: l.text,
+        x: l.x,
+        y: l.y,
+        size: l.fontSize,
+        anchor: l.anchor,
+        baseline: BASELINE[l.baseline],
+      });
   return flatten(out);
-}
-
-/** A v12 bar held inside the plot box as v13 holds it (the listed difference). */
-function held(
-  r: V12Rect,
-  plot: XyChartLayout['plot'],
-  horizontal: boolean,
-  isBar: boolean
-): V12Rect {
-  if (!isBar) return { x: r.x, y: r.y, width: r.width, height: r.height };
-  const clamp = (v: number, a: number, b: number): number => Math.min(Math.max(v, a), b);
-  const [x0, x1] = [plot.x, plot.x + plot.width];
-  const [y0, y1] = [plot.y, plot.y + plot.height];
-  // v12's value end (the top of a vertical bar, the right of a horizontal one) can pass the
-  // axis, which makes the size negative; its other end is the axis.
-  if (horizontal) {
-    const y = clamp(r.y, y0, y1);
-    return {
-      x: r.x,
-      y,
-      width: clamp(r.x + r.width, x0, x1) - r.x,
-      height: clamp(r.y + r.height, y0, y1) - y,
-    };
-  }
-  const x = clamp(r.x, x0, x1);
-  const top = clamp(r.y, y0, y1);
-  return { x, y: top, width: clamp(r.x + r.width, x0, x1) - x, height: r.y + r.height - top };
 }
 
 /** The v13 layout in v12's group paths and order (`getDrawableElement`, `orchestrator.ts:213`). */
@@ -225,14 +263,22 @@ function v13Shape(l: XyChartLayout): Flat {
   const push = (key: string, v: unknown): void => {
     (out[key] ??= []).push(v);
   };
-  const seg = (s: { x1: number; y1: number; x2: number; y2: number }) => [s.x1, s.y1, s.x2, s.y2];
   if (l.title) push('chart-title', v13Text(l.title));
   for (const p of l.plots) {
     if (p.kind === 'bar') {
       for (const b of p.bars)
         push(`plot/bar-plot-${p.index}`, { x: b.x, y: b.y, width: b.width, height: b.height });
+      for (const t of p.dataLabels) {
+        const { rotation: _, ...rest } = v13Text(t);
+        push(`plot/bar-plot-${p.index}/data-labels`, rest);
+      }
     } else {
-      if (p.path) push(`plot/line-plot-${p.index}`, numbers(p.path));
+      if (p.path)
+        push(`plot/line-plot-${p.index}`, {
+          d: commands(p.path),
+          strokeWidth: p.strokeWidth,
+          path: p.path,
+        });
       for (const t of p.pointLabels) push(`plot/line-plot-${p.index}/labels`, v13Text(t));
     }
   }
@@ -245,15 +291,21 @@ function v13Shape(l: XyChartLayout): Flat {
           width: r.swatch.width,
           height: r.swatch.height,
         });
-    for (const r of l.legend.rows) if (r.stroke) push('legend/markers', seg(r.stroke));
+    for (const r of l.legend.rows)
+      if (r.stroke)
+        push('legend/markers', { d: segment(r.stroke), strokeWidth: r.strokeWidth ?? 0 });
     for (const r of l.legend.rows) push('legend/label', v13Text(r.label));
   }
   for (const axis of [l.xAxis, l.yAxis]) {
     const pos = `${axis.position}-axis`;
     if (axis.line)
-      push(`${pos}/${axis.position === 'left' ? 'axisl-line' : 'axis-line'}`, seg(axis.line));
+      push(`${pos}/${axis.position === 'left' ? 'axisl-line' : 'axis-line'}`, {
+        d: segment(axis.line),
+        strokeWidth: axis.lineWidth,
+      });
     for (const t of axis.ticks) if (t.label) push(`${pos}/label`, v13Text(t.label));
-    for (const t of axis.ticks) if (t.line) push(`${pos}/ticks`, seg(t.line));
+    for (const t of axis.ticks)
+      if (t.line) push(`${pos}/ticks`, { d: segment(t.line), strokeWidth: axis.tickWidth });
     if (axis.title) push(`${pos}/title`, v13Text(axis.title));
   }
   return flatten(out);
@@ -280,6 +332,27 @@ function differences(a: Flat, b: Flat): string[] {
   return out;
 }
 
+/** The bar plots v12 drew a bar of past the plot box or with a negative size. */
+function heldPlots(drawn: V12Drawn, plot: XyChartLayout['plot']): Set<number> {
+  const out = new Set<number>();
+  const e = 0.01;
+  for (const el of drawn.elems) {
+    const m = el.type === 'rect' ? /^bar-plot-(\d+)$/.exec(el.groupTexts[1] ?? '') : null;
+    if (!m || el.type !== 'rect') continue;
+    const outside = el.data.some(
+      (r) =>
+        r.width < 0 ||
+        r.height < 0 ||
+        r.x < plot.x - e ||
+        r.y < plot.y - e ||
+        r.x + r.width > plot.x + plot.width + e ||
+        r.y + r.height > plot.y + plot.height + e
+    );
+    if (outside) out.add(Number(m[1]));
+  }
+  return out;
+}
+
 let theme: Theme;
 let corpus: CorpusItem[];
 beforeAll(async () => {
@@ -289,12 +362,26 @@ beforeAll(async () => {
   for await (const item of corpusFromDir(join(REPO_ROOT, dir), dir)) corpus.push(item);
 });
 
+interface Comparison {
+  problems: string[];
+  /** Reason → the ids that differ for it, by decision. */
+  listed: Map<string, string[]>;
+  compared: number;
+}
+
 /** Each item's differences from v12 and its invariant violations, with `extra` over its config. */
 async function compare(
   items: readonly CorpusItem[],
   extra: Record<string, unknown>
-): Promise<string[]> {
+): Promise<Comparison> {
   const problems: string[] = [];
+  const listed = new Map<string, string[]>();
+  const list = (reason: string, id: string): void => {
+    const ids = listed.get(reason) ?? [];
+    if (!ids.includes(id)) ids.push(id);
+    listed.set(reason, ids);
+  };
+  let compared = 0;
   for (const item of items) {
     const own = section(item.source);
     const xyChart = {
@@ -304,23 +391,35 @@ async function compare(
       yAxis: { ...(own.yAxis as object | undefined), ...(extra.yAxis as object | undefined) },
     };
     const m = model(item.source);
-    if (!m) {
-      problems.push(`${item.id}: v13 rejected it`);
+    const drawn = await v12Drawn(item.source, xyChart);
+    // Acceptance is the parser gates' (listed divergences, detection); compare what both draw.
+    if (!m || !drawn) continue;
+    const skip = notCompared(m);
+    if (skip) {
+      list(skip, item.id);
       continue;
     }
+    compared++;
     const layout = layoutXyChart(m, xyChartTestContext(theme, xyChart, { measurer: v12Measurer }));
-    const elems = await v12Elems(item.source, xyChart);
-    if (!elems) {
-      problems.push(`${item.id}: v12 rejected it`);
-      continue;
-    }
-    const horizontal = layout.orientation === 'horizontal';
     const tag = `${item.id} ${JSON.stringify(extra)}`;
-    for (const d of differences(v13Shape(layout), v12Shape(elems, layout.plot, horizontal)))
-      problems.push(`${tag}: ${d}`);
-    for (const v of xyChartLayoutViolations(m, layout)) problems.push(`${tag}: ${v}`);
+    const held = heldPlots(drawn, layout.plot);
+    const tiny = [...drawn.dataLabels].filter(([, ls]) => ls.some((l) => !(l.fontSize > 0)));
+    for (const d of differences(v13Shape(layout), v12Shape(drawn))) {
+      const bar = /^plot\/bar-plot-(\d+)/.exec(d);
+      if (bar && held.has(Number(bar[1]))) list('bar held in the plot box', item.id);
+      else if (bar && d.includes('/data-labels') && tiny.some(([i]) => i === Number(bar[1])))
+        list('D383 label too small', item.id);
+      else problems.push(`${tag}: ${d}`);
+    }
+    // v12 itself puts the title over the plot when `titlePadding` is negative.
+    const overlap = configNumber((xyChart as Record<string, unknown>).titlePadding) ?? 0;
+    for (const v of xyChartLayoutViolations(m, layout)) {
+      if (v === 'the title is not above the plot' && overlap < 0)
+        list('v12: a negative titlePadding overlaps the title and the plot', item.id);
+      else problems.push(`${tag}: ${v}`);
+    }
   }
-  return problems;
+  return { problems, listed, compared };
 }
 
 /** Config variants over every fixture: orientation, rotation, space, sizes, hidden parts. */
@@ -332,30 +431,58 @@ const VARIANTS: readonly Record<string, unknown>[] = [
   { width: 260, height: 180, legendFontSize: 30 },
   { width: 1500, height: 90, titleFontSize: 40, titlePadding: 30 },
   { xAxis: { showAxisLine: false, tickLength: 12 }, yAxis: { showTick: false, labelPadding: 0 } },
+  { showDataLabel: true },
+  { showDataLabel: true, showDataLabelOutsideBar: true, chartOrientation: 'horizontal' },
+  { showDataLabel: true, showDataLabelOutsideBar: true, width: 300 },
+  // Outside the schema's ranges, as v12 takes them (story 6, D383).
+  { plotReservedSpacePercent: 20, legendPadding: -4 },
+  { titlePadding: -5, xAxis: { labelPadding: -3, titlePadding: -2 }, yAxis: { tickLength: -4 } },
+  { xAxis: { labelFontSize: 400 }, yAxis: { titleFontSize: 300 }, titleFontSize: 250 },
 ];
 
-describe('xychart layout parity with v12 getDrawableElem()', () => {
+describe('xychart layout parity with v12', () => {
   it('equals v12 on the e2e corpus, to 0.01 px', async () => {
     expect(corpus.length).toBe(48);
-    expect((await compare(corpus, {})).slice(0, 30)).toEqual([]);
+    const { problems, listed, compared } = await compare(corpus, {});
+    expect(problems.slice(0, 30)).toEqual([]);
+    expect([...listed]).toEqual([]);
+    expect(compared).toBe(48);
   });
 
   it.each(VARIANTS)('equals v12 on the e2e corpus under %o', async (extra) => {
-    expect((await compare(corpus, extra)).slice(0, 30)).toEqual([]);
+    const { problems, listed } = await compare(corpus, extra);
+    expect(problems.slice(0, 30)).toEqual([]);
+    const allowed = [
+      'D383 label too small',
+      'v12: a negative titlePadding overlaps the title and the plot',
+    ];
+    expect([...listed.keys()].filter((r) => !allowed.includes(r))).toEqual([]);
   });
 
   it('equals v12 on every corpus source and statement order both accept, but the listed ones', async () => {
     const all = [...(await xyChartCorpus()), ...xyChartCases(), ...(await xyChartOrderCorpus())];
-    const compared: CorpusItem[] = [];
-    const listed = new Map<string, number>();
-    for (const item of all) {
-      const m = model(item.source);
-      const reason = m && listedDifference(m);
-      if (reason) listed.set(reason, (listed.get(reason) ?? 0) + 1);
-      else if (m && (await v12Elems(item.source, section(item.source)))) compared.push(item);
-    }
-    expect(compared.length).toBeGreaterThan(1200);
-    expect([...listed.keys()].sort()).toEqual(['D383 missing value', 'D385 line break']);
-    expect((await compare(compared, {})).slice(0, 30)).toEqual([]);
-  }, 120_000);
+    const { problems, listed, compared } = await compare(all, { showDataLabel: true });
+    expect(compared).toBeGreaterThan(1200);
+    expect(problems.slice(0, 30)).toEqual([]);
+    expect([...listed.keys()].sort()).toEqual([
+      'D383 label too small',
+      'D383 missing value',
+      'D385 line break',
+      'bar held in the plot box',
+    ]);
+    // The held bars, by source: values under a `y-axis` minimum read after the plot
+    // (`data-labels-within-bars-*` reordered, `number-negative-arrow`), and plots written before
+    // their linear `x-axis` (D386), past its range (`correct-distances-…` reordered).
+    const held = listed.get('bar held in the plot box')!;
+    const sources = new Set(
+      held.map((id) => id.replace(/^xychart-order\//, '').replace(/ \([\d ]+\)$/, ''))
+    );
+    expect([...sources].sort()).toEqual([
+      'e2e/nightly-check/correct-distances-between-data-points.mmd',
+      'e2e/nightly-check/data-labels-within-bars-horizontal.mmd',
+      'e2e/nightly-check/data-labels-within-bars-vertical.mmd',
+      'xychart-cases/number-negative-arrow',
+    ]);
+    expect(held.length).toBe(29);
+  }, 180_000);
 });

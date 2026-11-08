@@ -14,19 +14,21 @@ export interface Measured {
   readonly font: FontKey;
   readonly width: number;
   readonly height: number;
+  /** One line's height: `height` less it is what the label's extra lines add. */
+  readonly lineHeight: number;
   readonly baseline: number;
   readonly label?: MeasuredLabel;
 }
 
 /** Measures through the render's measurer: labels by core label layout, plain text as is. */
-export interface TextKit {
+export interface TextMeasure {
   label(text: string, font: FontKey): Measured;
   plain(text: string, font: FontKey): Measured;
   /** v12's `getMaxDimension`: the widest width and the tallest height of `texts`. */
   max(texts: readonly Measured[], font: FontKey): { width: number; height: number };
 }
 
-export function textKit(measurer: Measurer, inline: InlineSpans | undefined): TextKit {
+export function textMeasure(measurer: Measurer, inline: InlineSpans | undefined): TextMeasure {
   const options = inline ? { inline } : {};
   return {
     label(text, font) {
@@ -36,6 +38,7 @@ export function textKit(measurer: Measurer, inline: InlineSpans | undefined): Te
         font,
         width: label.width,
         height: label.height,
+        lineHeight: label.lineHeight,
         baseline: label.baseline,
         label,
       };
@@ -47,6 +50,7 @@ export function textKit(measurer: Measurer, inline: InlineSpans | undefined): Te
         font,
         width: measurer.width(text, font, 0),
         height: lineHeight,
+        lineHeight,
         baseline: ascent,
       };
     },

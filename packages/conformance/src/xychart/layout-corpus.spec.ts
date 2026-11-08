@@ -28,6 +28,8 @@ const CONFIGS: readonly Record<string, unknown>[] = [
     xAxis: { showLabel: false, showTick: false },
     yAxis: { showAxisLine: false, showTitle: false },
   },
+  // Outside the schema's ranges, as v12 takes them (story 6).
+  { plotReservedSpacePercent: 20, legendPadding: -4, xAxis: { labelPadding: -3, tickLength: -2 } },
 ];
 
 let theme: Theme;

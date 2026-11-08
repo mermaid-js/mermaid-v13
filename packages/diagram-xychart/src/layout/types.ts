@@ -137,8 +137,10 @@ export interface XyLegendRow {
   readonly kind: XyChartPlotKind;
   /** A bar plot's square marker. */
   readonly swatch?: Rect;
-  /** A line plot's marker: a stroke `legendMarker` long, the line's width. */
+  /** A line plot's marker: a stroke `legendMarker` long… */
   readonly stroke?: Segment;
+  /** …the line's width. */
+  readonly strokeWidth?: number;
   readonly label: XyText;
 }
 

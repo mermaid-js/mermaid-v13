@@ -4,6 +4,7 @@
  * parity spec. They live outside the runtime entry, so the chunk mermaid loads for an XY chart
  * render stays small (D217).
  */
+export { configNumber } from './config.ts';
 export { xyChartLayoutViolations } from './layout/invariants.ts';
 export { bandScale, linePath, linearScale, ticks } from './layout/scale.ts';
 export { xyChartTestContext, xyChartTestTheme } from './test-context.ts';

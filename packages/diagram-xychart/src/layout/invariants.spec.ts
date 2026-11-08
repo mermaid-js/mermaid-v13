@@ -80,6 +80,35 @@ describe('xyChartLayoutViolations', () => {
     );
   });
 
+  it('catches NaN written in a path or a number text', () => {
+    const v = broken((l) => ({
+      ...l,
+      plots: l.plots.map((p) => (p.kind === 'line' ? { ...p, path: 'M0,NaNL1,1' } : p)),
+      yAxis: {
+        ...l.yAxis,
+        ticks: l.yAxis.ticks.map((t, i) =>
+          i === 0 && t.label ? { ...t, label: { ...t.label, text: 'Infinity' } } : t
+        ),
+      },
+    }));
+    expect(v.some((x) => x.endsWith('writes M0,NaNL1,1'))).toBe(true);
+    expect(v.some((x) => x.endsWith('writes Infinity'))).toBe(true);
+  });
+
+  it('catches legend row labels that overlap', () => {
+    const v = broken((l) => ({
+      ...l,
+      legend: l.legend && {
+        ...l.legend,
+        rows: l.legend.rows.map((r) => ({
+          ...r,
+          label: { ...r.label, box: { ...r.label.box, height: 500 } },
+        })),
+      },
+    }));
+    expect(v.some((x) => x.includes("label overlaps the next row's"))).toBe(true);
+  });
+
   it('catches contents outside the bounds', () => {
     const v = broken((l) => ({ ...l, bounds: { ...l.bounds, width: l.bounds.width / 2 } }));
     expect(v.some((x) => x.endsWith('is outside the bounds'))).toBe(true);
