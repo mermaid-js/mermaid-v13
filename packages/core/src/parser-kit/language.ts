@@ -94,6 +94,14 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   isValidId(name: string, kind?: string): string | undefined;
   /**
+   * `name` written so the parser reads it as one name of kind `kind` where {@link isValidId}
+   * refuses it unquoted: a rename writes this at each unquoted occurrence (wardley's
+   * `"notebook"`, D427), and the text between the quotes must be `name` itself (D191). Return
+   * `undefined` when no quoting holds `name` as written. When omitted, such a rename is refused
+   * with the reason `isValidId` gives.
+   */
+  quoteId?(name: string, kind?: string): string | undefined;
+  /**
    * Completion items at the probe (D95): `probe` is `ParseResult.probe` of a parse of
    * `doc.text` with `probe: offset`. Items are filtered by the probe's prefix.
    */

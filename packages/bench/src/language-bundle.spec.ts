@@ -90,6 +90,20 @@ const PACKAGES = [
       'test-context.ts',
     ],
   },
+  {
+    name: 'wardley',
+    dir: 'diagram-wardley',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'v12-specs/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+    ],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

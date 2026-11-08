@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #430: the manifest comes with T5 (#497).
+  {
+    type: 'wardley',
+    id: 'wardley',
+    section: 'wardley',
+    pattern: /^\s*wardley-beta/i,
+    detector: (text) => /^\s*wardley-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-wardley/language').then((m) => m.language),
+  },
+];

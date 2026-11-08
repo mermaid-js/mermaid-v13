@@ -1,0 +1,17 @@
+@ 3:11  component |Tea [0.5, 0.7]
+  3:11-3:14 "Tea"
+  5:11-5:14 "Tea"
+  6:9-6:12 "Tea"
+  7:1-7:4 "Tea"
+  8:1-8:4 "Tea"
+  9:8-9:11 "Tea"
+  10:15-10:18 "Tea"
+  11:10-11:13 "Tea"
+  14:9-14:12 "Tea"
+@ 7:14  Tea -> "Hot W|ater"
+  4:12-4:21 "Hot Water"
+  7:9-7:18 "Hot Water"
+  8:8-8:17 "Hot Water"
+@ 12:13  component |Leaf [0.2]
+  12:13-12:17 "Leaf"
+  14:1-14:5 "Leaf"

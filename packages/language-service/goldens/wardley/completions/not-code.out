@@ -1,0 +1,12 @@
+@ 2:9  title: T|ea
+  none
+@ 5:6  %% a |comment
+  none
+@ 6:11  title Tea |Shop
+  none
+@ 7:11  accTitle: |x
+  none
+@ 8:9  note "a |b" [0.3, 0.3]
+  none
+@ 10:5  a |b
+  none

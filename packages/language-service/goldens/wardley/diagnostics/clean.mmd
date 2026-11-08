@@ -1,0 +1,19 @@
+wardley-beta
+title Tea Shop
+size [1100, 800]
+evolution Genesis -> Custom -> Product -> Commodity
+anchor Business [0.95, 0.63]
+component Cup of Tea [0.79, 0.61] label [19, -4]
+component Kettle [0.43, 0.35] (build) inertia
+component "notebook" [0.2, 0.3]
+Business -> Cup of Tea
+Cup of Tea -.-> Kettle; boils
+Kettle +> "notebook"
+evolve Kettle 0.62
+pipeline Kettle {
+  component Electric [0.8]
+}
+note "Standardising" [0.4, 0.4]
+annotations [0.1, 0.9]
+annotation 1, [0.5, 0.5] "Cheap"
+accelerator Cloud [0.5, 0.8]

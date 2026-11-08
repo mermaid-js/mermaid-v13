@@ -1,0 +1,12 @@
+@ 3:11  component |Tea [0.5, 0.7]
+  prepare: 3:11-3:14 "Tea"; rename to "say \"hi\" 'there'":
+  refused: `say "hi" 'there'` is not an unquoted name: an unquoted name is ASCII letters, digits, blanks, `_`, `-`, `&` and parentheses, with no blank at either end. Nor can it be quoted: a quoted name has no line break or `\`, and not both `"` and `'`.
+@ 5:8  Tea -> |Water
+  prepare: 5:8-5:13 "Water"; rename to "say \"hi\" 'there'":
+  refused: 'say "hi" 'there'' cannot be written inside "…".
+@ 6:3  ti|tle Tea
+  prepare: refused: There is no id or class name here to rename.
+@ 7:4  evo|lve Tea 0.8
+  prepare: refused: There is no id or class name here to rename.
+@ 8:7  note "|Note" [0.3, 0.3]
+  prepare: refused: There is no id or class name here to rename.

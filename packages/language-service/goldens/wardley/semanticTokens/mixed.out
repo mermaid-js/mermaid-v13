@@ -1,0 +1,64 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:13 "wardley-beta" keyword
+3:1-3:13 "%% a comment" comment
+4:1-4:15 "title Tea Shop" keyword
+5:1-5:14 "accTitle: Tea" keyword
+6:1-8:2 "accDescr {\n  multi\n}" keyword
+9:1-9:5 "size" keyword
+9:6-9:7 "[" operator
+9:7-9:11 "1100" number
+9:11-9:12 "," operator
+9:13-9:16 "800" number
+9:16-9:17 "]" operator
+10:1-10:10 "evolution" keyword
+10:11-10:18 "Genesis" variable
+10:18-10:19 "@" operator
+10:19-10:22 "0.2" number
+10:23-10:24 "/" operator
+10:25-10:30 "First" variable
+10:31-10:33 "->" operator
+10:34-10:43 "Commodity" variable
+11:1-11:7 "anchor" keyword
+11:8-11:12 "User" node [declaration, definition]
+11:13-11:14 "[" operator
+11:14-11:18 "0.95" number
+11:18-11:19 "," operator
+11:20-11:23 "0.6" number
+11:23-11:24 "]" operator
+12:1-12:10 "component" keyword
+12:11-12:22 "\"Hot Water\"" node [declaration, definition]
+12:23-12:24 "[" operator
+12:24-12:27 "0.4" number
+12:27-12:28 "," operator
+12:29-12:32 "0.3" number
+12:32-12:33 "]" operator
+12:34-12:39 "label" keyword
+12:40-12:41 "[" operator
+12:41-12:42 "-" operator
+12:42-12:44 "10" number
+12:44-12:45 "," operator
+12:46-12:47 "5" number
+12:47-12:48 "]" operator
+12:49-12:50 "(" operator
+12:50-12:53 "buy" keyword
+12:53-12:54 ")" operator
+12:55-12:62 "inertia" keyword
+13:1-13:5 "User" node
+13:6-13:8 "->" operator
+13:9-13:20 "\"Hot Water\"" node
+13:20-13:28 "; serves" string
+14:1-14:5 "User" node
+14:6-14:15 "+'pours'>" operator
+14:16-14:25 "Hot Water" node
+15:1-15:7 "evolve" keyword
+15:8-15:17 "Hot Water" node
+15:18-15:21 "0.8" number
+16:1-16:11 "annotation" keyword
+16:12-16:13 "1" number
+16:13-16:14 "," operator
+16:15-16:16 "[" operator
+16:16-16:19 "0.5" number
+16:19-16:20 "," operator
+16:21-16:24 "0.5" number
+16:24-16:25 "]" operator
+16:26-16:31 "\"One\"" string

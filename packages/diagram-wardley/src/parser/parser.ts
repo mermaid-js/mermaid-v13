@@ -83,6 +83,7 @@ import {
   SIZE_HINT,
 } from './messages.ts';
 import { normalise } from './normalise.ts';
+import { resolveSymbols } from './symbols.ts';
 import {
   AFTER_BOUNDARY,
   AFTER_COORDINATES,
@@ -99,7 +100,9 @@ import {
   DOC,
   EXPECTED,
   HEAD,
+  IN_PARENS,
   IN_PIPELINE,
+  INERTIA_ONLY,
   KEYWORD_LINE,
   KEYWORD_PREFIX,
   LINE_END,
@@ -228,12 +231,13 @@ class WardleyParser {
   }
 
   /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
+   * Probe hook: the parser tests token `j` (the current one, or the next when a rule looks
+   * ahead, as a component's `(`) for `kinds` (a constant list), or would accept them there.
+   * Records them when it is the probed token.
    */
-  private tested(kinds: readonly number[]): void {
+  private tested(kinds: readonly number[], j = this.i): void {
     const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.range(j).start);
   }
 
   /** Consume a token of `kind` and return its index, or fail. */
@@ -637,11 +641,13 @@ class WardleyParser {
     this.tested(AFTER_COORDINATES);
     if (this.kind() === T.Label) node.label = this.labelOffset();
     this.tested(node.label ? AFTER_LABEL : AFTER_COORDINATES);
+    if (this.kind() === T.LParen) this.tested(IN_PARENS, this.i + 1);
     if (this.kind() === T.LParen && this.kind(this.i + 1) === T.Strategy) {
       this.i++;
       node.strategy = this.displayed(this.i++) as WardleyStrategy;
       this.expect(T.RParen);
       this.tested(AFTER_STRATEGY);
+      if (this.kind() === T.LParen) this.tested(INERTIA_ONLY, this.i + 1);
     }
     if (this.kind() === T.Inertia) {
       this.i++;
@@ -680,6 +686,7 @@ class WardleyParser {
     this.tested(node.fromPort ? AFTER_PORT : AFTER_FROM);
     if (this.kind() === T.LinkArrow || this.kind() === T.Arrow)
       node.arrow = this.displayed(this.i++);
+    if (node.arrow) this.tested(NAMES);
     if (NAME_SET[this.kind()] !== 1) {
       if (node.arrow) this.fail(NAMES);
       this.fail(node.fromPort ? AFTER_PORT : AFTER_FROM);
@@ -969,15 +976,11 @@ class WardleyParser {
     this.done({ id, type, range, text }, word);
   }
 
-  /**
-   * D427: a reference to a name no anchor or component defines has no symbol (no definition,
-   * references or rename). Run after the parse: a node defined after a link still resolves it.
-   */
+  /** D427, after the parse: a node declared after a link still resolves it (`symbols.ts`). */
   private unresolved(): void {
     const { symbols } = this.st;
-    let k = 0;
-    for (const s of symbols) if (this.defined.has(s.name)) symbols[k++] = s;
-    symbols.length = k;
+    const pass = { symbols, src: this.src, defined: this.defined, statements: this.children };
+    symbols.splice(0, symbols.length, ...resolveSymbols(pass));
   }
 
   // ---- the model ----------------------------------------------------------------------

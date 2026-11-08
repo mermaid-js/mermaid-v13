@@ -50,6 +50,9 @@ export const AFTER_STAGE = [T.At, T.Slash, T.Arrow, ...LINE_END];
 export const AFTER_BOUNDARY = [T.Slash, T.Arrow, ...LINE_END];
 export const AFTER_STAGES = [T.Arrow, ...LINE_END];
 export const IN_PIPELINE = [Kind.Newline, T.Component, T.RBrace];
+/** Inside a component's `(`: a strategy or `inertia`; after a strategy only `inertia`. */
+export const IN_PARENS = [T.Strategy, T.Inertia];
+export const INERTIA_ONLY = [T.Inertia];
 export const AFTER_PIPELINE_CHILD = [T.Label, ...LINE_END];
 /** Tokens that cannot start or continue an unquoted name although they look like one (D423). */
 export const KEYWORD_PREFIX = kindSet(

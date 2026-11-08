@@ -50,7 +50,8 @@
         "@mermaid-js/diagram-packet",
         "@mermaid-js/diagram-radar",
         "@mermaid-js/diagram-cynefin",
-        "@mermaid-js/diagram-kanban"
+        "@mermaid-js/diagram-kanban",
+        "@mermaid-js/diagram-wardley"
       ]
     },
     "packages/dev": {
