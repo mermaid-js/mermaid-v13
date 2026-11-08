@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sankeyTokens } from '@mermaid-js/diagram-sankey';
+import { sankeyTokens } from '@mermaid-js/diagram-sankey/testing';
 
 /**
  * R-PARSE-7, pitfall 5: the sankey lexer is linear in input size, in every state and over

@@ -5,33 +5,31 @@
  */
 import { FIRST_DIAGRAM_KIND, Kind } from '@mermaid-js/core/parser-kit';
 
-const F = FIRST_DIAGRAM_KIND;
-
-export const T = {
+export const SankeyKind = {
   /**
    * `sankey-beta` or `sankey` (ASCII case-insensitive, word-bounded), wherever a token starts
    * before the first one: in INITIAL only.
    */
-  Sankey: F,
+  Sankey: FIRST_DIAGRAM_KIND,
   /** `,` outside a quoted field. */
-  Comma: F + 1,
+  Comma: FIRST_DIAGRAM_KIND + 1,
   /** The `"` opening a quoted field. */
-  OpenQuote: F + 2,
+  OpenQuote: FIRST_DIAGRAM_KIND + 2,
   /** The `"` closing a quoted field: one not followed by another `"`. */
-  CloseQuote: F + 3,
+  CloseQuote: FIRST_DIAGRAM_KIND + 3,
   /**
    * `[\x20-\x21\x23-\x2B\x2D-\x7E]+` (`{TEXTDATA}`): a field outside quotes, blanks included,
    * up to a `,`, `"`, line break, or a character outside printable ASCII.
    */
-  Text: F + 4,
+  Text: FIRST_DIAGRAM_KIND + 4,
   /**
    * The inside of a quoted field: `{TEXTDATA}`, `,`, line breaks and `""` pairs (kept as
    * written; v12's grammar action undoubled them). Zero-width when the text ends inside the
    * quotes, where jison returned one empty `ESCAPED_TEXT` before `$end`.
    */
-  EscapedText: F + 5,
+  EscapedText: FIRST_DIAGRAM_KIND + 5,
   /** jison's `<<EOF>>` `EOF`: zero-width, at the end of the text, outside quotes. */
-  Eof: F + 6,
+  Eof: FIRST_DIAGRAM_KIND + 6,
 } as const;
 
 /**
@@ -43,13 +41,13 @@ export const T = {
  * `ESCAPED_TEXT` rules matched the empty string forever.
  */
 export const JISON_NAMES: Readonly<Record<number, string>> = {
-  [T.Sankey]: 'SANKEY',
-  [T.Comma]: 'COMMA',
-  [T.OpenQuote]: 'DQUOTE',
-  [T.CloseQuote]: 'DQUOTE',
-  [T.Text]: 'NON_ESCAPED_TEXT',
-  [T.EscapedText]: 'ESCAPED_TEXT',
-  [T.Eof]: 'EOF',
+  [SankeyKind.Sankey]: 'SANKEY',
+  [SankeyKind.Comma]: 'COMMA',
+  [SankeyKind.OpenQuote]: 'DQUOTE',
+  [SankeyKind.CloseQuote]: 'DQUOTE',
+  [SankeyKind.Text]: 'NON_ESCAPED_TEXT',
+  [SankeyKind.EscapedText]: 'ESCAPED_TEXT',
+  [SankeyKind.Eof]: 'EOF',
   [Kind.Newline]: 'NEWLINE',
   [Kind.Error]: 'LEXICAL_ERROR',
 };

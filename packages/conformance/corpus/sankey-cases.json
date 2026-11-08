@@ -458,5 +458,41 @@
   {
     "id": "sankey-cases/nodes-trimmed-same",
     "source": "sankey\na,b,1\n a ,c,2\n\" a \",d,3"
+  },
+  {
+    "id": "sankey-cases/line-separator-between-rows",
+    "source": "sankey\na,b,1\u2028c,d,2"
+  },
+  {
+    "id": "sankey-cases/line-separator-at-end",
+    "source": "sankey\na,b,1\u2029"
+  },
+  {
+    "id": "sankey-cases/line-separator-before-row",
+    "source": "sankey\n\u2028a,b,1"
+  },
+  {
+    "id": "sankey-cases/line-separator-quoted",
+    "source": "sankey\n\"a\u2028b\",c,1"
+  },
+  {
+    "id": "sankey-cases/line-separator-before-comment-line",
+    "source": "sankey\na,b,1\n\u2028%% c\nc,d,2"
+  },
+  {
+    "id": "sankey-cases/line-separator-comment-after",
+    "source": "sankey\na,b,1\u2028%% c\nc,d,2"
+  },
+  {
+    "id": "sankey-cases/line-separator-comment-between",
+    "source": "sankey\na,b,1\u2028  %% c\u2028c,d,2"
+  },
+  {
+    "id": "sankey-cases/line-separator-after-header",
+    "source": "sankey\u2028a,b,1"
+  },
+  {
+    "id": "sankey-cases/line-separator-after-header-then-newline",
+    "source": "sankey\u2028\na,b,1"
   }
 ]

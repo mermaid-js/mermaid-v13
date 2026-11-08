@@ -229,7 +229,7 @@ function inert(): unknown {
  * order, `expect` is inert (it calls a function passed to it, for `toThrow`), and
  * `<name>.parser.parse` / `<name>.parse` call `record` with their argument, for each of
  * `parserNames`. `globals` are more names in the spec's scope (real helpers in place of inert
- * imports). gitGraph's harvest (`../gitgraph/harvest.ts`) runs its spec with it too.
+ * imports); they never replace the runner's own stubs. gitGraph's harvest (`../gitgraph/harvest.ts`) runs its spec with it too.
  */
 export function runSpec(
   text: string,
@@ -282,7 +282,9 @@ export function runSpec(
     return matcher;
   };
   const parser = () => ({ parser: { parse: record, yy: inert() }, parse: record });
+  // `globals` first, so it cannot replace the runner's own stubs.
   const scope: Record<string, unknown> = {
+    ...globals,
     describe,
     it,
     test: it,
@@ -290,7 +292,6 @@ export function runSpec(
     afterEach: noop,
     expect,
     ...Object.fromEntries(parserNames.map((name) => [name, parser()])),
-    ...globals,
   };
   const body = stripImports(text);
   const names = Object.keys(scope);

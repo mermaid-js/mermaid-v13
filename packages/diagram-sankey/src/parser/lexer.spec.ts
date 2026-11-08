@@ -3,7 +3,7 @@ import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { JISON_NAMES, sankeyTokens } from './index.ts';
 import { lex } from './lexer.ts';
-import { T } from './tokens.ts';
+import { SankeyKind } from './tokens.ts';
 
 const stream = (src: string) => {
   const pre = preprocess(src);
@@ -101,7 +101,11 @@ describe('sankey.jison quirks', () => {
       'ESCAPED_TEXT:',
     ]);
     const end = sankeyTokens('sankey\na,"').at(-1);
-    expect(end).toMatchObject({ kind: T.EscapedText, text: '', range: { start: 10, end: 10 } });
+    expect(end).toMatchObject({
+      kind: SankeyKind.EscapedText,
+      text: '',
+      range: { start: 10, end: 10 },
+    });
   });
 
   it('reads a quote after text, or text after a closing quote, as tokens of their own', () => {
@@ -202,12 +206,12 @@ describe('the token stream', () => {
   it('writes one token across a removed comment or directive, whose range covers it', () => {
     const src = 'sankey\na%%{init: {}}%%b,"x\n%% c\ny",1';
     const all = stream(src);
-    const text = all.find((t) => t.kind === T.Text);
+    const text = all.find((t) => t.kind === SankeyKind.Text);
     expect(text && [text.text, src.slice(text.start, text.end)]).toEqual([
       'ab',
       'a%%{init: {}}%%b',
     ]);
-    const escaped = all.find((t) => t.kind === T.EscapedText);
+    const escaped = all.find((t) => t.kind === SankeyKind.EscapedText);
     expect(escaped && [escaped.text, src.slice(escaped.start, escaped.end)]).toEqual([
       'x\ny',
       'x\n%% c\ny',
@@ -223,16 +227,16 @@ describe('the token stream', () => {
     const kinds = stream(src).map((t) => t.kind);
     expect(kinds).toEqual([
       Kind.Comment,
-      T.Sankey,
+      SankeyKind.Sankey,
       Kind.Newline,
       Kind.Comment,
-      T.Text,
-      T.Comma,
-      T.Text,
-      T.Comma,
-      T.Text,
+      SankeyKind.Text,
+      SankeyKind.Comma,
+      SankeyKind.Text,
+      SankeyKind.Comma,
+      SankeyKind.Text,
       // The line break before the last comment is trailing blanks to v12: trimmed.
-      T.Eof,
+      SankeyKind.Eof,
       Kind.Comment,
       Kind.EOF,
     ]);

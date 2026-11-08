@@ -1,7 +1,6 @@
 /**
- * `@mermaid-js/diagram-sankey`: the sankey diagram plugin (spec #427). The lexer is here; the
- * parser, model, layout, renderer, plugin export and manifest land with the other tickets of
- * that spec.
+ * `@mermaid-js/diagram-sankey`: the sankey diagram plugin (spec #427). The parser, model,
+ * layout, renderer, plugin export and manifest land with the other tickets of that spec. The
+ * lexer, which only the conformance gates read so far, is at `./testing` (as pie's, #325).
  */
-export { JISON_NAMES, SankeyTokenKind, sankeyTokens } from './parser/index.ts';
-export type { SankeyToken } from './parser/index.ts';
+export {};

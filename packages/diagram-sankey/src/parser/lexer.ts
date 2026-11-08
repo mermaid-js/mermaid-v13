@@ -44,10 +44,10 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { T } from './tokens.ts';
+import { SankeyKind } from './tokens.ts';
 
 // Start conditions of sankey.jison.
-const S = { INITIAL: 0, CSV: 1, ESCAPED_TEXT: 2 } as const;
+const STATE = { INITIAL: 0, CSV: 1, ESCAPED_TEXT: 2 } as const;
 
 /** Stands for an entity placeholder in v12's text: a character no rule consumes. */
 const ENTITY = '¶';
@@ -172,7 +172,7 @@ function prepare({ chars, start, end }: Rewritten): V12Text {
 
 /** One lex. Offsets are into v12's text; {@link emit} maps them to the source. */
 class SankeyLexer {
-  private readonly t: V12Text;
+  private readonly v12: V12Text;
   private readonly text: string;
   private readonly len: number;
   private readonly holes: readonly Hole[];
@@ -180,12 +180,12 @@ class SankeyLexer {
   private hole: number;
   /** The end of the last token's source range (dropped `;` before it belong to a token). */
   private covered = 0;
-  private readonly w: TokenWriter;
+  private readonly writer: TokenWriter;
   /** The v12-text range of each token written; `-1` for trivia. */
   private readonly vStart: number[] = [];
   private readonly vEnd: number[] = [];
   private readonly stack: number[] = [];
-  private state: number = S.INITIAL;
+  private state: number = STATE.INITIAL;
   private p = 0;
 
   constructor(
@@ -195,19 +195,23 @@ class SankeyLexer {
   ) {
     this.holes = view.holes;
     this.hole = firstHole(view, from);
-    this.t = v12Text(from, view);
-    this.text = this.t.text;
+    this.v12 = v12Text(from, view);
+    this.text = this.v12.text;
     this.len = this.text.length;
     // About one token per five characters of sankey text.
-    this.w = new TokenWriter(((this.len / 5) | 0) + 8);
+    this.writer = new TokenWriter(((this.len / 5) | 0) + 8);
   }
 
   run(): Lexed {
     while (this.p < this.len) this.step(this.text.charCodeAt(this.p));
     // At the end jison tries the rules once more on the empty input.
-    this.emit(this.state === S.ESCAPED_TEXT ? T.EscapedText : T.Eof, this.len, this.len);
+    this.emit(
+      this.state === STATE.ESCAPED_TEXT ? SankeyKind.EscapedText : SankeyKind.Eof,
+      this.len,
+      this.len
+    );
     this.trivia(this.src.length + 1);
-    const tokens = this.w.finish(this.src);
+    const tokens = this.writer.finish(this.src);
     const { vStart, vEnd, text, src } = this;
     return {
       tokens,
@@ -223,7 +227,7 @@ class SankeyLexer {
 
   /** Write a trivia token (it has no v12 text). */
   private push(kind: number, a: number, b: number): void {
-    this.w.push(kind, a, b);
+    this.writer.push(kind, a, b);
     this.vStart.push(-1);
     this.vEnd.push(-1);
   }
@@ -243,19 +247,19 @@ class SankeyLexer {
 
   /** The source offset of v12-text offset `s`; the end of the last character from `len` on. */
   private source(s: number): number {
-    if (s < this.len) return this.t.start[s] ?? 0;
-    return this.len > 0 ? (this.t.end[this.len - 1] ?? 0) : this.src.length;
+    if (s < this.len) return this.v12.start[s] ?? 0;
+    return this.len > 0 ? (this.v12.end[this.len - 1] ?? 0) : this.src.length;
   }
 
   /** Write the token `text[s, end)` with its source range, and move to `end`. */
   private emit(kind: number, s: number, end: number): void {
     const a = this.source(s);
-    let b = end > s ? (this.t.end[end - 1] ?? a) : a;
+    let b = end > s ? (this.v12.end[end - 1] ?? a) : a;
     if (this.holes.length > 0) {
       this.trivia(a);
       if (b > a) b = this.dropAt(b);
     }
-    this.w.push(kind, a, b);
+    this.writer.push(kind, a, b);
     this.vStart.push(s);
     this.vEnd.push(end);
     if (b > this.covered) this.covered = b;
@@ -309,39 +313,39 @@ class SankeyLexer {
 
   private step(c: number): void {
     const { p } = this;
-    if (this.state === S.ESCAPED_TEXT) {
+    if (this.state === STATE.ESCAPED_TEXT) {
       // `"(?!")` closes the field; else `ESCAPED_TEXT`.
       if (c === DQUOTE && this.text.charCodeAt(p + 1) !== DQUOTE) {
-        this.emit(T.CloseQuote, p, p + 1);
-        this.state = this.stack.pop() ?? S.INITIAL;
+        this.emit(SankeyKind.CloseQuote, p, p + 1);
+        this.state = this.stack.pop() ?? STATE.INITIAL;
         return;
       }
       const e = this.escaped(p);
-      if (e > p) this.emit(T.EscapedText, p, e);
+      if (e > p) this.emit(SankeyKind.EscapedText, p, e);
       else this.emit(Kind.Error, p, this.span(p, isStall));
       return;
     }
-    if (this.state === S.INITIAL) {
+    if (this.state === STATE.INITIAL) {
       // `sankey-betax` is `sankey` then `-betax`: the `\b` fails after `beta`, not `sankey`.
       let word = this.keyword('sankey-beta', p) ? 11 : 0;
       if (word === 0 && this.keyword('sankey', p)) word = 6;
       if (word > 0) {
-        this.emit(T.Sankey, p, p + word);
+        this.emit(SankeyKind.Sankey, p, p + word);
         this.stack.push(this.state);
-        this.state = S.CSV;
+        this.state = STATE.CSV;
         return;
       }
     }
     // INITIAL and csv share the rest, in this order.
     if (c === LF) this.emit(Kind.Newline, p, p + 1);
-    else if (c === COMMA) this.emit(T.Comma, p, p + 1);
+    else if (c === COMMA) this.emit(SankeyKind.Comma, p, p + 1);
     else if (c === DQUOTE) {
-      this.emit(T.OpenQuote, p, p + 1);
+      this.emit(SankeyKind.OpenQuote, p, p + 1);
       this.stack.push(this.state);
-      this.state = S.ESCAPED_TEXT;
+      this.state = STATE.ESCAPED_TEXT;
     } else {
       const e = this.span(p, isTextData);
-      if (e > p) this.emit(T.Text, p, e);
+      if (e > p) this.emit(SankeyKind.Text, p, e);
       else this.emit(Kind.Error, p, this.span(p, isStall));
     }
   }

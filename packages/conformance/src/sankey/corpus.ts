@@ -5,34 +5,17 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
-import { crlf } from '../kanban/corpus.ts';
+import { body, crlf } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
-const S = 'sankey\n';
-
-const items = (prefix: string, sources: string[]): CorpusItem[] =>
-  sources.map((source, k) => ({ id: `${prefix} ${k}`, source }));
-
 /**
- * U+2028 and U+2029: `\s` takes them (so `prepareTextForParsing` trims them off the ends), no
- * sankey rule consumes them (v12's lexer stalls on one), and v12's comment removal (`^`,
- * multiline) starts a line after them.
+ * The cases (`corpus/sankey-cases.json`): each quirk and rejection of v12's sankey lexer, and
+ * the line-separator cases (`line-separator-*`: U+2028 and U+2029, which `\s` takes, so
+ * `prepareTextForParsing` trims them off the ends, which no sankey rule consumes, and after
+ * which v12's comment removal starts a line).
  */
-export const LINE_SEPARATORS: CorpusItem[] = items('line separators', [
-  S + 'a,b,1 c,d,2',
-  S + 'a,b,1 ',
-  S + ' a,b,1',
-  S + '"a b",c,1',
-  S + 'a,b,1\n %% c\nc,d,2',
-  S + 'a,b,1 %% c\nc,d,2',
-  S + 'a,b,1   %% c c,d,2',
-  'sankey a,b,1',
-  'sankey \na,b,1',
-]);
-
-/** The cases (`corpus/sankey-cases.json`): each quirk and rejection of v12's sankey lexer. */
 export function sankeyCases(): CorpusItem[] {
   return JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/sankey-cases.json'), 'utf8')
@@ -49,14 +32,6 @@ export async function sankeyCorpus(): Promise<CorpusItem[]> {
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/sankey-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
   return [...out, ...specs];
-}
-
-const FRONT_MATTER = /^---[\s\S]*?\n---[^\S\n]*\n/;
-
-/** `edit` applied to the text after the front matter. */
-function body(src: string, edit: (text: string) => string): string {
-  const head = FRONT_MATTER.exec(src)?.[0] ?? '';
-  return head + edit(src.slice(head.length));
 }
 
 /**
@@ -89,11 +64,11 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
 ];
 
 /**
- * The e2e fixtures, the v12 spec strings, the cases and the line-separator cases, and each of
- * them in every variant of {@link VARIANTS} that changes it.
+ * The e2e fixtures, the v12 spec strings and the cases, and each of them in every variant of
+ * {@link VARIANTS} that changes it.
  */
 export async function sankeyGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await sankeyCorpus()), ...sankeyCases(), ...LINE_SEPARATORS];
+  const all = [...(await sankeyCorpus()), ...sankeyCases()];
   const out = [...all];
   for (const [suffix, make] of VARIANTS) {
     for (const item of all) {

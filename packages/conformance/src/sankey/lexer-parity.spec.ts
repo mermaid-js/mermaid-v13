@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JISON_NAMES, sankeyTokens } from '@mermaid-js/diagram-sankey';
+import { JISON_NAMES, sankeyTokens } from '@mermaid-js/diagram-sankey/testing';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { loadOracle } from '../oracle.ts';
@@ -25,7 +25,7 @@ import { sankeyGateCorpus, VARIANTS } from './corpus.ts';
  * Every source is also lexed in each generated variant (`VARIANTS`): with comment lines added
  * (and one through the middle of a short body), with every line break a CR followed by a
  * removed comment or directive line, with CRLF line breaks, with every line break doubled, and
- * with a directive through the middle of every line. The line-separator cases are in the set.
+ * with a directive through the middle of every line. The cases include U+2028 / U+2029 ones.
  *
  * Exclusions (v13 kinds with no jison name, left out of the v13 stream): comments (the `%%`
  * lines v12 removed), directives and a dropped `;`, which v13 writes as trivia.
@@ -37,7 +37,8 @@ import { sankeyGateCorpus, VARIANTS } from './corpus.ts';
  * Sources v12 never lexed as a sankey (`oracle.tokens` is undefined: the detector
  * `/^\s*sankey(-beta)?/` is case-sensitive) are skipped; the test bounds which.
  */
-const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => escape(s)).join('|')})\\)$`);
 const TEXT = new Set(['NON_ESCAPED_TEXT', 'ESCAPED_TEXT']);
 
 /** Where v12's lexer stalled: the first empty text token before the last token, or -1. */
@@ -60,6 +61,14 @@ function v13Tokens(source: string): JisonToken[] {
 }
 
 describe('sankey lexer parity with mermaid@12 (jison)', () => {
+  it("captures the text after sankey's prepareTextForParsing", async () => {
+    const oracle = await loadJisonLexerOracle('sankey');
+    // Front matter, comment lines and outer blanks gone, blank lines collapsed, no `\n` appended.
+    expect(await oracle.lexedText('---\ntitle: T\n---\nsankey\n\n a,b,1 \n%% c\n\nb,c,2\n')).toBe(
+      'sankey\n a,b,1 \nb,c,2'
+    );
+  });
+
   it('emits the same tokens over the corpus, the cases and their variants', async () => {
     const oracle = await loadJisonLexerOracle('sankey');
     const v12 = await loadOracle();
@@ -85,7 +94,7 @@ describe('sankey lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
         if (item.id.startsWith('sankey-cases/')) cases++;
-        if (item.id.startsWith('line separators')) separators++;
+        if (item.id.startsWith('sankey-cases/line-separator-')) separators++;
       }
       let expected = tokens;
       const stall = stallAt(tokens);
@@ -114,11 +123,11 @@ describe('sankey lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(
       `lexer parity: ${compared} of ${items.length} sources lexed by v12, ${stalls.length} stall\n`
     );
-    // Every e2e fixture, every harvested spec and syntax-page string, every case and every
-    // line-separator case reaches the lexer.
+    // Every e2e fixture, every harvested spec and syntax-page string and every case (the
+    // line-separator ones among them) reaches the lexer.
     expect(e2e).toBe(18);
     expect(specs).toBe(14);
-    expect(cases).toBe(115);
+    expect(cases).toBe(124);
     expect(separators).toBe(9);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
@@ -141,6 +150,6 @@ describe('sankey lexer parity with mermaid@12 (jison)', () => {
         return !(header && !/^\s*sankey/.test(cut));
       })
     ).toEqual([]);
-    expect(skipped.length).toBeLessThan(12);
+    expect(skipped.length).toBe(8);
   }, 180_000);
 });

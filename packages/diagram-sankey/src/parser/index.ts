@@ -7,7 +7,7 @@ import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
-export { JISON_NAMES, T as SankeyTokenKind } from './tokens.ts';
+export { JISON_NAMES, SankeyKind as SankeyTokenKind } from './tokens.ts';
 
 export interface SankeyToken {
   /** A `SankeyTokenKind` or a shared `Kind` (`Newline`, `Error`). */
