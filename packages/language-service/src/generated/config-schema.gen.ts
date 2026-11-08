@@ -1286,7 +1286,8 @@ export const configSchema: ConfigSchema = {
     "wardley-beta": {
       "$ref": "#/$defs/WardleyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "cynefin": {
@@ -6476,13 +6477,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the Wardley renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "The width of the Wardley diagram canvas.",
           "type": "number",
           "minimum": 1,
           "default": 900,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -6491,7 +6508,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "padding": {
@@ -6500,7 +6518,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 48,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeRadius": {
@@ -6509,7 +6528,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 6,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeLabelOffset": {
@@ -6518,7 +6538,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "axisFontSize": {
@@ -6527,7 +6548,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelFontSize": {
@@ -6536,7 +6558,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showGrid": {
@@ -6544,7 +6567,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

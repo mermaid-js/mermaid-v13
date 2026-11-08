@@ -5,6 +5,8 @@ import type { WardleyModel } from './model.ts';
 import { detectWardley, parseWardley, type WardleyParseResult } from './parser/index.ts';
 import { renderWardley } from './render/index.ts';
 import { theme } from './theme/table.ts';
+import { WARDLEY_SECTION } from './config.ts';
+import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 
 /**
  * The Wardley map plugin (DESIGN §12.1, spec #430): `layoutKind: 'custom'` with its own
@@ -14,13 +16,16 @@ import { theme } from './theme/table.ts';
  * extension reads it and there is no `labels` hook.
  *
  * `theme` is wardley's own table (`theme/table.ts`, D322, D331) over the thirteen `wardley*`
- * variables of `theme/vocabulary.ts`. The manifest, the registry row and the generated
- * `configDefaults` come with T5 (#497).
+ * variables of `theme/vocabulary.ts`. The registry loads it from the package's `mermaid` manifest
+ * (#497). Its options are v12's `wardley-beta` section (`configSection`, D421), whose generated
+ * defaults are `configDefaults`.
  */
 export const wardley = {
   id: 'wardley',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configSection: WARDLEY_SECTION,
+  configDefaults: wardleyBetaConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectWardley(text),
   parse: (text: string, ctx: DiagramParseContext): WardleyParseResult =>
     parseWardley(text, { preprocessed: ctx.preprocessed }),

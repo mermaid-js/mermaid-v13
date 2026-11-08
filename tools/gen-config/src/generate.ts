@@ -46,6 +46,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   radar: 'packages/diagram-radar',
   cynefin: 'packages/diagram-cynefin',
   kanban: 'packages/diagram-kanban',
+  'wardley-beta': 'packages/diagram-wardley',
 };
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */
@@ -686,7 +687,8 @@ export async function generate(
     if (typeName === undefined) {
       throw new Error(`section ${section} must $ref a titled def`);
     }
-    const name = `${section}ConfigDefaults`;
+    // A section v12 named with a dash (`wardley-beta`) gives a camel-cased identifier.
+    const name = `${section.replace(/-(\w)/g, (_, c: string) => c.toUpperCase())}ConfigDefaults`;
     files.set(
       `${pkg}/src/generated/config-defaults.ts`,
       `${BANNER}import type { ${typeName} } from '@mermaid-js/core/config';\n\n` +

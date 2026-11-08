@@ -146,7 +146,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   { type: 'railroadAbnf', pattern: /^\s*railroad-abnf-beta/i },
   { type: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i },
   { type: 'venn', pattern: /^\s*venn-beta/ },
-  { type: 'wardley', pattern: /^\s*wardley-beta/i },
+  {
+    type: 'wardley',
+    pattern: /^\s*wardley-beta/i,
+    id: 'wardley',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-wardley').then((m) => m.wardley),
+  },
   {
     type: 'cynefin',
     pattern: /^\s*cynefin-beta(?:[\s:]|$)/,

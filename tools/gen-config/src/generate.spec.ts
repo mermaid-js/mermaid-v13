@@ -65,10 +65,13 @@ describe('gen-config', () => {
   it('writes defaults for every section owner (#148)', async () => {
     const { files } = await generate(read(SCHEMA_PATH)!, read);
     for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
+      // `wardley-beta` → `wardleyBetaConfigDefaults`.
+      const name = section.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
       expect(files.get(`${pkg}/src/generated/config-defaults.ts`), section).toContain(
-        `export const ${section}ConfigDefaults: `
+        `export const ${name}ConfigDefaults: `
       );
     }
+    expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
   });
 
   it('fails when a key has no x-mermaid annotation', async () => {

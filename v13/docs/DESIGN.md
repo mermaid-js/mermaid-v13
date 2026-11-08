@@ -647,6 +647,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
   layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
   ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2: lazily loaded entry, draws with core/ascii (§6.3)
+  configSection?: string;                       // M5a (#497): its config section when not `id` (wardley's v12 `wardley-beta`, D421); the manifest's `section` says the same for the language service
   configDefaults?: object;                      // its schema section defaults
   theme?: DiagramThemeTable;                    // M5a (D331): its own theme variables, rules and family entries (§8.1)
 }

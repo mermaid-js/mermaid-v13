@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/diagram-wardley",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Wardley map plugin for Mermaid: parser, layout and SVG renderer (in progress).",
+  "version": "13.0.0-alpha.0",
+  "description": "Wardley map plugin for Mermaid: parser, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -44,5 +43,18 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "wardley",
+    "types": [
+      "wardley"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "wardley",
+    "language": "./dist/language.js",
+    "section": "wardley-beta"
   }
 }

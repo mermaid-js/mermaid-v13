@@ -83,11 +83,11 @@ let api: Mermaid;
 let layoutTheme: Theme;
 
 beforeAll(async () => {
-  api = await wardleyApi();
+  api = wardleyApi();
   layoutTheme = createTheme(await loadTheme('default'), { diagram: wardley.theme });
   const corpus = await wardleyGateCorpus();
   for (const theme of THEMES) {
-    const themed = await wardleyApi({ theme });
+    const themed = wardleyApi({ theme });
     for (const item of corpus) {
       if (!detectWardley(item.source)) continue;
       try {
@@ -181,7 +181,7 @@ describe('wardley render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await wardleyApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, wardleyApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -512,7 +512,7 @@ describe('wardley render: what is drawn', () => {
     expect([0, 0, 900, 600].map(String)).toEqual(
       ['x', 'y', 'width', 'height'].map((k) => attr(wide.tree, bg, k))
     );
-    const fixed = await wardleyApi({
+    const fixed = wardleyApi({
       'wardley-beta': { useMaxWidth: false, showGrid: true },
     } as MermaidConfig);
     const { tree } = await render('wardley-beta\ncomponent A [0.5, 0.5]', fixed);
@@ -606,7 +606,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
     ['forest', '#ffffff', '#000000', '#321b67', '#ffffff', '#dc3545'],
     ['neutral', '#ffffff', '#666666', '#111111', '#ffffff', '#dc3545'],
   ] as const)('draws v12 colours in %s', async (theme, bg, line, text, fill, evolution) => {
-    const p = await paintsOf(await literal(theme));
+    const p = await paintsOf(literal(theme));
     const hex = (v: string | undefined) => v?.toLowerCase();
     expect(hex(p.background)).toBe(bg);
     expect(hex(p.axis)).toBe(line);
@@ -625,7 +625,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
   });
 
   it("keeps v12's fixed overlay and accelerator literals in every theme (D426)", async () => {
-    const { tree } = await render(probe('strategies'), await literal('dark'));
+    const { tree } = await render(probe('strategies'), literal('dark'));
     const fill = (cls: string) => attr(tree, byClass(tree, cls)[0], 'fill');
     expect(fill('wardley-build-overlay')).toBe('#eee');
     expect(attr(tree, byClass(tree, 'wardley-build-overlay')[0], 'stroke')).toBe('#000');
@@ -636,7 +636,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
   });
 
   it("takes an author's flat and nested wardley variables, the flat name winning (D335, D540)", async () => {
-    const m = await literal('default', {
+    const m = literal('default', {
       themeVariables: {
         wardleyAxisColor: '#111111',
         wardleyEvolutionColor: '#00ff00',
@@ -651,7 +651,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
     // `wardleyEvolutionColor` feeds `wardleyEvolutionStroke`, as in v12.
     expect(p.trend).toBe('#00ff00');
     const nested = await paintsOf(
-      await literal('default', {
+      literal('default', {
         themeVariables: { wardley: { evolutionStroke: '#0000ff' } },
       } as MermaidConfig)
     );
@@ -659,7 +659,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
   });
 
   it("moves the strokes with an author's lineColor", async () => {
-    const m = await literal('forest', {
+    const m = literal('forest', {
       themeVariables: { lineColor: '#ff0000' },
     } as MermaidConfig);
     const p = await paintsOf(m);

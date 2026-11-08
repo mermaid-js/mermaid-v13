@@ -9,15 +9,19 @@
  * on the canvas (twice the padding at least the width or height), to the default, or to 0 where
  * the default leaves none either. `showGrid` is read for truth, as v12 read it.
  *
- * The keys are `pending` in the schema until T5 (#497), which makes them `honoured` and
- * generates `generated/config-defaults.ts`; until then the defaults are written here, v12's
- * (`config.schema.yaml` `WardleyDiagramConfig`, the same as `wardleyRenderer.ts:52-65`).
+ * The section is v12's `wardley-beta` (the plugin's `configSection`), honoured from every source,
+ * front matter and `%%{init}` included (D421; v12's sanitiser dropped it there). The defaults are
+ * the schema's, generated into `generated/config-defaults.ts` (v12's, `wardleyRenderer.ts:52-65`).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
+import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
 
 export const WARDLEY_CONFIG_INVALID = 'WARDLEY_CONFIG_INVALID';
+
+/** The config section wardley reads: v12's name (D421). */
+export const WARDLEY_SECTION = 'wardley-beta';
 
 /** The options the layout reads, every one set. */
 export type WardleyLayoutConfig = Required<
@@ -36,17 +40,8 @@ export type WardleyLayoutConfig = Required<
 
 type LengthKey = Exclude<keyof WardleyLayoutConfig, 'showGrid'>;
 
-/** v12's defaults. */
-const DEFAULTS: WardleyLayoutConfig = {
-  width: 900,
-  height: 600,
-  padding: 48,
-  nodeRadius: 6,
-  nodeLabelOffset: 8,
-  axisFontSize: 12,
-  labelFontSize: 10,
-  showGrid: false,
-};
+/** The schema's defaults, v12's. */
+const DEFAULTS = wardleyBetaConfigDefaults as WardleyLayoutConfig;
 
 /** Each length's least valid value and how a warning names the range. */
 interface Range {

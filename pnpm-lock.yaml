@@ -536,6 +536,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -829,6 +832,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
     devDependencies:
       esbuild:
         specifier: ^0.25.12
