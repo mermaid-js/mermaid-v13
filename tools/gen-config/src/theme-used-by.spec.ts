@@ -64,9 +64,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
+ * must read none (so it is removed as soon as it reads one). Treemap until its renderer (#505).
  */
-const NOT_DRAWN_YET = new Set<string>([]);
+const NOT_DRAWN_YET = new Set<string>(['treemap']);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -89,6 +89,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'sequence',
       'state',
       'timeline',
+      'treemap',
     ]);
     for (const type of TYPES) {
       if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);

@@ -1,0 +1,710 @@
+[
+  {
+    "id": "treemap-cases/header-beta",
+    "source": "treemap-beta\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-plain",
+    "source": "treemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-only",
+    "source": "treemap"
+  },
+  {
+    "id": "treemap-cases/header-beta-only",
+    "source": "treemap-beta"
+  },
+  {
+    "id": "treemap-cases/header-suffix",
+    "source": "treemapx\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-beta-suffix",
+    "source": "treemap-betax\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-dash",
+    "source": "treemap-\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-digit",
+    "source": "treemap2\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-upper",
+    "source": "Treemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-row-on-line",
+    "source": "treemap \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-tab-row",
+    "source": "treemap\t\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-comment",
+    "source": "treemap %% c\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-glued-comment",
+    "source": "treemap%%c\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-trailing-blank",
+    "source": "treemap \n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-twice",
+    "source": "treemap\ntreemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/header-indented",
+    "source": "   treemap\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/leading-blank-lines",
+    "source": "\n\n  \ntreemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/rows-on-one-line",
+    "source": "treemap\n\"r\" \"s\""
+  },
+  {
+    "id": "treemap-cases/leaves-on-one-line",
+    "source": "treemap\n\"a\":1,\"b\":2"
+  },
+  {
+    "id": "treemap-cases/leaves-on-one-line-blank",
+    "source": "treemap\n\"a\": 1 \"b\": 2"
+  },
+  {
+    "id": "treemap-cases/leaf-comma-separator",
+    "source": "treemap\n\"a\", 1\n\"b\" ,2\n\"c\" , 3"
+  },
+  {
+    "id": "treemap-cases/leaf-blanks-around",
+    "source": "treemap\n\"a\"   :   1"
+  },
+  {
+    "id": "treemap-cases/leaf-tabs-around",
+    "source": "treemap\n\"a\"\t:\t1"
+  },
+  {
+    "id": "treemap-cases/leaf-no-blank",
+    "source": "treemap\n\"a\":1"
+  },
+  {
+    "id": "treemap-cases/leaf-class",
+    "source": "treemap\n\"a\": 1:::big\nclassDef big fill:red"
+  },
+  {
+    "id": "treemap-cases/leaf-class-blank",
+    "source": "treemap\n\"a\": 1 :::big"
+  },
+  {
+    "id": "treemap-cases/section-class",
+    "source": "treemap\n\"s\":::big\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/section-class-blank",
+    "source": "treemap\n\"s\" ::: big"
+  },
+  {
+    "id": "treemap-cases/class-dash",
+    "source": "treemap\n\"s\":::cls-x"
+  },
+  {
+    "id": "treemap-cases/class-undefined",
+    "source": "treemap\n\"s\":::undefined\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/double-colon",
+    "source": "treemap\n\"a\":: 1"
+  },
+  {
+    "id": "treemap-cases/four-colons",
+    "source": "treemap\n\"a\"::::b"
+  },
+  {
+    "id": "treemap-cases/trailing-blank-before-indented",
+    "source": "treemap\n\"r\" \n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/trailing-blank-before-unindented",
+    "source": "treemap\n\"r\" \n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/trailing-tab",
+    "source": "treemap\n\"r\"\t\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/inline-comment-before-indented",
+    "source": "treemap\n\"r\" %% c\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/inline-comment-before-unindented",
+    "source": "treemap\n\"r\" %% c\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/inline-comment-glued",
+    "source": "treemap\n\"a\": 1%% c\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/comment-percent-only",
+    "source": "treemap\n\"a\": 1 %%\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/single-percent",
+    "source": "treemap\n\"a\": 1 % x"
+  },
+  {
+    "id": "treemap-cases/comment-line-indented",
+    "source": "treemap\n\"r\"\n  %% c\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/comment-line-unindented",
+    "source": "treemap\n\"r\"\n%% c\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/comment-with-quote",
+    "source": "treemap\n\"a\": 1 %% \"x\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/blank-line-between",
+    "source": "treemap\n\"r\"\n\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/blank-only-line",
+    "source": "treemap\n\"r\"\n   \n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/blank-only-line-tabs",
+    "source": "treemap\n\"r\"\n\t\t\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/trailing-blank-end",
+    "source": "treemap\n\"a\": 1   "
+  },
+  {
+    "id": "treemap-cases/trailing-blank-lines-end",
+    "source": "treemap\n\"a\": 1\n\n  \n"
+  },
+  {
+    "id": "treemap-cases/number-zero-prefix",
+    "source": "treemap\n\"a\": 01"
+  },
+  {
+    "id": "treemap-cases/number-trailing-dot",
+    "source": "treemap\n\"a\": 1."
+  },
+  {
+    "id": "treemap-cases/number-trailing-comma",
+    "source": "treemap\n\"a\": 1,"
+  },
+  {
+    "id": "treemap-cases/number-thousands",
+    "source": "treemap\n\"a\": 1,000"
+  },
+  {
+    "id": "treemap-cases/number-commas",
+    "source": "treemap\n\"a\": 1,2,3"
+  },
+  {
+    "id": "treemap-cases/number-underscore",
+    "source": "treemap\n\"a\": 1_000"
+  },
+  {
+    "id": "treemap-cases/number-dots",
+    "source": "treemap\n\"a\": 1.2.3"
+  },
+  {
+    "id": "treemap-cases/number-dot",
+    "source": "treemap\n\"a\": ."
+  },
+  {
+    "id": "treemap-cases/number-dot-digits",
+    "source": "treemap\n\"a\": .5"
+  },
+  {
+    "id": "treemap-cases/number-minus",
+    "source": "treemap\n\"a\": -1"
+  },
+  {
+    "id": "treemap-cases/number-exponent",
+    "source": "treemap\n\"a\": 1e3"
+  },
+  {
+    "id": "treemap-cases/number-decimal",
+    "source": "treemap\n\"a\": 123.45"
+  },
+  {
+    "id": "treemap-cases/number-plus",
+    "source": "treemap\n\"a\": +1"
+  },
+  {
+    "id": "treemap-cases/number-zero",
+    "source": "treemap\n\"a\": 0"
+  },
+  {
+    "id": "treemap-cases/number-zeros",
+    "source": "treemap\n\"a\": 0000"
+  },
+  {
+    "id": "treemap-cases/number-comma-only",
+    "source": "treemap\n\"a\": ,"
+  },
+  {
+    "id": "treemap-cases/number-underscore-only",
+    "source": "treemap\n\"a\": _"
+  },
+  {
+    "id": "treemap-cases/number-underscore-lead",
+    "source": "treemap\n\"a\": _1"
+  },
+  {
+    "id": "treemap-cases/number-comma-lead",
+    "source": "treemap\n\"a\": ,5"
+  },
+  {
+    "id": "treemap-cases/number-mixed",
+    "source": "treemap\n\"a\": 1_2.3,4"
+  },
+  {
+    "id": "treemap-cases/number-hex",
+    "source": "treemap\n\"a\": 0x1F"
+  },
+  {
+    "id": "treemap-cases/number-infinity",
+    "source": "treemap\n\"a\": Infinity"
+  },
+  {
+    "id": "treemap-cases/number-nan",
+    "source": "treemap\n\"a\": NaN"
+  },
+  {
+    "id": "treemap-cases/number-no-name",
+    "source": "treemap\n12"
+  },
+  {
+    "id": "treemap-cases/number-then-class",
+    "source": "treemap\n\"a\": 1,000:::c1"
+  },
+  {
+    "id": "treemap-cases/string-single",
+    "source": "treemap\n'a': 1\n'b'"
+  },
+  {
+    "id": "treemap-cases/string-mixed-quotes",
+    "source": "treemap\n\"it's\": 1\n'say \"hi\"': 2"
+  },
+  {
+    "id": "treemap-cases/string-multiline",
+    "source": "treemap\n\"a\nb\": 1\n\"c\n\n  d\""
+  },
+  {
+    "id": "treemap-cases/string-escape",
+    "source": "treemap\n\"a\\\"b\": 1"
+  },
+  {
+    "id": "treemap-cases/string-backslash",
+    "source": "treemap\n\"a\\\\\": 1"
+  },
+  {
+    "id": "treemap-cases/string-empty",
+    "source": "treemap\n\"\": 1\n''"
+  },
+  {
+    "id": "treemap-cases/string-html",
+    "source": "treemap\n\"<b>bold</b> &amp; <br/>\": 1"
+  },
+  {
+    "id": "treemap-cases/string-tag-quotes",
+    "source": "treemap\n\"<span class=\"x\">y</span>\": 1"
+  },
+  {
+    "id": "treemap-cases/string-unterminated",
+    "source": "treemap\n\"a: 1"
+  },
+  {
+    "id": "treemap-cases/string-unterminated-single",
+    "source": "treemap\n'a: 1"
+  },
+  {
+    "id": "treemap-cases/string-unterminated-later",
+    "source": "treemap\n\"a\": 1\n\"b"
+  },
+  {
+    "id": "treemap-cases/string-unicode",
+    "source": "treemap\n\"\u00dcn\u00efc\u00f8d\u00e9 \ud83d\ude80 \u4e2d\u6587\": 1"
+  },
+  {
+    "id": "treemap-cases/string-comment-inside",
+    "source": "treemap\n\"a %% b\": 1"
+  },
+  {
+    "id": "treemap-cases/string-unquoted-name",
+    "source": "treemap\nabc: 1"
+  },
+  {
+    "id": "treemap-cases/string-unicode-name",
+    "source": "treemap\n\u00fcber: 1"
+  },
+  {
+    "id": "treemap-cases/entities",
+    "source": "treemap\n\"a #amp; b #9829;\": 1\n\"#quot;x#quot;\""
+  },
+  {
+    "id": "treemap-cases/entities-semicolon",
+    "source": "treemap\n\"a#x;\": 1"
+  },
+  {
+    "id": "treemap-cases/tabs-indent",
+    "source": "treemap\n\"r\"\n\t\"a\": 1\n\t\t\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/mixed-indent",
+    "source": "treemap\n\"r\"\n \t \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/dedent-unseen",
+    "source": "treemap\n\"r\"\n    \"s\"\n        \"a\": 1\n  \"b\": 2"
+  },
+  {
+    "id": "treemap-cases/row-under-leaf",
+    "source": "treemap\n\"a\": 1\n  \"b\": 2"
+  },
+  {
+    "id": "treemap-cases/several-roots",
+    "source": "treemap\n\"Root1\"\n\"Root2\""
+  },
+  {
+    "id": "treemap-cases/duplicate-names",
+    "source": "treemap\n\"r\"\n  \"a\": 1\n  \"a\": 2\n\"r\""
+  },
+  {
+    "id": "treemap-cases/deep-nesting",
+    "source": "treemap\n\"a\"\n \"b\"\n  \"c\"\n   \"d\"\n    \"e\": 1"
+  },
+  {
+    "id": "treemap-cases/empty-body",
+    "source": "treemap\n\n"
+  },
+  {
+    "id": "treemap-cases/classdef-semicolon",
+    "source": "treemap\nclassDef big fill:red;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-no-semicolon",
+    "source": "treemap\nclassDef big fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-before-use",
+    "source": "treemap\nclassDef big fill:red\n\"a\": 1:::big"
+  },
+  {
+    "id": "treemap-cases/classdef-after-use",
+    "source": "treemap\n\"a\": 1:::big\nclassDef big fill:red;"
+  },
+  {
+    "id": "treemap-cases/classdef-repeat",
+    "source": "treemap\nclassDef big fill:red\nclassDef big stroke:blue\n\"a\": 1:::big"
+  },
+  {
+    "id": "treemap-cases/classdef-one-char",
+    "source": "treemap\nclassDef c fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-no-styles",
+    "source": "treemap\nclassDef big\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-no-styles-end",
+    "source": "treemap\n\"a\": 1\nclassDef big"
+  },
+  {
+    "id": "treemap-cases/classdef-no-styles-semicolon",
+    "source": "treemap\nclassDef big;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-no-styles-blank-line",
+    "source": "treemap\nclassDef big\n\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-escaped-comma",
+    "source": "treemap\nclassDef big fill:red\\,blue,stroke:#f00\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-several-semicolons",
+    "source": "treemap\nclassDef big fill:red;stroke:blue;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-hash",
+    "source": "treemap\nclassDef big fill:#ff0000;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-hash-entity",
+    "source": "treemap\nclassDef big fill:#f00, color:#fff;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-tab",
+    "source": "treemap\nclassDef\tbig\tfill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-indented",
+    "source": "treemap\n  classDef big fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-digit-name",
+    "source": "treemap\nclassDef 1big fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-underscore-name",
+    "source": "treemap\nclassDef _b fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-dash-name",
+    "source": "treemap\nclassDef big-x fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-glued",
+    "source": "treemap\nclassDefbig fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-alone",
+    "source": "treemap\nclassDef\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-comment",
+    "source": "treemap\nclassDef big fill:red %% c\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-name-next-line",
+    "source": "treemap\nclassDef\nbig fill:red\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-styles-next-line-blank",
+    "source": "treemap\nclassDef big   \n   fill:red;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/classdef-in-row",
+    "source": "treemap\n\"a\": 1 classDef big fill:red"
+  },
+  {
+    "id": "treemap-cases/style-statement",
+    "source": "treemap\nstyle a fill:#f00;\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title",
+    "source": "treemap\ntitle My Treemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-bare",
+    "source": "treemap\ntitle\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-blank",
+    "source": "treemap\ntitle \n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-suffix",
+    "source": "treemap\ntitleX\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-comment",
+    "source": "treemap\ntitle T %% c\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-after-rows",
+    "source": "treemap\n\"a\": 1\ntitle Late"
+  },
+  {
+    "id": "treemap-cases/title-twice",
+    "source": "treemap\ntitle A\ntitle B\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-on-header-line",
+    "source": "treemap title T\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-indented",
+    "source": "treemap\n  title T\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-tab",
+    "source": "treemap\ntitle\tT\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/title-in-row",
+    "source": "treemap\n\"a\": 1 title T"
+  },
+  {
+    "id": "treemap-cases/title-percent",
+    "source": "treemap\ntitle 50% %\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-title",
+    "source": "treemap\naccTitle: Accessible\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-title-blank",
+    "source": "treemap\naccTitle : Accessible\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-title-no-colon",
+    "source": "treemap\naccTitle Accessible\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-title-comment",
+    "source": "treemap\naccTitle: A %% c\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr",
+    "source": "treemap\naccDescr: Description\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-block",
+    "source": "treemap\naccDescr {\n  line one\n  line two\n}\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-block-inline",
+    "source": "treemap\naccDescr { one line }\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-block-newline-brace",
+    "source": "treemap\naccDescr\n{ x }\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-block-unclosed",
+    "source": "treemap\naccDescr {\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-block-unclosed-twice",
+    "source": "treemap\naccDescr {\naccDescr {\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-bare",
+    "source": "treemap\naccDescr\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-indented",
+    "source": "treemap\n  accDescr: d\n  \"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-descr-comment-in-block",
+    "source": "treemap\naccDescr { a %% b }\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/acc-in-row",
+    "source": "treemap\n\"a\" accTitle: x"
+  },
+  {
+    "id": "treemap-cases/acc-name-ids",
+    "source": "treemap\naccDescrX\naccTitleY"
+  },
+  {
+    "id": "treemap-cases/front-matter-title",
+    "source": "---\ntitle: Front\n---\ntreemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/front-matter-config",
+    "source": "---\nconfig:\n  treemap:\n    valueFormat: \"$0,0\"\n---\ntreemap-beta\n\"a\": 1000"
+  },
+  {
+    "id": "treemap-cases/directive",
+    "source": "%%{init: {\"theme\": \"forest\"}}%%\ntreemap\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/directive-inline",
+    "source": "treemap\n\"a\": 1 %%{ x }%%\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/directive-glued",
+    "source": "treemap\n\"a\": 1 %%{ x }%%y\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive",
+    "source": "treemap\n%%{ never closed\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive-init",
+    "source": "treemap\n%%{init: {\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/body-dashes",
+    "source": "treemap\n---\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/error-semicolon",
+    "source": "treemap\n\"a\": 1;"
+  },
+  {
+    "id": "treemap-cases/error-brace",
+    "source": "treemap\n{\"a\": 1}"
+  },
+  {
+    "id": "treemap-cases/error-then-more",
+    "source": "treemap\n\"a\": 1 @ \"b\": 2"
+  },
+  {
+    "id": "treemap-cases/error-cr-only",
+    "source": "treemap\r\"a\": 1\r\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/error-cr-classdef",
+    "source": "treemap\rclassDef big\r\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/error-nbsp",
+    "source": "treemap\n\u00a0\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/error-bom-body",
+    "source": "treemap\n\ufeff\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-header",
+    "source": "treemap\u2028\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-rows",
+    "source": "treemap\n\"a\": 1\u2028\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/line-separators-string",
+    "source": "treemap\n\"a\u2028b\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-comment",
+    "source": "treemap\n\"a\": 1 %% c\u2028d\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/line-separators-title",
+    "source": "treemap\ntitle a\u2028b\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-acc-descr",
+    "source": "treemap\naccDescr {\na\u2028b\n}\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-acc-descr-brace",
+    "source": "treemap\naccDescr\u2028{ x }\n\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-classdef",
+    "source": "treemap\nclassDef\u2028big\u2029fill:red\u2028\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-classdef-styles",
+    "source": "treemap\nclassDef big fill:red\u2028\"a\": 1"
+  },
+  {
+    "id": "treemap-cases/line-separators-comment-line",
+    "source": "treemap\n\"a\": 1\n\u2028%% c\n\"b\": 2"
+  },
+  {
+    "id": "treemap-cases/all-features",
+    "source": "---\ntitle: Front\n---\ntreemap-beta\ntitle Budget\naccTitle: Budget chart\naccDescr {\n  Two sections\n}\n\"Costs\":::warn\n    \"Rent\", 1,200.50\n    \"Food\": 300 :::cheap\n  %% between\n\"Income\"\n\t\"Salary\": 3_000\nclassDef warn fill:#f00,color:#fff;\nclassDef cheap stroke:blue\\,green"
+  }
+]
