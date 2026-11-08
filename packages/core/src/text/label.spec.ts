@@ -50,6 +50,22 @@ describe('plain labels', () => {
     expect(texts(layout('aaaaaaaaaaaaaaaaaa', 40))).toEqual(['aaaaaaa', 'aaaaaaa', 'aaaa']);
   });
 
+  it('with keepWords, keeps a word wider than the box whole on its own line', () => {
+    const keep = (raw: string, markdown = false): MeasuredLabel =>
+      layoutLabel(raw, arial, 40, tableMeasurer, { keepWords: true, markdown });
+    // 18 × a = 100.08; 'aaa aaa' = 36.14 still wraps as without the option.
+    const box = keep('aaa aaaaaaaaaaaaaaaaaa aaa aaa');
+    expect(texts(box)).toEqual(['aaa', 'aaaaaaaaaaaaaaaaaa', 'aaa aaa']);
+    expect(box.width).toBeCloseTo(100.08, 9);
+    expect(box.widths.map((w) => +w.toFixed(2))).toEqual([16.68, 100.08, 36.14]);
+    expect(box.height).toBeCloseTo(3 * 11.5, 9);
+    // The slow path (markup) and a word alone keep it whole too.
+    expect(texts(keep('**aaaaaaaaaaaaaaaaaa**', true))).toEqual(['aaaaaaaaaaaaaaaaaa']);
+    expect(keep('aaaaaaaaaaaaaaaaaa').width).toBeCloseTo(100.08, 9);
+    // Words that fit wrap exactly as without the option.
+    expect(keep('aaa aaa aaa aaa aaa')).toEqual(layout('aaa aaa aaa aaa aaa', 40));
+  });
+
   it('measures each word of a wrapped label once, and a long word once per character', () => {
     const measured: string[] = [];
     const counting = {
