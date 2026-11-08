@@ -110,15 +110,6 @@ const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
   gitgraph: ['commitLineColor', 'gitCherryPickInk'],
 };
 
-/**
- * Rows that read a palette slot other than the series (D332), checked in the eleven themes only:
- * the twelfth theme has no palettes, so the slot reads `currentColor`, as every `cScale` reader
- * draws there. Kanban's column colours are `cScale<n>` lightened or darkened (D374).
- */
-const PALETTE_ROWS: Readonly<Record<string, readonly string[]>> = {
-  kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
-};
-
 function resolve(
   spec: ThemeSpec,
   table: DiagramThemeTable,
@@ -163,8 +154,7 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
     '%s: a twelfth theme with only base colours and a family resolves every variable',
     (type, table) => {
       const name = (s: ThemeSpec) => `${s.family}${s.dark ? ' dark' : ''}`;
-      const only = AUTHOR_ONLY[type];
-      const some = [...(SOME_THEMES[type] ?? []), ...(PALETTE_ROWS[type] ?? [])];
+      const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
       expect(
         Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, only, some)]))
       ).toEqual(Object.fromEntries(synthetic.map((s) => [name(s), []])));
@@ -215,12 +205,34 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
         },
       },
     };
+    // cScale is derived from the base colours there as v12 theme-base derives it, so only the
+    // band read fails, as in the built-in themes.
     for (const s of synthetic)
-      expect(resolve(s, table), s.family).toEqual([
-        'scaleFill=currentColor',
-        'bandFill=currentColor',
-      ]);
-    // The built-in themes carry cScale, so only the band read fails there.
+      expect(resolve(s, table), s.family).toEqual(['bandFill=currentColor']);
     expect(resolve(specs[THEME_NAMES.indexOf('base')]!, table)).toEqual(['bandFill=currentColor']);
+  });
+
+  it.each(
+    synthetic.flatMap((s) =>
+      [false, true].map((darkMode) => [`${s.family}${s.dark ? ' dark' : ''}`, darkMode, s] as const)
+    )
+  )('%s (darkMode %s): the twelfth theme draws every scale and git palette', (_, darkMode, s) => {
+    const theme = createTheme(s, { themeVariables: { darkMode }, cssVariables: false });
+    const lengths = {
+      cScale: 12,
+      cScaleInv: 12,
+      cScaleLabel: 12,
+      git: 8,
+      gitInv: 8,
+      gitBranchLabel: 8,
+    };
+    for (const [p, n] of Object.entries(lengths)) {
+      const list = theme.palette(p as keyof typeof lengths);
+      expect(list, p).toHaveLength(n);
+      expect(
+        list.filter((c) => parseColor(c) === undefined),
+        p
+      ).toEqual([]);
+    }
   });
 });
