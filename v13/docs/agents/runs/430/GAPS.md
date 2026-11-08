@@ -12,7 +12,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## Spec corrections from exploration (`01-v12-wardley.md`)
 
-- **Token order** (T1): after `NAME_WITH_SPACES`, 2.0.1 orders `WS, ACC_DESCR, ACC_TITLE, TITLE, INT, STRING, ID, NEWLINE, WHITESPACE, YAML, DIRECTIVE, SINGLE_LINE_COMMENT`; there is no `FLOAT`. The runtime dump decides, not the spec's list.
+- **Token order** (T1): after `NAME_WITH_SPACES`, 2.0.1 orders `WS, ACC_DESCR, ACC_TITLE, TITLE, INT, STRING, ID, NEWLINE, WHITESPACE, YAML, DIRECTIVE, SINGLE_LINE_COMMENT`; there is no `FLOAT`. The runtime dump decides, not the spec's list. **Closed (#487):** the lexer follows the dump (43 types; `-` has LONGER_ALT ARROW, LINK_ARROW, YAML) and the gate is green.
 - **Pipeline parent** (T3): x is the box centre, y is box top − square/6 (`wardleyRenderer.ts:359-364`), not the box centre. Follow v12.
 - **Self-links** (T3): v12 writes a `<line>` with NaN coordinates. v13 drops them with D425's `WARDLEY_LINK_DROPPED` (never NaN, D424/D226).
 - **Trends from a pipeline parent** are not horizontal in v12 (origin moved, target on the parent's original line, `:540-547`). Follow v12; the T3 "trends horizontal" invariant excepts trends from pipeline parents.
