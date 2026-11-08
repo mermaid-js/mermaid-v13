@@ -58,9 +58,9 @@ export interface ColumnLayout extends Rect {
    */
   readonly ordinal: number;
   /**
-   * Wrapped at `W` and centred on the column. A word wider than `W` is split between characters
-   * by core's label layout, which has no option to keep it whole; v12 let it overflow (GAPS
-   * #455). The bounds hold the title either way (D224).
+   * Wrapped at `W` and centred on the column. A word wider than `W` stays whole and overflows
+   * both sides, as in v12 (in cells it is split between characters). The bounds hold the title
+   * (D224).
    */
   readonly title?: PlacedLabel;
 }
