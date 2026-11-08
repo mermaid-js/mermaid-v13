@@ -1,10 +1,8 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
+import { PEER_SLOTS } from '../layout/metrics.ts';
 
 /** `usedBy` of every row: treemap reads them all. */
 const TREEMAP: readonly string[] = ['treemap'];
-
-/** v12's twelve `cScalePeer<n>` slots (`THEME_COLOR_LIMIT`), one per `cScale` slot. */
-const PEER_SLOTS = 12;
 
 /**
  * The treemap's theme variables (spec #428, D406, D407; not core's, R-PERF-8):

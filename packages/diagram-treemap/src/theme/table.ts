@@ -1,8 +1,6 @@
 import type { DiagramThemeTable, ThemeRuleTable } from '@mermaid-js/core/theme';
+import { PEER_SLOTS } from '../layout/metrics.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
-
-/** v12's `cScalePeer` slots, one per `cScale` slot. */
-const PEER_SLOTS = 12;
 
 /** `cScalePeer<i>` = `step(cScale<i>, 10%)` for every slot. */
 const peers = (step: 'darkenHsl' | 'lightenHsl'): ThemeRuleTable =>

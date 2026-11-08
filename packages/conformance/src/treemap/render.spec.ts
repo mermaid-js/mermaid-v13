@@ -549,8 +549,8 @@ describe('treemap render: accessibility, ids, security and formats', () => {
   });
 
   it('draws SVG only: ascii throws UnsupportedFormatError (D320)', async () => {
-    await expect(api.render('x', 'treemap\n"a": 1', { format: 'ascii' })).rejects.toBeInstanceOf(
-      UnsupportedFormatError
-    );
+    await expect(
+      api.render('x', CASES.get('treemap-cases/header-plain')!, { format: 'ascii' })
+    ).rejects.toBeInstanceOf(UnsupportedFormatError);
   });
 });

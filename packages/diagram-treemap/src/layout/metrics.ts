@@ -131,3 +131,5 @@ export const MAX_TILE_WEIGHT = 2 ** 500;
 /** v12 colours fills from `['transparent', cScale0…11]` and labels from `cScaleLabel0…11`. */
 export const FILL_SLOTS = 13;
 export const LABEL_SLOTS = 12;
+/** v12's `cScalePeer0…11`, one per `cScale` slot: the stroke range past its `transparent`. */
+export const PEER_SLOTS = FILL_SLOTS - 1;

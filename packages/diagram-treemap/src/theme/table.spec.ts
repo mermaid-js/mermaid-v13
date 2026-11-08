@@ -62,4 +62,16 @@ describe('treemap theme table', () => {
     });
     expect(flat.value('treemapTitleColor')).toBe('#00ff00');
   });
+
+  it('keeps the title rules under a dark theme and darkMode, where rules.dark sits over light', async () => {
+    // v12 12.2.0's titleColor in dark: #F9FFFE. Under base + darkMode the title follows core's
+    // titleColor, whatever core derives there (T5's oracle compares it with v12's).
+    const dark = await resolve('dark');
+    near(dark.rgba('treemapTitleColor'), [249, 255, 254]);
+    expect(dark.value('treemapTitleColor')).toBe(dark.value('titleColor'));
+    expect(dark.number('treemapTitleFontSize')).toBe(14);
+    const baseDark = await resolve('base', { darkMode: true });
+    expect(baseDark.value('treemapTitleColor')).toBe(baseDark.value('titleColor'));
+    expect(baseDark.number('treemapTitleFontSize')).toBe(14);
+  });
 });
