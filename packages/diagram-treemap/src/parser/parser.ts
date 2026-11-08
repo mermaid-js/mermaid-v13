@@ -333,12 +333,14 @@ class TreemapParser {
    */
   private tested(kinds: readonly number[], j = this.i): void {
     const p = this.probe;
-    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
+    if (p === undefined) return;
+    if (p.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
   }
 
   /** Consume a token of `kind` and return its index, or fail. */
   private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
+    // A plain parse builds no probe list.
+    if (this.probe !== undefined) this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
