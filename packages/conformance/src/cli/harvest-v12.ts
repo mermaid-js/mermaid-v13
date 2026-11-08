@@ -82,6 +82,16 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/cynefin.md',
   },
+  wardley: {
+    header: 'wardley-beta',
+    files: [
+      'packages/mermaid/src/diagrams/wardley/wardleyParser.spec.ts',
+      'packages/mermaid/src/diagrams/wardley/wardleyBuilder.spec.ts',
+      'packages/examples/src/examples/wardley.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/wardley.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;
