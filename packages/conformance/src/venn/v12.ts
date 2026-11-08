@@ -10,8 +10,7 @@
  * - a style is `[targets, [key, value][]]`, its properties in v12's object order;
  * - the title is the in-text one: the oracle never passes the front matter on, so
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too). v13 strips
- *   one pair of surrounding quotes from it (D416); `v13.ts` compares v13's title before that
- *   step, and the step has its own specs in the venn package.
+ *   one pair of surrounding quotes from it (D416), so a quoted title is a listed divergence.
  */
 import { decodeEntities as d } from '../flowchart/v12.ts';
 

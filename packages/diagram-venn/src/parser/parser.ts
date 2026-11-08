@@ -24,15 +24,15 @@
  *
  * v12's DB throws two errors, kept here as diagnostics with v12's message, after which the
  * statement and the parse go on (R-PARSE-4): `union requires multiple identifiers` and
- * `unknown set identifier: <ids>` (a `union` naming a set no earlier `set` declared). Neither
- * union reaches the model, as in v12. Unlike jison the parser does not stop at the first
- * syntax error: it reports it, skips to the next line break and carries on, so each line gives
- * at most one syntax diagnostic (one error, one diagnostic: what follows a bad token on its line
- * is not reported again).
+ * `unknown set identifier: <ids>` (a `union` naming a set no earlier `set` declared). Such a
+ * union is not in the model, as in v12, and the indented `text` lines after it get no sets (they
+ * are not in the model either). Unlike jison the parser does not stop at the first syntax
+ * error: it reports it and skips to the next statement, at a statement keyword (`set`, `union`,
+ * `text`, `style`, `title`) or a line break, so each statement gives at most one syntax
+ * diagnostic and N bad statements give N. A keyword where a statement wanted something else
+ * starts the next statement (`set A: set B` is one error).
  *
- * Four warnings, one per parse each (D417): `VENN_DUPLICATE` (a repeated `set` or `union`),
- * `VENN_INVALID_SIZE` (a negative size), `VENN_UNKNOWN_TARGET` (a text node or style naming
- * nothing drawn) and `VENN_EMPTY` (no set, and no error).
+ * The four D417 warnings are `./warnings.ts`'s.
  *
  * Symbols (D418): a `set` statement defines its id (`set`; a repeat refers to the first), and the
  * ids in `union`, `text` and `style` refer to it; text-node ids are `text` symbols (the first of
@@ -40,24 +40,25 @@
  * text reference when a text node has it, else a set reference. Ranges are the id tokens,
  * quotes included (D191).
  */
-import { Kind, kindSet, LineIndex, ParseState, sourceView } from '@mermaid-js/core/parser-kit';
+import {
+  Kind,
+  kindSet,
+  LineIndex,
+  ParseState,
+  significantTokens,
+  skipTo,
+  sourceView,
+} from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
   StatementSpan,
+  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import {
-  VENN_DUPLICATE,
-  VENN_EMPTY,
-  VENN_INVALID_SIZE,
-  VENN_UNION_ONE_SET,
-  VENN_UNKNOWN_SET,
-  VENN_UNKNOWN_TARGET,
-} from '../codes.ts';
+import { VENN_UNION_ONE_SET, VENN_UNKNOWN_SET } from '../codes.ts';
 import type { VennModel, VennStyle, VennSubset, VennTextNode } from '../model.ts';
 import type {
   VennDocument,
@@ -72,7 +73,10 @@ import type {
 } from './ast.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
+import { esc, idText, normalizeText, titleText } from './text.ts';
 import { T } from './tokens.ts';
+import { warnVenn } from './warnings.ts';
+import type { Placed } from './warnings.ts';
 
 export interface VennParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -83,6 +87,9 @@ export type VennParseResult = ParseResult<VennModel, VennDocument>;
 
 /** Trivia the parser skips: comments, directives and a dropped `;`. */
 const TRIVIA = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
+const STATEMENT_KINDS = [T.Title, T.Set, T.Union, T.Text, T.IndentText, T.Style] as const;
+/** Where recovery resumes (R-PARSE-4): a statement keyword, a line break or the end. */
+const BOUNDARY = kindSet(...STATEMENT_KINDS, Kind.Newline, T.Eof, Kind.EOF);
 const ID_KINDS = kindSet(T.Identifier, T.String);
 const LABEL_KINDS = kindSet(T.QuotedLabel, T.Label);
 const VALUE_KINDS = kindSet(T.Identifier, T.Numeric, T.HexColor, T.RgbColor, T.RgbaColor);
@@ -112,6 +119,9 @@ const STYLE_HINT =
 const QUOTE_HINT =
   'an id is letters, digits, `_` and `-`, starting with a letter or `_`; quote any other id, as in `set "Ä b"`';
 
+/** U+007F: ids are ASCII. */
+const LAST_ASCII = 0x7f;
+
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
  * instance, so its stack is captured once.
@@ -119,59 +129,21 @@ const QUOTE_HINT =
 class Stop extends Error {}
 const STOP = new Stop();
 
-/**
- * `%`, `>`, `@`, `#` and `+` percent-encoded (the separators of venn ids), and so are the
- * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
- * U+FFFF). Two hex digits up to U+007F, four above, so the encoding stays one-to-one.
- */
-const ESCAPED = '%>@#+\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-const TWO_DIGITS = 0x80;
-function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
+/** The optional `[label]` and `: size` after the ids of a `set` or `union`, and where they end. */
+interface Tail {
+  label?: string;
+  size?: number;
+  end: number;
 }
 
-/** Whether `text` is wrapped in one pair of `"` (after trimming). */
-function quoted(trimmed: string): boolean {
-  return trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"');
-}
-
-/** v12's `normalizeText`: trimmed, then one pair of surrounding `"` removed. */
-function normalizeText(text: string): string {
-  const trimmed = text.trim();
-  return quoted(trimmed) ? trimmed.slice(1, -1) : trimmed;
-}
-
-/** D416: one pair of surrounding quotes removed; any other title as v12 kept it. */
-function titleText(text: string): string {
-  const trimmed = text.trim();
-  return quoted(trimmed) ? trimmed.slice(1, -1) : text;
-}
-
-/** `a`, `a and b`, `a, b and c`. */
-function listOf(parts: readonly string[]): string {
-  if (parts.length < 2) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1] ?? ''}`;
-}
-
-/** A key for a list of ids (they may hold any character but `"`). */
-const keyOf = (ids: readonly string[]): string => JSON.stringify(ids);
-
-/** A model entry with the statement it came from, for the warnings. */
-interface Placed<V> {
-  value: V;
+/** What a `set` or `union` adds to the model (pitfall 10). */
+interface SubsetParts {
+  ast: string;
+  sets: string[];
+  /** How many ids were written (`union A,A` is two), for the default size. */
+  written: number;
+  tail: Tail;
   range: Range;
-  /** What a warning shows of it. */
-  shown: string;
 }
 
 /** Parse a venn diagram. Never throws: problems are error diagnostics. */
@@ -186,8 +158,8 @@ export function parseVenn(src: string, options: VennParseOptions = {}): VennPars
 class VennParser {
   private readonly pre: PreprocessResult;
   private readonly lexed: Lexed;
-  /** Indexes of the significant tokens into `lexed.tokens`. */
-  private readonly sig: number[] = [];
+  /** The significant tokens (pitfall 7). */
+  private readonly t: TokenView;
   private i = 0;
   private readonly st = new ParseState();
   private lines: LineIndex | undefined;
@@ -200,7 +172,10 @@ class VennParser {
   private readonly styles: Placed<VennStyle>[] = [];
   /** v12's `knownSets`: the ids of the `set` statements read so far. */
   private readonly knownSets = new Set<string>();
-  /** v12's `currentSets`: the sorted ids of the last `set` or `union`. */
+  /**
+   * v12's `currentSets`: the sorted ids of the last `set` or `union`, for the indented `text`
+   * lines after it; undefined after a `union` that failed v12's checks.
+   */
   private currentSets: string[] | undefined;
   /** The last in-text title (v12's `setDiagramTitle`: the last one wins). */
   private title: string | undefined;
@@ -210,12 +185,6 @@ class VennParser {
   private headerRange: Range | undefined;
   /** The open `set` or `union` span, which holds the indented `text` lines after it. */
   private block: StatementSpan | undefined;
-  /**
-   * The kind of the last statement read on this line, and whether its text id was a number (for
-   * the hints of an error right after it).
-   */
-  private lastStatement = 0;
-  private lastNumberId = false;
   /** Ids defined so far per symbol kind: the first occurrence defines (D418). */
   private readonly defined = { set: new Set<string>(), text: new Set<string>() };
   /** One-id style targets, resolved once every set and text id is known. */
@@ -227,16 +196,13 @@ class VennParser {
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    const view: SourceView = sourceView(
+    const view = sourceView(
       src,
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
     this.lexed = lex(src, pre.bodyStart, view);
-    const { tokens } = this.lexed;
-    for (let j = 0; j < tokens.length; j++) {
-      if (TRIVIA[tokens.kind[j] ?? Kind.EOF] !== 1) this.sig.push(j);
-    }
+    this.t = significantTokens(this.lexed.tokens, TRIVIA);
   }
 
   parse(): VennParseResult {
@@ -244,7 +210,13 @@ class VennParser {
     this.header();
     this.document();
     this.resolveStyleTargets();
-    this.warn();
+    warnVenn(st.diagnostics, {
+      subsets: this.subsets,
+      textNodes: this.textNodes,
+      styles: this.styles,
+      header: this.headerRange ?? { start: pre.bodyStart, end: pre.bodyStart },
+      lineOf: (at) => this.lineOf(at),
+    });
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     // D218: the in-text title if non-empty, else the front-matter one; D416 for the quotes.
     const inText = this.title === undefined ? '' : titleText(this.title);
@@ -268,20 +240,18 @@ class VennParser {
   // ---- tokens -------------------------------------------------------------------------
 
   private kind(i = this.i): number {
-    const j = this.sig[i];
-    return j === undefined ? Kind.EOF : (this.lexed.tokens.kind[j] ?? Kind.EOF);
+    return this.t.kind[i] ?? Kind.EOF;
   }
 
   private range(i = this.i): Range {
-    const t = this.lexed.tokens;
-    const j = this.sig[i] ?? t.length - 1;
-    return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
+    const j = Math.min(i, this.t.length - 1);
+    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
   }
 
-  /** A token's text as v12's parser read it (`Lexed.text`). */
+  /** A token's text as v12's parser read it (`Lexed.textOf`). */
   private raw(i = this.i): string {
-    const j = this.sig[i];
-    return j === undefined ? '' : this.lexed.text(j);
+    if (i >= this.t.length) return '';
+    return this.lexed.textOf(this.kind(i), this.t.start[i] ?? 0, this.t.end[i] ?? 0);
   }
 
   private is(set: Uint8Array, i = this.i): boolean {
@@ -339,15 +309,16 @@ class VennParser {
     throw STOP;
   }
 
-  /** Why the current token cannot start a statement, where a likely cause shows (for `fail`). */
-  private explain(): string | undefined {
+  /**
+   * Why the current token cannot start a statement, where a likely cause shows: `prev` is the
+   * statement right before it on the same line.
+   */
+  private explain(prev: VennStatementNode | undefined): string | undefined {
     const k = this.kind();
-    const prev = this.lastStatement;
     if (k === T.Venn) return ONE_HEADER;
-    if (prev === T.Set && (k === T.Comma || this.is(ID_KINDS))) return ONE_SET;
-    if (this.is(LABEL_KINDS)) {
-      return prev === T.Text && this.lastNumberId ? NUMBER_LABEL : LABEL_HINT;
-    }
+    if (prev?.type === 'Set' && (k === T.Comma || this.is(ID_KINDS))) return ONE_SET;
+    // A text statement takes a label after an id or a string, so one it left was after a number.
+    if (this.is(LABEL_KINDS)) return prev?.type === 'Text' ? NUMBER_LABEL : LABEL_HINT;
     if (k === T.Colon) return SIZE_HINT;
     return undefined;
   }
@@ -408,18 +379,25 @@ class VennParser {
     });
   }
 
-  /** Skip to the next line break after an error (R-PARSE-4). */
-  private recover(): void {
-    while (!this.atEnd() && this.kind() !== Kind.Newline) this.i++;
+  /**
+   * Skip to the next statement after an error in the statement that started at token `from`
+   * (R-PARSE-4): a statement keyword or a line break. A keyword after the statement's first
+   * token is where the next one starts.
+   */
+  private recover(from: number): void {
+    const at = this.i > from && this.is(BOUNDARY) ? this.i : this.i + 1;
+    this.i = skipTo(this.t, Math.min(at, this.t.length), BOUNDARY);
   }
 
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
+  /** Run one statement rule; on failure, recover. Returns what the rule made. */
+  private statement<R>(rule: () => R): R | undefined {
+    const from = this.i;
     try {
-      rule();
+      return rule();
     } catch (error) {
       if (error !== STOP) throw error;
-      this.recover();
+      this.recover(from);
+      return undefined;
     }
   }
 
@@ -443,12 +421,13 @@ class VennParser {
 
   /** `( NEWLINE | statement )* EOF` */
   private document(): void {
+    /** The statement before on this line, for the hints. */
+    let prev: VennStatementNode | undefined;
     for (;;) {
       if (this.atEnd()) return;
       const k = this.kind();
       if (k === Kind.Newline) {
-        // The hints read the statement before on the same line only.
-        this.lastStatement = 0;
+        prev = undefined;
         this.i++;
         continue;
       }
@@ -458,15 +437,16 @@ class VennParser {
       }
       // The `set` or `union` span ends before any statement but an indented `text`.
       if (k !== T.IndentText) this.block = undefined;
-      this.statement(() => {
-        if (k === T.Title) this.titleStatement();
-        else if (k === T.Set) this.setStatement();
-        else if (k === T.Union) this.unionStatement();
-        else if (k === T.Text) this.textStatement();
-        else if (k === T.IndentText) this.indentedText();
-        else if (k === T.Style) this.styleStatement();
-        else if (this.headerSeen || this.headerReported) this.fail(STATEMENT, this.explain());
-        else this.fail(HEADER, HEADER_HINT);
+      const before = prev;
+      prev = this.statement((): VennStatementNode => {
+        if (k === T.Title) return this.titleStatement();
+        if (k === T.Set) return this.setStatement();
+        if (k === T.Union) return this.unionStatement();
+        if (k === T.Text) return this.textStatement();
+        if (k === T.IndentText) return this.indentedText();
+        if (k === T.Style) return this.styleStatement();
+        if (this.headerSeen || this.headerReported) this.fail(STATEMENT, this.explain(before));
+        return this.fail(HEADER, HEADER_HINT);
       });
     }
   }
@@ -488,78 +468,75 @@ class VennParser {
   }
 
   /** `[ label ]`: the label as v12's DB kept it (an empty one is none), and where it ends. */
-  private label(): { label?: string; end?: number } {
-    if (!this.is(LABEL_KINDS)) return {};
+  private label(end: number): { label?: string; end: number } {
+    if (!this.is(LABEL_KINDS)) return { end };
     const raw = this.raw();
-    const end = this.range(this.i++).end;
-    return raw ? { label: normalizeText(raw), end } : { end };
+    const at = this.range(this.i++).end;
+    return raw ? { label: normalizeText(raw), end: at } : { end: at };
   }
 
-  /** `[ ":" NUMERIC ]`: the size as v12 read it (`parseFloat`), and where it ends. */
-  private size(): { size?: number; end?: number } {
-    if (this.kind() !== T.Colon) return {};
+  /** `[ label ] [ ":" NUMERIC ]` after the ids ending at `end`; the size as v12's `parseFloat`. */
+  private tail(end: number): Tail {
+    const tail: Tail = this.label(end);
+    if (this.kind() !== T.Colon) return tail;
     this.i++;
     if (this.kind() !== T.Numeric) this.fail(SIZE, SIZE_FORM);
-    const size = Number.parseFloat(this.raw());
-    return { size, end: this.range(this.i++).end };
+    tail.size = Number.parseFloat(this.raw());
+    tail.end = this.range(this.i++).end;
+    return tail;
   }
 
   /** `TITLE`: v12 keeps the text after `title` and one blank (`substr(6)`). */
-  private titleStatement(): void {
-    this.lastStatement = T.Title;
+  private titleStatement(): VennTitleNode {
     const range = this.range();
     const text = this.raw(this.i++).slice(6);
     this.title = text;
     const node: VennTitleNode = { id: this.id('title'), type: 'Title', range, text };
     this.children.push(node);
     this.st.statement('title', range);
+    return node;
   }
 
   /** `SET id [ label ] [ ":" NUMERIC ]` */
-  private setStatement(): void {
-    this.lastStatement = T.Set;
+  private setStatement(): VennSetNode {
     const start = this.range(this.i++).start;
     const name = this.ident(SET_ID);
-    const { label, end: labelEnd } = this.label();
-    const { size, end: sizeEnd } = this.size();
-    const range = { start, end: sizeEnd ?? labelEnd ?? name.range.end };
+    const tail = this.tail(name.range.end);
+    const range = { start, end: tail.end };
     const node: VennSetNode = {
       id: this.id(`set:${esc(name.name)}`),
       type: 'Set',
       range,
       name,
-      ...(label !== undefined ? { label } : {}),
-      ...(size !== undefined ? { size } : {}),
+      ...optional(tail),
     };
     this.children.push(node);
     this.symbol('set', name);
     this.knownSets.add(name.name);
     this.block = this.st.statement('set', { ...range });
-    this.addSubset(node.id, [name.name], 1, label, size, range);
+    this.addSubset({ ast: node.id, sets: [name.name], written: 1, tail, range });
+    return node;
   }
 
   /** `UNION ids [ label ] [ ":" NUMERIC ]`, then v12's two checks. */
-  private unionStatement(): void {
-    this.lastStatement = T.Union;
+  private unionStatement(): VennUnionNode {
     const start = this.range(this.i++).start;
     const members = this.ids(SET_ID);
-    const { label, end: labelEnd } = this.label();
-    const { size, end: sizeEnd } = this.size();
-    const last = members[members.length - 1]?.range.end ?? start;
-    const range = { start, end: sizeEnd ?? labelEnd ?? last };
+    const tail = this.tail(members[members.length - 1]?.range.end ?? start);
+    const range = { start, end: tail.end };
     const sets = members.map((m) => m.name).sort();
     const node: VennUnionNode = {
       id: this.id(`union:${sets.map(esc).join('+')}`),
       type: 'Union',
       range,
       members,
-      ...(label !== undefined ? { label } : {}),
-      ...(size !== undefined ? { size } : {}),
+      ...optional(tail),
     };
     this.children.push(node);
     for (const m of members) this.symbol('set', m, 'ref');
-    this.currentSets = sets;
     this.block = this.st.statement('union', { ...range });
+    // v12 threw before it added the union: the indented text lines after it get no sets.
+    this.currentSets = undefined;
     const d = this.st.diagnostics;
     if (members.length < 2) {
       d.error(
@@ -567,7 +544,7 @@ class VennParser {
         'union requires multiple identifiers: a `union` is the overlap of two or more sets, as in `union A,B`.',
         range
       );
-      return;
+      return node;
     }
     const unknown = members.filter((m) => !this.knownSets.has(m.name));
     const first = unknown[0];
@@ -575,34 +552,31 @@ class VennParser {
       const names = unknown.map((m) => m.name).join(', ');
       d.error(
         VENN_UNKNOWN_SET,
-        `unknown set identifier: ${names}. A \`union\` names sets declared before it, as in \`set ${first.name}\`.`,
+        `unknown set identifier: ${names}. A \`union\` names sets declared before it, as in \`set ${idText(first.name)}\`.`,
         first.range
       );
-      return;
+      return node;
     }
-    this.addSubset(node.id, sets, members.length, label, size, range);
+    this.addSubset({ ast: node.id, sets, written: members.length, tail, range });
+    return node;
   }
 
   /** `TEXT ids ( NUMERIC | id [ label ] )` */
-  private textStatement(): void {
-    this.lastStatement = T.Text;
-    this.lastNumberId = false;
+  private textStatement(): VennTextStatementNode {
     const start = this.range(this.i++).start;
     const members = this.ids(SET_ID, TEXT_HINT);
     for (const m of members) this.symbol('set', m, 'ref');
     const sets = members.map((m) => m.name).sort();
-    this.textTail(start, sets, members, false);
+    return this.textTail(start, sets, members, false);
   }
 
   /** `INDENT_TEXT "text" ( NUMERIC | id [ label ] )`: the sets of the last `set` or `union`. */
-  private indentedText(): void {
-    this.lastStatement = T.Text;
-    this.lastNumberId = false;
+  private indentedText(): VennTextStatementNode {
     this.i++;
     // The `text` after the indent (jison returns no token for it).
     const start = this.range().start;
     if (this.kind() === T.IndentTextKeyword) this.i++;
-    this.textTail(start, this.currentSets, [], true);
+    return this.textTail(start, this.currentSets, [], true);
   }
 
   private textTail(
@@ -610,18 +584,14 @@ class VennParser {
     sets: readonly string[] | undefined,
     members: VennName[],
     indented: boolean
-  ): void {
+  ): VennTextStatementNode {
     const number = this.kind() === T.Numeric;
     if (!number && !this.is(ID_KINDS)) this.fail(TEXT_ID, indented ? undefined : TEXT_HINT);
     const name = this.name(this.i++);
-    let label: string | undefined;
-    let end = name.range.end;
-    if (number) this.lastNumberId = true;
-    else {
-      const read = this.label();
-      label = read.label;
-      end = read.end ?? end;
-    }
+    // A number id takes no label (v12's grammar).
+    const { label, end } = number
+      ? { label: undefined, end: name.range.end }
+      : this.label(name.range.end);
     const range = { start, end };
     const node: VennTextStatementNode = {
       id: this.id(`text:${esc(name.name)}`),
@@ -639,7 +609,7 @@ class VennParser {
       (this.block.children ??= []).push({ kind: 'text', range });
       this.block.range.end = end;
     } else this.st.statement('text', range);
-    if (sets === undefined) return;
+    if (sets === undefined) return node;
     // The sets of an indented text are its `set` or `union`'s (shared, not copied: a wide
     // union with many text lines stays linear).
     const value: VennTextNode = {
@@ -649,11 +619,11 @@ class VennParser {
       ...(label !== undefined ? { label } : {}),
     };
     this.textNodes.push({ value, range, shown: `the text node ${this.shown(name.range)}` });
+    return node;
   }
 
   /** `STYLE ids field ( "," field )*` */
-  private styleStatement(): void {
-    this.lastStatement = T.Style;
+  private styleStatement(): VennStyleNode {
     const start = this.range(this.i++).start;
     const targets = this.ids(STYLE_TARGET);
     const fields = [this.field()];
@@ -684,6 +654,7 @@ class VennParser {
       properties,
     };
     this.styles.push({ value, range, shown: 'the style' });
+    return node;
   }
 
   /** `field = IDENTIFIER ":" ( STRING | value+ )`; values joined with a blank, as in v12. */
@@ -711,20 +682,13 @@ class VennParser {
   // ---- model and symbols --------------------------------------------------------------
 
   /** v12's `addSubsetData`: sorted ids, the size or `10 / n²`, the last sets for `text`. */
-  private addSubset(
-    ast: string,
-    sets: string[],
-    written: number,
-    label: string | undefined,
-    size: number | undefined,
-    range: Range
-  ): void {
+  private addSubset({ ast, sets, written, tail, range }: SubsetParts): void {
     this.currentSets = sets;
     const value: VennSubset = {
       ast,
       sets,
-      size: size ?? 10 / Math.pow(written, 2),
-      ...(label !== undefined ? { label } : {}),
+      size: tail.size ?? 10 / Math.pow(written, 2),
+      ...(tail.label !== undefined ? { label: tail.label } : {}),
     };
     this.subsets.push({ value, range, shown: this.shown(range) });
   }
@@ -744,114 +708,15 @@ class VennParser {
       this.st.symbol(t.name, text ? 'text' : 'set', t.range, 'ref');
     }
   }
-
-  // ---- warnings (D417) ----------------------------------------------------------------
-
-  private warn(): void {
-    this.warnDuplicates();
-    this.warnSizes();
-    this.warnUnknownTargets();
-    const d = this.st.diagnostics;
-    if (this.subsets.length === 0 && !d.hasErrors) {
-      d.warning(
-        VENN_EMPTY,
-        'The diagram has no sets, so only its title is drawn. Add a set with `set A`.',
-        this.headerRange ?? { start: this.pre.bodyStart, end: this.pre.bodyStart }
-      );
-    }
-  }
-
-  private at(p: Placed<unknown>): string {
-    return `${p.shown} at line ${this.lineOf(p.range.start)}`;
-  }
-
-  /** One warning naming every `set` or `union` that repeats an earlier one. */
-  private warnDuplicates(): void {
-    const seen = new Set<string>();
-    const repeats = this.subsets.filter((p) => {
-      const key = keyOf(p.value.sets);
-      if (seen.has(key)) return true;
-      seen.add(key);
-      return false;
-    });
-    const first = repeats[0];
-    if (!first) return;
-    const verb = repeats.length === 1 ? 'repeats an earlier one' : 'repeat earlier ones';
-    this.st.diagnostics.warning(
-      VENN_DUPLICATE,
-      `A set or overlap is declared more than once: ${listOf(repeats.map((p) => this.at(p)))} ${verb}. Each copy is drawn, and the last size counts; declare each once.`,
-      first.range
-    );
-  }
-
-  /** One warning naming every negative size. */
-  private warnSizes(): void {
-    const bad = this.subsets.filter((p) => p.value.size < 0);
-    const first = bad[0];
-    if (!first) return;
-    this.st.diagnostics.warning(
-      VENN_INVALID_SIZE,
-      `A size below 0 is laid out as 0: ${listOf(bad.map((p) => this.at(p)))}. Use a size of 0 or more.`,
-      first.range
-    );
-  }
-
-  /**
-   * One warning naming every text node and style whose sets are not drawn: no `set` or `union`
-   * has them (nor are they a pair of a three-or-more overlap, which v12 adds), and a one-id style
-   * names no text node either.
-   */
-  private warnUnknownTargets(): void {
-    // One key per sets array: indented texts share their union's.
-    const keys = new Map<readonly string[], string>();
-    const key = (ids: readonly string[]): string => {
-      let k = keys.get(ids);
-      if (k === undefined) keys.set(ids, (k = keyOf(ids)));
-      return k;
-    };
-    const declared = new Set<string>();
-    /** For each id, the three-or-more overlaps it is in (indexes), for the pairs v12 adds. */
-    const wide = new Map<string, Set<number>>();
-    this.subsets.forEach(({ value }, n) => {
-      declared.add(key(value.sets));
-      if (value.sets.length < 3) return;
-      for (const id of value.sets) {
-        let of = wide.get(id);
-        if (!of) wide.set(id, (of = new Set()));
-        of.add(n);
-      }
-    });
-    const drawn = (ids: readonly string[]): boolean => {
-      if (declared.has(key(ids))) return true;
-      if (ids.length !== 2) return false;
-      const a = wide.get(ids[0] ?? '');
-      const b = wide.get(ids[1] ?? '');
-      if (!a || !b) return false;
-      const [few, many] = a.size < b.size ? [a, b] : [b, a];
-      for (const n of few) if (many.has(n)) return true;
-      return false;
-    };
-    const textIds = new Set(this.textNodes.map((t) => t.value.id));
-    const named: Placed<unknown>[] = this.textNodes.filter((t) => !drawn(t.value.sets));
-    for (const s of this.styles) {
-      const { targets } = s.value;
-      const one = targets.length === 1 ? targets[0] : undefined;
-      if (!drawn(targets) && !(one !== undefined && textIds.has(one))) named.push(s);
-    }
-    named.sort((a, b) => a.range.start - b.range.start);
-    const first = named[0];
-    if (!first) return;
-    const verb = named.length === 1 ? 'names' : 'name';
-    this.st.diagnostics.warning(
-      VENN_UNKNOWN_TARGET,
-      `Not drawn: ${listOf(named.map((p) => this.at(p)))} ${verb} no declared set, overlap or text node. Declare it with \`set\` or \`union\`.`,
-      first.range
-    );
-  }
 }
 
-/** U+007F: ids are ASCII. */
-const LAST_ASCII = 0x7f;
+/** The label and size of a tail, as AST fields (absent when not written). */
+function optional(tail: Tail): { label?: string; size?: number } {
+  return {
+    ...(tail.label !== undefined ? { label: tail.label } : {}),
+    ...(tail.size !== undefined ? { size: tail.size } : {}),
+  };
+}
 
 /** Why stray characters are not venn, where a likely cause shows. */
 function explainCharacters(text: string): string | undefined {

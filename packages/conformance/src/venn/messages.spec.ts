@@ -1,41 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { JISON_NAMES, parseVenn, VennTokenKind } from '@mermaid-js/diagram-venn';
+import { parseVenn } from '@mermaid-js/diagram-venn';
 import { mutator, random } from '../fuzz/mutator.ts';
-import { vennCases, vennCorpus } from './corpus.ts';
+import { INTERNAL_NAMES, vennCases, vennCorpus, withoutQuotes } from './corpus.ts';
 
 /**
- * R-ERR-5: messages name constructs in Mermaid terms, never a token kind or grammar rule. We
- * break every venn corpus source in seeded ways and check every message produced.
+ * R-ERR-5: messages name constructs in Mermaid terms, never a token kind or grammar rule
+ * ({@link INTERNAL_NAMES}). We break every venn corpus source in seeded ways and check every
+ * message produced.
  */
-// v12's `venn.jison` rules and `grammar/venn.ebnf`'s compound ones (`statement`, `document`,
-// `line` and `value` are plain words).
-const RULES = [
-  'optNewlines',
-  'identifierList',
-  'indentedTextTail',
-  'stylesOpt',
-  'styleField',
-  'styleValue',
-  'valueTokens',
-  'valueToken',
-  'IndentedText',
-  'textId',
-];
-// Token names: jison terminals with `_` or all capitals, and v13 kind names that are compounds
-// (`IndentText`, `HexColor`, …); plain words such as `set` are Mermaid syntax.
-const TOKENS = [
-  ...Object.values(JISON_NAMES).filter((n) => /_|^[A-Z]{2,}$/.test(n)),
-  ...Object.keys(VennTokenKind).filter((n) => /^[A-Z][a-z]+[A-Z]/.test(n)),
-];
-const BANNED = new RegExp(`\\b(?:${[...RULES, ...TOKENS].join('|')})\\b`);
-/** The author's own text a message quotes: what was found, and the statements a warning names. */
-const quoted = (message: string): string =>
-  message
-    .replace(/got `[\s\S]*?`/g, 'got `…`')
-    .replace(/character `[\s\S]*?`/g, 'character `…`')
-    .replace(/`[^`]*` at line/g, '`…` at line')
-    .replace(/text node `[^`]*`/g, 'text node `…`');
-
 const FRAGMENTS = ['[', ']', '["', '"]', '"', ',', ':', '\n', '\r\n', '  ', '\t', '%%', ';'];
 const FRAGMENTS_MORE = [
   'venn-beta',
@@ -65,7 +37,10 @@ describe('venn error messages', () => {
       const src = next();
       for (const d of parseVenn(src).diagnostics) {
         if (d.severity === 'error') errors++;
-        if (BANNED.test(quoted(d.message)) || d.expected?.some((e) => BANNED.test(e))) {
+        if (
+          INTERNAL_NAMES.test(withoutQuotes(d.message)) ||
+          d.expected?.some((e) => INTERNAL_NAMES.test(e))
+        ) {
           bad.push(`${JSON.stringify(src)}: ${d.message}`);
         }
       }

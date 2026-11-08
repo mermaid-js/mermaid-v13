@@ -216,6 +216,33 @@ describe('venn errors (R-PARSE-4)', () => {
     expect(model.subsets.map((s) => s.sets)).toEqual([['A'], ['B']]);
   });
 
+  it('gives the indented text lines after a failed union no sets, and no model entry', () => {
+    for (const union of ['union A', 'union A,Q']) {
+      const { model, diagnostics } = parse(`set A\n${union}\n  text t\nset B`);
+      expect(model.textNodes).toEqual([]);
+      expect(diagnostics.filter((d) => d.severity === 'warning')).toEqual([]);
+    }
+  });
+
+  it('quotes an id the unknown-set hint suggests when it is not a bare id', () => {
+    const message = (union: string) =>
+      parse(`set A\n${union}`).diagnostics.find((d) => d.code === VENN_UNKNOWN_SET)?.message;
+    expect(message('union A,"x+y"')).toContain('as in `set "x+y"`');
+    expect(message('union A,"text"')).toContain('as in `set "text"`');
+    expect(message('union A,Q')).toContain('as in `set Q`');
+  });
+
+  it('resumes at the next statement keyword, so two errors on one line give two', () => {
+    const { diagnostics, model } = parse('set A: set Ä\nset B B set C set "D');
+    expect(diagnostics.map((d) => d.code)).toEqual([
+      'UNEXPECTED',
+      'UNEXPECTED_CHARACTER',
+      'UNEXPECTED',
+      'UNCLOSED_STRING',
+    ]);
+    expect(model.subsets.map((s) => s.sets[0])).toEqual(['B', 'C']);
+  });
+
   it('checks a union against the sets declared before it, case-sensitively (12.2.0)', () => {
     expect(errors('venn-beta\nunion A,B\nset A\nset B')).toEqual([VENN_UNKNOWN_SET]);
     expect(errors('venn-beta\nset A\nset B\nunion a,B')).toEqual([VENN_UNKNOWN_SET]);

@@ -8,6 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { JISON_NAMES, VennTokenKind } from '@mermaid-js/diagram-venn';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { body, crlf, tabs } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
@@ -92,13 +93,57 @@ export async function vennGateCorpus(): Promise<CorpusItem[]> {
 export const UNCLOSED = 'venn-cases/unclosed-directive-';
 
 /**
+ * The lexer gate's set without the unclosed directives (and their variants): every source the
+ * syntax gates (grammar lexer, grammar differential, generated sentences) compare.
+ */
+export async function vennSyntaxCorpus(): Promise<CorpusItem[]> {
+  return (await vennGateCorpus()).filter((item) => !item.id.startsWith(UNCLOSED));
+}
+
+/**
  * The gate's generated variants for the parity suite (the e2e fixtures, spec strings and cases
  * themselves are in the suite's dirs and files), ids prefixed `venn-gate/`. The unclosed
  * directives are left out: the two cases are listed divergences of core's directive reading.
  */
 export async function vennParityCorpus(): Promise<CorpusItem[]> {
   const listed = new Set([...(await vennCorpus()), ...vennCases()].map((c) => c.id));
-  return (await vennGateCorpus())
-    .filter((item) => !listed.has(item.id) && !item.id.startsWith(UNCLOSED))
+  return (await vennSyntaxCorpus())
+    .filter((item) => !listed.has(item.id))
     .map((item) => ({ id: `venn-gate/${item.id}`, source: item.source }));
 }
+
+/**
+ * Names no message may hold (R-ERR-5): v12's jison terminals (with `_` or all capitals), v13's
+ * compound kind names (`IndentText`, `HexColor`, …), and the compound rule names of v12's
+ * `venn.jison` and `grammar/venn.ebnf` (`statement`, `document`, `line` and `value` are plain
+ * words, and `set` and the other keywords are Mermaid syntax).
+ */
+export const INTERNAL_NAMES = new RegExp(
+  `\\b(?:${[
+    ...Object.values(JISON_NAMES).filter((n) => /_|^[A-Z]{2,}$/.test(n)),
+    ...Object.keys(VennTokenKind).filter((n) => /^[A-Z][a-z]+[A-Z]/.test(n)),
+    'optNewlines',
+    'identifierList',
+    'indentedTextTail',
+    'stylesOpt',
+    'styleField',
+    'styleValue',
+    'valueTokens',
+    'valueToken',
+    'IndentedText',
+    'textId',
+  ].join('|')})\\b`
+);
+
+/**
+ * A message without the author's own text it quotes (what was found, a bad character, the
+ * statements and text nodes a warning names), which may hold any word.
+ */
+export const withoutQuotes = (message: string): string =>
+  message
+    .replace(/got `[\s\S]*?`/g, 'got `…`')
+    .replace(/character `[\s\S]*?`/g, 'character `…`')
+    .replace(/`[^`]*` at line/g, '`…` at line')
+    .replace(/text node `[^`]*`/g, 'text node `…`')
+    .replace(/identifier: [^.]*\./g, 'identifier: ….')
+    .replace(/as in `set [^`]*`/g, 'as in `set …`');

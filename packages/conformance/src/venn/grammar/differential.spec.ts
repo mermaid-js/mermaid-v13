@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { detectVenn } from '@mermaid-js/diagram-venn';
 import { loadOracle } from '../../oracle.ts';
-import { UNCLOSED, vennGateCorpus } from '../corpus.ts';
+import { vennSyntaxCorpus } from '../corpus.ts';
 import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts';
 
 /**
@@ -17,8 +17,8 @@ describe('venn grammar differential', () => {
     const diffs: string[] = [];
     let compared = 0;
     let rejected = 0;
-    for (const item of await vennGateCorpus()) {
-      if (item.id.startsWith(UNCLOSED) || !detectVenn(item.source)) continue;
+    for (const item of await vennSyntaxCorpus()) {
+      if (!detectVenn(item.source)) continue;
       compared++;
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);

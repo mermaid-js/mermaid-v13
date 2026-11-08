@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadJisonLexerOracle } from '../../jison/oracle.ts';
-import { UNCLOSED, vennGateCorpus } from '../corpus.ts';
+import { vennSyntaxCorpus } from '../corpus.ts';
 import { asJison, grammarTokens } from './venn-grammar.ts';
 
 /**
@@ -15,8 +15,7 @@ describe('venn grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
     const oracle = await loadJisonLexerOracle('venn');
     const diffs: string[] = [];
-    for (const item of await vennGateCorpus()) {
-      if (item.id.startsWith(UNCLOSED)) continue;
+    for (const item of await vennSyntaxCorpus()) {
       const v12 = await oracle.lexedText(item.source);
       if (v12 === undefined) continue;
       const ours = grammarTokens(item.source).input.text;
@@ -30,8 +29,7 @@ describe('venn grammar lexer', () => {
     const oracle = await loadJisonLexerOracle('venn');
     const diffs: string[] = [];
     let compared = 0;
-    for (const item of await vennGateCorpus()) {
-      if (item.id.startsWith(UNCLOSED)) continue;
+    for (const item of await vennSyntaxCorpus()) {
       const v12 = await oracle.tokens(item.source);
       if (!v12) continue;
       compared++;

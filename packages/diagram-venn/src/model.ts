@@ -5,7 +5,9 @@
  * - ids, labels and text as v12's grammar handed them to its DB and its `normalizeText` left
  *   them: trimmed, then one pair of surrounding `"` removed; entities as written (`&amp;`, and
  *   v12's `#35;` form as `&#35;`), resolved when labels are laid out;
- * - member ids sorted as v12 sorted them (`Array.prototype.sort`, UTF-16 order of v12's text);
+ * - member ids sorted with `Array.prototype.sort` (UTF-16 order), as v12 sorted them, but on
+ *   the text above: v12 sorted its `encodeEntities` placeholders (`ﬂ°°35¶ß`), so ids holding an
+ *   entity can come in another order than v12's (a listed divergence, `union-entity-sort`);
  * - a size as written (`parseFloat`), negative ones too (the layout reads them as 0, with
  *   `VENN_INVALID_SIZE`); with none, `10 / n²` for `n` ids as written (`union A,A` is 2.5);
  * - style values as v12 joined them: a quoted value without its quotes, other value tokens
@@ -33,7 +35,11 @@ export interface VennSubset {
 export interface VennTextNode {
   /** `text:<id>`; `@2`, … for a repeat (D418). */
   readonly ast: AstId;
-  /** The sets of the area it sits in, sorted: as written, or the last `set` or `union`'s. */
+  /**
+   * The sets of the area it sits in, sorted: as written, or the last `set` or `union`'s for an
+   * indented one (a `union` that failed v12's checks gives none, and its indented text lines
+   * are not in the model).
+   */
   readonly sets: readonly string[];
   readonly id: string;
   /** The `[…]` label, when written and not empty. */

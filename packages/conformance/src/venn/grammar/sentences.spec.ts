@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildGenerator } from '@mermaid-js/gen-grammar';
 import { loadOracle } from '../../oracle.ts';
-import { UNCLOSED, vennGateCorpus } from '../corpus.ts';
+import { vennSyntaxCorpus } from '../corpus.ts';
 import {
   handWrittenVerdict,
   learnSentenceModel,
@@ -22,7 +22,7 @@ const SENTENCES = 3000;
  */
 describe('venn grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
-    const corpus = (await vennGateCorpus()).filter((c) => !c.id.startsWith(UNCLOSED));
+    const corpus = await vennSyntaxCorpus();
     const model = learnSentenceModel(corpus.map((c) => c.source));
     const generator = buildGenerator(referenceParser(), model);
     const oracle = await loadOracle();

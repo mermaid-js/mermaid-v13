@@ -89,19 +89,25 @@ export interface Lexed {
    * inside, a `[…]` label its inside trimmed. Read token text only through this.
    */
   text(j: number): string;
+  /**
+   * The same text for a token given by its kind and range, for a parser reading a view of the
+   * significant tokens (`significantTokens`), whose indexes are not the stream's.
+   */
+  textOf(kind: number, start: number, end: number): string;
 }
 
 /** Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). */
 export function lex(src: string, from: number, view: SourceView): Lexed {
   const tokens = new VennLexer(src, from, view).run();
+  const textOf = (kind: number, start: number, end: number): string => {
+    const text = cook(src, start, end, view);
+    if (kind === T.QuotedLabel) return text.slice(2, -2);
+    return kind === T.Label ? text.slice(1, -1).trim() : text;
+  };
   return {
     tokens,
-    text(j) {
-      const text = cook(src, tokens.start[j] ?? 0, tokens.end[j] ?? 0, view);
-      const kind = tokens.kind[j];
-      if (kind === T.QuotedLabel) return text.slice(2, -2);
-      return kind === T.Label ? text.slice(1, -1).trim() : text;
-    },
+    textOf,
+    text: (j) => textOf(tokens.kind[j] ?? 0, tokens.start[j] ?? 0, tokens.end[j] ?? 0),
   };
 }
 

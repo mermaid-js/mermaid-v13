@@ -796,6 +796,10 @@
     "source": "venn-beta\n  set A: 1"
   },
   {
+    "id": "venn-cases/union-entity-sort",
+    "source": "venn-beta\n  set \"#35;x\"\n  set \"b\"\n  union \"b\",\"#35;x\""
+  },
+  {
     "id": "venn-cases/recovery-two-bad-lines",
     "source": "venn-beta\n  set A B\n  set C\n  union ,\n  set D",
     "errors": [
@@ -905,7 +909,7 @@
       ["VENN_UNKNOWN_SET", 3],
       ["VENN_UNION_ONE_SET", 3]
     ],
-    "keeps": ["A", "B", "D"]
+    "keeps": ["A", "B", "C", "D"]
   },
   {
     "id": "venn-cases/recovery-five-errors",
@@ -973,7 +977,7 @@
       ["UNEXPECTED_CHARACTER", 4],
       ["UNEXPECTED_CHARACTER", 5]
     ],
-    "keeps": ["A", "B", "D"]
+    "keeps": ["A", "B", "C", "D"]
   },
   {
     "id": "venn-cases/recovery-glued-comments",
@@ -1001,5 +1005,48 @@
       ["UNEXPECTED", 3]
     ],
     "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-two-errors-on-one-line",
+    "source": "venn-beta\nset A: set Ä\nset B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-four-errors-on-one-line",
+    "source": "venn-beta\nset A B set : union A text A\nset C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 2],
+      ["VENN_UNION_ONE_SET", 2],
+      ["UNEXPECTED", 2]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-label-and-string-on-one-line",
+    "source": "venn-beta\nset A[] set \"B\nset C",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED_STRING", 2]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-text-after-unknown-union",
+    "source": "venn-beta\n  set A\n  union A,Q\n    text t1\n  set B\n    text t2",
+    "errors": [["VENN_UNKNOWN_SET", 3]],
+    "keeps": ["A", "B"],
+    "warnings": []
+  },
+  {
+    "id": "venn-cases/recovery-text-after-one-set-union",
+    "source": "venn-beta\n  set A\n  union A\n    text t1\n  set B",
+    "errors": [["VENN_UNION_ONE_SET", 3]],
+    "keeps": ["A", "B"],
+    "warnings": []
   }
 ]

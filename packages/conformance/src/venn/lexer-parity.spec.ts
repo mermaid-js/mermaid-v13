@@ -106,11 +106,11 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
       `venn lexer parity: ${compared} of ${items.length} sources lexed by v12\n`
     );
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer (the
-    // three cases v12 does not detect and the two excluded ones aside; #488 added 22 recovery
-    // cases, one of them without the header).
+    // three cases v12 does not detect and the two excluded ones aside; #488 added 27 recovery
+    // cases, one of them without the header, and `union-entity-sort`).
     expect(e2e).toBe(40);
     expect(specs).toBe(25);
-    expect(cases).toBe(216);
+    expect(cases).toBe(222);
     expect(diffs).toEqual([]);
     // The excluded sources: the two unclosed-directive cases and their variants.
     expect(excluded.filter((id) => !VARIANT.test(id))).toHaveLength(2);
