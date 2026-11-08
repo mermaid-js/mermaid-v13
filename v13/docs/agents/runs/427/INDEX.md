@@ -4,7 +4,7 @@ Integration branch `feature/427_sankey` (from `mermaid-v13` at 12ba676cb).
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T0 core gradients and blend mode (own PR into `mermaid-v13`, `feature/427_sankey-core-t0`) | #492 | — | in progress |
+| T0 core gradients and blend mode (own PR #524 into `mermaid-v13`) | #492 | — | merged into `mermaid-v13` (7623406a4); merged here in 9b295d408 |
 | T1 lexer parity gate and corpus | #494 | #285 (merged) | pending |
 | T2 grammar, parser, model, AST | #496 | #494 | pending |
 | T3 layout | #499 | #496 | pending |
