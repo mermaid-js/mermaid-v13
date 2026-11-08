@@ -7,11 +7,11 @@
  * file is derived from an upstream when its header has that marker. Then:
  * - that header names the upstream's license and copyright holder;
  * - in a published package (`packages/*` without `"private": true`), and in a private one that
- *   holds a file of `REQUIRED_CREDITS` (treemap's d3 ports, ahead of its release), the package root
- *   has a `THIRD_PARTY_NOTICES` that holds the upstream's license text and copyright line (an
- *   upstream that is not MIT in its own section), lists the file by its package-relative path
- *   (in that upstream's section, when the notices have one per upstream) and is in the
- *   package's `"files"`, so it ships in the tarball;
+ *   holds a file of `REQUIRED_CREDITS` (so making a package private does not drop its credits),
+ *   the package root has a `THIRD_PARTY_NOTICES` that holds the upstream's license text and
+ *   copyright line (an upstream that is not MIT in its own section), lists the file by its
+ *   package-relative path (in that upstream's section, when the notices have one per upstream)
+ *   and is in the package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
