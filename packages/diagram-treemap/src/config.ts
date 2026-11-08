@@ -54,3 +54,11 @@ export function treemapLayoutConfig(
         : d.valueFormat,
   };
 }
+
+/** v12's `useMaxWidth` (default true): only a falsy value turns it off (`config?.useMaxWidth || false`). */
+export function treemapUseMaxWidth(
+  section: Readonly<Record<string, unknown>> | undefined
+): boolean {
+  const given = section?.useMaxWidth;
+  return given === undefined || Boolean(given);
+}

@@ -1,12 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
+import { treemapTestTheme } from '../test-context.ts';
 import { context, leaf, model, section } from './fixtures.ts';
 import { layoutTreemap, treemapLayoutViolations, type TreemapLayout } from './index.ts';
 
 let theme: Theme;
 beforeAll(async () => {
-  theme = createTheme(await loadTheme('default'));
+  theme = await treemapTestTheme();
 });
 
 const M = model([

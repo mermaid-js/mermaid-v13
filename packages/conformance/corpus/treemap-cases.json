@@ -754,5 +754,41 @@
   {
     "id": "treemap-cases/layout-long-labels",
     "source": "treemap\n\"A section whose name is far too long for its header band\"\n  \"A leaf whose label cannot fit at any size it may take\": 1\n  \"Big\": 400\n\"&amp; #9829; <b>tags</b>\": 30"
+  },
+  {
+    "id": "treemap-cases/render-simple",
+    "source": "treemap-beta\n\"Section 1\"\n    \"Leaf 1.1\": 12\n    \"Section 1.2\":::cls\n      \"Leaf 1.2.1\": 12:::leafc\n\"Section 2\"\n    \"Leaf 2.1\": 20\n    \"Leaf 2.2\": 25\nclassDef cls fill:#ff0000,stroke:#00ff00,color:#0000ff\nclassDef leafc fill:#ffff00,stroke-width:4px,color:red,font-weight:bold"
+  },
+  {
+    "id": "treemap-cases/render-titles",
+    "source": "---\ntitle: Front matter title\n---\ntreemap\ntitle Budget\naccTitle: Budget by team\naccDescr: Spend per team and project\n\"Team\"\n  \"Alpha\": 30\n  \"Beta\": 10"
+  },
+  {
+    "id": "treemap-cases/render-front-matter-title",
+    "source": "---\ntitle: Front matter title\n---\ntreemap\n\"Team\"\n  \"Alpha\": 30"
+  },
+  {
+    "id": "treemap-cases/render-top-leaves",
+    "source": "treemap\n\"a\": 10\n\"b\": 20\n\"S\"\n  \"c\": 5"
+  },
+  {
+    "id": "treemap-cases/render-hostile",
+    "source": "treemap\n\"<script>alert(1)</script>\"\n  \"&lt;b&gt; &amp; ' x\": 3:::evil\n  \"]]> --> <!--\": 2\nclassDef evil fill:url(javascript:alert(1)),stroke:expression(alert(1)),color:#f00,background:url(x)"
+  },
+  {
+    "id": "treemap-cases/render-shared-names",
+    "source": "treemap\n\"A\"\n  \"x\": 1\n\"B\"\n  \"y\": 2\n\"A\"\n  \"z\": 3"
+  },
+  {
+    "id": "treemap-cases/render-utils-flat-to-tree",
+    "source": "treemap\n\"Root\"\n    \"Branch 1\"\n        \"Leaf 1.1\": 10\n        \"Leaf 1.2\": 15\n    \"Branch 2\"\n        \"Leaf 2.1\": 20\n        \"Leaf 2.2\": 25\n        \"Leaf 2.3\": 30"
+  },
+  {
+    "id": "treemap-cases/render-utils-only-roots",
+    "source": "treemap\n\"Root 1\"\n\"Root 2\""
+  },
+  {
+    "id": "treemap-cases/render-utils-complex-nesting",
+    "source": "treemap\n\"Root\"\n  \"Level 1\"\n    \"Level 2\"\n      \"Leaf 1\": 10\n    \"Level 2 again\"\n      \"Leaf 2\": 20"
   }
 ]

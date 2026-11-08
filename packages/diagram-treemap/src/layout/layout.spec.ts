@@ -1,6 +1,7 @@
 // cspell:words squarify squarified
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
+import { treemapTestTheme } from '../test-context.ts';
 import { context, leaf, model, section } from './fixtures.ts';
 import { layoutTreemap } from './index.ts';
 
@@ -8,7 +9,7 @@ import { layoutTreemap } from './index.ts';
 // comparison over the corpus is packages/conformance/src/treemap/layout-d3.spec.ts).
 let theme: Theme;
 beforeAll(async () => {
-  theme = createTheme(await loadTheme('default'));
+  theme = await treemapTestTheme();
 });
 
 describe('layoutTreemap', () => {
@@ -37,6 +38,14 @@ describe('layoutTreemap', () => {
     expect(l.leaves[0]!.box).toEqual({ x: 10, y: 65, width: 940, height: 455 });
     expect(l.title).toMatchObject({ text: 'T', x: 480, y: 15, anchor: 'middle' });
     expect(l.title!.font.size).toBe(14);
+  });
+
+  it('measures the title at treemapTitleFontSize (D407)', async () => {
+    const big = await treemapTestTheme('default', { treemap: { titleFontSize: 30 } });
+    const l = layoutTreemap(model([leaf('a', 1)], { title: 'Title' }), context(big));
+    expect(l.title!.font.size).toBe(30);
+    // Half an em per character: five characters at 30 px, centred on 500.
+    expect(l.title!.box).toEqual({ x: 462.5, y: 0, width: 75, height: 30 });
   });
 
   it('places a section header label and its value', () => {

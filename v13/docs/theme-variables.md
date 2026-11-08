@@ -31,7 +31,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
-| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt |
+| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
@@ -392,3 +392,22 @@ flags and opacities, which are read literally.
 | `timelineLabelOffset` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` |
 | `timelineEventLabelShift` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
 | `timelineScaleColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |
+
+### treemap
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cScalePeer0` | | color | `#ee75ff` | `#a6a6a6` | `#191a1a` | `#fadbff` | `#5353ff` | `#383a3a` | `#a6cf47` | `#3b3b3b` | `#ffba2a` | `#4242f5` | `#191a1a` |
+| `cScalePeer1` | | color | `#18e7cb` | `#a6a6a6` | `#222323` | `#74f1e0` | `#ffff45` | `#3e0000` | `#8bff4c` | `#dadada` | `#ba2aff` | `#7c7cac` | `#222323` |
+| `cScalePeer2` | | color | `#ffa037` | `#a6a6a6` | `#1a1919` | `#ffd09d` | `#c6ff53` | `#771955` | `#b9d970` | `#3b3b3b` | `#4480ff` | `#f6f655` | `#1a1919` |
+| `cScalePeer3` | | color | `#c17fff` | `#a6a6a6` | `#191a1a` | `#f3e5ff` | `#a853ff` | `#546e76` | `#62cf47` | `#a1a1a1` | `#daff2a` | `#9c42f5` | `#191a1a` |
+| `cScalePeer4` | | color | `#4dec8a` | `#a6a6a6` | `#19191a` | `#a9f6c6` | `#ff53ff` | `#754628` | `#47cf70` | `#5e5e5e` | `#6fff2a` | `#f542f5` | `#19191a` |
+| `cScalePeer5` | | color | `#9c81ff` | `#a6a6a6` | `#1a191a` | `#ece7ff` | `#ff53a8` | `#9d0e0e` | `#47cfb4` | `#808080` | `#2aff50` | `#f5429c` | `#1a191a` |
+| `cScalePeer6` | | color | `#ff6f6f` | `#a6a6a6` | `#1a191a` | `#ffd5d5` | `#ff5353` | `#65007b` | `#47a6cf` | `#c4c4c4` | `#2affba` | `#f54242` | `#1a191a` |
+| `cScalePeer7` | | color | `#ecca00` | `#a6a6a6` | `#1a191a` | `#ffe653` | `#ffa853` | `#cc7801` | `#4762cf` | `#e6e6e6` | `#2adaff` | `#f59c42` | `#1a191a` |
+| `cScalePeer8` | | color | `#7089ff` | `#a6a6a6` | `#d9d9d8` | `#d6ddff` | `#a8ff53` | `#23760a` | `#b447cf` | `#c4c4c4` | `#6c4dff` | `#a6f655` | `#d9d9d8` |
+| `cScalePeer9` | | color | `#a8f121` | `#a6a6a6` | `#1a1a19` | `#cef781` | `#53ffa8` | `#2a2c41` | `#cf4762` | `#a1a1a1` | `#ff2ada` | `#42f59c` | `#1a1a19` |
+| `cScalePeer10` | | color | `#41c4ff` | `#a6a6a6` | `#191a19` | `#a7e4ff` | `#53ffff` | `#003ca2` | `#cf7047` | `#808080` | `#ff2a6f` | `#42f5f5` | `#191a19` |
+| `cScalePeer11` | | color | `#ff6e81` | `#a6a6a6` | `#191a1a` | `#ffd4d9` | `#53a8ff` | `#0182cf` | `#cfb447` | `#5e5e5e` | `#ff502a` | `#429cf5` | `#191a1a` |
+| `treemapTitleColor` | `treemap.titleColor` | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#333333` | `#000000` | `#dfe0e0` |
+| `treemapTitleFontSize` | `treemap.titleFontSize` | length | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` |

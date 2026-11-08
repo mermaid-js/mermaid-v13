@@ -5,7 +5,7 @@
  * squarified treemap (`tiles.ts`), then each section's header label truncated and each leaf's
  * label fitted as v12 did, measured through the injected measurer (D405), values formatted by
  * `valueFormat` (D409), and the bounding box of what is drawn (D224). Lengths come from the
- * `treemap` config and the metrics table (pitfall 13).
+ * `treemap` config, the metrics table (pitfall 13) and, for the title, the theme (D407).
  *
  * v13 keeps text inside its box (R-LAYOUT-3): v12 clipped labels to their box, so a section
  * label or value that does not fit its section, and a label of a "complex" treemap still wider
@@ -48,6 +48,8 @@ interface Frame {
   readonly model: TreemapModel;
   /** The title band: every box moves down by it. */
   readonly band: number;
+  /** `treemapTitleFontSize` (D407). */
+  readonly titleSize: number;
 }
 
 /** Lays out a treemap in px. */
@@ -65,6 +67,7 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
     format: treemapValueFormat(config.valueFormat),
     model,
     band,
+    titleSize: ctx.theme.number('treemapTitleFontSize'),
   };
 
   const tree = tileTreemap(model.roots, { width, height, padding: config.padding });
@@ -338,11 +341,14 @@ function fitLeaf(
   return fits ? { label, valueText } : { label };
 }
 
-/** The title (`:126-134`): middle-anchored at `(width / 2, 15)`, 14 px. */
+/**
+ * The title (`:126-134`): middle-anchored at `(width / 2, 15)`, at `treemapTitleFontSize`
+ * (v12's `.treemapTitle` rule, 14 px, D407), which the renderer draws it at.
+ */
 function titleOf(title: string, width: number, frame: Frame): TreemapText {
   return placed(
     plainText(title),
-    { family: frame.family, size: M.titleSize, weight: NORMAL_WEIGHT },
+    { family: frame.family, size: frame.titleSize, weight: NORMAL_WEIGHT },
     frame.measurer,
     { x: width / 2, y: frame.band / 2, anchor: 'middle', baseline: 'middle' }
   );

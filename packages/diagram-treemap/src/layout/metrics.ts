@@ -30,8 +30,6 @@ export interface TreemapMetrics {
   readonly fallbackHeight: number;
   /** The band above the treemap that holds the title, when there is one (`:36`). */
   readonly titleBand: number;
-  /** The title's size (`.treemapTitle`, `styles.ts`'s `titleFontSize` default). */
-  readonly titleSize: number;
   /** A section's header band (`SECTION_HEADER_HEIGHT`). */
   readonly sectionHeader: number;
   /** A section's padding left, right and bottom; on top it is the header plus this (`:151-159`). */
@@ -61,6 +59,14 @@ export interface TreemapMetrics {
   /** Stroke widths the bounds allow for: section rect (`:208`), leaf rect (`:355`). */
   readonly sectionStroke: number;
   readonly leafStroke: number;
+  /** The renderer's paint constants: the section rect's fill and stroke opacity (`:205-209`). */
+  readonly sectionFillOpacity: number;
+  readonly sectionStrokeOpacity: number;
+  /** The leaf rect's fill opacity (`:351`). */
+  readonly leafFillOpacity: number;
+  /** The header band's `fill-opacity` and `stroke-width` (`:178-180`; it has no fill or stroke). */
+  readonly headerFillOpacity: number;
+  readonly headerStroke: number;
 }
 
 export const TREEMAP_METRICS: TreemapMetrics = {
@@ -68,7 +74,6 @@ export const TREEMAP_METRICS: TreemapMetrics = {
   fallbackWidth: 960,
   fallbackHeight: 500,
   titleBand: 30,
-  titleSize: 14,
   sectionHeader: 25,
   sectionPadding: 10,
   sectionLabelX: 6,
@@ -102,6 +107,11 @@ export const TREEMAP_METRICS: TreemapMetrics = {
   },
   sectionStroke: 2,
   leafStroke: 3,
+  sectionFillOpacity: 0.6,
+  sectionStrokeOpacity: 0.4,
+  leafFillOpacity: 0.3,
+  headerFillOpacity: 0.6,
+  headerStroke: 0.6,
 };
 
 /** d3's squarify ratio, the golden ratio (`treemapSquarify`'s default). */

@@ -33,6 +33,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
   // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
   kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
+  // `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
+  treemap: Array.from({ length: 12 }, (_, n) => `cScalePeer${n}`),
 };
 
 function sources(dir: string): string[] {

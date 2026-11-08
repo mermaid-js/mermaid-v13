@@ -1,0 +1,35 @@
+import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
+
+/** `usedBy` of every row: treemap reads them all. */
+const TREEMAP: readonly string[] = ['treemap'];
+
+/** v12's twelve `cScalePeer<n>` slots (`THEME_COLOR_LIMIT`), one per `cScale` slot. */
+const PEER_SLOTS = 12;
+
+/**
+ * The treemap's theme variables (spec #428, D406, D407; not core's, R-PERF-8):
+ *
+ * - `cScalePeer0`–`cScalePeer11` (D406): v12's section strokes, one colour per `cScale` slot,
+ *   under v12's numbered names so an author's `themeVariables.cScalePeer3` still sets slot 3.
+ *   Only treemap reads them; the table derives each from its `cScale` slot.
+ * - `treemapTitleColor` and `treemapTitleFontSize` (D407): v12's `.treemapTitle` fill and size,
+ *   also set by `themeVariables.treemap.titleColor` / `.titleFontSize` (D335, D540: key by key,
+ *   the flat name wins).
+ *
+ * `pnpm gen:theme` writes `generated/variables.ts` from them.
+ */
+export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
+  ...Object.fromEntries(
+    Array.from({ length: PEER_SLOTS }, (_, i) => [
+      `cScalePeer${i}`,
+      { alias: `tmp${i}`, kind: 'color', usedBy: TREEMAP } satisfies DiagramThemeVarDef,
+    ])
+  ),
+  treemapTitleColor: { alias: 'tmtc', kind: 'color', usedBy: TREEMAP, nested: 'titleColor' },
+  treemapTitleFontSize: {
+    alias: 'tmts',
+    kind: 'length',
+    usedBy: TREEMAP,
+    nested: 'titleFontSize',
+  },
+};
