@@ -5,6 +5,7 @@ import type { TreemapModel } from './model.ts';
 import { detectTreemap, parseTreemap, type TreemapParseResult } from './parser/index.ts';
 import { renderTreemap } from './render/index.ts';
 import { theme } from './theme/table.ts';
+import { treemapConfigDefaults } from './generated/config-defaults.ts';
 
 /**
  * The treemap plugin (DESIGN §12.1, spec #428): `layoutKind: 'custom'` with its own
@@ -12,13 +13,15 @@ import { theme } from './theme/table.ts';
  * on v12's canvas; `render` writes the whole `<svg>` document. SVG only (D320).
  *
  * `theme` is treemap's own table (`theme/table.ts`, D322, D331, D406, D407). No `labels`: treemap
- * text is plain (D405) and never goes through core's label layout. The manifest, the registry
- * row and `configDefaults` (the `treemap` schema section) are T5's (#514).
+ * text is plain (D405) and never goes through core's label layout. The registry loads it from
+ * the package's `mermaid` manifest (#514); `configDefaults` are the `treemap` section's generated
+ * defaults.
  */
 export const treemap = {
   id: 'treemap',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: treemapConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectTreemap(text),
   parse: (text: string, ctx: DiagramParseContext): TreemapParseResult =>
     parseTreemap(text, { preprocessed: ctx.preprocessed }),

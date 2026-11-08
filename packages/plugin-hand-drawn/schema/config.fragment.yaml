@@ -29,6 +29,7 @@ x-mermaid-fragment:
     - { from: architecture.look, when: handDrawn, to: handDrawn, value: true }
     - { from: mindmap.look, when: handDrawn, to: handDrawn, value: true }
     - { from: ishikawa.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: treemap.look, when: handDrawn, to: handDrawn, value: true }
     - { from: kanban.look, when: handDrawn, to: handDrawn, value: true }
     - { from: gitGraph.look, when: handDrawn, to: handDrawn, value: true }
     - { from: c4.look, when: handDrawn, to: handDrawn, value: true }

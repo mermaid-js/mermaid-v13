@@ -36,8 +36,12 @@ import type {
   TreemapTextAnchor,
 } from './types.ts';
 
-/** What the layout reads from the render context. */
-export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'>;
+/** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
+export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
+  Partial<Pick<RenderContext, 'warn'>>;
+
+/** For a layout run without a `warn` sink (unit tests, the invariants). */
+const ignoreWarning = (): void => undefined;
 
 /** What every text of one layout is measured and formatted with. */
 interface Frame {
@@ -54,9 +58,7 @@ interface Frame {
 
 /** Lays out a treemap in px. */
 export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): TreemapLayout {
-  const config = treemapLayoutConfig(
-    (ctx.config as unknown as { treemap?: Readonly<Record<string, unknown>> }).treemap
-  );
+  const config = treemapLayoutConfig(ctx.config.treemap, ctx.warn ?? ignoreWarning);
   const width = config.nodeWidth ? config.nodeWidth * M.canvasScale : M.fallbackWidth;
   const height = config.nodeHeight ? config.nodeHeight * M.canvasScale : M.fallbackHeight;
   const band = model.title ? M.titleBand : 0;

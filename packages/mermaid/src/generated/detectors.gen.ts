@@ -31,7 +31,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'treeView', pattern: /^\s*treeView-beta/ },
   { type: 'radar', pattern: /^\s*radar-beta/, id: 'radar', formats: ['svg'] },
   { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
-  { type: 'treemap', pattern: /^\s*treemap/ },
+  { type: 'treemap', pattern: /^\s*treemap/, id: 'treemap', formats: ['svg'] },
   { type: 'railroad', pattern: /^\s*railroad-beta/i },
   { type: 'railroadEbnf', pattern: /^\s*railroad-ebnf-beta/i },
   { type: 'railroadAbnf', pattern: /^\s*railroad-abnf-beta/i },

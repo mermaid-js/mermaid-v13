@@ -36,7 +36,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `treeView` | not ported | no | no |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | not ported | no | no |
-| `treemap` | not ported | no | no |
+| `treemap` | `@mermaid-js/diagram-treemap` | yes | no |
 | `railroad` | not ported | no | no |
 | `railroadEbnf` | not ported | no | no |
 | `railroadAbnf` | not ported | no | no |

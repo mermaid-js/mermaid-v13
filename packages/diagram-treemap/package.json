@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/diagram-treemap",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Treemap plugin for Mermaid: parser, layout and SVG renderer (in progress).",
+  "version": "13.0.0-alpha.0",
+  "description": "Treemap plugin for Mermaid: parser, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -45,5 +44,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "treemap",
+    "types": [
+      "treemap"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "treemap",
+    "language": "./dist/language.js"
   }
 }

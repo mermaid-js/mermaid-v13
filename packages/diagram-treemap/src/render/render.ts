@@ -192,9 +192,7 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = treemapUseMaxWidth(
-    (config as unknown as { treemap?: Readonly<Record<string, unknown>> }).treemap
-  );
+  const maxWidth = treemapUseMaxWidth(config.treemap);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.

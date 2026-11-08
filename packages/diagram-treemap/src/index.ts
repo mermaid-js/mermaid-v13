@@ -1,10 +1,12 @@
 /**
  * `@mermaid-js/diagram-treemap` (spec #428): the treemap plugin (with its theme table, #505), its
  * parser and detection, the model and the AST (#484), the layout and `valueFormat` (#485), and
- * the SVG renderer (#505). The manifest and registry row follow (T5). The token stream, the
- * layout invariants and the test context, which only tests read, are at `./testing`.
+ * the SVG renderer (#505), loaded from the registry through the package manifest (#514). The
+ * token stream, the layout invariants and the test context, which only tests read, are at
+ * `./testing`.
  */
 export { treemap } from './plugin.ts';
+export { TREEMAP_CONFIG_INVALID } from './config.ts';
 export { renderTreemap } from './render/index.ts';
 export type { TreemapRenderContext } from './render/index.ts';
 export {
