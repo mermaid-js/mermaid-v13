@@ -2018,7 +2018,7 @@ every e2e fixture, the v12 spec strings and the syntax page; grammar in
 | A `treemap` config value of the wrong type or a negative length (`padding: -5`, `nodeWidth: "wide"`) was used as it was | A number, or a numeric string as its number, of 0 or more; anything else draws with the default and one `TREEMAP_CONFIG_INVALID` warning per key. `nodeWidth`/`nodeHeight` of 0 still draws v12's 960 × 500 canvas, and an empty `valueFormat` is `,` | D226 |
 | The `treemap` section's `borderWidth`, `valueFontSize` and `labelFontSize` had defaults and were never read | Accepted and ignored, with no warning ([Config](#config)) | |
 | `themeVariables.treemap.*`: of the twelve keys v12's styles read, only `titleColor` and `titleFontSize` took effect (the section and leaf rules never matched, the label and value rules lost to inline attributes) | `titleColor` and `titleFontSize` set `treemapTitleColor` and `treemapTitleFontSize` (also flat; the flat name wins when both are set). `sectionStrokeColor`, `sectionStrokeWidth`, `sectionFillColor`, `leafStrokeColor`, `leafStrokeWidth`, `leafFillColor`, `labelColor`, `labelFontSize`, `valueColor` and `valueFontSize` are accepted and change nothing, as in v12 | D407, D335, D540 |
-| `look: handDrawn`: v12 never sketched a treemap | Not sketched either: drawn exactly as without the plugin | D301 |
+| `look: handDrawn` (top level or `treemap.look`): v12 never sketched a treemap | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the treemap draws exactly as without it: not sketched | D301, D303 |
 | `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
 
 ### Treemap theme colours
@@ -2026,12 +2026,15 @@ every e2e fixture, the v12 spec strings and the syntax page; grammar in
 Treemap reads the shared `cScale` and `cScaleLabel` palettes (v12's values in every theme, D258)
 and owns `cScalePeer0`–`cScalePeer11`, the section outlines (CSS `--mermaid-cScalePeer0`, …; an
 author's `cScalePeer<n>` is drawn as given, as in v12). v13 derives each peer from its `cScale`
-slot by the theme's `dark` trait: `lighten(cScale<i>, 10)` in a dark theme or under `darkMode`,
-`darken(cScale<i>, 10)` otherwise, as v12's base, neutral, neo, redux, redux-color and dark did,
-so a `cScale<n>` override moves its peer in every theme. `treemapTitleColor` follows
-`titleColor`, and `treemapTitleFontSize` is 14 px, as v12's `.treemapTitle`. What changed
-(`packages/conformance/src/treemap/theme.spec.ts` lists each one); only section outlines and the
-title change:
+slot by one rule, the theme's `dark` trait: `lighten(cScale<i>, 10)` in a dark theme or under
+`darkMode`, `darken(cScale<i>, 10)` otherwise, and the same rule over an author's `cScale<n>`.
+With each theme's own slots, that is what v12 drew in `base`, `neutral`, `neo`, `redux`,
+`redux-color` and `dark`; v12 used another step in `default` (15 points) and `forest` (25), the
+light branch in the three dark redux and neo themes, and another rule for an author's `cScale<n>`
+in `redux`, `base` and `neo`. `treemapTitleFontSize` is 14 px, as v12's `.treemapTitle`, and
+`treemapTitleColor` follows core's `titleColor`, which differs from v12's in `base`, `redux` and
+`redux-color`. What changed (`packages/conformance/src/treemap/theme.spec.ts` lists each one);
+only section outlines and the title change:
 
 | Themes | v12 | v13 | Why |
 | --- | --- | --- | --- |
@@ -2040,7 +2043,7 @@ title change:
 | `redux-dark` | The light branch (the theme sets no `darkMode`): peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot, so the outlines show on the dark fills | D406 |
 | `redux-dark-color` | The light branch: peers 10 points under the slot | The dark rule: 10 points over every slot | D406 |
 | `neo-dark` | The light branch: peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot | D406 |
-| `redux`, `base`, `neo` | An author's `cScale<n>` moved its peer by another rule (`redux` kept the theme's own peer, `base` and `neo` darkened the author's slot by 25 points) | The theme's rule over the author's slot, as without the override | D406 |
+| `redux`, `base`, `neo` | An author's `cScale<n>` moved its peer by another rule: `redux` kept the theme's own peer, `base` and `neo` darkened the author's slot by 35 points | The theme's rule over the author's slot (10 points), as without the override | D406 |
 | `base` (with or without `darkMode`), `redux`, `redux-color` | The title in v12's `titleColor` (`rgb(8.5, 5.75, 0)` in `base`, `#000000` in the redux themes) | Core's `titleColor` (`#333333`, `#28253d`), which every type's titles take | D407, R-THEME-9 |
 
 ## Treemap SVG structure

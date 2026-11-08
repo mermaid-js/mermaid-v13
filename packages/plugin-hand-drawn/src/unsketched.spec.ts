@@ -1,9 +1,9 @@
 /**
  * The eight types v12 never sketched (D301, D305, and cynefin, #423), and packet (#421) and
- * treemap (#514), which v12 never sketched either, draw as before with the plugin registered and `handDrawn` on (H3,
- * #343): over each one's whole e2e corpus, the SVG is byte-identical to the render without the
- * plugin, and no warning is added. A type without a v13 package yet is skipped and joins when it
- * is ported.
+ * treemap (#514), which v12 never sketched either, draw as before with the plugin registered and
+ * `handDrawn` on (H3, #343): over each one's whole e2e corpus, the SVG is byte-identical to the
+ * render without the plugin, and no warning is added. A type without a v13 package yet is skipped
+ * and joins when it is ported.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -88,4 +88,13 @@ describe('the eight unsketched types are unchanged with handDrawn on (D301, D305
       120_000
     );
   }
+
+  it('treemap.look: handDrawn warns without the plugin, and draws unsketched with it', async () => {
+    const text = '---\nconfig:\n  treemap:\n    look: handDrawn\n---\ntreemap\n  "A"\n    "b": 1\n';
+    const plainSvg = (await plain.render('u', 'treemap\n  "A"\n    "b": 1\n')).svg;
+    const before = await outcome(plain, text);
+    const after = await outcome(withPlugin, text);
+    expect(before).toEqual({ svg: plainSvg, codes: ['LOOK_REMOVED'] });
+    expect(after).toEqual({ svg: plainSvg, codes: [] });
+  });
 });

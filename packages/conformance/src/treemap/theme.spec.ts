@@ -21,6 +21,10 @@
  *   redux light themes (core's `contrast(clusterBkg, textColor, background)` rule, R-THEME-9),
  *   which `treemapTitleColor` follows (D407); `cScaleLabel8` in `redux-dark` (D544); and the
  *   labels of base under `darkMode` (D258, D334: the theme keeps its `scaleLabelColor`).
+ *
+ * Under an author `cScale4` and `cScalePeer3`, the same list holds but for `cScalePeer3` (drawn
+ * as given in both), plus `OVERRIDE_DIFFERENCES`, matched as exactly: the peer v12 drew for the
+ * author's slot by another rule than the theme's own (`redux`, `base`, `neo`).
  */
 import { readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -169,14 +173,25 @@ const DIFFERENCES: Readonly<Record<string, string>> = Object.fromEntries([
   ...listed('base+darkMode', slots('cScaleLabel'), D334),
 ]);
 
+/** The author overrides the override tests set: a peer as given, and a slot whose peer moves. */
+const OVERRIDE = { cScalePeer3: '#123456', cScale4: '#336699' };
+
+/** Why v12 drew `cScalePeer4` of the author's `cScale4` otherwise than its theme's rule. */
+const V12_KEPT_PEER =
+  'D406: v12 kept the theme’s own peer under an author cScale<n> (it derived the peers first); v13 derives it from the author’s slot';
+const V12_35 =
+  'D406: v12 darkened the author’s slot by 35 HSL points (updateColors() runs again over it); v13 by the theme’s rule';
+
 /**
- * The themes where v12's peer of an author `cScale<n>` is not its peer rule of that slot, where
- * v13's is (D406, the same rule with or without the override).
+ * `theme/variable` → why v13 differs from v12 under {@link OVERRIDE} beyond `DIFFERENCES`: the
+ * author's `cScale4` moved v12's `cScalePeer4` by another rule than the theme's own in `redux`
+ * (not at all), `base` and `neo` (35 points). Under the override, a theme's `DIFFERENCES` hold
+ * but for `cScalePeer3`, which both draw as given.
  */
 const OVERRIDE_DIFFERENCES: Readonly<Record<string, string>> = {
-  redux: 'v12 kept the theme’s own peer: it derived the peers before the author’s cScale',
-  base: 'v12 darkened the author’s slot by 25 HSL points (updateColors runs twice)',
-  neo: 'v12 darkened the author’s slot by 25 HSL points (updateColors runs twice)',
+  'redux/cScalePeer4': V12_KEPT_PEER,
+  'base/cScalePeer4': V12_35,
+  'neo/cScalePeer4': V12_35,
 };
 
 /** Treemap's table with the peers `step(cScale<i>, <pct>%)` under both traits. */
@@ -277,19 +292,41 @@ describe('treemap colours against v12 12.2.0 (#514, D258, D406, D407)', () => {
   );
 
   it.each(THEME_NAMES.map((n) => [n]))(
-    '%s: an author cScalePeer<n> is drawn as given, and a cScale<n> moves its peer, as in v12',
+    '%s: an author cScalePeer<n> is drawn as given, and a cScale<n> moves its peer',
     async (name) => {
-      const set = { cScalePeer3: '#123456', cScale4: '#336699' };
-      const vars = v12Vars(name, set);
-      const theme = await v13Theme(name, set);
+      const theme = await v13Theme(name, OVERRIDE);
       expect(theme.value('cScalePeer3')).toBe('#123456');
-      expect(String(vars.cScalePeer3).toLowerCase()).toBe('#123456');
-      // The peer follows the slot in v13 by the theme's rule; in v12 too, apart from the listed.
+      expect(String(v12Vars(name, OVERRIDE).cScalePeer3).toLowerCase()).toBe('#123456');
       const plain = await v13Theme(name);
       expect(near(theme.rgba('cScalePeer4'), plain.rgba('cScalePeer4'))).toBe(false);
-      const same = near(theme.rgba('cScalePeer4'), parseColor(String(vars.cScalePeer4)));
-      const differs = `${name}/cScalePeer4` in DIFFERENCES || name in OVERRIDE_DIFFERENCES;
-      expect(same, name).toBe(!differs);
+    }
+  );
+
+  it('under author overrides, differs from v12 only where a decision says so', async () => {
+    const found: string[] = [];
+    for (const theme of THEME_NAMES)
+      for (const n of await differing({ label: theme, theme, vars: OVERRIDE }))
+        found.push(`${theme}/${n}`);
+    const expected = [
+      ...Object.keys(DIFFERENCES).filter(
+        (k) => !k.endsWith('/cScalePeer3') && !k.startsWith('base+darkMode/')
+      ),
+      ...Object.keys(OVERRIDE_DIFFERENCES),
+    ];
+    expect(found.sort()).toEqual(expected.sort());
+  });
+
+  it('redux: v12 kept the theme’s own cScalePeer4 under an author cScale4 (D406)', () => {
+    const kept = parseColor(String(v12Vars('redux', OVERRIDE).cScalePeer4));
+    expect(near(kept, parseColor(String(v12Vars('redux').cScalePeer4)))).toBe(true);
+  });
+
+  it.each([['base'], ['neo']] as const)(
+    '%s: v12’s cScalePeer4 is the author’s cScale4 darkened by 35 HSL points (D406)',
+    async (name) => {
+      const at35 = await v13Theme(name, OVERRIDE, peerRule('darkenHsl', 35));
+      const drawn = parseColor(String(v12Vars(name, OVERRIDE).cScalePeer4));
+      expect(near(at35.rgba('cScalePeer4'), drawn)).toBe(true);
     }
   );
 });

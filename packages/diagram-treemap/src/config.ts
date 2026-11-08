@@ -31,39 +31,8 @@ type LengthKey = 'nodeWidth' | 'nodeHeight' | 'padding' | 'diagramPadding';
 /** The length keys: each a number of 0 or more (`minimum: 0` in the schema). */
 const LENGTHS: readonly LengthKey[] = ['nodeWidth', 'nodeHeight', 'padding', 'diagramPadding'];
 
-/** Every `TreemapLayoutConfig` key: leaving one out fails to type-check. */
-const KEYS: Readonly<Record<keyof TreemapLayoutConfig, true>> = {
-  nodeWidth: true,
-  nodeHeight: true,
-  padding: true,
-  diagramPadding: true,
-  showValues: true,
-  valueFormat: true,
-};
-
-/**
- * Whether the schema gives every layout key a default. The generated `TreemapDiagramConfig`
- * makes every key optional, so this is checked when the module loads; `config.spec.ts` pins it.
- */
-function hasEveryDefault(
-  d: TreemapDiagramConfig
-): d is TreemapDiagramConfig & Required<Pick<TreemapDiagramConfig, keyof TreemapLayoutConfig>> {
-  return Object.keys(KEYS).every((k) => Reflect.get(d, k) !== undefined);
-}
-if (!hasEveryDefault(treemapConfigDefaults)) {
-  throw new Error('config.schema.yaml gives a TreemapDiagramConfig key no default');
-}
-const schema = treemapConfigDefaults;
-
-/** The schema's defaults of the keys the layout reads. */
-export const TREEMAP_DEFAULTS: TreemapLayoutConfig = Object.freeze({
-  nodeWidth: schema.nodeWidth,
-  nodeHeight: schema.nodeHeight,
-  padding: schema.padding,
-  diagramPadding: schema.diagramPadding,
-  showValues: schema.showValues,
-  valueFormat: schema.valueFormat,
-});
+/** The schema's defaults (every key has one; `conformance/src/treemap/config.spec.ts` pins them). */
+const DEFAULTS = treemapConfigDefaults as Required<TreemapDiagramConfig>;
 
 /** A number, or a string that reads as one; else NaN. */
 function configNumber(value: unknown): number {
@@ -80,22 +49,29 @@ export function treemapLayoutConfig(
   section: Readonly<TreemapDiagramConfig> | undefined,
   warn: (w: Warning) => void
 ): TreemapLayoutConfig {
-  const from: Readonly<Record<string, unknown>> = section ?? {};
-  const d = TREEMAP_DEFAULTS;
-  const out: { -readonly [K in keyof TreemapLayoutConfig]: TreemapLayoutConfig[K] } = { ...d };
+  const given: Readonly<Record<string, unknown>> = section ?? {};
+  const d = DEFAULTS;
+  const out: { -readonly [K in keyof TreemapLayoutConfig]: TreemapLayoutConfig[K] } = {
+    nodeWidth: d.nodeWidth,
+    nodeHeight: d.nodeHeight,
+    padding: d.padding,
+    diagramPadding: d.diagramPadding,
+    showValues: d.showValues,
+    valueFormat: d.valueFormat,
+  };
   const invalid = (key: string, wants: string, used: unknown): void =>
     warn({
       code: TREEMAP_CONFIG_INVALID,
-      message: `treemap.${key} is ${shown(from[key])}, not ${wants}; using the default ${shown(used)}`,
+      message: `treemap.${key} is ${shown(given[key])}, not ${wants}; using the default ${shown(used)}`,
     });
   for (const key of LENGTHS) {
-    if (from[key] === undefined) continue;
-    const n = configNumber(from[key]);
+    if (given[key] === undefined) continue;
+    const n = configNumber(given[key]);
     if (Number.isFinite(n) && n >= 0) out[key] = n;
     else invalid(key, 'a number of 0 or more', d[key]);
   }
-  if (from.showValues !== undefined) out.showValues = from.showValues !== false;
-  const format = from.valueFormat;
+  if (given.showValues !== undefined) out.showValues = given.showValues !== false;
+  const format = given.valueFormat;
   if (typeof format === 'string') out.valueFormat = format === '' ? d.valueFormat : format;
   else if (format !== undefined) invalid('valueFormat', 'a d3-format specifier', d.valueFormat);
   return out;

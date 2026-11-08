@@ -55,10 +55,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await treemapApi();
+  api = treemapApi();
   const corpus = await treemapGateCorpus();
   for (const theme of THEMES) {
-    const themed = await treemapApi({ theme });
+    const themed = treemapApi({ theme });
     for (const item of corpus) {
       if (!detectTreemap(item.source)) continue;
       try {
@@ -124,7 +124,7 @@ describe('treemap render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await treemapApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, treemapApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -410,7 +410,7 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   it("colours sections from cScale and cScalePeer by name, leaves from their parent's cScale", async () => {
     // v12 12.2.0 `neutral`: cScale0 #555, cScale1 #F4F4F4, cScalePeer0 hsl(0, 0%, 23.33%),
     // cScalePeer1 hsl(0, 0%, 85.69%), cScaleLabel0 = cScale1.
-    const { tree } = await render(probe('simple'), await literal('neutral'));
+    const { tree } = await render(probe('simple'), literal('neutral'));
     const s2 = rectOf(tree, groupOf(tree, 'Section 2'));
     expect(attr(tree, s2, 'fill')).toBe('#555555');
     near(attr(tree, s2, 'stroke'), [60, 60, 60]);
@@ -434,7 +434,7 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   });
 
   it('draws top-level leaves transparent, as the hidden root takes the first colour (D404)', async () => {
-    const { tree } = await render(probe('top-leaves'), await literal('neutral'));
+    const { tree } = await render(probe('top-leaves'), literal('neutral'));
     for (const name of ['a', 'b']) {
       const r = rectOf(tree, groupOf(tree, name));
       expect([attr(tree, r, 'fill'), attr(tree, r, 'stroke')], name).toEqual([
@@ -446,7 +446,7 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   });
 
   it('gives equal names one colour, as v12 keyed its scales by name', async () => {
-    const { tree } = await render(probe('shared-names'), await literal('neutral'));
+    const { tree } = await render(probe('shared-names'), literal('neutral'));
     const fills = byClass(tree, 'treemapSection')
       .filter((n) => tree.tag(n) === 'rect')
       .map((r) => attr(tree, r, 'fill'));
@@ -455,7 +455,7 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   });
 
   it("writes classDef styles over v12's own: shape styles on the rect, text styles on the text", async () => {
-    const { tree } = await render(probe('simple'), await literal('neutral'));
+    const { tree } = await render(probe('simple'), literal('neutral'));
     const g = groupOf(tree, 'Section 1.2');
     const rect = rectOf(tree, g);
     expect([attr(tree, rect, 'fill'), attr(tree, rect, 'stroke')]).toEqual(['#ff0000', '#00ff00']);
@@ -471,25 +471,22 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   });
 
   it('reads cScalePeer from the theme, so an author cScalePeer<n> recolours the strokes (D406)', async () => {
-    const { tree } = await render(
-      probe('simple'),
-      await literal('neutral', { cScalePeer0: '#123456' })
-    );
+    const { tree } = await render(probe('simple'), literal('neutral', { cScalePeer0: '#123456' }));
     expect(attr(tree, rectOf(tree, groupOf(tree, 'Section 2')), 'stroke')).toBe('#123456');
-    const dark = (await render(probe('simple'), await literal('dark'))).tree;
+    const dark = (await render(probe('simple'), literal('dark'))).tree;
     // v12 dark: cScale0 #1f2020, cScalePeer0 = lighten(cScale0, 10) = hsl(180, 1.59%, 22.35%).
     near(attr(dark, rectOf(dark, groupOf(dark, 'Section 2')), 'stroke'), [56, 58, 58]);
   });
 
   it('draws the title at treemapTitleColor and treemapTitleFontSize, flat or nested (D407, D540)', async () => {
-    const base = (await render(probe('titles'), await literal('neutral'))).tree;
+    const base = (await render(probe('titles'), literal('neutral'))).tree;
     const [t] = byClass(base, 'treemapTitle');
     // v12 neutral's titleColor.
     expect([attr(base, t, 'fill'), attr(base, t, 'font-size')]).toEqual(['#333333', '14']);
     const nested = (
       await render(
         probe('titles'),
-        await literal('neutral', { treemap: { titleColor: '#ff0000', titleFontSize: 20 } })
+        literal('neutral', { treemap: { titleColor: '#ff0000', titleFontSize: 20 } })
       )
     ).tree;
     const [n] = byClass(nested, 'treemapTitle');
@@ -497,7 +494,7 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
     const flat = (
       await render(
         probe('titles'),
-        await literal('neutral', {
+        literal('neutral', {
           treemapTitleColor: '#00ff00',
           treemap: { titleColor: '#ff0000' },
         })

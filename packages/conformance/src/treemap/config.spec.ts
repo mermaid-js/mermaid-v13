@@ -61,6 +61,12 @@ describe('treemap config against v12 12.2.0 (#514)', () => {
     expect(treemap.configDefaults).toEqual(await v12Config());
   });
 
+  it('gives every key a default, which `config.ts` reads unchecked', () => {
+    const keys = ['padding', 'diagramPadding', 'showValues', 'nodeWidth', 'nodeHeight'];
+    for (const key of [...keys, 'valueFormat', 'useMaxWidth'])
+      expect(treemap.configDefaults[key], key).toBeDefined();
+  });
+
   it('a site treemap config reaches the layout as v12’s DB has it', async () => {
     const site = {
       treemap: {
