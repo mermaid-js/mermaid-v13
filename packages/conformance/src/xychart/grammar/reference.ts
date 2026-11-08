@@ -150,15 +150,6 @@ export function learnSentenceModel(sources: readonly string[]): SentenceModel {
   return model;
 }
 
-/**
- * Whether v12's preprocessing and core's leave different text to lex: v12's directive regex
- * removes an unclosed `%%{` with the rest of the text (or up to a word argument's end), core
- * keeps it and reports it (a listed divergence).
- */
-export function preprocessDiffers(source: string): boolean {
-  return grammarTokens(source).input.text !== lexXyChart(source).v12.text;
-}
-
 /** Whether mermaid\@12 accepted the syntax: false on a jison parse or lexical error. */
 export function v12Syntax(result: { accepted: boolean; error?: string }): boolean | undefined {
   if (result.accepted) return true;

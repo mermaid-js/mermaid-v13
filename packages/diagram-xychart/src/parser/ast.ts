@@ -13,6 +13,7 @@
  * | `accDescr: …` / `accDescr { … }`  | `accDescr`, `accDescr@2`, …     |
  */
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
+import type { XyChartPlotKind } from '../model.ts';
 
 /** A text as the grammar read it: words joined without blanks, or a string's contents. */
 export interface XyChartTextNode {
@@ -71,7 +72,7 @@ export interface XyChartPointNode {
 
 /** `bar …` or `line …`. */
 export interface XyChartPlotNode extends AstNode<'Plot'> {
-  kind: 'bar' | 'line';
+  kind: XyChartPlotKind;
   name?: XyChartTextNode;
   points: XyChartPointNode[];
 }

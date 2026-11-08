@@ -143,6 +143,7 @@ export const PARITY_SUITES: ParitySuite[] = [
     corpusFiles: [
       'packages/conformance/corpus/xychart-v12-specs.json',
       'packages/conformance/corpus/xychart-cases.json',
+      'packages/conformance/corpus/xychart-recovery.json',
     ],
     corpus: xyChartParityCorpus,
   },

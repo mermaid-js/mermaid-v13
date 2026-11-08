@@ -4,7 +4,6 @@ import { loadOracle } from '../../oracle.ts';
 import { xyChartGateCorpus } from '../corpus.ts';
 import {
   handWrittenVerdict,
-  preprocessDiffers,
   v12Syntax,
   learnSentenceModel,
   referenceParser,
@@ -30,8 +29,6 @@ describe('xychart grammar differential (generated sentences)', () => {
     let accepted = 0;
     for (let seed = 1; seed <= SENTENCES; seed++) {
       const { text } = generator.generate({ seed });
-      // An unclosed `%%{` cuts the rest of v12's text only (`divergences.json`).
-      if (preprocessDiffers(text)) continue;
       const ref = referenceVerdict(text);
       const hand = handWrittenVerdict(text);
       if (ref.accepted) accepted++;

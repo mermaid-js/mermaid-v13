@@ -10,6 +10,7 @@ import type {
   XyChartDatum,
   XyChartLinearAxis,
   XyChartPlot,
+  XyChartPlotKind,
   XyChartXAxis,
   XyChartYAxis,
 } from '../model.ts';
@@ -21,10 +22,22 @@ export interface XyChartPointInput {
   readonly label: string;
 }
 
-type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+
+/** The AST id of the plot at `index` (from 0) in statement order: `plot:<index + 1>`. */
+export const plotId = (index: number): AstId => `plot:${index + 1}`;
+
+type XAxisData = XyChartBandAxis | XyChartLinearAxis;
+
+/** Whether two x axes place the same x values alike (titles aside). */
+function sameData(a: XAxisData, b: XAxisData): boolean {
+  if (a.kind === 'linear') return b.kind === 'linear' && a.min === b.min && a.max === b.max;
+  if (b.kind === 'linear' || a.categories.length !== b.categories.length) return false;
+  return a.categories.every((c, i) => c === b.categories[i]);
+}
 
 export class XyChartBuilder {
-  private x: XyChartBandAxis | XyChartLinearAxis = { kind: 'band', title: '', categories: [] };
+  private x: XAxisData = { kind: 'band', title: '', categories: [] };
   private y: Mutable<XyChartLinearAxis> = {
     kind: 'linear',
     title: '',
@@ -35,6 +48,8 @@ export class XyChartBuilder {
   private hasX = false;
   /** v12's `hasSetYAxis`: a range was given. */
   private hasY = false;
+  /** The x axis data each plot was read against, by plot index. */
+  private readonly seen: XAxisData[] = [];
   readonly plots: XyChartPlot[] = [];
 
   setXAxisTitle(text: string): void {
@@ -61,18 +76,14 @@ export class XyChartBuilder {
   }
 
   /** A `bar` or `line` statement. Bar point labels are read and dropped, as in v12. */
-  addPlot(
-    kind: 'bar' | 'line',
-    name: string,
-    points: readonly XyChartPointInput[],
-    ast: AstId
-  ): XyChartPlot {
+  addPlot(kind: XyChartPlotKind, name: string, points: readonly XyChartPointInput[]): XyChartPlot {
     const values = points.map((p) => p.value);
+    const index = this.plots.length;
     const plot: Mutable<XyChartPlot> = {
-      ast,
+      ast: plotId(index),
       kind,
       name: name.trim(),
-      index: this.plots.length,
+      index,
       values,
       data: this.transform(values),
     };
@@ -80,8 +91,25 @@ export class XyChartBuilder {
       const labels = points.map((p) => (p.label ? p.label.trim() : ''));
       if (labels.some((l) => l !== '')) plot.pointLabels = labels;
     }
+    this.seen.push(this.x);
     this.plots.push(plot);
     return plot;
+  }
+
+  /**
+   * The indexes of the plots read against x axis data the final x axis does not have (D386): an
+   * `x-axis` with other categories or another range came after them, so their x values are not
+   * the final axis's. A title alone changes nothing; equal data repeated is no change.
+   */
+  plotsOffAxis(): number[] {
+    const out: number[] = [];
+    const verdict = new Map<XAxisData, boolean>();
+    this.seen.forEach((axis, i) => {
+      let differs = verdict.get(axis);
+      if (differs === undefined) verdict.set(axis, (differs = !sameData(axis, this.x)));
+      if (differs) out.push(i);
+    });
+    return out;
   }
 
   xAxis(ast: AstId | undefined): XyChartXAxis {

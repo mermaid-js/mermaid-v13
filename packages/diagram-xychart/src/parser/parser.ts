@@ -36,7 +36,8 @@ import type {
   XyChartTextNode,
   XyChartTextStatementNode,
 } from './ast.ts';
-import { XyChartBuilder } from './build.ts';
+import { plotId, XyChartBuilder } from './build.ts';
+import type { Mutable } from './build.ts';
 import { lex } from './lexer.ts';
 import type { XyChartLex } from './lexer.ts';
 import { T } from './tokens.ts';
@@ -166,8 +167,6 @@ class XyChartParser {
   private reported = -1;
   /** Whether an unclosed `accDescr {` was reported (once). */
   private unclosedDescription = false;
-  /** Plot statements seen, parsed or not: a failed one is not also "no plot". */
-  private plotsTried = 0;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -185,7 +184,10 @@ class XyChartParser {
     this.header();
     this.document();
     const model = buildModel(this.children, this.st, this.pre.frontMatter?.title);
-    if (this.plotsTried === 0) {
+    // A chart without plots, unless an error already explains it: a statement that failed (it
+    // may have been meant as the plot) or text the preprocess cut (an unclosed directive).
+    const errors = [...this.pre.diagnostics, ...this.st.diagnostics.list];
+    if (model.plots.length === 0 && !errors.some((d) => d.severity === 'error')) {
       const header = this.children.find((n) => n.type === 'Header');
       const range = header?.range ?? { start: this.pre.bodyStart, end: this.src.length };
       this.st.diagnostics.error('XYCHART_NO_PLOT', NO_PLOT, range);
@@ -494,7 +496,6 @@ class XyChartParser {
   /** `bar [<text>] [ <point> { , <point> } ]` or `line …`. */
   private plot(k: number): void {
     const first = this.c.pos;
-    this.plotsTried++;
     this.hint = PLOT_HINT;
     this.take();
     let name: XyChartTextNode | undefined;
@@ -612,8 +613,6 @@ function outerRanges(l: XyChartLex): [Uint32Array, Uint32Array] {
 
 // ---- model ----------------------------------------------------------------------------
 
-type Mutable<T> = { -readonly [K in keyof T]: T[K] };
-
 /** The id stem of each statement type (plots are numbered instead). */
 function stem(n: XyChartStatementNode): string {
   if (n.type === 'Header') return 'header';
@@ -629,7 +628,7 @@ function assignIds(nodes: readonly XyChartStatementNode[]): void {
   let plots = 0;
   for (const n of nodes) {
     if (n.type === 'Plot') {
-      n.id = `plot:${++plots}`;
+      n.id = plotId(plots++);
       continue;
     }
     const s = stem(n);
@@ -661,9 +660,8 @@ function buildModel(
   let xAst: string | undefined;
   let yAst: string | undefined;
   const plots: XyChartPlotNode[] = [];
-  /** The last `x-axis` that set data, and how many plots were read before it. */
+  /** The last `x-axis` that set data: the final x axis's. */
   let lastX: XyChartAxisNode | undefined;
-  let before = 0;
   for (const n of nodes) {
     if (n.type === 'Header') {
       if (n.orientation !== undefined) orientation = orientationOf(n.orientation);
@@ -673,23 +671,25 @@ function buildModel(
     else if (n.type === 'Axis') axisStatement(b, n);
     else {
       const points = n.points.map((p) => ({ value: Number(p.value), label: p.label ?? '' }));
-      b.addPlot(n.kind, n.name?.text ?? '', points, n.id);
+      b.addPlot(n.kind, n.name?.text ?? '', points);
       plots.push(n);
     }
     if (n.type === 'Axis' && n.axis === 'x') {
       xAst = n.id;
-      if (n.categories || n.data) [lastX, before] = [n, plots.length];
+      if (n.categories || n.data) lastX = n;
     } else if (n.type === 'Axis') yAst = n.id;
   }
-  if (lastX && before > 0) {
+  // Plots read against other x data: only a later `x-axis` with data (`lastX`) changes it.
+  const off = b.plotsOffAxis();
+  if (lastX && off.length > 0) {
     st.diagnostics.warning(
       'XYCHART_PLOT_BEFORE_AXIS',
       'Plots before this `x-axis` keep the x positions they had without it (on categories they are drawn at the start of the axis); put the `x-axis` before the plots.',
       lastX.range,
       {
-        related: plots.slice(0, before).map((p) => ({
-          message: `Plot ${p.id.slice('plot:'.length)} comes before the \`x-axis\`.`,
-          range: p.range,
+        related: off.map((i) => ({
+          message: `Plot ${i + 1} comes before the \`x-axis\`.`,
+          range: plots[i]?.range ?? lastX.range,
         })),
       }
     );

@@ -91,11 +91,31 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
   ['mid-line directive', midLineDirective],
 ];
 
-/** The cases (`corpus/xychart-cases.json`): each quirk, rejection and line-break form. */
-export function xyChartCases(): CorpusItem[] {
+/** One case of the parser's recovery set (`corpus/xychart-recovery.json`, #508). */
+export interface XyChartRecoveryCase extends CorpusItem {
+  name: string;
+  /** `[code, 1-based line]` of every expected error, in order. */
+  errors: [string, number][];
+  /** Plot names and categories that must still be in the model. */
+  keeps?: string[];
+}
+
+/** The recovery set, whose expected diagnostics `recovery.spec.ts` checks. */
+export function xyChartRecovery(): XyChartRecoveryCase[] {
   return JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/xychart-recovery.json'), 'utf8')
+  ) as XyChartRecoveryCase[];
+}
+
+/**
+ * The cases (`corpus/xychart-cases.json`: each quirk, rejection and line-break form) and the
+ * parser's recovery set.
+ */
+export function xyChartCases(): CorpusItem[] {
+  const cases = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/xychart-cases.json'), 'utf8')
   ) as CorpusItem[];
+  return [...cases, ...xyChartRecovery().map(({ id, source }) => ({ id, source }))];
 }
 
 /** The e2e fixtures and the v12 spec and syntax-page strings. */
@@ -131,7 +151,8 @@ export async function xyChartGateCorpus(): Promise<CorpusItem[]> {
  * a directive (with the rest of the text, or up to a word argument's end), so v12 reads less
  * text; v13 rejects it. The cases that have one are listed divergences (`divergences.json`), as
  * for quadrant and radar; their generated variants are left out of the parity corpus, since
- * they only repeat that divergence.
+ * they only repeat that divergence. Nothing else is left out (the grammar gates compare these
+ * too: both sides lex the text v12 cut).
  */
 const unclosedDirective = (source: string): boolean =>
   preprocess(source).diagnostics.some((d) => d.code === 'UNCLOSED_DIRECTIVE');

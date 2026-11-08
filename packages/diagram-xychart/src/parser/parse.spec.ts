@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { parseXyChart } from '../index.ts';
 
 const model = (src: string) => {
@@ -87,6 +88,16 @@ describe('xychart parser: model', () => {
     expect(model('xychart\nx-axis [a]\nbar [1]\nx-axis "T"').warnings).toEqual([]);
   });
 
+  it('does not warn when the later x-axis gives the plot the x values it already has', () => {
+    expect(model('xychart\nx-axis [a]\nbar [1]\nx-axis [a]').warnings).toEqual([]);
+    // The first plot inferred `1 --> 2`; the same range again changes nothing.
+    expect(model('xychart\nbar [1, 2]\nx-axis "T" 1 --> 2').warnings).toEqual([]);
+    const r = parseXyChart('xychart\nx-axis [a]\nbar [1]\nx-axis [b]\nbar [2]\nx-axis [b]');
+    expect(r.model.warnings.map((w) => [w.code, w.related?.map((x) => x.message)])).toEqual([
+      ['XYCHART_PLOT_BEFORE_AXIS', ['Plot 1 comes before the `x-axis`.']],
+    ]);
+  });
+
   it('cuts values to the categories and leaves missing ones out; keeps duplicates (D383)', () => {
     expect(pairs('xychart\nx-axis [a,b,c]\nbar [1]')).toEqual([
       [
@@ -170,6 +181,14 @@ describe('xychart parser: model', () => {
   it('accepts statements with no separator and repeated headers, as jison does', () => {
     expect(model('xychart\ntitle a x-axis [q] bar [5]').plots[0]?.data).toEqual([{ x: 'q', y: 5 }]);
     expect(model('xychart\nxychart-beta\n;bar [1] line [2]').plots).toHaveLength(2);
+  });
+
+  it('reports an unclosed directive that cut the text once, not also "no plot"', () => {
+    for (const src of ['%%{init: {}\nxychart\nbar [1]', 'xychart\n%%{init: {}\nbar [1]']) {
+      expect(parseXyChart(src).diagnostics.map((d) => d.code)).toEqual(['UNCLOSED_DIRECTIVE']);
+      const pre = preprocess(src);
+      expect(parseXyChart(src, { preprocessed: pre }).diagnostics).toEqual([]);
+    }
   });
 
   it('rejects a chart without a plot with v12 message (R-PARSE-4)', () => {

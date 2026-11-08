@@ -10,8 +10,10 @@
  * - `db` is v12's DB API over {@link XyChartBuilder}, with `getXYChartData()` in v12's shape
  *   (`[x, y]` pairs, `undefined` for a missing value).
  */
-import { parseXyChart, XyChartBuilder } from '../parser/index.ts';
-import type { XyChartPointInput, XyChartStatementNode } from '../parser/index.ts';
+import { XyChartBuilder } from '../parser/build.ts';
+import type { XyChartPointInput } from '../parser/build.ts';
+import { parseXyChart } from '../parser/index.ts';
+import type { XyChartStatementNode } from '../parser/index.ts';
 
 type Db = Record<string, ((...args: unknown[]) => unknown) | undefined>;
 
@@ -73,10 +75,10 @@ export const db = {
     builder.setXAxisBand(categories.map((c) => c.text));
   },
   setLineData(title: NormalText, points: XyChartPointInput[]): void {
-    builder.addPlot('line', title.text, points, `plot:${builder.plots.length + 1}`);
+    builder.addPlot('line', title.text, points);
   },
   setBarData(title: NormalText, points: XyChartPointInput[]): void {
-    builder.addPlot('bar', title.text, points, `plot:${builder.plots.length + 1}`);
+    builder.addPlot('bar', title.text, points);
   },
   getXYChartData(): V12Data {
     const x = builder.xAxis(undefined);

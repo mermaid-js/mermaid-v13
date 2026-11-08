@@ -1,6 +1,6 @@
 /**
- * The XY chart parser's public surface: the parser (#508), its AST, the model builder, and the
- * lexer (#507), gated against v12's jison lexer.
+ * The XY chart parser's public surface: the parser (#508), its AST, and the lexer (#507), gated
+ * against v12's jison lexer.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -13,8 +13,6 @@ import { v12Text } from './v12-text.ts';
 export { parseXyChart } from './parser.ts';
 export type { XyChartParseOptions, XyChartParseResult } from './parser.ts';
 export { detectXyChart } from './detect.ts';
-export { XyChartBuilder } from './build.ts';
-export type { XyChartPointInput } from './build.ts';
 export type * from './ast.ts';
 export { tokenValue } from './value.ts';
 export { JISON_NAMES, T as XyChartTokenKind } from './tokens.ts';

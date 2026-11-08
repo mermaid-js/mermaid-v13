@@ -11,8 +11,8 @@
  * - without x data, the first plot sets the x axis to the range `1 --> n` of its n values; later
  *   plots map onto that range (`data` below). Without a y range, the y axis spans the values of
  *   every plot read before one is given;
- * - a plot keeps the x values of the axis it saw: one written before an `x-axis` with data keeps
- *   its `data`, and so draws at the start of a band axis (D386, `XYCHART_PLOT_BEFORE_AXIS`);
+ * - a plot keeps the x values of the axis it saw: one written before an `x-axis` with other data
+ *   keeps its `data`, and so draws at the start of a band axis (D386, `XYCHART_PLOT_BEFORE_AXIS`);
  * - against a band axis, a plot's values are cut to the category count, and a missing value is
  *   `y: undefined` (D383 draws none for it); duplicate categories are kept;
  * - a reversed range (`10 --> 0`) is kept as written.
@@ -20,6 +20,9 @@
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 export type XyChartOrientation = 'vertical' | 'horizontal';
+
+/** A `bar` or `line` plot. */
+export type XyChartPlotKind = 'bar' | 'line';
 
 /** An x axis with categories (`x-axis [a, b]`). */
 export interface XyChartBandAxis {
@@ -60,7 +63,7 @@ export interface XyChartDatum {
 export interface XyChartPlot {
   /** `plot:<n>`, n from 1 in statement order. */
   readonly ast: AstId;
-  readonly kind: 'bar' | 'line';
+  readonly kind: XyChartPlotKind;
   /** Trimmed; `''` for an unnamed plot (no legend entry). */
   readonly name: string;
   /** Position among the plots, from 0: the palette slot is `index` mod the palette length. */
