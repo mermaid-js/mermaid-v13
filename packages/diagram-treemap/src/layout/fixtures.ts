@@ -2,10 +2,10 @@
  * Hand-built treemap models for the layout's unit specs (as radar's `layout/fixtures.ts`), and a
  * measurer whose widths are easy to work by hand: every character is half the font size wide.
  */
-import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { TreemapModel, TreemapNode } from '../model.ts';
+import { treemapTestContext } from '../test-context.ts';
 import type { TreemapLayoutContext } from './layout.ts';
 
 let ids = 0;
@@ -37,10 +37,11 @@ export const halfEm: Measurer = {
   metrics: (font) => ({ ascent: font.size * 0.8, descent: font.size * 0.2, lineHeight: font.size }),
 };
 
+/** A layout context with the half-em measurer (or `measurer`). */
 export function context(
   theme: Theme,
   treemap: Record<string, unknown> = {},
   measurer: Measurer = halfEm
 ): TreemapLayoutContext {
-  return { config: { treemap } as unknown as ResolvedConfig, theme, measurer };
+  return treemapTestContext(theme, treemap, measurer);
 }

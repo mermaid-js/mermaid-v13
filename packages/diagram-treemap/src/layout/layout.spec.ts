@@ -130,6 +130,21 @@ describe('layoutTreemap', () => {
     expect(a.valueText).toBeUndefined();
   });
 
+  it('prints no value that is not finite (D402)', () => {
+    const l = layoutTreemap(
+      model([section('s', leaf('a', 1e308), leaf('b', 1e308)), leaf('c', Infinity)]),
+      context(theme)
+    );
+    expect(l.sections[0]!.value).toBe(Infinity);
+    expect(l.sections[0]!.valueText).toBeUndefined();
+    const c = l.leaves.find((x) => x.node.name === 'c')!;
+    expect(c.valueText).toBeUndefined();
+    expect(c.box.width * c.box.height).toBe(0);
+    const a = l.leaves.find((x) => x.node.name === 'a')!;
+    // A finite value still prints, as d3's `,` (`.12~g`) writes it.
+    expect(a.valueText?.text).toBe('1e+308');
+  });
+
   it('decodes entities and prints tags (D405)', () => {
     const l = layoutTreemap(model([leaf('a &amp; &#9829; <b>', 1)]), context(theme));
     expect(l.leaves[0]!.label!.text).toBe('a & ♥ <b>');

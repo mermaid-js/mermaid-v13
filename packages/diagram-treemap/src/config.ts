@@ -29,7 +29,7 @@ export const TREEMAP_DEFAULTS: TreemapLayoutConfig = {
 };
 
 /** A finite number of 0 or more, or a string that reads as one; else undefined. */
-function length(value: unknown): number | undefined {
+function nonNegativeFinite(value: unknown): number | undefined {
   let n = Number.NaN;
   if (typeof value === 'number') n = value;
   else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
@@ -43,10 +43,10 @@ export function treemapLayoutConfig(
   const given = section ?? {};
   const d = TREEMAP_DEFAULTS;
   return {
-    nodeWidth: length(given.nodeWidth) ?? d.nodeWidth,
-    nodeHeight: length(given.nodeHeight) ?? d.nodeHeight,
-    padding: length(given.padding) ?? d.padding,
-    diagramPadding: length(given.diagramPadding) ?? d.diagramPadding,
+    nodeWidth: nonNegativeFinite(given.nodeWidth) ?? d.nodeWidth,
+    nodeHeight: nonNegativeFinite(given.nodeHeight) ?? d.nodeHeight,
+    padding: nonNegativeFinite(given.padding) ?? d.padding,
+    diagramPadding: nonNegativeFinite(given.diagramPadding) ?? d.diagramPadding,
     showValues: given.showValues !== false,
     valueFormat:
       typeof given.valueFormat === 'string' && given.valueFormat !== ''

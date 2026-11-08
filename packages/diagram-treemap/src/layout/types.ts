@@ -59,8 +59,8 @@ interface TreemapItem {
   /** The label; absent when hidden (it did not fit). */
   readonly label?: TreemapText;
   /**
-   * The formatted value; absent when hidden: `showValues: false`, a zero value, or (leaves)
-   * no room or no label.
+   * The formatted value; absent when hidden: `showValues: false`, a zero or non-finite value
+   * (D402), or (leaves) no room or no label.
    */
   readonly valueText?: TreemapText;
 }

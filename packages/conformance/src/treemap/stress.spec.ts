@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { treemapTokens } from '@mermaid-js/diagram-treemap/testing';
+import { beforeAll, describe, expect, it } from 'vitest';
+import type { Theme } from '@mermaid-js/core/theme';
+import { layoutTreemap, type TreemapModel, type TreemapNode } from '@mermaid-js/diagram-treemap';
+import {
+  treemapTestContext,
+  treemapTestTheme,
+  treemapTokens,
+} from '@mermaid-js/diagram-treemap/testing';
 
 /**
  * R-PARSE-7, pitfall 5: the treemap lexer is linear in input size, in every rule. v12's lexer is
@@ -94,5 +100,122 @@ describe('stress: the treemap lexer is linear in input size', () => {
       expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
     },
     30_000
+  );
+});
+
+/**
+ * Pitfall 19: the layout does no per-node rework (no scan of the siblings or the children per
+ * row), so it is linear in the rows, give or take d3's sort. Pie's pattern: n and 8n rows, best
+ * of five, CPU time, `tLarge / Math.max(tSmall, 2) < 24` (linear ~8x, quadratic ~64x). The
+ * models are built, not parsed, so only the layout is timed. Not measured on a steady machine.
+ */
+const LONG = 'a label far too long for any box it could get '.repeat(8);
+let ids = 0;
+const leaf = (name: string, value: number): TreemapNode => ({
+  type: 'Leaf',
+  name,
+  value,
+  depth: 0,
+  children: [],
+  astId: `node:${++ids}`,
+});
+const section = (name: string, children: TreemapNode[]): TreemapNode => ({
+  type: 'Section',
+  name,
+  depth: 0,
+  children,
+  astId: `node:${++ids}`,
+});
+const forest = (roots: TreemapNode[]): TreemapModel => ({
+  roots,
+  classes: [],
+  accTitle: '',
+  accDescr: '',
+  warnings: [],
+});
+const rows = (n: number, name: (i: number) => string = (i) => `n${i % 97}`) =>
+  Array.from({ length: n }, (_, i) => leaf(name(i), 1 + (i % 13)));
+
+/**
+ * `[name, build, config, scale]`: `build(n)` is a model of about `n` rows, laid out at 2k and
+ * 16k rows times `scale` (a quadratic leaf scan fails at those sizes, not at 8× fewer). Long
+ * labels cost a measure per character, so that shape runs at an eighth.
+ */
+const LAYOUTS: [
+  name: string,
+  build: (n: number) => TreemapModel,
+  config?: Record<string, unknown>,
+  scale?: number,
+][] = [
+  ['flat leaves', (n) => forest(rows(n))],
+  ['one section of leaves', (n) => forest([section('s', rows(n))])],
+  ['equal values', (n) => forest(Array.from({ length: n }, (_, i) => leaf(`n${i}`, 1)))],
+  [
+    'deep sections',
+    (n) => {
+      let node = leaf('x', 1);
+      for (let i = 0; i < n / 2; i++) node = section(`s${i % 7}`, [node, leaf('y', 1)]);
+      return forest([node]);
+    },
+  ],
+  [
+    'sections of ten, many names',
+    (n) =>
+      forest(
+        Array.from({ length: n / 10 }, (_, i) =>
+          section(
+            `s${i}`,
+            rows(9, (j) => `${i}.${j}`)
+          )
+        )
+      ),
+  ],
+  [
+    'complex, long labels truncated',
+    (n) =>
+      forest(
+        Array.from({ length: n / 10 }, (_, i) =>
+          section(
+            `${i} ${LONG}`,
+            rows(9, (j) => `${j} ${LONG}`)
+          )
+        )
+      ),
+    { nodeWidth: 3000, nodeHeight: 3000 },
+    1 / 8,
+  ],
+];
+
+let theme: Theme;
+beforeAll(async () => {
+  theme = await treemapTestTheme();
+});
+
+describe('stress: the treemap layout is linear in rows', () => {
+  it.each(LAYOUTS)(
+    '%s',
+    (name, build, config = {}, scale = 1) => {
+      const ctx = treemapTestContext(theme, config);
+      const small = build(2_000 * scale);
+      const large = build(16_000 * scale);
+      const lay = (m: TreemapModel) => layoutTreemap(m, ctx);
+      lay(small); // warm up
+      const truncated = lay(large).sections.filter((s) => s.label?.text.endsWith('...')).length;
+      if (name.startsWith('complex')) expect(truncated).toBeGreaterThan(100);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => lay(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => lay(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    60_000
   );
 });

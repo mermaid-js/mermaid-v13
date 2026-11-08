@@ -1,14 +1,17 @@
 /**
- * License check (R-REL-4, D12): ported code carries its upstreams' MIT attribution.
+ * License check (R-REL-4, D12): ported code carries its upstreams' attribution, under each
+ * upstream's license (MIT unless the upstream says otherwise; d3's packages are ISC).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's and Iconify's repository URLs; Braintree's sanitize-url package name). A file is derived from an upstream
- * when its header has that marker. Then:
- * - that header names the MIT license and the upstream's copyright holder;
- * - in a published package (`packages/*` without `"private": true`), the package root has a
- *   `THIRD_PARTY_NOTICES` that holds the upstream's MIT copyright line, lists the file by its
- *   package-relative path (in that upstream's section, when the notices have one per upstream)
- *   and is in the package's `"files"`, so it ships in the tarball;
+ * block (Pele's, Iconify's and d3's repository URLs; Braintree's sanitize-url package name). A
+ * file is derived from an upstream when its header has that marker. Then:
+ * - that header names the upstream's license and copyright holder;
+ * - in a published package (`packages/*` without `"private": true`), and in a private one that
+ *   holds a file of `REQUIRED_CREDITS` (treemap's d3 ports, ahead of its release), the package root
+ *   has a `THIRD_PARTY_NOTICES` that holds the upstream's license text and copyright line (an
+ *   upstream that is not MIT in its own section), lists the file by its package-relative path
+ *   (in that upstream's section, when the notices have one per upstream) and is in the
+ *   package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
@@ -26,7 +29,22 @@ interface Upstream {
   readonly marker: string;
   readonly holder: string;
   readonly copyright: string;
+  /** The upstream's license; MIT when absent. */
+  readonly license?: License;
 }
+
+type License = 'MIT' | 'ISC';
+
+/** Text a notices file must hold for each license: its name and, for ISC, its grant. */
+const LICENSE_TEXT: Readonly<Record<License, readonly string[]>> = {
+  MIT: ['MIT License'],
+  ISC: [
+    'ISC License',
+    'Permission to use, copy, modify, and/or distribute this software for any purpose',
+  ],
+};
+
+const licenseOf = (u: Upstream): License => u.license ?? 'MIT';
 
 export const UPSTREAMS: readonly Upstream[] = [
   {
@@ -48,6 +66,20 @@ export const UPSTREAMS: readonly Upstream[] = [
     holder: 'Vjacheslav Trushkin',
     copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
   },
+  {
+    name: 'd3-hierarchy',
+    marker: 'https://github.com/d3/d3-hierarchy',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2021 Mike Bostock',
+    license: 'ISC',
+  },
+  {
+    name: 'd3-format',
+    marker: 'https://github.com/d3/d3-format',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2026 Mike Bostock',
+    license: 'ISC',
+  },
 ];
 
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
@@ -55,6 +87,8 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
+  'packages/diagram-treemap/src/layout/tiles.ts': ['d3-hierarchy'],
+  'packages/diagram-treemap/src/format/d3-format.ts': ['d3-format'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -119,9 +153,10 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
     }
     for (const upstream of UPSTREAMS) {
       if (!header.includes(upstream.marker)) continue;
-      if (!/\bMIT\b/.test(header) || !header.includes(upstream.holder))
+      const license = licenseOf(upstream);
+      if (!new RegExp(`\\b${license}\\b`).test(header) || !header.includes(upstream.holder))
         problems.push(
-          `${rel}: ${upstream.name}-derived header must name the MIT license and "${upstream.holder}"`
+          `${rel}: ${upstream.name}-derived header must name the ${license} license and "${upstream.holder}"`
         );
       derived.push({ file: relative(dir, file), upstream });
     }
@@ -162,11 +197,13 @@ export function checkLicenses(root: string): string[] {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
-    if (manifest.private) continue;
-
     const pkg = relative(root, pkgDir);
-    const derived = derivedFiles(root, pkgDir, problems);
     const noticesPath = join(pkgDir, NOTICES);
+    // A private package is checked when it holds a file that must credit an upstream.
+    const required = Object.keys(REQUIRED_CREDITS).some((f) => f.startsWith(`${pkg}/`));
+    if (manifest.private && !required) continue;
+
+    const derived = derivedFiles(root, pkgDir, problems);
     if (!existsSync(noticesPath)) {
       if (derived.length > 0) {
         const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');
@@ -190,9 +227,16 @@ export function checkLicenses(root: string): string[] {
         (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
         derived.some((d) => d.upstream === u)
     );
-    for (const u of used)
-      if (!notices.includes('MIT License') || !notices.includes(u.copyright))
-        problems.push(`${pkg}/${NOTICES}: must contain the MIT License text with "${u.copyright}"`);
+    for (const u of used) {
+      const license = licenseOf(u);
+      // MIT text may stand anywhere in the notices (older ones have no sections); any other
+      // license's must stand in its upstream's own section.
+      const text = license === 'MIT' ? notices : section(notices, u.name);
+      if (!LICENSE_TEXT[license].every((t) => text.includes(t)) || !text.includes(u.copyright))
+        problems.push(
+          `${pkg}/${NOTICES}: must contain the ${license} License text with "${u.copyright}"`
+        );
+    }
     if (!(manifest.files ?? []).includes(NOTICES))
       problems.push(`${pkg}/package.json: "files" must include ${NOTICES}`);
 

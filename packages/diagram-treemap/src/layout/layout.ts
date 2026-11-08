@@ -119,6 +119,15 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   };
 }
 
+/**
+ * Whether a value is printed: under `showValues`, and not when 0 (v12 printed nothing for a
+ * falsy value, so NaN neither) nor when not finite (D402: a sum that overflows, or a value of
+ * 309 digits, prints nothing either).
+ */
+function shows(frame: Frame, value: number): boolean {
+  return frame.config.showValues && value !== 0 && Number.isFinite(value);
+}
+
 /** d3's rectangle of `t`, moved down by the title band. */
 function rectOf(t: Tile, band: number): Rect {
   return { x: t.x0, y: t.y0 + band, width: t.x1 - t.x0, height: t.y1 - t.y0 };
@@ -178,7 +187,7 @@ function sectionOf(
   const box = rectOf(t, frame.band);
   const styles = classStyles(frame.model, node.classSelector);
   const headerY = box.y + M.sectionHeader / 2;
-  const showValue = frame.config.showValues && t.value !== 0;
+  const showValue = shows(frame, t.value);
 
   const labelFont = classFont(styles, {
     family: frame.family,
@@ -312,7 +321,7 @@ function fitLeaf(
     anchor: 'middle',
     baseline: 'middle',
   });
-  if (!frame.config.showValues || t.value === 0) return { label };
+  if (!shows(frame, t.value)) return { label };
 
   const valueFont = font(valueSize(size));
   const top = box.height / 2 + size / 2 + fit.gap;
