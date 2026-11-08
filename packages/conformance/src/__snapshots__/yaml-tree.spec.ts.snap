@@ -36,7 +36,7 @@ exports[`YAML default mode over the corpus > reads front matter and shape data e
   "treemap": "26 6e715feafa07bf09",
   "usecase": "109 40f75d73db28f367",
   "venn": "21 1d0f16e77bfb3871",
-  "wardley": "10 e502b4021b1d620d",
+  "wardley": "11 8bf7083f7222f833",
   "xychart": "48 b03f96b1331a7e50",
   "zenuml": "1 fbf21f2721bf6b58",
 }
