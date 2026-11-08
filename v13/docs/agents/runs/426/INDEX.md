@@ -28,7 +28,7 @@ AI-Max is shared by five wave-2 ports, so one ticket agent runs at a time: T1 �
 
 | After | Core gz | Δ |
 | --- | --- | --- |
-| base (12ba676cb) | | |
+| base (12ba676cb) | 91,974 B (CDN, `measureCoreSize`) | — (2,234 B spare) |
 
 ## Finish rule
 
