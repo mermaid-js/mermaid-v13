@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, styleScope } from '@mermaid-js/core/svg';
 import { renderSankeyForTest } from './harness.ts';
+import { fixture, sankeyCase } from './sources.fixtures.ts';
 
 /** Every `<tag>` start tag's attributes, in document order. */
 function elements(svg: string, tag: string): Record<string, string>[] {
@@ -33,10 +34,15 @@ const byClass = (svg: string, tag: string, cls: string) =>
 const texts = (svg: string): string[] =>
   [...svg.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]!);
 
-/** v12 12.2.0 draws this as `a` (0–10), `b` (295–305), `c` (590–600) on a 600 × 400 extent. */
-const CHAIN = 'sankey\na,b,10\nb,c,5\n';
-const withConfig = (sankey: Record<string, unknown>, src = CHAIN): string =>
-  `---\nconfig:\n  sankey: ${JSON.stringify(sankey)}\n---\n${src}`;
+/**
+ * `a,b,10` and `b,c,10` with `sankey: {}` in its front matter, so the integrator's `sankey`
+ * options below apply. v12 12.2.0 draws it as `a` (0–10), `b` (295–305) and `c` (590–600), each
+ * 400 high, on a 600 × 400 extent.
+ */
+const CHAIN = fixture('nightly-check/legacy-label-style-by-default');
+/** The chain with the integrator's `sankey` options (and theme). */
+const chain = (sankey: Record<string, unknown>, theme?: string) =>
+  renderSankeyForTest(CHAIN, { config: { sankey, ...(theme ? { theme } : {}) } });
 
 describe('structure (spec #427 Renderer)', () => {
   it('draws g.nodes > g.node > rect, then g.node-labels, then g.links > g.link > path, in v12 order', async () => {
@@ -55,14 +61,14 @@ describe('structure (spec #427 Renderer)', () => {
     expect(elements(svg, 'rect').map((r) => [r.width, r.height, r.fill])).toEqual([
       ['10', '400', '#4e79a7'],
       ['10', '400', '#f28e2c'],
-      ['10', '200', '#e15759'],
+      ['10', '400', '#e15759'],
     ]);
     const paths = elements(svg, 'path');
     expect(paths.map((p) => p.d)).toEqual([
       'M10,200C152.5,200 152.5,200 295,200',
-      'M305,100C447.5,100 447.5,100 590,100',
+      'M305,200C447.5,200 447.5,200 590,200',
     ]);
-    expect(paths.map((p) => p['stroke-width'])).toEqual(['400', '200']);
+    expect(paths.map((p) => p['stroke-width'])).toEqual(['400', '400']);
     expect(byClass(svg, 'g', 'links')[0]).toMatchObject({ fill: 'none', 'stroke-opacity': '0.5' });
   });
 
@@ -94,10 +100,7 @@ describe('structure (spec #427 Renderer)', () => {
     expect(root['aria-roledescription']).toBe('sankey');
     expect(root.role).toBe('img');
     expect(root.class).toBe('mermaid mermaid-sankey');
-    const fixed = elements(
-      (await renderSankeyForTest(withConfig({ useMaxWidth: false }))).svg,
-      'svg'
-    )[0]!;
+    const fixed = elements((await chain({ useMaxWidth: false })).svg, 'svg')[0]!;
     expect([fixed.width, fixed.height]).toEqual([String(w), String(h)]);
     expect(fixed.style ?? '').not.toContain('max-width');
   });
@@ -105,7 +108,7 @@ describe('structure (spec #427 Renderer)', () => {
 
 describe('labels (D395, both label styles)', () => {
   it('legacy: one text per node in textColor at 14 px, v12 anchors, the value on the same line', async () => {
-    const { svg } = await renderSankeyForTest(CHAIN, { config: { theme: 'default' } });
+    const { svg } = await chain({}, 'default');
     const group = byClass(svg, 'g', 'node-labels')[0]!;
     expect(group['font-size']).toBe('14');
     expect(group.fill).toMatch(/^var\(--_[\w-]+\)$/);
@@ -113,19 +116,19 @@ describe('labels (D395, both label styles)', () => {
     expect(labels.map((t) => [t.x, t.y, t.dy, t['text-anchor'], t.class])).toEqual([
       ['16', '200', '0', 'start', undefined],
       ['311', '200', '0', 'start', undefined],
-      ['584', '100', '0', 'end', undefined],
+      ['584', '200', '0', 'end', undefined],
     ]);
-    expect(texts(svg)).toEqual(['a 10', 'b 10', 'c 5']);
+    expect(texts(svg)).toEqual(['a 10', 'b 10', 'c 10']);
   });
 
   it('legacy without values: the name only, shifted by 0.35 em (4.9 px)', async () => {
-    const { svg } = await renderSankeyForTest(withConfig({ showValues: false }));
+    const { svg } = await chain({ showValues: false });
     expect(texts(svg)).toEqual(['a', 'b', 'c']);
     expect(elements(svg, 'text').map((t) => t.dy)).toEqual(['4.9', '4.9', '4.9']);
   });
 
   it('outlined: every mainBkg-stroked sankey-label-bg, then every sankey-label-fg', async () => {
-    const { svg } = await renderSankeyForTest(withConfig({ labelStyle: 'outlined' }));
+    const { svg } = await chain({ labelStyle: 'outlined' });
     const bg = byClass(svg, 'text', 'sankey-label-bg');
     const fg = byClass(svg, 'text', 'sankey-label-fg');
     expect(bg).toHaveLength(3);
@@ -141,7 +144,7 @@ describe('labels (D395, both label styles)', () => {
       ...Array<string>(3).fill('sankey-label-bg'),
       ...Array<string>(3).fill('sankey-label-fg'),
     ]);
-    expect(texts(svg)).toEqual(['a 10', 'b 10', 'c 5', 'a 10', 'b 10', 'c 5']);
+    expect(texts(svg)).toEqual(['a 10', 'b 10', 'c 10', 'a 10', 'b 10', 'c 10']);
   });
 });
 
@@ -167,14 +170,14 @@ describe('links (linkColor, D391, D392)', () => {
   });
 
   it('shares one gradient between links with the same ends and colours', async () => {
-    const { svg } = await renderSankeyForTest('sankey\na,b,10\na,b,5\n');
+    const { svg } = await renderSankeyForTest(sankeyCase('sankey-cases/links-repeated'));
     expect(elements(svg, 'linearGradient')).toHaveLength(1);
     expect(new Set(elements(svg, 'path').map((p) => p.stroke)).size).toBe(1);
   });
 
   it('source, target and a CSS colour stroke the path with no gradient', async () => {
     const strokes = async (linkColor: string) => {
-      const { svg } = await renderSankeyForTest(withConfig({ linkColor }));
+      const { svg } = await chain({ linkColor });
       expect(svg).not.toContain('<linearGradient');
       return elements(svg, 'path').map((p) => p.stroke);
     };
@@ -184,9 +187,11 @@ describe('links (linkColor, D391, D392)', () => {
   });
 
   it('draws a linkColor that is no colour as the default gradient (T5 warns)', async () => {
-    const { svg } = await renderSankeyForTest(withConfig({ linkColor: 'url(javascript:x)' }));
-    expect(elements(svg, 'linearGradient')).toHaveLength(2);
-    expect(svg).not.toContain('javascript');
+    for (const linkColor of ['url(javascript:x)', 'red;x:y', 42]) {
+      const { svg } = await chain({ linkColor });
+      expect(elements(svg, 'linearGradient'), String(linkColor)).toHaveLength(2);
+      expect(svg).not.toMatch(/javascript|x:y|42/);
+    }
   });
 
   it('blends every g.link with multiply (D392)', async () => {
@@ -200,22 +205,31 @@ describe('links (linkColor, D391, D392)', () => {
 
 describe('node colours', () => {
   it('fills nodeColors entries and gives the rest the Tableau10 slots in order', async () => {
-    const { svg } = await renderSankeyForTest(
-      withConfig({ nodeColors: { b: '#123456' }, linkColor: 'source' })
-    );
+    const { svg } = await chain({ nodeColors: { b: '#123456' }, linkColor: 'source' });
     expect(elements(svg, 'rect').map((r) => r.fill)).toEqual(['#4e79a7', '#123456', '#f28e2c']);
     expect(elements(svg, 'path').map((p) => p.stroke)).toEqual(['#4e79a7', '#123456']);
   });
 
-  it('writes no fill for a nodeColors entry that is no colour (T5 warns and replaces it)', async () => {
-    for (const linkColor of ['source', 'gradient']) {
-      const { svg } = await renderSankeyForTest(
-        withConfig({ nodeColors: { b: 'red;x:url(y)' }, linkColor })
-      );
-      expect(svg).not.toContain('url(y)');
-      expect(elements(svg, 'rect')[1]!.fill).toBeUndefined();
+  it('drops a nodeColors entry that is no colour: the node takes its slot, its links its colour', async () => {
+    // Spec #427 §Integration: dropped, and the default used (#503 warns). v12 drew it black.
+    const nodeColors = { a: 5, b: 'red;x:url(y)' };
+    const source = await chain({ nodeColors, linkColor: 'source' });
+    expect(source.svg).not.toContain('url(y)');
+    expect(elements(source.svg, 'rect').map((r) => r.fill)).toEqual([
+      '#4e79a7',
+      '#f28e2c',
+      '#e15759',
+    ]);
+    expect(elements(source.svg, 'path').map((p) => p.stroke)).toEqual(['#4e79a7', '#f28e2c']);
+    const gradient = await chain({ nodeColors });
+    expect(elements(gradient.svg, 'stop').map((s) => s['stop-color'])).toEqual([
+      '#4e79a7',
+      '#f28e2c',
+      '#f28e2c',
+      '#e15759',
+    ]);
+    for (const { svg } of [source, gradient])
       expect(() => assertInert(svg, { gradient: false, scope: 'mermaid-0' })).not.toThrow();
-    }
   });
 });
 
@@ -229,19 +243,19 @@ describe('ids, title and determinism', () => {
   });
 
   it('names the diagram by its front-matter title (D396), drawing none', async () => {
-    const { svg } = await renderSankeyForTest(`---\ntitle: Energy <flows>\n---\n${CHAIN}`, {
+    const { svg } = await renderSankeyForTest(sankeyCase('sankey-cases/front-matter-title'), {
       idPrefix: 'd7',
     });
     expect(elements(svg, 'svg')[0]!['aria-labelledby']).toBe('d7-title');
-    expect(svg).toContain('<title id="d7-title">Energy &lt;flows&gt;</title>');
-    expect(texts(svg)).toEqual(['a 10', 'b 10', 'c 5']);
+    expect(svg).toContain('<title id="d7-title">T</title>');
+    expect(texts(svg)).not.toContain('T');
   });
 
   it('gives the same bytes on both writer backings and on a second render', async () => {
-    const src = withConfig({ labelStyle: 'outlined' });
-    const a = (await renderSankeyForTest(src)).svg;
-    expect((await renderSankeyForTest(src)).svg).toBe(a);
-    expect((await renderSankeyForTest(src, { tree: true })).svg).toBe(a);
+    const config = { sankey: { labelStyle: 'outlined' } };
+    const a = (await renderSankeyForTest(CHAIN, { config })).svg;
+    expect((await renderSankeyForTest(CHAIN, { config })).svg).toBe(a);
+    expect((await renderSankeyForTest(CHAIN, { config, tree: true })).svg).toBe(a);
   });
 
   it('draws an empty diagram as its three empty groups', async () => {

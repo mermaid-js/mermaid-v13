@@ -11,6 +11,7 @@
  * metrics table (pitfall 13).
  */
 import type { RenderContext } from '@mermaid-js/core';
+import type { SafeColor } from '@mermaid-js/core/svg';
 import type { FontKey } from '@mermaid-js/core/text';
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
@@ -103,8 +104,8 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
   let slots = 0;
   const nodes: SankeyNodeLayout[] = graph.nodes.map((node, i) => {
     const source = model.nodes[i]!;
-    // v12's `nodeColors[id] ?? scale(id)`: a named node asks the scale for no slot.
-    const named = config.nodeColors.has(source.id);
+    // v12's `nodeColors[id] ?? scale(id)`: a node with a colour asks the scale for no slot.
+    const named = config.nodeColors.get(source.id);
     const slot = named ? undefined : slots++ % TABLEAU10.length;
     // v12's getLabelPosition (`:189-203`).
     const left =
@@ -131,7 +132,7 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
       value: node.value / graph.scale,
       layer: node.layer,
       ...(slot === undefined ? {} : { slot }),
-      fill: slot === undefined ? String(config.nodeColors.get(source.id)) : TABLEAU10[slot]!,
+      fill: named ?? (TABLEAU10[slot!] as SafeColor),
       label,
     };
   });

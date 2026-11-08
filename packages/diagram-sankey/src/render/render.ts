@@ -45,9 +45,9 @@ export function renderSankey(
   ctx: SankeyRenderContext,
   w: SvgWriter
 ): void {
-  const options = sankeyRenderOptions(ctx.config.sankey as Readonly<Record<string, unknown>>);
+  const options = sankeyRenderOptions(ctx.config.sankey);
   // Every theme variable is read before the root, so its style declares them.
-  const scene: Scene = { w, layout, paint: paints(ctx.theme, layout), options };
+  const scene: Scene = { w, layout, paint: paints(ctx.theme, layout.labelStyle), options };
   openRoot(model, scene, ctx);
   drawNodes(scene);
   drawLabels(scene);
@@ -98,7 +98,7 @@ function openRoot(
 }
 
 /** v12 L154–172: one `g.node` per node at its corner, holding its rect. */
-function drawNodes({ w, layout, paint }: Scene): void {
+function drawNodes({ w, layout }: Scene): void {
   w.open('g', { class: 'nodes' });
   for (const n of layout.nodes) {
     w.open('g', {
@@ -107,7 +107,7 @@ function drawNodes({ w, layout, paint }: Scene): void {
       'data-ast': n.ast,
       transform: translate(n.x0, n.y0),
     });
-    w.leaf('rect', { width: n.x1 - n.x0, height: n.y1 - n.y0, fill: paint.nodes[n.index] });
+    w.leaf('rect', { width: n.x1 - n.x0, height: n.y1 - n.y0, fill: n.fill });
     w.close();
   }
   w.close();
@@ -120,14 +120,14 @@ function drawNodes({ w, layout, paint }: Scene): void {
  * here the background text is stroked and the foreground text drawn over it, the same picture.
  */
 function drawLabels({ w, layout, paint }: Scene): void {
-  const m = SANKEY_METRICS;
+  const metrics = SANKEY_METRICS;
   w.open('g', { class: 'node-labels', 'font-size': layout.font.size, fill: paint.text });
   if (paint.halo) {
     const halo: Attrs = {
       class: 'sankey-label-bg',
       stroke: paint.halo,
-      'stroke-width': m.outlineWidth,
-      'stroke-linejoin': m.outlineJoin,
+      'stroke-width': metrics.outlineWidth,
+      'stroke-linejoin': metrics.outlineJoin,
     };
     for (const n of layout.nodes) drawLabel(w, n.ast, n.label, halo);
     for (const n of layout.nodes) drawLabel(w, n.ast, n.label, { class: 'sankey-label-fg' });
@@ -169,23 +169,18 @@ function drawLinks(scene: Scene): void {
 /**
  * A link's stroke by `linkColor`: its source's or target's fill, one colour for all, or a
  * user-space gradient from the source's colour at `source.x1` to the target's at `target.x0`
- * (D391). A link with an end whose colour failed the check gets none.
+ * (D391). The colours are the layout's, so every link has one.
  */
-function linkStroke(
-  { w, paint, options }: Scene,
-  link: SankeyLinkLayout
-): OutlinePaint | undefined {
-  const from = paint.nodes[link.source];
-  const to = paint.nodes[link.target];
+function linkStroke({ w, options }: Scene, link: SankeyLinkLayout): OutlinePaint {
+  const from = link.sourceFill;
+  const to = link.targetFill;
   switch (options.linkColor) {
     case 'source':
       return from;
     case 'target':
       return to;
     case 'gradient':
-      return from && to
-        ? w.linearGradient({ x1: link.path.from.x, x2: link.path.to.x, from, to })
-        : undefined;
+      return w.linearGradient({ x1: link.path.from.x, x2: link.path.to.x, from, to });
     default:
       return options.linkColor;
   }

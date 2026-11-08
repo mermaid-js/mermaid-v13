@@ -149,11 +149,22 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
     expect(p.nodes.map((n) => n.slot)).toEqual([0, 1]);
   });
 
-  it('takes a node with any non-nullish nodeColors entry out of the slots, as v12 `??` did', () => {
+  it('takes a node out of the slots only for a nodeColors entry that is a colour', () => {
     // v12 never asked the scale for a's slot, so b took slot 0; null fell through to the scale.
-    const l = lay('sankey\na,b,1\nb,c,1', { nodeColors: { a: 5, c: null } });
+    const l = lay('sankey\na,b,1\nb,c,1', { nodeColors: { a: ' red ', c: null } });
     expect(l.nodes.map((n) => n.slot)).toEqual([undefined, 0, 1]);
-    expect(l.nodes.map((n) => n.fill)).toEqual(['5', '#4e79a7', '#f28e2c']);
+    expect(l.nodes.map((n) => n.fill)).toEqual(['red', '#4e79a7', '#f28e2c']);
+    // Dropped (spec #427: the default used): a number, an unsafe value, an object. v12 drew
+    // these black and asked the scale for no slot.
+    const bad = lay('sankey\na,b,1\nb,c,1', {
+      nodeColors: { a: 5, b: 'red;x:url(y)', c: { r: 1 } },
+    });
+    expect(bad.nodes.map((n) => n.slot)).toEqual([0, 1, 2]);
+    expect(bad.nodes.map((n) => n.fill)).toEqual(['#4e79a7', '#f28e2c', '#e15759']);
+    expect(bad.links.map((k) => [k.sourceFill, k.targetFill])).toEqual([
+      ['#4e79a7', '#f28e2c'],
+      ['#f28e2c', '#e15759'],
+    ]);
   });
 
   it('writes one line, the value rounded to 2 decimals between prefix and suffix (D395)', () => {

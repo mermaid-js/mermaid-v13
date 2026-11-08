@@ -6,11 +6,6 @@
  */
 export { sankey } from './plugin.ts';
 export { renderSankey, type SankeyRenderContext } from './render/render.ts';
-export {
-  sankeyRenderOptions,
-  type SankeyLinkPaint,
-  type SankeyRenderOptions,
-} from './render/options.ts';
 export { detectSankey, parseSankey } from './parser/index.ts';
 export type {
   SankeyDocument,

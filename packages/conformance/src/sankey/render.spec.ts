@@ -30,7 +30,11 @@ const CONFIGS: readonly Record<string, unknown>[] = [
   { linkColor: 'source', labelStyle: 'outlined' },
   { linkColor: 'target', showValues: false },
   { linkColor: '#636465', labelStyle: 'outlined', showValues: false },
-  { linkColor: 'gradient', labelStyle: 'outlined', nodeColors: { a: '#123456', Coal: 'red' } },
+  {
+    linkColor: 'gradient',
+    labelStyle: 'outlined',
+    nodeColors: { a: '#123456', Coal: 'red', b: 'url(x)' },
+  },
 ];
 const TOL = 0.01;
 

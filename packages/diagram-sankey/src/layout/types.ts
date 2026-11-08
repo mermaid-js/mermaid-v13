@@ -4,6 +4,7 @@
  * coordinates: d3-sankey's extent `[[0, 0], [width, height]]`, drawn as it is.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
+import type { SafeColor } from '@mermaid-js/core/svg';
 import type { FontKey } from '@mermaid-js/core/text';
 
 /** `nodeAlignment`: d3-sankey's `sankeyLeft`, `sankeyRight`, `sankeyCenter`, `sankeyJustify`. */
@@ -52,15 +53,15 @@ export interface SankeyNodeLayout {
   /** The column the node is drawn in (d3's `layer`). */
   readonly layer: number;
   /**
-   * The Tableau10 slot (the node's index among the nodes `nodeColors` does not name, mod 10);
-   * absent when `nodeColors` names the node.
+   * The Tableau10 slot (the node's index among the nodes `nodeColors` gives no valid colour,
+   * mod 10); absent when it gives one.
    */
   readonly slot?: number;
   /**
-   * The rect's fill: the slot's Tableau10 colour, or `nodeColors[id]` as written (unchecked:
-   * #503's colour check decides what an invalid one draws).
+   * The rect's fill: the node's `nodeColors` entry when it passes core's colour check, else the
+   * slot's Tableau10 colour.
    */
-  readonly fill: string;
+  readonly fill: SafeColor;
   readonly label: SankeyLabel;
 }
 
@@ -94,8 +95,8 @@ export interface SankeyLinkLayout {
   readonly y1: number;
   readonly path: SankeyLinkPath;
   /** The source's and target's fills (for `linkColor` `source`, `target` and `gradient`). */
-  readonly sourceFill: string;
-  readonly targetFill: string;
+  readonly sourceFill: SafeColor;
+  readonly targetFill: SafeColor;
 }
 
 export interface SankeyLayout {

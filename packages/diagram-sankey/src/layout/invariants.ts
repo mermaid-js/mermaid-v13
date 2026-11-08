@@ -176,13 +176,13 @@ function linkEnds({ layout, tol, out }: Check): void {
   });
 }
 
-/** A node `nodeColors` names (any non-nullish own entry) fills with it, the others take slots. */
+/** A node `nodeColors` gives a valid colour fills with it, the others take slots. */
 function colours({ layout, config, out }: Check): void {
   let slot = 0;
   for (const n of layout.nodes) {
     const named = config.nodeColors.has(n.id);
     const want = named ? undefined : slot++ % TABLEAU10.length;
-    const fill = named ? String(config.nodeColors.get(n.id)) : TABLEAU10[want!];
+    const fill = named ? config.nodeColors.get(n.id) : TABLEAU10[want!];
     if (n.slot !== want || n.fill !== fill)
       out.push(`node ${n.id} is filled ${n.fill} (slot ${n.slot})`);
   }

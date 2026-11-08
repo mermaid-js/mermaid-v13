@@ -5,12 +5,14 @@
  * else, and an unknown alignment or label style, falls back to the default. v12 differs (GAPS
  * #499): d3 took `+value`, so a negative `nodePadding` overlapped nodes and a negative
  * `nodeWidth` drew boxes inside out, and a string `nodePadding` was concatenated with v12's
- * `+ 15` before d3 read it. A `nodeColors` entry counts when it is the node's own entry and not
- * `null` or `undefined` (v12's `??`), whatever its type: it takes the node out of the Tableau10
- * slots, and #503's colour check decides what an invalid one draws. #503 warns on each dropped
- * or invalid value.
+ * `+ 15` before d3 read it. A `nodeColors` entry counts when it is the node's own entry and a
+ * string that passes core's colour check: it takes the node out of the Tableau10 slots (v12's
+ * `??`). Any other entry counts as absent (spec #427 §Integration: dropped, and the default
+ * used), so the node takes its slot; v12 drew such a node, and a link stroked from it, black
+ * or not at all (GAPS #502). #503 warns on each dropped or invalid value.
  */
 import type { SankeyDiagramConfig } from '@mermaid-js/core/config';
+import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
 import { SANKEY_LENGTH_DEFAULTS } from './layout/metrics.ts';
 import type { SankeyAlignment, SankeyLabelStyle } from './layout/types.ts';
 
@@ -24,8 +26,8 @@ export interface SankeyLayoutConfig {
   readonly prefix: string;
   readonly suffix: string;
   readonly labelStyle: SankeyLabelStyle;
-  /** The node's own non-nullish entries, unchecked. */
-  readonly nodeColors: ReadonlyMap<string, unknown>;
+  /** The node's own entries that pass the colour check. */
+  readonly nodeColors: ReadonlyMap<string, SafeColor>;
 }
 
 const ALIGNMENTS: readonly SankeyAlignment[] = ['left', 'right', 'center', 'justify'];
@@ -49,11 +51,12 @@ export function sankeyLayoutConfig(
 ): SankeyLayoutConfig {
   const s = (section ?? {}) as Readonly<Record<string, unknown>>;
   const d = SANKEY_LENGTH_DEFAULTS;
-  const colours = new Map<string, unknown>();
+  const colours = new Map<string, SafeColor>();
   const given = s.nodeColors;
   if (given !== null && typeof given === 'object')
-    for (const [id, colour] of Object.entries(given)) {
-      if (colour !== null && colour !== undefined) colours.set(id, colour);
+    for (const [id, value] of Object.entries(given)) {
+      const colour = typeof value === 'string' ? checkColor(value) : undefined;
+      if (colour) colours.set(id, colour);
     }
   return {
     width: length(s.width, d.width),
