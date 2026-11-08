@@ -1,10 +1,10 @@
 # Run notes, spec #426 (M5a XY chart, `@mermaid-js/diagram-xychart`)
 
-Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draft PR: (after the first merge).
+Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draft PR: #535.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T0 shared chart series palette (D381) + table palette kind (D545) | #506 | — | own PR off `mermaid-v13` (`feature/426_xychart-core-t0`, coordinator's request); review fixes in progress |
+| T0 shared chart series palette (D381) + table palette kind (D545) | #506 | — | merged into `mermaid-v13` as #534 (05a786ad8; D545 confirmed), merged here at 898863a24 |
 | T1 lexer parity gate | #507 | #285 (merged) | merged (ff 1f7574f8c; package entry 4,193 B gz, no core change) |
 | T2 grammar, parser, model, AST | #508 | #507 | open |
 | T3 layout | #509 | #508 | open |
