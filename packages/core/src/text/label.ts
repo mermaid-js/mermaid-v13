@@ -48,6 +48,11 @@ export interface LabelOptions {
    * provider for a label's spans, the label is laid out as written.
    */
   readonly inline?: InlineSpans;
+  /**
+   * Keep a word wider than `maxWidth` whole on a line of its own, so the label is as wide as the
+   * word, instead of splitting it between characters. Default false.
+   */
+  readonly keepWords?: boolean;
 }
 
 interface Piece {
@@ -134,7 +139,7 @@ export function layoutLabel(
       indent = bullet === 0 ? 0 : measurer.width(BULLETS[0], font, base);
       hang = measurer.width(BULLETS[bullet], font, base);
     }
-    const wrapped = wrap(pieces, font, measurer, maxWidth - indent - hang);
+    const wrapped = wrap(pieces, font, measurer, maxWidth - indent - hang, options.keepWords);
     for (let i = 0; i < wrapped.length; i++) {
       const line = wrapped[i] as Piece[];
       if (bullet !== undefined && i === 0) line.unshift({ text: BULLETS[bullet], style: base });
@@ -382,9 +387,16 @@ function lineWidth(runs: Run[]): number {
 
 /**
  * Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. Each
- * word is measured once; the white space around it and single characters come from `small`.
+ * word is measured once; the white space around it and single characters come from `small`. A
+ * word wider than `max` is split between characters, or with `keep` left whole on its line.
  */
-function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): Piece[][] {
+function wrap(
+  pieces: Piece[],
+  font: FontKey,
+  measurer: Measurer,
+  max: number,
+  keep = false
+): Piece[][] {
   const out: Piece[][] = [];
   let current: Piece[] = [];
   let width = 0;
@@ -433,7 +445,7 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
         part = part.slice(leadLength);
         lead = 0;
       }
-      if (width === 0 && lead + coreWidth > max) {
+      if (!keep && width === 0 && lead + coreWidth > max) {
         part = split(part, style, small, max, out);
         current.push({ text: part, style });
         width += measure(part, style);

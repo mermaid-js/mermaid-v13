@@ -6,9 +6,10 @@ import { packetTokens } from '@mermaid-js/diagram-packet/testing';
  * quadratic on a run of unclosed `accDescr {` (its ACC_DESCR rule searches for `}` from every
  * one) and on runs of escaped quotes. Shape from `../pie/stress.spec.ts`: n and 8n units; linear
  * is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of five,
- * and small and large lexes alternate. Each measurement repeats its lex as often as the small
- * one needs to take at least {@link MIN_MS} (the same count for both), so the bar stays a ratio
- * of two times well above the timer's noise, never an absolute bound. Not measured on a steady
+ * and small and large lexes alternate. The small lex repeats until it takes at least
+ * {@link MIN_MS}, ten steps of the CPU clock or more, and the large one an eighth as often, so
+ * the bar stays a ratio of per-lex times well above the clock's step, never an absolute bound,
+ * and a linear lexer gives two windows of the same length. Not measured on a steady
  * machine. The unclosed `accDescr {` shapes are timed at 32 times the size: without the memo
  * their quadratic part is a native `indexOf` for `}`, which only outweighs the per-token work
  * there (removing the memo fails them at that size, and not at the base one).
@@ -65,12 +66,27 @@ const cost = (run: () => unknown, reps: number): number => {
   for (let k = 0; k < reps; k++) run();
   return cpuMs() - t0;
 };
-/** The shortest small measurement. */
-const MIN_MS = 8;
-/** How many runs of `run` take at least {@link MIN_MS}. */
+/**
+ * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
+ * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
+ * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
+ */
+const clockStepMs = (): number => {
+  const steps: number[] = [];
+  let last = cpuMs();
+  while (steps.length < 20) {
+    const now = cpuMs();
+    if (now !== last) steps.push(now - last);
+    last = now;
+  }
+  return steps.sort((a, b) => a - b)[10]!;
+};
+/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
+const MIN_MS = Math.max(8, 10 * clockStepMs());
+/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
 const repeatsFor = (run: () => unknown): number => {
   let reps = 1;
-  while (cost(run, reps) < MIN_MS) reps *= 2;
+  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
   return reps;
 };
 
@@ -82,6 +98,8 @@ describe('stress: the packet lexer is linear in input size', () => {
       const large = build(32_000 * scale);
       packetTokens(large); // warm up
       const reps = repeatsFor(() => packetTokens(small));
+      // The large input is 8 times the small one: an eighth of the runs keeps its window as long.
+      const repsLarge = Math.max(1, reps / 8);
       let tSmall = Infinity;
       let tLarge = Infinity;
       for (let round = 0; round < 5; round++) {
@@ -91,10 +109,12 @@ describe('stress: the packet lexer is linear in input size', () => {
         );
         tLarge = Math.min(
           tLarge,
-          cost(() => packetTokens(large), reps)
+          cost(() => packetTokens(large), repsLarge)
         );
       }
-      expect(tLarge / tSmall).toBeLessThan(24);
+      // A reading of 0 means the clock did not move: a broken measurement, not a fast lex.
+      expect(tSmall, `${reps} small runs read 0 ms (MIN_MS ${MIN_MS})`).toBeGreaterThan(0);
+      expect(tLarge / repsLarge / (tSmall / reps)).toBeLessThan(24);
     },
     30_000
   );
