@@ -233,7 +233,7 @@ const extraLines = (m: Measured): number => Math.max(0, m.height - m.lineHeight)
  * v12 `ChartLegend`: the named plots, right of the plot, dropped whole when it does not fit.
  * A row is `legendFontSize` high, as v12's, plus a name's extra lines (D385).
  */
-class Legend {
+export class Legend {
   private rows: { plot: XyChartPlot; text: Measured }[] = [];
   private readonly box = { x: 0, y: 0, width: 0, height: 0 };
   private readonly marker: number;

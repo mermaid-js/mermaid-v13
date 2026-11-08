@@ -8,10 +8,11 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import type { XyChartLayoutContext } from './layout/index.ts';
+import { theme as table } from './theme/table.ts';
 
-/** The `default` theme (xychart has no theme table until T4, #510; the layout reads only `fontFamily`). */
+/** The `default` theme resolved with the XY chart's theme table (D331). */
 export async function xyChartTestTheme(): Promise<Theme> {
-  return createTheme(await loadTheme('default'));
+  return createTheme(await loadTheme('default'), { diagram: table });
 }
 
 /** A layout context over `theme` with the `xyChart` section `section`; warnings go to `warnings`. */

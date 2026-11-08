@@ -209,8 +209,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban']),
-  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant', 'packet', 'cynefin']),
+  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'xychart']),
+  primaryTextColor: def('pt', 'color', [
+    'core',
+    'class',
+    'quadrant',
+    'packet',
+    'cynefin',
+    'xychart',
+  ]),
   lineColor: def('l', 'color', [
     'flowchart',
     'class',
