@@ -5,7 +5,7 @@ Integration branch `feature/429_venn` (from `mermaid-v13` at 12ba676cb). Draft P
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #486 | #285 (merged) | merged (ff d614349d7; package entry 3,043 B gz, no core change) |
-| T2 grammar, parser, model, AST | #488 | #486 | in review (`feature/488_venn-parser`) |
+| T2 grammar, parser, model, AST | #488 | #486 | merged (ff 6af3622b5; package entry 8,334 B gz, no core change) |
 | T3 layout and venn.js solver | #491 | #488 | open |
 | T4 SVG renderer and theme table | #495 | #491 | open |
 | T6 language facet | #498 | #488 | open |
