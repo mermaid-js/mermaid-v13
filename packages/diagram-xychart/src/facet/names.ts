@@ -11,16 +11,17 @@ import { parseXyChart } from '../parser/parser.ts';
 const HEAD = 'xychart\n  ';
 
 /** A one-plot chart with `written` where a `kind` name goes, and the offset it starts at. */
-function sample(kind: string, written: string): [text: string, at: number] {
+function sample(kind: string | undefined, written: string): [text: string, at: number] {
   if (kind === 'plot') return [`${HEAD}bar ${written} [1]\n`, HEAD.length + 'bar '.length];
   return [`${HEAD}x-axis [${written}]\n  bar [1]\n`, HEAD.length + 'x-axis ['.length];
 }
 
 /** Whether `written` reads back as one `kind` occurrence named `name`, over all of `written`. */
-function readsAs(name: string, kind: string, written: string): boolean {
+function readsAs(name: string, kind: string | undefined, written: string): boolean {
   const [text, at] = sample(kind, written);
   const { diagnostics, symbols } = parseXyChart(text);
-  const hits = symbols.filter((s) => s.kind === kind);
+  const want = kind === 'plot' ? 'plot' : 'category';
+  const hits = symbols.filter((s) => s.kind === want);
   const hit = hits.length === 1 ? hits[0] : undefined;
   return (
     !diagnostics.some((d) => d.severity === 'error') &&
@@ -30,13 +31,16 @@ function readsAs(name: string, kind: string, written: string): boolean {
   );
 }
 
-/** The text a rename writes for `name` in place of a bare `kind` occurrence. */
-export function renameText(name: string, kind = 'category'): string {
+/** How `name` is written where a bare `kind` occurrence stands: bare if it reads back so. */
+export function writtenName(name: string, kind: string): string {
   return readsAs(name, kind, name) ? name : `"${name}"`;
 }
 
-/** Why `name` cannot be a category or plot name (`kind`), if it cannot. */
-export function nameReason(name: string, kind = 'category'): string | undefined {
+/**
+ * Why `name` cannot be a `plot` name or, for any other `kind` (the facet's main kind when the
+ * service gives none), a category, if it cannot.
+ */
+export function nameReason(name: string, kind?: string): string | undefined {
   if (name === '') return 'A name cannot be empty.';
   if (/[\r\n]/.test(name)) return 'A name cannot contain a line break.';
   if (name.includes('"')) return 'A name cannot contain `"`: XY chart strings have no escapes.';

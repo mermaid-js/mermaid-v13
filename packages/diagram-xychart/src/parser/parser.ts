@@ -417,7 +417,6 @@ class XyChartParser {
   }
 
   private stmt(): void {
-    this.c.tested(STATEMENT_START);
     const k = this.c.kind;
     if (k === T.Title) return this.title();
     if (k === T.XAxis || k === T.YAxis) return this.axis(k);

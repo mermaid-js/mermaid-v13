@@ -90,7 +90,7 @@ const S_NAMES: readonly string[] = Object.keys(S);
  * Word kinds: a cursor right after one extends it (`tit¦`, `bar¦`), so the probe's mode there
  * is that of the step that lexed it, not of the next step (a keyword's data state).
  */
-const WORD_KINDS = new Set<number>([
+const MODE_WORD_KINDS = new Set<number>([
   T.XyChart,
   T.ChartOrientation,
   T.Title,
@@ -106,9 +106,29 @@ const WORD_KINDS = new Set<number>([
 type Action = (typeof A)[keyof typeof A];
 type State = (typeof S)[keyof typeof S];
 
+/** A rule's pattern: the end of the match at `p`, or -1. */
+interface Matcher {
+  (x: Scan, p: number): number;
+  /**
+   * Whether a match can start with the character `c` (an ASCII code), for the dispatch table;
+   * absent for a pattern that may match the empty string or any character.
+   */
+  first?: (c: number) => boolean;
+}
+
+/** `match`, known to start only with a character `first` accepts. */
+const starting = (first: (c: number) => boolean, match: (x: Scan, p: number) => number): Matcher =>
+  Object.assign(match, { first });
+
+/** The first character of a case-insensitive literal (lower case). */
+const firstOf = (word: string) => {
+  const w = word.charCodeAt(0);
+  return (c: number) => fold(c) === w;
+};
+
 interface Rule {
   /** End of the match at `p`, or -1. */
-  readonly match: (x: Scan, p: number) => number;
+  readonly match: Matcher;
   /** The token kind written for the match (a trivia kind for the skipped comments). */
   readonly kind: number;
   readonly action: Action;
@@ -158,43 +178,38 @@ function until(x: Scan, c: string, p: number): number {
 }
 
 /** A literal with jison's trailing `\b`. */
-const keyword =
-  (word: string) =>
-  (x: Scan, p: number): number => {
+const keyword = (word: string): Matcher =>
+  starting(firstOf(word), (x, p) => {
     const e = literal(x, word, p);
     return e < 0 || isWord(code(x, e)) ? -1 : e;
-  };
+  });
 
 /** A literal with no `\b` after it. */
-const exact =
-  (word: string) =>
-  (x: Scan, p: number): number =>
-    literal(x, word, p);
+const exact = (word: string): Matcher => starting(firstOf(word), (x, p) => literal(x, word, p));
 
 /** `word\s*"c"\s*` (`accTitle:`, `accDescr:`, `accDescr {`). */
-const wordThen =
-  (word: string, c: number) =>
-  (x: Scan, p: number): number => {
+const wordThen = (word: string, c: number): Matcher =>
+  starting(firstOf(word), (x, p) => {
     const e = literal(x, word, p);
     if (e < 0) return -1;
     const b = blanks(x, e);
     return code(x, b) === c ? blanks(x, b + 1) : -1;
-  };
+  });
 
 /** One character. */
-const char =
-  (c: number) =>
-  (x: Scan, p: number): number =>
-    code(x, p) === c ? p + 1 : -1;
+const char = (c: number): Matcher =>
+  starting(
+    (d) => d === c,
+    (x, p) => (code(x, p) === c ? p + 1 : -1)
+  );
 
 /** A non-empty run of characters `test` accepts. */
-const run =
-  (test: (c: number) => boolean) =>
-  (x: Scan, p: number): number => {
+const run = (test: (c: number) => boolean): Matcher =>
+  starting(test, (x, p) => {
     let j = p;
     while (j < x.n && test(x.text.charCodeAt(j))) j++;
     return j > p ? j : -1;
-  };
+  });
 
 /** `%%(?!\{)[^\n]*`. */
 function comment(x: Scan, p: number): number {
@@ -266,6 +281,9 @@ const DEAD_MD_RULE = (
 ).toLowerCase();
 
 const isNewline = (c: number) => c === LF || c === CR;
+const isPercent = (c: number) => c === PERCENT;
+const isOrientationStart = (c: number) => fold(c) === 0x76 || fold(c) === 0x68; // v, h
+const isNumberStart = (c: number) => c === PLUS || c === DASH || c === DOT || isDigit(c);
 
 const rule = (
   match: Rule['match'],
@@ -276,12 +294,15 @@ const rule = (
 
 /** The rules of the generated xychart lexer; index = its rule number (from 0). */
 const RULES: readonly Rule[] = [
-  /* 0 */ rule(comment, Kind.Comment),
-  /* 1 */ rule(commentAfter, Kind.Comment),
-  /* 2 */ rule(lineBreak, Kind.Newline, A.pop),
-  /* 3 */ rule(lineBreak, Kind.Newline, A.pop),
+  /* 0 */ rule(starting(isPercent, comment), Kind.Comment),
+  /* 1 */ rule(
+    starting((c) => c !== RBRACE, commentAfter),
+    Kind.Comment
+  ),
+  /* 2 */ rule(starting(isNewline, lineBreak), Kind.Newline, A.pop),
+  /* 3 */ rule(starting(isNewline, lineBreak), Kind.Newline, A.pop),
   /* 4 */ rule(run(isNewline), Kind.Newline),
-  /* 5 */ rule(anyComment, Kind.Comment),
+  /* 5 */ rule(starting(isPercent, anyComment), Kind.Comment),
   /* 6 */ rule(keyword('title'), T.Title),
   /* 7 */ rule(wordThen('acctitle', COLON), T.AccTitle, A.begin, S.acc_title),
   /* 8 */ rule(lineEnd, T.AccTitleValue, A.pop),
@@ -292,15 +313,18 @@ const RULES: readonly Rule[] = [
   /* 13 */ rule((x, p) => until(x, '}', p), T.AccDescrMultilineValue),
   /* 14 */ rule(keyword('xychart-beta'), T.XyChart),
   /* 15 */ rule(keyword('xychart'), T.XyChart),
-  /* 16 */ rule(orientation, T.ChartOrientation),
+  /* 16 */ rule(starting(isOrientationStart, orientation), T.ChartOrientation),
   /* 17 */ rule(keyword('x-axis'), T.XAxis, A.begin, S.axis_data),
   /* 18 */ rule(keyword('y-axis'), T.YAxis, A.begin, S.axis_data),
   /* 19 */ rule(char(LBRACKET), T.SquareBracesStart, A.begin, S.axis_band_data),
-  /* 20 */ rule(arrow, T.ArrowDelimiter),
+  /* 20 */ rule(
+    starting((c) => c === DASH, arrow),
+    T.ArrowDelimiter
+  ),
   /* 21 */ rule(keyword('line'), T.Line, A.begin, S.data),
   /* 22 */ rule(keyword('bar'), T.Bar, A.begin, S.data),
   /* 23 */ rule(char(LBRACKET), T.SquareBracesStart, A.begin, S.data_inner),
-  /* 24 */ rule(number, T.NumberWithDecimal),
+  /* 24 */ rule(starting(isNumberStart, number), T.NumberWithDecimal),
   /* 25 */ rule(char(RBRACKET), T.SquareBracesEnd, A.pop),
   /* 26 */ rule(exact(DEAD_MD_RULE), T.DeadMdRule, A.pop),
   /* 27 */ rule(char(DQUOTE), T.StringStart, A.begin, S.string),
@@ -322,7 +346,13 @@ const RULES: readonly Rule[] = [
   /* 43 */ rule(run(isDigit), T.Num),
   /* 44 */ rule(run(isSpace), T.Blanks),
   /* 45 */ rule(char(SEMI), T.Semi),
-  /* 46 */ rule((x, p) => (p === x.n ? p : -1), T.Eof),
+  /* 46 */ rule(
+    starting(
+      () => false,
+      (x, p) => (p === x.n ? p : -1)
+    ),
+    T.Eof
+  ),
 ];
 
 /**
@@ -351,6 +381,21 @@ const CONDITIONS: readonly (readonly number[])[] = [
   /* data */ [...COMMENTS, 3, ...KEYWORDS, ...PLOTS, 23, ...REST],
   /* data_inner */ [...COMMENTS, ...KEYWORDS, ...PLOTS, 24, 25, ...REST],
 ];
+
+/**
+ * Per start condition and ASCII character, the rules of {@link CONDITIONS} that can match at a
+ * position holding that character, in the same order: a rule whose pattern starts only with
+ * other characters is left out, so the first match is the same. Past ASCII and at the end of
+ * the text the full list applies.
+ */
+const DISPATCH: readonly (readonly (readonly number[])[])[] = CONDITIONS.map((list) =>
+  Array.from({ length: 128 }, (_, c) =>
+    list.filter((k) => {
+      const first = (RULES[k] as Rule).match.first;
+      return first === undefined || first(c);
+    })
+  )
+);
 
 /** A lex: the tokens (source offsets), and each token's range in v12's text. */
 export interface XyChartLex {
@@ -400,31 +445,27 @@ class XyChartLexer {
   run(probe?: Probe): XyChartLex {
     const { n } = this.scan;
     let p = 0;
-    for (let done = false; !done; ) {
-      if (p >= n) done = true;
-      const before = p;
-      const mode = probe ? (S_NAMES[this.state] ?? '') : '';
-      const at = this.step(p);
-      if (at >= 0) p = at;
-      else if (p < n) {
-        // Zero-width before a line break, so the initial state lexes it; else one code point,
-        // so the token never splits an emoji.
-        const c = this.scan.text.charCodeAt(p);
-        const end = c === LF ? p : codePointEnd(this.scan.text, p);
-        this.emit(Kind.Error, p, end);
-        this.stack.length = 0;
-        this.state = S.INITIAL;
-        p = end;
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) {
+      for (let done = false; !done; ) {
+        if (p >= n) done = true;
+        p = this.advance(p, this.step(p));
       }
-      if (probe) {
+    } else {
+      for (let done = false; !done; ) {
+        if (p >= n) done = true;
+        const before = p;
+        const mode = S_NAMES[this.state] ?? '';
+        const k = this.step(p);
+        p = this.advance(p, k);
         const start = this.sourceStart(before);
         let end = p > before ? this.sourceEnd(p - 1) : start;
         // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
-        if (p > before && WORD_KINDS.has(this.lastKind)) end++;
+        if (p > before && k >= 0 && MODE_WORD_KINDS.has((RULES[k] as Rule).kind)) end++;
         probe.lexed(start, end, mode);
       }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     }
-    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);
@@ -437,24 +478,45 @@ class XyChartLexer {
     };
   }
 
-  /** Kind of the token the last step wrote (`Kind.Error` when none matched). */
-  private lastKind: number = Kind.Error;
+  /** Where the last matching step ended. */
+  private matchEnd = 0;
 
-  /** Apply the first matching rule of the current state at `p`: the new offset, or -1. */
+  /**
+   * The offset after the step at `p` that applied rule `k` (-1: none matched). Where jison would
+   * throw, one `Error` token: zero-width before a line break, so the initial state lexes it;
+   * else one code point, so the token never splits an emoji.
+   */
+  private advance(p: number, k: number): number {
+    if (k >= 0) return this.matchEnd;
+    if (p >= this.scan.n) return p;
+    const c = this.scan.text.charCodeAt(p);
+    const end = c === LF ? p : codePointEnd(this.scan.text, p);
+    this.emit(Kind.Error, p, end);
+    this.stack.length = 0;
+    this.state = S.INITIAL;
+    return end;
+  }
+
+  /**
+   * Apply the first matching rule of the current state at `p` (through {@link DISPATCH} for an
+   * ASCII character): the rule's number, its end in {@link matchEnd}; -1 when none matches.
+   */
   private step(p: number): number {
-    this.lastKind = Kind.Error;
-    for (const k of CONDITIONS[this.state] ?? []) {
+    const { text, n } = this.scan;
+    const c = p < n ? text.charCodeAt(p) : -1;
+    const rules = c >= 0 && c < 128 ? DISPATCH[this.state]![c]! : CONDITIONS[this.state]!;
+    for (const k of rules) {
       const r = RULES[k] as Rule;
       const e = r.match(this.scan, p);
       if (e < 0) continue;
       this.onRule?.(k);
-      this.lastKind = r.kind;
       if (r.action === A.begin) {
         this.stack.push(this.state);
         this.state = r.state;
       } else if (r.action === A.pop) this.state = this.stack.pop() ?? S.INITIAL;
       this.emit(r.kind, p, e);
-      return e;
+      this.matchEnd = e;
+      return k;
     }
     return -1;
   }

@@ -17,12 +17,12 @@ import type { XyChartSnapshot } from './v12.ts';
  * - categories: the last `x-axis` with categories has one `category` definition per category
  *   v12 keeps, in order and with v12's names; each one the service keeps is a symbol of its own
  *   (its definition and its only reference), also when another category has the same name;
- * - plots: the named plots, in order and with v12's names, are `plot` definitions; every
- *   occurrence of a name resolves to the first plot of that name, and its references are the
- *   plots of that name;
+ * - plots: the named plots, in order and with v12's names, are `plot` definitions; each one the
+ *   service keeps is a symbol of its own, also when another plot has the same name (v12 keeps
+ *   both: two colours, two legend rows);
  * - rename read back by v12: the first category and the first plot the service can rename,
  *   renamed to a name with a blank (so a bare one gains quotes), change only that category or
- *   the names of those plots in v12's DB;
+ *   that plot's name in v12's DB;
  * - folding: a multi-line v12 `accDescr` is an `accDescr` fold.
  *
  * The service gets the facet as an eager row, as a host bundling it would, until xychart's
@@ -91,7 +91,7 @@ describe('xychart symbols and folding through the service match v12', () => {
         }
       }
 
-      // Plots: the named ones, in order; one symbol per name.
+      // Plots: the named ones, in order, each a symbol of its own.
       const named = model.plots.map((p) => p.title).filter((t) => t !== '');
       const plotSymbols = symbols.filter((s) => s.kind === 'plot');
       if (JSON.stringify(plotSymbols.map((s) => s.name)) !== JSON.stringify(named))
@@ -100,12 +100,9 @@ describe('xychart symbols and folding through the service match v12', () => {
         const ref = doc.references(s.range.start);
         if (ref.length === 0) continue;
         plots++;
-        const first = plotSymbols.find((x) => x.name === s.name)!;
         const d = doc.definition(s.range.start);
-        if (!d || !(first.range.start <= d.start && d.end <= first.range.end))
-          fail(`plot ${s.name} at ${s.range.start} does not resolve to its first plot`);
-        const same = plotSymbols.filter((x) => x.name === s.name).length;
-        if (ref.length !== same) fail(`plot ${s.name}: ${ref.length} references for ${same}`);
+        if (ref.length !== 1 || !d || d.start !== ref[0]!.start || text(doc, d) !== s.name)
+          fail(`plot ${s.name} at ${s.range.start} is not a symbol of its own`);
       }
 
       // Rename, read back by v12.
@@ -135,7 +132,11 @@ describe('xychart symbols and folding through the service match v12', () => {
         else {
           renames++;
           const after = await v12(apply(item.source, r.edits));
-          const want = model.plots.map((p) => (p.title === plot.name ? NEW_NAME : p.title));
+          const at = plotSymbols.indexOf(plot);
+          let nth = -1;
+          const want = model.plots.map((p) =>
+            p.title !== '' && ++nth === at ? NEW_NAME : p.title
+          );
           if (JSON.stringify(after?.plots.map((p) => p.title)) !== JSON.stringify(want))
             fail(
               `plot ${plot.name}: v12 reads ${JSON.stringify(after?.plots.map((p) => p.title))}`

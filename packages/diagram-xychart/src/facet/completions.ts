@@ -6,6 +6,7 @@
  * axis or plot name. Inside text values (`accTitle:`, `accDescr`, strings), comments and front
  * matter nothing is offered, and neither are names: a chart has no ids to complete.
  */
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   CompletionKind,
@@ -31,9 +32,10 @@ const VALUE_MODES = new Set([
   'directive',
   'frontMatter',
 ]);
-const WORD_KINDS = new Set<number>([T.Alpha, T.Num, T.Minus, T.NumberWithDecimal]);
-/** Keywords and words of text: a cursor inside one replaces all of it. */
-const isWord = (kind: number) => WORD_KINDS.has(kind) || xychartCategories[kind] === 'Keyword';
+/** Words of text and numbers: with keywords, a cursor inside one replaces all of it. */
+const REPLACED_WORD_KINDS = new Set<number>([T.Alpha, T.Num, T.Minus, T.NumberWithDecimal]);
+const isWord = (kind: number) =>
+  REPLACED_WORD_KINDS.has(kind) || xychartCategories[kind] === 'Keyword';
 
 /** Items filtered by the typed prefix, one per label. */
 class Items {
@@ -97,11 +99,18 @@ function inOpener(text: string, tokens: TokenStream, at: number): boolean {
   return at <= (tokens.end[i] ?? 0) && /[:{]/.test(text.slice(start, at));
 }
 
-/** Whether `-->` is already written at or right after the cursor. */
-function arrowAfter(text: string, tokens: TokenStream, at: number): boolean {
-  if (/^[ \t]*-+>/.test(text.slice(at))) return true;
-  const i = tokenBefore(tokens, at);
-  return i >= 0 && tokens.kind[i] === T.ArrowDelimiter && at < (tokens.end[i] ?? 0);
+/**
+ * Whether the lexer read a `-->` at the cursor or as the next token after it (blanks and
+ * comments between): the range's arrow is already written.
+ */
+function arrowAfter(tokens: TokenStream, at: number): boolean {
+  let i = tokenBefore(tokens, at);
+  if (i >= 0 && (tokens.end[i] ?? 0) <= at) i++;
+  for (i = Math.max(i, 0); i < tokens.length; i++) {
+    const k = tokens.kind[i]!;
+    if (k !== T.Blanks && k !== Kind.Comment && k !== Kind.Directive) break;
+  }
+  return tokens.kind[i] === T.ArrowDelimiter;
 }
 
 export function xyChartCompletions(
@@ -121,7 +130,7 @@ export function xyChartCompletions(
   if (headed && atLineStart(text, range.start)) {
     for (const k of STATEMENTS) if (expected.has(k.kind)) items.keyword(k);
   }
-  if (expected.has(T.ArrowDelimiter) && !arrowAfter(text, tokens, probe.offset)) {
+  if (expected.has(T.ArrowDelimiter) && !arrowAfter(tokens, probe.offset)) {
     items.add('-->', 'operator', { documentation: xychartDocs[T.ArrowDelimiter] ?? '' });
   }
   if (expected.has(T.SquareBracesStart)) items.add('[', 'operator', { detail: 'the data' });

@@ -3,7 +3,7 @@ import { language, xyChartLanguage } from './language.ts';
 
 /**
  * The XY chart language facet (#512) at its own seam: completions at a probe parse and hover
- * over a plain parse, as the language service calls them, `isValidId` and `renameText`. The
+ * over a plain parse, as the language service calls them, `isValidId` and `writtenName`. The
  * service-level behaviour (definition, references, rename, folding, semantic tokens) is in the
  * goldens (`packages/language-service/goldens/xychart`).
  */
@@ -56,7 +56,7 @@ describe('xychart language facet', () => {
     expect(language).toBe(xyChartLanguage);
     expect(xyChartLanguage.id).toBe('xychart');
     expect(xyChartLanguage.namespaces).toEqual([['category'], ['plot']]);
-    expect(xyChartLanguage.standalone).toEqual(['category']);
+    expect(xyChartLanguage.standalone).toEqual(['category', 'plot']);
   });
 
   it('offers the header only where it goes, and the orientations right after it', () => {
@@ -128,18 +128,19 @@ describe('xychart language facet', () => {
   });
 
   it('accepts a name that reads back bare or quoted, and writes it quoted when bare cannot', () => {
-    const { isValidId, renameText } = xyChartLanguage;
+    const { isValidId, writtenName } = xyChartLanguage;
     for (const kind of ['category', 'plot']) {
       expect(isValidId('Sales', kind)).toBeUndefined();
       expect(isValidId('Q1 2024', kind)).toBeUndefined();
       expect(isValidId('bar', kind)).toBeUndefined();
-      expect(renameText!('Sales', kind)).toBe('Sales');
-      expect(renameText!('Q1 2024', kind)).toBe('"Q1 2024"');
-      expect(renameText!('a, b', kind)).toBe('"a, b"');
+      expect(writtenName!('Sales', kind)).toBe('Sales');
+      expect(writtenName!('Q1 2024', kind)).toBe('"Q1 2024"');
+      expect(writtenName!('a, b', kind)).toBe('"a, b"');
       // A keyword lexes as itself bare (`bar` starts a plot), so it is quoted.
-      expect(renameText!('bar', kind)).toBe('"bar"');
-      expect(renameText!('x-axis', kind)).toBe('"x-axis"');
+      expect(writtenName!('bar', kind)).toBe('"bar"');
+      expect(writtenName!('x-axis', kind)).toBe('"x-axis"');
     }
+    expect(isValidId('Q1 2024')).toBeUndefined();
     expect(isValidId('')).toBe('A name cannot be empty.');
     expect(isValidId('a\nb')).toBe('A name cannot contain a line break.');
     expect(isValidId('say "hi"')).toBe(

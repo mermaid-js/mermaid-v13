@@ -239,19 +239,24 @@ function readsBack(
     .map((s) => `${s.range.start}:${s.range.end}:${s.kind}`)
     .sort();
   // Where each renamed occurrence lands: shifted by the length changes of the edits before it
-  // and its own (an edit may add quotes, `renameText`).
+  // and of its own edit, the one inside its range (an edit may add quotes, `writtenName`).
   const sorted = [...renamed].sort((a, b) => a.range.start - b.range.start);
-  const deltas = [...edits]
-    .sort((a, b) => a.range.start - b.range.start)
-    .map((e) => e.newText.length - (e.range.end - e.range.start));
+  const sortedEdits = [...edits].sort((a, b) => a.range.start - b.range.start);
+  const want: string[] = [];
   let shift = 0;
-  const want = sorted
-    .map((s, i) => {
-      const start = s.range.start + shift;
-      shift += deltas[i] ?? 0;
-      return `${start}:${s.range.end + shift}:${s.kind}`;
-    })
-    .sort();
+  let j = 0;
+  for (const s of sorted) {
+    while (j < sortedEdits.length && sortedEdits[j]!.range.end <= s.range.start) {
+      const e = sortedEdits[j++]!;
+      shift += e.newText.length - (e.range.end - e.range.start);
+    }
+    const own = sortedEdits[j++];
+    if (!own || own.range.start < s.range.start || own.range.end > s.range.end) return false;
+    const start = s.range.start + shift;
+    shift += own.newText.length - (own.range.end - own.range.start);
+    want.push(`${start}:${s.range.end + shift}:${s.kind}`);
+  }
+  want.sort();
   return got.length === want.length && got.every((g, i) => g === want[i]);
 }
 
@@ -293,8 +298,14 @@ export function rename(
   const all = sameSymbol(list, o);
   const invalid = quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind);
   if (invalid !== undefined) return refuse(invalid);
-  const written = (x: Occurrence) =>
-    x.quote === undefined ? (facet.renameText?.(newName, x.kind) ?? newName) : newName;
+  // How a bare occurrence writes the new name, asked once per kind.
+  const writtenByKind = new Map<string, string>();
+  const written = (x: Occurrence): string => {
+    if (x.quote !== undefined || !facet.writtenName) return newName;
+    let w = writtenByKind.get(x.kind);
+    if (w === undefined) writtenByKind.set(x.kind, (w = facet.writtenName(newName, x.kind)));
+    return w;
+  };
   const edits = all.map((x) => ({ range: x.range, newText: written(x) }));
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);

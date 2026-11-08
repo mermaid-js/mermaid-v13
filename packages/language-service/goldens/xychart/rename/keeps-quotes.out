@@ -4,4 +4,4 @@
   xychart
     x-axis [a, b]
     bar "Revenue (EU)" [1, 2]
-    line "Revenue (EU)" [2, 1]
+    line Sales [2, 1]

@@ -4,5 +4,5 @@
   xychart
     x-axis [a, b]
     bar Revenue [1, 2]
-    line Revenue [2, 1]
+    line Sales [2, 1]
     line Cost [1, 1]

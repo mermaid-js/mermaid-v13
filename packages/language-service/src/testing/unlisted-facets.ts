@@ -8,6 +8,7 @@
  * A row goes when the type's manifest gets a `language` entry: `goldens.spec.ts` fails while a
  * row here shadows a generated row that has a `load`.
  */
+import { detectXyChart } from '@mermaid-js/diagram-xychart';
 import type { FacetEntry } from '../facets.ts';
 
 export const UNLISTED_FACETS: readonly FacetEntry[] = [
@@ -15,8 +16,10 @@ export const UNLISTED_FACETS: readonly FacetEntry[] = [
   {
     type: 'xychart',
     id: 'xychart',
+    section: 'xychart',
+    // v12's pattern, as the registry row has it; the detector is the package's own.
     pattern: /^\s*xychart(-beta)?/,
-    detector: (text) => /^\s*xychart(-beta)?/.test(text),
+    detector: (text) => detectXyChart(text),
     load: () => import('@mermaid-js/diagram-xychart/language').then((m) => m.language),
   },
 ];

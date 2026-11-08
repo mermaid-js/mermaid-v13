@@ -5,15 +5,17 @@
  * spec hold that in place.
  *
  * Symbols (D389): each band category is a `category` symbol whose range is the bare text or the
- * quoted string (D191), each its own definition (repeats are separate categories, as in v12's
- * model); each named plot is a `plot` symbol in its own namespace. Range axes and values have
+ * quoted string (D191), and each named plot a `plot` symbol in its own namespace. Both are
+ * `standalone`: each occurrence is its own definition, since repeats are separate categories
+ * and plots in v12's model (two `Sales` plots are two plots, two colours, two legend rows), so
+ * a rename changes one and may give it a name another already has. Range axes and values have
  * none. A rename keeps the quotes and adds them when a bare name gains a blank or punctuation
- * (`renameText`).
+ * (`writtenName`).
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { xyChartCompletions } from './facet/completions.ts';
 import { xyChartHover } from './facet/hover.ts';
-import { nameReason, renameText } from './facet/names.ts';
+import { nameReason, writtenName } from './facet/names.ts';
 import { xychartCategories } from './generated/categories.ts';
 import { parseXyChart } from './parser/parser.ts';
 import type { XyChartDocument } from './parser/ast.ts';
@@ -30,9 +32,9 @@ export const xyChartLanguage: LanguageFacet<XyChartDocument> = {
   parse: (text, options) => parseXyChart(text, options),
   categories: xychartCategories,
   namespaces: [['category'], ['plot']],
-  standalone: ['category'],
+  standalone: ['category', 'plot'],
   isValidId: nameReason,
-  renameText,
+  writtenName,
   completions: xyChartCompletions,
   hover: xyChartHover,
 };
