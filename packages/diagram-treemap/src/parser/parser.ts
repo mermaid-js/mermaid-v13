@@ -113,6 +113,15 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
+/** The longest text an error message quotes. */
+const EXCERPT = 24;
+
+/** The first line of `text`, at most {@link EXCERPT} characters, with `…` when anything is cut. */
+function excerpt(text: string): string {
+  const line = text.split('\n', 1)[0] ?? '';
+  return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
+}
+
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
  * instance, so its stack is captured once.
@@ -273,9 +282,7 @@ class TreemapParser {
     const k = this.kind(j);
     if (k === Kind.EOF) return 'the end of the text';
     if (k === T.Indentation) return 'a blank';
-    const text = this.raw(j).trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
+    return `\`${excerpt(this.raw(j).trim())}\``;
   }
 
   /** Record an error at `where` and stop the statement. */
@@ -310,7 +317,7 @@ class TreemapParser {
         [`\`${q}\``]
       );
     }
-    const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
+    const shown = excerpt(text);
     let why = '';
     const next = this.src.charAt(where.end);
     if (text === '-' && /[0-9.]/.test(next)) why = '; a treemap has no negative values';
@@ -621,8 +628,7 @@ class TreemapParser {
     this.st.symbol(parts.name, 'class', nameRange, id.includes('@') ? 'ref' : 'def');
     const gap = image.slice(parts.nameAt + parts.name.length, parts.stylesAt ?? 0);
     if (parts.styleText !== undefined && /[\n\r]/.test(gap)) {
-      const shown =
-        parts.styleText.length > 24 ? `${parts.styleText.slice(0, 24)}…` : parts.styleText;
+      const shown = excerpt(node.styleText ?? '');
       this.st.diagnostics.warning(
         TREEMAP_CLASSDEF_NEXT_LINE,
         `\`classDef ${parts.name}\` has no styles on its line, so it takes the next line (\`${shown}\`) as its styles. Write the styles after the class name, on its line.`,

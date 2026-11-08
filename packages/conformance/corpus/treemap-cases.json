@@ -706,5 +706,33 @@
   {
     "id": "treemap-cases/all-features",
     "source": "---\ntitle: Front\n---\ntreemap-beta\ntitle Budget\naccTitle: Budget chart\naccDescr {\n  Two sections\n}\n\"Costs\":::warn\n    \"Rent\", 1,200.50\n    \"Food\": 300 :::cheap\n  %% between\n\"Income\"\n\t\"Salary\": 3_000\nclassDef warn fill:#f00,color:#fff;\nclassDef cheap stroke:blue\\,green"
+  },
+  {
+    "id": "treemap-cases/parser-leaf-value-next-line",
+    "source": "treemap\n\"A\"\n: 1"
+  },
+  {
+    "id": "treemap-cases/parser-odd-values",
+    "source": "treemap\n\"a\": 1_000\n\"b\": 1,2,3\n\"c\": .\n\"d\": 1,000"
+  },
+  {
+    "id": "treemap-cases/parser-plain-values",
+    "source": "treemap\n\"a\": 01\n\"b\": 1.\n\"c\": 1,"
+  },
+  {
+    "id": "treemap-cases/parser-titles-last-wins",
+    "source": "treemap\ntitle  A   b \n\"a\": 1\naccTitle: T\naccDescr {\n  x\n   y }\ntitle B"
+  },
+  {
+    "id": "treemap-cases/parser-title-bare-last",
+    "source": "treemap\ntitle A\ntitle"
+  },
+  {
+    "id": "treemap-cases/parser-row-ranges",
+    "source": "treemap\n  \"a\"  :  1:::hot\n\"b\":::cold"
+  },
+  {
+    "id": "treemap-cases/parser-front-matter-title-in-text",
+    "source": "---\ntitle: Front\n---\ntreemap\ntitle In text\n\"a\": 1"
   }
 ]

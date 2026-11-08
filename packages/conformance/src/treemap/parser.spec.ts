@@ -9,16 +9,32 @@ import {
   TREEMAP_TRAILING_BLANK,
 } from '@mermaid-js/diagram-treemap';
 import type { TreemapNode } from '@mermaid-js/diagram-treemap';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { REPO_ROOT } from '../corpus.ts';
+import { treemapCases } from './corpus.ts';
 
 /**
  * The treemap parser and model (#484) on the multi-line fixtures
- * `e2e/diagrams/treemap/nightly-check/parser-*.mmd`: v12's value conversion and tree building,
- * AST ids (D408), D401's and D402's warnings, the front-matter title (D218), symbols, statement
- * spans and source ranges. Accept/reject and model parity are `parity.spec.ts`'s.
+ * `e2e/diagrams/treemap/nightly-check/parser-*.mmd` and the cases of
+ * `corpus/treemap-cases.json`: v12's value conversion and tree building, AST ids (D408), D401's
+ * traps and D402's warning, titles (D218), symbols, statement spans and source ranges.
+ * Accept/reject and model parity are `parity.spec.ts`'s.
  */
 const fixture = (name: string) =>
   readFileSync(join(REPO_ROOT, `e2e/diagrams/treemap/nightly-check/${name}.mmd`), 'utf8');
+const CASES = new Map(treemapCases().map((c) => [c.id, c.source]));
+const treemapCase = (id: string): string => {
+  const found = CASES.get(`treemap-cases/${id}`);
+  if (found === undefined) throw new Error(`no treemap case ${id}`);
+  return found;
+};
+const parse = (id: string) => parseTreemap(treemapCase(id));
+const errors = (id: string) =>
+  parse(id)
+    .diagnostics.filter((d) => d.severity === 'error')
+    .map((d) => d.code);
+const warnings = (id: string) => parse(id).model.warnings.map((d) => d.code);
+const message = (id: string) => parse(id).diagnostics[0]?.message;
 
 /** `name` (leaf `name=value`, class `name:::class`) and children, as one nested list. */
 type Shape = string | [string, Shape[]];
@@ -152,9 +168,10 @@ describe('treemap parser on the fixtures', () => {
     const src = fixture('parser-front-matter-title');
     const { model } = parseTreemap(src);
     expect([model.title, model.titleAstId]).toEqual(['Front matter title', undefined]);
-    const inText = src.replace('  title\n', '  title In text\n');
-    expect(parseTreemap(inText).model.title).toBe('In text');
-    expect(parseTreemap('treemap\n"a": 1').model.title).toBeUndefined();
+    expect(parseTreemap(treemapCase('parser-front-matter-title-in-text')).model.title).toBe(
+      'In text'
+    );
+    expect(parseTreemap(fixture('parser-nesting')).model.title).toBeUndefined();
   });
 
   it('records node and class symbols (D408) and statement spans', () => {
@@ -202,5 +219,97 @@ describe('treemap parser on the fixtures', () => {
       '"y": 2',
     ]);
     expect(model.roots.map(shape)).toEqual([['A &amp; B', ['x=1', 'y=2']]]);
+  });
+});
+
+describe('treemap parser on the cases', () => {
+  it('reads an empty treemap, leaves with `:` or `,`, several roots, a value on the next line', () => {
+    expect(parse('header-only').model).toMatchObject({ roots: [], classes: [], warnings: [] });
+    expect(parse('leaf-comma-separator').model.roots.map(shape)).toEqual(['a=1', 'b=2', 'c=3']);
+    expect(parse('several-roots').model.roots.map(shape)).toEqual([
+      ['Root1', []],
+      ['Root2', []],
+    ]);
+    expect(parse('parser-leaf-value-next-line').model.roots.map(shape)).toEqual(['A=1']);
+  });
+
+  it('nests rows on one line, with a warning (D401)', () => {
+    const { model, diagnostics } = parse('rows-on-one-line');
+    expect(model.roots.map(shape)).toEqual([['r', [['s', []]]]]);
+    expect(diagnostics.map((d) => d.code)).toEqual([TREEMAP_ROWS_ON_ONE_LINE]);
+    expect(warnings('leaves-on-one-line')).toEqual([TREEMAP_ROWS_ON_ONE_LINE]);
+    expect(warnings('header-row-on-line')).toEqual([]);
+  });
+
+  it('names the stray blank as the cause (D401)', () => {
+    const [d] = parse('trailing-blank-before-indented').diagnostics;
+    expect(d?.code).toBe('STRAY_BLANK');
+    expect(d?.message).toContain('a blank at the end of line 2');
+    expect(message('inline-comment-before-indented')).toContain(
+      'a blank before the `%%` comment on line 2'
+    );
+    expect(message('trailing-blank-end')).toContain('no row follows it');
+  });
+
+  it('warns when a trailing blank indents the next row, as v12 read it (D401)', () => {
+    const { model, diagnostics } = parse('trailing-blank-before-unindented');
+    expect(model.roots.map(shape)).toEqual([['r', ['b=2']]]);
+    expect(diagnostics.map((d) => [d.code, d.severity])).toEqual([
+      [TREEMAP_TRAILING_BLANK, 'warning'],
+    ]);
+  });
+
+  it('says class names need two characters (D401)', () => {
+    expect(message('classdef-one-char')).toContain('class names need two characters');
+    expect(errors('classdef-semicolon')).toEqual([]);
+  });
+
+  it('rejects what v12 rejected, with the cause', () => {
+    expect(message('header-suffix')).toContain('`treemapx` is not a diagram type');
+    expect(message('section-class-blank')).toContain('no blank before them');
+    expect(message('leaf-class-blank')).toContain('no blank before them');
+    expect(message('number-exponent')).toContain('no exponent');
+    expect(errors('number-minus')).toEqual(['UNEXPECTED_CHARACTER']);
+    expect(errors('string-unterminated')).toEqual(['UNCLOSED_STRING']);
+    expect(errors('acc-descr-block-unclosed')).toEqual(['UNCLOSED_ACC_DESCR']);
+    expect(errors('acc-title-no-colon')).toEqual(['UNEXPECTED']);
+  });
+
+  it("keeps v12's value conversion and lists the odd values once (D402)", () => {
+    const { model, diagnostics } = parse('parser-odd-values');
+    expect(model.roots.map(shape)).toEqual(['a=1', 'b=123', 'c=NaN', 'd=1000']);
+    expect(diagnostics.map((d) => [d.code, d.related?.length])).toEqual([
+      [TREEMAP_INVALID_VALUE, 2],
+    ]);
+    expect(warnings('parser-plain-values')).toEqual([]);
+  });
+
+  it('takes the last title, accTitle and accDescr, after rows too; a bare title sets none', () => {
+    const { model } = parse('parser-titles-last-wins');
+    expect([model.title, model.titleAstId, model.accTitle, model.accDescr]).toEqual([
+      'B',
+      'title@2',
+      'T',
+      'x\ny',
+    ]);
+    expect(parse('parser-title-bare-last').model.title).toBeUndefined();
+  });
+
+  it('gives each row its range, from the name to the value or class', () => {
+    const src = treemapCase('parser-row-ranges');
+    const { ast } = parseTreemap(src);
+    expect(ast.children.map((n) => src.slice(n.range.start, n.range.end))).toEqual([
+      'treemap',
+      '"a"  :  1:::hot',
+      '"b":::cold',
+    ]);
+  });
+
+  it('includes the preprocess diagnostics unless it is given the preprocess result', () => {
+    const src = treemapCase('unclosed-directive');
+    expect(errors('unclosed-directive')).toContain('UNCLOSED_DIRECTIVE');
+    const pre = preprocess(src);
+    const own = parseTreemap(src, { preprocessed: pre }).diagnostics;
+    expect(own.map((d) => d.code)).not.toContain('UNCLOSED_DIRECTIVE');
   });
 });
