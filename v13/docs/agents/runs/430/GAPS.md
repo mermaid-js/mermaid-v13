@@ -47,3 +47,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Accepted judgement calls: the lexer plumbing and gate helpers copy radar's (a parser-kit extraction is a cross-port decision); `LINE_SEPARATORS` are hand-written cases, as gantt's and gitGraph's.
 - **For the maintainer (radar, not wardley): a lone CR at the very end of a source** merges with the `\n` v12 appends and loses a NEWLINE token in radar's lexer (the same code); wardley's lexer handles it, and no radar case hits it. Not fixed here (out of scope).
 - `tools/gen-config/src/theme-used-by.spec.ts` lists `wardley` in `NOT_DRAWN_YET`: [x] dropped by **#490** (the layout reads `fontFamily`).
+
+## For T5 (#497), from the T4 review
+
+- [ ] **Shared-variable overrides diverge from 12.2.0 through core's derivations, not wardley's table** (probed in the #493 review): base + `background: '#abcdef'` (v12 strokes `#543210`, v13 `#0b0b0b`); base + `darkMode` (v12 text `#eeeeee`, v13 `#333333`); dark + `primaryColor` (v12 fills stay `#1f2020`, v13 follows the override); default ignores `background` and `wardleyEvolutionColor` overrides in v12 (a v12 bug) and v13 follows them. The theme oracle specs need `DIFFERENCES` entries with these reasons, or the override fixture avoids shared overrides; list each in the PR's maintainer items.
