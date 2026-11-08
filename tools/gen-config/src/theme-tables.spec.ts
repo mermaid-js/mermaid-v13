@@ -86,7 +86,10 @@ function unresolved(
                 ? theme.number(name) >= 0 && theme.number(name) <= 1
                 : kind === 'flag'
                   ? v === 'true' || v === 'false'
-                  : v !== '' && v !== 'currentColor';
+                  : kind === 'palette'
+                    ? theme.palette(name).length > 0 &&
+                      theme.palette(name).every((c) => parseColor(c) !== undefined)
+                    : v !== '' && v !== 'currentColor';
     if (!ok) out.push(`${name}=${v}`);
   }
   return out;

@@ -119,6 +119,18 @@ describe('theme direction (D331)', () => {
     expect(unreadInputs(t, ['mainBkg', 'cScale', 'mutedBkg'])).toEqual(['mutedBkg']);
   });
 
+  it("lets a palette variable's rule name a shared palette, which counts as read (D545)", () => {
+    const table: DiagramThemeTable = {
+      vars: { demoSeries: { alias: 'dms', kind: 'palette' } },
+      rules: { light: { demoSeries: 'plotColorArray' } },
+      families: { neo: { rules: { demoSeries: 'nopeArray' } } },
+    };
+    expect(checkThemeDirection(planted({ tables: { demo: table } }))).toEqual([
+      { rule: 'table-reads-foreign', where: 'demo rules', name: 'nopeArray' },
+    ]);
+    expect(unreadInputs({ demo: table }, ['plotColorArray'])).toEqual([]);
+  });
+
   it('fails when a diagram names a theme', () => {
     const v = checkThemeDirection(
       planted({

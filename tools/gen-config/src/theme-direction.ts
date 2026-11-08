@@ -12,8 +12,9 @@
  *    expression that mentions a theme (`config.theme === 'dark'`, `THEMES.has(theme)`).
  *    Indirection is out of its reach: `const n = config.theme; n === 'dark'` compares with a
  *    name that does not mention a theme, so it passes; review catches it.
- * 3. A diagram's table reads only the shared vocabulary, palette slots and its own variables, and
- *    writes only its own variables; its names are none of core's and none of another table's.
+ * 3. A diagram's table reads only the shared vocabulary, palettes and their slots, and its own
+ *    variables, and writes only its own variables; its names are none of core's and none of
+ *    another table's.
  * 4. A package's vocabulary (`src/theme/vocabulary.ts`, spec #414 T0b) and its plugin's table
  *    declare the same variables: the table's `vars` are the vocabulary without `usedBy`.
  *
@@ -33,7 +34,7 @@ import {
 } from '../../../packages/core/src/theme/diagram.ts';
 import { parseRule, ruleRefs } from '../../../packages/core/src/theme/dsl.ts';
 import { parseColor } from '../../../packages/core/src/theme/color.ts';
-import { PALETTE_SLOT } from '../../../packages/core/src/theme/vocabulary.ts';
+import { PALETTE_SLOT, PALETTE_VARIABLES } from '../../../packages/core/src/theme/vocabulary.ts';
 
 /** One source file of a runtime import graph: its absolute path and its text. */
 export interface SourceFile {
@@ -260,11 +261,18 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
       walk(sf);
     }
 
-  // 3. A table reads shared names, palette slots and its own; it writes only its own.
+  // 3. A table reads shared names, palettes (a `palette` variable's rule names one, D545) and
+  // their slots, and its own; it writes only its own.
+  const palettes: ReadonlySet<string> = new Set(PALETTE_VARIABLES);
   for (const [type, table] of Object.entries(input.tables)) {
     const { reads, writes } = tableReads(table);
     for (const name of reads)
-      if (!input.shared.has(name) && !Object.hasOwn(table.vars, name) && !PALETTE_SLOT.test(name))
+      if (
+        !input.shared.has(name) &&
+        !Object.hasOwn(table.vars, name) &&
+        !PALETTE_SLOT.test(name) &&
+        !palettes.has(name)
+      )
         out.push({ rule: 'table-reads-foreign', where: `${type} rules`, name });
     for (const name of writes)
       if (!Object.hasOwn(table.vars, name))

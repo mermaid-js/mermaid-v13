@@ -9,7 +9,7 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE } from './palettes.ts';
+import { BASE_PLOT, LABEL_SCALE } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
 import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
@@ -79,6 +79,7 @@ const neoDark: ThemeSpec = {
   },
   // v12 theme-neo-dark.js: hue steps darkened by 25 (75 under darkMode).
   palettes: {
+    plotColorArray: BASE_PLOT,
     ...darkenedScale(DARK_HUE_SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
     seriesColorArray: REDUX_DARK_SERIES,
