@@ -9,7 +9,7 @@ Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draf
 | T2 grammar, parser, model, AST | #508 | #507 | merged (ff 2d29b39c6; package entry 9,064 B gz, no core change) |
 | T3 layout | #509 | #508 | merged (ff 58a69c2c6; package entry ~15 KB gz; core +0, `fontFamily` usedBy only) |
 | T4 SVG renderer and theme table | #510 | #509, #506 | open |
-| T6 language facet | #512 | #508 | open |
+| T6 language facet | #512 | #508 | merged (ff e7da02591; `./language` 12,470 B gz; core +0, type-only `LanguageFacet.writtenName?`) |
 | T5 integration | #513 | #510, #512 | open |
 
 No T7 (D320: xychart throws `UnsupportedFormatError` for `ascii`).
