@@ -16,6 +16,7 @@
  * values printed by it.
  */
 import type { TreemapNode } from '../model.ts';
+import { d3Sum } from '../sum.ts';
 import { MAX_TILE_WEIGHT, GOLDEN_RATIO, TREEMAP_METRICS } from './metrics.ts';
 
 /** One node of the tiled tree: d3's `HierarchyRectangularNode`. */
@@ -119,28 +120,27 @@ function leavesOf(root: Tile): Tile[] {
   return eachBefore(root).filter((t) => !hasChildren(t));
 }
 
+const tileValue = (t: Tile): number => t.value;
+
 /** A leaf's own weight: its value when finite and positive, else 0. */
 const ownWeight = (v: number): number => (Number.isFinite(v) && v > 0 ? v : 0);
 
 /**
- * `sum(d => d.value ?? 0)`: `+value || 0` plus the children's, after them. The weights add up
- * the same way. When their total passes {@link MAX_TILE_WEIGHT}, every leaf weight is scaled by one
- * power of two so the total stays below it: the tiling divides weights by weights, so that
- * scale changes no rectangle, and below the limit (every value under 1e150) nothing is scaled.
+ * `sum(d => d.value ?? 0)` (`d3Sum`): `+value || 0` plus the children's, after them. The
+ * weights add up the same way. When their total passes {@link MAX_TILE_WEIGHT}, every leaf weight
+ * is scaled by one power of two so the total stays below it: the tiling divides weights by
+ * weights, so that scale changes no rectangle, and below the limit (every value under 1e150)
+ * nothing is scaled.
  */
 function sum(depthFirst: readonly Tile[]): void {
   let leaves = 0;
   let largest = 0;
   for (let i = depthFirst.length - 1; i >= 0; i--) {
     const t = depthFirst[i]!;
-    let value = +(t.node?.value ?? 0) || 0;
-    let weight = 0;
     const c = t.children;
-    if (c)
-      for (let j = c.length - 1; j >= 0; j--) {
-        value += c[j]!.value;
-        weight += c[j]!.weight;
-      }
+    const value = d3Sum(t.node?.value, c, tileValue);
+    let weight = 0;
+    if (c) for (let j = c.length - 1; j >= 0; j--) weight += c[j]!.weight;
     else {
       weight = ownWeight(value);
       largest = Math.max(largest, weight);

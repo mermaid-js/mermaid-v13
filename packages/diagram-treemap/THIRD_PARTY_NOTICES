@@ -4,12 +4,14 @@ Third-party notices for @mermaid-js/diagram-treemap
 d3-hierarchy
 ------------
 
-The file below re-implements, step for step, d3-hierarchy's `hierarchy`, `sum`, `sort` and
+The files below re-implement, step for step, d3-hierarchy's `hierarchy`, `sum`, `sort` and
 `treemap` with `treemapSquarify`, `treemapDice`, `treemapSlice` and `treemapRound`
-(https://github.com/d3/d3-hierarchy, release 3.1.2, as mermaid@12.2.0 resolves it). Its header
-says what changed. d3-hierarchy is used under the ISC License:
+(https://github.com/d3/d3-hierarchy, release 3.1.2, as mermaid@12.2.0 resolves it); `sum.ts`
+holds the step of `sum` at one node, which hover shares. Their headers say what changed.
+d3-hierarchy is used under the ISC License:
 
   src/layout/tiles.ts
+  src/sum.ts
 
 ISC License
 

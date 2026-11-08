@@ -9,10 +9,11 @@
  * v12's fallback canvas; `showValues` is on unless `false`; an empty `valueFormat` is `,`. A
  * negative length, one that is not a number, or a `valueFormat` that is not a string falls back
  * to the default with one `TREEMAP_CONFIG_INVALID` warning per key (as radar's and packet's).
+ * `showValues` and `valueFormat` are read by `options.ts`, which hover shares.
  */
 import type { Warning } from '@mermaid-js/core';
 import type { TreemapDiagramConfig } from '@mermaid-js/core/config';
-import { treemapConfigDefaults } from './generated/config-defaults.ts';
+import { TREEMAP_DEFAULTS, treemapValueOptions } from './options.ts';
 
 export const TREEMAP_CONFIG_INVALID = 'TREEMAP_CONFIG_INVALID';
 
@@ -31,9 +32,6 @@ type LengthKey = 'nodeWidth' | 'nodeHeight' | 'padding' | 'diagramPadding';
 /** The length keys: each a number of 0 or more (`minimum: 0` in the schema). */
 const LENGTHS: readonly LengthKey[] = ['nodeWidth', 'nodeHeight', 'padding', 'diagramPadding'];
 
-/** The schema's defaults (every key has one; `conformance/src/treemap/config.spec.ts` pins them). */
-const DEFAULTS = treemapConfigDefaults as Required<TreemapDiagramConfig>;
-
 /** A number, or a string that reads as one; else NaN. */
 function configNumber(value: unknown): number {
   if (typeof value === 'number') return value;
@@ -50,14 +48,12 @@ export function treemapLayoutConfig(
   warn: (w: Warning) => void
 ): TreemapLayoutConfig {
   const given: Readonly<Record<string, unknown>> = section ?? {};
-  const d = DEFAULTS;
-  const out: { -readonly [K in keyof TreemapLayoutConfig]: TreemapLayoutConfig[K] } = {
+  const d = TREEMAP_DEFAULTS;
+  const out: Record<LengthKey, number> = {
     nodeWidth: d.nodeWidth,
     nodeHeight: d.nodeHeight,
     padding: d.padding,
     diagramPadding: d.diagramPadding,
-    showValues: d.showValues,
-    valueFormat: d.valueFormat,
   };
   const invalid = (key: string, wants: string, used: unknown): void =>
     warn({
@@ -70,11 +66,7 @@ export function treemapLayoutConfig(
     if (Number.isFinite(n) && n >= 0) out[key] = n;
     else invalid(key, 'a number of 0 or more', d[key]);
   }
-  if (given.showValues !== undefined) out.showValues = given.showValues !== false;
-  const format = given.valueFormat;
-  if (typeof format === 'string') out.valueFormat = format === '' ? d.valueFormat : format;
-  else if (format !== undefined) invalid('valueFormat', 'a d3-format specifier', d.valueFormat);
-  return out;
+  return { ...out, ...treemapValueOptions(given, invalid) };
 }
 
 /** v12's `useMaxWidth` (default true): only a falsy value turns it off (`configureSvgSize`). */

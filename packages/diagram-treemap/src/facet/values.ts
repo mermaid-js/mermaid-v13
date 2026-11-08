@@ -4,14 +4,18 @@
  * changes), so hovering at every offset of a large treemap stays linear.
  *
  * The options come from the text alone: the front matter's `treemap` section, then each `init`
- * directive's (its `config` key read as the treemap section, as v12's `detectInit`), the last
- * one winning. A site config the service cannot see may change them.
+ * directive's (its `config` key read as the treemap section, as v12's `detectInit`), merged as
+ * the config resolver merges them (a later value wins, a nullish one is skipped) and read by
+ * `options.ts`, as the layout reads them. A site config the service cannot see may change them.
+ * Totals are `d3Sum`'s, the layout's own.
  */
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { treemapValueFormat } from '../format/index.ts';
 import type { TreemapModel, TreemapNode } from '../model.ts';
+import { treemapValueOptions, type TreemapValueOptions } from '../options.ts';
 import type { TreemapDocument } from '../parser/ast.ts';
+import { d3Sum } from '../sum.ts';
 import { code } from './tables.ts';
 
 /** A section's sum (d3's `sum`, as the layout takes it) and its number of leaves. */
@@ -33,21 +37,19 @@ const isPlain = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** `valueFormat` and `showValues` as the text sets them. */
-function options(text: string): { valueFormat: string; showValues: boolean } {
+function options(text: string): TreemapValueOptions {
   const pre = preprocess(text);
   const sections: unknown[] = [pre.frontMatter?.config?.treemap];
   for (const d of pre.directives) {
     if (d.kind !== 'init' || !isPlain(d.args)) continue;
     sections.push(d.args.treemap, d.args.config);
   }
-  let valueFormat = ',';
-  let showValues = true;
+  const merged: Record<string, unknown> = {};
   for (const s of sections) {
     if (!isPlain(s)) continue;
-    if (typeof s.valueFormat === 'string' && s.valueFormat !== '') valueFormat = s.valueFormat;
-    if (s.showValues !== undefined) showValues = s.showValues !== false;
+    for (const key of ['valueFormat', 'showValues']) merged[key] = s[key] ?? merged[key];
   }
-  return { valueFormat, showValues };
+  return treemapValueOptions(merged);
 }
 
 const cache = new WeakMap<object, Values>();
@@ -59,7 +61,7 @@ export function valuesOf(text: string, result: ParseResult<unknown, TreemapDocum
   const model = result.model as TreemapModel;
   const nodes = new Map<string, TreemapNode>();
   const totals = new Map<TreemapNode, Total>();
-  // Depth first, children before their section: d3's `+value || 0` plus the children's.
+  // Depth first, children before their section, each summed as the layout sums it.
   const stack: { node: TreemapNode; next: number }[] = model.roots.map((node) => ({
     node,
     next: 0,
@@ -76,13 +78,9 @@ export function valuesOf(text: string, result: ParseResult<unknown, TreemapDocum
       continue;
     }
     stack.pop();
-    let value = +(node.value ?? 0) || 0;
+    const value = d3Sum(node.value, node.children, (c) => totals.get(c)?.value ?? 0);
     let leaves = node.type === 'Leaf' ? 1 : 0;
-    for (const c of node.children) {
-      const t = totals.get(c);
-      value += t?.value ?? 0;
-      leaves += t?.leaves ?? 0;
-    }
+    for (const c of node.children) leaves += totals.get(c)?.leaves ?? 0;
     totals.set(node, { value, leaves });
   }
   const { valueFormat, showValues } = options(text);
