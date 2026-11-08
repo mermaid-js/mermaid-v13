@@ -13,12 +13,17 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Spec corrections from exploration (`01-v12-wardley.md`)
 
 - **Token order** (T1): after `NAME_WITH_SPACES`, 2.0.1 orders `WS, ACC_DESCR, ACC_TITLE, TITLE, INT, STRING, ID, NEWLINE, WHITESPACE, YAML, DIRECTIVE, SINGLE_LINE_COMMENT`; there is no `FLOAT`. The runtime dump decides, not the spec's list. **Closed (#487):** the lexer follows the dump (43 types; `-` has LONGER_ALT ARROW, LINK_ARROW, YAML) and the gate is green.
-- **Pipeline parent** (T3): x is the box centre, y is box top − square/6 (`wardleyRenderer.ts:359-364`), not the box centre. Follow v12.
-- **Self-links** (T3): v12 writes a `<line>` with NaN coordinates. v13 drops them with D425's `WARDLEY_LINK_DROPPED` (never NaN, D424/D226).
-- **Trends from a pipeline parent** are not horizontal in v12 (origin moved, target on the parent's original line, `:540-547`). Follow v12; the T3 "trends horizontal" invariant excepts trends from pipeline parents.
+- **Pipeline parent** (T3): x is the box centre, y is box top − square/6 (`wardleyRenderer.ts:359-364`), not the box centre. Follow v12. **Closed (#490):** as v12; a later pipeline sees an earlier one's move.
+- **Self-links** (T3): v12 writes a `<line>` with NaN coordinates. v13 drops them with D425's `WARDLEY_LINK_DROPPED` (never NaN, D424/D226). **Closed (#490):** the layout drops them (the parser warns), and also a link whose ends coincide (v12: NaN), silently.
+- **Trends from a pipeline parent** are not horizontal in v12 (origin moved, target on the parent's original line, `:540-547`). Follow v12; the T3 "trends horizontal" invariant excepts trends from pipeline parents. **Closed (#490):** as v12; the invariant excepts parents a pipeline moved.
 - **Extra group** `g.wardley-pipeline-links` (`.wardley-pipeline-evolution-link`, dashed `4 4`) between pipelines and links: kept (T4, class list in MIGRATION.md).
-- **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table.
+- **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table. **Closed (#490):** all in `layout/metrics.ts`, with v12's line numbers.
 - **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order. **Closed (#489):** every v12 message is an error with its text, in source order (`parity.spec.ts` checks all 11 contexts word for word); an out-of-range value is kept as 100, so it causes no second error.
+
+## T3 (#490)
+
+- Choices (also in `tickets/490.md`): `WARDLEY_CONFIG_INVALID` is one warning per bad key (and one for `size`), as radar's and cynefin's; a numeric string reads as its number. A link between coincident nodes is dropped without a warning (the parser cannot see positions). Text is measured with core's label layout, plain (entities decoded, `\n` breaks), like cynefin's fixed texts. The stage font is `max(0, axisFontSize − 2)`. A padding past half the canvas draws the chart mirrored, as v12.
+- For T4: no colours in the layout (no stand-in module was needed); strokes, dashes and opacities are in `WARDLEY_METRICS`; draw arrowheads from the layout's triangles; the viewBox is `bounds`.
 
 ## T2 (#489, merged)
 
@@ -33,4 +38,4 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review (orchestrator, `/code-review`): no hard standards violations. Fixed: five missing quirk cases (port + arrow, arrow label + `;` label, bare `+'x'>`, duplicate annotation numbers, bare `A B`); every skipped source named and the set asserted (`NOT_REACHED`, 17); the `unclosed-directive` exclusion asserts core's `UNCLOSED_DIRECTIVE`; stress sized for a 3–4 ms small lex (8 s for the file); one `wardleyView(src)` helper.
 - Accepted judgement calls: the lexer plumbing and gate helpers copy radar's (a parser-kit extraction is a cross-port decision); `LINE_SEPARATORS` are hand-written cases, as gantt's and gitGraph's.
 - **For the maintainer (radar, not wardley): a lone CR at the very end of a source** merges with the `\n` v12 appends and loses a NEWLINE token in radar's lexer (the same code); wardley's lexer handles it, and no radar case hits it. Not fixed here (out of scope).
-- `tools/gen-config/src/theme-used-by.spec.ts` lists `wardley` in `NOT_DRAWN_YET`: [ ] **#493** drops it.
+- `tools/gen-config/src/theme-used-by.spec.ts` lists `wardley` in `NOT_DRAWN_YET`: [x] dropped by **#490** (the layout reads `fontFamily`).
