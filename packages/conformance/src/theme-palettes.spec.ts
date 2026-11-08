@@ -6,6 +6,7 @@
  */
 import {
   THEME_NAMES,
+  contrastRatio,
   createTheme,
   formatColor,
   loadTheme,
@@ -62,28 +63,56 @@ async function v13Palettes(theme: ThemeName, themeVariables?: object): Promise<P
  */
 const TEXT_UNDER_DARK_MODE: readonly ThemeName[] = ['base', 'neo', 'redux', 'redux-color'];
 
+/**
+ * D544: `redux-dark` draws a `cScaleLabel` slot black where v12's ink is below AA on the slot's
+ * fill and black reads better (`contrast(cScale<n>, scaleLabelColor, #000000)`). Its fills are
+ * v12's; in the theme values only slot 8 changes. `neo-dark` keeps v12's labels: its readers
+ * draw them on `mainBkg`, not on the fill.
+ */
+const CONTRAST_LABELS: readonly ThemeName[] = ['redux-dark'];
+
+/** What v13 draws where v12 drew `old`: v12's palettes, with D544's labels. */
+function expected(theme: ThemeName, old: Palettes): Palettes {
+  if (!CONTRAST_LABELS.includes(theme)) return old;
+  const black = parseColor('#000000')!;
+  const ink = (fill: string, label: string): string => {
+    const [f, l] = [parseColor(fill), parseColor(label)];
+    if (!f || !l) return label;
+    const ratio = contrastRatio(l, f);
+    return ratio >= 4.5 || ratio >= contrastRatio(black, f) ? label : '#000000';
+  };
+  return { ...old, cScaleLabel: old.cScaleLabel.map((l, i) => ink(old.cScale[i]!, l)) };
+}
+
 describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', () => {
+  it.each(CONTRAST_LABELS)('%s: only the slot-8 label differs from v12 (D544)', async (theme) => {
+    const [now, old] = [await v13Palettes(theme), v12Palettes(theme)];
+    const differ = now.cScaleLabel.flatMap((l, i) => (l === old.cScaleLabel[i] ? [] : [i]));
+    expect([differ, now.cScaleLabel[8], old.cScaleLabel[8]]).toEqual([[8], '#000000', '#e0dfdf']);
+    expect([now.cScale, now.cScaleInv]).toEqual([old.cScale, old.cScaleInv]);
+  });
+
   it.each(THEME_NAMES)('%s: the theme values', async (theme) => {
-    expect(await v13Palettes(theme)).toEqual(v12Palettes(theme));
+    expect(await v13Palettes(theme)).toEqual(expected(theme, v12Palettes(theme)));
   });
 
   it.each(THEME_NAMES)(
     '%s: under primaryColor, secondaryColor and tertiaryColor',
     async (theme) => {
       const vars = { primaryColor: '#3366cc', secondaryColor: '#cc6633', tertiaryColor: '#66cc33' };
-      expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+      expect(await v13Palettes(theme, vars)).toEqual(expected(theme, v12Palettes(theme, vars)));
     }
   );
 
   it.each(THEME_NAMES)('%s: under primaryColor alone', async (theme) => {
     const vars = { primaryColor: '#3366cc' };
-    expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+    expect(await v13Palettes(theme, vars)).toEqual(expected(theme, v12Palettes(theme, vars)));
   });
 
   it.each(THEME_NAMES)('%s: under darkMode', async (theme) => {
     const vars = { darkMode: true };
     const now = await v13Palettes(theme, vars);
-    const old = v12Palettes(theme, vars);
+    const old = expected(theme, v12Palettes(theme, vars));
     expect(now.cScale).toEqual(old.cScale);
     expect(now.cScaleInv).toEqual(old.cScaleInv);
     if (!TEXT_UNDER_DARK_MODE.includes(theme)) expect(now.cScaleLabel).toEqual(old.cScaleLabel);
@@ -110,7 +139,7 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
     const vars = { scaleLabelColor: '#3366cc' };
     for (const theme of THEME_NAMES)
       expect((await v13Palettes(theme, vars)).cScaleLabel, theme).toEqual(
-        v12Palettes(theme, vars).cScaleLabel
+        expected(theme, v12Palettes(theme, vars)).cScaleLabel
       );
   });
 
@@ -146,6 +175,6 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
 
   it.each(THEME_NAMES)('%s: the other palettes follow a cScale override', async (theme) => {
     const vars = { cScale1: '#123456' };
-    expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+    expect(await v13Palettes(theme, vars)).toEqual(expected(theme, v12Palettes(theme, vars)));
   });
 });

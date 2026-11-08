@@ -28,7 +28,9 @@ export interface ThemeSpec {
   /**
    * Colour lists (D151, D152). A theme with a non-empty `borderColorArray` colours each
    * subgraph from it; an empty `bkgColorArray` means border-only colour. A palette the theme
-   * leaves out is empty. An entry is a colour or a rule (`dsl.ts`), and a rule may name a slot
+   * leaves out is empty, except the series (`BASE_SERIES`) and the scale and git palettes
+   * (`baseScalesFor`), which v12 theme-base derives from the base colours. An entry is a colour
+   * or a rule (`dsl.ts`), and a rule may name a slot
    * of any palette (`invert(cScale3)`, `bkgColorArray2`), so it follows the author's overrides
    * (D258, D332).
    */
