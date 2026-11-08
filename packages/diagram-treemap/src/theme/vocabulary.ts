@@ -25,9 +25,9 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
       { alias: `tmp${i}`, kind: 'color', usedBy: TREEMAP } satisfies DiagramThemeVarDef,
     ])
   ),
-  treemapTitleColor: { alias: 'tmtc', kind: 'color', usedBy: TREEMAP, nested: 'titleColor' },
+  treemapTitleColor: { alias: 'tmc', kind: 'color', usedBy: TREEMAP, nested: 'titleColor' },
   treemapTitleFontSize: {
-    alias: 'tmts',
+    alias: 'tms',
     kind: 'length',
     usedBy: TREEMAP,
     nested: 'titleFontSize',

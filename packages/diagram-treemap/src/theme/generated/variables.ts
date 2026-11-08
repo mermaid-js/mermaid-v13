@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('cScalePeer0 tmp0 color - cScalePeer1 tmp1 color - cScalePeer2 tmp2 color - cScalePeer3 tmp3 color - cScalePeer4 tmp4 color - cScalePeer5 tmp5 color - cScalePeer6 tmp6 color - cScalePeer7 tmp7 color - cScalePeer8 tmp8 color - cScalePeer9 tmp9 color - cScalePeer10 tmp10 color - cScalePeer11 tmp11 color - treemapTitleColor tmtc color titleColor treemapTitleFontSize tmts length titleFontSize');
+  /* @__PURE__ */ table('cScalePeer0 tmp0 color - cScalePeer1 tmp1 color - cScalePeer2 tmp2 color - cScalePeer3 tmp3 color - cScalePeer4 tmp4 color - cScalePeer5 tmp5 color - cScalePeer6 tmp6 color - cScalePeer7 tmp7 color - cScalePeer8 tmp8 color - cScalePeer9 tmp9 color - cScalePeer10 tmp10 color - cScalePeer11 tmp11 color - treemapTitleColor tmc color titleColor treemapTitleFontSize tms length titleFontSize');
