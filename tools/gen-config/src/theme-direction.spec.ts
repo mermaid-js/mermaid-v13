@@ -121,7 +121,10 @@ describe('theme direction (D331)', () => {
 
   it("lets a palette variable's rule name a shared palette, which counts as read (D545)", () => {
     const table: DiagramThemeTable = {
-      vars: { demoSeries: { alias: 'dms', kind: 'palette' } },
+      vars: {
+        demoSeries: { alias: 'dms', kind: 'palette' },
+        demoFill: { alias: 'dmf', kind: 'color' },
+      },
       rules: { light: { demoSeries: 'plotColorArray' } },
       families: { neo: { rules: { demoSeries: 'nopeArray' } } },
     };
@@ -129,6 +132,15 @@ describe('theme direction (D331)', () => {
       { rule: 'table-reads-foreign', where: 'demo rules', name: 'nopeArray' },
     ]);
     expect(unreadInputs({ demo: table }, ['plotColorArray'])).toEqual([]);
+    // Any other variable's rule may read a palette's slots only, never the whole palette.
+    const colour: DiagramThemeTable = {
+      ...table,
+      rules: { light: { demoSeries: 'plotColorArray', demoFill: 'plotColorArray' } },
+      families: {},
+    };
+    expect(checkThemeDirection(planted({ tables: { demo: colour } }))).toEqual([
+      { rule: 'table-reads-foreign', where: 'demo rules', name: 'plotColorArray' },
+    ]);
   });
 
   it('fails when a diagram names a theme', () => {

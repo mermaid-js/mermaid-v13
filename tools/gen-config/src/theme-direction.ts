@@ -12,9 +12,9 @@
  *    expression that mentions a theme (`config.theme === 'dark'`, `THEMES.has(theme)`).
  *    Indirection is out of its reach: `const n = config.theme; n === 'dark'` compares with a
  *    name that does not mention a theme, so it passes; review catches it.
- * 3. A diagram's table reads only the shared vocabulary, palettes and their slots, and its own
- *    variables, and writes only its own variables; its names are none of core's and none of
- *    another table's.
+ * 3. A diagram's table reads only the shared vocabulary, palette slots and its own variables (a
+ *    `palette` variable's rule names a whole shared palette, D545), and writes only its own
+ *    variables; its names are none of core's and none of another table's.
  * 4. A package's vocabulary (`src/theme/vocabulary.ts`, spec #414 T0b) and its plugin's table
  *    declare the same variables: the table's `vars` are the vocabulary without `usedBy`.
  *
@@ -80,6 +80,8 @@ export interface Violation {
 const WORDS = new Set(['default', 'base', 'dark', 'neutral']);
 /** The families a table's `fallback` may name (`ThemeFamily`). */
 const FAMILIES: ReadonlySet<string> = new Set(THEME_FAMILIES);
+/** The shared palettes, which only a `palette` variable's rule may name whole (D545). */
+const PALETTES: ReadonlySet<string> = new Set(PALETTE_VARIABLES);
 
 function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void): void {
   const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
@@ -166,13 +168,24 @@ function isFallback(node: ts.StringLiteralLike): boolean {
 const declared = (d: { alias: string; kind: string; nested?: string } | undefined) =>
   d && JSON.stringify([d.alias, d.kind, d.nested ?? null]);
 
-function tableReads(table: DiagramThemeTable): { reads: string[]; writes: string[] } {
+/**
+ * What a table's rules read and its entries write. A `palette` variable's rule that names a shared
+ * palette (D545) is in `palettes`, not `reads`: only such a rule may name a whole palette.
+ */
+function tableReads(table: DiagramThemeTable): {
+  reads: string[];
+  writes: string[];
+  palettes: string[];
+} {
   const reads: string[] = [];
   const writes: string[] = [];
+  const palettes: string[] = [];
   const rules = (r: Readonly<Record<string, string>> | undefined) => {
     for (const [name, rule] of Object.entries(r ?? {})) {
       writes.push(name);
-      ruleRefs(parseRule(rule), (n) => parseColor(n) === undefined, reads);
+      const whole = rule.trim();
+      if (table.vars[name]?.kind === 'palette' && PALETTES.has(whole)) palettes.push(whole);
+      else ruleRefs(parseRule(rule), (n) => parseColor(n) === undefined, reads);
     }
   };
   const lits = (v: Readonly<Record<string, unknown>> | undefined) =>
@@ -185,7 +198,7 @@ function tableReads(table: DiagramThemeTable): { reads: string[]; writes: string
       lits(e?.values);
       lits(e?.tokens);
     }
-  return { reads, writes };
+  return { reads, writes, palettes };
 }
 
 /**
@@ -198,8 +211,10 @@ export function unreadInputs(
   inputs: readonly string[]
 ): string[] {
   const read = new Set<string>();
-  for (const table of Object.values(tables))
-    for (const name of tableReads(table).reads) read.add(PALETTE_SLOT.exec(name)?.[1] ?? name);
+  for (const table of Object.values(tables)) {
+    const { reads, palettes } = tableReads(table);
+    for (const name of [...reads, ...palettes]) read.add(PALETTE_SLOT.exec(name)?.[1] ?? name);
+  }
   return inputs.filter((name) => !read.has(name));
 }
 
@@ -261,18 +276,12 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
       walk(sf);
     }
 
-  // 3. A table reads shared names, palettes (a `palette` variable's rule names one, D545) and
-  // their slots, and its own; it writes only its own.
-  const palettes: ReadonlySet<string> = new Set(PALETTE_VARIABLES);
+  // 3. A table reads shared names, palette slots and its own (and a `palette` variable's rule a
+  // whole palette, D545, which `tableReads` keeps apart); it writes only its own.
   for (const [type, table] of Object.entries(input.tables)) {
     const { reads, writes } = tableReads(table);
     for (const name of reads)
-      if (
-        !input.shared.has(name) &&
-        !Object.hasOwn(table.vars, name) &&
-        !PALETTE_SLOT.test(name) &&
-        !palettes.has(name)
-      )
+      if (!input.shared.has(name) && !Object.hasOwn(table.vars, name) && !PALETTE_SLOT.test(name))
         out.push({ rule: 'table-reads-foreign', where: `${type} rules`, name });
     for (const name of writes)
       if (!Object.hasOwn(table.vars, name))

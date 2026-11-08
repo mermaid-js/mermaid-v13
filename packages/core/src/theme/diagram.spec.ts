@@ -548,6 +548,26 @@ describe("a table's palette variable (D545)", () => {
     ]);
   });
 
+  it('takes an empty list as unset, as an empty value is, with no warning', () => {
+    const warnings: ThemeWarning[] = [];
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    for (const themeVariables of [
+      { demoSeries: [] },
+      { demoSeries: '' },
+      { demo: { series: '' } },
+      { plotColorArray: [] },
+      { plotColorArray: '' },
+    ]) {
+      const t = read(spec.base, { themeVariables, warn });
+      expect(t.palette('demoSeries'), JSON.stringify(themeVariables)).toEqual(BASE_TEN);
+      expect(t.palette('plotColorArray')).toEqual(BASE_TEN);
+    }
+    expect(warnings).toEqual([]);
+    // Other palettes keep an empty list: an empty bkgColorArray means border-only colour.
+    const bands = createTheme(spec['redux-color'], { themeVariables: { bkgColorArray: [] } });
+    expect(bands.palette('bkgColorArray')).toEqual([]);
+  });
+
   it('writes its value comma-separated, and has no CSS variable', () => {
     expect(read(spec.base).value('demoSeries')).toBe(BASE_TEN.join(','));
     const css = createTheme(spec.base, { diagram: PALETTE });
