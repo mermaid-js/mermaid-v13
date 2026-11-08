@@ -1,3 +1,4 @@
+// cspell:words betax
 /**
  * Sankey lexer: a state machine mirroring the start conditions and rule order of v12's
  * `sankey.jison` (parser-method §1).
