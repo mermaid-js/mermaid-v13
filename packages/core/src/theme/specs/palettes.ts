@@ -79,6 +79,15 @@ export const BASE_SERIES: readonly string[] = series(
     'adjustHue(secondaryColor,-64) adjustHue(primaryColor,128) adjustHue(secondaryColor,128)'
 );
 
+/**
+ * The chart series palette `plotColorArray` (D381), a shared input that names no diagram: v12
+ * theme-base's ten chart colours, as written. `base`, the redux themes and `neo` carry it as v12
+ * does, and a theme that leaves the palette out reads it (D545).
+ */
+export const BASE_PLOT: readonly string[] = series(
+  '#FFF4DD #FFD8B1 #FFA07A #ECEFF1 #D6DBDF #C3E0A8 #FFB6A4 #FFD74D #738FA7 #FFFFF0'
+);
+
 /** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258; 8 for the git palettes). */
 export const paletteSlots = (entry: (i: number) => string, length = 12): readonly string[] =>
   Array.from({ length }, (_, i) => entry(i));

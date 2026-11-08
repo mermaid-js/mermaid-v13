@@ -4,7 +4,14 @@
  * subgraph is coloured on its border only and keeps its contrast in dark mode.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots, series, TAILWIND_300, TAILWIND_400 } from './palettes.ts';
+import {
+  BASE_PLOT,
+  INVERTED_SCALE,
+  paletteSlots,
+  series,
+  TAILWIND_300,
+  TAILWIND_400,
+} from './palettes.ts';
 import { gitLabelRules } from './scales.ts';
 import {
   REDUX_DARK_BASE,
@@ -31,6 +38,7 @@ const theme: ThemeSpec = {
     seriesTextColor: '#28253d',
   },
   palettes: {
+    plotColorArray: BASE_PLOT,
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],
     cScale: TAILWIND_300,

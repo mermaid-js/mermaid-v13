@@ -13,9 +13,15 @@ export const theme: DiagramThemeTable = {
     demoPad: { alias: 'dmp', kind: 'padding' },
     demoOpacity: { alias: 'dmo', kind: 'opacity' },
     demoOn: { alias: 'dmn', kind: 'flag' },
+    demoSeries: { alias: 'dms', kind: 'palette', nested: 'series' },
   },
   rules: {
-    light: { demoFill: 'mix(mainBkg, background, 50%)', demoText: 'textColor' },
+    // A palette variable's rule names the shared palette it reads (D545).
+    light: {
+      demoFill: 'mix(mainBkg, background, 50%)',
+      demoText: 'textColor',
+      demoSeries: 'plotColorArray',
+    },
     dark: { demoFill: 'mix(mainBkg, background, 30%)' },
   },
   families: {
