@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lexXyChart } from '@mermaid-js/diagram-xychart';
+import { lexXyChart, parseXyChart } from '@mermaid-js/diagram-xychart';
 
 /**
  * R-PARSE-7, pitfall 5: the XY chart lexer is linear in input size, in every rule and state:
@@ -78,6 +78,51 @@ describe('stress: the XY chart lexer is linear in input size', () => {
         tLarge = Math.min(
           tLarge,
           cost(() => lexXyChart(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
+});
+
+/**
+ * The parser and model builder are linear too (#508, pitfalls 11 and 19): many statements of
+ * each kind, long plots against both axis kinds, plots before many axes (the warning's list),
+ * and errors that recovery skips. Same ratio as above.
+ */
+const PARSE_SHAPES: [string, (n: number) => string][] = [
+  ['many plots', (n) => H + 'bar [1, 2]\nline L [3 "p"]\n'.repeat(n / 26)],
+  ['a long plot, inferred axes', (n) => H + 'line [' + '1.5, '.repeat(n / 5) + '1]'],
+  ['many categories', (n) => H + 'x-axis [' + 'a, '.repeat(n / 3) + 'b]\nbar [1]'],
+  [
+    'a long plot on categories',
+    (n) => H + 'x-axis [' + 'a, '.repeat(n / 6) + 'b]\nbar [' + '2, '.repeat(n / 6) + '1]',
+  ],
+  ['plots and axes alternating', (n) => H + 'bar [1]\nx-axis [a]\n'.repeat(n / 18)],
+  ['repeated titles and axes', (n) => H + 'title t\ny-axis 0 --> 1\n'.repeat(n / 22) + 'bar [1]'],
+  ['many errors', (n) => H + 'bar [x]\n'.repeat(n / 8)],
+  ['statements with no separator', (n) => H + 'bar [1] '.repeat(n / 8)],
+];
+
+describe('stress: the XY chart parser is linear in input size', () => {
+  it.each(PARSE_SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(4_000);
+      const large = build(32_000);
+      parseXyChart(small); // warm up
+      parseXyChart(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parseXyChart(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parseXyChart(large))
         );
       }
       expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);

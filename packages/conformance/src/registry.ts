@@ -19,6 +19,8 @@ import { radarAdapter } from './radar/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
+import { xyChartParityCorpus } from './xychart/corpus.ts';
+import { xyChartAdapter } from './xychart/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -134,6 +136,15 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: cynefinAdapter,
     corpusDirs: ['e2e/diagrams/cynefin'],
     corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
+  },
+  {
+    adapter: xyChartAdapter,
+    corpusDirs: ['e2e/diagrams/xychart'],
+    corpusFiles: [
+      'packages/conformance/corpus/xychart-v12-specs.json',
+      'packages/conformance/corpus/xychart-cases.json',
+    ],
+    corpus: xyChartParityCorpus,
   },
 ];
 

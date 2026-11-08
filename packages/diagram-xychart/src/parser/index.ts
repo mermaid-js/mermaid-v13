@@ -1,14 +1,22 @@
 /**
- * The XY chart parser's public surface so far (#507): the lexer, gated against v12's jison
- * lexer. The parser (#508) builds on {@link lexXyChart}.
+ * The XY chart parser's public surface: the parser (#508), its AST, the model builder, and the
+ * lexer (#507), gated against v12's jison lexer.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 import type { XyChartLex } from './lexer.ts';
+import { tokenValue } from './value.ts';
 import { v12Text } from './v12-text.ts';
 
+export { parseXyChart } from './parser.ts';
+export type { XyChartParseOptions, XyChartParseResult } from './parser.ts';
+export { detectXyChart } from './detect.ts';
+export { XyChartBuilder } from './build.ts';
+export type { XyChartPointInput } from './build.ts';
+export type * from './ast.ts';
+export { tokenValue } from './value.ts';
 export { JISON_NAMES, T as XyChartTokenKind } from './tokens.ts';
 export type { XyChartLex } from './lexer.ts';
 export type { V12Text } from './v12-text.ts';
@@ -28,20 +36,6 @@ export interface XyChartToken {
  */
 export function lexXyChart(src: string, onRule?: (rule: number) => void): XyChartLex {
   return lex(src, v12Text(src, preprocess(src).bodyStart), onRule);
-}
-
-/** Undo v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`). */
-const decodeEntities = (text: string): string =>
-  text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-
-/**
- * The text of token `i` as v12's parser read it (less the `\n` v12 appended), or the source text
- * of a trivia token.
- */
-export function tokenValue(l: XyChartLex, i: number): string {
-  const s = l.textStart[i] ?? -1;
-  if (s < 0) return l.tokens.source.slice(l.tokens.start[i] ?? 0, l.tokens.end[i] ?? 0);
-  return decodeEntities(l.v12.text.slice(s, Math.min(l.textEnd[i] ?? s, l.v12.length)));
 }
 
 /**

@@ -1,0 +1,966 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-xychart",
+  "scopeName": "source.mermaid-xychart",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-xychart"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-xychart"
+    },
+    "rule-0": {
+      "match": "(?i)%%(?!\\{)[^\\n]*",
+      "name": "comment.line.mermaid-xychart"
+    },
+    "rule-1": {
+      "match": "(?i)[^\\}]%%[^\\n]*",
+      "name": "comment.line.mermaid-xychart"
+    },
+    "rule-4": {
+      "match": "(?i)[\\n\\r]+"
+    },
+    "rule-5": {
+      "match": "(?i)%%[^\\n]*",
+      "name": "comment.line.mermaid-xychart"
+    },
+    "rule-6": {
+      "match": "(?i)title\\b",
+      "name": "keyword.control.mermaid-xychart"
+    },
+    "rule-7": {
+      "begin": "(?i)accTitle\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-9": {
+      "begin": "(?i)accDescr\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-11": {
+      "begin": "(?i)accDescr\\s*\\{\\s*",
+      "end": "((?i)\\})",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr_multiline"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      }
+    },
+    "rule-14": {
+      "match": "(?i)xychart-beta\\b",
+      "name": "keyword.control.mermaid-xychart"
+    },
+    "rule-15": {
+      "match": "(?i)xychart\\b",
+      "name": "keyword.control.mermaid-xychart"
+    },
+    "rule-16": {
+      "match": "(?i)(?:vertical|horizontal)",
+      "name": "keyword.control.mermaid-xychart"
+    },
+    "rule-17": {
+      "begin": "(?i)x-axis\\b",
+      "end": "((?i)\\r?\\n)|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-axis_data"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-18": {
+      "begin": "(?i)y-axis\\b",
+      "end": "((?i)\\r?\\n)|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-axis_data"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-21": {
+      "begin": "(?i)line\\b",
+      "end": "((?i)\\r?\\n)|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-data"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-22": {
+      "begin": "(?i)bar\\b",
+      "end": "((?i)\\r?\\n)|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-data"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-26": {
+      "match": "(?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`",
+      "name": "string.quoted.mermaid-xychart"
+    },
+    "rule-27": {
+      "begin": "(?i)\"",
+      "end": "((?i)\")",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-30": {
+      "match": "(?i)\\[",
+      "name": "punctuation.definition.mermaid-xychart"
+    },
+    "rule-31": {
+      "match": "(?i)\\]",
+      "name": "punctuation.definition.mermaid-xychart"
+    },
+    "rule-32": {
+      "match": "(?i)[A-Za-z]+"
+    },
+    "rule-33": {
+      "match": "(?i):"
+    },
+    "rule-34": {
+      "match": "(?i)\\+"
+    },
+    "rule-35": {
+      "match": "(?i),",
+      "name": "punctuation.definition.mermaid-xychart"
+    },
+    "rule-36": {
+      "match": "(?i)="
+    },
+    "rule-37": {
+      "match": "(?i)\\*"
+    },
+    "rule-38": {
+      "match": "(?i)#"
+    },
+    "rule-39": {
+      "match": "(?i)_"
+    },
+    "rule-40": {
+      "match": "(?i)\\."
+    },
+    "rule-41": {
+      "match": "(?i)&"
+    },
+    "rule-42": {
+      "match": "(?i)-"
+    },
+    "rule-43": {
+      "match": "(?i)[0-9]+"
+    },
+    "rule-44": {
+      "match": "(?i)\\s+"
+    },
+    "rule-45": {
+      "match": "(?i);"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        }
+      ]
+    },
+    "mode-acc_title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_descr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-13": {
+      "match": "(?i)[^\\}]+",
+      "name": "string.quoted.mermaid-xychart"
+    },
+    "mode-acc_descr_multiline": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-13"
+        }
+      ]
+    },
+    "rule-29": {
+      "match": "(?i)[^\"]+",
+      "name": "string.quoted.mermaid-xychart"
+    },
+    "mode-string": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-29"
+        }
+      ]
+    },
+    "rule-19": {
+      "begin": "(?i)\\[",
+      "end": "((?i)\\])|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-axis_band_data"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-xychart"
+        },
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "rule-20": {
+      "match": "(?i)-->",
+      "name": "keyword.operator.mermaid-xychart"
+    },
+    "rule-24": {
+      "match": "(?i)[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)",
+      "name": "constant.numeric.mermaid-xychart"
+    },
+    "mode-axis_data": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        }
+      ]
+    },
+    "mode-axis_band_data": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        }
+      ]
+    },
+    "rule-23": {
+      "begin": "(?i)\\[",
+      "end": "((?i)\\])|((?i)`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`\"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`)",
+      "patterns": [
+        {
+          "include": "#mode-data_inner"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-xychart"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-xychart"
+        },
+        "2": {
+          "name": "string.quoted.mermaid-xychart"
+        }
+      }
+    },
+    "mode-data": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        }
+      ]
+    },
+    "mode-data_inner": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-xychart"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-xychart"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-xychart"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-xychart"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

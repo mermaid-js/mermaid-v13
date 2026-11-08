@@ -7,6 +7,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -120,6 +121,94 @@ export async function xyChartGateCorpus(): Promise<CorpusItem[]> {
     for (const item of all) {
       const source = make(item.source);
       if (source !== item.source) out.push({ id: `${item.id} (${suffix})`, source });
+    }
+  }
+  return out;
+}
+
+/**
+ * Whether core's preprocess finds an unclosed `%%{` in `source`. v12's directive regex cut such
+ * a directive (with the rest of the text, or up to a word argument's end), so v12 reads less
+ * text; v13 rejects it. The cases that have one are listed divergences (`divergences.json`), as
+ * for quadrant and radar; their generated variants are left out of the parity corpus, since
+ * they only repeat that divergence.
+ */
+const unclosedDirective = (source: string): boolean =>
+  preprocess(source).diagnostics.some((d) => d.code === 'UNCLOSED_DIRECTIVE');
+
+/**
+ * The generated variants for model parity (#508): every item of {@link xyChartGateCorpus} the
+ * parity suite's corpus dirs and files do not list already, with ids `xychart-gate/<id>`, and
+ * the statement orders of {@link xyChartOrderCorpus}; none with an unclosed directive.
+ */
+export async function xyChartParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await xyChartCorpus()), ...xyChartCases()].map((c) => c.id));
+  const gate = (await xyChartGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `xychart-gate/${item.id}`, source: item.source }));
+  return [...gate, ...(await xyChartOrderCorpus())].filter(
+    (item) => !unclosedDirective(item.source)
+  );
+}
+
+/** Sources with at most this many statement lines get every order of them. */
+const ALL_ORDERS = 4;
+
+/** Every order of `items` (`items.length` ≤ {@link ALL_ORDERS}). */
+function permutations<T>(items: readonly T[]): T[][] {
+  if (items.length <= 1) return [[...items]];
+  return items.flatMap((item, i) =>
+    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [item, ...rest])
+  );
+}
+
+/**
+ * The orders of `lines` to try: every one for up to {@link ALL_ORDERS} lines; else the reverse,
+ * each rotation, and each line moved to the front and to the back. Each statement in turn comes
+ * first and last, so every axis and plot is read before and after every other kind.
+ */
+function orders<T>(lines: readonly T[]): T[][] {
+  if (lines.length <= ALL_ORDERS) return permutations(lines);
+  const n = lines.length;
+  const out = [[...lines].reverse()];
+  for (let k = 1; k < n; k++) out.push([...lines.slice(k), ...lines.slice(0, k)]);
+  for (let k = 0; k < n; k++) {
+    const rest = [...lines.slice(0, k), ...lines.slice(k + 1)];
+    const line = lines[k] as T;
+    out.push([line, ...rest], [...rest, line]);
+  }
+  return out;
+}
+
+/**
+ * Model parity over every statement order (#508): the corpus and the cases with their statement
+ * lines (the lines after the header line, blank and `%%` lines left where they are) reordered as
+ * {@link orders} says. Ids are `xychart-order/<id> (<order>)`, the order as the original line
+ * numbers. v12's DB and v13's model must agree on each, so the order-dependent rules (the x
+ * range from the first plot, a plot before its axis, the y range from the plots read before a
+ * `y-axis`, the last title) are compared in every order, not only as written.
+ */
+export async function xyChartOrderCorpus(): Promise<CorpusItem[]> {
+  const out: CorpusItem[] = [];
+  const seen = new Set<string>();
+  for (const item of [...(await xyChartCorpus()), ...xyChartCases()]) {
+    const head = FRONT_MATTER.exec(item.source)?.[0] ?? '';
+    const lines = item.source.slice(head.length).split('\n');
+    const header = lines.findIndex((l) => /^\s*xychart/.test(l));
+    if (header < 0) continue;
+    const slots: number[] = [];
+    lines.forEach((l, k) => {
+      if (k > header && l.trim() !== '' && !l.trim().startsWith('%%')) slots.push(k);
+    });
+    if (slots.length < 2) continue;
+    for (const order of orders(slots)) {
+      if (order.every((k, i) => k === slots[i])) continue;
+      const next = [...lines];
+      slots.forEach((slot, i) => (next[slot] = lines[order[i] as number] as string));
+      const source = head + next.join('\n');
+      if (seen.has(source)) continue;
+      seen.add(source);
+      out.push({ id: `xychart-order/${item.id} (${order.join(' ')})`, source });
     }
   }
   return out;
