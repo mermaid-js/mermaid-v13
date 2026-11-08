@@ -1,0 +1,28 @@
+@ 2:3  |
+  set keyword 2:3-2:3 "" -> "set "
+  union keyword 2:3-2:3 "" -> "union "
+  text keyword 2:3-2:3 "" -> "text "
+  style keyword 2:3-2:3 "" -> "style "
+  title keyword 2:3-2:3 "" -> "title Title"
+@ 4:4  s|
+  set keyword 4:3-4:4 "s" -> "set "
+  style keyword 4:3-4:4 "s" -> "style "
+@ 5:4  u|
+  union keyword 5:3-5:4 "u" -> "union "
+@ 6:5  |
+  set keyword 6:5-6:5 "" -> "set "
+  union keyword 6:5-6:5 "" -> "union "
+  text keyword 6:5-6:5 "" -> "text "
+  style keyword 6:5-6:5 "" -> "style "
+  title keyword 6:5-6:5 "" -> "title Title"
+@ 7:4  t|
+  text keyword 7:3-7:4 "t" -> "text "
+  title keyword 7:3-7:4 "t" -> "title Title"
+@ 9:7  te|
+  text keyword 9:5-9:7 "te" -> "text "
+@ 11:3  |
+  set keyword 11:3-11:3 "" -> "set "
+  union keyword 11:3-11:3 "" -> "union "
+  text keyword 11:3-11:3 "" -> "text "
+  style keyword 11:3-11:3 "" -> "style "
+  title keyword 11:3-11:3 "" -> "title Title"

@@ -133,7 +133,7 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL, bol, on, onBol | — | `%%(?!\{)[^\n]*` |  | A `%%` comment after other text on a line, to the end of the line; at the start of a token it takes the character before it. |
 | INITIAL, bol, on, onBol | — | `[^}]%%[^\n]*` |  |  |
 | bol, onBol | — | `[ \t]+(?=[\n\r])` |  | At a line start: blanks before a line break or before other text are skipped. |
-| onBol | INDENT_TEXT | `[ \t]+(?=text\b)` | pop push(indentText) | `text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area. The token is the indent. |
+| onBol | INDENT_TEXT | `[ \t]+(?=text\b)` | pop push(indentText) | `text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area, which takes that statement's sets. |
 | bol, onBol | — | `[ \t]+` |  |  |
 | bol | — | `(?=[^ \t\n\r])` | pop | Any other line start ends the indented text lines. |
 | onBol | — | `(?=[^ \t\n\r])` | pop pop |  |
@@ -153,7 +153,7 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL, on | TEXT | `text\b` |  | `text <ids> <id>`: a text node in the area of those sets, with an optional `[label]`. |
 | INITIAL, on | STYLE | `style\b` |  | `style <ids> key: value, …`: the `fill`, `fill-opacity`, `stroke`, `stroke-width` and `color` of a set, an overlap or a text node. |
 | INITIAL, on | — | `\["(?=[^"]*"\])` | push(quotedLabel) | A label: `["…"]` as written, or `[…]` trimmed. |
-| quotedLabel | BRACKET_LABEL | `[^"]*` | pop push(labelEnd) |  |
+| quotedLabel | BRACKET_LABEL | `[^"]*(?="\])` | pop push(labelEnd) |  |
 | INITIAL, on | — | `\[\s*(?=[^\]"]+\])` | push(label) |  |
 | label | BRACKET_LABEL | `[^\]"]*?(?=\s*\])` | pop push(labelEnd) |  |
 | labelEnd | — | `"?\s*\]` | pop |  |

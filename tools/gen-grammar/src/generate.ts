@@ -238,7 +238,7 @@ export const GRAMMARS: GrammarTarget[] = [
         // The `text` after an indent: jison returns no token for it; the lexer keeps one.
         IndentTextKeyword: { mode: 'indentText', pattern: 'text\\b', docOf: 'INDENT_TEXT' },
         // Both `BRACKET_LABEL` rules: the lexer keeps a kind per rule.
-        QuotedLabel: { mode: 'quotedLabel', pattern: '[^"]*', terminal: 'BRACKET_LABEL' },
+        QuotedLabel: { mode: 'quotedLabel', pattern: '[^"]*(?="\\])', terminal: 'BRACKET_LABEL' },
         Label: { mode: 'label', pattern: '[^\\]"]*?(?=\\s*\\])', terminal: 'BRACKET_LABEL' },
       },
     },

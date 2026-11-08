@@ -238,11 +238,20 @@ function readsBack(
   const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName))
     .map((s) => `${s.range.start}:${s.range.end}:${s.kind}`)
     .sort();
-  // Where each renamed occurrence lands: shifted by the length change of the edits before it.
-  const delta = newName.length - o.name.length;
+  // Where each renamed occurrence lands: shifted by the length change of the edits before it,
+  // and grown by its own (an edit that adds quotes changes more than the name's length).
   const sorted = [...renamed].sort((a, b) => a.range.start - b.range.start);
+  const deltas = [...edits]
+    .sort((a, b) => a.range.start - b.range.start)
+    .map((e) => e.newText.length - (e.range.end - e.range.start));
+  let shift = 0;
   const want = sorted
-    .map((s, i) => `${s.range.start + i * delta}:${s.range.end + (i + 1) * delta}:${s.kind}`)
+    .map((s, i) => {
+      const delta = deltas[i] ?? 0;
+      const at = `${s.range.start + shift}:${s.range.end + shift + delta}:${s.kind}`;
+      shift += delta;
+      return at;
+    })
     .sort();
   return got.length === want.length && got.every((g, i) => g === want[i]);
 }
@@ -259,16 +268,22 @@ function quotedReason(all: readonly Occurrence[], newName: string): string | und
 }
 
 /**
- * The facet's reason against `newName`, when any occurrence is written bare. Between quotes a
- * name takes more (`Client Account`); the read-back check still has the last word.
+ * What a rename writes at the bare occurrences in `all`: `newName`, or the facet's quoted form
+ * of it when `isValidId` refuses it bare and the facet can quote it
+ * ({@link LanguageFacet.quoteId}); else the facet's reason. Between quotes a name takes more
+ * (`Client Account`); the read-back check still has the last word.
  */
-function bareReason(
+function bareText(
   facet: LanguageFacet,
   all: readonly Occurrence[],
   newName: string,
   kind: string
-): string | undefined {
-  return all.some((x) => x.quote === undefined) ? facet.isValidId(newName, kind) : undefined;
+): { text: string } | { refused: string } {
+  if (all.every((x) => x.quote !== undefined)) return { text: newName };
+  const reason = facet.isValidId(newName, kind);
+  if (reason === undefined) return { text: newName };
+  const quoted = facet.quoteId?.(newName, kind);
+  return quoted === undefined ? { refused: reason } : { text: quoted };
 }
 
 export function rename(
@@ -283,9 +298,14 @@ export function rename(
   const facet = ctx.facet!;
   const refuse = (refused: string): RenameResult => deepFreeze({ refused });
   const all = sameSymbol(list, o);
-  const invalid = quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind);
+  const invalid = quotedReason(all, newName);
   if (invalid !== undefined) return refuse(invalid);
-  const edits = all.map((x) => ({ range: x.range, newText: newName }));
+  const bare = bareText(facet, all, newName, o.kind);
+  if ('refused' in bare) return refuse(bare.refused);
+  const edits = all.map((x) => ({
+    range: x.range,
+    newText: x.quote === undefined ? bare.text : newName,
+  }));
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
   if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);

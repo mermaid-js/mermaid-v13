@@ -34,7 +34,8 @@ takes the character before it. *)
 (** At a line start: blanks before a line break or before other text are skipped. *)
 <bol,onBol> -                /[ \t]+(?=[\n\r])/ ;
 (** `text <id>` on an indented line right under a `set` or `union` (or another such line): a
-text node in its area. The token is the indent. *)
+text node in its area, which takes that statement's sets. *)
+(* The token is the indent; the `text` after it is attached to it. *)
 <onBol> INDENT_TEXT          /[ \t]+(?=text\b)/            pop push(indentText) ;
 <bol,onBol> -                /[ \t]+/ ;
 (** Any other line start ends the indented text lines. *)
@@ -70,7 +71,7 @@ UNION                        /union\b/                     push(on) :keyword ;
 
 (** A label: `["…"]` as written, or `[…]` trimmed. *)
 <INITIAL,on> -               /\["(?=[^"]*"\])/             push(quotedLabel) attach-next :string ;
-<quotedLabel> BRACKET_LABEL       /[^"]*/                       pop push(labelEnd) :string ;
+<quotedLabel> BRACKET_LABEL       /[^"]*(?="\])/               pop push(labelEnd) :string ;
 <INITIAL,on> -               /\[\s*(?=[^\]"]+\])/          push(label) attach-next :string ;
 <label> BRACKET_LABEL        /[^\]"]*?(?=\s*\])/           pop push(labelEnd) :string ;
 <labelEnd> -                 /"?\s*\]/                     pop attach-prev :string ;

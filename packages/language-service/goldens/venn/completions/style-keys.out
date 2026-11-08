@@ -1,0 +1,19 @@
+@ 4:11  style A |
+  fill property 4:11-4:11 "" -> "fill: "
+  fill-opacity property 4:11-4:11 "" -> "fill-opacity: "
+  stroke property 4:11-4:11 "" -> "stroke: "
+  stroke-width property 4:11-4:11 "" -> "stroke-width: "
+  color property 4:11-4:11 "" -> "color: "
+@ 5:14  style A,B f|
+  fill property 5:13-5:14 "f" -> "fill: "
+  fill-opacity property 5:13-5:14 "f" -> "fill-opacity: "
+@ 6:22  style A fill: red, |
+  fill-opacity property 6:22-6:22 "" -> "fill-opacity: "
+  stroke property 6:22-6:22 "" -> "stroke: "
+  stroke-width property 6:22-6:22 "" -> "stroke-width: "
+  color property 6:22-6:22 "" -> "color: "
+@ 7:42  style A fill: red, fill-opacity: 0.5, s|
+  stroke property 7:41-7:42 "s" -> "stroke: "
+  stroke-width property 7:41-7:42 "s" -> "stroke-width: "
+@ 8:17  style A fill: |
+  none

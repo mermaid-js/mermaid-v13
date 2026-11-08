@@ -1,0 +1,2 @@
+4:9-4:10 "," error UNEXPECTED: Expected `set`, `union`, `text`, `style` or `title`, got `,`.
+6:3-6:14 "text A,B t2" warning VENN_UNKNOWN_TARGET: Not drawn: the text node `t2` at line 6 names no declared set, overlap or text node. Declare it with `set` or `union`.

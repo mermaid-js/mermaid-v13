@@ -1,0 +1,9 @@
+3:3-3:11 "set B:-2" warning VENN_INVALID_SIZE: A size below 0 is laid out as 0: `set B:-2` at line 3. Use a size of 0 or more.
+4:11-4:12 "C" error VENN_UNKNOWN_SET: unknown set identifier: C. A `union` names sets declared before it, as in `set C`.
+5:3-5:10 "union B" error VENN_UNION_ONE_SET: union requires multiple identifiers: a `union` is the overlap of two or more sets, as in `union A,B`.
+6:3-6:10 "set A:5" warning VENN_DUPLICATE: A set or overlap is declared more than once: `set A:5` at line 6 and `set A` at line 10 repeat earlier ones. Each copy is drawn, and the last size counts; declare each once.
+8:3-8:12 "text Z z1" warning VENN_UNKNOWN_TARGET: Not drawn: the text node `z1` at line 8 and the style at line 9 name no declared set, overlap or text node. Declare it with `set` or `union`.
+10:9-10:10 "B" error UNEXPECTED: Expected `set`, `union`, `text`, `style` or `title`, got `B`; a `set` names one set; write an overlap as `union A,B`.
+11:7-11:8 "Ä" error UNEXPECTED_CHARACTER: Unexpected character `Ä`; an id is letters, digits, `_` and `-`, starting with a letter or `_`; quote any other id, as in `set "Ä b"`.
+12:10-12:11 "." error UNEXPECTED_CHARACTER: Unexpected character `.`; a number has digits after its `.`, as in `1.5`.
+13:10-13:11 "\"" error UNCLOSED_STRING: Unclosed string: the `"` at line 13 has no closing `"`. Add `"` after the text.

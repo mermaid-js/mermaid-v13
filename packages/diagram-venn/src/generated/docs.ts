@@ -13,5 +13,5 @@ export const vennDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Union]: "`union <id>,<id>…`: the overlap of two or more sets declared before it, with an optional `[label]` and `:size` (10 / n² for n sets by default), as in `union A,B[\"Both\"]:2`.",
   [T.Text]: "`text <ids> <id>`: a text node in the area of those sets, with an optional `[label]` (not after an id that is a number), as in `text A,B t1[\"In both\"]`.",
   [T.Style]: "`style <ids> key: value, …`: the `fill`, `fill-opacity`, `stroke`, `stroke-width` and `color` of a set, an overlap or a text node, as in `style A,B fill: #f00`.",
-  [T.IndentTextKeyword]: "`text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area. The token is the indent.",
+  [T.IndentTextKeyword]: "`text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area, which takes that statement's sets.",
 };

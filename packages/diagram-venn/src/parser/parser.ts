@@ -34,6 +34,11 @@
  *
  * The four D417 warnings are `./warnings.ts`'s.
  *
+ * With `probe` (R-LANG-7, D95, #498) the rules also record what they would accept at that offset,
+ * at the same decision points as their `fail` lists, for completion; nothing else changes. The
+ * probe's mode is jison's start condition there (`INITIAL`, `bol`), or `string`, `label` or
+ * `title` inside a quoted id or value, a `[label]` or a title's text.
+ *
  * Symbols (D418): a `set` statement defines its id (`set`; a repeat refers to the first), and the
  * ids in `union`, `text` and `style` refer to it; text-node ids are `text` symbols (the first of
  * a name defines it); a one-id `style` target is a set reference when a set has that id, else a
@@ -41,10 +46,13 @@
  * quotes included (D191).
  */
 import {
+  DQUOTE,
   Kind,
   kindSet,
+  LBRACKET,
   LineIndex,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
   sourceView,
@@ -54,6 +62,7 @@ import type {
   ParseResult,
   Range,
   StatementSpan,
+  TokenStream,
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -93,6 +102,54 @@ const BOUNDARY = kindSet(...STATEMENT_KINDS, Kind.Newline, T.Eof, Kind.EOF);
 const ID_KINDS = kindSet(T.Identifier, T.String);
 const LABEL_KINDS = kindSet(T.QuotedLabel, T.Label);
 const VALUE_KINDS = kindSet(T.Identifier, T.Numeric, T.HexColor, T.RgbColor, T.RgbaColor);
+
+// What each decision point accepts, for the probe (R-LANG-7): the kinds its test reads.
+const P_HEAD = [T.Venn, Kind.Newline];
+const P_STATEMENT = [...STATEMENT_KINDS, Kind.Newline, T.Eof];
+/** Before any `venn-beta`: a later one is taken as the header. */
+const P_STATEMENT_OR_HEAD = [T.Venn, ...P_STATEMENT];
+/** The `text` after an indent: the keyword of the indented text statement. */
+const P_INDENT_TEXT = [T.IndentTextKeyword];
+const P_ID = [T.Identifier, T.String];
+const P_COMMA = [T.Comma];
+const P_LABEL = [T.QuotedLabel, T.Label];
+const P_COLON = [T.Colon];
+const P_SIZE = [T.Numeric];
+const P_TEXT_ID = [T.Numeric, T.Identifier, T.String];
+const P_KEY = [T.Identifier];
+const P_VALUE_WORD = [T.Identifier, T.Numeric, T.HexColor, T.RgbColor, T.RgbaColor];
+const P_VALUE = [T.String, ...P_VALUE_WORD];
+/**
+ * Kinds a probe's cursor follows rather than extends: `,`, `:`, and a quoted id or value and a
+ * label, which their closing quote or bracket ends.
+ */
+const PROBE_FOLLOWS = kindSet(T.Comma, T.Colon, T.String, T.QuotedLabel, T.Label);
+
+/**
+ * The probe's mode at `o` when it is inside a value: `string` in a quoted id or value (closed
+ * or not), `label` in a `[label]` (closed or not), `title` in a title's text (past `title` and
+ * its blank, to the line end); else undefined, and the lexer's start condition is the mode.
+ */
+function valueMode(src: string, tokens: TokenStream, o: number): string | undefined {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    if (kind === Kind.Error) {
+      // An unclosed quote or bracket: one error token, then the line lexed as code.
+      const c = src.charCodeAt(start);
+      if ((c === DQUOTE || c === LBRACKET) && !/[\n\r]/.test(src.slice(start, o)))
+        return c === DQUOTE ? 'string' : 'label';
+      continue;
+    }
+    if (end < o) continue;
+    if (kind === T.String && o < end) return 'string';
+    if ((kind === T.QuotedLabel || kind === T.Label) && o < end) return 'label';
+    if (kind === T.Title && o > start + 'title'.length) return 'title';
+  }
+  return undefined;
+}
 
 // What the parser expects, in Mermaid terms (R-ERR-2, R-ERR-5).
 const HEADER = ['`venn-beta`'];
@@ -162,6 +219,7 @@ class VennParser {
   private readonly t: TokenView;
   private i = 0;
   private readonly st = new ParseState();
+  private readonly probe: Probe | undefined;
   private lines: LineIndex | undefined;
   private readonly children: VennStatementNode[] = [];
   /** Mentions per id base, for the `@n` suffixes. */
@@ -201,8 +259,16 @@ class VennParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.lexed = lex(src, pre.bodyStart, view);
+    this.lexed = lex(src, pre.bodyStart, view, options.probe);
     this.t = significantTokens(this.lexed.tokens, TRIVIA);
+    if (options.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.lexed.tokens);
+      // Ignored when the offset is outside code.
+      const o = probe.offset;
+      probe.lexed(o, o, valueMode(src, this.lexed.tokens, o) ?? this.lexed.mode ?? 'INITIAL');
+    }
   }
 
   parse(): VennParseResult {
@@ -234,7 +300,7 @@ class VennParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.lexed.tokens, this.options);
+    return st.result(model, ast, this.lexed.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -252,6 +318,15 @@ class VennParser {
   private raw(i = this.i): string {
     if (i >= this.t.length) return '';
     return this.lexed.textOf(this.kind(i), this.t.start[i] ?? 0, this.t.end[i] ?? 0);
+  }
+
+  /**
+   * Probe hook: the parser tests token `j` for `kinds` (a constant list), or would accept them
+   * there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
   }
 
   private is(set: Uint8Array, i = this.i): boolean {
@@ -385,6 +460,7 @@ class VennParser {
    * token is where the next one starts.
    */
   private recover(from: number): void {
+    this.probe?.freeze();
     const at = this.i > from && this.is(BOUNDARY) ? this.i : this.i + 1;
     this.i = skipTo(this.t, Math.min(at, this.t.length), BOUNDARY);
   }
@@ -405,7 +481,11 @@ class VennParser {
 
   /** `NEWLINE* VENN`. Without it the rest is still read, and a later `venn-beta` is taken as it. */
   private header(): void {
-    while (this.kind() === Kind.Newline && !this.atEnd()) this.i++;
+    for (;;) {
+      this.tested(P_HEAD);
+      if (this.kind() !== Kind.Newline || this.atEnd()) break;
+      this.i++;
+    }
     if (this.kind() === T.Venn) this.takeHeader();
     else this.statement(() => this.fail(HEADER, HEADER_HINT));
     // One error, one diagnostic: later statements are not told the header is missing again.
@@ -424,6 +504,7 @@ class VennParser {
     /** The statement before on this line, for the hints. */
     let prev: VennStatementNode | undefined;
     for (;;) {
+      this.tested(this.headerSeen ? P_STATEMENT : P_STATEMENT_OR_HEAD);
       if (this.atEnd()) return;
       const k = this.kind();
       if (k === Kind.Newline) {
@@ -453,6 +534,7 @@ class VennParser {
 
   /** `id = IDENTIFIER | STRING` */
   private ident(names: readonly string[], hint?: string): VennName {
+    this.tested(P_ID);
     if (!this.is(ID_KINDS)) this.fail(names, hint);
     return this.name(this.i++);
   }
@@ -460,7 +542,9 @@ class VennParser {
   /** `ids = id ( "," id )*` */
   private ids(names: readonly string[], hint?: string): VennName[] {
     const out = [this.ident(names, hint)];
-    while (this.kind() === T.Comma) {
+    for (;;) {
+      this.tested(P_COMMA);
+      if (this.kind() !== T.Comma) break;
       this.i++;
       out.push(this.ident(names, hint));
     }
@@ -469,6 +553,7 @@ class VennParser {
 
   /** `[ label ]`: the label as v12's DB kept it (an empty one is none), and where it ends. */
   private label(end: number): { label?: string; end: number } {
+    this.tested(P_LABEL);
     if (!this.is(LABEL_KINDS)) return { end };
     const raw = this.raw();
     const at = this.range(this.i++).end;
@@ -478,8 +563,10 @@ class VennParser {
   /** `[ label ] [ ":" NUMERIC ]` after the ids ending at `end`; the size as v12's `parseFloat`. */
   private tail(end: number): Tail {
     const tail: Tail = this.label(end);
+    this.tested(P_COLON);
     if (this.kind() !== T.Colon) return tail;
     this.i++;
+    this.tested(P_SIZE);
     if (this.kind() !== T.Numeric) this.fail(SIZE, SIZE_FORM);
     tail.size = Number.parseFloat(this.raw());
     tail.end = this.range(this.i++).end;
@@ -575,6 +662,7 @@ class VennParser {
     this.i++;
     // The `text` after the indent (jison returns no token for it).
     const start = this.range().start;
+    this.tested(P_INDENT_TEXT);
     if (this.kind() === T.IndentTextKeyword) this.i++;
     return this.textTail(start, this.currentSets, [], true);
   }
@@ -585,6 +673,7 @@ class VennParser {
     members: VennName[],
     indented: boolean
   ): VennTextStatementNode {
+    this.tested(P_TEXT_ID);
     const number = this.kind() === T.Numeric;
     if (!number && !this.is(ID_KINDS)) this.fail(TEXT_ID, indented ? undefined : TEXT_HINT);
     const name = this.name(this.i++);
@@ -627,7 +716,9 @@ class VennParser {
     const start = this.range(this.i++).start;
     const targets = this.ids(STYLE_TARGET);
     const fields = [this.field()];
-    while (this.kind() === T.Comma) {
+    for (;;) {
+      this.tested(P_COMMA);
+      if (this.kind() !== T.Comma) break;
       this.i++;
       fields.push(this.field());
     }
@@ -659,11 +750,14 @@ class VennParser {
 
   /** `field = IDENTIFIER ":" ( STRING | value+ )`; values joined with a blank, as in v12. */
   private field(): VennStyleField {
+    this.tested(P_KEY);
     if (this.kind() !== T.Identifier) this.fail(STYLE_KEY, STYLE_HINT);
     const keyRange = this.range();
     const key = this.raw(this.i++);
+    this.tested(P_COLON);
     if (this.kind() !== T.Colon) this.fail(COLON, STYLE_HINT);
     this.i++;
+    this.tested(P_VALUE);
     if (this.kind() === T.String) {
       const valueRange = this.range();
       return { key, keyRange, value: normalizeText(this.raw(this.i++)), valueRange };
@@ -675,6 +769,7 @@ class VennParser {
     while (this.is(VALUE_KINDS)) {
       parts.push(this.raw());
       end = this.range(this.i++).end;
+      this.tested(P_VALUE_WORD);
     }
     return { key, keyRange, value: normalizeText(parts.join(' ')), valueRange: { start, end } };
   }

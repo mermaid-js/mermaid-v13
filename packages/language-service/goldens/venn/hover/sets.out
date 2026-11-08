@@ -1,0 +1,38 @@
+@ 2:7  set |A["Alpha"]:20
+  2:7-2:8 "A"
+  | **`A`** set · Alpha
+  |
+  | Size 20.
+  |
+  | In `union A,B` (size 4) and `union A,B,C` (size 1.111).
+@ 6:11  union A,|B:4
+  6:11-6:12 "B"
+  | **`B`** set
+  |
+  | Size 10 (the default).
+  |
+  | In `union A,B` (size 4) and `union A,B,C` (size 1.111).
+@ 9:8  text |C t1
+  9:8-9:9 "C"
+  | **`C`** set
+  |
+  | Size 5 (declared 2 times; the last size counts).
+  |
+  | In `union A,B,C` (size 1.111).
+@ 10:9  style |A fill: red
+  10:9-10:10 "A"
+  | **`A`** set · Alpha
+  |
+  | Size 20.
+  |
+  | In `union A,B` (size 4) and `union A,B,C` (size 1.111).
+@ 11:8  text |Z z1
+  11:8-11:9 "Z"
+  | **`Z`** set
+  |
+  | Not declared: no `set Z` statement, so nothing naming it is drawn.
+@ 12:8  set "|D d"
+  12:8-12:11 "D d"
+  | **`D d`** set
+  |
+  | Size 10 (the default).

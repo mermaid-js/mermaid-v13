@@ -1,0 +1,27 @@
+@ 4:10  text |a1["One"]
+  prepare: 4:10-4:12 "a1"; rename to "note":
+  %% rename-to: note
+  venn-beta
+    set A
+      text note["One"]
+    title Text nodes
+    text A note
+    style note color: blue
+@ 6:11  text A a|1
+  prepare: 6:10-6:12 "a1"; rename to "note":
+  %% rename-to: note
+  venn-beta
+    set A
+      text note["One"]
+    title Text nodes
+    text A note
+    style note color: blue
+@ 7:9  style |a1 color: blue
+  prepare: 7:9-7:11 "a1"; rename to "note":
+  %% rename-to: note
+  venn-beta
+    set A
+      text note["One"]
+    title Text nodes
+    text A note
+    style note color: blue

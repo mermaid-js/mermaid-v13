@@ -1,0 +1,12 @@
+@ 2:8  title: |x
+  none
+@ 5:7  %% s|et
+  none
+@ 6:11  title Se|t
+  none
+@ 7:12  set A["La|bel"]
+  none
+@ 8:9  set "B|
+  none
+@ 9:21  style A color: "re|d"
+  none

@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #429: the manifest comes with T5 (#501).
+  {
+    type: 'venn',
+    id: 'venn',
+    section: 'venn',
+    pattern: /^\s*venn-beta/,
+    detector: (text) => /^\s*venn-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-venn/language').then((m) => m.language),
+  },
+];

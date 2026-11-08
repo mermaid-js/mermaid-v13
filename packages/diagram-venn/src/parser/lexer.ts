@@ -67,6 +67,9 @@ import { T } from './tokens.ts';
 // Start conditions of venn.jison (`bol` is inclusive: INITIAL's rules apply there too).
 const S = { INITIAL: 0, BOL: 1 } as const;
 
+/** Start condition names by number, as jison names them, for the probe's mode (R-LANG-7). */
+const S_NAMES = ['INITIAL', 'bol'];
+
 const PLUS = 0x2b;
 const APOS = "'";
 
@@ -94,11 +97,22 @@ export interface Lexed {
    * significant tokens (`significantTokens`), whose indexes are not the stream's.
    */
   textOf(kind: number, start: number, end: number): string;
+  /**
+   * With `modeAt`, jison's start condition at that source offset (`INITIAL` or `bol`): that of
+   * the step whose text holds it, else of the first step at or after it (the probe's `lexed`
+   * rule).
+   */
+  readonly mode?: string;
 }
 
-/** Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). */
-export function lex(src: string, from: number, view: SourceView): Lexed {
-  const tokens = new VennLexer(src, from, view).run();
+/**
+ * Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). With
+ * `modeAt` (a probe's offset, R-LANG-7), the start condition there is {@link Lexed.mode}.
+ */
+export function lex(src: string, from: number, view: SourceView, modeAt?: number): Lexed {
+  const lexer = new VennLexer(src, from, view);
+  const tokens = lexer.run(modeAt);
+  const { mode } = lexer;
   const textOf = (kind: number, start: number, end: number): string => {
     const text = cook(src, start, end, view);
     if (kind === T.QuotedLabel) return text.slice(2, -2);
@@ -108,6 +122,7 @@ export function lex(src: string, from: number, view: SourceView): Lexed {
     tokens,
     textOf,
     text: (j) => textOf(tokens.kind[j] ?? 0, tokens.start[j] ?? 0, tokens.end[j] ?? 0),
+    ...(mode === undefined ? {} : { mode }),
   };
 }
 
@@ -140,6 +155,8 @@ class VennLexer {
   private nextQuote = -2;
   /** The next `]` or `"` at or after the last lookup (-2: not looked up). */
   private nextLabelStop = -2;
+  /** The start condition at the offset `run` was given. */
+  mode: string | undefined;
 
   constructor(
     private readonly src: string,
@@ -214,11 +231,22 @@ class VennLexer {
     return !o || o.source(q + 1) === o.source(q) + 1;
   }
 
-  run(): TokenStream {
+  run(modeAt?: number): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) this.step(text.charCodeAt(this.p));
+    // Two loops, so a plain lex does no probe work per step.
+    if (modeAt === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
+    else {
+      while (this.p < n) {
+        const before = this.source(this.p);
+        const state = this.state;
+        this.step(text.charCodeAt(this.p));
+        if (this.mode === undefined && (before >= modeAt || this.source(this.p) > modeAt))
+          this.mode = S_NAMES[state];
+      }
+      this.mode ??= S_NAMES[this.state];
+    }
     // `<<EOF>>` is in every start condition.
     this.emit(T.Eof, this.len, this.len);
     this.trivia(this.src.length + 1);

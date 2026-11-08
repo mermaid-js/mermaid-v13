@@ -71,6 +71,22 @@ const PACKAGES = [
     renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
   },
   {
+    name: 'venn',
+    dir: 'diagram-venn',
+    renderer: [
+      'render/',
+      'layout/',
+      'solver/',
+      'theme/',
+      'plugin.ts',
+      'index.ts',
+      'labels.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
+  {
     name: 'info',
     dir: 'diagram-info',
     renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],

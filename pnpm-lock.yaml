@@ -152,6 +152,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-venn':
+        specifier: workspace:^
+        version: link:../diagram-venn
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -600,6 +603,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-venn':
+        specifier: workspace:*
+        version: link:../diagram-venn
 
   packages/language-service-codemirror:
     devDependencies:
@@ -969,6 +975,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-venn':
+        specifier: workspace:^
+        version: link:../../packages/diagram-venn
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1
