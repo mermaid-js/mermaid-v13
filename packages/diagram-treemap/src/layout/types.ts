@@ -14,6 +14,11 @@ export interface Rect {
   readonly height: number;
 }
 
+/** `r` grown by `by` on every side (a stroke's outer half, or a padding band). */
+export function grow(r: Rect, by: number): Rect {
+  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
+}
+
 /** v12's `text-anchor` and `dominant-baseline` for a text at its point. */
 export type TreemapTextAnchor = 'start' | 'middle' | 'end';
 export type TreemapBaseline = 'middle' | 'hanging';

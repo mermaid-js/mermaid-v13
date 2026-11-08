@@ -14,7 +14,13 @@
  */
 import type { TreemapModel, TreemapNode } from '../model.ts';
 import { TREEMAP_METRICS as M } from './metrics.ts';
-import type { Rect, TreemapLayout, TreemapLeafLayout, TreemapSectionLayout } from './types.ts';
+import {
+  grow,
+  type Rect,
+  type TreemapLayout,
+  type TreemapLeafLayout,
+  type TreemapSectionLayout,
+} from './types.ts';
 
 const EPS = 1e-6;
 
@@ -49,10 +55,6 @@ function padded(r: Rect): Rect {
     width: r.width - 2 * M.sectionPadding,
     height: r.height - M.sectionHeader - 2 * M.sectionPadding,
   };
-}
-
-function grow(r: Rect, by: number): Rect {
-  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
 }
 
 /** Every number in the layout, with a path to name it. */

@@ -27,13 +27,14 @@ import {
 } from './metrics.ts';
 import { classFont, plainText, textWidth, truncate } from './text.ts';
 import { tileTreemap, type Tile } from './tiles.ts';
-import type {
-  Rect,
-  TreemapLayout,
-  TreemapLeafLayout,
-  TreemapSectionLayout,
-  TreemapText,
-  TreemapTextAnchor,
+import {
+  grow,
+  type Rect,
+  type TreemapLayout,
+  type TreemapLeafLayout,
+  type TreemapSectionLayout,
+  type TreemapText,
+  type TreemapTextAnchor,
 } from './types.ts';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
@@ -368,10 +369,6 @@ class Ordinal {
     }
     return i % this.n;
   }
-}
-
-function grow(r: Rect, by: number): Rect {
-  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
 }
 
 /** The union of what is drawn. */
