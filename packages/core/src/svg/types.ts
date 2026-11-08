@@ -39,8 +39,9 @@ export type LinkTarget = '_self' | '_blank' | '_parent' | '_top';
 /** A paint value: a checked colour, a theme variable, or a keyword. */
 export type Paint = SafeColor | ThemeRef | 'none' | 'currentColor' | 'transparent';
 /**
- * `url(#<scope>-gradient)`, the render's own gradient (D182). Only `Theme.outline()` makes
- * one, and only `fill` and `stroke` take it.
+ * `url(#…)` of one of the render's own gradients: `url(#<scope>-gradient)` (D182), which only
+ * `Theme.outline()` makes, or a user-space gradient's (D391), which only
+ * `SvgWriter.linearGradient()` makes. Only `fill` and `stroke` take it.
  */
 export type GradientRef = Brand<string, 'GradientRef'>;
 /** What `fill` and `stroke` accept: a paint, or the render's gradient. */
@@ -161,6 +162,19 @@ export interface SvgGradient {
   readonly id: string;
   readonly start: StopColor;
   readonly stop: StopColor;
+}
+
+/**
+ * A user-space linear gradient (D391): horizontal, `from` at (x1, y) to `to` at (x2, y), in the
+ * user units of the element that refers to it. `SvgWriter.linearGradient()` takes it.
+ */
+export interface LinearGradient {
+  readonly x1: number;
+  readonly x2: number;
+  /** Both ends' y (`y1 = y2`); 0 when left out. */
+  readonly y?: number;
+  readonly from: StopColor;
+  readonly to: StopColor;
 }
 
 /** A warning raised by a safety check. The pipeline forwards these to `ctx.warn`. */

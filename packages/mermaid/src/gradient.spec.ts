@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderContext } from '@mermaid-js/core';
-import { assertInert, type GradientRef, type SvgTree, type SvgWriter } from '@mermaid-js/core/svg';
+import {
+  assertInert,
+  styleText,
+  type GradientRef,
+  type SafeColor,
+  type SafeValue,
+  type SvgTree,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import { createMermaid, MermaidError, type ExternalDiagram } from './index.ts';
 
 /** A diagram whose renderer outlines its one box with `theme.outline()`, as T3–T7 will. */
@@ -121,4 +129,100 @@ describe('the neo gradient through render (D182)', () => {
       expect((e as MermaidError).code).toBe('INTERNAL');
     });
   }
+});
+
+/** A diagram whose links are user-space gradients (D391) blended with multiply (D392), as sankey's. */
+const LINKED = {
+  manifest: { plugin: 'diagram', id: 'linked', entry: './dist/index.js', export: 'linked' },
+  detector: (text: string) => text.trimStart().startsWith('linked'),
+  load: async () => ({
+    linked: {
+      id: 'linked',
+      layoutKind: 'custom' as const,
+      detector: () => true,
+      parse: (text: string) => ({
+        model: text,
+        ast: { id: 'l', type: 'Linked', range: { start: 0, end: text.length } },
+        diagnostics: [],
+        symbols: [],
+        statements: [],
+      }),
+      render: (_m: string, _l: unknown, ctx: RenderContext, w: SvgWriter) => {
+        const [a, b] = ['#1f77b4', '#ff7f0e'] as SafeColor[];
+        w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, 40, 10] });
+        w.leaf('rect', {
+          x: 0,
+          y: 0,
+          width: 4,
+          height: 4,
+          stroke: ctx.theme.outline('nodeBorder'),
+        });
+        const style = styleText({ 'mix-blend-mode': 'multiply' as SafeValue });
+        for (const [x1, x2] of [
+          [4, 36],
+          [4, 36],
+          [4, 20],
+        ] as const)
+          w.leaf('path', {
+            d: w.path().moveTo(x1, 2).lineTo(x2, 2).done(),
+            stroke: w.linearGradient({ x1, x2, from: a!, to: b! }),
+            style,
+          });
+        w.close();
+      },
+    },
+  }),
+} as ExternalDiagram;
+
+describe('user-space gradients and blend mode through render (D391, D392)', () => {
+  const mermaid = async (...more: ExternalDiagram[]) => {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([LINKED, ...more]);
+    return m;
+  };
+
+  it('writes one gradient per distinct link, scoped to the render', async () => {
+    const { svg } = await (await mermaid()).render('d1', 'linked');
+    expect(svg.match(/<linearGradient /g)).toHaveLength(2);
+    expect(svg).toMatch(
+      /^<svg[^>]*><defs><linearGradient id="d1-g-[0-9a-z]+" gradientUnits="userSpaceOnUse" x1="4" y1="0" x2="36" y2="0">/
+    );
+    expect(svg.match(/style="mix-blend-mode:multiply"/g)).toHaveLength(3);
+    assertInert(svg, { gradient: false, scope: 'd1' });
+  });
+
+  it('puts them after the render’s gradient (D182) when that is on', async () => {
+    const { svg } = await (await mermaid()).render('d1', 'linked', { config: ON });
+    expect(svg).toContain('</linearGradient><linearGradient id="d1-g-');
+    assertInert(svg, { gradient: 'd1-gradient', scope: 'd1' });
+  });
+
+  it('gives two renders with different id prefixes no id in common', async () => {
+    const m = await mermaid();
+    const a = ids((await m.render('a', 'linked', { config: ON })).svg);
+    const b = ids((await m.render('b', 'linked', { config: ON })).svg);
+    expect(a).toHaveLength(3);
+    expect(b.filter((id) => a.includes(id))).toEqual([]);
+    const c = ids(m.renderSync('linked').svg);
+    const d = ids(m.renderSync('linked\n').svg);
+    expect(c.filter((id) => d.includes(id))).toEqual([]);
+  });
+
+  it('writes the same bytes through the tree a postRender hook edits', async () => {
+    const plain = (await (await mermaid()).render('d1', 'linked', { config: ON })).svg;
+    const m = await mermaid({ id: 'noop', postRender: () => undefined });
+    expect((await m.render('d1', 'linked', { config: ON })).svg).toBe(plain);
+  });
+
+  it.each([
+    ['refers to an undeclared gradient', 'url(#d1-g-zzz)'],
+    ['refers to another render’s gradient', 'url(#d2-g-zzz)'],
+  ])('fails the render when a hook %s', async (_what, paint) => {
+    const edit = (t: SvgTree) =>
+      t.setAttr(t.find({ tag: 'path' })[0]!, 'stroke', paint as GradientRef);
+    const m = await mermaid({ id: 'hostile', postRender: edit });
+    const e = await m.render('d1', 'linked').catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(MermaidError);
+    expect((e as MermaidError).code).toBe('INTERNAL');
+  });
 });

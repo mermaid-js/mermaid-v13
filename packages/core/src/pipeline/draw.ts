@@ -62,7 +62,11 @@ export function drawDiagram<M, L>(
     const gradient = ctx.theme.gradient();
     // The first registered outline drawer, if it is active for this render (D302).
     const outline = run?.outline();
-    const options = outline ? { gradient, outline: outline.draw } : { gradient };
+    // Read only when a renderer asks for a user-space gradient (D391).
+    const idPrefix = () => ctx.idPrefix;
+    const options = outline
+      ? { gradient, idPrefix, outline: outline.draw }
+      : { gradient, idPrefix };
     if (run?.editsTree) {
       const w = treeWriter(options);
       plugin.render(model, layout, ctx, w);

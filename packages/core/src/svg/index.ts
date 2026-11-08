@@ -11,6 +11,7 @@ export type {
   GradientRef,
   GradientTag,
   Length,
+  LinearGradient,
   LinkTarget,
   OutlinePaint,
   Paint,

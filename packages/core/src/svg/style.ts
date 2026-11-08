@@ -199,7 +199,15 @@ export function themeRef(
   return `var(${name},${typeof fallback === 'number' ? num(fallback) : fallback})` as ThemeRef;
 }
 
+/**
+ * `mix-blend-mode` (D392), with its only values. Not a presentation attribute, so `checkStyle`
+ * writes it as `style` and it is not in {@link STYLE_PROPERTIES}.
+ */
+export const BLEND = 'mix-blend-mode';
+export const BLEND_MODES: ReadonlySet<string> = new Set(['normal', 'multiply']);
+
 type Kind =
+  | 'blend'
   | 'color'
   | 'length'
   | 'opacity'
@@ -240,6 +248,8 @@ export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(Object.keys(PROPERT
 function checkValue(kind: Kind, v: string): string | undefined {
   const lower = v.toLowerCase();
   switch (kind) {
+    case 'blend':
+      return BLEND_MODES.has(lower) ? lower : undefined;
     case 'color':
       return checkColor(v);
     case 'length':
@@ -300,9 +310,9 @@ export function checkStyle(declarations: readonly string[], warn?: Warn): Checke
     const at = decl.indexOf(':');
     const prop = (at < 0 ? decl : decl.slice(0, at)).trim().toLowerCase();
     if (prop === '') continue;
-    const entry = Object.prototype.hasOwnProperty.call(PROPERTIES, prop)
-      ? PROPERTIES[prop]
-      : undefined;
+    const blend = prop === BLEND;
+    let entry: readonly [Kind, Target] | undefined = blend ? ['blend', 'shape'] : undefined;
+    if (!blend && Object.prototype.hasOwnProperty.call(PROPERTIES, prop)) entry = PROPERTIES[prop];
     if (entry === undefined || at < 0) {
       warn?.({
         code: 'STYLE_PROPERTY_DROPPED',
@@ -326,6 +336,10 @@ export function checkStyle(declarations: readonly string[], warn?: Warn): Checke
       continue;
     }
     any = true;
+    if (blend) {
+      shape.style = BLEND + ':' + value;
+      continue;
+    }
     const target = entry[1];
     if (target !== 'text') shape[prop] = value;
     if (target !== 'shape') text[prop === 'color' ? 'fill' : prop] = value;
@@ -339,6 +353,7 @@ export const STYLE_TEXT_PROPERTIES: ReadonlySet<string> = new Set([
   'max-width',
   'width',
   'height',
+  BLEND,
 ]);
 
 /**
@@ -358,7 +373,11 @@ export function styleText(
       throw new TypeError(`${JSON.stringify(prop)} is not an allowed style property`);
     }
     const text = typeof value === 'number' ? num(value) : value;
-    if (RE_UNSAFE_STYLE.test(text) || RE_INVALID_XML.test(text))
+    if (
+      RE_UNSAFE_STYLE.test(text) ||
+      RE_INVALID_XML.test(text) ||
+      (prop === BLEND && !BLEND_MODES.has(text))
+    )
       throw new TypeError(`Unsafe style value for ${prop}`);
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
@@ -373,13 +392,17 @@ const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;
  * it (`p-<base36>`), so any id (React's `:r1:`, ids with spaces) gives a valid, distinct scope.
  */
 export function styleScope(id: string): string {
-  if (RE_SCOPE.test(id)) return id;
+  return RE_SCOPE.test(id) ? id : `p-${hash36(id)}`;
+}
+
+/** FNV-1a (32-bit) of `text`, in base 36: a short, stable id part, not a secure hash. */
+export function hash36(text: string): string {
   let h = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  return `p-${(h >>> 0).toString(36)}`;
+  return (h >>> 0).toString(36);
 }
 const MEDIA_DARK = '@media (prefers-color-scheme:dark){';
 
