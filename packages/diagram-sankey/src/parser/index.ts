@@ -1,6 +1,6 @@
 /**
- * The sankey parser's public surface: the lexer gated against v12's jison lexer (the parser
- * and detection follow in #496).
+ * The sankey parser's public surface: the parser, detection, and the lexer gated against v12's
+ * jison lexer.
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -8,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, SankeyKind as SankeyTokenKind } from './tokens.ts';
+export { parseSankey } from './parser.ts';
+export type { SankeyParseOptions, SankeyParseResult } from './parser.ts';
+export { detectSankey } from './detect.ts';
+export type * from './ast.ts';
 
 export interface SankeyToken {
   /** A `SankeyTokenKind` or a shared `Kind` (`Newline`, `Error`). */

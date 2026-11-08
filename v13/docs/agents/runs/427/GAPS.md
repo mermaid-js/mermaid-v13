@@ -18,7 +18,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## #496 T2 parser
 - **Choice:** D394's "listing every such row in `related`": the parse diagnostic keeps `related`; core's render `Warning` has no `related` (`toWarning` drops it), so the render warning lists the rows through `astIds` (each row's `link:` id). No core change.
-- **Choice:** D397 ids: node names can contain `->` and `@`, and core's `AstIds` escape is not exported. The package escapes names with the same rules as core's escape (copied, not imported) so `node:`/`link:` ids are unambiguous; the round-trip proves it.
+- **Choice:** D397 ids: node names can contain `->` and `@`, and core's `AstIds` escape is not exported. The package escapes names with the same rules as core's escape (copied, not imported) so `node:`/`link:` ids are unambiguous; `parse.spec.ts` checks names with `->`, `>`, `@`, `#` and `%` give distinct ids (the T4 round-trip proves it over the corpus).
+- **Choice:** an infinite value (`Infinity`, `1e999`) counts as 0 with `SANKEY_INVALID_VALUE`, like NaN and negative values: D394 names only those, but d3-sankey would draw every box NaN, against D394's "never draw NaN". v12's value (Infinity) stays in the model for parity.
+- **Choice:** D393 gives one error per group of nodes that reach each other (strongly connected component), at the group's first row, naming that row's source; two separate cycles are two errors (N errors, N diagnostics).
+- **Choice:** `SANKEY_VALUE_TRAILING_TEXT` is one warning per value with text after its number, at that text (D394 says "one … warning" for "a value field").
+- Closed: 35 parity divergences, all D393 cycles (`reject`: v12 parses a cycle, v13 rejects it); v12's two `__proto__` spec tests parse a cycle and are skipped in `v12-specs/` with that reason.
+- Note for #499: links carry `flow` (the value to draw, 0 for invalid ones); `value` is v12's for parity and T6's hover.
 
 ## #499 T3 layout
 

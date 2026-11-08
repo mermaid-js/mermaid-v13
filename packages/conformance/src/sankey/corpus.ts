@@ -78,3 +78,14 @@ export async function sankeyGateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/**
+ * The gate corpus less the items the parity suite already reads from its dirs and files
+ * (`registry.ts`), ids prefixed `sankey-gate/`: model parity over the whole gate corpus.
+ */
+export async function sankeyParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await sankeyCorpus()), ...sankeyCases()].map((c) => c.id));
+  return (await sankeyGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `sankey-gate/${item.id}`, source: item.source }));
+}

@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { parseSankey } from '@mermaid-js/diagram-sankey';
 import { sankeyTokens } from '@mermaid-js/diagram-sankey/testing';
 
 /**
- * R-PARSE-7, pitfall 5: the sankey lexer is linear in input size, in every state and over
- * each of v12's rewrites (trimming, collapsed line breaks, removed spans, entities, stalls).
- * Shape copied from `../pie/stress.spec.ts`: n and 8n units; linear is ~8x, quadratic ~64x,
- * and the bar is 24x. Times are this thread's CPU time, best of five, and small and large
- * lexes alternate.
+ * R-PARSE-7, pitfall 5: the sankey lexer (and below, the parser) is linear in input size, in
+ * every state and over each of v12's rewrites (trimming, collapsed line breaks, removed spans,
+ * entities, stalls). Shape copied from `../pie/stress.spec.ts`: n and 8n units; linear is ~8x,
+ * quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, and small
+ * and large runs alternate.
  */
 const S = 'sankey\n';
 const SHAPES: [string, (n: number) => string][] = [
@@ -57,28 +58,79 @@ const cost = (run: () => unknown): number => {
   return cpuMs() - t0;
 };
 
+/** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
+const ratio = (build: (n: number) => string, run: (src: string) => unknown): number => {
+  const small = build(4_000);
+  const large = build(32_000);
+  run(small); // warm up
+  run(large);
+  let tSmall = Infinity;
+  let tLarge = Infinity;
+  for (let round = 0; round < 5; round++) {
+    tSmall = Math.min(
+      tSmall,
+      cost(() => run(small))
+    );
+    tLarge = Math.min(
+      tLarge,
+      cost(() => run(large))
+    );
+  }
+  return tLarge / Math.max(tSmall, 2);
+};
+
 describe('stress: the sankey lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
-    (_name, build) => {
-      const small = build(4_000);
-      const large = build(32_000);
-      sankeyTokens(small); // warm up
-      sankeyTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => sankeyTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => sankeyTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
-    },
+    (_name, build) => expect(ratio(build, sankeyTokens)).toBeLessThan(24),
     30_000
   );
+});
+
+/** Rows until the text is about `n` characters long. */
+const rows = (n: number, row: (k: number) => string): string => {
+  let out = S;
+  for (let k = 0; out.length < n; k++) out += row(k) + '\n';
+  return out.slice(0, -1);
+};
+
+/**
+ * R-PARSE-7, pitfalls 11 and 19: the parser (nodes by name, AST ids, cycles, value warnings,
+ * recovery) is linear in input size on the lexer's shapes and on its own, with the same n and
+ * 8n ratio test.
+ */
+const PARSE_SHAPES: [string, (n: number) => string][] = [
+  ...SHAPES,
+  ['many distinct nodes', (n) => rows(n, (k) => `s${k},t${k},1`)],
+  ['fan-out from one node', (n) => rows(n, (k) => `hub,t${k},1`)],
+  ['fan-in to one node', (n) => rows(n, (k) => `s${k},hub,1`)],
+  ['a long chain', (n) => rows(n, (k) => `n${k},n${k + 1},1`)],
+  ['a long cycle', (n) => rows(n, (k) => `n${k},n${k + 1},1`) + '\nn1,n0,1'],
+  ['a self-link on every row', (n) => rows(n, (k) => `n${k},n${k},1`)],
+  ['repeated links', (n) => rows(n, () => 'a,b,1')],
+  ['quoted names', (n) => rows(n, (k) => `"s ""${k}""","t,${k}",1`)],
+  ['invalid values on every row', (n) => rows(n, (k) => `s${k},t${k},x${k}`)],
+  ['trailing text on every value', (n) => rows(n, (k) => `s${k},t${k},1 ${k}`)],
+  ['syntax errors on every row', (n) => rows(n, (k) => `s${k},t${k}`)],
+  ['lines of blanks between rows', (n) => rows(n, (k) => `s${k},t${k},1\n   `)],
+];
+
+describe('stress: the sankey parser is linear in input size', () => {
+  it.each(PARSE_SHAPES)(
+    '%s',
+    (_name, build) => expect(ratio(build, (src) => parseSankey(src))).toBeLessThan(24),
+    30_000
+  );
+
+  it('parses 3,000 rows', () => {
+    const lines = Array.from(
+      { length: 3_000 },
+      (_, k) => `Source ${k % 97},Target ${k},${(k % 50) + 0.5}`
+    );
+    const r = parseSankey(`sankey\n\n${lines.join('\n')}`);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.links).toHaveLength(3_000);
+    expect(r.model.nodes).toHaveLength(97 + 3_000);
+    expect(r.ast.children).toHaveLength(3_000);
+  });
 });

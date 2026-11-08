@@ -1,0 +1,202 @@
+{
+  "tokenPostfix": ".mermaid-sankey",
+  "defaultToken": "",
+  "ignoreCase": true,
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "sankey-beta\\b",
+        {
+          "token": "keyword",
+          "next": "@csv"
+        }
+      ],
+      [
+        "sankey\\b",
+        {
+          "token": "keyword",
+          "next": "@csv"
+        }
+      ],
+      [
+        "\\r\\n|\\n",
+        {
+          "token": ""
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@escaped_text"
+        }
+      ],
+      [
+        "[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"(?!\")",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "csv": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\r\\n|\\n",
+        {
+          "token": ""
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@escaped_text"
+        }
+      ],
+      [
+        "[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"(?!\")",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "escaped_text": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\"(?!\")",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

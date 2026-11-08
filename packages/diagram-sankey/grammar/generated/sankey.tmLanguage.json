@@ -1,0 +1,209 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-sankey",
+  "scopeName": "source.mermaid-sankey",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-sankey"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-sankey"
+    },
+    "rule-0": {
+      "begin": "(?i)sankey-beta\\b",
+      "end": "((?i)\"(?!\"))",
+      "patterns": [
+        {
+          "include": "#mode-csv"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-sankey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-sankey"
+        }
+      }
+    },
+    "rule-1": {
+      "begin": "(?i)sankey\\b",
+      "end": "((?i)\"(?!\"))",
+      "patterns": [
+        {
+          "include": "#mode-csv"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-sankey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-sankey"
+        }
+      }
+    },
+    "rule-3": {
+      "match": "(?i)\\r\\n|\\n"
+    },
+    "rule-4": {
+      "match": "(?i),",
+      "name": "punctuation.definition.mermaid-sankey"
+    },
+    "rule-5": {
+      "begin": "(?i)\"",
+      "end": "((?i)\"(?!\"))",
+      "patterns": [
+        {
+          "include": "#mode-escaped_text"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-sankey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-sankey"
+        }
+      }
+    },
+    "rule-6": {
+      "match": "(?i)[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]+",
+      "name": "variable.other.mermaid-sankey"
+    },
+    "rule-7": {
+      "match": "(?i)\"(?!\")",
+      "name": "string.quoted.mermaid-sankey"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        }
+      ]
+    },
+    "mode-csv": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        }
+      ]
+    },
+    "mode-escaped_text": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sankey"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-sankey"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-sankey"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sankey"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

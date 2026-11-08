@@ -228,6 +228,25 @@ export const GRAMMARS: GrammarTarget[] = [
       mixed: ['SPACELINE', 'SHAPE_DATA'],
     },
   },
+  {
+    type: 'sankey',
+    title: 'Sankey diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'SankeyKind',
+      // One kind per rule where jison names two rules alike (`DQUOTE`) or the kind is named
+      // after what it holds (`Text` for `NON_ESCAPED_TEXT`).
+      unnamed: {
+        OpenQuote: { mode: 'csv', pattern: '"', terminal: 'DQUOTE' },
+        CloseQuote: { mode: 'escaped_text', pattern: '"(?!")', terminal: 'DQUOTE' },
+        Text: {
+          mode: 'csv',
+          pattern: '[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]*',
+          terminal: 'NON_ESCAPED_TEXT',
+        },
+      },
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

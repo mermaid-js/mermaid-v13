@@ -494,5 +494,25 @@
   {
     "id": "sankey-cases/line-separator-after-header-then-newline",
     "source": "sankey\u2028\na,b,1"
+  },
+  {
+    "id": "sankey-cases/values-overflow",
+    "source": "sankey\na,b,1e999\nb,c,-1e999"
+  },
+  {
+    "id": "sankey-cases/values-quoted-trailing-text",
+    "source": "sankey\na,b,\"1 2\"\nb,c,\"3\n4\""
+  },
+  {
+    "id": "sankey-cases/values-negative-zero-sign",
+    "source": "sankey\na,b,-0\nb,c,+0"
+  },
+  {
+    "id": "sankey-cases/nodes-blank-name",
+    "source": "sankey\na, ,1\n ,b,2"
+  },
+  {
+    "id": "sankey-cases/links-diamond",
+    "source": "sankey\na,b,1\na,c,2\nb,d,1\nc,d,2\nd,e,3"
   }
 ]
