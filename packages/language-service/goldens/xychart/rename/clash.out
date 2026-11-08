@@ -1,0 +1,3 @@
+@ 3:7  bar |Sales [1, 2]
+  prepare: 3:7-3:12 "Sales"; rename to "Cost":
+  refused: 'Cost' is already a plot id in this diagram.

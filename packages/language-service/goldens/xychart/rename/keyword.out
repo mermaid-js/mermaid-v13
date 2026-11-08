@@ -1,0 +1,6 @@
+@ 3:11  x-axis [|a, b]
+  prepare: 3:11-3:12 "a"; rename to "bar":
+  %% rename-to: bar
+  xychart
+    x-axis ["bar", b]
+    bar [1, 2]

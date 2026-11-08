@@ -90,6 +90,11 @@ const PACKAGES = [
       'test-context.ts',
     ],
   },
+  {
+    name: 'xychart',
+    dir: 'diagram-xychart',
+    renderer: ['layout/', 'index.ts', 'config.ts', 'testing.ts', 'test-context.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

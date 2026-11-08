@@ -11,6 +11,8 @@
  * which jison returns none, are trivia here, as are comments. Values convert as v12's DB did
  * (`build.ts`). Unlike jison it does not stop at the first error: it reports it, skips to the
  * end of the statement (a line break, `;` or the end of the text) and carries on (R-PARSE-4).
+ * With `probe`, a {@link ProbeCursor} records what the parser tests at the probed offset
+ * (R-LANG-7, D95), and the lexer the start condition there.
  */
 import {
   Kind,
@@ -18,6 +20,8 @@ import {
   LineIndex,
   ParseState,
   PERCENT,
+  Probe,
+  ProbeCursor,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -96,6 +100,21 @@ const OPENS = kindSet(T.StringStart, T.AccDescrMultiline);
 /** Glue whose text counts towards the previous token's range (a closing quote, the `}`). */
 const CLOSES = kindSet(T.StringEnd, T.AccDescrMultilineEnd);
 const COMMENTS = kindSet(Kind.Comment, Kind.Directive);
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
+ * blanks, separators and punctuation (`[`, `]`, `,`, `-->`, `;`, `:`).
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.Blanks,
+  T.Colon,
+  T.Comma,
+  T.Semi,
+  T.ArrowDelimiter,
+  T.SquareBracesStart,
+  T.SquareBracesEnd,
+  T.StringEnd,
+  T.AccDescrMultilineEnd
+);
 
 /** A line break, as the line index counts them. */
 const LINE_BREAK = /\r\n?|[\n\u2028\u2029]/;
@@ -156,6 +175,7 @@ class XyChartParser {
   private readonly lexed: XyChartLex;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  private readonly probe: Probe | undefined;
   private readonly children: XyChartStatementNode[] = [];
   /** Source range of each token with the quotes and `accDescr {`/`}` next to it. */
   private readonly outerStart: Uint32Array;
@@ -175,8 +195,16 @@ class XyChartParser {
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.lexed = lex(src, v12Text(src, pre.bodyStart));
-    this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    const probe =
+      options.probe === undefined
+        ? undefined
+        : (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    this.lexed = lex(src, v12Text(src, pre.bodyStart), undefined, probe);
+    if (probe === undefined) this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    else {
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
+    }
     [this.outerStart, this.outerEnd] = outerRanges(this.lexed);
   }
 
@@ -188,22 +216,28 @@ class XyChartParser {
     // may have been meant as the plot) or text the preprocess cut (an unclosed directive).
     const errors = [...this.pre.diagnostics, ...this.st.diagnostics.list];
     if (model.plots.length === 0 && !errors.some((d) => d.severity === 'error')) {
+      // Zero-width after the header, where the plots would go: the header itself is right.
       const header = this.children.find((n) => n.type === 'Header');
-      const range = header?.range ?? { start: this.pre.bodyStart, end: this.src.length };
+      const range = header
+        ? { start: header.range.end, end: header.range.end }
+        : { start: this.pre.bodyStart, end: this.src.length };
       this.st.diagnostics.error('XYCHART_NO_PLOT', NO_PLOT, range);
     }
+    // In source order (the facet contract): the warnings about the model come last otherwise.
+    this.st.diagnostics.list.sort((p, q) => p.range.start - q.range.start);
     const ast: XyChartDocument = {
       id: 'doc',
       type: 'Document',
       range: { start: this.pre.bodyStart, end: this.src.length },
       children: this.children,
     };
-    return this.st.result(model, ast, this.lexed.tokens, this.options);
+    return this.st.result(model, ast, this.lexed.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
 
   private in(kinds: readonly number[]): boolean {
+    this.c.tested(kinds);
     return kinds.includes(this.c.kind);
   }
 
@@ -343,12 +377,14 @@ class XyChartParser {
   private header(): void {
     const { c } = this;
     for (;;) {
+      // Before the first statement: another header, or a statement (the document follows).
+      c.tested([T.XyChart, ...STATEMENT_START]);
       if (this.in(EOL)) c.next();
-      else if (c.kind === T.XyChart) {
+      else if (this.in([T.XyChart])) {
         const first = c.pos;
         this.take();
         const node: XyChartHeaderNode = { id: '', type: 'Header', range: this.span(first) };
-        if (c.kind === T.ChartOrientation) {
+        if (this.in([T.ChartOrientation])) {
           node.orientation = this.take();
           node.range = this.span(first);
         } else if (!this.in(AFTER_STATEMENT) && !this.in([T.XyChart])) {
@@ -363,6 +399,8 @@ class XyChartParser {
   private document(): void {
     const { c } = this;
     for (;;) {
+      // Statements need no separator: one may start at every token the loop rests on.
+      c.tested(STATEMENT_START);
       const k = c.kind;
       if (k === Kind.EOF) return;
       if (this.in(EOL)) {
@@ -379,6 +417,7 @@ class XyChartParser {
   }
 
   private stmt(): void {
+    this.c.tested(STATEMENT_START);
     const k = this.c.kind;
     if (k === T.Title) return this.title();
     if (k === T.XAxis || k === T.YAxis) return this.axis(k);
@@ -458,8 +497,8 @@ class XyChartParser {
     };
     const data = x ? [CATEGORIES, RANGE] : [RANGE];
     if (this.in(TEXT_START)) node.title = this.text([]);
-    if (x && this.c.kind === T.SquareBracesStart) this.band(node);
-    else if (this.c.kind === T.NumberWithDecimal) {
+    if (x && this.in([T.SquareBracesStart])) this.band(node);
+    else if (this.in([T.NumberWithDecimal])) {
       if (node.title && !node.title.quoted) this.hint = DIGITS_HINT;
       node.data = this.range();
     } else if (!node.title) this.fail([AXIS_TITLE, ...data]);
@@ -473,7 +512,7 @@ class XyChartParser {
     const first = this.c.pos;
     this.take();
     const categories = [this.text(CATEGORY)];
-    while (this.c.kind === T.Comma) {
+    while (this.in([T.Comma])) {
       this.take();
       categories.push(this.text(CATEGORY));
     }
@@ -503,7 +542,7 @@ class XyChartParser {
     this.expect([T.SquareBracesStart], name ? [VALUES] : [PLOT_NAME, VALUES]);
     this.hint = NUMBER_HINT;
     const points = [this.point()];
-    while (this.c.kind === T.Comma) {
+    while (this.in([T.Comma])) {
       this.take();
       points.push(this.point());
     }
@@ -532,7 +571,7 @@ class XyChartParser {
     const first = this.c.pos;
     const value = this.expect([T.NumberWithDecimal], NUMBER);
     const point: XyChartPointNode = { value, range: this.span(first) };
-    if (this.c.kind === T.Str) {
+    if (this.in([T.Str])) {
       this.closed();
       point.label = this.take();
       point.range = this.span(first);
@@ -700,7 +739,9 @@ function buildModel(
     xAxis: b.xAxis(xAst),
     yAxis: b.yAxis(yAst),
     plots: b.plots,
-    warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
+    warnings: st.diagnostics.list
+      .filter((d) => d.severity === 'warning')
+      .sort((p, q) => p.range.start - q.range.start),
   };
   if (orientation) model.orientation = orientation;
   if (title) {

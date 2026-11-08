@@ -53,7 +53,7 @@ import {
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 import type { V12Text } from './v12-text.ts';
 
@@ -82,6 +82,26 @@ const A = {
   /** `this.popState()`. */
   pop: 2,
 } as const;
+
+/** Start condition names by number, for the probe's lexer mode (jison's names). */
+const S_NAMES: readonly string[] = Object.keys(S);
+
+/**
+ * Word kinds: a cursor right after one extends it (`tit¦`, `bar¦`), so the probe's mode there
+ * is that of the step that lexed it, not of the next step (a keyword's data state).
+ */
+const WORD_KINDS = new Set<number>([
+  T.XyChart,
+  T.ChartOrientation,
+  T.Title,
+  T.XAxis,
+  T.YAxis,
+  T.Line,
+  T.Bar,
+  T.Alpha,
+  T.Num,
+  T.NumberWithDecimal,
+]);
 
 type Action = (typeof A)[keyof typeof A];
 type State = (typeof S)[keyof typeof S];
@@ -344,10 +364,16 @@ export interface XyChartLex {
 
 /**
  * Lex an XY chart source as v12 saw it (`v12`), writing v12's removed spans as trivia. `onRule`
- * is told the rule number of every rule that matches (dev use: the rule-coverage gate).
+ * is told the rule number of every rule that matches (dev use: the rule-coverage gate). With a
+ * `probe`, the start condition at the probe's offset is recorded as its mode (R-LANG-7).
  */
-export function lex(src: string, v12: V12Text, onRule?: (rule: number) => void): XyChartLex {
-  return new XyChartLexer(src, v12, onRule).run();
+export function lex(
+  src: string,
+  v12: V12Text,
+  onRule?: (rule: number) => void,
+  probe?: Probe
+): XyChartLex {
+  return new XyChartLexer(src, v12, onRule).run(probe);
 }
 
 class XyChartLexer {
@@ -371,11 +397,13 @@ class XyChartLexer {
     this.w = new TokenWriter(((v12.text.length / 3) | 0) + 8);
   }
 
-  run(): XyChartLex {
+  run(probe?: Probe): XyChartLex {
     const { n } = this.scan;
     let p = 0;
     for (let done = false; !done; ) {
       if (p >= n) done = true;
+      const before = p;
+      const mode = probe ? (S_NAMES[this.state] ?? '') : '';
       const at = this.step(p);
       if (at >= 0) p = at;
       else if (p < n) {
@@ -388,7 +416,15 @@ class XyChartLexer {
         this.state = S.INITIAL;
         p = end;
       }
+      if (probe) {
+        const start = this.sourceStart(before);
+        let end = p > before ? this.sourceEnd(p - 1) : start;
+        // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
+        if (p > before && WORD_KINDS.has(this.lastKind)) end++;
+        probe.lexed(start, end, mode);
+      }
     }
+    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);
@@ -401,13 +437,18 @@ class XyChartLexer {
     };
   }
 
+  /** Kind of the token the last step wrote (`Kind.Error` when none matched). */
+  private lastKind: number = Kind.Error;
+
   /** Apply the first matching rule of the current state at `p`: the new offset, or -1. */
   private step(p: number): number {
+    this.lastKind = Kind.Error;
     for (const k of CONDITIONS[this.state] ?? []) {
       const r = RULES[k] as Rule;
       const e = r.match(this.scan, p);
       if (e < 0) continue;
       this.onRule?.(k);
+      this.lastKind = r.kind;
       if (r.action === A.begin) {
         this.stack.push(this.state);
         this.state = r.state;

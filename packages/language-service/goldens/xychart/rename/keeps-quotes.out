@@ -1,0 +1,7 @@
+@ 4:11  bar "Sal|es" [1, 2]
+  prepare: 4:8-4:13 "Sales"; rename to "Revenue (EU)":
+  %% rename-to: Revenue (EU)
+  xychart
+    x-axis [a, b]
+    bar "Revenue (EU)" [1, 2]
+    line "Revenue (EU)" [2, 1]

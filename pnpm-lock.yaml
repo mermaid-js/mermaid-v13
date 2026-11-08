@@ -152,6 +152,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -597,6 +600,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
 
   packages/language-service-codemirror:
     devDependencies:
@@ -966,6 +972,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../../packages/diagram-xychart
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

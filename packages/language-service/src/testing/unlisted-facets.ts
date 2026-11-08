@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #426: the manifest comes with T5 (#513).
+  {
+    type: 'xychart',
+    id: 'xychart',
+    pattern: /^\s*xychart(-beta)?/,
+    detector: (text) => /^\s*xychart(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-xychart/language').then((m) => m.language),
+  },
+];
