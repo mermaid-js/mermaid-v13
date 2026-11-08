@@ -8,7 +8,7 @@ Integration branch `feature/430_wardley`, cut from `mermaid-v13` at `12ba676cb` 
 | T2 grammar, parser, model, AST, ported specs | #489 | #487 | merged |
 | T3 custom layout (`WardleyLayout`) | #490 | #489 (soft) | merged |
 | T4 SVG renderer and theme table | #493 | #489, #490 | merged |
-| T6 language facet | #500 | #489 | open |
+| T6 language facet | #500 | #489 | merged |
 | T5 integration | #497 | #493, #500 | open |
 
 No T0 (the theme table API is #414's, merged) and no T7 (D320).
