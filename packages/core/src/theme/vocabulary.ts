@@ -246,6 +246,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'info',
     'radar',
+    'sankey',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -256,6 +257,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
+    'sankey',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',

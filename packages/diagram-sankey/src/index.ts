@@ -1,9 +1,16 @@
 /**
- * `@mermaid-js/diagram-sankey`: the sankey diagram plugin (spec #427). The parser, its model and
- * AST, the codes of the diagnostics and warnings it raises, and the layout are here; the
- * renderer, plugin export and manifest land with the other tickets of that spec. The lexer, which only
- * the conformance gates read, is at `./testing` (as pie's, #325).
+ * `@mermaid-js/diagram-sankey`: the sankey diagram plugin (spec #427). The plugin (`sankey`), its
+ * parser, model and AST, the codes of the diagnostics and warnings it raises, the layout and the
+ * SVG renderer are here; the manifest and config defaults land with T5 (#503). The lexer and the
+ * render harness, which only the tests read, are at `./testing` (as pie's, #325).
  */
+export { sankey } from './plugin.ts';
+export { renderSankey, type SankeyRenderContext } from './render/render.ts';
+export {
+  sankeyRenderOptions,
+  type SankeyLinkPaint,
+  type SankeyRenderOptions,
+} from './render/options.ts';
 export { detectSankey, parseSankey } from './parser/index.ts';
 export type {
   SankeyDocument,

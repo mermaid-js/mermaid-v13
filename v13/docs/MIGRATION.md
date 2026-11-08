@@ -2036,3 +2036,28 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo`, `redux`, `redux-color` | No cynefin block: `default`'s literals, so boundaries and arrows `#333333`, text `#333`, labels `#131300`, whatever the theme's own colours, and a `lineColor` override changed nothing | Boundaries and arrows in the theme's `lineColor`, text in its `textColor`, labels in its `primaryTextColor` (`#000000`, `#333333`/`#28253d`, `#333333`/`#28253d`); a `lineColor` override moves them | D333(b), R-THEME-11 |
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
+
+## Sankey SVG structure
+
+What changed in the sankey's SVG compared with v12 (spec #427, D391, D392, D395–D397). v12's
+groups and classes are kept, in v12's order, so selectors that use them keep working:
+`g.nodes` holds one `g.node` per node (translated to its corner, holding its `rect`), then
+`g.node-labels` (`font-size="14"`) one `text` per node (`text.sankey-label-bg` for every node,
+then `text.sankey-label-fg` for every node, under `labelStyle: outlined`), then `g.links`
+(`fill="none"`, `stroke-opacity="0.5"`) one `g.link` per row holding its `path`. Nodes are in
+first-appearance order and links in row order, as in v12.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="sankey"`, a `<style>` scoped by the id, an empty leading `<g>`, `width="100%"` and `max-width` unless `sankey.useMaxWidth: false` | No root `id`; `class="mermaid mermaid-sankey"`, `role="img"`, `aria-roledescription="sankey"` (kept), `data-mermaid-version`; no `<style>` (except `theme: 'auto'`); `width="100%"` and `max-width` unless `sankey.useMaxWidth: false`, as in v12. The `viewBox` is still what is drawn with no padding, now measured: nodes, label boxes (with the outline's halo), and link strokes | Inert output (R-SEC-2), D224 |
+| Each `g.node` had `id="node-<n>"` and stray `x`/`y` attributes; each link's gradient `id="linearGradient-<n>"`, numbered across every diagram on the page | No element id but `<render id>-title` (below) and the gradients' (below) | No colliding ids (R-A11Y-1) |
+| No title: the front-matter `title` was neither drawn nor the accessible name | Still not drawn; when the front matter has a `title`, it becomes `<title id="<render id>-title">` and the root's `aria-labelledby`, since sankey has no `accTitle` syntax. No other type does this yet (D133) | D396 |
+| No source mapping | `data-id` and `data-ast` on each `g.node` (`node:<name>`) and `g.link` (`link:<source>-><target>`, `@2`, `@3` for repeated rows); labels carry `data-id` only (`%`, `>`, `@` and `#` in names percent-encoded) | One `data-ast` element per AST node (R-PARSE-8, D397) |
+| `linkColor: gradient` (the default): a `<linearGradient gradientUnits="userSpaceOnUse" x1 x2>` with stops at `0%`/`100%` inside each `g.link`, before its path | The same gradient (from the source's colour at its right edge to the target's at its left edge), written by the writer into the root's `<defs>` with `y1="0" y2="0"` and stops at `0`/`1`, its id `<scope>-g-<hash of its ends and colours>`: links with the same ends and colours share one, and two diagrams on a page never collide | D391 |
+| `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient (#503 adds its warning) | R-SEC-2 |
+| `style="mix-blend-mode: multiply"` on each `g.link`, and again in `.link` in the `<style>` | `style="mix-blend-mode:multiply"` on each `g.link` only: crossing links still darken where they overlap, and on dark pages too | D392 |
+| Labels: `id\n<prefix><value><suffix>` set with d3 `.text()`, drawn on one line; `dy="0em"`, or `dy="0.35em"` with `showValues: false`; `fill` from the root `<style>` (`textColor`) | The same one line with a blank between the name and the value (D395); `dy` in px (`0`, or `4.9`, 0.35 × 14); `fill` on `g.node-labels`, the theme's `textColor` | D395, D152 |
+| `labelStyle: outlined`: `.sankey-label-bg` stroked `mainBkg` (`|| background || '#fff'`), 4 px, round joins, `paint-order: stroke`, under `.sankey-label-fg` filled `textColor` | The background text carries `stroke` (`mainBkg`), `stroke-width="4"` and `stroke-linejoin="round"` as attributes, with no `paint-order`: the foreground text drawn over it gives the same picture | Allow-list (no `paint-order`), D215 |
+| `.node rect { shape-rendering: crispEdges }` | Not written: the allow-list has no `shape-rendering`, so node edges are anti-aliased | Allow-list |
+| Node fills: a `nodeColors` entry as written, else the next of d3's `schemeTableau10` | The same; an entry that fails the colour check is not written (#503 warns and draws its default) | D152, R-SEC-2 |
+| `look: neo` and the neo and redux themes drew the same shapes as the classic themes (no `data-look` on sankey rects, so the neo rules missed them) | The same: sankey differs between families by `textColor`, `mainBkg` and the font family only. Checked against v12 12.2.0's computed styles (`default`, `dark`, `neo` with `look: neo`) | D215, D227 |
