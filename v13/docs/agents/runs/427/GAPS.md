@@ -21,6 +21,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** D397 ids: node names can contain `->` and `@`, and core's `AstIds` escape is not exported. The package escapes names with the same rules as core's escape (copied, not imported) so `node:`/`link:` ids are unambiguous; the round-trip proves it.
 
 ## #499 T3 layout
+- Coordinator: the port of d3-sankey 0.12.3 (and `sankeyLinkHorizontal` from d3-shape's link) gets a `THIRD_PARTY_NOTICES` file in `packages/diagram-sankey`, in the same form as treemap's d3-hierarchy credit (`feature/428_treemap`, or `mermaid-v13` once it lands). Read the licence from the installed package (`LICENSE` in d3-sankey 0.12.3; not assumed ISC).
 
 ## #502 T4 renderer
 - **For the maintainer:** D396 says the front-matter title becomes the `<title>` fallback "as D133 allows", but D133 says the front-matter title does not feed the accessible name, and no v13 type does this yet. Follow D396 as decided; sankey is the first such type.
