@@ -2,7 +2,8 @@
  * The v13 side of treemap parity: the treemap parser and the normaliser from its
  * `TreemapModel` to the {@link TreemapSnapshot} that `v12.ts` takes from mermaid\@12's DB.
  */
-import { classStyles, detectTreemap, parseTreemap } from '@mermaid-js/diagram-treemap';
+import { detectTreemap, parseTreemap } from '@mermaid-js/diagram-treemap';
+import { classStyles } from '@mermaid-js/diagram-treemap/testing';
 import type { TreemapModel, TreemapNode } from '@mermaid-js/diagram-treemap';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';
