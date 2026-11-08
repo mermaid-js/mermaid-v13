@@ -1,0 +1,22 @@
+@ 4:10  text |a1["Docs"]
+  prepare: 4:10-4:12 "a1"; rename to "A":
+  %% rename-to: A
+  venn-beta
+    set A
+      text A["Docs"]
+    set B
+    union A,B
+      text ab1
+    style B fill: red
+    text A,B A
+@ 9:13  text A,B a|1
+  prepare: 9:12-9:14 "a1"; rename to "A":
+  %% rename-to: A
+  venn-beta
+    set A
+      text A["Docs"]
+    set B
+    union A,B
+      text ab1
+    style B fill: red
+    text A,B A

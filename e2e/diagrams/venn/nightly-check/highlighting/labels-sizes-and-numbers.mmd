@@ -1,0 +1,19 @@
+---
+description: >-
+  Every label and number form the highlighters colour (#498): a quoted
+  `["…"]` label, a bare `[…]` label with blanks inside, signed and
+  fractional sizes, a text node whose id is a number, and indented `text`
+  lines that stay under their set across a blank line and a comment line.
+---
+venn-beta
+  title Labels and sizes
+  set A["Alpha"]:10
+    text a1[First]
+
+    %% still under A
+    text 12
+  set B[ spaced ]:+2.5
+  union A,B[Both]:.5
+    text "ab"["In both"]
+  style A,B fill: #f00, stroke: rgb(1, 2, 3), color: rgba(0,0,0,0.5)
+  text A t1

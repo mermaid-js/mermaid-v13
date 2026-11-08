@@ -1,18 +1,15 @@
 /**
  * Which names a venn id may take bare, and how a rename quotes the others (D418, D191, D92).
  *
- * A bare id is v12's `IDENTIFIER` (`[A-Za-z_][A-Za-z0-9\-_]*`) that no earlier rule takes:
- * the keywords `set`, `union`, `text`, `style` and `venn-beta` match with `\b` and without
- * regard to case, so `Set`, `text-b` and `style-x` lex as a keyword first; `title` followed by a
- * blank or a line break is a title, so a bare `title` is refused too. A text node's id may be a
- * number (`text A 12`), but a `style` target may not, so a rename quotes a number. Any other
+ * A bare id is one the parser's `isBareId` takes (`parser/text.ts`, the rule messages and hover
+ * write ids by): v12's `IDENTIFIER` that no keyword rule takes first, so `Set`, `text-b` and
+ * `set-x` and a bare `title` are written quoted. A text node's id may also be a number
+ * (`text A 12`, so renaming one back writes it as it was); a `style` target may not, so a
+ * rename to a number of a text node a `style` names fails the service's read-back. Any other
  * name is written quoted, `"Ä b"`, which v12 reads as the name once its quotes are removed; a
  * name with a `"` or a line break, or with blanks at either end (v12 trims), cannot be written.
  */
-
-const BARE_ID = /^[A-Za-z_][A-Za-z0-9\-_]*$/;
-/** A keyword at the start, ended by `\b` (a `-` ends it too). */
-const KEYWORD_FIRST = /^(?:set|union|text|style|venn-beta)(?![A-Za-z0-9_])/i;
+import { isBareId, isIdentifier } from '../parser/text.ts';
 
 /** Why `name` cannot be written at all, quoted or not; undefined when it can. */
 function unwritable(name: string): string | undefined {
@@ -21,16 +18,20 @@ function unwritable(name: string): string | undefined {
   return undefined;
 }
 
-/** `undefined` when `name` may be written bare as a set or text node id, else why not. */
-export function invalidReason(name: string): string | undefined {
+const NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/;
+
+/**
+ * `undefined` when `name` may be written bare as an id of `kind` (`set`, the default, or
+ * `text`), else why not.
+ */
+export function invalidReason(name: string, kind = 'set'): string | undefined {
   const never = unwritable(name);
   if (never !== undefined) return never;
-  if (!BARE_ID.test(name)) {
+  if (isBareId(name) || (kind === 'text' && NUMBER.test(name))) return undefined;
+  if (!isIdentifier(name)) {
     return `'${name}' is not a bare venn id: one is letters, digits, \`_\` and \`-\`, starting with a letter or \`_\`.`;
   }
-  if (KEYWORD_FIRST.test(name) || /^title$/i.test(name))
-    return `'${name}' starts with a venn keyword, so it is read as the keyword.`;
-  return undefined;
+  return `'${name}' starts with a venn keyword, so it is read as the keyword.`;
 }
 
 /** `name` quoted, as a rename writes it where it cannot go bare; undefined when it cannot. */

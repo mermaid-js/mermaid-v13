@@ -82,6 +82,20 @@ const isTitleStop = (c: number) => c === HASH || c === LF || c === SEMI;
 /** In `[0-9.]` (a number of `rgb(…)`). */
 const isRgbDigit = (c: number) => isDigit(c) || c === DOT;
 
+/** The end of the run of digits of `text` from `from`. */
+function digits(text: string, from: number): number {
+  let e = from;
+  while (isDigit(text.charCodeAt(e))) e++;
+  return e;
+}
+
+/** The end of `(\.\d+)?` of `text` at `at`. */
+function fraction(text: string, at: number): number {
+  return text.charCodeAt(at) === DOT && isDigit(text.charCodeAt(at + 1))
+    ? digits(text, at + 2)
+    : at;
+}
+
 /** A lex: the token stream, and the text of each token as v12's parser read it. */
 export interface Lexed {
   /** Ends in `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it. */
@@ -537,16 +551,9 @@ class VennLexer {
   /** The end of `[+-]?(\d+(\.\d+)?|\.\d+)` at `p`, or `p`. */
   private numeric(c: number): number {
     const { text, p } = this;
-    const digits = (from: number) => {
-      let e = from;
-      while (isDigit(text.charCodeAt(e))) e++;
-      return e;
-    };
-    const fraction = (at: number) =>
-      text.charCodeAt(at) === DOT && isDigit(text.charCodeAt(at + 1)) ? digits(at + 2) : at;
     const start = c === PLUS || c === DASH ? p + 1 : p;
-    if (isDigit(text.charCodeAt(start))) return fraction(digits(start));
-    const e = fraction(start);
+    if (isDigit(text.charCodeAt(start))) return fraction(text, digits(text, start));
+    const e = fraction(text, start);
     return e > start ? e : p;
   }
 

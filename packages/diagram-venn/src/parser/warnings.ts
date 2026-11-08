@@ -8,14 +8,19 @@ import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import { VENN_DUPLICATE, VENN_EMPTY, VENN_INVALID_SIZE, VENN_UNKNOWN_TARGET } from '../codes.ts';
 import type { VennStyle, VennSubset, VennTextNode } from '../model.ts';
 import { invalidSize } from '../sizes.ts';
-import { listOf } from './text.ts';
+import type { VennName } from './ast.ts';
+import { idText, listOf } from './text.ts';
 
 /** A model entry with the statement it came from. */
 export interface Placed<V> {
   value: V;
   range: Range;
-  /** What a warning shows of it: the statement quoted, or `the style`. */
-  shown: string;
+  /** What a warning calls it before the quote, if anything: `the text node`, `the style`. */
+  what?: string;
+  /** The source a warning quotes for it: the statement, or a text node's id. */
+  quote?: Range;
+  /** The set ids it names as written (a `text`'s sets, a `style`'s targets), with ranges. */
+  ids?: readonly VennName[];
 }
 
 /** What the warnings read. */
@@ -27,14 +32,21 @@ export interface WarningInput {
   header: Range;
   /** The 1-based line of an offset. */
   lineOf: (at: number) => number;
+  /** The source text at a range as a message quotes it. */
+  quote: (r: Range) => string;
+  /** One `VENN_UNKNOWN_TARGET` per unknown id, for the editor (`VennParseOptions`). */
+  perOccurrence?: boolean;
 }
 
-/** A key for a list of ids (they may hold any character but `"`). */
-const keyOf = (ids: readonly string[]): string => JSON.stringify(ids);
+/** A key for a list of ids: they may hold any character but `"`, which separates them. */
+const keyOf = (ids: readonly string[]): string => `${ids.length}"${ids.join('"')}`;
 
 /** Add the D417 warnings of one parse to `d`. */
 export function warnVenn(d: Diagnostics, input: WarningInput): void {
-  const at = (p: Placed<unknown>) => `${p.shown} at line ${input.lineOf(p.range.start)}`;
+  const at = (p: Placed<unknown>) => {
+    const shown = [p.what, p.quote && input.quote(p.quote)].filter(Boolean).join(' ');
+    return `${shown} at line ${input.lineOf(p.range.start)}`;
+  };
   duplicates(d, input, at);
   sizes(d, input, at);
   unknownTargets(d, input, at);
@@ -91,7 +103,9 @@ function sizes(d: Diagnostics, { subsets }: WarningInput, at: At): void {
 /**
  * One warning naming every text node and style whose sets are not drawn: no `set` or `union`
  * has them (nor are they a pair of a three-or-more overlap, which v12 adds), and a one-id style
- * names no text node either.
+ * names no text node either. With `perOccurrence`, one warning per id of those that no `set`
+ * declares, at the id, or, when every id is declared, one per statement at its ids (no
+ * `union` has that overlap).
  */
 function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
   // One key per sets array: indented texts share their union's.
@@ -131,6 +145,10 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
     if (!drawn(targets) && !(one !== undefined && textIds.has(one))) named.push(s);
   }
   named.sort((a, b) => a.range.start - b.range.start);
+  if (input.perOccurrence) {
+    for (const p of named) eachUnknown(d, p, at, (id) => declared.has(keyOf([id])));
+    return;
+  }
   const first = named[0];
   if (!first) return;
   const verb = named.length === 1 ? 'names' : 'name';
@@ -138,5 +156,28 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
     VENN_UNKNOWN_TARGET,
     `Not drawn: ${listOf(named.map(at))} ${verb} no declared set, overlap or text node. Declare it with \`set\` or \`union\`.`,
     first.range
+  );
+}
+
+/** The editor's warnings for one statement `unknownTargets` found (see there). */
+function eachUnknown(d: Diagnostics, p: Placed<unknown>, at: At, isSet: (id: string) => boolean) {
+  const ids = p.ids ?? [];
+  const missing = ids.filter((n) => !isSet(n.name));
+  for (const m of missing) {
+    const id = idText(m.name);
+    d.warning(
+      VENN_UNKNOWN_TARGET,
+      `Not drawn: no \`set ${id}\` declares \`${id}\`, which ${at(p)} names. Declare it with \`set ${id}\`.`,
+      m.range
+    );
+  }
+  const first = ids[0];
+  const last = ids[ids.length - 1];
+  if (missing.length > 0 || !first || !last) return;
+  const overlap = `union ${ids.map((n) => idText(n.name)).join(',')}`;
+  d.warning(
+    VENN_UNKNOWN_TARGET,
+    `Not drawn: no \`${overlap}\` declares the overlap ${at(p)} names. Declare it with \`${overlap}\`.`,
+    { start: first.range.start, end: last.range.end }
   );
 }

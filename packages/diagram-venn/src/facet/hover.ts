@@ -11,10 +11,10 @@
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import type { VennModel } from '../model.ts';
-import type { VennDocument, VennSetNode } from '../parser/ast.ts';
+import type { VennDocument } from '../parser/ast.ts';
 import { idText, listOf } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
-import { code, span, STYLE_KEYS } from './tables.ts';
+import { code, setsByName, span, STYLE_KEYS } from './tables.ts';
 
 /** Kinds whose doc is for the keyword at their start only: a title holds its text too. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = { [T.Title]: 'title' };
@@ -40,8 +40,7 @@ function setHover(model: VennModel, ast: VennDocument, name: string): string {
     parts.push(
       last.label === undefined ? `**${code(name)}** set` : `**${code(name)}** set · ${last.label}`
     );
-    let node: VennSetNode | undefined;
-    for (const n of ast.children) if (n.type === 'Set' && n.name.name === name) node = n;
+    const node = setsByName(ast).get(name)?.at(-1);
     const notes: string[] = [];
     if (node?.size === undefined) notes.push('the default');
     if (own.length > 1) notes.push(`declared ${own.length} times; the last size counts`);

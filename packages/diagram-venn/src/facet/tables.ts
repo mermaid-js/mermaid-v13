@@ -5,6 +5,7 @@
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { VennDocument, VennSetNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 
 /** A keyword offered when the parser expects one of `kinds`. */
@@ -55,6 +56,22 @@ export const STYLE_KEYS: readonly (readonly [key: string, doc: string])[] = [
   ['stroke-width', "The outline width of a set's circle, as in `stroke-width: 2px`."],
   ['color', 'The colour of the label of a set or overlap, or of a text node, as in `color: #fff`.'],
 ];
+
+/**
+ * The `set` statements of `ast` by id, each id's in source order (a repeat is a second entry);
+ * only those starting before `before` when given. Completion reads the first of an id (its
+ * label), hover the last (the size drawn, D417).
+ */
+export function setsByName(ast: VennDocument, before?: number): Map<string, VennSetNode[]> {
+  const out = new Map<string, VennSetNode[]>();
+  for (const n of ast.children) {
+    if (n.type !== 'Set' || (before !== undefined && n.range.start >= before)) continue;
+    const list = out.get(n.name.name);
+    if (list) list.push(n);
+    else out.set(n.name.name, [n]);
+  }
+  return out;
+}
 
 /** Kinds a statement's context is not read from: trivia, line breaks and the end. */
 const SKIPPED = new Set<number>([

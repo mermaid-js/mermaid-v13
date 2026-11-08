@@ -9,7 +9,8 @@
  * `union`, `text` and `style` refer to it; each text node id is a `text` symbol in a namespace
  * of its own, which a one-id `style` naming no set refers to. A rename changes every occurrence,
  * keeps quotes, quotes a new name that is not a bare id (`quoteId`), and the service refuses a
- * name the namespace already has. A `set` or `union` folds with the indented `text` lines under
+ * name the namespace already has. Diagnostics give each id a `text` or `style` names that
+ * nothing declares its own `VENN_UNKNOWN_TARGET`, where a render warns once (D417). A `set` or `union` folds with the indented `text` lines under
  * it, from the parser's statement spans.
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
@@ -28,12 +29,14 @@ export type * from './parser/index.ts';
 /** The venn facet. */
 export const vennLanguage: LanguageFacet<VennDocument> = {
   id: 'venn',
-  parse: (text, options) => parseVenn(text, options),
+  // The editor's diagnostics: one unknown-target warning per id (D417's one per kind is a
+  // render's).
+  parse: (text, options) => parseVenn(text, { ...options, perOccurrence: true }),
   categories: vennCategories,
   namespaces: [['set'], ['text']],
   declaredOnly: true,
   isValidId: invalidReason,
-  quoteId: (name) => quotedId(name),
+  quoteId: quotedId,
   completions: vennCompletions,
   hover: vennHover,
 };

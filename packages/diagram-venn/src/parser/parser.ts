@@ -90,6 +90,12 @@ import type { Placed } from './warnings.ts';
 export interface VennParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /**
+   * The editor's diagnostics (the language facet, #498): `VENN_UNKNOWN_TARGET` once per id a
+   * `text` or `style` names that nothing declares (once per statement naming an undeclared
+   * overlap), at that id, instead of D417's one warning per parse for a render.
+   */
+  perOccurrence?: boolean;
 }
 
 export type VennParseResult = ParseResult<VennModel, VennDocument>;
@@ -99,11 +105,9 @@ const TRIVIA = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
 const STATEMENT_KINDS = [T.Title, T.Set, T.Union, T.Text, T.IndentText, T.Style] as const;
 /** Where recovery resumes (R-PARSE-4): a statement keyword, a line break or the end. */
 const BOUNDARY = kindSet(...STATEMENT_KINDS, Kind.Newline, T.Eof, Kind.EOF);
-const ID_KINDS = kindSet(T.Identifier, T.String);
-const LABEL_KINDS = kindSet(T.QuotedLabel, T.Label);
-const VALUE_KINDS = kindSet(T.Identifier, T.Numeric, T.HexColor, T.RgbColor, T.RgbaColor);
 
-// What each decision point accepts, for the probe (R-LANG-7): the kinds its test reads.
+// What each decision point accepts: the kinds its test reads, which the probe records
+// (R-LANG-7); the sets the parser tests with are made from the same lists.
 const P_HEAD = [T.Venn, Kind.Newline];
 const P_STATEMENT = [...STATEMENT_KINDS, Kind.Newline, T.Eof];
 /** Before any `venn-beta`: a later one is taken as the header. */
@@ -111,13 +115,16 @@ const P_STATEMENT_OR_HEAD = [T.Venn, ...P_STATEMENT];
 /** The `text` after an indent: the keyword of the indented text statement. */
 const P_INDENT_TEXT = [T.IndentTextKeyword];
 const P_ID = [T.Identifier, T.String];
+const ID_KINDS = kindSet(...P_ID);
 const P_COMMA = [T.Comma];
 const P_LABEL = [T.QuotedLabel, T.Label];
+const LABEL_KINDS = kindSet(...P_LABEL);
 const P_COLON = [T.Colon];
 const P_SIZE = [T.Numeric];
 const P_TEXT_ID = [T.Numeric, T.Identifier, T.String];
 const P_KEY = [T.Identifier];
 const P_VALUE_WORD = [T.Identifier, T.Numeric, T.HexColor, T.RgbColor, T.RgbaColor];
+const VALUE_KINDS = kindSet(...P_VALUE_WORD);
 const P_VALUE = [T.String, ...P_VALUE_WORD];
 /**
  * Kinds a probe's cursor follows rather than extends: `,`, `:`, and a quoted id or value and a
@@ -282,6 +289,8 @@ class VennParser {
       styles: this.styles,
       header: this.headerRange ?? { start: pre.bodyStart, end: pre.bodyStart },
       lineOf: (at) => this.lineOf(at),
+      quote: (r) => this.shown(r),
+      perOccurrence: this.options.perOccurrence === true,
     });
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     // D218: the in-text title if non-empty, else the front-matter one; D416 for the quotes.
@@ -707,7 +716,7 @@ class VennParser {
       id: name.name,
       ...(label !== undefined ? { label } : {}),
     };
-    this.textNodes.push({ value, range, shown: `the text node ${this.shown(name.range)}` });
+    this.textNodes.push({ value, range, what: 'the text node', quote: name.range, ids: members });
     return node;
   }
 
@@ -744,7 +753,7 @@ class VennParser {
       targets: targets.map((t) => t.name).sort(),
       properties,
     };
-    this.styles.push({ value, range, shown: 'the style' });
+    this.styles.push({ value, range, what: 'the style', ids: targets });
     return node;
   }
 
@@ -785,7 +794,7 @@ class VennParser {
       size: tail.size ?? 10 / Math.pow(written, 2),
       ...(tail.label !== undefined ? { label: tail.label } : {}),
     };
-    this.subsets.push({ value, range, shown: this.shown(range) });
+    this.subsets.push({ value, range, quote: range });
   }
 
   /** A `set` or `text` id occurrence; without a role, the first of a name defines it (D418). */

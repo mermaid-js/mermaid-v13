@@ -26,9 +26,18 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import type { VennDocument } from '../parser/ast.ts';
+import { normalizeText } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { invalidReason, quotedId } from './names.ts';
-import { KEYWORDS, lineStartOf, lineTokens, span, STYLE_KEYS, tokenBefore } from './tables.ts';
+import {
+  KEYWORDS,
+  lineStartOf,
+  lineTokens,
+  setsByName,
+  span,
+  STYLE_KEYS,
+  tokenBefore,
+} from './tables.ts';
 
 /** The lexer modes in which the cursor is in code (jison's start conditions). */
 const CODE_MODES = new Set(['INITIAL', 'bol']);
@@ -83,7 +92,7 @@ function placeOf(doc: DocumentView<VennDocument>, tokens: TokenStream, at: numbe
     const taken = new Set<string>();
     for (const j of after) {
       const kind = tokens.kind[j];
-      if (kind === T.Identifier || kind === T.String) taken.add(unquote(textOf(j)));
+      if (kind === T.Identifier || kind === T.String) taken.add(normalizeText(textOf(j)));
     }
     return taken;
   };
@@ -110,20 +119,13 @@ function placeOf(doc: DocumentView<VennDocument>, tokens: TokenStream, at: numbe
   return { kind: 'key', taken };
 }
 
-/** An id token's name: v12's `normalizeText` of a quoted one. */
-function unquote(raw: string): string {
-  const t = raw.trim();
-  return t.length >= 2 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1).trim() : t;
-}
-
-/** The declared set ids (`set` statements; before `before` when given) and text node ids. */
+/** The declared set ids (before `before` when given) and text node ids, with their labels. */
 function declared(doc: DocumentView<VennDocument>, before?: number) {
   const sets = new Map<string, string | undefined>();
+  for (const [name, nodes] of setsByName(doc.result.ast, before)) sets.set(name, nodes[0]?.label);
   const texts = new Map<string, string | undefined>();
   for (const n of doc.result.ast.children) {
-    if (n.type === 'Set' && (before === undefined || n.range.start < before)) {
-      if (!sets.has(n.name.name)) sets.set(n.name.name, n.label);
-    } else if (n.type === 'Text' && !texts.has(n.name.name)) texts.set(n.name.name, n.label);
+    if (n.type === 'Text' && !texts.has(n.name.name)) texts.set(n.name.name, n.label);
   }
   return { sets, texts };
 }

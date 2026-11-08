@@ -43,13 +43,27 @@ export function titleText(text: string): string {
   return quoted(trimmed) ? trimmed.slice(1, -1) : text;
 }
 
-/** v12's id rule (`IDENTIFIER`), and the keywords that win over it. */
+/** v12's id rule (`IDENTIFIER`). */
 const BARE_ID = /^[A-Za-z_][A-Za-z0-9\-_]*$/;
-const KEYWORD = /^(?:set|union|text|style|venn-beta)$/i;
+/**
+ * The keyword rules that come before `IDENTIFIER` in `venn.jison` and take a bare id's start:
+ * `set`, `union`, `text`, `style` and `venn-beta`, each ended by `\b` and matched without regard
+ * to case (`set-x` lexes `set` and then `-x`, which no rule takes; `Set` is the keyword), and
+ * `title` followed by a blank or a line break (a title statement).
+ */
+const KEYWORD_FIRST = /^(?:(?:set|union|text|style|venn-beta)(?![A-Za-z0-9_])|title$)/i;
+
+/** Whether `name` matches v12's `IDENTIFIER` rule (keywords aside). */
+export const isIdentifier = (name: string): boolean => BARE_ID.test(name);
+
+/** Whether `name` lexes as one id when written bare (v12's lexer). */
+export function isBareId(name: string): boolean {
+  return BARE_ID.test(name) && !KEYWORD_FIRST.test(name);
+}
 
 /** An id as a message writes it in a statement: bare when it lexes as an id, else quoted. */
 export function idText(name: string): string {
-  return BARE_ID.test(name) && !KEYWORD.test(name) ? name : `"${name}"`;
+  return isBareId(name) ? name : `"${name}"`;
 }
 
 /** `a`, `a and b`, `a, b and c`. */

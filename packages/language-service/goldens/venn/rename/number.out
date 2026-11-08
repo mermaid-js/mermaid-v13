@@ -7,15 +7,7 @@
     style a1 color: red
 @ 4:10  text |a1
   prepare: 4:10-4:12 "a1"; rename to "12":
-  %% rename-to: 12
-  venn-beta
-    set A
-      text "12"
-    style "12" color: red
+  refused: '12' would not read as the same text id everywhere it is used.
 @ 5:9  style |a1 color: red
   prepare: 5:9-5:11 "a1"; rename to "12":
-  %% rename-to: 12
-  venn-beta
-    set A
-      text "12"
-    style "12" color: red
+  refused: '12' would not read as the same text id everywhere it is used.

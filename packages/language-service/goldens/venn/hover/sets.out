@@ -11,7 +11,7 @@
   |
   | Size 10 (the default).
   |
-  | In `union A,B` (size 4) and `union A,B,C` (size 1.111).
+  | In `union A,B` (size 4), `union A,B,C` (size 1.111) and `union B,"set-x"` (size 2.5).
 @ 9:8  text |C t1
   9:8-9:9 "C"
   | **`C`** set
@@ -36,3 +36,10 @@
   | **`D d`** set
   |
   | Size 10 (the default).
+@ 14:17  union "set-x",|B
+  14:17-14:18 "B"
+  | **`B`** set
+  |
+  | Size 10 (the default).
+  |
+  | In `union A,B` (size 4), `union A,B,C` (size 1.111) and `union B,"set-x"` (size 2.5).
