@@ -7,7 +7,7 @@ Integration branch `feature/429_venn` (from `mermaid-v13` at 12ba676cb). Draft P
 | T1 lexer parity gate | #486 | #285 (merged) | merged (ff d614349d7; package entry 3,043 B gz, no core change) |
 | T2 grammar, parser, model, AST | #488 | #486 | merged (ff 6af3622b5; package entry 8,334 B gz, no core change) |
 | T3 layout and venn.js solver | #491 | #488 | merged (ff f95271949; package entry 16,410 B gz, core 93,426 B gz unchanged) |
-| T4 SVG renderer and theme table | #495 | #491 | open |
+| T4 SVG renderer and theme table | #495 | #491 | merged (ff 51e92a401; package entry 19,137 B gz, CDN core closure 94,095 B gz) |
 | T6 language facet | #498 | #488 | open |
 | T5 integration | #501 | #495, #498 | open |
 
@@ -31,6 +31,7 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 | #486 T1 | unchanged | 0 (no core or registry change) |
 | #488 T2 | unchanged | 0 (no core or registry change) |
 | #491 T3 | 93,426 | 0 (schema `venn.padding` default 8 → 15 and its doc comment only) |
+| #495 T4 | bench 93,682 → 93,695; CDN closure 94,088 → 94,095 | +7 (`data-venn-sets` in the SVG allowlist; the bench base includes #534) |
 
 ## Merge log
 
