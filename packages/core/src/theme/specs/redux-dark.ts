@@ -13,6 +13,7 @@ import {
   REDUX_DARK_TOKENS,
   REDUX_DARK_VALUES,
 } from './redux-dark-values.ts';
+import { BASE_PLOT } from './palettes.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark',
@@ -26,6 +27,7 @@ const theme: ThemeSpec = {
   values: REDUX_DARK_VALUES,
   // v12 theme-redux-dark.js: hue steps darkened by 25 (75 under darkMode); git as base derives it.
   palettes: {
+    plotColorArray: BASE_PLOT,
     ...darkenedScale(DARK_HUE_SOURCES, 25),
     // D544: the label ink, black where it fails on the fill (slot 8); darkMode reads it too.
     cScaleLabel: CONTRAST_LABELS,

@@ -77,6 +77,9 @@ const theme: ThemeSpec = {
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
   palettes: {
+    plotColorArray: series(
+      '#ECECFF #8493A6 #FFC3A0 #DCDDE1 #B8E994 #D1A36F #C3CDE6 #FFB6C1 #496078 #F8F3E3'
+    ),
     // v12 theme-default.js: the base colours, tertiary −40, primary −10, secondary −30, tertiary
     // −20, then hue turns. Slots 2 and 5 derive from the hex tertiary colour, where v12 darkened
     // its unrounded HSL one, a few steps off (D333(a): #b9ff20 against v12's #b5ff20). Then the

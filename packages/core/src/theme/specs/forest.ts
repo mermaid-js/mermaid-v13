@@ -75,6 +75,9 @@ const theme: ThemeSpec = {
   // v12 theme-forest.js: hue steps darkened by 10, inverses a half turn of hue. Its
   // tertiaryColor is khroma lighten('#cde498', 10), of which the base variable is the hex.
   palettes: {
+    plotColorArray: series(
+      '#CDE498 #FF6B6B #A0D2DB #D7BDE2 #F0F0F0 #FFC3A0 #7FD8BE #FF9A8B #FAF3E0 #FFF176'
+    ),
     ...darkenedScale(
       hueSources(
         false,
