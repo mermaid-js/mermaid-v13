@@ -483,3 +483,104 @@ describe('shared label ink (D334)', () => {
     }
   });
 });
+
+describe("a table's palette variable (D545)", () => {
+  // A diagram's own list of colours: its rule names the shared palette it reads, a family may
+  // name another, and the author replaces it by its flat name or its nested key.
+  const PALETTE: DiagramThemeTable = {
+    section: 'demo',
+    vars: { demoSeries: { alias: 'dms', kind: 'palette', nested: 'series' } },
+    rules: { light: { demoSeries: 'plotColorArray' } },
+    families: { neo: { rules: { demoSeries: 'cScale' } } },
+  };
+  const read = (s: ThemeSpec, opts: ThemeOptions = {}) =>
+    createTheme(s, { cssVariables: false, diagram: PALETTE, ...opts });
+  const BASE_TEN = [
+    '#FFF4DD',
+    '#FFD8B1',
+    '#FFA07A',
+    '#ECEFF1',
+    '#D6DBDF',
+    '#C3E0A8',
+    '#FFB6A4',
+    '#FFD74D',
+    '#738FA7',
+    '#FFFFF0',
+  ];
+
+  it('reads the shared palette its rule names, and a family may name another', () => {
+    for (const n of THEME_NAMES) {
+      const shared = spec[n].family === 'neo' ? 'cScale' : 'plotColorArray';
+      expect(read(spec[n]).palette('demoSeries'), n).toEqual(createTheme(spec[n]).palette(shared));
+    }
+    expect(read(spec.base).palette('demoSeries')).toEqual(BASE_TEN);
+  });
+
+  it("follows the author's list of the shared palette", () => {
+    const t = read(spec.base, { themeVariables: { plotColorArray: '#111111, #222222' } });
+    expect(t.palette('demoSeries')).toEqual(['#111111', '#222222']);
+  });
+
+  it("takes the author's list, flat or nested, as an array or a comma-separated string", () => {
+    const flat = read(spec.base, { themeVariables: { demoSeries: ['#111111', '#222222'] } });
+    expect(flat.palette('demoSeries')).toEqual(['#111111', '#222222']);
+    const nested = read(spec.base, { themeVariables: { demo: { series: '#333333,#444444' } } });
+    expect(nested.palette('demoSeries')).toEqual(['#333333', '#444444']);
+    // The flat name wins, with no warning (D540); the shared palette keeps the theme's.
+    const warnings: ThemeWarning[] = [];
+    const both = read(spec.base, {
+      themeVariables: { demoSeries: '#555555', demo: { series: '#666666' } },
+      warn: (w) => warnings.push(w),
+    });
+    expect([both.palette('demoSeries'), warnings]).toEqual([['#555555'], []]);
+    expect(both.palette('plotColorArray')).toEqual(BASE_TEN);
+  });
+
+  it("drops an unsafe list with a warning, and keeps the theme's", () => {
+    const warnings: ThemeWarning[] = [];
+    const t = read(spec.base, {
+      themeVariables: { demo: { series: '#111111, url(x)' } },
+      warn: (w) => warnings.push(w),
+    });
+    expect(t.palette('demoSeries')).toEqual(BASE_TEN);
+    expect(warnings.map((w) => w.message)).toEqual([
+      'themeVariables.demoSeries value "#111111, url(x)" is not allowed and was dropped.',
+    ]);
+  });
+
+  it('takes an empty list as unset, as an empty value is, with no warning', () => {
+    const warnings: ThemeWarning[] = [];
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    for (const themeVariables of [
+      { demoSeries: [] },
+      { demoSeries: '' },
+      { demo: { series: '' } },
+      { plotColorArray: [] },
+      { plotColorArray: '' },
+    ]) {
+      const t = read(spec.base, { themeVariables, warn });
+      expect(t.palette('demoSeries'), JSON.stringify(themeVariables)).toEqual(BASE_TEN);
+      expect(t.palette('plotColorArray')).toEqual(BASE_TEN);
+    }
+    expect(warnings).toEqual([]);
+    // Other palettes keep an empty list: an empty bkgColorArray means border-only colour.
+    const bands = createTheme(spec['redux-color'], { themeVariables: { bkgColorArray: [] } });
+    expect(bands.palette('bkgColorArray')).toEqual([]);
+  });
+
+  it('writes its value comma-separated, and has no CSS variable', () => {
+    expect(read(spec.base).value('demoSeries')).toBe(BASE_TEN.join(','));
+    const css = createTheme(spec.base, { diagram: PALETTE });
+    expect(css.palette('demoSeries')).toEqual(BASE_TEN);
+    expect(() => css.color('demoSeries')).toThrow(TypeError);
+    expect(css.rootStyle()).toEqual({});
+  });
+
+  it("reads v12 theme-base's ten chart colours where a theme leaves plotColorArray out", () => {
+    const { palettes: _, ...bare } = spec.base;
+    expect(createTheme(bare).palette('plotColorArray')).toEqual(BASE_TEN);
+    expect(read(bare).palette('demoSeries')).toEqual(BASE_TEN);
+    const own: ThemeSpec = { ...bare, palettes: { plotColorArray: ['#abcdef'] } };
+    expect(createTheme(own).palette('plotColorArray')).toEqual(['#abcdef']);
+  });
+});

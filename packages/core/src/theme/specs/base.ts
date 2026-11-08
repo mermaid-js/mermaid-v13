@@ -3,7 +3,7 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
+import { BASE_PLOT, BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
 import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
@@ -43,6 +43,7 @@ const base: ThemeSpec = {
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode); git darkened by 25
   // (lightened under darkMode, with black branch labels).
   palettes: {
+    plotColorArray: BASE_PLOT,
     ...darkenedScale(SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
     // v12 theme-base.js: the base colours, then khroma `darken` by 10, then hue turns, which are

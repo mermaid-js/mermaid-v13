@@ -12,4 +12,5 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   demoPad: { alias: 'dmp', kind: 'padding', usedBy: ['demo'] },
   demoOpacity: { alias: 'dmo', kind: 'opacity', usedBy: ['demo'] },
   demoOn: { alias: 'dmn', kind: 'flag', usedBy: [] },
+  demoSeries: { alias: 'dms', kind: 'palette', usedBy: ['demo'], nested: 'series' },
 };

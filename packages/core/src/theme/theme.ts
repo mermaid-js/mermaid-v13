@@ -50,7 +50,7 @@ import {
 import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
-import { BASE_SERIES } from './specs/palettes.ts';
+import { BASE_PLOT, BASE_SERIES } from './specs/palettes.ts';
 import { baseScalesFor } from './specs/scales.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
@@ -149,11 +149,13 @@ export interface Theme {
   autoDeclarations(): AutoDeclarations | undefined;
   /**
    * A palette as literal colours (D151, D152): the author's `themeVariables` list if valid,
-   * else the theme's; empty when the theme carries none.
+   * else the theme's; empty when the theme carries none. `name` is a shared palette
+   * (`PALETTE_VARIABLES`) or a `palette` variable of the diagram's table, which reads the shared
+   * palette its rule names unless the author lists its own (D545).
    */
-  palette(name: PaletteVariable): readonly SafeColor[];
+  palette(name: PaletteVariable | (string & {})): readonly SafeColor[];
   /** {@link palette}'s entries as colour channels, where JS can compute them. */
-  paletteRgba(name: PaletteVariable): readonly (Rgba | undefined)[];
+  paletteRgba(name: PaletteVariable | (string & {})): readonly (Rgba | undefined)[];
 }
 
 export interface AutoDeclarations {
@@ -198,7 +200,8 @@ const AA = 4.5;
 
 const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
 
-function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
+/** A value of every kind but `palette`, a list that `paletteSource` checks. */
+function checkValue(kind: Exclude<ThemeVarKind, 'palette'>, raw: unknown): string | undefined {
   if (typeof raw === 'boolean') return kind === 'flag' ? String(raw) : undefined;
   if (typeof raw === 'number')
     return kind === 'length' || kind === 'padding' || kind === 'weight' || kind === 'opacity'
@@ -268,7 +271,7 @@ class Resolver {
    * theme's colour or rule, else for the series v12 theme-base's derivation (`BASE_SERIES`).
    * Undefined past the end of every list.
    */
-  slot(p: PaletteVariable, i: number): Resolved | undefined {
+  slot(p: string, i: number): Resolved | undefined {
     const key = `${p}${i}`;
     // Only theme specs write palette rules, so no author input can make a cycle here.
     if (this.slots.has(key)) return this.slots.get(key);
@@ -284,13 +287,18 @@ class Resolver {
     return r;
   }
 
-  /** The palette's entries as literal colours, or as channels. */
-  palette(p: PaletteVariable): SafeColor[];
-  palette(p: PaletteVariable, rgba: true): (Rgba | undefined)[];
-  palette(p: PaletteVariable, rgba?: true): (SafeColor | Rgba | undefined)[] {
-    const n = (this.palettes.user[p] ?? this.palettes.spec[p] ?? []).length;
+  /**
+   * The palette's entries as literal colours, or as channels. A table's `palette` variable the
+   * author leaves unset reads the shared palette its rule names (D545); any other rule, none.
+   */
+  palette(p: string): SafeColor[];
+  palette(p: string, rgba: true): (Rgba | undefined)[];
+  palette(p: string, rgba?: true): (SafeColor | Rgba | undefined)[] {
+    const reads = this.defs[p]?.kind === 'palette' && !this.palettes.user[p] && this.rules[p];
+    const source = reads && (PALETTE_VARIABLES as readonly string[]).includes(reads) ? reads : p;
+    const n = (this.palettes.user[source] ?? this.palettes.spec[source] ?? []).length;
     return Array.from({ length: n }, (_, i) => {
-      const r = this.slot(p, i);
+      const r = this.slot(source, i);
       return rgba ? r?.rgba : ((checkColor(r?.lit ?? '') ?? 'currentColor') as SafeColor);
     });
   }
@@ -360,6 +368,11 @@ class Resolver {
   }
 
   private compute(name: string): Resolved {
+    if (this.defs[name]?.kind === 'palette') {
+      // A palette has no CSS variable: its value is its colours, comma-separated (D545).
+      const lit = this.palette(name).join(',');
+      return { css: lit, lit, rgba: undefined, deps: [] };
+    }
     const user = this.overrides.get(name);
     if (user !== undefined) {
       const r = this.literal(name, user);
@@ -390,7 +403,7 @@ class Resolver {
       case 'ref': {
         const slot = own(this.defs, e.name) ? undefined : PALETTE_SLOT.exec(e.name);
         if (slot) {
-          const r = this.slot(slot[1] as PaletteVariable, Number(slot[2]));
+          const r = this.slot(slot[1]!, Number(slot[2]));
           // A series entry reads as the theme wrote it, so its CSS follows the base colours as
           // the rule it replaces did (D332).
           if (r && slot[1] === 'seriesColorArray') return r;
@@ -534,7 +547,7 @@ class Resolver {
       throw new SyntaxError('ifSet needs a variable');
     const set = slot
       ? this.palettes.slots.has(v.name) ||
-        this.palettes.user[slot[1] as PaletteVariable]?.[Number(slot[2])] !== undefined
+        this.palettes.user[slot[1]!]?.[Number(slot[2])] !== undefined
       : this.overrides.has(v.name);
     if (set) return this.evaluate(v);
     const b = this.evaluate(fallback);
@@ -629,7 +642,8 @@ function checkOverrides(
   for (const name of Object.keys(vars)) {
     const def = own(defs, name) ? defs[name] : undefined;
     const raw = vars[name];
-    if (!def || raw === undefined || raw === null || raw === '') continue;
+    // A palette variable is a list, checked with the palettes (`paletteSource`).
+    if (!def || def.kind === 'palette' || raw === undefined || raw === null || raw === '') continue;
     const v = checkValue(def.kind, raw);
     if (v === undefined) {
       warn?.({
@@ -651,14 +665,14 @@ const MAX_PALETTE = 64;
  */
 const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
 
-type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
+type PaletteLists = Readonly<Partial<Record<string, readonly string[]>>>;
 
 /** What the palettes of one render are built from (D258). */
 interface PaletteSource {
   /** The theme's entries: colours or rules. */
   readonly spec: PaletteLists;
-  /** The author's whole lists, checked colours. */
-  readonly user: Readonly<Partial<Record<PaletteVariable, readonly SafeColor[]>>>;
+  /** The author's whole lists, checked colours, a table's `palette` variables' among them. */
+  readonly user: Readonly<Partial<Record<string, readonly SafeColor[]>>>;
   /** The author's numbered entries (`cScale3`), checked colours. */
   readonly slots: ReadonlyMap<string, SafeColor>;
 }
@@ -722,21 +736,28 @@ function paletteSource(
   vars: Readonly<Record<string, unknown>> | undefined,
   warn: ThemeOptions['warn'],
   /** The author's `themeVariables.darkMode`, not the theme's `dark` flag. */
-  darkMode: boolean
+  darkMode: boolean,
+  /** The diagram table's `palette` variables, which the author lists as palettes (D545). */
+  tablePalettes: readonly string[] = []
 ): PaletteSource {
   const drop = (name: string, raw: unknown) =>
     warn?.({
       code: 'THEME_VARIABLE_DROPPED',
       message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
     });
+  // A theme that leaves the chart series palette out reads v12 theme-base's (D545).
   const lists = withBaseScales(
-    darkMode ? { ...spec.palettes, ...spec.darkModePalettes } : (spec.palettes ?? {}),
+    {
+      plotColorArray: BASE_PLOT,
+      ...spec.palettes,
+      ...(darkMode ? spec.darkModePalettes : undefined),
+    },
     darkMode
   );
-  const user: Partial<Record<PaletteVariable, readonly SafeColor[]>> = {};
+  const user: Partial<Record<string, readonly SafeColor[]>> = {};
   const slots = new Map<string, SafeColor>();
   if (!vars) return { spec: lists, user, slots };
-  for (const name of PALETTE_VARIABLES) {
+  for (const name of [...PALETTE_VARIABLES, ...tablePalettes]) {
     const raw = own(vars, name) ? vars[name] : undefined;
     if (raw === undefined || raw === null) continue;
     const checked = paletteItems(raw)?.map((c) =>
@@ -746,12 +767,14 @@ function paletteSource(
       drop(name, raw);
       continue;
     }
-    user[name] = checked as SafeColor[];
+    // An empty chart palette is unset, as an empty value is: a reader cycles through it (D545).
+    if (checked.length || (name !== 'plotColorArray' && !tablePalettes.includes(name)))
+      user[name] = checked as SafeColor[];
   }
   for (const [key, c] of numberedOverrides(vars, drop)) {
     // An entry the palette has no slot for is accepted and ignored (R-CONF-5).
     const m = RE_SLOT.exec(key) as RegExpExecArray;
-    const p = m[1] as PaletteVariable;
+    const p = m[1]!;
     if (Number(m[2]) < (user[p] ?? lists[p] ?? []).length) slots.set(key, c);
   }
   return { spec: lists, user, slots };
@@ -763,7 +786,7 @@ interface ThemeParts {
   main: Resolver;
   night: Resolver | undefined;
   /** Each palette read so far, as literal colours. */
-  palettes: Map<PaletteVariable, readonly SafeColor[]>;
+  palettes: Map<string, readonly SafeColor[]>;
   /** `defs` as a map, for the lookups every themed value makes. */
   byName: ReadonlyMap<string, ThemeVarEntry>;
   /** `rootStyleText()` by the aliases used, in the order they were first used. */
@@ -855,6 +878,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   for (const [name, v] of Object.entries(table?.vars ?? {}))
     if (!own(THEME_VARIABLE_TABLE, name)) defs[name] = v;
   const overrides = checkOverrides(tv, defs, options.warn);
+  const tablePalettes = Object.keys(defs).filter((name) => defs[name]!.kind === 'palette');
   const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
   const darkMode = spec.dark || authorDark;
   // The layers of today's precedence (spec #414): shared and diagram light/dark rules, the
@@ -874,10 +898,18 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   };
   const parts: ThemeParts = {
     darkMode,
-    main: resolver(spec, darkMode, paletteSource(spec, tv, options.warn, authorDark)),
+    main: resolver(
+      spec,
+      darkMode,
+      paletteSource(spec, tv, options.warn, authorDark, tablePalettes)
+    ),
     // The dark spec's own palettes, so a series slot read follows it there (D332).
     night: options.dark
-      ? resolver(options.dark, true, paletteSource(options.dark, tv, undefined, authorDark))
+      ? resolver(
+          options.dark,
+          true,
+          paletteSource(options.dark, tv, undefined, authorDark, tablePalettes)
+        )
       : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),

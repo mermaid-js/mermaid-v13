@@ -6,6 +6,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import {
+  BASE_PLOT,
   INVERTED_SCALE,
   LABEL_SCALE,
   TAILWIND_300,
@@ -20,6 +21,7 @@ const theme: ThemeSpec = {
   // v12 draws ER edge labels on a plain fill (`erEdgeLabelBackground`) in the colour themes only.
   values: { ...redux.values, linkLabelBkg: '#ffffff' },
   palettes: {
+    plotColorArray: BASE_PLOT,
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,
     cScale: TAILWIND_300,
