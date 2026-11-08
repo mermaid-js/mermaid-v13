@@ -49,6 +49,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - Review (orchestrator, `/code-review`), fixed: d3's ISC credit in `THIRD_PARTY_NOTICES`, checked by `check:licenses` (stricter only); layout stress shapes; non-finite values print no value text (Q2); a shared test-context builder; a rename in `config.ts`.
 - Accepted: the shared loop of `layout-d3.spec.ts` and `layout-corpus.spec.ts`; the `config.ts` stand-in until T5; `treemap` in core's `fontFamily` `usedBy` (needed by `theme-used-by.spec.ts`, as pie, packet, info); hand-built models in the unit specs (sources stay in the corpus).
+- CI (run 42506956245) failed T3's `complex, long labels truncated` layout stress at 27x against the 24x bar: the canvas was fixed, so the 8x tree had smaller boxes and did more fitting per row. The canvas now grows with the square root of the rows (8.1x locally); the bar is unchanged.
 - For the maintainer: d3's code is ported under ISC (d3-hierarchy, d3-format 3.1.2), credited in each file header and `packages/diagram-treemap/THIRD_PARTY_NOTICES`.
 
 ## T4 (#505)
