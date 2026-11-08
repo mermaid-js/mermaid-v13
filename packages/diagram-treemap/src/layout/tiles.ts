@@ -1,10 +1,12 @@
+// cspell:words squarify squarified
 /**
  * d3-hierarchy 3.1.2 as v12's treemap calls it (`renderer.ts:144-161`), with no dependency
  * (R-PERF-2): `hierarchy(root).sum(d => d.value ?? 0).sort((a, b) => b.value - a.value)`, then
  * `treemap().size([w, h]).paddingTop(…).paddingInner(padding)….round(true)` with the default
  * `treemapSquarify` (ratio φ). Every step follows d3's `hierarchy/{index,sum,sort}.js` and
  * `treemap/{index,squarify,dice,slice,round}.js` operation for operation, so the rectangles are
- * d3's to the bit (`packages/conformance/src/treemap/layout-d3.spec.ts`).
+ * d3's to the bit (`packages/conformance/src/treemap/layout-d3.spec.ts`). d3-hierarchy:
+ * https://github.com/d3/d3-hierarchy, ISC License, Copyright 2010-2021 Mike Bostock.
  *
  * One change (D402): d3 tiles by `value`, and a value that is not finite (a leaf of 309 digits)
  * or so large its products overflow makes it write NaN or Infinity. Tiling here reads `weight`,
@@ -14,7 +16,7 @@
  * values printed by it.
  */
 import type { TreemapNode } from '../model.ts';
-import { MAX_TILE_WEIGHT, SQUARIFY_RATIO, TREEMAP_METRICS } from './metrics.ts';
+import { MAX_TILE_WEIGHT, GOLDEN_RATIO, TREEMAP_METRICS } from './metrics.ts';
 
 /** One node of the tiled tree: d3's `HierarchyRectangularNode`. */
 export interface Tile {
@@ -53,9 +55,9 @@ export interface TiledTree {
 /** d3's `hierarchy` over the hidden root, then `sum` and `sort`, then the treemap. */
 export function tileTreemap(roots: readonly TreemapNode[], options: TileOptions): TiledTree {
   const root = hierarchy(roots);
-  const preorder = eachBefore(root);
-  sum(preorder);
-  for (const t of preorder) t.children?.sort((a, b) => b.value - a.value);
+  const depthFirst = eachBefore(root);
+  sum(depthFirst);
+  for (const t of depthFirst) t.children?.sort((a, b) => b.value - a.value);
   position(eachBefore(root), options);
   return { root, branches: breadthFirst(root).filter(hasChildren), leaves: leavesOf(root) };
 }
@@ -126,11 +128,11 @@ const ownWeight = (v: number): number => (Number.isFinite(v) && v > 0 ? v : 0);
  * power of two so the total stays below it: the tiling divides weights by weights, so that
  * scale changes no rectangle, and below the limit (every value under 1e150) nothing is scaled.
  */
-function sum(preorder: readonly Tile[]): void {
+function sum(depthFirst: readonly Tile[]): void {
   let leaves = 0;
   let largest = 0;
-  for (let i = preorder.length - 1; i >= 0; i--) {
-    const t = preorder[i]!;
+  for (let i = depthFirst.length - 1; i >= 0; i--) {
+    const t = depthFirst[i]!;
     let value = +(t.node?.value ?? 0) || 0;
     let weight = 0;
     const c = t.children;
@@ -147,12 +149,12 @@ function sum(preorder: readonly Tile[]): void {
     t.value = value;
     t.weight = weight;
   }
-  if (preorder[0]!.weight <= MAX_TILE_WEIGHT) return;
+  if (depthFirst[0]!.weight <= MAX_TILE_WEIGHT) return;
   const scale =
     2 **
     (Math.log2(MAX_TILE_WEIGHT) - Math.ceil(Math.log2(largest)) - Math.ceil(Math.log2(leaves)));
-  for (let i = preorder.length - 1; i >= 0; i--) {
-    const t = preorder[i]!;
+  for (let i = depthFirst.length - 1; i >= 0; i--) {
+    const t = depthFirst[i]!;
     t.weight = t.children ? t.children.reduce((s, child) => s + child.weight, 0) : t.weight * scale;
   }
 }
@@ -162,13 +164,13 @@ const PAD = TREEMAP_METRICS.sectionPadding;
 const PAD_TOP = TREEMAP_METRICS.sectionHeader + TREEMAP_METRICS.sectionPadding;
 
 /** d3's `treemap(root)`: `positionNode` for every node in `eachBefore` order, then rounding. */
-function position(preorder: readonly Tile[], options: TileOptions): void {
-  const root = preorder[0]!;
+function position(depthFirst: readonly Tile[], options: TileOptions): void {
+  const root = depthFirst[0]!;
   root.x0 = root.y0 = 0;
   root.x1 = options.width;
   root.y1 = options.height;
   const inner = options.padding / 2;
-  for (const t of preorder) {
+  for (const t of depthFirst) {
     const p = t.depth === 0 ? 0 : inner;
     let x0 = t.x0 + p;
     let y0 = t.y0 + p;
@@ -192,7 +194,7 @@ function position(preorder: readonly Tile[], options: TileOptions): void {
       squarify(t, area);
     }
   }
-  for (const t of preorder) {
+  for (const t of depthFirst) {
     t.x0 = Math.round(t.x0);
     t.y0 = Math.round(t.y0);
     t.x1 = Math.round(t.x1);
@@ -232,7 +234,7 @@ function squarify(parent: Tile, area: Span): void {
     while (!sumValue && i1 < n);
     let minValue = sumValue;
     let maxValue = sumValue;
-    const alpha = Math.max(dy / dx, dx / dy) / (value * SQUARIFY_RATIO);
+    const alpha = Math.max(dy / dx, dx / dy) / (value * GOLDEN_RATIO);
     let beta = sumValue * sumValue * alpha;
     let minRatio = Math.max(maxValue / beta, beta / minValue);
     // Keep adding nodes while the aspect ratio holds or improves.

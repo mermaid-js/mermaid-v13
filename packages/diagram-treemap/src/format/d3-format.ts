@@ -1,3 +1,4 @@
+// cspell:ignore defgprs
 /**
  * d3-format 3.1.2's `format` in its default locale (`,` thousands in groups of three, `.`
  * decimal, `$` currency prefix, `−` minus, `NaN`), re-implemented for treemap's `valueFormat`
@@ -6,6 +7,7 @@
  * `locale.js`, `formatSpecifier.js`, `formatTypes.js`, `formatTrim.js`, `formatDecimal.js`,
  * `formatRounded.js`, `formatPrefixAuto.js` and `formatGroup.js`, in its order, so the output is
  * d3's character for character (`packages/conformance/src/treemap/value-format.spec.ts`).
+ * d3-format: https://github.com/d3/d3-format, ISC License, Copyright 2010-2026 Mike Bostock.
  */
 
 /** d3's specifier pattern. */
@@ -227,7 +229,7 @@ function signOf(sign: string, negative: boolean): string {
   return sign === '-' || sign === '(' ? '' : sign;
 }
 
-/** One value's parts before padding: what goes before, the groupable digits, what goes after. */
+/** One value's parts before padding: what goes before, the digits that group, what goes after. */
 type Parts = [prefix: string, digits: string, suffix: string];
 
 /** A number's parts (`locale.js`'s `format` up to the grouping). */

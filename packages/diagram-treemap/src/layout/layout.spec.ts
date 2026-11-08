@@ -1,3 +1,4 @@
+// cspell:words squarify squarified
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { context, leaf, model, section } from './fixtures.ts';

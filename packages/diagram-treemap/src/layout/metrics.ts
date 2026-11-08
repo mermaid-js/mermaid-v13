@@ -1,3 +1,4 @@
+// cspell:words squarify squarified
 /**
  * The treemap layout's px constants (spec #428 "Package and contract", pitfall 13): v12
  * `renderer.ts`'s fixed lengths, font sizes and fitting thresholds. No other file in `layout/`
@@ -104,7 +105,7 @@ export const TREEMAP_METRICS: TreemapMetrics = {
 };
 
 /** d3's squarify ratio, the golden ratio (`treemapSquarify`'s default). */
-export const SQUARIFY_RATIO = (1 + Math.sqrt(5)) / 2;
+export const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 
 /** CSS weights: v12 draws section labels bold, everything else normal; a weight is 1 to 1000. */
 export const BOLD_WEIGHT = 700;

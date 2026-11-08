@@ -1,3 +1,4 @@
+// cspell:words squarify squarified
 /**
  * The treemap custom layout (spec #428 T3, `layoutKind: 'custom'`): `TreemapModel` in,
  * `TreemapLayout` out. It follows v12's `renderer.ts` with the drawing taken out: d3's
