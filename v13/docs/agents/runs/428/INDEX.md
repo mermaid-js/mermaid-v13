@@ -9,7 +9,7 @@ Integration branch `feature/428_treemap`, cut from `mermaid-v13` at `12ba676cb` 
 | T3 custom layout (`TreemapLayout`) and `valueFormat` | #485 | #484 (soft) | merged (ff 26e9637bd; runtime entry 13.0 KB gz, no core code change) |
 | T4 SVG renderer and theme table | #505 | #484, #485 | merged (ff 3b32324b0; runtime entry 14.4 KB gz, no core code change) |
 | T6 language facet | #511 | #484 | merged (ff 700642a2f; `./language` 13.2 KB gz, runtime entry 15.5 KB gz) |
-| T5 integration | #514 | #505, #511 | open |
+| T5 integration | #514 | #505, #511 | merged (ff 07801af2f; core +57 B gz (registry + KEY_TREE rows), treemap chunk 15.5 KB gz, warm render 20.9× v12) |
 
 No T0 (treemap adds no core contract; the theme table API is #414's, merged) and no T7 (D320). One ticket agent at a time (the machine is shared by five wave-2 sessions).
 
