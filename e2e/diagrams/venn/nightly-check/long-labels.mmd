@@ -1,0 +1,10 @@
+---
+description: >-
+  Set and overlap labels long enough to wrap (at most three lines, D414) and a
+  text node whose label is longer than its cell.
+---
+venn-beta
+  set A["A rather long label for the first set of things"]
+    text a1["An even longer text node label that will not fit in one line of its cell"]
+  set B["Second set with a label that runs on for a while too"]
+  union A, B["The overlap between the two long-named sets"]

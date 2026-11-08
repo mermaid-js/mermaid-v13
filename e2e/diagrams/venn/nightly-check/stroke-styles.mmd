@@ -1,0 +1,13 @@
+---
+description: >-
+  The style keys the other fixtures leave out: `stroke`, `stroke-width` and
+  `fill-opacity` on each set, and a `fill`, `fill-opacity` and `color` on the
+  overlap, which v12 fills only when it is styled.
+---
+venn-beta
+  set A
+  set B
+  union A, B["Both"]
+  style A stroke:#d62728, stroke-width:2, fill-opacity:0.3
+  style B stroke:#1f77b4, stroke-width:8, fill-opacity:0.05
+  style A, B fill:#ffbf00, fill-opacity:0.6, color:#333333

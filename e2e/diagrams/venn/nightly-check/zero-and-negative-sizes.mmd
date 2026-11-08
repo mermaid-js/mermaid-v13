@@ -1,0 +1,14 @@
+---
+description: >-
+  Sizes v12 accepts but cannot draw: a set of size 0 (dropped from the chart
+  with every overlap touching it) and a negative size (read as 0 in v13 with
+  a warning, D417), next to two ordinary sets.
+---
+venn-beta
+  set A:10
+  set B:8
+  set Z:0
+  set N:-2
+  union A, B:2
+  union A, Z:1
+  union B, N:1

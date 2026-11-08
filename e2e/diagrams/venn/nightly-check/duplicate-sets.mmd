@@ -1,0 +1,12 @@
+---
+description: >-
+  A repeated `set` and a repeated `union`: v12 keeps both copies (the last size
+  wins in the chart and each copy takes a colour slot); v13 draws the same and
+  warns (D417).
+---
+venn-beta
+  set A:10
+  set B:10
+  set A:14
+  union A, B:2
+  union B, A:4

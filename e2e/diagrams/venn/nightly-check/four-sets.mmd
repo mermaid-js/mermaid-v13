@@ -1,0 +1,21 @@
+---
+description: >-
+  Four sets with every pairwise overlap, two triple overlaps and the quadruple
+  one: the solver's four-or-more path, which v12 seeds with `Math.random` and
+  v13 with a fixed seed (D413).
+---
+venn-beta
+  title Four sets
+  set A:12
+  set B:10
+  set C:8
+  set D:6
+  union A, B:3
+  union A, C:3
+  union A, D:2
+  union B, C:3
+  union B, D:2
+  union C, D:2
+  union A, B, C:1
+  union B, C, D:1
+  union A, B, C, D:0.5

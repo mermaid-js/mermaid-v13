@@ -255,6 +255,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-venn':
+        specifier: workspace:^
+        version: link:../diagram-venn
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -460,6 +463,12 @@ importers:
         version: link:../core
 
   packages/diagram-timeline:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-venn:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
