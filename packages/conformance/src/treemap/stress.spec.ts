@@ -1,6 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
-import { layoutTreemap, type TreemapModel, type TreemapNode } from '@mermaid-js/diagram-treemap';
+import {
+  layoutTreemap,
+  type TreemapLayout,
+  type TreemapModel,
+  type TreemapNode,
+} from '@mermaid-js/diagram-treemap';
 import {
   treemapTestContext,
   treemapTestTheme,
@@ -139,12 +144,14 @@ const rows = (n: number, name: (i: number) => string = (i) => `n${i % 97}`) =>
 /**
  * `[name, build, config, scale]`: `build(n)` is a model of about `n` rows, laid out at 2k and
  * 16k rows times `scale` (a quadratic leaf scan fails at those sizes, not at 8× fewer). Long
- * labels cost a measure per character, so that shape runs at an eighth.
+ * labels cost a measure per character, so that shape runs at an eighth. Its canvas grows with
+ * the square root of the rows, so both sizes give boxes of one size: the label fitting and
+ * truncation then do the same work per row, and only the row count differs.
  */
 const LAYOUTS: [
   name: string,
   build: (n: number) => TreemapModel,
-  config?: Record<string, unknown>,
+  config?: (n: number) => Record<string, unknown>,
   scale?: number,
 ][] = [
   ['flat leaves', (n) => forest(rows(n))],
@@ -181,7 +188,10 @@ const LAYOUTS: [
           )
         )
       ),
-    { nodeWidth: 3000, nodeHeight: 3000 },
+    (n) => {
+      const side = Math.round(3000 * Math.sqrt(n / 2_000));
+      return { nodeWidth: side, nodeHeight: side };
+    },
     1 / 8,
   ],
 ];
@@ -194,25 +204,27 @@ beforeAll(async () => {
 describe('stress: the treemap layout is linear in rows', () => {
   it.each(LAYOUTS)(
     '%s',
-    (name, build, config = {}, scale = 1) => {
-      const ctx = treemapTestContext(theme, config);
-      const small = build(2_000 * scale);
-      const large = build(16_000 * scale);
-      const lay = (m: TreemapModel) => layoutTreemap(m, ctx);
-      lay(small); // warm up
-      const truncated = lay(large).sections.filter((s) => s.label?.text.endsWith('...')).length;
-      if (name.startsWith('complex')) expect(truncated).toBeGreaterThan(100);
+    (name, build, config = () => ({}), scale = 1) => {
+      const [nSmall, nLarge] = [2_000 * scale, 16_000 * scale];
+      const small = build(nSmall);
+      const large = build(nLarge);
+      const ctxSmall = treemapTestContext(theme, config(nSmall));
+      const ctxLarge = treemapTestContext(theme, config(nLarge));
+      const laySmall = () => layoutTreemap(small, ctxSmall);
+      const layLarge = () => layoutTreemap(large, ctxLarge);
+      const cut = (layout: TreemapLayout) =>
+        layout.sections.filter((s) => s.label?.text.endsWith('...')).length;
+      const smallCut = cut(laySmall()); // also the warm-up
+      const largeCut = cut(layLarge());
+      if (name.startsWith('complex')) {
+        expect(smallCut).toBeGreaterThan(10);
+        expect(largeCut).toBeGreaterThan(100);
+      }
       let tSmall = Infinity;
       let tLarge = Infinity;
       for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => lay(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => lay(large))
-        );
+        tSmall = Math.min(tSmall, cost(laySmall));
+        tLarge = Math.min(tLarge, cost(layLarge));
       }
       expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
     },
