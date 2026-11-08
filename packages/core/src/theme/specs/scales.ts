@@ -4,7 +4,7 @@
  * chunk does not carry them.
  */
 import type { ThemeRuleTable } from '../spec.ts';
-import { paletteSlots } from './palettes.ts';
+import { LABEL_SCALE, paletteSlots } from './palettes.ts';
 
 /** v12's hue steps from the primary colour for slots 3–11 (khroma `adjust(…, { h })`). */
 const HUE_STEPS = [30, 60, 90, 120, 150, 210, 270, 300, 330] as const;
@@ -62,6 +62,16 @@ export const DARK_HUE_SOURCES = hueSources(
 );
 
 /**
+ * `cScaleLabel` of `redux-dark` (D544): v12's label ink `scaleLabelColor` where it reads on the
+ * slot's fill (AA), else black where black reads better. Its fills are v12's (D258): all black
+ * but slot 8, a light grey on which v12's `#e0dfdf` is 1.38:1. Not `neo-dark`, whose mindmap and
+ * timeline draw the label on `mainBkg` under the gradient, where black would be about 1.3:1.
+ */
+export const CONTRAST_LABELS = paletteSlots(
+  (i) => `contrast(cScale${i}, scaleLabelColor, #000000)`
+);
+
+/**
  * `cScaleLabel` where v12 writes `scaleLabelColor || 'black'` under `darkMode` (`theme-dark.js`,
  * `theme-neutral.js`).
  */
@@ -114,6 +124,34 @@ export const gitPalettes = (
   gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
   gitBranchLabel: sources.map(() => label),
 });
+
+type ScaleLists = Readonly<Record<string, readonly string[]>>;
+let baseScales: readonly [ScaleLists, ScaleLists] | undefined;
+
+/**
+ * The `cScale`, `cScaleInv`, `cScaleLabel`, `git`, `gitInv` and `gitBranchLabel` a theme spec
+ * leaves out, as v12 `theme-base.js` derives them, over the theme's own base colours: hue steps
+ * darkened by 25 (75 under `darkMode`), git darkened by 25 (lightened under `darkMode`, with
+ * black branch labels). So a theme with only base colours and a family draws every palette
+ * reader, as `BASE_SERIES` does for the series (D332). Keyed by `darkMode` (the author's, as
+ * `darkModePalettes` are), never by a theme's name (D331). Every built-in theme writes all six
+ * itself. Built on the first read, so a page whose themes write them never builds the rules.
+ */
+export function baseScalesFor(darkMode: boolean): ScaleLists {
+  if (!baseScales) {
+    const hues = hueSources(true);
+    const git = gitSources('primaryColor', 'secondaryColor', 'tertiaryColor');
+    baseScales = [
+      { ...darkenedScale(hues, 25), cScaleLabel: LABEL_SCALE, ...gitPalettes(git) },
+      {
+        ...darkenedScale(hues, 75),
+        cScaleLabel: LABEL_SCALE,
+        ...gitPalettes(git, 'lightenHsl', 'black'),
+      },
+    ];
+  }
+  return baseScales[darkMode ? 1 : 0];
+}
 
 /**
  * The badge and the callout border (D332) as one v12 theme derives gitGraph's commit label
