@@ -7,7 +7,7 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, LABEL_SCALE } from './palettes.ts';
+import { BASE_PLOT, BASE_SECONDARY, LABEL_SCALE } from './palettes.ts';
 import { darkenedScale, gitLabelRules, hueSources } from './scales.ts';
 import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { NEO_GIT, NEO_GIT_DARK_MODE, REDUX_SERIES } from './redux.ts';
@@ -70,6 +70,7 @@ const neo: ThemeSpec = {
   // v12 theme-neo.js derives cScale from its own constants (#ECECFE, #E9E9F1), not from
   // primaryColor, darkened by 25 (75 under darkMode).
   palettes: {
+    plotColorArray: BASE_PLOT,
     ...darkenedScale(SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
     seriesColorArray: REDUX_SERIES,

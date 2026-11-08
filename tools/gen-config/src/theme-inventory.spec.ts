@@ -78,6 +78,7 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
       'demoPad',
       'demoOpacity',
       'demoOn',
+      'demoSeries',
     ]);
     expect(demo.table?.section).toBe('demo');
     expect(plain).toEqual({ type: 'plain', dir: join(FIXTURES, 'diagram-plain') });
@@ -101,6 +102,7 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
         demoPad: { alias: 'dmp', kind: 'padding' },
         demoOpacity: { alias: 'dmo', kind: 'opacity' },
         demoOn: { alias: 'dmn', kind: 'flag' },
+        demoSeries: { alias: 'dms', kind: 'palette', nested: 'series' },
       });
       expect(mod.THEME_VARIABLE_TABLE).toEqual(demo.table?.vars);
     } finally {
@@ -122,6 +124,10 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     );
     expect(doc).toContain(
       '| `demoOn` | | flag | `true` | `true` | `true` | `true` | `false` | `false` | `false` | `false` | `false` | `true` | `true` |'
+    );
+    // A palette variable's colours, comma-separated: the shared palette its rule names (D545).
+    expect(doc).toMatch(
+      /^\| `demoSeries` \| `demo\.series` \| palette \| `#FFF4DD,#FFD8B1,[^`]*` \|.* \| `#ECECFF,#8493A6,[^`]*` \|/m
     );
     // The nested form beside the flat name (D540); redux's dark value in the dark redux themes.
     expect(doc).toMatch(
