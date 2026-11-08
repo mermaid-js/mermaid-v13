@@ -57,7 +57,11 @@ interface Env {
   readonly sectionWidth: number;
   readonly padding: number;
   readonly font: FontKey;
-  /** Lays out `text` wrapped at `wrap`; undefined when there is no text. */
+  /**
+   * Lays out `text` wrapped at `wrap`; undefined when there is no text. In px a word wider than
+   * `wrap` stays whole and overflows, as in v12 (spec #424); in cells it is split, as the text
+   * output draws a label inside its box.
+   */
   measure(text: string | undefined, wrap: number): MeasuredLabel | undefined;
 }
 
@@ -102,6 +106,7 @@ function envOf(ctx: KanbanLayoutContext): Env {
     size: ctx.theme.number('fontSize'),
     weight: FONT_WEIGHT,
   };
+  const keepWords = ctx.units.id !== 'cell';
   return {
     lengths,
     meta,
@@ -112,6 +117,7 @@ function envOf(ctx: KanbanLayoutContext): Env {
       if (text === undefined) return undefined;
       const label = layoutLabel(text, font, wrap, ctx.measurer, {
         markdown: true,
+        keepWords,
         ...(ctx.inline ? { inline: ctx.inline } : {}),
       });
       return label.lines.length === 0 ? undefined : label;
