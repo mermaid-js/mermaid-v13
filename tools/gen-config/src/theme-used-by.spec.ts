@@ -64,9 +64,10 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
+ * must read none (so it is removed as soon as it reads one). xychart's renderer is #510, which
+ * removes it.
  */
-const NOT_DRAWN_YET = new Set<string>([]);
+const NOT_DRAWN_YET = new Set<string>(['xychart']);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -89,6 +90,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'sequence',
       'state',
       'timeline',
+      'xychart',
     ]);
     for (const type of TYPES) {
       if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);

@@ -1,8 +1,8 @@
 // cspell:words unput
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
- * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types and
- * kanban (M5). Pie and gitGraph are Langium in v12 and gate on its tokens instead (D213).
+ * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
+ * kanban and xychart (M5). Pie and gitGraph are Langium in v12 and gate on its tokens instead (D213).
  */
 
 /** The part of a v12 jison lexer the oracle drives. */
@@ -169,6 +169,20 @@ export const JISON_TYPES = {
       dir: `${V12_DIAGRAMS}/quadrant-chart`,
       docs: 'quadrantChart.md',
       method: { kind: 'run', parsers: ['parser'], specs: ['parser/quadrant.jison.spec.ts'] },
+    },
+  },
+  xychart: {
+    probe: 'xychart\n  bar [1]',
+    e2e: ['xychart'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/xychart`,
+      docs: 'xyChart.md',
+      method: {
+        kind: 'run',
+        parsers: ['parser'],
+        // The DB spec calls the DB's setters only, so it adds no source.
+        specs: ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'],
+      },
     },
   },
 } as const satisfies Record<string, JisonTypeDescriptor>;

@@ -9,6 +9,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #506 T0 chart series palette
 
 ## #507 T1 lexer
+- **Choice:** the dead `md_string` rules are ported as the one literal rule jison built from them (`T.DeadMdRule`, rule 26), so v13 skips that exact text as v12 does instead of dropping the rule; `md-string-dead-rule-*` cases fire it.
+- `NOT_DRAWN_YET` in `theme-used-by.spec.ts` holds `xychart` until #510 reads a theme variable.
 
 ## #508 T2 parser
 - Exploration: v12 infers the x range from the **first** plot, not the longest as the spec says: inferring calls `setXAxisRangeData`, which sets `hasSetXAxis` (`xychartDb.ts:93, 130–134`). Probe the oracle and follow it.
