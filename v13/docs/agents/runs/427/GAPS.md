@@ -26,7 +26,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Note for #499: links carry `flow` (the value to draw, 0 for invalid ones); `value` is v12's for parity and T6's hover.
 
 ## #499 T3 layout
-- Coordinator: the port of d3-sankey 0.12.3 (and `sankeyLinkHorizontal` from d3-shape's link) gets a `THIRD_PARTY_NOTICES` file in `packages/diagram-sankey`, in the same form as treemap's d3-hierarchy credit (`feature/428_treemap`, or `mermaid-v13` once it lands). Read the licence from the installed package (`LICENSE` in d3-sankey 0.12.3; not assumed ISC).
+- Closed: `packages/diagram-sankey/THIRD_PARTY_NOTICES` in treemap's form (from `feature/428_treemap`): d3-sankey 0.12.3, d3-array 2.12.1 (`sum`/`min`/`max`) and d3-shape 1.3.7 (`linkHorizontal`), each **BSD 3-Clause** (read from the installed `LICENSE`s), and in the package's `files`.
+- **Choice:** where d3-sankey writes NaN, v13 does not (D394): when every flow is 0 (`values-nan`, `values-infinity`, `values-overflow`, `values-negative-zero-sign`) `ky` is 0, so nodes are 0 high and spread as d3 spreads them; flows are scaled by a power of two first, so sums never overflow (bit-identical to d3 elsewhere); a 0-high extent with one node per column pads by `nodePadding` (d3: `0 / 0`).
+- **Choice:** `nodeColors` counts the node's own string entry only: v12's `nodeColors[id]` found `Object.prototype` members for names like `constructor`.
+- **Choice:** the bounds hold the nodes and the label boxes (advance width, ascent to descent about the baseline), not link strokes: v12's `getBBox` left strokes out, and each link's centre line lies inside its nodes.
+- Note for #503: the layout's length defaults are in `layout/metrics.ts` until `sankey` joins `SECTION_OWNERS`; `sankeyLayoutConfig` drops wrong types silently, so the config warnings land there.
 
 ## #502 T4 renderer
 - **For the maintainer:** D396 says the front-matter title becomes the `<title>` fallback "as D133 allows", but D133 says the front-matter title does not feed the accessible name, and no v13 type does this yet. Follow D396 as decided; sankey is the first such type.

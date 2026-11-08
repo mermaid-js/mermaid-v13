@@ -220,8 +220,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
   ]),
-  // Pie, packet, cynefin and info draw in the font family but size their text by their own variables.
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info']),
+  // Pie, packet, cynefin, info and sankey draw in the font family but size their text by their own
+  // variables (sankey: 14 px).
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info', 'sankey']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
