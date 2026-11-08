@@ -4,15 +4,7 @@
  * the codes of the diagnostics and warnings it raises. The manifest lands with #501.
  */
 export { venn } from './plugin.ts';
-export { vennLabels } from './labels.ts';
-export {
-  renderVenn,
-  VENN_PAINT,
-  vennPaints,
-  type VennPaints,
-  type VennRenderContext,
-} from './render/index.ts';
-export { theme as vennTheme } from './theme/table.ts';
+export { renderVenn, type VennRenderContext } from './render/index.ts';
 export { detectVenn, JISON_NAMES, parseVenn, VennTokenKind, vennTokens } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';

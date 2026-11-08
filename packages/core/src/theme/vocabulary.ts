@@ -232,7 +232,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
-  tertiaryTextColor: def('tt', 'color', ['core']),
+  tertiaryTextColor: def('tt', 'color', ['core', 'venn']),
   textColor: def('tx', 'color', [
     'core',
     'flowchart',

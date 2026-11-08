@@ -1,9 +1,10 @@
 /**
- * Venn's paints (spec #429 §Renderer, v12 `vennRenderer.ts:117-229`), read from the theme and the
- * `style` statements before the root is written, so its style declares every alias they use.
+ * Venn's paints (spec #429 §Renderer, v12 `vennRenderer.ts:41-50, :117-229`), read from the theme
+ * and the `style` statements before the root is written, so its style declares every alias they
+ * use.
  *
- * - **Circle**: the base is the style's `fill`, else the slot colour ({@link VennPaints.slot}),
- *   with `fill-opacity` from the style or 0.1, the stroke from the style or the base, and
+ * - **Circle**: the base is the style's `fill`, else the set's colour (below), with
+ *   `fill-opacity` from the style or 0.1, the stroke from the style or the base, and
  *   `stroke-opacity` 0.95. Its label is the style's `color`, else the base lightened by 30 HSL
  *   points when the background is dark, darkened by 30 otherwise (khroma's `isDark` of the
  *   resolved `background`, as v12; not the theme's `dark` trait).
@@ -11,10 +12,12 @@
  *   style's `color`, else `vennSetTextColor`.
  * - **Text node**: its own style's `color`, else `vennSetTextColor`. **Title**: `vennTitleTextColor`.
  *
- * A slot colour is, in order: the author's own `venn<slot + 1>`; with a palette (a non-empty
- * `borderColorArray`, as in redux-color and redux-dark-color, or an author's), its entry
- * `slot mod length`; else the theme's `venn<slot + 1>` (`theme/table.ts`), which falls back to
- * `primaryColor`. Never by theme name (D331).
+ * A set's colour is v12's `themeColors[i % n]`: the slot colours `venn1`–`venn8` that have a
+ * value, in order, set `i` taking the `i mod n`th, and `primaryColor` when there are none. Slot
+ * `k` has, in order: the author's own `venn<k>`; with a palette (a non-empty `borderColorArray`,
+ * as in redux-color and redux-dark-color, or an author's), its entry `(k - 1) mod length`, as
+ * those v12 themes filled their slots; else the theme's `venn<k>` (`theme/table.ts`: the classic
+ * themes write all eight, redux and neo none). Never by theme name (D331).
  */
 import {
   checkColor,
@@ -27,6 +30,7 @@ import { formatColor, parseColor, type Rgba } from '@mermaid-js/core/theme';
 import type { VennModel } from '../model.ts';
 import { vennStyles } from '../layout/index.ts';
 import { areaKey } from '../solver/index.ts';
+import { VENN_SLOTS } from '../layout/metrics.ts';
 import { slotVar } from '../theme/slots.ts';
 import { isDark, shiftLightness } from './colour.ts';
 import type { VennRenderContext } from './context.ts';
@@ -64,12 +68,17 @@ export interface OverlapPaint {
 }
 
 export interface VennPaints {
-  /** The colour of slot `slot` and its channels, where JS can compute them. */
-  slot(slot: number): { readonly paint: Paint; readonly rgba: Rgba | undefined };
-  circle(sets: readonly string[], slot: number): CirclePaint;
+  /** The circle of the drawn set at `index` (0, 1, …) with the style of `sets`. */
+  circle(sets: readonly string[], index: number): CirclePaint;
   overlap(sets: readonly string[]): OverlapPaint;
   textNode(id: string): Paint;
   title(): Paint;
+}
+
+/** A colour and its channels, where JS can compute them. */
+interface Colour {
+  readonly paint: Paint;
+  readonly rgba: Rgba | undefined;
 }
 
 /** One style target's paints, as v12 reads them: `fill`, `fill-opacity`, `stroke`, `color`. */
@@ -104,16 +113,30 @@ export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints
     return out;
   };
 
+  // Which slots the author wrote: an author's `venn<k>` comes before the palette, as in v12,
+  // whose themes filled only the slots still unset. `Theme` resolves an author's value but does
+  // not say whose a value is, so this reads the config the theme was built from.
   const authored = (ctx.config.themeVariables ?? {}) as Readonly<Record<string, unknown>>;
   const palette = theme.palette('borderColorArray');
-  const slot = (s: number): { paint: Paint; rgba: Rgba | undefined } => {
-    const name = slotVar(s);
+  const slotColour = (k: number): Colour | undefined => {
+    const name = slotVar(k);
     if (palette.length > 0 && !Object.hasOwn(authored, name)) {
-      const c = palette[s % palette.length]!;
+      const c = palette[k % palette.length]!;
       return { paint: c, rgba: parseColor(c) };
     }
+    // A slot neither the theme nor the author writes reads `currentColor` (redux, neo).
+    if (theme.value(name) === 'currentColor') return undefined;
     return { paint: theme.color(name), rgba: theme.rgba(name) };
   };
+  const written: Colour[] = [];
+  for (let k = 0; k < VENN_SLOTS; k++) {
+    const c = slotColour(k);
+    if (c) written.push(c);
+  }
+  const setColour = (index: number): Colour =>
+    written.length > 0
+      ? written[index % written.length]!
+      : { paint: theme.color('primaryColor'), rgba: theme.rgba('primaryColor') };
 
   const background = theme.rgba('background') ?? parseColor(VENN_PAINT.background)!;
   const shift = isDark(background) ? VENN_PAINT.labelShift : -VENN_PAINT.labelShift;
@@ -126,10 +149,9 @@ export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints
   };
 
   return {
-    slot,
-    circle(sets, s) {
+    circle(sets, index) {
       const st = styled(sets);
-      const base = st.fill ? { paint: st.fill, rgba: parseColor(st.fill) } : slot(s);
+      const base = st.fill ? { paint: st.fill, rgba: parseColor(st.fill) } : setColour(index);
       return {
         fill: base.paint,
         fillOpacity: st.fillOpacity ?? VENN_PAINT.circleFillOpacity,

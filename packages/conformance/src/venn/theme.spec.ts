@@ -10,9 +10,8 @@
  *
  * Every slot that differs is in `DIFFERENCES` with the decision that makes it, and the list has to
  * match the differences found exactly, so none is unlisted and none is stale: D415's classic
- * light approximation (`base` and `forest`: `venn3` only; `neutral`: all eight slots), D333(a)'s
- * rounding in `default`'s `venn3`, and the title ink in `base`, `redux` and `redux-color`, where
- * v13's shared `titleColor` is not v12's.
+ * light approximation (`base` and `forest`: `venn3` only; `neutral`: all eight slots) and D333(a)'s
+ * rounding in `default`'s `venn3`.
  */
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
@@ -24,7 +23,8 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
-import { venn, vennPaints, type VennModel } from '@mermaid-js/diagram-venn';
+import { venn, type VennModel } from '@mermaid-js/diagram-venn';
+import { vennPaints } from '@mermaid-js/diagram-venn/testing';
 import { loadOracle } from '../oracle.ts';
 
 interface V12 {
@@ -111,7 +111,7 @@ async function v13Drawn(
     vennSetTextColor: hex(theme.value('vennSetTextColor')),
   };
   for (const i of INDEXES) {
-    const c = paints.circle([`A${i}`], i % SLOTS);
+    const c = paints.circle([`A${i}`], i);
     out[`circle${i}`] = hex(c.fill);
     out[`label${i}`] = hex(c.label);
   }
@@ -124,8 +124,6 @@ const D415_NEUTRAL =
   'D415: classic light themes take default’s formula; v12 neutral read its cScale greys';
 const D333A =
   'D333(a): v12 darkened its unrounded HSL tertiaryColor; v13 the hex one (#b9ff20 against #b5ff20)';
-const TITLE =
-  'spec #429 “v13 entries”: the title ink is the rule titleColor, which v13 resolves by its shared contrast rule here, where v12 had its own (#000000, base’s derived near-black)';
 /** The slot-derived keys of set index `i` (its circle and label). */
 const ofSlot = (theme: string, slot: number, why: string): [string, string][] =>
   INDEXES.flatMap((i): [string, string][] =>
@@ -143,10 +141,6 @@ const DIFFERENCES: Readonly<Record<string, string>> = Object.fromEntries([
   ...ofSlot('forest', 2, D415),
   ...Array.from({ length: SLOTS }, (_, s) => ofSlot('neutral', s, D415_NEUTRAL)).flat(),
   ...ofSlot('default', 2, D333A),
-  ...['base', 'redux', 'redux-color'].map((t): [string, string] => [
-    `${t}/vennTitleTextColor`,
-    TITLE,
-  ]),
 ]);
 
 describe('venn colours against v12 12.2.0 (#495, D415)', () => {
@@ -218,20 +212,36 @@ describe('venn colours against v12 12.2.0 (#495, D415)', () => {
     }
   );
 
-  // Listed (GAPS #495): v12 cycled whatever `venn*` it found, so in the four themes that define
-  // none an author's lone `venn2` coloured every circle; v13 gives it slot 1 only.
-  it.each(FLAT.map((n) => [n]))('%s: an author’s venn2 recolours slot 1 only', async (name) => {
-    const author = { venn2: '#123456' };
+  // v12 cycles the `venn*` it finds (`themeColors[i % n]`), so in the four themes that define
+  // none an author's lone `venn2` colours every circle, and `venn1` with `venn3` alternate.
+  it.each(
+    FLAT.flatMap((n) => [
+      [n, { venn2: '#123456' }],
+      [n, { venn1: '#aa0000', venn3: '#0000aa' }],
+    ])
+  )('%s %o: the circles cycle the written slots, as in v12', async (name, author) => {
     const old = v12Drawn(v12Vars(name, author));
     const now = await v13Drawn(name, author);
-    expect([old.circle0, old.circle1]).toEqual(['#123456', '#123456']);
-    expect([now.circle0, now.circle1]).toEqual([hex(v12Vars(name).primaryColor), '#123456']);
+    const keys = Object.keys(old).filter((k) => !(`${name}/${k}` in DIFFERENCES));
+    expect(Object.fromEntries(keys.map((k) => [k, now[k]]))).toEqual(
+      Object.fromEntries(keys.map((k) => [k, old[k]]))
+    );
+    const circles = INDEXES.slice(0, 4).map((i) => now[`circle${i}`]);
+    expect(circles).toEqual(
+      'venn2' in author ? Array(4).fill('#123456') : ['#aa0000', '#0000aa', '#aa0000', '#0000aa']
+    );
   });
 
   // v12 base derives every slot from the author's base colours; the label ink follows an
   // author's dark background.
-  it('base: an author’s primaryColor, secondaryColor and background move the slots as in v12', async () => {
-    const author = { primaryColor: '#aa3366', secondaryColor: '#3366aa', background: '#101010' };
+  it('base: an author’s base colours and background move the slots and inks as in v12', async () => {
+    // tertiaryColor too: v12 base derives it from primaryColor, v13 base keeps its own.
+    const author = {
+      primaryColor: '#aa3366',
+      secondaryColor: '#3366aa',
+      tertiaryColor: '#66aa33',
+      background: '#101010',
+    };
     const old = v12Drawn(v12Vars('base', author));
     const now = await v13Drawn('base', author);
     const keys = Object.keys(old).filter((k) => !(`base/${k}` in DIFFERENCES));

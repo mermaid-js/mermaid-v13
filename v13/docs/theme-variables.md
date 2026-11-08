@@ -24,7 +24,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
-| `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
+| `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
 | `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, venn |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
@@ -395,15 +395,17 @@ flags and opacities, which are read literally.
 
 ### venn
 
+A theme with a palette (a non-empty `borderColorArray`: redux-color, redux-dark-color, or an author’s) draws the circles from it, not from these slot values; `currentColor` is a slot no theme writes, and the circles cycle the slots that are written, else fall back to `primaryColor`.
+
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `venn1` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#5353ff` | `#6a6e6e` | `#8cb42f` | `#a1a1a1` | `#ffc244` | `#cccccc` | `#1f2020` |
-| `venn2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ffff45` | `#a40000` | `#6aff19` | `#b0b0b0` | `#c244ff` | `#cccccc` | `#1f2020` |
-| `venn3` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#b9ff20` | `#cc2a91` | `#8db52e` | `#888888` | `#2a71ff` | `#cccccc` | `#1f2020` |
-| `venn4` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ff53ff` | `#87a1a9` | `#2fb457` | `#a1a1a1` | `#80ff44` | `#cccccc` | `#1f2020` |
-| `venn5` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#53ffff` | `#bf7344` | `#b4572f` | `#a1a1a1` | `#ff4480` | `#cccccc` | `#1f2020` |
-| `venn6` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#45ff45` | `#eb2626` | `#19ffae` | `#b0b0b0` | `#ff4480` | `#cccccc` | `#1f2020` |
-| `venn7` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ff5353` | `#b800e1` | `#2f8cb4` | `#a1a1a1` | `#44ffc2` | `#cccccc` | `#1f2020` |
-| `venn8` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#45ffff` | `#feab35` | `#196aff` | `#b0b0b0` | `#ffc244` | `#cccccc` | `#1f2020` |
-| `vennTitleTextColor` | | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#333333` | `#000000` | `#dfe0e0` |
+| `venn1` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#5353ff` | `#6a6e6e` | `#8cb42f` | `#a1a1a1` | `#ffc244` | `currentColor` | `currentColor` |
+| `venn2` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#ffff45` | `#a40000` | `#6aff19` | `#b0b0b0` | `#c244ff` | `currentColor` | `currentColor` |
+| `venn3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#b9ff20` | `#cc2a91` | `#8db52e` | `#888888` | `#2a71ff` | `currentColor` | `currentColor` |
+| `venn4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#ff53ff` | `#87a1a9` | `#2fb457` | `#a1a1a1` | `#80ff44` | `currentColor` | `currentColor` |
+| `venn5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#53ffff` | `#bf7344` | `#b4572f` | `#a1a1a1` | `#ff4480` | `currentColor` | `currentColor` |
+| `venn6` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#45ff45` | `#eb2626` | `#19ffae` | `#b0b0b0` | `#ff4480` | `currentColor` | `currentColor` |
+| `venn7` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#ff5353` | `#b800e1` | `#2f8cb4` | `#a1a1a1` | `#44ffc2` | `currentColor` | `currentColor` |
+| `venn8` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#45ffff` | `#feab35` | `#196aff` | `#b0b0b0` | `#ffc244` | `currentColor` | `currentColor` |
+| `vennTitleTextColor` | | color | `#000000` | `#000000` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#090600` | `#000000` | `#dfe0e0` |
 | `vennSetTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |

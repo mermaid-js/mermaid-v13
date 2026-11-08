@@ -79,6 +79,7 @@ function packageSection(pkg: ThemePackage, specs: readonly ThemeSpec[]): string[
     '',
     `### ${pkg.type}`,
     '',
+    ...(pkg.note === undefined ? [] : [pkg.note, '']),
     `| Variable | Nested | Kind | ${specs.map((s) => s.name).join(' | ')} |`,
     `| --- | --- | --- | ${specs.map(() => '---').join(' | ')} |`,
     ...rows,

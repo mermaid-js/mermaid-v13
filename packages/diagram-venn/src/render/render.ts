@@ -15,6 +15,7 @@
  * chart (venn.js's `disjoint`) is not drawn.
  */
 import {
+  checkColor,
   px,
   styleScope,
   styleText,
@@ -22,6 +23,7 @@ import {
   translate,
   type Attrs,
   type Paint,
+  type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type {
@@ -35,21 +37,26 @@ import type { VennModel } from '../model.ts';
 import type { VennRenderContext } from './context.ts';
 import { VENN_PAINT, vennPaints, type CirclePaint, type OverlapPaint } from './paint.ts';
 
+/** An area with an outline: one the solver placed on the chart. */
+type Placed = VennAreaLayout & { readonly path: RegionPath };
+
+const placed = (a: VennAreaLayout): a is Placed => a.path !== undefined;
+
 /** An area to draw with its paint, read before the root. */
-type Drawn =
-  | { readonly area: VennAreaLayout & { readonly path: RegionPath }; readonly circle: CirclePaint }
-  | {
-      readonly area: VennAreaLayout & { readonly path: RegionPath };
-      readonly overlap: OverlapPaint;
-    };
+type Drawn = { readonly area: Placed } & (
+  | { readonly circle: CirclePaint }
+  | { readonly overlap: OverlapPaint }
+);
 
 interface Scene {
   readonly w: SvgWriter;
   readonly layout: VennLayout;
   readonly areas: readonly Drawn[];
   readonly textNodes: readonly (readonly Paint[])[];
-  readonly title?: Paint;
 }
+
+/** A fixed colour of v12's (the debug shapes), checked as a paint. */
+const fixed = (c: string): Paint => checkColor(c) as Paint;
 
 /** Writes the whole `<svg>` document for a laid-out venn diagram. */
 export function renderVenn(
@@ -60,31 +67,23 @@ export function renderVenn(
 ): void {
   // Every theme variable is read before the root, so its style declares them.
   const paints = vennPaints(model, ctx);
-  const areas: Drawn[] = [];
-  for (const area of layout.areas) {
-    if (!area.path) continue;
-    const a = area as VennAreaLayout & { readonly path: RegionPath };
-    areas.push(
+  const areas: Drawn[] = layout.areas
+    .filter(placed)
+    .map((area) =>
       area.kind === 'set'
-        ? { area: a, circle: paints.circle(area.sets, area.slot ?? 0) }
-        : { area: a, overlap: paints.overlap(area.sets) }
+        ? { area, circle: paints.circle(area.sets, area.index ?? 0) }
+        : { area, overlap: paints.overlap(area.sets) }
     );
-  }
   const textNodes = layout.textAreas.map((t) => t.nodes.map((n) => paints.textNode(n.id)));
-  const scene: Scene = {
-    w,
-    layout,
-    areas,
-    textNodes,
-    ...(layout.title ? { title: paints.title() } : {}),
-  };
+  const titleInk = layout.title && paints.title();
+  const scene: Scene = { w, layout, areas, textNodes };
   openRoot(model, scene, ctx);
-  if (layout.title && scene.title)
+  if (layout.title && titleInk)
     label(w, layout.title, {
       class: 'venn-title',
       'data-id': 'title',
       'font-size': layout.fonts.title.size,
-      fill: scene.title,
+      fill: titleInk,
     });
   w.open('g', { transform: translate(layout.offset.x, layout.offset.y) });
   for (const d of areas) drawArea(scene, d);
@@ -94,7 +93,7 @@ export function renderVenn(
 }
 
 /** A region's outline as path data. */
-function pathData(w: SvgWriter, p: RegionPath): ReturnType<ReturnType<SvgWriter['path']>['done']> {
+function pathData(w: SvgWriter, p: RegionPath): PathData {
   const b = w.path().moveTo(p.start.x, p.start.y);
   for (const a of p.arcs) b.arcTo(a.radius, a.radius, 0, a.large, a.sweep, a.to.x, a.to.y);
   return b.done();
@@ -113,7 +112,7 @@ function drawArea({ w, layout }: Scene, d: Drawn): void {
   });
   const dPath = pathData(w, area.path);
   let ink: Paint;
-  if ('circle' in d) {
+  if (set) {
     const c = d.circle;
     w.outline('node', 'path', {
       d: dPath,
@@ -159,7 +158,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
         cy: t.inner.y,
         r: t.inner.radius,
         fill: 'none',
-        stroke: VENN_PAINT.debugCircle as Paint,
+        stroke: fixed(VENN_PAINT.debugCircle),
         'stroke-width': debug.circleStroke,
         'stroke-dasharray': dash(VENN_PAINT.debugCircleDash) as Attrs['stroke-dasharray'],
       });
@@ -172,7 +171,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
           width: n.cell.width,
           height: n.cell.height,
           fill: 'none',
-          stroke: VENN_PAINT.debugCell as Paint,
+          stroke: fixed(VENN_PAINT.debugCell),
           'stroke-width': debug.cellStroke,
           'stroke-dasharray': dash(VENN_PAINT.debugCellDash) as Attrs['stroke-dasharray'],
         });

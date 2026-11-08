@@ -244,9 +244,19 @@ describe('colours (spec #429 Renderer, D415)', () => {
       { config: { theme: 'redux', themeVariables: {} } }
     );
     const circles = [...areas(svg).values()].filter((a) => hasClass(a.g, 'venn-circle'));
-    expect(circles.map((c) => c.path.fill)).toEqual(['var(--_vn1)', 'var(--_vn2)', 'var(--_vn3)']);
-    for (const k of [1, 2, 3]) expect(svg).toContain(`--_vn${k}:var(--mermaid-venn${k},var(--_p))`);
+    expect(circles.map((c) => c.path.fill)).toEqual(['var(--_p)', 'var(--_p)', 'var(--_p)']);
+    // redux writes no slot, so no slot alias is declared (v12's `.filter(Boolean)`).
+    expect(svg).not.toMatch(/--_vn\d/);
     expect(svg).not.toContain('undefined');
+  });
+
+  it('cycles the slots an author writes in a theme that has none, as v12', async () => {
+    const { svg } = await renderVennForTest(
+      fixtureSource('pr-check/2-should-render-a-three-set-venn-diagram'),
+      { config: { theme: 'neo', themeVariables: { venn1: '#aa0000', venn3: '#0000aa' } } }
+    );
+    const circles = [...areas(svg).values()].filter((a) => hasClass(a.g, 'venn-circle'));
+    expect(circles.map((c) => c.path.fill)).toEqual(['var(--_vn1)', 'var(--_vn3)', 'var(--_vn1)']);
   });
 
   it('keeps an explicit style fill over the palette', async () => {

@@ -21,3 +21,9 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   vennTitleTextColor: { alias: 'vnt', kind: 'color', usedBy: VENN },
   vennSetTextColor: { alias: 'vns', kind: 'color', usedBy: VENN },
 };
+
+/**
+ * The inventory doc's note (`v13/docs/theme-variables.md`): what the slot rows below do not show.
+ */
+export const THEME_NOTE =
+  'A theme with a palette (a non-empty `borderColorArray`: redux-color, redux-dark-color, or an author’s) draws the circles from it, not from these slot values; `currentColor` is a slot no theme writes, and the circles cycle the slots that are written, else fall back to `primaryColor`.';

@@ -8,4 +8,5 @@ export { vennLayoutViolations } from './layout/invariants.ts';
 export { parsedVenn, vennTestContext, vennTestTheme, type ParsedVenn } from './test-context.ts';
 export { seededRandom } from './solver/index.ts';
 export { renderVennForTest, TEST_VERSION } from './render/harness.ts';
+export { vennPaints, type VennPaints } from './render/paint.ts';
 export type { RenderedVenn, RenderVennOptions } from './render/harness.ts';
