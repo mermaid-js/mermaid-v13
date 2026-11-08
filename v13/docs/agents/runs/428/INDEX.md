@@ -5,7 +5,7 @@ Integration branch `feature/428_treemap`, cut from `mermaid-v13` at `12ba676cb` 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate on the Langium oracle | #483 | — | merged (ff eba522b95; `testing` entry 2.3 KB gz, no core change) |
-| T2 grammar, parser, model, AST, ported specs | #484 | #483 | open |
+| T2 grammar, parser, model, AST, ported specs | #484 | #483 | merged (ff a77fb95c8; runtime entry 8.0 KB gz, no core change) |
 | T3 custom layout (`TreemapLayout`) and `valueFormat` | #485 | #484 (soft) | open |
 | T4 SVG renderer and theme table | #505 | #484, #485 | open |
 | T6 language facet | #511 | #484 | open |

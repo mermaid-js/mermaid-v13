@@ -25,3 +25,9 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Choice:** v12's `utils.test.ts` (the spec's T4 item) is ported in T2, as `src/v12-specs/utils.spec.ts`, since `buildHierarchy` is the model's tree building. T4 need not port it again.
 - **Model contract for T3** (`packages/diagram-treemap/src/model.ts`): `roots` (nodes `type`, `name`, `value?` leaf only and maybe `NaN`, `classSelector?`, `depth` 0 at the top, `children`, `astId`), `classes`, `title?`, `titleAstId?`, `accTitle`, `accDescr`, `warnings`; `classStyles(model, name)` gives a node's v12 `cssCompiledStyles`. Later changes additive, listed here.
 - Not in T2: probe hooks (`ParseOptions.probe` is ignored until T6 adds them) and class rename (D408), both T6's.
+
+## T2 (#484, merged)
+
+- Review (orchestrator, `/code-review`), fixed: inline diagram sources moved from `parse.spec.ts` and `conformance/src/treemap/parser.spec.ts` into `parser-*` cases in `corpus/treemap-cases.json`; one `excerpt()` helper; handoff numbers corrected.
+- Accepted: the rule methods return `void` and fill instance collections, the same shape as radar's accepted parser (pitfall 6 read as radar reads it); the three extra D401 codes; the D402 "cut short" reading; porting `utils.test.ts` in T2; `@n` ids for repeated `title`/`accTitle`/`accDescr`. Parity leaves out the front-matter title, which v12's oracle never sees: the D218 fallback is covered by `parser-front-matter-title.mmd` and `parser.spec.ts`.
+- The ported v12 specs need no oracle-backed skip (21 of 21 pass).
