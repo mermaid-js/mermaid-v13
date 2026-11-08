@@ -74,7 +74,7 @@ describe('wardley layout invariants on parser-produced fixtures', () => {
         const v = wardleyLayoutViolations(model, layout);
         if (v.length > 0) failures.push(`${id} ${JSON.stringify(section)}: ${v.join('; ')}`);
       }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(54);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(65);
     expect(nodes).toBeGreaterThan(1000);
     expect(links).toBeGreaterThan(400);
     expect(failures.slice(0, 10)).toEqual([]);

@@ -1,0 +1,79 @@
+---
+description: >-
+  a larger map: thirty components, custom stage boundaries, two pipelines, several trends and
+  link flows, notes and annotations
+---
+wardley-beta
+  title Platform strategy
+  size [1200, 800]
+  evolution Genesis@0.15 -> Custom@0.4 -> Product@0.7 -> Commodity
+  anchor Customer [0.98, 0.55]
+  anchor Partner [0.98, 0.8]
+  component Web App [0.9, 0.5]
+  component Mobile App [0.9, 0.62]
+  component Partner API [0.88, 0.78]
+  component Checkout [0.8, 0.45] (build)
+  component Search [0.78, 0.6] (buy)
+  component Recommendations [0.75, 0.3] (build) inertia
+  component Catalogue [0.7, 0.55]
+  component Payments [0.68, 0.82] (outsource)
+  component Identity [0.65, 0.72] (buy)
+  component Inventory [0.6, 0.4]
+  component Pricing [0.58, 0.25] (build)
+  component Analytics [0.55, 0.5]
+  component Messaging [0.5, 0.7]
+  component Data Lake [0.45, 0.45]
+  component ML Platform [0.42, 0.2]
+  component Feature Store [0.38, 0.3]
+  component Container Platform [0.3, 0.68]
+  component Observability [0.28, 0.55]
+  component CI Pipelines [0.27, 0.75]
+  component Compute [0.15, 0.85] (market)
+  component Storage [0.14, 0.88] (market)
+  component Network [0.12, 0.9] (market)
+  component Power [0.05, 0.95]
+  Customer -> Web App
+  Customer -> Mobile App
+  Partner -> Partner API
+  Web App -> Checkout
+  Web App -> Search
+  Mobile App -> Search
+  Mobile App -> Recommendations
+  Partner API -> Catalogue
+  Checkout -> Payments
+  Checkout +> Identity
+  Checkout -> Inventory
+  Search -> Catalogue
+  Recommendations -> ML Platform
+  Recommendations -.-> Analytics
+  Catalogue -> Pricing
+  Catalogue -> Data Lake
+  Inventory -> Messaging
+  Pricing -> Feature Store
+  Analytics -> Data Lake
+  ML Platform -> Feature Store
+  Feature Store -> Data Lake
+  Data Lake -> Storage
+  Messaging -> Container Platform
+  Container Platform -> Compute
+  Container Platform +<> Observability
+  CI Pipelines -> Container Platform
+  Compute -> Power
+  Storage -> Power
+  Network -> Power
+  Container Platform -> Network
+  pipeline Container Platform {
+    component VMs [0.55]
+    component Kubernetes [0.68]
+    component Serverless [0.8]
+  }
+  evolve Recommendations 0.55
+  evolve ML Platform 0.62
+  evolve Pricing 0.45
+  note "Identity is a product: buy it" [0.75, 0.85]
+  note "Data is the moat" [0.35, 0.4]
+  annotations [0.03, 0.97]
+  annotation 1,[0.75, 0.3] "Build the differentiator"
+  annotation 2,[0.15, 0.85] "Utility compute"
+  accelerator Open Source [0.4, 0.3]
+  deaccelerator Legacy Contracts [0.6, 0.8]

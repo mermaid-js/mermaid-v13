@@ -1,0 +1,21 @@
+---
+config:
+  theme: dark
+  themeVariables:
+    wardleyEvolutionColor: '#ffd43b'
+description: >-
+  v12's flat wardleyEvolutionColor feeding the trends (wardleyEvolutionStroke) in dark, where the
+  fills are mainBkg and anchor labels, dividers and annotations take the axis colours (D426)
+---
+wardley-beta
+  title Evolution colour
+  evolution Genesis@0.2 -> Custom@0.45 -> Product@0.75 -> Commodity
+  anchor Customer [0.9, 0.3]
+  component Service [0.6, 0.35]
+  component Platform [0.3, 0.6]
+  Customer -> Service
+  Service -> Platform
+  evolve Service 0.7
+  evolve Platform 0.85
+  annotations [0.05, 0.95]
+  annotation 1,[0.3, 0.6] "Commoditising"
