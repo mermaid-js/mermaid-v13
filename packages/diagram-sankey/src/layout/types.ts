@@ -56,8 +56,11 @@ export interface SankeyNodeLayout {
    * absent when `nodeColors` names the node.
    */
   readonly slot?: number;
-  /** `nodeColors[id]`, or the slot's Tableau10 colour. */
-  readonly colour: string;
+  /**
+   * The rect's fill: the slot's Tableau10 colour, or `nodeColors[id]` as written (unchecked:
+   * #503's colour check decides what an invalid one draws).
+   */
+  readonly fill: string;
   readonly label: SankeyLabel;
 }
 
@@ -90,9 +93,9 @@ export interface SankeyLinkLayout {
   readonly y0: number;
   readonly y1: number;
   readonly path: SankeyLinkPath;
-  /** The source's and target's colours (for `linkColor` `source`, `target` and `gradient`). */
-  readonly sourceColour: string;
-  readonly targetColour: string;
+  /** The source's and target's fills (for `linkColor` `source`, `target` and `gradient`). */
+  readonly sourceFill: string;
+  readonly targetFill: string;
 }
 
 export interface SankeyLayout {
@@ -111,6 +114,10 @@ export interface SankeyLayout {
   readonly labelStyle: SankeyLabelStyle;
   /** The font the labels were measured in, and so are drawn in. */
   readonly font: FontKey;
-  /** What is drawn: the nodes and the labels, with no padding (D224); all 0 when empty. */
+  /**
+   * What is drawn, with no padding (D224); all 0 when empty: the nodes, the label boxes (grown
+   * by half the outline under `outlined`, its halo), and each link's stroke (at least 1 px wide,
+   * so a zero link or a 0-high node still counts).
+   */
   readonly bounds: Rect;
 }

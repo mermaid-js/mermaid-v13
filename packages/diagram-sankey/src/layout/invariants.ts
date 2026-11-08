@@ -6,14 +6,14 @@
  */
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
-import { SANKEY_METRICS, TABLEAU10 } from './metrics.ts';
+import { D3_SANKEY, SANKEY_METRICS, TABLEAU10 } from './metrics.ts';
 import type { Rect, SankeyLayout, SankeyNodeLayout } from './types.ts';
 
 /**
- * Float tolerance of the checks, relative to the extent: d3-sankey leaves overlaps of up to
- * 1e-6 px unresolved (its collision threshold).
+ * Float tolerance of the checks, relative to the extent: d3-sankey leaves overlaps up to its
+ * collision threshold unresolved.
  */
-const EPS = 1e-6;
+const EPS = D3_SANKEY.collision;
 
 /** What every check reads. */
 interface Check {
@@ -74,8 +74,13 @@ function order({ model, layout, out }: Check): void {
  */
 function columns({ layout, config, tol, out }: Check): void {
   const byLayer = new Map<number, SankeyNodeLayout[]>();
-  for (const n of layout.nodes) byLayer.set(n.layer, [...(byLayer.get(n.layer) ?? []), n]);
-  const tallest = Math.max(0, ...[...byLayer.values()].map((c) => c.length));
+  for (const n of layout.nodes) {
+    const column = byLayer.get(n.layer);
+    if (column) column.push(n);
+    else byLayer.set(n.layer, [n]);
+  }
+  let tallest = 0;
+  for (const c of byLayer.values()) tallest = Math.max(tallest, c.length);
   const asked = config.nodePadding + (config.showValues ? SANKEY_METRICS.valuePadding : 0);
   const padding = tallest > 1 ? Math.min(asked, config.height / (tallest - 1)) : asked;
   if (Math.abs(layout.padding - padding) > tol)
@@ -111,7 +116,8 @@ function columns({ layout, config, tol, out }: Check): void {
  */
 function proportions({ model, layout, tol, out }: Check): void {
   const { nodes, links } = layout;
-  const top = Math.max(0, ...model.links.map((l) => l.flow));
+  let top = 0;
+  for (const l of model.links) top = Math.max(top, l.flow);
   const unit = (flow: number): number => (top > 0 ? flow / top : 0);
   const ins = nodes.map(() => 0);
   const outs = nodes.map(() => 0);
@@ -125,7 +131,10 @@ function proportions({ model, layout, tol, out }: Check): void {
     widthIn[l.target]! += l.width;
   });
   const values = nodes.map((_, i) => Math.max(ins[i]!, outs[i]!));
-  const ref = values.indexOf(Math.max(0, ...values));
+  let ref = -1;
+  values.forEach((v, i) => {
+    if (ref < 0 || v > values[ref]!) ref = i;
+  });
   const n0 = nodes[ref];
   const k = n0 && values[ref]! > 0 ? (n0.y1 - n0.y0) / values[ref]! : 0;
   nodes.forEach((n, i) => {
@@ -162,19 +171,20 @@ function linkEnds({ layout, tol, out }: Check): void {
       out.push(`link ${i} leaves ${s.id} outside its box`);
     if (l.y1 - l.width / 2 < t.y0 - tol || l.y1 + l.width / 2 > t.y1 + tol)
       out.push(`link ${i} reaches ${t.id} outside its box`);
-    if (l.sourceColour !== s.colour || l.targetColour !== t.colour)
+    if (l.sourceFill !== s.fill || l.targetFill !== t.fill)
       out.push(`link ${i} is not coloured by its ends`);
   });
 }
 
-/** nodeColors, else the next Tableau10 slot. */
+/** A node `nodeColors` names (any non-nullish own entry) fills with it, the others take slots. */
 function colours({ layout, config, out }: Check): void {
   let slot = 0;
   for (const n of layout.nodes) {
-    const own = config.nodeColors.get(n.id);
-    const want = own === undefined ? slot++ % TABLEAU10.length : undefined;
-    if (n.slot !== want || n.colour !== (own ?? TABLEAU10[want!]))
-      out.push(`node ${n.id} is coloured ${n.colour} (slot ${n.slot})`);
+    const named = config.nodeColors.has(n.id);
+    const want = named ? undefined : slot++ % TABLEAU10.length;
+    const fill = named ? String(config.nodeColors.get(n.id)) : TABLEAU10[want!];
+    if (n.slot !== want || n.fill !== fill)
+      out.push(`node ${n.id} is filled ${n.fill} (slot ${n.slot})`);
   }
 }
 
@@ -187,13 +197,17 @@ function labels({ layout, config, tol, out }: Check): void {
     if (label.x !== x || label.y !== (n.y0 + n.y1) / 2) out.push(`node ${n.id}'s label is off`);
     const left = label.anchor === 'start' ? label.x : label.x - label.box.width;
     if (Math.abs(label.box.x - left) > tol) out.push(`node ${n.id}'s label box is off its anchor`);
-    if (label.dy !== (config.showValues ? 0 : SANKEY_METRICS.labelShift))
+    const { labelShiftEm, fontSize } = SANKEY_METRICS;
+    if (label.dy !== (config.showValues ? 0 : labelShiftEm * fontSize))
       out.push(`node ${n.id}'s label has dy ${label.dy}`);
   }
 }
 
-/** Everything drawn inside the bounds (D224). */
-function bounds({ layout, tol, out }: Check): void {
+/**
+ * Everything drawn inside the bounds (D224): nodes, label boxes with the outlined halo, and
+ * each link's stroke at its two ends (where it reaches furthest up and down).
+ */
+function bounds({ layout, config, tol, out }: Check): void {
   const b = layout.bounds;
   const inside = (r: Rect, what: string): void => {
     if (
@@ -204,13 +218,22 @@ function bounds({ layout, tol, out }: Check): void {
     )
       out.push(`${what} is outside the bounds`);
   };
+  const halo = config.labelStyle === 'outlined' ? SANKEY_METRICS.outlineWidth / 2 : 0;
   for (const n of layout.nodes) {
     inside({ x: n.x0, y: n.y0, width: n.x1 - n.x0, height: n.y1 - n.y0 }, `node ${n.id}`);
-    inside(n.label.box, `node ${n.id}'s label`);
+    const t = n.label.box;
+    inside(
+      { x: t.x - halo, y: t.y - halo, width: t.width + 2 * halo, height: t.height + 2 * halo },
+      `node ${n.id}'s label`
+    );
   }
-  for (const l of layout.links)
-    for (const p of [l.path.from, l.path.c1, l.path.c2, l.path.to])
+  for (const l of layout.links) {
+    const half = l.strokeWidth / 2;
+    for (const p of [l.path.from, l.path.to])
+      inside({ x: p.x, y: p.y - half, width: 0, height: 2 * half }, `link ${l.index}'s stroke`);
+    for (const p of [l.path.c1, l.path.c2])
       inside({ ...p, width: 0, height: 0 }, `link ${l.index}`);
+  }
 }
 
 /** Every number in `v`, at any depth, is finite (a node's `value` only not NaN). */

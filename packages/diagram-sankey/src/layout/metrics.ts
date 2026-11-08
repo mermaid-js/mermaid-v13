@@ -5,7 +5,7 @@
  * length comes from the `sankey` config. Sankey draws SVG only (D320), so there is no cell set.
  */
 
-/** The sankey layout's fixed lengths. */
+/** The sankey layout's fixed lengths and factors. */
 export interface SankeyMetrics {
   /** v12 adds this to `nodePadding` when `showValues` is on (`:123`): room for the value. */
   readonly valuePadding: number;
@@ -14,20 +14,32 @@ export interface SankeyMetrics {
   /** `g.node-labels` `font-size` (`:206`): labels are measured and drawn at it. */
   readonly fontSize: number;
   /**
-   * v12's `dy="0.35em"` when `showValues` is off (`:215`), in px at {@link fontSize}: 0.35 × 14
-   * (v13's `dy` is numeric only). With `showValues` on, `dy` is 0.
+   * v12's `dy="0.35em"` when `showValues` is off (`:215`), in em: the layout writes it in px,
+   * `labelShiftEm × fontSize` (v13's `dy` is numeric only, GAPS #502). With `showValues` on,
+   * `dy` is 0.
    */
-  readonly labelShift: number;
+  readonly labelShiftEm: number;
+  /**
+   * The `outlined` style's halo: `.sankey-label-bg` is stroked this wide (`styles.js:11-16`),
+   * with round joins, so it reaches half of it past the text.
+   */
+  readonly outlineWidth: number;
+  readonly outlineJoin: 'round';
   /** v12 draws a link at least this wide: `max(1, width)` (`:278`, D394's zero links). */
   readonly minLinkWidth: number;
+  /** `g.links` `stroke-opacity` (`:231`): a factor, not a length. */
+  readonly linkOpacity: number;
 }
 
 export const SANKEY_METRICS: SankeyMetrics = {
   valuePadding: 15,
   labelGap: 6,
   fontSize: 14,
-  labelShift: 4.9,
+  labelShiftEm: 0.35,
+  outlineWidth: 4,
+  outlineJoin: 'round',
   minLinkWidth: 1,
+  linkOpacity: 0.5,
 };
 
 /** The `sankey` config's length defaults (v12 `config.schema.yaml` `SankeyDiagramConfig`). */

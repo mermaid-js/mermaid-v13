@@ -3,18 +3,18 @@
  * `SankeyLayout` out. It follows v12's `sankeyRenderer.ts` with the drawing taken out: the
  * labels are measured first through the injected measurer at 14 px in `fontFamily`
  * (pitfall 16), the boxes come from d3-sankey 0.12.3 as v12 configures it (`./d3-sankey.ts`),
- * then each node gets its colour and label and each link its path (d3-sankey's
+ * then each node gets its fill and label and each link its path (d3-sankey's
  * `sankeyLinkHorizontal`, d3-shape 1.3.7's `linkHorizontal`: BSD 3-Clause License, see
- * THIRD_PARTY_NOTICES), where v12 put them. The
- * bounds cover the nodes and the labels with no padding, as v12's `setupGraphViewbox(…, 0)`
- * took the drawn box (D224). Lengths come from the `sankey` config and the metrics table
- * (pitfall 13).
+ * THIRD_PARTY_NOTICES), where v12 put them. The bounds cover what is drawn with no padding, as
+ * v12's `setupGraphViewbox(…, 0)` took the drawn box (D224): the nodes, the labels with the
+ * outlined style's halo, and the link strokes. Lengths come from the `sankey` config and the
+ * metrics table (pitfall 13).
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { FontKey } from '@mermaid-js/core/text';
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
-import { d3Sankey, type D3Node } from './d3-sankey.ts';
+import { d3Sankey, type D3LinkInput, type D3Node } from './d3-sankey.ts';
 import { D3_SANKEY, NORMAL_WEIGHT, SANKEY_METRICS, TABLEAU10 } from './metrics.ts';
 import type {
   Rect,
@@ -74,7 +74,7 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
   };
 
   const indexOf = new Map(model.nodes.map((n, i) => [n.id, i]));
-  const links = model.links.map((l) => ({
+  const links: D3LinkInput[] = model.links.map((l) => ({
     source: indexOf.get(l.source)!,
     target: indexOf.get(l.target)!,
     flow: l.flow,
@@ -99,12 +99,13 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
   const { ascent, descent } = ctx.measurer.metrics(font);
 
   const central = centralLayer(graph.nodes);
-  const dy = config.showValues ? 0 : m.labelShift;
+  const dy = config.showValues ? 0 : m.labelShiftEm * m.fontSize;
   let slots = 0;
   const nodes: SankeyNodeLayout[] = graph.nodes.map((node, i) => {
     const source = model.nodes[i]!;
-    const own = config.nodeColors.get(source.id);
-    const slot = own === undefined ? slots++ % TABLEAU10.length : undefined;
+    // v12's `nodeColors[id] ?? scale(id)`: a named node asks the scale for no slot.
+    const named = config.nodeColors.has(source.id);
+    const slot = named ? undefined : slots++ % TABLEAU10.length;
     // v12's getLabelPosition (`:189-203`).
     const left =
       config.labelStyle === 'outlined' ? node.layer < central : !(node.x0 < config.width / 2);
@@ -130,7 +131,7 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
       value: node.value / graph.scale,
       layer: node.layer,
       ...(slot === undefined ? {} : { slot }),
-      colour: own ?? TABLEAU10[slot!]!,
+      fill: slot === undefined ? String(config.nodeColors.get(source.id)) : TABLEAU10[slot]!,
       label,
     };
   });
@@ -156,15 +157,36 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
         c2: { x: mx, y: link.y1 },
         to: { x: x1, y: link.y1 },
       },
-      sourceColour: nodes[l.source]!.colour,
-      targetColour: nodes[l.target]!.colour,
+      sourceFill: nodes[l.source]!.fill,
+      targetFill: nodes[l.target]!.fill,
     };
   });
 
+  // What is drawn: nodes, labels (with the outline's halo), and link strokes. A link's stroke
+  // is horizontal at both ends and its centre line runs monotonically from y0 to y1, so it
+  // spans x0…x1 and reaches half its width past the higher and the lower end.
+  const halo = config.labelStyle === 'outlined' ? m.outlineWidth / 2 : 0;
   const boxes: Rect[] = [];
   for (const n of nodes) {
     boxes.push({ x: n.x0, y: n.y0, width: n.x1 - n.x0, height: n.y1 - n.y0 });
-    boxes.push(n.label.box);
+    const b = n.label.box;
+    boxes.push({
+      x: b.x - halo,
+      y: b.y - halo,
+      width: b.width + 2 * halo,
+      height: b.height + 2 * halo,
+    });
+  }
+  for (const l of out) {
+    const { from, to } = l.path;
+    const half = l.strokeWidth / 2;
+    const top = Math.min(from.y, to.y) - half;
+    boxes.push({
+      x: Math.min(from.x, to.x),
+      y: top,
+      width: Math.abs(to.x - from.x),
+      height: Math.max(from.y, to.y) + half - top,
+    });
   }
   return {
     width: config.width,

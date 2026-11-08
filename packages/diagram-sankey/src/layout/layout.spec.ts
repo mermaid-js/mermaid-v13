@@ -1,34 +1,38 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
 import { parseSankey } from '../parser/index.ts';
+import { sankeyTestContext, sankeyTestTheme } from '../test-context.ts';
 import { layoutSankey, sankeyLayoutViolations, type SankeyLayout } from './index.ts';
 
 let theme: Theme;
 beforeAll(async () => {
-  theme = createTheme(await loadTheme('default'));
+  theme = await sankeyTestTheme();
 });
 
-// A measurer with round numbers, so expected boxes are worked by hand from v12's code: every
-// character is 10 px wide, the ascent is 0.8 of the size and the descent 0.2.
-const fonts: FontKey[] = [];
-const tenPx: Measurer = {
-  id: 'ten',
-  width: (text, font) => {
-    fonts.push(font);
-    return text.length * 10;
-  },
-  metrics: (font) => ({ ascent: font.size * 0.8, descent: font.size * 0.2, lineHeight: font.size }),
-};
+/**
+ * A measurer with round numbers, so expected boxes are worked by hand from v12's code: every
+ * character is 10 px wide, the ascent is 0.8 of the size and the descent 0.2. `fonts` gets each
+ * font it measures in.
+ */
+function tenPx(fonts: FontKey[] = []): Measurer {
+  return {
+    id: 'ten',
+    width: (text, font) => {
+      fonts.push(font);
+      return text.length * 10;
+    },
+    metrics: (font) => ({
+      ascent: font.size * 0.8,
+      descent: font.size * 0.2,
+      lineHeight: font.size,
+    }),
+  };
+}
 
-function lay(src: string, sankey: Record<string, unknown> = {}): SankeyLayout {
+function lay(src: string, sankey: Record<string, unknown> = {}, measurer = tenPx()): SankeyLayout {
   const { model } = parseSankey(src);
-  const layout = layoutSankey(model, {
-    config: { sankey } as unknown as ResolvedConfig,
-    measurer: tenPx,
-    theme,
-  });
+  const layout = layoutSankey(model, sankeyTestContext(theme, sankey, measurer));
   expect(sankeyLayoutViolations(model, layout, sankey)).toEqual([]);
   return layout;
 }
@@ -127,9 +131,7 @@ describe('sankey layout: d3-sankey as v12 configures it', () => {
 
   it('throws on a cycle, as d3 did (the parser rejects it first, D393)', () => {
     const { model } = parseSankey('sankey\na,b,1\nb,a,1');
-    expect(() =>
-      layoutSankey(model, { config: {} as ResolvedConfig, measurer: tenPx, theme })
-    ).toThrow('circular link');
+    expect(() => layoutSankey(model, sankeyTestContext(theme))).toThrow('circular link');
   });
 });
 
@@ -138,13 +140,20 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
     const rows = Array.from({ length: 11 }, (_, i) => `s,t${i},1`).join('\n');
     const l = lay(`sankey\n${rows}`, { nodeColors: { t0: '#123456', constructor: '#fff' } });
     expect(l.nodes.map((n) => n.slot)).toEqual([0, undefined, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
-    expect(node(l, 't0').colour).toBe('#123456');
-    expect(node(l, 's').colour).toBe('#4e79a7');
-    expect(node(l, 't10').colour).toBe('#4e79a7');
-    expect(l.links[0]).toMatchObject({ sourceColour: '#4e79a7', targetColour: '#123456' });
+    expect(node(l, 't0').fill).toBe('#123456');
+    expect(node(l, 's').fill).toBe('#4e79a7');
+    expect(node(l, 't10').fill).toBe('#4e79a7');
+    expect(l.links[0]).toMatchObject({ sourceFill: '#4e79a7', targetFill: '#123456' });
     // Only own entries count: `__proto__` and `constructor` are names like any other.
     const p = lay('sankey\n__proto__,constructor,1', { nodeColors: {} });
     expect(p.nodes.map((n) => n.slot)).toEqual([0, 1]);
+  });
+
+  it('takes a node with any non-nullish nodeColors entry out of the slots, as v12 `??` did', () => {
+    // v12 never asked the scale for a's slot, so b took slot 0; null fell through to the scale.
+    const l = lay('sankey\na,b,1\nb,c,1', { nodeColors: { a: 5, c: null } });
+    expect(l.nodes.map((n) => n.slot)).toEqual([undefined, 0, 1]);
+    expect(l.nodes.map((n) => n.fill)).toEqual(['5', '#4e79a7', '#f28e2c']);
   });
 
   it('writes one line, the value rounded to 2 decimals between prefix and suffix (D395)', () => {
@@ -170,7 +179,7 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
 
   it('shifts the baseline 0.35em (4.9 px) without values', () => {
     const l = lay(FORK, { showValues: false });
-    expect(l.nodes.map((n) => n.label.dy)).toEqual([4.9, 4.9, 4.9]);
+    for (const n of l.nodes) expect(n.label.dy).toBeCloseTo(4.9, 12);
     const a = node(l, 'a');
     expect(a.label.box.y).toBeCloseTo(a.label.y + 4.9 - 11.2, 9);
   });
@@ -192,21 +201,35 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
     expect(tie.nodes.every((n) => n.label.anchor === 'start')).toBe(true);
   });
 
-  it('bounds the nodes and the labels, with no padding (D224)', () => {
+  it('bounds what is drawn, with no padding (D224)', () => {
     // Legacy: every label inside the 600 × 400 extent; the nodes reach its four edges.
-    expect(lay(FORK).bounds).toEqual({ x: 0, y: 0, width: 600, height: 400 });
-    // Outlined, with a the largest: b's and c's labels start 6 px past the right edge.
+    const b = lay(FORK).bounds;
+    expect(b).toMatchObject({ x: 0, y: 0, width: 600 });
+    expect(b.height).toBeCloseTo(400, 9);
+    // Outlined, with a the largest: b's and c's labels start 6 px past the right edge, and the
+    // 4 px outline reaches 2 px past the text.
     const l = lay(FORK, { labelStyle: 'outlined' });
     expect(l.bounds.x).toBe(0);
-    expect(l.bounds.width).toBe(606 + 40);
+    expect(l.bounds.width).toBe(606 + 40 + 2);
     // A label left of layer 0 starts before 0.
     const left = lay('sankey\na,b,4\nx,b,6\nb,c,10', { labelStyle: 'outlined' });
-    expect(left.bounds.x).toBe(-6 - 'a 4'.length * 10);
+    expect(left.bounds.x).toBe(-6 - 'a 4'.length * 10 - 2);
+  });
+
+  it('bounds a zero link by its 1 px stroke', () => {
+    // Every flow 0: both nodes 0 high at y 200; text measured 0 wide and 0 high.
+    const flat: Measurer = {
+      id: 'flat',
+      width: () => 0,
+      metrics: () => ({ ascent: 0, descent: 0, lineHeight: 0 }),
+    };
+    const l = lay('sankey\na,b,0', {}, flat);
+    expect(l.bounds).toEqual({ x: 0, y: 199.5, width: 600, height: 1 });
   });
 
   it('measures labels at 14 px in the theme font, normal weight', () => {
-    fonts.length = 0;
-    const l = lay(FORK);
+    const fonts: FontKey[] = [];
+    const l = lay(FORK, {}, tenPx(fonts));
     expect(fonts.length).toBe(3);
     expect(new Set(fonts.map((f) => JSON.stringify(f)))).toEqual(
       new Set([JSON.stringify({ family: theme.value('fontFamily'), size: 14, weight: 400 })])

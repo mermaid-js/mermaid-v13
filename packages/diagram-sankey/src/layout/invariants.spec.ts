@@ -1,23 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
 import { parseSankey } from '../parser/index.ts';
+import { sankeyTestContext, sankeyTestTheme } from '../test-context.ts';
 import { layoutSankey, sankeyLayoutViolations, type SankeyLayout } from './index.ts';
 
 let theme: Theme;
 beforeAll(async () => {
-  theme = createTheme(await loadTheme('default'));
+  theme = await sankeyTestTheme();
 });
 
 // a → b, a → c, b → c, c → d: three layers, a column of two.
 const { model } = parseSankey('sankey\na,b,3\na,c,2\nb,c,3\nc,d,5\nx,d,1');
-const ok = (): SankeyLayout =>
-  layoutSankey(model, {
-    config: { sankey: {} } as unknown as ResolvedConfig,
-    measurer: tableMeasurer,
-    theme,
-  });
+const ok = (): SankeyLayout => layoutSankey(model, sankeyTestContext(theme));
 const broken = (f: (l: SankeyLayout) => SankeyLayout): string[] =>
   sankeyLayoutViolations(model, f(ok()));
 const at = <T>(xs: readonly T[], i: number, f: (x: T) => T): T[] =>
@@ -93,9 +87,19 @@ describe('sankeyLayoutViolations', () => {
     }));
     expect(v).toEqual(
       expect.arrayContaining([
-        expect.stringMatching(/^node c is coloured/),
+        expect.stringMatching(/^node c is filled/),
         expect.stringContaining('outside the bounds'),
       ])
+    );
+  });
+
+  it("catches bounds that leave out the outlined label's halo", () => {
+    const section = { labelStyle: 'outlined' };
+    const l = layoutSankey(model, sankeyTestContext(theme, section));
+    expect(sankeyLayoutViolations(model, l, section)).toEqual([]);
+    const tight = { ...l, bounds: { ...l.bounds, width: l.bounds.width - 1 } };
+    expect(sankeyLayoutViolations(model, tight, section)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/label is outside the bounds$/)])
     );
   });
 });

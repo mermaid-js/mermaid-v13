@@ -1,10 +1,14 @@
 /**
  * The `sankey` options the layout reads, each with v12's default (`SankeyDiagramConfig`). The
- * config resolver does not check value types, so a directive can set `"width": "wide"`: a
- * length is read as d3 read it (a number, or a numeric string as its number) and must be
- * finite and not negative; anything else, and an unknown alignment or label style, falls back
- * to the default. A `nodeColors` entry counts when it is the node's own string entry.
- * (Warnings for dropped values, and the colour check, are #503's.)
+ * config resolver does not check value types, so a directive can set `"width": "wide"`. A
+ * length is read as a finite number of 0 or more, or a numeric string as its number; anything
+ * else, and an unknown alignment or label style, falls back to the default. v12 differs (GAPS
+ * #499): d3 took `+value`, so a negative `nodePadding` overlapped nodes and a negative
+ * `nodeWidth` drew boxes inside out, and a string `nodePadding` was concatenated with v12's
+ * `+ 15` before d3 read it. A `nodeColors` entry counts when it is the node's own entry and not
+ * `null` or `undefined` (v12's `??`), whatever its type: it takes the node out of the Tableau10
+ * slots, and #503's colour check decides what an invalid one draws. #503 warns on each dropped
+ * or invalid value.
  */
 import type { SankeyDiagramConfig } from '@mermaid-js/core/config';
 import { SANKEY_LENGTH_DEFAULTS } from './layout/metrics.ts';
@@ -20,8 +24,8 @@ export interface SankeyLayoutConfig {
   readonly prefix: string;
   readonly suffix: string;
   readonly labelStyle: SankeyLabelStyle;
-  /** Own string entries only. */
-  readonly nodeColors: ReadonlyMap<string, string>;
+  /** The node's own non-nullish entries, unchecked. */
+  readonly nodeColors: ReadonlyMap<string, unknown>;
 }
 
 const ALIGNMENTS: readonly SankeyAlignment[] = ['left', 'right', 'center', 'justify'];
@@ -45,11 +49,11 @@ export function sankeyLayoutConfig(
 ): SankeyLayoutConfig {
   const s = (section ?? {}) as Readonly<Record<string, unknown>>;
   const d = SANKEY_LENGTH_DEFAULTS;
-  const colours = new Map<string, string>();
+  const colours = new Map<string, unknown>();
   const given = s.nodeColors;
   if (given !== null && typeof given === 'object')
     for (const [id, colour] of Object.entries(given)) {
-      if (typeof colour === 'string') colours.set(id, colour);
+      if (colour !== null && colour !== undefined) colours.set(id, colour);
     }
   return {
     width: length(s.width, d.width),

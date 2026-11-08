@@ -16,6 +16,10 @@
  *   NaN; here `ky` is 0, so the nodes are 0 high and spread as d3 spreads them.
  * - When the extent is 0 high and no column holds two nodes, d3's padding is `0 / 0`; here it
  *   is `nodePadding`, its limit as the height goes to 0.
+ * - With a single layer d3's column step is `… / 0`; here it is 0.
+ *
+ * Node depths and heights come from one pass in topological order, not d3's repeated sweeps:
+ * the same values in linear time (`longestPaths`).
  *
  * d3 threw `circular link` on a cycle; so does this. A render never gets here with one: the
  * parser rejects cycles (D393).
@@ -49,6 +53,13 @@ export interface D3Link {
   /** The link's centre line at its source and at its target. */
   y0: number;
   y1: number;
+}
+
+/** A link to lay out: its source and target by node index, and the flow it draws. */
+export interface D3LinkInput {
+  readonly source: number;
+  readonly target: number;
+  readonly flow: number;
 }
 
 export interface D3SankeyOptions {
@@ -143,7 +154,7 @@ function flowScale(flows: readonly number[]): number {
 /** computeNodeLinks (L126-147), with the scaled flows. */
 function buildGraph(
   nodeCount: number,
-  links: readonly { readonly source: number; readonly target: number; readonly flow: number }[],
+  links: readonly D3LinkInput[],
   scale: number
 ): { nodes: D3Node[]; links: D3Link[] } {
   const nodes: D3Node[] = [];
@@ -173,33 +184,40 @@ function buildGraph(
 }
 
 /**
- * computeNodeDepths (L157-173) and computeNodeHeights (L175-191): `set` each node's distance
- * along `next`, breadth first.
+ * computeNodeDepths (L157-173) and computeNodeHeights (L175-191): `set` each node's length of
+ * the longest path to it along `next`. d3 sweeps the whole node set once per step of the
+ * longest path (quadratic on a long chain); a node ends with the last step that reaches it,
+ * which is that longest path's length, so one pass in topological order gives the same values
+ * in linear time. A cycle leaves nodes unvisited: `circular link`, as d3 threw.
  */
-function sweep(
+function longestPaths(
   nodes: readonly D3Node[],
   set: (node: D3Node, x: number) => void,
   next: (node: D3Node) => D3Node[]
 ): void {
-  const n = nodes.length;
-  let current = new Set(nodes);
-  let x = 0;
-  while (current.size) {
-    const after = new Set<D3Node>();
-    for (const node of current) {
-      set(node, x);
-      for (const other of next(node)) after.add(other);
+  const after = nodes.map(next);
+  const waiting = nodes.map(() => 0);
+  for (const targets of after) for (const t of targets) waiting[t.index]!++;
+  const x = nodes.map(() => 0);
+  const queue = nodes.filter((n) => waiting[n.index] === 0);
+  // The queue grows while it is read: a for-of reads its length afresh each step.
+  for (const node of queue) {
+    for (const t of after[node.index]!) {
+      x[t.index] = Math.max(x[t.index]!, x[node.index]! + 1);
+      if (--waiting[t.index]! === 0) queue.push(t);
     }
-    if (++x > n) throw new Error('circular link');
-    current = after;
   }
+  if (queue.length < nodes.length) throw new Error('circular link');
+  for (const node of nodes) set(node, x[node.index]!);
 }
 
 /** computeNodeLayers (L193-209). */
 function computeNodeLayers(nodes: readonly D3Node[], o: D3SankeyOptions): D3Node[][] {
   const align = ALIGN[o.align];
   const layers = max(nodes, (d) => d.depth)! + 1;
-  const kx = (o.x1 - o.x0 - o.nodeWidth) / (layers - 1);
+  // d3 divides by 0 for a single layer (a graph without links: the parser builds none, as
+  // every node comes from a link); every node is then in layer 0, at x0.
+  const kx = layers > 1 ? (o.x1 - o.x0 - o.nodeWidth) / (layers - 1) : 0;
   const columns: D3Node[][] = Array.from({ length: layers }, () => []);
   for (const node of nodes) {
     const i = Math.max(0, Math.min(layers - 1, Math.floor(align(node, layers))));
@@ -402,7 +420,7 @@ function computeLinkBreadths(nodes: readonly D3Node[]): void {
  */
 export function d3Sankey(
   nodeCount: number,
-  links: readonly { readonly source: number; readonly target: number; readonly flow: number }[],
+  links: readonly D3LinkInput[],
   options: D3SankeyOptions
 ): D3SankeyGraph {
   const scale = flowScale(links.map((l) => l.flow));
@@ -413,12 +431,12 @@ export function d3Sankey(
   // computeNodeValues (L149-155).
   for (const node of nodes)
     node.value = Math.max(sum(node.sourceLinks, value), sum(node.targetLinks, value));
-  sweep(
+  longestPaths(
     nodes,
     (node, x) => (node.depth = x),
     (node) => node.sourceLinks.map((l) => l.target)
   );
-  sweep(
+  longestPaths(
     nodes,
     (node, x) => (node.height = x),
     (node) => node.targetLinks.map((l) => l.source)
