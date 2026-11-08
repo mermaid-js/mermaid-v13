@@ -20,11 +20,12 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table. **Closed (#490):** all in `layout/metrics.ts`, with v12's line numbers.
 - **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order. **Closed (#489):** every v12 message is an error with its text, in source order (`parity.spec.ts` checks all 11 contexts word for word); an out-of-range value is kept as 100, so it causes no second error.
 
-## T4 (#493)
+## T4 (#493, merged)
 
 - Orchestrator choices kept: `wardleyGridColor` is the literal `lightgrey` (neutral's `hsl(0, 0%, 90%)` is T5's `DIFFERENCES` row); `g.wardley-pipeline-links` is drawn (MIGRATION.md).
 - Choices (also in `tickets/493.md`): a `#name;` decodes through core's `entityAt` (its ~50 names and every numeric reference); another name (`#alpha;`) stays `&alpha;`, where a browser showed v12's `α`. Parity decodes v12's side with the full HTML table, so this is a listed divergence (`wardley-cases/entities-outside-core`, owner #493) with a MIGRATION.md row. **For the maintainer:** the full HTML name table would cost bytes in the wardley chunk. The background covers the view box (the bounds, D224), not only v12's canvas. Groups with nothing to draw are left out. New classes `wardley-link-head`, `wardley-trend-head`. `data-ast` also on `g.wardley-stages` (an `evolution`) and `g.wardley-annotations-box` (`annotations`).
 - Review (#493) fixed: the v12 snapshot's decoder (above); accepted render probes moved to `nightly-check/render-*.mmd` and the entity parse probe to `nightly-check/parser-entity-codes.mmd`; `displayed()`, `HeadParts`, the build stroke in `OVERLAYS`, `drawStages`/`drawGrid`, dashes through `checkStyle`.
+- Accepted: `entities` 8.1.0 as a conformance devDependency (test-only decoder for v12's side; already in the lockfile); runtime entry 21.6 KB gz, renderer 3.0 KB gz; core 93,682 B gz unchanged by T4.
 - Left to T5 (#497): MIGRATION.md rows for D421, D424 and the six D333(b) themes, the oracle theme specs and `DIFFERENCES`, the manifest, `configDefaults`, dropping `render-api.ts`'s `replace`.
 
 ## T3 (#490, merged)
