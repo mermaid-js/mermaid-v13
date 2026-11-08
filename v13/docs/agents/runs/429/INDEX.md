@@ -34,6 +34,7 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 ## Merge log
 
 - 2026-11-08: `mermaid-v13` 0a472e044 (#482, core `cScale`/git palette derivation, D544) merged in 1d9ca69b7, clean. The brief still says not to depend on it for venn's palette rows.
+- 2026-11-08: `mermaid-v13` 98d3c3ffa (#515 keepWords, #524 sankey core T0, #530 M5b decisions, #531 packet stress timer) merged in ab81ad803, clean.
 
 ## Finish rule
 
