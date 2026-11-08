@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { cook, Kind } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { LANGIUM_NAMES, wardleyTokens } from '@mermaid-js/diagram-wardley/testing';
+import { LANGIUM_NAMES, wardleyTokens, wardleyView } from '@mermaid-js/diagram-wardley/testing';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
@@ -26,19 +26,50 @@ import { wardleyGateCorpus } from './corpus.ts';
  * (`commented()`), which v12 removed before lexing; `corpus/wardley-cases.json` adds the spec's
  * quirks and the U+2028/U+2029 and other `\s` cases.
  *
- * Exclusions ({@link EXCLUDED}, by id prefix, with every variant of the source):
- * - `wardley-cases/unclosed-directive`: a `%%{` that starts a line and is never closed. Core's
- *   preprocess ends it at its line end and reports `UNCLOSED_DIRECTIVE`, so v13 rejects the
- *   source; v12's directive regex also removed the line break after it (or, with a `{`
- *   argument, the rest of the text). The difference is in core's directive reading, shared by
- *   every type (pie's and radar's gates list it too), not in a wardley lexer rule. An unclosed
- *   `%%{` after a statement (`wardley-cases/directive-unclosed-in-line`) is gated.
+ * Every source the gate does not compare is named, and the sets are asserted exactly, so the
+ * gate fails when one of them starts to match (or to reach v12) or a new one appears:
+ * - {@link EXCLUDED}: `wardley-cases/unclosed-directive*`, a `%%{` that starts a line and is
+ *   never closed (in every variant but `unclosed-directive (commented)`, whose comment lines
+ *   leave v12 the same text, so it is gated). Core's preprocess ends it at its line end and reports
+ *   `UNCLOSED_DIRECTIVE` (an error: v13 rejects the source, asserted); v12's directive regex
+ *   also removed the line break after it (or, with a `{` argument, the rest of the text). The
+ *   difference is in core's directive reading, shared by every type (pie's and radar's gates
+ *   list it too), not in a wardley lexer rule. An unclosed `%%{` after a statement
+ *   (`wardley-cases/directive-unclosed-in-line`) is gated.
+ * - {@link NOT_REACHED}: the sources v12 never lexed as wardley: the case written so
+ *   (`not-wardley-bare`, `wardley` alone is not detected) in every variant, and the
+ *   `commented()` copies of short sources, whose cut falls inside the header.
  */
-const EXCLUDED: ReadonlyMap<string, string> = new Map([
+const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
+const variants = (id: string) => [id, `${id} (CRLF)`, `${id} (commented)`];
+const EXCLUDED: ReadonlyMap<string, string> = new Map(
   [
     'wardley-cases/unclosed-directive',
-    'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)',
-  ],
+    'wardley-cases/unclosed-directive (CRLF)',
+    ...variants('wardley-cases/unclosed-directive-init'),
+  ].map((id) => [id, UNCLOSED])
+);
+const CUT_HEADER = 'the commented() cut falls inside the header';
+const NOT_REACHED: ReadonlyMap<string, string> = new Map([
+  ...variants('wardley-cases/not-wardley-bare').map(
+    (id) => [id, 'wardley alone is not detected'] as const
+  ),
+  ...[
+    'v12-specs/wardleyParser.spec.ts#1',
+    'wardley-cases/acc-title-no-colon',
+    'wardley-cases/header-alone',
+    'wardley-cases/header-upper',
+    'wardley-cases/links-bare-arrow-label',
+    'wardley-cases/links-bare-unquoted',
+    'wardley-cases/links-dash-dot-dash',
+    'wardley-cases/links-diamond',
+    'wardley-cases/links-dotted-dead',
+    'wardley-cases/links-fat',
+    'wardley-cases/links-reverse',
+    'wardley-cases/title-at-end',
+    'wardley-cases/title-cr-end',
+    'wardley-cases/title-only-blank',
+  ].map((id) => [`${id} (commented)`, CUT_HEADER] as const),
 ]);
 const ERROR = 'LEXICAL_ERROR';
 const HIDDEN = new Set(['YAML', 'DIRECTIVE', 'SINGLE_LINE_COMMENT']);
@@ -73,13 +104,8 @@ function v13Streams(source: string): Streams {
 
 /** The text v12's lexer read before source offset `at`: v12's text, trimmed at its start. */
 function lexedBefore(source: string, at: number): string {
-  const pre = preprocess(source);
-  const view = sourceView(
-    source,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return cook(source, pre.bodyStart, at, view).trimStart();
+  const { bodyStart, view } = wardleyView(source);
+  return cook(source, bodyStart, at, view).trimStart();
 }
 
 const show = (t: LangiumToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
@@ -97,19 +123,20 @@ describe('wardley lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
     const oracle = await loadLangiumLexerOracle('wardley');
     const items = await wardleyGateCorpus();
     const diffs: string[] = [];
-    // Exclusions that still differ somewhere, so each one is still needed.
-    const needed = new Set<string>();
+    const excluded: string[] = [];
     const unreached: string[] = [];
+    const headerKept: string[] = [];
+    const accepted: string[] = [];
     let compared = 0;
     let e2e = 0;
     let errors = 0;
     for (const item of items) {
       const lexed = await oracle.lex(item.source);
       if (!lexed) {
-        // Not detected as wardley: the cases written so, and the `commented()` copies of short
-        // sources, whose cut falls inside the header. Any other source must reach the lexer.
-        if (!item.id.startsWith('wardley-cases/not-wardley') && /wardley-beta/i.test(item.source)) {
-          unreached.push(item.id);
+        unreached.push(item.id);
+        // For the reason given: the header no longer appears whole.
+        if (NOT_REACHED.get(item.id) === CUT_HEADER && /wardley-beta/i.test(item.source)) {
+          headerKept.push(item.id);
         }
         continue;
       }
@@ -120,9 +147,13 @@ describe('wardley lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
       const v13 = v13Streams(item.source);
       const tokens = firstDiff(v12.tokens, v13.tokens);
       const hidden = firstDiff(v12.hidden, v13.hidden);
-      const exclusion = [...EXCLUDED.keys()].find((k) => item.id.startsWith(k));
-      if (exclusion !== undefined) {
-        if (tokens ?? hidden) needed.add(exclusion);
+      if (EXCLUDED.has(item.id)) {
+        // Still different, and for the reason given: v13 rejects the source in preprocess.
+        if (tokens ?? hidden) excluded.push(item.id);
+        const unclosed = preprocess(item.source).diagnostics.some(
+          (d) => d.code === 'UNCLOSED_DIRECTIVE' && d.severity === 'error'
+        );
+        if (!unclosed) accepted.push(item.id);
         continue;
       }
       if (tokens) diffs.push(`${item.id} tokens ${tokens}`);
@@ -132,10 +163,12 @@ describe('wardley lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
       `wardley lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     expect(diffs).toEqual([]);
-    expect([...needed].sort()).toEqual([...EXCLUDED.keys()].sort());
+    expect(excluded.sort()).toEqual([...EXCLUDED.keys()].sort());
+    expect(accepted).toEqual([]);
+    expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
+    expect(headerKept).toEqual([]);
     // Every e2e fixture reaches the wardley lexer.
     expect(e2e).toBe(10);
-    expect(unreached).toEqual([]);
-    expect(compared).toBeGreaterThan(470);
+    expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

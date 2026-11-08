@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { wardleyTokens } from './index.ts';
+import { Kind } from '@mermaid-js/core/parser-kit';
+import { wardleyTokens, wardleyView } from './index.ts';
 import { lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
@@ -12,13 +11,8 @@ import { T } from './tokens.ts';
  * `Error` token where it reports an error.
  */
 const stream = (src: string) => {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const s = lex(src, pre.bodyStart, view);
+  const { bodyStart, view } = wardleyView(src);
+  const s = lex(src, bodyStart, view);
   return Array.from({ length: s.length }, (_, j) => ({
     kind: s.kind[j] ?? Kind.EOF,
     start: s.start[j] ?? 0,

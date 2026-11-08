@@ -232,6 +232,22 @@
     "source": "wardley-beta\nA -> B -> A"
   },
   {
+    "id": "wardley-cases/links-port-then-arrow",
+    "source": "wardley-beta\nA +> -> B\nA +< --> B"
+  },
+  {
+    "id": "wardley-cases/links-arrow-label-and-label",
+    "source": "wardley-beta\nA +'x'> B; y"
+  },
+  {
+    "id": "wardley-cases/links-bare-arrow-label",
+    "source": "wardley-beta\n+'x'>"
+  },
+  {
+    "id": "wardley-cases/links-bare-unquoted",
+    "source": "wardley-beta\nA B"
+  },
+  {
     "id": "wardley-cases/links-plus-odd",
     "source": "wardley-beta\nA + B\nA +' B"
   },
@@ -286,6 +302,10 @@
   {
     "id": "wardley-cases/annotations-forms",
     "source": "wardley-beta\nannotations [1, 0]\nannotations [0.5, 0.25]\nannotation 1,[0.5, 0.5] \"text\"\nannotation 2, [1, 0] 'x'\nannotation 01, [0,0] \"y\""
+  },
+  {
+    "id": "wardley-cases/annotation-duplicate-numbers",
+    "source": "wardley-beta\nannotations [0.1, 0.9]\nannotation 1,[0.5, 0.5] \"a\"\nannotation 1,[0.2, 0.2] \"b\""
   },
   {
     "id": "wardley-cases/accelerators",
