@@ -53,7 +53,7 @@ describe('treemap layout invariants on parser-produced fixtures', () => {
             failures.push(`${item.id} ${JSON.stringify(config)}: ${v.slice(0, 3).join('; ')}`);
         }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(32);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(53);
     // Both fitting outcomes are exercised.
     expect(labels).toBeGreaterThan(10_000);
     expect(hidden).toBeGreaterThan(2000);

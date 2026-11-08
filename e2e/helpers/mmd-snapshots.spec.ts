@@ -171,6 +171,7 @@ describe('the real fixture folders', () => {
     expect(folders).toContain('git');
     expect(folders).toContain('gantt');
     expect(folders).toContain('radar');
+    expect(folders).toContain('treemap');
     expect(folders).not.toContain('requirement');
     expect(folders).not.toContain('zenuml');
   });
