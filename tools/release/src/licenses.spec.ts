@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -237,6 +237,71 @@ describe('license check (R-REL-4)', () => {
     });
     expect(checkLicenses(root)).toEqual([
       'packages/core/src/svg/url.ts: header must credit @braintree/sanitize-url',
+    ]);
+  });
+
+  // cspell:ignore Frederickson Gratzl
+  const VENN_HEADER =
+    '// Ported from venn.js (https://github.com/upsetjs/venn.js), MIT License, Copyright (c) 2013 Ben Frederickson, Copyright (c) 2021 Samuel Gratzl.\n';
+  const FMIN_HEADER =
+    '// Ported from fmin (https://github.com/benfred/fmin), BSD-3-Clause License, Copyright 2016, Ben Frederickson.\n';
+  const VENN_NOTICE =
+    'venn.js\n-------\n\n  src/a.ts\n  src/b.ts\n\nMIT License\n\nCopyright (c) 2013 Ben Frederickson\nCopyright (c) 2021 Samuel Gratzl\n';
+  const FMIN_NOTICE =
+    'fmin\n----\n\n  src/b.ts\n\nBSD 3-Clause License\n\nCopyright 2016, Ben Frederickson\n\nRedistribution and use in source and binary forms, with or without modification,\n';
+  const vennManifest = JSON.stringify({ name: 'venn', files: ['dist', 'THIRD_PARTY_NOTICES'] });
+
+  it('credits every holder of an upstream with several, and a BSD-3-Clause upstream', () => {
+    const good = workspace({
+      'packages/venn/package.json': vennManifest,
+      'packages/venn/THIRD_PARTY_NOTICES': `${VENN_NOTICE}\n${FMIN_NOTICE}`,
+      'packages/venn/src/a.ts': `${VENN_HEADER}export {};\n`,
+      'packages/venn/src/b.ts': `${FMIN_HEADER}${VENN_HEADER}export {};\n`,
+    });
+    expect(checkLicenses(good)).toEqual([]);
+    const bad = workspace({
+      'packages/venn/package.json': vennManifest,
+      'packages/venn/THIRD_PARTY_NOTICES':
+        VENN_NOTICE.replace('Copyright (c) 2021 Samuel Gratzl\n', '') +
+        FMIN_NOTICE.replace(/Redistribution.*\n/, ''),
+      'packages/venn/src/a.ts': `${VENN_HEADER.replace(', Copyright (c) 2021 Samuel Gratzl', '')}export {};\n`,
+      'packages/venn/src/b.ts': `${FMIN_HEADER.replace('BSD-3-Clause', 'MIT')}${VENN_HEADER}export {};\n`,
+    });
+    expect(checkLicenses(bad)).toEqual([
+      'packages/venn/src/a.ts: venn.js-derived header must name the MIT license and "Ben Frederickson" and "Samuel Gratzl"',
+      'packages/venn/src/b.ts: fmin-derived header must name the BSD-3-Clause license and "Ben Frederickson"',
+      'packages/venn/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2013 Ben Frederickson" and "Copyright (c) 2021 Samuel Gratzl"',
+      'packages/venn/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2016, Ben Frederickson"',
+    ]);
+  });
+
+  it('passes on the venn package as it will be published', () => {
+    // diagram-venn is private until its integration ticket (#501), which the check skips: run
+    // it on a copy without `"private": true`.
+    const repo = join(import.meta.dirname, '..', '..', '..');
+    const root = mkdtempSync(join(tmpdir(), 'licenses-venn-'));
+    const pkg = join(repo, 'packages', 'diagram-venn');
+    cpSync(join(pkg, 'src'), join(root, 'packages', 'diagram-venn', 'src'), { recursive: true });
+    cpSync(
+      join(pkg, 'THIRD_PARTY_NOTICES'),
+      join(root, 'packages', 'diagram-venn', 'THIRD_PARTY_NOTICES')
+    );
+    const published = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')) as {
+      private?: boolean;
+    };
+    delete published.private;
+    writeFileSync(
+      join(root, 'packages', 'diagram-venn', 'package.json'),
+      JSON.stringify(published)
+    );
+    expect(checkLicenses(root)).toEqual([]);
+    // It checks the solver: a ported file without its credit is caught.
+    writeFileSync(
+      join(root, 'packages', 'diagram-venn', 'src', 'solver', 'solve.ts'),
+      'export {};\n'
+    );
+    expect(checkLicenses(root)).toEqual([
+      'packages/diagram-venn/src/solver/solve.ts: header must credit venn.js',
     ]);
   });
 

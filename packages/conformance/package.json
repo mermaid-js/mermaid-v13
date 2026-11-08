@@ -46,6 +46,7 @@
     "@mermaid-js/layout-elk": "workspace:^",
     "@mermaid-js/plugin-math": "workspace:^",
     "@types/js-yaml": "^4.0.9",
+    "@upsetjs/venn.js": "2.0.0",
     "js-yaml": "^4.3.2",
     "mermaid": "workspace:*",
     "mermaid-parser-v12": "npm:@mermaid-js/parser@2.0.1",

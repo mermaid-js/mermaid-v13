@@ -64,9 +64,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). venn's renderer is #495.
+ * must read none (so it is removed as soon as it reads one).
  */
-const NOT_DRAWN_YET = new Set<string>(['venn']);
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {

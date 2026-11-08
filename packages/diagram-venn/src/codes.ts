@@ -16,3 +16,7 @@ export const VENN_UNKNOWN_TARGET = 'VENN_UNKNOWN_TARGET';
 export const VENN_INVALID_SIZE = 'VENN_INVALID_SIZE';
 /** Warning: no `set` or `union`; only the title is drawn. */
 export const VENN_EMPTY = 'VENN_EMPTY';
+/** Warning: sets of size 0 (or below, D417), which are not drawn, nor their overlaps. */
+export const VENN_ZERO_SET = 'VENN_ZERO_SET';
+/** Warning: a `venn` config value the layout cannot use; the default is used instead. */
+export const VENN_CONFIG_INVALID = 'VENN_CONFIG_INVALID';

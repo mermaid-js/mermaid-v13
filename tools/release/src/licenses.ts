@@ -1,12 +1,16 @@
+// cspell:ignore fmin
 /**
- * License check (R-REL-4, D12): ported code carries its upstreams' MIT attribution.
+ * License check (R-REL-4, D12): ported code carries its upstreams' attribution (MIT, or
+ * BSD-3-Clause for fmin, which venn.js bundles).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
  * block (Pele's and Iconify's repository URLs; Braintree's sanitize-url package name). A file is derived from an upstream
  * when its header has that marker. Then:
- * - that header names the MIT license and the upstream's copyright holder;
+ * - that header names the upstream's license (MIT unless the entry says otherwise) and every
+ *   copyright holder of the upstream;
  * - in a published package (`packages/*` without `"private": true`), the package root has a
- *   `THIRD_PARTY_NOTICES` that holds the upstream's MIT copyright line, lists the file by its
+ *   `THIRD_PARTY_NOTICES` that holds the upstream's license text and every copyright line of
+ *   it, lists the file by its
  *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
@@ -19,14 +23,32 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
+/** The licenses ported code may come under. */
+type License = 'MIT' | 'BSD-3-Clause';
+
+/** How a header names each license, and a line of its text the notices must hold. */
+const LICENSES: Readonly<Record<License, { readonly header: RegExp; readonly text: string }>> = {
+  MIT: { header: /\bMIT\b/, text: 'MIT License' },
+  'BSD-3-Clause': {
+    header: /\bBSD-3-Clause\b/,
+    text: 'Redistribution and use in source and binary forms',
+  },
+};
+
 interface Upstream {
   /** The section heading in THIRD_PARTY_NOTICES. */
   readonly name: string;
   /** Text in a file header that marks the file as derived from this upstream. */
   readonly marker: string;
-  readonly holder: string;
-  readonly copyright: string;
+  /** MIT when not given. */
+  readonly license?: License;
+  /** The copyright holder a header names, or every one of several. */
+  readonly holder: string | readonly string[];
+  /** The copyright line the notices hold, or every one of several. */
+  readonly copyright: string | readonly string[];
 }
+
+const all = (v: string | readonly string[]): readonly string[] => (typeof v === 'string' ? [v] : v);
 
 export const UPSTREAMS: readonly Upstream[] = [
   {
@@ -48,6 +70,21 @@ export const UPSTREAMS: readonly Upstream[] = [
     holder: 'Vjacheslav Trushkin',
     copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
   },
+  {
+    // cspell:ignore Frederickson Gratzl
+    name: 'venn.js',
+    marker: 'https://github.com/upsetjs/venn.js',
+    holder: ['Ben Frederickson', 'Samuel Gratzl'],
+    copyright: ['Copyright (c) 2013 Ben Frederickson', 'Copyright (c) 2021 Samuel Gratzl'],
+  },
+  {
+    // venn.js bundles fmin's optimisers, under fmin's own license.
+    name: 'fmin',
+    marker: 'https://github.com/benfred/fmin',
+    license: 'BSD-3-Clause',
+    holder: 'Ben Frederickson',
+    copyright: 'Copyright 2016, Ben Frederickson',
+  },
 ];
 
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
@@ -55,6 +92,12 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
+  'packages/diagram-venn/src/solver/circles.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/fmin.ts': ['fmin', 'venn.js'],
+  'packages/diagram-venn/src/solver/index.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/normalize.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/regions.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/solve.ts': ['venn.js'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -119,9 +162,11 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
     }
     for (const upstream of UPSTREAMS) {
       if (!header.includes(upstream.marker)) continue;
-      if (!/\bMIT\b/.test(header) || !header.includes(upstream.holder))
+      const license = upstream.license ?? 'MIT';
+      const holders = all(upstream.holder);
+      if (!LICENSES[license].header.test(header) || !holders.every((h) => header.includes(h)))
         problems.push(
-          `${rel}: ${upstream.name}-derived header must name the MIT license and "${upstream.holder}"`
+          `${rel}: ${upstream.name}-derived header must name the ${license} license and ${holders.map((h) => `"${h}"`).join(' and ')}`
         );
       derived.push({ file: relative(dir, file), upstream });
     }
@@ -190,9 +235,14 @@ export function checkLicenses(root: string): string[] {
         (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
         derived.some((d) => d.upstream === u)
     );
-    for (const u of used)
-      if (!notices.includes('MIT License') || !notices.includes(u.copyright))
-        problems.push(`${pkg}/${NOTICES}: must contain the MIT License text with "${u.copyright}"`);
+    for (const u of used) {
+      const license = u.license ?? 'MIT';
+      const lines = all(u.copyright);
+      if (!notices.includes(LICENSES[license].text) || !lines.every((c) => notices.includes(c)))
+        problems.push(
+          `${pkg}/${NOTICES}: must contain the ${license} License text with ${lines.map((c) => `"${c}"`).join(' and ')}`
+        );
+    }
     if (!(manifest.files ?? []).includes(NOTICES))
       problems.push(`${pkg}/package.json: "files" must include ${NOTICES}`);
 
