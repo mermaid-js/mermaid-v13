@@ -7,6 +7,7 @@
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import { VENN_DUPLICATE, VENN_EMPTY, VENN_INVALID_SIZE, VENN_UNKNOWN_TARGET } from '../codes.ts';
 import type { VennStyle, VennSubset, VennTextNode } from '../model.ts';
+import { invalidSize } from '../sizes.ts';
 import { listOf } from './text.ts';
 
 /** A model entry with the statement it came from. */
@@ -67,14 +68,22 @@ function duplicates(d: Diagnostics, { subsets }: WarningInput, at: At): void {
   );
 }
 
-/** One warning naming every negative size. */
+/**
+ * One warning naming every size laid out as 0 though not written so: below 0, or too large to
+ * square (D417, `../sizes.ts`).
+ */
 function sizes(d: Diagnostics, { subsets }: WarningInput, at: At): void {
-  const bad = subsets.filter((p) => p.value.size < 0);
+  const bad = subsets.filter((p) => invalidSize(p.value.size));
   const first = bad[0];
   if (!first) return;
+  const huge = bad.some((p) => p.value.size > 0);
+  const what = huge ? 'A size below 0, or too large to lay out,' : 'A size below 0';
+  const use = huge
+    ? 'Use a size of 0 or more, with at most 154 digits.'
+    : 'Use a size of 0 or more.';
   d.warning(
     VENN_INVALID_SIZE,
-    `A size below 0 is laid out as 0: ${listOf(bad.map(at))}. Use a size of 0 or more.`,
+    `${what} is laid out as 0: ${listOf(bad.map(at))}. ${use}`,
     first.range
   );
 }

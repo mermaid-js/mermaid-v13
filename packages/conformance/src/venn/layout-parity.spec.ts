@@ -1,14 +1,19 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import * as venn from '@upsetjs/venn.js';
 import type { Theme } from '@mermaid-js/core/theme';
-import { layoutVenn, parseVenn, type VennLayout, type VennModel } from '@mermaid-js/diagram-venn';
 import {
+  layoutVenn,
+  type Circle,
+  type RegionPath,
+  type VennLayout,
+  type VennModel,
+} from '@mermaid-js/diagram-venn';
+import {
+  parsedVenn,
   seededRandom,
   vennTestContext,
   vennTestTheme,
-  type RegionPath,
 } from '@mermaid-js/diagram-venn/testing';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import { loadOracle } from '../oracle.ts';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { UNCLOSED, vennCases, vennCorpus } from './corpus.ts';
@@ -22,13 +27,17 @@ import { v12Drawn, type V12Drawn, type V12Subset } from './v12-layout.ts';
  * side is `v12-layout.ts`: v12's own pre-steps and venn.js's `VennDiagram` path (D412's one
  * solve), with venn.js imported. Text centres and region outlines are compared too.
  *
- * D412 sets the one solve's padding from `venn.padding` when given, where v12's visible circles
- * kept 15: v12's side takes that padding too. The corpus leaves out the sources whose model is a
+ * v12's side solves at venn.js's padding 15, as v12's visible circles did, or at the source's
+ * own `venn.padding` where it sets one (D412 reads it for the one solve; v12 used it only for
+ * its second). The corpus leaves out the sources whose model is a
  * listed divergence (`union-entity-sort`, the unclosed directives).
  *
- * Four sets or more draw from `Math.random` in venn.js (from eight areas on); D413 makes v13
- * deterministic, so v12 parity there is a listed divergence. The port itself is checked there
- * by running venn.js with `Math.random` drawing the same fixed-seed sequence.
+ * venn.js draws from `Math.random` from eight areas on (four sets or more, or a repeated set);
+ * D413 makes v13 deterministic, so v12 parity there is a listed divergence. The port itself is
+ * checked there by running venn.js with `Math.random` drawing the same fixed-seed sequence, as
+ * the corpus half does for its repeated sets. The corpus also leaves out what D417 lays out
+ * otherwise than v12: a negative size or one too large to square (v12 drew NaN), and a
+ * `venn.padding` that is negative or leaves no room (v12 drew mirrored or negative circles).
  */
 
 let theme: Theme;
@@ -37,14 +46,15 @@ beforeAll(async () => {
 });
 
 /** The layout of `src` (front-matter config), which must parse without errors. */
-function v13(src: string): { model: VennModel; layout: VennLayout; width: number; height: number } {
-  const pre = preprocess(src);
-  const { model, diagnostics } = parseVenn(src, { preprocessed: pre });
+function v13(src: string): {
+  model: VennModel;
+  layout: VennLayout;
+  config: Readonly<Record<string, unknown>>;
+} {
+  const { model, diagnostics, config } = parsedVenn(src);
   const errors = diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) throw new Error(errors.map((d) => d.message).join('\n'));
-  const config = (pre.frontMatter?.config?.venn ?? {}) as Record<string, unknown>;
-  const layout = layoutVenn(model, vennTestContext(theme, config));
-  return { model, layout, width: layout.width, height: layout.height };
+  return { model, layout: layoutVenn(model, vennTestContext(theme, config)), config };
 }
 
 /** venn.js's path string as a {@link RegionPath}, or undefined for its `M 0 0`. */
@@ -93,13 +103,8 @@ function compare(layout: VennLayout, v12: V12Drawn): Diff {
   let circle = 0;
   let point = 0;
   const ids = Object.keys(v12.circles);
-  const mine: Record<string, { x: number; y: number; radius: number }> = {};
-  for (const area of layout.areas) {
-    if (area.circle) {
-      const id = area.sets[0]!;
-      mine[id] = { x: area.circle.center.x, y: area.circle.center.y, radius: area.circle.radius };
-    }
-  }
+  const mine: Record<string, Circle> = {};
+  for (const area of layout.areas) if (area.circle) mine[area.sets[0]!] = area.circle;
   if (Object.keys(mine).sort().join() !== [...ids].sort().join()) {
     problems.push(`sets ${Object.keys(mine).join()} against ${ids.join()}`);
     return { circle: Infinity, point: Infinity, problems, loss: Infinity };
@@ -157,6 +162,17 @@ function compare(layout: VennLayout, v12: V12Drawn): Diff {
   const full = addMissing(v12.data);
   const loss = areas(mine, full) - areas(v12.circles, full);
   return { circle, point, problems, loss };
+}
+
+/** `run` with `Math.random` drawing v13's fixed-seed sequence (D413). */
+function withSeed<T>(run: () => T): T {
+  const random = Math.random;
+  Math.random = seededRandom();
+  try {
+    return run();
+  } finally {
+    Math.random = random;
+  }
 }
 
 /** venn.js's `addMissingAreas` (not exported): every pair with no overlap of its own, at 0. */
@@ -276,8 +292,12 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
     let worstPoint = 0;
     let worstLoss = -Infinity;
     for (const row of rows) {
-      const { layout, width, height } = v13(source(row.sets, row.overlaps));
-      const diff = compare(layout, v12Drawn(subsets(row.sets, row.overlaps), width, height, false));
+      const { layout } = v13(source(row.sets, row.overlaps));
+      const { width, height } = layout;
+      const diff = compare(
+        layout,
+        v12Drawn({ subsets: subsets(row.sets, row.overlaps), width, height })
+      );
       worstCircle = Math.max(worstCircle, diff.circle);
       worstPoint = Math.max(worstPoint, diff.point);
       worstLoss = Math.max(worstLoss, diff.loss);
@@ -305,9 +325,21 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
       const data = db.getSubsetData().map((s) => ({ ...s, sets: s.sets.map(decodeEntities) }));
       const ids = new Set(data.flatMap((s) => s.sets));
       // Four sets or more: D413; negative sizes: D417 lays them out as 0, v12 drew NaN.
-      if (ids.size > 3 || data.some((s) => s.size < 0) || data.length === 0) continue;
-      const { model, layout, width, height } = v13(item.source);
-      const v12Layout = v12Drawn(data, width, height, model.title !== undefined, layout.padding);
+      const invalid = (n: number): boolean => n < 0 || !Number.isFinite(n * n);
+      if (ids.size > 3 || data.some((s) => invalid(s.size)) || data.length === 0) continue;
+      const { model, layout, config } = v13(item.source);
+      const { width, height } = layout;
+      const own = config.padding;
+      if (typeof own === 'number' && (own < 0 || own !== layout.padding)) continue;
+      const v12Layout = withSeed(() =>
+        v12Drawn({
+          subsets: data,
+          width,
+          height,
+          ...(model.title !== undefined ? { title: model.title } : {}),
+          ...(typeof own === 'number' ? { padding: own } : {}),
+        })
+      );
       const diff = compare(layout, v12Layout);
       compared++;
       if (diff.circle > 1e-6 || diff.point > 1e-6 || diff.loss > 1e-9 || diff.problems.length > 0)
@@ -316,7 +348,7 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
         );
     }
     expect(failures.slice(0, 10)).toEqual([]);
-    expect(compared).toBe(144);
+    expect(compared).toBe(155);
   }, 120_000);
 
   it('equals venn.js on four to six sets when venn.js draws the same fixed-seed sequence (D413)', () => {
@@ -341,15 +373,9 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
       // From eight areas on venn.js tries the MDS start, which draws random numbers.
       if (count + overlaps.length >= 8) mds++;
       const src = source(sets, overlaps);
-      const { layout, width, height } = v13(src);
-      const random = Math.random;
-      Math.random = seededRandom();
-      let v12: V12Drawn;
-      try {
-        v12 = v12Drawn(subsets(sets, overlaps), width, height, false);
-      } finally {
-        Math.random = random;
-      }
+      const { layout } = v13(src);
+      const { width, height } = layout;
+      const v12 = withSeed(() => v12Drawn({ subsets: subsets(sets, overlaps), width, height }));
       const diff = compare(layout, v12);
       if (diff.circle > 1e-6 || diff.point > 1e-6 || diff.problems.length > 0)
         failures.push(

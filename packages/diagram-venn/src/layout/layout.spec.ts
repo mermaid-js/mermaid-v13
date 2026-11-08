@@ -1,45 +1,43 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { Theme } from '@mermaid-js/core/theme';
-import { VENN_CONFIG_INVALID, VENN_ZERO_SET } from '../codes.ts';
+import { VENN_ZERO_SET } from '../codes.ts';
 import { vennTestContext, vennTestTheme } from '../test-context.ts';
-import { gridMeasurer, parsed, venn } from './fixtures.ts';
 import { vennLayoutViolations } from './invariants.ts';
 import { layoutVenn } from './layout.ts';
-import type { VennLayout } from './types.ts';
+import { fixture, gridMeasurer } from './mmd.fixtures.ts';
+import type { VennCircle, VennLayout } from './types.ts';
 
 let theme: Theme;
 beforeAll(async () => {
   theme = await vennTestTheme();
 });
 
-/** The layout of `src` with its front-matter config, the warnings, and the invariants checked. */
-function laid(
-  src: string,
-  section: Readonly<Record<string, unknown>> = {},
-  measurer = gridMeasurer
-): { layout: VennLayout; warnings: Warning[] } {
-  const { model, config } = parsed(src);
+/**
+ * The layout of the fixture at `path` (under `e2e/diagrams/venn/`) with its front-matter
+ * config, the warnings of the layout, and the invariants checked.
+ */
+function laid(path: string): { layout: VennLayout; warnings: Warning[] } {
+  const { model, config } = fixture(path);
   const warnings: Warning[] = [];
-  const layout = layoutVenn(
-    model,
-    vennTestContext(theme, { ...config, ...section }, warnings, measurer)
-  );
+  const layout = layoutVenn(model, vennTestContext(theme, config, warnings, gridMeasurer));
   expect(vennLayoutViolations(model, layout)).toEqual([]);
   return { layout, warnings };
 }
 
-const circleOf = (layout: VennLayout, id: string) =>
+const circleOf = (layout: VennLayout, id: string): VennCircle =>
   layout.areas.find((a) => a.kind === 'set' && a.sets[0] === id)!.circle!;
+
+const textOf = (label: { text: { lines: { text: string }[][] } } | undefined): string[] =>
+  label!.text.lines.map((l) => l.map((r) => r.text).join(''));
+
+const LAYOUT = 'nightly-check/layout';
 
 describe('venn layout: the solve (D411, D412)', () => {
   it('draws three equal sets as an equilateral triangle, d / r ≈ 1.2632, C on top', () => {
-    const { layout } = laid(
-      venn('set A', 'set B', 'set C', 'union A,B', 'union A,C', 'union B,C', 'union A,B,C')
-    );
+    const { layout } = laid('pr-check/2-should-render-a-three-set-venn-diagram');
     const [a, b, c] = ['A', 'B', 'C'].map((id) => circleOf(layout, id));
-    const d = (p: typeof a, q: typeof a) =>
-      Math.hypot(p!.center.x - q!.center.x, p!.center.y - q!.center.y);
+    const d = (p: VennCircle, q: VennCircle) => Math.hypot(p.x - q.x, p.y - q.y);
     expect(a!.radius).toBeCloseTo(b!.radius, 9);
     expect(a!.radius).toBeCloseTo(c!.radius, 9);
     for (const [p, q] of [
@@ -47,22 +45,27 @@ describe('venn layout: the solve (D411, D412)', () => {
       [a, c],
       [b, c],
     ] as const) {
-      expect(d(p, q) / a!.radius).toBeCloseTo(1.2632, 3);
+      expect(d(p!, q!) / a!.radius).toBeCloseTo(1.2632, 3);
     }
-    expect(c!.center.y).toBeLessThan(Math.min(a!.center.y, b!.center.y));
+    expect(c!.y).toBeLessThan(Math.min(a!.y, b!.y));
   });
 
   it("gives two equal sets v12's drawn radius of 210 at the default 800 × 450 and padding 15", () => {
-    const { layout } = laid(venn('set A', 'set B', 'union A,B'));
+    const { layout } = laid('pr-check/1-should-render-a-simple-two-set-venn-diagram');
     expect(layout.padding).toBe(15);
     expect(circleOf(layout, 'A').radius).toBeCloseTo(210, 6);
     expect(circleOf(layout, 'B').radius).toBeCloseTo(210, 6);
+  });
+
+  it('draws one set alone as large as the chart allows', () => {
+    const { layout } = laid(`${LAYOUT}/one-set`);
+    expect(circleOf(layout, 'A').radius).toBeCloseTo(210, 6);
   });
 });
 
 describe('venn layout: input v12 drew badly or not at all (D417)', () => {
   it('draws an empty diagram as its title only', () => {
-    const { layout } = laid(venn('title Nothing yet'));
+    const { layout } = laid('nightly-check/empty-with-title');
     expect(layout.areas).toEqual([]);
     expect(layout.title?.text.lines.length).toBe(1);
     // Centred on (width / 2, 32s), at 32 px whatever the scale.
@@ -73,150 +76,127 @@ describe('venn layout: input v12 drew badly or not at all (D417)', () => {
     expect(layout.offset).toEqual({ x: 0, y: 24 });
   });
 
-  it('drops a zero-size set and every overlap with it, with one VENN_ZERO_SET', () => {
-    const { layout, warnings } = laid(
-      venn('set A:0', 'set B:4', 'set C:3', 'union A,B:1', 'union B,C:1', 'set D:-2')
-    );
-    expect(layout.areas.map((a) => a.sets.join('+'))).toEqual(['B', 'C', 'B+C']);
+  it('drops a set of size 0 and every overlap with it, with one VENN_ZERO_SET naming it', () => {
+    // set Z:0 and set N:-2 beside A and B; N is the parser's VENN_INVALID_SIZE, not a zero set.
+    const { layout, warnings } = laid('nightly-check/zero-and-negative-sizes');
+    expect(layout.areas.map((a) => a.sets.join('+'))).toEqual(['A', 'B', 'A+B']);
     expect(warnings.map((w) => w.code)).toEqual([VENN_ZERO_SET]);
-    expect(warnings[0]!.message).toContain('`A`, `D`');
+    expect(warnings[0]!.message).toContain('set `Z` of size 0');
+    expect(warnings[0]!.message).not.toContain('`N`');
   });
 
-  it('never draws NaN: sizes too small or too large to square, and a lone set', () => {
-    for (const src of [
-      venn(
-        'set A:0.0000000000000000000000000000001',
-        'set B:1',
-        'union A,B:0.00000000000000000000000000000001'
-      ),
-      venn(`set A:1${'0'.repeat(200)}`, 'set B:1'),
-      venn(`set A:1${'0'.repeat(400)}`, 'set B:1'),
-      venn('set A'),
-    ]) {
-      const { layout } = laid(src);
+  it('never draws NaN: sizes far below 1, a 101-digit size, and one too large to square', () => {
+    for (const name of ['tiny-sizes', 'huge-size', 'too-large-size']) {
+      const { layout, warnings } = laid(`${LAYOUT}/${name}`);
       expect(layout.areas.some((a) => a.circle)).toBe(true);
+      expect(warnings).toEqual([]);
     }
+    // Too large to square: laid out as 0, so not drawn (the parser warns, VENN_INVALID_SIZE).
+    const { layout } = laid(`${LAYOUT}/too-large-size`);
+    expect(layout.areas.map((a) => a.sets.join('+'))).toEqual(['B']);
   });
 
-  it('falls back to padding 0 when the padding leaves no room, with VENN_CONFIG_INVALID', () => {
-    const { layout, warnings } = laid(venn('set A', 'set B'), { padding: 300 });
+  it('solves at padding 0 when the padding leaves no room, without a warning', () => {
+    const { layout, warnings } = laid(`${LAYOUT}/padding-too-large`);
     expect(layout.padding).toBe(0);
-    expect(warnings.map((w) => w.code)).toEqual([VENN_CONFIG_INVALID]);
+    expect(warnings).toEqual([]);
   });
 
-  it('reads venn.width, height and padding, and warns once about every value it cannot use', () => {
-    const { layout } = laid(venn('set A', 'set B', 'union A,B'), {
-      width: '400',
-      height: 300,
-      padding: 0,
-    });
+  it('reads venn.width, height and padding, a numeric string as its number', () => {
+    const { layout } = laid(`${LAYOUT}/config-numeric-string`);
     expect([layout.width, layout.height, layout.scale, layout.padding]).toEqual([
       400, 300, 0.25, 0,
     ]);
     // Two equal sets side by side, as wide as the chart.
     const [a, b] = [circleOf(layout, 'A'), circleOf(layout, 'B')];
-    expect(Math.min(a.center.x - a.radius, b.center.x - b.radius)).toBeCloseTo(0, 6);
-    expect(Math.max(a.center.x + a.radius, b.center.x + b.radius)).toBeCloseTo(400, 6);
-    const { layout: bad, warnings } = laid(venn('set A'), {
-      width: 'wide',
-      height: -1,
-      useDebugLayout: 'yes',
-    });
-    expect([bad.width, bad.height, bad.debug]).toEqual([800, 450, undefined]);
-    expect(warnings.map((w) => w.code)).toEqual([VENN_CONFIG_INVALID]);
-    expect(warnings[0]!.message).toMatch(/venn\.width .*venn\.height .*venn\.useDebugLayout/);
+    expect(Math.min(a.x - a.radius, b.x - b.radius)).toBeCloseTo(0, 6);
+    expect(Math.max(a.x + a.radius, b.x + b.radius)).toBeCloseTo(400, 6);
+  });
+
+  it('falls back to the default for each value it cannot use, without a warning', () => {
+    const { layout, warnings } = laid(`${LAYOUT}/config-unusable-values`);
+    expect([layout.width, layout.height, layout.padding, layout.debug]).toEqual([
+      800,
+      450,
+      15,
+      undefined,
+    ]);
+    expect(warnings).toEqual([]);
   });
 });
 
 describe('venn layout: labels and text nodes (D414)', () => {
-  it('labels a set with its id, an overlap only with its label, and keeps a label to three lines', () => {
-    const long = 'one two three four five six seven eight nine ten eleven twelve';
-    const { layout } = laid(venn(`set A["${long}"]`, 'set B', 'union A,B', 'union A,B["both"]'));
-    const [a, b, ab] = layout.areas;
-    expect(b!.label!.text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual(['B']);
+  it('labels a set with its id, an overlap only with its label, and wraps a label to three lines', () => {
+    const { layout } = laid(`${LAYOUT}/label-three-lines`);
+    const [a, b, ab, again] = layout.areas;
+    expect(textOf(b!.label)).toEqual(['B']);
     expect(a!.label!.text.lines.length).toBe(3);
+    expect(textOf(a!.label).join(' ')).toBe(
+      'one two three four five six seven eight nine ten eleven twelve'
+    );
     // The last non-empty label of an area's sets is every copy's (venn.js keys labels by sets).
-    expect(
-      ab!
-        .label!.text.lines.flat()
-        .map((r) => r.text)
-        .join('')
-    ).toBe('both');
-    expect(layout.areas[3]!.label).toEqual(ab!.label);
+    expect(textOf(ab!.label)).toEqual(['both']);
+    expect(again!.label).toEqual(ab!.label);
     expect(layout.fonts.label.size).toBe(24);
   });
 
-  it('keeps a label written on more than three lines as written', () => {
-    const { layout } = laid(venn('set A["a<br>b<br>c<br>d"]', 'set B'));
-    expect(layout.areas[0]!.label!.text.lines.length).toBe(4);
+  it('caps a label written on four lines at three, the last lines joined', () => {
+    const { layout } = laid(`${LAYOUT}/label-written-on-four-lines`);
+    expect(textOf(layout.areas[0]!.label)).toEqual(['a', 'b', 'c d']);
   });
 
   it('moves a label that would lie on an earlier one below it', () => {
     // B is inside A, and the overlap's centre is B's: v12 drew "B" and "inner" on one spot.
-    const { layout } = laid(venn('set A:10', 'set B:2', 'union A,B["inner"]:2'));
+    const { layout } = laid(`${LAYOUT}/label-collision-subset`);
     const b = layout.areas[1]!.label!;
     const ab = layout.areas[2]!.label!;
     expect(ab.y).toBeCloseTo(b.y + b.height, 9);
   });
 
   it("lays text nodes out in v12's grid about the area's centre, wrapped to their box", () => {
-    const { layout } = laid(
-      venn(
-        'set A',
-        '  text a1',
-        '  text a2["a much longer text node label"]',
-        '  text a3',
-        'set B',
-        'union A,B',
-        '  text ab'
-      )
-    );
+    const { layout } = laid(`${LAYOUT}/text-grid`);
     expect(layout.textAreas.map((t) => [t.sets.join('+'), t.nodes.map((n) => n.id)])).toEqual([
       ['A', ['a1', 'a2', 'a3']],
       ['A+B', ['ab']],
     ]);
     const [a, ab] = layout.textAreas;
     // Three nodes: two columns, two rows, no offset (more than two nodes, no label).
-    expect(a!.grid.width).toBeCloseTo(a!.innerRadius * 1.9, 9);
-    expect(a!.grid.y).toBeCloseTo(a!.centre.y - a!.grid.height / 2, 9);
+    expect(a!.grid.width).toBeCloseTo(a!.inner.radius * 1.9, 9);
+    expect(a!.grid.y).toBeCloseTo(a!.inner.y - a!.grid.height / 2, 9);
     expect(a!.nodes[0]!.cell.width).toBeCloseTo(a!.grid.width / 2, 9);
     expect(a!.nodes[2]!.cell.y).toBeCloseTo(a!.grid.y + a!.grid.height / 2, 9);
-    expect(a!.nodes[1]!.box.width).toBeCloseTo(a!.nodes[1]!.cell.width * 0.9, 9);
-    expect(a!.nodes[1]!.label.text.lines.length).toBeGreaterThan(1);
-    for (const line of a!.nodes[1]!.label.text.widths)
-      expect(line).toBeLessThanOrEqual(a!.nodes[1]!.box.width);
+    const long = a!.nodes[1]!;
+    expect(long.box.width).toBeCloseTo(long.cell.width * 0.9, 9);
+    expect(long.label.text.lines.length).toBeGreaterThan(1);
+    for (const w of long.label.text.widths) expect(w).toBeLessThanOrEqual(long.box.width);
     // One node: moved down 30s.
-    expect(ab!.grid.y).toBeCloseTo(ab!.centre.y - ab!.grid.height / 2 + 15, 9);
+    expect(ab!.grid.y).toBeCloseTo(ab!.inner.y - ab!.grid.height / 2 + 15, 9);
     expect(layout.fonts.text.size).toBe(20);
   });
 
   it("gives a labelled area's grid the label offset, min(32s, innerRadius / 4)", () => {
-    const { layout } = laid(venn('set A["Alpha"]', '  text a1', '  text a2', '  text a3'));
+    const { layout } = laid(`${LAYOUT}/text-grid-labelled`);
     const [t] = layout.textAreas;
-    const offset = Math.min(16, t!.innerRadius / 4);
-    expect(t!.grid.y).toBeCloseTo(t!.centre.y - t!.grid.height / 2 + offset, 9);
+    const offset = Math.min(16, t!.inner.radius / 4);
+    expect(t!.grid.y).toBeCloseTo(t!.inner.y - t!.grid.height / 2 + offset, 9);
   });
 
   it('draws no text node whose area is not drawn', () => {
-    const { layout } = laid(venn('set A:0', '  text a1', 'set B', '  text b1', 'text Z z1'));
+    const { layout } = laid(`${LAYOUT}/text-in-undrawn-areas`);
     expect(layout.textAreas.map((t) => t.sets.join('+'))).toEqual(['B']);
   });
 
-  it('adds the inner circle and the cells as plain shapes under useDebugLayout', () => {
-    const { layout } = laid(venn('set A', '  text a1', '  text a2', 'set B', '  text b1'), {
-      useDebugLayout: true,
-    });
-    expect(layout.debug!.circles.map((c) => c.radius)).toEqual(
-      layout.textAreas.map((t) => t.innerRadius)
-    );
-    expect(layout.debug!.cells).toHaveLength(3);
+  it('adds the inner circles and the cells as plain shapes under useDebugLayout', () => {
+    const { layout } = laid('nightly-check/debug-layout');
+    expect(layout.debug!.circles).toEqual(layout.textAreas.map((t) => t.inner));
+    expect(layout.debug!.cells).toHaveLength(4);
     expect([layout.debug!.circleStroke, layout.debug!.cellStroke]).toEqual([0.75, 0.5]);
   });
 });
 
 describe('venn layout: the drawn areas', () => {
   it("draws areas in v12's order: the model's, a repeat again, then v12's added pairs", () => {
-    const { layout } = laid(venn('set A:4', 'set B:4', 'set C:4', 'set A:6', 'union A,B,C:1'));
+    const { layout } = laid(`${LAYOUT}/added-pairs-and-repeats`);
     expect(layout.areas.map((a) => [a.sets.join('+'), a.ast ?? null, a.size])).toEqual([
       ['A', 'set:A', 4],
       ['B', 'set:B', 4],
@@ -238,10 +218,10 @@ describe('venn layout: the drawn areas', () => {
   });
 
   it("outlines a set as two half circles and a lens as two arcs; disjoint sets' overlap has none", () => {
-    const { layout } = laid(venn('set A', 'set B', 'union A,B', 'set C', 'set D', 'union C,D:0'));
+    const { layout } = laid(`${LAYOUT}/disjoint-overlap`);
     const a = layout.areas[0]!;
     expect(a.path!.arcs).toHaveLength(2);
-    expect(a.path!.start.x).toBeCloseTo(a.circle!.center.x - a.circle!.radius, 9);
+    expect(a.path!.start.x).toBeCloseTo(a.circle!.x - a.circle!.radius, 9);
     expect(layout.areas[2]!.path!.arcs).toHaveLength(2);
     const cd = layout.areas.find((x) => x.sets.join() === 'C,D')!;
     expect(cd.path).toBeUndefined();
@@ -249,57 +229,54 @@ describe('venn layout: the drawn areas', () => {
   });
 
   it("takes a circle's stroke from its style, else 5s", () => {
-    const { layout } = laid(venn('set A', 'set B', 'style A stroke-width: 12'));
-    expect(circleOf(layout, 'A').strokeWidth).toBe(12);
-    expect(circleOf(layout, 'B').strokeWidth).toBe(2.5);
+    const { layout } = laid('nightly-check/stroke-styles');
+    expect(circleOf(layout, 'A').strokeWidth).toBe(2);
+    expect(circleOf(layout, 'B').strokeWidth).toBe(8);
+    expect(
+      laid('pr-check/1-should-render-a-simple-two-set-venn-diagram').layout.areas[0]!.circle!
+        .strokeWidth
+    ).toBe(2.5);
   });
 
   it('lays four sets or more out the same way on every run (D413)', () => {
-    const src = venn(
-      'set A:5',
-      'set B:4',
-      'set C:3',
-      'set D:2',
-      'set E:6',
-      'union A,B:1',
-      'union C,D:1',
-      'union A,E:2',
-      'union B,C:0.5'
-    );
-    expect(JSON.stringify(laid(src).layout)).toBe(JSON.stringify(laid(src).layout));
+    const path = 'nightly-check/five-sets-sparse';
+    expect(JSON.stringify(laid(path).layout)).toBe(JSON.stringify(laid(path).layout));
   });
 });
 
 describe('venn layout invariants', () => {
-  const src = venn('set A["Alpha"]', '  text a1', 'set B', 'union A,B["both"]');
-
-  it('catch a moved circle, a NaN, overlapping labels and short bounds', () => {
-    const { model } = parsed(src);
-    const { layout } = laid(src);
-    const [a, b, ab] = layout.areas;
+  it('catch a moved circle, a NaN, overlapping labels, a stray cell and short bounds', () => {
+    const { model } = fixture(`${LAYOUT}/text-grid-labelled`);
+    const { layout: base } = laid(`${LAYOUT}/text-grid-labelled`);
     const broken = (patch: Partial<VennLayout>) =>
-      vennLayoutViolations(model, { ...layout, ...patch });
+      vennLayoutViolations(model, { ...base, ...patch });
+    const [a] = base.areas;
     expect(
-      broken({
-        areas: [{ ...a!, circle: { ...a!.circle!, radius: a!.circle!.radius * 2 } }, b!, ab!],
-      })
-    ).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('area per unit of size'),
-        expect.stringContaining('outside the chart'),
-      ])
-    );
+      broken({ areas: [{ ...a!, circle: { ...a!.circle!, radius: a!.circle!.radius * 2 } }] })
+    ).toEqual(expect.arrayContaining([expect.stringContaining('outside the chart')]));
     expect(broken({ scale: Number.NaN })).toEqual(['layout.scale is NaN']);
-    expect(broken({ areas: [a!, { ...b!, label: a!.label! }, ab!] })).toEqual(
-      expect.arrayContaining([expect.stringContaining('labels of A and B overlap')])
-    );
     expect(broken({ bounds: { x: 0, y: 0, width: 10, height: 10 } })[0]).toMatch(
       /outside the bounds/
     );
-    const [t] = layout.textAreas;
+    const [t] = base.textAreas;
     const n = t!.nodes[0]!;
+    const far = { ...n, cell: { ...n.cell, x: n.cell.x - 1000 } };
+    expect(broken({ textAreas: [{ ...t!, nodes: [far, ...t!.nodes.slice(1)] }] })).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('past its radius'),
+        expect.stringContaining('outside the grid'),
+      ])
+    );
+    // Two labels on one spot, and a size that does not match the area.
+    const { model: two } = fixture('pr-check/1-should-render-a-simple-two-set-venn-diagram');
+    const { layout: pair } = laid('pr-check/1-should-render-a-simple-two-set-venn-diagram');
+    const [p, q, pq] = pair.areas;
     expect(
-      broken({ textAreas: [{ ...t!, nodes: [{ ...n, cell: { ...n.cell, x: n.cell.x - 1000 } }] }] })
-    ).toEqual(expect.arrayContaining([expect.stringContaining('outside the grid')]));
+      vennLayoutViolations(two, { ...pair, areas: [p!, { ...q!, label: p!.label! }, pq!] })
+    ).toEqual(expect.arrayContaining([expect.stringContaining('labels of A and B overlap')]));
+    const smaller = { ...q!, circle: { ...q!.circle!, radius: q!.circle!.radius / 2 } };
+    expect(vennLayoutViolations(two, { ...pair, areas: [p!, smaller, pq!] })).toEqual(
+      expect.arrayContaining([expect.stringContaining('area per unit of size')])
+    );
   });
 });

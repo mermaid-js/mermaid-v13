@@ -1,36 +1,54 @@
 /**
- * The `venn` options the layout reads, checked (D417: never NaN, one warning per kind). The
- * config resolver does not check value types, so a directive can set `"width": "wide"`. A
- * length is a number, or a numeric string as its number, inside the schema's range; a flag is
- * a boolean. Anything else falls back to the default, and one `VENN_CONFIG_INVALID` warning
- * names every such key.
+ * The `venn` options the layout reads. The config resolver does not check value types (a
+ * directive can set `"width": "wide"`), and venn has no warning code for config (D417 lists
+ * none), so a value the layout cannot use falls back to its default without a warning: a length
+ * is a number, or a numeric string as its number, inside the schema's range; a flag is a
+ * boolean.
+ *
+ * `padding` is the one solve's margin (D412): an author's value as written, else 15, the padding
+ * v12 drew its circles with. The resolved config cannot tell a default from an author's value,
+ * so the plugin's section defaults leave `padding` out ({@link vennPluginDefaults}): a padding
+ * the layout sees is always an author's. The schema's default is 15 too, so its documentation
+ * says what is drawn.
  */
-import type { Warning } from '@mermaid-js/core';
-import { VENN_CONFIG_INVALID } from './codes.ts';
-import { VENN_CONFIG_DEFAULTS, VENN_METRICS } from './layout/metrics.ts';
 
 /** The `venn` options the layout reads, every one set. */
 export interface VennLayoutConfig {
   readonly width: number;
   readonly height: number;
-  /** `venn.padding` when given, else venn.js's 15 (D412). */
   readonly padding: number;
   readonly useDebugLayout: boolean;
 }
 
-/** A length key's schema range and how the warning names it. */
-interface Range {
-  readonly min: number;
-  readonly wants: string;
-}
-
-const LENGTHS: Readonly<Record<'width' | 'height' | 'padding', Range>> = {
-  width: { min: 1, wants: 'a number of 1 or more' },
-  height: { min: 1, wants: 'a number of 1 or more' },
-  padding: { min: 0, wants: 'a number of 0 or more' },
+/**
+ * The `VennDiagramConfig` defaults (`packages/core/schema/config.schema.yaml`), which the layout
+ * falls back to until #501 generates them into the plugin's `configDefaults`.
+ */
+export const VENN_CONFIG_DEFAULTS: VennLayoutConfig = {
+  width: 800,
+  height: 450,
+  padding: 15,
+  useDebugLayout: false,
 };
 
-const DEFAULTS: VennLayoutConfig = { ...VENN_CONFIG_DEFAULTS, padding: VENN_METRICS.padding };
+/**
+ * The section defaults the plugin hands core (#501 passes the generated `vennConfigDefaults`
+ * through this): every one but `padding`, so no default, whatever the schema says, reaches the
+ * layout as if an author had set it.
+ */
+export function vennPluginDefaults<T extends Readonly<Record<string, unknown>>>(
+  defaults: T
+): Omit<T, 'padding'> {
+  const { padding: _padding, ...rest } = defaults;
+  return rest;
+}
+
+/** The least value of each length (the schema's `minimum`). */
+const MINIMUM: Readonly<Record<'width' | 'height' | 'padding', number>> = {
+  width: 1,
+  height: 1,
+  padding: 0,
+};
 
 /** A finite number, or a string that reads as one; else undefined. */
 function configNumber(value: unknown): number | undefined {
@@ -40,30 +58,20 @@ function configNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
-
-/** The layout's options from the resolved `venn` section, each checked. */
+/** The layout's options from the resolved `venn` section. */
 export function vennLayoutConfig(
-  section: Readonly<Record<string, unknown>> | undefined,
-  warn: (w: Warning) => void
+  section: Readonly<Record<string, unknown>> | undefined
 ): VennLayoutConfig {
-  const out = { ...DEFAULTS } as { -readonly [K in keyof VennLayoutConfig]: VennLayoutConfig[K] };
   const given = section ?? {};
-  const bad: string[] = [];
-  const has = (key: string): boolean => Object.hasOwn(given, key) && given[key] !== undefined;
-  for (const key of Object.keys(LENGTHS) as (keyof typeof LENGTHS)[]) {
-    if (!has(key)) continue;
-    const { min, wants } = LENGTHS[key];
+  const length = (key: keyof typeof MINIMUM): number => {
     const n = configNumber(given[key]);
-    if (n !== undefined && n >= min) out[key] = n;
-    else bad.push(`venn.${key} is ${shown(given[key])}, not ${wants}; using ${DEFAULTS[key]}`);
-  }
-  if (has('useDebugLayout')) {
-    const v = given.useDebugLayout;
-    if (typeof v === 'boolean') out.useDebugLayout = v;
-    else bad.push(`venn.useDebugLayout is ${shown(v)}, not true or false; using false`);
-  }
-  if (bad.length > 0) warn({ code: VENN_CONFIG_INVALID, message: `${bad.join('. ')}.` });
-  return out;
+    return n !== undefined && n >= MINIMUM[key] ? n : VENN_CONFIG_DEFAULTS[key];
+  };
+  const debug = given.useDebugLayout;
+  return {
+    width: length('width'),
+    height: length('height'),
+    padding: length('padding'),
+    useDebugLayout: typeof debug === 'boolean' ? debug : VENN_CONFIG_DEFAULTS.useDebugLayout,
+  };
 }

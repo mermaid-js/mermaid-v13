@@ -13,7 +13,7 @@
  * parents in a map instead of on the circles.
  */
 import { distance, type Circle } from './circles.ts';
-import { record, type Solution } from './solve.ts';
+import { nullRecord, type Solution } from './solve.ts';
 
 /** A circle and the set it is for. */
 export interface SetCircle extends Circle {
@@ -257,7 +257,7 @@ export function scaleSolution(
 }
 
 function toObjectNotation(circles: readonly SetCircle[]): Record<string, SetCircle> {
-  const r = record<SetCircle>();
+  const r = nullRecord<SetCircle>();
   for (const circle of circles) r[circle.setid] = circle;
   return r;
 }

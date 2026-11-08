@@ -62,18 +62,20 @@ export function ensurePairwiseSubsets(subsets: V12Subset[]): V12Subset[] {
   return synthetic.length > 0 ? [...subsets, ...synthetic] : subsets;
 }
 
-/**
- * The circles and text centres v12 drew for `subsets` on a `width × height` canvas, with a
- * title row when `title` (`svgHeight − 48s`), at venn.js's padding 15 (or D412's `venn.padding`).
- */
-export function v12Drawn(
-  subsets: V12Subset[],
-  width: number,
-  height: number,
-  title: boolean,
-  padding = 15
-): V12Drawn {
-  const titleHeight = title ? 48 * (width / 1600) : 0;
+/** What {@link v12Drawn} lays out: v12's subsets, its canvas, title and padding. */
+export interface V12Input {
+  readonly subsets: V12Subset[];
+  readonly width: number;
+  readonly height: number;
+  /** The diagram's title: with one, v12's chart is `48s` shorter. */
+  readonly title?: string;
+  /** venn.js's 15, which v12's visible circles used; D412 reads the source's `venn.padding`. */
+  readonly padding?: number;
+}
+
+/** The circles and text centres v12 drew for `input`. */
+export function v12Drawn({ subsets, width, height, title, padding = 15 }: V12Input): V12Drawn {
+  const titleHeight = title === undefined ? 0 : 48 * (width / 1600);
   let data = ensurePairwiseSubsets(subsets);
   // VennDiagram's chart(): handle 0-sized sets by removing from input.
   const toRemove = new Set<string>();

@@ -66,6 +66,17 @@ const BANNER =
   '// Do not edit: run `pnpm gen:config`.\n';
 
 /** Root keys that are config sections (a diagram's or a layout plugin's own object). */
+/**
+ * A diagram section's defaults as `generate()` writes them into its owner's
+ * `src/generated/config-defaults.ts` (`{}` for a section with none).
+ */
+export function sectionDefaults(schemaSource: string, section: string): Record<string, unknown> {
+  const root = loadSchema(schemaSource);
+  const node = root.properties?.[section];
+  if (node === undefined) throw new Error(`the schema has no section ${section}`);
+  return (defaultsOf(root, node) ?? {}) as Record<string, unknown>;
+}
+
 export function sectionKeys(root: RootSchema): string[] {
   return Object.entries(root.properties ?? {})
     .filter(([key, node]) => defName(node.$ref) !== undefined || key === 'elk')

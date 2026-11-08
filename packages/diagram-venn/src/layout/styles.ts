@@ -5,9 +5,7 @@
  * key of set `A` and of a text node `A`.
  */
 import type { VennModel } from '../model.ts';
-import { areaKey } from '../solver/index.ts';
-
-export { areaKey };
+import { areaKey, nullRecord } from '../solver/index.ts';
 
 /** The merged properties of each style target, by `areaKey(targets)`. */
 export function vennStyles(model: VennModel): Map<string, Readonly<Record<string, string>>> {
@@ -16,7 +14,7 @@ export function vennStyles(model: VennModel): Map<string, Readonly<Record<string
     const key = areaKey(targets);
     const existing = map.get(key);
     if (existing) Object.assign(existing, properties);
-    else map.set(key, Object.assign(Object.create(null) as Record<string, string>, properties));
+    else map.set(key, Object.assign(nullRecord<string>(), properties));
   }
   return map;
 }

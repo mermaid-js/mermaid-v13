@@ -9,16 +9,17 @@
  * to their box in v12's grid. Lengths come from the `venn` config and the metrics table
  * (pitfall 13).
  *
- * Fixed on the way (D417): a negative size counts as 0, a size too large to square counts as 0
- * too, a padding that leaves no room falls back to 0, an area that is not on the chart
- * (venn.js's y −1000) gets no label and no text nodes, and a label that would lie on an earlier
- * one moves down below it.
+ * Fixed on the way (D417): sizes as `../sizes.ts` reads them (a negative or too large size counts
+ * as 0), a padding that leaves no room counts as 0, an area that is not on the chart (venn.js's
+ * y −1000) gets no label and no text nodes, and a label that would lie on an earlier one moves
+ * down below it.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import { VENN_CONFIG_INVALID, VENN_ZERO_SET } from '../codes.ts';
+import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
 import type { VennModel, VennSubset } from '../model.ts';
+import { laidOutSize } from '../sizes.ts';
 import {
   areaKey,
   intersectionAreaPath,
@@ -27,12 +28,12 @@ import {
   type Solved,
   type TextCentre,
 } from '../solver/index.ts';
+import { drawnBoxes, overlaps, union } from './geometry.ts';
 import { NORMAL_WEIGHT, VENN_METRICS, VENN_SLOTS } from './metrics.ts';
 import { vennStyles } from './styles.ts';
 import type {
   PlacedLabel,
   Point,
-  Rect,
   VennAreaLayout,
   VennDebugShapes,
   VennLayout,
@@ -51,11 +52,6 @@ const ignoreWarning = (): void => undefined;
 interface Datum extends Area {
   readonly ast?: VennSubset['ast'];
   readonly label?: string;
-}
-
-/** The size a subset is laid out at: below 0, or too large to square, counts as 0 (D417). */
-function laidOutSize(size: number): number {
-  return size > 0 && Number.isFinite(size * size) ? size : 0;
 }
 
 /**
@@ -88,11 +84,7 @@ function withPairs(subsets: readonly Datum[]): Datum[] {
 
 /** Lays out a venn diagram in px. */
 export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout {
-  const warn = ctx.warn ?? ignoreWarning;
-  const config = vennLayoutConfig(
-    ctx.config.venn as Readonly<Record<string, unknown>> | undefined,
-    warn
-  );
+  const config = vennLayoutConfig(ctx.config.venn as Readonly<Record<string, unknown>> | undefined);
   const m = VENN_METRICS;
   const { width, height } = config;
   const scale = width / m.referenceWidth;
@@ -112,23 +104,21 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
     model.title === undefined ? undefined : measure(model.title, fonts.title, Infinity);
   const titleHeight = titleText ? m.titleHeight * scale : 0;
   const chartHeight = Math.max(0, height - titleHeight);
+  // The padding of the one solve (D412); one that leaves no room counts as 0.
+  const padding = 2 * config.padding < Math.min(width, chartHeight) ? config.padding : 0;
 
-  // The padding of the one solve (D412), unless it leaves no room.
-  let padding = config.padding;
-  if (padding > 0 && 2 * padding >= Math.min(width, chartHeight)) {
-    warn({
-      code: VENN_CONFIG_INVALID,
-      message: `venn.padding ${padding} leaves no room for the circles in ${width} × ${chartHeight}; using 0.`,
-    });
-    padding = 0;
-  }
-
-  const drawn = drawnAreas(model, warn);
+  const drawn = drawnAreas(model, ctx.warn ?? ignoreWarning);
   const solved = solveVenn(drawn, { width, height: chartHeight, padding });
   const labels = placeLabels(drawn, solved, (text, maxWidth) =>
     capped(text, fonts.label, maxWidth, measure)
   );
-  const areas = areasOf(drawn, solved, labels, vennStyles(model), m.circleStroke * scale);
+  const areas = areasOf({
+    drawn,
+    solved,
+    labels,
+    styles: vennStyles(model),
+    circleStroke: m.circleStroke * scale,
+  });
 
   // Text nodes (v12 `renderTextNodes`), on the areas drawn, keyed as v12 (the last copy).
   const byKey = new Map<string, Datum>();
@@ -137,7 +127,7 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
 
   const debug: VennDebugShapes | undefined = config.useDebugLayout
     ? {
-        circles: textAreas.map((t) => ({ center: t.centre, radius: t.innerRadius })),
+        circles: textAreas.map((t) => t.inner),
         cells: textAreas.flatMap((t) => t.nodes.map((n) => n.cell)),
         circleStroke: m.debugCircleStroke * scale,
         cellStroke: m.debugCellStroke * scale,
@@ -146,27 +136,30 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
 
   const title = titleText && placeCentred(titleText, width / 2, m.titleBaseline * scale);
   const offset = { x: 0, y: titleHeight };
-  const parts = { width, height, offset, areas, textAreas, title, debug };
-  return {
+  const drawing = {
     width,
     height,
-    scale,
     offset,
-    titleHeight,
-    padding,
     areas,
     textAreas,
     ...(title ? { title } : {}),
     ...(debug ? { debug } : {}),
+  };
+  return {
+    ...drawing,
+    scale,
+    titleHeight,
+    padding,
     fonts,
-    bounds: boundsOf(parts),
+    bounds: union([...drawnBoxes(drawing)].map(([, box]) => box)),
   };
 }
 
 /**
  * The areas venn.js drew: the model's (sizes as D417 reads them), v12's added pairs, then every
- * zero-size set dropped with the overlaps it is in (one `VENN_ZERO_SET`), and any overlap naming
- * a set no `set` declares (a hand-built model; the parser rejects one).
+ * set laid out at 0 dropped with the overlaps it is in, and any overlap naming a set no `set`
+ * declares (a hand-built model; the parser rejects one). Sets written with size 0 get one
+ * `VENN_ZERO_SET`; a negative or too large size is the parser's `VENN_INVALID_SIZE`.
  */
 function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
   const data = withPairs(
@@ -177,9 +170,11 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
       ...(s.label !== undefined ? { label: s.label } : {}),
     }))
   );
-  const zero = new Set<string>();
-  for (const d of data) if (d.sets.length === 1 && d.size === 0) zero.add(d.sets[0]!);
-  const declared = new Set(data.filter((d) => d.sets.length === 1).map((d) => d.sets[0]!));
+  const dropped = new Set<string>();
+  for (const d of data) if (d.sets.length === 1 && d.size === 0) dropped.add(d.sets[0]!);
+  const zero = new Set(
+    model.subsets.filter((s) => s.sets.length === 1 && s.size === 0).map((s) => s.sets[0]!)
+  );
   if (zero.size > 0) {
     const ids = [...zero].map((id) => `\`${id}\``).join(', ');
     const one = zero.size === 1;
@@ -188,13 +183,14 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
       message: `Not drawn: ${one ? 'set' : 'sets'} ${ids} of size 0, and every overlap with ${one ? 'it' : 'them'}. Give each set a size above 0.`,
     });
   }
-  return data.filter((d) => d.sets.every((id) => declared.has(id) && !zero.has(id)));
+  const declared = new Set(data.filter((d) => d.sets.length === 1).map((d) => d.sets[0]!));
+  return data.filter((d) => d.sets.every((id) => declared.has(id) && !dropped.has(id)));
 }
 
 /**
  * Each area's label once (venn.js `VennDiagram`): the last non-empty label of its sets, else a
- * set's own id, wrapped against its first set's radius, centred on the floored text centre. One
- * that would lie on an earlier one moves down below it.
+ * set's own id, wrapped against its first set's radius (venn.js's `wrapText` width), centred on
+ * the floored text centre. One that would lie on an earlier one moves down below it.
  */
 function placeLabels(
   drawn: readonly Datum[],
@@ -222,14 +218,19 @@ function placeLabels(
   return placed;
 }
 
+/** What {@link areasOf} builds the drawn areas from. */
+interface AreaParts {
+  readonly drawn: readonly Datum[];
+  readonly solved: Solved;
+  readonly labels: ReadonlyMap<string, PlacedLabel | undefined>;
+  readonly styles: ReadonlyMap<string, Readonly<Record<string, string>>>;
+  /** `5s`, for a set no style gives a `stroke-width`. */
+  readonly circleStroke: number;
+}
+
 /** The drawn areas in v12's order, a set's with its circle and slot. */
-function areasOf(
-  drawn: readonly Datum[],
-  { circles, centres }: Solved,
-  labels: ReadonlyMap<string, PlacedLabel | undefined>,
-  styles: ReadonlyMap<string, Readonly<Record<string, string>>>,
-  circleStroke: number
-): VennAreaLayout[] {
+function areasOf({ drawn, solved, labels, styles, circleStroke }: AreaParts): VennAreaLayout[] {
+  const { circles, centres } = solved;
   let setIndex = 0;
   return drawn.map((d) => {
     const key = areaKey(d.sets);
@@ -247,53 +248,20 @@ function areasOf(
       ...(label ? { label } : {}),
     };
     if (d.sets.length !== 1) return common;
-    const circle = members[0]!;
+    const { x, y, radius } = members[0]!;
     const index = setIndex++;
     return {
       ...common,
       circle: {
-        center: { x: circle.x, y: circle.y },
-        radius: circle.radius,
+        x,
+        y,
+        radius,
         strokeWidth: strokeOf(styles.get(key)?.['stroke-width'], circleStroke),
       },
       index,
       slot: index % VENN_SLOTS,
     };
   });
-}
-
-/** What the bounds cover. */
-interface BoundsParts {
-  readonly width: number;
-  readonly height: number;
-  readonly offset: Point;
-  readonly areas: readonly VennAreaLayout[];
-  readonly textAreas: readonly VennTextArea[];
-  readonly title: PlacedLabel | undefined;
-  readonly debug: VennDebugShapes | undefined;
-}
-
-/** The canvas grown to cover everything drawn (D224), in the diagram frame. */
-function boundsOf(p: BoundsParts): Rect {
-  const box = new Box();
-  box.add({ x: 0, y: 0, width: p.width, height: p.height });
-  if (p.title) box.add(p.title);
-  const moved = (r: Rect): Rect => ({ ...r, x: r.x + p.offset.x, y: r.y + p.offset.y });
-  const movedPoint = (q: Point): Point => ({ x: q.x + p.offset.x, y: q.y + p.offset.y });
-  for (const area of p.areas) {
-    if (area.circle) {
-      const r = area.circle.radius + area.circle.strokeWidth / 2;
-      box.addDisc(movedPoint(area.circle.center), r);
-    }
-    if (area.label) box.add(moved(area.label));
-  }
-  for (const t of p.textAreas) for (const n of t.nodes) box.add(moved(n.label));
-  if (p.debug) {
-    const { circleStroke, cellStroke } = p.debug;
-    for (const c of p.debug.circles) box.addDisc(movedPoint(c.center), c.radius + circleStroke / 2);
-    for (const c of p.debug.cells) box.add(moved(grow(c, cellStroke / 2)));
-  }
-  return box.rect();
 }
 
 /** A text centre that is on the chart. */
@@ -309,23 +277,32 @@ function strokeOf(value: string | undefined, fallback: number): number {
 
 type Measure = (text: string, font: FontKey, maxWidth: number) => MeasuredLabel;
 
+/** A line break as core's label layout reads one. */
+const RE_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/gi;
+
 /**
- * `text` wrapped at `maxWidth` in at most three lines (D414, venn.js's `maxLines`): when it
- * needs more, the narrowest width past `maxWidth` that keeps it to three, found by halving.
- * Explicit breaks are kept, so a label written on more lines keeps them.
+ * `text` in at most three lines (D414). v12 drew every line venn.js's `wrapText` made, so no
+ * text is dropped: lines written past the second are joined into the third with a blank; then
+ * the label wraps at `maxWidth`, and when that needs more than three lines, at the narrowest
+ * wider width that keeps it to three, found by halving.
  */
 function capped(text: string, font: FontKey, maxWidth: number, measure: Measure): MeasuredLabel {
   const { maxLabelLines: max, labelWidthSteps } = VENN_METRICS;
-  const first = measure(text, font, maxWidth);
+  const parts = text.split(RE_BREAK);
+  const source =
+    parts.length > max
+      ? [...parts.slice(0, max - 1), parts.slice(max - 1).join(' ')].join('<br>')
+      : text;
+  const first = measure(source, font, maxWidth);
   if (first.lines.length <= max) return first;
-  const natural = measure(text, font, Infinity);
+  const natural = measure(source, font, Infinity);
   if (natural.lines.length >= max) return natural;
   let lo = maxWidth;
   let hi = natural.width;
   let best = natural;
   for (let step = 0; step < labelWidthSteps; step++) {
     const mid = (lo + hi) / 2;
-    const at = measure(text, font, mid);
+    const at = measure(source, font, mid);
     if (at.lines.length <= max) {
       hi = mid;
       best = at;
@@ -340,17 +317,11 @@ function capped(text: string, font: FontKey, maxWidth: number, measure: Measure)
  * width only) is large for the circles; v13 keeps that place whenever it is free.
  */
 function clear(label: PlacedLabel, taken: readonly PlacedLabel[]): PlacedLabel {
-  let y = label.y;
+  let at = label;
   for (;;) {
-    const on = taken.filter(
-      (t) =>
-        label.x < t.x + t.width &&
-        t.x < label.x + label.width &&
-        y < t.y + t.height &&
-        t.y < y + label.height
-    );
-    if (on.length === 0) return { ...label, y };
-    for (const t of on) y = Math.max(y, t.y + t.height);
+    const on = taken.filter((t) => overlaps(at, t));
+    if (on.length === 0) return at;
+    at = { ...at, y: Math.max(at.y, ...on.map((t) => t.y + t.height)) };
   }
 }
 
@@ -410,10 +381,9 @@ function textAreasOf(
     const labelOffsetBase = hasLabel
       ? Math.min(m.labelOffsetMax * scale, innerRadius * m.labelOffsetFactor)
       : 0;
-    const labelOffset =
-      labelOffsetBase + (nodes.length <= m.fewNodes ? m.fewNodesOffset * scale : 0);
+    const fewOffset = nodes.length <= m.fewNodes ? m.fewNodesOffset * scale : 0;
     const startX = centre.x - innerWidth / 2;
-    const startY = centre.y - innerHeight / 2 + labelOffset;
+    const startY = centre.y - innerHeight / 2 + labelOffsetBase + fewOffset;
     const cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
     const rows = Math.max(1, Math.ceil(nodes.length / cols));
     const cellWidth = innerWidth / cols;
@@ -442,37 +412,10 @@ function textAreasOf(
     });
     out.push({
       sets: area.sets,
-      centre,
-      innerRadius,
+      inner: { x: centre.x, y: centre.y, radius: innerRadius },
       grid: { x: startX, y: startY, width: innerWidth, height: innerHeight },
       nodes: placed,
     });
   }
   return out;
-}
-
-/** `r` grown by `d` on every side. */
-function grow(r: Rect, d: number): Rect {
-  return { x: r.x - d, y: r.y - d, width: r.width + 2 * d, height: r.height + 2 * d };
-}
-
-/** The union of what is drawn. */
-class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  add(r: Rect): void {
-    this.x0 = Math.min(this.x0, r.x);
-    this.y0 = Math.min(this.y0, r.y);
-    this.x1 = Math.max(this.x1, r.x + r.width);
-    this.y1 = Math.max(this.y1, r.y + r.height);
-  }
-  /** The square around the disc of radius `r` about `center`. */
-  addDisc(center: Point, r: number): void {
-    this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
-  }
 }

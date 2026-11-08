@@ -4,15 +4,14 @@
  * BSD-3-Clause for fmin, which venn.js bundles).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's and Iconify's repository URLs; Braintree's sanitize-url package name). A file is derived from an upstream
- * when its header has that marker. Then:
+ * block (the repository URLs of Pele, Iconify, venn.js and fmin; Braintree's sanitize-url
+ * package name). A file is derived from an upstream when its header has that marker. Then:
  * - that header names the upstream's license (MIT unless the entry says otherwise) and every
  *   copyright holder of the upstream;
  * - in a published package (`packages/*` without `"private": true`), the package root has a
- *   `THIRD_PARTY_NOTICES` that holds the upstream's license text and every copyright line of
- *   it, lists the file by its
- *   package-relative path (in that upstream's section, when the notices have one per upstream)
- *   and is in the package's `"files"`, so it ships in the tarball;
+ *   `THIRD_PARTY_NOTICES` that holds the upstream's license text and every copyright line of it,
+ *   lists the file by its package-relative path (in that upstream's section, when the notices
+ *   have one per upstream) and is in the package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
@@ -42,33 +41,31 @@ interface Upstream {
   readonly marker: string;
   /** MIT when not given. */
   readonly license?: License;
-  /** The copyright holder a header names, or every one of several. */
-  readonly holder: string | readonly string[];
-  /** The copyright line the notices hold, or every one of several. */
-  readonly copyright: string | readonly string[];
+  /** The copyright holders a header names, every one. */
+  readonly holder: readonly string[];
+  /** The copyright lines the notices hold, every one. */
+  readonly copyright: readonly string[];
 }
-
-const all = (v: string | readonly string[]): readonly string[] => (typeof v === 'string' ? [v] : v);
 
 export const UPSTREAMS: readonly Upstream[] = [
   {
     name: 'Pele',
     marker: 'https://github.com/obsidianmd/pele',
-    holder: 'kepano',
-    copyright: 'Copyright (c) 2026 kepano',
+    holder: ['kepano'],
+    copyright: ['Copyright (c) 2026 kepano'],
   },
   {
     name: '@braintree/sanitize-url',
     marker: '@braintree/sanitize-url',
-    holder: 'Braintree',
-    copyright: 'Copyright (c) 2017 Braintree',
+    holder: ['Braintree'],
+    copyright: ['Copyright (c) 2017 Braintree'],
   },
   {
     // cspell:ignore Vjacheslav Trushkin
     name: '@iconify/utils',
     marker: 'https://github.com/iconify/iconify',
-    holder: 'Vjacheslav Trushkin',
-    copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
+    holder: ['Vjacheslav Trushkin'],
+    copyright: ['Copyright (c) 2021-PRESENT Vjacheslav Trushkin'],
   },
   {
     // cspell:ignore Frederickson Gratzl
@@ -82,8 +79,8 @@ export const UPSTREAMS: readonly Upstream[] = [
     name: 'fmin',
     marker: 'https://github.com/benfred/fmin',
     license: 'BSD-3-Clause',
-    holder: 'Ben Frederickson',
-    copyright: 'Copyright 2016, Ben Frederickson',
+    holder: ['Ben Frederickson'],
+    copyright: ['Copyright 2016, Ben Frederickson'],
   },
 ];
 
@@ -163,7 +160,7 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
     for (const upstream of UPSTREAMS) {
       if (!header.includes(upstream.marker)) continue;
       const license = upstream.license ?? 'MIT';
-      const holders = all(upstream.holder);
+      const holders = upstream.holder;
       if (!LICENSES[license].header.test(header) || !holders.every((h) => header.includes(h)))
         problems.push(
           `${rel}: ${upstream.name}-derived header must name the ${license} license and ${holders.map((h) => `"${h}"`).join(' and ')}`
@@ -237,7 +234,7 @@ export function checkLicenses(root: string): string[] {
     );
     for (const u of used) {
       const license = u.license ?? 'MIT';
-      const lines = all(u.copyright);
+      const lines = u.copyright;
       if (!notices.includes(LICENSES[license].text) || !lines.every((c) => notices.includes(c)))
         problems.push(
           `${pkg}/${NOTICES}: must contain the ${license} License text with ${lines.map((c) => `"${c}"`).join(' and ')}`

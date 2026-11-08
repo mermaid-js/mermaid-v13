@@ -177,7 +177,11 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
-/** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
+/**
+ * Who reads both base text variables (`fontFamily`, `fontSize`): a new type that reads both
+ * appends here. A type that reads only `fontFamily` (pie, packet, cynefin, info, venn) is listed
+ * on that row.
+ */
 const TEXT_USERS = [
   'core',
   'flowchart',

@@ -25,8 +25,6 @@ export interface VennMetrics {
   readonly textFontSize: number;
   /** A circle's stroke when no style sets one: `5s`. */
   readonly circleStroke: number;
-  /** venn.js's default padding, the drawn circles' (D412), when `venn.padding` is not given. */
-  readonly padding: number;
   /** A label wraps to at most this many lines (D414; venn.js's `maxLines`). */
   readonly maxLabelLines: number;
   /** Steps of the halving search for the width that keeps a label to `maxLabelLines`. */
@@ -59,7 +57,6 @@ export const VENN_METRICS: VennMetrics = {
   labelFontSize: 48,
   textFontSize: 40,
   circleStroke: 5,
-  padding: 15,
   maxLabelLines: 3,
   labelWidthSteps: 24,
   textBoxMinWidth: 80,
@@ -74,13 +71,6 @@ export const VENN_METRICS: VennMetrics = {
   debugCircleStroke: 1.5,
   debugCellStroke: 1,
 };
-
-/**
- * The `venn` config defaults the layout falls back to (`VennDiagramConfig` at `fa796a943`)
- * until #501 generates them from the schema. `padding` is not here: D412's default is
- * {@link VennMetrics.padding}.
- */
-export const VENN_CONFIG_DEFAULTS = { width: 800, height: 450, useDebugLayout: false } as const;
 
 /** v12 writes `venn-set-0`…`venn-set-7`: set `i` takes slot `i mod 8`. */
 export const VENN_SLOTS = 8;

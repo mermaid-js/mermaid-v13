@@ -3,18 +3,14 @@
  * #429 §Layout, D224). Every length is in px (venn draws SVG only, D320). Two frames, as v12
  * drew: the title and `bounds` are in the diagram's coordinates; areas, text areas and debug
  * shapes are in the chart's, the group v12 translated down by the title row (`offset`).
- * Rectangles have their top-left corner at `x`, `y`.
+ * Rectangles have their top-left corner at `x`, `y`; circles are `{ x, y, radius }` about their
+ * centre, as venn.js's.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
-import type { RegionPath } from '../solver/index.ts';
+import type { Circle, Point, RegionPath } from '../solver/index.ts';
 
-export type { RegionArc, RegionPath } from '../solver/index.ts';
-
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
+export type { Circle, Point, RegionArc, RegionPath } from '../solver/index.ts';
 
 export interface Rect extends Point {
   readonly width: number;
@@ -27,9 +23,7 @@ export interface PlacedLabel extends Rect {
 }
 
 /** A drawn set's circle. */
-export interface VennCircle {
-  readonly center: Point;
-  readonly radius: number;
+export interface VennCircle extends Readonly<Circle> {
   /** The stroke the bounds allow for: the style's `stroke-width` as a number, else `5s`. */
   readonly strokeWidth: number;
 }
@@ -45,7 +39,10 @@ export interface VennAreaLayout {
   readonly sets: readonly string[];
   /** The model's entry; absent for a pair v12 adds (`ensurePairwiseSubsets`). */
   readonly ast?: AstId;
-  /** The size it was laid out at: 0 for a negative one (D417), `min(a, b) / 4` for an added pair. */
+  /**
+   * The size it was laid out at: 0 for a negative or too large one (D417), `min(a, b) / 4` for
+   * an added pair.
+   */
   readonly size: number;
   /** A set's circle (a repeat shares the last copy's size, as in v12). */
   readonly circle?: VennCircle;
@@ -61,9 +58,10 @@ export interface VennAreaLayout {
    */
   readonly centre?: Point;
   /**
-   * The label, at most three lines (D414), its box centred on the floored centre as v12 drew it:
-   * the last non-empty `[label]` of this area's sets, else a set's own id; absent for an overlap
-   * without one, and for an area not on the chart.
+   * The label, at most three lines (D414), its box centred on the floored centre as v12 drew it
+   * (moved down below an earlier area's label it would lie on): the last non-empty `[label]` of
+   * this area's sets, else a set's own id; absent for an overlap without one, and for an area
+   * not on the chart.
    */
   readonly label?: PlacedLabel;
 }
@@ -84,11 +82,15 @@ export interface VennTextNodeLayout {
 export interface VennTextArea {
   /** The area's sets, sorted. */
   readonly sets: readonly string[];
-  /** venn.js's text centre of the area. */
-  readonly centre: Point;
-  /** The room about the centre inside every circle of the area, or `0.6 · minR` when none. */
-  readonly innerRadius: number;
-  /** The grid: `max(80s, 1.9 · innerRadius)` by `max(60s, 1.9 · innerRadius)`, moved down by the label offset. */
+  /**
+   * The inner circle: about venn.js's text centre, the room inside every circle of the area,
+   * or `0.6 · minR` when there is none.
+   */
+  readonly inner: Readonly<Circle>;
+  /**
+   * The grid: `max(80s, 1.9 · r)` by `max(60s, 1.9 · r)` about the centre, moved down by the
+   * label offset.
+   */
   readonly grid: Rect;
   /** In source order. */
   readonly nodes: readonly VennTextNodeLayout[];
@@ -96,7 +98,7 @@ export interface VennTextArea {
 
 /** `venn.useDebugLayout`'s plain shapes (v12's purple circles and teal cells). */
 export interface VennDebugShapes {
-  readonly circles: readonly { readonly center: Point; readonly radius: number }[];
+  readonly circles: readonly Readonly<Circle>[];
   readonly cells: readonly Rect[];
   readonly circleStroke: number;
   readonly cellStroke: number;
@@ -112,7 +114,7 @@ export interface VennLayout {
   readonly offset: Point;
   /** `48s` with a title, else 0. */
   readonly titleHeight: number;
-  /** The one solve's padding (D412): `venn.padding`, else 15. */
+  /** The one solve's padding (D412): `venn.padding`, 15 by default. */
   readonly padding: number;
   /** Drawn areas, in v12's order (chart frame). */
   readonly areas: readonly VennAreaLayout[];

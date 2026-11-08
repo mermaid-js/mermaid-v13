@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { layoutVenn, parseVenn } from '@mermaid-js/diagram-venn';
+import { layoutVenn } from '@mermaid-js/diagram-venn';
 import {
+  parsedVenn,
   vennLayoutViolations,
   vennTestContext,
   vennTestTheme,
@@ -38,9 +38,7 @@ describe('venn layout invariants on parser-produced fixtures', () => {
     let wide = 0;
     let texts = 0;
     for (const item of corpus) {
-      const pre = preprocess(item.source);
-      const { model } = parseVenn(item.source, { preprocessed: pre });
-      const own = (pre.frontMatter?.config?.venn ?? {}) as Record<string, unknown>;
+      const { model, config: own } = parsedVenn(item.source);
       sets += model.subsets.length;
       if (new Set(model.subsets.flatMap((s) => s.sets)).size >= 4) wide++;
       texts += model.textNodes.length;
@@ -55,7 +53,7 @@ describe('venn layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(40);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(55);
     expect(sets).toBeGreaterThan(3000);
     expect(wide).toBeGreaterThan(20);
     expect(texts).toBeGreaterThan(500);

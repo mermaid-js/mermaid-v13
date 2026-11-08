@@ -6449,9 +6449,10 @@ export const configSchema: ConfigSchema = {
           }
         },
         "padding": {
+          "description": "The margin round the circles, in pixels (D412). The documented default changes from 8\nto 15, the padding v12 drew its circles with: v12's schema said 8, but only its second\nsolve (text nodes and hand-drawn circles) read it. v13 solves once, at this padding.\n",
           "type": "number",
           "minimum": 0,
-          "default": 8,
+          "default": 15,
           "x-mermaid": {
             "status": "pending"
           }

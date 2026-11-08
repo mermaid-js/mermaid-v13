@@ -12,11 +12,9 @@ export const VENN_UNKNOWN_SET = 'VENN_UNKNOWN_SET';
 export const VENN_DUPLICATE = 'VENN_DUPLICATE';
 /** Warning: a text node or style naming a set or overlap the diagram does not draw. */
 export const VENN_UNKNOWN_TARGET = 'VENN_UNKNOWN_TARGET';
-/** Warning: a negative size (laid out as 0). */
+/** Warning: a negative size, or one too large to lay out (laid out as 0). */
 export const VENN_INVALID_SIZE = 'VENN_INVALID_SIZE';
 /** Warning: no `set` or `union`; only the title is drawn. */
 export const VENN_EMPTY = 'VENN_EMPTY';
-/** Warning: sets of size 0 (or below, D417), which are not drawn, nor their overlaps. */
+/** Warning (the layout's): sets written with size 0, which are not drawn, nor their overlaps. */
 export const VENN_ZERO_SET = 'VENN_ZERO_SET';
-/** Warning: a `venn` config value the layout cannot use; the default is used instead. */
-export const VENN_CONFIG_INVALID = 'VENN_CONFIG_INVALID';

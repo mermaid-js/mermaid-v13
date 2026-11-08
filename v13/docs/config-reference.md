@@ -879,7 +879,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `venn.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `venn.width` | number | `800` | pending |  | The width of the Venn diagram. |
 | `venn.height` | number | `450` | pending |  | The height of the Venn diagram. |
-| `venn.padding` | number | `8` | pending |  |  |
+| `venn.padding` | number | `15` | pending |  | The margin round the circles, in pixels (D412). The documented default changes from 8 to 15, the padding v12 drew its circles with: v12's schema said 8, but only its second solve (text nodes and hand-drawn circles) read it. v13 solves once, at this padding. |
 | `venn.useDebugLayout` | boolean | `false` | pending |  |  |
 
 ## `wardley-beta`

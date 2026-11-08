@@ -41,7 +41,7 @@ const MAX_ITERATIONS = 500;
 const SMALL = 1e-10;
 
 /** An empty record with no prototype. */
-export const record = <V>(): Record<string, V> => Object.create(null) as Record<string, V>;
+export const nullRecord = <V>(): Record<string, V> => Object.create(null) as Record<string, V>;
 
 /** The circles for `areas` (venn.js `venn`), before normalising and scaling. */
 export function venn(areas: readonly Area[], options: SolveOptions): Solution {
@@ -62,7 +62,7 @@ export function venn(areas: readonly Area[], options: SolveOptions): Solution {
   // optimize initial layout from our loss function
   const solution = nelderMead(
     (values) => {
-      const current = record<Circle>();
+      const current = nullRecord<Circle>();
       for (let i = 0; i < setids.length; ++i) {
         const setid = setids[i]!;
         current[setid] = {
@@ -233,7 +233,7 @@ function constrainedMDSLayout(areas: readonly Area[], options: SolveOptions): So
 
   // bidirectionally map sets to a rowid  (so we can create a matrix)
   const sets: Area[] = [];
-  const setids = record<number>();
+  const setids = nullRecord<number>();
   for (const area of areas) {
     if (area.sets.length === 1) {
       setids[area.sets[0]!] = sets.length;
@@ -262,7 +262,7 @@ function constrainedMDSLayout(areas: readonly Area[], options: SolveOptions): So
   const positions = best!.x;
 
   // translate rows back to (x,y,radius) coordinates
-  const circles = record<Circle>();
+  const circles = nullRecord<Circle>();
   for (let i = 0; i < sets.length; ++i) {
     const set = sets[i]!;
     circles[set.sets[0]!] = {
@@ -293,8 +293,8 @@ interface Overlap {
  */
 function greedyLayout(areas: readonly Area[]): Solution {
   // define a circle for each set
-  const circles = record<GreedyCircle>();
-  const setOverlaps = record<Overlap[]>();
+  const circles = nullRecord<GreedyCircle>();
+  const setOverlaps = nullRecord<Overlap[]>();
   for (const area of areas) {
     if (area.sets.length === 1) {
       const set = area.sets[0]!;
@@ -331,7 +331,7 @@ function greedyLayout(areas: readonly Area[]): Solution {
   mostOverlapped.sort(sortOrder);
 
   // keep track of what sets have been laid out
-  const positioned = record<boolean>();
+  const positioned = nullRecord<boolean>();
   const isPositioned = (element: Overlap): boolean => element.set in positioned;
 
   const positionSet = (point: Point, index: string): void => {

@@ -290,6 +290,22 @@ describe('venn warnings (D417)', () => {
 
   it('warns once for every negative size', () => {
     expect(warnings('venn-beta\nset A:-1\nset B:-2\nset C:0')).toEqual([VENN_INVALID_SIZE]);
+    const { model } = parseVenn('venn-beta\nset A:-1');
+    expect(model.warnings[0]?.message).toBe(
+      'A size below 0 is laid out as 0: `set A:-1` at line 2. Use a size of 0 or more.'
+    );
+  });
+
+  it('warns in the same warning for a size too large to square (D417: laid out as 0)', () => {
+    const huge = `1${'0'.repeat(400)}`;
+    const { model } = parseVenn(`venn-beta\nset A:-1\nset B:${huge}\nset C:1${'0'.repeat(150)}`);
+    expect(model.warnings.map((d) => d.code)).toEqual([VENN_INVALID_SIZE]);
+    const message = model.warnings[0]?.message ?? '';
+    expect(message).toMatch(/^A size below 0, or too large to lay out, is laid out as 0: /);
+    expect(message).toContain('at line 2');
+    expect(message).toContain('at line 3');
+    expect(message).toMatch(/Use a size of 0 or more, with at most 154 digits\.$/);
+    expect(model.warnings[0]?.message).not.toContain('line 4');
   });
 
   it('warns for a style naming nothing drawn, not for a text node or 3-way pair target', () => {

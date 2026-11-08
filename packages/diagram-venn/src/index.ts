@@ -14,10 +14,8 @@ export {
   VENN_UNKNOWN_SET,
   VENN_UNKNOWN_TARGET,
   VENN_ZERO_SET,
-  VENN_CONFIG_INVALID,
 } from './codes.ts';
 export {
-  areaKey,
   layoutVenn,
   vennStyles,
   VENN_METRICS,
@@ -25,4 +23,10 @@ export {
   type VennLayoutContext,
 } from './layout/index.ts';
 export type * from './layout/types.ts';
-export { vennLayoutConfig, type VennLayoutConfig } from './config.ts';
+export { areaKey } from './solver/index.ts';
+export {
+  VENN_CONFIG_DEFAULTS,
+  vennLayoutConfig,
+  vennPluginDefaults,
+  type VennLayoutConfig,
+} from './config.ts';
