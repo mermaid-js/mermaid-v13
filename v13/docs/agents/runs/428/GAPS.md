@@ -73,3 +73,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   7. Inline `style` (with v12's `!important` class styles and `white-space`/`overflow`/`text-overflow`) becomes presentation attributes: `fill`, `stroke`, `font-*`, `text-anchor`, `dominant-baseline`. Class styles are checked (R-SEC-2): unsupported properties and unsafe values are dropped with `STYLE_PROPERTY_DROPPED`/`STYLE_VALUE_DROPPED`.
   8. The root is `class="mermaid mermaid-treemap"` (no `flowchart`, which v12's `setupViewPortForSVG` added), with `font-family`, and its viewBox is the layout's bounds (D224).
   9. Sections and leaves carry `data-id`/`data-ast` on the group and `data-id` on their rects and texts; the in-text title's text both (R-PARSE-8).
+
+## T4 (#505, merged)
+
+- Review (orchestrator, `/code-review`), fixed: an inline source in `render.spec.ts` replaced by a corpus case; `PEER_SLOTS` defined once; the title checked under dark and base with `darkMode`; the `utils.test.ts` criterion and the T5 config cast recorded above.
+- Accepted: the `M` metrics alias and the renderer's local names; the `drawSection`/`drawLeaf` shape; `showValues`/`useMaxWidth` tested at the renderer seam until T5's schema; default's and forest's `darken(…, 25)` and special slots taking the 10% rule (D406 decides it; T5 lists them in `DIFFERENCES` and MIGRATION.md).
