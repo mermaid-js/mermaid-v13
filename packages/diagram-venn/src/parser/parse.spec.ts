@@ -232,6 +232,12 @@ describe('venn errors (R-PARSE-4)', () => {
     expect(model.subsets.map((s) => s.sets[0])).toEqual(['A', 'D']);
   });
 
+  it('hints from the statement before only on the same line', () => {
+    const message = (src: string) => parseVenn(src).diagnostics[0]?.message ?? '';
+    expect(message('venn-beta\nset A B')).toContain('a `set` names one set');
+    expect(message('venn-beta\nset A\nB')).not.toContain('a `set` names one set');
+  });
+
   it('names unclosed strings and labels', () => {
     const one = (body: string) => errors(`venn-beta\n${body}\nset Z`);
     expect(one('set "A')).toEqual(['UNCLOSED_STRING']);

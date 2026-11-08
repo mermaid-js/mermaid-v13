@@ -209,7 +209,10 @@ class VennParser {
   private headerRange: Range | undefined;
   /** The open `set` or `union` span, which holds the indented `text` lines after it. */
   private block: StatementSpan | undefined;
-  /** The kind of the last statement read, and whether its text id was a number (for hints). */
+  /**
+   * The kind of the last statement read on this line, and whether its text id was a number (for
+   * the hints of an error right after it).
+   */
   private lastStatement = 0;
   private lastNumberId = false;
   /** Ids defined so far per symbol kind: the first occurrence defines (D418). */
@@ -443,6 +446,8 @@ class VennParser {
       if (this.atEnd()) return;
       const k = this.kind();
       if (k === Kind.Newline) {
+        // The hints read the statement before on the same line only.
+        this.lastStatement = 0;
         this.i++;
         continue;
       }
