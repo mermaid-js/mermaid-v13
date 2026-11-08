@@ -332,5 +332,6 @@ export function outliningEveryLeaf(w: SvgWriter, role: OutlineRole = 'node'): Sv
     label: (box, x, y, attrs) => w.label(box, x, y, attrs),
     path: () => w.path(),
     styleSheet: (css) => w.styleSheet(css),
+    linearGradient: (g) => w.linearGradient(g),
   };
 }

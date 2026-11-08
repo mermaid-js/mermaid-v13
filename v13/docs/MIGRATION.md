@@ -1892,9 +1892,10 @@ Class lists are written with single spaces and no trailing blank.
 - **Labels** (D372) are SVG text from core's label layout, measured in the theme's font, instead
   of HTML in `<foreignObject>`: `**bold**`, `<br>`, entities, math and `fa:` icons work in column
   titles, card titles, tickets and assignees. Column titles wrap at `sectionWidth` and card
-  labels 25 px inside it, as in v12; a single word wider than that is split between characters,
-  where v12 let it overflow the column or card. A raw line break inside a quoted label breaks
-  the line, where v12's HTML folded it to a space.
+  labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
+  column or card, as in v12 (earlier v13 builds split it between characters; the text output
+  still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
+  where v12's HTML folded it to a space.
 - **Metadata v12 parsed but never drew is still not drawn** (D376), with no warning: an item's
   icon (`::icon()` or `@{ icon }`), and a column's `ticket`, `assigned` and `priority`. It stays
   in the model and the AST.

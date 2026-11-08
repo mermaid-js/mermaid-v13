@@ -199,7 +199,15 @@ export function themeRef(
   return `var(${name},${typeof fallback === 'number' ? num(fallback) : fallback})` as ThemeRef;
 }
 
+/**
+ * `mix-blend-mode` (D392), with its only values. Not a presentation attribute, so `checkStyle`
+ * writes it as the shape's `style`, and it is not in {@link STYLE_PROPERTIES}.
+ */
+export const BLEND = 'mix-blend-mode';
+export const BLEND_MODES: ReadonlySet<string> = new Set(['normal', 'multiply']);
+
 type Kind =
+  | 'blend'
   | 'color'
   | 'length'
   | 'opacity'
@@ -212,7 +220,8 @@ type Kind =
   | 'join'
   | 'size'
   | 'spacing';
-type Target = 'shape' | 'text' | 'both';
+/** `style`: the shape's `style` attribute, for a property that is not a presentation attribute. */
+type Target = 'shape' | 'text' | 'both' | 'style';
 
 const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   fill: ['color', 'shape'],
@@ -232,14 +241,19 @@ const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   'font-style': ['fontStyle', 'text'],
   'text-decoration': ['decoration', 'text'],
   'letter-spacing': ['spacing', 'text'],
+  [BLEND]: ['blend', 'style'],
 };
 
-/** The properties `checkStyle` keeps. */
-export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(Object.keys(PROPERTIES));
+/** The properties `checkStyle` keeps as presentation attributes (all but `mix-blend-mode`). */
+export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(
+  Object.keys(PROPERTIES).filter((p) => p !== BLEND)
+);
 
 function checkValue(kind: Kind, v: string): string | undefined {
   const lower = v.toLowerCase();
   switch (kind) {
+    case 'blend':
+      return BLEND_MODES.has(lower) ? lower : undefined;
     case 'color':
       return checkColor(v);
     case 'length':
@@ -278,7 +292,11 @@ function checkValue(kind: Kind, v: string): string | undefined {
 
 /** Checked style declarations, split by what they apply to, as presentation attributes. */
 export interface CheckedStyle {
-  /** For the shape or line: fill, stroke, stroke-*, opacity. */
+  /**
+   * For the shape or line: fill, stroke, stroke-*, opacity, and `style` holding only
+   * `mix-blend-mode:normal|multiply` (D392). A renderer that writes its own `style` on the same
+   * element passes this one as `styleText`'s `tail`, so neither replaces the other.
+   */
   readonly shape: Attrs;
   /** For the label: `color` becomes `fill`, plus font-* and text-decoration. */
   readonly text: Attrs;
@@ -327,8 +345,11 @@ export function checkStyle(declarations: readonly string[], warn?: Warn): Checke
     }
     any = true;
     const target = entry[1];
-    if (target !== 'text') shape[prop] = value;
-    if (target !== 'shape') text[prop === 'color' ? 'fill' : prop] = value;
+    if (target === 'style') shape.style = prop + ':' + value;
+    else {
+      if (target !== 'text') shape[prop] = value;
+      if (target !== 'shape') text[prop === 'color' ? 'fill' : prop] = value;
+    }
   }
   return any ? { shape: shape as Attrs, text: text as Attrs } : EMPTY;
 }
@@ -339,6 +360,7 @@ export const STYLE_TEXT_PROPERTIES: ReadonlySet<string> = new Set([
   'max-width',
   'width',
   'height',
+  BLEND,
 ]);
 
 /**
@@ -358,7 +380,11 @@ export function styleText(
       throw new TypeError(`${JSON.stringify(prop)} is not an allowed style property`);
     }
     const text = typeof value === 'number' ? num(value) : value;
-    if (RE_UNSAFE_STYLE.test(text) || RE_INVALID_XML.test(text))
+    if (
+      RE_UNSAFE_STYLE.test(text) ||
+      RE_INVALID_XML.test(text) ||
+      (prop === BLEND && !BLEND_MODES.has(text))
+    )
       throw new TypeError(`Unsafe style value for ${prop}`);
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
@@ -373,13 +399,17 @@ const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;
  * it (`p-<base36>`), so any id (React's `:r1:`, ids with spaces) gives a valid, distinct scope.
  */
 export function styleScope(id: string): string {
-  if (RE_SCOPE.test(id)) return id;
+  return RE_SCOPE.test(id) ? id : `p-${hash36(id)}`;
+}
+
+/** FNV-1a (32-bit) of `text`, in base 36: a short, stable id part, not a secure hash. */
+export function hash36(text: string): string {
   let h = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  return `p-${(h >>> 0).toString(36)}`;
+  return (h >>> 0).toString(36);
 }
 const MEDIA_DARK = '@media (prefers-color-scheme:dark){';
 
