@@ -7,7 +7,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **No T0, no T7.** Treemap adds no core contract; no ASCII ticket (D320).
 - **T5 after T6.** T5 (#514) is blocked by T6 (#511) too, so the manifest's `language` key and the registry follow-ups land once, in T5 (radar's order).
 - **Theme table in T4.** The T0 (#414) is merged, so the spec's pure-call fallback in core is not used. T4 (#505) lands `src/theme/vocabulary.ts` with the plugin; T5 adds the oracle specs and DIFFERENCES.
-- **`cScalePeer` shape (D406).** Diagram tables have no palette kind (`ThemeVarKind`); core's palettes are core's. Treemap's `cScalePeer` is twelve colour variables `cScalePeer0`–`cScalePeer11` in its own table, each derived from the matching `cScale` slot by trait. The author-facing numbered names stay as in v12.
+- **`cScalePeer` shape (D406).** Diagram tables have no palette kind (`ThemeVarKind`); core's palettes are core's. Treemap's `cScalePeer` is twelve colour variables `cScalePeer0`–`cScalePeer11` in its own table, each derived from the matching `cScale` slot by trait. The author-facing numbered names stay as in v12. D545 (#506, merged after T3) adds a `palette` kind to diagram tables, but its rule only names a shared palette to read, with no per-slot derivation, and v12 authors set `cScalePeer<n>` one by one; so the twelve colour variables stay.
 
 ## T1 (#483, merged)
 
@@ -44,3 +44,9 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - `src/config.ts` is a stand-in until T5's schema: v12's defaults hard-coded, a value out of range falls back silently (T5 decides on a warning).
 - Review fixes: `THIRD_PARTY_NOTICES` (d3-hierarchy and d3-format sections, ISC text and copyright lines from the 3.1.2 LICENSE files, in `"files"`); `tools/release/src/licenses.ts` gains a per-upstream `license` (default MIT) and the two d3 upstreams, `REQUIRED_CREDITS` for `tiles.ts` and `format/d3-format.ts`, and checks a private package that holds a required-credit file (only treemap; Pele, Braintree, Iconify unchanged). Layout stress shapes (2k vs 16k rows, flat, deep, many names, a complex tree of long labels at an eighth) in `conformance/src/treemap/stress.spec.ts`; a quadratic leaf scan fails them.
 - Shared edit: `treemap` added to `fontFamily`'s `usedBy` (core vocabulary, `gen:theme` run: only `theme-variables.md` changed) and taken off `NOT_DRAWN_YET` in `theme-used-by.spec.ts`, since the layout reads `fontFamily`.
+
+## T3 (#485, merged)
+
+- Review (orchestrator, `/code-review`), fixed: d3's ISC credit in `THIRD_PARTY_NOTICES`, checked by `check:licenses` (stricter only); layout stress shapes; non-finite values print no value text (Q2); a shared test-context builder; a rename in `config.ts`.
+- Accepted: the shared loop of `layout-d3.spec.ts` and `layout-corpus.spec.ts`; the `config.ts` stand-in until T5; `treemap` in core's `fontFamily` `usedBy` (needed by `theme-used-by.spec.ts`, as pie, packet, info); hand-built models in the unit specs (sources stay in the corpus).
+- For the maintainer: d3's code is ported under ISC (d3-hierarchy, d3-format 3.1.2), credited in each file header and `packages/diagram-treemap/THIRD_PARTY_NOTICES`.
