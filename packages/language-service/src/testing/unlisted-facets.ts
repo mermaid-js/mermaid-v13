@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #428: the manifest comes with T5 (#514).
-  {
-    type: 'treemap',
-    id: 'treemap',
-    section: 'treemap',
-    pattern: /^\s*treemap/,
-    detector: (text) => /^\s*treemap/.test(text),
-    load: () => import('@mermaid-js/diagram-treemap/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

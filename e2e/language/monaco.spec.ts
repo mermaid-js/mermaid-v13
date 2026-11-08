@@ -253,6 +253,7 @@ const TYPE_DOCS: Record<string, string> = {
   radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
   kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
+  treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */

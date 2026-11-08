@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detectTreemap, parseTreemap } from '@mermaid-js/diagram-treemap';
+import { parseTreemap } from '@mermaid-js/diagram-treemap';
 import type { TreemapRowNode } from '@mermaid-js/diagram-treemap';
-import { treemapLanguage } from '@mermaid-js/diagram-treemap/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -25,13 +24,11 @@ import type { TreemapNodeSnapshot } from './v12.ts';
  * - each v12 section with rows written over several lines has a `section` fold from its name to
  *   the end of its last row, and a multi-line v12 `accDescr` an `accDescr` fold.
  *
- * The facet is passed as an eager row until treemap's manifest has its `language` entry (#514).
+ * The service loads the facet through the generated registry row (treemap's manifest
+ * `language` entry, #514).
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'treemap', id: 'treemap', detector: (t) => detectTreemap(t), facet: treemapLanguage },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['treemap'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 
 /** v12's rows depth first (source order), each with its last row (itself, or a descendant). */
@@ -142,8 +139,9 @@ describe('treemap definition, references and folding through the service match v
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while treemap has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#514)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'treemap');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///t', 'treemap\n"a": 1\n').facet?.id).toBe('treemap');
   });
 });
