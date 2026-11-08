@@ -1,4 +1,4 @@
-// cspell:words vennx
+// cspell:words betax
 /**
  * Venn detection on a raw source, as v12's detector saw the text (`/^\s*venn-beta/` after the
  * front matter, with directives and `%%` comments removed): `diagramStart` finds where that text

@@ -1,3 +1,4 @@
+// cspell:words LALR
 /**
  * Venn parser: recursive descent over the significant {@link lex} tokens (gated against v12's
  * jison lexer, #486), producing a {@link VennModel}, the typed AST, symbols, statement spans and

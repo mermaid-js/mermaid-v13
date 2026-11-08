@@ -92,12 +92,12 @@
       "match": "(?i)style\\b",
       "name": "keyword.control.mermaid-venn"
     },
-    "phase-qlabel": {
+    "phase-quotedLabel": {
       "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\"]*))",
       "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\"]*)",
       "patterns": [
         {
-          "include": "#mode-qlabel"
+          "include": "#mode-quotedLabel"
         }
       ]
     },
@@ -126,7 +126,7 @@
       "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#phase-qlabel"
+          "include": "#phase-quotedLabel"
         },
         {
           "include": "#switch-23"
@@ -337,7 +337,7 @@
       "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)text\\b)",
       "patterns": [
         {
-          "include": "#mode-itext"
+          "include": "#mode-indentText"
         }
       ],
       "endCaptures": {
@@ -465,7 +465,7 @@
         }
       ]
     },
-    "mode-itext": {
+    "mode-indentText": {
       "patterns": [
         {
           "include": "#trivia-0"
@@ -475,7 +475,7 @@
         }
       ]
     },
-    "mode-qlabel": {
+    "mode-quotedLabel": {
       "patterns": [
         {
           "include": "#trivia-0"

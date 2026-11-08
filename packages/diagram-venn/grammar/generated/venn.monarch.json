@@ -107,7 +107,7 @@
         "\\[\"(?=[^\"]*\"\\])",
         {
           "token": "string",
-          "next": "@qlabel"
+          "next": "@quotedLabel"
         }
       ],
       [
@@ -303,7 +303,7 @@
         "\\[\"(?=[^\"]*\"\\])",
         {
           "token": "string",
-          "next": "@qlabel"
+          "next": "@quotedLabel"
         }
       ],
       [
@@ -398,7 +398,7 @@
         "[ \\t]+(?=text\\b)",
         {
           "token": "",
-          "switchTo": "@itext"
+          "switchTo": "@indentText"
         }
       ],
       [
@@ -421,7 +421,7 @@
         }
       ]
     ],
-    "itext": [
+    "indentText": [
       [
         "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
         {
@@ -443,7 +443,7 @@
         }
       ]
     ],
-    "qlabel": [
+    "quotedLabel": [
       [
         "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
         {

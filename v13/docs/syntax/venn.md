@@ -124,7 +124,7 @@ id = IDENTIFIER
 
 The lexer works in modes (`INITIAL` and the ones below). In each mode it tries the rules in this order and takes the first that matches; a rule may push a mode or pop back to the previous one. Rules without a token emit nothing.
 
-Modes: `INITIAL`, `bol`, `on`, `onBol`, `itext`, `qlabel`, `label`, `labelEnd`.
+Modes: `INITIAL`, `bol`, `on`, `onBol`, `indentText`, `quotedLabel`, `label`, `labelEnd`.
 
 Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 
@@ -133,11 +133,11 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL, bol, on, onBol | — | `%%(?!\{)[^\n]*` |  | A `%%` comment after other text on a line, to the end of the line; at the start of a token it takes the character before it. |
 | INITIAL, bol, on, onBol | — | `[^}]%%[^\n]*` |  |  |
 | bol, onBol | — | `[ \t]+(?=[\n\r])` |  | At a line start: blanks before a line break or before other text are skipped. |
-| onBol | INDENT_TEXT | `[ \t]+(?=text\b)` | pop push(itext) | `text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area. The token is the indent. |
+| onBol | INDENT_TEXT | `[ \t]+(?=text\b)` | pop push(indentText) | `text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area. The token is the indent. |
 | bol, onBol | — | `[ \t]+` |  |  |
 | bol | — | `(?=[^ \t\n\r])` | pop | Any other line start ends the indented text lines. |
 | onBol | — | `(?=[^ \t\n\r])` | pop pop |  |
-| itext | — | `text\b` | pop |  |
+| indentText | — | `text\b` | pop |  |
 | INITIAL | NEWLINE | `[\n\r]+` | push(bol) | Line breaks separate statements. |
 | on | NEWLINE | `[\n\r]+` | push(onBol) |  |
 | bol, onBol | NEWLINE | `[\n\r]+` |  |  |
@@ -152,8 +152,8 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | on | UNION | `union\b` |  |  |
 | INITIAL, on | TEXT | `text\b` |  | `text <ids> <id>`: a text node in the area of those sets, with an optional `[label]`. |
 | INITIAL, on | STYLE | `style\b` |  | `style <ids> key: value, …`: the `fill`, `fill-opacity`, `stroke`, `stroke-width` and `color` of a set, an overlap or a text node. |
-| INITIAL, on | — | `\["(?=[^"]*"\])` | push(qlabel) | A label: `["…"]` as written, or `[…]` trimmed. |
-| qlabel | BRACKET_LABEL | `[^"]*` | pop push(labelEnd) |  |
+| INITIAL, on | — | `\["(?=[^"]*"\])` | push(quotedLabel) | A label: `["…"]` as written, or `[…]` trimmed. |
+| quotedLabel | BRACKET_LABEL | `[^"]*` | pop push(labelEnd) |  |
 | INITIAL, on | — | `\[\s*(?=[^\]"]+\])` | push(label) |  |
 | label | BRACKET_LABEL | `[^\]"]*?(?=\s*\])` | pop push(labelEnd) |  |
 | labelEnd | — | `"?\s*\]` | pop |  |
