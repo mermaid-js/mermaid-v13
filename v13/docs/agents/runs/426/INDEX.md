@@ -6,7 +6,7 @@ Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draf
 | --- | --- | --- | --- |
 | T0 shared chart series palette (D381) + table palette kind (D545) | #506 | — | merged into `mermaid-v13` as #534 (05a786ad8; D545 confirmed), merged here at 898863a24 |
 | T1 lexer parity gate | #507 | #285 (merged) | merged (ff 1f7574f8c; package entry 4,193 B gz, no core change) |
-| T2 grammar, parser, model, AST | #508 | #507 | open |
+| T2 grammar, parser, model, AST | #508 | #507 | merged (ff 2d29b39c6; package entry 9,064 B gz, no core change) |
 | T3 layout | #509 | #508 | open |
 | T4 SVG renderer and theme table | #510 | #509, #506 | open |
 | T6 language facet | #512 | #508 | open |
@@ -31,7 +31,8 @@ AI-Max is shared by five wave-2 ports, so one ticket agent runs at a time: T1 �
 | base (12ba676cb) | 91,974 B (CDN, `measureCoreSize`) | — (2,234 B spare) |
 | #507 T1 | 91,974 B | 0 (no core change) |
 | `mermaid-v13` 7623406a4 merged (sankey T0 #524, #515) | 93,822 B (`cdn-build.spec.ts` ESM closure) | +1,848 from other PRs; 386 B spare |
-| #506 T0 (its own PR, measured on 7623406a4) | 94,064 B | +242; 144 B spare |
+| #506 T0 (#534, merged; measured on 98d3c3ffa) | 94,088 B | +266; 120 B spare |
+| #508 T2 | — | 0 (no core or registry change) |
 
 ## Finish rule
 
