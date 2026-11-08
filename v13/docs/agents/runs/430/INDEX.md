@@ -4,7 +4,7 @@ Integration branch `feature/430_wardley`, cut from `mermaid-v13` at `12ba676cb` 
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate on the Langium oracle | #487 | — | open |
+| T1 lexer parity gate on the Langium oracle | #487 | — | merged |
 | T2 grammar, parser, model, AST, ported specs | #489 | #487 | open |
 | T3 custom layout (`WardleyLayout`) | #490 | #489 (soft) | open |
 | T4 SVG renderer and theme table | #493 | #489, #490 | open |

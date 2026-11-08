@@ -19,3 +19,10 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Extra group** `g.wardley-pipeline-links` (`.wardley-pipeline-evolution-link`, dashed `4 4`) between pipelines and links: kept (T4, class list in MIGRATION.md).
 - **Metrics missing from the spec's list** (T3): axis labels at (p + cw/2, H − p/4) and (p/3, p + ch/2) rotated; anchor label centred, bold, y − 3; annotation markers r 10, number 10 px bold; box height n·16 + 20 + maxBBoxHeight/2. They go in the one metrics table.
 - **Errors** (T2): v12 throws in category order (title, size, evolution, anchors, components, notes, pipelines, links, evolves, annotations, accelerators), not source order; an `evolve` on an unknown name never reaches the range check. v13 reports every one (R-PARSE-4), in source order.
+
+## T1 (#487, merged)
+
+- Review (orchestrator, `/code-review`): no hard standards violations. Fixed: five missing quirk cases (port + arrow, arrow label + `;` label, bare `+'x'>`, duplicate annotation numbers, bare `A B`); every skipped source named and the set asserted (`NOT_REACHED`, 17); the `unclosed-directive` exclusion asserts core's `UNCLOSED_DIRECTIVE`; stress sized for a 3–4 ms small lex (8 s for the file); one `wardleyView(src)` helper.
+- Accepted judgement calls: the lexer plumbing and gate helpers copy radar's (a parser-kit extraction is a cross-port decision); `LINE_SEPARATORS` are hand-written cases, as gantt's and gitGraph's.
+- **For the maintainer (radar, not wardley): a lone CR at the very end of a source** merges with the `\n` v12 appends and loses a NEWLINE token in radar's lexer (the same code); wardley's lexer handles it, and no radar case hits it. Not fixed here (out of scope).
+- `tools/gen-config/src/theme-used-by.spec.ts` lists `wardley` in `NOT_DRAWN_YET`: [ ] **#493** drops it.
