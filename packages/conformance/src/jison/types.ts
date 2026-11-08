@@ -77,9 +77,10 @@ const V12_DIAGRAMS = 'packages/mermaid/src/diagrams';
  * off itself at a line that starts with a non-blank (`yy.setIndentMode(false)`), and keeps
  * `yy.consumeIndentText` on `yy`. Only the parser turns the mode on: the actions of every
  * `set` and `union` statement. This `yy` plays that part: the mode is on from each `SET` or
- * `UNION` token (the mode is read only at a line start, which the statement's action always
- * runs before). The DB's own module state is never touched, so runs do not leak into each
- * other. `venn/yy-emulation.spec.ts` checks it against the stream v12's parser pulls.
+ * `UNION` token. The mode is read only at a line start, which a reduced statement's action
+ * always runs before, so the two differ only after a parse error, where v12 lexes no further.
+ * The DB's own module state is never touched, so runs do not leak into each other.
+ * `venn/yy-emulation.spec.ts` checks it against the stream v12's parser pulls.
  */
 function vennYy({ onToken }: JisonYyContext): unknown {
   let indent = false;

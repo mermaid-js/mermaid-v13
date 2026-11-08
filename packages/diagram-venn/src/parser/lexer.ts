@@ -91,7 +91,7 @@ export interface Lexed {
   text(j: number): string;
 }
 
-/** Lex the venn body `src[from…]`. `view` comes from {@link sourceView}. */
+/** Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). */
 export function lex(src: string, from: number, view: SourceView): Lexed {
   const tokens = new VennLexer(src, from, view).run();
   return {
@@ -517,8 +517,8 @@ class VennLexer {
   }
 
   /**
-   * The end of `count` numbers `\s*[0-9.]+\s*` separated by `,` and closed by `)`, from `q`
-   * (just past `rgb(` or `rgba(`), or -1.
+   * The end of `count` numbers `\s*[0-9.]+\s*` separated by `,` and closed by `)`, from
+   * `from` (just past `rgb(` or `rgba(`), or -1.
    */
   private numbers(from: number, count: number): number {
     const { text } = this;

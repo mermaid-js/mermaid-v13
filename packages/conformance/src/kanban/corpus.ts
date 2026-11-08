@@ -9,10 +9,10 @@ import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
-const FRONT_MATTER = /^---[\s\S]*?\n---[^\S\n]*\n/;
+export const FRONT_MATTER = /^---[\s\S]*?\n---[^\S\n]*\n/;
 
 /** `edit` applied to the text after the front matter. */
-function body(src: string, edit: (text: string) => string): string {
+export function body(src: string, edit: (text: string) => string): string {
   const head = FRONT_MATTER.exec(src)?.[0] ?? '';
   return head + edit(src.slice(head.length));
 }

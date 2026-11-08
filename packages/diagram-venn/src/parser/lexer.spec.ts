@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { JISON_NAMES, vennTokens } from './index.ts';
+import { Kind } from '@mermaid-js/core/parser-kit';
+import { JISON_NAMES, vennTokens, vennView } from './index.ts';
 import { lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
 const stream = (src: string) => {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const s = lex(src, pre.bodyStart, view).tokens;
+  const { from, view } = vennView(src);
+  const s = lex(src, from, view).tokens;
   return Array.from({ length: s.length }, (_, j) => ({
     kind: s.kind[j] ?? Kind.EOF,
     start: s.start[j] ?? 0,

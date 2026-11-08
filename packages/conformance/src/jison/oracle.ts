@@ -51,13 +51,13 @@ export interface JisonLexerOracle {
   lexedText(source: string): Promise<string | undefined>;
   /**
    * The tokens v12's parser itself pulled from its lexer while it parsed `source` (the lexer
-   * then read the parser's own `yy`, so the DB's feedback is v12's and not the descriptor's
-   * `yy` builder), in the form `tokens()` returns, or undefined when v12 never ran this
-   * type's parser on it. The parser stops at its first error, so this is a prefix of what the
-   * lexer gives on its own; a lexical error ends it with `[LEXICAL_ERROR, '']`. For checking
-   * a `yy` builder that emulates the parser (venn's).
+   * then read the parser's own `yy`, not the descriptor's builder), in the form `tokens()`
+   * returns them, or undefined when v12 never ran this type's parser on it. The parser stops
+   * at its first error, so this is a prefix of what the lexer gives on its own; a lexical
+   * error ends it with `[LEXICAL_ERROR, '']`. For checking a `yy` builder that plays the
+   * parser's part (venn's).
    */
-  parserTokens(source: string, options?: TokensOptions): Promise<JisonToken[] | undefined>;
+  pulledTokens(source: string): Promise<JisonToken[] | undefined>;
   readonly LEXICAL_ERROR: typeof LEXICAL_ERROR;
 }
 
@@ -95,31 +95,6 @@ function defaultYy({ db }: { db: object }): unknown {
   return typeof ctor === 'function' && ctor !== Object ? new (ctor as new () => object)() : db;
 }
 
-/**
- * Decodes one lex result into a {@link JisonToken} and clips v12's appended `\n` off the
- * first token returned once the text is used up: its match took it, unless a skipped rule did
- * (then it does not end in `\n`, or it is an empty match). One per run of the lexer.
- */
-class Decoder {
-  private clipped: boolean;
-
-  constructor(
-    private readonly terminals: Record<number, string>,
-    options: TokensOptions
-  ) {
-    this.clipped = options.keepAppendedNewline === true;
-  }
-
-  token(t: number | string, lexer: JisonLexer): JisonToken {
-    let image = lexer.yytext;
-    if (!this.clipped && lexer._input === '') {
-      this.clipped = true;
-      if (image.endsWith('\n')) image = image.slice(0, -1);
-    }
-    return [typeof t === 'number' ? (this.terminals[t] ?? String(t)) : t, image];
-  }
-}
-
 async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<JisonLexerOracle> {
   const oracle = await loadOracle();
   const mermaid = ((await import('mermaid-v12')) as unknown as { default: MermaidV12 }).default;
@@ -130,35 +105,13 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
   const yy = descriptor.yy ?? defaultYy;
   const setInput = lexer.setInput.bind(lexer);
   let captured: string | undefined;
-  /** The tokens the parser pulls, while `parserTokens` records them. */
-  let pulled: { out: JisonToken[]; decoder: Decoder; options: TokensOptions } | undefined;
+  /** The parser's tokens, while `pulledTokens` records them. */
+  let pulled: Recording | undefined;
   lexer.setInput = (input, yyArg) => {
     captured = input;
     // A new parse starts over.
-    if (pulled)
-      pulled = { ...pulled, out: [], decoder: new Decoder(parser.terminals_, pulled.options) };
+    if (pulled) pulled = recording(parser.terminals_);
     setInput(input, yyArg);
-  };
-  // jison's `parse` lexes with `Object.create(parser.lexer)`, so `this` is its own lexer. Its
-  // `lex` calls itself again after a rule that returns no token: only the outer call records.
-  // eslint-disable-next-line @typescript-eslint/unbound-method -- called with jison's lexer as `this`
-  const lex = lexer.lex;
-  let depth = 0;
-  lexer.lex = function (this: JisonLexer): number | string {
-    if (!pulled || depth > 0) return lex.call(this);
-    const record = pulled;
-    let t: number | string;
-    depth++;
-    try {
-      t = lex.call(this);
-    } catch (error) {
-      record.out.push([LEXICAL_ERROR, '']);
-      throw error;
-    } finally {
-      depth--;
-    }
-    if (t !== 1) record.out.push(record.decoder.token(t, this)); // not $end
-    return t;
   };
   const lexedText = async (source: string): Promise<string | undefined> => {
     captured = undefined;
@@ -166,16 +119,23 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
     // Set by the wrapped setInput during the parse.
     return captured as string | undefined;
   };
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- called with jison's lexer as `this`
+  const lex = lexer.lex;
   return {
     type,
     LEXICAL_ERROR,
     lexedText,
-    async parserTokens(source, options = {}) {
-      pulled = { out: [], decoder: new Decoder(parser.terminals_, options), options };
+    async pulledTokens(source) {
+      // Only while recording: every other parse runs v12's own `lex`.
+      pulled = recording(parser.terminals_);
+      lexer.lex = function (this: JisonLexer) {
+        return pulled ? pulled.lex(lex, this) : lex.call(this);
+      };
       try {
         const input = await lexedText(source);
         return input === undefined ? undefined : pulled.out;
       } finally {
+        lexer.lex = lex;
         pulled = undefined;
       }
     },
@@ -184,8 +144,8 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
       if (input === undefined) return undefined;
       const listeners: ((name: string, image: string) => void)[] = [];
       setInput(input, yy({ db, lexer, onToken: (listener) => listeners.push(listener) }));
-      const decoder = new Decoder(parser.terminals_, options);
       const out: JisonToken[] = [];
+      let clipped = options.keepAppendedNewline === true;
       let left = input.length;
       for (let stalled = 0; stalled < MAX_STALLED; ) {
         let t: number | string;
@@ -198,11 +158,58 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
         if (t === 1) break; // $end
         stalled = lexer._input.length < left ? 0 : stalled + 1;
         left = lexer._input.length;
-        const token = decoder.token(t, lexer);
-        out.push(token);
-        for (const listener of listeners) listener(...token);
+        let image = lexer.yytext;
+        // The first token returned once the text is used up: its match took the appended `\n`,
+        // unless a skipped rule did (then it does not end in `\n`, or it is an empty match).
+        if (!clipped && lexer._input === '') {
+          clipped = true;
+          if (image.endsWith('\n')) image = image.slice(0, -1);
+        }
+        out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
+        for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
       }
       return out;
+    },
+  };
+}
+
+interface Recording {
+  readonly out: JisonToken[];
+  /** v12's `lex` on `self` (the parse's own lexer), recording the token it returns. */
+  lex(original: () => number | string, self: JisonLexer): number | string;
+}
+
+/**
+ * A fresh record of the tokens one parse pulls, decoded and clipped as `tokens()` does. jison's
+ * `parse` lexes with `Object.create(parser.lexer)`, and its `lex` calls itself again after a
+ * rule that returns no token: only the outer call records.
+ */
+function recording(terminals: Record<number, string>): Recording {
+  const out: JisonToken[] = [];
+  let clipped = false;
+  let depth = 0;
+  return {
+    out,
+    lex(original, self) {
+      if (depth > 0) return original.call(self);
+      let t: number | string;
+      depth++;
+      try {
+        t = original.call(self);
+      } catch (error) {
+        out.push([LEXICAL_ERROR, '']);
+        throw error;
+      } finally {
+        depth--;
+      }
+      if (t === 1) return t; // $end
+      let image = self.yytext;
+      if (!clipped && self._input === '') {
+        clipped = true;
+        if (image.endsWith('\n')) image = image.slice(0, -1);
+      }
+      out.push([typeof t === 'number' ? (terminals[t] ?? String(t)) : t, image]);
+      return t;
     },
   };
 }

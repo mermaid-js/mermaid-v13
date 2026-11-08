@@ -2,7 +2,7 @@
  * The venn parser's public surface (so far): the lexer gated against v12's jison lexer.
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
+import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
@@ -17,17 +17,26 @@ export interface VennToken {
 }
 
 /**
- * The significant venn tokens of `src` (trivia left out), for editors and for the
- * lexer-parity gate.
+ * Where the venn body of `src` starts and its source view (what v12's preprocessing removed
+ * and rewrote), as {@link lex} takes them.
  */
-export function vennTokens(src: string): VennToken[] {
+export function vennView(src: string): { from: number; view: SourceView } {
   const pre = preprocess(src);
   const view = sourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  const lexed = lex(src, pre.bodyStart, view);
+  return { from: pre.bodyStart, view };
+}
+
+/**
+ * The significant venn tokens of `src` (trivia left out), for editors and for the
+ * lexer-parity gate.
+ */
+export function vennTokens(src: string): VennToken[] {
+  const { from, view } = vennView(src);
+  const lexed = lex(src, from, view);
   const { tokens } = lexed;
   const out: VennToken[] = [];
   for (let j = 0; j < tokens.length; j++) {

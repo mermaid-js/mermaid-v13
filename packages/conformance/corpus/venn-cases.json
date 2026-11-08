@@ -730,5 +730,69 @@
   {
     "id": "venn-cases/four-sets-many-overlaps",
     "source": "venn-beta\n  set A\n  set B\n  set C\n  set D\n  union A,B\n  union B,C\n  union C,D\n  union A,D\n  union A,B,C,D:1"
+  },
+  {
+    "id": "venn-cases/line-separator-between-statements",
+    "source": "venn-beta\n  set A   set B"
+  },
+  {
+    "id": "venn-cases/line-separator-after-header",
+    "source": "venn-beta   set A"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-before-line-break",
+    "source": "venn-beta \n  set A"
+  },
+  {
+    "id": "venn-cases/line-separator-in-title",
+    "source": "venn-beta\n  title a b\n  set A"
+  },
+  {
+    "id": "venn-cases/line-separator-after-title-keyword",
+    "source": "venn-beta\n  title x\n  set A"
+  },
+  {
+    "id": "venn-cases/line-separators-in-labels",
+    "source": "venn-beta\n  set A[a b]\n  set B[\"c d\"]"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-in-string",
+    "source": "venn-beta\n  set \"a b\""
+  },
+  {
+    "id": "venn-cases/line-separator-in-removed-comment-line",
+    "source": "venn-beta\n  set A\n%% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-in-mid-line-comment",
+    "source": "venn-beta\n  set A %% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-in-glued-comment",
+    "source": "venn-beta\n  set A%% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-at-line-start",
+    "source": "venn-beta\n  set A\n   text a"
+  },
+  {
+    "id": "venn-cases/line-separator-in-indented-text",
+    "source": "venn-beta\n  set A\n  text a b"
+  },
+  {
+    "id": "venn-cases/line-separator-before-comment-line",
+    "source": "venn-beta\n  set A %% c\n  set B"
+  },
+  {
+    "id": "venn-cases/separators-around-indented-comment",
+    "source": "venn-beta\n  set A   %% c   set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-in-rgb",
+    "source": "venn-beta\n  set A\n  style A fill:rgb(1, 2,3)"
+  },
+  {
+    "id": "venn-cases/line-separator-after-colon",
+    "source": "venn-beta\n  set A: 1"
   }
 ]

@@ -24,7 +24,7 @@ import { vennGateCorpus, VARIANTS } from './corpus.ts';
  * removed comment or directive line, with CRLF line breaks, with tab indents, with every
  * indent removed (an indented `text` then meets the line-start rules with indent mode off),
  * and with a directive through the middle of every line after the header (pitfall 3's
- * mid-line cut). The line-separator cases (`LINE_SEPARATORS`) are in the set too.
+ * mid-line cut). The cases file holds the line-separator cases (pitfall 2) too.
  *
  * Exclusions:
  * - v13 kinds with no jison name, left out of the v13 stream: the `text` right after an
@@ -78,7 +78,6 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
     let e2e = 0;
     let specs = 0;
     let cases = 0;
-    let separators = 0;
     for (const item of items) {
       if ([...EXCLUDED.keys()].some((prefix) => item.id.startsWith(prefix))) {
         excluded.push(item.id);
@@ -94,7 +93,6 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
         if (item.id.startsWith('venn-cases/')) cases++;
-        if (item.id.startsWith('line separators')) separators++;
       }
       const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
       const actual = v13Tokens(item.source);
@@ -107,12 +105,11 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(
       `venn lexer parity: ${compared} of ${items.length} sources lexed by v12\n`
     );
-    // Every e2e fixture, harvested spec and syntax-page string, case and line-separator case
-    // reaches the lexer (the cases v12 does not detect aside).
+    // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer (the
+    // two cases v12 does not detect and the two excluded ones aside).
     expect(e2e).toBe(40);
     expect(specs).toBe(25);
-    expect(cases).toBe(179);
-    expect(separators).toBe(16);
+    expect(cases).toBe(195);
     expect(diffs).toEqual([]);
     // The excluded sources: the two unclosed-directive cases and their variants.
     expect(excluded.filter((id) => !VARIANT.test(id))).toHaveLength(2);
