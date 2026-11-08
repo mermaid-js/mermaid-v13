@@ -1,0 +1,16 @@
+1:1-1:13 "treemap-beta" keyword
+2:3-2:15 "title Budget" keyword
+2:16-2:28 "%% the title" comment
+3:3-3:22 "accTitle: Household" keyword
+4:3-4:9 "\"Home\"" node [declaration, definition]
+4:9-4:12 ":::" operator
+4:12-4:16 "home" class
+5:5-5:11 "\"Rent\"" node [declaration, definition]
+5:11-5:12 ":" operator
+5:13-5:18 "1,200" number
+6:5-6:12 "'Power'" node [declaration, definition]
+6:12-6:13 "," operator
+6:14-6:18 "80.5" number
+7:3-7:11 "classDef" keyword
+7:12-7:16 "home" class [declaration, definition]
+7:17-7:27 "fill:#cde;" keyword

@@ -191,17 +191,33 @@ describe('treemap parser on the fixtures', () => {
       ['class', 'food', 'def', 'food'],
       ['class', 'home', 'ref', 'home'],
     ]);
-    expect(statements.map((s) => [s.kind, at(s.range)])).toEqual([
+    // A section's span runs over its rows, which nest under it (folding, #511).
+    type Span = (typeof statements)[number];
+    const spans = (list: readonly Span[]): unknown[] =>
+      list.map((s) =>
+        s.children ? [s.kind, at(s.range).split('\n')[0], spans(s.children)] : [s.kind, at(s.range)]
+      );
+    expect(spans(statements)).toEqual([
       ['header', 'treemap-beta'],
       ['title', 'title Household budget'],
       ['accTitle', 'accTitle: Budget'],
       ['accDescr', 'accDescr: Monthly spending by category'],
-      ['section', '"Home":::home'],
-      ['leaf', '"Rent", 1200'],
-      ['leaf', '"Power": 80.5'],
-      ['section', '"Food"'],
-      ['leaf', '"Groceries": 400:::food'],
-      ['leaf', '"Eating out": 150'],
+      [
+        'section',
+        '"Home":::home',
+        [
+          ['leaf', '"Rent", 1200'],
+          ['leaf', '"Power": 80.5'],
+        ],
+      ],
+      [
+        'section',
+        '"Food"',
+        [
+          ['leaf', '"Groceries": 400:::food'],
+          ['leaf', '"Eating out": 150'],
+        ],
+      ],
       ['classDef', 'classDef home fill:#cde,stroke:#345'],
       ['classDef', 'classDef food fill:#fdc'],
       ['classDef', 'classDef home color:#111'],

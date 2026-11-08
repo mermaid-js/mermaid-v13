@@ -22,16 +22,21 @@
  * it reports it, skips to the next token that starts a line, and carries on (R-PARSE-4).
  */
 import {
+  APOSTROPHE,
   ASCII_MAX,
   cook,
+  DQUOTE,
   ExpectedTable,
   formatExpected,
   isSpace,
   Kind,
+  kindSet,
   LineIndex,
   localOffset,
   ParseState,
   PERCENT,
+  Probe,
+  SEMI,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -41,6 +46,7 @@ import type {
   ParseResult,
   Range,
   SourceView,
+  StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -86,6 +92,24 @@ export const TREEMAP_CLASSDEF_NEXT_LINE = 'TREEMAP_CLASSDEF_NEXT_LINE';
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 /** What starts a row after its indent. */
 const ITEM = [T.String, T.ClassDef];
+/** What may come next in the document: a text statement, a row (its indent first), the end. */
+const DOC_NEXT = [...TEXT, T.Indentation, T.String, T.ClassDef, Kind.EOF];
+/**
+ * What may follow a blank (probe lists): a row's name or `classDef`, and the text statements,
+ * whose tokens take the blanks before them when the line goes on as one.
+ */
+const AFTER_BLANK = [...ITEM, ...TEXT];
+/** What may follow a row's name: its blank, the `:` or `,` of a leaf, its class. */
+const AFTER_NAME = [T.Indentation, T.Separator, T.Comma, T.StyleSeparator];
+const SEPARATORS = [T.Separator, T.Comma];
+const BEFORE_VALUE = [T.Indentation, T.Number];
+const CLASS = [T.StyleSeparator];
+
+/**
+ * Kinds a probe's cursor follows rather than extends: punctuation, a blank (the indent or the
+ * blank before `:`), and a name, which its closing quote ends.
+ */
+const PROBE_FOLLOWS = kindSet(T.StyleSeparator, T.Separator, T.Comma, T.Indentation, T.String);
 
 /** Trivia of the parser's view: the lexer's trivia and the line breaks. */
 const isTrivia = (k: number) =>
@@ -99,6 +123,40 @@ const TEXT_STATEMENTS: Readonly<
   [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
   [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
 };
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
+ * mode names what the offset is in: `string` inside a name (closed or not), `title`,
+ * `accTitle` or `accDescr` past the keyword of that statement, `classDef` past the keyword of
+ * a `classDef` (its name and styles), else `INITIAL` (code).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    const c = src.charCodeAt(start);
+    if (kind === T.String && o < end) return 'string';
+    // An unclosed name is an error token from its quote on.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+    if (kind === T.ClassDef) {
+      const closed = src.charCodeAt(end - 1) === SEMI;
+      if (o > start + 'classDef'.length && (o < end || !closed)) return 'classDef';
+      continue;
+    }
+    const word = TEXT_STATEMENTS[kind]?.word;
+    if (!word) continue;
+    let k = start;
+    while (/[\t ]/.test(src.charAt(k))) k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -180,11 +238,14 @@ class TreemapParser {
   /** Where the statement that failed stopped. */
   private failedAt = 0;
   private readonly st = new ParseState();
+  private readonly probe: Probe | undefined;
   private readonly children: TreemapStatementNode[] = [];
   private lines: LineIndex | undefined;
   /** Mentions per id base (`classDef:a`, `title`, …), for the `@n` suffixes. */
   private readonly mentions = new Map<string, number>();
   private readonly rows: TreemapRowNode[] = [];
+  /** The statement span of each of {@link rows}. */
+  private readonly rowSpans: StatementSpan[] = [];
   private readonly classDefs: ClassDefRead[] = [];
   /** Whether the statement before is a row (a section, leaf or `classDef`). */
   private afterRow = false;
@@ -209,6 +270,13 @@ class TreemapParser {
     );
     this.full = lex(src, pre.bodyStart, this.view);
     this.t = lineView(this.full);
+    if (opts.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
+    }
   }
 
   parse(): TreemapParseResult {
@@ -216,13 +284,14 @@ class TreemapParser {
     this.statement(() => this.header());
     this.document();
     const model = this.model();
+    this.foldSections();
     const ast: TreemapDocument = {
       id: 'doc',
       type: 'Document',
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.full, this.opts);
+    return st.result(model, ast, this.full, this.opts, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -258,8 +327,18 @@ class TreemapParser {
       .replace(/\r\n?/g, '\n');
   }
 
+  /**
+   * Probe hook: the parser tests the token at `j` for `kinds` (a constant list), or would accept
+   * them there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
+  }
+
   /** Consume a token of `kind` and return its index, or fail. */
   private expect(kind: number, hint?: string): number {
+    this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
@@ -373,7 +452,6 @@ class TreemapParser {
     }
     if (k === T.TreemapKeyword) return 'a treemap has one `treemap` header, at its start';
     if (!want.includes(T.String)) return undefined;
-    if (k === T.Id && this.raw() === 'classDef') return this.classDefName();
     if (k === T.Id) return `a name is written in quotes: \`"${this.raw()}"\``;
     if (k === T.Number) return 'a value follows a name and `:`, such as `"Apples": 10`';
     if (k === T.Separator || k === T.Comma)
@@ -381,15 +459,38 @@ class TreemapParser {
     return undefined;
   }
 
-  /** `classDef` read as a name: its class name is missing or one character long (D401). */
-  private classDefName(): string {
+  /**
+   * `classDef` read as a name: its class name is missing or one character long (D401). The
+   * error is where the name should be: the token after `classDef` on its line, else the end of
+   * that line, so a `classDef ` still being typed has its error after what was typed.
+   */
+  private classDefName(): never {
     let j = this.i + 1;
-    if (this.kind(j) === T.Indentation) j++;
-    const name = this.kind(j) === T.Id ? this.raw(j) : '';
-    if (name.length === 1) {
-      return `class names need two characters or more, and \`${name}\` has one: rename the class`;
+    if (this.kind(j) === T.Indentation && !this.startsLine(j)) j++;
+    const names = EXPECTED.names([T.Id]);
+    if (this.kind(j) !== Kind.EOF && !this.startsLine(j)) {
+      const name = this.kind(j) === T.Id ? this.raw(j) : '';
+      const why =
+        name.length === 1
+          ? `class names need two characters or more, and \`${name}\` has one: rename the class`
+          : 'a class name is ASCII letters, digits and `_`, two characters or more';
+      this.stop(
+        'UNEXPECTED',
+        `Expected a class name after \`classDef\`, got ${this.found(j)}; ${why}.`,
+        this.range(j),
+        names
+      );
     }
-    return '`classDef` takes a class name of two characters or more, then its styles';
+    const { src } = this;
+    let at = this.range(j - 1).end;
+    while (at < src.length && src[at] !== '\n' && src[at] !== '\r') at++;
+    const brk = src.startsWith('\r\n', at) ? 2 : Number(at < src.length);
+    this.stop(
+      'UNEXPECTED',
+      `Expected a class name after \`classDef\`, got the end of the line; \`classDef\` takes a class name of two characters or more, then its styles.`,
+      { start: at, end: at + brk },
+      names
+    );
   }
 
   /** Whether the token at `j` ends where the next one starts. */
@@ -403,6 +504,7 @@ class TreemapParser {
    * it, else the first after it.
    */
   private recover(from: number): void {
+    this.probe?.freeze();
     let j = this.failedAt > from ? this.failedAt : from + 1;
     // The indent of a row on the next line, which the failed statement took as its own blank.
     const blank = j - 1;
@@ -437,6 +539,7 @@ class TreemapParser {
   /** `(TITLE | ACC_TITLE | ACC_DESCR | Row)* EOF` */
   private document(): void {
     for (;;) {
+      this.tested(DOC_NEXT);
       const k = this.kind();
       if (k === Kind.EOF) return;
       this.statement(() => {
@@ -472,10 +575,12 @@ class TreemapParser {
     if (blank >= 0) {
       indent = this.raw(blank).length;
       this.i++;
+      this.tested(AFTER_BLANK);
     }
     const k = this.kind();
     if (k !== T.String && k !== T.ClassDef) {
       if (blank >= 0 && this.startsLine()) this.strayBlank(blank);
+      if (k === T.Id && this.raw() === 'classDef') this.classDefName();
       this.fail(ITEM);
     }
     this.lineWarnings(blank, this.i);
@@ -552,11 +657,13 @@ class TreemapParser {
     const nameRange = this.range(s);
     const name = nameValue(this.raw(s));
     let j = this.i;
-    if (this.kind(j) === T.Indentation) j++;
+    this.tested(AFTER_NAME);
+    if (this.kind(j) === T.Indentation) this.tested(SEPARATORS, ++j);
     const leaf = this.kind(j) === T.Separator || this.kind(j) === T.Comma;
     let node: TreemapRowNode;
     if (leaf) {
       this.i = j + 1;
+      this.tested(BEFORE_VALUE);
       if (this.kind() === T.Indentation) this.i++;
       const v = this.expect(T.Number, this.valueHint());
       const valueText = this.raw(v);
@@ -584,6 +691,7 @@ class TreemapParser {
         depth: 0,
       } satisfies TreemapSectionNode;
     }
+    this.tested(CLASS);
     if (this.kind() === T.StyleSeparator) {
       this.i++;
       const c = this.expect(T.Id);
@@ -595,7 +703,7 @@ class TreemapParser {
     }
     this.rows.push(node);
     this.children.push(node);
-    this.st.statement(leaf ? 'leaf' : 'section', node.range);
+    this.rowSpans.push(this.st.statement(leaf ? 'leaf' : 'section', { ...node.range }));
     // D408: every name is a `node` symbol of its own.
     this.st.symbol(name, 'node', nameRange, 'def');
   }
@@ -648,6 +756,40 @@ class TreemapParser {
       } else break;
     }
     return { start: p, end: p + length };
+  }
+
+  // ---- folding ------------------------------------------------------------------------
+
+  /**
+   * Folding (#511): each section's statement span runs to the end of its last row, the rows
+   * under it (v12's tree: a section holds the rows after it up to the first one indented no more
+   * than it) and whatever is written between them nesting under it. Linear: a section's end is
+   * set when it is popped.
+   */
+  private foldSections(): void {
+    const open: { indent: number; span: StatementSpan }[] = [];
+    let last = 0;
+    this.rows.forEach((row, n) => {
+      while ((open[open.length - 1]?.indent ?? -1) >= row.indent) {
+        const top = open.pop();
+        if (top) top.span.range.end = last;
+      }
+      const span = this.rowSpans[n];
+      if (span && row.type === 'Section') open.push({ indent: row.indent, span });
+      last = row.range.end;
+    });
+    for (const o of open) o.span.range.end = last;
+    const { statements } = this.st;
+    const flat = statements.splice(0);
+    const stack: StatementSpan[] = [];
+    for (const s of flat) {
+      while (stack.length > 0 && s.range.start >= (stack[stack.length - 1]?.range.end ?? 0))
+        stack.pop();
+      const parent = stack[stack.length - 1];
+      if (parent) (parent.children ??= []).push(s);
+      else statements.push(s);
+      if (s.kind === 'section') stack.push(s);
+    }
   }
 
   // ---- the model ----------------------------------------------------------------------

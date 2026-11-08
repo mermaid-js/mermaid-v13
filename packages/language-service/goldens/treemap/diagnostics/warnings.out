@@ -1,0 +1,4 @@
+3:10-3:13 "\"b\"" warning TREEMAP_ROWS_ON_ONE_LINE: `"b"` starts a second row on this line. It is read as a row of its own, indented by the blanks before it, so it may nest under the row before it. Put each row on its own line.
+4:8-4:13 "1_000" warning TREEMAP_INVALID_VALUE: Some values are not plain numbers: `1_000` (read as 1), `.` (read as not a number). Write digits, with `.` before the decimals and `,` only between groups of three; a value that is not a number takes no area.
+6:1-7:9 "classDef hot\n  \"e\": 3" warning TREEMAP_CLASSDEF_NEXT_LINE: `classDef hot` has no styles on its line, so it takes the next line (`"e": 3`) as its styles. Write the styles after the class name, on its line.
+8:4-8:5 " " warning TREEMAP_TRAILING_BLANK: This row is indented by the blank at the end of line 8: a treemap reads the blanks before a name as its indent, wherever they are. Remove the blank.

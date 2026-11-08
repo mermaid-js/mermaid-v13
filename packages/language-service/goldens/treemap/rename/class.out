@@ -1,0 +1,22 @@
+@ 3:9  "A":::|hot
+  prepare: 3:9-3:12 "hot"; rename to "warm":
+  %% rename-to: warm
+  treemap
+    "A":::warm
+      "a": 1:::warm
+    "B"
+      "b": 2:::cool
+    classDef warm fill:red
+    classDef cool fill:blue
+    classDef warm stroke:black
+@ 9:12  classDef |hot stroke:black
+  prepare: 9:12-9:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  treemap
+    "A":::warm
+      "a": 1:::warm
+    "B"
+      "b": 2:::cool
+    classDef warm fill:red
+    classDef cool fill:blue
+    classDef warm stroke:black

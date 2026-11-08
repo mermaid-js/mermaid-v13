@@ -1,0 +1,5 @@
+@ 3:9  "A":::|hot
+  prepare: 3:9-3:12 "hot"; rename to "x":
+  refused: `x` has one character, and class names need two characters or more.
+@ 5:5  ti|tle Budget
+  prepare: refused: There is no id or class name here to rename.
