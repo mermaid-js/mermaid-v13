@@ -90,6 +90,19 @@ const PACKAGES = [
       'test-context.ts',
     ],
   },
+  {
+    name: 'sankey',
+    dir: 'diagram-sankey',
+    renderer: [
+      'render/',
+      'layout/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

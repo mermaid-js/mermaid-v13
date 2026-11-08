@@ -38,10 +38,12 @@ SANKEY                       /sankey\b/                   push(csv) :keyword ;
 <INITIAL,csv> DQUOTE         /"/                          push(escaped_text) :string ;
 (** A field outside quotes: printable ASCII but `"` and `,`, blanks included (they are trimmed). *)
 <INITIAL,csv> NON_ESCAPED_TEXT /[\x20-\x21\x23-\x2B\x2D-\x7E]*/ :variable ;
+(* jison lists this rule and the next for every mode; outside quotes the rules above always
+match first, so they are written for `escaped_text` only, where the highlighters need them. *)
 (** `"`, not followed by another `"`: closes a quoted field. *)
-<INITIAL,csv,escaped_text> DQUOTE /"(?!")/                pop :string ;
+<escaped_text> DQUOTE        /"(?!")/                     pop :string ;
 (** The text of a quoted field. *)
-<INITIAL,csv,escaped_text> ESCAPED_TEXT /(?:[\x20-\x21\x23-\x2B\x2D-\x7E]|,|\r|\n|"")*/ :string ;
+<escaped_text> ESCAPED_TEXT  /(?:[\x20-\x21\x23-\x2B\x2D-\x7E]|,|\r|\n|"")*/ :string ;
 
 @trivia
 

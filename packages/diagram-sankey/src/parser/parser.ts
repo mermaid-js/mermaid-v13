@@ -2,7 +2,11 @@
 /**
  * Sankey parser: recursive descent over the {@link lex} tokens (gated against v12's jison
  * lexer, #494), producing a {@link SankeyModel}, the typed AST, statement spans and diagnostics
- * (DESIGN §4.3). Symbols and the probe are the language facet's (T6).
+ * (DESIGN §4.3). For the language facet (T6): each name is a `node` symbol, the first its
+ * definition (D398); the body is the one statement span, from `sankey` to its last row (its
+ * fold: rows have no span, so a row with a line break in a quoted name folds nothing, as the
+ * spec's "no folding beyond the body"); with a probe (R-LANG-7, D95) the parser records what it
+ * would accept at the probed token: the header, the start of a field, a comma, a line break.
  *
  * The grammar is v12's `sankey.jison` (LALR), ported rule for rule; `grammar/sankey.ebnf` is
  * the normative form:
@@ -22,8 +26,17 @@
  * Unlike jison the parser does not stop at the first syntax error: it reports it, skips to
  * the next line and carries on (R-PARSE-4). A row with an error adds nothing to the model.
  */
-import { Kind, LineIndex, ParseState, sourceView, TokenCursor } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import {
+  Kind,
+  kindSet,
+  LineIndex,
+  ParseState,
+  Probe,
+  ProbeCursor,
+  sourceView,
+  TokenCursor,
+} from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { SANKEY_CYCLE, SANKEY_INVALID_VALUE, SANKEY_VALUE_TRAILING_TEXT } from '../codes.ts';
@@ -42,6 +55,18 @@ export interface SankeyParseOptions extends ParseOptions {
 }
 
 export type SankeyParseResult = ParseResult<SankeyModel, SankeyDocument>;
+
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** What may start a field. */
+const FIELD_START = [T.Text, T.OpenQuote];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset: a
+ * comma (the next field comes after it) and the quotes.
+ */
+const PROBE_FOLLOWS = kindSet(T.Comma, T.OpenQuote, T.CloseQuote);
+/** Tokens that end no row: what the body's span does not run to. */
+const NOT_IN_BODY = kindSet(Kind.Newline, Kind.Comment, Kind.Directive, Kind.Space, T.Eof);
 
 const HEADER = ['`sankey`'];
 const ROW = ['a row such as `Coal,Electricity,12.5`'];
@@ -122,6 +147,9 @@ class SankeyParser {
   private readonly lexed: Lexed;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  private readonly probe: Probe | undefined;
+  /** The body's span, from `sankey` to the end of its last row. */
+  private body: StatementSpan | undefined;
   private readonly ids = new LinkIds();
   private readonly nodes: SankeyNode[] = [];
   private readonly byName = new Map<string, number>();
@@ -142,13 +170,22 @@ class SankeyParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.lexed = lex(src, pre.bodyStart, view);
-    this.c = new TokenCursor(this.lexed.tokens);
+    if (options.probe === undefined) {
+      this.lexed = lex(src, pre.bodyStart, view);
+      this.c = new TokenCursor(this.lexed.tokens);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    this.lexed = lex(src, pre.bodyStart, view, probe);
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(this.lexed.tokens, probe);
   }
 
   parse(): SankeyParseResult {
     this.start();
     this.rows();
+    this.endBody();
     this.cycles();
     this.values();
     const { st, pre, src } = this;
@@ -176,7 +213,7 @@ class SankeyParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.c.tokens, this.options);
+    return st.result(model, ast, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -289,7 +326,7 @@ class SankeyParser {
   /** `SANKEY NEWLINE`. Without it the rows are still read, and a later `sankey` is taken as it. */
   private start(): void {
     this.guarded(() => {
-      if (this.c.kind !== T.Sankey) this.fail(HEADER, HEADER_HINT);
+      if (!this.c.at(T.Sankey)) this.fail(HEADER, HEADER_HINT);
       this.header();
     });
   }
@@ -297,7 +334,7 @@ class SankeyParser {
   private header(): void {
     const { c } = this;
     this.headerSeen = true;
-    this.st.statement('header', c.range);
+    this.body = this.st.beginStatement('sankey', c.start);
     c.next();
     if (c.eat(Kind.Newline)) return;
     const blanks = c.kind === T.Text && this.raw(c.pos).trim() === '';
@@ -320,12 +357,36 @@ class SankeyParser {
       }
       this.guarded(() => {
         this.row();
-        if (c.kind === Kind.Newline) c.next();
+        if (c.at(Kind.Newline)) c.next();
         else if (c.kind !== T.Eof && c.kind !== Kind.EOF) {
           this.fail(LINE_BREAK, this.afterValueHint());
         }
       });
     }
+    if (this.probe) this.probeEnd();
+  }
+
+  /**
+   * After the last token, at the probed end of the text (v12 trimmed the blanks and line
+   * breaks there): past a line break a row may start, and after a comma a field.
+   */
+  private probeEnd(): void {
+    const { c } = this;
+    let j = c.pos - 1;
+    while (j >= 0 && NOT_IN_BODY[c.tokens.kind[j] ?? 0] === 1) j--;
+    const after = j >= 0 ? (c.tokens.end[j] ?? 0) : 0;
+    if (/[\n\r]/.test(this.src.slice(after, c.start))) c.tested(FIELD_START);
+    else if (c.tokens.kind[j] === T.Comma) c.tested(FIELD_START);
+  }
+
+  /** Close the body's span at the end of the last token of a row. */
+  private endBody(): void {
+    const { body, c } = this;
+    if (!body) return;
+    const t = c.tokens;
+    let j = t.length - 1;
+    while (j >= 0 && (t.kind[j] === Kind.EOF || NOT_IN_BODY[t.kind[j] ?? 0] === 1)) j--;
+    this.st.endStatement(body, Math.max(body.range.start, t.end[j] ?? 0));
   }
 
   /** `field COMMA field COMMA field`. */
@@ -376,23 +437,23 @@ class SankeyParser {
       const text = role === 'value' ? trimmed : trimmed.replaceAll('""', '"');
       return { raw, text, quoted, range, whole };
     };
-    if (c.kind === T.Text) {
+    if (c.at(T.Text)) {
       const j = c.next();
       const raw = this.raw(j);
       const from = raw.length - raw.trimStart().length;
       return read(j, false, this.exact(j, raw, from, from + raw.trim().length), this.range(j));
     }
-    if (c.kind !== T.OpenQuote) {
+    if (!c.at(T.OpenQuote)) {
       let hint: string | undefined;
       if (c.kind === T.Comma) hint = EMPTY_FIELD_HINT;
       else if (role !== 'source' && this.atRowEnd()) hint = THREE_FIELDS_HINT;
       this.fail(EXPECTED[role], hint);
     }
     const open = c.next();
-    if (c.kind === T.CloseQuote) this.fail(QUOTED_TEXT, EMPTY_QUOTES_HINT);
-    if (c.kind !== T.EscapedText) this.fail(QUOTED_TEXT);
+    if (c.at(T.CloseQuote)) this.fail(QUOTED_TEXT, EMPTY_QUOTES_HINT);
+    if (!c.at(T.EscapedText)) this.fail(QUOTED_TEXT);
     const j = c.next();
-    if (c.kind === T.CloseQuote) {
+    if (c.at(T.CloseQuote)) {
       const whole = { start: this.range(open).start, end: this.range(c.next()).end };
       return read(j, true, whole, whole);
     }
@@ -403,10 +464,14 @@ class SankeyParser {
 
   // ---- model --------------------------------------------------------------------------
 
-  /** v12's `findOrCreateNode`: the node's index, added at its first occurrence. */
+  /**
+   * v12's `findOrCreateNode`: the node's index, added at its first occurrence. Each occurrence
+   * is a `node` symbol (D398), the first its definition.
+   */
   private node(field: ReadField, into: SankeyNodeNode[]): number {
     const name = field.text;
     const known = this.byName.get(name);
+    this.st.symbol(name, 'node', field.range, known === undefined ? 'def' : 'ref');
     if (known !== undefined) return known;
     const ast = nodeAstId(name);
     this.byName.set(name, this.nodes.length);
@@ -444,7 +509,6 @@ class SankeyParser {
     };
     if (firsts.length > 0) link.children = firsts;
     this.children.push(link);
-    this.st.statement('link', range);
     this.trailingText(value, number);
   }
 

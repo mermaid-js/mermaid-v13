@@ -26,7 +26,7 @@
     },
     "rule-0": {
       "begin": "(?i)sankey-beta\\b",
-      "end": "((?i)\"(?!\"))",
+      "end": "$",
       "patterns": [
         {
           "include": "#mode-csv"
@@ -35,17 +35,12 @@
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-sankey"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-sankey"
         }
       }
     },
     "rule-1": {
       "begin": "(?i)sankey\\b",
-      "end": "((?i)\"(?!\"))",
+      "end": "$",
       "patterns": [
         {
           "include": "#mode-csv"
@@ -54,11 +49,6 @@
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-sankey"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-sankey"
         }
       }
     },
@@ -92,10 +82,6 @@
       "match": "(?i)[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]+",
       "name": "variable.other.mermaid-sankey"
     },
-    "rule-7": {
-      "match": "(?i)\"(?!\")",
-      "name": "string.quoted.mermaid-sankey"
-    },
     "mode-INITIAL": {
       "patterns": [
         {
@@ -121,9 +107,6 @@
         },
         {
           "include": "#rule-6"
-        },
-        {
-          "include": "#rule-7"
         }
       ]
     },
@@ -149,6 +132,10 @@
         }
       ]
     },
+    "rule-8": {
+      "match": "(?i)(?:[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]|,|\\r|\\n|\"\")+",
+      "name": "string.quoted.mermaid-sankey"
+    },
     "mode-escaped_text": {
       "patterns": [
         {
@@ -156,6 +143,9 @@
         },
         {
           "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-8"
         }
       ]
     },

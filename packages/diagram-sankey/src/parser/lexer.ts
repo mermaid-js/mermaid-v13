@@ -43,11 +43,13 @@ import {
   SourceOffsets,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { SankeyKind } from './tokens.ts';
 
 // Start conditions of sankey.jison.
 const STATE = { INITIAL: 0, CSV: 1, ESCAPED_TEXT: 2 } as const;
+/** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
+const STATE_NAMES = ['INITIAL', 'CSV', 'ESCAPED_TEXT'];
 
 /** Stands for an entity placeholder in v12's text: a character no rule consumes. */
 const ENTITY = '¶';
@@ -74,10 +76,11 @@ export interface Lexed {
 
 /**
  * Lex the sankey body `src[from…]`. `view` comes from `sourceView` with core's default
- * options (every rewrite v12 ran for sankey).
+ * options (every rewrite v12 ran for sankey). With a `probe`, the start condition at the
+ * probe's offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView): Lexed {
-  return new SankeyLexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {
+  return new SankeyLexer(src, from, view).run(probe);
 }
 
 /** v12's text, and the source range each of its characters came from. */
@@ -202,8 +205,19 @@ class SankeyLexer {
     this.writer = new TokenWriter(((this.len / 5) | 0) + 8);
   }
 
-  run(): Lexed {
-    while (this.p < this.len) this.step(this.text.charCodeAt(this.p));
+  run(probe?: Probe): Lexed {
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < this.len) this.step(this.text.charCodeAt(this.p));
+    else {
+      while (this.p < this.len) {
+        const before = this.source(this.p);
+        const state = this.state;
+        this.step(this.text.charCodeAt(this.p));
+        // An opening quote is read in the state before it, a closing one in the one it leaves.
+        probe.lexed(before, this.source(this.p), STATE_NAMES[state] ?? '');
+      }
+      probe.lexed(this.src.length, this.src.length, STATE_NAMES[this.state] ?? '');
+    }
     // At the end jison tries the rules once more on the empty input.
     this.emit(
       this.state === STATE.ESCAPED_TEXT ? SankeyKind.EscapedText : SankeyKind.Eof,

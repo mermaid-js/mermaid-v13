@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #427: the manifest comes with T5 (#503).
+  {
+    type: 'sankey',
+    id: 'sankey',
+    section: 'sankey',
+    pattern: /^\s*sankey(-beta)?/,
+    detector: (text) => /^\s*sankey(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-sankey/language').then((m) => m.language),
+  },
+];

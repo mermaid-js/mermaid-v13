@@ -114,10 +114,18 @@ describe('sankey parse: AST ids and ranges (D397)', () => {
     const row = r.ast.children[0] as SankeyLinkNode;
     expect(at(src, row.range)).toBe('a ,"b c", 1');
     expect(at(src, row.value.range)).toBe('1');
-    expect(r.statements.map((s) => [s.kind, at(src, s.range)])).toEqual([
-      ['header', 'sankey'],
-      ['link', 'a ,"b c", 1'],
+    // The body is the one span (its fold, T6), from `sankey` to its last row.
+    expect(r.statements.map((s) => [s.kind, at(src, s.range), s.children])).toEqual([
+      ['sankey', 'sankey\n  a ,"b c", 1', undefined],
     ]);
+  });
+
+  it('ends the body at its last row, before a comment and blank lines after it (T6)', () => {
+    const src = 'sankey\na,b,1\n\nc,d,2 \n%% end\n\n';
+    const r = parseSankey(src);
+    expect(r.statements.map((s) => at(src, s.range))).toEqual(['sankey\na,b,1\n\nc,d,2']);
+    // Without a header there is no body, and no span.
+    expect(parseSankey('a,b,1\nc,d,2').statements).toEqual([]);
   });
 
   it('maps ranges through CRLF, comments and directives', () => {

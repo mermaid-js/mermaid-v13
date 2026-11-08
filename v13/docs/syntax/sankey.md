@@ -66,8 +66,8 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL, csv | COMMA | `,` |  | `,`: separates the three fields of a row. |
 | INITIAL, csv | DQUOTE | `"` | push(escaped_text) | `"`: opens a quoted field, which may hold `,`, line breaks and `""` (a `"`). |
 | INITIAL, csv | NON_ESCAPED_TEXT | `[\x20-\x21\x23-\x2B\x2D-\x7E]*` |  | A field outside quotes: printable ASCII but `"` and `,`, blanks included (they are trimmed). |
-| INITIAL, csv, escaped_text | DQUOTE | `"(?!")` | pop | `"`, not followed by another `"`: closes a quoted field. |
-| INITIAL, csv, escaped_text | ESCAPED_TEXT | `(?:[\x20-\x21\x23-\x2B\x2D-\x7E]\|,\|\r\|\n\|"")*` |  | The text of a quoted field. |
+| escaped_text | DQUOTE | `"(?!")` | pop | `"`, not followed by another `"`: closes a quoted field. |
+| escaped_text | ESCAPED_TEXT | `(?:[\x20-\x21\x23-\x2B\x2D-\x7E]\|,\|\r\|\n\|"")*` |  | The text of a quoted field. |
 
 Removed before lexing (highlighted only):
 

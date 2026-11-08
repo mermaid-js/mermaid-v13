@@ -69,12 +69,14 @@ const matchesEmpty = (pattern: string) => new RegExp(`^(?:${pattern})$`).test(''
 /**
  * The pattern a highlighter uses for a rule that changes no mode. TextMate and Monarch cannot
  * take a rule that matches empty text (it makes no progress): `atom*` becomes `atom+`, which
- * matches the same non-empty text; any other pattern that can match empty is left out.
+ * matches the same non-empty text (an atom: one character, escape or class, or a `(?:…)`
+ * group with no group inside); any other pattern that can match empty is left out.
  */
 function progressPattern(r: LexRule): string | undefined {
   const pattern = lineBased(r.pattern);
   if (!matchesEmpty(pattern)) return pattern;
-  const star = /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?])\*$/;
+  const star =
+    /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?]|\(\?:(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\]()])*\))\*$/;
   return star.test(pattern) ? `${pattern.slice(0, -1)}+` : undefined;
 }
 const scopeOf = (r: LexRule) => r.scope;

@@ -72,12 +72,6 @@
         {
           "token": "variable"
         }
-      ],
-      [
-        "\"(?!\")",
-        {
-          "token": "string"
-        }
       ]
     ],
     "csv": [
@@ -118,13 +112,6 @@
         {
           "token": "variable"
         }
-      ],
-      [
-        "\"(?!\")",
-        {
-          "token": "string",
-          "next": "@pop"
-        }
       ]
     ],
     "escaped_text": [
@@ -146,6 +133,12 @@
         {
           "token": "string",
           "next": "@pop"
+        }
+      ],
+      [
+        "(?:[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]|,|\\r|\\n|\"\")+",
+        {
+          "token": "string"
         }
       ]
     ],

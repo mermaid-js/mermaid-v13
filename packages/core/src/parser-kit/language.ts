@@ -94,12 +94,49 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   isValidId(name: string, kind?: string): string | undefined;
   /**
+   * How names are written, when the service's own reading does not fit (sankey's CSV fields,
+   * D398). Without it the service takes an occurrence whose range is its name, or its name
+   * inside one of the quote pairs it knows with nothing escaped, and a rename writes the new
+   * name as it is. With it, see {@link NameSyntax}.
+   */
+  readonly nameSyntax?: NameSyntax;
+  /**
    * Completion items at the probe (D95): `probe` is `ParseResult.probe` of a parse of
    * `doc.text` with `probe: offset`. Items are filtered by the probe's prefix.
    */
   completions(probe: ProbeResult, doc: DocumentView<A>): CompletionItem[];
   /** Hover for what is under the cursor (D93); keyword docs come from the syntax reference. */
   hover(at: HoverTarget, doc: DocumentView<A>): Hover | undefined;
+}
+
+/**
+ * A facet's own reading and writing of names ({@link LanguageFacet.nameSyntax}): names that
+ * escape characters (`"x""y"` for `x"y`) or take quotes only when they need them.
+ */
+export interface NameSyntax {
+  /**
+   * Where symbol `s` (a parser occurrence in `text`) writes its name: `range` is the text a
+   * rename replaces, and `quote` the opening quote around it when it is written in quotes
+   * (the range then lies just inside them, and is one token with them). `undefined` when the
+   * text there does not read as the name: the service drops the occurrence, so a rename of
+   * its symbol is refused.
+   */
+  read(
+    text: string,
+    s: SymbolOccurrence
+  ): { readonly range: Range; readonly quote?: string } | undefined;
+  /**
+   * The edit renaming one occurrence (`at`, as {@link read} gave it) of `text` to `newName`,
+   * which `isValidId` has accepted: `newText` in place of `range`, a range that holds
+   * `at.range` and may take more (the blanks around a field the new name must be quoted in).
+   * With a name syntax the service asks `isValidId` about every rename, quoted or not, and
+   * does not refuse a quote character in the name itself: escaping it is this method's job.
+   */
+  write(
+    newName: string,
+    at: { readonly range: Range; readonly quote?: string },
+    text: string
+  ): { range: Range; newText: string };
 }
 
 /**

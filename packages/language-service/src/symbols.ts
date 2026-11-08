@@ -9,7 +9,10 @@ import type { LanguageFacet, Range, SymbolOccurrence } from '@mermaid-js/core/pa
 import type { DocumentContext } from './context.ts';
 import { deepFreeze } from './freeze.ts';
 
-/** A symbol occurrence whose range covers exactly its name, with its namespace. */
+/**
+ * A symbol occurrence whose range covers exactly its name (with a facet's `nameSyntax`, the
+ * text written for it), with its namespace.
+ */
 export interface Occurrence extends SymbolOccurrence {
   /**
    * Namespace key: the index of the facet group holding `kind`, else the kind itself; for a
@@ -85,9 +88,17 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   if (!result || !facet) return [];
   const spaceOf = spaces(facet);
   const out: Occurrence[] = [];
+  const syntax = facet.nameSyntax;
   for (const s of result.symbols) {
-    let { start, end } = s.range;
     if (s.name === '') continue;
+    if (syntax) {
+      const read = syntax.read(text, s);
+      if (!read) continue;
+      const o = { name: s.name, kind: s.kind, role: s.role, range: read.range, space: spaceOf(s) };
+      out.push(read.quote === undefined ? o : { ...o, quote: read.quote });
+      continue;
+    }
+    let { start, end } = s.range;
     const bare = end - start === s.name.length && text.startsWith(s.name, start);
     const quote = bare ? undefined : quoteAround(text, start, end, s.name);
     if (quote) {
@@ -233,16 +244,24 @@ function readsBack(
   ];
   const renamed = byStart(before.filter((s) => spaceOf(s) === o.space && s.name === o.name));
   if (renamed.length !== edits.length) return false;
+  const sortedEdits = [...edits].sort((a, b) => a.range.start - b.range.start);
   const after = facet.parse(applyEdits(ctx.text, edits), { keepTokens: true }).symbols;
   if (after.length !== before.length) return false;
   const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName))
     .map((s) => `${s.range.start}:${s.range.end}:${s.kind}`)
     .sort();
-  // Where each renamed occurrence lands: shifted by the length change of the edits before it.
-  const delta = newName.length - o.name.length;
+  // Where each renamed occurrence lands: over its range and its edit's, shifted by the length
+  // change of the edits before it, its end also by its own. (With no name syntax each edit is
+  // inside its occurrence and changes it by `newName.length - o.name.length`.)
   const sorted = [...renamed].sort((a, b) => a.range.start - b.range.start);
+  let shift = 0;
   const want = sorted
-    .map((s, i) => `${s.range.start + i * delta}:${s.range.end + (i + 1) * delta}:${s.kind}`)
+    .map((s, i) => {
+      const e = sortedEdits[i]!;
+      const start = Math.min(s.range.start, e.range.start) + shift;
+      shift += e.newText.length - (e.range.end - e.range.start);
+      return `${start}:${Math.max(s.range.end, e.range.end) + shift}:${s.kind}`;
+    })
     .sort();
   return got.length === want.length && got.every((g, i) => g === want[i]);
 }
@@ -283,9 +302,15 @@ export function rename(
   const facet = ctx.facet!;
   const refuse = (refused: string): RenameResult => deepFreeze({ refused });
   const all = sameSymbol(list, o);
-  const invalid = quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind);
+  const syntax = facet.nameSyntax;
+  // A name syntax escapes what the quotes would not hold, so the facet judges every name.
+  const invalid = syntax
+    ? facet.isValidId(newName, o.kind)
+    : (quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind));
   if (invalid !== undefined) return refuse(invalid);
-  const edits = all.map((x) => ({ range: x.range, newText: newName }));
+  const edits = all.map((x) =>
+    syntax ? syntax.write(newName, x, ctx.text) : { range: x.range, newText: newName }
+  );
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
   if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);
