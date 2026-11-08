@@ -62,6 +62,9 @@ const theme: ThemeSpec = {
   },
   // v12 theme-neutral.js: fixed greys; labels 0 and 2 take cScale1.
   palettes: {
+    plotColorArray: series(
+      '#EEE #6BB8E4 #8ACB88 #C7ACD6 #E8DCC2 #FFB2A8 #FFF380 #7E8D91 #FFD8B1 #FAF3E0'
+    ),
     cScale: [
       '#555555',
       '#f4f4f4',
