@@ -219,10 +219,10 @@ class WardleyParser {
   }
 
   /**
-   * A token's text as v12's lexer read it (removed spans dropped), with v12's `#name;` codes as
-   * the characters v12 drew (`displayText`).
+   * A token's display text: as v12's lexer read it (removed spans dropped), with v12's `#name;`
+   * codes as the characters v12 drew (`displayText`).
    */
-  private raw(j = this.i): string {
+  private displayed(j = this.i): string {
     const { start, end } = this.range(j);
     return displayText(this.src, start, end, this.view);
   }
@@ -273,14 +273,14 @@ class WardleyParser {
     const k = this.kind();
     if (NAME_SET[k] !== 1) this.fail(NAMES);
     const range = this.range(this.i);
-    const raw = this.raw(this.i++);
-    return { value: k === T.String ? stringValue(raw) : raw, range };
+    const shown = this.displayed(this.i++);
+    return { value: k === T.String ? stringValue(shown) : shown, range };
   }
 
   /** A token of `kind` (a decimal or an integer) as a number. */
   private number(kind: number, hint?: string): WardleyNumber {
     const j = this.expect(kind, hint);
-    return { value: Number(this.raw(j)), range: this.range(j) };
+    return { value: Number(this.displayed(j)), range: this.range(j) };
   }
 
   /** `CoordinateValue: WARDLEY_NUMBER | INT`. */
@@ -288,7 +288,7 @@ class WardleyParser {
     this.tested(COORDINATE);
     const k = this.kind();
     if (k !== T.Decimal && k !== T.Int) this.fail(COORDINATE);
-    return { value: Number(this.raw(this.i)), range: this.range(this.i++) };
+    return { value: Number(this.displayed(this.i)), range: this.range(this.i++) };
   }
 
   /** `"[" WN "," WN "]"`: `[visibility, evolution]`. */
@@ -326,7 +326,7 @@ class WardleyParser {
     const k = this.kind(j);
     if (k === Kind.EOF) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
-    const text = this.raw(j).trim();
+    const text = this.displayed(j).trim();
     const line = text.split('\n', 1)[0] ?? '';
     return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
   }
@@ -349,7 +349,7 @@ class WardleyParser {
   /** Text no token rule matched: an unclosed string, or stray characters. */
   private badCharacters(where: Range): never {
     const { st } = this;
-    const text = this.raw();
+    const text = this.displayed();
     const line = this.lineOf(where.start);
     if (text.startsWith('"') || text.startsWith("'")) {
       const q = text[0] ?? '"';
@@ -374,7 +374,7 @@ class WardleyParser {
    */
   private accessibilityName(): void {
     if (!this.started || this.kind(this.stmt) !== T.Id || this.i > this.stmt + 1) return;
-    const word = this.raw(this.stmt);
+    const word = this.displayed(this.stmt);
     if (word !== 'accDescr' && word !== 'accTitle') return;
     const where = this.range(this.stmt);
     if (word === 'accDescr' && this.kind(this.stmt + 1) === T.LBrace) {
@@ -400,7 +400,7 @@ class WardleyParser {
     const wantsName = want.some((w) => NAME_SET[w] === 1);
     if (wantsName && KEYWORD_PREFIX[k] === 1) return this.keywordName(this.i);
     if (wantsName && k === T.Int && this.glued(this.i) && NAME_SET[this.kind(this.i + 1)] === 1) {
-      const whole = this.raw() + this.raw(this.i + 1);
+      const whole = this.displayed() + this.displayed(this.i + 1);
       return `\`${whole}\` starts with a digit, and an unquoted name cannot: quote it, as \`"${whole}"\``;
     }
     // `notebook`, `sizeable`, `componentX -> Y`: a keyword glued to the name after it.
@@ -426,7 +426,8 @@ class WardleyParser {
     }
     const statement = this.kind(s);
     if (statement === T.Component) return componentHint(k, this.kind(this.i + 1), want);
-    if (NAME_SET[statement] === 1) return linkHint(k, want, this.raw(s), statement === T.Name);
+    if (NAME_SET[statement] === 1)
+      return linkHint(k, want, this.displayed(s), statement === T.Name);
     if (k === T.RBrace) return 'this `}` closes no pipeline';
     return undefined;
   }
@@ -438,7 +439,7 @@ class WardleyParser {
 
   /** The keyword a keyword-like token starts with (`title` for a title's whole line). */
   private keywordOf(j: number): string {
-    const text = this.raw(j);
+    const text = this.displayed(j);
     return this.kind(j) === T.Title ? 'title' : text;
   }
 
@@ -448,9 +449,9 @@ class WardleyParser {
     let whole = word;
     if (this.kind(j) !== T.Title) {
       for (let n = j; this.glued(n) && NAME_SET[this.kind(n + 1)] === 1; n++)
-        whole += this.raw(n + 1);
+        whole += this.displayed(n + 1);
     } else {
-      const m = /^title[\t ]+([^\t [\]]*)/.exec(this.raw(j));
+      const m = /^title[\t ]+([^\t [\]]*)/.exec(this.displayed(j));
       if (m?.[1]) whole = `title ${m[1]}`;
     }
     return keywordHint(word, whole);
@@ -500,7 +501,7 @@ class WardleyParser {
     this.newlines(HEAD);
     const k = this.kind();
     if (k !== T.WardleyBeta) {
-      const raw = k === T.Name ? this.raw() : '';
+      const raw = k === T.Name ? this.displayed() : '';
       const hint = raw.toLowerCase().startsWith('wardley-beta')
         ? 'a Wardley map starts with `wardley-beta`, in lower case'
         : 'a Wardley map starts with `wardley-beta`';
@@ -638,7 +639,7 @@ class WardleyParser {
     this.tested(node.label ? AFTER_LABEL : AFTER_COORDINATES);
     if (this.kind() === T.LParen && this.kind(this.i + 1) === T.Strategy) {
       this.i++;
-      node.strategy = this.raw(this.i++) as WardleyStrategy;
+      node.strategy = this.displayed(this.i++) as WardleyStrategy;
       this.expect(T.RParen);
       this.tested(AFTER_STRATEGY);
     }
@@ -675,18 +676,19 @@ class WardleyParser {
       to: from,
     };
     this.tested(AFTER_FROM);
-    if (this.kind() === T.LinkPort) node.fromPort = this.raw(this.i++);
+    if (this.kind() === T.LinkPort) node.fromPort = this.displayed(this.i++);
     this.tested(node.fromPort ? AFTER_PORT : AFTER_FROM);
-    if (this.kind() === T.LinkArrow || this.kind() === T.Arrow) node.arrow = this.raw(this.i++);
+    if (this.kind() === T.LinkArrow || this.kind() === T.Arrow)
+      node.arrow = this.displayed(this.i++);
     if (NAME_SET[this.kind()] !== 1) {
       if (node.arrow) this.fail(NAMES);
       this.fail(node.fromPort ? AFTER_PORT : AFTER_FROM);
     }
     node.to = this.name();
     this.tested(AFTER_TO);
-    if (this.kind() === T.LinkPort) node.toPort = this.raw(this.i++);
+    if (this.kind() === T.LinkPort) node.toPort = this.displayed(this.i++);
     this.tested(node.toPort ? AFTER_TO_PORT : AFTER_TO);
-    if (this.kind() === T.LinkLabel) node.linkLabel = linkLabelValue(this.raw(this.i++));
+    if (this.kind() === T.LinkLabel) node.linkLabel = linkLabelValue(this.displayed(this.i++));
     node.range.end = this.end();
     if (node.linkLabel !== undefined) this.eol();
     else this.eol(node.toPort ? AFTER_TO_PORT : AFTER_TO);
@@ -890,7 +892,7 @@ class WardleyParser {
     if (this.kind() !== T.String) {
       this.fail([T.String], undefined, ['a text in quotes, such as `"Note"`']);
     }
-    const text = stringValue(this.raw(this.i++));
+    const text = stringValue(this.displayed(this.i++));
     const at = this.coordinates();
     const range = { start, end: this.end() };
     this.eol();
@@ -930,7 +932,7 @@ class WardleyParser {
     if (this.kind() !== T.String) {
       this.fail([T.String], undefined, ['a text in quotes, such as `"Annotation"`']);
     }
-    const text = stringValue(this.raw(this.i++));
+    const text = stringValue(this.displayed(this.i++));
     const range = { start, end: this.end() };
     this.eol();
     const id = this.id(astName('annotation', String(number.value)));
@@ -954,7 +956,7 @@ class WardleyParser {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.raw(j);
+    const image = this.displayed(j);
     const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
     const range = this.range(j);
     let text: string;

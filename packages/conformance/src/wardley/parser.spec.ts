@@ -469,10 +469,24 @@ describe('wardley AST, symbols and statements', () => {
     ]);
   });
 
+  it("decodes v12's #name; codes as v12 drew them and keeps a literal &name; (GAPS #493)", () => {
+    const { model } = parse(nightly('parser-entity-codes'));
+    expect(model.title).toBe('A & B &amp; C');
+    expect(model.nodes.map((n) => n.label)).toEqual(['Tea & &amp; "Cups"', 'X &y; ♥ &x41;']);
+    expect(model.notes[0]!.text).toBe('♥ love &lt;3');
+    expect(model.links[0]).toMatchObject({
+      source: 'Tea & &amp; "Cups"',
+      target: 'X &y; ♥ &x41;',
+      label: 'a < b &gt; c',
+    });
+    // An `&` in a comment inside the range is dropped with the comment.
+    expect(model.accDescr).toBe('a & b\ne &amp;');
+  });
+
   it('accepts every parser fixture without an error, as v12 does', () => {
     const dir = join(REPO_ROOT, 'e2e/diagrams/wardley/nightly-check');
     const names = readdirSync(dir).filter((f) => f.startsWith('parser-') && f.endsWith('.mmd'));
-    expect(names.length).toBe(32);
+    expect(names.length).toBe(33);
     for (const file of names) {
       const errors = parse(readFileSync(join(dir, file), 'utf8')).diagnostics.filter(
         (d) => d.severity === 'error'

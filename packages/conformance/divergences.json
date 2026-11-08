@@ -398,5 +398,29 @@
     "reason": "v12 lexed an unclosed `%%{` after a statement as a `%%` comment; v13's preprocess reports UNCLOSED_DIRECTIVE for any `%%{` with no `}%%`, so the map is rejected (core preprocess behaviour, shared by every type).",
     "owner": "#489",
     "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core",
+    "inputHash": "sha256:4c822bf8d295a2fa",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core (CRLF)",
+    "inputHash": "sha256:e0b5d3ce1065bb44",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core (commented)",
+    "inputHash": "sha256:6f8a8a4f8048f612",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
   }
 ]

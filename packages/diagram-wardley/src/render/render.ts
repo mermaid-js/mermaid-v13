@@ -14,6 +14,7 @@
 import type { RenderContext } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
+  checkStyle,
   px,
   rotate,
   styleScope,
@@ -22,7 +23,6 @@ import {
   type Paint,
   type PathBuilder,
   type PathData,
-  type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { Attrs } from '@mermaid-js/core/svg';
@@ -61,6 +61,8 @@ export function renderWardley(
   openRoot(model, layout, ctx, w);
   w.open('g', { class: 'wardley-map' });
   drawFrame(model, pen);
+  drawStages(model, pen);
+  drawGrid(pen);
   drawPipelines(pen);
   drawLinks(pen);
   drawTrends(pen);
@@ -89,8 +91,17 @@ function text(w: SvgWriter, t: PlacedText, attrs: Attrs): void {
   w.close();
 }
 
-/** A dash pattern from the metrics table (digits and spaces only). */
-const dash = (pattern: string): SafeValue => pattern as SafeValue;
+/** A metrics dash pattern as a checked `stroke-dasharray` attribute (core's style check). */
+const dashed = (pattern: string): Attrs => checkStyle([`stroke-dasharray:${pattern}`]).shape;
+
+/** The dash patterns, checked once. */
+const DASHES = {
+  stage: dashed(metrics.stage.dash),
+  grid: dashed(metrics.grid.dash),
+  join: dashed(metrics.pipeline.joinDash),
+  link: dashed(metrics.link.dash),
+  trend: dashed(metrics.trend.dash),
+} as const;
 
 /** A straight line's end points as `<line>` attributes. */
 const ends = ({ from, to }: Segment) => ({ x1: from.x, y1: from.y, x2: to.x, y2: to.y });
@@ -103,8 +114,17 @@ function closed(points: readonly Point[], path: PathBuilder): PathData {
   return path.close().done();
 }
 
+/** An arrowhead: its triangle, class, owner and colour. */
+interface HeadParts {
+  readonly triangle: Triangle;
+  readonly cls: string;
+  /** The link's or trend's AST id, its `data-id`. */
+  readonly ast: AstId;
+  readonly fill: Paint;
+}
+
 /** An arrowhead (v12's marker, `:93-138`) as a filled path. */
-function head(w: SvgWriter, triangle: Triangle, cls: string, ast: AstId, fill: Paint): void {
+function head(w: SvgWriter, { triangle, cls, ast, fill }: HeadParts): void {
   w.leaf('path', {
     class: cls,
     'data-id': ast,
@@ -114,7 +134,7 @@ function head(w: SvgWriter, triangle: Triangle, cls: string, ast: AstId, fill: P
   });
 }
 
-/** The background, the title, the axes, the stages and the grid (`:140-295`). */
+/** The background, the title and the axes (`:140-212`). */
 function drawFrame(model: WardleyModel, { w, paint, layout }: Pen): void {
   // The background fills the picture, as v12's canvas-sized one did (the bounds grow past the
   // canvas where something is drawn outside it, D224).
@@ -150,7 +170,10 @@ function drawFrame(model: WardleyModel, { w, paint, layout }: Pen): void {
     fill: paint.axisText,
   });
   w.close();
+}
 
+/** The stages: each divider (none before the first), then its label (`:214-271`). */
+function drawStages(model: WardleyModel, { w, paint, layout }: Pen): void {
   const evolution = model.evolution?.astId;
   w.open('g', { class: 'wardley-stages', 'data-id': evolution, 'data-ast': evolution });
   for (const stage of layout.stages) {
@@ -160,13 +183,16 @@ function drawFrame(model: WardleyModel, { w, paint, layout }: Pen): void {
         ...ends(stage.divider),
         stroke: paint.axis,
         'stroke-width': metrics.stage.stroke,
-        'stroke-dasharray': dash(metrics.stage.dash),
+        ...DASHES.stage,
         opacity: metrics.stage.opacity,
       });
     text(w, stage.label, { class: 'wardley-stage-label', fill: paint.axisText });
   }
   w.close();
+}
 
+/** The grid quarters under `showGrid` (`:273-295`). */
+function drawGrid({ w, paint, layout }: Pen): void {
   if (layout.grid.length === 0) return;
   w.open('g', { class: 'wardley-grid' });
   for (const line of layout.grid)
@@ -174,7 +200,7 @@ function drawFrame(model: WardleyModel, { w, paint, layout }: Pen): void {
       ...ends(line),
       stroke: paint.grid,
       'stroke-width': metrics.grid.stroke,
-      'stroke-dasharray': dash(metrics.grid.dash),
+      ...DASHES.grid,
     });
   w.close();
 }
@@ -208,7 +234,7 @@ function drawPipelines({ w, paint, layout }: Pen): void {
         ...ends(join),
         stroke: paint.link,
         'stroke-width': pipeline.joinStroke,
-        'stroke-dasharray': dash(pipeline.joinDash),
+        ...DASHES.join,
       });
   w.close();
 }
@@ -226,10 +252,11 @@ function drawLinks({ w, paint, layout }: Pen): void {
       ...ends(link),
       stroke: paint.link,
       'stroke-width': metrics.link.stroke,
-      'stroke-dasharray': link.dashed ? dash(metrics.link.dash) : undefined,
+      ...(link.dashed ? DASHES.link : {}),
     });
-    if (link.heads.start) head(w, link.heads.start, 'wardley-link-head', link.ast, paint.link);
-    if (link.heads.end) head(w, link.heads.end, 'wardley-link-head', link.ast, paint.link);
+    for (const triangle of [link.heads.start, link.heads.end])
+      if (triangle)
+        head(w, { triangle, cls: 'wardley-link-head', ast: link.ast, fill: paint.link });
   }
   for (const link of links)
     if (link.label)
@@ -254,18 +281,26 @@ function drawTrends({ w, paint, layout }: Pen): void {
       ...ends(trend),
       stroke: paint.evolution,
       'stroke-width': metrics.trend.stroke,
-      'stroke-dasharray': dash(metrics.trend.dash),
+      ...DASHES.trend,
     });
-    head(w, trend.head, 'wardley-trend-head', trend.ast, paint.evolution);
+    head(w, {
+      triangle: trend.head,
+      cls: 'wardley-trend-head',
+      ast: trend.ast,
+      fill: paint.evolution,
+    });
   }
   w.close();
 }
 
-/** v12's overlay class and fill for each strategy (`:597-644`). */
-const OVERLAYS: Readonly<Record<WardleyStrategy, { cls: string; fill: Paint }>> = {
+/**
+ * v12's overlay class, fill and stroke for each strategy (`:597-644`); without a stroke, the
+ * component stroke. v12 strokes the build overlay black in every theme (D426 keeps it).
+ */
+const OVERLAYS: Readonly<Record<WardleyStrategy, { cls: string; fill: Paint; stroke?: Paint }>> = {
   outsource: { cls: 'wardley-outsource-overlay', fill: FIXED.outsource },
   buy: { cls: 'wardley-buy-overlay', fill: FIXED.buy },
-  build: { cls: 'wardley-build-overlay', fill: FIXED.build },
+  build: { cls: 'wardley-build-overlay', fill: FIXED.build, stroke: FIXED.buildStroke },
   market: { cls: 'wardley-market-overlay', fill: FIXED.white },
 };
 
@@ -291,16 +326,15 @@ function drawNode({ w, paint }: Pen, node: WardleyNodeLayout): void {
     'data-ast': node.ast,
   });
   if (overlay) {
-    const { cls, fill } = OVERLAYS[overlay.strategy];
+    const row = OVERLAYS[overlay.strategy];
     w.leaf('circle', {
-      class: cls,
+      class: row.cls,
       cx: point.x,
       cy: point.y,
       r: overlay.radius,
-      fill,
-      ...stroke,
-      // v12 strokes the build overlay black in every theme (D426 keeps it).
-      ...(overlay.strategy === 'build' ? { stroke: FIXED.buildStroke } : {}),
+      fill: row.fill,
+      stroke: row.stroke ?? paint.componentStroke,
+      'stroke-width': metrics.node.stroke,
     });
   }
   if (node.glyph === 'circle')

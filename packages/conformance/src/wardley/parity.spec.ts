@@ -18,13 +18,18 @@ import { wardleyAdapter } from './v13.ts';
  * `divergences.json`.
  *
  * The listed wardley divergences are core's reading, shared by every type, and the second test
- * checks they differ only there ({@link CORE}): core ends an unclosed `%%{` at its line end and
+ * checks they differ only there ({@link LISTED}): core ends an unclosed `%%{` at its line end and
  * reports `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed (or, after
- * a statement, read as a comment).
+ * a statement, read as a comment); and core's entity table, smaller than the HTML table a browser
+ * drew v12's `#name;` codes from, so a name outside it keeps its `&name;` (GAPS #493).
  */
-const CORE: ReadonlyMap<string, RegExp> = new Map([
-  ['wardley-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
-  ['wardley-cases/directive-unclosed-in-line', /^UNCLOSED_DIRECTIVE/],
+const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
+  ['wardley-cases/unclosed-directive', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],
+  ['wardley-cases/directive-unclosed-in-line', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],
+  [
+    'wardley-cases/entities-outside-core',
+    { kind: 'model', detail: /^nodes\[0\]\.id, nodes\[0\]\.label, notes\[0\]\.text$/ },
+  ],
 ]);
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
@@ -82,9 +87,9 @@ describe('wardley oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('differs only in core, where the list says (unclosed directives)', async () => {
+  it('differs only in core, where the list says (unclosed directives, entity names)', async () => {
     const report = await run();
-    const prefixes = [...CORE.keys()];
+    const prefixes = [...LISTED.keys()];
     for (const prefix of prefixes) {
       expect(
         report.expected.some((d) => d.id.startsWith(prefix)),
@@ -94,8 +99,9 @@ describe('wardley oracle parity with mermaid@12', () => {
     for (const d of report.expected) {
       const prefix = prefixes.find((p) => d.id.startsWith(p));
       expect(prefix, d.id).toBeDefined();
-      expect(d.kind, d.id).toBe('reject');
-      expect(d.detail, d.id).toMatch(CORE.get(prefix ?? '') ?? /^$/);
+      const listed = LISTED.get(prefix ?? '');
+      expect(d.kind, d.id).toBe(listed?.kind);
+      expect(d.detail, d.id).toMatch(listed?.detail ?? /^$/);
     }
   }, 300_000);
 

@@ -572,50 +572,6 @@
     "source": "wardley-beta\ncomponent P [0.5, 0.5]\ncomponent P_x [0.2, 0.3]\npipeline P {\n  component x_y [0.4]\n}\npipeline P_x {\n  component y [0.6]\n}"
   },
   {
-    "id": "wardley-cases/render-simple",
-    "source": "wardley-beta\ntitle Tea Shop\nanchor Business [0.95, 0.63]\ncomponent Cup of Tea [0.79, 0.61] label [19, -4]\ncomponent Tea [0.63, 0.81]\nBusiness -> Cup of Tea\nCup of Tea -> Tea\nevolve Tea 0.9\nnote \"Standardising\" [0.4, 0.2]"
-  },
-  {
-    "id": "wardley-cases/render-everything",
-    "source": "wardley-beta\ntitle Everything\nevolution First -> Second -> Third\nanchor User [0.95, 0.5]\ncomponent Kettle [0.6, 0.45] inertia\ncomponent Water [0.3, 0.8] (buy)\nUser +> Kettle ; boil\nKettle -.-> Water\nevolve Water 0.9\npipeline Kettle {\n  component Campfire [0.35]\n  component Electric [0.55]\n}\nannotations [0.05, 0.95]\nannotation 1,[0.4, 0.6] \"First note\"\nnote \"Watch this\" [0.2, 0.2]\naccelerator Faster [0.7, 0.3]\ndeaccelerator Slower [0.2, 0.5]"
-  },
-  {
-    "id": "wardley-cases/render-strategies",
-    "source": "wardley-beta\ncomponent Built [0.8, 0.2] (build)\ncomponent Bought [0.7, 0.4] (buy)\ncomponent Outsourced [0.6, 0.6] (outsource)\ncomponent Market [0.5, 0.8] (market)\ncomponent Heavy [0.3, 0.3] inertia\ncomponent Both [0.2, 0.7] (build) inertia\ncomponent P [0.4, 0.5] inertia\npipeline P {\n  component Q [0.45]\n}"
-  },
-  {
-    "id": "wardley-cases/render-flows",
-    "source": "wardley-beta\ncomponent A [0.2, 0.2]\ncomponent B [0.5, 0.5]\ncomponent C [0.8, 0.2]\ncomponent D [0.2, 0.8]\nA +> B\nB +< C\nC +<> D\nD -.-> A ; dashed\nB -> D ; up the hill\nA +'backup'> C"
-  },
-  {
-    "id": "wardley-cases/render-dropped-links",
-    "source": "wardley-beta\ncomponent A [0.2, 0.2]\ncomponent P [0.5, 0.5]\nA -> A\nA -> Nowhere\npipeline P {\n  component c [0.3]\n}\nc -> P\nA -> c"
-  },
-  {
-    "id": "wardley-cases/render-annotations",
-    "source": "wardley-beta\nannotations [0.9, 0.1]\nannotation 2,[0.3, 0.7] \"Second\"\nannotation 1,[0.5, 0.5] \"First\"\nannotation 3,[0.7, 0.3] \"\""
-  },
-  {
-    "id": "wardley-cases/render-custom-stages",
-    "source": "wardley-beta\nevolution Uncharted@0.4 -> Transitional@0.6 -> Industrialised@1.0\ncomponent A [0.5, 0.5]"
-  },
-  {
-    "id": "wardley-cases/render-entities",
-    "source": "wardley-beta\ntitle A #amp; B &amp; C\ncomponent \"Tea #amp; &amp; #quot;Cups#quot;\" [0.5, 0.5]\nnote \"#9829; love &lt;3\" [0.1, 0.2]"
-  },
-  {
-    "id": "wardley-cases/render-repeated-title",
-    "source": "wardley-beta\ntitle First\ntitle Last\ncomponent A [0.5, 0.5]"
-  },
-  {
-    "id": "wardley-cases/render-front-matter-title",
-    "source": "---\ntitle: Front\n---\nwardley-beta\ncomponent A [0.5, 0.5]"
-  },
-  {
-    "id": "wardley-cases/render-acc-title-descr",
-    "source": "wardley-beta\naccTitle: Tea map\naccDescr: How tea is made\ncomponent A [0.5, 0.5]"
-  },
-  {
     "id": "wardley-cases/render-hostile-title",
     "source": "wardley-beta\ntitle <svg onload=alert(1)>\ncomponent A [0.5, 0.5]"
   },
@@ -626,5 +582,9 @@
   {
     "id": "wardley-cases/render-hostile-accessibility",
     "source": "wardley-beta\naccTitle: </title><script>alert(1)</script>\naccDescr {\n  ]]><svg onload=alert(1)>\n}\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core",
+    "source": "wardley-beta\ncomponent \"A #alpha; B\" [0.5, 0.5]\nnote \"#nbsp;#hellip; #frac12;\" [0.1, 0.1]"
   }
 ]

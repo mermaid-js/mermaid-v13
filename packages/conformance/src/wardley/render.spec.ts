@@ -21,7 +21,7 @@ import {
 import { pathPoints } from '../sequence/path-bounds.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
-import { wardleyCases, wardleyGateCorpus } from './corpus.ts';
+import { wardleyCases, wardleyCorpus, wardleyGateCorpus } from './corpus.ts';
 import { wardleyApi } from './render-api.ts';
 
 /**
@@ -41,7 +41,8 @@ import { wardleyApi } from './render-api.ts';
  * evolution (the last). A link that is not drawn is named by the parse's or the layout's
  * `WARDLEY_LINK_DROPPED`, or runs from a pipeline child to its own parent (v12's silent skip).
  *
- * The probes below are `corpus/wardley-cases.json`'s `wardley-cases/render-*` cases (also in the
+ * The probes below are the `e2e/diagrams/wardley/nightly-check/render-*.mmd` fixtures v12
+ * accepts and `corpus/wardley-cases.json`'s hostile `wardley-cases/render-*` cases (all in the
  * gate corpus above).
  */
 const THEMES = [
@@ -162,11 +163,11 @@ describe('wardley render properties over the corpus', () => {
     // Inputs v13 rejects are the parser's business (#489 parity); none fail to render.
     expect(skipped.filter((s) => !s.reason.startsWith('SYNTAX'))).toEqual([]);
     // Every render probe renders.
-    const probes = wardleyCases().filter((c) => c.id.startsWith('wardley-cases/render-'));
-    for (const p of probes)
+    expect(PROBES.size).toBeGreaterThan(10);
+    for (const id of PROBES.keys())
       expect(
-        cases.some((c) => c.id === `default ${p.id}`),
-        p.id
+        cases.some((c) => c.id === `default ${id}`),
+        id
       ).toBe(true);
   });
 
@@ -304,11 +305,17 @@ const render = async (src: string, m: Mermaid = api) => {
   return { ...result, tree: parseSvg(result.svg) };
 };
 
-/** A `wardley-cases/render-<name>` source from `corpus/wardley-cases.json`. */
-const CASES = new Map(wardleyCases().map((c) => [c.id, c.source]));
+/** The probes: `nightly-check/render-<name>.mmd`, and the hostile `wardley-cases/render-<name>`. */
+const PROBES = new Map(
+  [...(await wardleyCorpus()), ...wardleyCases()]
+    .filter((c) => /^(e2e\/nightly-check|wardley-cases)\/render-/.test(c.id))
+    .map((c) => [c.id, c.source])
+);
 function probe(name: string): string {
-  const source = CASES.get(`wardley-cases/render-${name}`);
-  if (source === undefined) throw new Error(`no wardley-cases/render-${name}`);
+  const source =
+    PROBES.get(`e2e/nightly-check/render-${name}.mmd`) ??
+    PROBES.get(`wardley-cases/render-${name}`);
+  if (source === undefined) throw new Error(`no render-${name} probe`);
   return source;
 }
 
@@ -356,6 +363,12 @@ describe('wardley render: what is drawn', () => {
       'wardley-annotation',
       'wardley-annotations-box',
     ]);
+    // The metrics' dash patterns, through core's style check.
+    const dash = (cls: string) => attr(tree, byClass(tree, cls)[0], 'stroke-dasharray');
+    expect(dash('wardley-pipeline-evolution-link')).toBe('4 4');
+    expect(dash('wardley-link--dashed')).toBe('6 6');
+    expect(dash('wardley-trend')).toBe('4 4');
+    expect(dash('wardley-link')).toBeUndefined();
     const [links] = byClass(tree, 'wardley-links');
     expect(classes(tree, tree.children(links!))).toEqual([
       'wardley-link',

@@ -6,24 +6,24 @@
  *
  * Normalisation, chosen so the snapshot holds what v12 built and nothing else:
  * - text is what v12 drew: each `encodeEntities` placeholder (`#name;`, `#123;`) as the
- *   character v12's SVG showed (core's named set and numeric references; another name stays
- *   `&name;`, as a browser shows it), and a literal `&name;` as written (GAPS #493);
+ *   character a browser showed for the `&name;` v12's SVG wrote (the full HTML named set, the
+ *   `entities` package; an unknown name stays `&name;`), and a literal `&name;` as written
+ *   (GAPS #493). v13 decodes core's set only, so a name outside it is a listed divergence;
  * - flags v12 left unset (`inertia` on an anchor, `inPipeline`, `isPipelineParent`) are `false`;
  * - an annotation's one point is `x`, `y`; `axes` is the evolution, when it has stages;
  * - the title is the in-text one: the oracle never passes the front matter on, so
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too).
  */
-import { entityAt } from '@mermaid-js/core/text';
+import { decodeHTMLStrict } from 'entities/decode';
 
 /** A placeholder `ﬂ°name¶ß` / `ﬂ°°123¶ß`, which v12's SVG wrote as `&name;` / `&#123;`. */
 const RE_PLACEHOLDER = /ﬂ°(°?)(\w+)¶ß/g;
 
-/** v12's text as drawn: its placeholders as their characters. */
+/** v12's text as a browser drew it: its placeholders as their characters. */
 const d = (text: string): string =>
-  text.replace(RE_PLACEHOLDER, (_, hash: string, name: string) => {
-    const ref = `&${hash ? '#' : ''}${name};`;
-    return entityAt(ref, 0)?.[0] ?? ref;
-  });
+  text.replace(RE_PLACEHOLDER, (_, hash: string, name: string) =>
+    decodeHTMLStrict(`&${hash ? '#' : ''}${name};`)
+  );
 
 /** `diagram.type` values mermaid\@12 reports for wardley sources. */
 export const WARDLEY_V12_TYPES = ['wardley'];
