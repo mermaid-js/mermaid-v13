@@ -179,6 +179,24 @@ describe('sankey parse: values (D394)', () => {
     expect(r.model.warnings).toEqual(r.diagnostics);
   });
 
+  it('says why a value counts as 0: not a number, negative, or not finite', () => {
+    const message = (value: string) =>
+      parseSankey(`sankey\na,b,${value}`).diagnostics.find((d) => d.code === SANKEY_INVALID_VALUE)
+        ?.message;
+    expect(message('abc')).toBe(
+      'The value "abc" of the link from "a" to "b" is not a number, so the link counts as 0.'
+    );
+    expect(message('-2')).toBe(
+      'The value "-2" of the link from "a" to "b" is negative, so the link counts as 0.'
+    );
+    expect(message('1e999')).toBe(
+      'The value "1e999" of the link from "a" to "b" is not a finite number, so the link counts as 0.'
+    );
+    expect(parseSankey('sankey\na,b,x\nb,c,Infinity').diagnostics[0]?.message).toBe(
+      '2 links have a value that is not a finite number of 0 or more (the first is the value "x" of the link from "a" to "b"), so each counts as 0.'
+    );
+  });
+
   it('warns once per value with text after its number, at that text', () => {
     const src = 'sankey\na,b,1;\nb,c,"2 x"\nc,d,3 %% n\nd,e,4';
     const r = parseSankey(src);

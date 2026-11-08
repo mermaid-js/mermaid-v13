@@ -6,15 +6,18 @@
  * names and the `@` before a count are the only ones in an id, and two rows get the same id
  * only when they link the same two names.
  */
+import { AT, GT, HASH, PERCENT } from '@mermaid-js/core/parser-kit';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 
-const SPECIAL = /[%>@#]/g;
-
-/** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`). */
+/** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`, copied). */
 function escapeName(name: string): string {
-  SPECIAL.lastIndex = 0;
-  if (!SPECIAL.test(name)) return name;
-  return name.replace(SPECIAL, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+  for (let i = 0; i < name.length; i++) {
+    const c = name.charCodeAt(i);
+    if (c === PERCENT || c === GT || c === AT || c === HASH) {
+      return name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+    }
+  }
+  return name;
 }
 
 /** `node:<name>`. */

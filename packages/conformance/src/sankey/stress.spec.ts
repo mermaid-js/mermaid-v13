@@ -95,6 +95,17 @@ const rows = (n: number, row: (k: number) => string): string => {
 };
 
 /**
+ * A chain of rows about `n` characters long, closed from its last node back to `n0`: one strongly
+ * connected component as large as the text.
+ */
+const cycle = (n: number): string => {
+  let out = S;
+  let k = 0;
+  for (; out.length < n; k++) out += `n${k},n${k + 1},1\n`;
+  return `${out}n${k},n0,1`;
+};
+
+/**
  * R-PARSE-7, pitfalls 11 and 19: the parser (nodes by name, AST ids, cycles, value warnings,
  * recovery) is linear in input size on the lexer's shapes and on its own, with the same n and
  * 8n ratio test.
@@ -105,7 +116,7 @@ const PARSE_SHAPES: [string, (n: number) => string][] = [
   ['fan-out from one node', (n) => rows(n, (k) => `hub,t${k},1`)],
   ['fan-in to one node', (n) => rows(n, (k) => `s${k},hub,1`)],
   ['a long chain', (n) => rows(n, (k) => `n${k},n${k + 1},1`)],
-  ['a long cycle', (n) => rows(n, (k) => `n${k},n${k + 1},1`) + '\nn1,n0,1'],
+  ['a long cycle', (n) => cycle(n)],
   ['a self-link on every row', (n) => rows(n, (k) => `n${k},n${k},1`)],
   ['repeated links', (n) => rows(n, () => 'a,b,1')],
   ['quoted names', (n) => rows(n, (k) => `"s ""${k}""","t,${k}",1`)],

@@ -8,7 +8,7 @@
  * Usage: `pnpm --filter @mermaid-js/diagram-sankey port:v12-specs` (also runs prettier).
  */
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,18 +22,24 @@ const FILES = ['sankey.spec.ts'];
 const DATA = ['energy.csv'];
 
 /**
- * `file: { test title (or its unique start): reason }`. Reasons are written into the file.
- * The oracle (12.2.0) parses `__proto__,A` / `A,__proto__`, a cycle that v12's d3-sankey then
- * refuses at render; v13 rejects it at parse (D393), so the two tests that parse it are skipped.
+ * `file: { test title (or its unique start): { reason, divergence } }`, in `v12-skips.json`.
+ * Reasons are written into the file. Each skip names the parity divergence that is its cause
+ * (an id in `packages/conformance/divergences.json`): the port refuses a skip whose divergence
+ * is not listed, and `conformance/src/sankey/v12-skips.spec.ts` checks the same on every run,
+ * so a skip cannot outlive its divergence. The oracle (12.2.0) parses `__proto__,A` /
+ * `A,__proto__`, a cycle that v12's d3-sankey then refuses at render; v13 rejects it at parse
+ * (D393), so the two tests that parse it are skipped.
  */
-const SKIP: Record<string, Record<string, string>> = {
-  'sankey.spec.ts': {
-    'allows __proto__ as id with sankey-beta syntax':
-      'the two rows are a cycle, an error at parse in v13 (D393); `__proto__` as a name is covered by the #7528 tests and sankey-cases/fields-proto',
-    'allows __proto__ as id with sankey syntax':
-      'the two rows are a cycle, an error at parse in v13 (D393); `__proto__` as a name is covered by the #7528 tests and sankey-cases/fields-proto',
-  },
-};
+const SKIP = JSON.parse(
+  readFileSync(new URL('./v12-skips.json', import.meta.url), 'utf8')
+) as Record<string, Record<string, { reason: string; divergence: string }>>;
+const DIVERGENCES = new Set(
+  (
+    JSON.parse(readFileSync(join(ROOT, 'packages/conformance/divergences.json'), 'utf8')) as {
+      id: string;
+    }[]
+  ).map((d) => d.id)
+);
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });
@@ -47,7 +53,12 @@ for (const file of FILES) {
     .filter((line) => !/^import .* from ['"]/.test(line) && !line.startsWith('// @ts-'))
     .join('\n');
   const notes: string[] = [];
-  for (const [title, reason] of Object.entries(SKIP[file] ?? {})) {
+  for (const [title, { reason, divergence }] of Object.entries(SKIP[file] ?? {})) {
+    if (!DIVERGENCES.has(divergence)) {
+      throw new Error(
+        `${file}: the skip of ${title} names ${divergence}, which is not a divergence`
+      );
+    }
     let hit = 0;
     body = body.replace(
       /\b(it|describe)\((['"`])((?:(?!\2)[^\\]|\\.)*)\2/g,

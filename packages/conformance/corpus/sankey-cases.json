@@ -514,5 +514,9 @@
   {
     "id": "sankey-cases/links-diamond",
     "source": "sankey\na,b,1\na,c,2\nb,d,1\nc,d,2\nd,e,3"
+  },
+  {
+    "id": "sankey-cases/values-negative",
+    "source": "sankey\na,b,-3\nb,c,2"
   }
 ]

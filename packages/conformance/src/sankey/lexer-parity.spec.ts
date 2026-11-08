@@ -127,7 +127,7 @@ describe('sankey lexer parity with mermaid@12 (jison)', () => {
     // line-separator ones among them) reaches the lexer.
     expect(e2e).toBe(18);
     expect(specs).toBe(14);
-    expect(cases).toBe(129);
+    expect(cases).toBe(130);
     expect(separators).toBe(9);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

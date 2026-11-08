@@ -41,6 +41,15 @@ export function numberEnd(s: string): number {
 
 /**
  * Whether the layout draws `value` as it is (D394): a finite number of 0 or more. NaN and
- * negative values count as 0; so does an infinite one, which would make every box NaN.
+ * negative values count as 0; so does an infinite one, with which d3-sankey would draw that
+ * node and its links with NaN.
  */
 export const drawable = (value: number): boolean => value >= 0 && value !== Infinity;
+
+/** Why the layout does not draw `value` as it is, for messages; undefined when it does. */
+export function invalidity(value: number): string | undefined {
+  if (Number.isNaN(value)) return 'is not a number';
+  if (value === Infinity) return 'is not a finite number';
+  if (value < 0) return 'is negative';
+  return undefined;
+}

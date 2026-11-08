@@ -43,6 +43,15 @@ export interface SankeyLink {
   readonly range: Range;
 }
 
+/**
+ * A warning of the parse. `SANKEY_INVALID_VALUE` lists its rows' link ids in `astIds` (D394):
+ * core's render `Warning` keeps that field (and drops `related`), so the render warning made
+ * from this diagnostic lists the rows too.
+ */
+export interface SankeyWarning extends Diagnostic {
+  readonly astIds?: readonly AstId[];
+}
+
 export interface SankeyModel {
   /** In first-appearance order. Empty when no row was read. */
   readonly nodes: readonly SankeyNode[];
@@ -50,6 +59,6 @@ export interface SankeyModel {
   readonly links: readonly SankeyLink[];
   /** The front-matter `title` (D396), as v12 read it. */
   readonly title?: string;
-  /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
-  readonly warnings: readonly Diagnostic[];
+  /** Warning diagnostics of the parse (the same objects as in `ParseResult.diagnostics`). */
+  readonly warnings: readonly SankeyWarning[];
 }

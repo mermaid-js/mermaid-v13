@@ -23,24 +23,18 @@
  * the next line and carries on (R-PARSE-4). A row with an error adds nothing to the model.
  */
 import { Kind, LineIndex, ParseState, sourceView, TokenCursor } from '@mermaid-js/core/parser-kit';
-import type {
-  Diagnostic,
-  ParseOptions,
-  ParseResult,
-  Range,
-  RelatedInfo,
-} from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { SANKEY_CYCLE, SANKEY_INVALID_VALUE, SANKEY_VALUE_TRAILING_TEXT } from '../codes.ts';
-import type { SankeyLink, SankeyModel, SankeyNode } from '../model.ts';
+import type { SankeyLink, SankeyModel, SankeyNode, SankeyWarning } from '../model.ts';
 import type { SankeyDocument, SankeyField, SankeyLinkNode, SankeyNodeNode } from './ast.ts';
 import { cycleLinks } from './cycles.ts';
 import { LinkIds, nodeAstId } from './ids.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import { SankeyKind as T } from './tokens.ts';
-import { drawable, numberEnd } from './values.ts';
+import { drawable, invalidity, numberEnd } from './values.ts';
 
 export interface SankeyParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -51,8 +45,15 @@ export type SankeyParseResult = ParseResult<SankeyModel, SankeyDocument>;
 
 const HEADER = ['`sankey`'];
 const ROW = ['a row such as `Coal,Electricity,12.5`'];
-const TARGET = ['a target name'];
-const VALUE = ['a value such as `12.5`'];
+
+/** A row's three fields, in order. */
+type Role = 'source' | 'target' | 'value';
+/** What is expected where each field starts. */
+const EXPECTED: Readonly<Record<Role, string[]>> = {
+  source: ROW,
+  target: ['a target name'],
+  value: ['a value such as `12.5`'],
+};
 const COMMA = ['a comma'];
 const LINE_BREAK = ['a line break'];
 const QUOTED_TEXT = ['the text of the quoted field'];
@@ -329,11 +330,11 @@ class SankeyParser {
 
   /** `field COMMA field COMMA field`. */
   private row(): void {
-    const source = this.field(ROW, true);
+    const source = this.field('source');
     this.comma(source);
-    const target = this.field(TARGET, true);
+    const target = this.field('target');
     this.comma(target);
-    const value = this.field(VALUE, false);
+    const value = this.field('value');
     this.addLink(source, target, value);
   }
 
@@ -363,44 +364,37 @@ class SankeyParser {
     return undefined;
   }
 
-  /** `DQUOTE ESCAPED_TEXT DQUOTE | NON_ESCAPED_TEXT`. A name is read as v12's DB got it. */
-  private field(names: string[], isName: boolean): ReadField {
+  /**
+   * `DQUOTE ESCAPED_TEXT DQUOTE | NON_ESCAPED_TEXT`, read as v12's record action did: trimmed,
+   * and for a name `""` as `"`.
+   */
+  private field(role: Role): ReadField {
     const { c } = this;
+    const read = (j: number, quoted: boolean, range: Range, whole: Range): ReadField => {
+      const raw = this.raw(j);
+      const trimmed = raw.trim();
+      const text = role === 'value' ? trimmed : trimmed.replaceAll('""', '"');
+      return { raw, text, quoted, range, whole };
+    };
     if (c.kind === T.Text) {
       const j = c.next();
       const raw = this.raw(j);
-      const trimmed = raw.trim();
       const from = raw.length - raw.trimStart().length;
-      return {
-        raw,
-        text: isName ? trimmed.replaceAll('""', '"') : trimmed,
-        quoted: false,
-        range: this.exact(j, raw, from, from + trimmed.length),
-        whole: this.range(j),
-      };
+      return read(j, false, this.exact(j, raw, from, from + raw.trim().length), this.range(j));
     }
     if (c.kind !== T.OpenQuote) {
       let hint: string | undefined;
       if (c.kind === T.Comma) hint = EMPTY_FIELD_HINT;
-      else if (names !== ROW && this.atRowEnd()) hint = THREE_FIELDS_HINT;
-      this.fail(names, hint);
+      else if (role !== 'source' && this.atRowEnd()) hint = THREE_FIELDS_HINT;
+      this.fail(EXPECTED[role], hint);
     }
     const open = c.next();
     if (c.kind === T.CloseQuote) this.fail(QUOTED_TEXT, EMPTY_QUOTES_HINT);
     if (c.kind !== T.EscapedText) this.fail(QUOTED_TEXT);
     const j = c.next();
     if (c.kind === T.CloseQuote) {
-      const close = c.next();
-      const raw = this.raw(j);
-      const trimmed = raw.trim();
-      const whole = { start: this.range(open).start, end: this.range(close).end };
-      return {
-        raw,
-        text: isName ? trimmed.replaceAll('""', '"') : trimmed,
-        quoted: true,
-        range: whole,
-        whole,
-      };
+      const whole = { start: this.range(open).start, end: this.range(c.next()).end };
+      return read(j, true, whole, whole);
     }
     // The text ended inside the quotes: jison's empty `ESCAPED_TEXT` at the end, then nothing.
     if (c.kind === T.EscapedText || c.kind === Kind.EOF) this.unclosed(open);
@@ -500,20 +494,21 @@ class SankeyParser {
     if (!first) return;
     const message =
       bad.length === 1
-        ? `${upper(describe(first))} is not a number of 0 or more, so the link counts as 0.`
-        : `${bad.length} links have a value that is not a number of 0 or more (the first is ${describe(first)}), so each counts as 0.`;
-    const related: RelatedInfo[] = bad.map((l) => ({
-      message: `${upper(describe(l))} counts as 0.`,
-      range: l.valueField.range,
-    }));
-    const d: Diagnostic & { astIds?: readonly string[] } = this.st.diagnostics.warning(
-      SANKEY_INVALID_VALUE,
+        ? `${upper(describe(first))} ${invalidity(first.value) ?? ''}, so the link counts as 0.`
+        : `${bad.length} links have a value that is not a finite number of 0 or more (the first is ${describe(first)}), so each counts as 0.`;
+    const warning: SankeyWarning = {
+      severity: 'warning',
+      code: SANKEY_INVALID_VALUE,
       message,
-      first.valueField.range,
-      { related }
-    );
-    // Core's render `Warning` keeps `astIds`, not `related` (D394's "listing every such row").
-    d.astIds = bad.map((l) => l.ast);
+      range: first.valueField.range,
+      related: bad.map((l) => ({
+        message: `${upper(describe(l))} ${invalidity(l.value) ?? ''}: it counts as 0.`,
+        range: l.valueField.range,
+      })),
+      // Core's render `Warning` keeps `astIds`, not `related` (D394's "listing every such row").
+      astIds: bad.map((l) => l.ast),
+    };
+    this.st.diagnostics.list.push(warning);
   }
 }
 
