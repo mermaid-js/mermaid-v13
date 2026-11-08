@@ -253,6 +253,7 @@ const TYPE_DOCS: Record<string, string> = {
   radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
   kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
+  wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */

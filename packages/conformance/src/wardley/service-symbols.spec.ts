@@ -1,8 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { detectWardley, parseWardley } from '@mermaid-js/diagram-wardley';
+import { parseWardley } from '@mermaid-js/diagram-wardley';
 import type { WardleyLinkNode, WardleyPipelineNode } from '@mermaid-js/diagram-wardley';
-import { wardleyLanguage } from '@mermaid-js/diagram-wardley/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -31,13 +30,11 @@ import { wardleyV12Snapshot } from './v12.ts';
  * Sources with a listed model divergence (`divergences.json`: an entity name core's table
  * lacks) are left out: their labels differ from v12's by design.
  *
- * The facet is passed as an eager row until wardley's manifest has its `language` entry (#497).
+ * The service loads the facet through the generated registry row (wardley's manifest
+ * `language` entry, #497).
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'wardley', id: 'wardley', detector: (t) => detectWardley(t), facet: wardleyLanguage },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['wardley'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const DIVERGENT = new Set(
   loadDivergences(fileURLToPath(DIVERGENCES_FILE))
@@ -146,8 +143,12 @@ describe('wardley definition, references and folding through the service match v
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while wardley has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry, with the wardley-beta section (#497, D421)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'wardley');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(row?.section).toBe('wardley-beta');
+    expect(service.update('x:///w', 'wardley-beta\ncomponent A [0.5, 0.5]\n').facet?.id).toBe(
+      'wardley'
+    );
   });
 });

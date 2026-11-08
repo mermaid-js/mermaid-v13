@@ -61,11 +61,13 @@ describe('completion', () => {
       'quadrantChart',
       'packet',
       'radar-beta',
+      'wardley-beta',
       'cynefin-beta',
     ]);
     expect(labels('qua|')).toEqual(['quadrantChart']);
     expect(labels('pac|')).toEqual(['packet']);
     expect(labels('rad|')).toEqual(['radar-beta']);
+    expect(labels('war|')).toEqual(['wardley-beta']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);
