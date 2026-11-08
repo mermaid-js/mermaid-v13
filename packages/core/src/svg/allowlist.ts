@@ -46,6 +46,7 @@ const ATTR_TABLE: Record<AllowedAttr | GradientAttr, true> = {
   'data-mermaid-version': true,
   'data-p': true,
   'data-color-id': true,
+  'data-venn-sets': true,
   style: true,
   transform: true,
   'pointer-events': true,

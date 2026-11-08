@@ -21,11 +21,16 @@ const SOURCES = (import.meta as ImportMeta & { glob: RawGlob }).glob(
   { query: '?raw', import: 'default', eager: true }
 );
 
-/** The fixture at `path` (under `e2e/diagrams/venn/`, without `.mmd`), parsed; it must parse. */
-export function fixture(path: string): ParsedVenn {
+/** The text of the fixture at `path` (under `e2e/diagrams/venn/`, without `.mmd`). */
+export function fixtureSource(path: string): string {
   const source = SOURCES[`${ROOT}${path}.mmd`];
   if (source === undefined) throw new Error(`no fixture e2e/diagrams/venn/${path}.mmd`);
-  const parsed = parsedVenn(source);
+  return source;
+}
+
+/** The fixture at `path` (under `e2e/diagrams/venn/`, without `.mmd`), parsed; it must parse. */
+export function fixture(path: string): ParsedVenn {
+  const parsed = parsedVenn(fixtureSource(path));
   const errors = parsed.diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) throw new Error(`${path}: ${errors.map((d) => d.message).join('; ')}`);
   return parsed;
