@@ -7,6 +7,7 @@
 import { asLimitError, checkOutput } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import { inertProblem } from '../svg/inert.ts';
+import { styleScope } from '../svg/style.ts';
 import { streamWriter, treeWriter } from '../svg/writer.ts';
 import { stageEnd, stageStart } from '../timing/index.ts';
 import { MermaidError } from './errors.ts';
@@ -62,7 +63,11 @@ export function drawDiagram<M, L>(
     const gradient = ctx.theme.gradient();
     // The first registered outline drawer, if it is active for this render (D302).
     const outline = run?.outline();
-    const options = outline ? { gradient, outline: outline.draw } : { gradient };
+    // Read only when a renderer asks for a user-space gradient (D391).
+    const idPrefix = () => ctx.idPrefix;
+    const options = outline
+      ? { gradient, idPrefix, outline: outline.draw }
+      : { gradient, idPrefix };
     if (run?.editsTree) {
       const w = treeWriter(options);
       plugin.render(model, layout, ctx, w);
@@ -80,6 +85,8 @@ export function drawDiagram<M, L>(
         linkSchemes: ctx.linkSchemes,
         themeStyle: ctx.theme.autoDeclarations() !== undefined,
         gradient: gradient?.id ?? false,
+        // Pinned as the gradient's id is, so no other render's gradient passes (D391).
+        scope: styleScope(ctx.idPrefix),
       });
       if (problem !== undefined)
         throw new MermaidError(

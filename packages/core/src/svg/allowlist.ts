@@ -101,7 +101,7 @@ const ATTR_TABLE: Record<AllowedAttr | GradientAttr, true> = {
 export const ALLOWED_TAGS: ReadonlySet<string> = new Set(Object.keys(TAG_TABLE));
 /** Every attribute the writer may emit. */
 export const ALLOWED_ATTRS: ReadonlySet<string> = new Set(Object.keys(ATTR_TABLE));
-/** The gradient's elements: only the writer itself emits them (D182). */
+/** The gradients' elements: only the writer itself emits them (D182, D391). */
 export const GRADIENT_TAGS: ReadonlySet<string> = new Set<GradientTag>([
   'defs',
   'linearGradient',
@@ -115,7 +115,7 @@ export const GRADIENT_ATTRS: ReadonlyMap<string, GradientTag> = new Map<Gradient
   ['stop-opacity', 'stop'],
 ]);
 /**
- * The one gradient the writer emits (D182): `linearGradient`'s attributes other than `id`, with
+ * The render's gradient (D182): `linearGradient`'s attributes other than `id`, with
  * their only values. A horizontal gradient over each outline's bounding box (v12 insertLookDefs'
  * 0% → 100%, as the fractions objectBoundingBox units take).
  */
@@ -128,6 +128,8 @@ export const GRADIENT_FIXED: Readonly<Record<string, string>> = {
 };
 /** A gradient id: a style scope (`styleScope`) and `-gradient`. */
 export const RE_GRADIENT_ID = /^[A-Za-z_][\w-]{0,63}-gradient$/;
+/** A user-space gradient id (D391): a style scope, `-g-` and a base-36 hash. */
+export const RE_USER_GRADIENT_ID = /^([A-Za-z_][\w-]{0,63})-g-[0-9a-z]{1,7}$/;
 /** Elements that may hold character data. */
 export const TEXT_HOLDERS: ReadonlySet<string> = new Set(['text', 'tspan', 'title', 'desc']);
 /** Attributes whose value must be a number. */
