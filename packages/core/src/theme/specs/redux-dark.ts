@@ -4,8 +4,7 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules } from './scales.ts';
+import { CONTRAST_LABELS, DARK_HUE_SOURCES, darkenedScale, gitLabelRules } from './scales.ts';
 import {
   REDUX_DARK_GIT,
   REDUX_DARK_GIT_DARK_MODE,
@@ -28,7 +27,8 @@ const theme: ThemeSpec = {
   // v12 theme-redux-dark.js: hue steps darkened by 25 (75 under darkMode); git as base derives it.
   palettes: {
     ...darkenedScale(DARK_HUE_SOURCES, 25),
-    cScaleLabel: LABEL_SCALE,
+    // D544: the label ink, black where it fails on the fill (slot 8); darkMode reads it too.
+    cScaleLabel: CONTRAST_LABELS,
     seriesColorArray: REDUX_DARK_SERIES,
     ...REDUX_DARK_GIT,
   },

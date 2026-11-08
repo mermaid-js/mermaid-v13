@@ -18,10 +18,13 @@ import {
   LINK_TARGETS,
   NUMERIC_ATTRS,
   RE_GRADIENT_ID,
+  RE_USER_GRADIENT_ID,
   SVG_NS,
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
 import {
+  BLEND,
+  BLEND_MODES,
   RE_UNSAFE_STYLE,
   STYLE_TEXT_PROPERTIES,
   checkColor,
@@ -41,21 +44,38 @@ export interface InertOptions {
    */
   readonly themeStyle?: boolean;
   /**
-   * The render's gradient (D182): its id, the only one `url(#…)` may name, or `false` when the
-   * render has none, so no `<defs>` is accepted. Left out, the id is the one the document's
-   * gradient declares, which must look like `<scope>-gradient`.
+   * The render's gradient (D182): its id, or `false` when the render has none, so no such
+   * gradient is accepted. Left out, the id is the one the document's gradient declares, which
+   * must look like `<scope>-gradient`.
    */
   readonly gradient?: string | false;
+  /**
+   * The render's style scope: every user-space gradient (D391) must be `<scope>-g-<hash>`. Left
+   * out, it is the render's gradient's (`<scope>-gradient`, given or found first), else the
+   * first user-space gradient's, and the others must share it. The pipeline always gives it.
+   */
+  readonly scope?: string;
 }
 
-/** Where the scan is in the one gradient an SVG may carry (D182). */
+/**
+ * Where the scan is in the `<defs>` an SVG may carry: at most one render's gradient (D182) and
+ * any number of user-space gradients (D391), each with two stops.
+ */
 interface GradientScan {
-  /** The gradient's id, given or found. */
+  /** The render's gradient's id, given or found. */
   id: string | undefined;
+  /** The user-space gradients' scope, given or found. */
+  scope: string | undefined;
   /** Elements the root has had so far. */
   rootChildren: number;
   defs: number;
-  gradients: number;
+  /** Render's gradients (D182) so far. */
+  box: number;
+  /** Every gradient id the document has declared. */
+  ids: Set<string>;
+  /** The current `<linearGradient>`'s attributes, kind and stops. */
+  attrs: Record<string, string>;
+  user: boolean;
   stops: number;
 }
 
@@ -63,22 +83,19 @@ const RE_FRACTION = /^(?:0|1|0?\.\d{1,6})$/;
 const RE_PERCENT_STOP = /^(?:\d{1,2}(?:\.\d{1,6})?|100)%$/;
 
 /** Why element `tag` cannot stand under `parent` here, as far as the gradient goes. */
-function gradientPlace(
-  tag: string,
-  stack: readonly string[],
-  g: GradientScan,
-  options: InertOptions
-): string | undefined {
+function gradientPlace(tag: string, stack: readonly string[], g: GradientScan): string | undefined {
   const parent = stack[stack.length - 1];
   if (stack.length === 1) g.rootChildren++;
   switch (tag) {
     case 'defs':
-      if (options.gradient === false) return '<defs> in an SVG without a gradient';
       if (stack.length !== 1 || parent !== 'svg' || g.rootChildren !== 1 || ++g.defs > 1)
         return '<defs> that is not the first child of <svg>';
       return undefined;
     case 'linearGradient':
-      return parent === 'defs' && ++g.gradients === 1 ? undefined : '<linearGradient> out of place';
+      if (parent !== 'defs') return '<linearGradient> out of place';
+      g.attrs = {};
+      g.stops = 0;
+      return undefined;
     case 'stop':
       return parent === 'linearGradient' && ++g.stops <= 2 ? undefined : '<stop> out of place';
   }
@@ -95,11 +112,9 @@ function gradientAttrProblem(
   const owner = GRADIENT_ATTRS.get(name);
   if (owner !== undefined && owner !== tag) return `${name} on <${tag}>`;
   if (tag === 'linearGradient') {
-    if (name === 'id') {
-      if (g.id === undefined && RE_GRADIENT_ID.test(value)) g.id = value;
-      return value === g.id ? undefined : `gradient id="${value}" is not this SVG's`;
-    }
-    return GRADIENT_FIXED[name] === value ? undefined : `${name}="${value}" on <linearGradient>`;
+    // Checked as a whole at the end of the start tag (gradientShape).
+    g.attrs[name] = value;
+    return undefined;
   }
   if (tag === 'stop') {
     if (name === 'offset')
@@ -108,24 +123,63 @@ function gradientAttrProblem(
         : `offset="${value}"`;
     if (name === 'stop-color') return checkColor(value) ? undefined : `stop-color="${value}"`;
     if (name === 'stop-opacity')
-      return RE_FRACTION.test(value) ? undefined : `stop-opacity="${value}"`;
+      return !g.user && RE_FRACTION.test(value) ? undefined : `stop-opacity="${value}"`;
     return `${name} on <stop>`;
   }
   if (tag === 'defs') return `${name} on <defs>`;
-  if (name === 'id' && value === g.id) return `id="${value}" is the gradient's`;
+  if (name === 'id' && (value === g.id || g.ids.has(value))) return `id="${value}" is a gradient's`;
   return undefined;
 }
 
 /**
- * A `fill` or `stroke` that refers to the gradient: only `url(#<id>)`, after the gradient. Any
+ * Why the `<linearGradient>` just started is neither the render's gradient (D182) nor a
+ * user-space one (D391): `userSpaceOnUse`, `<scope>-g-<hash>`, numeric x1, x2 and y1 = y2.
+ */
+function gradientShape(g: GradientScan, options: InertOptions): string | undefined {
+  const a = g.attrs;
+  const id = a.id ?? '';
+  const n = Object.keys(a).length;
+  g.user = a.gradientUnits === 'userSpaceOnUse';
+  if (g.user) {
+    const scope = RE_USER_GRADIENT_ID.exec(id)?.[1];
+    g.scope ??= scope;
+    if (scope === undefined || scope !== g.scope) return `gradient id="${id}" is not this SVG's`;
+    // attrProblem has checked each coordinate is a number.
+    if (
+      n !== 6 ||
+      a.x1 === undefined ||
+      a.x2 === undefined ||
+      a.y1 === undefined ||
+      a.y2 === undefined ||
+      a.y1 !== a.y2
+    )
+      return `<linearGradient id="${id}"> that is not horizontal in user space`;
+  } else {
+    if (options.gradient === false) return '<defs> holds a gradient this render does not have';
+    if (g.id === undefined && RE_GRADIENT_ID.test(id)) g.id = id;
+    if (id !== g.id || ++g.box > 1) return `gradient id="${id}" is not this SVG's`;
+    // The user-space gradients after it are in its scope.
+    g.scope ??= id.slice(0, -9);
+    if (n !== Object.keys(GRADIENT_FIXED).length + 1)
+      return '<linearGradient> without its id, units and direction';
+    for (const k in GRADIENT_FIXED)
+      if (a[k] !== GRADIENT_FIXED[k]) return `${k}="${a[k]}" on <linearGradient>`;
+  }
+  if (g.ids.has(id)) return `a second gradient id="${id}"`;
+  g.ids.add(id);
+  return undefined;
+}
+
+/**
+ * A `fill` or `stroke` that refers to a gradient: only `url(#<id>)`, after the gradient. Any
  * other `url(` (and `url(` anywhere else) is left to `attrProblem`, which rejects it.
  */
 function gradientRef(name: string, value: string, g: GradientScan): boolean {
   return (
     (name === 'fill' || name === 'stroke') &&
-    g.gradients === 1 &&
-    g.id !== undefined &&
-    value === `url(#${g.id})`
+    value.startsWith('url(#') &&
+    value.endsWith(')') &&
+    g.ids.has(value.slice(5, -1))
   );
 }
 
@@ -280,7 +334,9 @@ function attrProblem(
         const prop = (at < 0 ? decl : decl.slice(0, at)).trim();
         if (at < 0 || (!prop.startsWith('--') && !STYLE_TEXT_PROPERTIES.has(prop)))
           return `style property ${prop}`;
-        if (RE_UNSAFE_STYLE.test(decl.slice(at + 1))) return `style="${value}"`;
+        const v = decl.slice(at + 1);
+        if (RE_UNSAFE_STYLE.test(v) || (prop === BLEND && !BLEND_MODES.has(v.trim())))
+          return `style="${value}"`;
       }
       return undefined;
     }
@@ -299,9 +355,15 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
   let sheets = 0;
   const g: GradientScan = {
     id: typeof options.gradient === 'string' ? options.gradient : undefined,
+    scope:
+      options.scope ??
+      (typeof options.gradient === 'string' ? options.gradient.slice(0, -9) : undefined),
     rootChildren: 0,
     defs: 0,
-    gradients: 0,
+    box: 0,
+    ids: new Set(),
+    attrs: {},
+    user: false,
     stops: 0,
   };
   while (i < n) {
@@ -340,9 +402,11 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       i++;
       const open = stack.pop();
       if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
+      if (tag === 'linearGradient' && g.stops !== 2) return '<linearGradient> without two stops';
+      if (tag === 'defs' && g.ids.size === 0) return '<defs> without a gradient';
       continue;
     }
-    const place = gradientPlace(tag, stack, g, options);
+    const place = gradientPlace(tag, stack, g);
     if (place !== undefined) return place;
     const seen = new Set<string>();
     let target: string | undefined;
@@ -385,8 +449,11 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
     }
     if (target === '_blank' && rel !== BLANK_REL)
       return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
-    if (tag === 'linearGradient' && seen.size !== Object.keys(GRADIENT_FIXED).length + 1)
-      return '<linearGradient> without its id, units and direction';
+    if (tag === 'linearGradient') {
+      const shape = gradientShape(g, options);
+      if (shape !== undefined) return shape;
+    }
+    if (selfClosing && (tag === 'defs' || tag === 'linearGradient')) return `an empty <${tag}>`;
     if (tag === 'stop' && !seen.has('offset')) return '<stop> without an offset';
     if (!selfClosing) stack.push(tag);
   }

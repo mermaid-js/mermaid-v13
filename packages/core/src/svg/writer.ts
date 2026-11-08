@@ -5,10 +5,18 @@
  */
 import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
-import { esc, escAttr } from './escape.ts';
+import { esc, escAttr, num } from './escape.ts';
 import { pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
+import { checkColor, hash36, styleScope } from './style.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
-import type { AllowedTag, Attrs, SvgGradient, ThemeStyleSheet } from './types.ts';
+import type {
+  AllowedTag,
+  Attrs,
+  GradientRef,
+  LinearGradient,
+  SvgGradient,
+  ThemeStyleSheet,
+} from './types.ts';
 
 /** One run of text with uniform emphasis. */
 export interface LabelSpan {
@@ -137,6 +145,12 @@ export interface SvgWriter {
    * `assertInert` accepts it only with `themeStyle: true`.
    */
   styleSheet(css: ThemeStyleSheet): void;
+  /**
+   * A user-space linear gradient (D391), as the paint for `fill` or `stroke`. The writer owns
+   * the element: `finish()` writes it into the root's `<defs>` with the id
+   * `<scope>-g-<hash of the ends and stops>`, once however often it is asked for in a render.
+   */
+  linearGradient(gradient: LinearGradient): GradientRef;
 }
 
 export interface WriterOptions {
@@ -151,6 +165,11 @@ export interface WriterOptions {
    * rules). Without one, `outline` is `leaf`.
    */
   readonly outline?: OutlineDraw;
+  /**
+   * The render's id prefix, read on the first `linearGradient()` call: its `styleScope` starts
+   * every user-space gradient id (D391). `mermaid` when left out.
+   */
+  readonly idPrefix?: () => string;
 }
 
 const NO_ATTRS: Attrs = Object.freeze({});
@@ -174,23 +193,63 @@ const FIXED = Object.entries(GRADIENT_FIXED)
   .map(([k, v]) => ` ${k}="${v}"`)
   .join('');
 
+/** A `<linearGradient>`'s two stops, `from` at 0 and `to` at 1, and its end tag. */
+const stopsAndEnd = (from: string, to: string) =>
+  `<stop offset="0" stop-color="${escAttr(from)}"/><stop offset="1" stop-color="${escAttr(to)}"/></linearGradient>`;
+
 /**
- * `svg` with the gradient's `<defs>` as the root's first child. Both backings escape `>` in
+ * The render's user-space gradients (D391), keyed by their written ends and stops, so equal
+ * ones share an id. A hash that two different gradients share is hashed again, so ids stay
+ * unique within the render.
+ */
+class UserGradients {
+  private readonly ids = new Map<string, string>();
+  private readonly taken = new Set<string>();
+  markup = '';
+
+  constructor(private readonly scope: string) {}
+
+  ref(g: LinearGradient): GradientRef {
+    for (const c of [g.from, g.to])
+      if (checkColor(c) !== c) throw new TypeError(`${JSON.stringify(c)} is not a stop colour`);
+    const y = num(g.y ?? 0);
+    const ends = ` x1="${num(g.x1)}" y1="${y}" x2="${num(g.x2)}" y2="${y}"`;
+    const key = ends + g.from + ' ' + g.to;
+    let id = this.ids.get(key);
+    if (id === undefined) {
+      let k = key;
+      while (this.taken.has((id = `${this.scope}-g-${hash36(k)}`))) k += ' ';
+      this.ids.set(key, id);
+      this.taken.add(id);
+      this.markup +=
+        `<linearGradient id="${id}" gradientUnits="userSpaceOnUse"${ends}>` +
+        stopsAndEnd(g.from, g.to);
+    }
+    return `url(#${id})` as GradientRef;
+  }
+}
+
+/**
+ * `svg` with the gradients' `<defs>` as the root's first child: the render's gradient (D182)
+ * when an element refers to it, then the user-space ones (D391). Both backings escape `>` in
  * attribute values, so the first `>` ends the root's start tag.
  */
-function withGradient(svg: string, g: SvgGradient): string {
+function withDefs(svg: string, g: SvgGradient | undefined, user: UserGradients | undefined) {
+  if (g === undefined && !user) return svg;
   const end = svg.indexOf('>');
   if (end < 0 || svg[end - 1] === '/')
     throw new Error('SvgWriter: the gradient is referred to by an empty root');
-  const stop = (offset: number, color: string) =>
-    `<stop offset="${offset}" stop-color="${esc(color)}"/>`;
   const defs =
-    `<defs><linearGradient id="${esc(g.id)}"${FIXED}>` +
-    stop(0, g.start) +
-    stop(1, g.stop) +
-    '</linearGradient></defs>';
+    '<defs>' +
+    (g ? `<linearGradient id="${escAttr(g.id)}"${FIXED}>` + stopsAndEnd(g.start, g.stop) : '') +
+    (user?.markup ?? '') +
+    '</defs>';
   return svg.slice(0, end + 1) + defs + svg.slice(end + 1);
 }
+
+/** The writer's user-space gradients, made on the first `linearGradient()` call. */
+const usersOf = (idPrefix: (() => string) | undefined) =>
+  new UserGradients(styleScope(idPrefix ? idPrefix() : 'mermaid'));
 
 function checkSheetParent(top: string | undefined, depth: number): void {
   if (top !== 'svg' || depth !== 1)
@@ -357,12 +416,18 @@ class Stream implements StreamSvgWriter {
   private pending = false;
   private readonly ref: string | undefined;
   private referred = false;
+  private user: UserGradients | undefined;
 
   constructor(
     private readonly gradient: SvgGradient | undefined,
-    private readonly draw: OutlineDraw | undefined
+    private readonly draw: OutlineDraw | undefined,
+    private readonly idPrefix: (() => string) | undefined
   ) {
     this.ref = refOf(gradient);
+  }
+
+  linearGradient(g: LinearGradient): GradientRef {
+    return (this.user ??= usersOf(this.idPrefix)).ref(g);
   }
 
   private attrs(tag: string, attrs: Attrs | undefined): string {
@@ -453,18 +518,24 @@ class Stream implements StreamSvgWriter {
   finish(): string {
     if (this.stack.length > 0)
       throw new Error(`SvgWriter.finish() with <${this.stack[this.stack.length - 1]}> still open`);
-    return this.referred ? withGradient(this.out, this.gradient as SvgGradient) : this.out;
+    return withDefs(this.out, this.referred ? this.gradient : undefined, this.user);
   }
 }
 
 class Tree implements TreeSvgWriter {
   private readonly compact = new CompactTree();
   private readonly stack: number[] = [0];
+  private user: UserGradients | undefined;
 
   constructor(
     private readonly gradient: SvgGradient | undefined,
-    private readonly draw: OutlineDraw | undefined
+    private readonly draw: OutlineDraw | undefined,
+    private readonly idPrefix: (() => string) | undefined
   ) {}
+
+  linearGradient(g: LinearGradient): GradientRef {
+    return (this.user ??= usersOf(this.idPrefix)).ref(g);
+  }
 
   get tree(): SvgTree {
     return this.compact;
@@ -517,16 +588,16 @@ class Tree implements TreeSvgWriter {
     const referred =
       ref !== undefined &&
       t.find((n) => t.getAttr(n, 'stroke') === ref || t.getAttr(n, 'fill') === ref).length > 0;
-    return referred ? withGradient(svg, this.gradient as SvgGradient) : svg;
+    return withDefs(svg, referred ? this.gradient : undefined, this.user);
   }
 }
 
 /** The default backing: writes straight into a string buffer. */
 export function streamWriter(options?: WriterOptions): StreamSvgWriter {
-  return new Stream(options?.gradient, options?.outline);
+  return new Stream(options?.gradient, options?.outline, options?.idPrefix);
 }
 
 /** The tree backing, for when a `postRender` hook is registered. */
 export function treeWriter(options?: WriterOptions): TreeSvgWriter {
-  return new Tree(options?.gradient, options?.outline);
+  return new Tree(options?.gradient, options?.outline, options?.idPrefix);
 }
