@@ -19,6 +19,7 @@ import { radarAdapter } from './radar/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
+import { treemapAdapter } from './treemap/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -129,6 +130,12 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: radarAdapter,
     corpusDirs: ['e2e/diagrams/radar'],
     corpusFiles: ['packages/conformance/corpus/radar-v12-specs.json'],
+  },
+  {
+    adapter: treemapAdapter,
+    corpusDirs: ['e2e/diagrams/treemap'],
+    // The cases run in `treemap/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
+    corpusFiles: ['packages/conformance/corpus/treemap-v12-specs.json'],
   },
   {
     adapter: cynefinAdapter,

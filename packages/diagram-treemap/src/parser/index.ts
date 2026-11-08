@@ -1,10 +1,23 @@
-/** The treemap parser's public surface so far: the lexer gated against v12's Langium lexer (#483). */
+/**
+ * The treemap parser's public surface: the parser (#484), detection, and the lexer gated against
+ * v12's Langium lexer (#483).
+ */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, TREEMAP_TRIVIA, T as TreemapTokenKind } from './tokens.ts';
+export {
+  parseTreemap,
+  TREEMAP_CLASSDEF_NEXT_LINE,
+  TREEMAP_ROWS_ON_ONE_LINE,
+  TREEMAP_TRAILING_BLANK,
+} from './parser.ts';
+export type { TreemapParseOptions, TreemapParseResult } from './parser.ts';
+export { TREEMAP_INVALID_VALUE } from './normalise.ts';
+export { detectTreemap } from './detect.ts';
+export type * from './ast.ts';
 
 export interface TreemapToken {
   /** A `TreemapTokenKind` or a shared `Kind`. */

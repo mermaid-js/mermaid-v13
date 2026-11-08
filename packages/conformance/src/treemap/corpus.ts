@@ -1,8 +1,8 @@
 /**
  * The treemap corpora (#428): the e2e fixtures, the knsv dev diagram and the harvested v12 spec
  * strings, and the lexer gate's set, which adds the cases of `corpus/treemap-cases.json` (the
- * spec's quirks, line separators, unclosed directives) and a CRLF and a commented copy of every
- * source.
+ * spec's quirks, line separators, unclosed directives) and the recovery set
+ * (`corpus/treemap-recovery.json`), and a CRLF and a commented copy of every source.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,8 +27,15 @@ export async function treemapCorpus(): Promise<CorpusItem[]> {
   return [...items, ...readCorpus('treemap-v12-specs.json')];
 }
 
-/** The parser and lexer cases (`corpus/treemap-cases.json`). */
-export const treemapCases = (): CorpusItem[] => readCorpus('treemap-cases.json');
+/**
+ * The hand-written cases: the parser and lexer cases (`corpus/treemap-cases.json`) and the
+ * parser's recovery set (`treemap-recovery.json`, whose expected diagnostics `recovery.spec.ts`
+ * checks).
+ */
+export const treemapCases = (): CorpusItem[] => [
+  ...readCorpus('treemap-cases.json'),
+  ...readCorpus('treemap-recovery.json').map(({ id, source }) => ({ id, source })),
+];
 
 /** The corpus, the cases, and a CRLF and a commented copy of each. */
 export async function treemapGateCorpus(): Promise<CorpusItem[]> {

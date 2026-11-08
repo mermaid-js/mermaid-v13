@@ -284,7 +284,10 @@ class TreemapLexer {
     return j;
   }
 
-  /** The end of the run of `[^\n]` from `q`, in v12's text (where CR was LF). */
+  /**
+   * The end of the run of `[^\n]` from `q` in v12's text, where CR was LF: it stops at LF or
+   * CR, as {@link isBreak}.
+   */
   private lineEnd(q: number): number {
     let j = q;
     while (j < this.n && !isBreak(this.text.charCodeAt(j))) j++;
