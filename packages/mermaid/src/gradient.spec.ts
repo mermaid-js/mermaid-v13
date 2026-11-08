@@ -214,6 +214,20 @@ describe('user-space gradients and blend mode through render (D391, D392)', () =
     expect((await m.render('d1', 'linked', { config: ON })).svg).toBe(plain);
   });
 
+  it('fails the render when a hook plants a gradient into a type that draws none', async () => {
+    const plant = (t: SvgTree) => {
+      const g = t.append(t.root, 'linearGradient' as 'g', { id: 'd2-g-abc' });
+      t.setAttr(t.find({ tag: 'rect' })[0]!, 'stroke', 'url(#d2-g-abc)' as GradientRef);
+      return g;
+    };
+    for (const edit of [plant, (t: SvgTree) => void t.append(t.root, 'defs' as 'g')]) {
+      const m = await mermaidWith({ id: 'hostile', postRender: edit });
+      const e = await m.render('d1', 'outlined').catch((x: unknown) => x);
+      expect(e).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).code).toBe('INTERNAL');
+    }
+  });
+
   it.each([
     ['refers to an undeclared gradient', 'url(#d1-g-zzz)'],
     ['refers to another render’s gradient', 'url(#d2-g-zzz)'],

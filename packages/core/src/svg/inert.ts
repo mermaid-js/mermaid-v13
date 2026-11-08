@@ -51,7 +51,8 @@ export interface InertOptions {
   readonly gradient?: string | false;
   /**
    * The render's style scope: every user-space gradient (D391) must be `<scope>-g-<hash>`. Left
-   * out, it is the first such gradient's, and the others must share it.
+   * out, it is the render's gradient's (`<scope>-gradient`, given or found first), else the
+   * first user-space gradient's, and the others must share it. The pipeline always gives it.
    */
   readonly scope?: string;
 }
@@ -144,12 +145,21 @@ function gradientShape(g: GradientScan, options: InertOptions): string | undefin
     g.scope ??= scope;
     if (scope === undefined || scope !== g.scope) return `gradient id="${id}" is not this SVG's`;
     // attrProblem has checked each coordinate is a number.
-    if (n !== 6 || a.x1 === undefined || a.x2 === undefined || a.y1 === undefined || a.y1 !== a.y2)
+    if (
+      n !== 6 ||
+      a.x1 === undefined ||
+      a.x2 === undefined ||
+      a.y1 === undefined ||
+      a.y2 === undefined ||
+      a.y1 !== a.y2
+    )
       return `<linearGradient id="${id}"> that is not horizontal in user space`;
   } else {
     if (options.gradient === false) return '<defs> holds a gradient this render does not have';
     if (g.id === undefined && RE_GRADIENT_ID.test(id)) g.id = id;
     if (id !== g.id || ++g.box > 1) return `gradient id="${id}" is not this SVG's`;
+    // The user-space gradients after it are in its scope.
+    g.scope ??= id.slice(0, -9);
     if (n !== Object.keys(GRADIENT_FIXED).length + 1)
       return '<linearGradient> without its id, units and direction';
     for (const k in GRADIENT_FIXED)
@@ -345,7 +355,9 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
   let sheets = 0;
   const g: GradientScan = {
     id: typeof options.gradient === 'string' ? options.gradient : undefined,
-    scope: options.scope,
+    scope:
+      options.scope ??
+      (typeof options.gradient === 'string' ? options.gradient.slice(0, -9) : undefined),
     rootChildren: 0,
     defs: 0,
     box: 0,
@@ -391,6 +403,7 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       const open = stack.pop();
       if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
       if (tag === 'linearGradient' && g.stops !== 2) return '<linearGradient> without two stops';
+      if (tag === 'defs' && g.ids.size === 0) return '<defs> without a gradient';
       continue;
     }
     const place = gradientPlace(tag, stack, g);
@@ -438,8 +451,9 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
     if (tag === 'linearGradient') {
       const shape = gradientShape(g, options);
-      if (shape !== undefined || selfClosing) return shape ?? '<linearGradient> without two stops';
+      if (shape !== undefined) return shape;
     }
+    if (selfClosing && (tag === 'defs' || tag === 'linearGradient')) return `an empty <${tag}>`;
     if (tag === 'stop' && !seen.has('offset')) return '<stop> without an offset';
     if (!selfClosing) stack.push(tag);
   }

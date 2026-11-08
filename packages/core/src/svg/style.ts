@@ -201,7 +201,7 @@ export function themeRef(
 
 /**
  * `mix-blend-mode` (D392), with its only values. Not a presentation attribute, so `checkStyle`
- * writes it as `style` and it is not in {@link STYLE_PROPERTIES}.
+ * writes it as the shape's `style`, and it is not in {@link STYLE_PROPERTIES}.
  */
 export const BLEND = 'mix-blend-mode';
 export const BLEND_MODES: ReadonlySet<string> = new Set(['normal', 'multiply']);
@@ -220,7 +220,8 @@ type Kind =
   | 'join'
   | 'size'
   | 'spacing';
-type Target = 'shape' | 'text' | 'both';
+/** `style`: the shape's `style` attribute, for a property that is not a presentation attribute. */
+type Target = 'shape' | 'text' | 'both' | 'style';
 
 const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   fill: ['color', 'shape'],
@@ -240,10 +241,13 @@ const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   'font-style': ['fontStyle', 'text'],
   'text-decoration': ['decoration', 'text'],
   'letter-spacing': ['spacing', 'text'],
+  [BLEND]: ['blend', 'style'],
 };
 
-/** The properties `checkStyle` keeps. */
-export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(Object.keys(PROPERTIES));
+/** The properties `checkStyle` keeps as presentation attributes (all but `mix-blend-mode`). */
+export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(
+  Object.keys(PROPERTIES).filter((p) => p !== BLEND)
+);
 
 function checkValue(kind: Kind, v: string): string | undefined {
   const lower = v.toLowerCase();
@@ -288,7 +292,11 @@ function checkValue(kind: Kind, v: string): string | undefined {
 
 /** Checked style declarations, split by what they apply to, as presentation attributes. */
 export interface CheckedStyle {
-  /** For the shape or line: fill, stroke, stroke-*, opacity. */
+  /**
+   * For the shape or line: fill, stroke, stroke-*, opacity, and `style` holding only
+   * `mix-blend-mode:normal|multiply` (D392). A renderer that writes its own `style` on the same
+   * element passes this one as `styleText`'s `tail`, so neither replaces the other.
+   */
   readonly shape: Attrs;
   /** For the label: `color` becomes `fill`, plus font-* and text-decoration. */
   readonly text: Attrs;
@@ -310,9 +318,9 @@ export function checkStyle(declarations: readonly string[], warn?: Warn): Checke
     const at = decl.indexOf(':');
     const prop = (at < 0 ? decl : decl.slice(0, at)).trim().toLowerCase();
     if (prop === '') continue;
-    const blend = prop === BLEND;
-    let entry: readonly [Kind, Target] | undefined = blend ? ['blend', 'shape'] : undefined;
-    if (!blend && Object.prototype.hasOwnProperty.call(PROPERTIES, prop)) entry = PROPERTIES[prop];
+    const entry = Object.prototype.hasOwnProperty.call(PROPERTIES, prop)
+      ? PROPERTIES[prop]
+      : undefined;
     if (entry === undefined || at < 0) {
       warn?.({
         code: 'STYLE_PROPERTY_DROPPED',
@@ -336,13 +344,12 @@ export function checkStyle(declarations: readonly string[], warn?: Warn): Checke
       continue;
     }
     any = true;
-    if (blend) {
-      shape.style = BLEND + ':' + value;
-      continue;
-    }
     const target = entry[1];
-    if (target !== 'text') shape[prop] = value;
-    if (target !== 'shape') text[prop === 'color' ? 'fill' : prop] = value;
+    if (target === 'style') shape.style = prop + ':' + value;
+    else {
+      if (target !== 'text') shape[prop] = value;
+      if (target !== 'shape') text[prop === 'color' ? 'fill' : prop] = value;
+    }
   }
   return any ? { shape: shape as Attrs, text: text as Attrs } : EMPTY;
 }

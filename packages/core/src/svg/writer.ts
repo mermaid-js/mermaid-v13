@@ -193,8 +193,9 @@ const FIXED = Object.entries(GRADIENT_FIXED)
   .map(([k, v]) => ` ${k}="${v}"`)
   .join('');
 
-const stops = (from: string, to: string) =>
-  `<stop offset="0" stop-color="${esc(from)}"/><stop offset="1" stop-color="${esc(to)}"/></linearGradient>`;
+/** A `<linearGradient>`'s two stops, `from` at 0 and `to` at 1, and its end tag. */
+const stopsAndEnd = (from: string, to: string) =>
+  `<stop offset="0" stop-color="${escAttr(from)}"/><stop offset="1" stop-color="${escAttr(to)}"/></linearGradient>`;
 
 /**
  * The render's user-space gradients (D391), keyed by their written ends and stops, so equal
@@ -221,7 +222,8 @@ class UserGradients {
       this.ids.set(key, id);
       this.taken.add(id);
       this.markup +=
-        `<linearGradient id="${id}" gradientUnits="userSpaceOnUse"${ends}>` + stops(g.from, g.to);
+        `<linearGradient id="${id}" gradientUnits="userSpaceOnUse"${ends}>` +
+        stopsAndEnd(g.from, g.to);
     }
     return `url(#${id})` as GradientRef;
   }
@@ -239,7 +241,7 @@ function withDefs(svg: string, g: SvgGradient | undefined, user: UserGradients |
     throw new Error('SvgWriter: the gradient is referred to by an empty root');
   const defs =
     '<defs>' +
-    (g ? `<linearGradient id="${esc(g.id)}"${FIXED}>` + stops(g.start, g.stop) : '') +
+    (g ? `<linearGradient id="${escAttr(g.id)}"${FIXED}>` + stopsAndEnd(g.start, g.stop) : '') +
     (user?.markup ?? '') +
     '</defs>';
   return svg.slice(0, end + 1) + defs + svg.slice(end + 1);

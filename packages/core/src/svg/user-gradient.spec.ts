@@ -191,6 +191,7 @@ describe('assertInert: user-space gradients (D391, R-SEC-2)', () => {
     ['no units', change(OPEN, OPEN.replace(' gradientUnits="userSpaceOnUse"', ''))],
     ['y1 different from y2', change(OPEN, OPEN.replace('y2="0"', 'y2="1"'))],
     ['a missing x2', change(OPEN, OPEN.replace(' x2="90.26"', ''))],
+    ['another attribute in place of y2', change(OPEN, OPEN.replace('y2="0"', 'class="0"'))],
     ['a percent coordinate', change(OPEN, OPEN.replace('x1="10"', 'x1="10%"'))],
     ['a coordinate that is not a number', change(OPEN, OPEN.replace('x1="10"', 'x1="NaN"'))],
     ['a gradientTransform', change(OPEN, OPEN.replace('">', '" gradientTransform="rotate(90)">'))],
@@ -207,6 +208,20 @@ describe('assertInert: user-space gradients (D391, R-SEC-2)', () => {
   ];
   it.each(bad)('rejects %s', (_what, svg, scope) => {
     expect(inertProblem(svg, { scope })).toBeDefined();
+  });
+
+  it('takes the scope from the render’s gradient (D182) when none is given', () => {
+    expect(inertProblem(OK, { gradient: 'd2-gradient' })).toMatch(/is not this SVG's/);
+    const { svg } = draw([LINK], { gradient: BOX, idPrefix: () => 'd2' });
+    expect(inertProblem(svg)).toMatch(/d2-g-.* is not this SVG's/);
+  });
+
+  it.each([
+    ['empty', `${ROOT}<defs></defs><g/></svg>`],
+    ['self-closing', `${ROOT}<defs/><g/></svg>`],
+  ])('rejects %s defs, with or without a render gradient', (_what, svg) => {
+    expect(inertProblem(svg)).toMatch(/defs/);
+    expect(inertProblem(svg, { gradient: false })).toMatch(/defs/);
   });
 
   it('still rejects the render’s gradient (D182) where the render has none', () => {
@@ -241,6 +256,11 @@ describe('mix-blend-mode (D392)', () => {
       expect(warnings.map((w) => w.code)).toEqual(['STYLE_VALUE_DROPPED']);
     }
   );
+
+  it('joins a renderer’s own style as styleText’s tail, so neither replaces the other', () => {
+    const { shape } = checkStyle(['mix-blend-mode:multiply']);
+    expect(styleText({ width: 3 }, shape.style)).toBe('width:3;mix-blend-mode:multiply');
+  });
 
   it('is written by styleText and accepted by assertInert, with those values only', () => {
     const style = styleText({ 'mix-blend-mode': 'multiply' as SafeValue });
