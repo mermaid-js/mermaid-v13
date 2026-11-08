@@ -298,5 +298,36 @@
       ["WARDLEY_OUT_OF_RANGE", 7]
     ],
     "keeps": ["Kettle", "Kettle_Gas", "Kettle_Electric"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-name-keyword",
+    "name": "A pipeline named with a keyword: its block still opens, and a component's range error counts",
+    "source": "wardley-beta\ncomponent notebook [0.5, 0.5]\ncomponent Kettle [0.5, 0.5]\npipeline notebook {\n  component Gas [150.0]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4],
+      ["WARDLEY_OUT_OF_RANGE", 5]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-name-digit",
+    "name": "A pipeline named with a leading digit: its block still opens, and a component's range error counts",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline 1A {\n  component Gas [150.0]\n  component Electric [0.6]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-unknown-parent-range",
+    "name": "A pipeline naming no component, with a range error in its component",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline X {\n  component Y [150.0]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["WARDLEY_UNKNOWN_PARENT", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["Kettle", "Cup"]
   }
 ]

@@ -41,19 +41,29 @@ const run = async () =>
 /** v12's syntax errors (Langium) and detection failures, which carry no DB message. */
 const NOT_THROWN = /Parsing failed|Lexer error|Parse error|No diagram type detected/;
 
-/** Every context v12's `toPercent` and pipeline check name in a thrown message. */
-const CONTEXTS = [
-  /^Anchor ".*" (evolution|visibility) must/,
-  /^Component ".*" evolution must/,
-  /^Component ".*" visibility must/,
-  /^Note ".*" (evolution|visibility) must/,
-  /^Pipeline component ".*" evolution must/,
-  /^Evolve target for ".*" must/,
-  /^Annotations box (evolution|visibility) must/,
-  /^Annotation \d+ (evolution|visibility) must/,
-  /^Accelerator ".*" (evolution|visibility) must/,
-  /^Deaccelerator ".*" (evolution|visibility) must/,
-  /^Pipeline ".*" must reference an existing component with coordinates\.$/,
+/**
+ * One message for every check v12's `populateDb` throws from (`wardleyParser.ts`), as v12
+ * words it: each axis of every `toPercent` context (16) and the pipeline parent. Each must be
+ * thrown by mermaid\@12 for some corpus source, and be among v13's errors there.
+ */
+const THROWN = [
+  'Anchor "Business" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 200',
+  'Anchor "User" visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Component "Cup" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 101.5',
+  'Component "Cup" visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 300',
+  'Note "Hot" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 101',
+  'Note "Hot" visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Pipeline component "Gas" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Evolve target for "Tea" must be between 0-1 (decimal) or 0-100 (percentage). Received: 120',
+  'Annotations box evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Annotations box visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 500',
+  'Annotation 7 evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 300',
+  'Annotation 7 visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Accelerator "Cloud" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 102',
+  'Accelerator "Cloud" visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Deaccelerator "Legacy" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 150',
+  'Deaccelerator "Legacy" visibility must be between 0-1 (decimal) or 0-100 (percentage). Received: 102',
+  'Pipeline "Pot" must reference an existing component with coordinates.',
 ];
 
 describe('wardley oracle parity with mermaid@12', () => {
@@ -92,13 +102,13 @@ describe('wardley oracle parity with mermaid@12', () => {
   it("reports every message v12's DB threw, word for word, as an error", async () => {
     const oracle = await loadOracle();
     const missing: string[] = [];
-    const seen = new Set<RegExp>();
+    const seen = new Set<string>();
     let thrown = 0;
     for (const item of await wardleyGateCorpus()) {
       const v12 = await oracle.parse(item.source);
       if (v12.accepted || NOT_THROWN.test(v12.error)) continue;
       thrown++;
-      for (const c of CONTEXTS) if (c.test(v12.error)) seen.add(c);
+      seen.add(v12.error);
       const errors = parseWardley(item.source)
         .diagnostics.filter((d) => d.severity === 'error')
         .map((d) => d.message);
@@ -106,6 +116,6 @@ describe('wardley oracle parity with mermaid@12', () => {
     }
     expect(thrown).toBeGreaterThan(30);
     expect(missing).toEqual([]);
-    expect(CONTEXTS.filter((c) => !seen.has(c)).map(String)).toEqual([]);
+    expect(THROWN.filter((m) => !seen.has(m))).toEqual([]);
   }, 300_000);
 });

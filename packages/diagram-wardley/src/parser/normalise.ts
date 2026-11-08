@@ -35,6 +35,7 @@ import type {
   WardleyLinkNode,
   WardleyNoteNode,
   WardleyNumber,
+  WardleyPipelineComponentNode,
   WardleyPipelineNode,
   WardleyStatementNode,
 } from './ast.ts';
@@ -57,6 +58,8 @@ export const WARDLEY_PIPELINE_REPLACED = 'WARDLEY_PIPELINE_REPLACED';
 export interface Parsed {
   /** The statements in source order (only the ones that parsed). */
   statements: readonly WardleyStatementNode[];
+  /** Components of pipelines whose name failed to parse (no node; values still checked). */
+  orphans: readonly WardleyPipelineComponentNode[];
   /** The last in-text values (`''` when none). */
   title: string;
   titleAstId: AstId | undefined;
@@ -134,6 +137,14 @@ export class WardleyNodes {
   }
 }
 
+/** A link as read, with what its D425 warning names. */
+interface ReadLink {
+  link: WardleyLink;
+  range: Range;
+  from: string;
+  to: string;
+}
+
 /** One place a warning kind was raised. */
 interface Raised {
   /** The warning's message when this place is the first. */
@@ -196,7 +207,8 @@ class Populate {
     for (const c of of('Component')) this.component(c);
     const notes = of('Note').map((n) => this.note(n));
     const pipelines = this.pipelines(of('Pipeline'));
-    const links = of('Link').map((l) => this.link(l));
+    this.check(this.parsed.orphans);
+    const read = of('Link').map((l) => this.link(l));
     const trends = this.trends(of('Evolve'));
     const box = of('Annotations')[0];
     const annotationsBox = box && {
@@ -211,7 +223,8 @@ class Populate {
       else if (a.type === 'Deaccelerator')
         deaccelerators.push(this.accelerator(a, 'Deaccelerator'));
     }
-    this.drops(links);
+    this.drops(read);
+    const links = read.map((r) => r.link);
     this.flush();
 
     const { title, titleAstId, frontMatterTitle } = this.parsed;
@@ -250,12 +263,11 @@ class Populate {
       return 100;
     }
     if (value > 1 && value < 2) {
-      this.raise(
-        WARDLEY_COORDINATE_AMBIGUOUS,
-        `\`${value}\` is read as ${value} %, not as a fraction: only values up to 1 are fractions of the axis (\`1.0\` is 100 %). Write the fraction you meant, such as \`0.5\`, or a percentage of 2 or more.`,
+      this.raise(WARDLEY_COORDINATE_AMBIGUOUS, {
+        message: `\`${value}\` is read as ${value} %, not as a fraction: only values up to 1 are fractions of the axis (\`1.0\` is 100 %). Write the fraction you meant, such as \`0.5\`, or a percentage of 2 or more.`,
         range,
-        `\`${value}\` is read as ${value} % too`
-      );
+        also: `\`${value}\` is read as ${value} % too`,
+      });
     }
     return normalized;
   }
@@ -337,18 +349,19 @@ class Populate {
           `Pipeline "${parent}" must reference an existing component with coordinates.`,
           p.parent.range
         );
+        // v12 stopped here; the children's values are still checked (R-PARSE-4).
+        this.check(p.children);
         continue;
       }
       const parentY = parentNode.y;
       const before = byParent.get(parent);
       if (before) {
-        this.raise(
-          WARDLEY_PIPELINE_REPLACED,
-          `A second \`pipeline ${parent}\` replaces the first one's components, which stay on the map outside the pipeline. Write one \`pipeline ${parent} { … }\` with all its components.`,
-          p.parent.range,
-          `\`pipeline ${parent}\` repeated`,
-          { message: `the first \`pipeline ${parent}\``, range: before.range }
-        );
+        this.raise(WARDLEY_PIPELINE_REPLACED, {
+          message: `A second \`pipeline ${parent}\` replaces the first one's components, which stay on the map outside the pipeline. Write one \`pipeline ${parent} { … }\` with all its components.`,
+          range: p.parent.range,
+          also: `\`pipeline ${parent}\` repeated`,
+          extra: { message: `the first \`pipeline ${parent}\``, range: before.range },
+        });
       }
       // v12 `startPipeline`: a new child list, at the first block's position.
       const pipeline = {
@@ -387,23 +400,28 @@ class Populate {
     );
   }
 
-  private link(l: WardleyLinkNode): WardleyLink & { range: Range; from: string; to: string } {
+  /** Range checks of pipeline components that add no node (their parent is unknown or failed). */
+  private check(children: readonly WardleyPipelineComponentNode[]): void {
+    for (const c of children) {
+      this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`);
+    }
+  }
+
+  private link(l: WardleyLinkNode): ReadLink {
     const arrow = l.arrow;
     const dashed = !!arrow && (arrow.includes('-.->') || arrow.includes('.-.'));
     const fromArrow = arrowFlow(arrow);
     const flow = portFlow(l.fromPort) ?? portFlow(l.toPort) ?? fromArrow.flow;
     const label = fromArrow.label ?? l.linkLabel;
-    return {
+    const link: WardleyLink = Object.freeze({
       source: this.nodes.resolve(l.from.value),
       target: this.nodes.resolve(l.to.value),
       dashed,
       ...(label !== undefined && { label }),
       ...(flow && { flow }),
       astId: l.id,
-      range: l.range,
-      from: l.from.value,
-      to: l.to.value,
-    };
+    });
+    return { link, range: l.range, from: l.from.value, to: l.to.value };
   }
 
   private trends(list: readonly WardleyEvolveNode[]): WardleyTrend[] {
@@ -412,12 +430,11 @@ class Populate {
       const name = e.name.value;
       const node = this.nodes.get(name);
       if (!node) {
-        this.raise(
-          WARDLEY_UNKNOWN_TARGET,
-          `\`evolve ${name}\` names no anchor or component, so it draws nothing. Name a component by its name as written (a pipeline component cannot evolve).`,
-          e.name.range,
-          `\`evolve ${name}\` names no node either`
-        );
+        this.raise(WARDLEY_UNKNOWN_TARGET, {
+          message: `\`evolve ${name}\` names no anchor or component, so it draws nothing. Name a component by its name as written (a pipeline component cannot evolve).`,
+          range: e.name.range,
+          also: `\`evolve ${name}\` names no node either`,
+        });
         continue;
       }
       const targetX = this.percent(e.target, `Evolve target for "${name}"`);
@@ -448,12 +465,8 @@ class Populate {
   // ---- warnings -------------------------------------------------------------------------
 
   /** D425: a link not drawn because an end names no node, or because it links a node to itself. */
-  private drops(links: (WardleyLink & { range: Range; from: string; to: string })[]): void {
-    for (let k = 0; k < links.length; k++) {
-      const l = links[k];
-      if (!l) continue;
-      const { range, from, to, ...link } = l;
-      links[k] = Object.freeze(link) as typeof l;
+  private drops(links: readonly ReadLink[]): void {
+    for (const { link, range, from, to } of links) {
       const unknown: string[] = [];
       if (!this.nodes.has(link.source)) unknown.push(`\`${from}\``);
       if (!this.nodes.has(link.target) && to !== from) unknown.push(`\`${to}\``);
@@ -462,25 +475,17 @@ class Populate {
         why = `${unknown.join(' and ')} ${unknown.length > 1 ? 'name' : 'names'} no anchor or component`;
       } else if (link.source === link.target) why = `it links \`${from}\` to itself`;
       if (!why) continue;
-      this.raise(
-        WARDLEY_LINK_DROPPED,
-        `The link \`${from} -> ${to}\` is not drawn: ${why}.`,
+      this.raise(WARDLEY_LINK_DROPPED, {
+        message: `The link \`${from} -> ${to}\` is not drawn: ${why}.`,
         range,
-        `the link \`${from} -> ${to}\` is not drawn either: ${why}`
-      );
+        also: `the link \`${from} -> ${to}\` is not drawn either: ${why}`,
+      });
     }
   }
 
   /** Record a place for the warning of `code`. */
-  private raise(
-    code: string,
-    message: string,
-    range: Range,
-    also: string,
-    extra?: RelatedInfo
-  ): void {
+  private raise(code: string, place: Raised): void {
     const list = this.raised.get(code);
-    const place: Raised = { message, also, range, ...(extra && { extra }) };
     if (list) list.push(place);
     else this.raised.set(code, [place]);
   }

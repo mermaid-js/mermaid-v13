@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -9,11 +9,13 @@ import {
   WARDLEY_UNKNOWN_TARGET,
 } from '@mermaid-js/diagram-wardley';
 import type { WardleyPipelineNode } from '@mermaid-js/diagram-wardley';
+import { WardleyTokenKind } from '@mermaid-js/diagram-wardley/testing';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { REPO_ROOT } from '../corpus.ts';
 
 /**
- * The wardley parser and model (#489) on the e2e fixtures and the `parser-*` cases of
- * `corpus/wardley-cases.json`: v12's population rules (merges, pipelines, link resolution,
+ * The wardley parser and model (#489) on the e2e fixtures (`pr-check/`, and the parser's own in
+ * `nightly-check/parser-*.mmd`) and the cases of `corpus/wardley-cases.json` v12 rejects: v12's population rules (merges, pipelines, link resolution,
  * last-wins, category order), the D218 title, AST ids (D427), the D425 and D428 warnings,
  * symbols (D427), statement spans and source ranges. Accept/reject and model parity with v12
  * are `parity.spec.ts`'s.
@@ -21,6 +23,9 @@ import { REPO_ROOT } from '../corpus.ts';
 const parse = (src: string) => parseWardley(src);
 const fixture = (name: string) =>
   readFileSync(join(REPO_ROOT, `e2e/diagrams/wardley/pr-check/${name}.mmd`), 'utf8');
+/** The parser's fixtures that v12 accepts (as radar's T2): `e2e/diagrams/wardley/nightly-check/`. */
+const nightly = (name: string) =>
+  readFileSync(join(REPO_ROOT, `e2e/diagrams/wardley/nightly-check/${name}.mmd`), 'utf8');
 const CASES = new Map(
   (
     JSON.parse(
@@ -123,7 +128,7 @@ describe('wardley parser on the fixtures', () => {
 
 describe('wardley model: v12 population rules', () => {
   it('merges statements for one node: later values win, label offsets fall back', () => {
-    const { model } = parse(wardleyCase('parser-merge-nodes'));
+    const { model } = parse(nightly('parser-merge-nodes'));
     expect(model.nodes).toEqual([
       {
         id: 'A',
@@ -139,7 +144,7 @@ describe('wardley model: v12 population rules', () => {
         astId: 'node:A',
       },
     ]);
-    expect(ids(wardleyCase('parser-merge-nodes'))).toEqual([
+    expect(ids(nightly('parser-merge-nodes'))).toEqual([
       'wardley',
       'node:A',
       'node:A@2',
@@ -149,7 +154,7 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('a pipeline child over a component of its id drops inertia and strategy, keeps offsets', () => {
-    const node = parse(wardleyCase('parser-pipeline-id-collision')).model.nodes[1];
+    const node = parse(nightly('parser-pipeline-id-collision')).model.nodes[1];
     expect(node).toEqual({
       id: 'P_c',
       label: 'c',
@@ -166,7 +171,7 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('a second pipeline for a parent replaces its children, with one warning', () => {
-    const src = wardleyCase('parser-pipeline-replaced');
+    const src = nightly('parser-pipeline-replaced');
     const { model, diagnostics } = parse(src);
     expect(model.pipelines).toEqual([
       { nodeId: 'Kettle', componentIds: ['Kettle_Electric'], astId: 'pipeline:Kettle@2' },
@@ -187,7 +192,7 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('keeps links whatever their ends; one warning for those not drawn', () => {
-    const src = wardleyCase('parser-link-resolve');
+    const src = nightly('parser-link-resolve');
     const { model, diagnostics } = parse(src);
     expect(model.links.map((l) => [l.source, l.target])).toEqual([
       ['A', 'B'],
@@ -206,7 +211,7 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('reads flows, dashes and labels as v12 did', () => {
-    const { model } = parse(wardleyCase('parser-link-flows'));
+    const { model } = parse(nightly('parser-link-flows'));
     expect(model.links.map(({ dashed, label, flow }) => ({ dashed, label, flow }))).toEqual([
       { dashed: false, label: undefined, flow: 'bidirectional' },
       { dashed: false, label: undefined, flow: 'backward' },
@@ -227,33 +232,33 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('an evolve of an unknown name is skipped with one warning, before its range check', () => {
-    const { model, diagnostics } = parse(wardleyCase('parser-range-evolve-unknown'));
+    const { model, diagnostics } = parse(nightly('parser-range-evolve-unknown'));
     expect(model.trends.map((t) => t.nodeId)).toEqual(['Tea']);
     expect(diagnostics.map((d) => [d.code, d.severity])).toEqual([
       [WARDLEY_UNKNOWN_TARGET, 'warning'],
     ]);
     // A pipeline child is found by its id only, as v12's `getNode`.
-    const child = parse(wardleyCase('parser-evolve-pipeline-child'));
+    const child = parse(nightly('parser-evolve-pipeline-child'));
     expect(child.model.trends.map((t) => t.nodeId)).toEqual(['P_c']);
     expect(child.diagnostics.map((d) => d.code)).toEqual([WARDLEY_UNKNOWN_TARGET]);
   });
 
   it('keeps the last evolve, evolution and size, and the first annotations box', () => {
-    expect(parse(wardleyCase('parser-evolve-last-wins')).model.trends).toEqual([
+    expect(parse(nightly('parser-evolve-last-wins')).model.trends).toEqual([
       { nodeId: 'A', targetX: 70, targetY: 50, astId: 'evolve:A@2' },
       { nodeId: 'B', targetX: 80, targetY: 40, astId: 'evolve:B' },
     ]);
-    expect(parse(wardleyCase('parser-evolution-last-wins')).model.evolution).toEqual({
+    expect(parse(nightly('parser-evolution-last-wins')).model.evolution).toEqual({
       stages: ['Genesis / Concept', 'Custom / Emerging', 'Product'],
       boundaries: [0.4],
       astId: 'evolution@2',
     });
-    expect(parse(wardleyCase('parser-size-last-wins')).model.size).toEqual({
+    expect(parse(nightly('parser-size-last-wins')).model.size).toEqual({
       width: 0,
       height: 0,
       astId: 'size@2',
     });
-    expect(parse(wardleyCase('parser-range-annotations-second')).model.annotationsBox).toEqual({
+    expect(parse(nightly('parser-range-annotations-second')).model.annotationsBox).toEqual({
       x: 90,
       y: 10,
       astId: 'annotations',
@@ -279,7 +284,7 @@ describe('wardley model: v12 population rules', () => {
     ]);
     expect(model.accelerators[0]).toMatchObject({ x: 100, y: 50 });
     expect(model.nodes[0]).toMatchObject({ id: 'User', x: 50, y: 100 });
-    const limits = parse(wardleyCase('parser-range-limits'));
+    const limits = parse(nightly('parser-range-limits'));
     expect(limits.model.nodes.map((n) => [n.x, n.y])).toEqual([
       [100, 0],
       [2, 100],
@@ -288,7 +293,7 @@ describe('wardley model: v12 population rules', () => {
   });
 
   it('warns once for coordinates in (1, 2), D428', () => {
-    const src = wardleyCase('parser-coordinates-ambiguous');
+    const src = nightly('parser-coordinates-ambiguous');
     const { model, diagnostics } = parse(src);
     expect(diagnostics.map((d) => d.code)).toEqual([WARDLEY_COORDINATE_AMBIGUOUS]);
     const [d] = diagnostics;
@@ -306,32 +311,70 @@ describe('wardley model: v12 population rules', () => {
   });
 });
 
+describe('wardley messages and the probe', () => {
+  it('says a name starts with a keyword and how to quote it (D423)', () => {
+    const messages = (id: string) =>
+      parse(wardleyCase(id))
+        .diagnostics.filter((d) => d.severity === 'error')
+        .map((d) => d.message);
+    expect(messages('keyword-names-note')).toEqual([
+      'Expected a name such as `Tea` or `"Hot water"`, got `note`; `notebook` starts with the keyword `note`, and an unquoted name cannot be or start with one: quote it, as `"notebook"`.',
+    ]);
+    expect(messages('keyword-names-component')[0]).toContain(
+      '`component` is a keyword, and an unquoted name cannot be or start with one: quote it, as `"component"`'
+    );
+    expect(messages('keyword-names-strategy')[0]).toContain(
+      '`marketing` starts with the keyword `market`'
+    );
+  });
+
+  it('keeps the preprocess diagnostics unless they are handed in', () => {
+    const src = wardleyCase('unclosed-directive');
+    const pre = preprocess(src);
+    expect(pre.diagnostics.map((d) => d.code)).toEqual(['UNCLOSED_DIRECTIVE']);
+    const own = parse(src).diagnostics.map((d) => d.code);
+    expect(own).toContain('UNCLOSED_DIRECTIVE');
+    expect(parseWardley(src, { preprocessed: pre }).diagnostics.map((d) => d.code)).not.toContain(
+      'UNCLOSED_DIRECTIVE'
+    );
+  });
+
+  it('records what the parser expects at a probe offset, and the title mode', () => {
+    const src = fixture('1-should-render-tea-shop');
+    const after = src.indexOf('component Cup [0.73, 0.78]') + 'component Cup [0.73, 0.78]'.length;
+    expect(parseWardley(src, { probe: after }).probe?.expected).toEqual(
+      expect.arrayContaining([
+        WardleyTokenKind.Label,
+        WardleyTokenKind.LParen,
+        WardleyTokenKind.Inertia,
+      ])
+    );
+    const inTitle = src.indexOf('title Tea Shop') + 'title Tea'.length;
+    expect(parseWardley(src, { probe: inTitle }).probe?.mode).toBe('title');
+  });
+});
+
 describe('wardley title and accessibility (D218)', () => {
   it('the last in-text title wins; an empty one leaves none', () => {
-    expect(parse(wardleyCase('parser-title-last-wins')).model).toMatchObject({
+    expect(parse(nightly('parser-title-last-wins')).model).toMatchObject({
       title: 'Second title',
       titleAstId: 'title@2',
     });
-    expect(parse(wardleyCase('parser-title-last-empty')).model.title).toBeUndefined();
+    expect(parse(nightly('parser-title-last-empty')).model.title).toBeUndefined();
   });
 
   it('falls back to the front-matter title', () => {
-    const { model } = parse(wardleyCase('parser-front-matter-title'));
+    const { model } = parse(nightly('parser-front-matter-title'));
     expect(model.title).toBe('From front matter');
     expect(model.titleAstId).toBeUndefined();
   });
 
   it("converts accTitle and accDescr as v12's value converter", () => {
-    expect(parse(wardleyCase('parser-acc')).model).toMatchObject({
+    expect(parse(nightly('parser-acc')).model).toMatchObject({
       accTitle: 'An accessible title',
       accDescr: 'last wins',
     });
-    expect(ids(wardleyCase('parser-acc'))).toEqual([
-      'wardley',
-      'accTitle',
-      'accDescr',
-      'accDescr@2',
-    ]);
+    expect(ids(nightly('parser-acc'))).toEqual(['wardley', 'accTitle', 'accDescr', 'accDescr@2']);
   });
 });
 
@@ -346,7 +389,7 @@ describe('wardley AST, symbols and statements', () => {
       'annotation:1',
       'annotation:1@2',
     ]);
-    expect(ids(wardleyCase('parser-pipeline-replaced'))).toEqual([
+    expect(ids(nightly('parser-pipeline-replaced'))).toEqual([
       'wardley',
       'node:Kettle',
       ['pipeline:Kettle', 'node:Kettle_Gas'],
@@ -355,7 +398,7 @@ describe('wardley AST, symbols and statements', () => {
       'evolve:Kettle',
     ]);
     // Quoted names are converted; `>`, `@`, `#` and `%` would be percent-encoded.
-    expect(ids(wardleyCase('parser-quoted-names'))).toEqual([
+    expect(ids(nightly('parser-quoted-names'))).toEqual([
       'wardley',
       'node:Tea "Cup"',
       'node:  spaced  ',
@@ -371,7 +414,7 @@ describe('wardley AST, symbols and statements', () => {
   });
 
   it('defines a node at its first anchor or component; other names refer to it', () => {
-    const src = wardleyCase('parser-pipeline-replaced');
+    const src = nightly('parser-pipeline-replaced');
     const at = (s: { range: { start: number; end: number } }) =>
       src.slice(s.range.start, s.range.end);
     expect(parse(src).symbols.map((s) => [s.role, s.name, at(s)])).toEqual([
@@ -385,14 +428,14 @@ describe('wardley AST, symbols and statements', () => {
       ['ref', 'Kettle', 'Kettle'],
     ]);
     // A quoted name's symbol covers its quotes (D191); names no node defines have none.
-    const quoted = wardleyCase('parser-quoted-names');
+    const quoted = nightly('parser-quoted-names');
     expect(parse(quoted).symbols.map((s) => quoted.slice(s.range.start, s.range.end))).toEqual([
       '"Tea \\"Cup\\""',
       "'  spaced  '",
       '"Tea \\"Cup\\""',
       "'  spaced  '",
     ]);
-    expect(parse(wardleyCase('parser-link-resolve')).symbols.map((s) => s.name)).toEqual([
+    expect(parse(nightly('parser-link-resolve')).symbols.map((s) => s.name)).toEqual([
       'A',
       'B',
       'A',
@@ -404,7 +447,7 @@ describe('wardley AST, symbols and statements', () => {
   });
 
   it('spans statements; a pipeline holds its components', () => {
-    const src = wardleyCase('parser-pipeline-blank-lines');
+    const src = nightly('parser-pipeline-blank-lines');
     const { statements, ast } = parse(src);
     const text = (r: { start: number; end: number }) => src.slice(r.start, r.end);
     expect(
@@ -426,21 +469,19 @@ describe('wardley AST, symbols and statements', () => {
     ]);
   });
 
-  it('accepts what v12 accepts at the edges of statements', () => {
-    for (const id of [
-      'parser-header-same-line',
-      'parser-header-glued-name',
-      'parser-component-glued-keyword',
-      'parser-pipeline-at-end',
-      'parser-trailing-statement-eof',
-    ]) {
-      expect(
-        parse(wardleyCase(id)).diagnostics.filter((d) => d.severity === 'error'),
-        id
-      ).toEqual([]);
+  it('accepts every parser fixture without an error, as v12 does', () => {
+    const dir = join(REPO_ROOT, 'e2e/diagrams/wardley/nightly-check');
+    const names = readdirSync(dir).filter((f) => f.startsWith('parser-') && f.endsWith('.mmd'));
+    expect(names.length).toBe(32);
+    for (const file of names) {
+      const errors = parse(readFileSync(join(dir, file), 'utf8')).diagnostics.filter(
+        (d) => d.severity === 'error'
+      );
+      expect(errors, file).toEqual([]);
     }
-    expect(
-      parse(wardleyCase('parser-component-glued-keyword')).model.nodes.map((n) => n.id)
-    ).toEqual(['B', 'A']);
+    expect(parse(nightly('parser-component-glued-keyword')).model.nodes.map((n) => n.id)).toEqual([
+      'B',
+      'A',
+    ]);
   });
 });

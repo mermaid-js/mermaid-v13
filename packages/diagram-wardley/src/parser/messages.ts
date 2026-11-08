@@ -7,6 +7,12 @@ import { ASCII_MAX, Kind } from '@mermaid-js/core/parser-kit';
 import { words } from './tables.ts';
 import { STRATEGIES, T } from './tokens.ts';
 
+/** Why a `size` value must be an integer. */
+export const SIZE_HINT = 'a size is whole pixels, such as `size [1100, 800]`';
+
+/** Why a `label` offset must be an integer. */
+export const LABEL_HINT = 'a label offset is whole pixels, such as `label [-10, 5]`';
+
 /** Why no token rule matched `text` (`next`: the character after it), or `''`. */
 export function characterHint(text: string, next: string): string {
   if (text === ';') return '; a `; label` after a link needs text: `A -> B; label`';

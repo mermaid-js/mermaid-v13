@@ -1,0 +1,10 @@
+wardley-beta
+component Kettle [0.5, 0.5]
+pipeline Kettle {
+  component Gas [0.3]
+}
+pipeline Kettle {
+  component Electric [0.6]
+}
+Gas -> Electric
+evolve Kettle 0.8

@@ -22,7 +22,9 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## T2 (#489)
 
-- Choices (also in `tickets/489.md`): D425's three warnings are raised by the parser, one per kind with the other places in `related`; v12's child→own-parent link filter is the renderer's (T3/T4 skip those links, no warning). Only the first `annotations` is range-checked (v12 read only it). Ids beyond D427: `wardley`, `annotations`, `accTitle`, `accDescr`; `note:<k>` is an ordinal; link ids use the names as written.
+- Choices (also in `tickets/489.md`): D425's three warnings are raised by the parser, one per kind with the other places in `related`; v12's child→own-parent link filter is the renderer's (T3/T4 skip those links, no warning). Only the first `annotations` is range-checked (v12 read only it). Ids beyond D427: `wardley`, `annotations`, `accTitle`, `accDescr`; `note:<k>` is an ordinal. A pipeline component's range error is reported even where v12 never reached it (its pipeline's name failed or names no node).
+- **For the maintainer:** link ids `link:<a>-><b>` use the names as written, not the resolved node ids (a link to a pipeline child by label is `link:Gas->Kettle`, its target `Kettle_Gas`).
+- Review (#489) fixed: failed pipeline names now open the block with their components counted; the 17 v12 messages are asserted literally; the 32 v12-accepted parser cases are `nightly-check/parser-*.mmd` fixtures.
 - For T3: `WardleyModel` keeps v12's node field names; annotations carry `x`/`y` (not `coordinates[]`); `evolution` replaces v12's `axes` (absent: v12's default stages).
 
 ## T1 (#487, merged)

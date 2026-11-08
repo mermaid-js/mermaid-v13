@@ -73,7 +73,15 @@ import {
 } from './convert.ts';
 import { astName, linkName } from './ids.ts';
 import { lex } from './lexer.ts';
-import { characterHint, componentHint, keywordHint, linkHint, pipelineHint } from './messages.ts';
+import {
+  characterHint,
+  componentHint,
+  keywordHint,
+  LABEL_HINT,
+  linkHint,
+  pipelineHint,
+  SIZE_HINT,
+} from './messages.ts';
 import { normalise } from './normalise.ts';
 import {
   AFTER_BOUNDARY,
@@ -149,6 +157,8 @@ class WardleyParser {
   private readonly st = new ParseState();
   private readonly probe: Probe | undefined;
   private readonly children: WardleyStatementNode[] = [];
+  /** Components of pipelines whose name failed: no node, their values still checked. */
+  private readonly orphans: WardleyPipelineComponentNode[] = [];
   private lines: LineIndex | undefined;
   /** Mentions per id base (`node:A`, `title`, …), for the `@n` suffixes. */
   private readonly mentions = new Map<string, number>();
@@ -386,6 +396,10 @@ class WardleyParser {
     const k = this.kind();
     const wantsName = want.some((w) => NAME_SET[w] === 1);
     if (wantsName && KEYWORD_PREFIX[k] === 1) return this.keywordName(this.i);
+    if (wantsName && k === T.Int && this.glued(this.i) && NAME_SET[this.kind(this.i + 1)] === 1) {
+      const whole = this.raw() + this.raw(this.i + 1);
+      return `\`${whole}\` starts with a digit, and an unquoted name cannot: quote it, as \`"${whole}"\``;
+    }
     // `notebook`, `sizeable`, `componentX -> Y`: a keyword glued to the name after it.
     const s = this.stmt;
     if (
@@ -547,9 +561,9 @@ class WardleyParser {
   private size(): void {
     const start = this.range(this.i++).start;
     this.expect(T.LBracket);
-    const width = this.number(T.Int, 'a size is whole pixels, such as `size [1100, 800]`');
+    const width = this.number(T.Int, SIZE_HINT);
     this.expect(T.Comma);
-    const height = this.number(T.Int, 'a size is whole pixels, such as `size [1100, 800]`');
+    const height = this.number(T.Int, SIZE_HINT);
     this.expect(T.RBracket);
     const range = { start, end: this.end() };
     this.eol();
@@ -595,10 +609,10 @@ class WardleyParser {
     const start = this.range(this.i++).start;
     this.expect(T.LBracket);
     const sx = this.accept(T.Dash, [T.Dash, T.Int]) ? -1 : 1;
-    const x = this.number(T.Int, 'a label offset is whole pixels, such as `label [-10, 5]`');
+    const x = this.number(T.Int, LABEL_HINT);
     this.expect(T.Comma);
     const sy = this.accept(T.Dash, [T.Dash, T.Int]) ? -1 : 1;
-    const y = this.number(T.Int, 'a label offset is whole pixels, such as `label [-10, 5]`');
+    const y = this.number(T.Int, LABEL_HINT);
     this.expect(T.RBracket);
     return { x: sx * x.value, y: sy * y.value, range: { start, end: this.end() } };
   }
@@ -734,7 +748,10 @@ class WardleyParser {
     const span = this.st.beginStatement('pipeline', keyword.start);
     const body = this.pipelineBody(parent, brace);
     this.st.endStatement(span, body.end);
-    if (parent) {
+    // Components of a pipeline whose name failed are in no AST node, but their values are
+    // checked, so their errors count (R-PARSE-4).
+    if (!parent) this.orphans.push(...body.children);
+    else {
       this.children.push({
         id: this.id(astName('pipeline', parent.value)),
         type: 'Pipeline',
@@ -749,8 +766,7 @@ class WardleyParser {
   /**
    * The components of a pipeline and its `}`. `closed`: the cursor is after the `}` (its line
    * end comes next); otherwise the `}` was on a line an error skipped, or there is none (an
-   * error says so). `end` is where the block ends. Components have no node without a parent
-   * (their ids need it).
+   * error says so). `end` is where the block ends.
    */
   private pipelineBody(
     parent: WardleyName | undefined,
@@ -778,9 +794,8 @@ class WardleyParser {
         try {
           if (k !== T.Component)
             this.fail([T.Component, T.RBrace], undefined, [PIPELINE_CHILD, '`}`']);
-          const child = this.pipelineComponent(parent);
+          children.push(this.pipelineComponent(parent));
           end = this.end();
-          if (child) children.push(child);
         } catch (error) {
           if (error !== STOP) throw error;
           this.probe?.freeze();
@@ -796,9 +811,7 @@ class WardleyParser {
   }
 
   /** `PipelineComponent: "component" Name "[" WARDLEY_NUMBER "]" Label? EOL` */
-  private pipelineComponent(
-    parent: WardleyName | undefined
-  ): WardleyPipelineComponentNode | undefined {
+  private pipelineComponent(parent: WardleyName | undefined): WardleyPipelineComponentNode {
     const start = this.range(this.i++).start;
     const name = this.name();
     this.expect(T.LBracket);
@@ -811,8 +824,8 @@ class WardleyParser {
     if (this.kind() !== Kind.EOF) this.expect(Kind.Newline);
     this.define(name);
     this.st.statement('component', range);
-    if (!parent) return undefined;
-    const id = this.id(astName('node', `${parent.value}_${name.value}`));
+    // Without a parent (its name failed) the component has no id; its values are still checked.
+    const id = parent ? this.id(astName('node', `${parent.value}_${name.value}`)) : '';
     const node: WardleyPipelineComponentNode = {
       id,
       type: 'PipelineComponent',
@@ -969,6 +982,7 @@ class WardleyParser {
     const resolved = normalise(
       {
         statements: this.children,
+        orphans: this.orphans,
         title: this.title,
         titleAstId: this.titleAstId,
         accTitle: this.accTitle,

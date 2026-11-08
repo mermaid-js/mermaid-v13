@@ -488,16 +488,8 @@
     "source": "wardley-beta\ncomponent Tea [0.5, 0.5]\nevolve Tea 120.0\nTea -> Tea"
   },
   {
-    "id": "wardley-cases/parser-range-evolve-unknown",
-    "source": "wardley-beta\ncomponent Tea [0.5, 0.5]\nevolve Cup 120.0\nevolve Tea 0.9"
-  },
-  {
     "id": "wardley-cases/parser-range-annotations-box",
     "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotations [500, 0.5]\nannotation 1, [0.5, 0.5] \"x\""
-  },
-  {
-    "id": "wardley-cases/parser-range-annotations-second",
-    "source": "wardley-beta\nannotations [0.1, 0.9]\nannotations [500, 0.5]\nannotation 1, [0.5, 0.5] \"x\""
   },
   {
     "id": "wardley-cases/parser-range-annotation",
@@ -516,120 +508,12 @@
     "source": "wardley-beta\naccelerator Cloud [0.5, 102.0]\nnote \"n\" [0.5, 0.5]\nanchor User [103.0, 0.5]"
   },
   {
-    "id": "wardley-cases/parser-range-limits",
-    "source": "wardley-beta\ncomponent A [0.0, 1.0]\ncomponent B [100.0, 2.0]\ncomponent C [1.000001, 99.99]"
-  },
-  {
     "id": "wardley-cases/parser-range-just-over",
     "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [100.01, 0.5]\nA -> B"
   },
   {
     "id": "wardley-cases/parser-pipeline-unknown-parent",
     "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Pot {\n  component Gas [0.3]\n}"
-  },
-  {
-    "id": "wardley-cases/parser-pipeline-anchor-parent",
-    "source": "wardley-beta\nanchor User [0.9, 0.5]\npipeline User {\n  component Phone [0.3]\n  component Web [0.7] label [-5, 10]\n}"
-  },
-  {
-    "id": "wardley-cases/parser-pipeline-replaced",
-    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [0.3]\n}\npipeline Kettle {\n  component Electric [0.6]\n}\nGas -> Electric\nevolve Kettle 0.8"
-  },
-  {
-    "id": "wardley-cases/parser-pipeline-id-collision",
-    "source": "wardley-beta\ncomponent P [0.5,0.5]\ncomponent P_c [0.1,0.1] label [5,5] (buy) inertia\npipeline P {\n component c [0.2]\n}"
-  },
-  {
-    "id": "wardley-cases/parser-pipeline-of-child",
-    "source": "wardley-beta\ncomponent P [0.4, 0.5]\npipeline P {\n  component c [0.2]\n}\npipeline P_c {\n  component d [0.6]\n}"
-  },
-  {
-    "id": "wardley-cases/parser-pipeline-children-links",
-    "source": "wardley-beta\ncomponent Kettle [0.57, 0.45]\npipeline Kettle {\n  component Campfire Kettle [0.35] label [-60, 35]\n  component Electric Kettle [0.53]\n}\nCampfire Kettle -> Kettle\nKettle_Electric Kettle -> Kettle\nUser -> Electric Kettle"
-  },
-  {
-    "id": "wardley-cases/parser-merge-nodes",
-    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [1, 2] (build) inertia\nanchor A [0.1, 0.1]\ncomponent A [0.3, 0.3] (buy)\ncomponent A [0.2, 0.2] label [-4, 6]"
-  },
-  {
-    "id": "wardley-cases/parser-node-order",
-    "source": "wardley-beta\ncomponent Tea [0.5, 0.5]\nanchor Business [0.95, 0.63]\ncomponent Cup [0.7, 0.3]\nanchor Public [0.95, 0.78]"
-  },
-  {
-    "id": "wardley-cases/parser-strategies",
-    "source": "wardley-beta\ncomponent A [0.5, 0.5] (build)\ncomponent B [0.5, 0.5] (buy) (inertia)\ncomponent C [0.5, 0.5] label [3, -3] (outsource) inertia\ncomponent D [0.5, 0.5] (market)"
-  },
-  {
-    "id": "wardley-cases/parser-quoted-names",
-    "source": "wardley-beta\ncomponent \"Tea \\\"Cup\\\"\" [0.5, 0.5]\ncomponent '  spaced  ' [0.4, 0.4]\n\"Tea \\\"Cup\\\"\" -> '  spaced  '\nevolution \"  Genesis  \" / \" Idea \" -> Custom"
-  },
-  {
-    "id": "wardley-cases/parser-entities",
-    "source": "wardley-beta\ncomponent \"Tea #amp; Cups\" [0.5, 0.5]\nnote \"#9829; love\" [0.1, 0.1]\n\"Tea #amp; Cups\" -> B ; #quot;q#quot;"
-  },
-  {
-    "id": "wardley-cases/parser-link-resolve",
-    "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.4, 0.4]\nA -> B\nA -> X\nY -> Z\nB -> B"
-  },
-  {
-    "id": "wardley-cases/parser-link-flows",
-    "source": "wardley-beta\nA +<> B\nA +< B\nA +> B\nA -> B +<\nA +'x'> B; y\nA +'a<b'> B\nA +''<> B\nA +> -> B\nA -.-> B\nA --> B\nA > B\n\"A\" \"B\"\nA -> B;   \t"
-  },
-  {
-    "id": "wardley-cases/parser-link-label-trim",
-    "source": "wardley-beta\nA -> B ;  label with  blanks  \nA -> B;x\nA -> B ; ; two"
-  },
-  {
-    "id": "wardley-cases/parser-evolve-last-wins",
-    "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.4, 0.4]\nevolve A 0.9\nevolve B 0.8\nevolve A 0.7"
-  },
-  {
-    "id": "wardley-cases/parser-evolve-pipeline-child",
-    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n  component c [0.2]\n}\nevolve c 0.8\nevolve P_c 0.9"
-  },
-  {
-    "id": "wardley-cases/parser-evolution-last-wins",
-    "source": "wardley-beta\nevolution A@0.25 -> B -> C@0.75 -> D\ncomponent A [0.5, 0.5]\nevolution Genesis / Concept -> Custom@0.4 / Emerging -> Product"
-  },
-  {
-    "id": "wardley-cases/parser-size-last-wins",
-    "source": "wardley-beta\nsize [600, 800]\ncomponent A [0.5, 0.5]\nsize [0, 0]"
-  },
-  {
-    "id": "wardley-cases/parser-title-last-wins",
-    "source": "wardley-beta\ntitle First\ncomponent A [0.5, 0.5]\ntitle   Second   title  "
-  },
-  {
-    "id": "wardley-cases/parser-title-last-empty",
-    "source": "wardley-beta\ntitle First\ncomponent A [0.5, 0.5]\ntitle"
-  },
-  {
-    "id": "wardley-cases/parser-acc",
-    "source": "wardley-beta\naccTitle: An   accessible title\naccDescr {\n  line one\n\n    line   two\n}\naccDescr: last wins"
-  },
-  {
-    "id": "wardley-cases/parser-front-matter-title",
-    "source": "---\ntitle: From front matter\n---\nwardley-beta\ncomponent A [0.5, 0.5]\nA -> A"
-  },
-  {
-    "id": "wardley-cases/parser-coordinates-ambiguous",
-    "source": "wardley-beta\ncomponent A [1.5, 0.5]\ncomponent B [0.5, 1.000001]\nnote \"n\" [1.99, 2.0]\nannotation 1, [1, 2] \"x\""
-  },
-  {
-    "id": "wardley-cases/parser-coordinates-annotations-int",
-    "source": "wardley-beta\nannotations [1, 0]\nannotation 2, [0, 1] \"edge\"\nannotation 3, [50, 25] \"pct\""
-  },
-  {
-    "id": "wardley-cases/parser-header-same-line",
-    "source": "wardley-beta component A [0.5, 0.5]\ncomponent B [0.4, 0.4]\nA -> B"
-  },
-  {
-    "id": "wardley-cases/parser-header-glued-name",
-    "source": "wardley-betaA -> B\ncomponent A [0.5, 0.5]\ncomponent B [0.4, 0.4]"
-  },
-  {
-    "id": "wardley-cases/parser-component-glued-keyword",
-    "source": "wardley-beta\ncomponentA [0.5, 0.5]\nanchorB [0.4, 0.4]\nevolveA 0.6"
   },
   {
     "id": "wardley-cases/parser-statements-one-line",
@@ -648,15 +532,27 @@
     "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n  component c [0.2] }\nP -> P"
   },
   {
-    "id": "wardley-cases/parser-pipeline-blank-lines",
-    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n\n  component c [0.2]\n\n  component d [0.3]\n\n}\n\n"
+    "id": "wardley-cases/parser-range-anchor-visibility",
+    "source": "wardley-beta\nanchor User [150.0, 0.5]\ncomponent A [0.5, 0.5]\nUser -> A"
   },
   {
-    "id": "wardley-cases/parser-pipeline-at-end",
-    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n  component c [0.2]\n}"
+    "id": "wardley-cases/parser-range-note-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nnote \"Hot\" [150.0, 0.5]\nA -> A"
   },
   {
-    "id": "wardley-cases/parser-trailing-statement-eof",
-    "source": "wardley-beta\ncomponent P [0.5, 0.5]\nP -> Q\ntitle End"
+    "id": "wardley-cases/parser-range-annotations-box-evolution",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotations [0.5, 150.0]\nannotation 1, [0.5, 0.5] \"x\""
+  },
+  {
+    "id": "wardley-cases/parser-range-annotation-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotation 7, [150.0, 0.5] \"Seven\"\nannotation 8, [0.5, 0.5] \"Eight\""
+  },
+  {
+    "id": "wardley-cases/parser-range-accelerator-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [150.0, 0.5]\ndeaccelerator Legacy [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-deaccelerator-evolution",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [0.5, 0.5]\ndeaccelerator Legacy [0.5, 150.0]"
   }
 ]
