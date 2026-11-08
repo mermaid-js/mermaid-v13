@@ -1,0 +1,23 @@
+# Run notes, spec #427 (M5a sankey, `@mermaid-js/diagram-sankey`)
+
+Integration branch `feature/427_sankey` (from `mermaid-v13` at 12ba676cb).
+
+| Ticket | Issue | Blocked by | State |
+| --- | --- | --- | --- |
+| T0 core gradients and blend mode (own PR into `mermaid-v13`, `feature/427_sankey-core-t0`) | #492 | — | in progress |
+| T1 lexer parity gate and corpus | #494 | #285 (merged) | pending |
+| T2 grammar, parser, model, AST | #496 | #494 | pending |
+| T3 layout | #499 | #496 | pending |
+| T4 SVG renderer | #502 | #499, #492 | pending |
+| T6 language facet | #504 | #496 | pending |
+| T5 integration | #503 | #502, #504 | pending |
+
+No T7 (D320: sankey throws `UnsupportedFormatError` for ascii). One ticket agent at a time (five ports share AI-Max).
+
+## Finish rule
+
+The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.
+
+- `01-v12-sankey.md`: pointer notes on v12's jison grammar, preprocessing and oracle capture, probed oracle quirks, DB, renderer, styles, config schema, d3-sankey 0.12.3, Tableau10, the v12 spec and harvest, the e2e corpus.
+- `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports (pie, radar, packet, kanban, info), the jison oracle and parity wiring, gen:grammar, the SVG writer (gradient, style allow-list, `assertInert`, ids, `data-ast`), config, registry, theme, size gates, measuring, the language facet, MIGRATION.md.
+- `IMPLEMENTER.md`, `GAPS.md`, `tickets/`: as in other runs.
