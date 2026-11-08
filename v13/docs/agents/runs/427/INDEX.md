@@ -1,6 +1,6 @@
 # Run notes, spec #427 (M5a sankey, `@mermaid-js/diagram-sankey`)
 
-Integration branch `feature/427_sankey` (from `mermaid-v13` at 12ba676cb).
+Integration branch `feature/427_sankey` (from `mermaid-v13` at 12ba676cb). Draft PR: #532.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
