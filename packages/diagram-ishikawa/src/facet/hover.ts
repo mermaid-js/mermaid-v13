@@ -6,7 +6,8 @@
  * (D496); the effect its cause count; the keyword its one-line doc from the grammar file
  * (`generated/docs.ts`). Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import { ISHIKAWA_INDENT_CLAMPED } from '../codes.ts';
 import { ishikawaDocs } from '../generated/docs.ts';
 import type { IshikawaCause, IshikawaModel } from '../model.ts';
 import type { IshikawaDocument, IshikawaLineNode } from '../parser/ast.ts';
@@ -49,12 +50,15 @@ function effectHover(model: IshikawaModel, text: string): string {
   return `**effect** ${code(text)}\n\nThe head of the fish · ${causes}`;
 }
 
-/** The path of causes from the top-level one to the one with AST id `ast` (D497). */
-function pathTo(model: IshikawaModel, ast: string): IshikawaCause[] {
+/** The 1-based tree position an AST id `cause:<i>.<j>…` names (D497). */
+const positionOf = (ast: string): number[] => ast.slice('cause:'.length).split('.').map(Number);
+
+/** The causes from the top-level one down to the one at `position`; empty if there is none. */
+function pathTo(model: IshikawaModel, position: readonly number[]): IshikawaCause[] {
   const out: IshikawaCause[] = [];
   let list = model.causes;
-  for (const step of ast.slice('cause:'.length).split('.')) {
-    const c = list[Number(step) - 1];
+  for (const k of position) {
+    const c = list[k - 1];
     if (!c) return [];
     out.push(c);
     list = c.causes;
@@ -62,25 +66,33 @@ function pathTo(model: IshikawaModel, ast: string): IshikawaCause[] {
   return out;
 }
 
+/**
+ * Whether the parse reported the cause at `range` clamped to the top level (D496): an
+ * `ISHIKAWA_INDENT_CLAMPED` at it, or the warning's `related` entry for it.
+ */
+function clamped(doc: DocumentView<IshikawaDocument>, range: Range): boolean {
+  const at = (r: Range) => r.start === range.start && r.end === range.end;
+  return doc.result.diagnostics.some(
+    (d) =>
+      d.code === ISHIKAWA_INDENT_CLAMPED &&
+      (at(d.range) || (d.related ?? []).some((x) => at(x.range)))
+  );
+}
+
 function causeHover(doc: DocumentView<IshikawaDocument>, ast: string): string | undefined {
-  const model = doc.result.model as IshikawaModel;
-  const path = pathTo(model, ast);
+  const position = positionOf(ast);
+  const path = pathTo(doc.result.model as IshikawaModel, position);
   const cause = path[path.length - 1];
   if (!cause) return undefined;
   const depth = path.length;
   const parent = path[depth - 2];
-  const top = Number(ast.slice('cause:'.length).split('.')[0]);
-  const side = top % 2 === 1 ? 'above the spine' : 'below the spine';
+  const side = position[0]! % 2 === 1 ? 'above the spine' : 'below the spine';
   const place =
     parent === undefined
       ? `Depth 1, a top-level cause, ${side}`
       : `Depth ${depth}, under ${code(parent.text)}, ${side}`;
   const facts = [`${place} · ${plural(cause.causes.length, 'sub-cause')}`];
-  // The baseline clamp (D496): the first cause's indent is the baseline.
-  const lines = doc.result.ast.children;
-  const first = lines.find((n) => n.type === 'Cause');
-  const line = lines.find((n) => n.id === ast);
-  if (first && line && line.indent < first.indent) {
+  if (clamped(doc, cause.range)) {
     facts.push(
       'Indented less than the first cause, so read as a top-level cause (mermaid@12 does the same).'
     );

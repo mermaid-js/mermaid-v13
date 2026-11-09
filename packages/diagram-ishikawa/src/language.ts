@@ -33,7 +33,7 @@ export type * from './parser/index.ts';
 /** The ishikawa facet. */
 export const ishikawaLanguage: LanguageFacet<IshikawaDocument> = {
   id: 'ishikawa',
-  parse: (text, options) => parseIshikawa(text, { ...options, clampInfo: true }),
+  parse: (text, options) => parseIshikawa(text, { ...options, clampPerCause: true }),
   categories: ishikawaCategories,
   namespaces: [['cause']],
   standalone: ['cause'],

@@ -100,6 +100,20 @@ describe('ishikawa language facet', () => {
     );
   });
 
+  it('reads the clamp from the parse, per cause or from the one warning (D496)', () => {
+    const text = 'ishikawa\nE\n    A\n  B\n  C\n';
+    const offset = text.indexOf('C');
+    for (const result of [
+      ishikawaLanguage.parse(text, { keepTokens: true }),
+      parseIshikawa(text, { keepTokens: true }),
+    ]) {
+      const h = ishikawaLanguage.hover({ offset }, { text, result });
+      expect(h?.contents).toMatch(/Indented less than the first cause/);
+      const first = ishikawaLanguage.hover({ offset: text.indexOf('A') }, { text, result });
+      expect(first?.contents).not.toMatch(/Indented less/);
+    }
+  });
+
   it('gives each clamped cause an information diagnostic, where a render warns once (D496)', () => {
     const text = 'ishikawa\nE\n    A\n  B\n  C\n';
     const facet = ishikawaLanguage.parse(text, { keepTokens: true }).diagnostics;
@@ -114,6 +128,16 @@ describe('ishikawa language facet', () => {
     expect(render.map((d) => [d.severity, d.code])).toEqual([
       ['warning', 'ISHIKAWA_INDENT_CLAMPED'],
     ]);
+  });
+
+  it('refuses a rename to a name holding a source line break (D497); `<br>` is one cause', () => {
+    for (const name of ['two\nlines', 'two\r\nlines', 'two\rlines', 'two\n'])
+      expect(ishikawaLanguage.isValidId(name, 'cause'), JSON.stringify(name)).toBe(
+        'A cause is one line: it cannot hold a line break.'
+      );
+    // A `<br>` is a break in the drawn label, not in the source: v12 reads one cause.
+    expect(ishikawaLanguage.isValidId('two<br>lines', 'cause')).toBeUndefined();
+    expect(ishikawaLanguage.isValidId('two<br/>lines', 'cause')).toBeUndefined();
   });
 
   it('accepts a cause name that reads back as that cause, and says why not otherwise (D497)', () => {

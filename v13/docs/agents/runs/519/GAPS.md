@@ -53,12 +53,13 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 ## T6 (#584)
 
 - **Deviation:** the spec asks for "a warning on a line that starts with the keyword", but mermaid\@12 rejects such a line (T1's oracle finding: the keyword is a token wherever a token starts), so it stays the parser's `UNEXPECTED` error with its hint (`The ishikawa way`); no separate warning. The oracle decides syntax (D496).
-- The clamp's "information diagnostic": the facet parses with `clampInfo`, which gives one `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped cause in place of the render's one warning (D496 keeps that for renders), as venn's `perOccurrence` did for D417.
+- The clamp's "information diagnostic": the facet parses with `clampPerCause`, which gives one `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped cause in place of the render's one warning (D496 keeps that for renders), as venn's `perOccurrence` did for D417.
 - Hover names a cause's side as v12 drew it: the 1st, 3rd, … top-level cause above the spine, the others below; a sub-cause its top-level cause's side. The effect's count is its top-level causes, plus all of them when there are sub-causes.
 - Rename (D497) also refuses an empty name, blanks at either end (the indent sets the depth), a leading `%%` (a comment line), and any name that does not read back as exactly that cause (a `%%{…}%%` directive, `#35;`): `isValidId` parses it as a cause and compares.
 - Completion offers the header keywords only. The completion goldens' body cursors sit in `not-code.mmd`, since `completion-validity.spec.ts` wants items at every other completion golden.
 - For T5 (#585): drop the `UNLISTED_FACETS` row (`language-service/src/testing/unlisted-facets.ts`) and the eager row and last test of `conformance/src/ishikawa/service-symbols.spec.ts` once the manifest has `language: ./dist/language.js`; add the adapter highlighter rows (`LEZER_HIGHLIGHTERS`, `MONARCH_HIGHLIGHTERS`, recipe step 9), which need the registry row's `load`.
-- R-LANG-4: no committed 50k fixture, CLI or budget spec (kanban and mindmap have none either); measured once by hand (handoff).
+- **For the maintainer:** D497's "refuses a line break" is read as a line break in the source (LF, CR, CRLF, U+2028/U+2029): a `<br>` in a new name is accepted, since mermaid\@12 reads `two<br>lines` as one cause (drawn on two lines). Pinned in `diagram-ishikawa/src/language.spec.ts`.
+- **Unmet on this machine, R-LANG-4:** the only evidence is one hand run on a generated 50,033-character document: cycle median 29.0 ms against the 15 ms budget (D156; best 9.9 ms, bare parse 1.7 ms), at load average 48. No committed 50k fixture, CLI or budget spec (kanban and mindmap have none either). **For T5 / the final review:** measure on a steady machine (or the reference runner) before claiming R-LANG-4.
 
 ## T7 (#586)
 

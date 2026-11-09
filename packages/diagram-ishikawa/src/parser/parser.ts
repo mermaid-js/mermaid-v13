@@ -26,8 +26,8 @@
  * Symbols (D497): each cause is a `cause` symbol, its own definition with no references.
  * Statement spans: `header`, `effect`, and `cause`, each holding the spans of the causes under
  * it (for folding). The D496 warnings are made here: `ISHIKAWA_EMPTY` and
- * `ISHIKAWA_INDENT_CLAMPED` (with `clampInfo`, the language facet's, one information
- * diagnostic per clamped cause instead).
+ * `ISHIKAWA_INDENT_CLAMPED` (with `clampPerCause`, one information diagnostic per clamped
+ * cause instead).
  *
  * With `probe` (R-LANG-7, D95, #584) the rules also record what they would accept at that
  * offset: the header keyword (after the blank and comment lines before it), what starts a
@@ -65,29 +65,27 @@ export interface IshikawaParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
   /**
-   * The language facet's diagnostics: one `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped
-   * cause, in place of the one warning a render gives (D496, spec #519 "Language facet").
+   * One `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped cause, in place of the one warning
+   * listing them all (D496): what an editor shows (spec #519 "Language facet").
    */
-  clampInfo?: boolean;
+  clampPerCause?: boolean;
 }
 
 export type IshikawaParseResult = ParseResult<IshikawaModel, IshikawaDocument>;
 
+// The kinds of each decision point, as lists (what the probe records, R-LANG-7, D95) and as
+// sets (what the parser tests); each set is made from its list. Constants, so a parse without a
+// probe allocates nothing for them.
+/** A blank or comment line (jison's `SPACELINE`): before the header, or a statement. */
+const BLANK_LINE_KINDS = [T.SpaceLine, T.CommentLine];
+const BLANK_LINES = kindSet(...BLANK_LINE_KINDS);
+/** What may start a statement: an indent, a line of text, a blank or comment line. */
+const STATEMENT_KINDS = [T.SpaceList, T.Text, ...BLANK_LINE_KINDS];
 /** What ends a statement: a line break, the end, or a blank or comment line. */
-const STOPS = kindSet(Kind.Newline, T.Eof, T.SpaceLine, T.CommentLine);
-/** A blank or comment line (jison's `SPACELINE`). */
-const BLANK_LINES = kindSet(T.SpaceLine, T.CommentLine);
+const STOP_KINDS = [Kind.Newline, T.Eof, ...BLANK_LINE_KINDS];
+const STOPS = kindSet(...STOP_KINDS);
 /** What an error after an indent names: the text or keyword after it, not the blanks. */
 const AFTER_INDENT = kindSet(T.Text, T.Ishikawa);
-
-// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
-// so a parse without a probe allocates nothing for them.
-/** The blank and comment lines before the header. */
-const BLANK_LINE_KINDS = [T.SpaceLine, T.CommentLine];
-/** What may start a statement: an indent, a line of text, a blank or comment line. */
-const STATEMENT_KINDS = [T.SpaceList, T.Text, T.SpaceLine, T.CommentLine];
-/** What ends a statement. */
-const STOP_KINDS = [Kind.Newline, T.Eof, T.SpaceLine, T.CommentLine];
 /**
  * Kinds a probe's cursor follows rather than extends when the token ends at the offset: an
  * indent and a blank line (the cursor is then where a line's text goes).
@@ -452,7 +450,7 @@ class IshikawaParser {
     const baseline = this.causes[0];
     if (!first || !baseline) return;
     const shown = (c: OpenCause) => `${quote(c.text)} at line ${this.lineOf(c.range.start)}`;
-    if (this.options.clampInfo) {
+    if (this.options.clampPerCause) {
       // The editor's: the indent's meaning at each line it changes.
       for (const c of clamped) {
         d.add(

@@ -7,7 +7,7 @@
 export const ISHIKAWA_EMPTY = 'ISHIKAWA_EMPTY';
 /**
  * Warning: causes indented less than the first cause, read as top-level causes; one per parse,
- * each such cause in `related` (D496). The language facet parses with `clampInfo`: one `info`
- * diagnostic of this code at each such cause instead (#584).
+ * each such cause in `related` (D496). With `clampPerCause`, one `info` diagnostic of this code
+ * at each such cause instead.
  */
 export const ISHIKAWA_INDENT_CLAMPED = 'ISHIKAWA_INDENT_CLAMPED';
