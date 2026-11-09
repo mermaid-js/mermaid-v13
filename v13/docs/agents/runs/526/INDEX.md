@@ -4,7 +4,7 @@ Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T0 `gen:grammar` for several grammars | #605 | — | own PR into `mermaid-v13` |
+| T0 `gen:grammar` for several grammars | #605 | — | merged into `mermaid-v13` (#621, c66d9ab1a) |
 | T1 lexer parity gates | #608 | #605 | open |
 | T2 grammars, parsers, model, AST | #610 | #608 | open |
 | T3 layout | #612 | #610 | open |
