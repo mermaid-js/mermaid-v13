@@ -205,7 +205,7 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
 /**
  * Who reads both base text variables (`fontFamily`, `fontSize`): a new type that reads both
  * appends here. A type that reads only `fontFamily` (pie, packet, cynefin, info, sankey, treemap,
- * treeview, wardley, xychart, venn) is listed on that row.
+ * wardley, xychart, venn) is listed on that row.
  */
 const TEXT_USERS = [
   'core',
@@ -262,11 +262,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
     'wardley',
-    'treeview',
   ]),
-  // Pie, packet, cynefin, info, sankey, treemap, treeview, wardley, xychart and venn draw in the
-  // font family but size their text by their own variables or constants (sankey: 14 px; wardley:
-  // its config; xychart: its `xyChart` config).
+  // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
+  // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
+  // xychart: its `xyChart` config).
   fontFamily: def('ff', 'font', [
     ...TEXT_USERS,
     'pie',
@@ -275,7 +274,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'info',
     'sankey',
     'treemap',
-    'treeview',
     'wardley',
     'xychart',
     'venn',
@@ -305,7 +303,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'sankey',
     'venn',
-    'treeview',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',

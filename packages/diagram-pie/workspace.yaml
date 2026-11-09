@@ -1,0 +1,50 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: pie
+    title: Pie chart syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # A label starts a section and `:` follows it: completion offers both, with the doc.
+      documented:
+        - String
+        - Colon
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The pie chart plugin (SVG; `pie`).'
+  install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
+  dynamicReads:
+    [
+      'pie1',
+      'pie2',
+      'pie3',
+      'pie4',
+      'pie5',
+      'pie6',
+      'pie7',
+      'pie8',
+      'pie9',
+      'pie10',
+      'pie11',
+      'pie12',
+    ]

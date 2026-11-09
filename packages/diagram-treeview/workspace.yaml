@@ -1,0 +1,26 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# Pre-manifest until T5 (#577) adds the `mermaid` manifest; then configDefaults, release and the
+# language bundle check apply too.
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables (the package's own name: `treeviewCategories`), `title` the
+# syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: treeview
+    title: Tree view syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench; checked
+# once the manifest has its `language` entry).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - ascii/
+    - ascii.ts
+    - v12-specs/
+    - index.ts
+    - testing.ts
+    - test-context.ts

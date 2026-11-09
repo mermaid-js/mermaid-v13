@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { treeViewGateCorpus } from './corpus.ts';
@@ -13,7 +13,7 @@ import { treeViewAdapter } from './v13.ts';
  * the recovery set and the line-separator cases, each also with CRLF line breaks and with
  * comment lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: `getRoot()`
  * as a depth-first list of depth, name, node type, icon, class and description, `getCount()`, the
- * title and accessibility) must agree, except the divergences listed in `divergences.json`.
+ * title and accessibility) must agree, except the divergences listed in `divergences/treeView.json`.
  *
  * The listed treeView divergences are core's reading, shared by every type, and the second test
  * checks they differ only there ({@link CORE}):
@@ -36,7 +36,7 @@ const run = async () =>
   runParity({
     adapters: [treeViewAdapter],
     corpus: each(await treeViewGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 describe('treeView oracle parity with mermaid@12', () => {

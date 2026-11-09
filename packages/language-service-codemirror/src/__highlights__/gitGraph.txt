@@ -1,0 +1,6 @@
+gitGraph:keyword
+commit:keyword
+id::keyword
+"A":string
+branch:keyword
+dev:variable

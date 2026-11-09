@@ -1,48 +1,27 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { classDiagram } from '@mermaid-js/diagram-class';
-import { er } from '@mermaid-js/diagram-er';
-import { flowchart } from '@mermaid-js/diagram-flowchart';
-import { kanban } from '@mermaid-js/diagram-kanban';
-import { sequence } from '@mermaid-js/diagram-sequence';
-import { state } from '@mermaid-js/diagram-state';
-import { venn } from '@mermaid-js/diagram-venn';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { outlineFixture, outliningEveryLeaf } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type DiagramPlugin, type ExtensionPlugin } from 'mermaid';
 import { createMermaid as createSlim } from 'mermaid/slim';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
+import { OUTLINE_CASES } from './outline-cases.ts';
 
 /**
  * The outline hook (D302) changes no byte of the corpus unless a drawer draws. The base writes
  * every outline as its plain leaf, as flowchart, class, state and ER did before they adopted
- * the hook (#340), kanban before #459 and venn before #501. Against it: the adopted diagrams
- * with no drawer, with T0's fixture drawer registered but inactive (stream and tree backing),
+ * the hook (#340), kanban before #459 and venn before #501. The types are `OUTLINE_CASES`, one
+ * `src/<type>/outline.ts` each. Against it: the adopted diagrams with no drawer, with T0's fixture drawer registered but inactive (stream and tree backing),
  * and with every leaf of every first-party diagram drawn through `w.outline` and a drawer
  * declining each one.
  */
 
-const DIRS = [
-  'flowchart',
-  'class-diagram',
-  'state-diagram',
-  'state-diagram-v2',
-  'er-diagram',
-  'sequence',
-  'kanban',
-  'venn',
-];
+/** The outlining types (`OUTLINE_CASES`, each type's `src/<type>/outline.ts`). */
+const CASES = [...OUTLINE_CASES.values()];
+const DIRS = CASES.flatMap((c) => c.dirs);
 
 type AnyPlugin = DiagramPlugin<unknown, unknown>;
-const PLUGINS = [
-  flowchart,
-  classDiagram,
-  state,
-  er,
-  sequence,
-  kanban,
-  venn,
-] as unknown as AnyPlugin[];
+const PLUGINS: AnyPlugin[] = CASES.map((c) => c.plugin);
 
 /** `w`, writing each outline as the plain leaf, without the hook. */
 const plainLeaves = (w: SvgWriter): SvgWriter => ({

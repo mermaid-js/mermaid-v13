@@ -158,9 +158,6 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
-      '@mermaid-js/diagram-treeview':
-        specifier: workspace:^
-        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -182,6 +179,9 @@ importers:
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
+      js-yaml:
+        specifier: ^4.3.2
+        version: 4.3.2
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
@@ -687,9 +687,6 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
-      '@mermaid-js/diagram-treeview':
-        specifier: workspace:*
-        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn

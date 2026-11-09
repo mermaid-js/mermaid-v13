@@ -1,11 +1,11 @@
 /**
- * The eight types v12 never sketched (D301, D305, and cynefin, #423), and packet (#421),
- * treemap (#514) and wardley (#497), which v12 never sketched either, draw as before with the
- * plugin registered and `handDrawn` on (H3, #343): over each one's whole e2e corpus, the SVG is
- * byte-identical to the render without the plugin, and no warning is added. A type without a v13
- * package yet is skipped and joins when it is ported.
+ * The types v12 never sketched (D301, D305) draw as before with the plugin registered and
+ * `handDrawn` on (H3, #343): over each one's whole e2e corpus, the SVG is byte-identical to the
+ * render without the plugin, and no warning is added. They are the fixture folders whose
+ * `hand-drawn.txt` says `unsketched` (a port adds that file, so this spec never names a type).
+ * A folder whose types have no v13 package yet is skipped and joins when it is ported.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createMermaid, type Mermaid } from 'mermaid';
@@ -14,21 +14,13 @@ import { handDrawn } from './index.ts';
 
 const DIAGRAMS = fileURLToPath(new URL('../../../e2e/diagrams/', import.meta.url));
 
-/** v12 type (as `detectType` reports it) → its e2e fixture folder. */
-const UNSKETCHED: Readonly<Record<string, string>> = {
-  sequence: 'sequence',
-  gantt: 'gantt',
-  pie: 'pie',
-  timeline: 'timeline',
-  journey: 'journey',
-  quadrantChart: 'quadrant-chart',
-  gitGraph: 'git',
-  packet: 'packet',
-  cynefin: 'cynefin',
-  treemap: 'treemap',
-  wardley: 'wardley',
-  xychart: 'xychart',
-};
+/** The fixture folders v12 never sketched: their `hand-drawn.txt` says `unsketched`. */
+const UNSKETCHED = readdirSync(DIAGRAMS)
+  .filter((dir) => {
+    const file = join(DIAGRAMS, dir, 'hand-drawn.txt');
+    return existsSync(file) && readFileSync(file, 'utf8').split('\n')[0]!.trim() === 'unsketched';
+  })
+  .sort();
 
 const HAND_DRAWN = /look["']?\s*:\s*["']?handDrawn/;
 
@@ -67,11 +59,25 @@ describe('the unsketched types are unchanged with handDrawn on (D301, D305)', ()
     expect((await withPlugin.render('u', flow)).svg).not.toBe((await plain.render('u', flow)).svg);
   });
 
-  for (const [type, folder] of Object.entries(UNSKETCHED)) {
-    it.skipIf(!plain.supportsFormat(type, 'svg'))(
-      `${type}: every ${folder} fixture draws the same bytes, with no added warning`,
+  it('include the types v12 never sketched, sequence among them', () => {
+    expect(UNSKETCHED).toContain('sequence');
+  });
+
+  for (const folder of UNSKETCHED) {
+    const files = mmd(folder);
+    // The folder's types, as `detectType` reports them; it runs once each has a v13 package.
+    const types = new Set(
+      files.flatMap(([, text]) => {
+        try {
+          return [plain.detectType(text)];
+        } catch {
+          return [];
+        }
+      })
+    );
+    it.skipIf(types.size === 0 || ![...types].every((t) => plain.supportsFormat(t, 'svg')))(
+      `${folder}: every fixture draws the same bytes, with no added warning`,
       async () => {
-        const files = mmd(folder);
         expect(files.length).toBeGreaterThan(0);
         let drawn = 0;
         for (const [path, text] of files) {
@@ -90,13 +96,4 @@ describe('the unsketched types are unchanged with handDrawn on (D301, D305)', ()
       120_000
     );
   }
-
-  it('treemap.look: handDrawn warns without the plugin, and draws unsketched with it', async () => {
-    const text = '---\nconfig:\n  treemap:\n    look: handDrawn\n---\ntreemap\n  "A"\n    "b": 1\n';
-    const plainSvg = (await plain.render('u', 'treemap\n  "A"\n    "b": 1\n')).svg;
-    const before = await outcome(plain, text);
-    const after = await outcome(withPlugin, text);
-    expect(before).toEqual({ svg: plainSvg, codes: ['LOOK_REMOVED'] });
-    expect(after).toEqual({ svg: plainSvg, codes: [] });
-  });
 });

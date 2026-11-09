@@ -1,0 +1,7 @@
+treemap:keyword
+"Root":string
+"Leaf":string
+::punctuation
+::::operator
+hot:variable
+classDef hot fill:red:keyword

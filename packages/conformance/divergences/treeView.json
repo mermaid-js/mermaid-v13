@@ -1,0 +1,26 @@
+[
+  {
+    "id": "treeView-cases/unclosed-directive",
+    "inputHash": "sha256:f9855d06a2dd2502",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treeView is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; the lexer gate excludes the same cases, #571).",
+    "owner": "#572",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "treeView-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:dcffa4b9ac7eba39",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treeView is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; the lexer gate excludes the same cases, #571).",
+    "owner": "#572",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "treeView-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:895c7ff72037a1c9",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treeView is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; the lexer gate excludes the same cases, #571).",
+    "owner": "#572",
+    "since": "2026-11-09"
+  }
+]

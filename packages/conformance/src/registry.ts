@@ -1,196 +1,25 @@
-import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
-import { cynefinAdapter } from './cynefin/v13.ts';
-import { erAdapter } from './er/v13.ts';
-import { flowchartAdapter } from './flowchart/v13.ts';
-import { infoAdapter } from './info/v13.ts';
-import { ganttAdapter } from './gantt/v13.ts';
-import { gitGraphAdapter } from './gitgraph/v13.ts';
-import { journeyAdapter } from './journey/v13.ts';
-import { kanbanParityCorpus } from './kanban/corpus.ts';
-import { kanbanAdapter } from './kanban/v13.ts';
-import { mindmapParityCorpus } from './mindmap/corpus.ts';
-import { mindmapAdapter } from './mindmap/v13.ts';
-import { packetAdapter } from './packet/v13.ts';
-import { pieAdapter } from './pie/v13.ts';
-import { quadrantParityCorpus } from './quadrant/corpus.ts';
-import { quadrantAdapter } from './quadrant/v13.ts';
-import { radarAdapter } from './radar/v13.ts';
-import { sankeyParityCorpus } from './sankey/corpus.ts';
-import { sankeyAdapter } from './sankey/v13.ts';
-import { sequenceAdapter } from './sequence/v13.ts';
-import { stateAdapter } from './state/v13.ts';
-import { timelineAdapter } from './timeline/v13.ts';
-import { treemapAdapter } from './treemap/v13.ts';
-import { treeViewAdapter } from './treeView/v13.ts';
-import { vennParityCorpus } from './venn/corpus.ts';
-import { vennAdapter } from './venn/v13.ts';
-import { wardleyAdapter } from './wardley/v13.ts';
-import { xyChartParityCorpus } from './xychart/corpus.ts';
-import { xyChartAdapter } from './xychart/v13.ts';
+import { exportsOnly, importTypeFiles } from './type-files.ts';
 
 /**
- * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
- * `{ adapter: flowchartAdapter, corpusDirs: ['e2e/diagrams/flowchart'] }` (ticket #8).
+ * The diagrams under oracle parity: each type's own `src/<type>/suite.ts` exports its suites as
+ * `parity`, e.g. `[{ adapter: flowchartAdapter, corpusDirs: ['e2e/diagrams/flowchart'] }]`
+ * (ticket #8), and they are gathered here in folder-name order. A port adds its `suite.ts`;
+ * no shared list names its type. The runner picks an item's adapter by the oracle's type or the
+ * adapter's detector, so the order must not matter: `registry.spec.ts` checks that no two
+ * adapters claim the same v12 type.
  */
-export const PARITY_SUITES: ParitySuite[] = [
-  {
-    adapter: flowchartAdapter,
-    corpusDirs: ['e2e/diagrams/flowchart'],
-    corpusFiles: ['packages/conformance/corpus/flowchart-v12-specs.json'],
-  },
-  {
-    adapter: sequenceAdapter,
-    corpusDirs: ['e2e/diagrams/sequence'],
-    corpusFiles: [
-      'packages/conformance/corpus/sequence-v12-specs.json',
-      'packages/conformance/corpus/sequence-cases.json',
-    ],
-  },
-  {
-    adapter: classAdapter,
-    corpusDirs: ['e2e/diagrams/class-diagram'],
-    corpusFiles: ['packages/conformance/corpus/class-v12-specs.json'],
-  },
-  {
-    adapter: erAdapter,
-    corpusDirs: ['e2e/diagrams/er-diagram'],
-    corpusFiles: ['packages/conformance/corpus/er-v12-specs.json'],
-  },
-  {
-    adapter: stateAdapter,
-    corpusDirs: ['e2e/diagrams/state-diagram', 'e2e/diagrams/state-diagram-v2'],
-    corpusFiles: ['packages/conformance/corpus/state-v12-specs.json'],
-  },
-  {
-    adapter: journeyAdapter,
-    corpusDirs: ['e2e/diagrams/journey'],
-    corpusFiles: ['packages/conformance/corpus/journey-v12-specs.json'],
-  },
-  {
-    adapter: timelineAdapter,
-    corpusDirs: ['e2e/diagrams/timeline'],
-    corpusFiles: [
-      'packages/conformance/corpus/timeline-v12-specs.json',
-      'packages/conformance/corpus/timeline-cases.json',
-    ],
-  },
-  {
-    adapter: mindmapAdapter,
-    corpusDirs: ['e2e/diagrams/mindmap'],
-    corpusFiles: [
-      'packages/conformance/corpus/mindmap-v12-specs.json',
-      'packages/conformance/corpus/mindmap-cases.json',
-    ],
-    corpus: mindmapParityCorpus,
-  },
-  {
-    adapter: ganttAdapter,
-    corpusDirs: ['e2e/diagrams/gantt'],
-    corpusFiles: [
-      'packages/conformance/corpus/gantt-v12-specs.json',
-      'packages/conformance/corpus/gantt-cases.json',
-    ],
-  },
-  {
-    adapter: pieAdapter,
-    corpusDirs: ['e2e/diagrams/pie'],
-    corpusFiles: ['packages/conformance/corpus/pie-v12-specs.json'],
-  },
-  {
-    adapter: gitGraphAdapter,
-    corpusDirs: ['e2e/diagrams/git'],
-    corpusFiles: [
-      'packages/conformance/corpus/gitGraph-v12-specs.json',
-      'packages/conformance/corpus/gitGraph-cases.json',
-    ],
-  },
-  {
-    adapter: infoAdapter,
-    corpusDirs: ['e2e/diagrams/info'],
-    corpusFiles: ['packages/conformance/corpus/info-v12-specs.json'],
-  },
-  {
-    adapter: quadrantAdapter,
-    corpusDirs: ['e2e/diagrams/quadrant-chart'],
-    corpusFiles: [
-      'packages/conformance/corpus/quadrant-v12-specs.json',
-      'packages/conformance/corpus/quadrant-cases.json',
-    ],
-    corpus: quadrantParityCorpus,
-  },
-  {
-    adapter: kanbanAdapter,
-    corpusDirs: ['e2e/diagrams/kanban'],
-    corpusFiles: [
-      'packages/conformance/corpus/kanban-v12-specs.json',
-      'packages/conformance/corpus/kanban-cases.json',
-    ],
-    corpus: kanbanParityCorpus,
-  },
-  {
-    adapter: packetAdapter,
-    corpusDirs: ['e2e/diagrams/packet'],
-    // The cases run in `packet/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
-    corpusFiles: ['packages/conformance/corpus/packet-v12-specs.json'],
-  },
-  {
-    adapter: radarAdapter,
-    corpusDirs: ['e2e/diagrams/radar'],
-    corpusFiles: ['packages/conformance/corpus/radar-v12-specs.json'],
-  },
-  {
-    adapter: treemapAdapter,
-    corpusDirs: ['e2e/diagrams/treemap'],
-    // The cases run in `treemap/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
-    corpusFiles: ['packages/conformance/corpus/treemap-v12-specs.json'],
-  },
-  {
-    adapter: treeViewAdapter,
-    corpusDirs: ['e2e/diagrams/tree-view'],
-    // The cases run in `treeView/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
-    corpusFiles: ['packages/conformance/corpus/treeView-v12-specs.json'],
-  },
-  {
-    adapter: cynefinAdapter,
-    corpusDirs: ['e2e/diagrams/cynefin'],
-    corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
-  },
-  {
-    adapter: sankeyAdapter,
-    corpusDirs: ['e2e/diagrams/sankey'],
-    corpusFiles: [
-      'packages/conformance/corpus/sankey-v12-specs.json',
-      'packages/conformance/corpus/sankey-cases.json',
-    ],
-    corpus: sankeyParityCorpus,
-  },
-  {
-    adapter: wardleyAdapter,
-    corpusDirs: ['e2e/diagrams/wardley'],
-    // The cases run in `wardley/parity.spec.ts`, with their unclosed-directive divergences.
-    corpusFiles: ['packages/conformance/corpus/wardley-v12-specs.json'],
-  },
-  {
-    adapter: xyChartAdapter,
-    corpusDirs: ['e2e/diagrams/xychart'],
-    corpusFiles: [
-      'packages/conformance/corpus/xychart-v12-specs.json',
-      'packages/conformance/corpus/xychart-cases.json',
-      'packages/conformance/corpus/xychart-recovery.json',
-    ],
-    corpus: xyChartParityCorpus,
-  },
-  {
-    adapter: vennAdapter,
-    corpusDirs: ['e2e/diagrams/venn'],
-    corpusFiles: [
-      'packages/conformance/corpus/venn-v12-specs.json',
-      'packages/conformance/corpus/venn-cases.json',
-    ],
-    corpus: vennParityCorpus,
-  },
-];
+export const PARITY_SUITES: ParitySuite[] = (
+  await importTypeFiles('suite.ts', (module, where) => {
+    exportsOnly(module, where, ['parity']);
+    if (!Array.isArray(module.parity) || module.parity.length === 0)
+      throw new Error(`${where}: \`parity\` must list the type's suites`);
+    return module.parity as readonly ParitySuite[];
+  })
+).flatMap(({ module }) => module);
 
-/** The committed divergence list (R-COMPAT-4). */
-export const DIVERGENCES_FILE = new URL('../divergences.json', import.meta.url);
+/**
+ * The committed divergence list (R-COMPAT-4): one `<type>.json` per diagram type in this
+ * folder, read together by `loadDivergences`, so a port adds its own file.
+ */
+export const DIVERGENCES_DIR = new URL('../divergences/', import.meta.url);
