@@ -29,3 +29,8 @@ export const C4_UNKNOWN_END = 'C4_UNKNOWN_END';
  * statements): the structure is kept (D450, for the maintainer).
  */
 export const C4_STRUCTURE_KEPT = 'C4_STRUCTURE_KEPT';
+/**
+ * D454: a boundary inside itself (reopening an alias inside one of its own boundaries makes the
+ * parents a cycle, which v12 left undrawn): it is drawn at the top level.
+ */
+export const C4_BOUNDARY_CYCLE = 'C4_BOUNDARY_CYCLE';

@@ -263,9 +263,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
   ]),
-  // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
-  // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
-  // xychart: its `xyChart` config).
+  // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn and c4 draw in the font
+  // family but size their text by their own variables or constants (sankey: 14 px; wardley: its
+  // config; xychart: its `xyChart` config; c4: its `c4` config).
   fontFamily: def('ff', 'font', [
     ...TEXT_USERS,
     'pie',
@@ -277,6 +277,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'wardley',
     'xychart',
     'venn',
+    'c4',
   ]),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived

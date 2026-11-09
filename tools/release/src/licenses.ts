@@ -142,6 +142,10 @@ export const UPSTREAMS: readonly Upstream[] = [
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
 export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
+  'packages/diagram-c4/src/layout/grid.ts': ['Pele'],
+  'packages/diagram-c4/src/layout/path.ts': ['Pele'],
+  'packages/diagram-c4/src/layout/route.ts': ['Pele'],
+  'packages/diagram-c4/src/layout/shapes.ts': ['Pele'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
   'packages/diagram-sankey/src/layout/d3-sankey.ts': ['d3-sankey', 'd3-array'],

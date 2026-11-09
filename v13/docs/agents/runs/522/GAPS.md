@@ -25,6 +25,17 @@ Unmet acceptance criteria and choices not covered by the spec or a D-id, per own
 
 ## T3 (#540)
 
+- Choice (oracle wins over the spec's wording): an element's text is v12's order, the bold name, then `[Person]`/`[Container: techn]`, then the description (`c4LabelHelper.ts` sections `c4-name`, `c4-type`, `c4-descr`, checked in the 12.2.0 dist); the spec's "Layout (T3)" put the type line above the name.
+- Choice (D454's lengths, no D-id for the mapping): elements `2·c4ShapeMargin` apart both ways (v12's packer), rows after the first `nextLinePaddingX` in; contents `c4ShapeMargin` inside a frame on every side, below the header; boundaries `diagramMarginX` apart across and `c4ShapeMargin + diagramMarginY` down (v12's `stopy + margin` then `+ diagramMarginY`); the canvas margins are `diagramMarginX`/`Y`, v12's 60 px title row above. Elements keep their own height in a row (v12; Pele stretched them). The header is v12's (centred; label `boundaryFontSize + 2` bold at 8, `[type]` 5 below, description `− 2` 20 below); Pele's sliding heading is not ported, so a line may cross a header.
+- Choice: every shape is sized with `c4ShapePadding` (v12 classic): `max(width, text + 2·pad)`; person +26, cylinder `+3·ry`, queue `+2·rx`, `fr-rect` +16. **For T4:** neo's cylinder/`fr-rect`/`h-cyl` paddings (core rows `cylinderPadding*`, `subroutinePadding*`, with `'c4'` in `usedBy`) go into `shapeSize` (`layout/shapes.ts`), read in the layout, not the renderer (one pipeline).
+- Choice: with root `wrap` and `c4.wrap`, a relation label wraps at Pele's room (88 px across a column gap, else 160) and a boundary header at `max(contents' width, c4.width)` (v12's widths came from `screen.availWidth`). The title is 16 px normal in the theme family (v12's root font), not the theme's `fontSize` (no second core row).
+- Choice: the router clips to the real outlines, rounded corners included (Pele treated `rounded` as a rectangle), so ends lie on the drawn outline. Arrowhead trims are the renderer's: `c4RelationPath(rel, startTrim, endTrim)`.
+- Choice: `C4_BOUNDARY_CYCLE` is a render warning (`ctx.warn`, AST id of the boundary moved), raised by the layout: on each cycle, the boundary first in the model goes to the top level.
+- Font family keys go through `checkStyle` (`STYLE_VALUE_DROPPED`, sequence's precedent); size keys through `fontSizePx` (base 14).
+- Core: `fontFamily` gains `'c4'` in `usedBy` (`gen:theme` regenerated `theme-variables.md`); `NOT_DRAWN_YET` in `theme-used-by.spec.ts` is now empty. Core gz unchanged (94,412 B before and after).
+- Listed exceptions to "relations cross no other element" (e2e corpus, 141 relations): 4 relations in `nightly-check/large-diagram` (6 crossings, pinned in `layout/layout.spec.ts`): a diagonal between boundaries finds no free two-bend elbow and Pele's router tries no longer route. The docs examples and every other fixture cross nothing.
+- Over the R-SEC-5 budget (`rels · (elements + boundaries + 3·rels) > 2,000,000`) relations go straight and labels sit at their middle (`C4Layout.careful` false). Just under it a careful layout takes about 0.5 s here (not measured on a steady machine).
+
 ## T4 (#541)
 
 - Block's T0 merged as #589 (`mermaid-v13` ad3648a91): `cylinderPadding*` (`cyx`, `cyy`) and `subroutinePadding*` (`srx`, `sry`) are core rows in `packages/core/src/theme/vocabulary.ts` with `usedBy: ['flowchart']` (plus block). T4 adds `'c4'` to `usedBy` on each row its sources read, nothing else in core. The integration branch merges `mermaid-v13` before T4 starts.
