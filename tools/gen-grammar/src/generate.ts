@@ -3,7 +3,7 @@
  * artefacts, never imported by a published package), the syntax reference pages and each
  * diagram's runtime kind → category table (D94) and keyword doc table (D93).
  */
-import { diagramPackages, type DiagramPackage } from '../../workspace/diagrams.ts';
+import { workspaceDiagrams, type WorkspaceDiagram } from '../../workspace/diagrams.ts';
 import { categoriesModule, kindKeys } from './categories.ts';
 import type { KindSource } from './categories.ts';
 import { docsModule } from './docs.ts';
@@ -91,10 +91,11 @@ export function grammarTarget(pkg: string, entry: unknown): GrammarTarget {
 
 /**
  * The grammar targets of `packages`: each diagram package's `workspace.yaml` `grammars`, in
- * package order. A port adds its own entries there; no list here names it.
+ * package order, a pre-manifest package's too (its T2 writes the grammar before T5 adds the
+ * manifest). A port adds its own entries there; no list here names it.
  */
 export function grammarTargets(
-  packages: readonly DiagramPackage[] = diagramPackages()
+  packages: readonly WorkspaceDiagram[] = workspaceDiagrams()
 ): GrammarTarget[] {
   return packages.flatMap((p) => (p.wiring.grammars ?? []).map((g) => grammarTarget(p.type, g)));
 }
