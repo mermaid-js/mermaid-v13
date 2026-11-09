@@ -8,7 +8,7 @@ Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draf
 | T1 lexer parity gate | #507 | #285 (merged) | merged (ff 1f7574f8c; package entry 4,193 B gz, no core change) |
 | T2 grammar, parser, model, AST | #508 | #507 | merged (ff 2d29b39c6; package entry 9,064 B gz, no core change) |
 | T3 layout | #509 | #508 | merged (ff 58a69c2c6; package entry ~15 KB gz; core +0, `fontFamily` usedBy only) |
-| T4 SVG renderer and theme table | #510 | #509, #506 | open |
+| T4 SVG renderer and theme table | #510 | #509, #506 | merged (c2f0d523f; package entry 17,928 B gz; theme identity 0 diffs) |
 | T6 language facet | #512 | #508 | merged (ff e7da02591; `./language` 12,470 B gz; core +0, type-only `LanguageFacet.writtenName?`) |
 | T5 integration | #513 | #510, #512 | open |
 
@@ -34,6 +34,7 @@ AI-Max is shared by five wave-2 ports, so one ticket agent runs at a time: T1 â†
 | #506 T0 (#534, merged; measured on 98d3c3ffa) | 94,088 B | +266; 120 B spare |
 | #508 T2 | â€” | 0 (no core or registry change) |
 | #509 T3 | 94,088 B | 0 (`fontFamily` usedBy += xychart; dropped from CDN core) |
+| #510 T4 | 94,096 B | +8 (`flatten()` treats a flat `[]` as unset, D545 fix; 112 B spare) |
 
 ## Finish rule
 
