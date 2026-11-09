@@ -26,6 +26,7 @@ import {
 import { markerRect, type Rect } from './end-markers.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
+import { honourSides } from './sides.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -615,7 +616,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     edges.set(e.id, model);
   });
 
-  return {
+  const laid: LayoutModel = {
     width: total.width + 2 * margin,
     height: total.height + 2 * margin,
     nodes,
@@ -623,6 +624,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     groups,
     direction: rootDir,
   };
+  return grid ? laid : honourSides(graph, laid, M, margin); // sides are hints (D503)
 }
 
 // The axis a side faces along, and which way is out of the box.
