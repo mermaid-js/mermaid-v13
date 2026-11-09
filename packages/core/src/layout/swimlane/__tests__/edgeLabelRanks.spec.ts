@@ -116,7 +116,11 @@ describe('swimlane edge labels do not change node ranks (#8327)', () => {
     ]);
     const model = swimlaneLayout(graph);
     const [a, b] = [model.edges.get('e0')!.label!, model.edges.get('e1')!.label!];
-    expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(SHORT_LABEL_SIZE.width);
+    // Each label rides its own route (anchored after routing), so their boxes do not overlap.
+    const apart =
+      Math.abs(a.x - b.x) >= SHORT_LABEL_SIZE.width ||
+      Math.abs(a.y - b.y) >= SHORT_LABEL_SIZE.height;
+    expect(apart).toBe(true);
     expect(validateLayout(graph, model)).toEqual([]);
   });
 
