@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-venn",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Venn diagram plugin for Mermaid: parser, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",

@@ -121,7 +121,11 @@ export function packAll(
       opts.outDir,
       `${manifest.name.replace(/^@/, '').replace('/', '-')}-${manifest.version}.tgz`
     );
-    execFileSync('tar', ['-czf', tarball, '-C', work, 'package']);
+    // macOS tar writes an AppleDouble `._name` entry for every file with extended attributes
+    // (e.g. com.apple.provenance) unless COPYFILE_DISABLE is set; GNU tar ignores it.
+    execFileSync('tar', ['-czf', tarball, '-C', work, 'package'], {
+      env: { ...process.env, COPYFILE_DISABLE: '1' },
+    });
     return { name: manifest.name, version: manifest.version, tarball };
   });
 }
