@@ -69,10 +69,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). treeView until its renderer
- * (#575).
+ * must read none (so it is removed as soon as it reads one).
  */
-const NOT_DRAWN_YET = new Set<string>(['treeview']);
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
