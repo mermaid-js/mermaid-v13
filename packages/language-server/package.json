@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/language-server",
-  "version": "13.0.0-alpha.1",
+  "version": "13.0.0-alpha.2",
   "description": "Mermaid language server (LSP over stdio) for .mmd and .mermaid files.",
   "type": "module",
   "license": "MIT",

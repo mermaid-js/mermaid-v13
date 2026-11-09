@@ -367,9 +367,6 @@
   "packages/core/src/theme/theme.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 1
-    },
-    "tsdoc/syntax": {
-      "count": 2
     }
   },
   "packages/dev/src/browser/compare-pane.ts": {
