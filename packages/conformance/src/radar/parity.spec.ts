@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { radarGateCorpus } from './corpus.ts';
@@ -13,7 +13,7 @@ import { radarAdapter } from './v13.ts';
  * parity run), and `corpus/radar-cases.json`, each also with CRLF line breaks and with comment
  * lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: `getAxes()`,
  * `getCurves()`, `getOptions()`, the title and accessibility) must agree, except the divergences
- * listed in `divergences.json`.
+ * listed in `divergences/`.
  *
  * The listed radar divergences are core's reading, shared by every type, and the second test
  * checks they differ only there ({@link CORE}):
@@ -36,7 +36,7 @@ const run = async () =>
   runParity({
     adapters: [radarAdapter],
     corpus: each(await radarGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 describe('radar oracle parity with mermaid@12', () => {

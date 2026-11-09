@@ -6,7 +6,7 @@ import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-se
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { inputHash, loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { packetGateCorpus } from './corpus.ts';
 import type { PacketPieceSnapshot } from './v12.ts';
 import { packetV12Snapshot } from './v12.ts';
@@ -42,7 +42,7 @@ const service = createLanguageService();
 await service.preload({ types: ['packet'] });
 /** `id` and source hash of each listed model divergence. */
 const DIVERGENT = new Set(
-  loadDivergences(fileURLToPath(DIVERGENCES_FILE))
+  loadDivergences(fileURLToPath(DIVERGENCES_DIR))
     .filter((d) => d.kind === 'model')
     .map((d) => `${d.id} ${d.inputHash}`)
 );

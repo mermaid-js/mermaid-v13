@@ -1,12 +1,13 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { findFragments } from './fragments.ts';
+import { findFragments, findMigrationFragments } from './fragments.ts';
 import {
   MIGRATION_BEGIN,
   MIGRATION_END,
   SCHEMA_PATH,
   SECTION_OWNERS,
+  assembleMigration,
   defaultsName,
   generate,
   spliceMigration,
@@ -58,9 +59,42 @@ async function problemsOf(schema: string): Promise<string> {
 
 describe('gen-config', () => {
   it('the committed generated files match the schema (run `pnpm gen:config`)', async () => {
-    const { files } = await generate(read(SCHEMA_PATH)!, read, findFragments(root));
+    const { files } = await generate(
+      read(SCHEMA_PATH)!,
+      read,
+      findFragments(root),
+      findMigrationFragments(root)
+    );
     const stale = [...files].filter(([path, content]) => read(path) !== content).map(([p]) => p);
     expect(stale).toEqual([]);
+  });
+
+  it("assembles MIGRATION.md's per-diagram sections from v13/docs/migration", () => {
+    const found = findMigrationFragments(root);
+    expect(found.length).toBeGreaterThan(0);
+    // The numbered fragments keep the old order; a port's `<type>.md` sorts after them.
+    expect(found.map((f) => f.name)).toEqual([...found.map((f) => f.name)].sort());
+    const doc = read('v13/docs/MIGRATION.md')!;
+    expect(doc.endsWith(found.map((f) => f.text).join('\n'))).toBe(true);
+    const head = '# Migrating\n\nIntro.\n\n';
+    const a = { name: '010-a.md', text: '## A\n\nOne.\n' };
+    const b = { name: '020-b.md', text: '## B\n\nTwo.\n' };
+    const usecase = { name: 'usecase.md', text: '## Use case\n\nNew.\n' };
+    const doc2 = `${head}${a.text}\n${b.text}`;
+    // A new fragment is appended; a fragment's edit replaces its old text.
+    expect(assembleMigration(doc2, [a, b, usecase])).toBe(`${doc2}\n${usecase.text}`);
+    const edited = { ...a, text: '## A\n\nOne, edited.\n' };
+    expect(assembleMigration(doc2, [edited, b])).toBe(`${head}${edited.text}\n${b.text}`);
+    // The first time, the sections go after the doc.
+    expect(assembleMigration('# Migrating\n', [b])).toBe('# Migrating\n\n' + b.text);
+    expect(assembleMigration(head, [])).toBe(head);
+    expect(() => assembleMigration(head, [{ name: 'x.md', text: 'no heading\n' }])).toThrow(
+      /must start with a "## " heading/
+    );
+    // A fragment named like a section above the fragments is refused, not spliced there.
+    expect(() => assembleMigration(`# M\n\n## B\n\nOld.\n\n## A\n\nOne.\n`, [a, b])).toThrow(
+      /020-b\.md's "## B" is also above them/
+    );
   });
 
   it('writes defaults for every section owner (#148)', async () => {
@@ -72,6 +106,14 @@ describe('gen-config', () => {
     }
     expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
     expect(SECTION_OWNERS.xyChart).toBe('packages/diagram-xychart');
+  });
+
+  it('owns a section exactly for the packages whose workspace.yaml says configDefaults', () => {
+    // Every committed config-defaults.ts has an owner, so dropping the opt-in cannot leave one stale.
+    const committed = readdirSync(join(root, 'packages'))
+      .filter((d) => existsSync(join(root, 'packages', d, 'src/generated/config-defaults.ts')))
+      .map((d) => `packages/${d}`);
+    expect(Object.values(SECTION_OWNERS).sort()).toEqual(committed.sort());
   });
 
   it('camel-cases a dashed section in its defaults name', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { treemapGateCorpus } from './corpus.ts';
@@ -14,7 +14,7 @@ import { treemapAdapter } from './v13.ts';
  * breaks and with comment lines added. Accept/reject and the normalised model (`v12.ts`,
  * `v13.ts`: `getRoot()` with names, values, class selectors, compiled styles, nesting and
  * order, `getClasses()`, the title and accessibility) must agree, except the divergences listed
- * in `divergences.json`.
+ * in `divergences/`.
  *
  * The listed treemap divergences are core's reading, shared by every type, and the second test
  * checks they differ only there ({@link CORE}):
@@ -33,7 +33,7 @@ const run = async () =>
   runParity({
     adapters: [treemapAdapter],
     corpus: each(await treemapGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 describe('treemap oracle parity with mermaid@12', () => {
