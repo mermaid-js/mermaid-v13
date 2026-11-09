@@ -174,8 +174,9 @@ describe('architecture lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)',
     expect(headerKept).toEqual([]);
     // Every e2e fixture reaches the architecture lexer: the 20 v12 ones and the 8 `lexer-*` ones
     // of `nightly-check/` (#594: arrowheads, text icons, quoted labels, names, the header's line,
-    // blanks, a labelled `{group}` edge, like-side and self edges).
-    expect(e2e).toBe(28);
+    // blanks, a labelled `{group}` edge, like-side and self edges), and the 2 `layout-*` ones
+    // (#607: bends as written, `iconSize` and `padding`).
+    expect(e2e).toBe(30);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });
