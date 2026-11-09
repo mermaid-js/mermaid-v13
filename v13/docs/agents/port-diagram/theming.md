@@ -22,13 +22,15 @@ Where v12 gates on a name for something that is not a palette or geometry (for e
 
 ## Shared vocabulary
 
-The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`. The circle and cross arrowheads and the padding of flowchart's other shapes (stadium, double circle, circle minimum, subroutine, cylinder, lean, odd) are flowchart's own (`packages/diagram-flowchart/src/theme/`, spec #414 T4): a second type that needs one moves its row back to core.
+The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`. The circle and cross arrowheads and the padding of the stadium, double circle, circle minimum, subroutine, cylinder, lean and odd shapes were flowchart's own until block, C4 and agentflow needed them (#552); they are core rows again, so a new reader adds itself to the row's `usedBy`.
 
 | Group | Variables | Read with |
 | --- | --- | --- |
 | Palette | `borderColorArray`, `bkgColorArray`; the series palettes `seriesColorArray`, `plotColorArray` (D332, D381) | `theme.palette()`, or a slot in a rule (`seriesColorArray3`) |
 | Point arrowhead | `arrowheadGap`, `arrowheadLength`, `arrowheadWidth` | `theme.number()` |
-| Padding | `nodePaddingX`, `nodePaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `circlePadding` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
+| Circle arrowhead | `circleArrowheadSize`, `circleArrowheadGap` | `theme.number()` |
+| Cross arrowhead | `crossArrowheadSize`, `crossArrowheadGap`, `crossArrowheadStrokeWidth` | `theme.number()` |
+| Padding | `nodePaddingX`, `nodePaddingY`, `stadiumPaddingX`, `stadiumPaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `doubleCircleGap`, `doubleCirclePadding`, `circlePadding`, `circleMinDiameter`, `subroutinePaddingX`, `subroutinePaddingY`, `cylinderPaddingX`, `cylinderPaddingY`, `leanPaddingX`, `leanPaddingY`, `oddPaddingX`, `oddPaddingY` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
 | Shadow | `dropShadow` | `theme.filter()` |
 | Gradient | `useGradient` (a `flag` token), `gradientStart`, `gradientStop` (`usedBy: ['core']`) | `theme.outline(name)` for the paint, `theme.gradient()` to know whether it is on |
 
@@ -48,7 +50,7 @@ To add one (the contract is DESIGN §8.1 and §12.1, D331):
 4. **Generate.** A new package needs the stub `src/theme/generated/variables.ts` (`export const THEME_VARIABLE_TABLE = {};`) before the first `pnpm gen:theme`, which writes it and `v13/docs/theme-variables.md`. Document the variable under `themeVariables` in `packages/core/schema/config.schema.yaml` with both values, then run `pnpm gen:config`.
 5. Add its row to the MIGRATION.md "Theme geometry" table, for geometry.
 
-The direction check (`tools/gen-config/src/theme-direction.spec.ts`) and the closure scan in `packages/mermaid/src/cdn-build.spec.ts` fail when a name runs the wrong way or reaches core's bundle. Test with `createTheme(spec, { diagram: plugin.theme })` (`packages/diagram-flowchart/src/theme/table.spec.ts` is an example).
+The direction check (`tools/gen-config/src/theme-direction.spec.ts`) and the closure scan in `packages/mermaid/src/cdn-build.spec.ts` fail when a name runs the wrong way or reaches core's bundle. Test with `createTheme(spec, { diagram: plugin.theme })` (`packages/diagram-class/src/theme/table.spec.ts` is an example).
 
 The DSL forms a table uses most (D332):
 
