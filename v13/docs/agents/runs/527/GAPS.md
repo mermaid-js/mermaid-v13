@@ -68,3 +68,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - `mermaid-v13` @ 18b902dcb merged: the Langium lexer and harvest rows are `conformance/src/eventmodeling/tables.ts`, the parity suite `suite.ts`, the 37 divergences `divergences/eventmodeling.json`, the grammar target `grammars:` in `packages/diagram-eventmodeling/workspace.yaml`; the `harvest:eventmodeling` script, the core `TEXT_USERS` line and the `NOT_DRAWN_YET` edit are dropped (the source scan finds the font readers). The yaml-tree digest is `__snapshots__/yaml-tree/eventmodeling.txt`.
 - **For the maintainer:** #638 (`fix/pre-manifest-diagrams`) is merged in so the pre-manifest package counts; `tools/workspace/sync.spec.ts` carries railroad's one-line `workspaceDiagrams()` fix from #638's review (a copy of #638's fix, to drop when #638 lands with it).
 - The `sync.spec.ts` copy goes away with Knut's #640 (`fix/pre-manifest-language`, shared `copyWorkspaceInputs`): on that merge take #640's file and run `pnpm regen`. #640 also counts a pre-manifest `./language` export in language-service's devDependencies, which #609 (T6) needs before T5's manifest.
+
+## T4 (#606, merged)
+
+- Review (orchestrator, `/code-review`), fixed: the AST round-trip checks both directions, with a not-drawn set computed from the model and `eventModelStructure` (R-PARSE-8); lane labels start-anchored at v12's (30, lane y + 30); `useMaxWidth` checked and warned as `padding` (D226); a `labels` hook that returns no strings (data is plain text, D523).
+- Accepted: `openRoot`/`textElement` copied as in ~10 renderers (a core helper would be a core change); the plugin and renderer on the main entry (treemap's shape).
