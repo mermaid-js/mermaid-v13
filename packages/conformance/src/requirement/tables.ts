@@ -7,9 +7,6 @@ export const jison = {
   requirement: {
     probe: 'requirementDiagram\n',
     e2e: ['requirement'],
-    // `with-a-title` closes its front matter with an indented `  ---`, so v12 rejects it before
-    // its lexer runs (spec #520); it stays a rejection fixture.
-    notLexed: ['requirement/visual-check/with-a-title-default.mmd'],
     harvest: {
       dir: `${V12_DIAGRAMS}/requirement`,
       docs: 'requirementDiagram.md',

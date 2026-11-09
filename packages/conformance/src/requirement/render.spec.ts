@@ -68,10 +68,9 @@ describe('requirement render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with both markers, dividers, labels and titles', () => {
     expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBeGreaterThanOrEqual(172);
     expect(cases.length).toBeGreaterThan(200 * THEMES.length);
-    // Every e2e fixture renders but the title file v13's preprocess rejects (spec #520).
-    expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([
-      'e2e/visual-check/with-a-title-default.mmd',
-    ]);
+    // Every e2e fixture renders; the title file v13's preprocess rejects is a case (spec #520).
+    expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
+    expect(rejected.has('requirement-cases/title-front-matter-unclosed')).toBe(true);
     const all = cases.map((c) => c.r.svg).join('');
     for (const part of [
       'class="marker requirement_contains"',

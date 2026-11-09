@@ -818,5 +818,9 @@
   {
     "id": "requirement-cases/recovery-a-nested-definition",
     "source": "requirementDiagram\nrequirement a {\n  requirement b {\n  }\n}"
+  },
+  {
+    "id": "requirement-cases/title-front-matter-unclosed",
+    "source": "---\n  title: simple Requirement diagram\n  ---\n    requirementDiagram\n\n    requirement test_req {\n    id: 1\n    text: the test text.\n    risk: high\n    verifymethod: test\n    }\n\n    element test_entity {\n    type: simulation\n    }\n\n    test_entity - satisfies -> test_req\n"
   }
 ]

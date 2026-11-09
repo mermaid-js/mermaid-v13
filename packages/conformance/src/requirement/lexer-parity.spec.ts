@@ -211,7 +211,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // The excluded sources: the two above, and their variants.
     expect(excluded.filter((id) => !VARIANT.test(id))).toHaveLength(EXCLUDED.size);
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer, but
-    // `visual-check/with-a-title-default.mmd` (v12 rejects its front matter), the upper-case
+    // the unclosed-front-matter title case (v12 rejects its front matter), the upper-case
     // header case and the excluded sources.
     expect(e2e).toBe(189);
     expect(specs).toBe(48);
@@ -226,7 +226,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // through the middle of the header.
     const byId = new Map(items.map((item) => [item.id, item.source]));
     const undetected = new Set([
-      'e2e/visual-check/with-a-title-default.mmd',
+      'requirement-cases/title-front-matter-unclosed',
       'requirement-cases/header-upper-case',
     ]);
     expect(
