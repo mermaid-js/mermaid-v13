@@ -568,6 +568,21 @@ describe("a table's palette variable (D545)", () => {
     expect(bands.palette('bkgColorArray')).toEqual([]);
   });
 
+  it('lets the nested key apply under an empty flat list, as under an empty flat value', () => {
+    for (const demoSeries of [[], '']) {
+      const t = read(spec.base, { themeVariables: { demoSeries, demo: { series: '#123456' } } });
+      expect(t.palette('demoSeries'), JSON.stringify(demoSeries)).toEqual(['#123456']);
+    }
+    // An empty shared palette is the theme's, under the table's variable too.
+    const shared = read(spec.base, {
+      themeVariables: { plotColorArray: [], demo: { series: [] } },
+    });
+    expect([shared.palette('plotColorArray'), shared.palette('demoSeries')]).toEqual([
+      BASE_TEN,
+      BASE_TEN,
+    ]);
+  });
+
   it('writes its value comma-separated, and has no CSS variable', () => {
     expect(read(spec.base).value('demoSeries')).toBe(BASE_TEN.join(','));
     const css = createTheme(spec.base, { diagram: PALETTE });

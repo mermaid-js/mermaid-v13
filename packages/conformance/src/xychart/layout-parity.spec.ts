@@ -195,7 +195,7 @@ const segment = (s: Segment): (string | number)[][] => [
 ];
 
 const ANCHOR = { left: 'start', center: 'middle', right: 'end' } as const;
-const BASELINE = { top: 'top', middle: 'middle', hanging: 'top', auto: 'alphabetic' } as const;
+const BASELINE = { top: 'top', middle: 'middle', hanging: 'hanging', auto: 'alphabetic' } as const;
 
 // v12's renderer decoded its `encodeEntities` placeholders before drawing; v13 keeps the text
 // as written and core label layout decodes it.

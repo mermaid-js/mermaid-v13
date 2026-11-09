@@ -1,8 +1,12 @@
+// cspell:words drawables
 /**
- * Ports v12's XY chart parser and DB specs (R-TEST-3) into `src/v12-specs/`, run against v13's
- * parser through `src/v12-specs/adapter.ts`: `parser.parse` parses with v13 and replays the
- * statements onto `parser.yy` as v12's grammar called its DB, and `db` is v12's DB API over v13's
- * model builder. The spec bodies are copied unchanged from the last v12 commit; only imports
+ * Ports v12's XY chart parser, DB and chart-builder specs (R-TEST-3) into `src/v12-specs/`. The
+ * parser and DB specs run against v13's parser through `src/v12-specs/adapter.ts`:
+ * `parser.parse` parses with v13 and replays the statements onto `parser.yy` as v12's grammar
+ * called its DB, and `db` is v12's DB API over v13's model builder. The chart title and legend
+ * specs run against v13's layout and renderer through `src/v12-specs/chart-adapter.ts`, which
+ * reads v12's drawables back from the SVG. The spec bodies are copied unchanged from the last
+ * v12 commit; only imports
  * are rewritten, v12's own error texts are dropped from `toThrowError` (v13 messages name
  * constructs in Mermaid terms, R-ERR-5), and tests listed in `SKIP` (with a reason) are turned
  * into `it.skip`.
@@ -18,7 +22,17 @@ const V12 = 'fa796a943';
 const DIR = 'packages/mermaid/src/diagrams/xychart';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const OUT = fileURLToPath(new URL('../src/v12-specs/', import.meta.url));
-const FILES = ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'];
+/** Each spec and the adapter import that replaces its v12 imports. */
+const PARSER = "import { db, parser } from './adapter.ts';";
+const CHART = "import { defaultConfig, themes, XYChartBuilder } from './chart-adapter.ts';";
+const LEGEND =
+  "import { ChartLegend, defaultConfig, getChartLegendComponent, themes, XYChartBuilder } from './chart-adapter.ts';";
+const FILES: readonly (readonly [file: string, imports: string])[] = [
+  ['parser/xychart.jison.spec.ts', PARSER],
+  ['xychartDb.spec.ts', PARSER],
+  ['chartBuilder/components/chartTitle.spec.ts', CHART],
+  ['chartBuilder/components/legend.spec.ts', LEGEND],
+];
 
 /** `file: { test title (or its unique start): reason }`. Reasons are written into the file. */
 const SKIP: Record<string, Record<string, string>> = {};
@@ -31,9 +45,11 @@ const git = (...args: string[]) =>
 
 let total = 0;
 let skipped = 0;
-for (const file of FILES) {
+for (const [file, imports] of FILES) {
   const name = file.slice(file.lastIndexOf('/') + 1);
   let body = git('show', `${V12}:${DIR}/${file}`)
+    // Imports, a multi-line one included: the adapter's import replaces them.
+    .replace(/^import\b[^;]*?\bfrom ['"][^'"]+['"];?$/gm, '')
     .split('\n')
     .filter((line) => !/^import .* from ['"]/.test(line) && !line.startsWith('// @ts-ignore'))
     .join('\n');
@@ -65,7 +81,7 @@ for (const file of FILES) {
     '// @ts-nocheck',
     '// cspell:disable',
     "import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';",
-    "import { db, parser } from './adapter.ts';",
+    imports,
     ...new Set(notes),
     '',
   ].join('\n');

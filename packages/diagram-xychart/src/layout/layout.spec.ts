@@ -286,7 +286,7 @@ describe('layoutXyChart: data labels', () => {
     expect(inside.dataLabels[0]).toMatchObject({
       x: b.x + b.width / 2,
       y: b.y + 10,
-      baseline: 'top',
+      baseline: 'hanging',
     });
     const outside = bars(lay(src, { showDataLabel: true, showDataLabelOutsideBar: true }).layout);
     expect(outside.dataLabels[0]).toMatchObject({ y: b.y - 10, baseline: 'alphabetic' });
