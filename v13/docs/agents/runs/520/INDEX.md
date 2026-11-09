@@ -1,11 +1,11 @@
 # Run notes, spec #520 (M5b requirement, `@mermaid-js/diagram-requirement`)
 
-Integration branch `feature/520_requirement` (from `mermaid-v13` at 521fb76ee). Draft PR: not yet opened.
+Integration branch `feature/520_requirement` (from `mermaid-v13` at 521fb76ee). Draft PR: #629.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate and corpus | #560 | #285 (merged) | open |
-| T2 grammar, parser, model, AST | #564 | #560 | open |
+| T1 lexer parity gate and corpus | #560 | #285 (merged) | merged (ff 6062cd372; package entry 4,471 B gz; core unchanged 93,891 B) |
+| T2 grammar, parser, model, AST | #564 | #560 | in progress (t564) |
 | T3 layout | #570 | #564 | open |
 | T4 SVG renderer | #574 | #570 | open |
 | T6 language facet | #579 | #564 | open |
