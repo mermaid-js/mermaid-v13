@@ -204,9 +204,10 @@ describe('layoutEventModel', () => {
       '}',
     ]);
     expect(data?.text.indents).toEqual([0, 16, 16, 16, 0]);
-    // Every character is measured: '"id":    42,' is 12 wide in characters.
-    expect(data?.text.widths[1]).toBe(16 + 12 * 8);
-    expect(data?.text.lines.flat().every((r) => !r.text.includes('\u200b'))).toBe(true);
+    // Each line is measured as drawn: its indent and 8 a character of the text shown.
+    expect(data?.text.widths).toEqual(
+      (shown ?? []).map((line, k) => (data?.text.indents[k] ?? 0) + [...line].length * 8)
+    );
   });
 
   it('wraps names and data at 430, so a box is at most 470 wide', () => {

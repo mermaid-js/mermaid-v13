@@ -207,20 +207,20 @@ function boxText(env: Env, name: string, data: string | undefined): BoxText {
   };
 }
 
-/** Zero width space: a break hint core's label layout drops from what it draws. */
-const HIDDEN = '\u200b';
-/** Markup core's label layout reads in plain text: a tag's `<`, an entity's `&`, a `\n` break. */
-const MARKUP = /[<&]|\\(?=n)/g;
+/** The characters core's label layout reads as markup in plain text, as character references. */
+const ESCAPES: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '\\': '&#92;' };
+const MARKUP = /[&<\\]/g;
 const BLANKS = /[ \t]/g;
 
 /**
- * `text` as written, through core's label layout (D523): a zero width space after each `<`, `&`
- * and a `\` before `n` keeps them from reading as a tag, an entity or a line break (and is dropped
- * from the drawn text), and each blank is a no-break space, so a run of them stays (v12's
- * `&nbsp;`) while a line can still wrap there. No core change.
+ * `text` as written, through core's label layout (D523): `&`, `<` and `\` become character
+ * references, which the layout decodes back to the characters after it has read tags, entities
+ * and `\n` breaks, so none is read as markup and each is measured as drawn; each blank is a
+ * no-break space, so a run of them stays (v12's `&nbsp;`) while a line can still wrap there. No
+ * core change.
  */
 const literal = (text: string): string =>
-  text.replace(MARKUP, (m) => m + HIDDEN).replace(BLANKS, '\u00a0');
+  text.replace(MARKUP, (m) => ESCAPES[m] ?? m).replace(BLANKS, '\u00a0');
 
 /**
  * The data as one left-aligned label in mono: each source line laid out on its own, as written
