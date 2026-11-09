@@ -35,3 +35,4 @@ The integration PR stays a draft until all of these hold; then `gh pr ready <PR>
 ## CI log
 
 - `28513490c` (T3 + mermaid-v13): run 42672206856 marked failure with no failing job. Attempt 1 ran only "Check and build" (pass) and attempt 2 only the other four (all pass), so the jobs were not scheduled. Infrastructure, not the branch; the next push gives a clean run.
+- `9105235e4` (T6): pre-push `pnpm check` green. No hosted CI: #627 conflicts with `mermaid-v13` since #637, and GitHub runs no pull-request CI on a conflicting PR. CI returns after the #637 move (waits on the shared no-manifest fix).
