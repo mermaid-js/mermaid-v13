@@ -24,6 +24,7 @@ import type {
   EventModelNote,
 } from '../model.ts';
 import type { EventModelDataNode, EventModelGwtStepNode, EventModelText } from './ast.ts';
+import { firstFrameAt } from '../frames.ts';
 import type { Parsed } from './parser.ts';
 
 /**
@@ -76,12 +77,9 @@ export function normalise(
   const dataBlocks: EventModelDataBlock[] = [];
   const notes: EventModelNote[] = [];
   const gwts: EventModelGwt[] = [];
-  /** Each frame id's first frame: its index in `frames`. */
-  const frameAt = new Map<string, number>();
   const dataNames = new Set<string>();
   const entityNames = new Set<string>();
   for (const { node, kind } of parsed.frames) {
-    if (!frameAt.has(node.frame.value)) frameAt.set(node.frame.value, frames.length);
     const frame: EventModelFrame = {
       id: node.frame.value,
       reset: node.reset,
@@ -120,6 +118,7 @@ export function normalise(
       });
     }
   }
+  const frameAt = firstFrameAt(frames);
   symbols(parsed, st, frameAt, dataNames, entityNames);
   warnings(parsed, st, frames, frameAt, dataNames);
 
@@ -208,10 +207,12 @@ function warnings(
       const id = s.frame.value;
       const at = frameAt.get(id);
       const source = at === undefined ? undefined : frames[at];
-      if (source && !allowsSource(kind, source.kind)) {
+      // Only a source that becomes a relation (placed already) has its kind checked.
+      if (source && at !== undefined && at <= index && !allowsSource(kind, source.kind)) {
         invalid.add(invalidSourceMessage(kind, source.keyword), s.frame.range);
       }
       if (at === undefined) {
+        if (parsed.failedIds.has(id)) continue;
         unknownSource.add(
           `Frame ${node.frame.value} names the source frame ${id}, which no frame has, so no relation is drawn from it.`,
           s.frame.range
@@ -231,7 +232,9 @@ function warnings(
     }
   });
   for (const node of parsed.children) {
-    if ((node.type === 'Note' || node.type === 'Gwt') && !frameAt.has(node.frame.value)) {
+    if (node.type !== 'Note' && node.type !== 'Gwt') continue;
+    const id = node.frame.value;
+    if (!frameAt.has(id) && !parsed.failedIds.has(id)) {
       const what = node.type === 'Note' ? 'This note' : 'This `gwt`';
       unknownFrame.add(
         `${what} is on frame ${node.frame.value}, which no frame has.`,

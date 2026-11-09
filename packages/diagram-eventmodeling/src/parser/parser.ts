@@ -26,12 +26,12 @@
 import {
   ExpectedTable,
   formatExpected,
-  isLineEnd,
   Kind,
   kindSet,
   LineIndex,
   ParseState,
   significantTokens,
+  skipTo,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -89,6 +89,9 @@ const TEXTS = [T.Title, T.AccTitle, T.AccDescr];
 const STARTS = [...FRAMES, T.Entity, T.Data, T.Note, T.Gwt, ...TEXTS];
 const STARTS_SET = kindSet(...STARTS);
 const AFTER_STATEMENT = [...STARTS, Kind.EOF];
+/** What may follow a `gwt`'s `given` steps, and its `when` steps (R-ERR-2). */
+const AFTER_GIVEN = [...KIND_LIST, T.When, T.Then];
+const AFTER_WHEN = [...KIND_LIST, T.Then];
 
 /** Human names for what the parser expects (R-ERR-2); never a token or rule name (R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -136,6 +139,11 @@ export interface Parsed {
   readonly title?: EventModelTextNode;
   readonly accTitle?: EventModelTextNode;
   readonly accDescr?: EventModelTextNode;
+  /**
+   * Ids of frames whose statement failed after its id: no D525 warning names them as missing,
+   * since the error already covers them.
+   */
+  readonly failedIds: ReadonlySet<string>;
 }
 
 /** Parse an event model. Never throws: problems are error diagnostics. */
@@ -165,6 +173,10 @@ class EventModelParser {
   private readonly mentions = new Map<string, number>();
   /** Frame ids read so far (duplicates are v12's thrown error). */
   private readonly frameIds = new Set<string>();
+  /** Ids of frames that failed after their id was read. */
+  private readonly failedIds = new Set<string>();
+  /** The id of the frame being read, until it completes. */
+  private pending: string | undefined;
   private title: EventModelTextNode | undefined;
   private accTitle: EventModelTextNode | undefined;
   private accDescr: EventModelTextNode | undefined;
@@ -191,6 +203,7 @@ class EventModelParser {
       title: this.title,
       accTitle: this.accTitle,
       accDescr: this.accDescr,
+      failedIds: this.failedIds,
     };
     const model = normalise(parsed, st, this.pre.frontMatter?.title);
     const ast: EventModelDocument = {
@@ -293,7 +306,7 @@ class EventModelParser {
       throw STOP;
     }
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
-    const why = /^[\w.]*$/.test(shown)
+    const why = /^[\w.]*$/.test(text)
       ? ''
       : '; names are ASCII letters, digits and `_`, and start with a letter or `_`';
     this.st.diagnostics.error(
@@ -326,13 +339,16 @@ class EventModelParser {
   /** Why the token `k` (`text`) starts no statement. */
   private explainStatement(k: number, text: string): string | undefined {
     if (k === T.Id) {
-      const word = TEXT_WORDS.find((w) => text.startsWith(w));
+      const word = TEXT_WORDS.find((w) => text === w);
       if (word) {
         return `\`${word}\` is read only after another statement on the same line, as in \`eventmodeling ${word}${word === 'title' ? ' My model' : ': …'}\``;
       }
       if (KEYWORDS.has(text.toLowerCase())) return 'keywords are written in lower case';
     }
     if (k === T.Header) return 'an event model has one `eventmodeling`, at its start';
+    if (k === T.DataBlock) {
+      return 'inline data after a frame stays on one line; write a multi-line block as `data Name { … }` and refer to it with `[[Name]]`';
+    }
     if (k === T.Arrow || k === T.OpenRef || k === T.DataInline) {
       return 'a frame takes its parts in this order: `->>` sources, then `[[data]]`, then inline data';
     }
@@ -347,22 +363,27 @@ class EventModelParser {
       rule();
     } catch (error) {
       if (error !== STOP) throw error;
-      // Always move on: a failure on the statement's first token skips that token, and so
-      // does one on a keyword inside the line (`tf 01 evt data`: a name, not a statement).
-      let j = this.i > from && this.lineStart(this.i) ? this.i : Math.max(this.i + 1, from + 1);
-      while (j < this.t.length && STARTS_SET[this.kind(j)] !== 1) j++;
-      this.i = j;
+      if (this.pending !== undefined) this.failedIds.add(this.pending);
+      this.pending = undefined;
+      // Resume at the failing token when it starts a statement (`->> tf 02 cmd B`), else after
+      // it. A failure on the statement's first token always moves on.
+      const resume = this.i > from && this.startsStatement(this.i);
+      this.i = skipTo(this.t, resume ? this.i : Math.max(this.i + 1, from + 1), STARTS_SET);
     }
   }
 
-  /** Whether token `j` is the first on its line (a line break between it and the one before). */
-  private lineStart(j: number): boolean {
-    if (j === 0) return true;
-    const end = this.t.start[j] ?? 0;
-    for (let p = this.t.end[j - 1] ?? 0; p < end; p++) {
-      if (isLineEnd(this.src.charCodeAt(p))) return true;
-    }
-    return false;
+  /**
+   * Whether token `j` starts a statement: a statement keyword followed by what that statement
+   * takes next. A keyword that is not (`tf 01 evt data tf 02 …`: `data` meant as a name) is
+   * skipped with the rest of the broken statement.
+   */
+  private startsStatement(j: number): boolean {
+    const k = this.kind(j);
+    if (STARTS_SET[k] !== 1) return false;
+    const next = this.kind(j + 1);
+    if (k === T.Data || k === T.Entity) return next === T.Id;
+    if (k === T.Title || k === T.AccTitle || k === T.AccDescr) return true;
+    return next === T.FrameId;
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -447,6 +468,9 @@ class EventModelParser {
     const k = this.kind();
     const keyword = this.text();
     const frame = this.expect(T.FrameId);
+    this.pending = frame.value;
+    // Reported when read (a later syntax error in the frame is its own), reserved only once the
+    // frame is complete: a frame that fails reaches no model and takes no id.
     this.duplicate(frame, keyword.range.start);
     const { text: kindText, kind } = this.kindOf();
     const name = this.qualifiedName();
@@ -481,16 +505,15 @@ class EventModelParser {
     node.range.end = this.end();
     node.id = this.id(`frame:${frame.value}`);
     for (const s of node.children) s.id = this.id(`relation:${s.frame.value}->${frame.value}`);
+    this.frameIds.add(frame.value);
+    this.pending = undefined;
     this.frames.push({ node, kind });
     this.done(node, 'frame');
   }
 
   /** v12's thrown error (`db.ts` `setAst`): a frame id read before, tf and rf alike. */
   private duplicate(frame: EventModelText, start: number): void {
-    if (!this.frameIds.has(frame.value)) {
-      this.frameIds.add(frame.value);
-      return;
-    }
+    if (!this.frameIds.has(frame.value)) return;
     this.st.diagnostics.error(
       EVENTMODELING_DUPLICATE_FRAME,
       `Duplicate event modeling frame ID "${frame.value}" on line ${this.lineOf(start)}`,
@@ -534,8 +557,9 @@ class EventModelParser {
     if (this.kind() === T.When) {
       this.i++;
       when = this.steps();
-    }
-    this.expect(T.Then);
+    } else if (this.kind() !== T.Then) this.fail(AFTER_GIVEN);
+    if (this.kind() !== T.Then) this.fail(AFTER_WHEN);
+    this.i++;
     const then = this.steps();
     const range = { start, end: this.end() };
     const node = { id: this.id(`gwt:${frame.value}`), type: 'Gwt' as const, range, frame };

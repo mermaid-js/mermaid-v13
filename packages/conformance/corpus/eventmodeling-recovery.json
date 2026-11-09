@@ -236,5 +236,53 @@
     "source": "eventmodeling\ntf 01 ui A\ntf 02 cmd note\ntf 03 evt C ->> 01",
     "errors": [["UNEXPECTED", 3]],
     "keeps": ["01", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/failed-frame-keeps-id-free",
+    "name": "A frame that fails takes no id: the next frame with that id is no duplicate",
+    "source": "eventmodeling\ntf 01 evt\ntf 01 evt A\ntf 02 cmd B",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/arrow-before-frame",
+    "name": "A source with no id, then a frame on the same line",
+    "source": "eventmodeling tf 01 evt A ->> tf 02 cmd B ->> 01\ntf 03 evt C",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["02", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/frame-keyword-as-name",
+    "name": "A frame keyword where a name belongs, twice on one line",
+    "source": "eventmodeling\ntf 01 evt tf 02 evt\ntf 03 cmd C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["03"]
+  },
+  {
+    "id": "eventmodeling-recovery/block-after-frame",
+    "name": "A multi-line block straight after a frame",
+    "source": "eventmodeling\ntf 01 evt A {\n  \"a\": 1\n}\ntf 02 cmd B",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/gwt-given-only",
+    "name": "A gwt with only given steps, then a frame",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A\ntf 02 cmd B",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/title-words-as-names",
+    "name": "Words that start with title or accDescr at a line start",
+    "source": "eventmodeling\ntitleBar\ntf 01 evt A\naccDescription\ntf 02 cmd B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "02"]
   }
 ]

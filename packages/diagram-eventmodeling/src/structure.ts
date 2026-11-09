@@ -16,6 +16,7 @@
  * `EventModelData.text`).
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
+import { firstFrameAt } from './frames.ts';
 import type { EventModel, EventModelFrame, EventModelKind } from './model.ts';
 
 /** The three bands: index of their default lane, its label, and a namespace lane's prefix. */
@@ -61,7 +62,12 @@ export interface EventModelRelation {
   readonly target: number;
   /** No `->>` wrote it: from the nearest earlier box in another lane. */
   readonly inferred: boolean;
-  /** The AST id of the `->>` that wrote it (`relation:<source>-><target>`); none when inferred. */
+  /** `relation:<source>-><target>`: the drawn path's `data-id` (D528; an inferred one's too). */
+  readonly id: string;
+  /**
+   * The AST id of the `->>` that wrote it (the same text as {@link id}); none when inferred, so
+   * its path carries `data-id` and no `data-ast` (#606).
+   */
   readonly astId?: AstId;
 }
 
@@ -132,9 +138,7 @@ function relations(
   laneOf: readonly EventModelLane[]
 ): EventModelRelation[] {
   const out: EventModelRelation[] = [];
-  /** Each id's first frame (a repeated id is an error). */
-  const firstOf = new Map<string, number>();
-  for (const [k, f] of frames.entries()) if (!firstOf.has(f.id)) firstOf.set(f.id, k);
+  const firstOf = firstFrameAt(frames);
   /**
    * Where the run of boxes in one lane that ends at each frame starts: the nearest earlier box
    * in another lane is the one before the run (v12 scanned back box by box, quadratic when a
@@ -155,14 +159,22 @@ function relations(
         .sort((a, b) => a - b);
       for (const source of sources) {
         const id = frames[source]?.id ?? '';
-        out.push({ source, target, inferred: false, astId: relationId(f, id) });
+        out.push({
+          source,
+          target,
+          inferred: false,
+          id: relationId(f, id),
+          astId: relationId(f, id),
+        });
       }
       continue;
     }
     if (target === 0 || f.reset) continue;
     const before = target - 1;
     const source = laneOf[before] === laneOf[target] ? (runStart[before] ?? 0) - 1 : before;
-    if (source >= 0) out.push({ source, target, inferred: true });
+    if (source >= 0) {
+      out.push({ source, target, inferred: true, id: relationId(f, frames[source]?.id ?? '') });
+    }
   }
   return out;
 }

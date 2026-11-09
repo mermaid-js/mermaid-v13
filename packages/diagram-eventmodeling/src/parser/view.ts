@@ -31,7 +31,7 @@ export function eventModelingView(
   src: string,
   pre: PreprocessResult = preprocess(src)
 ): EventModelingView {
-  const directives = [...pre.directives.map((d) => d.range)].sort((a, b) => a.start - b.start);
+  const directives = pre.directives.map((d) => d.range).sort((a, b) => a.start - b.start);
   let copy = src;
   let view = sourceView(copy, pre.bodyStart, directives);
   while (view.holes.some((h) => h.kind === 'comment')) {

@@ -98,11 +98,13 @@ function stubDocument(): unknown {
 /** Run `fn` with the stub `document` installed (and the previous one put back). */
 export function withStubDocument<T>(fn: () => T): T {
   const g = globalThis as Record<string, unknown>;
+  const had = 'document' in g;
   const saved = g.document;
   g.document = stubDocument();
   try {
     return fn();
   } finally {
-    g.document = saved;
+    if (had) g.document = saved;
+    else delete g.document;
   }
 }

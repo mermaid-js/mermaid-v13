@@ -40,6 +40,21 @@ const emCase = (id: string): string => {
   if (found === undefined) throw new Error(`no event modeling case ${id}`);
   return found;
 };
+const RECOVERY = new Map(
+  (
+    JSON.parse(
+      readFileSync(
+        join(REPO_ROOT, 'packages/conformance/corpus/eventmodeling-recovery.json'),
+        'utf8'
+      )
+    ) as { id: string; source: string }[]
+  ).map((c) => [c.id, c.source])
+);
+const recovery = (id: string): string => {
+  const found = RECOVERY.get(`eventmodeling-recovery/${id}`);
+  if (found === undefined) throw new Error(`no event modeling recovery case ${id}`);
+  return found;
+};
 const codes = (src: string) => parse(src).diagnostics.map((d) => [d.severity, d.code]);
 /** The source text of `range` in `src`. */
 const at = (src: string, range: { start: number; end: number }) =>
@@ -339,6 +354,41 @@ describe('event modeling diagnostics', () => {
     expect(message('parser-second-header')).toMatch(/one `eventmodeling`, at its start/);
     expect(message('frame-id-four-digits')).toMatch(/one to three digits/);
     expect(message('parser-typed-block-on-frame')).toMatch(/inline data stays on one line/);
+  });
+
+  it('checks the kind only of sources that become relations, and warns nothing for a failed frame', () => {
+    const forward = parse(nightly('parser-forward-source')).diagnostics;
+    expect(forward.map((d) => [d.code, d.message, d.related?.length ?? 0])).toEqual([
+      [
+        EVENTMODELING_INVALID_SOURCE,
+        "A event can only receive input from a command, not from 'evt'.",
+        0,
+      ],
+      [
+        EVENTMODELING_UNKNOWN_SOURCE,
+        'Frame 01 names the source frame 02, which comes after it, so no relation is drawn from it: a source must come first.',
+        1,
+      ],
+    ]);
+    // Frame 01 fails at `->> tf`; frame 02 on the same line still parses, and its `->> 01`
+    // names a frame the error already covers, so no warning.
+    const lost = parse(recovery('arrow-before-frame'));
+    expect(lost.model.frames.map((f) => f.id)).toEqual(['02', '03']);
+    expect(lost.diagnostics.map((d) => d.code)).toEqual(['UNEXPECTED']);
+  });
+
+  it('names what a gwt takes next, and hints only at whole misplaced words', () => {
+    const [gwt] = parse(recovery('gwt-given-only')).diagnostics;
+    expect(gwt?.expected).toEqual([
+      'a kind (`ui`, `pcr`, `cmd`, `rmo` or `evt`)',
+      '`when`',
+      '`then`',
+    ]);
+    const [block] = parse(recovery('block-after-frame')).diagnostics;
+    expect(block?.message).toMatch(/inline data after a frame stays on one line/);
+    for (const d of parse(recovery('title-words-as-names')).diagnostics) {
+      expect(d.message).not.toMatch(/read only after another statement/);
+    }
   });
 
   it('takes the preprocess result from the caller', () => {
