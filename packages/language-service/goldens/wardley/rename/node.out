@@ -1,0 +1,14 @@
+@ 4:11  component |Tea [0.5, 0.7] label [10, 5]
+  prepare: 4:11-4:14 "Tea"; rename to "Green Tea":
+  %% rename-to: Green Tea
+  wardley-beta
+  anchor User [0.95, 0.6]
+  component Green Tea [0.5, 0.7] label [10, 5]
+  component Green Tea [0.6, 0.7]
+  User -> Green Tea
+  Green Tea +'pour'> User
+  evolve Green Tea 0.8
+  pipeline Green Tea {
+    component Leaf [0.2]
+  }
+  accelerator Green Tea [0.5, 0.8]

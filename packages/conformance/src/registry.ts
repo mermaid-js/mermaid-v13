@@ -20,6 +20,7 @@ import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
 import { treemapAdapter } from './treemap/v13.ts';
+import { wardleyAdapter } from './wardley/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -141,6 +142,12 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: cynefinAdapter,
     corpusDirs: ['e2e/diagrams/cynefin'],
     corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
+  },
+  {
+    adapter: wardleyAdapter,
+    corpusDirs: ['e2e/diagrams/wardley'],
+    // The cases run in `wardley/parity.spec.ts`, with their unclosed-directive divergences.
+    corpusFiles: ['packages/conformance/corpus/wardley-v12-specs.json'],
   },
 ];
 

@@ -1,0 +1,35 @@
+---
+config:
+  theme: neo
+  themeVariables:
+    wardley:
+      backgroundColor: '#fff9db'
+      axisColor: '#0b7285'
+      axisTextColor: '#0b7285'
+      gridColor: '#ffd8a8'
+      componentFill: '#e7f5ff'
+      componentStroke: '#1864ab'
+      componentLabelColor: '#1864ab'
+      linkStroke: '#5c940d'
+      evolutionStroke: '#c2255c'
+      annotationStroke: '#862e9c'
+      annotationTextColor: '#862e9c'
+      annotationFill: '#f3d9fa'
+    wardleyLinkStroke: '#e8590c'
+  wardley-beta:
+    showGrid: true
+description: >-
+  the twelve nested themeVariables.wardley keys (D335) in neo, and the flat wardleyLinkStroke
+  winning over the nested linkStroke (D540)
+---
+wardley-beta
+  title Nested wardley variables
+  evolution Genesis -> Custom -> Product -> Commodity
+  anchor Customer [0.9, 0.4]
+  component Service [0.6, 0.5]
+  component Platform [0.3, 0.75]
+  Customer -> Service
+  Service -> Platform
+  evolve Service 0.8
+  annotations [0.05, 0.95]
+  annotation 1,[0.6, 0.5] "Moving"

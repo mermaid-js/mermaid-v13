@@ -1,0 +1,9 @@
+wardley-beta
+component Kettle [0.57, 0.45]
+pipeline Kettle {
+  component Campfire Kettle [0.35] label [-60, 35]
+  component Electric Kettle [0.53]
+}
+Campfire Kettle -> Kettle
+Kettle_Electric Kettle -> Kettle
+User -> Electric Kettle

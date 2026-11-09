@@ -1,0 +1,15 @@
+---
+title: Front-matter title
+description: >-
+  text: a front-matter title (D218), #name; and numeric entity codes, an &amp; in a name, unicode,
+  quoted names, link labels and a long note, all one literal line in the theme font (D422)
+---
+wardley-beta
+  anchor "Kunde – ü & ß" [0.95, 0.5]
+  component "Tea #amp; Cups" [0.7, 0.4]
+  component 'Café ☕' [0.45, 0.6] label [10, -12]
+  component "Power &amp; Light" [0.2, 0.75]
+  "Kunde – ü & ß" -> "Tea #amp; Cups"
+  "Tea #amp; Cups" +'brews'> 'Café ☕'
+  'Café ☕' -> "Power &amp; Light" ; #9829; runs on
+  note "A long note that runs well past the component it describes, as v12 drew it" [0.15, 0.3]

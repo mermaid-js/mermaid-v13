@@ -1,0 +1,5 @@
+2:11-2:15 "note" error UNEXPECTED: Expected a name such as `Tea` or `"Hot water"`, got `note`; `notebook` starts with the keyword `note`, and an unquoted name cannot be or start with one: quote it, as `"notebook"`.
+3:16-3:17 "1" error UNEXPECTED: Expected a decimal such as `0.5`, got `1`; a coordinate is a decimal with a `.`, such as `0.5`: write `1.0` for 1 and `0.0` for 0.
+4:24-4:29 "120.0" error WARDLEY_OUT_OF_RANGE: Component "Kettle" evolution must be between 0-1 (decimal) or 0-100 (percentage). Received: 120
+5:14-6:1 "\n" error UNEXPECTED: Expected a name such as `Tea` or `"Hot water"`, got a line break.
+6:10-6:15 "Ghost" error WARDLEY_UNKNOWN_PARENT: Pipeline "Ghost" must reference an existing component with coordinates.

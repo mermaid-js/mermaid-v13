@@ -45,6 +45,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
+    "@mermaid-js/diagram-wardley": "workspace:*",
     "@mermaid-js/language-service": "workspace:*",
     "vscode-languageserver": "^11.0.0"
   },
