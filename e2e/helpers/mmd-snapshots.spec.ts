@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, it, expect } from 'vitest';
@@ -17,6 +17,7 @@ import {
   SUPPORTED_TYPES,
 } from './mmd-snapshots.ts';
 import * as discovery from '../../packages/dev/src/fixture-discovery.ts';
+import { diagramPackages } from '../../tools/workspace/diagrams.ts';
 import * as helpers from './mmd-snapshots.ts';
 
 describe('asHostText', () => {
@@ -157,25 +158,16 @@ describe('discoverMmdFixtures', () => {
 });
 
 describe('the real fixture folders', () => {
-  it('runs flowchart and skips types without a v13 package', async () => {
+  it('runs every folder whose types all have a v13 package, and skips the rest', async () => {
+    // From the diagram packages' manifests, not the registry the discovery reads, so a new
+    // port's folder joins here unchanged and a registry that drops a package fails.
+    const ported = new Set(diagramPackages().flatMap((p) => p.manifest.types));
     const folders = supportedFixtureFolders();
-    expect(folders).toContain('flowchart');
-    expect(folders).toContain('sequence');
-    expect(folders).toContain('state-diagram');
-    expect(folders).toContain('state-diagram-v2');
-    expect(folders).toContain('journey');
-    expect(folders).toContain('timeline');
-    expect(folders).toContain('mindmap');
-    expect(folders).toContain('pie');
-    expect(folders).toContain('packet');
-    expect(folders).toContain('git');
-    expect(folders).toContain('gantt');
-    expect(folders).toContain('radar');
-    expect(folders).toContain('treemap');
-    expect(folders).toContain('wardley');
-    expect(folders).toContain('xychart');
-    expect(folders).not.toContain('requirement');
-    expect(folders).not.toContain('zenuml');
+    const declared = Object.keys(FIXTURE_FOLDER_TYPES).sort();
+    const runs = declared.filter((f) => FIXTURE_FOLDER_TYPES[f].every((t) => ported.has(t)));
+    expect(runs).toContain('flowchart');
+    expect(declared.filter((f) => !runs.includes(f))).toContain('zenuml');
+    expect(folders).toEqual(runs.filter((f) => existsSync(fixturePath(f))));
   });
 
   it('declares the types each folder actually holds (detected by mermaid)', async () => {

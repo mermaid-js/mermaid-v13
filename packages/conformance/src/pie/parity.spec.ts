@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runParity } from '../runner.ts';
 import { loadDivergences } from '../divergences.ts';
 import { fileURLToPath } from 'node:url';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import type { CorpusItem } from '../types.ts';
 import { pieGateCorpus } from './corpus.ts';
 import { pieAdapter } from './v13.ts';
@@ -31,7 +31,7 @@ describe('pie oracle parity with mermaid@12', () => {
     const report = await runParity({
       adapters: [pieAdapter],
       corpus: each(items),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+      divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
     });
     const agree = report.results.filter((r) => r.status === 'agree');
     const rejected = agree.filter((r) => !r.oracleAccepted).length;
