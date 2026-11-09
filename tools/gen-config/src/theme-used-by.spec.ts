@@ -69,9 +69,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since railroad's layout (#612).
+ * must read none (so it is removed as soon as it reads one). Railroad until its renderer (#613).
  */
-const NOT_DRAWN_YET = new Set<string>([]);
+const NOT_DRAWN_YET = new Set<string>(['railroad']);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
