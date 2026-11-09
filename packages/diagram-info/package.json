@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-info",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Info diagram plugin for Mermaid: prints the version of mermaid, as SVG or text.",
   "type": "module",
   "license": "MIT",

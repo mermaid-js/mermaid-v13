@@ -52,12 +52,30 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state |
 | `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state |
 | `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state |
+| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart |
+| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart |
+| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
+| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
+| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap |
+| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
+| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
 | `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap |
 | `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
 | `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
+| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
+| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
+| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
+| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
+| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
+| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart |
+| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart |
+| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
+| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
+| `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
+| `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
 | `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
@@ -66,8 +84,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
 | `linkInkColor` | `--mermaid-linkInkColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
 | `lineTextColor` | `--mermaid-lineTextColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
-| `softBorder` | `--mermaid-softBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
+| `softBorder` | `--mermaid-softBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | core |
 | `frameBorder` | `--mermaid-frameBorder` | derived | color | `softBorder` | `softBorder` | redux-dark, redux-dark-color, forest | sequence |
+| `actorBkg` | `--mermaid-actorBkg` | derived | color | `mainBkg` | `mainBkg` | | sequence, usecase |
+| `actorBorder` | `--mermaid-actorBorder` | derived | color | `inline(softBorder)` | `inline(softBorder)` | | sequence, usecase |
 | `badgeBkg` | `--mermaid-badgeBkg` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `badgeTextColor` | `--mermaid-badgeTextColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `calloutBkg` | `--mermaid-calloutBkg` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
@@ -154,29 +174,6 @@ flags and opacities, which are read literally.
 | `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `erZeroOrMoreCircleOffset` | | length | `28` | `28` | `28` | `28` | `30` | `30` | `30` | `30` | `30` | `28` | `28` |
-
-### flowchart
-
-| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `circleArrowheadSize` | | length | `14` | `14` | `14` | `14` | `11` | `11` | `11` | `11` | `11` | `14` | `14` |
-| `circleArrowheadGap` | | length | `3.15` | `3.15` | `3.15` | `3.15` | `1.1` | `1.1` | `1.1` | `1.1` | `1.1` | `3.15` | `3.15` |
-| `crossArrowheadSize` | | length | `10.4` | `10.4` | `10.4` | `10.4` | `9` | `9` | `9` | `9` | `9` | `10.4` | `10.4` |
-| `crossArrowheadGap` | | length | `2.96` | `2.96` | `2.96` | `2.96` | `2` | `2` | `2` | `2` | `2` | `2.96` | `2.96` |
-| `crossArrowheadStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
-| `stadiumPaddingX` | | padding | `40` | `40` | `40` | `40` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `40` | `40` |
-| `stadiumPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
-| `doubleCircleGap` | | length | `12` | `12` | `12` | `12` | `5` | `5` | `5` | `5` | `5` | `12` | `12` |
-| `doubleCirclePadding` | | padding | `16` | `16` | `16` | `16` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `16` | `16` |
-| `circleMinDiameter` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
-| `subroutinePaddingX` | | padding | `28` | `28` | `28` | `28` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `28` | `28` |
-| `subroutinePaddingY` | | padding | `12` | `12` | `12` | `12` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `12` | `12` |
-| `cylinderPaddingX` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
-| `cylinderPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
-| `leanPaddingX` | | padding | `2*padding` | `2*padding` | `2*padding` | `2*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `2*padding` | `2*padding` |
-| `leanPaddingY` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` |
-| `oddPaddingX` | | padding | `42` | `42` | `42` | `42` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `42` | `42` |
-| `oddPaddingY` | | padding | `24` | `24` | `24` | `24` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `24` | `24` |
 
 ### gantt
 
@@ -357,8 +354,6 @@ flags and opacities, which are read literally.
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `actorBkg` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
-| `actorBorder` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
 | `actorTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
 | `actorLineColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
 | `signalColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#333333` | `#d3d3d3` | `#333333` | `#333333` | `#333333` | `#333333` | `#cccccc` |
