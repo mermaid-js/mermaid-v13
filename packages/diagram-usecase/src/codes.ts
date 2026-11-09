@@ -34,6 +34,9 @@ export const USECASE_UNCLOSED_BOUNDARY = 'USECASE_UNCLOSED_BOUNDARY';
 /** An `accDescr {` without its `}`. */
 export const USECASE_UNCLOSED_ACC_DESCR = 'USECASE_UNCLOSED_ACC_DESCR';
 
+/** A `usecase` config value the layout cannot use: it draws with the default (pitfall 22). */
+export const USECASE_CONFIG_IGNORED = 'USECASE_CONFIG_IGNORED';
+
 /** The codes of the model's checks (v12's model builder and its JSON reader). */
 export const MODEL_CODES: ReadonlySet<string> = new Set([
   USECASE_CONFLICT,
