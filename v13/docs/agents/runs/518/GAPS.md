@@ -4,7 +4,8 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 
 ## T1 (#571)
 
-- D486 corpus comparison: the 15 `e2e/diagrams/tree-view/*.mmd` are byte-identical to 12.2.0's own e2e files; 8 were flattened upstream in v12 commit `7a38a04a6` against the cypress originals (`0233eba0af^:cypress/integration/rendering/treeView/treeView.spec.ts` in `/Users/knsv/repos/mermaid`). Choice (coordinator): keep the 12.2.0 files as they are (they are what the oracle shipped) and add each cypress original as its own fixture, listing each in the handoff.
+- D486 corpus comparison: the 15 `e2e/diagrams/tree-view/*.mmd` are byte-identical to 12.2.0's own e2e files; 8 were flattened upstream in v12 commit `7a38a04a6` against the cypress originals (`0233eba0af^:cypress/integration/rendering/treeView/treeView.spec.ts` in `/Users/knsv/repos/mermaid`). Choice (coordinator): keep the 12.2.0 files as they are (they are what the oracle shipped) and add each cypress original as its own fixture, listing each in the handoff. Done in #571 (`nightly-check/cypress-*.mmd`, 8; the custom-config one without the template's leading blank line and trailing blank line, which v12 rejects; the raw text is a case, excluded for core's front matter reading).
+- #571 choices: a `│` line the box pass drops gets no token; on a box-pass error the lexer lexes the text unrewritten and `box.error` carries v12's message, line and the source line range (T2 reports it at the source column, D486).
 
 ## T2 (#572)
 
