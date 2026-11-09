@@ -32,7 +32,7 @@ exports[`YAML default mode over the corpus > reads front matter and shape data e
   "state-diagram-v2": "139 a1c67f9a7001eef2",
   "swimlanes": "58 6bc844b98b70c6ed",
   "timeline": "57 7ab65dc9b60b2353",
-  "tree-view": "15 17beeedd4493ff4f",
+  "tree-view": "23 33ec7e14116ca34a",
   "treemap": "53 46b71839c98ba93e",
   "usecase": "109 40f75d73db28f367",
   "venn": "80 fd6888ba04b5540a",
