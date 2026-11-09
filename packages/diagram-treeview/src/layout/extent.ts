@@ -1,6 +1,6 @@
 /**
- * The extents of what a treeView layout draws, which its bounds cover (D224): the layout's
- * bounds and the invariants read them.
+ * The extents of what a treeView layout draws, which its bounds cover (D224). The invariants
+ * work them out on their own (`invariants.ts`), so a missed extent here fails them.
  */
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
@@ -11,7 +11,7 @@ function grow(r: Rect, by: number): Rect {
 }
 
 /** A text's extent: `width` from its `x`, `height` around its `y`. */
-export function textBox(t: TreeViewText): Rect {
+function textBox(t: TreeViewText): Rect {
   return { x: t.x, y: t.y - t.height / 2, width: t.width, height: t.height };
 }
 

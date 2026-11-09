@@ -2,31 +2,37 @@
 /**
  * The treeView layout's invariants (R-LAYOUT-3, spec #518 T3): what every `TreeViewLayout` of a
  * model must satisfy, whatever the config or the measurer. Returns one message per broken rule;
- * none for a sound layout. Checks:
+ * none for a sound layout. The checker works out what it expects from the model, the raw
+ * `treeView` section and the metrics table on its own: it shares neither the layout's config
+ * reading nor its extents, so a bug in either fails it. Checks:
  * - no NaN anywhere, and no infinite length;
  * - the rows are the root row `/` and then the model's nodes in preorder (walked from
- *   `roots`), each at its parent's depth plus 1;
- * - the rows stack from y = 0 without gaps or overlaps, none of negative height;
- * - a child's indent is its parent's plus `rowIndent + paddingX`, the root's 0; its label lies
- *   within its row;
+ *   `roots`), each at the node's depth plus 1;
+ * - the rows stack from y = 0 without gaps or overlaps, each its label plus `2 × paddingY` high;
+ * - a row's indent is `depth × (rowIndent + paddingX)`, so a child's is its parent's plus
+ *   `rowIndent + paddingX`; its label is `paddingX` in (past the icon slot with an icon), at
+ *   its centre; its icon `paddingX` in and `paddingY` down;
  * - one branch into every row but the root (D482), at its centre, from its parent's stem; one
  *   stem down each parent, from its row's bottom to its last child's centre plus half the line;
- * - descriptions where the model has them, in one column, `descriptionGap` clear of every
+ * - descriptions where the model has them, in one column `descriptionGap` past the widest
  *   label, at their row's centre;
  * - a highlight box exactly on the `highlight` rows, covering the row's text;
- * - everything drawn lies inside `bounds`.
+ * - everything drawn (labels, icons, descriptions, highlight boxes with their stroke, lines
+ *   with their thickness) lies inside `bounds`.
  */
-import { treeViewLayoutConfig } from '../config.ts';
+import { TREEVIEW_DEFAULTS } from '../config.ts';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
-import { lineBox, rowExtents, textBox } from './extent.ts';
+import { highlighted } from './layout.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
-import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow } from './types.ts';
+import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
 
 const EPS = 1e-6;
 
 const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS * Math.max(1, Math.abs(b));
-const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-const name = (r: TreeViewRow | undefined): string => r?.node?.astId ?? (r ? 'the root' : 'none');
+const showRect = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
+const showLine = (l: Omit<TreeViewLine, 'kind' | 'row'>): string =>
+  `(${l.x1}, ${l.y1})–(${l.x2}, ${l.y2})`;
+const rowName = (r: TreeViewRow | undefined): string => r?.node?.astId ?? (r ? 'the root' : 'none');
 
 function inside(inner: Rect, outer: Rect): boolean {
   return (
@@ -61,7 +67,55 @@ function preorder(model: TreeViewModel): [TreeViewNode, TreeViewNode | undefined
   return out;
 }
 
-const line = (l: TreeViewLine): string => `(${l.x1}, ${l.y1})–(${l.x2}, ${l.y2})`;
+/** The lengths the checker expects: a finite number of 0 or more as given, else v12's default. */
+function lengthsOf(section: Readonly<Record<string, unknown>>) {
+  const read = (
+    key: 'rowIndent' | 'paddingX' | 'paddingY' | 'lineThickness',
+    d: number
+  ): number => {
+    const v = section[key];
+    return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : d;
+  };
+  const d = TREEVIEW_DEFAULTS;
+  return {
+    rowIndent: read('rowIndent', d.rowIndent),
+    paddingX: read('paddingX', d.paddingX),
+    paddingY: read('paddingY', d.paddingY),
+    lineThickness: read('lineThickness', d.lineThickness),
+  };
+}
+
+/** A text's extent: `width` from its `x`, `height` centred on its `y`. */
+const textRect = (t: TreeViewText): Rect => ({
+  x: t.x,
+  y: t.y - t.height / 2,
+  width: t.width,
+  height: t.height,
+});
+
+/** A line's extent with its stroke: `thickness` across it, butt caps. */
+function lineRect(l: TreeViewLine, thickness: number): Rect {
+  const across = thickness / 2;
+  if (l.kind === 'branch')
+    return { x: l.x1, y: l.y1 - across, width: l.x2 - l.x1, height: thickness };
+  return { x: l.x1 - across, y: l.y1, width: thickness, height: l.y2 - l.y1 };
+}
+
+/** What a row draws, each named. */
+function drawnBy(r: TreeViewRow): [string, Rect][] {
+  const out: [string, Rect][] = [['label', textRect(r.label)]];
+  if (r.icon) out.push(['icon', r.icon.box]);
+  if (r.description) out.push(['description', textRect(r.description)]);
+  if (r.highlight) {
+    const s = M.highlightStroke / 2;
+    const b = r.highlight.box;
+    out.push([
+      'highlight',
+      { x: b.x - s, y: b.y - s, width: b.width + 2 * s, height: b.height + 2 * s },
+    ]);
+  }
+  return out;
+}
 
 /**
  * The broken invariants of `layout` as a layout of `model` under the `treeView` config
@@ -77,9 +131,11 @@ export function treeViewLayoutViolations(
     if (!Number.isFinite(n)) out.push(`${path} is ${n}`);
   if (out.length > 0) return out;
 
-  const { rowIndent, paddingX } = treeViewLayoutConfig(section);
-  const thickness = layout.lineThickness;
+  const { rowIndent, paddingX, paddingY, lineThickness } = lengthsOf(section);
+  const step = rowIndent + paddingX;
   const { rows } = layout;
+  if (!near(layout.lineThickness, lineThickness))
+    out.push(`the lines are ${layout.lineThickness} thick, not ${lineThickness}`);
 
   // The rows: the root, then the preorder.
   const order = preorder(model);
@@ -89,87 +145,110 @@ export function treeViewLayoutViolations(
     out.push(`${rows.length} rows for ${order.length} nodes and the root`);
   order.forEach(([node], i) => {
     const r = rows[i + 1];
-    if (r?.node !== node) out.push(`row ${i + 1} is ${name(r)}, not ${node.astId}`);
+    if (r?.node !== node) out.push(`row ${i + 1} is ${rowName(r)}, not ${node.astId}`);
     else rowOf.set(node, i + 1);
   });
   if (out.length > 0) return out;
 
-  // Stacking and indents.
+  // Stacking, indents, labels and icons.
+  const centre = (r: TreeViewRow): number => r.box.y + r.box.height / 2;
   let y = 0;
   rows.forEach((r, i) => {
+    const depth = r.node ? r.node.depth + 1 : 0;
+    if (r.depth !== depth) out.push(`row ${i} is at depth ${r.depth}, not ${depth}`);
     if (!near(r.box.y, y)) out.push(`row ${i} starts at ${r.box.y}, not ${y}`);
-    if (r.box.height < 0) out.push(`row ${i} is ${r.box.height} high`);
+    if (!near(r.box.height, r.label.height + 2 * paddingY))
+      out.push(`row ${i} is ${r.box.height} high, not its label + ${2 * paddingY}`);
     y = r.box.y + r.box.height;
-    const label = textBox(r.label);
-    if (label.x < r.box.x - EPS || label.x + label.width > r.box.x + r.box.width + EPS)
-      out.push(`row ${i}'s label ${show(label)} is outside its row ${show(r.box)}`);
+    if (!near(r.box.x, depth * step)) out.push(`row ${i} is at x ${r.box.x}, not ${depth * step}`);
+    const slot = r.icon ? M.icon + M.iconGap : 0;
+    const labelX = r.box.x + paddingX + slot;
+    if (!near(r.label.x, labelX) || !near(r.label.y, centre(r)))
+      out.push(
+        `row ${i}'s label is at (${r.label.x}, ${r.label.y}), not (${labelX}, ${centre(r)})`
+      );
+    if (!near(r.box.width, r.label.width + 2 * paddingX + slot))
+      out.push(`row ${i} is ${r.box.width} wide, not its label + paddings + icon slot`);
+    const icon = r.icon?.box;
+    if (
+      icon &&
+      !(
+        near(icon.x, r.box.x + paddingX) &&
+        near(icon.y, r.box.y + paddingY) &&
+        icon.width === M.icon &&
+        icon.height === M.icon
+      )
+    )
+      out.push(`row ${i}'s icon ${showRect(icon)} is not ${M.icon} square at paddingX, paddingY`);
   });
-  if (rows[0]!.box.x !== 0 || rows[0]!.depth !== 0) out.push('the root row is not at x 0, depth 0');
   for (const [node, parent] of order) {
-    const i = rowOf.get(node)!;
+    const r = rows[rowOf.get(node)!]!;
     const p = rows[parent ? rowOf.get(parent)! : 0]!;
-    const r = rows[i]!;
-    const x = p.box.x + rowIndent + paddingX;
-    if (!near(r.box.x, x)) out.push(`row ${i} is at x ${r.box.x}, not ${x}`);
-    if (r.depth !== p.depth + 1) out.push(`row ${i} is at depth ${r.depth}, not ${p.depth + 1}`);
+    if (!near(r.box.x, p.box.x + step))
+      out.push(`row ${rowOf.get(node)} is not ${step} in from its parent's`);
   }
 
-  // Connectors.
-  const centre = (r: TreeViewRow): number => r.box.y + r.box.height / 2;
-  const children = new Map<number, TreeViewNode[]>([[0, [...model.roots]]]);
-  for (const [node] of order) children.set(rowOf.get(node)!, [...node.children]);
+  // Connectors, grouped by row once.
+  const branches = new Map<number, TreeViewLine[]>();
+  const stems = new Map<number, TreeViewLine[]>();
+  for (const l of layout.lines) {
+    const by = l.kind === 'branch' ? branches : stems;
+    let list = by.get(l.row);
+    if (!list) by.set(l.row, (list = []));
+    list.push(l);
+  }
+  const children = new Map<number, readonly TreeViewNode[]>([[0, model.roots]]);
+  for (const [node] of order) children.set(rowOf.get(node)!, node.children);
+  const check = (
+    kind: string,
+    i: number,
+    found: TreeViewLine[],
+    want?: Omit<TreeViewLine, 'kind' | 'row'>
+  ): void => {
+    if (!want) {
+      if (found.length > 0)
+        out.push(`row ${i} has ${found.length} ${kind}(s) and should have none`);
+    } else if (found.length !== 1) out.push(`row ${i} has ${found.length} ${kind}s, not 1`);
+    else if (!same(found[0]!, want))
+      out.push(`the ${kind} of row ${i} is ${showLine(found[0]!)}, not ${showLine(want)}`);
+  };
   rows.forEach((r, i) => {
-    const branches = layout.lines.filter((l) => l.kind === 'branch' && l.row === i);
-    if (i === 0) {
-      if (branches.length > 0) out.push(`row 0 has ${branches.length} branch(es) (D482)`);
-    } else {
-      const c = centre(r);
-      const want = { x1: r.box.x - rowIndent, y1: c, x2: r.box.x, y2: c };
-      if (branches.length !== 1) out.push(`row ${i} has ${branches.length} branches, not 1`);
-      else if (!same(branches[0]!, want))
-        out.push(
-          `the branch into row ${i} is ${line(branches[0]!)}, not ${line({ ...want, kind: 'branch', row: i })}`
-        );
-    }
-    const stems = layout.lines.filter((l) => l.kind === 'stem' && l.row === i);
+    const c = centre(r);
+    // D482: none into the root row.
+    check(
+      'branch',
+      i,
+      branches.get(i) ?? [],
+      i === 0 ? undefined : { x1: r.box.x - rowIndent, y1: c, x2: r.box.x, y2: c }
+    );
     const kids = children.get(i) ?? [];
-    if (kids.length === 0) {
-      if (stems.length > 0) out.push(`row ${i} has no children and ${stems.length} stem(s)`);
-      return;
+    let want: Omit<TreeViewLine, 'kind' | 'row'> | undefined;
+    if (kids.length > 0) {
+      const last = rows[rowOf.get(kids[kids.length - 1]!)!]!;
+      const x = r.box.x + paddingX;
+      want = { x1: x, y1: r.box.y + r.box.height, x2: x, y2: centre(last) + lineThickness / 2 };
     }
-    const last = rows[rowOf.get(kids[kids.length - 1]!)!]!;
-    const x = r.box.x + paddingX;
-    const want = { x1: x, y1: r.box.y + r.box.height, x2: x, y2: centre(last) + thickness / 2 };
-    if (stems.length !== 1) out.push(`row ${i} has ${stems.length} stems, not 1`);
-    else if (!same(stems[0]!, want))
-      out.push(
-        `the stem of row ${i} is ${line(stems[0]!)}, not ${line({ ...want, kind: 'stem', row: i })}`
-      );
+    check('stem', i, stems.get(i) ?? [], want);
   });
 
   // The description column.
-  const described = rows.filter((r) => r.description);
+  let widest = -Infinity;
+  for (const r of rows) widest = Math.max(widest, r.label.x + r.label.width);
+  const column = widest + M.descriptionGap;
   rows.forEach((r, i) => {
-    if ((r.node?.description !== undefined) !== Boolean(r.description))
-      out.push(
-        `row ${i} ${r.description ? 'has a description the model has not' : 'lost its description'}`
-      );
+    const d = r.description;
+    if ((r.node?.description !== undefined) !== Boolean(d))
+      out.push(`row ${i} ${d ? 'has a description the model has not' : 'lost its description'}`);
+    if (!d) return;
+    if (!near(d.x, column))
+      out.push(`the description of row ${i} is at x ${d.x}, the column at ${column}`);
+    if (!near(d.y, centre(r))) out.push(`the description of row ${i} is off its centre`);
+    if (d.text !== r.node?.description) out.push(`the description of row ${i} is not the model's`);
   });
-  if (described.length > 0) {
-    const column = described[0]!.description!.x;
-    rows.forEach((r, i) => {
-      const d = r.description;
-      if (d && !near(d.x, column))
-        out.push(`the description of row ${i} is at x ${d.x}, the column at ${column}`);
-      if (d && !near(d.y, centre(r))) out.push(`the description of row ${i} is off its centre`);
-      if (r.label.x + r.label.width + M.descriptionGap > column + EPS)
-        out.push(`the description column ${column} is not clear of row ${i}'s label`);
-    });
-  }
 
   // Highlight boxes.
   rows.forEach((r, i) => {
-    const want = r.node?.cssClass === 'highlight';
+    const want = highlighted(r.node);
     if (want !== Boolean(r.highlight))
       out.push(
         `row ${i} is ${want ? 'highlighted and has no box' : 'not highlighted and has a box'}`
@@ -178,26 +257,21 @@ export function treeViewLayoutViolations(
     const box = r.highlight.box;
     for (const t of [r.label, r.description])
       if (t && (t.x < box.x - EPS || t.x + t.width > box.x + box.width + EPS))
-        out.push(`row ${i}'s highlight ${show(box)} does not cover ${JSON.stringify(t.text)}`);
+        out.push(`row ${i}'s highlight ${showRect(box)} does not cover ${JSON.stringify(t.text)}`);
   });
 
   // Everything inside the bounds.
+  const bounds = showRect(layout.bounds);
   rows.forEach((r, i) => {
-    const what = ['label', 'icon', 'description', 'highlight'].filter(
-      (k) => k === 'label' || r[k as keyof TreeViewRow] !== undefined
-    );
-    rowExtents(r).forEach((e, k) => {
+    for (const [what, e] of drawnBy(r))
       if (!inside(e, layout.bounds))
-        out.push(`row ${i}'s ${what[k]} ${show(e)} is outside the bounds ${show(layout.bounds)}`);
-    });
+        out.push(`row ${i}'s ${what} ${showRect(e)} is outside the bounds ${bounds}`);
   });
-  layout.lines.forEach((l) => {
-    const e = lineBox(l, thickness);
+  for (const l of layout.lines) {
+    const e = lineRect(l, lineThickness);
     if (!inside(e, layout.bounds))
-      out.push(
-        `the ${l.kind} of row ${l.row} ${show(e)} is outside the bounds ${show(layout.bounds)}`
-      );
-  });
+      out.push(`the ${l.kind} of row ${l.row} ${showRect(e)} is outside the bounds ${bounds}`);
+  }
   return out;
 }
 

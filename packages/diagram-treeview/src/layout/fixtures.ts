@@ -36,7 +36,11 @@ export const styled: Measurer = {
   metrics: (font) => halfEm.metrics(font),
 };
 
-/** A layout context with the half-em measurer (or `measurer`). */
+/**
+ * A layout context with the half-em measurer (or `measurer`): the unit specs' positions are
+ * worked by hand against it, where `treeViewTestContext` defaults to the table measurer the
+ * conformance specs use.
+ */
 export function context(
   theme: Theme,
   treeView: Record<string, unknown> = {},

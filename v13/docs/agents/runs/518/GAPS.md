@@ -19,13 +19,17 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 - v12's viewBox clips its right edge by half the line thickness; v13 keeps contents inside the bounding box (D224).
 - Done in #573. Highlight origin: the row's indent (v12's `x`), not the label's x. Cumulative widening: **kept**. The oracle's code (`renderer.ts:202-213`) sets `totalWidth` to `x + (totalWidth − x + 8) + 2`, i.e. +10 px for every highlighted row, so it always changes v12's viewBox width (and each later box ends 10 px further right). P1 and D224 ("output changes only where v12 clipped") keep it; `TREEVIEW_METRICS.highlightSlack` is v12's `+ 2`. For the maintainer below.
 - Done in #573. Bounds: v12's viewBox (`−lineThickness/2`, 0, `totalWidth`, `totalHeight`), grown only where a label, icon, description, highlight box (stroke 1) or line (with its half thickness) reaches past it; at the defaults it is v12's viewBox exactly. The root row's connector (from `−rowIndent` to 0) is not in the layout (D482).
-- #573 choices (no D-id): an empty name (a node written `/`) measures 0 × 0 (v12's `getBBox` of an empty text), so its row is `2·paddingY` high; the root row gets a folder icon under `showIcons`, as v12 resolved its icon too; config lengths read as v12's defaults when missing, negative or not numeric (numeric strings as their number), `showIcons` by v12's truthiness, warnings left to #577; the label size is v12's 16 px from `TREEVIEW_METRICS.labelFontSize`, read only in `labelFont` (`layout/layout.ts`), which #575 points at `treeViewLabelFontSize`.
+- #573 choices (no D-id): an empty name (a node written `/`) measures 0 × 0 (v12's `getBBox` of an empty text), so its row is `2·paddingY` high; the root row gets a folder icon under `showIcons`, as v12 resolved its icon too; config lengths are used only when a finite number of 0 or more, else v12's default (v12 did arithmetic on a string: `rowIndent: '20'` gave `'205'`, a 205 px indent per level; v13 takes the default), `showIcons` by v12's truthiness, warnings left to #577; the label size is v12's 16 px from `TREEVIEW_METRICS.labelFontSize`, read only in `labelFont` (`layout/layout.ts`), which #575 points at `treeViewLabelFontSize`.
 
 ## T4 (#575)
+
+- From #573: when `labelFont` (`src/layout/layout.ts`) switches from `TREEVIEW_METRICS.labelFontSize` to `treeViewLabelFontSize`, parse its units (v12's value is `16px`; an author may write `1em`, `12pt` or a bare number), as pitfall 16 says: the layout measures in px.
 
 ## T6 (#576)
 
 ## T5 (#577)
+
+- From #573: `src/config.ts` `treeViewLayoutConfig` falls back silently to v12's default for a length that is not a finite number of 0 or more (a string, negative, NaN, Infinity). Add the one-per-key invalid-value warning (D226, as treemap's `TREEMAP_CONFIG_INVALID`) and switch to the generated defaults when the keys become `honoured`.
 
 - Port v12's `db.spec.ts` `getConfig` test with the config work (the `treeView` options move to `honoured`): #572 skips it with this pointer, as no D-id puts it in T2.
 

@@ -2,11 +2,14 @@
  * The `treeView` options the layout and the renderer read. The schema section is `pending`
  * until the integration ticket (#577) makes these keys `honoured` and the plugin carries the
  * generated defaults; until then the defaults here are v12's (`config.schema.yaml`
- * `TreeViewDiagramConfig`, `defaultConfig.ts:288-291`). A length is a finite number of 0 or
- * more, or a string that reads as one (v12 used `"20"` by coercion); anything else falls back to
- * the default (#577 decides on a warning). `showIcons` is v12's truthiness; `defaultIconPack` a
- * string; the icon maps plain objects.
+ * `TreeViewDiagramConfig`). The config resolver checks neither types nor the schema's
+ * minimums, so a directive can set `"rowIndent": "20"` or `-5`. A length is used only when it
+ * is a finite number of 0 or more; anything else is the default. v12 did arithmetic on what it
+ * was given, so a string concatenated: `rowIndent: '20'` with `paddingX` 5 indented each level
+ * by `'205'`, 205 px. The warning for such a value is #577's (GAPS T5). `showIcons` is v12's truthiness;
+ * `defaultIconPack` a string; the icon maps plain objects of strings.
  */
+import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { TreeViewIconOptions } from './icons.ts';
 
 export interface TreeViewLayoutConfig extends TreeViewIconOptions {
@@ -34,12 +37,9 @@ export const TREEVIEW_DEFAULTS: Readonly<Record<LengthKey, number>> & TreeViewIc
 
 const LENGTHS: readonly LengthKey[] = ['rowIndent', 'paddingX', 'paddingY', 'lineThickness'];
 
-/** A finite number of 0 or more, or a string that reads as one; else undefined. */
+/** `value` when it is a finite number of 0 or more; else undefined. */
 function length(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
 /** A plain object of strings (the icon maps), else undefined. */
@@ -52,9 +52,10 @@ function iconMap(value: unknown): Readonly<Record<string, string>> | undefined {
 
 /** The layout's options from the resolved `treeView` section. */
 export function treeViewLayoutConfig(
-  section: Readonly<Record<string, unknown>> | undefined
+  section: Readonly<TreeViewDiagramConfig> | undefined
 ): TreeViewLayoutConfig {
-  const given = section ?? {};
+  // Read as unknown: the resolver passes what the author wrote, whatever its type.
+  const given: Readonly<Record<string, unknown>> = section ?? {};
   const d = TREEVIEW_DEFAULTS;
   const lengths = {} as Record<LengthKey, number>;
   for (const key of LENGTHS) lengths[key] = length(given[key]) ?? d[key];

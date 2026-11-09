@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treeViewTestTheme } from '../test-context.ts';
-import { context, tree } from './fixtures.ts';
+import type { Measurer } from '@mermaid-js/core/text';
+import { context, halfEm, tree } from './fixtures.ts';
 import { layoutTreeView, treeViewLayoutViolations, type TreeViewLayout } from './index.ts';
 
 // The checker passes sound layouts and names each broken invariant (the corpus run is
@@ -71,7 +72,7 @@ describe('treeViewLayoutViolations', () => {
       (l) => {
         for (const r of l.rows) if (r.description) r.description.x = 20;
       },
-      /description column 20 is not clear of row 1's label/,
+      /the description of row 1 is at x 20, the column at \d+/,
     ],
     [
       'a lost highlight',
@@ -90,5 +91,35 @@ describe('treeViewLayoutViolations', () => {
     breakIt(l);
     const v = treeViewLayoutViolations(model, l);
     expect(v.join('\n')).toMatch(message);
+  });
+
+  // Bounds that leave out one extent, as a layout that forgot it would compute them: v12's
+  // viewBox (-lineThickness / 2, 0, width, height), which each of these reaches past.
+  const short: Measurer = { ...halfEm, metrics: () => ({ ascent: 4, descent: 1, lineHeight: 5 }) };
+  const dropped: [string, string[], Record<string, unknown>, RegExp, Measurer?][] = [
+    ['a label', ['  a'], { paddingX: 0, lineThickness: 4 }, /row 1's label .* outside the bounds/],
+    [
+      "a highlight box's stroke",
+      ['  a :::highlight'],
+      { lineThickness: 5 },
+      /row 1's highlight .* outside the bounds/,
+    ],
+    ['an icon', ['  a icon(x)'], { paddingY: 0 }, /row 1's icon .* outside the bounds/, short],
+  ];
+
+  it.each(dropped)('catches bounds without %s', (_name, lines, config, message, measurer) => {
+    const m = tree(...lines);
+    const l = copy(layoutTreeView(m, context(theme, config, measurer))) as Mutable<TreeViewLayout>;
+    expect(treeViewLayoutViolations(m, l, config)).toEqual([]);
+    l.bounds = { x: -l.lineThickness / 2, y: 0, width: l.width, height: l.height };
+    expect(treeViewLayoutViolations(m, l, config).join('\n')).toMatch(message);
+  });
+
+  it('reads the config itself: a layout of other lengths fails it', () => {
+    const l = layoutTreeView(model, context(theme, { rowIndent: 3 }));
+    expect(treeViewLayoutViolations(model, l, { rowIndent: 3 })).toEqual([]);
+    expect(treeViewLayoutViolations(model, l, { rowIndent: '3' }).join('\n')).toMatch(
+      /row 1 is at x 8, not 15/
+    );
   });
 });

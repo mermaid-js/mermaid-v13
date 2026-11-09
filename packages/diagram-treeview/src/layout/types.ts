@@ -4,7 +4,7 @@
  * D481). Every length is in px, in the diagram's coordinates (treeView draws SVG; the ASCII
  * renderer reads the model). Rectangles have their top-left corner at `x`, `y`.
  */
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, StyleBits } from '@mermaid-js/core/text';
 import type { TreeViewNode } from '../model.ts';
 
 export interface Rect {
@@ -15,13 +15,15 @@ export interface Rect {
 }
 
 /**
- * One line of plain text (D484), measured in `font`: drawn with `dominant-baseline: middle` and
+ * One line of plain text (D484), measured in `font` and `style` (`Style.Bold` for a directory's
+ * label, `Style.Italic` for a description, else 0): drawn with `dominant-baseline: middle` and
  * `text-anchor: start` at (`x`, `y`), so it spans `x` to `x + width` and is `height` high
  * around `y` (0 high for an empty text, as v12's `getBBox`).
  */
 export interface TreeViewText {
   readonly text: string;
   readonly font: FontKey;
+  readonly style: StyleBits;
   readonly x: number;
   readonly y: number;
   readonly width: number;

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Measurer } from '@mermaid-js/core/text';
+import { Style, type Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treeViewTestTheme } from '../test-context.ts';
 import { context, halfEm, styled, tree } from './fixtures.ts';
@@ -69,13 +69,19 @@ describe('layoutTreeView', () => {
   it('measures directories bold and descriptions italic, in fontFamily at 16 px', () => {
     // Bold is a whole em per character, italic a quarter, the rest half.
     const l = layoutTreeView(tree('  src/ ## d', '  b'), context(theme, {}, styled));
-    expect(l.rows.map((r) => [r.text, r.label.width, r.label.font.weight])).toEqual([
-      ['/', 16, 700],
-      ['src', 48, 700],
-      ['b', 8, 400],
+    expect(l.rows.map((r) => [r.text, r.label.width, r.label.font.weight, r.label.style])).toEqual([
+      ['/', 16, 700, Style.Bold],
+      ['src', 48, 700, Style.Bold],
+      ['b', 8, 400, 0],
     ]);
     const d = l.rows[1]!.description!;
-    expect([d.x, d.width, d.font.weight, d.font.size]).toEqual([20 + 48 + 16, 4, 400, 16]);
+    expect([d.x, d.width, d.font.weight, d.font.size, d.style]).toEqual([
+      20 + 48 + 16,
+      4,
+      400,
+      16,
+      Style.Italic,
+    ]);
     expect(d.font.family).toBe(theme.value('fontFamily'));
     expect(l.width).toBe(84 + 4 + 5);
   });
@@ -169,13 +175,16 @@ describe('layoutTreeView', () => {
     expect(tall.bounds).toEqual({ x: -0.5, y: 0, width: 51, height: 19 });
   });
 
-  it('reads a numeric string as its number and falls back to the default otherwise', () => {
+  it('takes a finite length of 0 or more and falls back to the default otherwise', () => {
+    // v12 added a string: rowIndent '20' + paddingX 5 was '205'. Not a length here.
     const l = layoutTreeView(
       tree('  a'),
-      context(theme, { rowIndent: '20', paddingX: -1, paddingY: 'wide', lineThickness: null })
+      context(theme, { rowIndent: '20', paddingX: -1, paddingY: Infinity, lineThickness: null })
     );
-    expect(l.rows[1]!.box).toEqual({ x: 25, y: 26, width: 18, height: 26 });
+    expect(l.rows[1]!.box).toEqual({ x: 15, y: 26, width: 18, height: 26 });
     expect(l.lineThickness).toBe(1);
+    const zero = layoutTreeView(tree('  a'), context(theme, { rowIndent: 0, paddingY: 0 }));
+    expect(zero.rows[1]!.box).toEqual({ x: 5, y: 16, width: 18, height: 16 });
   });
 
   it('draws the root row alone for a tree with no nodes', () => {
