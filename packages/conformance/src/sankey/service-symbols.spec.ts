@@ -19,7 +19,8 @@ import type { SankeySnapshot } from './v12.ts';
  *   other text than the source holds, as a CRLF or a directive inside it);
  * - rename: each node renamed to a plain name, and to one that needs quotes and doubling
  *   (`a, "b"`), reads back in v12 as the same graph with only that name changed; the rename
- *   of a name with a dropped occurrence is refused;
+ *   of a name with a dropped occurrence is refused (among them, every name on a line v12 may
+ *   rewrite: `style,b,1 :#f;`, whose last `;` v12 drops only while the line holds `style`);
  * - folding: the body folds from `sankey` over every row v12 read.
  *
  * The service gets the facet as an eager row, as a host bundling it would, until sankey's
@@ -33,13 +34,6 @@ const service = createLanguageService({
 
 const key = (r: Range) => `${r.start}:${r.end}`;
 
-/**
- * Sources where a rename changes how v12 reads the rest of a line (GAPS #504): renaming
- * `style` in `style,b,1 :#f;` makes the line no `style…:…#…;` line, whose last `;` v12's
- * `encodeEntities` dropped, so `#f;` becomes an entity, which v12 rejects (v13 reports it).
- * The service's read-back check compares symbols, not errors.
- */
-const CHANGES_THE_LINE = /^sankey-cases\/characters-style-semicolon-value( \(|$)/;
 const PLAIN = 'renamedZq7';
 const QUOTED = 'renamed, "Zq7"';
 
@@ -91,7 +85,6 @@ describe('sankey symbols, rename and folding through the service match v12', () 
     let renames = 0;
     let refusals = 0;
     let folds = 0;
-    let known = 0;
     for (const item of await sankeyGateCorpus()) {
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || v12.diagramType !== 'sankey') continue;
@@ -137,8 +130,7 @@ describe('sankey symbols, rename and folding through the service match v12', () 
           if (kept !== mine.length) fail(`${name} -> ${to}: renamed with a dropped occurrence`);
           renames++;
           const back = await oracle.parse(apply(item.source, result.edits));
-          if (!back.accepted && CHANGES_THE_LINE.test(item.id)) known++;
-          else if (!back.accepted) fail(`${name} -> ${to}: v12 rejects the renamed text`);
+          if (!back.accepted) fail(`${name} -> ${to}: v12 rejects the renamed text`);
           else if (JSON.stringify(sankeyV12Snapshot(back.db)) !== renamed(graph, name, to))
             fail(`${name} -> ${to}: v12 reads another graph`);
         }
@@ -154,7 +146,6 @@ describe('sankey symbols, rename and folding through the service match v12', () 
       else if (fold.range.end < last) fail('the body fold ends before the last name');
     }
     expect(problems).toEqual([]);
-    expect(known).toBe(12);
     expect(checked).toBeGreaterThan(600);
     expect(names).toBeGreaterThan(3000);
     expect(repeated).toBeGreaterThan(900);

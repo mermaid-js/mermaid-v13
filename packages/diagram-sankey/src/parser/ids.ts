@@ -25,13 +25,18 @@ export const nodeAstId = (name: string): AstId => `node:${escapeName(name)}`;
 
 /** Hands out the link ids of one parse, counting rows per source and target. */
 export class LinkIds {
-  private readonly seen = new Map<string, number>();
+  /** Rows so far by source index, then target index. */
+  private readonly seen: Map<number, number>[] = [];
 
-  /** `link:<source>-><target>`, then `@2`, `@3`, … */
-  next(source: string, target: string): AstId {
+  /**
+   * `link:<source>-><target>`, then `@2`, `@3`, … Rows are counted by the nodes' indexes
+   * (`from`, `to`), which name the nodes one to one, so no id string is hashed.
+   */
+  next(source: string, target: string, from: number, to: number): AstId {
+    const row = (this.seen[from] ??= new Map());
+    const n = (row.get(to) ?? 0) + 1;
+    row.set(to, n);
     const id = `link:${escapeName(source)}->${escapeName(target)}`;
-    const n = (this.seen.get(id) ?? 0) + 1;
-    this.seen.set(id, n);
     return n === 1 ? id : `${id}@${n}`;
   }
 }

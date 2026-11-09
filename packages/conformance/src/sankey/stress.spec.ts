@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseSankey } from '@mermaid-js/diagram-sankey';
+import { detectSankey, parseSankey } from '@mermaid-js/diagram-sankey';
+import { sankeyLanguage } from '@mermaid-js/diagram-sankey/language';
 import { sankeyTokens } from '@mermaid-js/diagram-sankey/testing';
+import { createLanguageService } from '@mermaid-js/language-service';
 
 /**
  * R-PARSE-7, pitfall 5: the sankey lexer (and below, the parser) is linear in input size, in
@@ -144,4 +146,41 @@ describe('stress: the sankey parser is linear in input size', () => {
     expect(r.model.nodes).toHaveLength(97 + 3_000);
     expect(r.ast.children).toHaveLength(3_000);
   });
+});
+
+/**
+ * The facet through the language service (#504): reading every name (`nameSyntax.read`, which
+ * looks at the line each name is on), semantic tokens, a rename of a name on every row and a
+ * completion at the end are linear too, with the same ratio test.
+ */
+const service = createLanguageService({
+  facets: [
+    { type: 'sankey', id: 'sankey', detector: (t) => detectSankey(t), facet: sankeyLanguage },
+  ],
+});
+let uri = 0;
+const query = (src: string) => {
+  const doc = service.update(`stress:///${uri++}`, src);
+  doc.semanticTokens();
+  doc.rename(src.indexOf('hub') + 1, 'renamed, "hub"');
+  doc.completions(src.length);
+  doc.hover(src.indexOf('hub') + 1);
+};
+const SERVICE_SHAPES: [string, (n: number) => string][] = [
+  ['many rows', (n) => rows(n, (k) => `hub,t${k},1`)],
+  ['short rows', (n) => rows(n, (k) => (k === 0 ? 'hub,a,1' : `a,b${k % 10},1`))],
+  ['quoted names with CRLF', (n) => rows(n, (k) => `"hub","t ""${k}""",1\r`)],
+  ['long lines of quoted fields', (n) => rows(n, (k) => `hub,"${'x,'.repeat(k % 50)}${k}",1`)],
+  [
+    'a style line, then rows',
+    (n) => 'sankey\nstyle,b,1 :#f;\n' + rows(n, (k) => `hub,t${k},1`).slice(7),
+  ],
+];
+
+describe('stress: the sankey facet through the service is linear in input size', () => {
+  it.each(SERVICE_SHAPES)(
+    '%s',
+    (_name, build) => expect(ratio(build, query)).toBeLessThan(24),
+    30_000
+  );
 });

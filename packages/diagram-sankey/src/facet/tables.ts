@@ -4,6 +4,7 @@
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { fieldName } from '../parser/names.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 
 const LINE_BREAK = /[\n\r]/;
@@ -65,7 +66,7 @@ export function sourceName(
   else if (k !== T.Text) return undefined;
   if (k === T.OpenQuote && tokens.kind[j] !== T.EscapedText) return undefined;
   const raw = text.slice(tokens.start[j] ?? 0, tokens.end[j] ?? 0);
-  return (k === T.OpenQuote ? raw.replaceAll('""', '"') : raw).trim();
+  return fieldName(raw);
 }
 
 /** Markdown inline code holding `text` as written, whatever backticks it has. */

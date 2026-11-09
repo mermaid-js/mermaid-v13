@@ -16,10 +16,8 @@ import type {
 import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyDocument } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
-import { fieldText, withFieldBlanks } from './names.ts';
+import { fieldText, isFieldBlank, withFieldBlanks } from './names.ts';
 import { fieldAt, sourceName, span, tokenBefore } from './tables.ts';
-
-const BLANK = /[\t ]/;
 
 /** The probed word's range: the prefix, plus the rest of the field's text after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
@@ -31,7 +29,7 @@ function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeRe
     const tokenEnd = tokens.end[i] ?? o;
     if (tokenEnd > o) end = tokenEnd;
     // A bare field is read trimmed: the blanks after its text stay.
-    if (kind === T.Text) while (end > o && BLANK.test(text.charAt(end - 1))) end--;
+    if (kind === T.Text) while (end > o && isFieldBlank(text.charAt(end - 1))) end--;
   }
   return span(probe.prefix.start, end);
 }

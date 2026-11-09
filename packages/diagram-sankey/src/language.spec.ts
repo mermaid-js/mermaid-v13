@@ -212,3 +212,14 @@ describe('sankey names (D398)', () => {
     expect(valid('a#35;')).toMatch(/entity/);
   });
 });
+
+describe('sankey names on a line v12 may rewrite', () => {
+  it('drops them, so their rename is refused, and reads every other line', () => {
+    const { read } = sankeyLanguage.nameSyntax!;
+    const text = 'sankey\nstyle,b,1 :#f;\nb,c,2\r\nc,d,3';
+    const kept = sankeyLanguage
+      .parse(text, { keepTokens: true })
+      .symbols.map((s) => (read(text, s) ? s.name : `(${s.name})`));
+    expect(kept).toEqual(['(style)', '(b)', 'b', 'c', 'c', 'd']);
+  });
+});

@@ -49,7 +49,9 @@ import { SankeyKind } from './tokens.ts';
 // Start conditions of sankey.jison.
 const STATE = { INITIAL: 0, CSV: 1, ESCAPED_TEXT: 2 } as const;
 /** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
-const STATE_NAMES = ['INITIAL', 'CSV', 'ESCAPED_TEXT'];
+const STATE_NAMES: readonly string[] = Object.entries(STATE)
+  .sort((a, b) => a[1] - b[1])
+  .map(([name]) => name);
 
 /** Stands for an entity placeholder in v12's text: a character no rule consumes. */
 const ENTITY = '¶';
@@ -100,9 +102,12 @@ function v12Text(from: number, view: SourceView): V12Text {
   return prepare(rewrite(from, view));
 }
 
-/** The characters of v12's text before `prepareTextForParsing`, with their source ranges. */
+/**
+ * v12's text before `prepareTextForParsing`, and the source range of each of its characters.
+ * The text is built from slices of the view's text, not a string per character.
+ */
 interface Rewritten {
-  chars: string[];
+  text: string;
   start: Uint32Array;
   end: Uint32Array;
 }
@@ -114,32 +119,42 @@ function rewrite(from: number, view: SourceView): Rewritten {
   const offsets = view.runs ? new SourceOffsets(view.runs, begin) : undefined;
   const at = (q: number) => (offsets ? offsets.source(q) : q);
   const size = raw.length - begin;
-  const chars: string[] = [];
   const start = new Uint32Array(size);
   const end = new Uint32Array(size);
-  const put = (ch: string, a: number, b: number) => {
-    start[chars.length] = a;
-    end[chars.length] = b;
-    chars.push(ch);
+  const parts: string[] = [];
+  /** Where the raw text not yet copied starts. */
+  let copied = begin;
+  let n = 0;
+  /** `ch` in place of `raw[q, next)`. */
+  const replace = (q: number, next: number, ch: string) => {
+    parts.push(raw.slice(copied, q), ch);
+    copied = next;
   };
   for (let q = begin; q < raw.length; q++) {
     const c = raw.charCodeAt(q);
     const a = at(q);
-    const entity = c === HASH ? entityEnd(raw, q) : q;
+    start[n] = a;
+    end[n] = a + 1;
+    n++;
     if (c === CR) {
       // A CRLF in the source is one line break; a CR and an LF that a removed span left side
       // by side were two to v12, which turned CRs into LFs before removing anything.
       const crlf = raw.charCodeAt(q + 1) === LF && at(q + 1) === a + 1;
-      put('\n', a, a + (crlf ? 2 : 1));
+      end[n - 1] = a + (crlf ? 2 : 1);
+      replace(q, crlf ? q + 2 : q + 1, '\n');
       if (crlf) q++;
     } else if (c === DQUOTE && ((view.mask?.[a] ?? 0) & QUOTE) !== 0) {
-      put("'", a, a + 1);
-    } else if (entity > q) {
-      put(ENTITY, a, at(entity) + 1);
+      replace(q, q + 1, "'");
+    } else if (c === HASH) {
+      const entity = entityEnd(raw, q);
+      if (entity === q) continue;
+      end[n - 1] = at(entity) + 1;
+      replace(q, entity + 1, ENTITY);
       q = entity;
-    } else put(raw[q] ?? '', a, a + 1);
+    }
   }
-  return { chars, start, end };
+  parts.push(raw.slice(copied));
+  return { text: parts.join(''), start: start.subarray(0, n), end: end.subarray(0, n) };
 }
 
 /** The offset of the `;` ending an entity (`#\w+;`) at `q`, else `q`. */
@@ -151,26 +166,30 @@ function entityEnd(raw: string, q: number): number {
 
 /**
  * `prepareTextForParsing`: trim `\s` off both ends, and collapse each run of line breaks into
- * its first, whose source range then covers the run. Works in place.
+ * its first, whose source range then covers the run. The ranges are compacted in place.
  */
-function prepare({ chars, start, end }: Rewritten): V12Text {
+function prepare({ text, start, end }: Rewritten): V12Text {
   let lo = 0;
-  let hi = chars.length;
-  while (lo < hi && isSpace((chars[lo] ?? '').charCodeAt(0))) lo++;
-  while (hi > lo && isSpace((chars[hi - 1] ?? '').charCodeAt(0))) hi--;
+  let hi = text.length;
+  while (lo < hi && isSpace(text.charCodeAt(lo))) lo++;
+  while (hi > lo && isSpace(text.charCodeAt(hi - 1))) hi--;
+  const parts: string[] = [];
+  /** Where the text not yet copied starts. */
+  let copied = lo;
   let m = 0;
   for (let i = lo; i < hi; i++) {
-    if (chars[i] === '\n' && i > lo && chars[i - 1] === '\n') {
+    if (i > lo && text.charCodeAt(i) === LF && text.charCodeAt(i - 1) === LF) {
       end[m - 1] = end[i] ?? 0;
+      if (copied < i) parts.push(text.slice(copied, i));
+      copied = i + 1;
       continue;
     }
-    chars[m] = chars[i] ?? '';
     start[m] = start[i] ?? 0;
     end[m] = end[i] ?? 0;
     m++;
   }
-  chars.length = m;
-  return { text: chars.join(''), start: start.subarray(0, m), end: end.subarray(0, m) };
+  parts.push(text.slice(copied, hi));
+  return { text: parts.join(''), start: start.subarray(0, m), end: end.subarray(0, m) };
 }
 
 /** One lex. Offsets are into v12's text; {@link emit} maps them to the source. */
@@ -207,17 +226,8 @@ class SankeyLexer {
 
   run(probe?: Probe): Lexed {
     // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) while (this.p < this.len) this.step(this.text.charCodeAt(this.p));
-    else {
-      while (this.p < this.len) {
-        const before = this.source(this.p);
-        const state = this.state;
-        this.step(this.text.charCodeAt(this.p));
-        // An opening quote is read in the state before it, a closing one in the one it leaves.
-        probe.lexed(before, this.source(this.p), STATE_NAMES[state] ?? '');
-      }
-      probe.lexed(this.src.length, this.src.length, STATE_NAMES[this.state] ?? '');
-    }
+    if (probe !== undefined) this.probed(probe);
+    while (this.p < this.len) this.step(this.text.charCodeAt(this.p));
     // At the end jison tries the rules once more on the empty input.
     this.emit(
       this.state === STATE.ESCAPED_TEXT ? SankeyKind.EscapedText : SankeyKind.Eof,
@@ -235,6 +245,24 @@ class SankeyLexer {
         return src.slice(tokens.start[j], tokens.end[j]);
       },
     };
+  }
+
+  /**
+   * Lex up to the probe's offset, telling the probe each step's state, then stop: past the
+   * offset the probe has its mode, and the plain loop lexes the rest.
+   */
+  private probed(probe: Probe): void {
+    const o = probe.offset;
+    while (this.p < this.len) {
+      const before = this.source(this.p);
+      const state = this.state;
+      this.step(this.text.charCodeAt(this.p));
+      const after = this.source(this.p);
+      // An opening quote is read in the state before it, a closing one in the one it leaves.
+      probe.lexed(before, after, STATE_NAMES[state] ?? '');
+      if (before >= o || after > o) return;
+    }
+    probe.lexed(this.src.length, this.src.length, STATE_NAMES[this.state] ?? '');
   }
 
   // --- Offsets and output -------------------------------------------------------------------

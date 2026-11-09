@@ -44,6 +44,7 @@ import type { SankeyLink, SankeyModel, SankeyNode, SankeyWarning } from '../mode
 import type { SankeyDocument, SankeyField, SankeyLinkNode, SankeyNodeNode } from './ast.ts';
 import { cycleLinks } from './cycles.ts';
 import { LinkIds, nodeAstId } from './ids.ts';
+import { fieldName } from './names.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import { SankeyKind as T } from './tokens.ts';
@@ -66,7 +67,14 @@ const FIELD_START = [T.Text, T.OpenQuote];
  */
 const PROBE_FOLLOWS = kindSet(T.Comma, T.OpenQuote, T.CloseQuote);
 /** Tokens that end no row: what the body's span does not run to. */
-const NOT_IN_BODY = kindSet(Kind.Newline, Kind.Comment, Kind.Directive, Kind.Space, T.Eof);
+const NOT_IN_BODY = kindSet(
+  Kind.Newline,
+  Kind.Comment,
+  Kind.Directive,
+  Kind.Space,
+  T.Eof,
+  Kind.EOF
+);
 
 const HEADER = ['`sankey`'];
 const ROW = ['a row such as `Coal,Electricity,12.5`'];
@@ -355,13 +363,7 @@ class SankeyParser {
         this.guarded(() => this.header());
         continue;
       }
-      this.guarded(() => {
-        this.row();
-        if (c.at(Kind.Newline)) c.next();
-        else if (c.kind !== T.Eof && c.kind !== Kind.EOF) {
-          this.fail(LINE_BREAK, this.afterValueHint());
-        }
-      });
+      this.guarded(this.line);
     }
     if (this.probe) this.probeEnd();
   }
@@ -385,9 +387,19 @@ class SankeyParser {
     if (!body) return;
     const t = c.tokens;
     let j = t.length - 1;
-    while (j >= 0 && (t.kind[j] === Kind.EOF || NOT_IN_BODY[t.kind[j] ?? 0] === 1)) j--;
+    while (j >= 0 && NOT_IN_BODY[t.kind[j] ?? 0] === 1) j--;
     this.st.endStatement(body, Math.max(body.range.start, t.end[j] ?? 0));
   }
+
+  /** A row and the line break after it (one closure per parse, not per row). */
+  private readonly line = (): void => {
+    const { c } = this;
+    this.row();
+    if (c.at(Kind.Newline)) c.next();
+    else if (c.kind !== T.Eof && c.kind !== Kind.EOF) {
+      this.fail(LINE_BREAK, this.afterValueHint());
+    }
+  };
 
   /** `field COMMA field COMMA field`. */
   private row(): void {
@@ -431,17 +443,12 @@ class SankeyParser {
    */
   private field(role: Role): ReadField {
     const { c } = this;
-    const read = (j: number, quoted: boolean, range: Range, whole: Range): ReadField => {
-      const raw = this.raw(j);
-      const trimmed = raw.trim();
-      const text = role === 'value' ? trimmed : trimmed.replaceAll('""', '"');
-      return { raw, text, quoted, range, whole };
-    };
     if (c.at(T.Text)) {
       const j = c.next();
       const raw = this.raw(j);
       const from = raw.length - raw.trimStart().length;
-      return read(j, false, this.exact(j, raw, from, from + raw.trim().length), this.range(j));
+      const range = this.exact(j, raw, from, from + raw.trim().length);
+      return this.read(role, j, false, range, this.range(j));
     }
     if (!c.at(T.OpenQuote)) {
       let hint: string | undefined;
@@ -455,11 +462,18 @@ class SankeyParser {
     const j = c.next();
     if (c.at(T.CloseQuote)) {
       const whole = { start: this.range(open).start, end: this.range(c.next()).end };
-      return read(j, true, whole, whole);
+      return this.read(role, j, true, whole, whole);
     }
     // The text ended inside the quotes: jison's empty `ESCAPED_TEXT` at the end, then nothing.
     if (c.kind === T.EscapedText || c.kind === Kind.EOF) this.unclosed(open);
     this.fail(CLOSE_QUOTE);
+  }
+
+  /** Field `j` as read: its text trimmed, and for a name `""` as `"`. */
+  private read(role: Role, j: number, quoted: boolean, range: Range, whole: Range): ReadField {
+    const raw = this.raw(j);
+    const text = role === 'value' ? raw.trim() : fieldName(raw);
+    return { raw, text, quoted, range, whole };
   }
 
   // ---- model --------------------------------------------------------------------------
@@ -487,7 +501,7 @@ class SankeyParser {
     const to = this.node(target, firsts);
     const number = parseFloat(value.text);
     const range = { start: source.range.start, end: value.range.end };
-    const ast = this.ids.next(source.text, target.text);
+    const ast = this.ids.next(source.text, target.text, from, to);
     this.links.push({
       source: source.text,
       target: target.text,

@@ -8,6 +8,7 @@
  * quotes when the new name needs them.
  */
 import type { NameSyntax, Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
+import { fieldName } from '../parser/names.ts';
 
 /** A character a sankey name may hold: printable ASCII, or a line break (in quotes). */
 const NAME_CHARS = /^[\x20-\x7e\n]*$/;
@@ -30,16 +31,43 @@ export function invalidReason(name: string, _kind?: string): string | undefined 
   return undefined;
 }
 
-/** `text` with `""` read as `"`, trimmed: a quoted field's name. */
-const unquoted = (text: string) => text.replaceAll('""', '"').trim();
+/**
+ * The blank a field may take around its text: a space (a tab is no `{TEXTDATA}`, so no field
+ * holds one).
+ */
+export const isFieldBlank = (ch: string): boolean => ch === ' ';
 
-/** Where an occurrence writes its name: the bare field, or the text between its quotes. */
+const isLineBreak = (ch: string) => ch === '\n' || ch === '\r';
+
+/** The line or lines `[start, end)` is on (a scan of those lines only). */
+function lineAround(text: string, start: number, end: number): string {
+  let from = start;
+  while (from > 0 && !isLineBreak(text.charAt(from - 1))) from--;
+  let to = end;
+  while (to < text.length && !isLineBreak(text.charAt(to))) to++;
+  return text.slice(from, to);
+}
+
+/**
+ * Whether v12 may read a line differently once a name on it changes: `encodeEntities` drops
+ * the last `;` of a line holding `style…:…#…;` (or `classDef…`), so renaming `style` in
+ * `style,b,1 :#f;` turns `#f;` into an entity, which v12 rejects.
+ */
+const rewrittenLine = (line: string) =>
+  line.includes(';') && (line.includes('style') || line.includes('classDef'));
+
+/**
+ * Where an occurrence writes its name: the bare field, or the text between its quotes. None
+ * (the service then refuses its rename) where v12 read other text than the source holds, or
+ * on a line v12 may rewrite ({@link rewrittenLine}).
+ */
 function read(text: string, s: SymbolOccurrence): { range: Range; quote?: string } | undefined {
   const { start, end } = s.range;
+  if (rewrittenLine(lineAround(text, start, end))) return;
   if (end - start === s.name.length && text.startsWith(s.name, start)) return { range: s.range };
   if (end - start < 2 || text.charAt(start) !== '"' || text.charAt(end - 1) !== '"') return;
   // Not the name when v12 read other text there (a CRLF, a collapsed blank line, a comment).
-  if (unquoted(text.slice(start + 1, end - 1)) !== s.name) return;
+  if (fieldName(text.slice(start + 1, end - 1)) !== s.name) return;
   return { range: { start: start + 1, end: end - 1 }, quote: '"' };
 }
 
@@ -56,8 +84,8 @@ export function fieldText(name: string, quote: string | undefined): string {
  */
 export function withFieldBlanks(text: string, range: Range): Range {
   let { start, end } = range;
-  while (start > 0 && text.charAt(start - 1) === ' ') start--;
-  while (text.charAt(end) === ' ') end++;
+  while (start > 0 && isFieldBlank(text.charAt(start - 1))) start--;
+  while (isFieldBlank(text.charAt(end))) end++;
   return { start, end };
 }
 
