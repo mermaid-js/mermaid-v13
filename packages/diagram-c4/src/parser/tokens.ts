@@ -21,7 +21,7 @@ export const T = {
   DirectionRL: F + 2,
   /** `.*direction\s+LR[^\n]*`. */
   DirectionLR: F + 3,
-  /** `title\s[^#\n;]+` (the `\s` may be a line break). */
+  /** `title\s[^#\n;]+` (the `\s` is not a line break), or `title` right before one (D452). */
   Title: F + 4,
   /** `accDescription\s[^#\n;]+`. */
   AccDescription: F + 5,
@@ -96,9 +96,9 @@ export const T = {
    */
   AttributeEmpty: F + 57,
   /**
-   * An argument's text: inside quotes (`[^"]*`, line breaks included), or unquoted (`[^,]+`:
-   * to the next comma, across `)` and line breaks, with its leading blanks). Also the empty
-   * match of a quoted argument left open at the end of the text.
+   * An argument's text: inside quotes (`[^"]*`, line breaks included), or unquoted
+   * (`[^,)\n]+`, with its leading blanks; D452: v12's `[^,]+` ran over `)` and line breaks).
+   * Also the empty match of a quoted argument left open at the end of the text.
    */
   Str: F + 58,
   /** `[^=]*` after `$`: a named argument's name, up to the next `=` (maybe empty). */

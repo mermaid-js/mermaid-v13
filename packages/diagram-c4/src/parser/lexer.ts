@@ -13,11 +13,16 @@
  * case-sensitive and every keyword ends in `\b`; the four `.*direction\s+(TB|BT|RL|LR)[^\n]*`
  * rules come first, so a line holding `direction LR` anywhere after the token start is one
  * token (the last such `direction` on the line; a `.` stops at LF, U+2028 and U+2029, its
- * `\s+` does not); `title\s[^#\n;]+` takes a line break as its blank; a `%%` comment eats the
- * line breaks after it; `\s*(\r?\n)+` (`NEWLINE`) takes the blanks before the last line break of
- * a blank run; the macro states have no blank rule, so `Person (a)` is an error at the blank;
- * in the arguments an unquoted value is `[^,]+`, which runs over `)` and line breaks to the
- * next comma; a quoted one has no escapes; `$name` reads `[^=]*`. The rules that return no
+ * `\s+` does not); `title\s[^#\n;]+` takes a blank other than a line break;
+ * `\s*(\r?\n)+` (`NEWLINE`) takes the blanks before the last line break of a blank run; the
+ * macro states have no blank rule, so `Person (a)` is an error at the blank; a quoted value has
+ * no escapes; `$name` reads `[^=]*`.
+ *
+ * D452 changes three rules, each a listed exclusion of the lexer-parity gate: an unquoted value
+ * is `[^,)\n]+` (v12's `[^,]+` ran over `)` and line breaks to the next comma), and a line break
+ * in the arguments leaves them, the macro open; a `%%` comment leaves the line breaks after it
+ * to `NEWLINE` (v12's ate them); a `title` right before a line break is a title with no text
+ * (v12's `\s` took the line break, so the next line was the title). The rules that return no
  * token (`(`, `)`, `,`, the quotes, `$`, `="`, `accDescr {` and its `}`) are kinds of their
  * own with no jison name. At the end jison tries the current state's rules once more on the
  * empty text: `EOF` in INITIAL, `EOF_IN_STRUCT` right after a macro keyword (never reached:
@@ -462,11 +467,10 @@ class C4Lexer {
     if ((c === LOWER_T || c === LOWER_A) && this.title(p)) return;
     // `accTitle\s*:\s*`, `accDescr\s*:\s*`, `accDescr\s*\{\s*`.
     if (this.startsWith('acc', p) && this.accessibility(p)) return;
-    // `%%[^\n]*(\r?\n?)+`: a comment, and the line breaks after it.
+    // `%%[^\n]*`: a comment. v12's `(\r?\n?)+` after it ate the line breaks; D452 leaves
+    // them to `NEWLINE`.
     if (c === PERCENT && text.charCodeAt(p + 1) === PERCENT) {
-      let e = this.find('\n', p + 2);
-      while (text.charCodeAt(e) === LF) e++;
-      this.emit(Kind.Comment, p, e);
+      this.emit(Kind.Comment, p, this.find('\n', p + 2));
       return;
     }
     if (isSpace(c)) {
@@ -494,10 +498,18 @@ class C4Lexer {
     else this.emit(Kind.Error, p, p + 1);
   }
 
-  /** The `title` and `accDescription` rules at `p`; whether one matched. */
+  /**
+   * The `title` and `accDescription` rules at `p`; whether one matched. D452: a `title` right
+   * before a line break is a title of its own, with no text (v12's `\s` took the line break and
+   * the next line as the title).
+   */
   private title(p: number): boolean {
     for (const [word, kind] of TITLES) {
       const q = p + word.length;
+      if (kind === T.Title && this.text.charCodeAt(q) === LF && this.startsWith(word, p)) {
+        this.emit(kind, p, q);
+        return true;
+      }
       if (this.startsWith(word, p) && isSpace(this.text.charCodeAt(q))) {
         const e = this.titleText(q + 1);
         if (e > q + 1) {
@@ -571,8 +583,25 @@ class C4Lexer {
       this.begin(T.KeyStart, e + 1, S.STRING_KV);
       return;
     }
-    // `[^,]+`: to the next comma, over `)` and line breaks.
-    this.emit(T.Str, p, this.find(',', p));
+    // D452: a line break ends the arguments (the macro is left open, for the parser to
+    // report); it lexes in INITIAL.
+    if (c === LF) {
+      this.stack.length = 0;
+      this.state = S.INITIAL;
+      return;
+    }
+    // `[^,)\n]+` (D452; v12's `[^,]+` ran over `)` and line breaks to the next comma).
+    this.emit(T.Str, p, this.unquoted(p));
+  }
+
+  /** The end of `[^,)\n]+` from `p` (at least one past `p`). */
+  private unquoted(p: number): number {
+    const { text } = this;
+    let j = p + 1;
+    for (let c = text.charCodeAt(j); j < this.n; c = text.charCodeAt(++j)) {
+      if (c === COMMA || c === RPAREN || c === LF) break;
+    }
+    return j;
   }
 
   /** `"` closes; `[^"]*` is the text, line breaks included. */

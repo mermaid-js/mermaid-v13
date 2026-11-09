@@ -36,11 +36,16 @@ import { c4GateCorpus, VARIANTS } from './corpus.ts';
  * of their own (zero-width), as is the clipped appended `NEWLINE`. A stream that ends in the
  * arguments or a named argument's `=`/value has no final token: jison ends it with `$end`.
  *
- * D452 (unquoted arguments stopping at `)` and line ends, a trailing `%%` keeping its line
- * break, a lone `title`, `direction` lines as diagnostics) changes the parse, not this lexer,
- * which stays v12's (#539 owns those changes): no D452 exclusion is listed. A quoted label
- * holding `direction LR` stays one `direction_lr` token, so the parser reports it as D452's
- * `direction` diagnostic.
+ * D452's three lexing changes (#539) are the listed exclusions. A source is excluded when its
+ * first differing token is one of them; the rest of its stream is not compared (it follows the
+ * changed token), and the unit specs of `diagram-c4/src/parser/lexer.spec.ts` pin it:
+ * - `unquoted`: v12's `STR` runs over a `)` or a line break, where v13's unquoted argument stops
+ *   (`[^,)\n]+`), or a line break leaves the arguments (the parser reports the macro open);
+ * - `comment`: v13 has a `NEWLINE` right after a `%%` comment, whose line breaks v12 ate;
+ * - `title`: v12's `title` took a line break and the next line, v13's is a lone `title`.
+ * The rest of D452 (`direction` lines and `$__proto__` as diagnostics, named arguments in the
+ * alias or label slot) is parser work. A quoted label holding `direction LR` stays one
+ * `direction_lr` token, so the parser reports it as D452's `direction` diagnostic.
  *
  * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test lists
  * them: five commented copies of a short body, where `%% cut` goes through the header.
@@ -48,23 +53,102 @@ import { c4GateCorpus, VARIANTS } from './corpus.ts';
 /** The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus and #538's 12). */
 const E2E_FIXTURES = 44;
 
+/** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
+const D452_EXCLUDED: Record<'unquoted' | 'comment' | 'title', string[]> = {
+  unquoted: [
+    'c4-cases/paren-at-end',
+    'c4-cases/unquoted-runs-over-close-paren',
+    'c4-cases/unquoted-descr-runs-over-lines',
+    'c4-cases/unquoted-at-end',
+    'c4-cases/unquoted-keeps-leading-blank',
+    'c4-cases/blank-after-quote-before-paren',
+    'c4-cases/tab-after-comma',
+    'c4-cases/no-escapes',
+    'c4-cases/unclosed-quote-runs-to-end',
+    'c4-cases/single-quotes',
+    'c4-cases/quote-inside-unquoted',
+    'c4-cases/dollar-in-quotes',
+    'c4-cases/acc-in-arguments',
+    'c4-cases/comment-in-unquoted',
+  ],
+  comment: [
+    'e2e/nightly-check/comments.mmd',
+    'c4-cases/comment-mid-line-eats-newline',
+    'c4-cases/comment-mid-line-eats-newlines',
+    'c4-cases/comment-at-end',
+    'c4-cases/comment-bare-percent',
+    'c4-cases/comment-after-brace',
+    'c4-cases/ls-in-comment',
+  ],
+  title: [
+    'c4-cases/title-line-break-blank',
+    'c4-cases/title-alone',
+    'c4-cases/title-alone-then-statement',
+  ],
+};
+/** How many sources, variants included, each D452 exclusion covers: unquoted, comment, title. */
+const D452_COUNTS = [367, 43, 17];
+
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
 
 const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
-function v13Tokens(source: string): JisonToken[] {
-  const out: JisonToken[] = [];
+/** The v13 tokens with a jison name, as `[name, image]`, and where each starts and ends. */
+function v13Tokens(source: string): { tokens: JisonToken[]; ranges: [number, number][] } {
+  const tokens: JisonToken[] = [];
+  const ranges: [number, number][] = [];
+  // Where the last token (with or without a jison name) ended.
+  let end = 0;
   for (const t of c4Tokens(source)) {
     const name = JISON_NAMES[t.kind];
+    const before = end;
+    end = t.range.end;
     if (!name) continue;
+    ranges.push([before, t.range.start]);
     if (name === LEXICAL_ERROR) {
-      out.push([LEXICAL_ERROR, '']);
+      tokens.push([LEXICAL_ERROR, '']);
       break;
     }
-    out.push([name, t.text]);
+    tokens.push([name, t.text]);
   }
-  return out;
+  return { tokens, ranges };
+}
+
+/** D452's lexing changes, by the gate exclusion they are listed under. */
+type Exclusion = 'unquoted' | 'comment' | 'title';
+
+/**
+ * The D452 exclusion that explains the first difference, at token `at`, between v12's stream
+ * and v13's, or undefined. `gap` is the source between the token before v13's and v13's.
+ */
+function exclusion(
+  v12: readonly JisonToken[],
+  v13: readonly JisonToken[],
+  at: number,
+  gap: string
+): Exclusion | undefined {
+  const [a, b] = [v12[at], v13[at]];
+  if (a?.[0] === 'STR') {
+    // The oracle took v12's appended line break off its last token, so an image with no `)`
+    // or line break ran to the end of the text.
+    const stop = a[1].search(/[)\n]/);
+    const prefix = stop === -1 ? a[1] : a[1].slice(0, stop);
+    // v13's argument stopped at the `)` or line break, or the arguments ended there.
+    if (b?.[0] === 'STR' ? stop !== -1 && b[1] === prefix : /^ *$/.test(prefix)) return 'unquoted';
+  }
+  // v12's last argument ran over the line break it appended, v13's stopped before it.
+  if (a === undefined && b?.[0] === 'NEWLINE' && v12[at - 1]?.[0] === 'STR') return 'unquoted';
+  if (b?.[0] === 'NEWLINE' && a?.[0] !== 'NEWLINE' && gap.includes('%%')) return 'comment';
+  // v12's `title\s` took the line break (and the next line, or failed at a blank line).
+  if (
+    b?.[0] === 'title' &&
+    b[1] === 'title' &&
+    (a?.[0] === LEXICAL_ERROR || (a?.[0] === 'title' && a[1].startsWith('title\n')))
+  ) {
+    return 'title';
+  }
+  return undefined;
 }
 
 describe('c4 lexer parity with mermaid@12 (jison)', () => {
@@ -72,6 +156,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     const oracle = await loadJisonLexerOracle('c4');
     const items = await c4GateCorpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
+    const excluded: Record<Exclusion, string[]> = { unquoted: [], comment: [], title: [] };
     const skipped: string[] = [];
     let compared = 0;
     let e2e = 0;
@@ -90,10 +175,16 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('c4-cases/')) cases++;
       }
       const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
-      const actual = v13Tokens(item.source);
+      const { tokens: actual, ranges } = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
       while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
+      const [from, to] = ranges[at] ?? [0, 0];
+      const why = exclusion(expected, actual, at, item.source.slice(from, to));
+      if (why) {
+        excluded[why].push(item.id);
+        continue;
+      }
       diffs.push({
         id: item.id,
         at,
@@ -101,13 +192,25 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
         v13: actual.slice(Math.max(0, at - 2), at + 3),
       });
     }
+    const count = (k: Exclusion) => excluded[k].length;
     process.stdout.write(
-      `lexer parity: ${compared} of ${items.length} sources lexed by v12 (${e2e} e2e, ${specs} specs, ${cases} cases)\n`
+      `lexer parity: ${compared} of ${items.length} sources lexed by v12 (${e2e} e2e, ${specs} specs, ${cases} cases); ` +
+        `D452 exclusions: ${count('unquoted')} unquoted, ${count('comment')} comment, ${count('title')} title\n`
     );
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
       diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
     ).toEqual([]);
+    // The D452 exclusions: the sources excluded as they are, and how many sources each
+    // excludes with the variants (a variant can change how v12 reads an argument: a U+2029
+    // after a comma makes the quoted argument after it unquoted to v12, `[ ]*"` failing).
+    const plain = (k: Exclusion) => excluded[k].filter((id) => !VARIANT.test(id));
+    expect({
+      unquoted: plain('unquoted'),
+      comment: plain('comment'),
+      title: plain('title'),
+    }).toEqual(D452_EXCLUDED);
+    expect([count('unquoted'), count('comment'), count('title')]).toEqual(D452_COUNTS);
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer.
     expect(e2e).toBe(E2E_FIXTURES);

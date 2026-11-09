@@ -47,11 +47,15 @@ describe('c4Diagram.jison quirks', () => {
     expect(jison('C4Context')).toEqual(['C4_CONTEXT:C4Context', ...END]);
   });
 
-  it('runs an unquoted argument to the next comma, across `)` and line breaks', () => {
+  it('stops an unquoted argument at `)` and at a line break (D452)', () => {
+    // v12's `[^,]+` ran over both to the next comma (`STR:a)\nPerson(b`).
     expect(jison('C4Context\nPerson(a)\nPerson(b, "B")')).toEqual([
       ...H,
       'PERSON:Person',
-      'STR:a)\nPerson(b',
+      'STR:a',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:b',
       'STR:B',
       ...END,
     ]);
@@ -60,12 +64,43 @@ describe('c4Diagram.jison quirks', () => {
       'PERSON:Person',
       'STR:a',
       'STR:A',
-      'STR: d)\nPerson(b',
+      'STR: d',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:b',
       'STR:B',
       ...END,
     ]);
-    // At the end it takes the rest of the text, and jison ends in the arguments with `$end`.
-    expect(jison('C4Context\nPerson(a)')).toEqual([...H, 'PERSON:Person', 'STR:a)']);
+    expect(jison('C4Context\nPerson(a)')).toEqual([...H, 'PERSON:Person', 'STR:a', ...END]);
+    // A line break in the arguments leaves them, with the macro open: the parser reports it.
+    expect(jison('C4Context\nPerson(a, b\nPerson(c, "C")')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR: b',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:c',
+      'STR:C',
+      ...END,
+    ]);
+    expect(jison('C4Context\nPerson(a, "A"\n)')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
+      'NEWLINE:\n',
+      'LEXICAL_ERROR:)',
+      ...END,
+    ]);
+    // A quoted argument still runs over line breaks to its closing quote.
+    expect(jison('C4Context\nPerson(a, "A\nB")')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR:A\nB',
+      ...END,
+    ]);
   });
 
   it('keeps a blank before a comma: in an unquoted argument, and as one after a quote', () => {
@@ -86,24 +121,28 @@ describe('c4Diagram.jison quirks', () => {
       'PERSON:Person',
       'STR:a',
       'STR:A \\',
-      'STR:q\\" B")',
+      // The rest is unquoted, to the `)` (D452; v12 ran on to the end and rejected).
+      'STR:q\\" B"',
+      ...END,
     ]);
   });
 
-  it('lets a `%%` comment eat the line breaks after it (no NEWLINE)', () => {
+  it('leaves the line breaks after a `%%` comment to NEWLINE (D452)', () => {
+    // v12's comment rule ate them, so the next statement followed with no NEWLINE.
     const src = 'C4Context\nPerson(a,"A") %% c\n\nPerson(b,"B")';
     expect(jison(src)).toEqual([
       ...H,
       'PERSON:Person',
       'STR:a',
       'STR:A',
+      'NEWLINE:\n\n',
       'PERSON:Person',
       'STR:b',
       'STR:B',
       ...END,
     ]);
     const comment = stream(src).find((t) => t.kind === Kind.Comment);
-    expect(comment && src.slice(comment.start, comment.end)).toBe('%% c\n\n');
+    expect(comment && src.slice(comment.start, comment.end)).toBe('%% c');
   });
 
   it('tries the `.*direction` rules first, over the whole line from the token start', () => {
@@ -136,12 +175,18 @@ describe('c4Diagram.jison quirks', () => {
     ]);
   });
 
-  it('reads `title\\s[^#\\n;]+`: the blank may be a line break, blanks are kept', () => {
+  it('reads `title\\s[^#\\n;]+` (blanks kept), and a lone `title` as a title (D452)', () => {
+    // v12's `\\s` took the line break, and the next line was the title.
     expect(jison('C4Context\ntitle\nPerson(a, "A")')).toEqual([
       ...H,
-      'title:title\nPerson(a, "A")',
+      'title:title',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
       ...END,
     ]);
+    expect(jison('C4Context\ntitle')).toEqual([...H, 'title:title', ...END]);
     expect(untilError('C4Context\ntitle  X  ;y')).toEqual([
       ...H,
       'title:title  X  ',
@@ -149,7 +194,6 @@ describe('c4Diagram.jison quirks', () => {
     ]);
     // An entity's `#` and `;` were a placeholder to v12, so the title runs over it.
     expect(jison('C4Context\ntitle Caf#233; A')).toEqual([...H, 'title:title Caf&#233; A', ...END]);
-    expect(untilError('C4Context\ntitle')).toEqual([...H, 'LEXICAL_ERROR:']);
   });
 
   it('has no blank rule after a macro keyword', () => {
@@ -386,10 +430,12 @@ describe('the C4 token stream', () => {
     ).toBe('=x)');
   });
 
-  it('ends in EOF_IN_STRUCT right after a macro keyword, and in nothing in the arguments', () => {
+  it('ends in EOF_IN_STRUCT right after a macro keyword, and in nothing in a value', () => {
     const kinds = (src: string) => c4Tokens(src).map((t) => t.kind);
     expect(kinds('C4Context\nPerson').at(-1)).toBe(T.EofInStruct);
-    expect(kinds('C4Context\nPerson(a').at(-1)).toBe(T.Str);
+    // The line break v12 appended leaves the arguments (D452): NEWLINE and EOF follow.
+    expect(kinds('C4Context\nPerson(a').slice(-3)).toEqual([T.Str, Kind.Newline, T.Eof]);
+    expect(kinds('C4Context\nPerson(a, "A').at(-1)).toBe(T.Str);
     expect(kinds('C4Context\nPerson(a, $k').at(-1)).toBe(T.StrKey);
     // `[^"]+` takes the line break v12 appended: an empty STR_VALUE once clipped.
     expect(kinds('C4Context\nPerson(a, $k="').at(-1)).toBe(T.StrValue);
