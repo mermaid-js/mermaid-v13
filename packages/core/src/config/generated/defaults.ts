@@ -2,7 +2,7 @@
 // Do not edit: run `pnpm gen:config`.
 import type { MermaidConfig } from './config.type.ts';
 
-/** Top-level defaults. Diagram sections live in their own packages. */
+/** Top-level defaults, and core's own engine sections. Diagram sections live in their own packages. */
 export const CORE_DEFAULTS: MermaidConfig = {
   "theme": "redux-color",
   "layout": "layered",
@@ -26,6 +26,15 @@ export const CORE_DEFAULTS: MermaidConfig = {
   "legacyMathML": false,
   "forceLegacyMathML": false,
   "deterministicIds": false,
+  "swimlane": {
+    "useMaxWidth": true,
+    "theme": "redux-color",
+    "layout": "swimlane",
+    "lineHops": "arc",
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
   "fontSize": 16,
   "markdownAutoWrap": true,
   "suppressErrorRendering": false

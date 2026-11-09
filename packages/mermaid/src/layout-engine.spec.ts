@@ -201,7 +201,7 @@ describe('the swimlane engine, a peer of layered (D535)', () => {
     // Swimlane hops by default (`swimlane.lineHops: arc`, D537), so the line-hop chunk too.
     expect((e as NotLoadedError).missing).toEqual([
       { kind: 'layout', name: 'swimlane' },
-      { kind: 'layout', name: 'lineHops' },
+      { kind: 'chunk', name: 'lineHops' },
     ]);
     const r = await m.render('p', withLayout('swimlane'));
     expect(r.warnings).toEqual([]);

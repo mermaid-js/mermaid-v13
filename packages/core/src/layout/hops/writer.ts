@@ -1,112 +1,89 @@
 /**
  * The shared edge-path step for line hops (D537): every edge-drawing diagram draws its edge lines
- * through `SvgWriter.outline('edge', 'path', …)` (D302), so hops are applied there, for every
+ * through `SvgWriter.outline('edge', 'path', …)` (D302), so hops are found there, for every
  * diagram, on either writer backing. A hop on an early edge can depend on a later one, so the
- * render's writes are kept in order until the drawing is done; then each edge line gets its
- * hops and everything is written, in the same order, into the real writer. Hops never need the
- * tree writer: a render without hops never gets here and keeps the stream writer.
+ * step writes everything through at once and only notes each edge line's path data; `finish`
+ * then puts the hopped path data in the finished markup, in place of the lines that give way.
+ * Hops never need the tree writer: a render without hops never gets here.
  */
-import type { DiagramPlugin } from '../../pipeline/types.ts';
-import { pathBuilder } from '../../svg/path.ts';
-import type { Attrs, PathData } from '../../svg/types.ts';
-import type { SvgWriter } from '../../svg/writer.ts';
+import type { StreamSvgWriter, TreeSvgWriter } from '../../svg/writer.ts';
 import { lineHops, type HopStyle } from './hops.ts';
 
-/** A writer that draws line hops, and the step that writes the kept drawing out. */
-export interface HopWriter {
-  readonly writer: SvgWriter;
-  /** Writes everything drawn so far into the wrapped writer, edge lines hopped. Once. */
-  done(): void;
-}
-
-/** One edge line: its attributes (`d` replaced once hopped) and its coordinate frame. */
+/** One edge line: its path data as written, and its coordinate frame. */
 interface Line {
-  attrs: Attrs;
+  readonly d: string;
   readonly frame: number;
 }
 
 /**
  * Wraps `w` so edge lines drawn in one coordinate frame hop over each other in `style`. A frame
- * is the space under the nearest element with a `transform` (or the root): only lines in the same
- * frame are compared, since their numbers are in the same space.
+ * is the space under the nearest element with a `transform` (or the root): only lines in the
+ * same frame are compared, since their numbers are in the same space. Every call goes straight
+ * through to `w`; `finish` returns `w`'s markup with the hopped lines' new path data. A line an
+ * outline drawer redraws (hand-drawn) is not in the markup as written, so it keeps its own
+ * drawing. On the tree backing, `postRender` hooks see the lines before their hops.
  */
-export function hopWriter(w: SvgWriter, style: HopStyle): HopWriter {
-  const tape: (() => void)[] = [];
+export function hopWriter<W extends StreamSvgWriter | TreeSvgWriter>(w: W, style: HopStyle): W {
   const lines: Line[] = [];
   const frames = [0];
   let next = 0;
   const top = (): number => frames[frames.length - 1]!;
-  const writer: SvgWriter = {
+  const done = (svg: string): string => {
+    if (lines.length < 2) return svg;
+    const hopped = new Map<Line, string>();
+    const byFrame = new Map<number, Line[]>();
+    for (const line of lines) {
+      const list = byFrame.get(line.frame) ?? [];
+      byFrame.set(line.frame, list);
+      list.push(line);
+    }
+    for (const list of byFrame.values())
+      lineHops(
+        list.map((l) => l.d),
+        style
+      ).forEach((d, i) => {
+        if (d !== undefined) hopped.set(list[i]!, d);
+      });
+    if (hopped.size === 0) return svg;
+    // The lines are in the markup in drawing order: each is looked for after the one before.
+    // (A path elsewhere with the very same data, drawn before its edge line, would be taken
+    // for it; edge lines start and end on node borders, so none does in practice.)
+    let out = '';
+    let at = 0;
+    for (const line of lines) {
+      const written = ` d="${line.d}"`;
+      const i = svg.indexOf(written, at);
+      if (i < 0) continue;
+      const d = hopped.get(line);
+      out += svg.slice(at, i) + (d === undefined ? written : ` d="${d}"`);
+      at = i + written.length;
+    }
+    return out + svg.slice(at);
+  };
+  const writer: StreamSvgWriter & Partial<TreeSvgWriter> = {
     open(tag, attrs) {
       frames.push(attrs?.transform === undefined ? top() : ++next);
-      tape.push(() => w.open(tag, attrs));
+      w.open(tag, attrs);
     },
     close() {
       frames.pop();
-      tape.push(() => w.close());
+      w.close();
     },
-    leaf(tag, attrs) {
-      tape.push(() => w.leaf(tag, attrs));
-    },
+    leaf: (tag, attrs) => w.leaf(tag, attrs),
     outline(role, tag, attrs) {
-      if (role === 'edge' && tag === 'path' && typeof attrs?.d === 'string') {
-        const line: Line = { attrs, frame: attrs.transform === undefined ? top() : ++next };
-        lines.push(line);
-        tape.push(() => w.outline(role, tag, line.attrs));
-      } else tape.push(() => w.outline(role, tag, attrs));
+      if (role === 'edge' && tag === 'path' && typeof attrs?.d === 'string')
+        lines.push({ d: attrs.d, frame: attrs.transform === undefined ? top() : ++next });
+      w.outline(role, tag, attrs);
     },
-    text(content) {
-      tape.push(() => w.text(content));
-    },
-    label(box, x, y, attrs) {
-      tape.push(() => w.label(box, x, y, attrs));
-    },
-    path: pathBuilder,
-    styleSheet(css) {
-      tape.push(() => w.styleSheet(css));
-    },
-    // Asked for at once: the reference is returned now, and the order of the gradients kept.
+    text: (content) => w.text(content),
+    label: (box, x, y, attrs) => w.label(box, x, y, attrs),
+    path: () => w.path(),
+    styleSheet: (css) => w.styleSheet(css),
     linearGradient: (g) => w.linearGradient(g),
-  };
-  let written = false;
-  return {
-    writer,
-    done() {
-      if (written) return;
-      written = true;
-      const byFrame = new Map<number, Line[]>();
-      for (const line of lines) {
-        const list = byFrame.get(line.frame) ?? [];
-        byFrame.set(line.frame, list);
-        list.push(line);
-      }
-      for (const list of byFrame.values()) {
-        if (list.length < 2) continue;
-        const hopped = lineHops(
-          list.map((l) => l.attrs.d as string),
-          style
-        );
-        hopped.forEach((d: PathData | undefined, i) => {
-          if (d !== undefined) list[i]!.attrs = { ...list[i]!.attrs, d };
-        });
-      }
-      for (const write of tape) write();
+    finish: () => done(w.finish()),
+    get tree() {
+      return (w as Partial<TreeSvgWriter>).tree!;
     },
   };
-}
-
-/**
- * `plugin`, drawing its edge lines with hops in `style` (D537): its `render` draws into a
- * {@link hopWriter} over the writer it is given, whichever backing that is. `mermaid` draws a
- * render with it only when the render's resolved `lineHops` is not `false`.
- */
-export function hopPlugin<M, L>(plugin: DiagramPlugin<M, L>, style: HopStyle): DiagramPlugin<M, L> {
-  return {
-    ...plugin,
-    render(model, layout, ctx, w) {
-      const hops = hopWriter(w, style);
-      plugin.render(model, layout, ctx, hops.writer);
-      hops.done();
-    },
-  };
+  return writer as W;
 }

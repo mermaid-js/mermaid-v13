@@ -13,7 +13,6 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import type { hopPlugin as HopPlugin } from '@mermaid-js/core/layout/hops';
 import {
   detectText,
   diagramStart,
@@ -195,9 +194,6 @@ const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
 
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
-/** The resource that loads core's line-hop step (D537): `preload({ layouts: ['lineHops'] })`. */
-export const LINE_HOPS = 'lineHops';
-
 /**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
  * closure (R-PERF-8). A diagram reaches one only when it is its `layoutEngine.default` (D285),
@@ -207,13 +203,6 @@ const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
   ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
   ['swimlane', () => import('@mermaid-js/core/layout/swimlane').then((m) => m.swimlane)],
-  // Not an engine: core's line-hop step (D537), loaded the same way. D285's gate keeps it from
-  // ever laying a diagram out (`layout: lineHops` is `LAYOUT_UNKNOWN`).
-  [
-    LINE_HOPS,
-    () =>
-      import('@mermaid-js/core/layout/hops').then((m) => m.hopPlugin as unknown as LayoutEngine),
-  ],
 ]);
 
 /**
@@ -231,33 +220,6 @@ export function layoutName(config: ResolvedConfig, plugin: AnyPlugin): string {
   const name = String(config.layout ?? 'layered');
   const aliases = plugin.layoutEngine?.aliases;
   return aliases && Object.hasOwn(aliases, name) ? aliases[name]! : name;
-}
-
-type HopsKey = { readonly lineHops?: unknown } | undefined;
-const hopsSet = (o: unknown): boolean => (o as HopsKey)?.lineHops !== undefined;
-
-/**
- * D537: a render's line-hop style, or `false` for none. `engine` is the layout that lays it out
- * (none for a custom layout); its config section, the name up to the first dot (`elk` for
- * `elk.stress`), overrides the shared `lineHops`. `sources` are the author's config layers, which
- * tell an explicit value from a default. In order: a shared `false` set explicitly turns hops off
- * everywhere; else the engine's key set explicitly; the shared key set explicitly; the engine's
- * default (`swimlane`'s is `arc`, as in v12); the shared default, `false`.
- */
-export function hopStyle(
-  config: ResolvedConfig,
-  sources: readonly (Readonly<Record<string, unknown>> | undefined)[],
-  engine?: string
-): 'arc' | 'gap' | false {
-  const section = engine?.split('.')[0];
-  const own = section === undefined ? undefined : (config as Record<string, HopsKey>)[section];
-  const top = sources.some(hopsSet);
-  let v: unknown = own?.lineHops ?? section === 'swimlane';
-  if (top && config.lineHops === false) return false;
-  if (section !== undefined && sources.some((s) => hopsSet(s?.[section]))) v = own?.lineHops;
-  else if (top) v = config.lineHops;
-  if (!v) return false;
-  return v === 'gap' ? 'gap' : 'arc';
 }
 
 /**
@@ -970,11 +932,6 @@ export class Registry {
     if (loader) return { engine: layered, state: 'missing', need: name };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
-  }
-
-  /** Core's line-hop step (D537), once `loadLayout(LINE_HOPS)` has loaded its chunk. */
-  hops(): typeof HopPlugin | undefined {
-    return this.layouts.get(LINE_HOPS) as unknown as typeof HopPlugin | undefined;
   }
 
   /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */

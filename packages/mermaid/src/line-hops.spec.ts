@@ -1,13 +1,11 @@
-// D537 (#78): line hops are core's shared edge-path step, for every diagram that draws edges, in
-// a lazily loaded chunk (`@mermaid-js/core/layout/hops`) that `mermaid` loads only for a render
-// whose resolved `lineHops` is not `false`. Through `createMermaid().render()` and `renderSync()`;
-// the precedence of the shared key and an engine's own key through `hopStyle`.
+// D537 (#78): line hops are core's shared edge-path step, for every diagram that draws edges,
+// through `createMermaid().render()` and `renderSync()`. The lazy chunk's loading is in
+// `line-hops-lazy.spec.ts` and `line-hops-preload.spec.ts` (each starts with it unloaded); the
+// precedence is `hopStyle`'s spec in core.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { createMermaid, NotLoadedError } from './index.ts';
-import { hopStyle } from './registry.ts';
+import { createMermaid } from './index.ts';
 
 const fixture = (name: string): string =>
   readFileSync(
@@ -26,15 +24,6 @@ const lines = (svg: string): string[] =>
 const ARC = /L[\d.]+,[\d.]+A6,6 0 0,[01] [\d.]+,[\d.]+/g;
 /** One hop: the run's points on either side of the arc. */
 const HOP = /L([\d.]+),([\d.]+)A6,6 0 0,[01] ([\d.]+),([\d.]+)/g;
-
-function thrown(f: () => unknown): unknown {
-  try {
-    f();
-  } catch (e) {
-    return e;
-  }
-  throw new Error('expected a throw');
-}
 
 describe('lineHops on a flowchart with crossing edges (D537)', () => {
   it('draws a 6px arc on the run that gives way at each crossing, and none when off', async () => {
@@ -96,135 +85,5 @@ describe('lineHops on a flowchart with crossing edges (D537)', () => {
     const m = createMermaid();
     await m.prepare(ON);
     expect(m.renderSync(ON, { id: 'd' }).svg).toBe(first.svg);
-  });
-});
-
-describe('the lazy chunk (D537, "Lazy chunk for hops")', () => {
-  it('renderSync without it throws NotLoadedError for layout `lineHops`, as for a lazy layout', async () => {
-    const m = createMermaid();
-    await m.preload({ types: ['flowchart'] });
-    const e = thrown(() => m.renderSync(ON, { id: 'd' }));
-    expect(e).toBeInstanceOf(NotLoadedError);
-    expect((e as NotLoadedError).missing).toEqual([{ kind: 'layout', name: 'lineHops' }]);
-    // A render that does not hop needs nothing more.
-    expect(m.renderSync(OFF, { id: 'd' }).warnings).toEqual([]);
-  });
-
-  it('with placeholders, draws without hops and says so', async () => {
-    const m = createMermaid();
-    await m.preload({ types: ['flowchart'] });
-    const r = m.renderSync(ON, { id: 'd', placeholders: true });
-    expect(r.warnings.map((w) => w.code)).toEqual(['PLACEHOLDER']);
-    expect(r.warnings[0]!.message).toContain('layout "lineHops"');
-    expect(lines(r.svg)).toEqual(lines((await createMermaid().render('d', OFF)).svg));
-  });
-
-  it('loads only for a render that hops; preload({ layouts: ["lineHops"] }) loads it', async () => {
-    const m = createMermaid();
-    await m.render('d', OFF);
-    await m.render('c', 'classDiagram\n  A --> B\n');
-    expect(() => m.renderSync(ON, { id: 'd' })).toThrow(NotLoadedError);
-    await m.preload({ layouts: ['lineHops'] });
-    expect(m.renderSync(ON, { id: 'd' }).svg).toBe((await createMermaid().render('d', ON)).svg);
-  });
-
-  it('is loaded for every diagram that draws edges, not only flowchart', async () => {
-    for (const text of [
-      'classDiagram\n  A --> B\n',
-      'stateDiagram-v2\n  A --> B\n',
-      'erDiagram\n  A ||--o{ B : has\n',
-    ]) {
-      const hopping = `---\nconfig:\n  lineHops: true\n---\n${text}`;
-      const m = createMermaid();
-      await m.preload({ types: [m.detectType(text)] });
-      const e = thrown(() => m.renderSync(hopping, { id: 'd' }));
-      expect((e as NotLoadedError).missing).toEqual([{ kind: 'layout', name: 'lineHops' }]);
-      await m.prepare(hopping);
-      // No crossing here: drawn exactly as without hops.
-      expect(m.renderSync(hopping, { id: 'd' }).svg).toBe(
-        (await createMermaid().render('d', text)).svg
-      );
-    }
-  });
-
-  it('`layout: lineHops` is not an engine: LAYOUT_UNKNOWN, drawn with layered', async () => {
-    const text = OFF.replace('  lineHops: false\n', '  layout: lineHops\n');
-    const r = await createMermaid().render('d', text);
-    expect(r.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
-  });
-
-  it('swimlane hops by default (`swimlane.lineHops: arc`), so its renders load the chunk', async () => {
-    const text = '---\nconfig:\n  layout: swimlane\n---\nflowchart LR\n  A --> B\n';
-    const m = createMermaid();
-    await m.preload({ types: ['flowchart'], layouts: ['swimlane'] });
-    const e = thrown(() => m.renderSync(text, { id: 'd' }));
-    expect((e as NotLoadedError).missing).toEqual([{ kind: 'layout', name: 'lineHops' }]);
-    const off = text.replace('layout: swimlane\n', 'layout: swimlane\n  lineHops: false\n');
-    expect(m.renderSync(off, { id: 'd' }).warnings).toEqual([]);
-  });
-});
-
-describe('hopStyle: the shared key and an engine section (D537)', () => {
-  const config = (c: Record<string, unknown>) => c as ResolvedConfig;
-  // The resolved config carries every default; `sources` hold only what the author set.
-  const elkDefault = { lineHops: false, elk: { lineHops: true } };
-
-  it.each([
-    ['nothing set, no engine section', { lineHops: false }, [], 'layered', false],
-    ['nothing set, a custom layout', { lineHops: false }, [], undefined, false],
-    ['the engine default (elk: true)', elkDefault, [], 'elk.stress', 'arc'],
-    ['the engine default (swimlane: arc)', { lineHops: false }, [], 'swimlane', 'arc'],
-    ['the shared key set', { lineHops: 'gap' }, [{ lineHops: 'gap' }], 'layered', 'gap'],
-    [
-      'the shared key over the engine default',
-      { ...elkDefault, lineHops: 'gap' },
-      [{ lineHops: 'gap' }],
-      'elk',
-      'gap',
-    ],
-    [
-      'the engine key set over the shared key',
-      { lineHops: 'gap', elk: { lineHops: true } },
-      [{ lineHops: 'gap' }, { elk: { lineHops: true } }],
-      'elk',
-      'arc',
-    ],
-    [
-      'the engine key set off',
-      { lineHops: true, elk: { lineHops: false } },
-      [{ lineHops: true, elk: { lineHops: false } }],
-      'elk',
-      false,
-    ],
-    [
-      'a shared false set turns hops off everywhere',
-      { lineHops: false, elk: { lineHops: true } },
-      [{ lineHops: false }, { elk: { lineHops: true } }],
-      'elk',
-      false,
-    ],
-    [
-      'a shared false set beats the swimlane default',
-      { lineHops: false },
-      [{ lineHops: false }],
-      'swimlane',
-      false,
-    ],
-    [
-      'an engine key under another engine is not read',
-      { lineHops: false, elk: { lineHops: true } },
-      [{ elk: { lineHops: true } }],
-      'layered',
-      false,
-    ],
-    [
-      'swimlane gap',
-      { lineHops: false, swimlane: { lineHops: 'gap' } },
-      [{ swimlane: { lineHops: 'gap' } }],
-      'swimlane',
-      'gap',
-    ],
-  ] as const)('%s', (_, c, sources, engine, expected) => {
-    expect(hopStyle(config(c), sources, engine)).toBe(expected);
   });
 });

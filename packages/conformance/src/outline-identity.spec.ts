@@ -80,26 +80,35 @@ describe('the outline hook leaves the corpus byte-identical (D302)', () => {
       'every leaf outlined, declining drawer, tree': await api(slim, declining, tree),
     };
     let compared = 0;
+    let hops = 0;
     for (const dir of DIRS)
       for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir)) {
-        // Line hops (D537) are drawn at the edge outline on purpose; the plain-leaf base cannot
-        // draw them, so a fixture that turns them on is checked by its own specs instead.
-        if (/^\s*lineHops: (true|arc|gap)$/m.test(item.source)) continue;
+        // Line hops (D537) are found at the edge outline, which the plain-leaf base does not
+        // draw through: both sides compare a fixture that turns them on with them off, and the
+        // adopted diagrams must hop with them on.
+        const source = item.source.replace(/^(\s*lineHops:) (true|arc|gap)$/m, '$1 false');
+        if (source !== item.source) {
+          await variants['adopted, no drawer'].prepare(item.source, { id: 'm' });
+          const hopped = variants['adopted, no drawer'].renderSync(item.source, { id: 'm' }).svg;
+          expect(hopped, `${item.id}: hops`).toMatch(/A6,6 0 0,[01] /);
+          hops++;
+        }
         let expected: string;
         try {
-          await plain.prepare(item.source, { id: 'm' });
-          expected = plain.renderSync(item.source, { id: 'm' }).svg;
+          await plain.prepare(source, { id: 'm' });
+          expected = plain.renderSync(source, { id: 'm' }).svg;
         } catch (e) {
           if (e instanceof MermaidError) continue;
           throw e;
         }
         for (const [name, m] of Object.entries(variants)) {
-          await m.prepare(item.source, { id: 'm' });
-          const svg = m.renderSync(item.source, { id: 'm' }).svg;
+          await m.prepare(source, { id: 'm' });
+          const svg = m.renderSync(source, { id: 'm' }).svg;
           if (svg !== expected) expect(svg, `${item.id}: ${name}`).toBe(expected);
         }
         compared++;
       }
     expect(compared).toBeGreaterThan(1000);
+    expect(hops, 'fixtures with line hops on').toBeGreaterThan(0);
   }, 600_000);
 });

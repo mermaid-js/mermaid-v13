@@ -64,12 +64,11 @@ import {
 import { createDomAdapter } from './dom.ts';
 import { toMermaidError, toWarning } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
+import * as hops from './line-hops.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
-  hopStyle,
   isElkName,
-  LINE_HOPS,
   Registry,
   type AnyPlugin,
   layoutName,
@@ -212,6 +211,8 @@ export interface PreloadRequest {
   iconPacks?: readonly string[];
   /** Loads what a registered math extension provides, for `renderSync` with `$$…$$` (D178). */
   math?: boolean;
+  /** Loads core's line-hop chunk (D537), for `renderSync` with `lineHops` on (see line-hops.ts). */
+  lineHops?: boolean;
 }
 
 /** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
@@ -231,7 +232,7 @@ interface Analysis {
   readonly prepared: Prepared;
   /** The front-matter title, for text output (D82). */
   readonly title?: string;
-  /** The author's config layers (`initialize`, front matter, directives), for `hopStyle`. */
+  /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
   readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
 }
 
@@ -283,14 +284,6 @@ function themeNames(config: ResolvedConfig): ThemeName[] {
   return choice.dark ? [choice.name, choice.dark] : [choice.name];
 }
 
-/**
- * The line-hop style of an SVG render of `a` (D537): a graph diagram's `layout` names the config
- * section that overrides the shared key. (A name no engine answers to has no such section: an
- * unknown key is dropped from diagram text.)
- */
-const hopsOf = ({ prepared: { config }, plugin, sources }: Analysis): 'arc' | 'gap' | false =>
-  hopStyle(config, sources, plugin.layoutKind === 'graph' ? layoutName(config, plugin) : undefined);
-
 /** The layout, themes and plugin resources `a` needs that are not loaded yet. */
 function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const missing: Resource[] = [];
@@ -300,8 +293,8 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
     const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
   }
-  // D537: the line-hop chunk, only when this render hops; text output never does.
-  if (!text && !registry.hops() && hopsOf(a)) missing.push({ kind: 'layout', name: LINE_HOPS });
+  if (!text && !hops.loadedHops() && hops.mayHop(config, hops.hopSection(registry, a)))
+    missing.push(hops.HOPS); // D537
   // Text output draws no colours, so it needs no theme (D82).
   for (const name of text ? [] : themeNames(config)) {
     if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
@@ -316,6 +309,7 @@ async function loadResources(registry: Registry, missing: readonly Resource[]): 
       if (r.kind === 'layout') await registry.loadLayout(r.name);
       else if (r.kind === 'theme') await loadTheme(r.name as ThemeName);
       else if (r.kind === 'diagram') await registry.load(r.name);
+      else if (r.kind === 'chunk') await hops.loadHops();
     })
   );
 }
@@ -803,17 +797,15 @@ export function createMermaid(
       units: pxProfile,
       width: options?.availableWidth,
     });
-    // D537: hops when this render has them and the chunk is loaded (else a placeholder render).
-    const hops = registry.hops();
-    const style = hops && hopsOf(analysis);
-    const drawer = style ? hops(plugin, style) : plugin;
+    const edges = hops.hopStepFor(registry, analysis); // D537
     const renderHooks = hooksFor(analysis);
     if (renderHooks.size === 0) {
-      const drawn = drawDiagram(drawer, prepared.parse.model, ctx);
+      const drawn = drawDiagram(plugin, prepared.parse.model, ctx, undefined, edges);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
     }
     const run = renderHooks.start(ctx, plugin.id);
-    const drawn = drawDiagram(drawer, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
+    const hooked = { run, ast: prepared.parse.ast };
+    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, hooked, edges);
     const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
     if (run.mounts) result.bindFunctions = (element) => run.afterMount(element, result);
@@ -916,6 +908,7 @@ export function createMermaid(
   async function preload(req: PreloadRequest): Promise<void> {
     if (discovery.pending) await discovery.settle();
     const tasks: Promise<unknown>[] = [];
+    const layouts = [...(req.layouts ?? [])];
     const ascii = req.formats?.includes('ascii');
     if (ascii) tasks.push(import('./ascii.ts').then((b) => void (textBackend = b)));
     for (const t of req.types ?? []) {
@@ -923,6 +916,7 @@ export function createMermaid(
         registry.load(t).then((p) => {
           if (!p)
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
+          layouts.push(p.layoutEngine?.default ?? '');
           // The plugin's own default engine (D284) comes with it, as `layered` does.
           if (p.layoutEngine) return registry.loadLayout(p.layoutEngine.default);
         })
@@ -946,6 +940,9 @@ export function createMermaid(
     for (const name of req.iconPacks ?? []) tasks.push(iconPacks.load(name));
     try {
       await Promise.all(tasks);
+      // D537: the hop chunk, when asked for or when hops could be on by default.
+      if (req.lineHops || hops.hopsByDefault(site.config, registry.fragments(), layouts))
+        await hops.loadHops();
     } catch (e) {
       throw toMermaidError(e);
     }

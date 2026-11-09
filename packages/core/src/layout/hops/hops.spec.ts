@@ -1,10 +1,9 @@
 // D537 (#78): line hops as a pure function over edge path data (`lineHops`), and the shared
 // edge-path step over a writer (`hopWriter`, `hopPlugin`). Moved from the ELK plugin.
 import { describe, expect, it } from 'vitest';
-import type { DiagramPlugin } from '../../pipeline/types.ts';
 import type { OutlineDraw } from '../../svg/writer.ts';
 import { streamWriter, treeWriter, type SvgWriter } from '../../svg/writer.ts';
-import { hopPlugin, hopWriter, lineHops, parsePath } from './index.ts';
+import { hopStyle, hopWriter, lineHops, parsePath } from './index.ts';
 
 /** A horizontal and a vertical line crossing at (50, 50). */
 const H = 'M0,50L100,50';
@@ -76,15 +75,13 @@ function drawEdges(w: SvgWriter, ds: readonly string[], transform?: string): voi
 }
 
 function hopped(ds: readonly string[], style: 'arc' | 'gap' = 'arc', draw?: OutlineDraw) {
-  const w = streamWriter(draw ? { outline: draw } : undefined);
-  const h = hopWriter(w, style);
-  drawEdges(h.writer, ds);
-  h.done();
+  const w = hopWriter(streamWriter(draw ? { outline: draw } : undefined), style);
+  drawEdges(w, ds);
   return w.finish();
 }
 
 describe('hopWriter (the shared edge-path step)', () => {
-  it('writes what it is given in order, edge lines hopped', () => {
+  it('writes everything through, then puts the hopped line in the finished markup', () => {
     const plain = streamWriter();
     drawEdges(plain, [H, V]);
     expect(hopped([H, V])).toBe(
@@ -92,52 +89,128 @@ describe('hopWriter (the shared edge-path step)', () => {
     );
   });
 
-  it('writes a drawing with no crossing byte for byte as without it', () => {
-    const plain = streamWriter();
-    drawEdges(plain, [H, 'M0,60L100,60']);
-    expect(hopped([H, 'M0,60L100,60'])).toBe(plain.finish());
+  it('writes a drawing with no crossing, or one edge line, byte for byte as without it', () => {
+    for (const ds of [[H, 'M0,60L100,60'], [H]]) {
+      const plain = streamWriter();
+      drawEdges(plain, ds);
+      expect(hopped(ds)).toBe(plain.finish());
+    }
   });
 
-  it('draws the same on the tree backing as on the stream', () => {
-    const w = treeWriter();
-    const h = hopWriter(w, 'arc');
-    drawEdges(h.writer, [H, V]);
-    h.done();
+  it('draws the same on the tree backing as on the stream, and keeps the tree', () => {
+    const tree = treeWriter();
+    const w = hopWriter(tree, 'arc');
+    drawEdges(w, [H, V]);
+    expect(w.tree).toBe(tree.tree);
     expect(w.finish()).toBe(hopped([H, V]));
+  });
+
+  it('finds each line after the one before, so an equal path drawn later is left alone', () => {
+    const w = hopWriter(streamWriter(), 'arc');
+    w.open('svg', {});
+    drawEdges(w, [H, V]);
+    w.leaf('path', { d: H as never }); // not an edge line, drawn after with the same data
+    w.close();
+    const svg = w.finish();
+    expect(svg.match(/A6,6/g)).toHaveLength(1);
+    expect(svg.endsWith(`<path d="${H}"/></svg>`)).toBe(true);
   });
 
   it('compares only lines in the same coordinate frame', () => {
-    const w = streamWriter();
-    const h = hopWriter(w, 'arc');
-    h.writer.open('svg', {});
-    drawEdges(h.writer, [H]);
+    const w = hopWriter(streamWriter(), 'arc');
+    w.open('svg', {});
+    drawEdges(w, [H]);
     // The same numbers under a transform are somewhere else.
-    drawEdges(h.writer, [V], 'translate(500,0)');
-    h.writer.close();
-    h.done();
+    drawEdges(w, [V], 'translate(500,0)');
+    w.close();
     expect(w.finish()).not.toContain('A6,6');
   });
 
-  it("hands an outline drawer the hopped line (the hand-drawn plugin's sketch)", () => {
-    const seen: string[] = [];
-    const draw: OutlineDraw = (role, _tag, attrs) => {
-      if (role === 'edge') seen.push(String(attrs.d));
-      return false;
+  it('leaves a line an outline drawer redrew (hand-drawn) as the drawer drew it', () => {
+    const draw: OutlineDraw = (role, _tag, _attrs, sink) => {
+      if (role !== 'edge') return false;
+      sink.leaf('path', { d: 'M1,1L2,2' as never });
+      return true;
     };
-    hopped([H, V], 'arc', draw);
-    expect(seen).toEqual(['M0,50L44,50A6,6 0 0,1 56,50L100,50', V]);
+    expect(hopped([H, V], 'arc', draw)).not.toContain('A6,6');
   });
+});
 
-  it('hopPlugin draws the plugin through a hopWriter over the writer it is given', () => {
-    const plugin: DiagramPlugin<string[], undefined> = {
-      id: 'probe',
-      detector: () => true,
-      parse: () => ({ model: [], ast: undefined as never, diagnostics: [] }) as never,
-      layoutKind: 'custom',
-      render: (model, _layout, _ctx, w) => drawEdges(w, model),
-    } as DiagramPlugin<string[], undefined>;
-    const w = streamWriter();
-    hopPlugin(plugin, 'arc').render([H, V], undefined, {} as never, w);
-    expect(w.finish()).toBe(hopped([H, V]));
+describe('hopStyle: the shared key and an engine section (D537)', () => {
+  const config = (c: Record<string, unknown>) => c as never;
+  // The resolved config carries every default; `layers` hold only what the author set.
+  const defaults = { lineHops: false, elk: { lineHops: true }, swimlane: { lineHops: 'arc' } };
+
+  it.each([
+    ['nothing set, no engine section', defaults, [], 'layered', false],
+    ['nothing set, a custom layout', defaults, [], undefined, false],
+    ['the engine default (elk: true)', defaults, [], 'elk', 'arc'],
+    ['the engine default (swimlane: arc)', defaults, [], 'swimlane', 'arc'],
+    [
+      'the shared key set',
+      { ...defaults, lineHops: 'gap' },
+      [{ lineHops: 'gap' }],
+      'layered',
+      'gap',
+    ],
+    [
+      'the shared key over the engine default',
+      { ...defaults, lineHops: 'gap' },
+      [{ lineHops: 'gap' }],
+      'elk',
+      'gap',
+    ],
+    [
+      'the engine key set over the shared key',
+      { ...defaults, lineHops: 'gap' },
+      [{ lineHops: 'gap' }, { elk: { lineHops: true } }],
+      'elk',
+      'arc',
+    ],
+    [
+      'the engine key set off',
+      { lineHops: true, elk: { lineHops: false } },
+      [{ lineHops: true, elk: { lineHops: false } }],
+      'elk',
+      false,
+    ],
+    [
+      'a shared false set turns hops off everywhere',
+      defaults,
+      [{ lineHops: false }, { elk: { lineHops: true } }],
+      'elk',
+      false,
+    ],
+    [
+      'a shared false set beats the swimlane default',
+      defaults,
+      [{ lineHops: false }],
+      'swimlane',
+      false,
+    ],
+    [
+      'an engine key under another engine is not read',
+      defaults,
+      [{ elk: { lineHops: true } }],
+      'layered',
+      false,
+    ],
+    [
+      'swimlane gap',
+      { ...defaults, swimlane: { lineHops: 'gap' } },
+      [{ swimlane: { lineHops: 'gap' } }],
+      'swimlane',
+      'gap',
+    ],
+    [
+      'an invalid shared value the resolver dropped is unset',
+      defaults,
+      [{ lineHops: 'zigzag' }],
+      'elk',
+      'arc',
+    ],
+    ['a null shared value is unset', defaults, [{ lineHops: null }], 'swimlane', 'arc'],
+  ] as const)('%s', (_, c, layers, section, expected) => {
+    expect(hopStyle(config(c), layers as never, section)).toBe(expected);
   });
 });

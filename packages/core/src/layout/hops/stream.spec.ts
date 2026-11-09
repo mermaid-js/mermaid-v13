@@ -1,10 +1,10 @@
-// D537: line hops never need the tree writer. `drawDiagram` with a hopping plugin and no
+// D537: line hops never need the tree writer. `drawDiagram` with the hop step and no
 // `postRender` hook keeps the stream writer.
 import { describe, expect, it, vi } from 'vitest';
 import { drawDiagram } from '../../pipeline/draw.ts';
 import type { DiagramPlugin, RenderContext } from '../../pipeline/types.ts';
 import * as writer from '../../svg/writer.ts';
-import { hopPlugin } from './index.ts';
+import { hopWriter } from './index.ts';
 
 vi.mock(import('../../svg/writer.ts'), async (original) => {
   const m = await original();
@@ -30,7 +30,9 @@ const ctx = {
 
 describe('line hops and the writer backings (D537)', () => {
   it('a render with hops keeps the stream writer', () => {
-    const { svg } = drawDiagram(hopPlugin(probe, 'arc'), ['M0,50L100,50', 'M50,0L50,100'], ctx);
+    const { svg } = drawDiagram(probe, ['M0,50L100,50', 'M50,0L50,100'], ctx, undefined, (w) =>
+      hopWriter(w, 'arc')
+    );
     expect(svg).toContain('A6,6');
     expect(writer.treeWriter).not.toHaveBeenCalled();
   });

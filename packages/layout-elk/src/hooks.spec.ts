@@ -89,6 +89,13 @@ describe('elk.lineHops (drawn by core, D174, D537)', () => {
     expect((await api().render('d', doc(CROSSING, top('true') + hops('false')))).svg).toBe(plain);
   });
 
+  it('reads elk.lineHops only when an ELK engine lays the diagram out', async () => {
+    // An ELK name no loader answers to is drawn by layered (LAYOUT_UNKNOWN): no ELK hops.
+    const r = await api().render('d', doc(CROSSING, '', 'elk.nope'));
+    expect(r.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(r.svg).not.toContain('A6,6');
+  });
+
   it('reads elk.lineHops only under an ELK layout', async () => {
     const layered = doc(CROSSING, hops('true'), 'layered');
     expect((await api().render('d', layered)).svg).toBe(

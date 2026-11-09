@@ -8,7 +8,7 @@
  * (v12 skips smoothed curves and rounded corners for the same reason). Unlike v12, the corners
  * of an edge that hops keep their rounding: only the run that carries the hop is split.
  */
-import { pathBuilder, type PathBuilder } from '../../svg/path.ts';
+import { pathBuilder } from '../../svg/path.ts';
 import type { PathData } from '../../svg/types.ts';
 import type { Point } from '../types.ts';
 
@@ -155,9 +155,14 @@ function fitted(hops: Hop[], length: number): Hop[] {
   return list.filter((h) => h.r >= min);
 }
 
-/** `commands` with the hops on their `L` runs, as path data. */
-function withHops(commands: PathCommand[], hops: Map<number, Hop[]>, style: HopStyle): PathBuilder {
+/** `commands` with the hops on their `L` runs, as path data, or undefined when none fits. */
+function withHops(
+  commands: PathCommand[],
+  hops: Map<number, Hop[]>,
+  style: HopStyle
+): PathData | undefined {
   const b = pathBuilder();
+  let drawn = 0;
   let at: Point = { x: 0, y: 0 };
   let start = at;
   commands.forEach((c, index) => {
@@ -171,6 +176,7 @@ function withHops(commands: PathCommand[], hops: Map<number, Hop[]>, style: HopS
       // Horizontal runs bump up and vertical runs bump right, whichever way they go (y down).
       const sweep = Math.abs(ux) >= Math.abs(uy) ? ux >= 0 : uy >= 0;
       for (const h of fitted(hops.get(index) ?? [], length)) {
+        drawn++;
         b.lineTo(h.point.x - ux * h.r, h.point.y - uy * h.r);
         const x = h.point.x + ux * h.r;
         const y = h.point.y + uy * h.r;
@@ -187,22 +193,19 @@ function withHops(commands: PathCommand[], hops: Map<number, Hop[]>, style: HopS
     else b.close();
     at = end;
   });
-  return b;
+  return drawn > 0 ? b.done() : undefined;
 }
 
 /**
  * The edges' lines with their hops: one entry per line of `paths` (the path data of edges drawn
  * in one coordinate frame, in drawing order), the new path data where the line gives way at a
- * crossing, else undefined (also when no crossing on it has room for a hop). A line that is not plain absolute path data neither hops nor is
- * hopped over.
+ * crossing, else undefined (also when no crossing on it has room for a hop). A line that is
+ * not plain absolute path data neither hops nor is hopped over.
  */
 export function lineHops(paths: readonly string[], style: HopStyle): (PathData | undefined)[] {
   const lines = paths.map(parsePath);
   const out: (PathData | undefined)[] = paths.map(() => undefined);
-  for (const [edge, byCommand] of hopsOf(lines)) {
-    const d = withHops(lines[edge]!, byCommand, style).done();
-    // Every crossing on it may be too close to a bend to carry a hop.
-    if (d !== paths[edge]) out[edge] = d;
-  }
+  for (const [edge, byCommand] of hopsOf(lines))
+    out[edge] = withHops(lines[edge]!, byCommand, style);
   return out;
 }
