@@ -18,7 +18,6 @@ const OWN = [
   'relationColor',
   'relationLabelColor',
   'relationStrokeWidth',
-  'relationMarkerStrokeWidth',
   'relationArrowScale',
 ];
 const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'] as const;
@@ -33,12 +32,7 @@ const themed = async (name: string, themeVariables?: Record<string, unknown>) =>
   });
 
 const geometry = (t: Awaited<ReturnType<typeof themed>>) =>
-  [
-    'requirementBorderSize',
-    'relationStrokeWidth',
-    'relationMarkerStrokeWidth',
-    'relationArrowScale',
-  ].map((n) => t.number(n));
+  ['requirementBorderSize', 'relationStrokeWidth', 'relationArrowScale'].map((n) => t.number(n));
 
 describe('the requirement theme table (D435)', () => {
   it('owns its variables; core names none of them', () => {
@@ -54,17 +48,17 @@ describe('the requirement theme table (D435)', () => {
   });
 
   it('draws v12 classic geometry in the classic themes and v12 neo in redux and neo', async () => {
-    for (const name of CLASSIC) expect(geometry(await themed(name)), name).toEqual([1.3, 1, 1, 1]);
+    for (const name of CLASSIC) expect(geometry(await themed(name)), name).toEqual([1.3, 1, 1]);
     for (const name of [...REDUX, ...NEO])
-      expect(geometry(await themed(name)), name).toEqual([2, 2, 2, 0.8]);
+      expect(geometry(await themed(name)), name).toEqual([2, 2, 0.8]);
   });
 
   it('widens the neo lines, markers and outline with strokeWidth, never the classic ones', async () => {
-    expect(geometry(await themed('redux', { strokeWidth: 5 }))).toEqual([5, 5, 5, 0.8]);
-    expect(geometry(await themed('default', { strokeWidth: 5 }))).toEqual([1.3, 1, 1, 1]);
+    expect(geometry(await themed('redux', { strokeWidth: 5 }))).toEqual([5, 5, 0.8]);
+    expect(geometry(await themed('default', { strokeWidth: 5 }))).toEqual([1.3, 1, 1]);
     expect(
       geometry(await themed('neo', { requirementBorderSize: 3, relationArrowScale: 1 }))
-    ).toEqual([3, 2, 2, 1]);
+    ).toEqual([3, 2, 1]);
   });
 
   it('colours boxes, text and relations as v12 drew them, following their shared inputs', async () => {
@@ -82,16 +76,36 @@ describe('the requirement theme table (D435)', () => {
       '#d3d3d3',
       '#cccccc',
     ]);
-    // v12 neo-dark's HTML label ink is nodeTextColor, not textColor.
-    const neoDark = await themed('neo-dark');
-    expect([neoDark.value('requirementTextColor'), neoDark.value('relationLabelColor')]).toEqual([
-      '#e0dfdf',
-      '#e0dfdf',
-    ]);
+    // The text ink is `nodeTextColor` where a theme writes one, else `textColor` (v12's
+    // `nodeTextColor || textColor`): each v12 render's `span { color }`.
+    const INK: Readonly<Record<string, string>> = {
+      default: '#333333',
+      dark: '#cccccc',
+      forest: '#000000',
+      neutral: '#000000',
+      base: '#333333',
+      redux: '#28253d',
+      'redux-color': '#28253d',
+      'redux-dark': '#e0dfdf',
+      'redux-dark-color': '#e0dfdf',
+      neo: '#333333',
+      'neo-dark': '#e0dfdf',
+    };
+    for (const name of THEME_NAMES) {
+      const ink = await themed(name);
+      expect([ink.value('requirementTextColor'), ink.value('relationLabelColor')], name).toEqual([
+        INK[name],
+        INK[name],
+      ]);
+    }
+    // An author's textColor reaches the text where the theme writes no nodeTextColor.
+    expect((await themed('neo', { textColor: '#abcdef' })).value('requirementTextColor')).toBe(
+      '#abcdef'
+    );
     const o = await themed('redux', {
       mainBkg: '#123456',
       nodeBorder: '#654321',
-      nodeTextColor: '#abcdef',
+      textColor: '#abcdef',
       lineColor: '#fedcba',
     });
     expect(

@@ -83,6 +83,8 @@ interface Paints {
     readonly text: Color;
     /** The theme's drop shadow (v12 neo's `.outer-path`); none in the classic themes. */
     readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
+    /** How far a divider in `stroke` is lifted: `dividerLift` under the gradient, else 0. */
+    readonly lift: number;
   };
   readonly line?: { readonly stroke: Color; readonly strokeWidth: Length };
   readonly label?: { readonly fill: Color; readonly text: Color };
@@ -105,6 +107,7 @@ function paints(theme: ThemeOf, p: RequirementPrepared): Paints {
       strokeWidth: theme.length('requirementBorderSize'),
       text: theme.color('requirementTextColor'),
       shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
+      lift: theme.gradient() ? M.dividerLift : 0,
     },
     line: relations
       ? { stroke: theme.color('relationColor'), strokeWidth: theme.length('relationStrokeWidth') }
@@ -176,15 +179,11 @@ export function renderRequirement(
   const scene: Scene = { w, layout, p, ctx, paint: paints(ctx.theme, p) };
   const frame = frameOf(layout, p);
   openRoot(scene, model, frame);
-  // v12 numbers each edge by the relation's place among all of them (`getData`).
-  const order = new Map(model.relations.map((r, i) => [r, i]));
-  const dataId = (r: RelationView): string =>
-    `${r.relation.src}-${r.relation.dst}-${order.get(r.relation) ?? 0}`;
   w.open('g', { class: 'edgePaths', fill: 'none' });
-  for (const r of p.relations) drawRelation(scene, r, dataId(r));
+  for (const r of p.relations) drawRelation(scene, r);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  for (const r of p.relations) drawRelationLabel(scene, r, dataId(r));
+  for (const r of p.relations) drawRelationLabel(scene, r);
   w.close();
   w.open('g', { class: 'nodes', fill: scene.paint.box.text });
   for (const box of p.boxes) drawBox(scene, box);
@@ -237,7 +236,7 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: stri
   w.close();
 }
 
-function drawRelation({ w, layout, p, paint }: Scene, r: RelationView, dataId: string): void {
+function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
   const route = layout.edges.get(r.id);
   if (!route || route.points.length < 2 || !paint.line) return;
   // A self-loop's legs are short: rounded corners, whatever the curve (as class).
@@ -245,7 +244,7 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView, dataId: s
   w.outline('edge', 'path', {
     class:
       'edge-thickness-normal edge-pattern-' + (r.dashed ? 'dashed' : 'solid') + ' relationshipLine',
-    'data-id': dataId,
+    'data-id': r.dataId,
     'data-ast': r.id,
     d: path.d,
     stroke: paint.line.stroke,
@@ -257,14 +256,14 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView, dataId: s
     r.markerAt === 'source'
       ? { x: path.sx, y: path.sy, ux: -path.sdx, uy: -path.sdy }
       : { x: path.ex, y: path.ey, ux: -path.edx, uy: -path.edy };
-  drawMarker(w, r.marker, end, paint.line.stroke, p.markers, dataId);
+  drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
 }
 
-function drawRelationLabel({ w, layout, paint }: Scene, r: RelationView, dataId: string): void {
+function drawRelationLabel({ w, layout, paint }: Scene, r: RelationView): void {
   const at = layout.edges.get(r.id)?.label;
   if (!at || r.label.width === 0 || !paint.label) return;
   const lw = r.label.width + 2 * M.labelPad;
-  w.open('g', { class: 'edgeLabel', 'data-id': dataId });
+  w.open('g', { class: 'edgeLabel', 'data-id': r.dataId });
   w.leaf('rect', {
     class: 'labelBkg',
     x: at.x - lw / 2,
@@ -281,7 +280,7 @@ function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {
   const placed = layout.nodes.get(view.id);
   if (!placed) return;
   const slot = paint.slotOf(view.slot);
-  const b = paint.box;
+  const boxPaint = paint.box;
   const shape = view.style.shape;
   w.open('g', {
     class: 'node' + cls(view.classes),
@@ -295,9 +294,9 @@ function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {
   // The author's `style` / `classDef` wins over the palette (v12 put them inline, over the
   // palette's CSS), so it is spread after.
   const outline: Attrs = {
-    fill: slot?.fill ?? b.fill,
-    stroke: slot?.stroke ?? b.stroke,
-    'stroke-width': b.strokeWidth,
+    fill: slot?.fill ?? boxPaint.fill,
+    stroke: slot?.stroke ?? boxPaint.stroke,
+    'stroke-width': boxPaint.strokeWidth,
     ...shape,
   };
   w.outline('node', 'rect', {
@@ -306,7 +305,7 @@ function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {
     y: top,
     width: view.width,
     height: view.height,
-    filter: b.shadow,
+    filter: boxPaint.shadow,
     ...outline,
   });
   const ink = shape.fill ? ctx.theme.ink(shape.fill) : undefined;
@@ -318,30 +317,37 @@ function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {
       ...text,
     });
   }
-  if (view.divider !== undefined) drawDivider(w, view, outline, left, top);
+  if (view.divider !== undefined) {
+    // Lifted only where the gradient strokes it; an author's or the palette's stroke is plain.
+    const lift = outline.stroke === boxPaint.stroke ? boxPaint.lift : 0;
+    drawDivider(w, view, outline, left, top, lift);
+  }
   w.close();
 }
 
 /**
- * The rule between the name and the body. Under the gradient (D182) it is drawn in one path
- * with the outline, so its box is the box's and the objectBoundingBox gradient paints it
- * (D185, as ER's rules); elsewhere it is the line alone.
+ * The rule between the name and the body, alone, so an outline drawer sketches it once. Under
+ * the gradient (D182) its right end is lifted `lift` so its box has a height and the
+ * objectBoundingBox gradient paints it (D185, as class's dividers and v12 neo's 0.001-tall
+ * polygon); the gradient's colour runs along it as along the outline.
  */
-function drawDivider(w: SvgWriter, view: BoxView, outline: Attrs, left: number, top: number): void {
-  const right = left + view.width;
+function drawDivider(
+  w: SvgWriter,
+  view: BoxView,
+  outline: Attrs,
+  left: number,
+  top: number,
+  lift: number
+): void {
   const y = top + view.divider!;
-  const b = w.path();
-  if (String(outline.stroke).startsWith('url(')) {
-    b.moveTo(left, top)
-      .lineTo(right, top)
-      .lineTo(right, top + view.height)
-      .lineTo(left, top + view.height)
-      .close();
-  }
-  b.moveTo(left, y).lineTo(right, y);
+  const rule = w
+    .path()
+    .moveTo(left, y)
+    .lineTo(left + view.width, y - lift)
+    .done();
   w.open('g', { class: 'divider' });
   w.outline('divider', 'path', {
-    d: b.done(),
+    d: rule,
     fill: 'none',
     stroke: outline.stroke,
     'stroke-width': outline['stroke-width'],

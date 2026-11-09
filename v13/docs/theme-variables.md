@@ -362,7 +362,6 @@ flags and opacities, which are read literally.
 | `relationColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `relationLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
 | `relationStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
-| `relationMarkerStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
 | `relationArrowScale` | | length | `0.8` | `0.8` | `0.8` | `0.8` | `1` | `1` | `1` | `1` | `1` | `0.8` | `0.8` |
 
 ### sequence

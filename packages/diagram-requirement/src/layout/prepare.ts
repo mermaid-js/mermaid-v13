@@ -76,6 +76,11 @@ export interface BoxMeasures {
 export interface RelationView {
   /** Layout edge id: the relation's AST id. */
   readonly id: string;
+  /**
+   * v12's edge id, written as `data-id`: `<src>-<dst>-<n>`, `n` the relation's place among all
+   * of them, those left out (D434) included (`getData`).
+   */
+  readonly dataId: string;
   readonly relation: Relation;
   /** Layout ids of the boxes the ends resolve to. */
   readonly source: string;
@@ -266,12 +271,13 @@ export function prepareRequirement(
     ...model.elements.map((box) => boxView({ kind: 'element', box }, env)),
   ];
   const relations: RelationView[] = [];
-  for (const r of model.relations) {
+  model.relations.forEach((r, n) => {
     // D434: a relation to a name no box has stays out of the layout.
-    if (r.from === undefined || r.to === undefined) continue;
+    if (r.from === undefined || r.to === undefined) return;
     const contains = r.kind === 'contains';
     relations.push({
       id: r.ast,
+      dataId: `${r.src}-${r.dst}-${n}`,
       relation: r,
       source: r.from,
       target: r.to,
@@ -280,7 +286,7 @@ export function prepareRequirement(
       markerAt: contains ? 'source' : 'target',
       dashed: !contains,
     });
-  }
+  });
   const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded');
   const b = pxProfile.builder;
   const markers = markerGeometry(theme);

@@ -23,6 +23,12 @@ export const REQUIREMENT_METRICS = Object.freeze({
   bodyInset: 10,
   /** The divider's stroke width (v12 `.divider { stroke-width: 1 }`). */
   divider: 1,
+  /**
+   * How far the divider's right end is lifted under the gradient, so its box has a height and
+   * an objectBoundingBox gradient paints it (D185; v12 neo drew a 0.001-tall polygon, the
+   * writer rounds to 0.01, as class's).
+   */
+  dividerLift: 0.01,
   /** The box outline's stroke width. */
   stroke: 1.3,
   /** The dash of every relation but `contains`. */
@@ -34,7 +40,7 @@ export const REQUIREMENT_METRICS = Object.freeze({
   /** The classic marker strokes' width (butt caps, as v12's paths). */
   markerStroke: 1,
   /**
-   * The most a theme's marker stroke (`relationMarkerStrokeWidth`) and chevron scale
+   * The most a theme's marker stroke (`relationStrokeWidth`) and chevron scale
    * (`relationArrowScale`) are taken at, so the room they give stays bounded.
    */
   maxMarkerStroke: 8,
@@ -63,7 +69,7 @@ export interface MarkerExtent {
  * How one render draws the markers (spec #520 T4, D152): the strokes' width, and the scale of
  * the chevron and its stroke. v12 classic drew both markers at 1 and its 1px line, v12 neo with
  * `strokeWidth` strokes in user space and the chevron at 0.8 (`viewBox 0 0 25 20` in a 20 × 20
- * marker); the families' tokens carry each (`relationMarkerStrokeWidth`, `relationArrowScale`).
+ * marker); the families' tokens carry each (`relationStrokeWidth`, `relationArrowScale`).
  */
 export interface MarkerGeometry {
   readonly stroke: number;
@@ -80,13 +86,13 @@ const within = (v: number, max: number, fallback: number): number =>
   Number.isFinite(v) && v >= 0 ? Math.min(v, max) : fallback;
 
 /**
- * The marker geometry a theme gives (`relationMarkerStrokeWidth`, `relationArrowScale`), each
+ * The marker geometry a theme gives (`relationStrokeWidth`, `relationArrowScale`), each
  * taken at no more than its cap; a chevron scale of 0 draws v12's.
  */
 export function markerGeometry(theme: { number(name: string): number }): MarkerGeometry {
   const scale = theme.number('relationArrowScale');
   return {
-    stroke: within(theme.number('relationMarkerStrokeWidth'), M.maxMarkerStroke, M.markerStroke),
+    stroke: within(theme.number('relationStrokeWidth'), M.maxMarkerStroke, M.markerStroke),
     arrowScale: scale > 0 ? within(scale, M.maxArrowScale, 1) : 1,
   };
 }

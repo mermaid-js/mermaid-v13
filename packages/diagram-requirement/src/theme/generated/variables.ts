@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('requirementBackground rqb color - requirementBorderColor rqc color - requirementBorderSize rqs length - requirementTextColor rqt color - relationLabelBackground rqlb color - relationColor rqrc color - relationLabelColor rqlc color - relationStrokeWidth rqw length - relationMarkerStrokeWidth rqmw length - relationArrowScale rqas length -');
+  /* @__PURE__ */ table('requirementBackground rqb color - requirementBorderColor rqc color - requirementBorderSize rqs length - requirementTextColor rqt color - relationLabelBackground rqlb color - relationColor rqrc color - relationLabelColor rqlc color - relationStrokeWidth rqw length - relationArrowScale rqas length -');

@@ -208,6 +208,10 @@ describe('the families (D152, D215, D227)', () => {
     expect((await render(SAMPLE, { theme })).svg).toMatchSnapshot();
   });
 
+  it('matches the palette snapshot (redux-color)', async () => {
+    expect((await render(SAMPLE, { theme: 'redux-color' })).svg).toMatchSnapshot();
+  });
+
   it('draws v12 classic geometry in classic themes: 1.3 outlines, 1px lines and markers, no shadow or gradient', async () => {
     const { svg, gradient } = await render(SMALL, { theme: 'forest' });
     expect(gradient).toBe(false);
@@ -233,20 +237,59 @@ describe('the families (D152, D215, D227)', () => {
     }
   });
 
-  it('strokes the box and its divider with the neo gradient, the divider in the outline path (D182, D185)', async () => {
+  it('strokes the box and its divider with the neo gradient, the rule lifted so it paints (D182, D185)', async () => {
     const { svg, gradient } = await render(SMALL, { theme: 'neo' });
     expect(gradient).toBe('mermaid-0-gradient');
     const box = byClass(svg, 'rect', 'outer-path')[0]!;
     expect(box.stroke).toBe('url(#mermaid-0-gradient)');
     const divider = /<g class="divider"><path d="([^"]*)" fill="none" stroke="([^"]*)"/.exec(svg)!;
     expect(divider[2]).toBe('url(#mermaid-0-gradient)');
-    // The outline's four corners, then the rule: the path's box is the box's.
-    expect(divider[1]!.match(/M/g)).toHaveLength(2);
-    // Without the gradient, the rule alone.
-    const plain = /<g class="divider"><path d="([^"]*)"/.exec(
-      (await render(SMALL, { theme: 'redux' })).svg
-    )!;
-    expect(plain[1]!.match(/[ML]/g)).toEqual(['M', 'L']);
+    // The rule alone, its right end 0.01 up: a box with a height, which the gradient paints.
+    expect(divider[1]!.match(/[ML]/g)).toEqual(['M', 'L']);
+    const [, y0, , y1] = nums(divider[1]!);
+    expect(y0! - y1!).toBeCloseTo(0.01, 6);
+    // Without the gradient (and where a style strokes the box), a level rule.
+    for (const [src, theme] of [
+      [SMALL, 'redux'],
+      [`${SMALL}style a stroke:#ff0000\n`, 'neo'],
+    ] as const) {
+      const plain = /<g class="divider"><path d="([^"]*)"/.exec(
+        (await render(src, { theme })).svg
+      )!;
+      const [, a, , b] = nums(plain[1]!);
+      expect([plain[1]!.match(/[ML]/g), a], theme).toEqual([['M', 'L'], b]);
+    }
+  });
+});
+
+describe('edges follow flowchart.curve (class precedent)', () => {
+  /** The path commands of every relation line. */
+  const commands = async (curve?: string): Promise<string> =>
+    byClass(
+      (await render(SAMPLE, curve ? { flowchart: { curve } } : {})).svg,
+      'path',
+      'relationshipLine'
+    )
+      .map((l) => l.d!.replace(/[^A-Z]/g, ''))
+      .join(' ');
+
+  it('draws linear as straight segments, basis as S-curves, and rounds corners by default', async () => {
+    expect(await commands('linear')).toMatch(/^[ML ]+$/);
+    const basis = await commands('basis');
+    expect(basis).toContain('C');
+    expect(basis).not.toContain('A');
+    // `rounded` (the default) turns its corners with arcs.
+    expect(await commands()).toContain('A');
+  });
+
+  it('draws a self-loop with rounded corners whatever the curve', async () => {
+    const loop = 'requirementDiagram\nrequirement a {\n}\na - refines -> a\n';
+    for (const curve of ['linear', 'basis', 'step']) {
+      const { svg } = await render(loop, { flowchart: { curve } });
+      const d = byClass(svg, 'path', 'relationshipLine')[0]!.d!;
+      expect(d, curve).toContain('A');
+      expect(d, curve).not.toContain('C');
+    }
   });
 });
 
@@ -362,6 +405,24 @@ describe('the w.outline hook (D301, D302)', () => {
     const markers = (s: string) =>
       s.match(/<(?:path|circle)[^>]*requirement_(?:arrow|contains)[^>]*>|<circle[^>]*>/g);
     expect(markers(drawn.svg)).toEqual(markers(plain.svg));
+    expect(drawn.svg).toMatchSnapshot();
+  });
+
+  it('sketches the outline once and the divider rule alone under neo (D185, D301)', async () => {
+    const calls: { role: string; d?: string }[] = [];
+    const sketch: OutlineDraw = (role, _tag, attrs, sink) => {
+      calls.push({ role, d: attrs.d === undefined ? undefined : String(attrs.d) });
+      sink.leaf('path', { class: 'sketch', d: sink.path().moveTo(0, 0).done() });
+      return true;
+    };
+    const drawn = await renderRequirementForTest(SMALL, {
+      config: { theme: 'neo' },
+      outline: sketch,
+    });
+    expect(calls.map((c) => c.role)).toEqual(['edge', 'edge', 'node', 'divider', 'node']);
+    // The divider's path is the rule only: one move, one line, no second outline.
+    const divider = calls.find((c) => c.role === 'divider')!.d!;
+    expect(divider.match(/[MLZ]/g)).toEqual(['M', 'L']);
     expect(drawn.svg).toMatchSnapshot();
   });
 });

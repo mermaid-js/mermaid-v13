@@ -15,9 +15,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   relationLabelBackground: { alias: 'rqlb', kind: 'color', usedBy: ['requirement'] },
   relationColor: { alias: 'rqrc', kind: 'color', usedBy: ['requirement'] },
   relationLabelColor: { alias: 'rqlc', kind: 'color', usedBy: ['requirement'] },
-  // Relation geometry (D152), read as numbers at render time: the line's width, the markers'
-  // stroke width and the chevron's scale. The layout's marker room follows the last two.
+  // Relation geometry (D152), read as numbers at render time: the width of the line and of the
+  // markers' strokes, and the chevron's scale. The layout's marker room follows both.
   relationStrokeWidth: { alias: 'rqw', kind: 'length', usedBy: ['requirement'] },
-  relationMarkerStrokeWidth: { alias: 'rqmw', kind: 'length', usedBy: ['requirement'] },
   relationArrowScale: { alias: 'rqas', kind: 'length', usedBy: ['requirement'] },
 };
