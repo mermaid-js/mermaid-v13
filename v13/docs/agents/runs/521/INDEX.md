@@ -31,3 +31,10 @@ Block #521, c4 #522 and agentflow #523 run in parallel on AI-Max: at most one ti
 | --- | --- | --- |
 | base (521fb76ee) | 93,891 | — |
 | T0 #552 | 94,217 | +326 |
+
+## PAUSED (2026-11-09, Knut: AI-Max overloaded; resume only on the coordinator's "RESUME")
+
+- **Integration:** `feature/521_block` at f3fa2c8e6 (T0 via #589, T1, T2, `mermaid-v13` merged), pushed, pre-push check green. Draft PR #623. Checked out in `/Users/knsv/repos/mermaid-v13/.claude/worktrees/b521`.
+- **In flight:** T3 #555 on `feature/555_block_layout` at f7274d888 (this worktree, `521-block-7f431e`). Implementation committed; resume point in `tickets/555.md`. Scoped checks green; the full `pnpm check` (needed: T3 touches core `usedBy`) was killed by the pause and must run again, then merge `feature/521_block` and rerun the handoff checks.
+- **Then:** `/code-review` of T3, ff into `feature/521_block` (in b521), merge `mermaid-v13`, push. Next tickets: T4 #556 (renderer, needs T3) and T6 #557 (language, needs T2) one at a time, then T5 #558, then T7 #559.
+- **Open for the maintainer:** see GAPS.md (two D440 items from T2, two from T3).
