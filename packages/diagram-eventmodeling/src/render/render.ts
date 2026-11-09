@@ -29,7 +29,7 @@ import { paints, type Paints } from './paint.ts';
 /** What the renderer reads from the render context. */
 export type EventModelRenderContext = Pick<
   RenderContext,
-  'config' | 'theme' | 'idPrefix' | 'version'
+  'config' | 'theme' | 'idPrefix' | 'version' | 'warn'
 >;
 
 /** Writes the whole `<svg>` document for a laid-out event model. */
@@ -53,7 +53,7 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs): void {
   w.label(p.text, p.x + p.width / 2, p.y + p.height / 2, attrs);
 }
 
-/** A lane (`renderD3Swimlane`): the rect from x 0, then the bold label at (30, y + 30). */
+/** A lane (`renderD3Swimlane`): the rect from x 0, then the bold label from (30, y + 30). */
 function drawLane(
   lane: EventModelLaneLayout,
   radius: number,
@@ -73,7 +73,18 @@ function drawLane(
     fill: paint.laneFill,
     stroke: paint.laneStroke,
   });
-  label(w, lane.label, { 'data-id': id, fill: paint.text, ...font });
+  // v12's start-anchored label: its left edge at `labelAt.x`, first baseline at `labelAt.y`.
+  const text = lane.label.text;
+  w.label(
+    { ...text, left: true },
+    lane.labelAt.x + text.width / 2,
+    lane.label.y + text.height / 2,
+    {
+      'data-id': id,
+      fill: paint.text,
+      ...font,
+    }
+  );
   w.close();
 }
 
@@ -142,7 +153,7 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = eventModelingUseMaxWidth(config.eventmodeling);
+  const maxWidth = eventModelingUseMaxWidth(config.eventmodeling, ctx.warn);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.

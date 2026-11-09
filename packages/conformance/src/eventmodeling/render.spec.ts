@@ -16,6 +16,7 @@ import {
   type Prepared,
   type RenderResult,
 } from 'mermaid';
+import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { REPO_ROOT } from '../corpus.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -31,10 +32,11 @@ import { eventModelingApi } from './render-api.ts';
  * `<marker>`, `clipPath` or transform, no empty `<g>`, every drawn coordinate inside the viewBox,
  * ids only on the title and description, and the AST round-trip (R-PARSE-8).
  *
- * The round-trip rule (D528): every frame maps to exactly one `data-ast` element, its
- * `g.em-box`, and every explicit relation (`->>`) to one, its `path.em-relation`. An inferred
- * relation's path and the lanes carry `data-id` only (`relation:<s>-><t>`, `lane:<index>`);
- * rects, texts and heads carry their group's or path's `data-id`.
+ * The round-trip rule (D528), both ways: every `data-ast` is an AST node, a frame's on its
+ * `g.em-box` and a placed `->>`'s on its `path.em-relation`; and every AST node is drawn exactly
+ * once except the not-drawn set `notDrawnIds` computes from the model and the structure. An
+ * inferred relation's path and the lanes carry `data-id` only (`relation:<s>-><t>`,
+ * `lane:<index>`); rects, texts and heads carry their group's or path's `data-id`.
  */
 const THEMES = ['default', 'neo-dark', 'auto'] as const satisfies readonly MermaidConfig['theme'][];
 
@@ -107,6 +109,43 @@ function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
   return out;
 }
 
+/**
+ * The AST nodes nothing is drawn for (D526, D528), from the model and the structure, not by id
+ * pattern: the document and its header; notes, `gwt`s, entities and data blocks (modelled, not
+ * drawn, as v12); the `title`, `accTitle` and `accDescr` statements (D218: the title is not
+ * drawn; the accessible ones are the root's `<title>`/`<desc>`, with no `data-ast`); and every
+ * `->>` source node `eventModelStructure` makes no relation of: a repeated source (the second
+ * `->> 01` of a frame, its id suffixed 2) and a forward or undefined one (v12 drew neither). A frame's source nodes are
+ * checked against its model sources, so no node is excused that the model does not hold.
+ */
+function notDrawnIds(
+  ast: AstNode,
+  model: EventModel,
+  structure: ReturnType<typeof eventModelStructure>
+): Set<string> {
+  const out = new Set<string>([
+    ...model.notes.map((n) => n.astId),
+    ...model.gwts.map((g) => g.astId),
+    ...model.entities.map((e) => e.astId),
+    ...model.dataBlocks.map((d) => d.astId),
+  ]);
+  const placed = new Set(structure.relations.flatMap((r) => (r.astId ? [r.astId] : [])));
+  const frames = new Map(model.frames.map((f) => [f.astId, f]));
+  for (const node of ast.children ?? []) {
+    if (STATEMENTS_NOT_DRAWN.has(node.type)) out.add(node.id);
+    const frame = frames.get(node.id);
+    if (node.type !== 'Frame' || !frame) continue;
+    const sources = (node.children ?? []).filter((k) => k.type === 'Source');
+    expect(sources.length, node.id).toBe(frame.sources.length);
+    for (const k of sources) if (!placed.has(k.id)) out.add(k.id);
+  }
+  out.add(ast.id);
+  return out;
+}
+
+/** Statement kinds with no element: the header and the title and accessibility statements. */
+const STATEMENTS_NOT_DRAWN = new Set(['Header', 'Title', 'AccTitle', 'AccDescr']);
+
 describe('event modeling render properties over the corpus', () => {
   it('renders the corpus', () => {
     for (const theme of THEMES)
@@ -166,6 +205,7 @@ describe('event modeling render properties over the corpus', () => {
     let frames = 0;
     let explicit = 0;
     let inferred = 0;
+    let dropped = 0;
     for (const c of cases) {
       const { tree } = c;
       const parse = c.prepared.parse;
@@ -182,10 +222,21 @@ describe('event modeling render properties over the corpus', () => {
         const want = node!.type === 'Frame' ? 'g em-box' : 'path em-relation';
         expect(`${tree.tag(el)} ${tree.getAttr(el, 'class')}`, `${c.id}: ${id}`).toBe(want);
       }
-      for (const f of model.frames) {
-        frames++;
-        expect(seen.get(f.astId)?.length, `${c.id}: ${f.astId}`).toBe(1);
+      // AST → elements: every node is drawn exactly once, unless it is in the not-drawn set.
+      const drawn = new Set([
+        ...model.frames.map((f) => f.astId),
+        ...structure.relations.flatMap((r) => (r.astId === undefined ? [] : [r.astId])),
+      ]);
+      const notDrawn = notDrawnIds(parse.ast, model, structure);
+      for (const id of index.keys()) {
+        if (drawn.has(id)) expect(seen.get(id)?.length, `${c.id}: ${id}`).toBe(1);
+        else {
+          expect(notDrawn.has(id), `${c.id}: ${id} is neither drawn nor listed`).toBe(true);
+          expect(seen.has(id), `${c.id}: ${id} is not drawn`).toBe(false);
+          if (index.get(id)!.type === 'Source') dropped++;
+        }
       }
+      frames += model.frames.length;
       const paths = tree.find((n, t) => t.getAttr(n, 'class') === 'em-relation');
       expect(paths.length, c.id).toBe(structure.relations.length);
       for (const [i, r] of structure.relations.entries()) {
@@ -212,6 +263,8 @@ describe('event modeling render properties over the corpus', () => {
     expect(frames).toBeGreaterThan(1000);
     expect(explicit).toBeGreaterThan(100);
     expect(inferred).toBeGreaterThan(100);
+    // Repeated and unplaced `->>` sources: AST nodes v12 draws nothing for.
+    expect(dropped).toBeGreaterThan(10);
   });
 });
 
@@ -270,6 +323,11 @@ describe('event modeling render: what is drawn', () => {
     expect(attr(tree, tree.children(lane)[0], 'rx')).toBe('3');
     expect(textOf(tree, tree.children(lane)[1]!)).toBe('UI/Automation');
     expect(weightOf(tree, tree.children(lane)[1]!)).toBe('bold');
+    // v12's start-anchored label: left edge at x 30, first baseline at the lane's y + 30.
+    const laneText = tree.children(lane)[1]!;
+    expect(attr(tree, laneText, 'text-anchor')).toBe('start');
+    const at = attr(tree, laneText, 'x') === undefined ? tree.children(laneText)[0] : laneText;
+    expect([attr(tree, at, 'x'), attr(tree, at, 'y')]).toEqual(['30', '30']);
     // A box: rect rx 3, then its bold name.
     const box = tree.children(root)[lanes]!;
     expect(attr(tree, box, 'data-ast')).toBe('frame:01');
@@ -382,6 +440,17 @@ describe('event modeling render: what is drawn', () => {
     const f = await render(src, fixed);
     const froot = f.tree.find({ tag: 'svg' })[0]!;
     expect([attr(f.tree, froot, 'width'), attr(f.tree, froot, 'height')]).toEqual([w, h]);
+    expect(f.warnings.map((x) => x.code)).not.toContain('EVENTMODELING_CONFIG_INVALID');
+  });
+
+  it('warns once and keeps useMaxWidth on for a value that is not a boolean (D226)', async () => {
+    const odd = await eventModelingApi({
+      eventmodeling: { useMaxWidth: 'no' },
+    } as unknown as MermaidConfig);
+    const r = await render(fixture('pr-check/state-change-pattern.mmd'), odd);
+    expect(attr(r.tree, r.tree.find({ tag: 'svg' })[0], 'width')).toBe('100%');
+    const invalid = r.warnings.filter((x) => x.code === 'EVENTMODELING_CONFIG_INVALID');
+    expect(invalid.map((x) => x.path)).toEqual(['eventmodeling.useMaxWidth']);
   });
 
   it('draws SVG only: ascii is UnsupportedFormatError (D320)', async () => {

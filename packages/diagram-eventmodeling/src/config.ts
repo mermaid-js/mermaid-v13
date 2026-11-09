@@ -6,7 +6,8 @@
  *
  * `padding` is a number, or a numeric string as its number (v12 passed it on as given), of 0 or
  * more, small enough that the bounds it pads stay finite (`PADDING_HEADROOM`); anything else is
- * v12's 30 with one `EVENTMODELING_CONFIG_INVALID`.
+ * v12's 30 with one `EVENTMODELING_CONFIG_INVALID`. `useMaxWidth` is a boolean, else true with
+ * one (`eventModelingUseMaxWidth`, read by the renderer).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
@@ -39,10 +40,21 @@ export function eventModelingConfig(
   return { padding: fallback };
 }
 
-/** v12's `useMaxWidth` (default true): only a falsy value turns it off (`setupGraphViewbox`). */
+/**
+ * `useMaxWidth` (default true, v12's `setupGraphViewbox`): a boolean as given; anything else
+ * (a directive can write `"useMaxWidth": "no"`) is the default with one
+ * `EVENTMODELING_CONFIG_INVALID` (D226).
+ */
 export function eventModelingUseMaxWidth(
-  section: Readonly<Pick<EventModelingDiagramConfig, 'useMaxWidth'>> | undefined
+  section: Readonly<Pick<EventModelingDiagramConfig, 'useMaxWidth'>> | undefined,
+  warn: (w: Warning) => void
 ): boolean {
-  const value: unknown = section?.useMaxWidth;
-  return value === undefined || Boolean(value);
+  const given: unknown = section?.useMaxWidth;
+  if (given === undefined || typeof given === 'boolean') return given ?? true;
+  warn({
+    code: EVENTMODELING_CONFIG_INVALID,
+    message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
+    path: 'eventmodeling.useMaxWidth',
+  });
+  return true;
 }

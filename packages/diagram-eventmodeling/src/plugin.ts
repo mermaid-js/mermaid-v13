@@ -15,8 +15,9 @@ import { theme } from './theme/table.ts';
  * `EventModelLayout`. `parse` takes the whole source; `layout` sizes and places lanes, boxes and
  * relations; `render` writes the whole `<svg>` document. SVG only (D320).
  *
- * `theme` is event modeling's own table (`theme/table.ts`, D331, D527). No `labels` hook: box
- * text is plain (D523), measured and drawn through core's label layout. The manifest, and with
+ * `theme` is event modeling's own table (`theme/table.ts`, D331, D527). `labels` gives no
+ * strings: box text is plain (D523), laid out as written and never through `ctx.inline`, so a
+ * `$$` in data loads no math engine (D176, D178). The manifest, and with
  * it the registry row and `configDefaults`, land with T5 (#611); until then a test registers
  * the plugin over the first-party `eventmodeling` row (`replace: true`).
  */
@@ -24,6 +25,7 @@ export const eventmodeling = {
   id: 'eventmodeling',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  labels: (): readonly string[] => [],
   detector: (text: string): boolean => detectEventModeling(text),
   parse: (text: string, ctx: DiagramParseContext): EventModelParseResult =>
     parseEventModel(text, { preprocessed: ctx.preprocessed }),
