@@ -72,8 +72,10 @@ export function renderXyChart(
   w.close();
 }
 
-/** v12's `dominant-baseline` for a text's baseline (`getDominantBaseLine`, the data labels'). */
-/** v12's `dominant-baseline` for each of the layout's baselines (`getDominantBaseLine`, the data labels'). */
+/**
+ * v12's `dominant-baseline` for each of the layout's baselines (`getDominantBaseLine`, the data
+ * labels').
+ */
 export const DOMINANT_BASELINE: Readonly<
   Record<XyText['baseline'], NonNullable<Attrs['dominant-baseline']>>
 > = {
@@ -172,7 +174,8 @@ function drawBars(plot: XyBarPlotLayout, paint: Paints, w: SvgWriter): void {
       'stroke-width': 0,
       'data-id': id,
     });
-  // v12 hangs a label inside a vertical bar from its top (`hanging`).
+  // The layout chooses each data label's baseline (`hanging` inside a vertical bar,
+  // `withDataLabels`); this draws it.
   for (const t of plot.dataLabels) drawText(w, t, { fill: paint.dataLabel, 'data-id': id });
   w.close();
 }

@@ -4,6 +4,7 @@
  * padding) and the same arithmetic, without d3 (`scale.ts`). Its labels are measured before any
  * space is handed out (measure first, pitfall 16): a linear axis's ticks depend on its domain only.
  */
+import type { Size } from '@mermaid-js/core/layout';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
 import type { XyChartAxisOptions } from '../config.ts';
@@ -11,11 +12,6 @@ import { XYCHART_METRICS } from './metrics.ts';
 import { bandScale, linearScale, ticks as d3Ticks } from './scale.ts';
 import { place, type Measured, type TextMeasure } from './text.ts';
 import type { Rect, Segment, XyAxisLayout, XyAxisPosition, XyText, XyTick } from './types.ts';
-
-interface Dimension {
-  width: number;
-  height: number;
-}
 
 /** What the axis shows: a band of categories, or a linear domain (`[min, max]` as given). */
 export type AxisData =
@@ -52,7 +48,7 @@ export class Axis {
   /** The tick values in increasing-domain order, and their measured labels. */
   private readonly values: readonly (string | number)[];
   private readonly labels: readonly Measured[];
-  private readonly labelSize: Dimension;
+  private readonly labelSize: Size;
   private readonly titleText: Measured | undefined;
   private scaleOf: (value: string | number) => number = () => 0;
 
@@ -160,7 +156,7 @@ export class Axis {
    * axis takes across `available`, dropping parts that do not fit, in v12's order: the axis line,
    * the labels (whose half size along the axis sets the outer padding), the ticks, the title.
    */
-  calculateSpace(available: Dimension): Dimension {
+  calculateSpace(available: Size): Size {
     const options = this.input.options;
     const left = this.position === 'left';
     const across = left ? 'width' : 'height';

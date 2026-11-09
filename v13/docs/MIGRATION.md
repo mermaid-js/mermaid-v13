@@ -2062,6 +2062,7 @@ v12's chart builder to 0.01 px. What changes in config and drawing (spec #426):
 | Data labels with no room in any bar wrote `font-size="Infinitypx"` | None are drawn, with one `XYCHART_LABEL_TOO_SMALL` warning | D383 |
 | A plot written before its `x-axis` kept the x values of the axis it saw, silently; on a linear axis a category x had no position | The same, with one `XYCHART_PLOT_BEFORE_AXIS` warning naming the plots; a value with no x on the axis is drawn at the axis start, on a band and a linear axis alike | D386 |
 | An unclosed `accDescr {` ended in an empty description, silently | The same, with one `XYCHART_UNCLOSED_DESCRIPTION` warning | #508 |
+| `mermaid.parse()` accepted a chart with no plot (`xychart` alone); the render then failed with `No Plot to render, please provide a plot with some data` | Rejected at parse, with v12's message (`XYCHART_NO_PLOT`) | Choice, for the maintainer (#508) |
 | A bar whose value is below the range minimum drew with a negative height, one above the maximum past the plot | The bar is held inside the plot box, its end at the box edge | Choice, for the maintainer (#509) |
 | The title, axis titles, categories, legend names and line point labels were set with d3 `.text()`: `<br>` and tags printed as written | Core's label layout: `<br>` breaks the line (a legend name of several lines takes as many rows), math and icons work, entities decode; tick numbers and data labels stay plain text. Point labels are author text like the others (a choice, #509; D385 names the rest) | D385 |
 | Line point labels in the line's colour | The same (near-white on the redux and base palettes, as in v12) | D384 |
@@ -2103,6 +2104,7 @@ draw order.
 | No source mapping | `data-ast` on the in-text title's `g.chart-title`, each plot's `g.bar-plot-<n>`/`g.line-plot-<n>` and each drawn axis's `g.<position>-axis`; `data-id` (the plot's AST id) on bars, lines, point labels, data labels and legend rows. The legend has no `data-ast` | R-PARSE-8, pitfall 12 |
 | Paths as d3 wrote them | `M…L…` with two decimals (axis lines, ticks, legend strokes); a line plot's `d` keeps d3 `line()`'s three decimals | Core's path writer |
 | Data labels' `font-size="<n>px"` | `font-size="<n>"` | Presentation attributes |
-| A label with `<br>` printed as one `<text>` | A `<text>` of `<tspan>`s, one per line (core's label writer); one-line text is v12's `<text>` at `translate(x,y) rotate(r)` | D385 |
+| A label with `<br>` printed as one `<text>` | A `<text>` of `<tspan>`s, one per line (core's label writer); a one-line text that v12's chart builder drew (title, axis text, legend names, point labels) is v12's `<text>` at `translate(x,y) rotate(r)` | D385 |
+| Data labels placed with `x` and `y` | `x="0" y="0"` with `transform="translate(x,y) rotate(0)"`, as every other text; the same position | Choice (#510): one text writer |
 | A plot whose values are all missing threw | The plot's group is written, with nothing drawn in it; a hidden axis part writes no group, an axis with every part hidden none at all | D383 |
 | `look: neo` and the redux themes: the same chart as the classic themes | The same: the XY chart differs between families by colour only | D227 |

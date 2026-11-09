@@ -10,7 +10,12 @@ import type { XyChartLex } from './lexer.ts';
 import { tokenValue } from './value.ts';
 import { v12Text } from './v12-text.ts';
 
-export { parseXyChart } from './parser.ts';
+export {
+  parseXyChart,
+  XYCHART_NO_PLOT,
+  XYCHART_PLOT_BEFORE_AXIS,
+  XYCHART_UNCLOSED_DESCRIPTION,
+} from './parser.ts';
 export type { XyChartParseOptions, XyChartParseResult } from './parser.ts';
 export { detectXyChart } from './detect.ts';
 export type * from './ast.ts';

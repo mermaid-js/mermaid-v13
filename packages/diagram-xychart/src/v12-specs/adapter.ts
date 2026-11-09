@@ -12,7 +12,7 @@
  */
 import { XyChartBuilder } from '../parser/build.ts';
 import type { XyChartPointInput } from '../parser/build.ts';
-import { parseXyChart } from '../parser/index.ts';
+import { parseXyChart, XYCHART_NO_PLOT } from '../parser/index.ts';
 import type { XyChartStatementNode } from '../parser/index.ts';
 
 type Db = Record<string, ((...args: unknown[]) => unknown) | undefined>;
@@ -50,7 +50,7 @@ export const parser = {
   parse(source: string): void {
     const result = parseXyChart(source);
     const error = result.diagnostics.find(
-      (d) => d.severity === 'error' && d.code !== 'XYCHART_NO_PLOT'
+      (d) => d.severity === 'error' && d.code !== XYCHART_NO_PLOT
     );
     if (error) throw new Error(error.message);
     for (const n of result.ast.children) replay(parser.yy, n);

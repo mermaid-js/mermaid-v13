@@ -3,6 +3,7 @@
  * rows, right of the plot, dropped whole when they do not fit. Its own module so the ported v12
  * legend spec reaches it through `./testing`, as v12's spec reached the component.
  */
+import type { Size } from '@mermaid-js/core/layout';
 import type { FontKey } from '@mermaid-js/core/text';
 import type { XyChartOptions } from '../config.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
@@ -12,9 +13,10 @@ import type { XyLegendLayout, XyLegendRow } from './types.ts';
 
 const { legendMarker, legendItemSpacing, legendMarkerSpacing, lineStrokeWidth } = XYCHART_METRICS;
 
-interface Size {
-  width: number;
-  height: number;
+/** A named plot and its measured legend name: one legend row. */
+interface LegendEntry {
+  readonly plot: XyChartPlot;
+  readonly text: Measured;
 }
 
 /** How much taller than one line a text is: 0 for one line. */
@@ -25,12 +27,12 @@ const extraLines = (m: Measured): number => Math.max(0, m.height - m.lineHeight)
  * A row is `legendFontSize` high, as v12's, plus a name's extra lines (D385).
  */
 export class Legend {
-  private rows: { plot: XyChartPlot; text: Measured }[] = [];
+  private rows: LegendEntry[] = [];
   private readonly box = { x: 0, y: 0, width: 0, height: 0 };
   private readonly marker: number;
   private readonly markerSpacing: number;
   private readonly itemSpacing: number;
-  private readonly named: { plot: XyChartPlot; text: Measured }[];
+  private readonly named: LegendEntry[];
   constructor(
     model: XyChartModel,
     private readonly options: XyChartOptions,

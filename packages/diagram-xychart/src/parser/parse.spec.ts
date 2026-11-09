@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { parseXyChart } from '../index.ts';
+import {
+  parseXyChart,
+  XYCHART_NO_PLOT,
+  XYCHART_PLOT_BEFORE_AXIS,
+  XYCHART_UNCLOSED_DESCRIPTION,
+} from '../index.ts';
 
 const model = (src: string) => {
   const r = parseXyChart(src);
@@ -77,7 +82,7 @@ describe('xychart parser: model', () => {
   it('warns once for the plots before the last x-axis with data, naming each (D386)', () => {
     const r = parseXyChart('xychart\nbar [1,2]\nline [2]\nx-axis [a,b]\nbar [3]\nx-axis "T"');
     expect(r.diagnostics.map((d) => [d.severity, d.code, r.ast.children[3]?.range])).toEqual([
-      ['warning', 'XYCHART_PLOT_BEFORE_AXIS', r.ast.children[3]?.range],
+      ['warning', XYCHART_PLOT_BEFORE_AXIS, r.ast.children[3]?.range],
     ]);
     const [w] = r.model.warnings;
     expect(w?.range).toEqual({ start: 27, end: 39 });
@@ -94,7 +99,7 @@ describe('xychart parser: model', () => {
     expect(model('xychart\nbar [1, 2]\nx-axis "T" 1 --> 2').warnings).toEqual([]);
     const r = parseXyChart('xychart\nx-axis [a]\nbar [1]\nx-axis [b]\nbar [2]\nx-axis [b]');
     expect(r.model.warnings.map((w) => [w.code, w.related?.map((x) => x.message)])).toEqual([
-      ['XYCHART_PLOT_BEFORE_AXIS', ['Plot 1 comes before the `x-axis`.']],
+      [XYCHART_PLOT_BEFORE_AXIS, ['Plot 1 comes before the `x-axis`.']],
     ]);
   });
 
@@ -174,7 +179,7 @@ describe('xychart parser: model', () => {
     const r = parseXyChart('xychart\nbar [1]\naccDescr {\nnever closed');
     expect(r.model.accDescr).toBe('');
     expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
-      ['warning', 'XYCHART_UNCLOSED_DESCRIPTION'],
+      ['warning', XYCHART_UNCLOSED_DESCRIPTION],
     ]);
   });
 
@@ -194,7 +199,7 @@ describe('xychart parser: model', () => {
   it('rejects a chart without a plot with v12 message (R-PARSE-4)', () => {
     const r = parseXyChart('xychart\ntitle T');
     expect(r.diagnostics.map((d) => [d.code, d.message])).toEqual([
-      ['XYCHART_NO_PLOT', 'No Plot to render, please provide a plot with some data'],
+      [XYCHART_NO_PLOT, 'No Plot to render, please provide a plot with some data'],
     ]);
   });
 });

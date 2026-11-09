@@ -19,6 +19,7 @@
  *   `xychartRenderer.ts:102`). Both are maintainer choices (`GAPS.md` #509).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import type { Size } from '@mermaid-js/core/layout';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
 import { ignoreWarning, XYCHART_SECTION, xyChartOptions, type XyChartOptions } from '../config.ts';
@@ -62,11 +63,6 @@ const {
 
 /** `v` held to ±`valueLimit` (a 309-digit value is Infinity). */
 const finiteValue = (v: number): number => clamp(v, -valueLimit, valueLimit);
-
-interface Size {
-  width: number;
-  height: number;
-}
 
 /** Lays out an XY chart in px. */
 export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): XyChartLayout {

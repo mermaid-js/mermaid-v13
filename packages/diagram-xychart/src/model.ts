@@ -48,7 +48,11 @@ export type XyChartXAxis = (XyChartBandAxis | XyChartLinearAxis) & {
 export type XyChartYAxis = XyChartLinearAxis & {
   /** The AST id of the last `y-axis` statement, when there is one. */
   readonly ast?: AstId;
-  /** Whether a `y-axis` gave the range (else it spans the plots' values). */
+  /**
+   * Whether a `y-axis` gave the range (else it spans the plots' values). Part of the specified
+   * model (spec #426 §Parser: "y axis (linear, explicit or inferred)"); the layout reads only the
+   * range.
+   */
   readonly explicit: boolean;
 };
 
@@ -68,7 +72,10 @@ export interface XyChartPlot {
   readonly name: string;
   /** Position among the plots, from 0: the palette slot is `index` mod the palette length. */
   readonly index: number;
-  /** The values as written, before any cut. */
+  /**
+   * The values as written, before any cut. Part of the specified model (spec #426 §Parser:
+   * "plots (kind, name, values, point labels, AST id)"); the layout reads `data`.
+   */
   readonly values: readonly number[];
   /** The points v12 computed against the x axis this plot saw. */
   readonly data: readonly XyChartDatum[];

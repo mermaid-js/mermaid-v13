@@ -12,7 +12,7 @@ import {
   sourceRange,
 } from '@mermaid-js/gen-grammar';
 import type { AstShape, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
-import { lexXyChart, parseXyChart } from '@mermaid-js/diagram-xychart';
+import { lexXyChart, parseXyChart, XYCHART_NO_PLOT } from '@mermaid-js/diagram-xychart';
 import type { XyChartDocument } from '@mermaid-js/diagram-xychart';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -97,7 +97,7 @@ export function referenceVerdict(source: string): Verdict {
 }
 
 /** Errors that come from checks beyond the syntax: a chart without plots. */
-const SEMANTIC = new Set(['XYCHART_NO_PLOT']);
+const SEMANTIC = new Set([XYCHART_NO_PLOT]);
 
 /**
  * Accept/reject and AST shape by the hand-written parser. Preprocess diagnostics are left out

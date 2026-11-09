@@ -2,7 +2,8 @@
 // with `createTheme(spec, { diagram: table })` in every theme: the twelve colours follow
 // `primaryTextColor` and `background`, the palette reads `plotColorArray`, and an author sets
 // either by the flat name or by v12's nested `themeVariables.xyChart` key, the flat name
-// winning. The v12 oracle comparison in all eleven themes is T5's (#513).
+// winning. The v12 oracle comparison in all eleven themes is
+// `packages/conformance/src/xychart/theme.spec.ts`.
 import { describe, expect, it } from 'vitest';
 import { createTheme, loadTheme, THEME_NAMES, type ThemeName } from '@mermaid-js/core/theme';
 import { xychart } from '../plugin.ts';

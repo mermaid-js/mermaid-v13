@@ -7,6 +7,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import { XYCHART_SECTION } from './config.ts';
 import type { XyChartLayoutContext } from './layout/index.ts';
 import { theme as table } from './theme/table.ts';
 
@@ -23,7 +24,7 @@ export function xyChartTestContext(
 ): XyChartLayoutContext {
   const warnings = options.warnings;
   return {
-    config: { xyChart: section } as unknown as ResolvedConfig,
+    config: { [XYCHART_SECTION]: section } as unknown as ResolvedConfig,
     theme,
     measurer: options.measurer ?? tableMeasurer,
     warn: (w) => warnings?.push(w),

@@ -5,8 +5,8 @@
  * config defaults under the integrator's config and the source's front matter and directives,
  * the theme with the plugin's table, its `themeVariables` and its dark half for `theme: 'auto'`,
  * the table measurer, and the stream writer with the theme's gradient. `mermaid` renders the XY
- * chart through the registry once T5's manifest lands (#513); this renders the plugin alone,
- * with what the public API does not take (a model, a measurer).
+ * chart through the registry; this renders the plugin alone, with what the public API does not
+ * take (a model, a measurer).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';

@@ -1,6 +1,7 @@
 /**
- * The `xyChart` options, read here for the layout (and the renderer). The defaults are the
- * section's generated ones (`generated/config-defaults.ts`, from `config.schema.yaml`).
+ * The `xyChart` options, read here for the layout (the renderer reads only what the layout
+ * carries). The defaults are the section's generated ones (`generated/config-defaults.ts`, from
+ * `config.schema.yaml`).
  *
  * Values are taken as v12 took them (`cleanAndMerge` checks no schema range, story 6, D383):
  * any finite number (or numeric string, as the other ports read a length) for a number key, any

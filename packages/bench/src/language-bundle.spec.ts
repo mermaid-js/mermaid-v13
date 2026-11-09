@@ -93,7 +93,20 @@ const PACKAGES = [
   {
     name: 'xychart',
     dir: 'diagram-xychart',
-    renderer: ['layout/', 'index.ts', 'config.ts', 'testing.ts', 'test-context.ts'],
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'v12-specs/',
+      'plugin.ts',
+      'index.ts',
+      'labels.ts',
+      'model.ts',
+      'config.ts',
+      'generated/config-defaults.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
   },
 ] as const;
 

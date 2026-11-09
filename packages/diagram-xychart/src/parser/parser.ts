@@ -55,6 +55,13 @@ export interface XyChartParseOptions extends ParseOptions {
 
 export type XyChartParseResult = ParseResult<XyChartModel, XyChartDocument>;
 
+/** v12's `No Plot to render…`: a chart with no plot is rejected at parse (v12 failed at render). */
+export const XYCHART_NO_PLOT = 'XYCHART_NO_PLOT';
+/** An `accDescr {` with no closing `}`: accepted with an empty description, as v12. */
+export const XYCHART_UNCLOSED_DESCRIPTION = 'XYCHART_UNCLOSED_DESCRIPTION';
+/** Plots read before an `x-axis` with other data keep the x values they saw (D386). */
+export const XYCHART_PLOT_BEFORE_AXIS = 'XYCHART_PLOT_BEFORE_AXIS';
+
 /** jison's `alphaNumToken`: unquoted text. */
 const ALPHA_NUM = [
   T.Amp,
@@ -221,7 +228,7 @@ class XyChartParser {
       const range = header
         ? { start: header.range.end, end: header.range.end }
         : { start: this.pre.bodyStart, end: this.src.length };
-      this.st.diagnostics.error('XYCHART_NO_PLOT', NO_PLOT, range);
+      this.st.diagnostics.error(XYCHART_NO_PLOT, NO_PLOT, range);
     }
     // In source order (the facet contract): the warnings about the model come last otherwise.
     this.st.diagnostics.list.sort((p, q) => p.range.start - q.range.start);
@@ -472,7 +479,7 @@ class XyChartParser {
         this.unclosedDescription = true;
         const at = this.outerStart[first] ?? 0;
         this.st.diagnostics.warning(
-          'XYCHART_UNCLOSED_DESCRIPTION',
+          XYCHART_UNCLOSED_DESCRIPTION,
           `Unclosed description: the \`accDescr {\` at line ${this.lineOf(at)} has no closing \`}\`, so the chart has no description. Add \`}\` after the description.`,
           { start: at, end: Math.min(this.src.length, at + 'accDescr'.length) }
         );
@@ -721,7 +728,7 @@ function buildModel(
   const off = b.plotsOffAxis();
   if (lastX && off.length > 0) {
     st.diagnostics.warning(
-      'XYCHART_PLOT_BEFORE_AXIS',
+      XYCHART_PLOT_BEFORE_AXIS,
       'Plots before this `x-axis` keep the x positions they had without it (on categories they are drawn at the start of the axis); put the `x-axis` before the plots.',
       lastX.range,
       {

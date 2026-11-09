@@ -4,6 +4,7 @@
  * data labels are plain text, measured as one run. A placed text is v12's `TextElem`: an anchor
  * point, `text-anchor`, a baseline and a rotation, with its box from the measurer.
  */
+import type { Size } from '@mermaid-js/core/layout';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { Point, Rect, XyBaseline, XyText, XyTextAnchor } from './types.ts';
@@ -25,7 +26,7 @@ export interface TextMeasure {
   label(text: string, font: FontKey): Measured;
   plain(text: string, font: FontKey): Measured;
   /** v12's `getMaxDimension`: the widest width and the tallest height of `texts`. */
-  max(texts: readonly Measured[], font: FontKey): { width: number; height: number };
+  max(texts: readonly Measured[], font: FontKey): Size;
 }
 
 export function textMeasure(measurer: Measurer, inline: InlineSpans | undefined): TextMeasure {
