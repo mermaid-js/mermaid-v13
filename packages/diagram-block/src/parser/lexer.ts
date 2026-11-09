@@ -24,8 +24,11 @@
  *
  * jison throws where no rule matches; that is a one-character `Kind.Error` (a code point) and
  * lexing goes on in the same state. Every scan is linear in the text it consumes (R-PARSE-7):
- * the blank run and the dot run at a position are cached, so failed edge and direction matches
- * do not rescan them.
+ * the blank, dot and `\w` runs at a position are cached, so a failed edge, direction or
+ * class-definition id match, which errors at one character and retries at the next, does not
+ * rescan its run. Every other scan either is consumed by the token it ends (ids, strings, digit
+ * runs, rest-of-line states, `class` and `style` id lists) or stops after a fixed number of
+ * characters (keywords, shape delimiters).
  */
 import {
   BACKSLASH,
@@ -87,6 +90,14 @@ const LOWER_O = 0x6f;
 const LOWER_X = 0x78;
 const APOS = "'";
 
+const BLOCK = 'block';
+const BLOCK_BETA = 'block-beta';
+const SPACE = 'space';
+const SPACE_COLON = 'space:';
+const ACC_TITLE = 'accTitle';
+const ACC_DESCR = 'accDescr';
+const END = 'end';
+
 /** The arrow directions, in rule order. */
 const DIRECTIONS = ['right', 'left', 'x', 'y', 'up', 'down'] as const;
 
@@ -115,11 +126,6 @@ export interface Lexed {
    * Read token text only through this.
    */
   text(j: number): string;
-  /**
-   * The same text for a token given by its kind and range, for a parser reading a view of the
-   * significant tokens (`significantTokens`), whose indexes are not the stream's.
-   */
-  textOf(kind: number, start: number, end: number): string;
 }
 
 /** The text of a token of `kind` whose cooked source text is `text`, as jison's action left it. */
@@ -130,7 +136,7 @@ function rewrite(kind: number, text: string): string {
       return value === 'auto' ? '-1' : value;
     }
     case T.SpaceBlock:
-      return text === 'space' ? '1' : text.slice(6);
+      return text === SPACE ? '1' : text.slice(SPACE_COLON.length);
     case T.Size:
       return text.slice(1);
     case T.Dir:
@@ -147,12 +153,10 @@ function rewrite(kind: number, text: string): string {
  */
 export function lex(src: string, from: number, view: SourceView): Lexed {
   const tokens = new BlockLexer(src, from, view).run();
-  const textOf = (kind: number, start: number, end: number): string =>
-    rewrite(kind, cook(src, start, end, view));
   return {
     tokens,
-    textOf,
-    text: (j) => textOf(tokens.kind[j] ?? 0, tokens.start[j] ?? 0, tokens.end[j] ?? 0),
+    text: (j) =>
+      rewrite(tokens.kind[j] ?? 0, cook(src, tokens.start[j] ?? 0, tokens.end[j] ?? 0, view)),
   };
 }
 
@@ -186,6 +190,9 @@ class BlockLexer {
   /** The same for the last run of `.`. */
   private dotFrom = -1;
   private dotTo = -1;
+  /** The same for the last run of `\w`. */
+  private wordFrom = -1;
+  private wordTo = -1;
 
   constructor(
     private readonly src: string,
@@ -376,10 +383,26 @@ class BlockLexer {
     return j;
   }
 
-  /** The end of the run of `\w` from `q`. */
+  /**
+   * The end of the run of `\w` from `q` (cached as {@link spaces} is, so a CLASSDEF id with no
+   * blank after it, an error at each of its characters, does not rescan the run).
+   */
   private word(q: number): number {
+    if (q >= this.wordFrom && q <= this.wordTo) return this.wordTo;
     let j = q;
     while (isWord(this.text.charCodeAt(j))) j++;
+    this.wordFrom = q;
+    this.wordTo = j;
+    return j;
+  }
+
+  /**
+   * The end of the run of `\d` from `q`. Every digit run it scans is consumed by the token it
+   * ends (`columns 3`, `space:3`, `:3`), so it needs no cache.
+   */
+  private digits(q: number): number {
+    let j = q;
+    while (isDigit(this.text.charCodeAt(j))) j++;
     return j;
   }
 
@@ -454,13 +477,7 @@ class BlockLexer {
       this.p = this.spaces(p);
       return;
     }
-    if (c === DQUOTE) {
-      // `["][`]`, then `["]`.
-      if (text.charCodeAt(p + 1) === BACKTICK) this.begin(T.MdStringStart, p + 2, S.MD_STRING);
-      else this.begin(T.StringStart, p + 1, S.STRING);
-      return;
-    }
-    if (this.statements(c)) return;
+    if (this.quote(c) || this.statements(c)) return;
     const open = opener(c, text.charCodeAt(p + 1), text.charCodeAt(p + 2));
     if (open > 0) {
       this.begin(T.NodeDStart, p + open, S.NODE);
@@ -479,9 +496,8 @@ class BlockLexer {
     }
     if (this.link(true)) return;
     // `':'\d+`.
-    if (c === COLON && isDigit(text.charCodeAt(p + 1))) {
-      let d = p + 2;
-      while (isDigit(text.charCodeAt(d))) d++;
+    const d = c === COLON ? this.digits(p + 1) : p;
+    if (d > p + 1) {
       this.emit(T.Size, p, d);
       return;
     }
@@ -490,11 +506,12 @@ class BlockLexer {
 
   /** The rules before `[\s]+`: `block-beta`, `block:` and `block`. */
   private keywords(c: number): boolean {
-    if (c !== 0x62 || !this.literal('block', this.p)) return false;
+    if (c !== 0x62 || !this.literal(BLOCK, this.p)) return false;
     const { p } = this;
-    if (this.keyword('block-beta', p)) this.emit(T.Block, p, p + 10);
-    else if (this.text.charCodeAt(p + 5) === COLON) this.emit(T.IdBlock, p, p + 6);
-    else if (!isWord(this.text.charCodeAt(p + 5))) this.emit(T.Block, p, p + 5);
+    const after = p + BLOCK.length;
+    if (this.keyword(BLOCK_BETA, p)) this.emit(T.Block, p, p + BLOCK_BETA.length);
+    else if (this.text.charCodeAt(after) === COLON) this.emit(T.IdBlock, p, after + 1);
+    else if (!isWord(this.text.charCodeAt(after))) this.emit(T.Block, p, after);
     else return false;
     return true;
   }
@@ -516,16 +533,16 @@ class BlockLexer {
       case 0x73: // s
         return this.space() || this.statement('style', T.Style, S.STYLE_STMNT);
       case 0x64: // d
-        return this.keyword('default', p) && this.token(T.Default, 7);
+        return this.keywordToken('default', T.Default);
       case 0x6c: // l
-        return this.keyword('linkStyle', p) && this.token(T.LinkStyle, 9);
+        return this.keywordToken('linkStyle', T.LinkStyle);
       case 0x69: // i
-        return this.keyword('interpolate', p) && this.token(T.Interpolate, 11);
+        return this.keywordToken('interpolate', T.Interpolate);
       case 0x61: // a
         return this.accessibility();
       case 0x65: // e
-        if (!this.keyword('end', p)) return false;
-        this.emit(T.End, p, this.spaces(p + 3));
+        if (!this.keyword(END, p)) return false;
+        this.emit(T.End, p, this.spaces(p + END.length));
         return true;
       default:
         return false;
@@ -534,31 +551,32 @@ class BlockLexer {
 
   /** `columns\s+auto\b`, then `columns\s+[\d]+`. */
   private columns(): boolean {
-    const { text, p } = this;
+    const { p } = this;
     const s = this.keywordBlanks('columns');
     if (s < 0) return false;
     if (this.keyword('auto', s)) {
-      this.emit(T.Columns, p, s + 4);
+      this.emit(T.Columns, p, s + 'auto'.length);
       return true;
     }
-    if (!isDigit(text.charCodeAt(s))) return false;
-    let e = s + 1;
-    while (isDigit(text.charCodeAt(e))) e++;
+    const e = this.digits(s);
+    if (e === s) return false;
     this.emit(T.Columns, p, e);
     return true;
   }
 
   /** `space[:]\d+`, then `space\b`. */
   private space(): boolean {
-    const { text, p } = this;
-    if (!this.literal('space', p)) return false;
-    if (text.charCodeAt(p + 5) === COLON && isDigit(text.charCodeAt(p + 6))) {
-      let e = p + 7;
-      while (isDigit(text.charCodeAt(e))) e++;
-      this.emit(T.SpaceBlock, p, e);
-      return true;
+    const { p } = this;
+    if (!this.literal(SPACE, p)) return false;
+    if (this.literal(SPACE_COLON, p)) {
+      const from = p + SPACE_COLON.length;
+      const e = this.digits(from);
+      if (e > from) {
+        this.emit(T.SpaceBlock, p, e);
+        return true;
+      }
     }
-    return this.keyword('space', p) && this.token(T.SpaceBlock, 5);
+    return this.keywordToken(SPACE, T.SpaceBlock);
   }
 
   /** `word\s+`, entering `state`. */
@@ -572,9 +590,9 @@ class BlockLexer {
   /** `accTitle\s*":"\s*`, `accDescr\s*":"\s*`, then `accDescr\s*"{"\s*`. */
   private accessibility(): boolean {
     const { text, p } = this;
-    const title = this.literal('accTitle', p);
-    if (!title && !this.literal('accDescr', p)) return false;
-    const s = this.spaces(p + 8);
+    const title = this.literal(ACC_TITLE, p);
+    if (!title && !this.literal(ACC_DESCR, p)) return false;
+    const s = this.spaces(p + (title ? ACC_TITLE : ACC_DESCR).length);
     const c = text.charCodeAt(s);
     if (c === COLON) {
       this.begin(
@@ -589,9 +607,10 @@ class BlockLexer {
     return true;
   }
 
-  /** Write a token of `length` characters at `p`. */
-  private token(kind: number, length: number): true {
-    this.emit(kind, this.p, this.p + length);
+  /** `word\b` at `p` as a token of `kind`. False when it is not there. */
+  private keywordToken(word: string, kind: number): boolean {
+    if (!this.keyword(word, this.p)) return false;
+    this.emit(kind, this.p, this.p + word.length);
     return true;
   }
 
@@ -648,12 +667,16 @@ class BlockLexer {
     else if (!this.quote(c)) this.error();
   }
 
-  /** A quote then a backtick, or a quote (no token for either), entering the string. False at any other `c`. */
-  private quote(c: number): boolean {
+  /**
+   * A quote then a backtick enters the markdown string (no token); else a quote enters the
+   * string as a `kind` token (no jison token, but LLABEL's is `LINK_LABEL`). False at any other
+   * `c`.
+   */
+  private quote(c: number, kind: number = T.StringStart): boolean {
     if (c !== DQUOTE) return false;
     const { p } = this;
     if (this.text.charCodeAt(p + 1) === BACKTICK) this.begin(T.MdStringStart, p + 2, S.MD_STRING);
-    else this.begin(T.StringStart, p + 1, S.STRING);
+    else this.begin(kind, p + 1, S.STRING);
     return true;
   }
 
@@ -684,21 +707,14 @@ class BlockLexer {
       this.error();
       return;
     }
-    // jison pops twice: out of ARROW_DIR and out of BLOCK_ARROW.
-    this.emit(T.BlockArrowEnd, p, this.spaces(p + 1));
-    this.stack.pop();
+    // jison pops twice: out of ARROW_DIR, then out of BLOCK_ARROW.
+    this.pop(T.BlockArrowEnd, this.spaces(p + 1));
     this.state = this.stack.pop() ?? S.INITIAL;
   }
 
   /** After `--`, `==` or `-.`: a markdown string, the label's quote, or the closing `LINK`. */
   private linkLabel(c: number): void {
-    const { p } = this;
-    if (c === DQUOTE) {
-      if (this.text.charCodeAt(p + 1) === BACKTICK) this.begin(T.MdStringStart, p + 2, S.MD_STRING);
-      else this.begin(T.LinkLabel, p + 1, S.STRING);
-      return;
-    }
-    if (!this.link(false)) this.error();
+    if (!this.quote(c, T.LinkLabel) && !this.link(false)) this.error();
   }
 
   /** `DEFAULT\s+`, then `\w+\s+`, each entering the class definition's styles. */
@@ -737,7 +753,9 @@ class BlockLexer {
    * the accessibility values) and `accDescr {`'s `}` then `[^\}]*`. The match may be empty.
    */
   private rest(c: number): void {
-    const [kind, toBrace] = REST[this.state] ?? [T.StyleClass, false];
+    const rest = REST[this.state];
+    if (!rest) throw new Error(`block lexer: no rule for start condition ${this.state}`);
+    const [kind, toBrace] = rest;
     if (!toBrace) this.pop(kind, this.find('\n', this.p));
     else if (c === RBRACE) this.pop(T.AccDescrMultilineEnd, this.p + 1);
     else this.emit(kind, this.p, this.find('}', this.p));
@@ -780,8 +798,8 @@ function linkEnd(text: string, q: number, dotsEnd: number): number {
   }
   const dots = c === DASH ? q + 1 : q;
   if (dotsEnd === dots || text.charCodeAt(dotsEnd) !== DASH) return -1;
-  const t = text.charCodeAt(dotsEnd + 1);
-  return t === LOWER_X || t === LOWER_O || t === GT ? dotsEnd + 2 : dotsEnd + 1;
+  // `[xo>]?`.
+  return isLinkTip(text.charCodeAt(dotsEnd + 1), GT) ? dotsEnd + 2 : dotsEnd + 1;
 }
 
 /**

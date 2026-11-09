@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
-import { body, crlf, tabs } from '../kanban/corpus.ts';
+import { body, crlf, FRONT_MATTER, tabs } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -36,6 +36,23 @@ export const midLineDirective = (src: string): string =>
       .join('\n');
   });
 
+/**
+ * Sequence's `commented` (nine comment lines between lines), except that a body of two lines or
+ * fewer is cut through the middle of its text after the header keyword, not through the
+ * header (moved off a surrogate pair): v12 detects no block in a copy with a cut header, so
+ * that variant would not be compared. A body with nothing after the header is left as it is.
+ */
+export function blockCommented(src: string): string {
+  const head = FRONT_MATTER.exec(src)?.[0] ?? '';
+  const b = src.slice(head.length);
+  if (b.split('\n').length > 2) return commented(src);
+  const after = /^\s*block(?:-beta)?/.exec(b)?.[0].length ?? 0;
+  if (b.length - after < 2) return src;
+  let at = after + Math.floor((b.length - after) / 2);
+  if (/[\udc00-\udfff]/.test(b.charAt(at))) at++;
+  return head + b.slice(0, at) + '\n%% cut\n' + b.slice(at);
+}
+
 /** The cases (`corpus/block-cases.json`): each corpus gap, quirk and rejection v12 has. */
 export function blockCases(): CorpusItem[] {
   return JSON.parse(
@@ -57,7 +74,7 @@ export async function blockCorpus(): Promise<CorpusItem[]> {
 
 /** The generated variants of each gate source, by id suffix. */
 export const VARIANTS: readonly [suffix: string, make: (src: string) => string][] = [
-  ['commented', commented],
+  ['commented', blockCommented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],

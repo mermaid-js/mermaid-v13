@@ -18,6 +18,8 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 - Blanks and line breaks are no token (block has no `NL`; `[\s]+` skips them). T2 reads statement boundaries from the grammar, not from line breaks, as v12 does.
 - No probe/mode output yet (`lex` has no `modeAt`): T6 adds it when the facet needs the start condition.
 - Gate exclusion: `block-cases/unclosed-directive-1` (core's directive reading, as cynefin, pie and venn).
+- Gate skips (v12 lexes no block, asserted in the spec): `block-cases/header-upper-case` and its six variants (`Block` fails the case-sensitive detector `/^\s*block(-beta)?/`; T2 rejects it the same way). No other source is skipped: the commented variant (`blockCommented`) cuts a short body after its header instead of through it, so those copies are compared too.
+- No plugin object exists yet (`src/index.ts` exports the lexer only), so `layoutKind: 'custom'` is not declared anywhere: it lands with the plugin object, when T2/T3 first add one and at the latest in T5 with the manifest.
 
 ## T2 #554
 
@@ -26,6 +28,8 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 ## T4 #556
 
 ## T5 #558
+
+- Declare `layoutKind: 'custom'` on the plugin object if T2/T3 have not (T1 has no plugin object).
 
 ## T6 #557
 

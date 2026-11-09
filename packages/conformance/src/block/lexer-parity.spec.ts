@@ -3,7 +3,6 @@ import { blockTokens, JISON_NAMES } from '@mermaid-js/diagram-block';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
-import { FRONT_MATTER } from '../kanban/corpus.ts';
 import { blockGateCorpus, VARIANTS } from './corpus.ts';
 
 /**
@@ -20,7 +19,7 @@ import { blockGateCorpus, VARIANTS } from './corpus.ts';
  *   (v13 writes a one-character error token and lexes on, for recovery).
  *
  * Every source is also lexed in each generated variant (`VARIANTS`): with comment lines added
- * (and one through the middle of a short body), with every line break a CR followed by a
+ * (and, in a short body, one through the middle of the text after the header), with every line break a CR followed by a
  * removed comment or directive line, with CRLF line breaks, with tab indents, and with a
  * directive through the middle of every line after the header (pitfall 3's mid-line cut). The
  * cases file holds the line-separator cases (pitfall 2) too.
@@ -31,9 +30,10 @@ import { blockGateCorpus, VARIANTS } from './corpus.ts';
  *   arrow's directions (jison matches them and returns no token); comments and directives,
  *   which v13 writes as trivia. Skipped blanks are no token on either side;
  * - the sources in {@link EXCLUDED}, with every variant of them;
- * - sources v12 never lexed as a block (`oracle.tokens` is undefined: the detector
- *   `/^\s*block(-beta)?/` is case-sensitive, and a commented copy of a short body can cut the
- *   header); the test bounds which.
+ * - sources v12 never lexed as a block (`oracle.tokens` is undefined): only
+ *   `block-cases/header-upper-case` and its variants, as the detector `/^\s*block(-beta)?/` is
+ *   case-sensitive (asserted). The commented variant cuts a short body after its header
+ *   (`blockCommented`), so every other variant is compared.
  *
  * Empty-image tokens are not excluded: `EOF` (`<<EOF>>`, zero-width), and the empty `STR`,
  * `CLASSDEF_STYLEOPTS`, `STYLECLASS`, `STYLE_DEFINITION_DATA` and accessibility values a
@@ -114,21 +114,11 @@ describe('block lexer parity with mermaid@12 (jison)', () => {
     expect(e2e).toBe(58);
     expect(specs).toBe(62);
     expect(cases).toBe(178);
-    // The only sources v12 does not lex: the upper-case header (and its variants), and
-    // commented copies of a body of two lines or fewer, where `%% cut` goes through the middle
-    // of the header.
-    const byId = new Map(items.map((item) => [item.id, item.source]));
+    // The only sources v12 does not lex: the upper-case header and its variants (the detector
+    // `/^\s*block(-beta)?/` is case-sensitive).
     expect(
-      skipped.filter((id) => {
-        const base = id.replace(VARIANT, '');
-        if (base === 'block-cases/header-upper-case') return false;
-        const original = byId.get(base) ?? '';
-        const cut = byId.get(id) ?? '';
-        const lines = original.replace(FRONT_MATTER, '').split('\n').length;
-        const header = id.endsWith(' (commented)') && lines <= 2;
-        return !(header && !/^\s*block/.test(cut.replace(FRONT_MATTER, '')));
-      })
+      skipped.filter((id) => id.replace(VARIANT, '') !== 'block-cases/header-upper-case')
     ).toEqual([]);
-    expect(skipped.length).toBeLessThan(20);
+    expect(skipped.length).toBeGreaterThan(0);
   }, 300_000);
 });
