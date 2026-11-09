@@ -41,6 +41,11 @@
       "types": "./dist/layout/tree/index.d.ts",
       "default": "./dist/layout/tree/index.js"
     },
+    "./layout/compass": {
+      "mermaid-source": "./src/layout/compass/index.ts",
+      "types": "./dist/layout/compass/index.d.ts",
+      "default": "./dist/layout/compass/index.js"
+    },
     "./layout/swimlane": {
       "mermaid-source": "./src/layout/swimlane/index.ts",
       "types": "./dist/layout/swimlane/index.d.ts",
