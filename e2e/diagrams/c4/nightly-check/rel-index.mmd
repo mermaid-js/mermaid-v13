@@ -1,0 +1,15 @@
+---
+description: >-
+  RelIndex in a C4Dynamic diagram: the index argument comes first and v12
+  ignores it, numbering relations in statement order; the last one has a
+  technology.
+---
+C4Dynamic
+title RelIndex numbering
+Person(user, "User")
+Container(web, "Web App", "React")
+Container(api, "API", "Go")
+ContainerDb(db, "Database", "Postgres")
+RelIndex(1, user, web, "Opens")
+RelIndex(3, web, api, "Calls")
+RelIndex(2, api, db, "Reads", "SQL")

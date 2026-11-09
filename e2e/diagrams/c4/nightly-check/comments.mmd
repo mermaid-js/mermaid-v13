@@ -1,0 +1,17 @@
+---
+description: >-
+  Comments: comment lines before the first element, between elements,
+  indented inside a boundary and at the end; a comment at the end of the
+  last line.
+---
+C4Context
+%% a comment line before the elements
+title Comments
+Person(c, "Customer")
+  %% an indented comment line
+System_Boundary(b, "Shop") {
+  %% a comment inside a boundary
+  System(s, "Shop")
+}
+%% a comment line between statements
+Rel(c, s, "Buys") %% a comment at the end of the last line

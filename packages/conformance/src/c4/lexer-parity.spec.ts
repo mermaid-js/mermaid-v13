@@ -1,0 +1,129 @@
+import { describe, expect, it } from 'vitest';
+import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
+import { decodeEntities } from '../flowchart/v12.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
+import { c4GateCorpus, VARIANTS } from './corpus.ts';
+
+/**
+ * Lexer-parity gate (parser-method §1, #538): the v13 C4 lexer emits the same terminals, with
+ * the same images, as v12's jison lexer (`c4Diagram.jison`) on the text v12 lexed.
+ *
+ * Normalisation, both sides:
+ * - images are compared as v12's parser read them: entity placeholders decoded, CRLF as LF;
+ * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
+ *   clipped to the source, so the oracle takes that `\n` off the token that matched it;
+ * - after a lexical error jison stops, so both streams are cut at the first `LEXICAL_ERROR`
+ *   (an unknown word, `;`, a blank or line break after a macro keyword, `title` with nothing
+ *   after it, `$k=x`, a `#` that a `title` stops at).
+ *
+ * Every source is also lexed in each generated variant (`VARIANTS`): with comment lines added
+ * (and one through the middle of a short body), with every line break a CR followed by a
+ * removed comment or directive line, with CRLF line breaks, with tab indents, with U+2028 and
+ * U+2029 in every line (pitfall 3), and with a directive through the middle of every line
+ * after the header. The cases file adds the quirks the spec lists (unquoted arguments over `)`
+ * and line breaks, a blank before a comma, no escapes, `%%` eating the line break, the
+ * `.*direction` rules), rejections, line-separator, CR, entity and tag-quote cases.
+ *
+ * Exclusions (v13 kinds with no jison name, left out of the v13 stream):
+ * - `(`, `)`, `,`, the quotes around an argument, `$`, `="` and the closing `"` of a named
+ *   argument, `accDescr {` and its `}`: jison matches them and returns no token;
+ * - comments (the `%%` lines v12 removed, and a mid-line `%%` jison skips with the line breaks
+ *   after it), directives and skipped blanks, which v13 writes as trivia.
+ *
+ * Empty-image tokens are not excluded: `EOF`, `EOF_IN_STRUCT` and the empty `STR`, `STR_KEY`,
+ * accessibility and `accDescr {` values jison matches on the empty text at the end are tokens
+ * of their own (zero-width), as is the clipped appended `NEWLINE`. A stream that ends in the
+ * arguments or a named argument's `=`/value has no final token: jison ends it with `$end`.
+ *
+ * D452 (unquoted arguments stopping at `)` and line ends, a trailing `%%` keeping its line
+ * break, a lone `title`, `direction` lines as diagnostics) changes the parse, not this lexer,
+ * which stays v12's (#539 owns those changes): no D452 exclusion is listed. A quoted label
+ * holding `direction LR` stays one `direction_lr` token, so the parser reports it as D452's
+ * `direction` diagnostic.
+ *
+ * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test bounds
+ * which: commented copies of a one-line body, where `%% cut` goes through the header.
+ */
+/** The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus and #538's 12). */
+const E2E_FIXTURES = 44;
+
+const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+
+function v13Tokens(source: string): JisonToken[] {
+  const out: JisonToken[] = [];
+  for (const t of c4Tokens(source)) {
+    const name = JISON_NAMES[t.kind];
+    if (!name) continue;
+    if (name === LEXICAL_ERROR) {
+      out.push([LEXICAL_ERROR, '']);
+      break;
+    }
+    out.push([name, t.text]);
+  }
+  return out;
+}
+
+describe('c4 lexer parity with mermaid@12 (jison)', () => {
+  it('emits the same tokens over the corpus, the cases and their variants', async () => {
+    const oracle = await loadJisonLexerOracle('c4');
+    const items = await c4GateCorpus();
+    const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
+    const skipped: string[] = [];
+    let compared = 0;
+    let e2e = 0;
+    let specs = 0;
+    let cases = 0;
+    for (const item of items) {
+      const v12 = await oracle.tokens(item.source);
+      if (!v12) {
+        skipped.push(item.id);
+        continue;
+      }
+      compared++;
+      if (!VARIANT.test(item.id)) {
+        if (item.id.startsWith('e2e')) e2e++;
+        if (item.id.startsWith('v12-')) specs++;
+        if (item.id.startsWith('c4-cases/')) cases++;
+      }
+      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const actual = v13Tokens(item.source);
+      if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
+      let at = 0;
+      while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
+      diffs.push({
+        id: item.id,
+        at,
+        v12: expected.slice(Math.max(0, at - 2), at + 3),
+        v13: actual.slice(Math.max(0, at - 2), at + 3),
+      });
+    }
+    process.stdout.write(
+      `lexer parity: ${compared} of ${items.length} sources lexed by v12 (${e2e} e2e, ${specs} specs, ${cases} cases)\n`
+    );
+    const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
+    expect(
+      diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
+    ).toEqual([]);
+    // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
+    // the lexer.
+    expect(e2e).toBe(E2E_FIXTURES);
+    expect(specs).toBe(160);
+    expect(cases).toBe(173);
+    const byId = new Map(items.map((item) => [item.id, item.source]));
+    expect(
+      skipped.filter((id) => {
+        const original = byId.get(id.replace(VARIANT, '')) ?? '';
+        const cut = byId.get(id) ?? '';
+        const header = id.endsWith(' (commented)') && original.split('\n').length <= 2;
+        return !(
+          header &&
+          !/^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/.test(
+            cut.replace(/%%[^\n]*\n/g, '')
+          )
+        );
+      })
+    ).toEqual([]);
+    expect(skipped.length).toBeLessThan(8);
+  }, 300_000);
+});

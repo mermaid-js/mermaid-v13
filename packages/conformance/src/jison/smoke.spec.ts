@@ -18,6 +18,7 @@ const M4_M5: JisonType[] = [
   'kanban',
   'sankey',
   'xychart',
+  'c4',
   'venn',
 ];
 

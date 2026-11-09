@@ -4,7 +4,9 @@ Unmet acceptance criteria and choices not covered by the spec or a D-id, per own
 
 ## T1 (#538)
 
-- `.*direction` rules come first in v12's lexer: any line containing `direction LR`, even inside a quoted label, is a lexer reject (01 note). D452 makes `direction` lines a diagnostic; whether a quoted `direction TB` inside a label stays a lexer token is a gate exclusion T1 lists.
+- `.*direction` rules come first in v12's lexer: any line containing `direction LR`, even inside a quoted label, is a lexer reject (01 note). **Closed (#538):** the lexer stays v12's, so a quoted `direction TB` stays one `Direction*` token and #539 reports it as D452's `direction` diagnostic; no gate exclusion. Choosing to let the label through instead is a lexer change and a gate exclusion for #539.
+- **Closed (#538):** D452's other lexer-visible items (unquoted argument stopping at `)` and line ends, `%%` keeping its line break, lone `title`) are not in the T1 lexer; #539 implements them and lists each lexer change as a gate exclusion in `conformance/src/c4/lexer-parity.spec.ts`.
+- The syntax page shows its C4Context example twice; the docs fixtures are five files (`nightly-check/docs/`), the harvest keeps all six strings.
 
 ## T2 (#539)
 
