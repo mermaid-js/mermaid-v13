@@ -14,6 +14,7 @@ import type { MonarchDefinition } from './highlighters.ts';
 import { fakeMonaco } from './testing/fake-monaco.ts';
 import type { FakeMonaco } from './testing/fake-monaco.ts';
 import { monarchSpans, monarchTokens } from './testing/monarch.ts';
+import { highlighted, sampleOf } from '../scripts/highlighted.ts';
 import { MONARCH_HIGHLIGHTERS, registerMermaid } from './index.ts';
 import type { MermaidRegistration } from './index.ts';
 
@@ -29,59 +30,25 @@ async function setUp(): Promise<void> {
 const monarch = () => fake.monarch.get('mermaid') as Monaco.languages.IMonarchLanguage;
 const spans = (text: string) => monarchSpans(monarch(), text);
 
+/** The highlighted types (each package's manifest), each with its first-paint sample. */
+const TYPES = highlighted();
+const SAMPLES = Object.fromEntries(TYPES.map((h) => [h.id, sampleOf(h, 'sample')]));
+/** The documents the tests below, which are about the dispatch and not one type, use. */
 const DOCS = {
   flowchart: 'flowchart LR\n  A --> B\n',
   sequence: 'sequenceDiagram\n  Alice->>Bob: Hi\n',
   class: 'classDiagram\n  class Animal\n',
-  state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
-  journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
-  timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
-  pie: 'pie\n  "Dogs" : 386\n',
-  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
-  mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
-  gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
-  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
-  packet: 'packet\n  0-15: "Source Port"\n  +16: "Length"\n',
-  radar: 'radar-beta\n  axis A, B\n',
-  xychart: 'xychart\n  x-axis [a, b]\n  bar [1, 2]\n',
-  cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
-  kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
-  sankey: 'sankey\n"Solar, roof",Electricity,40.5\n',
-  treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
-  wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
-  venn: 'venn-beta\n  set A["Alpha"]: 10\n  union A, B\n    text "x"\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
-  it('has a row for each v13 diagram type', () => {
-    expect(Object.keys(MONARCH_HIGHLIGHTERS).sort()).toEqual([
-      'class',
-      'cynefin',
-      'er',
-      'flowchart',
-      'gantt',
-      'gitGraph',
-      'info',
-      'journey',
-      'kanban',
-      'mindmap',
-      'packet',
-      'pie',
-      'quadrantChart',
-      'radar',
-      'sankey',
-      'sequence',
-      'state',
-      'timeline',
-      'treemap',
-      'venn',
-      'wardley',
-      'xychart',
-    ]);
+  it('has a row for each first-party facet, and each one a sample', () => {
+    const facets = [...new Set(firstPartyFacets.filter((e) => e.load).map((e) => e.id))];
+    expect(Object.keys(MONARCH_HIGHLIGHTERS).sort()).toEqual(facets.sort());
+    expect(Object.keys(SAMPLES).sort()).toEqual(facets.sort());
   });
 
-  it.each(Object.entries(DOCS))('colours a %s model with its own grammar', async (id, text) => {
+  it.each(Object.entries(SAMPLES))('colours a %s model with its own grammar', async (id, text) => {
     await setUp();
     fake.createModel(`file:///${id}.mmd`, text);
     const header = text.split(/\s/)[0]!;

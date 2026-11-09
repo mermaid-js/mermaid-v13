@@ -1,0 +1,46 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: requirement
+    title: Requirement diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      # `VerifyMethod` is jison's `VERIFYMTHD`, whose name does not fold to the kind's.
+      unnamed:
+        AccDescrOpen:
+          mode: INITIAL
+          pattern: 'accDescr\s*\{\s*'
+          docOf: acc_descr_multiline_value
+        AccDescrClose:
+          mode: acc_descr_multiline
+          pattern: '\}'
+          docOf: acc_descr_multiline_value
+        Quote:
+          mode: INITIAL
+          pattern: '"'
+        StyleEnd:
+          mode: style
+          pattern: \n
+        VerifyMethod:
+          mode: INITIAL
+          pattern: 'verifyMethod\b'
+          terminal: VERIFYMTHD
+          docOf: VERIFYMTHD
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench). Read
+# once the manifest has its `language` entry (T5); until then
+# bench/src/language-bundle-requirement.spec.ts checks the bundle.
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - plugin.ts
+    - index.ts
+    - labels.ts
+    - limits.ts
+    - testing.ts

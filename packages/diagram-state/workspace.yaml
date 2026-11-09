@@ -1,0 +1,52 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: state
+    title: State diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # Text jison consumes without a terminal; the hand-written lexer keeps a token for it.
+      unnamed:
+        State:
+          mode: struct
+          pattern: (?i:state)\s+
+        Quote:
+          mode: STATE
+          pattern: '"'
+        Marker:
+          mode: STATE
+          pattern: (?i:<<(?:fork|join|choice)>>|\[\[(?:fork|join|choice)\]\])
+        EndNote:
+          mode: NOTE_TEXT
+          pattern: \n\s*(?i:end note)\b
+        AccDescrOpen:
+          mode: INITIAL
+          pattern: (?i:accDescr)\s*\{\s*
+        AccDescrClose:
+          mode: acc_descr_multiline
+          pattern: \}
+        ScaleWidth:
+          mode: SCALE
+          pattern: \s+(?i:width)\b
+      # A pseudo-state's name: the `state` keyword before it is not a token of its own.
+      documented:
+        - Fork
+        - Join
+        - Choice
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`).'
+  install: 'with `mermaid/slim`'

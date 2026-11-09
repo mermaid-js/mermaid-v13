@@ -3,17 +3,18 @@
  * lexer for one diagram type, run on exactly the text v12's parser for that type received.
  *
  * We capture that text by wrapping the lexer's `setInput` while the v12 oracle parses, then
- * re-run the lexer on it with a fresh `yy` (from the type's descriptor in `./types.ts`).
+ * re-run the lexer on it with a fresh `yy` (from the type's row of `JISON_TYPES`, its
+ * `src/<type>/tables.ts`).
  *
  * Calls must be sequential (await each one before the next), across every type: each type's
  * captured text is one variable shared by its calls, and v12 is a single shared instance.
  */
 import { loadOracle } from '../oracle.ts';
-import { JISON_TYPES } from './types.ts';
+import { JISON_TYPES, rowOf } from '../tables.ts';
 import type { JisonLexer, JisonType, JisonTypeDescriptor } from './types.ts';
 
 export type { JisonType, JisonTypeDescriptor } from './types.ts';
-export { JISON_TYPES } from './types.ts';
+export { JISON_TYPES } from '../tables.ts';
 
 /** A jison terminal name and the text it matched (`yytext` after the rule's action). */
 export type JisonToken = [name: string, image: string];
@@ -109,7 +110,7 @@ const loading = new Map<JisonType, Promise<JisonLexerOracle>>();
 export function loadJisonLexerOracle(type: JisonType): Promise<JisonLexerOracle> {
   let oracle = loading.get(type);
   if (!oracle) {
-    oracle = load(type, JISON_TYPES[type]);
+    oracle = load(type, rowOf(JISON_TYPES, type, 'JISON_TYPES'));
     loading.set(type, oracle);
   }
   return oracle;

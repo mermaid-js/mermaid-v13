@@ -9,7 +9,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { join, posix } from 'node:path';
 import { REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { JISON_TYPES } from './types.ts';
+import { JISON_TYPES, rowOf } from '../tables.ts';
 import type { JisonType, JisonTypeDescriptor } from './types.ts';
 
 /** The last v12 commit of mermaid's own history in this repo. */
@@ -35,7 +35,11 @@ export function hasV12History(): boolean {
 
 /** The corpus `harvest <type>` writes, in file order, without duplicate sources. */
 export function harvest(type: JisonType): CorpusItem[] {
-  const { dir, docs, method }: JisonTypeDescriptor['harvest'] = JISON_TYPES[type].harvest;
+  const { dir, docs, method }: JisonTypeDescriptor['harvest'] = rowOf(
+    JISON_TYPES,
+    type,
+    'JISON_TYPES'
+  ).harvest;
   const items: CorpusItem[] = [];
   const seen = new Set<string>();
   const add = (id: string, source: string) => {

@@ -1,0 +1,7 @@
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  CUSTOMER {
+    string name PK
+    int age
+  }
+  ORDER }|..|{ ITEM : "contains"

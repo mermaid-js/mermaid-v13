@@ -37,7 +37,7 @@ import { ganttGateCorpus } from './corpus.ts';
  *
  * Not in the gate: an unclosed `%%{word` directive. v12's directive regex removed it with more
  * of the text after it than v13's preprocess does (a decided preprocess divergence, see
- * `divergences.json` `quadrant-cases/unclosed-directive`), so the two lexers see different
+ * `divergences/` `quadrant-cases/unclosed-directive`), so the two lexers see different
  * text there.
  */
 /** The sources v12 does not lex as a gantt (see the end of the gate). */

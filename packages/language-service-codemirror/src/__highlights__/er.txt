@@ -1,0 +1,8 @@
+erDiagram:keyword
+CUSTOMER:variable
+||:operator
+--:operator
+o{:operator
+ORDER:variable
+::punctuation
+places:variable

@@ -1,0 +1,53 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: xychart
+    title: XY chart syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      unnamed:
+        AccDescrMultiline:
+          mode: INITIAL
+          pattern: accDescr\s*\{\s*
+        AccDescrMultilineEnd:
+          mode: acc_descr_multiline
+          pattern: \}
+        StringStart:
+          mode: INITIAL
+          pattern: '"'
+        StringEnd:
+          mode: string
+          pattern: '"'
+        DeadMdRule:
+          mode: INITIAL
+          pattern: '`\)[ ]{36}\{ this\.pushState\(md_string\); \}\n<md_string>\(\?:\(\?!`"\)\.\)\+[ ]{18}\{ return MD_STR; \}\n<md_string>\(\?:`'
+        Blanks:
+          mode: INITIAL
+          pattern: \s+
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - v12-specs/
+    - plugin.ts
+    - index.ts
+    - labels.ts
+    - model.ts
+    - config.ts
+    - generated/config-defaults.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The XY chart plugin (SVG; `xychart`, `xychart-beta`).'
+  install: 'with `mermaid/slim`'

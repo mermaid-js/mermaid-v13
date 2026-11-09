@@ -222,7 +222,6 @@ const TEXT_USERS = [
   'gantt',
   'kanban',
   'radar',
-  'requirement',
 ];
 
 /**
@@ -263,7 +262,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
     'wardley',
-    'requirement',
   ]),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
   // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
@@ -305,7 +303,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'sankey',
     'venn',
-    'requirement',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -318,7 +315,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'gitgraph',
     'sankey',
     'wardley',
-    'requirement',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',
@@ -330,10 +326,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'mindmap',
     'gitgraph',
     'kanban',
-    'requirement',
   ]),
-  // Shared: four diagram types and core's `Theme.ink()` read it (D334).
-  nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er', 'requirement']),
+  // Shared: three diagram types and core's `Theme.ink()` read it (D334).
+  nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
   titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap', 'venn']),
@@ -359,7 +354,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
-    'requirement',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
@@ -407,7 +401,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
-    'requirement',
   ]),
   // Shared inputs that name no diagram (D332), read with `inline()`: the ink of a diagram's own
   // titles and legends on the page, and the ink of labels on the series colours.
@@ -447,7 +440,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // region nested in another of its kind. v13 names; v12 has none.
   rowBkg: def('rbk', 'color', ['er']),
   rowAltBkg: def('rab', 'color', ['er']),
-  linkLabelBkg: def('llb', 'color', ['er', 'requirement']),
+  linkLabelBkg: def('llb', 'color', ['er']),
   nestedBkg: def('nbk', 'color', ['state']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
