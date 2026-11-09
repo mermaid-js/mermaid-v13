@@ -262,6 +262,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
     'wardley',
+    'treeview',
   ]),
   // Pie, packet, cynefin, info, sankey, treemap, treeview, wardley, xychart and venn draw in the
   // font family but size their text by their own variables or constants (sankey: 14 px; wardley:
@@ -304,6 +305,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'sankey',
     'venn',
+    'treeview',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',

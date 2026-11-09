@@ -70,3 +70,11 @@ export function treeViewLayoutConfig(
     ...(extensionIcons ? { extensionIcons } : {}),
   };
 }
+
+/** v12's `useMaxWidth` (default true): only a falsy value turns it off (`configureSvgSize`). */
+export function treeViewUseMaxWidth(
+  section: Readonly<Pick<TreeViewDiagramConfig, 'useMaxWidth'>> | undefined
+): boolean {
+  const value: unknown = section?.useMaxWidth;
+  return value === undefined || Boolean(value);
+}

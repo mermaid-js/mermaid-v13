@@ -4,7 +4,7 @@
  * engine): `TreeViewModel` in, `TreeViewLayout` out. It follows v12's `renderer.ts:52-216` with
  * the drawing taken out, in v12's steps: the rows, the connectors, the description column, the
  * highlight boxes; then the bounds. Every label and description is measured through the
- * injected measurer, in `fontFamily` at the label size (pitfall 16): directories bold,
+ * injected measurer, in `fontFamily` at `treeViewLabelFontSize` (pitfall 16): directories bold,
  * descriptions italic. Lengths come from the `treeView` config, the measurer and the metrics
  * table (pitfall 13).
  *
@@ -256,9 +256,15 @@ export function highlighted(node: TreeViewNode | undefined): boolean {
 }
 
 /**
- * The label font: `fontFamily` at the label size, normal weight. The one place the label size
- * is read: the renderer (#575) makes it the theme variable `treeViewLabelFontSize`.
+ * The label font: `fontFamily` at `treeViewLabelFontSize`, normal weight; the one place the
+ * label size is read (pitfall 16). The theme reads a `length` in px: v12's `16px` and a bare
+ * number are px, and a value in other units (`1em`, `12pt`) is not a length, so the theme keeps
+ * its own (core's `length` kind, as every diagram's sizes; GAPS T4).
  */
 function labelFont(ctx: TreeViewLayoutContext): FontKey {
-  return { family: ctx.theme.value('fontFamily'), size: M.labelFontSize, weight: NORMAL_WEIGHT };
+  return {
+    family: ctx.theme.value('fontFamily'),
+    size: ctx.theme.number('treeViewLabelFontSize'),
+    weight: NORMAL_WEIGHT,
+  };
 }

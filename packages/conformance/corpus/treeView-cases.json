@@ -850,5 +850,25 @@
   {
     "id": "treeView-cases/box-columns-error-deep",
     "source": "treeView-beta\n├─ a\n│ ├─ b\n│ │ └─\n└─ c"
+  },
+  {
+    "id": "treeView-cases/render-structure",
+    "source": "treeView-beta\ntitle Project\naccTitle: Files\naccDescr: A small tree\napp/\n  \"index.ts\" ## entry  point\n  \"a  b.js\" :::highlight\n  lib/ icon(none)\n    util.ts :::warn\nREADME.md ## read  me"
+  },
+  {
+    "id": "treeView-cases/render-highlights",
+    "source": "treeView-beta\na.js :::highlight\nb/\n  c.js :::highlight ## the description\nd :::highlight"
+  },
+  {
+    "id": "treeView-cases/render-icons",
+    "source": "treeView-beta\nsrc/\n  Dockerfile\n  main.TS\n  style.css\n  .env\n  constructor\n  toString\n  a.constructor\n  pinned.ts icon(pk:pin)\n  plain icon(star)\n  hidden.ts icon(none)\n  builtin icon(folder)\n  proto icon(constructor)"
+  },
+  {
+    "id": "treeView-cases/render-glyphs",
+    "source": "treeView-beta\nok icon(pk:ok)\nbad icon(pk:bad)\nwait icon(pk:wait)\nnone icon(other:x)"
+  },
+  {
+    "id": "treeView-cases/render-plain-text",
+    "source": "treeView-beta\n\"<script>alert(1)</script>\" ## <img src=x onerror=alert(1)>\n\"a &amp; b\"\n\"<br>x\" ## $$x^2$$\n\"fa:fa-car\"\n\"javascript:alert(1)\" :::evil"
   }
 ]

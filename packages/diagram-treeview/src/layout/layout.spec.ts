@@ -187,6 +187,22 @@ describe('layoutTreeView', () => {
     expect(zero.rows[1]!.box).toEqual({ x: 5, y: 16, width: 18, height: 16 });
   });
 
+  it('measures every text at treeViewLabelFontSize, set flat or under treeView (#575)', async () => {
+    for (const [vars, size] of [
+      [{ treeViewLabelFontSize: 20 }, 20],
+      [{ treeView: { labelFontSize: '24px' } }, 24],
+      // Not a theme length: the theme keeps v12's 16 px (GAPS T4).
+      [{ treeViewLabelFontSize: '1em' }, 16],
+    ] as const) {
+      const t = await treeViewTestTheme('default', vars);
+      const l = layoutTreeView(tree('  src/ ## the code', '    a.ts'), context(t));
+      const texts = l.rows.flatMap((r) => [r.label, ...(r.description ? [r.description] : [])]);
+      expect(new Set(texts.map((x) => x.font.size)), JSON.stringify(vars)).toEqual(new Set([size]));
+      // The half-em measurer: a label is one size high, so a row is that plus 2 × paddingY.
+      expect(l.rows[0]!.box.height).toBe(size + 10);
+    }
+  });
+
   it('draws the root row alone for a tree with no nodes', () => {
     const l = layoutTreeView(tree(), context(theme));
     expect(l.rows.map((r) => r.text)).toEqual(['/']);

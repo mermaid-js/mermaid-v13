@@ -110,7 +110,7 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, DIAGRAM_FACET),
     });
     expect(facet?.messages.map((m) => m.ruleId)).toEqual(
-      Array(3).fill('mermaid/import-boundaries')
+      Array(4).fill('mermaid/import-boundaries')
     );
   });
 });

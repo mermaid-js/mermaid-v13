@@ -1,8 +1,9 @@
 /**
  * The treeView layout's px constants (spec #518 T3, pitfall 13): v12 `renderer.ts`'s fixed
- * lengths and `styles.ts`'s label size. No other file in `layout/` writes a length literal
+ * lengths. No other file in `layout/` writes a length literal
  * (`packages/conformance/src/treeview-layout-literals.spec.ts`); every other length comes from
- * the `treeView` config or the measurer.
+ * the `treeView` config, the theme (the label size, `treeViewLabelFontSize`, #575) or the
+ * measurer.
  */
 
 export interface TreeViewMetrics {
@@ -22,11 +23,6 @@ export interface TreeViewMetrics {
   readonly highlightSlack: number;
   /** The highlight box's stroke width (`styles.ts`: `stroke-width: 1`). */
   readonly highlightStroke: number;
-  /**
-   * The label and description size, v12's `labelFontSize` (`16px`), until the theme variable
-   * `treeViewLabelFontSize` lands with the renderer (#575; read in `labelFont`, `layout.ts`).
-   */
-  readonly labelFontSize: number;
 }
 
 export const TREEVIEW_METRICS: TreeViewMetrics = {
@@ -38,7 +34,6 @@ export const TREEVIEW_METRICS: TreeViewMetrics = {
   highlightOverhang: 8,
   highlightSlack: 2,
   highlightStroke: 1,
-  labelFontSize: 16,
 };
 
 /** CSS weights: directories are bold (`.treeView-node-dir`), everything else normal. */
