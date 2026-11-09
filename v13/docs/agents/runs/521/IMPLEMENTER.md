@@ -5,7 +5,7 @@
 - Notes: this folder. Read INDEX.md (pointer notes on v12 block and v13 references), GAPS.md (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
 - v12 source: `git show fa796a943:packages/mermaid/src/diagrams/block/…`; v12 config schema `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml`. Oracle: `mermaid@12.2.0` in `packages/conformance` (D316); jison lexer oracle `loadJisonLexerOracle('block')`. Pele (`/Users/knsv/repos/pele/src/diagrams/block/`) is an MIT reference, never the oracle (D325).
 - Worked examples: kanban, cynefin, pie (jison types); treemap, wardley, xychart, sankey, venn (newest ports).
-- Worktree: `.claude/worktrees/t<N>` on `feature/<N>_<short>`, cut from `feature/521_block`. Use absolute paths; stay out of other worktrees. Run `pnpm install` first.
+- Worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` (under the main checkout, never nested inside another worktree: knip scans nested ones) on `feature/<N>_<short>`, cut from `feature/521_block`. Use absolute paths; stay out of other worktrees. Run `pnpm install` first.
 - Env: `export PATH=$HOME/.volta/tools/image/node/24.16.0/bin:$PATH VITEST_MAX_WORKERS=4 GIT_SSH_COMMAND="ssh -o ServerAliveInterval=20 -o ServerAliveCountMax=30"`. Run every `pnpm check` and `pnpm e2e` as `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check` (three ports share this machine; a set `PARSE_FIXTURE_PATH` makes the conformance corpus specs read an outside folder and fail). Ticket agents never push.
 
 1. Confirm your base: `git merge-base --is-ancestor feature/521_block HEAD`. If that fails, reset onto `feature/521_block`.
