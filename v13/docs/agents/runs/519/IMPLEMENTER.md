@@ -25,8 +25,8 @@
 
 ## Machine-wide locks (seven sessions share this machine)
 
-- Ishikawa is on **lock slot B** (`m3-check-b.lock`, shared with treeView and requirement; maintainer, 2026-11-09). Never use slot A (`m3-check.lock`).
+- One lock for every running port (`m3-check.lock`, slot A; maintainer, 2026-11-09, load average ~30). Never use `m3-check-b.lock`. If a full check fails only on a timeout in a package you didn't touch, rerun it once.
 
-- Every full `pnpm check` (only for the exception in step 4), every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check-b.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
+- Every full `pnpm check` (only for the exception in step 4), every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
 - A timing test that fails under load is not a regression: rerun it under the lock. Known flakes: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
