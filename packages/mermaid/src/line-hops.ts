@@ -29,13 +29,13 @@ export function hopSection(registry: Registry, { plugin, prepared: { config } }:
   ).split('.')[0]!;
 }
 
-type Hoppable =
+type HopsKeys =
   | (Record<string, { lineHops?: unknown } | undefined> & { lineHops?: unknown })
   | undefined;
 
 /** Whether line hops could be on in config `c` under `section`, so the chunk is needed. */
 export const mayHop = (c: unknown, section = ''): boolean =>
-  !!((c as Hoppable)?.lineHops || (c as Hoppable)?.[section]?.lineHops);
+  !!((c as HopsKeys)?.lineHops || (c as HopsKeys)?.[section]?.lineHops);
 
 /**
  * Whether `preload` should load the chunk for `layouts`: when `lineHops` is set through
