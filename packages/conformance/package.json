@@ -19,7 +19,8 @@
     "harvest:info": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts info",
     "harvest:radar": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts radar",
     "harvest:treemap": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts treemap",
-    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley"
+    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley",
+    "harvest:usecase": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts usecase"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",
@@ -43,6 +44,7 @@
     "@mermaid-js/diagram-sequence": "workspace:^",
     "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/diagram-timeline": "workspace:^",
+    "@mermaid-js/diagram-usecase": "workspace:^",
     "@mermaid-js/diagram-treemap": "workspace:^",
     "@mermaid-js/diagram-venn": "workspace:^",
     "@mermaid-js/diagram-wardley": "workspace:^",

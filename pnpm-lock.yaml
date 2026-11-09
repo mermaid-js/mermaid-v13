@@ -276,6 +276,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -508,6 +511,12 @@ importers:
         version: link:../core
 
   packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-usecase:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^

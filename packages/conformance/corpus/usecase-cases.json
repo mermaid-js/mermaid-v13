@@ -1,0 +1,542 @@
+[
+  {
+    "id": "usecase-cases/entity-stereotype-rejected",
+    "source": "usecase-beta\nactor Staff(\"Order staff\") &lt;&lt;Employee&gt;&gt;\nCheckout(\"Checkout\") &lt;&lt;Core&gt;&gt;:::critical"
+  },
+  {
+    "id": "usecase-cases/ids-css-identifier",
+    "source": "usecase-beta\nmy-node --> B\na-b-c --> a--b\na-b- --> _a-b\nx-1 --> 1-2"
+  },
+  {
+    "id": "usecase-cases/ids-unicode",
+    "source": "usecase-beta\nAnvändare --> B\nA(\"Användare\")\nA[日本語 label]"
+  },
+  {
+    "id": "usecase-cases/ids-digits",
+    "source": "usecase-beta\n1 --> 2\n1mg --> a1\n_x --> 1_a"
+  },
+  {
+    "id": "usecase-cases/keywords-prefix",
+    "source": "usecase-beta\nendpoint --> TBD\nactor-x --> notes-x\nactors --> endextend\nclassDefx --> classX\nfalsey --> trueish"
+  },
+  {
+    "id": "usecase-cases/keywords-whole",
+    "source": "usecase-beta\nactor A\nsystemBoundary S\nend\ndirection TD\ndirection TB\ndirection BT\ndirection LR\ndirection RL\nnote for A x\nclassDef c fill:red\nclass A c\nstyle A fill:red\nA@{ business: true, x: false }"
+  },
+  {
+    "id": "usecase-cases/keywords-case",
+    "source": "usecase-beta\nActor A\ndirection td\nEND\nNote for A x"
+  },
+  {
+    "id": "usecase-cases/keywords-any-case",
+    "source": "usecase-beta\nA ..> B : include\nA ..> B : INCLUDE\nA ..> B : Include\nA ..> B : included\nA ..> B : extend\nA ..> B : EXTEND\nA ..> B : eXtEnD\nA ..> B : extended"
+  },
+  {
+    "id": "usecase-cases/keywords-header-glued",
+    "source": "usecase-betax\nA"
+  },
+  {
+    "id": "usecase-cases/header-trailing",
+    "source": "usecase-beta A --> B"
+  },
+  {
+    "id": "usecase-cases/header-only",
+    "source": "usecase-beta"
+  },
+  {
+    "id": "usecase-cases/header-newline",
+    "source": "usecase-beta\n"
+  },
+  {
+    "id": "usecase-cases/header-leading-blanks",
+    "source": "\n\n   usecase-beta\nactor A"
+  },
+  {
+    "id": "usecase-cases/header-bom",
+    "source": "﻿usecase-beta\nactor A"
+  },
+  {
+    "id": "usecase-cases/header-not-usecase",
+    "source": "usecase\nactor A"
+  },
+  {
+    "id": "usecase-cases/plantuml-guard",
+    "source": "usecase-beta\nPackage --> B\nA --> package\nskinparam x\nrectangle R\nallowmixing\nnewpage"
+  },
+  {
+    "id": "usecase-cases/operators-greedy",
+    "source": "usecase-beta\nA --xyz\no--> B\nA ---o B\nA ----> B\nA <---- B\nA x-- B\nA --o B\nA --x B\nA o-- B\nA -- B\nA --- B\nA --|> B\nA ..> B : include"
+  },
+  {
+    "id": "usecase-cases/operators-labelled",
+    "source": "usecase-beta\nA -- label --> B\nA <-- label -- B\nA o-- label -- B\nA x-- label -- B\nA -- label --o B\nA -- label --x B\nA -- label -- B"
+  },
+  {
+    "id": "usecase-cases/operators-glued",
+    "source": "usecase-beta\nA-->B\nA<--B\nA--oB\nAo--B\nfox--> B\nox--y\no-x\n<<--\n:::::\n...>\n..5"
+  },
+  {
+    "id": "usecase-cases/operators-ids",
+    "source": "usecase-beta\nA e1@--> B\nA e2@ --> B\ne1@{ animate: true }\nA@{ type: hollow }"
+  },
+  {
+    "id": "usecase-cases/operators-lexer-spec",
+    "source": "usecase-beta\n--|> ..> <<Human>> ::: ---> <--- --o o-- --x x-- --"
+  },
+  {
+    "id": "usecase-cases/comments-inline",
+    "source": "usecase-beta\nactor A %% x\n  %%\n%%\nA %%"
+  },
+  {
+    "id": "usecase-cases/comments-percent",
+    "source": "usecase-beta\nstyle A width:50%\nA[50%% off]"
+  },
+  {
+    "id": "usecase-cases/strings-plain",
+    "source": "usecase-beta\nA(\"a\\nb\")\nB('single')\nC(\"a'b\")\nD('a\"b')\nE(\"\")\nF('')\n\"Quoted id\" --> 'Other'"
+  },
+  {
+    "id": "usecase-cases/strings-unclosed-double",
+    "source": "usecase-beta\nA(\"abc\nB"
+  },
+  {
+    "id": "usecase-cases/strings-unclosed-single",
+    "source": "usecase-beta\nA('abc\nB"
+  },
+  {
+    "id": "usecase-cases/strings-unclosed-both",
+    "source": "usecase-beta\nA \"'x\nB"
+  },
+  {
+    "id": "usecase-cases/strings-percent",
+    "source": "usecase-beta\n\"%%\" 'plain' #f96 4px 50% red\\,blue"
+  },
+  {
+    "id": "usecase-cases/strings-markdown",
+    "source": "usecase-beta\nA(\"`**bold**\nsecond`\")\nB(\"`a`\")\nC(\"`first\n%% still markdown\nlast`\")"
+  },
+  {
+    "id": "usecase-cases/strings-markdown-unclosed",
+    "source": "usecase-beta\nA(\"`never closed\nB --> C"
+  },
+  {
+    "id": "usecase-cases/labels-parens",
+    "source": "usecase-beta\nA(x(y))\nA[x[y]]\nA(x)\nB[y]\nC()"
+  },
+  {
+    "id": "usecase-cases/labels-controls",
+    "source": "usecase-beta\nA[a\fb\u000bc d]\nB[\u0001]"
+  },
+  {
+    "id": "usecase-cases/labels-punctuation",
+    "source": "usecase-beta\nA[*bold* ; < > ` \\ Ärlig 日本語]\nB[! $ & * + / = ? ^ | ~ \\, @ , :]"
+  },
+  {
+    "id": "usecase-cases/labels-emoji",
+    "source": "usecase-beta\nA[🚀 launch]\nB(\"🚀\")"
+  },
+  {
+    "id": "usecase-cases/stereotype-closed",
+    "source": "usecase-beta\nactor A <<Human>>\nB(\"b\") <<Core>>:::c\nC[c] << spaced >>"
+  },
+  {
+    "id": "usecase-cases/stereotype-unclosed",
+    "source": "usecase-beta\nactor A <<x\nB --> C"
+  },
+  {
+    "id": "usecase-cases/stereotype-line-end",
+    "source": "usecase-beta\nactor A <<\nB"
+  },
+  {
+    "id": "usecase-cases/stereotype-blank",
+    "source": "usecase-beta\nactor A <<   >>\nB"
+  },
+  {
+    "id": "usecase-cases/stereotype-empty",
+    "source": "usecase-beta\nactor A <<>>\nB"
+  },
+  {
+    "id": "usecase-cases/stereotype-nbsp",
+    "source": "usecase-beta\nactor A << >>\nB"
+  },
+  {
+    "id": "usecase-cases/stereotype-twice",
+    "source": "usecase-beta\nactor A <<a>>b>>\nC <<a>> <<b>>"
+  },
+  {
+    "id": "usecase-cases/stereotype-next-line",
+    "source": "usecase-beta\nactor A <<a\n>>"
+  },
+  {
+    "id": "usecase-cases/stereotype-end-text",
+    "source": "usecase-beta\nactor A <<x"
+  },
+  {
+    "id": "usecase-cases/stereotype-lone-end",
+    "source": "usecase-beta\nA >> B\nA > B"
+  },
+  {
+    "id": "usecase-cases/acc-lines",
+    "source": "usecase-beta\naccTitle: The title\naccDescr: The description\n  accTitle   : spaced\n\taccDescr\t:tabbed\naccTitle:\naccDescr:"
+  },
+  {
+    "id": "usecase-cases/acc-block",
+    "source": "usecase-beta\naccDescr {\n  line one\n  line two\n}\nactor A\naccDescr{x}"
+  },
+  {
+    "id": "usecase-cases/acc-block-unclosed",
+    "source": "usecase-beta\naccDescr {\nnever closed\nactor A"
+  },
+  {
+    "id": "usecase-cases/acc-mid-line",
+    "source": "usecase-beta\nA accTitle: x\nA accDescr {x}\naccTitleX: y\naccDescrX: y"
+  },
+  {
+    "id": "usecase-cases/acc-block-brace-later",
+    "source": "usecase-beta\naccDescr {\nx\n  accDescr { y }"
+  },
+  {
+    "id": "usecase-cases/json-closed",
+    "source": "usecase-beta\njson Payload@{\n  \"text\": \"} \\\" {\",\n  \"nested\": {\"items\": [1, 2]}\n}:::data"
+  },
+  {
+    "id": "usecase-cases/json-spaced",
+    "source": "usecase-beta\njson  Payload \t@ \t{\"a\": 1}\njson X@{}"
+  },
+  {
+    "id": "usecase-cases/json-unclosed",
+    "source": "usecase-beta\njson Payload@{\n  \"a\": 1\nactor A"
+  },
+  {
+    "id": "usecase-cases/json-unclosed-braces",
+    "source": "usecase-beta\njson Payload@{{{{"
+  },
+  {
+    "id": "usecase-cases/json-not-declaration",
+    "source": "usecase-beta\njson\njsonX@{\"a\":1}\njson X {\"a\":1}\njson @{}\njson X@\nxjson Y@{}"
+  },
+  {
+    "id": "usecase-cases/json-string-brace",
+    "source": "usecase-beta\njson P@{\"a\": \"{\"}\nA"
+  },
+  {
+    "id": "usecase-cases/numbers",
+    "source": "usecase-beta\nstyle A stroke-width:1.5px,width:.5em,x:1.,y:1.5.5,z:1.5e3,w:12a.5"
+  },
+  {
+    "id": "usecase-cases/numbers-ids",
+    "source": "usecase-beta\n1.5 1.5px .5 1. 1.5.5 1.5e3 12a.5 ..5 1_.5"
+  },
+  {
+    "id": "usecase-cases/colours",
+    "source": "usecase-beta\nstyle A fill:#fff,stroke:#xyz,color:#ffz\nclassDef c fill:#f9f;\nclassDef d fill:#f9f,stroke:#333;\nstyle B fill:#f00;"
+  },
+  {
+    "id": "usecase-cases/entities-label",
+    "source": "usecase-beta\nA[x #amp; y #35; z]\nB(\"#quot;q#quot;\")\nC[ä#amp;ö]"
+  },
+  {
+    "id": "usecase-cases/entities-keywords",
+    "source": "usecase-beta\nA[#end; #actor; #9829;]\nB --> C #x;"
+  },
+  {
+    "id": "usecase-cases/entities-edge",
+    "source": "usecase-beta\nA[##a; #a#b; #; #-a; #a]"
+  },
+  {
+    "id": "usecase-cases/entities-style",
+    "source": "usecase-beta\nstyle A fill:#f00;\nclassDef c fill:#f00;stroke:#000;\nstyle B color:#amp;"
+  },
+  {
+    "id": "usecase-cases/entities-directive",
+    "source": "usecase-beta\nA[#am%%{init: {}}%%p;]"
+  },
+  {
+    "id": "usecase-cases/metadata",
+    "source": "usecase-beta\nA@{ type: hollow, business: true }\nactor B@{\n  type: awesome,\n  icon: \"fa:bell\",\n}\n\"Edge\"@{ animation: fast }"
+  },
+  {
+    "id": "usecase-cases/classes",
+    "source": "usecase-beta\nclassDef default fill:#f9f,stroke:#333\nclassDef a,b color:red\nclass A,B a\nclass C a b\nA:::a --> B:::b\nstyle A fill:red,stroke-dasharray: 5\\, 5"
+  },
+  {
+    "id": "usecase-cases/boundary",
+    "source": "usecase-beta\nsystemBoundary \"Auth\":::framed\n  actor X, Y\n  Login\n  \"Logout\"\n  %% inside\nend\n\"Auth\"@{ type: package }"
+  },
+  {
+    "id": "usecase-cases/notes",
+    "source": "usecase-beta\nnote for A Some text here\nnote for B \"quoted\""
+  },
+  {
+    "id": "usecase-cases/chains",
+    "source": "usecase-beta\nA & B --> C\nactor A, B, C\nactor X --> Y"
+  },
+  {
+    "id": "usecase-cases/cr-only",
+    "source": "usecase-beta\ractor A\rA --> B\r"
+  },
+  {
+    "id": "usecase-cases/crlf-end",
+    "source": "usecase-beta\r\nactor A\r\n"
+  },
+  {
+    "id": "usecase-cases/cr-end",
+    "source": "usecase-beta\nactor A\r"
+  },
+  {
+    "id": "usecase-cases/blank-lines",
+    "source": "usecase-beta\n\n\n  \n\t\nactor A\n\n"
+  },
+  {
+    "id": "usecase-cases/tabs",
+    "source": "usecase-beta\n\tactor\tA\n\tA\t-->\tB"
+  },
+  {
+    "id": "usecase-cases/trailing-blanks",
+    "source": "usecase-beta\nactor A   \t"
+  },
+  {
+    "id": "usecase-cases/front-matter",
+    "source": "---\ntitle: T\nconfig:\n  usecase:\n    colorScheme: rotate\n---\nusecase-beta\nactor A"
+  },
+  {
+    "id": "usecase-cases/directive-first",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\nusecase-beta\nactor A"
+  },
+  {
+    "id": "usecase-cases/directive-in-line",
+    "source": "usecase-beta\nactor A %%{init: {}}%% B\nC"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed",
+    "source": "usecase-beta\n%%{init\nactor A"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed-in-line",
+    "source": "usecase-beta\nB %%{ not a directive\nactor A"
+  },
+  {
+    "id": "usecase-cases/tag-quotes",
+    "source": "usecase-beta\nA[\"<b class=\"x\">y</b>\"]\nB[<i title=\"t\">z</i>]"
+  },
+  {
+    "id": "usecase-cases/hostile-label",
+    "source": "usecase-beta\nHostile(\"<img src=x onerror=alert#40;1#41;>\")"
+  },
+  {
+    "id": "usecase-cases/html-break",
+    "source": "usecase-beta\nA(\"a<br/>b\")\nB[a<br>b]"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L232-0a",
+    "source": "usecase-beta\nactor User\nUser --> Login"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L232-0b",
+    "source": "usecase-beta\nUser --> Login\nactor User"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L232-1a",
+    "source": "usecase-beta\nLogin[Sign in]\nUser --> Login"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L232-1b",
+    "source": "usecase-beta\nUser --> Login\nLogin[Sign in]"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L337-0",
+    "source": "usecase-beta\nactor Shared\nShared"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L337-1",
+    "source": "usecase-beta\nLogin(Sign in)\nLogin[Sign in]"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L337-2",
+    "source": "usecase-beta\nLogin(First label)\nLogin(Second label)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L337-3",
+    "source": "usecase-beta\nLogin <<Primary>>\nLogin <<Secondary>>"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L337-4",
+    "source": "usecase-beta\nsystemBoundary First\nLogin\nend\nsystemBoundary Second\nLogin\nend"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L347-0",
+    "source": "usecase-beta\n\"A-B\"\n\"A B\""
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L347-1",
+    "source": "usecase-beta\n\"A B\"\nA_B(Explicit)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L347-2",
+    "source": "usecase-beta\nactor Shared\njson Shared@{}"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L347-3",
+    "source": "usecase-beta\nactor link\nA link@--> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L347-4",
+    "source": "usecase-beta\nA link@--> B\nB link@--> C"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L357-0",
+    "source": "usecase-beta\nnote for Ghost \"Missing\""
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L357-1",
+    "source": "usecase-beta\nclass Ghost important"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L357-2",
+    "source": "usecase-beta\nstyle Ghost fill:red"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L357-3",
+    "source": "usecase-beta\nGhost@{ type: package }"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L509",
+    "source": "usecase-beta\nclassDef decorated fill:#fee\nactor User(\"`**User**\nrole`\") <<Human>>:::decorated\nLogin(\"`Sign\nin`\") <<Primary>>:::decorated\nEscaped(\"Open #40;safe#41; #91;now#93;\")\nLiteral(\"First\\nSecond\")"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L542",
+    "source": "usecase-beta\nBroken(\"First\nSecond\")"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L558",
+    "source": "usecase-beta\nactor Reviewer(*Reviewer*)\nLiteral(**Literal markers**)\nPriced[Costs 19.95 EUR, incl. VAT!]\nProgress(Ärende — 50% klart)\nReviewer -- opens **form** --> Literal\nReviewer --> Priced\nReviewer --> Progress\nnote for Literal Read the guide; then sign off."
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-0",
+    "source": "usecase-beta\nLiteral(Literal (nested) markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-1",
+    "source": "usecase-beta\nLiteral[Literal [nested] markers]"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-2",
+    "source": "usecase-beta\nLiteral(Literal {nested} markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-3",
+    "source": "usecase-beta\nLiteral(Literal -- markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-4",
+    "source": "usecase-beta\nLiteral(Literal ::: markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L573-5",
+    "source": "usecase-beta\nLiteral(Literal @{ markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L589-0",
+    "source": "usecase-beta\nLiteral(Literal \"markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/usecase.parser.spec.ts#L589-1",
+    "source": "usecase-beta\nLiteral(Reviewer's markers)"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-0",
+    "source": "usecase-beta\nA --> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-1",
+    "source": "usecase-beta\nA <-- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-2",
+    "source": "usecase-beta\nA -- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-3",
+    "source": "usecase-beta\nA --o B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-4",
+    "source": "usecase-beta\nA o-- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-5",
+    "source": "usecase-beta\nA --x B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-6",
+    "source": "usecase-beta\nA x-- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-7",
+    "source": "usecase-beta\nA -- \"starts session\" --> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-8",
+    "source": "usecase-beta\nA <-- \"reverse label\" -- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-9",
+    "source": "usecase-beta\nA -- label -- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-10",
+    "source": "usecase-beta\nA -- label --o B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-11",
+    "source": "usecase-beta\nA o-- label -- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-12",
+    "source": "usecase-beta\nA -- label --x B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-13",
+    "source": "usecase-beta\nA x-- label -- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-14",
+    "source": "usecase-beta\nA ..> : include B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-15",
+    "source": "usecase-beta\nA ..> : INCLUDE B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-16",
+    "source": "usecase-beta\nA ..> : ExTeNd B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-17",
+    "source": "usecase-beta\nA --|> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-18",
+    "source": "usecase-beta\nA ---> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-19",
+    "source": "usecase-beta\nA <---- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-20",
+    "source": "usecase-beta\nA ---- B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-21",
+    "source": "usecase-beta\nA -- longer ----> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-22",
+    "source": "usecase-beta\nA login@--> B"
+  },
+  {
+    "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-23",
+    "source": "usecase-beta\nA dependency@..> : include B"
+  }
+]

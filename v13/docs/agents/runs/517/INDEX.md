@@ -5,7 +5,7 @@ Integration branch `feature/517_usecase` (from `mermaid-v13` at 521fb76ee). Draf
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T0 core rows + `slot()` | #561 | — | own PR into `mermaid-v13` |
-| T1 lexer parity gate | #562 | — | open |
+| T1 lexer parity gate | #562 | — | done on `feature/562_usecase-lexer` |
 | T2 grammar, parser, model, AST | #563 | #562 | open |
 | T3 layout | #565 | #563 | open |
 | T4 SVG renderer and theme table | #566 | #565, #561 | open |
