@@ -19,7 +19,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Ported in the #546 review: the line/column checks of v12's `agentflow-yaml-error-position` and the spans of `agentflow-subgraph-span` (`src/parser/positions.spec.ts`, against v13's ranges); their message and mapping checks stay skipped with reasons.
 
 **For the maintainer (#546):**
-- D468 says "the edge's model id for edges (`@2` for a reopened id)" but also "flowchart's scheme"; flowchart's scheme is `e:A>B`, `e:A>B#2` (`diagram-flowchart/src/parser/ast.ts:3`). Kept flowchart's; D468's wording needs amending (D460).
+- Decided 2026-11-09 ("Yes, amend D468"): edge AST ids follow flowchart's `e:A>B` / `#2` scheme; D468 amended in DECISIONS.md.
 - Edge limit: v12 threw `Edge limit exceeded` at 501 (`maxEdges` 500); v13 uses core's resolved limits (R-SEC-5, `DEFAULT_LIMITS.maxEdges` 5,000) with `EDGE_LIMIT` and flowchart's message, as every v13 type does. #550 passes `ctx.limits`.
 - The 64-restart cap on lexer restarts after an error is flowchart's (`parser.ts:613`), kept.
 - `EDGE_DATA_DROPPED` is copied from flowchart (typed edge `@{}` keys validated, pitfall 10); v12 agentflow had no such check.
