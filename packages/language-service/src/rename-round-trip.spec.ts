@@ -113,8 +113,19 @@ const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
   // name them) are compared as ids again, and the `astId`s made of them are dropped.
   usecase: (model) => {
     const ID_KEYS = new Set(['id', 'source', 'target', 'parentId', 'members']);
+    const generated = (label: string) => label.replace(/\W/g, '_');
+    // The labels of quoted elements written back as ids: the element's id is the label itself
+    // (renamed back from the fresh name), and its id would be the label's generated id.
+    const m = model as Record<
+      'actors' | 'useCases' | 'boundaries',
+      { id: string; label: string }[]
+    >;
+    const back = new Map<string, string>();
+    for (const e of [...m.actors, ...m.useCases, ...m.boundaries]) {
+      if (e.id === e.label && generated(e.label) !== e.label) back.set(e.label, generated(e.label));
+    }
     const asId = (v: unknown): unknown => {
-      if (typeof v === 'string') return v.replace(/\W/g, '_');
+      if (typeof v === 'string') return back.get(v) ?? v;
       return Array.isArray(v) ? v.map(asId) : v;
     };
     const walk = (v: unknown): unknown => {

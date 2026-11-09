@@ -54,6 +54,12 @@ const SHAPES: [name: string, build: (n: number) => string, small: number][] = [
   ['an unclosed JSON object', (n) => H + 'json P@{' + '{'.repeat(n), 256_000],
   ['a long JSON object', (n) => H + 'json P@{' + '"k": "} \\" {", '.repeat(n / 15) + '}', 256_000],
   ['JSON declarations without a body', (n) => H + 'json P @ x\n'.repeat(n / 11), 64_000],
+  ['lines of # colours', (n) => H + 'style A fill:#f96,stroke:#333\n'.repeat(n / 30), 64_000],
+  [
+    'entities and colours',
+    (n) => H + 'A[#amp; #9829; x] --> B\nstyle B fill:#f96\n'.repeat(n / 42),
+    32_000,
+  ],
   ['entities in labels', (n) => H + 'A[' + '#a; '.repeat(n / 4) + ']', 16_000],
   ['label symbols', (n) => H + 'A[' + '日本語 '.repeat(n / 4) + ']', 128_000],
   ['CRLF statements', (n) => H + 'actor A\r\nA --> B\r\n'.repeat(n / 18), 32_000],

@@ -39,7 +39,7 @@ import {
   declaredOf,
   DIRECTIONS,
   isKeyword,
-  KEYWORDS,
+  KEYWORD_ITEMS,
   KIND_NAMES,
   METADATA_KEYS,
   span,
@@ -60,7 +60,7 @@ const IN_METADATA = new Set<number>([
   Kind.Newline,
 ]);
 /** Ids, keywords and numbers: a cursor inside one replaces all of it. */
-const WORDS = new Set<number>([T.Identifier, T.Number, ...KEYWORDS.map((k) => k.kind)]);
+const WORDS = new Set<number>([T.Identifier, T.Number, ...KEYWORD_ITEMS.map((k) => k.kind)]);
 
 /** Items filtered by the typed prefix, one per label. */
 class Items {
@@ -261,7 +261,7 @@ function ids(items: Items, doc: DocumentView<UsecaseDocument>, place: IdPlace, e
 
 /** The statement keywords the parser expects. */
 function keywords(items: Items, expected: ReadonlySet<number>): void {
-  for (const k of KEYWORDS) {
+  for (const k of KEYWORD_ITEMS) {
     if (!expected.has(k.kind)) continue;
     const documentation = usecaseDocs[k.kind];
     items.add(k.label, 'keyword', {

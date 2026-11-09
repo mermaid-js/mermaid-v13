@@ -188,54 +188,95 @@ export function lexText(src: string, from: number, view: SourceView): LexText {
     const at = (k: number) => (k >= last ? src.length : source(p + k));
     return { text, start: at, end: (k) => (k >= last ? src.length : at(k) + 1) };
   }
+  // Unchanged stretches are copied as slices; the run table maps each part of the text back:
+  // a copied run 1:1 through the view's offsets, a rewritten one to a fixed source span.
   const parts: string[] = [];
-  const starts: number[] = [];
-  const ends: number[] = [];
+  const runText: number[] = [];
+  const runFrom: number[] = [];
+  /** A rewritten run's source end; -1 for a copied run (`runFrom` is then a view offset). */
+  const runTo: number[] = [];
+  let length = 0;
+  let copyFrom = p;
+  const copy = (to: number) => {
+    if (to <= copyFrom) return;
+    parts.push(v.slice(copyFrom, to));
+    runText.push(length);
+    runFrom.push(copyFrom);
+    runTo.push(-1);
+    length += to - copyFrom;
+  };
   const put = (s: string, a: number, b: number) => {
     parts.push(s);
-    for (let k = s.length; k > 0; k--) {
-      starts.push(a);
-      ends.push(b);
-    }
+    runText.push(length);
+    runFrom.push(a);
+    runTo.push(b);
+    length += s.length;
   };
   for (let i = p; i < v.length; i++) {
     const c = v.charCodeAt(i);
+    if (c !== CR && c !== HASH && c !== DQUOTE) continue;
     const a = source(i);
     if (c === CR) {
       // A CRLF in the source is one line end; a CR and an LF a removed span left side by side
       // were two to v12, which turned CRs into LFs before removing anything.
       const crlf = v.charCodeAt(i + 1) === LF && source(i + 1) === a + 1;
+      copy(i);
       put('\n', a, crlf ? a + 2 : a + 1);
       if (crlf) i++;
+      copyFrom = i + 1;
       continue;
     }
-    if (c === DQUOTE && mask && ((mask[a] ?? 0) & QUOTE) !== 0) {
+    if (c === DQUOTE) {
+      if (!mask || ((mask[a] ?? 0) & QUOTE) === 0) continue;
+      copy(i);
       put("'", a, a + 1);
+      copyFrom = i + 1;
       continue;
     }
-    if (c === HASH) {
-      let j = i + 1;
-      while (j < v.length && isWord(v.charCodeAt(j))) j++;
-      if (j > i + 1 && v.charCodeAt(j) === SEMI) {
-        const name = v.slice(i + 1, j);
-        put(/^\d+$/.test(name) ? 'ﬂ°°' : 'ﬂ°', a, a + 1);
-        for (let k = i + 1; k < j; k++) {
-          const s = source(k);
-          put(v[k] ?? '', s, s + 1);
-        }
-        const semi = source(j);
-        put('¶ß', semi, semi + 1);
-        i = j;
-        continue;
-      }
-    }
-    put(v[i] ?? '', a, a + 1);
+    let j = i + 1;
+    while (j < v.length && isWord(v.charCodeAt(j))) j++;
+    if (j === i + 1 || v.charCodeAt(j) !== SEMI) continue;
+    copy(i);
+    put(/^\d+$/.test(v.slice(i + 1, j)) ? 'ﬂ°°' : 'ﬂ°', a, a + 1);
+    copyFrom = i + 1;
+    copy(j);
+    const semi = source(j);
+    put('¶ß', semi, semi + 1);
+    copyFrom = j + 1;
+    i = j;
   }
+  copy(v.length);
   put('\n', src.length, src.length);
+  const texts = Int32Array.from(runText);
+  const froms = Int32Array.from(runFrom);
+  const tos = Int32Array.from(runTo);
+  /** The run holding `text[k]`, or -1 past the end. */
+  const runOf = (k: number): number => {
+    if (k < 0 || k >= length) return -1;
+    let lo = 0;
+    let hi = texts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if ((texts[mid] ?? 0) <= k) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  };
+  const start = (k: number): number => {
+    const r = runOf(k);
+    if (r < 0) return src.length;
+    const to = tos[r] ?? -1;
+    return to >= 0 ? (froms[r] ?? 0) : source((froms[r] ?? 0) + k - (texts[r] ?? 0));
+  };
   return {
     text: parts.join(''),
-    start: (k) => starts[k] ?? src.length,
-    end: (k) => ends[k] ?? src.length,
+    start,
+    end: (k) => {
+      const r = runOf(k);
+      if (r < 0) return src.length;
+      const to = tos[r] ?? -1;
+      return to >= 0 ? to : start(k) + 1;
+    },
   };
 }
 

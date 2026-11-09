@@ -7,7 +7,7 @@ import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { UsecaseArrowType, UsecaseModel } from '../model.ts';
 import type { UsecaseElementKind } from '../parser/ast.ts';
 import { generatedId } from '../parser/text.ts';
-import { T } from '../parser/tokens.ts';
+import { ANY_CASE, KEYWORDS, T } from '../parser/tokens.ts';
 
 /** A keyword item: offered at a line start when the parser expects `kind`. */
 export interface KeywordItem {
@@ -21,7 +21,7 @@ export interface KeywordItem {
  * Statement keywords, in the order they are offered. `json` is not one: `json Id@` and its
  * object are one token, so the keyword alone is no statement start to offer.
  */
-export const KEYWORDS: readonly KeywordItem[] = [
+export const KEYWORD_ITEMS: readonly KeywordItem[] = [
   { kind: T.Usecase, label: 'usecase-beta' },
   { kind: T.Actor, label: 'actor' },
   { kind: T.SystemBoundary, label: 'systemBoundary' },
@@ -35,31 +35,15 @@ export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.AccDescrLine, label: 'accDescr', insert: 'accDescr: ' },
 ];
 
-/** The words the lexer reads as keywords (`include` and `extend` in any case). */
-const KEYWORD_WORDS = new Set([
-  'usecase-beta',
-  'actor',
-  'systemBoundary',
-  'end',
-  'direction',
-  'TD',
-  'TB',
-  'BT',
-  'LR',
-  'RL',
-  'note',
-  'for',
-  'json',
-  'classDef',
-  'class',
-  'style',
-  'true',
-  'false',
-]);
+/** The words the lexer reads as keywords: v12's keyword rules, `include`/`extend` in any case. */
+const KEYWORD_WORDS = new Map<string, number>(KEYWORDS.map(([word, kind]) => [word, kind]));
 
 /** Whether `word` lexes as a keyword where a name goes. */
-export const isKeyword = (word: string): boolean =>
-  KEYWORD_WORDS.has(word) || /^(?:include|extend)$/i.test(word);
+export function isKeyword(word: string): boolean {
+  if (KEYWORD_WORDS.has(word)) return true;
+  const kind = KEYWORD_WORDS.get(word.toLowerCase());
+  return kind !== undefined && ANY_CASE.has(kind);
+}
 
 /** Directions and what they mean. */
 export const DIRECTIONS: readonly (readonly [dir: string, kind: number, meaning: string])[] = [
