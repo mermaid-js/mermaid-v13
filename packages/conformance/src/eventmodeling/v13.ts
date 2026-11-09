@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * The v13 side of event modeling parity (#602): the parser, and the normaliser from its
  * `EventModel` (with `eventModelStructure`'s lanes, boxes and relations) to the

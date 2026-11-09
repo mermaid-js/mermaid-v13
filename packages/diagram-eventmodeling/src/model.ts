@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * The event modeling model (spec #527): what the parser (#602) produces and the layout (#604),
  * the renderer (#606) and the language facet (#609) read. Plain, frozen data in source order

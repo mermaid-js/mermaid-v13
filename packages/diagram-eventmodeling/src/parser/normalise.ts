@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * The model from the statements read (R-ARCH-7: source order), the language symbols (D528) and
  * D525's warnings for what v12 dropped silently. v12 kept Langium's AST as its model; the

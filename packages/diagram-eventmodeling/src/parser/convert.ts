@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * Value conversion (parser-method §3). Every input is a token's text as v12's lexer read it
  * (`cook()`ed).

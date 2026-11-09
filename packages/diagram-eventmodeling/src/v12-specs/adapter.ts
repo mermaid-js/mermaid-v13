@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * Test-only adapter for the ported v12 event modeling specs (R-TEST-3), backed by the v13
  * parse. The specs' expectations are kept as v12 wrote them; this file only translates names and

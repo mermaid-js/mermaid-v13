@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * The v12 side of event modeling parity (#602): a plain-data snapshot of what mermaid\@12 built,
  * in the shape `v13.ts` takes from v13's `EventModel` and `eventModelStructure`:

@@ -1,3 +1,4 @@
+// cspell:words gwts dedented
 /**
  * Event modeling AST (R-PARSE-8, DESIGN §4.2 adapted, D528). Every node has a semantic id and a
  * range into the original source, from its first token to its last:
