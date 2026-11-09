@@ -94,34 +94,40 @@ const READERS: Readonly<Record<Key, readonly [Reader, string]>> = {
   labelStyle: [oneOf(LABEL_STYLES), `one of ${LABEL_STYLES.join(', ')}`],
 };
 
-/** `nodeColors`' entries that pass the colour check; each other one is added to `dropped`. */
+/** A dropped colour: its key under `sankey`, and its value as a warning shows it. */
+type Dropped = readonly [key: string, shown: string];
+
+/**
+ * `nodeColors`' entries that pass the colour check, and the entries dropped; undefined when
+ * `nodeColors` is not an object at all.
+ */
 function nodeColours(
-  given: unknown,
-  dropped: string[],
-  warn: ((w: Warning) => void) | undefined
-): Map<string, SafeColor> {
+  given: unknown
+): { colours: Map<string, SafeColor>; dropped: Dropped[] } | undefined {
   const colours = new Map<string, SafeColor>();
-  if (given === undefined) return colours;
-  if (given === null || typeof given !== 'object' || Array.isArray(given)) {
-    warn?.({
-      code: SANKEY_CONFIG_INVALID,
-      message: `sankey.nodeColors is ${shown(given)}, not an object of node colours; using none`,
-      path: 'sankey.nodeColors',
-    });
-    return colours;
-  }
+  const dropped: Dropped[] = [];
+  if (given === undefined) return { colours, dropped };
+  if (given === null || typeof given !== 'object' || Array.isArray(given)) return undefined;
   for (const [id, value] of Object.entries(given)) {
     const colour = typeof value === 'string' ? checkColor(value) : undefined;
     if (colour) colours.set(id, colour);
-    else dropped.push(`nodeColors.${id}`, shown(value));
+    else dropped.push([`nodeColors.${id}`, shown(value)]);
   }
-  return colours;
+  return { colours, dropped };
 }
+
+/** One `SANKEY_CONFIG_INVALID`: `key` is `value`, not what it `wants`; `using` instead. */
+const invalid = (key: string, value: unknown, wants: string, using: string): Warning => ({
+  code: SANKEY_CONFIG_INVALID,
+  message: `sankey.${key} is ${shown(value)}, not ${wants}; using ${using}`,
+  path: `sankey.${key}`,
+});
 
 /**
  * The layout's options from the resolved `sankey` section, each checked. With `warn`, each key
- * that falls back warns once, and every dropped colour (`linkColor` too, which the renderer
- * reads) is named in one `SANKEY_COLOR_INVALID`.
+ * that falls back warns once (`useMaxWidth` too, which the renderer reads as `!== false`), and
+ * every dropped colour (`linkColor` too, which the renderer reads) is named in one
+ * `SANKEY_COLOR_INVALID`.
  */
 export function sankeyLayoutConfig(
   section: Readonly<SankeyDiagramConfig> | Readonly<Record<string, unknown>> | undefined,
@@ -135,26 +141,29 @@ export function sankeyLayoutConfig(
     const got = value === undefined ? undefined : read(value);
     out[key] = got ?? DEFAULTS[key];
     if (value !== undefined && got === undefined)
-      warn?.({
-        code: SANKEY_CONFIG_INVALID,
-        message: `sankey.${key} is ${shown(value)}, not ${wants}; using the default ${shown(DEFAULTS[key])}`,
-        path: `sankey.${key}`,
-      });
+      warn?.(invalid(key, value, wants, `the default ${shown(DEFAULTS[key])}`));
   }
-  // Pairs: the key under `sankey`, and the value shown.
-  const dropped: string[] = [];
+  const { useMaxWidth } = s;
+  if (useMaxWidth !== undefined && typeof useMaxWidth !== 'boolean')
+    warn?.(
+      invalid(
+        'useMaxWidth',
+        useMaxWidth,
+        'true or false',
+        `the default ${String(sankeyConfigDefaults.useMaxWidth)}`
+      )
+    );
+  const dropped: Dropped[] = [];
   if (s.linkColor !== undefined && linkPaint(s.linkColor) === undefined)
-    dropped.push('linkColor', shown(s.linkColor));
-  const nodeColors = nodeColours(s.nodeColors, dropped, warn);
-  if (dropped.length > 0) {
-    const named: string[] = [];
-    for (let i = 0; i < dropped.length; i += 2)
-      named.push(`sankey.${dropped[i]} ${dropped[i + 1]}`);
+    dropped.push(['linkColor', shown(s.linkColor)]);
+  const read = nodeColours(s.nodeColors);
+  if (read) dropped.push(...read.dropped);
+  else warn?.(invalid('nodeColors', s.nodeColors, 'an object of node colours', 'none'));
+  if (dropped.length > 0)
     warn?.({
       code: SANKEY_COLOR_INVALID,
-      message: `Not a colour, so the default is drawn instead: ${named.join(', ')}`,
-      path: `sankey.${dropped[0]}`,
+      message: `Not a colour, so the default is drawn instead: ${dropped.map(([key, value]) => `sankey.${key} ${value}`).join(', ')}`,
+      path: `sankey.${dropped[0]![0]}`,
     });
-  }
-  return { ...(out as Pick<SankeyLayoutConfig, Key>), nodeColors };
+  return { ...(out as Pick<SankeyLayoutConfig, Key>), nodeColors: read?.colours ?? new Map() };
 }

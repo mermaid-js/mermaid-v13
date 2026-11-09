@@ -746,7 +746,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | --- | --- | --- | --- | --- | --- |
 | `sankey` | object |  | honoured (13.0.0) |  | The object containing configurations specific for sankey diagrams. |
 | `sankey.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
-| `sankey.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width="100%"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`. |  |
+| `sankey.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width="100%"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`; a value that is not a boolean is the default and warns `SANKEY_CONFIG_INVALID`. |  |
 | `sankey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `sankey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sankey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |

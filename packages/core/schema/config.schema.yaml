@@ -4673,7 +4673,7 @@ $defs:
       width:
         type: number
         default: 600
-        x-mermaid:
+        x-mermaid: &sankeyLength
           status: honoured
           since: 13.0.0
           reason: >-
@@ -4683,13 +4683,7 @@ $defs:
       height:
         type: number
         default: 400
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number of 0 or more, or a numeric string as its number; anything else (negative, not
-            a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed
-            it to d3-sankey as it was.
+        x-mermaid: *sankeyLength
       linkColor:
         description: |
           The color of the links in the sankey diagram.
@@ -4707,7 +4701,7 @@ $defs:
       nodeAlignment:
         $ref: '#/$defs/SankeyNodeAlignment'
         default: justify
-        x-mermaid:
+        x-mermaid: &sankeyEnum
           status: honoured
           since: 13.0.0
           reason: An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`.
@@ -4726,7 +4720,8 @@ $defs:
           reason: >-
             v12 documented `false`, but its bundled defaults held `true` and every sankey without
             the key drew `width="100%"` with a `max-width`; v13 keeps that output. False draws the
-            diagram's own `width` and `height`.
+            diagram's own `width` and `height`; a value that is not a boolean is the default and
+            warns `SANKEY_CONFIG_INVALID`.
       showValues:
         description: |
           Toggle to display or hide values along with title.
@@ -4750,34 +4745,19 @@ $defs:
           The width of the nodes in the sankey diagram.
         type: number
         default: 10
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number of 0 or more, or a numeric string as its number; anything else (negative, not
-            a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed
-            it to d3-sankey as it was.
+        x-mermaid: *sankeyLength
       nodePadding:
         description: |
           The padding between nodes in the sankey diagram.
         type: number
         default: 12
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number of 0 or more, or a numeric string as its number; anything else (negative, not
-            a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed
-            it to d3-sankey as it was.
+        x-mermaid: *sankeyLength
       labelStyle:
         description: |
           The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text.
         $ref: '#/$defs/SankeyLabelStyle'
         default: legacy
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`.
+        x-mermaid: *sankeyEnum
       nodeColors:
         description: |
           A mapping of node IDs to their colors. Nodes not specified will use the default color scheme.

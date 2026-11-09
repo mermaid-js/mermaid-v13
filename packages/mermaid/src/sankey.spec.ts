@@ -206,6 +206,20 @@ describe('sankey diagrams through the public API (#503)', () => {
       'sankey.nodePadding is -5, not a number of 0 or more; using the default 12'
     );
     expect(bad.svg).toBe(plain.svg);
+    // `useMaxWidth` is read as a boolean: `"false"` is the default, with a warning.
+    const fit = await m.render('s12', withInit({ useMaxWidth: 'false' }));
+    expect(fit.warnings.map((w) => [w.code, w.message])).toEqual([
+      [
+        SANKEY_CONFIG_INVALID,
+        'sankey.useMaxWidth is "false", not true or false; using the default true',
+      ],
+    ]);
+    expect(fit.svg).toBe(plain.svg);
+    const notAMap = await m.render('s12', withInit({ nodeColors: 'red' }));
+    expect(notAMap.warnings.map((w) => w.message)).toEqual([
+      'sankey.nodeColors is "red", not an object of node colours; using none',
+    ]);
+    expect(notAMap.svg).toBe(plain.svg);
     // A numeric string is its number, as v12's d3 read it.
     const asText = await m.render('s12', withInit({ width: '300' }));
     expect([asText.warnings, asText.width]).toEqual([[], 300]);
@@ -223,6 +237,19 @@ describe('sankey diagrams through the public API (#503)', () => {
     expect(((await rejection(m.render('s13', TEXT))) as MermaidError).code).toBe('LIMIT');
     m.initialize({ limits: { maxEdges: 3, maxNodes: 4 } });
     expect((await m.render('s13', TEXT)).diagramType).toBe('sankey');
+  });
+
+  it('applies a fractional limit as the whole number under it', async () => {
+    const m = createMermaid();
+    // Three links, four nodes: 2.5 links and 3.5 nodes are both exceeded.
+    for (const limits of [{ maxEdges: 2.5 }, { maxNodes: 3.5 }]) {
+      m.initialize({ limits });
+      const e = await rejection(m.render('s15', TEXT));
+      expect(e, JSON.stringify(limits)).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).code, JSON.stringify(limits)).toBe('LIMIT');
+    }
+    m.initialize({ limits: { maxEdges: 3.5, maxNodes: 4.5 } });
+    expect((await m.render('s15', TEXT)).diagramType).toBe('sankey');
   });
 
   it('draws each theme apart, and the theme cache keeps them apart (D336)', async () => {

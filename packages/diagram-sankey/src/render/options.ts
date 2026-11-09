@@ -3,7 +3,8 @@
  * `linkColor` `gradient`, and `useMaxWidth` `true` (v12's schema documented `false` for sankey,
  * but its bundled defaults held `true`, and every sankey without the key drew `width="100%"`
  * with a `max-width`; v13's schema default is `true`, #503). The layout reads the rest
- * (`config.ts`), and warns once for a `linkColor` dropped here.
+ * (`config.ts`), and warns once for a `linkColor` dropped here and for a `useMaxWidth` that is
+ * not a boolean (read here as the default, `true`).
  */
 import type { SankeyDiagramConfig } from '@mermaid-js/core/config';
 import { linkPaint, type LinkPaint } from '../config.ts';

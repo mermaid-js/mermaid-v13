@@ -5857,7 +5857,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width=\"100%\"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`."
+            "reason": "v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width=\"100%\"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`; a value that is not a boolean is the default and warns `SANKEY_CONFIG_INVALID`."
           }
         },
         "showValues": {

@@ -4,8 +4,9 @@
  * which sankey re-implements, are BSD 3-Clause).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's and Iconify's repository URLs; Braintree's sanitize-url package name). A file is derived from an upstream
- * when its header has that marker. Then:
+ * block (Pele's, Iconify's and d3-sankey's, d3-array's and d3-shape's repository URLs;
+ * Braintree's sanitize-url package name). A file is derived from an upstream when its header
+ * has that marker. Then:
  * - that header names the upstream's license and copyright holder;
  * - in a published package (`packages/*` without `"private": true`), the package root has a
  *   `THIRD_PARTY_NOTICES` that holds the upstream's license text and copyright line (a license

@@ -13,7 +13,12 @@ export function checkLimit(
   cap: number | undefined,
   range: Range
 ): void {
-  if (cap === undefined || count !== cap + 1) return;
+  if (cap === undefined) return;
+  // Called once per node or link, so the first over the cap is the one whose predecessor was
+  // not (a fractional cap, `2.5`, included).
+  const overCap = count > cap;
+  const wasOverBefore = count - 1 > cap;
+  if (!overCap || wasOverBefore) return;
   const what = limit === 'maxNodes' ? 'nodes' : 'links';
   st.diagnostics.error(
     LIMIT_CODES[limit],
