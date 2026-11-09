@@ -23,7 +23,9 @@ export const venn = {
   id: 'venn',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
-  configDefaults: vennPluginDefaults(vennConfigDefaults) as Readonly<Record<string, unknown>>,
+  configDefaults: vennPluginDefaults(
+    vennConfigDefaults as Readonly<Record<string, unknown>>
+  ) as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectVenn(text),
   parse: (text: string, ctx: DiagramParseContext): VennParseResult =>
     parseVenn(text, { preprocessed: ctx.preprocessed }),
