@@ -1,12 +1,13 @@
 /**
  * The `eventmodeling` options, checked (D226: never NaN, one warning per key), as packet's and
  * cynefin's (D366). The config resolver does not check value types or the schema's minimums, so
- * a directive can set `"padding": -5` or `"padding": "wide"`. The layout reads `padding` (#604);
- * T5 (#611) adds the keys the renderer reads (`useMaxWidth`) here.
+ * a directive can set `"padding": -5` or `"padding": "wide"`. The layout reads `padding` (#604),
+ * the renderer `useMaxWidth` (#606); T5 (#611) marks them honoured.
  *
  * `padding` is a number, or a numeric string as its number (v12 passed it on as given), of 0 or
  * more, small enough that the bounds it pads stay finite (`PADDING_HEADROOM`); anything else is
- * v12's 30 with one `EVENTMODELING_CONFIG_INVALID`.
+ * v12's 30 with one `EVENTMODELING_CONFIG_INVALID`. `useMaxWidth` is a boolean, else true with
+ * one (`eventModelingUseMaxWidth`, read by the renderer).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
@@ -37,4 +38,23 @@ export function eventModelingConfig(
     path: 'eventmodeling.padding',
   });
   return { padding: fallback };
+}
+
+/**
+ * `useMaxWidth` (default true, v12's `setupGraphViewbox`): a boolean as given; anything else
+ * (a directive can write `"useMaxWidth": "no"`) is the default with one
+ * `EVENTMODELING_CONFIG_INVALID` (D226).
+ */
+export function eventModelingUseMaxWidth(
+  section: Readonly<Pick<EventModelingDiagramConfig, 'useMaxWidth'>> | undefined,
+  warn: (w: Warning) => void
+): boolean {
+  const given: unknown = section?.useMaxWidth;
+  if (given === undefined || typeof given === 'boolean') return given ?? true;
+  warn({
+    code: EVENTMODELING_CONFIG_INVALID,
+    message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
+    path: 'eventmodeling.useMaxWidth',
+  });
+  return true;
 }
