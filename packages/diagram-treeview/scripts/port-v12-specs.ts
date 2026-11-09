@@ -88,7 +88,7 @@ export const SKIP: Record<string, Record<string, string>> = {
   'boxDrawingPreprocessor.spec.ts': { remapErrorLines: NO_REMAP },
   'db.spec.ts': {
     getConfig:
-      'the treeView options are read by the layout and the renderer (T3 #573, T4 #575), not by the model',
+      'the treeView options (`getConfig`) are ported with the config work in T5 (#577), see GAPS T5',
   },
   'icons.spec.ts': {
     'treeViewIcons pack':

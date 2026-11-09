@@ -122,13 +122,15 @@
     "id": "treeView-recovery/an-empty-box-drawing-node",
     "name": "an empty box-drawing node",
     "source": "treeView-beta\n├── a\n├── \n└── b",
-    "errors": [["BOX_EMPTY_NODE", 3]]
+    "errors": [["BOX_EMPTY_NODE", 3]],
+    "keeps": ["a", "b"]
   },
   {
     "id": "treeView-recovery/an-indented-line-in-box-drawing",
     "name": "an indented line in box drawing",
     "source": "treeView-beta\n├── a\n    b\n└── c",
-    "errors": [["BOX_UNEXPECTED_INDENT", 3]]
+    "errors": [["BOX_UNEXPECTED_INDENT", 3]],
+    "keeps": ["a", "c"]
   },
   {
     "id": "treeView-recovery/an-unclosed-name-in-narrow-box-drawing",
@@ -218,7 +220,8 @@
     "errors": [
       ["BOX_EMPTY_NODE", 3],
       ["BOX_UNEXPECTED_INDENT", 5]
-    ]
+    ],
+    "keeps": ["a", "b", "d"]
   },
   {
     "id": "treeView-recovery/an-empty-box-drawing-node-and-a-title-after-a-node",
@@ -227,7 +230,8 @@
     "errors": [
       ["BOX_EMPTY_NODE", 3],
       ["UNEXPECTED", 5]
-    ]
+    ],
+    "keeps": ["a", "b"]
   },
   {
     "id": "treeView-recovery/a-blank-after-a-quoted-name-and-a-glued-class",
@@ -269,5 +273,36 @@
       ["UNCLOSED_STRING", 6]
     ],
     "keeps": ["b", "d"]
+  },
+  {
+    "id": "treeView-recovery/an-empty-box-drawing-node-and-an-unclosed-name",
+    "name": "an empty box-drawing node and an unclosed name",
+    "source": "treeView-beta\n├── a\n├──\n└── \"b",
+    "errors": [
+      ["BOX_EMPTY_NODE", 3],
+      ["UNCLOSED_STRING", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/an-indented-line-in-box-drawing-and-an-icon-that-does-not-close",
+    "name": "an indented line in box drawing and an icon that does not close",
+    "source": "treeView-beta\n├── a\n    x\n│   └── c icon(x y)\n└── d",
+    "errors": [
+      ["BOX_UNEXPECTED_INDENT", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "c", "d"]
+  },
+  {
+    "id": "treeView-recovery/a-stray-blank-an-empty-box-drawing-node-and-a-title-after-a-node",
+    "name": "a stray blank, an empty box-drawing node and a title after a node",
+    "source": "treeView-beta\n├── a\n├── \"b\" %% c\n├──\n└── d\ntitle x",
+    "errors": [
+      ["STRAY_BLANK", 3],
+      ["BOX_EMPTY_NODE", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["a", "b", "d"]
   }
 ]

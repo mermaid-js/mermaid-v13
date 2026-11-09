@@ -25,6 +25,7 @@ import {
   ExpectedTable,
   formatExpected,
   isBlank,
+  isSpace,
   Kind,
   LineIndex,
   ParseState,
@@ -34,6 +35,7 @@ import {
 import type {
   AstId,
   Diagnostic,
+  DiagnosticExtra,
   ParseOptions,
   ParseResult,
   Range,
@@ -55,6 +57,9 @@ import {
   nodeName,
   quotedValue,
   titleValue,
+  ACC_DESCR,
+  ACC_TITLE,
+  TITLE,
 } from './convert.ts';
 import { lex } from './lexer.ts';
 import type { TreeViewLex } from './lexer.ts';
@@ -88,13 +93,18 @@ const ANNOTATION = [T.ClassAnnotation, T.IconAnnotation, T.DescAnnotation];
 const isTrivia = (k: number) =>
   k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
 
-/** Each text statement's AST type and keyword. */
-const TEXT_STATEMENTS: Readonly<
-  Record<number, { type: 'Title' | 'AccTitle' | 'AccDescr'; word: string }>
-> = {
-  [T.Title]: { type: 'Title', word: 'title' },
-  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
-  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
+/** A text statement: its AST type, its keyword and its value conversion. */
+interface TextStatement {
+  type: 'Title' | 'AccTitle' | 'AccDescr';
+  word: string;
+  value: (image: string) => string;
+}
+
+/** Each text statement by its token kind. */
+const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
+  [T.Title]: { type: 'Title', word: TITLE, value: titleValue },
+  [T.AccTitle]: { type: 'AccTitle', word: ACC_TITLE, value: accTitleValue },
+  [T.AccDescr]: { type: 'AccDescr', word: ACC_DESCR, value: accDescrValue },
 };
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
@@ -128,6 +138,8 @@ function excerpt(text: string): string {
  */
 class Stop extends Error {}
 const STOP = new Stop();
+
+const bySource = (x: Diagnostic, y: Diagnostic) => x.range.start - y.range.start;
 
 /** Parse a treeView. Never throws: problems are error diagnostics. */
 export function parseTreeView(
@@ -198,10 +210,12 @@ class TreeViewParser {
   /** The `TREEVIEW_NODES_ON_ONE_LINE` warning of the current line, if any. */
   private oneLine: Diagnostic | undefined;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: Record<TextStatement['type'], string> = {
+    Title: '',
+    AccTitle: '',
+    AccDescr: '',
+  };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
     private readonly src: string,
@@ -230,7 +244,9 @@ class TreeViewParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, lexed.tokens, this.opts);
+    const result = st.result(model, ast, lexed.tokens, this.opts);
+    // The box errors are found before the parse: report them in source order with the rest.
+    return { ...result, diagnostics: [...result.diagnostics].sort(bySource) };
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -288,8 +304,8 @@ class TreeViewParser {
   }
 
   /** Record an error at `where` and stop the statement. */
-  private stop(code: string, message: string, where: Range, expected?: string[]): never {
-    this.st.diagnostics.error(code, message, where, expected ? { expected } : undefined);
+  private stop(code: string, message: string, where: Range, extra?: DiagnosticExtra): never {
+    this.st.diagnostics.error(code, message, where, extra);
     this.failedAt = this.i;
     throw STOP;
   }
@@ -299,7 +315,7 @@ class TreeViewParser {
     if (this.kind() === Kind.Error) this.badCharacters();
     const names = EXPECTED.names(want);
     const message = `Expected ${formatExpected(names)}, got ${this.found()}${hint ? `; ${hint}` : ''}.`;
-    this.stop('UNEXPECTED', message, this.range(), names);
+    this.stop('UNEXPECTED', message, this.range(), { expected: names });
   }
 
   /**
@@ -317,7 +333,7 @@ class TreeViewParser {
         'UNCLOSED_STRING',
         `Unclosed name: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the name.`,
         where,
-        [`\`${q}\``]
+        { expected: [`\`${q}\``] }
       );
     }
     const prev = this.i - 1;
@@ -336,30 +352,30 @@ class TreeViewParser {
     this.stop('UNEXPECTED_CHARACTER', `Unexpected character at line ${line}: ${why}.`, where);
   }
 
-  /** A box-drawing error (v12's box pass threw), at its line in the source (D486). */
+  /**
+   * A box-drawing error (v12's box pass threw), at its source line and column (D486): an empty
+   * node from its branch glyph to the line end, an indent over its blanks.
+   */
   private boxError(e: BoxError): void {
     const { src, lexed } = this;
-    const start = lexed.source(e.start);
+    const start = lexed.source(e.at);
     const end = e.end > e.start ? lexed.source(e.end - 1) + 1 : start;
     const line = this.lineOf(start);
-    const text = src.slice(start, end);
-    if (e.message.includes('Empty node')) {
-      const at = text.search(/[└┗├┣]/);
-      const where = { start: start + Math.max(at, 0), end };
+    if (e.code === 'empty-node') {
       this.st.diagnostics.error(
         'BOX_EMPTY_NODE',
         `Empty node: line ${line} has a box-drawing prefix and no name after it. Write a name after the prefix, or remove the line.`,
-        where,
+        { start, end },
         { expected: EXPECTED.names(NAME) }
       );
       return;
     }
-    let b = 0;
-    while (b < text.length && /\s/.test(text.charAt(b))) b++;
+    let b = start;
+    while (b < end && isSpace(src.charCodeAt(b))) b++;
     this.st.diagnostics.error(
       'BOX_UNEXPECTED_INDENT',
       `Unexpected indentation: line ${line} starts with blanks but has no \`├──\` or \`└──\` prefix, and the diagram is drawn with box-drawing lines. Write the prefix before its name, or remove the blanks.`,
-      { start, end: start + b }
+      { start, end: b }
     );
   }
 
@@ -411,29 +427,29 @@ class TreeViewParser {
     for (;;) {
       const k = this.kind();
       if (k === Kind.EOF) return;
+      const text = TEXT_STATEMENTS[k];
       this.statement(() => {
-        if (TEXT.includes(k)) this.textStatement(k);
+        if (text) this.textStatement(text);
         else this.node();
       });
     }
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE)`: the last of each wins; only before the first node. */
-  private textStatement(k: number): void {
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
+  private textStatement({ type, word, value }: TextStatement): void {
     if (this.started) this.lateText(word);
     const j = this.i++;
     const image = this.text(j);
     const range = this.trimmed(j);
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = value(image);
     const id = this.id(word);
-    if (type === 'Title') this.titleAstId = id;
+    this.texts[type] = text;
+    if (type === 'Title') {
+      this.titleAstId = id;
+      if (image.trim() === TITLE) this.titleTrap(j);
+    }
     this.children.push({ id, type, range, text });
     this.st.statement(word, range);
-    if (type === 'Title' && image.trim() === 'title') this.titleTrap(j);
     this.afterNode = false;
     this.oneLine = undefined;
   }
@@ -452,10 +468,11 @@ class TreeViewParser {
   /** A `title` glued to a bare name: the first node `title.txt` is a title and `.txt`. */
   private titleTrap(j: number): void {
     if (this.kind(j + 1) !== T.BareName || !this.glued(j)) return;
-    const name = `title${bareValue(this.text(j + 1))}`;
+    const rest = bareValue(this.text(j + 1));
+    const name = `${TITLE}${rest}`;
     this.st.diagnostics.warning(
       TREEVIEW_NAME_READ_AS_TITLE,
-      `\`${excerpt(name)}\` is read as an empty \`title\` and a node \`${excerpt(name.slice(5))}\`. Put the name in quotes, \`"${excerpt(name)}"\`.`,
+      `\`${excerpt(name)}\` is read as an empty \`title\` and a node \`${excerpt(rest)}\`. Put the name in quotes, \`"${excerpt(name)}"\`.`,
       { start: this.trimmed(j).start, end: this.trimmed(j + 1).end }
     );
   }
@@ -542,41 +559,43 @@ class TreeViewParser {
   }
 
   /**
+   * Where the blank run at `blank` is, for messages: on a line of its own, before a `%%`
+   * comment, or at the end of a line.
+   */
+  private blankAt(blank: number): { own: boolean; where: string } {
+    const r = this.range(blank);
+    const line = this.lineOf(r.start);
+    if (this.startsLine(blank)) return { own: true, where: `line ${line} holds only blanks` };
+    if (this.src.charCodeAt(r.end) === PERCENT) {
+      return { own: false, where: `there is a blank before the \`%%\` comment on line ${line}` };
+    }
+    return { own: false, where: `there is a blank at the end of line ${line}` };
+  }
+
+  /**
    * A blank run with no name after it on its line: at the end of a line (after a quoted name
    * or an annotation), before an inline comment, or on a line of its own. v12 read it as the
-   * indent of the next node, and the token after it is no name.
+   * indent of the next node, and the token after it is no name. Recovery resumes at the next
+   * node's indent.
    */
   private strayBlank(blank: number): never {
-    const where = this.range(blank);
-    const line = this.lineOf(where.start);
-    const comment = this.src.charCodeAt(where.end) === PERCENT;
-    const own = this.startsLine(blank);
-    let at = `there is a blank at the end of line ${line}`;
-    if (own) at = `line ${line} holds only blanks`;
-    else if (comment) at = `there is a blank before the \`%%\` comment on line ${line}`;
-    const next =
-      this.kind() === Kind.EOF
-        ? 'and no node follows it'
-        : 'and the next node has an indent of its own';
-    this.st.diagnostics.error(
+    const { own, where } = this.blankAt(blank);
+    const end = this.kind() === Kind.EOF;
+    const next = end ? 'and no node follows it' : 'and the next node has an indent of its own';
+    this.stop(
       'STRAY_BLANK',
-      `Unexpected blank: ${at}, which a treeView reads as the indent of the next node, ${next}. Remove ${own ? 'the blanks' : 'it'}.`,
-      where,
+      `Unexpected blank: ${where}, which a treeView reads as the indent of the next node, ${next}. Remove ${own ? 'the blanks' : 'it'}.`,
+      this.range(blank),
       {
         expected: EXPECTED.names(NAME),
-        ...(this.kind() === Kind.EOF
-          ? {}
-          : { related: [{ message: 'the next node', range: this.range() }] }),
+        ...(end ? {} : { related: [{ message: 'the next node', range: this.range() }] }),
       }
     );
-    // Recovery resumes at the next node's indent.
-    this.failedAt = this.i;
-    throw STOP;
   }
 
   /**
    * Warnings at a node's start: a second node on a line, and an indent that is a blank at the
-   * end of the line before.
+   * end of the line before, or a line of blanks.
    */
   private lineWarnings(blank: number, head: number): void {
     const { diagnostics } = this.st;
@@ -596,17 +615,11 @@ class TreeViewParser {
       }
     }
     if (blank >= 0 && this.startsLine(head)) {
-      const where = this.range(blank);
-      const line = this.lineOf(where.start);
-      let cause = `the blank at the end of line ${line}`;
-      if (this.startsLine(blank)) cause = `line ${line}, which holds only blanks`;
-      else if (this.src.charCodeAt(where.end) === PERCENT) {
-        cause = `the blank before the \`%%\` comment on line ${line}`;
-      }
+      const { own, where } = this.blankAt(blank);
       diagnostics.warning(
         TREEVIEW_TRAILING_BLANK,
-        `This node is indented by ${cause}: a treeView reads the blanks before a name as its indent, wherever they are. Remove the blank.`,
-        where,
+        `This node is indented by the blanks before it, and ${where}: a treeView reads the blanks before a name as its indent, wherever they are. Remove ${own ? 'them' : 'it'}.`,
+        this.range(blank),
         { related: [{ message: 'the node it indents', range: this.range(head) }] }
       );
     }
@@ -618,15 +631,13 @@ class TreeViewParser {
     const { diagnostics } = this.st;
     const resolved = normalise({
       nodes: this.nodes,
-      title: this.title,
+      title: this.texts.Title,
       titleAstId: this.titleAstId,
-      accTitle: this.accTitle,
-      accDescr: this.accDescr,
+      accTitle: this.texts.AccTitle,
+      accDescr: this.texts.AccDescr,
       frontMatterTitle: this.pre.frontMatter?.title,
     });
-    // The box errors are found before the parse: keep the list in source order.
-    diagnostics.list.sort((x, y) => x.range.start - y.range.start);
-    const warnings = diagnostics.list.filter((d) => d.severity === 'warning');
+    const warnings = diagnostics.list.filter((d) => d.severity === 'warning').sort(bySource);
     return Object.freeze({ ...resolved, warnings: Object.freeze(warnings) });
   }
 }

@@ -80,72 +80,84 @@ function parsedModel(text: string): TreeViewModel {
   return model;
 }
 
-let added: TreeViewNodeNode[] = [];
-let parsed: TreeViewModel | undefined;
-let texts = { title: '', accTitle: '', accDescr: '' };
+/** What one v12 DB instance holds: nodes added by hand, or the last parse, and its texts. */
+interface DbState {
+  added: TreeViewNodeNode[];
+  parsed: TreeViewModel | undefined;
+  texts: { title: string; accTitle: string; accDescr: string };
+}
 
-/** v12's treeView DB, over the v13 model. */
-export const db = {
-  clear(): void {
-    added = [];
-    parsed = undefined;
-    texts = { title: '', accTitle: '', accDescr: '' };
-  },
-  addNode(
-    level: number,
-    name: string,
-    nodeType: 'file' | 'directory',
-    cssClass?: string,
-    icon?: string,
-    description?: string
-  ): void {
-    const node: TreeViewNodeNode = {
-      id: '',
-      type: 'Node',
-      range: RANGE,
-      name,
-      nameRange: RANGE,
-      directory: nodeType === 'directory',
-      level,
-      depth: 0,
-    };
-    if (cssClass !== undefined) node.cssClass = cssClass;
-    if (icon !== undefined) node.icon = icon;
-    if (description !== undefined) node.description = description;
-    added.push(node);
-  },
-  getRoot(): V12Node {
-    if (parsed) return v12Root(parsed.roots, parsed.nodes);
-    const { roots, nodes } = buildTree(added);
-    return v12Root(roots, nodes);
-  },
-  getCount(): number {
-    return (parsed ? parsed.nodes.length : added.length) + 1;
-  },
-  setAccTitle(t: string): void {
-    texts.accTitle = parsedModel(`treeView-beta\naccTitle: ${t}`).accTitle;
-  },
-  getAccTitle: (): string => parsed?.accTitle ?? texts.accTitle,
-  setAccDescription(t: string): void {
-    texts.accDescr = parsedModel(`treeView-beta\naccDescr: ${t}`).accDescr;
-  },
-  getAccDescription: (): string => parsed?.accDescr ?? texts.accDescr,
-  setDiagramTitle(t: string): void {
-    texts.title = parsedModel(`treeView-beta\ntitle ${t}`).title ?? '';
-  },
-  getDiagramTitle: (): string => parsed?.title ?? texts.title,
-  getConfig(): never {
-    throw new Error('not in the model');
-  },
-};
+const emptyState = (): DbState => ({
+  added: [],
+  parsed: undefined,
+  texts: { title: '', accTitle: '', accDescr: '' },
+});
 
-/** v12's diagram parser: parse into {@link db}. */
-export const parser = {
-  parse(input: string): Promise<void> {
-    parsed = parsedModel(input);
-    return Promise.resolve();
-  },
-};
+/** v12's treeView DB and the diagram parser that fills it, over the v13 model (one instance). */
+function v12Diagram() {
+  let state = emptyState();
+  const db = {
+    clear(): void {
+      state = emptyState();
+    },
+    addNode(
+      level: number,
+      name: string,
+      nodeType: 'file' | 'directory',
+      cssClass?: string,
+      icon?: string,
+      description?: string
+    ): void {
+      const node: TreeViewNodeNode = {
+        id: '',
+        type: 'Node',
+        range: RANGE,
+        name,
+        nameRange: RANGE,
+        directory: nodeType === 'directory',
+        level,
+        depth: 0,
+      };
+      if (cssClass !== undefined) node.cssClass = cssClass;
+      if (icon !== undefined) node.icon = icon;
+      if (description !== undefined) node.description = description;
+      state.added.push(node);
+    },
+    getRoot(): V12Node {
+      const { roots, nodes } = state.parsed ?? buildTree(state.added);
+      return v12Root(roots, nodes);
+    },
+    getCount(): number {
+      return (state.parsed ? state.parsed.nodes.length : state.added.length) + 1;
+    },
+    setAccTitle(t: string): void {
+      state.texts.accTitle = parsedModel(`treeView-beta\naccTitle: ${t}`).accTitle;
+    },
+    getAccTitle: (): string => state.parsed?.accTitle ?? state.texts.accTitle,
+    setAccDescription(t: string): void {
+      state.texts.accDescr = parsedModel(`treeView-beta\naccDescr: ${t}`).accDescr;
+    },
+    getAccDescription: (): string => state.parsed?.accDescr ?? state.texts.accDescr,
+    setDiagramTitle(t: string): void {
+      state.texts.title = parsedModel(`treeView-beta\ntitle ${t}`).title ?? '';
+    },
+    getDiagramTitle: (): string => state.parsed?.title ?? state.texts.title,
+    getConfig(): never {
+      throw new Error('the options are ported with the config work (T5, #577)');
+    },
+  };
+  /** v12's diagram parser: parse into `db`. */
+  const parser = {
+    parse(input: string): Promise<void> {
+      state.parsed = parsedModel(input);
+      return Promise.resolve();
+    },
+  };
+  return { db, parser };
+}
+
+/** The instance the ported specs share, as v12's specs shared its DB module. */
+export const { db, parser } = v12Diagram();
 
 // ---- the box pass ------------------------------------------------------------------------
 
@@ -165,7 +177,7 @@ export function preprocessBoxDrawing(input: string): {
 } {
   const lineMap = new Map<number, number>();
   const box = boxDrawing(input, 0);
-  if (box.kind === 'error') throw new Error(box.error.message);
+  if (box.kind === 'error') throw new Error(box.errors[0].message);
   if (box.kind === 'none') return { text: input, lineMap };
   const { text, first } = box.rewrite;
   const out = text.slice(0, -1);

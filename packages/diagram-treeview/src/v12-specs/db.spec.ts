@@ -6,7 +6,7 @@
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './adapter.ts';
-// skipped: getConfig — the treeView options are read by the layout and the renderer (T3 #573, T4 #575), not by the model
+// skipped: getConfig — the treeView options (`getConfig`) are ported with the config work in T5 (#577), see GAPS T5
 
 describe('treeView db', () => {
   beforeEach(() => {

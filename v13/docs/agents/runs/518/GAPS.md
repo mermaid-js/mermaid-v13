@@ -9,9 +9,9 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 
 ## T2 (#572)
 
-- From T1's review: T1's box pass keeps per-character `first`/`last` maps in place of v12's `lineMap`, and nothing checks them against v12's `remapErrorLines` over the corpus. T2 must gate box-mode error lines against v12's messages (oracle) and source columns per D486. Done in #572: `conformance/src/treeView/box-errors.spec.ts` (61 rejected box sources by line, 17 by column, 6 of them where the source column is not v12's).
-- #572 choices (no D-id; listed in `tickets/572.md`): four warnings for v12 traps it accepts (`TREEVIEW_NODES_ON_ONE_LINE`, `TREEVIEW_TRAILING_BLANK`, `TREEVIEW_ANNOTATION_NEXT_LINE`, `TREEVIEW_NAME_READ_AS_TITLE`); `STRAY_BLANK` at the blank, not at the next indent where v12 reported; the model's `cssClass?: string` for the spec's "classes" (v12 keeps one); after a box error the text is parsed unrewritten, so errors inside box lines show once it is fixed.
-- For T4 (#575): `src/icons.ts` `resolveIcon` (v12's `getNodeIcon`) landed in #572 for `icons.spec.ts`. Its built-in name check is own-property, so `icon(constructor)` takes `defaultIconPack` where v12 gave `mermaid-treeview:constructor` (D486's spirit): list it with the render changes.
+- From T1's review: T1's box pass keeps per-character `first`/`last` maps in place of v12's `lineMap`, and nothing checks them against v12's `remapErrorLines` over the corpus. T2 must gate box-mode error lines against v12's messages (oracle) and source columns per D486. Done in #572: `conformance/src/treeView/box-errors.spec.ts` (100 rejected box sources by the primary diagnostic's line, 62 box errors by source column, 38 rewritten columns taken back to the source, 24 of them where the source column is not v12's).
+- #572 choices (no D-id; listed in `tickets/572.md`): four warnings for v12 traps it accepts (`TREEVIEW_NODES_ON_ONE_LINE`, `TREEVIEW_TRAILING_BLANK`, `TREEVIEW_ANNOTATION_NEXT_LINE`, `TREEVIEW_NAME_READ_AS_TITLE`); `STRAY_BLANK` at the blank, not at the next indent where v12 reported; the model's `cssClass?: string` for the spec's "classes" (v12 keeps one). After a box error the parser reads the rewrite with the rejected lines dropped, so errors on the other box lines are reported too (recovery set): sound because v12's rules are per line (depth from the line's own column, one segment width for the text), so dropping a rejected line changes no other line's rewrite; a node under a dropped empty node goes under the node before it.
+- For T4 (#575): `src/icons.ts` `resolveIcon` (v12's `getNodeIcon`) landed in #572 for `icons.spec.ts`; see "For the maintainer" for its one change from v12.
 
 ## T3 (#573)
 
@@ -24,8 +24,12 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 
 ## T5 (#577)
 
+- Port v12's `db.spec.ts` `getConfig` test with the config work (the `treeView` options move to `honoured`): #572 skips it with this pointer, as no D-id puts it in T2.
+
 ## T7 (#578)
 
 ## For the maintainer
 
 - Follow-up, not this spec: `tagQuotes` now exists in three lexer copies (treemap, wardley, treeView). A core kit helper would dedupe them after M5b (no core change here, D481).
+- v12 change (#572, kept): `icon(constructor)` (or `toString`, any name on `Object.prototype`) with a `defaultIconPack` is `pack:constructor`, as the spec says (built-in glyphs only for `file` and `folder`); v12 gave `mermaid-treeview:constructor`, its built-in check reading through the prototype.
+- Kit follow-up, not this spec: treeView's `lineView`/`recover` (as treemap's) re-implement `significantTokens`/`skipTo` (pitfall 7) because `TokenView` has no stream index or line-start flag. Adding those to the kit would let both parsers use it.

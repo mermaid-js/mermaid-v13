@@ -59,10 +59,11 @@ export function referenceVerdict(source: string): Verdict {
   if (lexed.boxed) return { accepted: true, ast: undefined };
   const text = lexed.input.text;
   const toShape = (a: AstShape): Shape => {
-    let from = tokens[a.start]?.outerStart ?? 0;
-    let to = tokens[a.end - 1]?.outerEnd ?? 0;
-    while (from < to && /\s/.test(text[from] ?? '')) from++;
-    while (to > from && /\s/.test(text[to - 1] ?? '')) to--;
+    const [from, to] = trim(
+      text,
+      tokens[a.start]?.outerStart ?? 0,
+      tokens[a.end - 1]?.outerEnd ?? 0
+    );
     const r = sourceRange(lexed.input, from, to);
     const shape: Shape = { type: a.type, range: trim(source, r.start, r.end) };
     if (a.children.length > 0) shape.children = a.children.map(toShape);

@@ -58,6 +58,11 @@ export function nodeIcon(converted: string): string {
   return converted === '' ? 'none' : converted;
 }
 
+/** The keywords of the text statements. */
+export const TITLE = 'title';
+export const ACC_TITLE = 'accTitle';
+export const ACC_DESCR = 'accDescr';
+
 /** `match[1].trim().replace(/[\t ]{2,}/gm, ' ')`: the one-line value. */
 function oneLine(text: string): string {
   const t = text.trim();
@@ -66,12 +71,12 @@ function oneLine(text: string): string {
 
 /** `title …`: the text after the keyword, trimmed, blank runs as one space (`title` alone: `''`). */
 export function titleValue(image: string): string {
-  return oneLine(image.slice(image.indexOf('title') + 5));
+  return oneLine(image.slice(image.indexOf(TITLE) + TITLE.length));
 }
 
 /** `accTitle: …`: the text after the colon, as {@link titleValue}; commonDb trims the start. */
 export function accTitleValue(image: string): string {
-  return oneLine(image.slice(image.indexOf(':', image.indexOf('accTitle')) + 1));
+  return oneLine(image.slice(image.indexOf(':', image.indexOf(ACC_TITLE)) + 1));
 }
 
 /**
@@ -79,7 +84,7 @@ export function accTitleValue(image: string): string {
  * dropped, blank runs as one space. commonDb's `.replace(/\n\s+/g, '\n')` then changes nothing.
  */
 export function accDescrValue(image: string): string {
-  let j = image.indexOf('accDescr') + 8;
+  let j = image.indexOf(ACC_DESCR) + ACC_DESCR.length;
   while (isBlank(image.charCodeAt(j))) j++;
   if (image[j] === ':') return oneLine(image.slice(j + 1));
   const body = image.slice(image.indexOf('{', j) + 1, image.lastIndexOf('}'));
