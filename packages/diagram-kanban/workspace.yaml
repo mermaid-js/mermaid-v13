@@ -74,3 +74,24 @@ languageBundle:
 release:
   summary: 'The kanban board plugin (SVG; `kanban`).'
   install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
+  dynamicReads:
+    [
+      'kanbanColumn0',
+      'kanbanColumn1',
+      'kanbanColumn2',
+      'kanbanColumn3',
+      'kanbanColumn4',
+      'kanbanColumn5',
+      'kanbanColumn6',
+      'kanbanColumn7',
+      'kanbanColumn8',
+      'kanbanColumn9',
+      'kanbanColumn10',
+      'kanbanColumn11',
+    ]

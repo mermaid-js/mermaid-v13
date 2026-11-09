@@ -20,6 +20,19 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 /** A diagram package's own `workspace.yaml`, the shared tools' per-package inputs. */
 export interface DiagramWiring {
   /**
+   * What the theme specs need from the package (`tools/gen-config/src/theme-packages.ts`):
+   * names its sources build at run time (`dynamicReads`), `notDrawnYet` while it reads no
+   * variable, core rows it is listed on before it reads them (`listedAhead`), and table rows
+   * that may resolve to `currentColor` (`someThemes`, `authorOnly`).
+   */
+  readonly theme?: {
+    readonly dynamicReads?: readonly string[];
+    readonly notDrawnYet?: boolean;
+    readonly listedAhead?: readonly string[];
+    readonly someThemes?: readonly string[];
+    readonly authorOnly?: readonly string[];
+  };
+  /**
    * `tools/gen-config` writes the package's config section defaults to
    * `src/generated/config-defaults.ts` (the section is the manifest's `section`, else its `id`).
    */
@@ -48,6 +61,7 @@ const WIRING_KEYS: ReadonlySet<string> = new Set([
   'grammars',
   'credits',
   'languageBundle',
+  'theme',
 ]);
 
 /** The `mermaid` key of a diagram package's package.json (DESIGN §12.1). */
@@ -75,7 +89,8 @@ export interface DiagramPackage {
 
 export const WIRING_FILE = 'workspace.yaml';
 
-function readWiring(root: string, dir: string): DiagramWiring {
+/** The `workspace.yaml` of the package at `dir` (absolute, or relative to `root`), or `{}`. */
+export function readWiring(root: string, dir = ''): DiagramWiring {
   const path = join(root, dir, WIRING_FILE);
   if (!existsSync(path)) return {};
   const parsed = load(readFileSync(path, 'utf8')) ?? {};

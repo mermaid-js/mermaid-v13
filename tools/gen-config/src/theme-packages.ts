@@ -17,6 +17,7 @@ import type {
   DiagramThemeVarDef,
 } from '../../../packages/core/src/theme/diagram.ts';
 import type { ThemeVarEntry } from '../../../packages/core/src/theme/vocabulary.ts';
+import { readWiring } from '../../workspace/diagrams.ts';
 
 /** The repository's `packages/` directory, where the `diagram-*` packages are. */
 export const PACKAGES = fileURLToPath(new URL('../../../packages', import.meta.url));
@@ -34,28 +35,28 @@ export interface ThemePackage {
   /** `src/theme/vocabulary.ts`'s optional `THEME_NOTE`: one line for the inventory doc. */
   readonly note?: string;
   /**
-   * `src/theme/vocabulary.ts`'s optional `DYNAMIC_READS`: names the package builds at run time
+   * `workspace.yaml`'s optional `theme.dynamicReads`: names the package builds at run time
    * (`pie${slot + 1}`), which {@link themeReads}' scan for literals can't see.
    */
   readonly dynamicReads?: readonly string[];
   /**
-   * `src/theme/vocabulary.ts`'s optional `NOT_DRAWN_YET: true`: the port has not reached layout,
+   * `workspace.yaml`'s optional `theme.notDrawnYet: true`: the port has not reached layout,
    * so its sources read no theme variable yet (the usedBy spec holds it to none).
    */
   readonly notDrawnYet?: boolean;
   /**
-   * `src/theme/vocabulary.ts`'s optional `LISTED_AHEAD`: core rows this type is listed on in
+   * `workspace.yaml`'s optional `theme.listedAhead`: core rows this type is listed on in
    * core's `usedBy` before its sources read them (a core T0 that moved them landed first). Each
    * must be unread, so an entry goes as soon as the type reads it.
    */
   readonly listedAhead?: readonly string[];
   /**
-   * `src/theme/vocabulary.ts`'s optional `SOME_THEMES`: table rows set only in the themes v12
+   * `workspace.yaml`'s optional `theme.someThemes`: table rows set only in the themes v12
    * sets them in, which the theme-tables spec lets resolve to `currentColor` elsewhere (#374).
    */
   readonly someThemes?: readonly string[];
   /**
-   * `src/theme/vocabulary.ts`'s optional `AUTHOR_ONLY`: table rows only an author sets, which
+   * `workspace.yaml`'s optional `theme.authorOnly`: table rows only an author sets, which
    * resolve to `currentColor` in every theme while unset.
    */
   readonly authorOnly?: readonly string[];
@@ -101,13 +102,10 @@ export async function themePackages(
     const vocabularyModule = await load(vocabularyPath(dir));
     const vocabulary = vocabularyModule?.THEME_VARIABLES as Vocabulary | undefined;
     const note = vocabularyModule?.THEME_NOTE as string | undefined;
-    const list = (key: string) => vocabularyModule?.[key] as readonly string[] | undefined;
-    const [dynamicReads, listedAhead, someThemes, authorOnly] = [
-      list('DYNAMIC_READS'),
-      list('LISTED_AHEAD'),
-      list('SOME_THEMES'),
-      list('AUTHOR_ONLY'),
-    ];
+    // The per-package theme spec data lives in the unpublished workspace.yaml, not in the
+    // package's sources, so it ships in no dist file.
+    const { dynamicReads, notDrawnYet, listedAhead, someThemes, authorOnly } =
+      readWiring(dir).theme ?? {};
     const index =
       tables === 'all' || vocabulary ? await load(join(dir, 'src/index.ts')) : undefined;
     const table = index && pluginTable(index);
@@ -117,7 +115,7 @@ export async function themePackages(
       ...(vocabulary && { vocabulary }),
       ...(note !== undefined && { note }),
       ...(dynamicReads && { dynamicReads }),
-      ...(vocabularyModule?.NOT_DRAWN_YET === true && { notDrawnYet: true }),
+      ...(notDrawnYet === true && { notDrawnYet: true }),
       ...(listedAhead && { listedAhead }),
       ...(someThemes && { someThemes }),
       ...(authorOnly && { authorOnly }),
@@ -147,7 +145,7 @@ function sources(dir: string): string[] {
  * (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
  * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
  * (D332); a var's `nested:` key is v12's name, not a read. Names the package builds at run time
- * are its vocabulary's `DYNAMIC_READS`. Only names in `known` (core's and every package's
+ * are its `workspace.yaml` `theme.dynamicReads`. Only names in `known` (core's and every package's
  * vocabulary) count.
  */
 export function themeReads(
@@ -198,7 +196,7 @@ export function coreUsers(
 
 /**
  * The used-by rule for core rows: a diagram package core's `usedBy` names must read the row, or
- * name it in its `LISTED_AHEAD` (listed before its renderer reads it); each `LISTED_AHEAD` row
+ * name it in its `theme.listedAhead` (listed before its renderer reads it); each such row
  * must be listed and unread. A reader need not be listed: {@link coreUsers} adds it.
  */
 export function coreListedErrors(

@@ -26,9 +26,3 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   actor4: { alias: 'ja4', kind: 'color', usedBy: JOURNEY },
   actor5: { alias: 'ja5', kind: 'color', usedBy: JOURNEY },
 };
-
-/**
- * Rows no theme sets, only an author: `actor0`–`actor5` (D249), which win over
- * `journey.actorColours` when set. Unset, they resolve to `currentColor` in every theme.
- */
-export const AUTHOR_ONLY: readonly string[] = Array.from({ length: 6 }, (_, i) => `actor${i}`);

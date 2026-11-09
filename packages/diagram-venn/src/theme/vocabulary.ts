@@ -29,20 +29,3 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
  */
 export const THEME_NOTE =
   'A theme with a palette (a non-empty `borderColorArray`: redux-color, redux-dark-color, or an author’s) draws the circles from it, not from these slot values; `currentColor` is a slot no theme writes, and the circles cycle the slots that are written, else fall back to `primaryColor`.';
-
-/**
- * Names the sources build at run time, which the theme usedBy scan for literals can't see:
- * `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
- */
-export const DYNAMIC_READS: readonly string[] = Array.from({ length: VENN_SLOTS }, (_, i) =>
-  slotVar(i)
-);
-
-/**
- * Rows set only in the themes v12 sets them in (#374, D331): the slot colours, which redux and
- * neo leave unset as v12 did (the renderer cycles the slots that are set, else the palette, else
- * `primaryColor`, #495). Elsewhere they resolve to `currentColor`.
- */
-export const SOME_THEMES: readonly string[] = Array.from({ length: VENN_SLOTS }, (_, i) =>
-  slotVar(i)
-);

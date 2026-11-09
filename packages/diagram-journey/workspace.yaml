@@ -27,3 +27,10 @@ languageBundle:
     - plugin.ts
     - index.ts
     - labels.ts
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # No theme sets them, only an author: `actor0`–`actor5` (D249), which win over `journey.actorColours` when set.
+  authorOnly: ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5']

@@ -39,3 +39,26 @@ languageBundle:
 release:
   summary: 'The flowchart plugin (SVG, and text output from `/ascii`).'
   install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # `padsOf` in render/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
+  dynamicReads:
+    [
+      'nodePaddingX',
+      'nodePaddingY',
+      'stadiumPaddingX',
+      'stadiumPaddingY',
+      'hexagonPaddingX',
+      'hexagonPaddingY',
+      'subroutinePaddingX',
+      'subroutinePaddingY',
+      'cylinderPaddingX',
+      'cylinderPaddingY',
+      'leanPaddingX',
+      'leanPaddingY',
+      'oddPaddingX',
+      'oddPaddingY',
+    ]

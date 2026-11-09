@@ -16,12 +16,13 @@ import {
  * each diagram package's sources (`themeReads` in theme-packages.ts): a string-literal argument
  * to a `Theme` method or a local helper over one, a table of names, a table rule's
  * `inline(name)`, and the names a package builds at run time, which its vocabulary lists as
- * `DYNAMIC_READS`. So a port never lists itself in core's vocabulary: the inventory lists it
+ * `theme.dynamicReads` in its `workspace.yaml`. So a port never lists itself in core's vocabulary: the inventory lists it
  * from its reads (`coreUsers`). Core's own `usedBy` keeps the types listed by hand before that,
  * each of which must still read the row, plus types listed ahead of their reads. A package's own rows (`src/theme/vocabulary.ts`, spec #414
  * T0b) may be read by its own type only: a row another type reads belongs in core.
  *
- * Everything per type lives in the package (`DYNAMIC_READS`, `NOT_DRAWN_YET`, `LISTED_AHEAD`),
+ * Everything per type lives in the package's `workspace.yaml` (`theme.dynamicReads`,
+ * `theme.notDrawnYet`, `theme.listedAhead`),
  * so a port adds its package and edits nothing here.
  */
 const PKGS = await themePackages(PACKAGES, { tables: 'vocabulary' });
@@ -35,8 +36,8 @@ describe('theme vocabulary usedBy (#207)', () => {
     expect(TYPES.length).toBeGreaterThan(0);
   });
 
-  // A port whose package has not reached layout yet says so with `NOT_DRAWN_YET = true` in its
-  // vocabulary: it must read nothing then, so the flag goes as soon as it reads one.
+  // A port whose package has not reached layout yet says so with `theme.notDrawnYet: true` in its
+  // workspace.yaml: it must read nothing then, so the flag goes as soon as it reads one.
   it.each(PKGS.map((p) => [p.type, p.notDrawnYet === true] as const))(
     '%s reads theme variables exactly when it is drawn (NOT_DRAWN_YET: %s)',
     (type, notDrawn) => {

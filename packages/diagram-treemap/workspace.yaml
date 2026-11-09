@@ -46,3 +46,24 @@ credits:
   files:
     src/layout/tiles.ts: ['d3-hierarchy']
     src/format/d3-format.ts: ['d3-format']
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
+  dynamicReads:
+    [
+      'cScalePeer0',
+      'cScalePeer1',
+      'cScalePeer2',
+      'cScalePeer3',
+      'cScalePeer4',
+      'cScalePeer5',
+      'cScalePeer6',
+      'cScalePeer7',
+      'cScalePeer8',
+      'cScalePeer9',
+      'cScalePeer10',
+      'cScalePeer11',
+    ]

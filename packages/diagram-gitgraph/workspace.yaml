@@ -25,3 +25,12 @@ languageBundle:
 release:
   summary: 'The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`).'
   install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # Set only in the themes v12 sets them in (#374, D331): the renderer draws v12's fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too.
+  someThemes: ['commitLineColor', 'gitCherryPickInk']
+  # No theme sets it, only an author: `tagBorder` (D267), v12's other name for `tagLabelBorder`.
+  authorOnly: ['tagBorder']

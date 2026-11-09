@@ -95,9 +95,9 @@ function unresolved(
 }
 
 /**
- * Rows a package's vocabulary exempts (`src/theme/vocabulary.ts`): `AUTHOR_ONLY`, rows no theme
+ * Rows a package exempts in its `workspace.yaml` (`theme.authorOnly`), rows no theme
  * sets, only an author (journey's `actor0`–`actor5`, D249; gitGraph's `tagBorder`, D267), which
- * resolve to `currentColor` in every theme while unset; `SOME_THEMES`, rows set only in the
+ * resolve to `currentColor` in every theme while unset; and `theme.someThemes`, rows set only in the
  * themes v12 sets them in (#374, D331: gitGraph's fallbacks, venn's slot colours, #495).
  */
 const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = Object.fromEntries(

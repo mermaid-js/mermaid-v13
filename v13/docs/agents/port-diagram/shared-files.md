@@ -19,7 +19,7 @@ Until wave 3, every port edited the same ~60 shared files: package lists, table 
 | Language-bundle renderer dirs | `languageBundle: { renderer: [...] }` in `workspace.yaml` | `bench/src/language-bundle.spec.ts` (was `PACKAGES`) |
 | RELEASING.md row | `release: { summary, install }` in `workspace.yaml` | `pnpm regen` |
 | Ported upstream code: licence credits | `credits: { upstreams, files }` in `workspace.yaml`, plus `notices/mermaid.txt` (the section mermaid's notices carry, since its CDN build bundles you) | `check:licenses` (was `UPSTREAMS`, `REQUIRED_CREDITS`, `BUNDLED_CREDITS`); `pnpm regen` assembles `packages/mermaid/THIRD_PARTY_NOTICES` |
-| Theme names built at run time; not drawn yet; core rows listed ahead; table exemptions | `DYNAMIC_READS`, `NOT_DRAWN_YET = true`, `LISTED_AHEAD`, `SOME_THEMES`, `AUTHOR_ONLY` exported from `packages/diagram-<type>/src/theme/vocabulary.ts` | theme specs (was hardcoded in `theme-used-by.spec.ts`, `theme-tables.spec.ts`) |
+| Theme names built at run time; not drawn yet; core rows listed ahead; table exemptions | `theme: { dynamicReads, notDrawnYet, listedAhead, someThemes, authorOnly }` in `workspace.yaml` | theme specs (was hardcoded in `theme-used-by.spec.ts`, `theme-tables.spec.ts`) |
 | Which core theme variables you read | nothing: core rows' users come from a scan of your sources | `gen:theme` (was core `vocabulary.ts` `usedBy`) |
 | MIGRATION.md section(s) | `v13/docs/migration/<type>.md`, starting with `## ` | `gen:config` |
 | Parity suite | `packages/conformance/src/<type>/suite.ts`, `export const parity = [...]` | `src/registry.ts` (was `PARITY_SUITES`) |
@@ -44,7 +44,7 @@ What still is a shared edit, by design: a change to shared code itself (a new co
    - package.json diagram dependencies, RELEASING row, knip and eslint list entries: **delete**; `pnpm regen` adds the dependencies and the row from `release:` in your `workspace.yaml`; knip and eslint use globs now.
    - `SECTION_OWNERS` row → `configDefaults: true`; `GRAMMARS` entry → `grammars:`; bench `PACKAGES` row → `languageBundle:`; licence rows → `credits:` and `notices/mermaid.txt`. All in your `workspace.yaml`; create it from a neighbour's.
    - `PARITY_SUITES` entry → `src/<type>/suite.ts`; `JISON_TYPES` / `LANGIUM_LEXERS` / `HARVESTS` rows → `src/<type>/tables.ts` (a jison type's smoke-list line goes; requirement's `NOT_LEXED` becomes `notLexed: [...]` on its row); `divergences.json` entries → `divergences/<type>.json`; `DIVERGENCES_FILE` → `DIVERGENCES_DIR` in your own specs.
-   - `NOT_DRAWN_YET` / `LISTED_AHEAD` / `DYNAMIC_READS` entries → exports of your `src/theme/vocabulary.ts`. Do not list your type on any core `usedBy`; keep only a real move of a row into core.
+   - `NOT_DRAWN_YET` / `LISTED_AHEAD` / `DYNAMIC_READS` entries → `theme:` keys in your `workspace.yaml` (`dynamicReads`, `notDrawnYet: true`, `listedAhead`). Do not list your type on any core `usedBy`; keep only a real move of a row into core.
    - MIGRATION.md sections → `v13/docs/migration/<type>.md`.
    - Lines in shared specs (type lists, `TYPE_DOCS`, per-type `it`s): drop the list lines; samples → `grammar/<type>.sample.mmd` / `.agree.mmd`; a type-only `it` → your own spec file; your `goldens/<id>/completions/empty.*` → delete.
    - Hand-drawn: add `e2e/diagrams/<folder>/hand-drawn.txt`.
@@ -55,14 +55,14 @@ Per in-flight port:
 
 | Port | Moves on its next merge |
 | --- | --- |
-| usecase (#624) | parity suite and harvest row → `conformance/src/usecase/`; `NOT_DRAWN_YET` and `LISTED_AHEAD` (`actorBkg`, `actorBorder`) → `diagram-usecase/src/theme/vocabulary.ts` (core keeps `usedBy: ['usecase']` on those two rows); config/grammar/release keys → `workspace.yaml`; MIGRATION section → `migration/usecase.md`. Its `harvest-v12.ts` file-name change is shared code: merge it as code. |
+| usecase (#624) | parity suite and harvest row → `conformance/src/usecase/`; `NOT_DRAWN_YET` and `LISTED_AHEAD` (`actorBkg`, `actorBorder`) → `theme:` in `diagram-usecase/workspace.yaml` (core keeps `usedBy: ['usecase']` on those two rows); config/grammar/release keys → `workspace.yaml`; MIGRATION section → `migration/usecase.md`. Its `harvest-v12.ts` file-name change is shared code: merge it as code. |
 | treeView (#627) | parity suite and Langium row → `conformance/src/treeView/`; its new `capture: 'langium'` descriptor field is shared code; grammar/config/release → `workspace.yaml`. |
 | ishikawa (#626) | parity suite and jison row → `conformance/src/ishikawa/`; `GRAMMARS` → `grammars:`; config/release → `workspace.yaml`; theme-used-by list line → drop. |
 | requirement (#629) | parity suite and jison row (with `notLexed`) → `conformance/src/requirement/`; `GRAMMARS` → `grammars:`; release/config → `workspace.yaml`. |
 | block (#623) | parity suite and jison row → `conformance/src/block/`; release/config → `workspace.yaml`. |
 | c4 (#622) | parity suite and jison row → `conformance/src/c4/`; release/config → `workspace.yaml`. |
-| agentflow (#632) | parity suite and jison row → `conformance/src/agentflow/`; `NOT_DRAWN_YET` → its vocabulary; `GRAMMARS` → `grammars:`; release/config → `workspace.yaml`. |
+| agentflow (#632) | parity suite and jison row → `conformance/src/agentflow/`; `NOT_DRAWN_YET` → `theme.notDrawnYet: true` in its `workspace.yaml`; `GRAMMARS` → `grammars:`; release/config → `workspace.yaml`. |
 | architecture (#631, wave 4) | parity suite and Langium row → `conformance/src/architecture/`; divergences → `divergences/architecture.json`; release/config → `workspace.yaml`. |
 | railroad (#633, wave 4) | four Langium rows and the harvest row → `conformance/src/railroad/tables.ts`; four `grammars:` entries (`railroad`, `railroadEbnf`, `railroadAbnf`, `railroadPeg`); release/config → `workspace.yaml`. |
-| eventmodeling (#625, wave 4) | parity suite and jison row → `conformance/src/eventmodeling/`; `NOT_DRAWN_YET` → its vocabulary; `GRAMMARS` → `grammars:`; release/config → `workspace.yaml`. |
+| eventmodeling (#625, wave 4) | parity suite and jison row → `conformance/src/eventmodeling/`; `NOT_DRAWN_YET` → `theme.notDrawnYet: true` in its `workspace.yaml`; `GRAMMARS` → `grammars:`; release/config → `workspace.yaml`. |
 | swimlane (`feature/528_swimlane`, wave 4) | a layout engine plus flowchart's `swimlane-beta` registration: no diagram package of its own, so nothing moves except any MIGRATION section (→ `migration/flowchart-swimlane.md`). Its `LAZY_LAYOUTS` row and flowchart registration are shared code: merge them as code. |

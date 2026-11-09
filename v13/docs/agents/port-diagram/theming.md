@@ -22,7 +22,7 @@ Where v12 gates on a name for something that is not a palette or geometry (for e
 
 ## Shared vocabulary
 
-The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`. The circle and cross arrowheads and the padding of the stadium, double circle, circle minimum, subroutine, cylinder, lean and odd shapes were flowchart's own until block, C4 and agentflow needed them (#552); they are core rows again. A new reader lists itself nowhere: the used-by column of core rows comes from a scan of each package's sources (`tools/gen-config/src/theme-packages.ts`); names it builds at run time go in its vocabulary's `DYNAMIC_READS`.
+The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`. The circle and cross arrowheads and the padding of the stadium, double circle, circle minimum, subroutine, cylinder, lean and odd shapes were flowchart's own until block, C4 and agentflow needed them (#552); they are core rows again. A new reader lists itself nowhere: the used-by column of core rows comes from a scan of each package's sources (`tools/gen-config/src/theme-packages.ts`); names it builds at run time go in its `workspace.yaml` (`theme.dynamicReads`).
 
 | Group | Variables | Read with |
 | --- | --- | --- |

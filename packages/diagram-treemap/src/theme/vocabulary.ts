@@ -31,12 +31,3 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
     nested: 'titleFontSize',
   },
 };
-
-/**
- * Names the sources build at run time, which the theme usedBy scan for literals can't see:
- * `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
- */
-export const DYNAMIC_READS: readonly string[] = Array.from(
-  { length: 12 },
-  (_, n) => `cScalePeer${n}`
-);

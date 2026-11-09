@@ -27,3 +27,24 @@ languageBundle:
 release:
   summary: 'The pie chart plugin (SVG; `pie`).'
   install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
+  dynamicReads:
+    [
+      'pie1',
+      'pie2',
+      'pie3',
+      'pie4',
+      'pie5',
+      'pie6',
+      'pie7',
+      'pie8',
+      'pie9',
+      'pie10',
+      'pie11',
+      'pie12',
+    ]
