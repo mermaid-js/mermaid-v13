@@ -58,6 +58,11 @@ const SPAN = 2 ** 26;
 
 type Lists = (number[] | undefined)[];
 
+// A block's size (each under 2^24 cells) and slide direction (one of four) as one safe integer.
+const SIZE = 2 ** 24;
+const slideKey = (rw: number, rh: number, sx: number, sy: number): number =>
+  ((rw * SIZE + rh) * 3 + sx + 1) * 3 + sy + 1;
+
 class Placer {
   readonly N: number;
   readonly G: number;
@@ -85,7 +90,9 @@ class Placer {
   readonly order: number[] = [];
   readonly cells = new Map<number, number>();
   readonly large: number[] = [];
-  readonly reach = new Map<string, number>();
+  // Slide memo: by the block's corner (packed as the cell map's keys), then by its size and the
+  // direction it slides (packed as `slideKey`).
+  readonly reach = new Map<number, Map<number, number>>();
   first = 0;
   ax = 0;
   ay = 0;
@@ -203,8 +210,11 @@ class Placer {
   // How far a block must slide along (sx, sy) to be clear. Each step jumps past what it hit, and
   // the result is kept, because a later block starting from the same place cannot stop sooner.
   slide(rx: number, ry: number, rw: number, rh: number, sx: number, sy: number): number {
-    const key = `${rx},${ry},${rw},${rh},${sx},${sy}`;
-    let k = this.reach.get(key) ?? 0;
+    const corner = (rx + OFFSET) * SPAN + ry + OFFSET;
+    let memo = this.reach.get(corner);
+    if (!memo) this.reach.set(corner, (memo = new Map<number, number>()));
+    const key = slideKey(rw, rh, sx, sy);
+    let k = memo.get(key) ?? 0;
     for (;;) {
       const hit = this.collide(rx + k * sx, ry + k * sy, rw, rh);
       if (hit < 0) break;
@@ -214,7 +224,7 @@ class Placer {
       else if (sy > 0) k = this.y[hit]! + this.h[hit]! - ry;
       else k = ry + rh - this.y[hit]!;
     }
-    this.reach.set(key, k);
+    memo.set(key, k);
     return k;
   }
 

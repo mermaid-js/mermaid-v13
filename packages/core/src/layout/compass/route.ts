@@ -28,6 +28,61 @@ export interface Port extends Rect {
 export const hits = (a: Rect, b: Rect): boolean =>
   a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
+// Bucket keys pack a cell's column and row into one number, as `grid.ts`'s cell map does.
+const OFFSET = 2 ** 25;
+const SPAN = 2 ** 26;
+
+/**
+ * Rects bucketed by a uniform grid of `cell`-sized squares, so asking what a small rect hits
+ * looks at the few rects near it rather than at all of them. Each rect has an owner (an edge
+ * index, or -1) that a query may skip.
+ */
+export class Space {
+  readonly cell: number;
+  readonly rects: Rect[] = [];
+  readonly owners: number[] = [];
+  readonly buckets = new Map<number, number[]>();
+
+  constructor(cell: number) {
+    this.cell = cell > 0 && Number.isFinite(cell) ? cell : 1;
+  }
+
+  private span(r: Rect): [number, number, number, number] {
+    const c = this.cell;
+    return [Math.floor(r.x0 / c), Math.floor(r.y0 / c), Math.floor(r.x1 / c), Math.floor(r.y1 / c)];
+  }
+
+  add(r: Rect, owner = -1): void {
+    const k = this.rects.length;
+    this.rects.push(r);
+    this.owners.push(owner);
+    const [cx0, cy0, cx1, cy1] = this.span(r);
+    for (let cx = cx0; cx <= cx1; cx++) {
+      for (let cy = cy0; cy <= cy1; cy++) {
+        const key = (cx + OFFSET) * SPAN + cy + OFFSET;
+        const list = this.buckets.get(key);
+        if (list) list.push(k);
+        else this.buckets.set(key, [k]);
+      }
+    }
+  }
+
+  /** The first-added rect `r` overlaps, other than those owned by `skip`. */
+  hit(r: Rect, skip = -2): Rect | undefined {
+    let best = -1;
+    const [cx0, cy0, cx1, cy1] = this.span(r);
+    for (let cx = cx0; cx <= cx1; cx++) {
+      for (let cy = cy0; cy <= cy1; cy++) {
+        for (const k of this.buckets.get((cx + OFFSET) * SPAN + cy + OFFSET) ?? []) {
+          if ((best < 0 || k < best) && this.owners[k] !== skip && hits(this.rects[k]!, r))
+            best = k;
+        }
+      }
+    }
+    return best < 0 ? undefined : this.rects[best];
+  }
+}
+
 /** Perpendicular sides: one bend when the corner is ahead of both ends, else out and back. */
 function turn(s: Port, e: Port): number[] {
   const STUB = METRICS.stub;
@@ -154,7 +209,7 @@ export function clearSpot(
   at: Point,
   size: { w: number; h: number },
   upright: boolean,
-  nodes: readonly Rect[]
+  nodes: Space
 ): Point {
   const { w, h } = size;
   const box = (p: Point): Rect => ({
@@ -163,7 +218,7 @@ export function clearSpot(
     x1: p.x + w / 2,
     y1: p.y + h / 2,
   });
-  const hit = (p: Point): Rect | undefined => nodes.find((n) => hits(n, box(p)));
+  const hit = (p: Point): Rect | undefined => nodes.hit(box(p));
   if (!hit(at)) return at;
   const runs: number[] = [];
   for (let i = 0; i + 3 < points.length; i += 2) runs.push(i);

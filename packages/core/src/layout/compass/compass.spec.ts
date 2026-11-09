@@ -191,3 +191,116 @@ describe('compass', () => {
     expect(() => compass(graph({ nodes: [node('a', { width: NaN })] }))).toThrow(RangeError);
   });
 });
+
+/** Whether an axis-aligned segment runs through a rect's interior. */
+function crosses(p: { x: number; y: number }, q: { x: number; y: number }, r: Rect): boolean {
+  const x0 = Math.min(p.x, q.x);
+  const x1 = Math.max(p.x, q.x);
+  const y0 = Math.min(p.y, q.y);
+  const y1 = Math.max(p.y, q.y);
+  return x0 < r.x1 && x1 > r.x0 && y0 < r.y1 && y1 > r.y0;
+}
+
+interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+const around = (c: { x: number; y: number }, w: number, h: number): Rect => ({
+  x0: c.x - w / 2,
+  y0: c.y - h / 2,
+  x1: c.x + w / 2,
+  y1: c.y + h / 2,
+});
+
+describe('compass: review fixes', () => {
+  it('keeps end labels clear of other edges’ lines and markers (finding 1)', () => {
+    const marked = (s: string): LayoutEdge => ({
+      ...edge(s, 'd'),
+      endLabel: { width: 20, height: 14 },
+      endMarker: { length: 10, width: 10 },
+    });
+    const g = graph({
+      direction: 'LR',
+      nodes: ['a', 'b', 'c', 'd'].map((id) => node(id, { anchorY: undefined, height: 30 })),
+      edges: [marked('a'), marked('b'), marked('c')],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const problems: string[] = [];
+    for (const e of g.edges) {
+      const label = around(m.edges.get(e.id)!.endLabel!, 20, 14);
+      for (const o of g.edges) {
+        if (o.id === e.id) continue;
+        const pts = m.edges.get(o.id)!.points;
+        for (let i = 1; i < pts.length; i++)
+          if (crosses(pts[i - 1]!, pts[i]!, label)) problems.push(`${e.id} on ${o.id}'s line`);
+        // The marker: its length back along the last run, its width across.
+        const end = pts.at(-1)!;
+        const prev = pts.at(-2)!;
+        const len = Math.hypot(prev.x - end.x, prev.y - end.y);
+        const tip = {
+          x: end.x + ((prev.x - end.x) / len) * 5,
+          y: end.y + ((prev.y - end.y) / len) * 5,
+        };
+        if (crosses(tip, tip, label) || overlapsRect(label, around(tip, 10, 10)))
+          problems.push(`${e.id} on ${o.id}'s marker`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('places a 0×0 edge label (finding 2)', () => {
+    const g = graph({
+      nodes: [node('a'), node('b')],
+      edges: [{ ...edge('a', 'b'), label: { width: 0, height: 0 } }],
+    });
+    const m = compass(g);
+    expect(m.edges.get('a-b')!.label).toBeDefined();
+    expect(validateLayout(g, m)).toEqual([]);
+  });
+
+  it('refuses non-finite sizes and spacings the way `layered` does (findings 3, 4)', () => {
+    const base = { nodes: [node('a'), node('b')], edges: [edge('a', 'b')] };
+    const bad: Partial<LayoutGraph>[] = [
+      { groups: [{ id: 'g', padding: pad, title: { width: NaN, height: 10 } }] },
+      { groups: [{ id: 'g', padding: pad, title: { width: 10, height: Infinity } }] },
+      { ...base, edges: [{ ...edge('a', 'b'), minLen: NaN }] },
+      { ...base, edges: [{ ...edge('a', 'b'), startMarker: { length: NaN, width: 1 } }] },
+      { ...base, edges: [{ ...edge('a', 'b'), endMarker: { length: 1, width: -1 } }] },
+      { spacing: { node: NaN, rank: 1, edge: 1 } },
+      { spacing: { node: 1, rank: -1, edge: 1 } },
+      { spacing: { node: 1, rank: 1, edge: Infinity } },
+      { headRoom: NaN },
+    ];
+    for (const b of bad) expect(() => compass(graph(b)), JSON.stringify(b)).toThrow(RangeError);
+  });
+
+  it('drops the parent of every group on a parent cycle (finding 6)', () => {
+    const g = graph({
+      nodes: [node('a', { parent: 'A' }), node('b', { parent: 'B' })],
+      groups: [
+        { id: 'A', parent: 'B', padding: pad },
+        { id: 'B', parent: 'A', padding: pad },
+      ],
+    });
+    const m = compass(g);
+    const A = m.groups.get('A')!;
+    const B = m.groups.get('B')!;
+    expect(overlapsRect(around(A, A.width, A.height), around(B, B.width, B.height))).toBe(false);
+  });
+
+  it('refuses a side it does not know (finding 7)', () => {
+    const g = graph({
+      nodes: [node('a'), node('b')],
+      edges: [{ ...edge('a', 'b'), sides: { source: 'up' as Side } }],
+    });
+    expect(() => compass(g)).toThrow(RangeError);
+  });
+});
+
+function overlapsRect(a: Rect, b: Rect): boolean {
+  return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+}

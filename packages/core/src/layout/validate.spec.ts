@@ -227,3 +227,50 @@ describe('validateLayout: `border` ends (D501)', () => {
     expect(validateLayout(graph, atBorder())).toEqual(["edge 'e' does not end at its target"]);
   });
 });
+
+describe('validateLayout: `border` ends lie on the right group border (D501)', () => {
+  const bordered = { ...graph, edges: [{ ...graph.edges[0]!, border: { target: true } }] };
+
+  it('refuses a border end inside the group but off its border', () => {
+    const model = good();
+    // Inside g (y 70..110), above b (y 80..100), on no side of g.
+    model.edges.get('e')!.points[1] = { x: 50, y: 75, axis: 'v' };
+    expect(validateLayout(bordered, model)).toEqual(["edge 'e' does not end at its target"]);
+  });
+
+  it('takes an end on a group at that group, not its parent, with or without `border`', () => {
+    const nested: LayoutGraph = {
+      ...graph,
+      nodes: [graph.nodes[0]!],
+      groups: [
+        { id: 'p', padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+        { id: 'g', parent: 'p', padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+      ],
+      edges: [{ id: 'e', source: 'a', target: 'g', minLen: 1, border: { target: true } }],
+    };
+    const model: LayoutModel = {
+      ...good(),
+      nodes: new Map([['a', { x: 50, y: 10, width: 40, height: 20 }]]),
+      groups: new Map([
+        ['p', { x: 50, y: 85, width: 80, height: 70, title: { x: 50, y: 55 } }],
+        ['g', { x: 50, y: 90, width: 40, height: 40, title: { x: 50, y: 75 } }],
+      ]),
+      edges: new Map([
+        [
+          'e',
+          {
+            points: [
+              { x: 50, y: 20, axis: 'v' },
+              // On p's top border, well above g.
+              { x: 50, y: 50, axis: 'v' },
+            ],
+            ports: { source: 'bottom', target: 'top' },
+          },
+        ],
+      ]),
+    };
+    expect(validateLayout(nested, model)).toEqual(["edge 'e' does not end at its target"]);
+    model.edges.get('e')!.points[1] = { x: 50, y: 70, axis: 'v' };
+    expect(validateLayout(nested, model)).toEqual([]);
+  });
+});

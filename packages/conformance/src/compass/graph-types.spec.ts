@@ -21,23 +21,29 @@ const TYPES = [
 
 const NAMES = ['layered', 'dagre', 'elk', 'elk.layered', 'elk.box', 'elk.rectpacking', 'compass'];
 
-/** Puts `layout: compass` in the fixture's front matter, over any `layout` it sets. */
-function withCompass(source: string): string {
+/**
+ * Drops any `layout` the fixture's front matter or directives set, so the `layout: compass` that
+ * `initialize` sets applies.
+ */
+function withoutLayout(source: string): string {
   const fm = /^---\n([\s\S]*?)\n---\n/.exec(source);
-  if (!fm) return `---\nlayout: compass\n---\n${source}`;
-  const body = fm[1]!.replace(/^layout:.*$/m, '').replace(/^(\s+)layout:.*$/m, '');
-  return `---\n${body}\nlayout: compass\n---\n${source.slice(fm[0].length)}`;
+  const rest = (fm ? source.slice(fm[0].length) : source).replace(
+    /"layout"\s*:\s*"[^"]*"\s*,?/g,
+    ''
+  );
+  if (!fm) return rest;
+  return `---\n${fm[1]!.replace(/^\s*layout:.*$/gm, '')}\n---\n${rest}`;
 }
 
 describe.each(TYPES)('compass over parser-produced %s graphs (D327)', (_, dir) => {
   it('renders every fixture with `layout: compass`, unrefused and without NaN', async () => {
     const m = createMermaid();
-    m.initialize({ deterministic: true });
+    m.initialize({ deterministic: true, layout: 'compass' });
     let rendered = 0;
     for await (const item of corpusFromDir(join(REPO_ROOT, dir), 'x')) {
       let r;
       try {
-        r = await m.render('mermaid-0', withCompass(item.source));
+        r = await m.render('mermaid-0', withoutLayout(item.source));
       } catch (e) {
         if (e instanceof MermaidError && e.code !== 'INTERNAL') continue;
         throw e;
@@ -78,4 +84,45 @@ describe.each(TYPES)('compass over parser-produced %s graphs (D327)', (_, dir) =
     }
     expect(checked).toBeGreaterThan(10);
   }, 300_000);
+});
+
+describe('compass on an edge to a subgraph (finding 5)', () => {
+  it('widens the gap for a labelled edge to a group, clear of its border and title', async () => {
+    const seen = new Map<'graph', LayoutGraph>();
+    const m = createMermaid();
+    m.initialize({ deterministic: true, layout: 'compass' });
+    m.registerLayoutLoaders([
+      {
+        name: 'compass',
+        loader: () =>
+          Promise.resolve((graph: LayoutGraph) => {
+            seen.set('graph', graph);
+            return compass(graph);
+          }),
+      },
+    ]);
+    for (const dir of ['LR', 'TB']) {
+      seen.clear();
+      await m.render(
+        'mermaid-0',
+        `flowchart ${dir}\n  A -- a rather long edge label here --> S\n  subgraph S [Subgraph title]\n    B\n  end\n`
+      );
+      const graph = seen.get('graph')!;
+      const model = compass(graph);
+      expect(validateLayout(graph, model), dir).toEqual([]);
+      const e = graph.edges.find((x) => x.label)!;
+      const at = model.edges.get(e.id)!.label!;
+      const group = model.groups.get(e.target) ?? model.groups.get(e.source)!;
+      const l = e.label!;
+      const a = model.nodes.get('A')!;
+      // In the gap between A and the subgraph, not dodged off past either.
+      const between =
+        dir === 'LR'
+          ? at.x - l.width / 2 >= a.x + a.width / 2 &&
+            at.x + l.width / 2 <= group.x - group.width / 2
+          : at.y - l.height / 2 >= a.y + a.height / 2 &&
+            at.y + l.height / 2 <= group.y - group.height / 2;
+      expect(between, dir).toBe(true);
+    }
+  });
 });

@@ -24,7 +24,7 @@ import type {
 } from '../types.ts';
 import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid.ts';
 import { METRICS as M } from './metrics.ts';
-import { clearSpot, hits, route, simplify, toRoute, type Port, type Rect } from './route.ts';
+import { clearSpot, hits, route, simplify, Space, toRoute, type Port, type Rect } from './route.ts';
 
 export { METRICS } from './metrics.ts';
 
@@ -52,6 +52,12 @@ function finite(v: number, what: string): void {
     throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
 }
 
+function sized(s: { width: number; height: number } | undefined, what: string): void {
+  if (!s) return;
+  finite(s.width, `${what} width`);
+  finite(s.height, `${what} height`);
+}
+
 function checkEdges(graph: LayoutGraph, ids: Set<string>): void {
   const edges = new Set<string>();
   for (const e of graph.edges) {
@@ -61,14 +67,27 @@ function checkEdges(graph: LayoutGraph, ids: Set<string>): void {
       throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
     if (!ids.has(e.target))
       throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
-    for (const s of [e.label, e.startLabel, e.endLabel]) {
-      if (!s) continue;
-      finite(s.width, `label width of edge '${e.id}'`);
-      finite(s.height, `label height of edge '${e.id}'`);
+    finite(e.minLen, `minLen of edge '${e.id}'`);
+    sized(e.label, `label of edge '${e.id}'`);
+    sized(e.startLabel, `start label of edge '${e.id}'`);
+    sized(e.endLabel, `end label of edge '${e.id}'`);
+    for (const [end, m] of [
+      ['start', e.startMarker],
+      ['end', e.endMarker],
+    ] as const) {
+      if (!m) continue;
+      finite(m.length, `${end} marker length of edge '${e.id}'`);
+      finite(m.width, `${end} marker width of edge '${e.id}'`);
+    }
+    for (const side of [e.sides?.source, e.sides?.target]) {
+      if (side !== undefined && !Object.hasOwn(SIDE_INDEX, side))
+        throw new RangeError(`layout: edge '${e.id}' has unknown side '${String(side)}'`);
     }
   }
 }
 
+// The same checks as `layered`'s (`layered/index.ts`), plus compass's own fields. One shared
+// check for every engine is a follow-up (GAPS.md, T0 #590).
 function check(graph: LayoutGraph): void {
   const ids = new Set<string>();
   const add = (id: string, what: string): void => {
@@ -79,42 +98,70 @@ function check(graph: LayoutGraph): void {
     add(n.id, 'node');
     finite(n.width, `width of node '${n.id}'`);
     finite(n.height, `height of node '${n.id}'`);
+    if (n.span !== undefined) finite(n.span, `span of node '${n.id}'`);
     if (n.anchorY !== undefined) finite(n.anchorY, `anchorY of node '${n.id}'`);
   }
   for (const g of graph.groups) {
     add(g.id, 'group');
     for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
       finite(v, `padding of group '${g.id}'`);
+    sized(g.title, `title of group '${g.id}'`);
   }
   checkEdges(graph, ids);
+  finite(graph.spacing.node, 'spacing.node');
+  finite(graph.spacing.rank, 'spacing.rank');
+  finite(graph.spacing.edge, 'spacing.edge');
   finite(graph.diagramPadding ?? 0, 'diagramPadding');
+  if (graph.headRoom !== undefined) finite(graph.headRoom, 'headRoom');
+}
+
+/**
+ * Each group's parent group index, -1 for none: a parent that is missing, the group itself, or
+ * on a cycle of parents counts as none, for every group on the cycle.
+ */
+function groupParents(graph: LayoutGraph): Int32Array {
+  const index = new Map<string, number>();
+  graph.groups.forEach((g, i) => index.set(g.id, i));
+  const up = Int32Array.from(graph.groups, (g) => index.get(g.parent ?? '') ?? -1);
+  // 0 unseen, 1 on the current walk up, 2 settled.
+  const state = new Uint8Array(up.length);
+  const walk: number[] = [];
+  for (let i = 0; i < up.length; i++) {
+    walk.length = 0;
+    let v = i;
+    while (v >= 0 && state[v] === 0) {
+      state[v] = 1;
+      walk.push(v);
+      v = up[v]!;
+    }
+    // The walk ran into itself: every group from `v` on is on the cycle.
+    if (v >= 0 && state[v] === 1)
+      for (let k = walk.indexOf(v); k < walk.length; k++) up[walk[k]!] = -1;
+    for (const u of walk) state[u] = 2;
+  }
+  return up;
 }
 
 /**
  * Groups with every parent before its children, otherwise in source order, so a graph that
- * already lists parents first keeps its order. A parent that is missing, not a group, or part of
- * a cycle counts as none.
+ * already lists parents first keeps its order, with each group's parent as an index into that
+ * order (`groupParents`).
  */
 function groupOrder(graph: LayoutGraph): { order: number[]; parentOf: Int32Array } {
-  const index = new Map<string, number>();
-  graph.groups.forEach((g, i) => index.set(g.id, i));
+  const up = groupParents(graph);
   const order: number[] = [];
-  const state = new Uint8Array(graph.groups.length);
-  const up = new Int32Array(graph.groups.length).fill(-1);
-  const visit = (i: number): void => {
-    if (state[i] !== 0) return;
-    state[i] = 1;
-    const p = index.get(graph.groups[i]!.parent ?? '');
-    if (p !== undefined && p !== i) {
-      visit(p);
-      // A parent still being visited is on a cycle with this group.
-      if (state[p] === 2) up[i] = p;
+  const done = new Uint8Array(up.length);
+  const chain: number[] = [];
+  for (let i = 0; i < up.length; i++) {
+    // The unplaced ancestors, innermost first, then placed outermost first.
+    chain.length = 0;
+    for (let v = i; v >= 0 && !done[v]; v = up[v]!) {
+      done[v] = 1;
+      chain.push(v);
     }
-    state[i] = 2;
-    order.push(i);
-  };
-  for (let i = 0; i < graph.groups.length; i++) visit(i);
-  const at = new Int32Array(graph.groups.length);
+    for (let k = chain.length - 1; k >= 0; k--) order.push(chain[k]!);
+  }
+  const at = new Int32Array(up.length);
   order.forEach((g, k) => (at[g] = k));
   const parentOf = Int32Array.from(order, (g) => (up[g]! < 0 ? -1 : at[up[g]!]!));
   return { order, parentOf };
@@ -132,6 +179,12 @@ const pick = (d: number, lo: number, mid: number, hi: number): number => {
   if (d < 0) return lo;
   return d > 0 ? hi : mid;
 };
+
+/** Moves `end` (on a group's side) along that side to be in line with `other`, if it fits. */
+function inLine(end: Port, other: Port): void {
+  if (end.dx !== 0) end.y = Math.min(end.y1, Math.max(end.y0, other.y));
+  else end.x = Math.min(end.x1, Math.max(end.x0, other.x));
+}
 
 class Pixels {
   readonly graph: LayoutGraph;
@@ -179,7 +232,10 @@ class Pixels {
   nodeRects: Rect[] = [];
   // What is drawn, which an edge that has to go around a node can push past the grid.
   bounds: Rect = { x0: 0, y0: 0, x1: 0, y1: 0 };
-  readonly labelRects: Rect[] = [];
+  // Node boxes; labels placed so far and markers; every edge's runs (owned by the edge).
+  nodeSpace = new Space(1);
+  clutter = new Space(1);
+  lines = new Space(1);
   // Vertical runs of the edges, to keep group titles out from under them.
   readonly runs: number[] = [];
 
@@ -267,14 +323,30 @@ class Pixels {
     }
   }
 
-  // An edge label needs the gap its edge crosses to be wide enough to hold it.
+  /** The first and last columns and rows an edge end spans: its node's cell, or its group's. */
+  cells(end: number): [number, number, number, number] {
+    if (end < this.N) {
+      const c = this.nodeCol[end]!;
+      const r = this.nodeRow[end]!;
+      return [c, c, r, r];
+    }
+    const g = end - this.N;
+    return [this.c0[g]!, this.c1[g]!, this.r0[g]!, this.r1[g]!];
+  }
+
+  // An edge label needs the gap its edge crosses to be wide enough to hold it. An end on a group
+  // spans the group's columns and rows, so the gap widened is the one outside its border.
   labelGaps(): void {
     const { N, nodeCol, nodeRow, colW, gapX, gapY } = this;
     for (let k = 0; k < this.E; k++) {
       const label = this.graph.edges[k]!.label;
       const a = this.endA[k]!;
       const b = this.endB[k]!;
-      if (!label || label.width === 0 || a >= N || b >= N) continue;
+      if (!label || label.width === 0) continue;
+      if (a >= N || b >= N) {
+        this.groupLabelGap(a, b, label);
+        continue;
+      }
       if (nodeCol[a] !== nodeCol[b]) {
         const c = Math.min(nodeCol[a]!, nodeCol[b]!);
         gapX[c] = Math.max(gapX[c]!, Math.ceil(label.width) + M.labelGapX);
@@ -289,15 +361,38 @@ class Pixels {
     }
   }
 
-  // Room around each group, kept on the rows and columns at its edges. A group that shares an
-  // edge with a group inside it stands that much further out. Children come after their parents,
-  // so walking backwards settles every group before the one that holds it.
-  insetGroups(): void {
+  /** As `labelGaps`, for an edge with an end on a group: the gap between the two ends' spans. */
+  groupLabelGap(a: number, b: number, label: { width: number; height: number }): void {
+    const [ac0, ac1, ar0, ar1] = this.cells(a);
+    const [bc0, bc1, br0, br1] = this.cells(b);
+    const wide = Math.ceil(label.width) + M.labelGapX;
+    const tall = Math.ceil(label.height) + M.labelGapY;
+    if (ac1 < bc0) this.gapX[ac1] = Math.max(this.gapX[ac1]!, wide);
+    else if (bc1 < ac0) this.gapX[bc1] = Math.max(this.gapX[bc1]!, wide);
+    else if (ar1 < br0) this.gapY[ar1] = Math.max(this.gapY[ar1]!, tall);
+    else if (br1 < ar0) this.gapY[br1] = Math.max(this.gapY[br1]!, tall);
+  }
+
+  /** Each group's first and last columns and rows. */
+  groupCells(): void {
     const { G, grid, colOf, rowOf } = this;
     this.c0 = new Int32Array(G);
     this.c1 = new Int32Array(G);
     this.r0 = new Int32Array(G);
     this.r1 = new Int32Array(G);
+    for (let g = 0; g < G; g++) {
+      this.c0[g] = colOf.get(grid.groupCol[g]!)!;
+      this.c1[g] = colOf.get(grid.groupCol[g]! + grid.groupCols[g]! - 1)!;
+      this.r0[g] = rowOf.get(grid.groupRow[g]!)!;
+      this.r1[g] = rowOf.get(grid.groupRow[g]! + grid.groupRows[g]! - 1)!;
+    }
+  }
+
+  // Room around each group, kept on the rows and columns at its edges. A group that shares an
+  // edge with a group inside it stands that much further out. Children come after their parents,
+  // so walking backwards settles every group before the one that holds it.
+  insetGroups(): void {
+    const { G, colOf, rowOf } = this;
     this.insL = new Float64Array(G);
     this.insR = new Float64Array(G);
     this.insT = new Float64Array(G);
@@ -309,10 +404,6 @@ class Pixels {
     this.rowT = new Float64Array(rowOf.size);
     this.rowB = new Float64Array(rowOf.size);
     for (let g = 0; g < G; g++) {
-      this.c0[g] = colOf.get(grid.groupCol[g]!)!;
-      this.c1[g] = colOf.get(grid.groupCol[g]! + grid.groupCols[g]! - 1)!;
-      this.r0[g] = rowOf.get(grid.groupRow[g]!)!;
-      this.r1[g] = rowOf.get(grid.groupRow[g]! + grid.groupRows[g]! - 1)!;
       this.headW[g] = this.groups[g]!.title?.width ?? 0;
       this.headH[g] = this.groups[g]!.title?.height ?? 0;
     }
@@ -374,6 +465,13 @@ class Pixels {
       const top = this.Y[r]! + this.rowA[r]! - this.anchor[i]!;
       return { x0: cx - n.width / 2, y0: top, x1: cx + n.width / 2, y1: top + n.height };
     });
+    // Buckets about a cell across, so a label or line meets only the few boxes near it.
+    let mean = 0;
+    for (const w of this.colW) mean += w / C;
+    this.nodeSpace = new Space(M.gap + mean);
+    this.clutter = new Space(M.gap + mean);
+    this.lines = new Space(M.gap + mean);
+    for (const r of this.nodeRects) this.nodeSpace.add(r);
   }
 
   grow(r: Rect): void {
@@ -418,6 +516,11 @@ class Pixels {
     const edge = this.graph.edges[k]!;
     const s = this.port(this.endA[k]!, this.sideA[k]!, edge.border?.source);
     const e = this.port(this.endB[k]!, this.sideB[k]!, edge.border?.target);
+    // An end on a group meets the side it faces in line with the other end where it can.
+    if (s.dx === -e.dx && s.dy === -e.dy) {
+      if (this.endA[k]! >= this.N && this.endB[k]! < this.N) inLine(s, e);
+      else if (this.endB[k]! >= this.N && this.endA[k]! < this.N) inLine(e, s);
+    }
     if (s.x === e.x && s.y === e.y && s.dx === e.dx) {
       // An edge from a side back to the same side: part the two ends so it shows as a loop,
       // each staying on the side.
@@ -441,9 +544,37 @@ class Pixels {
       points: toRoute(points),
       ports: { source: SIDES[this.sideA[k]!]!, target: SIDES[this.sideB[k]!]! },
     };
+    this.addLines(k, edge, points);
     const label = this.placeLabel(edge, points, [s, e]);
     if (label) placed.label = label;
     return placed;
+  }
+
+  /** Records an edge's runs (owned by it) and its markers, for end labels to keep clear of. */
+  addLines(k: number, edge: LayoutEdge, points: number[]): void {
+    for (let i = 0; i + 3 < points.length; i += 2) {
+      const [x0, x1] = [points[i]!, points[i + 2]!].sort((p, q) => p - q);
+      const [y0, y1] = [points[i + 1]!, points[i + 3]!].sort((p, q) => p - q);
+      this.lines.add({ x0: x0!, y0: y0!, x1: x1!, y1: y1! }, k);
+    }
+    const n = points.length;
+    const ends = [
+      [edge.startMarker, 0, 2],
+      [edge.endMarker, n - 2, n - 4],
+    ] as const;
+    for (const [marker, at, to] of ends) {
+      if (!marker) continue;
+      const px = points[at]!;
+      const py = points[at + 1]!;
+      const len = Math.hypot(points[to]! - px, points[to + 1]! - py) || 1;
+      const ux = (points[to]! - px) / len;
+      const uy = (points[to + 1]! - py) / len;
+      const cx = px + (ux * marker.length) / 2;
+      const cy = py + (uy * marker.length) / 2;
+      const w = Math.abs(ux) * marker.length + Math.abs(uy) * marker.width;
+      const h = Math.abs(uy) * marker.length + Math.abs(ux) * marker.width;
+      this.clutter.add({ x0: cx - w / 2, y0: cy - h / 2, x1: cx + w / 2, y1: cy + h / 2 });
+    }
   }
 
   /** The longest run, and the longest flat one; records the upright runs for group titles. */
@@ -475,7 +606,7 @@ class Pixels {
   placeLabel(edge: LayoutEdge, points: number[], ends: Port[]): Point | undefined {
     const runs = this.longestRuns(points);
     const label = edge.label;
-    if (!label || (label.width === 0 && label.height === 0)) return undefined;
+    if (!label) return undefined;
     const at = runs.flatLength >= label.width + M.labelPad ? runs.flat : runs.best;
     let x = (points[at]! + points[at + 2]!) / 2;
     let y = (points[at + 1]! + points[at + 3]!) / 2;
@@ -493,16 +624,17 @@ class Pixels {
     }
     // Pele clears only the two end boxes. A route on another graph type can pass a third node,
     // so a label that lands on one takes the first clear spot along the route instead.
-    const spot = clearSpot(points, { x, y }, { w, h }, upright, this.nodeRects);
+    const spot = clearSpot(points, { x, y }, { w, h }, upright, this.nodeSpace);
     const r = { x0: spot.x - w / 2, y0: spot.y - h / 2, x1: spot.x + w / 2, y1: spot.y + h / 2 };
     this.grow(r);
-    this.labelRects.push(r);
+    this.clutter.add(r);
     return spot;
   }
 
   // End labels (D102, a class multiplicity): beside the route's first or last run, outside the
   // box, on the first side of the line where they clear every node and label placed so far.
-  endLabel(edge: LayoutEdge, placed: LayoutModelEdge, atStart: boolean): Point | undefined {
+  endLabel(k: number, placed: LayoutModelEdge, atStart: boolean): Point | undefined {
+    const edge = this.graph.edges[k]!;
     const size = atStart ? edge.startLabel : edge.endLabel;
     if (!size) return undefined;
     const pts = placed.points;
@@ -515,27 +647,31 @@ class Pixels {
     const along = (Math.abs(ux) * size.width + Math.abs(uy) * size.height) / 2 + M.endLabelGap;
     const across = (Math.abs(uy) * size.width + Math.abs(ux) * size.height) / 2 + M.endLabelGap;
     const base = along + (marker?.length ?? 0);
-    const clear = (r: Rect): boolean =>
-      !this.nodeRects.some((n) => hits(n, r)) && !this.labelRects.some((l) => hits(l, r));
-    // Beside the line on one side, then the other, then further out across it, until it is
-    // clear. Every spot lies past the side the end meets, so none is on the end's own box.
+    // Beside the line on one side, then the other, then further out across it. Every spot lies
+    // past the side the end meets, so none is on the end's own box. The first spot clear of every
+    // node, label, marker and other edge's runs; else the first clear of all but the runs.
     const tries = Math.min(END_LABEL_TRIES, 2 * (this.N + this.E + 1));
-    let r: Rect = { x0: 0, y0: 0, x1: 0, y1: 0 };
-    for (let step = 0; step < tries; step++) {
+    const spot = (step: number): Rect => {
       const sign = step % 2 === 0 ? 1 : -1;
       const off = across + (marker?.width ?? 0) / 2 + Math.floor(step / 2) * (2 * across);
       const cx = p.x + ux * base - uy * off * sign;
       const cy = p.y + uy * base + ux * off * sign;
-      r = {
-        x0: cx - size.width / 2,
-        y0: cy - size.height / 2,
-        x1: cx + size.width / 2,
-        y1: cy + size.height / 2,
-      };
-      if (clear(r)) break;
+      const { width: w, height: h } = size;
+      return { x0: cx - w / 2, y0: cy - h / 2, x1: cx + w / 2, y1: cy + h / 2 };
+    };
+    const free = (r: Rect): boolean => !this.nodeSpace.hit(r) && !this.clutter.hit(r);
+    let r: Rect | undefined;
+    for (let step = 0; step < tries && !r; step++) {
+      const at = spot(step);
+      if (free(at) && !this.lines.hit(at, k)) r = at;
     }
+    for (let step = 0; step < tries && !r; step++) {
+      const at = spot(step);
+      if (free(at)) r = at;
+    }
+    r ??= spot(tries - 1);
     this.grow(r);
-    this.labelRects.push(r);
+    this.clutter.add(r);
     return { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 };
   }
 
@@ -566,10 +702,10 @@ class Pixels {
   model(): LayoutModel {
     const edges = new Map<string, LayoutModelEdge>();
     for (let k = 0; k < this.E; k++) edges.set(this.graph.edges[k]!.id, this.routeEdge(k));
-    for (const edge of this.graph.edges) {
-      const placed = edges.get(edge.id)!;
-      const start = this.endLabel(edge, placed, true);
-      const end = this.endLabel(edge, placed, false);
+    for (let k = 0; k < this.E; k++) {
+      const placed = edges.get(this.graph.edges[k]!.id)!;
+      const start = this.endLabel(k, placed, true);
+      const end = this.endLabel(k, placed, false);
       if (start) placed.startLabel = start;
       if (end) placed.endLabel = end;
     }
@@ -613,6 +749,7 @@ export function layoutCompass(graph: LayoutGraph): LayoutModel {
   check(graph);
   const pixels = new Pixels(graph);
   pixels.sizeCells();
+  pixels.groupCells();
   pixels.labelGaps();
   pixels.insetGroups();
   pixels.position();
