@@ -19,7 +19,22 @@
         }
       ]
     ],
-    "spanRule45": [
+    "spanRule39": [
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\})[\\s\\S])+",
+        {
+          "token": "keyword"
+        }
+      ]
+    ],
+    "spanRule46": [
       [
         "\\*\\/",
         {
@@ -271,9 +286,16 @@
         }
       ],
       [
-        "[\\t ]*accDescr(?:[\\t ]*:([^\\n\\r]*?(?=%%)|[^\\n\\r]*)|\\s*\\{([^}]*)\\})",
+        "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
         {
           "token": "keyword"
+        }
+      ],
+      [
+        "[\\t ]*accDescr\\s*\\{",
+        {
+          "token": "keyword",
+          "next": "@spanRule39"
         }
       ],
       [
@@ -316,7 +338,7 @@
         "\\/\\*",
         {
           "token": "comment",
-          "next": "@spanRule45"
+          "next": "@spanRule46"
         }
       ],
       [

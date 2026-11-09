@@ -30,6 +30,7 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
 } from '@mermaid-js/core/parser-kit';
@@ -92,6 +93,13 @@ const AFTER_STATEMENT = [...STARTS, Kind.EOF];
 /** What may follow a `gwt`'s `given` steps, and its `when` steps (R-ERR-2). */
 const AFTER_GIVEN = [...KIND_LIST, T.When, T.Then];
 const AFTER_WHEN = [...KIND_LIST, T.Then];
+/** Probe lists (constant, so a plain parse allocates none). */
+const HEADER = [T.Header];
+const DOT = [T.Dot];
+const ARROW = [T.Arrow];
+const OPEN_REF = [T.OpenRef];
+const BACKTICK = [T.Backtick];
+const INLINE_DATA = [T.Backtick, T.DataInline];
 
 /** Human names for what the parser expects (R-ERR-2); never a token or rule name (R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -113,6 +121,64 @@ const EXPECTED = new ExpectedTable([
   ['`then`', [T.Then]],
   ['the end of the text', [Kind.EOF]],
 ]);
+
+/**
+ * Kinds a probe's cursor follows rather than extends (R-LANG-7): the punctuation, and closed
+ * data, which its closer ends.
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.Arrow,
+  T.OpenRef,
+  T.CloseRef,
+  T.Backtick,
+  T.Dot,
+  T.DataInline,
+  T.DataBlock
+);
+
+/** Each text statement's keyword, for the probe's mode. */
+const TEXT_WORD: Readonly<Partial<Record<number, string>>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
+
+/**
+ * Where the probe's offset `o` is (R-LANG-7). The lexer has no modes (Langium's has none), so
+ * the mode names what the offset is in: `comment` inside a `/* *\/` or `//` comment and `yaml`
+ * inside a `---` block in the body (v12 hid both: not code); `data` inside inline data or a data
+ * block; `title`, `accTitle` or `accDescr` past the keyword of that statement;
+ * else `INITIAL` (code).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    // At its end, a `//` comment holds the offset (its line break is not in it); a closed
+    // `/* *\/` or data token does not.
+    if (kind === T.LineComment) return 'comment';
+    if (kind === T.BlockComment || kind === T.Yaml) {
+      if (o < end) return kind === T.Yaml ? 'yaml' : 'comment';
+      continue;
+    }
+    if (kind === T.DataInline || kind === T.DataBlock) {
+      if (o < end) return 'data';
+      continue;
+    }
+    const word = TEXT_WORD[kind];
+    if (word === undefined) continue;
+    let k = start;
+    while (src.charAt(k) === ' ' || src.charAt(k) === '\t') k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
 
 /** v12's text-statement words, which v12 lexes as a name at a line start. */
 const TEXT_WORDS = ['title', 'accTitle', 'accDescr'];
@@ -165,6 +231,7 @@ class EventModelParser {
   private readonly t: TokenView;
   private i = 0;
   private readonly st = new ParseState();
+  private readonly probe: Probe | undefined;
   private readonly children: EventModelStatementNode[] = [];
   private readonly frames: ParsedFrame[] = [];
   private readonly stepKinds = new Map<EventModelGwtStepNode, EventModelKind>();
@@ -190,12 +257,22 @@ class EventModelParser {
     this.view = eventModelingView(src, pre).view;
     this.full = lex(src, pre.bodyStart, this.view);
     this.t = significantTokens(this.full, EVENTMODELING_TRIVIA);
+    if (opts.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      const mode = probeMode(src, this.full, probe.offset);
+      if (mode === 'comment' || mode === 'yaml') probe.outside(mode);
+      // Ignored when the offset is outside code.
+      else probe.lexed(probe.offset, probe.offset, mode);
+    }
   }
 
   parse(): EventModelParseResult {
     const { st, src } = this;
     this.statement(() => this.header());
     this.document();
+    this.foldComments();
     const parsed: Parsed = {
       children: this.children,
       frames: this.frames,
@@ -212,7 +289,24 @@ class EventModelParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.full, this.opts);
+    return st.result(model, ast, this.full, this.opts, this.probe);
+  }
+
+  /**
+   * A statement span `comment` over each `/* *\/` comment that runs over lines, so it folds
+   * (spec #527, T6), kept in source order with the statements.
+   */
+  private foldComments(): void {
+    const { full, src, st } = this;
+    let added = false;
+    for (let j = 0; j < full.length; j++) {
+      if (full.kind[j] !== T.BlockComment) continue;
+      const range = { start: full.start[j] ?? 0, end: full.end[j] ?? 0 };
+      if (!/[\n\r\u2028\u2029]/.test(src.slice(range.start, range.end))) continue;
+      st.statements.push({ kind: 'comment', range });
+      added = true;
+    }
+    if (added) st.statements.sort((a, b) => a.range.start - b.range.start);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -231,8 +325,19 @@ class EventModelParser {
     return displayText(this.src, start, end, this.view);
   }
 
+  /**
+   * Probe hook: the parser tests the token at `j` for `kinds` (a constant list), or would accept
+   * them there. Records them when it is the probed token; a plain parse does nothing.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p === undefined) return;
+    if (p.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
+  }
+
   /** Consume a token of `kind` and return its text and range, or fail. */
   private expect(kind: number, hint?: string): EventModelText {
+    if (this.probe !== undefined) this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.text();
   }
@@ -363,6 +468,7 @@ class EventModelParser {
       rule();
     } catch (error) {
       if (error !== STOP) throw error;
+      this.probe?.freeze();
       if (this.pending !== undefined) this.failedIds.add(this.pending);
       this.pending = undefined;
       // Resume at the failing token when it starts a statement (`->> tf 02 cmd B`), else after
@@ -390,6 +496,7 @@ class EventModelParser {
 
   /** `'eventmodeling'` */
   private header(): void {
+    this.tested(HEADER);
     if (this.kind() !== T.Header) {
       const text = this.kind() === Kind.EOF ? '' : this.displayed();
       const hint = text.toLowerCase().startsWith('eventmodeling')
@@ -405,6 +512,7 @@ class EventModelParser {
   /** `(AccDescr | AccTitle | Title | Entity | Frame | Data | Note | Gwt)* EOF` */
   private document(): void {
     for (;;) {
+      this.tested(AFTER_STATEMENT);
       const k = this.kind();
       if (k === Kind.EOF) return;
       this.statement(() => this.dispatch(k));
@@ -429,6 +537,7 @@ class EventModelParser {
 
   /** `Kind`: one of the kind keywords; its short form. */
   private kindOf(): { text: EventModelText; kind: EventModelKind } {
+    this.tested(KIND_LIST);
     const kind = KINDS[this.kind()];
     if (kind === undefined) this.fail(KIND_LIST);
     return { text: this.text(), kind };
@@ -438,7 +547,9 @@ class EventModelParser {
   private qualifiedName(): EventModelText {
     const first = this.expect(T.Id);
     let value = first.value;
-    while (this.kind() === T.Dot) {
+    for (;;) {
+      this.tested(DOT);
+      if (this.kind() !== T.Dot) break;
       this.i++;
       value += `.${this.expect(T.Id, 'a name goes after each `.`').value}`;
     }
@@ -448,8 +559,10 @@ class EventModelParser {
   /** An optional data type between backticks, then a data token of `kind`. */
   private data(kind: number): EventModelDataNode {
     let type: EventModelText | undefined;
+    this.tested(BACKTICK);
     if (this.kind() === T.Backtick) {
       this.i++;
+      this.tested(DATA_TYPES);
       if (DATA_TYPE_SET[this.kind()] !== 1) this.fail(DATA_TYPES);
       type = this.text();
       this.expect(T.Backtick);
@@ -485,7 +598,9 @@ class EventModelParser {
       name,
       children: [],
     };
-    while (this.kind() === T.Arrow) {
+    for (;;) {
+      this.tested(ARROW);
+      if (this.kind() !== T.Arrow) break;
       const arrow = this.range(this.i++).start;
       const source = this.expect(T.FrameId);
       node.children.push({
@@ -495,11 +610,13 @@ class EventModelParser {
         frame: source,
       });
     }
+    this.tested(OPEN_REF);
     if (this.kind() === T.OpenRef) {
       this.i++;
       node.dataRef = this.expect(T.Id);
       this.expect(T.CloseRef);
     }
+    this.tested(INLINE_DATA);
     if (this.kind() === T.Backtick || this.kind() === T.DataInline)
       node.data = this.data(T.DataInline);
     node.range.end = this.end();
@@ -554,10 +671,12 @@ class EventModelParser {
     this.expect(T.Given);
     const given = this.steps();
     let when: EventModelGwtStepNode[] = [];
+    this.tested(AFTER_GIVEN);
     if (this.kind() === T.When) {
       this.i++;
       when = this.steps();
     } else if (this.kind() !== T.Then) this.fail(AFTER_GIVEN);
+    this.tested(AFTER_WHEN);
     if (this.kind() !== T.Then) this.fail(AFTER_WHEN);
     this.i++;
     const then = this.steps();
@@ -574,6 +693,7 @@ class EventModelParser {
       const step = { kind: text, name: this.expect(T.Id) };
       this.stepKinds.set(step, kind);
       out.push(step);
+      this.tested(KIND_LIST);
     } while (KINDS[this.kind()] !== undefined);
     return out;
   }

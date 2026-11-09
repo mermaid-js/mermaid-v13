@@ -1,0 +1,13 @@
+eventmodeling
+tf 01 ui Screen
+tf 02 cmd Add ->> |01 [[|Payload]]
+tf 03 evt Added ->> 0|2 ->> |09
+entity |Item
+data Payload {
+  a: 1
+}
+note |01 {
+  n
+}
+gwt 03 given evt |Item then evt Ite|m
+gwt 0|3 given evt Item then evt Unknow|n

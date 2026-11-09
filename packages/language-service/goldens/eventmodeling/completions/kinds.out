@@ -1,0 +1,15 @@
+@ 2:7  tf 01 |
+  ui keyword (UI/Automation lane) 2:7-2:7 "" -> "ui "
+  pcr keyword (UI/Automation lane) 2:7-2:7 "" -> "pcr "
+  processor keyword (UI/Automation lane) 2:7-2:7 "" -> "processor "
+  cmd keyword (Command/Read Model lane) 2:7-2:7 "" -> "cmd "
+  command keyword (Command/Read Model lane) 2:7-2:7 "" -> "command "
+  rmo keyword (Command/Read Model lane) 2:7-2:7 "" -> "rmo "
+  readmodel keyword (Command/Read Model lane) 2:7-2:7 "" -> "readmodel "
+  evt keyword (Events lane) 2:7-2:7 "" -> "evt "
+  event keyword (Events lane) 2:7-2:7 "" -> "event "
+@ 3:8  tf 02 c|
+  cmd keyword (Command/Read Model lane) 3:7-3:8 "c" -> "cmd "
+  command keyword (Command/Read Model lane) 3:7-3:8 "c" -> "command "
+@ 4:11  tf 03 cmd |
+  none

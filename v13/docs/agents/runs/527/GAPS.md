@@ -73,3 +73,10 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - Review (orchestrator, `/code-review`), fixed: the AST round-trip checks both directions, with a not-drawn set computed from the model and `eventModelStructure` (R-PARSE-8); lane labels start-anchored at v12's (30, lane y + 30); `useMaxWidth` checked and warned as `padding` (D226); a `labels` hook that returns no strings (data is plain text, D523).
 - Accepted: `openRoot`/`textElement` copied as in ~10 renderers (a core helper would be a core change); the plugin and renderer on the main entry (treemap's shape).
+
+## T6 (#609)
+
+- **Choices (for the maintainer):** the shared `rename-round-trip.spec.ts` renames a symbol whose facet refuses `renamedZq7` to the first of `FRESH_OTHERWISE` (`987`) it accepts (D528 keeps frame ids at 1–3 digits); completion also offers `->>`, `given`/`when`/`then` and entity names in `gwt` steps; the grammar's `kind`, `Frame` and start-rule docs reworded so keyword hover names the lanes and `rf`; `ACC_DESCR` written as its line and block rules (equivalent) so line-based highlighters span the block.
+- **Follow-up (gen-grammar, shared):** TextMate and Monarch colour a data block's lines as code: its closer is a line break then `}`, which a line-based span end cannot match (listed in `eventmodeling-agreement.spec.ts`; Lezer agrees with the lexer).
+- **For #611 (T5):** manifest `language: "./dist/language.js"`; drop the eager rows (`language-service/src/testing/unlisted-facets.ts`, `conformance/src/eventmodeling/service-symbols.spec.ts`); `vitest run packages/language-service-codemirror -u` for the sample's spans; the bench language-bundle spec then checks `languageBundle:`.
+- `#640` (`origin/fix/pre-manifest-language`) merged into `feature/609_em_language` (its `tools/workspace/sync.spec.ts` taken, `pnpm regen` run): language-service counts the pre-manifest `./language` export.

@@ -1,0 +1,17 @@
+eventmodeling title Cart accTitle: Cart model
+%% the shopping cart
+tf 01 ui CartScreen
+tf 02 cmd Cart.AddItem ->> 01 `json` { "productId": 7 }
+tf 03 evt Cart.ItemAdded [[ItemAddedData]]
+rf 04 rmo CartItems ->> 03
+/* the data
+   of an added item */
+data ItemAddedData `json` {
+  "productId": 7,
+  "quantity": 1
+}
+entity Cart.Item
+note 02 {
+  Adds one item.
+}
+gwt 03 given evt ItemAdded when cmd AddItem then evt ItemAdded

@@ -105,8 +105,11 @@ DATA_INLINE               /\{(.*)\}|"(.*)"|'(.*)'/          :string ;
 own. *)
 DATA_BLOCK                /\{[\t ]*\r?\n(?:[\S\s]*?\r?\n)?\}(?:\r?\n|(?!\S))/ :string ;
 (** `accDescr: …` to `%%` or the line end, or `accDescr { … }`: the accessible description,
-after another token on its line. *)
-ACC_DESCR                 /[\t ]*accDescr(?:[\t ]*:([^\n\r]*?(?=%%)|[^\n\r]*)|\s*\{([^}]*)\})/ :keyword ;
+after another token on its line. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one
+span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
 (** `accTitle: …` to `%%` or the line end: the accessible title, after another token on its
 line. *)
 ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
@@ -134,20 +137,24 @@ DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
 
 @grammar
 
-(** An event model is `eventmodeling`, then statements. The `YAML`, `DIRECTIVE` and comment
+(** An event model is `eventmodeling`, then statements: frames, `entity`, `data`, `note`,
+`gwt`, `title`, `accTitle` and `accDescr`. The `YAML`, `DIRECTIVE` and comment
 tokens of the lexer are skipped before parsing. *)
 eventmodeling = Header { statement } EOF ;
 Header @Header = HEADER ;
 statement = Frame | Entity | Data | Note | Gwt | Title | AccTitle | AccDescr ;
 
-(** A frame's kind, which picks its lane. *)
+(** A frame's kind, which picks its lane: `ui` and `pcr` (`processor`) the UI/Automation lane,
+`cmd` (`command`) and `rmo` (`readmodel`) the Command/Read Model lane, `evt` (`event`) the
+Events lane. *)
 kind = UI | PCR | PROCESSOR | CMD | COMMAND | RMO | READMODEL | EVT | EVENT ;
 (** `` `json` `` (…): how the data is written; not used in drawing. *)
 dataType = BACKTICK ( JSON | JSOBJ | FIGMA | SALT | URI | MD | HTML | TEXT ) BACKTICK ;
 (** `Name` or `Namespace.Name`: a two-part name puts the frame in its namespace's lane. *)
 qualifiedName = ID { DOT ID } ;
 
-(** `tf 01 evt Name`, then its sources (`->> 01`), a `[[data]]` reference and inline data, in
+(** `tf 01 evt Name` (or `timeframe`; `rf` or `resetframe` for a reset frame, to which no
+relation is inferred), then its sources (`->> 01`), a `[[data]]` reference and inline data, in
 that order, each optional. *)
 Frame @Frame = ( TF | TIMEFRAME | RF | RESETFRAME ) FRAME_ID kind qualifiedName { Source }
                [ OPEN_REF ID CLOSE_REF ] [ [ dataType ] DATA_INLINE ] ;

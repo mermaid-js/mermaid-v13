@@ -27,7 +27,8 @@ title My model`); at the start of a line they are names, which no statement take
 
 EBNF: `[ x ]` is optional, `{ x }` repeats zero or more times, `x+` one or more times, `|` separates alternatives. Upper-case names and `subgraph`, `end`, `acc_…`, `direction_…` are tokens (see below). A rule marked `@Type` builds an AST node of that type.
 
-An event model is `eventmodeling`, then statements. The `YAML`, `DIRECTIVE` and comment
+An event model is `eventmodeling`, then statements: frames, `entity`, `data`, `note`,
+`gwt`, `title`, `accTitle` and `accDescr`. The `YAML`, `DIRECTIVE` and comment
 tokens of the lexer are skipped before parsing.
 
 ```ebnf
@@ -49,7 +50,9 @@ statement = Frame
           | AccDescr ;
 ```
 
-A frame's kind, which picks its lane.
+A frame's kind, which picks its lane: `ui` and `pcr` (`processor`) the UI/Automation lane,
+`cmd` (`command`) and `rmo` (`readmodel`) the Command/Read Model lane, `evt` (`event`) the
+Events lane.
 
 ```ebnf
 kind = UI
@@ -75,7 +78,8 @@ dataType = BACKTICK ( JSON | JSOBJ | FIGMA | SALT | URI | MD | HTML | TEXT ) BAC
 qualifiedName = ID { DOT ID } ;
 ```
 
-`tf 01 evt Name`, then its sources (`->> 01`), a `[[data]]` reference and inline data, in
+`tf 01 evt Name` (or `timeframe`; `rf` or `resetframe` for a reset frame, to which no
+relation is inferred), then its sources (`->> 01`), a `[[data]]` reference and inline data, in
 that order, each optional.
 
 ```ebnf
@@ -172,7 +176,8 @@ Modes: `INITIAL`.
 | INITIAL | FRAME_ID | `\d{1,3}` |  | A frame id: one to three digits (`0`, `00` and `01` are three ids). |
 | INITIAL | DATA_INLINE | `\{(.*)\}\|"(.*)"\|'(.*)'` |  | Inline data: `{` to the last `}` on its line, or `"…"` or `'…'` to the last quote of its kind on the line. |
 | INITIAL | DATA_BLOCK | `\{[\t ]*\r?\n(?:[\S\s]*?\r?\n)?\}(?:\r?\n\|(?!\S))` |  | A data block: `{` at the end of its line, the lines of data, then `}` on a line of its own. |
-| INITIAL | ACC_DESCR | `[\t ]*accDescr(?:[\t ]*:([^\n\r]*?(?=%%)\|[^\n\r]*)\|\s*\{([^}]*)\})` |  | `accDescr: …` to `%%` or the line end, or `accDescr { … }`: the accessible description, after another token on its line. |
+| INITIAL | ACC_DESCR | `[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)\|[^\n\r]*)` |  | `accDescr: …` to `%%` or the line end, or `accDescr { … }`: the accessible description, after another token on its line. mermaid@12's one rule, as two tried in order; the block's `[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. |
+| INITIAL | ACC_DESCR | `[\t ]*accDescr\s*\{[\s\S]*?\}` |  |  |
 | INITIAL | ACC_TITLE | `[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)\|[^\n\r]*)` |  | `accTitle: …` to `%%` or the line end: the accessible title, after another token on its line. |
 | INITIAL | TITLE | `[\t ]*title(?:[\t ][^\n\r]*?(?=%%)\|[\t ][^\n\r]*\|)` |  | `title …` to `%%` or the line end: the title (not drawn), after another token on its line. |
 | INITIAL | — | `\s+` |  |  |

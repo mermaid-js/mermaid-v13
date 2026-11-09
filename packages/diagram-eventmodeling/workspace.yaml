@@ -8,3 +8,16 @@ grammars:
     kinds:
       module: parser/tokens.ts
       object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - v12-specs/
+    - plugin.ts
+    - index.ts
+    - config.ts
+    - testing.ts
+    - test-context.ts

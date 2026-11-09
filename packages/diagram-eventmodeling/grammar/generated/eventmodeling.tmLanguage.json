@@ -173,38 +173,43 @@
       "name": "string.quoted.mermaid-eventmodeling"
     },
     "rule-38": {
-      "match": "[\\t ]*accDescr(?:[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)|\\s*\\{(?:[^}]*)\\})",
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
       "name": "keyword.control.mermaid-eventmodeling"
     },
     "rule-39": {
-      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
       "name": "keyword.control.mermaid-eventmodeling"
     },
     "rule-40": {
-      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
       "name": "keyword.control.mermaid-eventmodeling"
     },
     "rule-41": {
-      "match": "\\s+"
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-eventmodeling"
     },
     "rule-42": {
+      "match": "\\s+"
+    },
+    "rule-43": {
       "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
       "name": "meta.embedded.mermaid-eventmodeling"
     },
-    "rule-43": {
+    "rule-44": {
       "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
       "name": "meta.embedded.mermaid-eventmodeling"
     },
-    "rule-44": {
+    "rule-45": {
       "match": "[\\t ]*%%[^\\n\\r]*",
       "name": "comment.line.mermaid-eventmodeling"
     },
-    "rule-45": {
+    "rule-46": {
       "begin": "\\/\\*",
       "end": "\\*\\/",
       "name": "comment.line.mermaid-eventmodeling"
     },
-    "rule-46": {
+    "rule-47": {
       "match": "\\/\\/[^\\n\\r]*",
       "name": "comment.line.mermaid-eventmodeling"
     },
@@ -353,6 +358,9 @@
         },
         {
           "include": "#rule-46"
+        },
+        {
+          "include": "#rule-47"
         }
       ]
     },

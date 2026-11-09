@@ -13,6 +13,12 @@ import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
 const FRESH = 'renamedZq7';
+/**
+ * Fresh names for a symbol kind whose facet refuses {@link FRESH}, tried in order: the first the
+ * facet's `isValidId` accepts for the kind is used (event modeling's frame ids are one to three
+ * digits, D528). A file whose text holds it skips that symbol, as one holding `FRESH` is skipped.
+ */
+const FRESH_OTHERWISE = ['987'];
 
 /**
  * Renames that change the model, found by this test and left to their owners (GAPS.md):
@@ -161,18 +167,25 @@ function modulo(value: unknown, from: string, to: string): unknown {
 }
 
 /** One position per distinct symbol: the first occurrence the service can rename. */
-function symbolPositions(doc: DocumentSnapshot): number[] {
+function symbolPositions(doc: DocumentSnapshot): { at: number; kind: string }[] {
   const seen = new Set<string>();
-  const out: number[] = [];
+  const out: { at: number; kind: string }[] = [];
   for (const s of contextOf(doc).result?.symbols ?? []) {
     const prepared = doc.prepareRename(s.range.start);
     if ('refused' in prepared) continue;
     const key = JSON.stringify(doc.references(s.range.start));
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(s.range.start);
+    out.push({ at: s.range.start, kind: s.kind });
   }
   return out;
+}
+
+/** The fresh name for a symbol of `kind`: {@link FRESH}, or the first of the others accepted. */
+function freshFor(doc: DocumentSnapshot, kind: string): string {
+  const facet = doc.facet!;
+  if (facet.isValidId(FRESH, kind) === undefined) return FRESH;
+  return FRESH_OTHERWISE.find((n) => facet.isValidId(n, kind) === undefined) ?? FRESH;
 }
 
 describe('rename, re-parse, same model modulo the name', () => {
@@ -188,10 +201,12 @@ describe('rename, re-parse, same model modulo the name', () => {
       if (!doc.facet) continue;
       const order = NAME_ORDERED[doc.facet.id] ?? ((m: unknown) => m);
       const before = order(modulo(contextOf(doc).result?.model, FRESH, FRESH));
-      for (const at of symbolPositions(doc)) {
+      for (const { at, kind } of symbolPositions(doc)) {
+        const fresh = freshFor(doc, kind);
+        if (fresh !== FRESH && text.includes(fresh)) continue;
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
-        const result = doc.rename(at, FRESH);
+        const result = doc.rename(at, fresh);
         const reason = FIXED_NAMES.get(doc.facet.id);
         if (reason !== undefined) {
           if (!('refused' in result)) problems.push(`${where}: a fixed name was renamed`);
@@ -205,7 +220,7 @@ describe('rename, re-parse, same model modulo the name', () => {
         }
         renamed++;
         const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
-        const after = order(modulo(contextOf(next).result?.model, FRESH, name));
+        const after = order(modulo(contextOf(next).result?.model, fresh, name));
         if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
         const codes = (d: DocumentSnapshot) => d.diagnostics().map((x) => x.code);
         if (JSON.stringify(codes(next)) !== JSON.stringify(codes(doc)))
