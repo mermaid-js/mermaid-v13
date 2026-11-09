@@ -26,6 +26,6 @@
 
 ## Machine-wide locks (three ports share AI-Max)
 
-- Every full `pnpm check` and every `pnpm e2e`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 pnpm check`.
+- Every full `pnpm check` and every `pnpm e2e`: `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`. `PARSE_FIXTURE_PATH` can be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and `pnpm check` fails. Ticket agents never push; the coordinator pushes the same way with `GIT_SSH_COMMAND="ssh -o ServerAliveInterval=20 -o ServerAliveCountMax=30"`.
 - A timing test that fails under load is not a regression: rerun it under the lock. Known flakes: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout under load.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.

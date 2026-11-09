@@ -4,10 +4,10 @@ Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR:
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate and corpus | #538 | #285 (merged) | open |
+| T1 lexer parity gate and corpus | #538 | #285 (merged) | merged (ff d0ab7516e; package entry 4,328 B gz, no core change) |
 | T2 grammar, parser, model, AST | #539 | #538 | open |
 | T3 layout (grid and relation router) | #540 | #539 | open |
-| T4 SVG renderer | #541 | #540; block's T0 (#521) merged into `mermaid-v13` | open |
+| T4 SVG renderer | #541 | #540; block's T0 (#521, PR #589) merged into `mermaid-v13` | open |
 | T5 integration | #542 | #541, #543 | open |
 | T6 language facet | #543 | #539 | open |
 | T7 ascii (Should) | #545 | #542 | open |
@@ -27,6 +27,7 @@ Wave 3 runs block #521, c4 #522 and agentflow #523 on AI-Max. Block's T0 (shape-
 | After | Core gz | Δ |
 | --- | --- | --- |
 | base (521fb76ee) | 93,891 B (`measureCoreSize`, static) | — (4,413 B spare) |
+| #538 T1 | 93,891 B | 0 (no core change) |
 
 ## Finish rule
 
