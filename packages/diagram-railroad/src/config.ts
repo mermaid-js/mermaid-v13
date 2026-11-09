@@ -11,7 +11,7 @@
  * `RAILROAD_CONFIG_INVALID` (the renderer raises it). T5 (#615) moves the keys to `honoured` and
  * generates the section defaults.
  */
-import type { Warning } from '@mermaid-js/core';
+import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
 
@@ -68,7 +68,8 @@ export function railroadLayoutConfig(
 
 /** The font the `railroad` section sets, key by key; what it leaves unset is the theme's. */
 export interface RailroadFontOverride {
-  readonly family?: string;
+  /** Checked by core's style check, as the renderer writes it. */
+  readonly family?: SafeValue;
   readonly size?: number;
 }
 
@@ -80,7 +81,8 @@ export function checkFontFamily(value: unknown): SafeValue | undefined {
 
 /**
  * `fontFamily` and `fontSize` from the resolved `railroad` section, where usable: a family that
- * passes core's style check (the renderer writes it), a size above 0.
+ * passes core's style check (the renderer writes it), a size of 0 or more (v12's
+ * `sanitizeNumberValue` for the config's size; only the theme's size had to be above 0).
  */
 export function railroadFontOverride(
   section: Readonly<Record<string, unknown>> | undefined
@@ -90,7 +92,7 @@ export function railroadFontOverride(
   const size = configNumber(given.fontSize);
   return {
     ...(family === undefined ? {} : { family }),
-    ...(Number.isFinite(size) && size > 0 ? { size } : {}),
+    ...(Number.isFinite(size) && size >= 0 ? { size } : {}),
   };
 }
 
@@ -115,50 +117,71 @@ export const RAILROAD_COLOUR_KEYS = {
 
 export type RailroadColourKey = keyof typeof RAILROAD_COLOUR_KEYS;
 
-/** The colours the `railroad` section sets that pass core's colour check, key by key. */
-export function railroadColourOverrides(
-  section: Readonly<Record<string, unknown>> | undefined
-): Partial<Record<RailroadColourKey, SafeColor>> {
-  const given = section ?? {};
-  const out: Partial<Record<RailroadColourKey, SafeColor>> = {};
-  for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
-    const value = given[key];
-    const colour = typeof value === 'string' ? checkColor(value.trim()) : undefined;
-    if (colour) out[key] = colour;
-  }
-  return out;
-}
-
 /** A `railroad` colour or font the renderer cannot use (D515). */
 export const RAILROAD_CONFIG_INVALID = 'RAILROAD_CONFIG_INVALID';
 
+/** The `railroad` section, checked once (D515), for the layout and the renderer. */
+export interface RailroadConfig {
+  readonly lengths: RailroadLayoutConfig;
+  /** The font it sets, key by key; what it leaves unset (or unusable) is the theme's. */
+  readonly font: RailroadFontOverride;
+  /** The colours it sets that pass core's colour check: each beats its theme variable. */
+  readonly colours: Readonly<Partial<Record<RailroadColourKey, SafeColor>>>;
+  readonly useMaxWidth: boolean;
+  /** Each colour or font key it sets that is not usable, as `railroad.<key> <value>`. */
+  readonly dropped: readonly string[];
+}
+
 const shown = (v: unknown): string => (typeof v === 'string' ? JSON.stringify(v) : String(v));
 
-/**
- * One `RAILROAD_CONFIG_INVALID` naming every colour or font key of the `railroad` section that
- * is set but unusable (D515), or none. Each such key is drawn with the theme's value, where v12
- * fell back silently. A length that is not a number of 0 or more falls back silently, as in v12.
- */
-export function railroadConfigWarning(
+/** The resolved `railroad` config section of a render. */
+export function railroadSection(
+  ctx: Pick<RenderContext, 'config'>
+): Readonly<Record<string, unknown>> {
+  return ((ctx.config as { railroad?: unknown }).railroad ?? {}) as Readonly<
+    Record<string, unknown>
+  >;
+}
+
+/** Checks the `railroad` section once: what the layout and the renderer read from it. */
+export function railroadConfig(
   section: Readonly<Record<string, unknown>> | undefined
-): Warning | undefined {
+): RailroadConfig {
   const given = section ?? {};
   const dropped: string[] = [];
-  const colours = railroadColourOverrides(given);
+  const colours: Partial<Record<RailroadColourKey, SafeColor>> = {};
   for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
-    if (given[key] !== undefined && colours[key] === undefined)
-      dropped.push(`railroad.${key} ${shown(given[key])}`);
+    const value = given[key];
+    if (value === undefined) continue;
+    const colour = typeof value === 'string' ? checkColor(value.trim()) : undefined;
+    if (colour) colours[key] = colour;
+    else dropped.push(`railroad.${key} ${shown(value)}`);
   }
   const font = railroadFontOverride(given);
   if (given.fontFamily !== undefined && font.family === undefined)
     dropped.push(`railroad.fontFamily ${shown(given.fontFamily)}`);
   if (given.fontSize !== undefined && font.size === undefined)
     dropped.push(`railroad.fontSize ${shown(given.fontSize)}`);
-  if (dropped.length === 0) return undefined;
+  return {
+    lengths: railroadLayoutConfig(given),
+    font,
+    colours,
+    useMaxWidth: given.useMaxWidth !== false,
+    dropped,
+  };
+}
+
+/**
+ * One `RAILROAD_CONFIG_INVALID` naming every colour or font key of the section that is set but
+ * unusable (D515), or none. Each such key is drawn with the theme's value, where v12 fell back
+ * silently. A length that is not a number of 0 or more falls back silently, as in v12.
+ */
+export function railroadConfigWarning(config: RailroadConfig): Warning | undefined {
+  if (config.dropped.length === 0) return undefined;
   return {
     code: RAILROAD_CONFIG_INVALID,
-    message: `${dropped.join(', ')}: not usable; using the theme's value`,
-    path: dropped[0]!.split(' ')[0]!,
+    message: `${config.dropped.join(', ')}: not usable; using the theme's value`,
+    path: config.dropped[0]!.split(' ')[0]!,
   };
 }
 

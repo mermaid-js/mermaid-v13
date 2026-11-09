@@ -13,7 +13,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
-| `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core, railroad |
+| `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad |
@@ -29,7 +29,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, railroad |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
-| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
+| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, railroad |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, railroad |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
@@ -354,7 +354,7 @@ flags and opacities, which are read literally.
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `railroadTerminalFill` | `railroad.terminalFill` | color | `#cccccc` | `#cccccc` | `#38383e` | `#38383e` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f4ddff` | `#cccccc` | `#584343` |
+| `railroadTerminalFill` | `railroad.terminalFill` | color | `#ffffde` | `#ffffde` | `#38383e` | `#38383e` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#ffffde` | `#ffffde` | `#584343` |
 | `railroadTerminalStroke` | `railroad.terminalStroke` | color | `#adadad` | `#adadad` | `#2f2f2f` | `#2f2f2f` | `#d9d9bd` | `#6c6d6d` | `#aed997` | `#d6d6d6` | `#cfbcd9` | `#b3b3b3` | `#6c6d6d` |
 | `railroadTerminalTextColor` | `railroad.terminalTextColor` | color | `#28253d` | `#28253d` | `#b9b7b7` | `#b9b7b7` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#b9b7b7` |
 | `railroadNonTerminalFill` | `railroad.nonTerminalFill` | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |

@@ -1,7 +1,10 @@
 // cspell:words nonterminal
 import { describe, expect, it } from 'vitest';
 import { assertInert, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
+import { tableMeasurer } from '@mermaid-js/core/text';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { RAILROAD_CONFIG_INVALID } from '../config.ts';
+import { layoutRailroad } from '../layout/index.ts';
 import { renderRailroadForTest as render } from './harness.ts';
 
 /**
@@ -68,13 +71,14 @@ describe('railroad SVG structure (v12 class names)', () => {
     expect(t.getAttr(kids(t, end!)[0]!, 'r')).toBe('5');
   });
 
-  it('nests every kind as g.railroad-<kind>, children before paths', async () => {
+  it('nests every kind as g.railroad-<kind>, in v12’s DOM order', async () => {
     const { t } = await tree(JSON_RULE);
     for (const kind of ['choice', 'terminal', 'nonterminal', 'special', 'optional', 'repetition'])
       expect(t.find({ class: `railroad-${kind}` }).length, kind).toBeGreaterThan(0);
     const choice = t.find({ class: 'railroad-choice' })[0]!;
     const order = kids(t, choice).map((n) => tagOf(t, n));
-    expect(order.lastIndexOf('g')).toBeLessThan(order.indexOf('path'));
+    // v12 `renderChoice` (L243-300): each branch, then its left and right paths.
+    expect(order).toEqual(Array.from({ length: 6 }, () => ['g', 'path', 'path']).flat());
     // Each alternative is translated in the choice; each choice path is a track.
     for (const g of kids(t, choice).filter((n) => tagOf(t, n) === 'g'))
       expect(t.getAttr(g, 'transform')).toMatch(/^translate\(/);
@@ -93,11 +97,37 @@ describe('railroad SVG structure (v12 class names)', () => {
     }
   });
 
+  it('writes a sequence’s elements and connectors interleaved, as v12', async () => {
+    const { t } = await tree(
+      'railroad-beta\na = sequence(terminal("x"), nonterminal("y"), terminal("z")) ;\n'
+    );
+    const seq = t.find({ class: 'railroad-sequence' })[0]!;
+    // v12 `renderSequence` (L186-204): child, connector, child, connector, child.
+    expect(kids(t, seq).map((n) => shape(t, n))).toEqual([
+      'g.railroad-terminal',
+      'path.railroad-line',
+      'g.railroad-nonterminal',
+      'path.railroad-line',
+      'g.railroad-terminal',
+    ]);
+    const opt = await tree('railroad-beta\na = zeroOrMore(terminal("x")) ;\n');
+    const rep = opt.t.find({ class: 'railroad-repetition' })[0]!;
+    expect(kids(opt.t, rep).map((n) => tagOf(opt.t, n))).toEqual([
+      'g',
+      'path',
+      'path',
+      'path',
+      'path',
+    ]);
+  });
+
   it('puts data-ast on rules and expressions only, data-id on texts (pitfall 12)', async () => {
     const r = await tree(JSON_RULE);
     const { t } = r;
     const withAst = t.find({}).filter((n) => t.getAttr(n, 'data-ast') !== undefined);
     expect(withAst.every((n) => tagOf(t, n) === 'g')).toBe(true);
+    // README T4: every element drawn from the AST carries both.
+    for (const n of withAst) expect(t.getAttr(n, 'data-id')).toBe(t.getAttr(n, 'data-ast'));
     const ids = withAst.map((n) => t.getAttr(n, 'data-ast'));
     expect(new Set(ids).size).toBe(ids.length);
     const model: string[] = [];
@@ -202,7 +232,7 @@ describe('railroad colours and fonts (v12 styles.spec.ts, on the SVG)', () => {
       'rrn',
     ])
       expect(svg, alias).toContain(`var(--_${alias})`);
-    expect(svg).toContain('--_rtf:var(--mermaid-railroadTerminalFill,var(--_s))');
+    expect(svg).toContain('--_rtf:var(--mermaid-railroadTerminalFill,#ffffde)');
   });
 
   it('declares only the colours a diagram draws', async () => {
@@ -283,8 +313,16 @@ describe('railroad colours and fonts (v12 styles.spec.ts, on the SVG)', () => {
     const { t, svg } = await tree(JSON_RULE, { theme: 'default' });
     const root = t.find({ tag: 'svg' })[0]!;
     expect(t.getAttr(root, 'font-family')).toBe('var(--_ff)');
-    expect(t.getAttr(root, 'font-size')).toBe('16');
+    expect(t.getAttr(root, 'font-size')).toBe('var(--_fs)');
+    expect(svg).toContain('--_fs:var(--mermaid-fontSize,');
     expect(svg).toContain('--_ff:var(--mermaid-fontFamily,');
+  });
+
+  it('accepts a railroad.fontSize of 0, as v12’s sanitizeNumberValue did', async () => {
+    const r = await tree(JSON_RULE, { railroad: { fontSize: 0 } });
+    expect(r.t.getAttr(r.t.find({ tag: 'svg' })[0]!, 'font-size')).toBe('0');
+    expect(r.layout.fonts.text.size).toBe(0);
+    expect(r.warnings.filter((w) => w.code === RAILROAD_CONFIG_INVALID)).toEqual([]);
   });
 
   it('drops an unusable colour or font with one RAILROAD_CONFIG_INVALID (D515)', async () => {
@@ -310,6 +348,16 @@ describe('railroad colours and fonts (v12 styles.spec.ts, on the SVG)', () => {
     expect(t.getAttr(kids(t, t.find({ class: 'railroad-start' })[0]!)[0]!, 'fill')).toBe('blue');
     expect(t.getAttr(t.find({ tag: 'svg' })[0]!, 'font-family')).toBe('var(--_ff)');
     expect(r.svg).not.toContain('display');
+    // The layout checks the section and warns; drawing it again does not warn again.
+    const warned: string[] = [];
+    const layout = layoutRailroad(r.model, {
+      config: r.config,
+      measurer: tableMeasurer,
+      theme: createTheme(await loadTheme('default'), {}),
+      warn: (w) => void warned.push(w.code),
+    });
+    expect(warned).toEqual([RAILROAD_CONFIG_INVALID]);
+    expect(layout.config.dropped).toHaveLength(4);
     const clean = await render(JSON_RULE, { config: { railroad: { lineColor: 'red' } } });
     expect(clean.warnings.filter((w) => w.code === RAILROAD_CONFIG_INVALID)).toEqual([]);
   });

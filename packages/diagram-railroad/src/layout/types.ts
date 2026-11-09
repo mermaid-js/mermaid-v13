@@ -9,7 +9,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
-import type { RailroadLayoutConfig } from '../config.ts';
+import type { RailroadConfig, RailroadLayoutConfig } from '../config.ts';
 import type { RailroadNodeKind } from '../model.ts';
 
 export interface Point {
@@ -97,6 +97,13 @@ export interface RailroadExpressionLayout {
    * stubs, its loop, then (`min` 0) its bypass. A terminal, nonterminal or special has none.
    */
   readonly paths: readonly TrackPath[];
+  /**
+   * v12's DOM order of children and paths: `pathsAfter[i]` of `paths`, in order, follow child
+   * `i`, and the paths left over follow the last child. A sequence writes each child then the
+   * connector to the next (1, …, 1, 0), a choice each branch then its left and right paths (2
+   * each), an optional or a repetition its element then all its paths (0).
+   */
+  readonly pathsAfter: readonly number[];
   /** A terminal's, nonterminal's or special's box and text. */
   readonly box?: TrackBox;
   readonly text?: PlacedText;
@@ -137,8 +144,14 @@ export interface RailroadLayout {
   /** v12's canvas (its viewBox): widest rule plus twice `padding`, or 200 × 100 with no rules. */
   readonly width: number;
   readonly height: number;
-  /** The checked `railroad` lengths the layout used. */
+  /** The checked `railroad` lengths the layout used (`config.lengths`). */
   readonly options: RailroadLayoutConfig;
+  /**
+   * The `railroad` section, checked once (D515): lengths, the font and colours it sets that are
+   * usable, `useMaxWidth`, and the keys it set that are not (the layout's one
+   * `RAILROAD_CONFIG_INVALID`). The renderer draws with it.
+   */
+  readonly config: RailroadConfig;
   /** The fonts measured in: every box's text, and the rule names (bold, D514). */
   readonly fonts: {
     readonly text: FontKey;

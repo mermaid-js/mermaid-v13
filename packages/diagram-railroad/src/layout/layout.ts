@@ -22,8 +22,9 @@
 import type { RenderContext } from '@mermaid-js/core';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import {
-  railroadFontOverride,
-  railroadLayoutConfig,
+  railroadConfig,
+  railroadConfigWarning,
+  railroadSection,
   type RailroadLayoutConfig,
 } from '../config.ts';
 import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
@@ -37,14 +38,20 @@ import type {
   TrackPath,
 } from './types.ts';
 
-/** What the layout reads from the render context. */
-export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'>;
+/**
+ * What the layout reads from the render context; `warn` takes the one `RAILROAD_CONFIG_INVALID`
+ * of an unusable colour or font (D515), where the section is checked.
+ */
+export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
+  Partial<Pick<RenderContext, 'warn'>>;
 
 /** Lays out a railroad diagram in px. */
 export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext): RailroadLayout {
-  const section = (ctx.config as { railroad?: Readonly<Record<string, unknown>> }).railroad;
-  const options = railroadLayoutConfig(section);
-  const font = railroadFontOverride(section);
+  const config = railroadConfig(railroadSection(ctx));
+  const invalid = railroadConfigWarning(config);
+  if (invalid) ctx.warn?.(invalid);
+  const options = config.lengths;
+  const font = config.font;
   const text: FontKey = {
     family: font.family ?? ctx.theme.value('fontFamily'),
     size: font.size ?? ctx.theme.number('fontSize'),
@@ -55,7 +62,7 @@ export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext)
 
   if (model.rules.length === 0) {
     const canvas = { x: 0, y: 0, width: m.emptyWidth, height: m.emptyHeight };
-    return { ...canvas, options, fonts, rules: [], bounds: canvas };
+    return { ...canvas, options, config, fonts, rules: [], bounds: canvas };
   }
 
   const place = new Placer(options, ctx.measurer, text, ruleName);
@@ -76,7 +83,7 @@ export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext)
   for (const r of rules) {
     visitRule(r, (d) => void box.add(d.stroked ? shifted(d.rect, 0, 0, half) : d.rect));
   }
-  return { width, height, options, fonts, rules, bounds: box.rect() };
+  return { width, height, options, config, fonts, rules, bounds: box.rect() };
 }
 
 /** The size of a laid-out expression, before its parent places it. */
@@ -204,6 +211,7 @@ class Placer {
       down: h / 2,
       children: [],
       paths: [],
+      pathsAfter: [],
       box: { x: 0, y: 0, width, height: h, cornerRadius, ...(dash ? { dash } : {}) },
       text: {
         text,
@@ -241,7 +249,8 @@ class Placer {
       }
       x += r.width + hs;
     });
-    return { kind: node.type, ast: node.astId, width, up, down, children, paths };
+    const pathsAfter = items.map((_, i) => (i < items.length - 1 ? 1 : 0));
+    return { kind: node.type, ast: node.astId, width, up, down, children, paths, pathsAfter };
   }
 
   /**
@@ -332,6 +341,8 @@ class Placer {
       down: bottom - centre,
       children,
       paths,
+      // Each branch's left and right paths.
+      pathsAfter: items.map(() => paths.length / items.length),
     };
   }
 
@@ -382,6 +393,7 @@ class Placer {
       down: inner.down,
       children: [at(inner, 2 * r, top)],
       paths: [...this.stubs(width, inner, track), this.bypass(width, track)],
+      pathsAfter: [0],
     };
   }
 
@@ -416,6 +428,7 @@ class Placer {
         back,
         ...(skippable ? [this.bypass(width, track)] : []),
       ],
+      pathsAfter: [0],
     };
   }
 }

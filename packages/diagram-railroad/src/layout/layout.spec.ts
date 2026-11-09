@@ -315,8 +315,10 @@ describe('config and fonts', () => {
     expect(layout.fonts.text).toEqual({ family: 'serif', size: 20, weight: 400 });
     expect(new Set(seen.map((f) => `${f.family} ${f.size}`))).toEqual(new Set(['serif 20']));
     expect(
-      layoutRailroad(model, context({ fontFamily: '', fontSize: 0 }, recording)).fonts.text
+      layoutRailroad(model, context({ fontFamily: '', fontSize: -1 }, recording)).fonts.text
     ).toEqual({ family: 'monospace', size: 16, weight: 400 });
+    // v12 read the config's size with `sanitizeNumberValue` (0 or more): 0 is taken.
+    expect(layoutRailroad(model, context({ fontSize: 0 }, recording)).fonts.text.size).toBe(0);
   });
 
   it('takes the theme font under a resolved config (D515: no railroad font default)', () => {

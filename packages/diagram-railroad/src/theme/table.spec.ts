@@ -52,30 +52,38 @@ describe('railroad theme table', () => {
     }
   });
 
-  it('fills terminals with secondaryColor in the light themes, lighten(mainBkg, 16) in the dark', () => {
-    for (const n of THEME_NAMES) {
+  it('fills terminals as v12’s secondBkg: the classic light themes’ clusterBkg, else #ffffde', () => {
+    // 12.2.0 (packages/conformance/src/railroad/theme.spec.ts): default #ffffde, forest
+    // #cdffb2, neutral #fcfcfc; base, neo, redux and redux-color have no secondBkg and drew
+    // theme-default's #ffffde; the dark themes lighten(mainBkg, 16).
+    const fill = (n: (typeof THEME_NAMES)[number]) => lit(specs[n]).value('railroadTerminalFill');
+    expect(['default', 'forest', 'neutral', 'base'].map((n) => fill(n as never))).toEqual([
+      '#ffffde',
+      '#cdffb2',
+      '#fcfcfc',
+      '#ffffde',
+    ]);
+    for (const n of ['neo', 'redux', 'redux-color'] as const) expect(fill(n), n).toBe('#ffffde');
+    for (const n of THEME_NAMES.filter((t) => specs[t].dark)) {
       const t = lit(specs[n]);
-      const want = specs[n].dark
-        ? lit(specs[n], { railroadTerminalFill: 'lightenHsl(mainBkg, 16%)' }).value(
-            'railroadTerminalFill'
-          )
-        : t.value('secondaryColor');
-      expect(t.value('railroadTerminalFill'), n).toBe(want);
+      const want = lit(specs[n], { railroadTerminalFill: 'lightenHsl(mainBkg, 16%)' });
+      expect(t.value('railroadTerminalFill'), n).toBe(want.value('railroadTerminalFill'));
     }
-    // v12 dark: lighten('#1f2020', 16).
-    expect(lit(specs.dark).value('railroadTerminalFill')).toBe('#474949');
+    expect(fill('dark')).toBe('#474949');
   });
 
   it('keeps the light terminal fill under an author’s darkMode on a light theme', () => {
-    const t = lit(specs.default, { darkMode: true });
-    expect(t.value('railroadTerminalFill')).toBe(t.value('secondaryColor'));
+    expect(lit(specs.default, { darkMode: true }).value('railroadTerminalFill')).toBe('#ffffde');
   });
 
   it('follows an author’s shared override, as v12’s derivation did', () => {
     const t = lit(specs.default, { lineColor: '#123456', secondaryColor: '#abcdef' });
     expect(t.value('railroadLineColor')).toBe('#123456');
     expect(t.value('railroadMarkerFill')).toBe('#123456');
-    expect(t.value('railroadTerminalFill')).toBe('#abcdef');
+    // v12 default's secondBkg is a literal: an author's secondaryColor does not reach it.
+    expect(t.value('railroadTerminalFill')).toBe('#ffffde');
+    const dark = lit(specs.dark, { mainBkg: '#000000' });
+    expect(dark.value('railroadTerminalFill')).toBe('#292929');
   });
 
   it('maps themeVariables.railroad.* key by key, the flat name winning (D335, D540)', () => {

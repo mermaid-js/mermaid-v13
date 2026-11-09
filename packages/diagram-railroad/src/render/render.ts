@@ -6,7 +6,8 @@
 // `g.railroad-start > circle`, `g.railroad-end > circle` and the lead-in and lead-out
 // `path.railroad-line`. An expression writes its children (each at its `translate`), then its
 // own track paths, or its box and text. Each rule and expression `g` carries its `data-ast`
-// (D517); each text carries the AST id of what it labels as `data-id` (pitfall 12).
+// and `data-id`, its AST id (D517); each text carries the AST id of what it labels as `data-id`
+// only (pitfall 12). Children and paths interleave as v12 appended them (`pathsAfter`).
 //
 // v12 styled everything from one `<style>` (`styles.ts`); v13 writes no style sheet but `auto`'s
 // (R-SEC-2), so each element carries v12's computed values as presentation attributes. What
@@ -22,7 +23,6 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { railroadConfigWarning, railroadFontOverride } from '../config.ts';
 import type {
   PlacedText,
   RailroadExpressionLayout,
@@ -31,23 +31,16 @@ import type {
   TrackPath,
 } from '../layout/index.ts';
 import type { RailroadModel } from '../model.ts';
-import { paints, type Paints } from './paint.ts';
+import { BOX_PAINT, paints, type Paints } from './paint.ts';
 
-/** What the renderer reads from the render context. */
-export type RailroadRenderContext = Pick<
-  RenderContext,
-  'config' | 'theme' | 'idPrefix' | 'version' | 'warn'
->;
+/** What the renderer reads from the render context (the config through `layout.config`). */
+export type RailroadRenderContext = Pick<RenderContext, 'theme' | 'idPrefix' | 'version'>;
 
 /** What drawing a rule needs, besides the rule. */
 interface Parts {
   readonly paint: Paints;
   readonly w: SvgWriter;
 }
-
-/** The `railroad` config section as the renderer reads it. */
-const sectionOf = (ctx: Pick<RenderContext, 'config'>): Readonly<Record<string, unknown>> =>
-  ((ctx.config as { railroad?: unknown }).railroad ?? {}) as Readonly<Record<string, unknown>>;
 
 /** Writes the whole `<svg>` document for a laid-out railroad diagram. */
 export function renderRailroad(
@@ -56,11 +49,8 @@ export function renderRailroad(
   ctx: RailroadRenderContext,
   w: SvgWriter
 ): void {
-  const section = sectionOf(ctx);
-  const invalid = railroadConfigWarning(section);
-  if (invalid) ctx.warn(invalid);
-  const parts: Parts = { paint: paints(ctx.theme, section, layout), w };
-  openRoot(model, layout, ctx, section, w);
+  const parts: Parts = { paint: paints(ctx.theme, layout), w };
+  openRoot(model, layout, ctx, w);
   for (const rule of layout.rules) drawRule(parts, rule);
   w.close();
 }
@@ -70,6 +60,7 @@ function drawRule(parts: Parts, rule: RailroadRuleLayout): void {
   const { paint, w } = parts;
   w.open('g', {
     class: 'railroad-rule',
+    'data-id': rule.ast,
     'data-ast': rule.ast,
     transform: translate(rule.origin.x, rule.origin.y),
   });
@@ -97,29 +88,28 @@ function drawRule(parts: Parts, rule: RailroadRuleLayout): void {
   w.close();
 }
 
-/** The fill, stroke and text colour keys of each boxed kind (v12 `styles.ts:274-360`). */
-const BOX_PAINT = {
-  terminal: ['terminalFill', 'terminalStroke', 'terminalTextColor'],
-  nonterminal: ['nonTerminalFill', 'nonTerminalStroke', 'nonTerminalTextColor'],
-  // v12's `.railroad-special text` is filled with the nonterminal text colour.
-  special: ['specialFill', 'specialStroke', 'nonTerminalTextColor'],
-} as const;
-
 /**
  * One expression, `g.railroad-<kind>`: translated within its parent, except the definition's,
- * whose wrapping `g` carries the offset (v12 `renderRule`).
+ * whose wrapping `g` carries the offset (v12 `renderRule`). Its children and paths in v12's
+ * order: each child, then the paths that follow it (`pathsAfter`), then any left.
  */
 function drawExpression(parts: Parts, e: RailroadExpressionLayout, translated = true): void {
   const { paint, w } = parts;
   w.open('g', {
     class: `railroad-${e.kind}`,
+    'data-id': e.ast,
     'data-ast': e.ast,
     transform: translated ? translate(e.x, e.y) : undefined,
   });
-  for (const c of e.children) drawExpression(parts, c);
-  for (const p of e.paths) drawTrack(parts, p);
-  if (e.box && e.text && e.kind in BOX_PAINT) {
-    const [fill, stroke, ink] = BOX_PAINT[e.kind as keyof typeof BOX_PAINT];
+  let next = 0;
+  e.children.forEach((c, i) => {
+    drawExpression(parts, c);
+    for (const end = next + (e.pathsAfter[i] ?? 0); next < end; next++)
+      drawTrack(parts, e.paths[next]!);
+  });
+  for (; next < e.paths.length; next++) drawTrack(parts, e.paths[next]!);
+  const keys = BOX_PAINT[e.kind];
+  if (e.box && e.text && keys) {
     const { box } = e;
     w.leaf('rect', {
       x: box.x,
@@ -128,11 +118,11 @@ function drawExpression(parts: Parts, e: RailroadExpressionLayout, translated = 
       height: box.height,
       rx: box.cornerRadius > 0 ? box.cornerRadius : undefined,
       ry: box.cornerRadius > 0 ? box.cornerRadius : undefined,
-      fill: paint.get(fill),
-      stroke: paint.get(stroke),
+      fill: paint.get(keys.fill),
+      stroke: paint.get(keys.stroke),
       'stroke-dasharray': box.dash ? (box.dash.map(num).join(',') as SafeValue) : undefined,
     });
-    drawText(w, e.text, e.ast, { fill: paint.get(ink) });
+    drawText(w, e.text, e.ast, { fill: paint.get(keys.text) });
   }
   w.close();
 }
@@ -177,19 +167,19 @@ function openRoot(
   model: RailroadModel,
   layout: RailroadLayout,
   ctx: RailroadRenderContext,
-  section: Readonly<Record<string, unknown>>,
   w: SvgWriter
 ): void {
   const { theme } = ctx;
+  const { font, useMaxWidth: maxWidth } = layout.config;
   const prefix = ctx.idPrefix;
   const { x, y, width, height } = layout.bounds;
-  const maxWidth = section.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  // The config's family where usable, else the theme's (read before the root style is written,
-  // so it declares its alias).
-  const family = railroadFontOverride(section).family as SafeValue | undefined;
-  const font = family ?? theme.font();
+  // The config's family and size where usable, else the theme's variables, so a host's
+  // `--mermaid-fontFamily` and `--mermaid-fontSize` reach them (read before the root style is
+  // written, so it declares their aliases).
+  const family = font.family ?? theme.font();
+  const size = font.size ?? theme.length('fontSize');
   const auto = theme.autoDeclarations();
   w.open('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -204,8 +194,8 @@ function openRoot(
     'data-mermaid-version': ctx.version,
     'data-p': auto ? styleScope(prefix) : undefined,
     style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': layout.fonts.text.size,
+    'font-family': family,
+    'font-size': size,
     'stroke-width': layout.options.strokeWidth,
   });
   if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));

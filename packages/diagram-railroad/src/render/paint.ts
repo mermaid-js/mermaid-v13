@@ -1,10 +1,6 @@
 import type { Paint } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
-import {
-  RAILROAD_COLOUR_KEYS,
-  railroadColourOverrides,
-  type RailroadColourKey,
-} from '../config.ts';
+import { RAILROAD_COLOUR_KEYS, type RailroadColourKey } from '../config.ts';
 import type { RailroadExpressionLayout, RailroadLayout } from '../layout/index.ts';
 import type { RailroadNodeKind } from '../model.ts';
 
@@ -13,43 +9,51 @@ export interface Paints {
   get(key: RailroadColourKey): Paint;
 }
 
-/** The colour keys each drawn part needs. */
-const RULE_KEYS: readonly RailroadColourKey[] = ['ruleNameColor', 'markerFill', 'lineColor'];
-const KIND_KEYS: Partial<Record<RailroadNodeKind, readonly RailroadColourKey[]>> = {
-  terminal: ['terminalFill', 'terminalStroke', 'terminalTextColor'],
-  nonterminal: ['nonTerminalFill', 'nonTerminalStroke', 'nonTerminalTextColor'],
+/** A boxed kind's fill, stroke and text colour keys (v12 `styles.ts:274-360`). */
+export interface BoxPaint {
+  readonly fill: RailroadColourKey;
+  readonly stroke: RailroadColourKey;
+  readonly text: RailroadColourKey;
+}
+
+/** The colour keys of each boxed kind; the other kinds draw only track. */
+export const BOX_PAINT: Readonly<Partial<Record<RailroadNodeKind, BoxPaint>>> = {
+  terminal: { fill: 'terminalFill', stroke: 'terminalStroke', text: 'terminalTextColor' },
+  nonterminal: {
+    fill: 'nonTerminalFill',
+    stroke: 'nonTerminalStroke',
+    text: 'nonTerminalTextColor',
+  },
   // v12's `.railroad-special text` is filled with the nonterminal text colour.
-  special: ['specialFill', 'specialStroke', 'nonTerminalTextColor'],
+  special: { fill: 'specialFill', stroke: 'specialStroke', text: 'nonTerminalTextColor' },
 };
+
+/** What every rule draws: its name, its markers and track. */
+const RULE_KEYS: readonly RailroadColourKey[] = ['ruleNameColor', 'markerFill', 'lineColor'];
 
 /** The colour keys `layout` draws with. */
 function keysOf(layout: RailroadLayout): Set<RailroadColourKey> {
   const keys = new Set<RailroadColourKey>(layout.rules.length > 0 ? RULE_KEYS : []);
-  const kinds = new Set<RailroadNodeKind>();
   const stack: RailroadExpressionLayout[] = layout.rules.map((r) => r.definition);
   for (let e = stack.pop(); e; e = stack.pop()) {
-    kinds.add(e.kind);
+    const box = BOX_PAINT[e.kind];
+    if (box) for (const k of [box.fill, box.stroke, box.text]) keys.add(k);
     stack.push(...e.children);
   }
-  for (const kind of kinds) for (const k of KIND_KEYS[kind] ?? []) keys.add(k);
   return keys;
 }
 
 /**
  * The paints a render draws with (D515, D516): the `railroad` config's colour where it sets a
- * usable one, else the theme variable for that key. Only the keys `layout` draws are read
- * (pitfall 18), so a diagram with no special declares no special colours under `auto`; all of
- * them before the root is written, so its style declares their aliases.
+ * usable one (`layout.config.colours`), else the theme variable for that key. Only the keys the
+ * layout draws are read, so a diagram with no special declares no special colours under `auto`;
+ * all of them before the root is written, so its style declares their aliases.
  */
-export function paints(
-  theme: Pick<Theme, 'color'>,
-  section: Readonly<Record<string, unknown>> | undefined,
-  layout: RailroadLayout
-): Paints {
-  const config = railroadColourOverrides(section);
+export function paints(theme: Pick<Theme, 'color'>, layout: RailroadLayout): Paints {
+  const { colours } = layout.config;
   const read = new Map<RailroadColourKey, Paint>();
   for (const key of keysOf(layout))
-    read.set(key, config[key] ?? theme.color(RAILROAD_COLOUR_KEYS[key]));
+    read.set(key, colours[key] ?? theme.color(RAILROAD_COLOUR_KEYS[key]));
   return {
     get(key) {
       const p = read.get(key);
