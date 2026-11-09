@@ -26,6 +26,7 @@
 
 ## Machine-wide locks (seven sessions share this machine)
 
+- `PARSE_FIXTURE_PATH` may be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and fail. Always unset it: every `pnpm check`, `pnpm e2e` and push runs as `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock …` (pushes also with `GIT_SSH_COMMAND="ssh -o ServerAliveInterval=20 -o ServerAliveCountMax=30"`; ticket agents never push).
 - Every full `pnpm check` and every `pnpm e2e`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 pnpm check`. Run them in the background (they take many minutes).
 - Known flakes, never edit them: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout under load. If one is the only failure, rerun once under the lock.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
