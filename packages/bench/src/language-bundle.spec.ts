@@ -134,6 +134,11 @@ const PACKAGES = [
     ],
   },
   {
+    name: 'treeView',
+    dir: 'diagram-treeview',
+    renderer: ['layout/', 'v12-specs/', 'index.ts', 'testing.ts', 'test-context.ts'],
+  },
+  {
     name: 'wardley',
     dir: 'diagram-wardley',
     renderer: [

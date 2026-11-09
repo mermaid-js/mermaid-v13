@@ -53,6 +53,11 @@ export function nodeName(converted: string): { name: string; directory: boolean 
   return { name: directory ? converted.slice(0, -1) : converted, directory };
 }
 
+/** A node's name as written bare: a directory's with its trailing `/` (`nodeName` undone). */
+export function writtenName(name: string, directory: boolean): string {
+  return directory ? `${name}/` : name;
+}
+
 /** `populate`'s icon: `''` (from `icon()`) is `'none'`. */
 export function nodeIcon(converted: string): string {
   return converted === '' ? 'none' : converted;

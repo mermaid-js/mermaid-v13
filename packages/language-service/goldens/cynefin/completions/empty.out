@@ -25,6 +25,7 @@
   sankey keyword 1:1-1:1 "" -> "sankey"
   packet keyword 1:1-1:1 "" -> "packet"
   xychart keyword 1:1-1:1 "" -> "xychart"
+  treeView-beta keyword 1:1-1:1 "" -> "treeView-beta"
   radar-beta keyword 1:1-1:1 "" -> "radar-beta"
   treemap keyword 1:1-1:1 "" -> "treemap"
   treemap-beta keyword 1:1-1:1 "" -> "treemap-beta"
