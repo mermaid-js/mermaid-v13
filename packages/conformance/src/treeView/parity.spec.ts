@@ -12,7 +12,7 @@ import { treeViewAdapter } from './v13.ts';
  * fixtures and the v12 spec strings (also in the main parity run), `corpus/treeView-cases.json`,
  * the recovery set and the line-separator cases, each also with CRLF line breaks and with
  * comment lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: `getRoot()`
- * as a preorder list of depth, name, node type, icon, class and description, `getCount()`, the
+ * as a depth-first list of depth, name, node type, icon, class and description, `getCount()`, the
  * title and accessibility) must agree, except the divergences listed in `divergences.json`.
  *
  * The listed treeView divergences are core's reading, shared by every type, and the second test

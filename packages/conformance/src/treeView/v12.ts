@@ -1,6 +1,6 @@
 /**
  * The v12 side of treeView parity: a plain-data snapshot of mermaid\@12's treeView DB, in the
- * shape both sides map to (spec #518 T2): `getRoot()` as a preorder list of
+ * shape both sides map to (spec #518 T2): `getRoot()` as a depth-first list of
  * `[depth, name, nodeType, icon, cssClass, description]` (the virtual root `/` left out, its
  * children at depth 0), `getCount()`, `getAccTitle()`, `getAccDescription()` and
  * `getDiagramTitle()`.
@@ -54,7 +54,7 @@ const opt = (v: string | undefined) => (v === undefined ? null : d(v));
 export function treeViewV12Snapshot(dbValue: unknown): TreeViewSnapshot {
   const db = dbValue as TreeViewDbV12;
   const rows: TreeViewRow[] = [];
-  // Iterative preorder: a tree may be deep.
+  // Depth first, without recursion: a tree may be deep.
   const stack: [TreeViewNodeV12, number][] = [...db.getRoot().children]
     .reverse()
     .map((n) => [n, 0]);

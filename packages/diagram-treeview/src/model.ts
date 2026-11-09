@@ -44,7 +44,7 @@ export interface TreeViewNode {
 export interface TreeViewModel {
   /** The nodes at the top, in source order (v12's `getRoot().children`). */
   readonly roots: readonly TreeViewNode[];
-  /** Every node in source order, which is the tree's preorder. */
+  /** Every node in source order, which is the tree read depth first. */
   readonly nodes: readonly TreeViewNode[];
   /**
    * The in-text `title` if non-empty, else the front-matter `title`; absent when neither. Kept

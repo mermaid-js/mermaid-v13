@@ -35,7 +35,7 @@ type Mutable = { -readonly [K in keyof TreeViewNode]: TreeViewNode[K] } & {
 /**
  * Place the nodes in the tree (v12 `addNode`), setting each AST node's `depth` and `id` (its
  * name path, `@n` for a repeat in one directory). Returns the model's nodes in source order
- * (the tree's preorder), frozen, and the top ones. No recursion: a tree may be deep.
+ * (the tree read depth first), frozen, and the top ones. No recursion: a tree may be deep.
  */
 export function buildTree(nodes: readonly TreeViewNodeNode[]): {
   nodes: TreeViewNode[];
