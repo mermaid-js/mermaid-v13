@@ -6,8 +6,6 @@ import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
  * `generated/variables.ts`.
  */
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
-  actorBkg: { alias: 'ab', kind: 'color', usedBy: ['sequence'] },
-  actorBorder: { alias: 'ar', kind: 'color', usedBy: ['sequence'] },
   actorTextColor: { alias: 'at', kind: 'color', usedBy: ['sequence'] },
   actorLineColor: { alias: 'alc', kind: 'color', usedBy: ['sequence'] },
   signalColor: { alias: 'sc', kind: 'color', usedBy: ['sequence'] },
