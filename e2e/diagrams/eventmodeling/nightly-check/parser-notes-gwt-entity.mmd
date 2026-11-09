@@ -1,0 +1,31 @@
+eventmodeling
+tf 01 cmd UpdateCart
+tf 02 evt CartUpdated ->> 01
+entity CartUpdated
+entity Cart.Line
+entity CartUpdated
+
+note 02 `md` {
+    # head
+    a markdown note
+}
+
+note 02 {
+  second note
+}
+
+note 09 {
+  on no frame
+}
+
+gwt 01
+  given
+    evt CartUpdated
+    cmd UpdateCart
+  when
+    cmd UpdateCart
+  then
+    evt CartUpdated
+
+gwt 02 given rmo Missing then evt CartUpdated
+gwt 07 given evt CartUpdated then evt CartUpdated

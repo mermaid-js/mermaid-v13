@@ -1,0 +1,240 @@
+[
+  {
+    "id": "eventmodeling-recovery/two-keyword-names",
+    "name": "Keyword names in two frames",
+    "source": "eventmodeling\ntf 01 evt text\ntf 02 cmd Ok\ntf 03 rmo data\ntf 04 evt Fine",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/duplicate-twice",
+    "name": "Two duplicate frame ids",
+    "source": "eventmodeling\ntf 01 ui A\ntf 02 cmd B\ntf 01 evt C\nrf 02 rmo D\ntf 03 evt E",
+    "errors": [
+      ["EVENTMODELING_DUPLICATE_FRAME", 4],
+      ["EVENTMODELING_DUPLICATE_FRAME", 5]
+    ],
+    "keeps": ["01", "02", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/duplicate-and-syntax",
+    "name": "A duplicate id and a syntax error in the same frame",
+    "source": "eventmodeling\ntf 01 ui A\ntf 01 evt\ntf 02 cmd B",
+    "errors": [
+      ["EVENTMODELING_DUPLICATE_FRAME", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/bad-characters",
+    "name": "Stray characters in two names",
+    "source": "eventmodeling\ntf 01 evt A-B\ntf 02 cmd C\ntf 03 evt D@E\ntf 04 rmo F",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["01", "02", "03", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/non-ascii-names",
+    "name": "Non-ASCII names",
+    "source": "eventmodeling\ntf 01 evt Caf\u00e9\ntf 02 cmd B\ntf 03 evt Gr\u00f6\u00dfe",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["01", "02", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/missing-kinds",
+    "name": "Frames without a kind",
+    "source": "eventmodeling\ntf 01 A\ntf 02 evt B\ntf 03 C\ntf 04 cmd D",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/missing-ids",
+    "name": "Frames without an id",
+    "source": "eventmodeling\ntf evt A\ntf 02 evt B\nrf cmd C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02"]
+  },
+  {
+    "id": "eventmodeling-recovery/own-line-title-and-acc",
+    "name": "title and accTitle on their own lines",
+    "source": "eventmodeling\ntitle My model\ntf 01 ui A\naccTitle: Model\ntf 02 cmd B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/upper-case-keywords",
+    "name": "Upper-case keywords",
+    "source": "eventmodeling\nTF 01 evt A\ntf 02 evt B\ntf 03 EVT C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02"]
+  },
+  {
+    "id": "eventmodeling-recovery/arrows-without-ids",
+    "name": "Two arrows without a frame id",
+    "source": "eventmodeling\ntf 01 ui A\ntf 02 cmd B ->>\ntf 03 evt C ->> X\ntf 04 rmo D ->> 03",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/unclosed-refs",
+    "name": "Unclosed data references",
+    "source": "eventmodeling\ntf 01 evt A [[D\ntf 02 cmd B\ntf 03 evt C [[\ntf 04 rmo E",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["02", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/inline-blocks",
+    "name": "Inline data where blocks belong",
+    "source": "eventmodeling\ntf 01 evt A [[D]]\ndata D { x }\nnote 01 { y }\ntf 02 cmd B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/blocks-inline",
+    "name": "A block where inline data belongs",
+    "source": "eventmodeling\ntf 01 evt A `json` {\n  a: 1\n}\ntf 02 cmd B\ntf 03 evt C `md`",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["02"]
+  },
+  {
+    "id": "eventmodeling-recovery/gwt-broken",
+    "name": "Two broken gwt specifications",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 when evt A then evt A\ngwt 01 given evt A then\ntf 02 cmd B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/unknown-data-types",
+    "name": "Unknown data types",
+    "source": "eventmodeling\ntf 01 evt A `yaml` { a }\ntf 02 cmd B\ndata D `csv` {\n  x\n}\ntf 03 evt C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/unclosed-inline",
+    "name": "Unclosed inline data",
+    "source": "eventmodeling\ntf 01 evt A { a\ntf 02 cmd B \"b\ntf 03 rmo C",
+    "errors": [
+      ["UNCLOSED_DATA", 2],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["03"]
+  },
+  {
+    "id": "eventmodeling-recovery/order-wrong",
+    "name": "Parts of frames in the wrong order",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 evt B [[D]] ->> 01\ntf 03 cmd C { a } [[D]]\ntf 04 rmo E",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["01", "02", "03", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/second-header",
+    "name": "A second eventmodeling and a stray dot",
+    "source": "eventmodeling\ntf 01 evt A\neventmodeling\ntf 02 cmd B.\ntf 03 evt C",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["01", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/long-frame-ids",
+    "name": "Frame ids of four digits",
+    "source": "eventmodeling\ntf 1234 evt A\ntf 02 cmd B\nnote 5678 {\n  x\n}",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["02"]
+  },
+  {
+    "id": "eventmodeling-recovery/note-and-entity",
+    "name": "A note without a frame and an entity without a name",
+    "source": "eventmodeling\ntf 01 evt A\nnote A {\n  x\n}\nentity\ntf 02 cmd B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["01", "02"]
+  },
+  {
+    "id": "eventmodeling-recovery/three-errors",
+    "name": "Three errors of different kinds",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 cmd text\ntf 03 rmo B#\ntf 01 ui C\ntf 04 evt D",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["EVENTMODELING_DUPLICATE_FRAME", 5]
+    ],
+    "keeps": ["01", "03", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/header-glued",
+    "name": "A glued header, then a keyword name",
+    "source": "eventmodelingX\ntf 01 evt A\ntf 02 cmd evt\ntf 03 evt B",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["01", "03"]
+  },
+  {
+    "id": "eventmodeling-recovery/one-line-errors",
+    "name": "Two errors on one line",
+    "source": "eventmodeling tf 01 evt text tf 02 cmd Ok tf 03 evt data tf 04 evt Fine",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 1]
+    ],
+    "keeps": ["02", "04"]
+  },
+  {
+    "id": "eventmodeling-recovery/single-error",
+    "name": "One keyword name among valid frames",
+    "source": "eventmodeling\ntf 01 ui A\ntf 02 cmd note\ntf 03 evt C ->> 01",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["01", "03"]
+  }
+]

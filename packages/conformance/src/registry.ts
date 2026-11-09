@@ -2,6 +2,7 @@ import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
+import { eventModelingAdapter } from './eventmodeling/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { infoAdapter } from './info/v13.ts';
 import { ganttAdapter } from './gantt/v13.ts';
@@ -157,6 +158,12 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/sankey-cases.json',
     ],
     corpus: sankeyParityCorpus,
+  },
+  {
+    adapter: eventModelingAdapter,
+    corpusDirs: ['e2e/diagrams/eventmodeling'],
+    // The cases run in `eventmodeling/parity.spec.ts`, with their listed divergences.
+    corpusFiles: ['packages/conformance/corpus/eventmodeling-v12-specs.json'],
   },
   {
     adapter: wardleyAdapter,

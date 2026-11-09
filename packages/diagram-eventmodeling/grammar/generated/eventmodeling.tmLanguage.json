@@ -1,0 +1,406 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-eventmodeling",
+  "scopeName": "source.mermaid-eventmodeling",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-eventmodeling"
+    },
+    "rule-0": {
+      "match": "eventmodeling(?=\\s|%%|$)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-1": {
+      "match": "resetframe(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-2": {
+      "match": "readmodel(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-3": {
+      "match": "processor(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-4": {
+      "match": "timeframe(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-5": {
+      "match": "command(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-6": {
+      "match": "entity(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-7": {
+      "match": "event(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-8": {
+      "match": "jsobj(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-9": {
+      "match": "figma(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-10": {
+      "match": "given(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-11": {
+      "match": "json(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-12": {
+      "match": "salt(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-13": {
+      "match": "html(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-14": {
+      "match": "text(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-15": {
+      "match": "data(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-16": {
+      "match": "note(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-17": {
+      "match": "when(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-18": {
+      "match": "then(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-19": {
+      "match": "rmo(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-20": {
+      "match": "cmd(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-21": {
+      "match": "evt(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-22": {
+      "match": "pcr(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-23": {
+      "match": "uri(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-24": {
+      "match": "->>",
+      "name": "keyword.operator.mermaid-eventmodeling"
+    },
+    "rule-25": {
+      "match": "gwt(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-26": {
+      "match": "ui(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-27": {
+      "match": "md(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-28": {
+      "match": "tf(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-29": {
+      "match": "\\[\\[",
+      "name": "punctuation.definition.mermaid-eventmodeling"
+    },
+    "rule-30": {
+      "match": "\\]\\]",
+      "name": "punctuation.definition.mermaid-eventmodeling"
+    },
+    "rule-31": {
+      "match": "rf(?!\\w)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-32": {
+      "match": "`",
+      "name": "punctuation.definition.mermaid-eventmodeling"
+    },
+    "rule-33": {
+      "match": "\\.",
+      "name": "punctuation.definition.mermaid-eventmodeling"
+    },
+    "rule-34": {
+      "match": "[_a-zA-Z][\\w_]*",
+      "name": "variable.other.mermaid-eventmodeling"
+    },
+    "rule-35": {
+      "match": "\\d{1,3}",
+      "name": "constant.numeric.mermaid-eventmodeling"
+    },
+    "rule-36": {
+      "match": "\\{(?:.*)\\}|\"(?:.*)\"|'(?:.*)'",
+      "name": "string.quoted.mermaid-eventmodeling"
+    },
+    "rule-37": {
+      "match": "\\{[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?\\}(?:\\r?\\n|(?!\\S))",
+      "name": "string.quoted.mermaid-eventmodeling"
+    },
+    "rule-38": {
+      "match": "[\\t ]*accDescr(?:[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)|\\s*\\{(?:[^}]*)\\})",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-39": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-40": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-eventmodeling"
+    },
+    "rule-41": {
+      "match": "\\s+"
+    },
+    "rule-42": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-eventmodeling"
+    },
+    "rule-43": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-eventmodeling"
+    },
+    "rule-44": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-eventmodeling"
+    },
+    "rule-45": {
+      "begin": "\\/\\*",
+      "end": "\\*\\/",
+      "name": "comment.line.mermaid-eventmodeling"
+    },
+    "rule-46": {
+      "match": "\\/\\/[^\\n\\r]*",
+      "name": "comment.line.mermaid-eventmodeling"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        },
+        {
+          "include": "#rule-46"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-eventmodeling"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-eventmodeling"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-eventmodeling"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-eventmodeling"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

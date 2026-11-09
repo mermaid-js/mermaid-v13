@@ -2,6 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { patchEventModelingOracle } from './eventmodeling/oracle-env.ts';
 import { patchGanttOracle } from './gantt/oracle-env.ts';
 import { patchQuadrantOracle } from './quadrant/oracle-env.ts';
 import { patchSequenceOracle } from './sequence/oracle-env.ts';
@@ -84,6 +85,8 @@ async function load(): Promise<Oracle> {
   await patchGanttOracle(mermaid);
   // XY chart acceptance includes having a plot, as v12's render requires (xychart/oracle-env.ts).
   await patchXyChartOracle(mermaid);
+  // Event modeling's AST, kept for model parity (eventmodeling/oracle-env.ts).
+  await patchEventModelingOracle(mermaid);
 
   return {
     version,

@@ -1,0 +1,592 @@
+// cspell:words eventmodeling accdescr jsobj readmodel resetframe timeframe
+/**
+ * Event modeling parser: recursive descent over the significant {@link lex} tokens (gated
+ * against v12's Langium lexer, #600), producing an {@link EventModel}, the typed AST, symbols,
+ * statement spans and diagnostics (DESIGN §4.2).
+ *
+ * The grammar is v12's `event-modeling.langium`, ported rule for rule (below);
+ * `grammar/eventmodeling.ebnf` is the normative form, so it accepts and rejects what v12's
+ * parser does. Whitespace, line breaks included, is not a token: statements are separated by
+ * nothing, so `eventmodeling tf 01 evt A tf 02 evt B` is two frames. Unlike v12 the parser does
+ * not stop at the first error: it reports it, skips to the next token that starts a statement
+ * and carries on, so N errors give N diagnostics (R-PARSE-4). v12's one thrown error, a
+ * duplicate frame id (`db.ts` `setAst`), is an error with its message; what v12 dropped
+ * silently gets D525's warnings ({@link normalise}).
+ */
+/*
+    EventModel : 'eventmodeling' (AccDescr | AccTitle | Title | Entity | Frame | Data | Note | Gwt)* EOF
+    Frame      : ('tf'|'timeframe'|'rf'|'resetframe') FID Kind QualifiedName ('->>' FID)*
+                 ('[[' ID ']]')? (('`' DataType '`')? DATA_INLINE)?
+    Entity     : 'entity' QualifiedName
+    Data       : 'data' ID ('`' DataType '`')? DATA_BLOCK
+    Note       : 'note' FID ('`' DataType '`')? DATA_BLOCK
+    Gwt        : 'gwt' FID 'given' Step+ ('when' Step+)? 'then' Step+       Step: Kind ID
+    QualifiedName : ID ('.' ID)*
+*/
+import {
+  ExpectedTable,
+  formatExpected,
+  isLineEnd,
+  Kind,
+  kindSet,
+  LineIndex,
+  ParseState,
+  significantTokens,
+} from '@mermaid-js/core/parser-kit';
+import type {
+  AstId,
+  ParseOptions,
+  ParseResult,
+  Range,
+  SourceView,
+  TokenStream,
+  TokenView,
+} from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { EVENTMODELING_DUPLICATE_FRAME } from '../codes.ts';
+import type { EventModel, EventModelKind } from '../model.ts';
+import type {
+  EventModelDataNode,
+  EventModelDocument,
+  EventModelFrameNode,
+  EventModelGwtStepNode,
+  EventModelStatementNode,
+  EventModelText,
+  EventModelTextNode,
+} from './ast.ts';
+import { accDescrValue, accTitleValue, dataText, displayText, titleValue } from './convert.ts';
+import { lex } from './lexer.ts';
+import { normalise } from './normalise.ts';
+import { EVENTMODELING_TRIVIA, KEYWORDS, T } from './tokens.ts';
+import { eventModelingView } from './view.ts';
+
+export interface EventModelParseOptions extends ParseOptions {
+  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
+  preprocessed?: PreprocessResult;
+}
+
+export type EventModelParseResult = ParseResult<EventModel, EventModelDocument>;
+
+/** The short form of each kind keyword. */
+const KINDS: Readonly<Partial<Record<number, EventModelKind>>> = {
+  [T.Ui]: 'ui',
+  [T.Pcr]: 'pcr',
+  [T.Processor]: 'pcr',
+  [T.Cmd]: 'cmd',
+  [T.Command]: 'cmd',
+  [T.Rmo]: 'rmo',
+  [T.Readmodel]: 'rmo',
+  [T.Evt]: 'evt',
+  [T.Event]: 'evt',
+};
+const KIND_LIST = [T.Ui, T.Pcr, T.Processor, T.Cmd, T.Command, T.Rmo, T.Readmodel, T.Evt, T.Event];
+const DATA_TYPES = [T.Json, T.Jsobj, T.Figma, T.Salt, T.Uri, T.Md, T.Html, T.Text];
+const DATA_TYPE_SET = kindSet(...DATA_TYPES);
+const FRAMES = [T.Tf, T.Timeframe, T.Rf, T.Resetframe];
+const TEXTS = [T.Title, T.AccTitle, T.AccDescr];
+/** The tokens a statement starts with: where recovery stops. */
+const STARTS = [...FRAMES, T.Entity, T.Data, T.Note, T.Gwt, ...TEXTS];
+const STARTS_SET = kindSet(...STARTS);
+const AFTER_STATEMENT = [...STARTS, Kind.EOF];
+
+/** Human names for what the parser expects (R-ERR-2); never a token or rule name (R-ERR-5). */
+const EXPECTED = new ExpectedTable([
+  ['a statement such as `tf 01 evt Name`', STARTS],
+  ['`eventmodeling`', [T.Header]],
+  ['a frame id such as `01`', [T.FrameId]],
+  ['a kind (`ui`, `pcr`, `cmd`, `rmo` or `evt`)', KIND_LIST],
+  ['a name', [T.Id]],
+  ['`.` and a name', [T.Dot]],
+  ['`->>` and a source frame id', [T.Arrow]],
+  ['`[[data name]]`', [T.OpenRef]],
+  ['`]]`', [T.CloseRef]],
+  ['a data type such as `json`', DATA_TYPES],
+  ['inline data such as `{ … }` or `"…"`', [T.DataInline]],
+  ['a data block: `{`, its lines, then `}` on a line of its own', [T.DataBlock]],
+  ['`` ` ``', [T.Backtick]],
+  ['`given`', [T.Given]],
+  ['`when`', [T.When]],
+  ['`then`', [T.Then]],
+  ['the end of the text', [Kind.EOF]],
+]);
+
+/** v12's text-statement words, which v12 lexes as a name at a line start. */
+const TEXT_WORDS = ['title', 'accTitle', 'accDescr'];
+
+/**
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
+ * instance, so its stack is captured once.
+ */
+class Stop extends Error {}
+const STOP = new Stop();
+
+/** The parts of a frame the model reads, by statement. */
+export interface ParsedFrame {
+  node: EventModelFrameNode;
+  kind: EventModelKind;
+}
+
+/** What the parser hands {@link normalise}: the statements read, in source order. */
+export interface Parsed {
+  readonly children: readonly EventModelStatementNode[];
+  readonly frames: readonly ParsedFrame[];
+  /** Kinds of gwt steps, by node, in step order (given, when, then). */
+  readonly stepKinds: ReadonlyMap<EventModelGwtStepNode, EventModelKind>;
+  readonly title?: EventModelTextNode;
+  readonly accTitle?: EventModelTextNode;
+  readonly accDescr?: EventModelTextNode;
+}
+
+/** Parse an event model. Never throws: problems are error diagnostics. */
+export function parseEventModel(
+  src: string,
+  options: EventModelParseOptions = {}
+): EventModelParseResult {
+  return new EventModelParser(src, options).parse();
+}
+
+/**
+ * One parse. Each grammar rule is a method that returns what it read; a rule that fails
+ * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
+ */
+class EventModelParser {
+  private readonly pre: PreprocessResult;
+  private readonly view: SourceView;
+  private readonly full: TokenStream;
+  private readonly t: TokenView;
+  private i = 0;
+  private readonly st = new ParseState();
+  private readonly children: EventModelStatementNode[] = [];
+  private readonly frames: ParsedFrame[] = [];
+  private readonly stepKinds = new Map<EventModelGwtStepNode, EventModelKind>();
+  private lines: LineIndex | undefined;
+  /** Mentions per id base (`frame:01`, `title`, …), for the `@n` suffixes. */
+  private readonly mentions = new Map<string, number>();
+  /** Frame ids read so far (duplicates are v12's thrown error). */
+  private readonly frameIds = new Set<string>();
+  private title: EventModelTextNode | undefined;
+  private accTitle: EventModelTextNode | undefined;
+  private accDescr: EventModelTextNode | undefined;
+
+  constructor(
+    private readonly src: string,
+    private readonly opts: EventModelParseOptions
+  ) {
+    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
+    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
+    this.view = eventModelingView(src, pre).view;
+    this.full = lex(src, pre.bodyStart, this.view);
+    this.t = significantTokens(this.full, EVENTMODELING_TRIVIA);
+  }
+
+  parse(): EventModelParseResult {
+    const { st, src } = this;
+    this.statement(() => this.header());
+    this.document();
+    const parsed: Parsed = {
+      children: this.children,
+      frames: this.frames,
+      stepKinds: this.stepKinds,
+      title: this.title,
+      accTitle: this.accTitle,
+      accDescr: this.accDescr,
+    };
+    const model = normalise(parsed, st, this.pre.frontMatter?.title);
+    const ast: EventModelDocument = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: this.pre.bodyStart, end: src.length },
+      children: this.children,
+    };
+    return st.result(model, ast, this.full, this.opts);
+  }
+
+  // ---- tokens -------------------------------------------------------------------------
+
+  private kind(j = this.i): number {
+    return this.t.kind[j] ?? Kind.EOF;
+  }
+
+  private range(j = this.i): Range {
+    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
+  }
+
+  /** A token's text as v12's lexer read it, `#name;` codes as their characters. */
+  private displayed(j = this.i): string {
+    const { start, end } = this.range(j);
+    return displayText(this.src, start, end, this.view);
+  }
+
+  /** Consume a token of `kind` and return its text and range, or fail. */
+  private expect(kind: number, hint?: string): EventModelText {
+    if (this.kind() !== kind) this.fail([kind], hint);
+    return this.text();
+  }
+
+  /** The current token's text and range; consumes it. */
+  private text(): EventModelText {
+    const range = this.range();
+    const value = this.displayed();
+    this.i++;
+    return { value, range };
+  }
+
+  /** The end of the last token read. */
+  private end(): number {
+    return this.t.end[this.i - 1] ?? 0;
+  }
+
+  /** `id`, then `id@2`, `id@3`, … */
+  private id(base: string): AstId {
+    const n = (this.mentions.get(base) ?? 0) + 1;
+    this.mentions.set(base, n);
+    return n === 1 ? base : `${base}@${n}`;
+  }
+
+  // ---- errors and recovery ------------------------------------------------------------
+
+  private lineOf(at: number): number {
+    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
+  }
+
+  /** How an error message names the token at `j`. */
+  private found(j = this.i): string {
+    if (this.kind(j) === Kind.EOF) return 'the end of the text';
+    const text = this.displayed(j).trim();
+    const line = text.split('\n', 1)[0] ?? '';
+    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
+  }
+
+  /** Report what was found where one of `want` was expected, then stop the statement. */
+  private fail(want: readonly number[], hint?: string): never {
+    if (this.kind() === Kind.Error) this.badCharacters();
+    const names = EXPECTED.names(want);
+    const why = hint ?? this.explain(want);
+    const message = `Expected ${formatExpected(names)}, got ${this.found()}${why ? `; ${why}` : ''}.`;
+    this.st.diagnostics.error('UNEXPECTED', message, this.range(), { expected: names });
+    throw STOP;
+  }
+
+  /** Text no token rule matched: unclosed data, or stray characters. */
+  private badCharacters(): never {
+    const where = this.range();
+    const text = this.displayed();
+    const line = this.lineOf(where.start);
+    const c = text.charAt(0);
+    if (c === '"' || c === "'") {
+      this.st.diagnostics.error(
+        'UNCLOSED_STRING',
+        `Unclosed quote: the \`${c}\` at line ${line} has no closing \`${c}\` on its line. Inline data in quotes ends on the line it starts.`,
+        where,
+        { expected: [`\`${c}\``] }
+      );
+      throw STOP;
+    }
+    if (c === '{') {
+      this.st.diagnostics.error(
+        'UNCLOSED_DATA',
+        `Unclosed data: the \`{\` at line ${line} is not closed. Inline data ends with \`}\` on its line; a data block starts a new line after \`{\` and ends with \`}\` on a line of its own.`,
+        where,
+        { expected: ['`}`'] }
+      );
+      throw STOP;
+    }
+    const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
+    const why = /^[\w.]*$/.test(shown)
+      ? ''
+      : '; names are ASCII letters, digits and `_`, and start with a letter or `_`';
+    this.st.diagnostics.error(
+      'UNEXPECTED_CHARACTER',
+      `Unexpected character \`${shown}\`${why}.`,
+      where
+    );
+    throw STOP;
+  }
+
+  private explain(want: readonly number[]): string | undefined {
+    const k = this.kind();
+    const text = k === Kind.EOF ? '' : this.displayed();
+    if (want.includes(T.Tf)) return this.explainStatement(k, text);
+    if (want.includes(T.Id) && KEYWORDS.has(text)) {
+      return `\`${text}\` is a keyword and cannot be a name`;
+    }
+    if (want.includes(T.Id) && k === T.FrameId) return 'a name starts with a letter or `_`';
+    if (k === T.FrameId && want.includes(T.Ui)) return 'a frame id has one to three digits';
+    if (k === T.DataBlock && want.includes(T.DataInline)) {
+      return 'inline data stays on one line; write a multi-line block as `data Name { … }` and refer to it with `[[Name]]`';
+    }
+    if (k === T.DataInline && want.includes(T.DataBlock)) {
+      return 'a block starts a new line after `{`, and its `}` stands on a line of its own';
+    }
+    if (k === T.Dot && want.includes(T.Then)) return 'a `gwt` step names an entity without a `.`';
+    return undefined;
+  }
+
+  /** Why the token `k` (`text`) starts no statement. */
+  private explainStatement(k: number, text: string): string | undefined {
+    if (k === T.Id) {
+      const word = TEXT_WORDS.find((w) => text.startsWith(w));
+      if (word) {
+        return `\`${word}\` is read only after another statement on the same line, as in \`eventmodeling ${word}${word === 'title' ? ' My model' : ': …'}\``;
+      }
+      if (KEYWORDS.has(text.toLowerCase())) return 'keywords are written in lower case';
+    }
+    if (k === T.Header) return 'an event model has one `eventmodeling`, at its start';
+    if (k === T.Arrow || k === T.OpenRef || k === T.DataInline) {
+      return 'a frame takes its parts in this order: `->>` sources, then `[[data]]`, then inline data';
+    }
+    if (k === T.Backtick) return 'a data type goes right before its data, as in `` `json` { … } ``';
+    return undefined;
+  }
+
+  /** Run one statement rule; on failure, skip to the next statement start (R-PARSE-4). */
+  private statement(rule: () => void): void {
+    const from = this.i;
+    try {
+      rule();
+    } catch (error) {
+      if (error !== STOP) throw error;
+      // Always move on: a failure on the statement's first token skips that token, and so
+      // does one on a keyword inside the line (`tf 01 evt data`: a name, not a statement).
+      let j = this.i > from && this.lineStart(this.i) ? this.i : Math.max(this.i + 1, from + 1);
+      while (j < this.t.length && STARTS_SET[this.kind(j)] !== 1) j++;
+      this.i = j;
+    }
+  }
+
+  /** Whether token `j` is the first on its line (a line break between it and the one before). */
+  private lineStart(j: number): boolean {
+    if (j === 0) return true;
+    const end = this.t.start[j] ?? 0;
+    for (let p = this.t.end[j - 1] ?? 0; p < end; p++) {
+      if (isLineEnd(this.src.charCodeAt(p))) return true;
+    }
+    return false;
+  }
+
+  // ---- rules --------------------------------------------------------------------------
+
+  /** `'eventmodeling'` */
+  private header(): void {
+    if (this.kind() !== T.Header) {
+      const text = this.kind() === Kind.EOF ? '' : this.displayed();
+      const hint = text.toLowerCase().startsWith('eventmodeling')
+        ? 'an event model starts with `eventmodeling`, in lower case and followed by a blank or a line break'
+        : 'an event model starts with `eventmodeling`';
+      this.fail([T.Header], hint);
+    }
+    const range = this.range(this.i++);
+    this.st.statement('header', range);
+    this.children.push({ id: 'eventmodeling', type: 'Header', range });
+  }
+
+  /** `(AccDescr | AccTitle | Title | Entity | Frame | Data | Note | Gwt)* EOF` */
+  private document(): void {
+    for (;;) {
+      const k = this.kind();
+      if (k === Kind.EOF) return;
+      this.statement(() => this.dispatch(k));
+    }
+  }
+
+  private dispatch(k: number): void {
+    if (k === T.Tf || k === T.Timeframe || k === T.Rf || k === T.Resetframe) this.frame();
+    else if (k === T.Entity) this.entity();
+    else if (k === T.Data) this.dataBlock();
+    else if (k === T.Note) this.note();
+    else if (k === T.Gwt) this.gwt();
+    else if (k === T.Title || k === T.AccTitle || k === T.AccDescr) this.textStatement(k);
+    else this.fail(AFTER_STATEMENT);
+  }
+
+  /** Record a finished statement: its node, its span. */
+  private done(node: EventModelStatementNode, kind: string): void {
+    this.children.push(node);
+    this.st.statement(kind, node.range);
+  }
+
+  /** `Kind`: one of the kind keywords; its short form. */
+  private kindOf(): { text: EventModelText; kind: EventModelKind } {
+    const kind = KINDS[this.kind()];
+    if (kind === undefined) this.fail(KIND_LIST);
+    return { text: this.text(), kind };
+  }
+
+  /** `QualifiedName: ID ('.' ID)*` */
+  private qualifiedName(): EventModelText {
+    const first = this.expect(T.Id);
+    let value = first.value;
+    while (this.kind() === T.Dot) {
+      this.i++;
+      value += `.${this.expect(T.Id, 'a name goes after each `.`').value}`;
+    }
+    return { value, range: { start: first.range.start, end: this.end() } };
+  }
+
+  /** An optional data type between backticks, then a data token of `kind`. */
+  private data(kind: number): EventModelDataNode {
+    let type: EventModelText | undefined;
+    if (this.kind() === T.Backtick) {
+      this.i++;
+      if (DATA_TYPE_SET[this.kind()] !== 1) this.fail(DATA_TYPES);
+      type = this.text();
+      this.expect(T.Backtick);
+    }
+    const token = this.expect(kind);
+    const node: EventModelDataNode = { text: dataText(token.value), range: token.range };
+    if (type) node.type = type;
+    return node;
+  }
+
+  /**
+   * A frame keyword, its id, kind and qualified name, then its sources, a data reference and
+   * inline data, each optional (see the grammar at the top).
+   */
+  private frame(): void {
+    const k = this.kind();
+    const keyword = this.text();
+    const frame = this.expect(T.FrameId);
+    this.duplicate(frame, keyword.range.start);
+    const { text: kindText, kind } = this.kindOf();
+    const name = this.qualifiedName();
+    const node: EventModelFrameNode = {
+      id: '',
+      type: 'Frame',
+      range: { start: keyword.range.start, end: 0 },
+      keyword,
+      reset: k === T.Rf || k === T.Resetframe,
+      frame,
+      kind: kindText,
+      name,
+      children: [],
+    };
+    while (this.kind() === T.Arrow) {
+      const arrow = this.range(this.i++).start;
+      const source = this.expect(T.FrameId);
+      node.children.push({
+        id: '',
+        type: 'Source',
+        range: { start: arrow, end: source.range.end },
+        frame: source,
+      });
+    }
+    if (this.kind() === T.OpenRef) {
+      this.i++;
+      node.dataRef = this.expect(T.Id);
+      this.expect(T.CloseRef);
+    }
+    if (this.kind() === T.Backtick || this.kind() === T.DataInline)
+      node.data = this.data(T.DataInline);
+    node.range.end = this.end();
+    node.id = this.id(`frame:${frame.value}`);
+    for (const s of node.children) s.id = this.id(`relation:${s.frame.value}->${frame.value}`);
+    this.frames.push({ node, kind });
+    this.done(node, 'frame');
+  }
+
+  /** v12's thrown error (`db.ts` `setAst`): a frame id read before, tf and rf alike. */
+  private duplicate(frame: EventModelText, start: number): void {
+    if (!this.frameIds.has(frame.value)) {
+      this.frameIds.add(frame.value);
+      return;
+    }
+    this.st.diagnostics.error(
+      EVENTMODELING_DUPLICATE_FRAME,
+      `Duplicate event modeling frame ID "${frame.value}" on line ${this.lineOf(start)}`,
+      frame.range
+    );
+  }
+
+  /** `'entity' QualifiedName` */
+  private entity(): void {
+    const start = this.range(this.i++).start;
+    const name = this.qualifiedName();
+    const range = { start, end: this.end() };
+    this.done({ id: this.id(`entity:${name.value}`), type: 'Entity', range, name }, 'entity');
+  }
+
+  /** `'data' ID ('`' DataType '`')? DATA_BLOCK` */
+  private dataBlock(): void {
+    const start = this.range(this.i++).start;
+    const name = this.expect(T.Id);
+    const data = this.data(T.DataBlock);
+    const range = { start, end: this.end() };
+    this.done({ id: this.id(`data:${name.value}`), type: 'Data', range, name, data }, 'data');
+  }
+
+  /** `'note' FID ('`' DataType '`')? DATA_BLOCK` */
+  private note(): void {
+    const start = this.range(this.i++).start;
+    const frame = this.expect(T.FrameId);
+    const data = this.data(T.DataBlock);
+    const range = { start, end: this.end() };
+    this.done({ id: this.id(`note:${frame.value}`), type: 'Note', range, frame, data }, 'note');
+  }
+
+  /** `'gwt' FID 'given' Step+ ('when' Step+)? 'then' Step+` */
+  private gwt(): void {
+    const start = this.range(this.i++).start;
+    const frame = this.expect(T.FrameId);
+    this.expect(T.Given);
+    const given = this.steps();
+    let when: EventModelGwtStepNode[] = [];
+    if (this.kind() === T.When) {
+      this.i++;
+      when = this.steps();
+    }
+    this.expect(T.Then);
+    const then = this.steps();
+    const range = { start, end: this.end() };
+    const node = { id: this.id(`gwt:${frame.value}`), type: 'Gwt' as const, range, frame };
+    this.done({ ...node, given, when, then }, 'gwt');
+  }
+
+  /** `Step+`, `Step: Kind ID` */
+  private steps(): EventModelGwtStepNode[] {
+    const out: EventModelGwtStepNode[] = [];
+    do {
+      const { text, kind } = this.kindOf();
+      const step = { kind: text, name: this.expect(T.Id) };
+      this.stepKinds.set(step, kind);
+      out.push(step);
+    } while (KINDS[this.kind()] !== undefined);
+    return out;
+  }
+
+  /** `title …`, `accTitle: …`, `accDescr …` (the last of each wins, as Langium assigns). */
+  private textStatement(k: number): void {
+    const token = this.text();
+    // The image keeps the blanks before the keyword (EM_TITLE's `[\t ]*`); the node does not.
+    const lead = token.value.length - token.value.trimStart().length;
+    const range = { start: token.range.start + lead, end: token.range.end };
+    if (k === T.Title) {
+      const node: EventModelTextNode = {
+        id: this.id('title'),
+        type: 'Title',
+        range,
+        text: titleValue(token.value),
+      };
+      this.title = node;
+      this.done(node, 'title');
+    } else if (k === T.AccTitle) {
+      const node: EventModelTextNode = {
+        id: this.id('accTitle'),
+        type: 'AccTitle',
+        range,
+        text: accTitleValue(token.value),
+      };
+      this.accTitle = node;
+      this.done(node, 'accTitle');
+    } else {
+      const node: EventModelTextNode = {
+        id: this.id('accDescr'),
+        type: 'AccDescr',
+        range,
+        text: accDescrValue(token.value),
+      };
+      this.accDescr = node;
+      this.done(node, 'accDescr');
+    }
+  }
+}
