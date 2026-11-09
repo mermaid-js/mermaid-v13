@@ -8,7 +8,7 @@ Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Dra
 | T2 grammar, parser, model, AST | #581 | #580 | merged (ff a2cab0f30; package entry 4,178 B gz, no core change) |
 | T3 fishbone layout | #582 | #581 | merged (ff 8deb7a764; package entry 7,154 B gz, no core code change) |
 | T4 SVG renderer | #583 | #582 | merged (ff ff665803f; package entry 8,478 B gz; core 94,412 B gz unchanged) |
-| T6 language facet | #584 | #581 | — |
+| T6 language facet | #584 | #581 | merged (ff 9b751af9f; package entry 8,758 B gz, `./language` 5,984 B gz; core unchanged) |
 | T5 integration | #585 | #583, #584 | — |
 | T7 ASCII outline (optional) | #586 | #585 | — |
 
