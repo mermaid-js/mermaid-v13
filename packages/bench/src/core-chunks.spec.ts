@@ -5,8 +5,9 @@
  * Without that, esbuild gives each set of lazy importers its own shared chunk, and a diagram
  * that imports one more combination of `svg`, `text`, `layout` or `parser-kit` re-splits core.
  *
- * Each case registers one stub diagram, as a port does: it turns the `venn` placeholder row of
- * the generated registry into a lazily loaded row. The stubs import different core subpaths.
+ * Each case registers one stub diagram, as a port does: it turns the `architecture` placeholder
+ * row of the generated registry (a type with no package; `venn` until #501 ported it) into a
+ * lazily loaded row. The stubs import different core subpaths.
  *
  * Spec #414 (D331, D322): a diagram's theme table is plain data on its plugin, loaded with its
  * chunk, so a themed stub grows core by its row only too. Its control imports the same table
@@ -32,7 +33,7 @@ const ENTRY = fileURLToPath(new URL('../../mermaid/src/cdn.ts', import.meta.url)
 const REGISTRY = fileURLToPath(
   new URL('../../mermaid/src/generated/registry.gen.ts', import.meta.url)
 );
-const PLACEHOLDER = "{ type: 'venn', pattern: /^\\s*venn-beta/ },";
+const PLACEHOLDER = "{ type: 'architecture', pattern: /^\\s*architecture/ },";
 
 const STUBS = {
   'svg and text, no layout': new URL('./__fixtures__/stub-diagram/svg-text.ts', import.meta.url),
@@ -45,7 +46,8 @@ const STUBS = {
 type Stub = keyof typeof STUBS;
 
 /**
- * Registers `stub` as a lazily loaded first-party diagram, in place of the `venn` placeholder.
+ * Registers `stub` as a lazily loaded first-party diagram, in place of the `architecture`
+ * placeholder.
  * `inCore` imports it statically instead, into core's closure (the control for a theme table).
  */
 function registerStub(stub: URL, inCore = false): Plugin {
@@ -60,7 +62,8 @@ function registerStub(stub: URL, inCore = false): Plugin {
           ? `() => Promise.resolve(stubInCore)`
           : `() => import(${path}).then((m) => m.stub)`;
         const row =
-          `{ type: 'venn', pattern: /^\\s*venn-beta/, id: 'venn', formats: ['svg'], ` +
+          `{ type: 'architecture', pattern: /^\\s*architecture/, id: 'architecture', ` +
+          `formats: ['svg'], ` +
           `load: ${load} },`;
         const head = inCore ? `import { stub as stubInCore } from ${path};\n` : '';
         return { contents: head + source.replace(PLACEHOLDER, row), loader: 'ts' };
