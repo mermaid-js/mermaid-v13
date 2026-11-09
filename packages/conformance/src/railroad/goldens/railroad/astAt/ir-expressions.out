@@ -1,0 +1,16 @@
+@ 2:1  |expr = sequence(nonterminal("term"), zeroOrMore(terminal("+")), optional(special("sp"))) ;
+  rule:expr 2:1-2:91 "expr = sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\"))) ;"
+@ 2:32  expr = sequence(nonterminal("te|rm"), zeroOrMore(terminal("+")), optional(special("sp"))) ;
+  rule:expr/0/0 2:17-2:36 "nonterminal(\"term\")"
+  rule:expr/0 2:8-2:89 "sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\")))"
+  rule:expr 2:1-2:91 "expr = sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\"))) ;"
+@ 2:49  expr = sequence(nonterminal("term"), zeroOrMore(|terminal("+")), optional(special("sp"))) ;
+  rule:expr/0/1/0 2:49-2:62 "terminal(\"+\")"
+  rule:expr/0/1 2:38-2:63 "zeroOrMore(terminal(\"+\"))"
+  rule:expr/0 2:8-2:89 "sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\")))"
+  rule:expr 2:1-2:91 "expr = sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\"))) ;"
+@ 2:84  expr = sequence(nonterminal("term"), zeroOrMore(terminal("+")), optional(special("s|p"))) ;
+  rule:expr/0/2/0 2:74-2:87 "special(\"sp\")"
+  rule:expr/0/2 2:65-2:88 "optional(special(\"sp\"))"
+  rule:expr/0 2:8-2:89 "sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\")))"
+  rule:expr 2:1-2:91 "expr = sequence(nonterminal(\"term\"), zeroOrMore(terminal(\"+\")), optional(special(\"sp\"))) ;"

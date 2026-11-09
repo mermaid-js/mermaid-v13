@@ -1,0 +1,15 @@
+@ 3:15  expr ::= term |;
+  | operator 3:15-3:15 "" -> "|"
+  , operator 3:15-3:15 "" -> ","
+  ? operator 3:15-3:15 "" -> "?"
+  * operator 3:15-3:15 "" -> "*"
+  + operator 3:15-3:15 "" -> "+"
+  - operator 3:15-3:15 "" -> "-"
+  ; operator 3:15-3:15 "" -> ";"
+  expr node (rule) 3:15-3:15 "" -> "expr"
+  term node (rule) 3:15-3:15 "" -> "term"
+@ 5:8  next = |
+  expr node (rule) 5:8-5:8 "" -> "expr"
+  term node (rule) 5:8-5:8 "" -> "term"
+@ 6:10  last = te|
+  term node (rule) 6:8-6:10 "te" -> "term"

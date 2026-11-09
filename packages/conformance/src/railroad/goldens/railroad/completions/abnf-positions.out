@@ -1,0 +1,12 @@
+@ 2:13  list = item |;
+  / operator 2:13-2:13 "" -> "/"
+  * operator (any number of times) 2:13-2:13 "" -> "*"
+  1* operator (once or more) 2:13-2:13 "" -> "1*"
+  ; operator 2:13-2:13 "" -> ";"
+  list node (rule) 2:13-2:13 "" -> "list"
+  item node (rule) 2:13-2:13 "" -> "item"
+@ 4:8  next = |
+  * operator (any number of times) 4:8-4:8 "" -> "*"
+  1* operator (once or more) 4:8-4:8 "" -> "1*"
+  list node (rule) 4:8-4:8 "" -> "list"
+  item node (rule) 4:8-4:8 "" -> "item"

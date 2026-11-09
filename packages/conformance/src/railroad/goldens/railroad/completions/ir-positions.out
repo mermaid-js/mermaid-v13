@@ -1,0 +1,31 @@
+@ 2:1  |
+  title keyword 2:1-2:1 "" -> "title "
+  accTitle keyword 2:1-2:1 "" -> "accTitle: "
+  accDescr: keyword 2:1-2:1 "" -> "accDescr: "
+  accDescr { keyword 2:1-2:1 "" -> "accDescr { }"
+@ 3:8  expr = |sequence(nonterminal("t"), ) ;
+  sequence keyword 3:8-3:8 "" -> "sequence("
+  choice keyword 3:8-3:8 "" -> "choice("
+  optional keyword 3:8-3:8 "" -> "optional("
+  oneOrMore keyword 3:8-3:8 "" -> "oneOrMore("
+  zeroOrMore keyword 3:8-3:8 "" -> "zeroOrMore("
+  terminal keyword 3:8-3:8 "" -> "terminal("
+  nonterminal keyword 3:8-3:8 "" -> "nonterminal("
+  special keyword 3:8-3:8 "" -> "special("
+  term node (rule) 3:8-3:8 "" -> "nonterminal(\"term\")"
+@ 3:31  expr = sequence(nonterminal("t|"), ) ;
+  term node (rule) 3:30-3:31 "t" -> "term"
+@ 3:35  expr = sequence(nonterminal("t"), |) ;
+  sequence keyword 3:35-3:35 "" -> "sequence("
+  choice keyword 3:35-3:35 "" -> "choice("
+  optional keyword 3:35-3:35 "" -> "optional("
+  oneOrMore keyword 3:35-3:35 "" -> "oneOrMore("
+  zeroOrMore keyword 3:35-3:35 "" -> "zeroOrMore("
+  terminal keyword 3:35-3:35 "" -> "terminal("
+  nonterminal keyword 3:35-3:35 "" -> "nonterminal("
+  special keyword 3:35-3:35 "" -> "special("
+  term node (rule) 3:35-3:35 "" -> "nonterminal(\"term\")"
+@ 4:21  term = terminal("1")| ;
+  ; operator 4:21-4:21 "" -> ";"
+@ 5:11  other = op|
+  optional keyword 5:9-5:11 "op" -> "optional("

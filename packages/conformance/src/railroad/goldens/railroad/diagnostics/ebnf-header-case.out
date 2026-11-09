@@ -1,0 +1,2 @@
+1:1-1:19 "RAILROAD-EBNF-BETA" error UNEXPECTED: Expected `railroad-ebnf-beta`, got `RAILROAD-EBNF-BETA`; the keyword is written in lower case.
+1:1-1:19 "RAILROAD-EBNF-BETA" info RAILROAD_HEADER_CASE: v12 detects `RAILROAD-EBNF-BETA` as a railroad diagram, since detection ignores case, and then rejects it: its parser reads the keyword in lower case only. Write `railroad-ebnf-beta`.

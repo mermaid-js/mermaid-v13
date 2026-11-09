@@ -1,0 +1,6 @@
+@ 3:14  number = 1*DI|GIT ;
+  prepare: 3:12-3:17 "DIGIT"; rename to "digit-char":
+  %% rename-to: digit-char
+  railroad-abnf-beta
+  number = 1*digit-char ;
+  digit-char = %x30-39 ;

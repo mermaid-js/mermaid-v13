@@ -1,0 +1,17 @@
+@ 2:13  Expr <- Sum |;
+  / operator 2:13-2:13 "" -> "/"
+  & operator 2:13-2:13 "" -> "&"
+  ! operator 2:13-2:13 "" -> "!"
+  ? operator 2:13-2:13 "" -> "?"
+  * operator 2:13-2:13 "" -> "*"
+  + operator 2:13-2:13 "" -> "+"
+  . operator 2:13-2:13 "" -> "."
+  ; operator 2:13-2:13 "" -> ";"
+  Expr node (rule) 2:13-2:13 "" -> "Expr"
+  Sum node (rule) 2:13-2:13 "" -> "Sum"
+@ 4:9  Next <- |
+  & operator 4:9-4:9 "" -> "&"
+  ! operator 4:9-4:9 "" -> "!"
+  . operator 4:9-4:9 "" -> "."
+  Expr node (rule) 4:9-4:9 "" -> "Expr"
+  Sum node (rule) 4:9-4:9 "" -> "Sum"

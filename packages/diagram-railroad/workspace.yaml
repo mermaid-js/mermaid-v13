@@ -27,3 +27,15 @@ grammars:
     kinds:
       module: parser/tokens.ts
       object: PegKind
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - plugin.ts
+    - config.ts
+    - test-context.ts
+    - index.ts
+    - testing.ts

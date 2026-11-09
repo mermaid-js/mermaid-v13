@@ -56,18 +56,67 @@ An expression is one call: a list, a wrapper or a leaf. A list with one item is 
 item.
 
 ```ebnf
-expression = KW_SEQUENCE LPAREN list RPAREN
-           | KW_CHOICE LPAREN list RPAREN
-           | KW_OPTIONAL LPAREN expression RPAREN
-           | KW_ONE_OR_MORE LPAREN expression RPAREN
-           | KW_ZERO_OR_MORE LPAREN expression RPAREN
-           | KW_TERMINAL LPAREN STRING RPAREN
-           | KW_NONTERMINAL LPAREN STRING RPAREN
-           | KW_SPECIAL LPAREN STRING RPAREN ;
+expression = sequence
+           | choice
+           | optional
+           | oneOrMore
+           | zeroOrMore
+           | terminal
+           | nonterminal
+           | special ;
 ```
 
 ```ebnf
 list = expression { COMMA expression } ;
+```
+
+`sequence(a, b, …)`: the expressions one after another.
+
+```ebnf
+sequence = KW_SEQUENCE LPAREN list RPAREN ;
+```
+
+`choice(a, b, …)`: one of the expressions, as branches stacked around the track.
+
+```ebnf
+choice = KW_CHOICE LPAREN list RPAREN ;
+```
+
+`optional(e)`: `e` or nothing, drawn with a bypass above.
+
+```ebnf
+optional = KW_OPTIONAL LPAREN expression RPAREN ;
+```
+
+`oneOrMore(e)`: `e` once or more, drawn with a loop below.
+
+```ebnf
+oneOrMore = KW_ONE_OR_MORE LPAREN expression RPAREN ;
+```
+
+`zeroOrMore(e)`: `e` any number of times, or not at all: a loop below and a bypass
+above.
+
+```ebnf
+zeroOrMore = KW_ZERO_OR_MORE LPAREN expression RPAREN ;
+```
+
+`terminal("text")`: literal text, drawn in a rounded box.
+
+```ebnf
+terminal = KW_TERMINAL LPAREN STRING RPAREN ;
+```
+
+`nonterminal("name")`: a reference to the rule `name`, drawn in a square box.
+
+```ebnf
+nonterminal = KW_NONTERMINAL LPAREN STRING RPAREN ;
+```
+
+`special("text")`: a description, drawn in a dashed box.
+
+```ebnf
+special = KW_SPECIAL LPAREN STRING RPAREN ;
 ```
 
 `title Grammar`: the title (the last one wins).
