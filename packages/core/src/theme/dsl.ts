@@ -28,6 +28,9 @@
  *   inline(v, b)        the same when the theme wrote v (the theme spec's base, tokens, values or
  *                       rules, or a diagram table's family entry), else b; a shared or diagram
  *                       light/dark rule for v, or the author's override of v, does not count
+ *   slot(p, 5, b)       palette p's slot 5 as a literal colour when p is non-empty (the theme's
+ *                       list, or the author's), else b: a role colour that follows per-item
+ *                       colour where a theme turns it on and its fallback elsewhere (D474)
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as
@@ -60,7 +63,8 @@ export type Fn =
   | 'adjustHue'
   | 'ifSet'
   | 'literal'
-  | 'inline';
+  | 'inline'
+  | 'slot';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -76,6 +80,7 @@ const ARITY: Readonly<Record<Fn, number>> = {
   ifSet: 2,
   literal: 1,
   inline: 1,
+  slot: 3,
 };
 
 const RE_TOKEN =
