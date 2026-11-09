@@ -4,7 +4,6 @@
   actor keyword 6:3-6:3 "" -> "actor"
   systemBoundary keyword 6:3-6:3 "" -> "systemBoundary"
   note keyword 6:3-6:3 "" -> "note for "
-  json keyword 6:3-6:3 "" -> "json "
   classDef keyword 6:3-6:3 "" -> "classDef"
   class keyword 6:3-6:3 "" -> "class"
   style keyword 6:3-6:3 "" -> "style"

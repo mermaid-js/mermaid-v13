@@ -4,7 +4,7 @@
  * marker means. Keyword docs are not here: they come from the grammar file (`generated/docs.ts`).
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { UsecaseArrowType, UsecaseDirection, UsecaseModel } from '../model.ts';
+import type { UsecaseArrowType, UsecaseModel } from '../model.ts';
 import type { UsecaseElementKind } from '../parser/ast.ts';
 import { generatedId } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
@@ -17,14 +17,16 @@ export interface KeywordItem {
   readonly insert?: string;
 }
 
-/** Statement keywords, in the order they are offered. */
+/**
+ * Statement keywords, in the order they are offered. `json` is not one: `json Id@` and its
+ * object are one token, so the keyword alone is no statement start to offer.
+ */
 export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.Usecase, label: 'usecase-beta' },
   { kind: T.Actor, label: 'actor' },
   { kind: T.SystemBoundary, label: 'systemBoundary' },
   { kind: T.End, label: 'end' },
   { kind: T.Note, label: 'note', insert: 'note for ' },
-  { kind: T.JsonDeclarationStart, label: 'json', insert: 'json ' },
   { kind: T.ClassDef, label: 'classDef' },
   { kind: T.Class, label: 'class' },
   { kind: T.Style, label: 'style' },
@@ -67,13 +69,6 @@ export const DIRECTIONS: readonly (readonly [dir: string, kind: number, meaning:
   ['LR', T.Lr, 'left to right (the default)'],
   ['RL', T.Rl, 'right to left'],
 ];
-
-export const DIRECTION_MEANING: Readonly<Record<UsecaseDirection, string>> = {
-  TB: 'top to bottom',
-  BT: 'bottom to top',
-  LR: 'left to right',
-  RL: 'right to left',
-};
 
 /** The arrow forms offered where an arrow goes: the text, its first token and what it draws. */
 export const ARROW_FORMS: readonly (readonly [text: string, kind: number, meaning: string])[] = [
@@ -223,9 +218,3 @@ export const span = (start: number, end: number): Range => ({ start, end });
 
 export const plural = (n: number, one: string, many = `${one}s`): string =>
   `${n} ${n === 1 ? one : many}`;
-
-/** `a`, `a and b`, `a, b and c`. */
-export function list(items: readonly string[]): string {
-  if (items.length <= 1) return items.join('');
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
-}

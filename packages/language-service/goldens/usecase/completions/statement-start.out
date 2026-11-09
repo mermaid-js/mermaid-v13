@@ -2,7 +2,6 @@
   actor keyword 2:3-2:3 "" -> "actor"
   systemBoundary keyword 2:3-2:3 "" -> "systemBoundary"
   note keyword 2:3-2:3 "" -> "note for "
-  json keyword 2:3-2:3 "" -> "json "
   classDef keyword 2:3-2:3 "" -> "classDef"
   class keyword 2:3-2:3 "" -> "class"
   style keyword 2:3-2:3 "" -> "style"

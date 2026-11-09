@@ -428,7 +428,7 @@ Modes: `INITIAL`, `comment`, `acc`, `jsonBody`, `stereotype`.
 | jsonBody | UNCLOSED_JSON_OBJECT_LITERAL | `\{[\s\S]*` | pop | An object never closed: the rest of the text. |
 | stereotype | STEREOTYPE_END | `>>` | pop | `>>`: closes a stereotype. |
 | stereotype | STEREOTYPE_TEXT | `(?=(?:(?!>>)[^\n])*?(?!>>)\S)(?:(?!>>)[^\n])+(?=>>)` |  | The stereotype's text, up to the first `>>` on its line; not blank. |
-| stereotype | UNCLOSED_STEREOTYPE_TEXT | `[^\n]+` | pop | The rest of the line, when no `>>` closes the stereotype on it (or its text is blank). |
+| stereotype | UNCLOSED_STEREOTYPE_TEXT | `(?!(?=(?:(?!>>)[^\n])*?(?!>>)\S)(?:(?!>>)[^\n])+>>)[^\n]+` | pop | The rest of the line, when no `>>` closes the stereotype on it (or its text is blank). The lookahead repeats `STEREOTYPE_TEXT` (which is tried first, so the lexer reads the same): a highlighter that tries a mode's ends before its other rules then still finds the text. |
 
 Removed before lexing (highlighted only):
 

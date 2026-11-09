@@ -185,8 +185,10 @@ EOF                       /$/ ;
 <stereotype> STEREOTYPE_END />>/                             pop :punctuation ;
 (** The stereotype's text, up to the first `>>` on its line; not blank. *)
 <stereotype> STEREOTYPE_TEXT /(?=(?:(?!>>)[^\n])*?(?!>>)\S)(?:(?!>>)[^\n])+(?=>>)/ :string ;
-(** The rest of the line, when no `>>` closes the stereotype on it (or its text is blank). *)
-<stereotype> UNCLOSED_STEREOTYPE_TEXT /[^\n]+/              pop :string ;
+(** The rest of the line, when no `>>` closes the stereotype on it (or its text is blank). The
+lookahead repeats `STEREOTYPE_TEXT` (which is tried first, so the lexer reads the same): a
+highlighter that tries a mode's ends before its other rules then still finds the text. *)
+<stereotype> UNCLOSED_STEREOTYPE_TEXT /(?!(?=(?:(?!>>)[^\n])*?(?!>>)\S)(?:(?!>>)[^\n])+>>)[^\n]+/ pop :string ;
 
 @trivia
 

@@ -1086,6 +1086,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../../packages/diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../../packages/diagram-venn
