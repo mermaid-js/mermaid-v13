@@ -1,0 +1,22 @@
+@ 2:3  |
+  classDef keyword 2:3-2:3 "" -> "classDef "
+  title keyword 2:3-2:3 "" -> "title "
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr: keyword 2:3-2:3 "" -> "accDescr: "
+  accDescr { keyword 2:3-2:3 "" -> "accDescr { }"
+  " value (a row: "Section", or "Leaf": value) 2:3-2:3 "" -> "\""
+@ 3:6  cla|
+  classDef keyword 3:3-3:6 "cla" -> "classDef "
+@ 4:5  ti|
+  title keyword 4:3-4:5 "ti" -> "title "
+@ 5:6  acc|
+  accTitle keyword 5:3-5:6 "acc" -> "accTitle: "
+  accDescr: keyword 5:3-5:6 "acc" -> "accDescr: "
+  accDescr { keyword 5:3-5:6 "acc" -> "accDescr { }"
+@ 6:1  |
+  classDef keyword 6:1-6:1 "" -> "classDef "
+  title keyword 6:1-6:1 "" -> "title "
+  accTitle keyword 6:1-6:1 "" -> "accTitle: "
+  accDescr: keyword 6:1-6:1 "" -> "accDescr: "
+  accDescr { keyword 6:1-6:1 "" -> "accDescr { }"
+  " value (a row: "Section", or "Leaf": value) 6:1-6:1 "" -> "\""

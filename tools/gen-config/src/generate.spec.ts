@@ -70,6 +70,7 @@ describe('gen-config', () => {
         `export const ${defaultsName(section)}: `
       );
     }
+    expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
     expect(SECTION_OWNERS.xyChart).toBe('packages/diagram-xychart');
   });
 

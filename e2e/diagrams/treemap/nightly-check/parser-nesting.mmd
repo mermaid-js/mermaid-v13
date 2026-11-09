@@ -1,0 +1,15 @@
+---
+description: >-
+  Parser nesting check (#484): any indent width, a dedent to a level never
+  seen, a row indented under a leaf (it joins the leaf's parent), tabs counted
+  as one, and two roots.
+---
+treemap
+"Root"
+      "Deep"
+          "d1": 1
+   "Mid": 2
+        "Under leaf": 3
+	"Tab": 4
+"Second root"
+  "s1": 5

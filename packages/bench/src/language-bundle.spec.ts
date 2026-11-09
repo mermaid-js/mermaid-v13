@@ -91,6 +91,34 @@ const PACKAGES = [
     ],
   },
   {
+    name: 'treemap',
+    dir: 'diagram-treemap',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
+  {
+    name: 'wardley',
+    dir: 'diagram-wardley',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'v12-specs/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+    ],
+  },
+  {
     name: 'xychart',
     dir: 'diagram-xychart',
     renderer: [

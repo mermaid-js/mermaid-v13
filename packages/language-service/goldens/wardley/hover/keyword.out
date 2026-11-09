@@ -1,0 +1,59 @@
+@ 1:11  wardley-be|ta
+  1:1-1:13 "wardley-beta"
+  | **`wardley-beta`**
+  |
+  | `wardley-beta`: starts a Wardley map.
+@ 2:3  ti|tle Tea Shop
+  2:1-2:6 "title"
+  | **`title`**
+  |
+  | `title Tea Shop`: the title drawn at the top (the last one wins).
+@ 3:13  title Tea Sh|op
+  none
+@ 4:6  compo|nent Tea [0.5, 0.7] label [1, 2] (build) inertia
+  4:1-4:10 "component"
+  | **`component`**
+  |
+  | `component Name [visibility, evolution]`, then `label [x, y]`, a strategy and `inertia`, in that order, each optional.
+@ 4:28  component Tea [0.5, 0.7] la|bel [1, 2] (build) inertia
+  4:26-4:31 "label"
+  | **`label`**
+  |
+  | `label [x, y]`: moves a component's label by `x`, `y` pixels.
+@ 4:42  component Tea [0.5, 0.7] label [1, 2] (bu|ild) inertia
+  4:40-4:45 "build"
+  | **`build`**
+  |
+  | `(build)`, `(buy)`, `(outsource)` or `(market)` after a component: how it is sourced.
+@ 4:51  component Tea [0.5, 0.7] label [1, 2] (build) iner|tia
+  4:47-4:54 "inertia"
+  | **`inertia`**
+  |
+  | `inertia` or `(inertia)` after a component: it resists change.
+@ 5:6  Tea -|> Tea
+  5:5-5:7 "->"
+  | **`->`**
+  |
+  | `->`: a link from one component to another, or the next evolution stage.
+@ 6:6  Tea +|> Tea
+  6:5-6:7 "+>"
+  | **`+>`**
+  |
+  | `+>`, `+<` or `+<>`: a flow along a link (forward, backward or both ways), after either name.
+@ 7:8  Tea -.-|> Tea
+  7:5-7:9 "-.->"
+  | **`-.->`**
+  |
+  | A link's arrow: `-->`, `-.->` (dashed) or `>`, or a labelled flow such as `+'label'>`, `+'label'<` or `+'label'<>`.
+@ 8:5  pipe|line Tea {
+  8:1-8:9 "pipeline"
+  | **`pipeline`**
+  |
+  | `pipeline Parent {`, then at least one component per line, then `}` on its own line.
+@ 11:4  acc|Title: x
+  11:1-11:9 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 12:7  note "|a" [0.3, 0.3]
+  none

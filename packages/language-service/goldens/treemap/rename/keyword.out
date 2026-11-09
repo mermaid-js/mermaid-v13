@@ -1,0 +1,3 @@
+@ 3:9  "A":::|hot
+  prepare: 3:9-3:12 "hot"; rename to "titles":
+  refused: `titles` starts with the keyword `title`, and a class name cannot.

@@ -210,7 +210,9 @@ export default tseslint.config(
       'packages/diagram-kanban/src/v12-specs/*.spec.ts',
       'packages/diagram-packet/src/v12-specs/*.spec.ts',
       'packages/diagram-radar/src/v12-specs/*.spec.ts',
+      'packages/diagram-treemap/src/v12-specs/*.spec.ts',
       'packages/diagram-cynefin/src/v12-specs/*.spec.ts',
+      'packages/diagram-wardley/src/v12-specs/*.spec.ts',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',

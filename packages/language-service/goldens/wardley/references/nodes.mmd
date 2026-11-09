@@ -1,0 +1,14 @@
+wardley-beta
+anchor User [0.95, 0.6]
+component |Tea [0.5, 0.7]
+component "Hot Water" [0.4, 0.3]
+component Tea [0.6, 0.7]
+User -> Tea
+Tea -> "Hot W|ater"
+Tea -> Hot Water
+evolve Tea 0.8
+deaccelerator Tea [0.5, 0.3]
+pipeline Tea {
+  component |Leaf [0.2]
+}
+Leaf -> Tea

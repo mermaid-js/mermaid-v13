@@ -182,6 +182,16 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
+    type: 'treemap',
+    title: 'Treemap syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
+    type: 'wardley',
+    title: 'Wardley map syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {

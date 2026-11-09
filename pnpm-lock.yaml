@@ -152,6 +152,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:^
         version: link:../diagram-xychart
@@ -258,6 +264,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:^
         version: link:../diagram-xychart
@@ -276,6 +288,9 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      entities:
+        specifier: 8.1.0
+        version: 8.1.0
       js-yaml:
         specifier: ^4.3.2
         version: 4.3.2
@@ -471,6 +486,18 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-wardley:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-xychart:
     devDependencies:
       '@mermaid-js/core':
@@ -533,6 +560,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:*
         version: link:../diagram-xychart
@@ -603,6 +636,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:*
         version: link:../diagram-xychart
@@ -829,6 +868,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:*
         version: link:../diagram-xychart
@@ -978,6 +1023,12 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../../packages/diagram-wardley
       '@mermaid-js/diagram-xychart':
         specifier: workspace:^
         version: link:../../packages/diagram-xychart

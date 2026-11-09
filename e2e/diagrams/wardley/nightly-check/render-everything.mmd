@@ -1,0 +1,18 @@
+wardley-beta
+title Everything
+evolution First -> Second -> Third
+anchor User [0.95, 0.5]
+component Kettle [0.6, 0.45] inertia
+component Water [0.3, 0.8] (buy)
+User +> Kettle ; boil
+Kettle -.-> Water
+evolve Water 0.9
+pipeline Kettle {
+  component Campfire [0.35]
+  component Electric [0.55]
+}
+annotations [0.05, 0.95]
+annotation 1,[0.4, 0.6] "First note"
+note "Watch this" [0.2, 0.2]
+accelerator Faster [0.7, 0.3]
+deaccelerator Slower [0.2, 0.5]

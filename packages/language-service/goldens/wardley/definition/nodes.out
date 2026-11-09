@@ -1,0 +1,18 @@
+@ 6:1  |User -> Tea
+  -> 2:8-2:12 "User"
+@ 6:10  User -> T|ea
+  -> 3:11-3:14 "Tea"
+@ 7:15  Tea -> Hot Wat|er
+  -> 4:12-4:21 "Hot Water"
+@ 8:8  evolve |Tea 0.8
+  -> 3:11-3:14 "Tea"
+@ 9:11  pipeline T|ea {
+  -> 3:11-3:14 "Tea"
+@ 10:13  component |Leaf [0.2]
+  -> 10:13-10:17 "Leaf"
+@ 12:9  Leaf -> |Tea
+  -> 3:11-3:14 "Tea"
+@ 13:13  accelerator |Tea [0.5, 0.8]
+  -> 3:11-3:14 "Tea"
+@ 14:11  Tea -> Gho|st
+  -> none

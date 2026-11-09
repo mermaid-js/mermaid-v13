@@ -209,13 +209,14 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'xychart']),
+  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'wardley', 'xychart']),
   primaryTextColor: def('pt', 'color', [
     'core',
     'class',
     'quadrant',
     'packet',
     'cynefin',
+    'wardley',
     'xychart',
   ]),
   lineColor: def('l', 'color', [
@@ -226,10 +227,20 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'gitgraph',
     'radar',
     'cynefin',
+    'wardley',
   ]),
-  // Pie, packet, cynefin, info and xychart draw in the font family but size their text by their
-  // own variables (xychart: its `xyChart` config).
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info', 'xychart']),
+  // Pie, packet, cynefin, info, treemap, wardley and xychart draw in the font family but size their
+  // text by their own variables or constants (wardley: its config; xychart: its `xyChart` config).
+  fontFamily: def('ff', 'font', [
+    ...TEXT_USERS,
+    'pie',
+    'packet',
+    'cynefin',
+    'info',
+    'treemap',
+    'wardley',
+    'xychart',
+  ]),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
@@ -263,6 +274,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
+    'wardley',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',
@@ -279,7 +291,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),

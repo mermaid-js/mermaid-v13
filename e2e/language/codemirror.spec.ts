@@ -211,6 +211,8 @@ const TYPE_DOCS: Record<string, string> = {
   xychart: 'xychart\n  x-axis [a, b]\n  bar [1, 2]\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
   kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
+  treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
+  wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */

@@ -49,6 +49,8 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'treemap',
+      'wardley',
       'xychart',
     ]);
   });
@@ -151,6 +153,47 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('axis:keyword');
       expect(out).toContain('curve:keyword');
       expect(out).toContain('"Speed":string');
+    });
+
+    it('highlights a treemap with the treemap grammar', () => {
+      const out = spans('treemap\n  "Root"\n    "Leaf": 12:::hot\n  classDef hot fill:red\n');
+      expect(out).toEqual([
+        'treemap:keyword',
+        '"Root":string',
+        '"Leaf":string',
+        '::punctuation',
+        '::::operator',
+        'hot:variable',
+        'classDef hot fill:red:keyword',
+      ]);
+    });
+
+    it('highlights a Wardley map with the wardley grammar', () => {
+      const out = spans(
+        'wardley-beta\n  title Tea\n  anchor Customer [0.95, 0.63]\n  component "Cup of Tea" [0.79, 0.61] (build)\n  Customer -> "Cup of Tea"\n  evolve Customer 0.8\n'
+      );
+      expect(out).toEqual([
+        'wardley-beta:keyword',
+        'title Tea:keyword',
+        'anchor:keyword',
+        'Customer:variable',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        'component:keyword',
+        '"Cup of Tea":string',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        '(:punctuation',
+        'build:keyword',
+        '):punctuation',
+        'Customer:variable',
+        '->:operator',
+        '"Cup of Tea":string',
+        'evolve:keyword',
+        'Customer:variable',
+      ]);
     });
 
     it('highlights an XY chart with the xychart grammar', () => {

@@ -1,0 +1,8 @@
+@ 2:9  "A":::|hot
+  -> 5:12-5:15 "hot"
+@ 3:18  "a": 1:::cool|
+  -> 6:12-6:16 "cool"
+@ 4:16  "B":::nowhere|
+  -> none
+@ 6:12  classDef |cool fill:blue
+  -> 6:12-6:16 "cool"
