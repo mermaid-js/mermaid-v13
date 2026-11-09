@@ -180,6 +180,8 @@ interface Frame {
   /** The boundary current before it opened. */
   outer: number;
   node: C4BoundaryNode | undefined;
+  /** Where its statements' AST nodes go: its node, else the nearest open boundary's. */
+  children: C4StatementNode[];
   span: StatementSpan;
   /** The `{`. */
   open: Range;
@@ -214,6 +216,8 @@ class C4Parser {
   /** The source of each statement that failed: an alias in one is not reported unknown. */
   private readonly failed: Range[] = [];
   private lines: LineIndex | undefined;
+  /** The statement failed at a line break right after its macro name. */
+  private parenLine = false;
 
   constructor(
     private readonly src: string,
@@ -315,7 +319,7 @@ class C4Parser {
   private found(): string {
     const { c } = this;
     if (inSet(ENDS, c.kind)) return 'the end of the text';
-    if (c.kind === Kind.Newline) return 'a line break';
+    if (c.kind === Kind.Newline || c.start === c.end) return 'a line break';
     const text = this.src.slice(c.start, c.end).split('\n')[0] ?? '';
     return `\`${text.length > 40 ? `${text.slice(0, 40)}…` : text}\``;
   }
@@ -340,6 +344,7 @@ class C4Parser {
     if (c.kind !== Kind.Error) return undefined;
     const ch = this.src.charAt(c.start);
     if (ch === ';') return NO_SEMICOLON_HINT;
+    if (c.start === c.end) return 'write the `(` on the line of the macro name';
     if (/\s/.test(ch)) return BLANK_BEFORE_PAREN_HINT;
     return undefined;
   }
@@ -373,6 +378,12 @@ class C4Parser {
       this.failedBoundary = false;
     }
     this.lineBreaks();
+    // A macro name alone on its line, then its arguments on the next: one error, both lines.
+    if (this.parenLine && c.kind === Kind.Error && this.src.charAt(c.start) === '(') {
+      while (!inSet(ENDS, c.kind) && !c.at(Kind.Newline)) c.next();
+      this.lineBreaks();
+    }
+    this.parenLine = false;
     // `Boundary(…)` that failed, then `{` on the next line: it opens.
     if (this.failedBoundary && c.kind === T.LBrace) {
       this.openFrame(-1, undefined, c.range);
@@ -482,8 +493,7 @@ class C4Parser {
       this.st.diagnostics.unexpected('UNEXPECTED', at, STATEMENT, this.found());
       this.openFrame(-1, undefined, at);
       c.next();
-      this.lineBreaks();
-      throw STOP;
+      return this.lineBreaks() ? OPENED : DIAGRAM_STATEMENT;
     }
     this.fail(STATEMENT, k === T.RBrace ? 'this `}` closes no boundary' : this.hint());
   }
@@ -613,7 +623,11 @@ class C4Parser {
       out.push({ value: '', range: { start: c.end - 1, end: c.end - 1 } });
       c.next();
     } else if (c.kind === T.ArgsOpen) c.next();
-    else this.fail(['`(`'], this.hint() ?? `\`${name}\` takes its arguments in \`( )\``);
+    else {
+      // A line break after the name (a zero-width error): `(` on the next line is its arguments.
+      this.parenLine = c.kind === Kind.Error && c.start === c.end;
+      this.fail(['`(`'], this.hint() ?? `\`${name}\` takes its arguments in \`( )\``);
+    }
     for (;;) {
       const k = c.kind;
       if (k === T.ArgsClose) {
@@ -685,14 +699,7 @@ class C4Parser {
 
   /** Add `node` to the open boundary's children (a failed boundary's go to the one around it). */
   private place(node: C4StatementNode): void {
-    for (let k = this.frames.length - 1; k >= 0; k--) {
-      const open = this.frames[k]?.node;
-      if (open) {
-        open.children.push(node);
-        return;
-      }
-    }
-    this.doc.children.push(node);
+    (this.frames[this.frames.length - 1]?.children ?? this.doc.children).push(node);
   }
 
   /** A boundary's statement and its `{`: `{` NEWLINE, or NEWLINE `{` [NEWLINE]. */
@@ -740,7 +747,9 @@ class C4Parser {
     start = open.start
   ): void {
     const span = this.st.beginStatement('boundary', start);
-    this.frames.push({ boundary, outer: this.b.current, node, span, open, count: 0 });
+    const around = this.frames[this.frames.length - 1]?.children ?? this.doc.children;
+    const children = node?.children ?? around;
+    this.frames.push({ boundary, outer: this.b.current, node, children, span, open, count: 0 });
     if (boundary >= 0) this.b.current = boundary;
   }
 
@@ -789,7 +798,11 @@ class C4Parser {
     }
     while (this.frames.length > 0)
       this.closeFrame({ start: this.src.length, end: this.src.length });
-    const failed = this.failed.map((r) => this.src.slice(r.start, r.end));
-    this.b.finish((alias) => alias !== '' && failed.some((t) => t.includes(alias)));
+    // The words of the statements that failed: an alias among them may have been defined there.
+    const words = new Set<string>();
+    for (const r of this.failed) {
+      for (const w of this.src.slice(r.start, r.end).split(/[\s,()"{}$=]+/)) words.add(w);
+    }
+    this.b.finish((alias) => alias !== '' && words.has(alias));
   }
 }

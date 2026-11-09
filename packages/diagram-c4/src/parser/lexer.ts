@@ -30,7 +30,9 @@
  * or `accDescr {` value.
  *
  * jison throws where no rule matches (`;`, an unknown word, a blank in a macro state, `$k=x`);
- * each is a one-character `Kind.Error` and lexing goes on in the same state. Every scan is
+ * each is a one-character `Kind.Error` and lexing goes on in the same state, except at a line
+ * break after a macro name or in `$name=`: a zero-width error there leaves the macro's states,
+ * so the parser can go on at the next line. Every scan is
  * linear in the text it consumes (R-PARSE-7): the `direction` rules are looked up once per
  * line, and a keyword is read no further than one past the longest one.
  */
@@ -551,7 +553,23 @@ class C4Lexer {
       return;
     }
     if (c === RPAREN) this.close();
-    else this.emit(Kind.Error, p, p + 1);
+    else this.error(c);
+  }
+
+  /**
+   * No rule matches at `p`: a one-character error, lexing on in the same state. At a line break
+   * the error is zero-width and the macro's states are left, so the line break lexes as one and
+   * the parser goes on at the next line (jison had stopped at the error).
+   */
+  private error(c: number): void {
+    const { p } = this;
+    if (c !== LF) {
+      this.emit(Kind.Error, p, p + 1);
+      return;
+    }
+    this.emit(Kind.Error, p, p);
+    this.stack.length = 0;
+    this.state = S.INITIAL;
   }
 
   /** `)` in a macro state or the arguments: jison pops two states. */
@@ -619,7 +637,7 @@ class C4Lexer {
       this.state = S.STRING_KV_VALUE;
       return;
     }
-    this.emit(Kind.Error, p, p + 1);
+    this.error(c);
   }
 
   /** `[^"]+` is the value; `"` closes it and the named argument (two pops). */

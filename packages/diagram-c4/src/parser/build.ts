@@ -145,6 +145,8 @@ export class C4Builder {
   private readonly relationIndex = new Map<string, Map<string, number>>();
   /** Relation ends and style targets, resolved to a namespace at the end. */
   private readonly refs: { name: string; range: Range }[] = [];
+  /** Each item's `extra` names, by name: where in `extra` each is. */
+  private readonly extraIndex = new Map<Bag, Map<string, number>>();
 
   constructor(
     private readonly src: string,
@@ -167,9 +169,13 @@ export class C4Builder {
       return;
     }
     const extra = bag.extra as C4Extra[];
-    const i = extra.findIndex((e) => e.name === name);
-    if (i === -1) extra.push({ name, value });
-    else extra[i] = { name, value };
+    let names = this.extraIndex.get(bag);
+    if (!names) this.extraIndex.set(bag, (names = new Map<string, number>()));
+    const i = names.get(name);
+    if (i === undefined) {
+      names.set(name, extra.length);
+      extra.push({ name, value });
+    } else extra[i] = { name, value };
   }
 
   /** A named argument: on a relation an offset is a number; any other name sets its field. */

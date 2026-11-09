@@ -51,8 +51,8 @@ import type { Exclusion } from './d452.ts';
  * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test lists
  * them: five commented copies of a short body, where `%% cut` goes through the header.
  */
-/** The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus and #538's 12). */
-const E2E_FIXTURES = 44;
+/** The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12 and #539's 2). */
+const E2E_FIXTURES = 46;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
 const D452_EXCLUDED: Record<'unquoted' | 'comment' | 'title', string[]> = {
@@ -82,13 +82,14 @@ const D452_EXCLUDED: Record<'unquoted' | 'comment' | 'title', string[]> = {
     'c4-cases/ls-in-comment',
   ],
   title: [
+    'e2e/nightly-check/parse-fixes.mmd',
     'c4-cases/title-line-break-blank',
     'c4-cases/title-alone',
     'c4-cases/title-alone-then-statement',
   ],
 };
 /** How many sources, variants included, each D452 exclusion covers: unquoted, comment, title. */
-const D452_COUNTS = [367, 43, 17];
+const D452_COUNTS = [368, 43, 23];
 
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;

@@ -88,7 +88,10 @@ export const T = {
   UpdateElementStyle: F + 53,
   UpdateRelStyle: F + 54,
   UpdateLayoutConfig: F + 55,
-  /** `<<EOF>>` right after a macro keyword: zero-width, at the end of the text. */
+  /**
+   * `<<EOF>>` right after a macro keyword: never reached, as in v12 (the line break v12 appended
+   * is an error first).
+   */
   EofInStruct: F + 56,
   /**
    * An empty argument: `(`, blanks and `,` opening the arguments; `,,`; or blanks and `""`

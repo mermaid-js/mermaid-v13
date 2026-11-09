@@ -1726,5 +1726,21 @@
     "reason": "v12 merged `Boundary(global, …)` into its root boundary, so nothing was drawn; v13 treats `global` as an ordinary alias (D454, #539).",
     "owner": "#539",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/nightly-check/parse-fixes.mmd",
+    "inputHash": "sha256:696b17495e8e7930",
+    "kind": "accept",
+    "reason": "Written for D452's parse fixes (an unquoted argument stopping at `)` and at the line end, a trailing `%%` comment keeping its line break, a lone `title`); v12's unquoted argument ran over `)` and line breaks to the end, and v12 rejected it (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/nightly-check/titles.mmd",
+    "inputHash": "sha256:af25dbb972e0e065",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md). The front-matter title, which v12 ignored, is held back from both sides here (D218's fallback has its own specs).",
+    "owner": "#539",
+    "since": "2026-11-09"
   }
 ]

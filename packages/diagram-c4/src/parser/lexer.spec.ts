@@ -430,9 +430,18 @@ describe('the C4 token stream', () => {
     ).toBe('=x)');
   });
 
-  it('ends in EOF_IN_STRUCT right after a macro keyword, and in nothing in a value', () => {
+  it('ends in a line break after an error at it, and in nothing in a value', () => {
     const kinds = (src: string) => c4Tokens(src).map((t) => t.kind);
-    expect(kinds('C4Context\nPerson').at(-1)).toBe(T.EofInStruct);
+    // The line break v12 appended after a macro keyword is a (zero-width) error; it leaves the
+    // macro, so jison's EOF_IN_STRUCT is never reached.
+    expect(kinds('C4Context\nPerson').slice(-4)).toEqual([
+      T.Person,
+      Kind.Error,
+      Kind.Newline,
+      T.Eof,
+    ]);
+    const error = c4Tokens('C4Context\nPerson\n(a)\nPerson(b)').find((t) => t.kind === Kind.Error);
+    expect(error?.range).toEqual({ start: 16, end: 16 });
     // The line break v12 appended leaves the arguments (D452): NEWLINE and EOF follow.
     expect(kinds('C4Context\nPerson(a').slice(-3)).toEqual([T.Str, Kind.Newline, T.Eof]);
     expect(kinds('C4Context\nPerson(a, "A').at(-1)).toBe(T.Str);
