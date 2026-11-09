@@ -10,7 +10,8 @@ import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts'
  * A diagram reads a variable by passing its name as a string literal to a call, either a `Theme`
  * method (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
  * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
- * (D332); a var's `nested:` key is v12's name, not a read. This spec scans each diagram
+ * (D332) or `slot(palette, n, name)` (D474), which reads both; a var's `nested:` key is v12's
+ * name, not a read. This spec scans each diagram
  * package's sources for these and checks the lists both ways, for core's vocabulary and for every
  * package's own (`src/theme/vocabulary.ts`, spec #414 T0b), whose rows only their own type may
  * read: a row another type reads belongs in core.
@@ -59,6 +60,9 @@ function readsOf(type: string): Set<string> {
     // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
     // theme wrote it (D332).
     ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
+    // A table rule's `slot(palette, n, fallback)`: the palette's slot where the palette is
+    // non-empty, else the fallback (D474), so both are read.
+    ...[...text.matchAll(/\bslot\((\w+),\s*\d+,\s*(\w+)\)/g)].flatMap((m) => [m[1]!, m[2]!]),
   ];
   return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));
 }
@@ -74,12 +78,10 @@ const TYPES = readdirSync(PACKAGES)
 const NOT_DRAWN_YET = new Set<string>([]);
 /**
  * Core rows a type is listed on before its renderer reads them, because the core T0 that moved
- * them lands first: usecase's role colours fall back to `actorBkg` and `actorBorder` (#561, D474)
- * from its renderer (#566). Exact: each must be unread, so the entry goes when the type reads it.
+ * them lands first. Exact: each must be unread, so the entry goes when the type reads it. Empty
+ * since usecase's renderer (#566) reads `actorBkg` and `actorBorder` through `slot()`.
  */
-const LISTED_AHEAD: Readonly<Record<string, readonly string[]>> = {
-  usecase: ['actorBkg', 'actorBorder'],
-};
+const LISTED_AHEAD: Readonly<Record<string, readonly string[]>> = {};
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {

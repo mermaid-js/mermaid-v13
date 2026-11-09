@@ -14,3 +14,6 @@ export {
 } from './parser/index.ts';
 export type { UsecaseToken, UsecaseView } from './parser/index.ts';
 export { usecaseLayoutProblems } from './layout/invariants.ts';
+export { renderUsecaseForTest } from './render/harness.ts';
+export type { RenderedUsecase, RenderUsecaseOptions } from './render/harness.ts';
+export { paletteSlots as usecasePaletteSlots } from './render/paint.ts';

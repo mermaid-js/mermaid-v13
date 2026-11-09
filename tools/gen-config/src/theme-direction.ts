@@ -32,7 +32,7 @@ import {
   type DiagramThemeTable,
   type DiagramThemeVarDef,
 } from '../../../packages/core/src/theme/diagram.ts';
-import { parseRule, ruleRefs } from '../../../packages/core/src/theme/dsl.ts';
+import { parseRule, ruleRefs, type Expr } from '../../../packages/core/src/theme/dsl.ts';
 import { parseColor } from '../../../packages/core/src/theme/color.ts';
 import { PALETTE_SLOT, PALETTE_VARIABLES } from '../../../packages/core/src/theme/vocabulary.ts';
 
@@ -169,8 +169,25 @@ const declared = (d: { alias: string; kind: string; nested?: string } | undefine
   d && JSON.stringify([d.alias, d.kind, d.nested ?? null]);
 
 /**
+ * A rule's reads (`ruleRefs`), with the palette a `slot(palette, n, fallback)` call names (D474)
+ * in `palettes` instead: the call reads that palette's slot `n`, or its fallback.
+ */
+function refs(e: Expr, reads: string[], palettes: string[]): void {
+  if (e.k === 'call' && e.fn === 'slot') {
+    const [p, , fallback] = e.args;
+    if (p?.k === 'ref' && PALETTES.has(p.name)) palettes.push(p.name);
+    else if (p) refs(p, reads, palettes);
+    if (fallback) refs(fallback, reads, palettes);
+    return;
+  }
+  if (e.k === 'call') for (const a of e.args) refs(a, reads, palettes);
+  else ruleRefs(e, (n) => parseColor(n) === undefined, reads);
+}
+
+/**
  * What a table's rules read and its entries write. A `palette` variable's rule that names a shared
- * palette (D545) is in `palettes`, not `reads`: only such a rule may name a whole palette.
+ * palette (D545) is in `palettes`, not `reads`: only such a rule, or a `slot()` call (D474), may
+ * name a whole palette.
  */
 function tableReads(table: DiagramThemeTable): {
   reads: string[];
@@ -185,7 +202,7 @@ function tableReads(table: DiagramThemeTable): {
       writes.push(name);
       const whole = rule.trim();
       if (table.vars[name]?.kind === 'palette' && PALETTES.has(whole)) palettes.push(whole);
-      else ruleRefs(parseRule(rule), (n) => parseColor(n) === undefined, reads);
+      else refs(parseRule(rule), reads, palettes);
     }
   };
   const lits = (v: Readonly<Record<string, unknown>> | undefined) =>

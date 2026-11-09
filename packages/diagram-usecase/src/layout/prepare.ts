@@ -174,6 +174,11 @@ export interface UsecasePrepared {
   readonly boundaries: readonly BoundaryView[];
   readonly edges: readonly UsecaseEdgeView[];
   readonly config: UsecaseLayoutConfig;
+  /**
+   * The front-matter title (D472), in the theme's font, unwrapped. The graph leaves room for
+   * none: the renderer draws it above the laid-out diagram.
+   */
+  readonly title?: MeasuredLabel;
 }
 
 /** A relationship's label as v12 drew it: `«include»`, `«extend»`, an association's label. */
@@ -332,7 +337,10 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
   }
 
   const graph = layoutGraph({ direction: model.direction, nodes, boundaries, edges }, config);
-  return { graph, nodes, layoutIds, boundaries, edges, config };
+  const text = model.title?.trim();
+  const plain = parts.measure.styleOf([]);
+  const title = text ? parts.measure.label(text, base, Infinity, plain) : undefined;
+  return { graph, nodes, layoutIds, boundaries, edges, config, ...(title ? { title } : {}) };
 }
 
 /** The checked style of class names plus own declarations, one per distinct list. */
