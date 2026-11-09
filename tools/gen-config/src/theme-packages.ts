@@ -182,27 +182,24 @@ export function knownNames(
 }
 
 /**
- * A core row's users as the inventory lists them: `core` first when core reads it, then every
- * other name, sorted. A diagram package is listed when its sources read the row (`reads`), so a
- * port never edits core's vocabulary to list itself; core's own `usedBy` holds only `core` and
- * types listed ahead of their reads (a type with no package yet, or its `LISTED_AHEAD`).
- * Sorted, not in the order the types were ported, so the cell does not depend on merge order.
+ * A core row's users as the inventory lists them: core's own `usedBy` as written (it was kept by
+ * hand until every type was found from its sources, and it stays as it was so core's bytes do
+ * not move), then every other diagram package whose sources read the row (`reads`), sorted. So
+ * a port never edits core's vocabulary to list itself: its reads list it.
  */
 export function coreUsers(
   name: string,
   listed: readonly string[],
   reads: ReadonlyMap<string, ReadonlySet<string>>
 ): string[] {
-  const types = new Set(listed.filter((u) => u !== 'core'));
-  for (const [type, set] of reads) if (set.has(name)) types.add(type);
-  return [...(listed.includes('core') ? ['core'] : []), ...[...types].sort()];
+  const readers = [...reads].filter(([, set]) => set.has(name)).map(([type]) => type);
+  return [...listed, ...readers.filter((t) => !listed.includes(t)).sort()];
 }
 
 /**
- * The used-by rule for core rows: core's `usedBy` names `core` and types listed ahead only. A
- * diagram package listed there must not read the row yet and must name it in its
- * `LISTED_AHEAD`, and each `LISTED_AHEAD` row must be listed and unread; a package whose sources
- * read the row is listed from its reads, so naming it too is an error.
+ * The used-by rule for core rows: a diagram package core's `usedBy` names must read the row, or
+ * name it in its `LISTED_AHEAD` (listed before its renderer reads it); each `LISTED_AHEAD` row
+ * must be listed and unread. A reader need not be listed: {@link coreUsers} adds it.
  */
 export function coreListedErrors(
   core: Readonly<Record<string, { readonly usedBy: readonly string[] }>>,
@@ -214,16 +211,17 @@ export function coreListedErrors(
   for (const [name, { usedBy }] of Object.entries(core))
     for (const type of usedBy) {
       const pkg = byType.get(type);
-      if (pkg === undefined) continue;
-      if (reads.get(type)?.has(name) === true)
-        out.push(`core \`${name}\`: drop ${type} from usedBy, its sources read it`);
-      else if (!(pkg.listedAhead ?? []).includes(name))
+      if (pkg === undefined || reads.get(type)?.has(name) === true) continue;
+      if (!(pkg.listedAhead ?? []).includes(name))
         out.push(`core \`${name}\`: lists ${type}, which neither reads it nor lists it ahead`);
     }
   for (const { type, listedAhead = [] } of packages)
-    for (const name of listedAhead)
+    for (const name of listedAhead) {
       if (!(core[name]?.usedBy ?? []).includes(type))
         out.push(`${type}: LISTED_AHEAD \`${name}\` is not listed on core's row`);
+      if (reads.get(type)?.has(name) === true)
+        out.push(`${type}: LISTED_AHEAD \`${name}\` is read now; drop it from LISTED_AHEAD`);
+    }
   return out;
 }
 

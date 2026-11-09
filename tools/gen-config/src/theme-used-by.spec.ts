@@ -16,9 +16,9 @@ import {
  * each diagram package's sources (`themeReads` in theme-packages.ts): a string-literal argument
  * to a `Theme` method or a local helper over one, a table of names, a table rule's
  * `inline(name)`, and the names a package builds at run time, which its vocabulary lists as
- * `DYNAMIC_READS`. So core's vocabulary never lists a diagram package that reads a row: the
- * inventory lists it from its reads (`coreUsers`). Core's own `usedBy` names `core` and types
- * listed ahead of their reads only. A package's own rows (`src/theme/vocabulary.ts`, spec #414
+ * `DYNAMIC_READS`. So a port never lists itself in core's vocabulary: the inventory lists it
+ * from its reads (`coreUsers`). Core's own `usedBy` keeps the types listed by hand before that,
+ * each of which must still read the row, plus types listed ahead of their reads. A package's own rows (`src/theme/vocabulary.ts`, spec #414
  * T0b) may be read by its own type only: a row another type reads belongs in core.
  *
  * Everything per type lives in the package (`DYNAMIC_READS`, `NOT_DRAWN_YET`, `LISTED_AHEAD`),
@@ -54,7 +54,7 @@ describe('theme vocabulary usedBy (#207)', () => {
     }
   );
 
-  it("names in core's usedBy only core and types listed ahead of their reads", () => {
+  it("names in core's usedBy only readers and types listed ahead of their reads", () => {
     expect(coreListedErrors(THEME_VARIABLES, PKGS, READS)).toEqual([]);
   });
 
@@ -69,37 +69,39 @@ describe('theme vocabulary usedBy (#207)', () => {
   });
 
   // packages/conformance/src/neo-theme.spec.ts keeps `border1` because nothing reads it (D152);
-  // core's own `usedBy` no longer says whether a diagram does, so the reads check it here.
+  // core's own `usedBy` no longer lists every reader, so the reads check it here.
   it('reads border1 nowhere (neo-theme.spec, D152)', () => {
     expect(coreUsers('border1', THEME_VARIABLES.border1!.usedBy, READS)).toEqual([]);
   });
 
-  it("lists core first, then every other user sorted, independent of the ports' order", () => {
+  it("lists core's own usedBy as written, then every other reader sorted", () => {
     const reads = new Map([
       ['zeta', new Set(['x'])],
       ['alpha', new Set(['x', 'y'])],
+      ['pending', new Set(['x'])],
     ]);
     expect(coreUsers('x', ['core', 'pending'], reads)).toEqual([
       'core',
-      'alpha',
       'pending',
+      'alpha',
       'zeta',
     ]);
     expect(coreUsers('y', [], reads)).toEqual(['alpha']);
   });
 
-  it('fails on a core row that lists a reader, or lists a type ahead without its LISTED_AHEAD', () => {
+  it('fails on a core row that lists a type that does not read it and is not listed ahead', () => {
     const core = {
       a: { usedBy: ['core', 'demo'] },
       b: { usedBy: ['demo'] },
       c: { usedBy: ['nopackage'] },
       d: { usedBy: [] },
+      e: { usedBy: ['demo'] },
     };
-    const packages = [{ type: 'demo', listedAhead: ['b', 'd'] }];
-    const reads = new Map([['demo', new Set(['a'])]]);
+    const packages = [{ type: 'demo', listedAhead: ['b', 'd', 'e'] }];
+    const reads = new Map([['demo', new Set(['a', 'e'])]]);
     expect(coreListedErrors(core, packages, reads)).toEqual([
-      'core `a`: drop demo from usedBy, its sources read it',
       "demo: LISTED_AHEAD `d` is not listed on core's row",
+      'demo: LISTED_AHEAD `e` is read now; drop it from LISTED_AHEAD',
     ]);
     expect(coreListedErrors({ b: { usedBy: ['demo'] } }, [{ type: 'demo' }], new Map())).toEqual([
       'core `b`: lists demo, which neither reads it nor lists it ahead',

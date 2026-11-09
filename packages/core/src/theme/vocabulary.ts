@@ -37,10 +37,9 @@ export interface ThemeVarDef {
   readonly alias: string;
   readonly kind: ThemeVarKind;
   /**
-   * `core` when core reads it, and the types listed ahead of their reads: a type with no package
-   * yet, or a package's `LISTED_AHEAD` (`src/theme/vocabulary.ts`). Not the diagram packages
-   * that read it: `tools/gen-config` reads those from their sources (`themeReads`), so a port
-   * never edits this file to list itself. The full list is in `v13/docs/theme-variables.md`.
+   * The diagram types (or `core`) that read it; empty for a v12 variable no ported diagram
+   * reads yet. `tools/gen-config/src/theme-used-by.spec.ts` checks the diagram types against
+   * their sources.
    */
   readonly usedBy: readonly string[];
 }
@@ -204,6 +203,28 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
 });
 
 /**
+ * Who reads both base text variables (`fontFamily`, `fontSize`): a new type that reads both
+ * appends here. A type that reads only `fontFamily` (pie, packet, cynefin, info, sankey, treemap,
+ * wardley, xychart, venn) is listed on that row.
+ */
+const TEXT_USERS = [
+  'core',
+  'flowchart',
+  'sequence',
+  'class',
+  'state',
+  'er',
+  'journey',
+  'timeline',
+  'quadrant',
+  'mindmap',
+  'gitgraph',
+  'gantt',
+  'kanban',
+  'radar',
+];
+
+/**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
  * Built in a pure call: spreads once made the object literal look side-effecting, so the CDN
@@ -211,120 +232,216 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
-  tertiaryColor: def('t', 'color', ['core']),
-  background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', []),
-  fontFamily: def('ff', 'font', ['core']),
-  fontSize: def('fs', 'length', ['core']),
+  tertiaryColor: def('t', 'color', ['core', 'gantt']),
+  background: def('bg', 'color', [
+    'core',
+    'state',
+    'packet',
+    'kanban',
+    'wardley',
+    'xychart',
+    'venn',
+  ]),
+  primaryTextColor: def('pt', 'color', [
+    'core',
+    'class',
+    'quadrant',
+    'packet',
+    'cynefin',
+    'wardley',
+    'xychart',
+  ]),
+  lineColor: def('l', 'color', [
+    'flowchart',
+    'class',
+    'state',
+    'er',
+    'gitgraph',
+    'radar',
+    'cynefin',
+    'wardley',
+  ]),
+  // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
+  // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
+  // xychart: its `xyChart` config).
+  fontFamily: def('ff', 'font', [
+    ...TEXT_USERS,
+    'pie',
+    'packet',
+    'cynefin',
+    'info',
+    'sankey',
+    'treemap',
+    'wardley',
+    'xychart',
+    'venn',
+  ]),
+  fontSize: def('fs', 'length', TEXT_USERS),
   // derived
-  primaryBorderColor: def('pb', 'color', ['core']),
+  primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
-  tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core']),
-  mainBkg: def('mb', 'color', []),
-  nodeBorder: def('nb', 'color', []),
+  tertiaryTextColor: def('tt', 'color', ['core', 'venn']),
+  textColor: def('tx', 'color', [
+    'core',
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'journey',
+    'timeline',
+    'quadrant',
+    'gitgraph',
+    'gantt',
+    'kanban',
+    'cynefin',
+    'info',
+    'radar',
+    'sankey',
+    'venn',
+  ]),
+  mainBkg: def('mb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+    'sankey',
+    'wardley',
+  ]),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+    'kanban',
+  ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
-  nodeTextColor: def('nt', 'color', ['core']),
-  clusterBkg: def('cb', 'color', []),
-  clusterBorder: def('cs', 'color', []),
-  titleColor: def('tc', 'color', []),
-  edgeLabelBackground: def('el', 'color', []),
-  arrowheadColor: def('ah', 'color', []),
+  nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
+  clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
+  clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap', 'venn']),
+  edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
+  arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),
   border1: def('b1', 'color', []),
   border2: def('b2', 'color', []),
-  noteBkgColor: def('nk', 'color', ['core']),
-  noteTextColor: def('nx', 'color', ['core']),
-  noteBorderColor: def('no', 'color', ['core']),
+  noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
+  noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
+  noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
 
   // tokens
-  strokeWidth: def('sw', 'length', ['core']),
-  clusterStrokeWidth: def('cw', 'length', []),
-  radius: def('r', 'length', ['core']),
-  fontWeight: def('fw', 'weight', ['core']),
+  strokeWidth: def('sw', 'length', [
+    'core',
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
+  clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
+  radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),
   // arrowhead geometry (numbers only)
-  arrowheadGap: def('ag', 'length', []),
-  arrowheadLength: def('al', 'length', []),
-  arrowheadWidth: def('aw', 'length', []),
-  circleArrowheadSize: def('ocs', 'length', []),
-  circleArrowheadGap: def('ocg', 'length', []),
-  crossArrowheadSize: def('xs', 'length', []),
-  crossArrowheadGap: def('xg', 'length', []),
-  crossArrowheadStrokeWidth: def('xw', 'length', []),
+  arrowheadGap: def('ag', 'length', ['flowchart', 'state']),
+  arrowheadLength: def('al', 'length', ['flowchart', 'state']),
+  arrowheadWidth: def('aw', 'length', ['flowchart', 'state']),
+  circleArrowheadSize: def('ocs', 'length', ['flowchart']),
+  circleArrowheadGap: def('ocg', 'length', ['flowchart']),
+  crossArrowheadSize: def('xs', 'length', ['flowchart']),
+  crossArrowheadGap: def('xg', 'length', ['flowchart']),
+  crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  nodePaddingX: def('npx', 'padding', []),
-  nodePaddingY: def('npy', 'padding', []),
-  stadiumPaddingX: def('spx', 'padding', []),
-  stadiumPaddingY: def('spy', 'padding', []),
-  hexagonPaddingX: def('hpx', 'padding', []),
-  hexagonPaddingY: def('hpy', 'padding', []),
-  hexagonSlant: def('hs', 'length', []),
-  doubleCircleGap: def('dcg', 'length', []),
-  doubleCirclePadding: def('dcp', 'padding', []),
-  circlePadding: def('cp', 'padding', []),
-  circleMinDiameter: def('cmd', 'length', []),
-  subroutinePaddingX: def('srx', 'padding', []),
-  subroutinePaddingY: def('sry', 'padding', []),
-  cylinderPaddingX: def('cyx', 'padding', []),
-  cylinderPaddingY: def('cyy', 'padding', []),
-  leanPaddingX: def('lnx', 'padding', []),
-  leanPaddingY: def('lny', 'padding', []),
-  oddPaddingX: def('odx', 'padding', []),
-  oddPaddingY: def('ody', 'padding', []),
+  nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
+  nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
+  stadiumPaddingX: def('spx', 'padding', ['flowchart']),
+  stadiumPaddingY: def('spy', 'padding', ['flowchart']),
+  hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
+  hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
+  doubleCircleGap: def('dcg', 'length', ['flowchart']),
+  doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
+  circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
+  circleMinDiameter: def('cmd', 'length', ['flowchart']),
+  subroutinePaddingX: def('srx', 'padding', ['flowchart']),
+  subroutinePaddingY: def('sry', 'padding', ['flowchart']),
+  cylinderPaddingX: def('cyx', 'padding', ['flowchart']),
+  cylinderPaddingY: def('cyy', 'padding', ['flowchart']),
+  leanPaddingX: def('lnx', 'padding', ['flowchart']),
+  leanPaddingY: def('lny', 'padding', ['flowchart']),
+  oddPaddingX: def('odx', 'padding', ['flowchart']),
+  oddPaddingY: def('ody', 'padding', ['flowchart']),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', []),
+  dropShadow: def('ds', 'filter', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
   // Shared inputs that name no diagram (D332), read with `inline()`: the ink of a diagram's own
   // titles and legends on the page, and the ink of labels on the series colours.
-  headingTextColor: def('hdt', 'color', []),
-  seriesTextColor: def('sxt', 'color', []),
+  headingTextColor: def('hdt', 'color', ['pie']),
+  seriesTextColor: def('sxt', 'color', ['pie']),
   // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
   // a sequence variable before.
-  scaleLabelColor: def('slc', 'color', ['core']),
+  scaleLabelColor: def('slc', 'color', ['core', 'sequence']),
   // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: a quiet fill for a highlighted span and its outline, the
   // ink of links and their labels, text on a `lineColor` fill (as `secondaryTextColor` is text
   // on `secondaryColor`), a softer outline than `nodeBorder` for boxes that frame rather than
   // hold content, and the outline of a frame's label tab. v13 names; v12 has none.
-  mutedBkg: def('mbk', 'color', []),
-  mutedBorder: def('mbd', 'color', []),
-  linkInkColor: def('lki', 'color', []),
-  lineTextColor: def('ltx', 'color', []),
+  mutedBkg: def('mbk', 'color', ['sequence']),
+  mutedBorder: def('mbd', 'color', ['sequence']),
+  linkInkColor: def('lki', 'color', ['sequence']),
+  lineTextColor: def('ltx', 'color', ['sequence']),
   softBorder: def('sfb', 'color', ['core']),
-  frameBorder: def('frb', 'color', []),
+  frameBorder: def('frb', 'color', ['sequence']),
   // v12's participant fill and border (sequence), which usecase's role colours fall back to where
-  // a theme carries no palette (D474): a row a second type reads is core's (D331). Usecase is
-  // listed ahead of its reads (its renderer, #566); sequence is listed from its sources.
-  actorBkg: def('ab', 'color', ['usecase']),
-  actorBorder: def('ar', 'color', ['usecase']),
+  // a theme carries no palette (D474): a row a second type reads is core's (D331).
+  actorBkg: def('ab', 'color', ['sequence', 'usecase']),
+  actorBorder: def('ar', 'color', ['sequence', 'usecase']),
   // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: a badge, a small label box on the secondary colour set
   // beside an item (gitGraph's commit ids; any id or count badge), and its text; a callout, a
   // bordered label on the primary colour pinned to an item (gitGraph's tags; flags or markers
   // elsewhere), its text and its border. v13 names; v12 has none.
-  badgeBkg: def('bgk', 'color', []),
-  badgeTextColor: def('bgt', 'color', []),
-  calloutBkg: def('clk', 'color', []),
-  calloutTextColor: def('clt', 'color', []),
-  calloutBorder: def('clb', 'color', []),
+  badgeBkg: def('bgk', 'color', ['gitgraph']),
+  badgeTextColor: def('bgt', 'color', ['gitgraph']),
+  calloutBkg: def('clk', 'color', ['gitgraph']),
+  calloutTextColor: def('clt', 'color', ['gitgraph']),
+  calloutBorder: def('clb', 'color', ['gitgraph']),
   // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: the fills of a table's odd and even rows, the fill behind a
   // label on a link drawn on a plain surface rather than the edge label chip, and the body of a
   // region nested in another of its kind. v13 names; v12 has none.
-  rowBkg: def('rbk', 'color', []),
-  rowAltBkg: def('rab', 'color', []),
-  linkLabelBkg: def('llb', 'color', []),
-  nestedBkg: def('nbk', 'color', []),
+  rowBkg: def('rbk', 'color', ['er']),
+  rowAltBkg: def('rab', 'color', ['er']),
+  linkLabelBkg: def('llb', 'color', ['er']),
+  nestedBkg: def('nbk', 'color', ['state']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),
