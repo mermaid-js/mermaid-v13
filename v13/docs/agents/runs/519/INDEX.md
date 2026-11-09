@@ -1,0 +1,29 @@
+# Run notes, spec #519 (M5b ishikawa, `@mermaid-js/diagram-ishikawa`)
+
+Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Draft PR: —.
+
+| Ticket | Issue | Blocked by | State |
+| --- | --- | --- | --- |
+| T1 lexer parity gate | #580 | #285 (merged) | — |
+| T2 grammar, parser, model, AST | #581 | #580 | — |
+| T3 fishbone layout | #582 | #581 | — |
+| T4 SVG renderer | #583 | #582 | — |
+| T6 language facet | #584 | #581 | — |
+| T5 integration | #585 | #583, #584 | — |
+| T7 ASCII outline (optional) | #586 | #585 | — |
+
+- `01-v12-ishikawa.md`: pointer notes on v12's grammar, DB, renderer, specs, docs page and the corpus.
+- `02-v13-seams.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring and the seams T1–T7 touch.
+- `IMPLEMENTER.md`: the brief every ticket agent reads.
+- `GAPS.md`: unmet criteria and choices per ticket.
+- `tickets/<n>.md`: handoffs.
+
+## Wave 3
+
+block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 and requirement #520 run in parallel on AI-Max: at most one ticket agent at a time here. Shared lists conflict (registry, detectors, `SECTION_OWNERS`, `HARVESTS`, `JISON_TYPES`, knip, theme vocabulary lists, adapter regex, language goldens' `empty.out`, licence tables, MIGRATION.md, RELEASING.md): when `mermaid-v13` moves, merge it, keep every side's rows, regenerate generated files, the lockfile and goldens.
+
+## Core size (R-PERF-8, D546 limit 98,304 B gz, `measureCoreSize`)
+
+| After | Core gz | Δ |
+| --- | --- | --- |
+| base (521fb76ee) | 93,891 | — |
