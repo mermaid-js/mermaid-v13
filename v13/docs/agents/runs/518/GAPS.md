@@ -36,6 +36,8 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 
 ## T5 (#577)
 
+- #637 (per-diagram shared files): do the move ("Moving an in-flight port", `v13/docs/agents/port-diagram/shared-files.md`) on the integration branch in one merge of `mermaid-v13`, after the coordinator says the no-manifest fix has landed. treeView's rows: parity suite and `LANGIUM_LEXERS`/`HARVESTS` rows → `conformance/src/treeView/{suite,tables}.ts` (the `capture: 'langium'` field stays shared code); grammar/config/release/theme/languageBundle → `packages/diagram-treeview/workspace.yaml`; drop `treeview` from core `fontFamily.usedBy` (T3) and from `NOT_DRAWN_YET`.
+
 - From #573: `src/config.ts` `treeViewLayoutConfig` falls back silently to v12's default for a length that is not a finite number of 0 or more (a string, negative, NaN, Infinity). Add the one-per-key invalid-value warning (D226, as treemap's `TREEMAP_CONFIG_INVALID`) and switch to the generated defaults when the keys become `honoured`.
 
 - Port v12's `db.spec.ts` `getConfig` test with the config work (the `treeView` options move to `honoured`): #572 skips it with this pointer, as no D-id puts it in T2.
