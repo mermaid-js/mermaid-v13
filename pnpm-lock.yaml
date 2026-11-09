@@ -122,9 +122,6 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:^
         version: link:../diagram-info
-      '@mermaid-js/diagram-ishikawa':
-        specifier: workspace:^
-        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -182,6 +179,9 @@ importers:
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
+      js-yaml:
+        specifier: ^4.3.2
+        version: 4.3.2
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
@@ -651,9 +651,6 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:*
         version: link:../diagram-info
-      '@mermaid-js/diagram-ishikawa':
-        specifier: workspace:*
-        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey

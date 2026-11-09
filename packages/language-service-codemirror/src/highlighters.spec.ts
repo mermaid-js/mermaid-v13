@@ -8,6 +8,8 @@ import { EditorState } from '@codemirror/state';
 import type { Tree } from '@lezer/common';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { firstPartyFacets } from '@mermaid-js/language-service';
+import { highlighted, sampleOf } from '../scripts/highlighted.ts';
 import { LEZER_HIGHLIGHTERS, loadHighlighter, mermaidLanguage } from './language.ts';
 
 const highlighter = tagHighlighter([
@@ -29,32 +31,14 @@ function spans(text: string, tree: Tree = mermaidLanguage().language.parser.pars
 
 const treeOf = (s: EditorState): Tree => ensureSyntaxTree(s, s.doc.length, 1e9)!;
 
+/** The highlighted types (each package's manifest), each with its first-paint sample. */
+const TYPES = highlighted();
+
 describe('the per-type first-paint highlighters (D134)', () => {
-  it('has a row for each v13 diagram type', () => {
-    expect(Object.keys(LEZER_HIGHLIGHTERS).sort()).toEqual([
-      'class',
-      'cynefin',
-      'er',
-      'flowchart',
-      'gantt',
-      'gitGraph',
-      'info',
-      'journey',
-      'kanban',
-      'mindmap',
-      'packet',
-      'pie',
-      'quadrantChart',
-      'radar',
-      'sankey',
-      'sequence',
-      'state',
-      'timeline',
-      'treemap',
-      'venn',
-      'wardley',
-      'xychart',
-    ]);
+  it('has a row for each first-party facet, and each one a sample', () => {
+    const facets = [...new Set(firstPartyFacets.filter((e) => e.load).map((e) => e.id))];
+    expect(Object.keys(LEZER_HIGHLIGHTERS).sort()).toEqual(facets.sort());
+    expect(TYPES.map((h) => h.id).sort()).toEqual(facets.sort());
   });
 
   it('colours nothing for a type whose highlighter is not loaded yet', () => {
@@ -67,204 +51,16 @@ describe('the per-type first-paint highlighters (D134)', () => {
       for (const id of Object.keys(LEZER_HIGHLIGHTERS)) await loadHighlighter(id);
     });
 
-    it('highlights a flowchart', () => {
-      expect(spans('flowchart LR\n  A --> B\n')).toEqual([
-        'flowchart:keyword',
-        'A:variable',
-        '-->:operator',
-        'B:variable',
-      ]);
-    });
-
-    it('highlights a sequence diagram with the sequence grammar', () => {
-      expect(spans('sequenceDiagram\n  Alice->>Bob: Hi\n')).toEqual([
-        'sequenceDiagram:keyword',
-        'Alice:variable',
-        '->>:operator',
-        'Bob:variable',
-        ': Hi:string',
-      ]);
-    });
-
-    it('highlights a class diagram with the class grammar', () => {
-      expect(spans('classDiagram\n  class Animal\n')).toEqual([
-        'classDiagram:keyword',
-        'class:keyword',
-        'Animal:variable',
-      ]);
-    });
-
-    it('highlights a state diagram with the state grammar', () => {
-      const out = spans('stateDiagram-v2\n  [*] --> Idle\n');
-      expect(out[0]).toBe('stateDiagram-v2:keyword');
-      expect(out).toContain('-->:operator');
-      expect(out).toContain('Idle:variable');
-    });
-
-    it('highlights an ER diagram with the ER grammar', () => {
-      const out = spans('erDiagram\n  CUSTOMER ||--o{ ORDER : places\n');
-      expect(out[0]).toBe('erDiagram:keyword');
-      expect(out).toContain('CUSTOMER:variable');
-      expect(out).toContain('ORDER:variable');
-    });
-
-    it('highlights a user journey with the journey grammar', () => {
-      const out = spans('journey\n  section Go to work\n  Make tea: 5: Me\n');
-      expect(out[0]).toBe('journey:keyword');
-      expect(out).toContain('Make tea:variable');
-      expect(out).toContain(': 5: Me:string');
-    });
-
-    it('highlights a quadrant chart with the quadrant grammar', () => {
-      const out = spans('quadrantChart\n  x-axis Low --> High\n  A: [0.3, 0.6]\n');
-      expect(out[0]).toBe('quadrantChart:keyword');
-      expect(out).toContain('x-axis:keyword');
-      expect(out).toContain('-->:operator');
-    });
-
-    it('highlights a gantt chart with the gantt grammar', () => {
-      const text =
-        'gantt\n  dateFormat YYYY-MM-DD\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n';
-      // A setting and a section are one token each, value included (the jison terminals).
-      expect(spans(text)).toEqual([
-        'gantt:keyword',
-        'dateFormat YYYY-MM-DD:keyword',
-        'section Build:keyword',
-        'Code:variable',
-        ':crit, a1, 2024-01-01, 3d:string',
-      ]);
-    });
-
-    it('highlights a packet diagram with the packet grammar', () => {
-      const out = spans('packet\n  title UDP\n  0-15: "Source Port"\n  +16: "Length"\n');
-      expect(out).toEqual([
-        'packet:keyword',
-        'title UDP:keyword',
-        '-:punctuation',
-        '::punctuation',
-        '"Source Port":string',
-        '+:punctuation',
-        '::punctuation',
-        '"Length":string',
-      ]);
-    });
-
-    it('highlights a radar chart with the radar grammar', () => {
-      const out = spans('radar-beta\n  axis a["Speed"], b\n  curve c{1, 2}\n  max 5\n');
-      expect(out[0]).toBe('radar-beta:keyword');
-      expect(out).toContain('axis:keyword');
-      expect(out).toContain('curve:keyword');
-      expect(out).toContain('"Speed":string');
-    });
-
-    it('highlights a treemap with the treemap grammar', () => {
-      const out = spans('treemap\n  "Root"\n    "Leaf": 12:::hot\n  classDef hot fill:red\n');
-      expect(out).toEqual([
-        'treemap:keyword',
-        '"Root":string',
-        '"Leaf":string',
-        '::punctuation',
-        '::::operator',
-        'hot:variable',
-        'classDef hot fill:red:keyword',
-      ]);
-    });
-
-    it('highlights a Wardley map with the wardley grammar', () => {
-      const out = spans(
-        'wardley-beta\n  title Tea\n  anchor Customer [0.95, 0.63]\n  component "Cup of Tea" [0.79, 0.61] (build)\n  Customer -> "Cup of Tea"\n  evolve Customer 0.8\n'
-      );
-      expect(out).toEqual([
-        'wardley-beta:keyword',
-        'title Tea:keyword',
-        'anchor:keyword',
-        'Customer:variable',
-        '[:punctuation',
-        ',:punctuation',
-        ']:punctuation',
-        'component:keyword',
-        '"Cup of Tea":string',
-        '[:punctuation',
-        ',:punctuation',
-        ']:punctuation',
-        '(:punctuation',
-        'build:keyword',
-        '):punctuation',
-        'Customer:variable',
-        '->:operator',
-        '"Cup of Tea":string',
-        'evolve:keyword',
-        'Customer:variable',
-      ]);
-    });
-
-    it('highlights an XY chart with the xychart grammar', () => {
-      const out = spans(
-        'xychart\n  title "Sales"\n  x-axis [jan, "feb"]\n  y-axis "Revenue" 0 --> 100\n  bar [10, 20]\n'
-      );
-      // A string's quotes and its text are three tokens (jison's string state, D212).
-      expect(out).toEqual([
-        'xychart:keyword',
-        'title:keyword',
-        '":string',
-        'Sales:string',
-        '":string',
-        'x-axis:keyword',
-        '[:punctuation',
-        ',:punctuation',
-        '":string',
-        'feb:string',
-        '":string',
-        ']:punctuation',
-        'y-axis:keyword',
-        '":string',
-        'Revenue:string',
-        '":string',
-        '-->:operator',
-        'bar:keyword',
-        '[:punctuation',
-        ',:punctuation',
-        ']:punctuation',
-      ]);
-    });
-
-    it('highlights a cynefin diagram with the cynefin grammar', () => {
-      const out = spans(
-        'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
-      );
-      expect(out[0]).toBe('cynefin-beta:keyword');
-      expect(out).toContain('complex:keyword');
-      expect(out).toContain('"Probe":string');
-      expect(out).toContain('-->:operator');
-    });
-
-    it('highlights a kanban board with the kanban grammar', () => {
-      const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
-      expect(out[0]).toBe('kanban:keyword');
-      expect(out.length).toBeGreaterThan(1);
-    });
-
-    it('highlights a sankey diagram with the sankey grammar', () => {
-      const out = spans('sankey\n"Solar, roof",Electricity,40.5\n');
-      expect(out).toEqual([
-        'sankey:keyword',
-        '":string',
-        'Solar, roof:string',
-        '":string',
-        ',:punctuation',
-        'Electricity:variable',
-        ',:punctuation',
-        '40.5:variable',
-      ]);
-    });
-
-    it('highlights a venn diagram with the venn grammar', () => {
-      const out = spans('venn-beta\n  set A["Alpha"]: 10\n  union A, B\n    text "x"\n');
-      expect(out[0]).toBe('venn-beta:keyword');
-      expect(out).toContain('set:keyword');
-      expect(out).toContain('union:keyword');
-      expect(out).toContain('"x":string');
-    });
+    // Each type's sample (`packages/diagram-<type>/grammar/<type>.sample.mmd`), its spans as
+    // `__highlights__/<id>.txt` prints them: the header is a keyword, so the type's own grammar ran.
+    it.each(TYPES.map((h) => [h.id, sampleOf(h, 'sample')] as const))(
+      'highlights a %s sample with its own grammar',
+      async (id, text) => {
+        const out = spans(text);
+        expect(out[0]).toBe(`${text.split(/\s/)[0]}:keyword`);
+        await expect(`${out.join('\n')}\n`).toMatchFileSnapshot(`__highlights__/${id}.txt`);
+      }
+    );
 
     it('finds the type after front matter, directives and comments', () => {
       const text = '---\ntitle: T\n---\n%%{init: {}}%%\n%% note\nsequenceDiagram\n  A->>B: x\n';

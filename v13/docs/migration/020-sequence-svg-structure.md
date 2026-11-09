@@ -1,0 +1,38 @@
+## Sequence SVG structure
+
+What changed in the sequence diagram's SVG compared with v12 (spec #125, DESIGN §7.2). The
+v12 element classes (`actor`, `actor-top`, `actor-bottom`, `actor-man`, `actor-box`,
+`actor-line`, `messageLine0`, `messageLine1`, `messageText`, `sequenceNumber`, `note`,
+`noteText`, `loopLine`, `labelBox`, `labelText`, `loopText`, `sectionTitle`, `activation0`–`2`,
+`rect`) are kept so selectors that use them keep working.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `aria-roledescription="sequence"`, a `<style>` scoped by the id | No root `id`; `class="mermaid mermaid-sequence"`, `role="img"`, `aria-roledescription="sequence"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| `<defs>` with `<marker>`s (`-arrowhead`, `-filled-head`, `-crosshead`, `-sequencenumber`, the half-arrow heads, `-filled-head-control`) and `<filter id="…-drop-shadow">`; `marker-end="url(#…)"` on lines | No `<defs>`. Arrowheads are `<polygon class="arrowhead">` / `<polyline class="arrowhead">` in the message's group, at v12's marker size and anchor; the sequence number is a `<circle class="sequenceNumberCircle">` and its `<text class="sequenceNumber">`; the control symbol's head is a `<polygon>`; the shadow is a `filter` CSS value from `dropShadow` | No ids needed; heads take the message colour |
+| Async (`-)`), half-arrow and stick heads were black in every theme (no CSS reached their markers); the cross head was themed | Every head is drawn in `signalColor` | v12's black heads did not read on the dark themes (D131) |
+| The sequence number in `font-family="sans-serif"` | The number takes the diagram font, like every other label; badge size and text sizes (12, 9, 7) as in v12 | Fonts are uniform across diagrams |
+| v12 classic themes gave `rect` blocks and boxes their own grey drop shadow (`g rect.rect { filter: dropShadow }`) | No shadow in the classic themes: `rect` blocks and boxes take `dropShadow` only where the theme sets it (the redux themes) | One shadow variable per theme (D152, D131) |
+| A fragment title that is empty once read (`loop </style>`) | Not drawn, as v12 skipped it | v13 drew `[]` before the fix |
+| A refused per-key font family (`sequence.actorFontFamily: "x;color:red"`) went into the inline style | Dropped with `STYLE_VALUE_DROPPED`; the label is measured and drawn in the Mermaid font | Inert output (R-SEC-3) |
+| Participants: a lifeline `<line id="actorN" class="actor-line 200" name>` in one group, the top box in another, the bottom box drawn later; `data-et`, `data-type`, `data-id="<name>"`, `name` attributes; `id="root-N"` for menus | One `<g class="participant participant-<kind>" data-id="<id>" data-ast="p:<id>">` per participant holding its `<line class="actor-line">`, `<g class="actor-top">` and `<g class="actor-bottom">`; no `name`, `data-et` or `data-type` | One element per participant maps it to its source (R-PARSE-8) |
+| Lifelines ran to `y2="2000"` and were cut by the viewBox | A lifeline ends at the bottom row (or where the participant is destroyed) | The layout places it (#141) |
+| Messages: `<text class="messageText">` and `<line>`/`<path>` as siblings, `data-et="message"`, `data-id="i<n>"`, `data-from`, `data-to` | `<g class="message" data-id data-ast="m:<from>><to>#<n>">` holding the label, the line or self-loop path, the heads, central-connection circles and the number | One element per message (R-PARSE-8) |
+| Notes, frames: `<g data-et="note">` or `<g data-et="control-structure">`, `data-id="i<n>"` | Notes in `<g class="notes">`, each `<g class="note-<placement>" data-id data-ast="note:<n>">`; frames in `<g class="fragments">`, each `<g class="fragment fragment-<kind>" data-id data-ast="f:<kind>#<n>">` with a `<g class="loopSection" data-ast>` per `else`/`and`/`option` | Same |
+| Activations, `rect` blocks and boxes: unclassed groups, appended where the draw loop met them | `<g class="activations">`, painted in start order so an inner bar covers its outer one (each bar has `data-ast` of its `activate` line; a bar opened by `+` or `()` has the message's id as `data-id` and no `data-ast`), `<g class="rects">`, `<g class="boxes">` (each `<g class="box" data-ast="box:<n>">`) | Stacking order is fixed: boxes, rects, participants, activations, frames, notes, messages |
+| Text: `<text>` with a `<tspan>` per line and a `style="font-…"` from `sequence.*Font*` | `<text>`/`<tspan>`; a section whose per-key font differs from the Mermaid font writes `font-family`/`font-size`/`font-weight` on its group (`participants`, `messages`, `fragments`, `notes`) | Labels are drawn in the font they were measured in |
+| Title: an unclassed `<text>` at a fixed place; box labels `class="text"` in default black | `<text class="sequenceTitle">` centred above the drawing; box labels in `textColor` | Theme colour on every text |
+| The `redux-color` / `redux-dark-color` names switched per-participant colour; `look: neo` switched the corner radius (6 / 3), the actor, note, label tab and `rect` shadow | The palette (`borderColorArray`, `bkgColorArray`, `data-color-id="color-<n>"` on the participant and its activations), `actorRadius` and `dropShadow` theme variables. `rect` blocks and boxes take the shadow only where the theme has one (see below) | D152 |
+| Bottom symbols of the figure kinds sat a few px off the top ones (`isFooter` offsets) | The bottom symbol is drawn like the top one | One drawing per kind |
+| v12's `look: neo` geometry: the band model of `actorBands.ts` (rows as tall as glyph band 44 + 6 + label + 6, one lifeline start per row, the symbols on the band, the stick figure scaled to it, the database cylinder as tall as it, a `collections` stack 6 shorter), messages 3 px shorter, label tabs 15 px taller, 30 px more below the drawing | The same geometry in the redux themes and v12 classic geometry in the classic themes, from the `actorGlyphBand`, `messageEndGap`, `labelBoxExtraHeight` and `actorFooterPadding` theme variables (see "Theme geometry"), so any theme can take either. Text output draws every symbol as a box and ignores them (#194) | D152 |
+| A front-matter `title` was drawn above the diagram like a `title` statement | The SVG draws only the `title` statement; a front-matter `title` is not drawn, as in flowchart and state (D122), and does not feed the accessible name: only `accTitle` does (D133). Text output prints it on top when there is no `title` statement | One cross-type decision on front-matter titles (D122, D133) |
+| `actor`/`link` popup menus (`actorPopupMenu`, `onclick`) | Not drawn by the renderer; the interactions plugin adds them | No script in output (R-SVG-4) |
+
+The `data-ast` ids are built from the names as written (R-PARSE-8): `p:<id>` for a participant
+(its later mentions `p:<id>@2`, `@3`, …), `m:<from>><to>` for the first message between two
+participants and `m:<from>><to>#2`, `#3`, … for the next ones, `note:<n>`, `f:<kind>#<n>`,
+`box:<n>` and `st:<n>` for the rest. Inside a name `%`, `>`, `@` and `#` are percent-encoded
+(`%25`, `%3E`, `%40`, `%23`), so the suffixes stay unambiguous; spaces and other characters are
+kept. So `participant A B` is `p:A B`, `participant A#c` is `p:A%23c`, the first `A->>B#2` is
+`m:A>B%232` (no suffix: it is the first message from `A` to `B#2`), and the second `A->>B` is
+`m:A>B#2`.

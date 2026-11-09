@@ -24,6 +24,7 @@
     "release:rehearse": "tsx tools/release/src/rehearse-cli.ts",
     "release:ensure-changeset": "tsx tools/release/src/changesets-cli.ts",
     "release:sync-version": "tsx tools/release/src/version-file-cli.ts",
+    "regen": "tsx tools/workspace/sync-cli.ts && pnpm install && pnpm gen:registry && pnpm gen:config && pnpm gen:theme && pnpm gen:grammar && pnpm -r --filter \"./packages/language-service-*\" run gen && vitest run packages/language-service/src/goldens.spec.ts -t no-diagram -u",
     "gen:config": "tsx tools/gen-config/src/cli.ts",
     "check:config": "tsx tools/gen-config/src/cli.ts --check",
     "gen:theme": "tsx --conditions=mermaid-source tools/gen-config/src/theme-cli.ts",

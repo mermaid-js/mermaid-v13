@@ -222,7 +222,6 @@ const TEXT_USERS = [
   'gantt',
   'kanban',
   'radar',
-  'ishikawa',
 ];
 
 /**
@@ -263,7 +262,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
     'wardley',
-    'ishikawa',
   ]),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
   // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
@@ -305,7 +303,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'sankey',
     'venn',
-    'ishikawa',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -318,7 +315,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'gitgraph',
     'sankey',
     'wardley',
-    'ishikawa',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',

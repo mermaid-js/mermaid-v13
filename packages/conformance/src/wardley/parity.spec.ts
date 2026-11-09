@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { parseWardley } from '@mermaid-js/diagram-wardley';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { wardleyGateCorpus } from './corpus.ts';
@@ -15,7 +15,7 @@ import { wardleyAdapter } from './v13.ts';
  * `corpus/wardley-cases.json` with the recovery set, each also with CRLF line breaks and with
  * comment lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`:
  * `getWardleyData()`, the title and accessibility) must agree, except the divergences listed in
- * `divergences.json`.
+ * `divergences/`.
  *
  * The listed wardley divergences are core's reading, shared by every type, and the second test
  * checks they differ only there ({@link LISTED}): core ends an unclosed `%%{` at its line end and
@@ -40,7 +40,7 @@ const run = async () =>
   runParity({
     adapters: [wardleyAdapter],
     corpus: each(await wardleyGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 /** v12's syntax errors (Langium) and detection failures, which carry no DB message. */

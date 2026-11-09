@@ -5,11 +5,12 @@
  *   below from v12 at fa796a943). `sketch` itself equals roughjs's `RoughGenerator` for the same
  *   options (H1, `sketch.spec.ts`), so this is parity with roughjs;
  * - the allow-list (R-SEC-2), determinism (R-ARCH-6, a fresh API object gives the same bytes) and
- *   no `Math.random` call, over the hand-drawn corpus and the sketched types' whole corpus
- *   (mindmap's too, #344, kanban's, #459, and venn's, #501) with `handDrawn` on;
+ *   no `Math.random` call, over the hand-drawn corpus and the sketched types' whole corpus with
+ *   `handDrawn` on: every fixture folder whose `hand-drawn.txt` says `sketched` (a port adds
+ *   that file, so this list never names a type);
  * - v12's XSS sources and Pele's payloads stay inert with it on.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Attrs, OutlineRole, OutlineSink, OutlineTag } from '@mermaid-js/core/svg';
@@ -21,16 +22,16 @@ import { handDrawn } from './index.ts';
 import { sketch, type SketchOptions } from './sketch.ts';
 
 const DIAGRAMS = fileURLToPath(new URL('../../../e2e/diagrams/', import.meta.url));
-const TYPES = [
-  'flowchart',
-  'class-diagram',
-  'state-diagram',
-  'state-diagram-v2',
-  'er-diagram',
-  'mindmap',
-  'kanban',
-  'venn',
-];
+/** A fixture folder's `hand-drawn.txt` verdict (its first line), when it has one. */
+function marker(dir: string): string | undefined {
+  const file = join(DIAGRAMS, dir, 'hand-drawn.txt');
+  return existsSync(file) ? readFileSync(file, 'utf8').split('\n')[0]!.trim() : undefined;
+}
+
+/** The fixture folders v12 sketched: their `hand-drawn.txt` says `sketched`. */
+const TYPES = readdirSync(DIAGRAMS)
+  .filter((dir) => marker(dir) === 'sketched')
+  .sort();
 
 function mmd(dir: string): [string, string][] {
   return readdirSync(join(DIAGRAMS, dir), { recursive: true, encoding: 'utf8' })
@@ -131,6 +132,17 @@ async function render(m: Awaited<ReturnType<typeof api>>, source: string) {
 }
 
 describe('the hand-drawn corpus', () => {
+  it('marks each folder `sketched` or `unsketched`, and runs every folder with a hand-drawn baseline', () => {
+    const marked = readdirSync(DIAGRAMS).filter((dir) => marker(dir) !== undefined);
+    for (const dir of marked) expect(['sketched', 'unsketched'], dir).toContain(marker(dir));
+    const baselines = readdirSync(DIAGRAMS).filter((dir) =>
+      existsSync(join(DIAGRAMS, dir, 'baseline', 'handdrawn'))
+    );
+    expect(baselines.length).toBeGreaterThan(0);
+    expect(baselines.filter((dir) => !TYPES.includes(dir))).toEqual([]);
+    expect(TYPES).toContain('flowchart');
+  });
+
   it('has the files #296 counts in the four types, besides the four-family baselines (#343)', () => {
     const baseline = (id: string) => id.includes('/baseline/handdrawn/');
     const count = (dir: string, h3 = false) =>
