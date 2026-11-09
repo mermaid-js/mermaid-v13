@@ -128,6 +128,51 @@ function markerRect(end: Point, next: Point): Rect {
 }
 
 /**
+ * The corners of a classic marker as v12 draws it, stroke included, in its own frame: `d` out
+ * from the outline along the line, `s` across it. The chevron is two butt-capped strokes from
+ * the tip on the outline to `(length, ±width/2)`; the `contains` circle's square (its plus lies
+ * inside it).
+ */
+function drawnMarker(marker: 'contains' | 'arrow'): [d: number, s: number][] {
+  const M = REQUIREMENT_METRICS;
+  const half = M.markerStroke / 2;
+  if (marker === 'contains') {
+    const { cx, r } = M.circle;
+    const o = r + half;
+    return [
+      [cx - o, -o],
+      [cx + o, -o],
+      [cx + o, o],
+      [cx - o, o],
+    ];
+  }
+  const out: [number, number][] = [];
+  for (const side of [-1, 1]) {
+    const back: [number, number] = [M.chevron.length, (side * M.chevron.width) / 2];
+    const leg = Math.hypot(...back);
+    // A butt cap: half the stroke each way, square to the leg.
+    const n = [(-back[1] / leg) * half, (back[0] / leg) * half] as const;
+    for (const [d, a] of [[0, 0], back] as const)
+      out.push([d + n[0], a + n[1]], [d - n[0], a - n[1]]);
+  }
+  return out;
+}
+
+/** The page box of a drawn marker at `end`, pointing away from it towards `next`. */
+function drawnRect(marker: 'contains' | 'arrow', end: Point, next: Point): Rect {
+  const len = Math.hypot(next.x - end.x, next.y - end.y) || 1;
+  const dx = (next.x - end.x) / len;
+  const dy = (next.y - end.y) / len;
+  const pts = drawnMarker(marker).map(([d, a]) => [
+    end.x + dx * d - dy * a,
+    end.y + dy * d + dx * a,
+  ]);
+  const xs = pts.map((q) => q[0]!);
+  const ys = pts.map((q) => q[1]!);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+/**
  * The T3 invariants past `validateLayout`: each relation ends on its boxes' outlines with its
  * marker outside every box; boxes, labels and markers inside the bounding box (D224); every box
  * at least as wide as its widest line plus padding, its lines inside it and in order.
@@ -170,12 +215,15 @@ function problems(layout: RequirementLayout): string[] {
     const to = boxes.get(e.target)!;
     if (!onOutline(from, pts[0]!)) out.push(`relation '${e.id}' does not start on its outline`);
     if (!onOutline(to, pts.at(-1)!)) out.push(`relation '${e.id}' does not end on its outline`);
-    const marker =
-      e.markerAt === 'source' ? markerRect(pts[0]!, pts[1]!) : markerRect(pts.at(-1)!, pts.at(-2)!);
+    const [end, next] = e.markerAt === 'source' ? [pts[0]!, pts[1]!] : [pts.at(-1)!, pts.at(-2)!];
+    const room = markerRect(end, next);
+    const drawn = drawnRect(e.marker, end, next);
     for (const [id, r] of boxes) {
-      if (overlaps(marker, r)) out.push(`the marker of '${e.id}' overlaps box '${id}'`);
+      if (overlaps(room, r)) out.push(`the marker room of '${e.id}' overlaps box '${id}'`);
+      if (overlaps(drawn, r)) out.push(`the marker of '${e.id}' overlaps box '${id}'`);
     }
-    if (!inside(page, marker)) out.push(`the marker of '${e.id}' lies outside the bounding box`);
+    if (!inside(page, room) || !inside(page, drawn))
+      out.push(`the marker of '${e.id}' lies outside the bounding box`);
     if (placed.label && !inside(page, rectOf(placed.label, e.label)))
       out.push(`the label of '${e.id}' lies outside the bounding box`);
   }
@@ -183,6 +231,21 @@ function problems(layout: RequirementLayout): string[] {
 }
 
 describe('requirement layout over parser-produced fixtures', () => {
+  it('reserves room that holds each marker as drawn, stroke included', () => {
+    for (const marker of ['contains', 'arrow'] as const) {
+      for (const [d, a] of drawnMarker(marker)) {
+        // The chevron's tip caps poke 0.22 into the box, inside the outline's slack.
+        expect(d, marker).toBeGreaterThanOrEqual(-SLACK);
+        expect(d, marker).toBeLessThanOrEqual(MARKER_ROOM.length);
+        expect(Math.abs(a), marker).toBeLessThanOrEqual(MARKER_ROOM.width / 2);
+      }
+    }
+    // The chevron's caps reach past its 20 × 20: 20.22 out, 20.89 across.
+    const arrow = drawnMarker('arrow');
+    expect(Math.max(...arrow.map(([d]) => d))).toBeCloseTo(20.2236, 3);
+    expect(2 * Math.max(...arrow.map(([, a]) => a))).toBeCloseTo(20.8944, 3);
+  });
+
   it('covers the corpus: both box kinds, every relation kind, styles, directions', () => {
     expect(fixtures.length).toBeGreaterThan(200);
     const models = fixtures.map((f) => f.model);

@@ -37,14 +37,18 @@ export { checkStyleCopies } from './limits.ts';
 export {
   layoutRequirement,
   MARKER_ROOM,
+  markerExtent,
   prepareRequirement,
   REQUIREMENT_METRICS,
   requirementCurve,
 } from './layout/index.ts';
 export type {
+  BoxMeasures,
+  BoxOf,
   BoxView,
   LinePart,
   LineView,
+  MarkerExtent,
   RelationView,
   RequirementCurve,
   RequirementLayout,

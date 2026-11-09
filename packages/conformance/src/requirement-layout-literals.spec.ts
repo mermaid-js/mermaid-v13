@@ -13,7 +13,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '2': 'halving: centring a line, half the first line',
   '400': 'the normal font weight',
   '600': 'the least bold font weight',
-  '1000': 'the cap on a font size taken from a style',
 };
 
 /** The numeric literals in TypeScript source, outside comments and strings. */

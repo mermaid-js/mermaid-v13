@@ -169,11 +169,12 @@ describe('relations', () => {
       ['relation:a->b', 'requirement:a', 'requirement:b'],
       ['relation:c->a', 'element:c', 'requirement:a'],
     ]);
-    // Marker room: 20 out and 20 across, at the end that has the marker.
-    expect(graph.edges[0]!.startMarker).toEqual({ length: 20, width: 20 });
+    // Marker room: the chevron as drawn (20.22 out, 20.89 across with its butt caps), rounded
+    // up, at the end that has the marker.
+    expect(graph.edges[0]!.startMarker).toEqual({ length: 21, width: 21 });
     expect(graph.edges[0]!.endMarker).toBeUndefined();
-    expect(graph.edges[1]!.endMarker).toEqual({ length: 20, width: 20 });
-    expect(graph.headRoom).toBe(20);
+    expect(graph.edges[1]!.endMarker).toEqual({ length: 21, width: 21 });
+    expect(graph.headRoom).toBe(21);
     expect(graph.edges[0]!.label!.width).toBeGreaterThan(width('<<contains>>'));
   });
 
@@ -213,8 +214,8 @@ describe('the graph', () => {
 
   it('sizes self-loops and port pitch for the markers', () => {
     const { graph } = lay('requirementDiagram\nrequirement a {\n}\na - contains -> a\n');
-    expect(graph.metrics!.loop).toBeGreaterThanOrEqual(20);
-    expect(graph.metrics!.portPitch).toBeGreaterThanOrEqual(20);
+    expect(graph.metrics!.loop).toBeGreaterThanOrEqual(21);
+    expect(graph.metrics!.portPitch).toBeGreaterThanOrEqual(21);
   });
 
   it('lays out with core layered when the context names no engine', () => {

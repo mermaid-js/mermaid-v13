@@ -31,7 +31,7 @@ export const REQUIREMENT_METRICS = Object.freeze({
   chevron: Object.freeze({ length: 20, width: 20 }),
   /** The classic `contains` circle at the source: its centre `cx` out from the outline. */
   circle: Object.freeze({ cx: 10, r: 9 }),
-  /** The classic marker strokes' width. */
+  /** The classic marker strokes' width (butt caps, as v12's paths). */
   markerStroke: 1,
   /** Between boxes in a rank, and between ranks (requirement has no spacing keys). */
   spacing: Object.freeze({ node: 50, rank: 50 }),
@@ -39,17 +39,46 @@ export const REQUIREMENT_METRICS = Object.freeze({
   titleMargin: 25,
   /** Around the drawing (`setupViewPortForSVG(svg, 8, …)`). */
   viewBoxPadding: 8,
+  /** A font size a style sets is taken below this, in px (ER's cap). */
+  maxFontSize: 1000,
 });
 
 const M = REQUIREMENT_METRICS;
 
+/** How far a drawn marker reaches out from the outline along its line, and across it. */
+export interface MarkerExtent {
+  readonly length: number;
+  readonly width: number;
+}
+
 /**
- * The room a marker takes out from its box along the line, and across it, stroke included,
- * rounded up: the larger of the chevron and the circle. A constant, as flowchart's and class's
- * head room (D154), so a family's marker tokens never move the layout: v12's neo chevron is the
- * classic one scaled by 0.8, inside this room.
+ * The drawn extent of each classic marker, stroke included. The chevron is two butt-capped
+ * strokes from the tip on the outline to `(length, ±width/2)`, each `leg` long: each cap sticks
+ * out half the stroke square to its leg, so the chevron reaches `stroke/2 · (width/2) / leg` past
+ * its back and is `stroke · length / leg` wider across (20.22 × 20.89 at a 1 px stroke; its tip
+ * pokes the same 0.22 into the box). The `contains` circle reaches its centre plus its radius
+ * and half the stroke; its plus lies inside it.
  */
-export const MARKER_ROOM = Object.freeze({
-  length: Math.ceil(Math.max(M.chevron.length, M.circle.cx + M.circle.r + M.markerStroke / 2)),
-  width: Math.ceil(Math.max(M.chevron.width, 2 * M.circle.r + M.markerStroke)),
+export function markerExtent(marker: 'contains' | 'arrow', stroke = M.markerStroke): MarkerExtent {
+  if (marker === 'contains') {
+    const r = M.circle.r + stroke / 2;
+    return { length: M.circle.cx + r, width: 2 * r };
+  }
+  const { length, width } = M.chevron;
+  const leg = Math.hypot(length, width / 2);
+  return {
+    length: length + ((stroke / 2) * (width / 2)) / leg,
+    width: width + (stroke * length) / leg,
+  };
+}
+
+/**
+ * The room a marker takes out from its box along the line, and across it: the larger drawn
+ * extent of the two classic markers (`markerExtent`), rounded up to 21 × 21. A constant, as
+ * flowchart's and class's head room (D154), so the layout never moves with a theme; T4 moves it
+ * to the family tokens (GAPS #574).
+ */
+export const MARKER_ROOM: MarkerExtent = Object.freeze({
+  length: Math.ceil(Math.max(markerExtent('arrow').length, markerExtent('contains').length)),
+  width: Math.ceil(Math.max(markerExtent('arrow').width, markerExtent('contains').width)),
 });

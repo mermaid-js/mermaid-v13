@@ -42,12 +42,18 @@ export interface LineView {
   readonly align: 'center' | 'start';
 }
 
+/** A box of either kind: `kind` says which model record `box` is. */
+export type BoxOf =
+  | { readonly kind: 'requirement'; readonly box: Requirement }
+  | { readonly kind: 'element'; readonly box: Element };
+
 /** A requirement or an element measured as v12's `requirementBox`. */
-export interface BoxView {
+export type BoxView = BoxOf & BoxMeasures;
+
+/** What a box view holds besides its model record. */
+export interface BoxMeasures {
   /** Layout node id: the box's AST id (`requirement:<name>`, `element:<name>`). */
   readonly id: string;
-  readonly kind: 'requirement' | 'element';
-  readonly box: Requirement | Element;
   readonly style: CheckedStyle;
   /** `default` plus the box's classes, as v12's `cssClasses`. */
   readonly classes: readonly string[];
@@ -115,8 +121,6 @@ const ROUTING: Readonly<Partial<Record<RequirementCurve, EdgeRouting>>> = {
 
 /** The least bold font weight. */
 const BOLD = 600;
-/** Font sizes a style may set: below this, in px. */
-const MAX_FONT = 1000;
 
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
@@ -124,26 +128,45 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= BOLD;
   const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
   const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < MAX_FONT ? { ...font, size } : font, bits];
+  return [size !== undefined && size > 0 && size < M.maxFontSize ? { ...font, size } : font, bits];
 }
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 
-/** v12's body lines, in order: an empty field draws nothing. */
-function bodyOf(box: Requirement | Element, kind: BoxView['kind']): [LinePart, string][] {
-  const fields: [LinePart, string, string][] =
-    kind === 'requirement'
+/** `<<text>>`, as v12 wrote it (entities, decoded by the label layout). */
+const guillemets = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
+
+/** v12's head and body lines, in order: an empty field draws nothing. */
+function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
+  const [kind, fields]: [string, [LinePart, string, string][]] =
+    of.kind === 'requirement'
       ? [
-          ['id', 'ID', (box as Requirement).requirementId],
-          ['text', 'Text', (box as Requirement).text],
-          ['risk', 'Risk', (box as Requirement).risk],
-          ['verification', 'Verification', (box as Requirement).verifyMethod],
+          of.box.kind,
+          [
+            ['id', 'ID', of.box.requirementId],
+            ['text', 'Text', of.box.text],
+            ['risk', 'Risk', of.box.risk],
+            ['verification', 'Verification', of.box.verifyMethod],
+          ],
         ]
       : [
-          ['type', 'Type', (box as Element).type],
-          ['docRef', 'Doc Ref', (box as Element).docRef],
+          'Element',
+          [
+            ['type', 'Type', of.box.type],
+            ['docRef', 'Doc Ref', of.box.docRef],
+          ],
         ];
-  return fields.filter(([, , v]) => v !== '').map(([part, key, v]) => [part, `${key}: ${v}`]);
+  const body = fields
+    .filter(([, , v]) => v !== '')
+    .map(([part, key, v]): [LinePart, string] => [part, `${key}: ${v}`]);
+  return { kind: guillemets(kind), body };
+}
+
+/** What every box view is measured with. */
+interface BoxEnv {
+  readonly font: FontKey;
+  readonly measure: Measure;
+  readonly styleOf: (styles: readonly string[]) => CheckedStyle;
 }
 
 /**
@@ -155,27 +178,16 @@ function bodyOf(box: Requirement | Element, kind: BoxView['kind']): [LinePart, s
  * line has its own line box (v12 centred each on its offset, so a taller line overlapped the
  * one above).
  */
-function boxView(
-  box: Requirement | Element,
-  kind: BoxView['kind'],
-  font: FontKey,
-  measure: Measure,
-  styleOf: (styles: readonly string[]) => CheckedStyle
-): BoxView {
+function boxView(of: BoxOf, { font, measure, styleOf }: BoxEnv): BoxView {
+  const { box } = of;
   const style = styleOf(box.styles);
   const [f, bits] = textStyle(style, font);
+  const content = linesOf(of);
   const head: [LinePart, MeasuredLabel][] = [
-    [
-      'kind',
-      measure(
-        `&lt;&lt;${kind === 'requirement' ? (box as Requirement).kind : 'Element'}&gt;&gt;`,
-        f,
-        bits
-      ),
-    ],
+    ['kind', measure(content.kind, f, bits)],
     ['name', measure(box.name, f, bits | Style.Bold)],
   ];
-  const body = bodyOf(box, kind).map(([part, text]): [LinePart, MeasuredLabel] => [
+  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel] => [
     part,
     measure(text, f, bits),
   ]);
@@ -196,9 +208,8 @@ function boxView(
     y += label.height;
   }
   return {
+    ...of,
     id: box.ast,
-    kind,
-    box,
     style,
     classes: box.classes,
     slot: box.slot,
@@ -239,9 +250,10 @@ export function prepareRequirement(
     if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
     return style;
   };
+  const env: BoxEnv = { font, measure, styleOf };
   const boxes = [
-    ...model.requirements.map((r) => boxView(r, 'requirement', font, measure, styleOf)),
-    ...model.elements.map((e) => boxView(e, 'element', font, measure, styleOf)),
+    ...model.requirements.map((box) => boxView({ kind: 'requirement', box }, env)),
+    ...model.elements.map((box) => boxView({ kind: 'element', box }, env)),
   ];
   const relations: RelationView[] = [];
   for (const r of model.relations) {
@@ -253,7 +265,7 @@ export function prepareRequirement(
       relation: r,
       source: r.from,
       target: r.to,
-      label: measure(`&lt;&lt;${r.kind}&gt;&gt;`, font, 0),
+      label: measure(guillemets(r.kind), font, 0),
       marker: contains ? 'contains' : 'arrow',
       markerAt: contains ? 'source' : 'target',
       dashed: !contains,
