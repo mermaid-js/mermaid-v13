@@ -24,7 +24,7 @@ describe('packAll (this workspace)', () => {
     // Every published diagram package, found from its manifest (so a new port joins unchanged),
     // under its private-registry name, in name order.
     const diagrams = diagramPackages(root)
-      .filter((p) => !p.private)
+      .filter((p) => p.manifest !== undefined && !p.private)
       .map((p) => p.name.replace(/^@mermaid-js\//, '@mermaid-chart/'))
       .sort();
     expect(diagrams.length).toBeGreaterThan(20);
