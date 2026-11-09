@@ -201,7 +201,14 @@ export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
  */
 const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
+  ['swimlane', () => import('@mermaid-js/core/layout/swimlane').then((m) => m.swimlane)],
 ]);
+
+/**
+ * Lazy first-party engines that are peers of `layered` (D502, D535): any graph diagram may select
+ * them, so D285's gate does not apply. `tree` is not one; it needs a tree, not a graph.
+ */
+const PEER_LAYOUTS: ReadonlySet<string> = new Set(['swimlane']);
 
 /** The engine a render asks for: `layout`, through the diagram's aliases (D284). */
 export function layoutName(config: ResolvedConfig, plugin: AnyPlugin): string {
@@ -905,8 +912,14 @@ export class Registry {
 
   private find(name: string, declares: boolean): LayoutFound {
     const loader = this.layoutLoader(name);
-    // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285).
-    if (!declares && loader !== undefined && loader === LAZY_LAYOUTS.get(name))
+    // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285),
+    // unless it is a peer of `layered` (D502, D535).
+    if (
+      !declares &&
+      !PEER_LAYOUTS.has(name) &&
+      loader !== undefined &&
+      loader === LAZY_LAYOUTS.get(name)
+    )
       return { engine: layered, state: 'unknown' };
     const engine = this.layouts.get(name);
     if (engine) return { engine, state: 'ready' };

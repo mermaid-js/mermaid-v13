@@ -41,6 +41,11 @@
       "types": "./dist/layout/tree/index.d.ts",
       "default": "./dist/layout/tree/index.js"
     },
+    "./layout/swimlane": {
+      "mermaid-source": "./src/layout/swimlane/index.ts",
+      "types": "./dist/layout/swimlane/index.d.ts",
+      "default": "./dist/layout/swimlane/index.js"
+    },
     "./svg": {
       "mermaid-source": "./src/svg/index.ts",
       "types": "./dist/svg/index.d.ts",
