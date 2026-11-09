@@ -9,6 +9,7 @@
  * only when it parses, as a node of its own with no annotation, to the name.
  */
 import type { NameSyntax, Range } from '@mermaid-js/core/parser-kit';
+import { writtenName } from '../parser/convert.ts';
 import { parseTreeView } from '../parser/index.ts';
 
 const DQ = '"';
@@ -34,13 +35,13 @@ function readsAs(written: string, name: string, directory: boolean): boolean {
 /** `name` (a directory's with its `/`) in quote `q`, if that reads back. */
 function quoted(name: string, directory: boolean, q: string): string | undefined {
   if (name.includes(q)) return undefined;
-  const w = `${q}${name}${directory ? '/' : ''}${q}`;
+  const w = `${q}${writtenName(name, directory)}${q}`;
   return readsAs(w, name, directory) ? w : undefined;
 }
 
 /** `name` (a directory's with its `/`) written bare, if that reads back. */
 function bare(name: string, directory: boolean): string | undefined {
-  const w = `${name}${directory ? '/' : ''}`;
+  const w = writtenName(name, directory);
   return readsAs(w, name, directory) ? w : undefined;
 }
 
@@ -96,7 +97,7 @@ export const treeViewNameSyntax: NameSyntax = {
       q === undefined
         ? [quoted(newName, directory, DQ), quoted(newName, directory, SQ)]
         : [quoted(newName, directory, other), bare(newName, directory)];
-    const newText = forms.find((f) => f !== undefined) ?? `${newName}${directory ? '/' : ''}`;
+    const newText = forms.find((f) => f !== undefined) ?? writtenName(newName, directory);
     return { range, newText };
   },
 };

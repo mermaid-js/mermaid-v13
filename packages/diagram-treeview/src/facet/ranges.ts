@@ -1,6 +1,6 @@
 /**
- * The treeView facet's shared helpers (DESIGN §4.5): finding the statement at an offset, Markdown
- * code spans, ranges.
+ * Ranges for the treeView facet (DESIGN §4.5): the statement at an offset, and making and testing
+ * ranges.
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { TreeViewDocument, TreeViewStatementNode } from '../parser/ast.ts';
@@ -23,14 +23,6 @@ export function statementAt(
   }
   const n = list[found];
   return n && offset <= n.range.end ? n : undefined;
-}
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
 }
 
 export const span = (start: number, end: number): Range => ({ start, end });

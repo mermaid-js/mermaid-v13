@@ -108,13 +108,6 @@ const AFTER_BLANK = [...NAME, ...TEXT];
  */
 const PROBE_FOLLOWS = /* @__PURE__ */ kindSet(T.Indentation, T.QuotedName, T.IconAnnotation);
 
-/** The text statements' keywords by token kind, for the probe's mode. */
-const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
  * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
@@ -122,30 +115,36 @@ const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
  * description, else `INITIAL` (code).
  */
 function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.QuotedName && o < end) return 'string';
-    // An unclosed name is an error token from its quote on.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    if (kind === T.DescAnnotation) {
-      if (o >= src.indexOf('##', start) + 2) return 'description';
-      continue;
-    }
-    const word = TEXT_WORDS[kind];
-    if (word === undefined) continue;
-    let k = start;
-    while (isBlank(src.charCodeAt(k))) k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
+  // The one token that may hold `o`: the last starting before it (tokens do not overlap).
+  let lo = 0;
+  let hi = tokens.length - 1;
+  let j = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if ((tokens.start[mid] ?? 0) < o) {
+      j = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
   }
-  return 'INITIAL';
+  const start = tokens.start[j] ?? 0;
+  const end = tokens.end[j] ?? 0;
+  if (j < 0 || end < o) return 'INITIAL';
+  const kind = tokens.kind[j] ?? Kind.EOF;
+  const c = src.charCodeAt(start);
+  if (kind === T.QuotedName && o < end) return 'string';
+  // An unclosed name is an error token from its quote on.
+  if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+  if (kind === T.DescAnnotation) {
+    return o >= src.indexOf('##', start) + 2 ? 'description' : 'INITIAL';
+  }
+  const word = textKeyword(kind);
+  if (word === undefined) return 'INITIAL';
+  let k = start;
+  while (isBlank(src.charCodeAt(k))) k++;
+  k += word.length;
+  // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+  const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+  return o > k && (o < end || !block) ? word : 'INITIAL';
 }
 
 /** Trivia of the parser's view: the lexer's trivia and the line breaks. */
@@ -165,6 +164,11 @@ const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
   [T.AccTitle]: { type: 'AccTitle', word: ACC_TITLE, value: accTitleValue },
   [T.AccDescr]: { type: 'AccDescr', word: ACC_DESCR, value: accDescrValue },
 };
+
+/** The keyword of the text statement a token of `kind` is (`title`, …), if it is one. */
+export function textKeyword(kind: number): string | undefined {
+  return TEXT_STATEMENTS[kind]?.word;
+}
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -565,7 +569,7 @@ class TreeViewParser {
     const why = glued
       ? `the name \`${excerpt(name)}\` is read as \`${word}\`: put it in quotes, \`"${excerpt(name)}"\``
       : `\`title\`, \`accTitle\` and \`accDescr\` go before the first node`;
-    this.fail([...NAME, Kind.EOF], why);
+    this.fail(NODE_NEXT, why);
   }
 
   /** A `title` glued to a bare name: the first node `title.txt` is a title and `.txt`. */
@@ -585,10 +589,15 @@ class TreeViewParser {
     const first = !this.started;
     this.started = true;
     const blank = this.kind() === T.Indentation ? this.i++ : -1;
-    if (blank >= 0) this.tested(first ? AFTER_BLANK : NAME);
+    // What may stand here, for the probe and the error alike (`document` tested it with no
+    // blank; a text statement's token takes the blanks before it, so it may follow one).
+    const next = first ? DOC_NEXT : NODE_NEXT;
+    const afterBlank = first ? AFTER_BLANK : NAME;
+    const want = blank < 0 ? next : afterBlank;
+    if (blank >= 0) this.tested(want);
     const level = blank >= 0 ? indentValue(this.text(blank)) : 0;
     const k = this.kind();
-    if (k !== T.QuotedName && k !== T.BareName) this.notName(blank);
+    if (k !== T.QuotedName && k !== T.BareName) this.notName(blank, want);
     const head = this.i++;
     this.lineWarnings(blank, head);
     const image = this.text(head);
@@ -647,23 +656,26 @@ class TreeViewParser {
     }
   }
 
-  /** The token after a node's indent (or where a node starts) is no name. */
-  private notName(blank: number): never {
+  /**
+   * The token after a node's indent (or where a node starts) is no name; `want` is what the
+   * probe was told may stand there.
+   */
+  private notName(blank: number, want: readonly number[]): never {
     const k = this.kind();
     if (blank >= 0 && (k === T.Indentation || k === Kind.EOF)) this.strayBlank(blank);
     if (k === T.TreeViewBeta) {
       this.fail(
-        NAME,
+        want,
         'a treeView has one `treeView-beta`, at its start: write `"treeView-beta"` for a node of that name'
       );
     }
     if (ANNOTATION.includes(k)) {
       this.fail(
-        NAME,
+        want,
         'an annotation follows the name it belongs to, as in `index.js :::highlight`'
       );
     }
-    this.fail(NAME);
+    this.fail(want);
   }
 
   /**

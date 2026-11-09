@@ -1,14 +1,16 @@
 /**
  * TreeView language facet (`@mermaid-js/diagram-treeview/language`, DESIGN §4.5, R-LANG-8, D89,
  * #576): the parser entry and the tables the language service needs. Nothing reachable from
- * here imports the layout or a renderer; the import-boundary lint and the bench's language
- * bundle spec hold that in place.
+ * here imports the layout or a renderer: the bench's language bundle spec holds that in place
+ * (the import-boundary lint knows `render/`, which T4 adds, but not `layout/`).
  *
- * Symbols (D487): each node is a `node` symbol over its name (inside its quotes, without a
- * directory's `/`), its own definition with no references, though names repeat
- * (`standalone`); a rename changes that name only, keeps its quotes and a directory's `/`, and
- * refuses a name with a line break or one ending with `/`, which would turn a file into a
- * directory. The facet reads and writes the names itself (`nameSyntax`, `facet/names.ts`).
+ * Symbols (D487): each node is a `node` symbol, its own definition with no references, though
+ * names repeat (`standalone`). The parser records it over the name as written, its quotes and a
+ * directory's `/` included; the facet's `nameSyntax` (`facet/names.ts`) reads the occurrence
+ * the service uses, the bare name inside them, and writes renames: that name only, its quotes
+ * and a directory's `/` kept. Rename refuses a name with a line break, and one ending with `/`,
+ * which would turn a file into a directory (the service compares a rename's result with the new
+ * name as given, so a directory cannot take `lib/` as `lib` either).
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { treeViewCompletions } from './facet/completions.ts';

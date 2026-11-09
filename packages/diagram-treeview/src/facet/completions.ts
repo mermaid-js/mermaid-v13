@@ -12,6 +12,7 @@
  * an annotation still being typed (`index.js :::`, `index.js icon(`) as part of the name, so the
  * parser tests a name there, and the word after the blank is what the item replaces.
  */
+import { isBlank, isLineEnd } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   CompletionKind,
@@ -24,8 +25,8 @@ import { BUILTIN_ICONS } from '../icons.ts';
 import type { TreeViewModel } from '../model.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { span } from './tables.ts';
-import { treeOf } from './tree.ts';
+import { span } from './ranges.ts';
+import { iconOptionsOf } from './tree.ts';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 type Place = 'header' | 'lineStart' | 'afterName';
@@ -37,6 +38,8 @@ interface Item {
   readonly place: Place;
   readonly insert?: string;
   readonly detail?: string;
+  /** The kind whose one-line doc it shows, if any. */
+  readonly doc?: number;
 }
 
 /** The kinds that may follow a name on its line, or a name itself (an annotation being typed). */
@@ -54,11 +57,18 @@ const statement = (kind: number, label: string, insert: string): Item => ({
   item: 'keyword',
   place: 'lineStart',
   insert,
+  doc: kind,
 });
 
 /** Everything completion offers but the icon packs, in the order it is offered. */
 const ITEMS: readonly Item[] = [
-  { kinds: [T.TreeViewBeta], label: 'treeView-beta', item: 'keyword', place: 'header' },
+  {
+    kinds: [T.TreeViewBeta],
+    label: 'treeView-beta',
+    item: 'keyword',
+    place: 'header',
+    doc: T.TreeViewBeta,
+  },
   statement(T.Title, 'title', 'title '),
   statement(T.AccTitle, 'accTitle', 'accTitle: '),
   // `accDescr` takes one line or a block: both forms are offered.
@@ -70,6 +80,7 @@ const ITEMS: readonly Item[] = [
     item: 'class',
     place: 'afterName',
     detail: 'a highlighted row',
+    doc: T.ClassAnnotation,
   },
   ...[...BUILTIN_ICONS, 'none'].map(
     (name): Item => ({
@@ -90,31 +101,29 @@ const ITEMS: readonly Item[] = [
   },
 ];
 
-/** The kind whose docs an item shows. */
-const DOC_KIND: Readonly<Record<string, number>> = { ':::highlight': T.ClassAnnotation };
-
-const isBlank = (c: string) => c === ' ' || c === '\t';
-const isBreak = (c: string) => c === '\n' || c === '\r' || c === '';
+/** Whether the character at `i` of `text` ends a word: a blank or a line end. */
+const stops = (text: string, i: number) =>
+  isBlank(text.charCodeAt(i)) || isLineEnd(text.charCodeAt(i));
 
 /** The word at `o`: back to the last blank or line start, on to the next blank or line end. */
 function wordAt(text: string, o: number): Range {
   let start = o;
-  while (start > 0 && !isBlank(text.charAt(start - 1)) && !isBreak(text.charAt(start - 1))) start--;
+  while (start > 0 && !stops(text, start - 1)) start--;
   let end = o;
-  while (end < text.length && !isBlank(text.charAt(end)) && !isBreak(text.charAt(end))) end++;
+  while (end < text.length && !stops(text, end)) end++;
   return span(start, end);
 }
 
 /** Whether only blanks come before `at` on its line. */
 function atLineStart(text: string, at: number): boolean {
   let i = at;
-  while (i > 0 && isBlank(text.charAt(i - 1))) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
+  while (i > 0 && isBlank(text.charCodeAt(i - 1))) i--;
+  return i === 0 || isLineEnd(text.charCodeAt(i - 1));
 }
 
 /** The icon packs the text names, in the order it names them first. */
 function iconPacks(doc: DocumentView<TreeViewDocument>): string[] {
-  const { icons } = treeOf(doc.text, doc.result);
+  const icons = iconOptionsOf(doc.text);
   const names = [
     ...(doc.result.model as TreeViewModel).nodes.map((n) => n.icon ?? ''),
     icons.defaultIconPack === '' ? '' : `${icons.defaultIconPack}:`,
@@ -144,7 +153,7 @@ export function treeViewCompletions(
   const placed: Record<Place, boolean> = {
     header: lineStart,
     lineStart,
-    afterName: !lineStart && range.start > 0 && isBlank(text.charAt(range.start - 1)),
+    afterName: !lineStart && range.start > 0 && isBlank(text.charCodeAt(range.start - 1)),
   };
   const items: Item[] = [...ITEMS];
   for (const pack of placed.afterName ? iconPacks(doc) : []) {
@@ -160,9 +169,7 @@ export function treeViewCompletions(
   for (const k of items) {
     if (!placed[k.place] || !k.kinds.some((kind) => expected.has(kind))) continue;
     if (!k.label.startsWith(prefix)) continue;
-    // The keywords' docs, and `:::`'s for `:::highlight`; the other annotations have none.
-    const docKind = DOC_KIND[k.label] ?? (k.place === 'afterName' ? undefined : k.kinds[0]);
-    const documentation = docKind === undefined ? undefined : treeviewDocs[docKind];
+    const documentation = k.doc === undefined ? undefined : treeviewDocs[k.doc];
     out.push({
       label: k.label,
       kind: k.item,
