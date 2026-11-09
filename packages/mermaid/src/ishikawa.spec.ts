@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { ishikawa } from '@mermaid-js/diagram-ishikawa';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -143,12 +143,105 @@ describe('ishikawa diagrams through the public API (#585)', () => {
     expect(empty.svg).not.toContain('<g class="ishikawa"');
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {
+  it('draws the outline as text (D498): the effect in a box, the causes as a tree', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('ishikawa', 'svg')).toBe(true);
-    expect(m.supportsFormat('ishikawa', 'ascii')).toBe(false);
-    const e = await rejection(m.render('i8', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('ishikawa');
+    expect(m.supportsFormat('ishikawa', 'ascii')).toBe(true);
+    const result = await m.render('i8', TEXT, { format: 'ascii' });
+    expect(result.format).toBe('ascii');
+    expect(result.diagramType).toBe('ishikawa');
+    expect(result.warnings).toEqual([]);
+    expect(result.text).toBe(
+      [
+        '┌──────────────┐',
+        '│ Blurry photo │',
+        '└─┬────────────┘',
+        '  ├── Process',
+        '  │   └── Out of focus',
+        '  └── User',
+        '      └── Shaky hands',
+      ].join('\n')
+    );
+    expect([result.columns, result.rows]).toEqual([22, 7]);
+  });
+
+  it('draws the ascii charset with tree(1)’s ASCII connectors', async () => {
+    const result = await createMermaid().render('i9', TEXT, {
+      format: 'ascii',
+      ascii: { charset: 'ascii' },
+    });
+    expect(result.text).toBe(
+      [
+        '+--------------+',
+        '| Blurry photo |',
+        '+-+------------+',
+        '  |-- Process',
+        '  |   `-- Out of focus',
+        '  `-- User',
+        '      `-- Shaky hands',
+      ].join('\n')
+    );
+  });
+
+  it('writes labels as plain text: entities decoded, a <br> a space, as the SVG <title>', async () => {
+    const text = 'ishikawa\n  Late &amp; cold<br>food\n  Rider\n    Lost<br/>twice\n';
+    const result = await createMermaid().render('i10', text, { format: 'ascii' });
+    expect(result.text).toBe(
+      [
+        '┌──────────────────┐',
+        '│ Late & cold food │',
+        '└─┬────────────────┘',
+        '  └── Rider',
+        '      └── Lost twice',
+      ].join('\n')
+    );
+  });
+
+  it('centres the front-matter title on the first line (D82), apart from the effect (D492)', async () => {
+    const text = '---\ntitle: Why\n---\nishikawa\n  Blurry photo\n  Process\n';
+    const result = await createMermaid().render('i13', text, { format: 'ascii' });
+    expect(result.text).toBe(
+      [
+        '      Why',
+        '┌──────────────┐',
+        '│ Blurry photo │',
+        '└─┬────────────┘',
+        '  └── Process',
+      ].join('\n')
+    );
+  });
+
+  it('draws an effect with no causes as its box alone, and an empty body as no text', async () => {
+    const m = createMermaid();
+    expect((await m.render('i11', 'ishikawa\n  Alone\n', { format: 'ascii' })).text).toBe(
+      ['┌───────┐', '│ Alone │', '└───────┘'].join('\n')
+    );
+    const empty = await m.render('i11', 'ishikawa\n', { format: 'ascii' });
+    expect(empty.text).toBe('');
+    expect(empty.warnings.map((w) => w.code)).toEqual(['ISHIKAWA_EMPTY']);
+  });
+
+  it('draws a 1,000-deep chain one cause a line, the last 4 columns a level in (a loop, no recursion)', async () => {
+    const chain = Array.from({ length: 1_000 }, (_, i) => `${' '.repeat(i + 2)}c${i}\n`).join('');
+    const m = createMermaid();
+    m.initialize({ maxTextSize: 1_000_000 });
+    const result = await m.render('i14', `ishikawa\n  E\n${chain}`, { format: 'ascii' });
+    const lines = result.text.split('\n');
+    expect(lines).toHaveLength(3 + 1_000);
+    expect(lines.at(-1)).toBe(`${' '.repeat(2 + 4 * 999)}└── c999`);
+  });
+
+  it('is never cropped: wider than ascii.maxWidth, it warns ASCII_TOO_WIDE, and drops emphasis with ASCII_DROPPED', async () => {
+    const text = 'ishikawa\n  Effect\n  A <b>bold</b> cause that is long\n';
+    const result = await createMermaid().render('i12', text, {
+      format: 'ascii',
+      ascii: { maxWidth: 20 },
+    });
+    expect(result.text.split('\n').at(-1)).toBe('  └── A bold cause that is long');
+    expect(result.columns).toBe(31);
+    expect(result.warnings.map((w) => [w.code, (w as { astIds?: string[] }).astIds])).toEqual([
+      ['ASCII_DROPPED', ['cause:1']],
+      ['ASCII_TOO_WIDE', undefined],
+    ]);
   });
 });

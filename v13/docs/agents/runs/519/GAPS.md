@@ -71,3 +71,8 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 ## T7 (#586)
 
 - No tree(1)-style printer exists in the repo (kanban is the only custom-layout ASCII); ishikawa writes its own (D498).
+- Closed (#586): `src/ascii/outline.ts` is ishikawa's own printer (no import from treeView or another diagram), a loop over the model's tree (a 1,000-deep chain is pinned through the API).
+- Trunk: the tree hangs from a tee on the box's bottom border under the effect's first column (`└─┬──┘`, `+-+--+`), so the causes read as the effect's children; D498 names the box and the tree but not how they join. Choice, not a D-id; for the maintainer if it needs one (D499).
+- Front-matter `title`: centred on the first line, as D82 says for every text output (flowchart, ER, sequence). The SVG draws it nowhere (D492, `<title>` only), so this is text-only; it is written as given, whitespace collapsed to one line.
+- Labels: one line each, plain as T4's `<title>` (core label layout in cells: entities decoded, markup gone, `<br>` and wraps a space). Never wrapped or folded: a line wider than `ascii.maxWidth` gets the API's `ASCII_TOO_WIDE` (kanban's choice). `ASCII_DROPPED` `emphasis` for bold/italic labels (D82); nothing else in an ishikawa label has an SVG-only form. Empty body: `''` (SVG draws nothing), the parse's `ISHIKAWA_EMPTY` still warns.
+- Shared spec: `bench/src/ascii-size.spec.ts` listed the ascii types by hand; it now reads them from the manifests (`mermaid.ascii`), so a port adding a text entry edits no list there (#637's rule). Prose: `v13/docs/ascii.md` gains an Ishikawa section and names ishikawa in its three type lists (hand-written, not generated).

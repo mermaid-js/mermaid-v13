@@ -155,8 +155,9 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'ishikawa',
     pattern: /^\s*ishikawa(-beta)?\b/i,
     id: 'ishikawa',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-ishikawa').then((m) => m.ishikawa),
+    loadAscii: () => import('@mermaid-js/diagram-ishikawa/ascii').then((m) => m.ascii),
   },
   {
     type: 'treemap',

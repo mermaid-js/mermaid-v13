@@ -20,7 +20,7 @@ compared corpus source lays out as v12 drew it. What changes (spec #519):
 | The `viewBox` was `getBBox()` of the drawing plus `diagramPadding`, strokes left out | Computed from the layout, half of each stroke included (≤ 1 px larger), plus `diagramPadding` | D224 |
 | `ishikawa.useMaxWidth` was documented with default `false`, but the runtime config gave `true` | Default `true`, the value v12 drew with ([Changed defaults](#changed-defaults)) | P2 |
 | An `ishikawa.diagramPadding` that was not a number reached the renderer as it was | A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning | No `NaN` in the output |
-| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | R-ASCII-5, D320 |
+| No text output | `format: 'ascii'` draws an outline, not the fishbone: the effect in a box, the causes below it as a `tree(1)`-style tree in source order (`├── `, `└── `, `│   `; `\|-- `, `` `-- ``, `\|   ` in the `ascii` charset), labels as plain text (entities decoded, a `<br>` a space), the front-matter `title` centred on the first line; bold and italic are dropped with one `ASCII_DROPPED` warning | D498, D320, D82 |
 
 ## Ishikawa SVG structure
 

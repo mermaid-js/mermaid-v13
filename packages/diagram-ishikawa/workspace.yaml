@@ -26,6 +26,8 @@ languageBundle:
   renderer:
     - render/
     - layout/
+    - ascii/
+    - ascii.ts
     - plugin.ts
     - index.ts
     - labels.ts
@@ -35,5 +37,5 @@ languageBundle:
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:
-  summary: 'The Ishikawa (fishbone) diagram plugin (SVG; `ishikawa`, `ishikawa-beta`).'
+  summary: 'The Ishikawa (fishbone) diagram plugin (SVG and text; `ishikawa`, `ishikawa-beta`).'
   install: 'with `mermaid/slim`'

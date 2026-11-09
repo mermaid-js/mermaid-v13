@@ -338,8 +338,13 @@ describe('hand-drawn (D494, D302)', () => {
 });
 
 describe('the plugin (DESIGN §12.1)', () => {
-  it('is SVG only, lays itself out and has no theme table (spec #519)', () => {
-    expect(ishikawa).toMatchObject({ id: 'ishikawa', formats: ['svg'], layoutKind: 'custom' });
+  it('draws SVG and text, lays itself out and has no theme table (spec #519)', () => {
+    expect(ishikawa).toMatchObject({
+      id: 'ishikawa',
+      formats: ['svg', 'ascii'],
+      layoutKind: 'custom',
+    });
+    // The text hook is the lazily loaded `./ascii` entry (#586), not on the plugin.
     expect('ascii' in ishikawa).toBe(false);
     expect('theme' in ishikawa).toBe(false);
   });

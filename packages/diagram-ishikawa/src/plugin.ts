@@ -10,15 +10,14 @@ import { renderIshikawa } from './render/index.ts';
 /**
  * The ishikawa plugin (DESIGN §12.1, spec #519): `layoutKind: 'custom'` with its own
  * `IshikawaLayout` (D491). `parse` takes the whole source; `layout` measures every label and
- * places the fishbone; `render` writes the whole `<svg>` document. SVG only for now (T7 may add
- * the outline as a lazy `ascii` entry, D498; until then core throws `UnsupportedFormatError` for
- * `format: 'ascii'`). No theme table: it reads only shared variables. The registry loads it from
+ * places the fishbone; `render` writes the whole `<svg>` document. Text output is the separate
+ * `./ascii` entry (#586, D498), which draws the model as an outline. No theme table: it reads only shared variables. The registry loads it from
  * the package's `mermaid` manifest (#585); `configDefaults` are the generated `ishikawa` section
  * defaults, the one source of every ishikawa default (`src/config.ts` falls back to them too).
  */
 export const ishikawa = {
   id: 'ishikawa',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: ishikawaConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectIshikawa(text),
