@@ -1,7 +1,6 @@
-// D537, "Lazy chunk for hops": core's line-hop chunk loads only for a render whose `lineHops`
-// could be on, and `renderSync` without it behaves as without a lazy layout. The chunk, once
-// loaded, is shared by every API object (as loaded themes are), so this file starts with it
-// unloaded and the cases run in order.
+// D537, "Lazy chunk for hops": core's line-hop chunk is loaded as a lazy layout named `lineHops`,
+// only for a render whose shared `lineHops` is on (an engine whose own key defaults on carries
+// the step itself), and `renderSync` without it behaves as without a lazy layout.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, NotLoadedError } from './index.ts';
@@ -13,7 +12,7 @@ const fixture = (name: string): string =>
   );
 const ON = fixture('line-hops-on');
 const OFF = fixture('line-hops-off');
-const CHUNK = [{ kind: 'chunk', name: 'lineHops' }];
+const CHUNK = [{ kind: 'layout', name: 'lineHops' }];
 
 function thrown(f: () => unknown): unknown {
   try {
@@ -40,7 +39,7 @@ describe('the lazy line-hop chunk (D537)', () => {
     await m.preload({ types: ['flowchart'] });
     const r = m.renderSync(ON, { id: 'd', placeholders: true });
     expect(r.warnings.map((w) => w.code)).toEqual(['PLACEHOLDER']);
-    expect(r.warnings[0]!.message).toContain('chunk "lineHops"');
+    expect(r.warnings[0]!.message).toContain('layout "lineHops"');
     expect(r.svg).not.toContain('A6,6');
   });
 
@@ -66,9 +65,9 @@ describe('the lazy line-hop chunk (D537)', () => {
     }
   });
 
-  it('preload({ lineHops: true }) loads it for renderSync', async () => {
+  it('preload({ layouts: ["lineHops"] }) loads it for renderSync', async () => {
     const m = createMermaid();
-    await m.preload({ types: ['flowchart'], lineHops: true });
+    await m.preload({ types: ['flowchart'], layouts: ['lineHops'] });
     expect(m.renderSync(ON, { id: 'd' }).svg).toBe((await createMermaid().render('d', ON)).svg);
     // Every diagram that draws edges, now that it is loaded: no crossing, drawn as without hops.
     const text = 'classDiagram\n  A --> B\n';
@@ -76,5 +75,15 @@ describe('the lazy line-hop chunk (D537)', () => {
     expect(m.renderSync(`---\nconfig:\n  lineHops: true\n---\n${text}`, { id: 'c' }).svg).toBe(
       (await createMermaid().render('c', text)).svg
     );
+  });
+
+  it('is no layout: `layout: lineHops` is LAYOUT_UNKNOWN, and no loader replaces it', async () => {
+    const text = OFF.replace('  lineHops: false\n', '  layout: lineHops\n');
+    expect((await createMermaid().render('d', text)).warnings.map((w) => w.code)).toEqual([
+      'LAYOUT_UNKNOWN',
+    ]);
+    const m = createMermaid();
+    m.registerLayoutLoaders([{ name: 'lineHops', loader: () => Promise.reject(new Error('no')) }]);
+    expect((await m.render('d', ON)).svg).toContain('A6,6');
   });
 });

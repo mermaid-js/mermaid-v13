@@ -1,6 +1,5 @@
-// D537: `elk.lineHops` defaults on, so preloading an ELK layout loads core's line-hop chunk too, and
-// `renderSync` after `preload({ layouts: ['elk'] })` draws ELK's hops as before. Its own file: the
-// chunk, once loaded, is shared by every API object.
+// D537: ELK's engine carries core's line-hop step, which `elk.lineHops` (default on) needs, so
+// `renderSync` after `preload({ layouts: ['elk'] })` draws ELK's hops as before.
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from 'mermaid';
 import elkLayouts from './index.ts';

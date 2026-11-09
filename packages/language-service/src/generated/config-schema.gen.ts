@@ -864,7 +864,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded only for a render whose hops could be on; `renderSync` without it throws `NotLoadedError` for chunk `lineHops` (load it with `prepare()` or `preload({ lineHops: true })`; preloading a layout whose own `lineHops` defaults on, `swimlane` or `elk`, loads it too)."
+        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
       }
     },
     "maxTextSize": {

@@ -1,6 +1,5 @@
-// D537: preloading a layout whose own `lineHops` defaults on (`swimlane.lineHops: arc`) loads core's
-// line-hop chunk too, so `renderSync` works after `preload` as it did before hops were lazy. Its
-// own file: the chunk, once loaded, is shared by every API object.
+// D537: the swimlane engine carries core's line-hop step, which `swimlane.lineHops` (default `arc`)
+// needs, so `preload` of the layout is enough for `renderSync`.
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from './index.ts';
 

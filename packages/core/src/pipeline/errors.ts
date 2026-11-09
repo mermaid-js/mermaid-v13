@@ -21,9 +21,7 @@ export type Resource =
   | { readonly kind: 'layout'; readonly name: string }
   | { readonly kind: 'theme'; readonly name: string }
   | { readonly kind: 'iconPack'; readonly name: string }
-  | { readonly kind: 'math'; readonly name: string }
-  /** A lazily loaded part of core: `lineHops` (D537). */
-  | { readonly kind: 'chunk'; readonly name: string };
+  | { readonly kind: 'math'; readonly name: string };
 
 export interface MermaidErrorInit {
   /** Offset and length in the original source; 0 when the error has no position. */

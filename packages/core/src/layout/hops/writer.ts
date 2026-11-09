@@ -7,7 +7,7 @@
  * Hops never need the tree writer: a render without hops never gets here.
  */
 import type { StreamSvgWriter, TreeSvgWriter } from '../../svg/writer.ts';
-import { lineHops, type HopStyle } from './hops.ts';
+import { hopPaths, type HopStyle } from './hops.ts';
 
 /** One edge line: its path data as written, and its coordinate frame. */
 interface Line {
@@ -38,7 +38,7 @@ export function hopWriter<W extends StreamSvgWriter | TreeSvgWriter>(w: W, style
       list.push(line);
     }
     for (const list of byFrame.values())
-      lineHops(
+      hopPaths(
         list.map((l) => l.d),
         style
       ).forEach((d, i) => {

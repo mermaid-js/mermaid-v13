@@ -202,7 +202,7 @@ function withHops(
  * crossing, else undefined (also when no crossing on it has room for a hop). A line that is
  * not plain absolute path data neither hops nor is hopped over.
  */
-export function lineHops(paths: readonly string[], style: HopStyle): (PathData | undefined)[] {
+export function hopPaths(paths: readonly string[], style: HopStyle): (PathData | undefined)[] {
   const lines = paths.map(parsePath);
   const out: (PathData | undefined)[] = paths.map(() => undefined);
   for (const [edge, byCommand] of hopsOf(lines))

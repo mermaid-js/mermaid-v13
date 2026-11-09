@@ -1,7 +1,7 @@
 // D537 (#78): line hops are core's shared edge-path step, for every diagram that draws edges,
 // through `createMermaid().render()` and `renderSync()`. The lazy chunk's loading is in
-// `line-hops-lazy.spec.ts` and `line-hops-preload.spec.ts` (each starts with it unloaded); the
-// precedence is `hopStyle`'s spec in core.
+// `line-hops-lazy.spec.ts` and `line-hops-preload.spec.ts`; the precedence is `hopStyle`'s spec in
+// core.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';

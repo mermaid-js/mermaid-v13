@@ -5,6 +5,7 @@
  */
 import type { ResolvedConfig } from '../../config/resolve.ts';
 import type { EdgeStep } from '../../pipeline/draw.ts';
+import type { DiagramPlugin } from '../../pipeline/types.ts';
 import type { HopStyle } from './hops.ts';
 import { hopWriter } from './writer.ts';
 
@@ -44,14 +45,27 @@ export function hopStyle(
 }
 
 /**
- * The draw step's writer wrapper for a render (`drawDiagram`'s `edges`), or undefined when the
- * render draws no hops (see {@link hopStyle}).
+ * The draw step's writer wrapper for a render (`drawDiagram`'s `edges`), from `mermaid`'s analysis
+ * of it (the resolved config, the author's config layers, the plugin), or undefined when it
+ * draws no hops (see {@link hopStyle}). A graph diagram's layout, through the
+ * plugin's aliases, names the engine section (`elk` for `elk.stress`). `mermaid` loads it as the
+ * layout registry's `lineHops`: from this chunk, or from an engine module that re-exports it
+ * (`swimlane`, ELK).
  */
-export function hopStep(
-  config: ResolvedConfig,
-  layers: readonly Layer[],
-  section?: string
-): EdgeStep | undefined {
-  const style = hopStyle(config, layers, section);
+export function lineHops({
+  prepared: { config },
+  sources,
+  plugin,
+}: {
+  readonly prepared: { readonly config: ResolvedConfig };
+  readonly sources: readonly Layer[];
+  readonly plugin: Pick<DiagramPlugin, 'layoutKind' | 'layoutEngine'>;
+}): EdgeStep | undefined {
+  const name = String(config.layout);
+  const section =
+    plugin.layoutKind === 'graph'
+      ? (plugin.layoutEngine?.aliases?.[name] ?? name).split('.')[0]
+      : undefined;
+  const style = hopStyle(config, sources, section);
   return style ? (w) => hopWriter(w, style) : undefined;
 }
