@@ -9,7 +9,7 @@ import { DASH, Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { UsecaseArrowType, UsecaseRelationshipType, UsecaseShape } from '../model.ts';
 import type { LabelDraft, MetadataDraft, PropertyDraft } from './drafts.ts';
-import { UsecaseReader } from './reader.ts';
+import { STOP, STOP_IN_METADATA, UsecaseReader } from './reader.ts';
 import {
   AFTER_BACK_LABEL,
   AFTER_COMMA,
@@ -25,7 +25,6 @@ import {
   PROPERTY_KEYS,
   PROPERTY_VALUE_SET,
   PROPERTY_VALUES,
-  WORD_KINDS,
 } from './tables.ts';
 import { generatedId } from './text.ts';
 import { LABEL_TEXT, T } from './tokens.ts';
@@ -128,21 +127,7 @@ export abstract class ItemReader extends UsecaseReader {
       const { label, range } = this.quotedLabel(this.i++);
       return { id: generatedId(label.raw), label, range, generated: true };
     }
-    this.fail(NAMES, this.nameHint());
-  }
-
-  protected nameHint(): string | undefined {
-    const k = this.kind();
-    if (k === T.CssIdentifier) {
-      return 'an id is letters, digits and `_`; write `my_node`, or a label in quotes';
-    }
-    if (k === T.LabelSymbol) {
-      return 'an id is ASCII letters, digits and `_`; put other text in a label, such as `A("…")`';
-    }
-    if (LABEL_TEXT[k] === 1 && k !== T.Identifier && WORD_KINDS.includes(k)) {
-      return `\`${this.raw(this.i)}\` is a keyword; quote it to use it as a name`;
-    }
-    return undefined;
+    this.fail(NAMES);
   }
 
   /**
@@ -181,10 +166,21 @@ export abstract class ItemReader extends UsecaseReader {
     return read;
   }
 
-  /** `'@{' NEWLINE* ( property ( separator property )* ','? NEWLINE* )? '}'` */
+  /**
+   * `'@{' NEWLINE* ( property ( separator property )* ','? NEWLINE* )? '}'`. An error inside
+   * stops with {@link STOP_IN_METADATA}, so recovery skips through the `}`.
+   */
   protected metadata(): MetadataDraft {
+    try {
+      return this.metadataBody();
+    } catch (error) {
+      if (error === STOP) throw STOP_IN_METADATA;
+      throw error;
+    }
+  }
+
+  private metadataBody(): MetadataDraft {
     this.i++;
-    this.metadataOpen = true;
     const properties: PropertyDraft[] = [];
     this.skipNewlines();
     if (PROPERTY_KEY_SET[this.kind()] === 1) {
@@ -197,7 +193,6 @@ export abstract class ItemReader extends UsecaseReader {
       this.skipNewlines();
     }
     this.expect(T.RBrace, this.kind() === T.Comma ? 'a `,` separates two properties' : undefined);
-    this.metadataOpen = false;
     return { properties };
   }
 
@@ -267,12 +262,7 @@ export abstract class ItemReader extends UsecaseReader {
   /** `':::' ID (',' ID)*` */
   protected classSuffix(): string[] {
     this.i++;
-    const names = [this.raw(this.expect(T.Identifier))];
-    while (this.kind() === T.Comma) {
-      this.i++;
-      names.push(this.raw(this.expect(T.Identifier)));
-    }
-    return names;
+    return this.commaList(() => this.raw(this.expect(T.Identifier)));
   }
 
   // ---- rules: relations ---------------------------------------------------------------
@@ -385,7 +375,7 @@ export abstract class ItemReader extends UsecaseReader {
 
   /** The first token at or after `j` that is not a label part; each run is scanned once. */
   protected labelRunEnd(j: number): number {
-    const memo = (this.labelRun ??= new Int32Array(this.kinds.length + 1).fill(-1));
+    const memo = (this.labelRun ??= new Int32Array(this.t.length + 1).fill(-1));
     let e = j;
     let stop = -1;
     while (LABEL_PART[this.kind(e)] === 1) {

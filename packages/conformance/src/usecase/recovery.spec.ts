@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import { MODEL_CODES, parseUsecase } from '@mermaid-js/diagram-usecase';
-import { CHEVROTAIN_NAMES } from '@mermaid-js/diagram-usecase/testing';
 import { usecaseCases } from './corpus.ts';
+import { INTERNAL_NAMES, withoutQuotes } from './internal-names.ts';
 
 /**
  * Recovery set (R-PARSE-4, D473): documents with N independent errors give N error
@@ -25,26 +25,6 @@ interface Case {
 
 const CASES = usecaseCases().filter((c) => c.id.startsWith('usecase-cases/recovery/')) as Case[];
 
-/** Chevrotain's token names (but `JSON`, the format's name) and v12's grammar rule names. */
-const INTERNAL = [
-  ...Object.values(CHEVROTAIN_NAMES).filter((n) => /^[A-Z_]{3,}$/.test(n) && n !== 'JSON'),
-  'actorItem',
-  'actorName',
-  'entityName',
-  'entityStatement',
-  'relationTail',
-  'nodeLabel',
-  'edgeLabel',
-  'metadataProperty',
-  'metadataSeparator',
-  'systemBoundaryContent',
-  'boundaryElement',
-  'classSuffix',
-  'styleValue',
-  'styleComponent',
-  'lineEnd',
-];
-
 describe('usecase recovery (R-PARSE-4)', () => {
   it('has at least 20 cases, at least 20 with several errors, model errors among them', () => {
     expect(CASES.length).toBeGreaterThanOrEqual(20);
@@ -65,7 +45,7 @@ describe('usecase recovery (R-PARSE-4)', () => {
       const ids = [...model.actors, ...model.useCases].map((e) => e.id);
       for (const k of c.keeps) expect(ids).toContain(k);
       for (const d of diagnostics) {
-        for (const name of INTERNAL) expect(d.message, d.message).not.toContain(name);
+        expect(INTERNAL_NAMES.test(withoutQuotes(d.message)), d.message).toBe(false);
       }
     });
   }

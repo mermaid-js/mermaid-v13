@@ -7,7 +7,40 @@ import { parseUsecase } from './parser.ts';
  * statement spans for folding and highlighting, the front-matter title (D472), JSON rows, and
  * diagnostics with related ranges (D473). Model parity with v12 is the conformance suite's.
  */
-const H = 'usecase-beta\n';
+type RawGlob = (
+  pattern: string,
+  options: { query: '?raw'; import: 'default'; eager: true }
+) => Readonly<Record<string, string>>;
+/** Vite's `import.meta.glob` (Vitest runs it) reads the files: the package needs no Node types. */
+const FIXTURES = (import.meta as ImportMeta & { glob: RawGlob }).glob(
+  '../../../../e2e/diagrams/usecase/nightly-check/parser-*.mmd',
+  {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }
+);
+const CASES_FILE = (import.meta as ImportMeta & { glob: RawGlob }).glob(
+  '../../../conformance/corpus/usecase-cases.json',
+  {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }
+);
+/** An e2e fixture, `e2e/diagrams/usecase/nightly-check/<name>.mmd`. */
+const fixture = (name: string): string => {
+  const text = FIXTURES[`../../../../e2e/diagrams/usecase/nightly-check/${name}.mmd`];
+  if (text === undefined) throw new Error(`no fixture ${name}`);
+  return text;
+};
+const CASES = JSON.parse(Object.values(CASES_FILE)[0] ?? '[]') as { id: string; source: string }[];
+/** A case of `corpus/usecase-cases.json`, `usecase-cases/parse/<name>`. */
+const testCase = (name: string): string => {
+  const found = CASES.find((c) => c.id === `usecase-cases/parse/${name}`);
+  if (!found) throw new Error(`no case ${name}`);
+  return found.source;
+};
 
 /** Every AST node id, depth first. */
 function ids(node: AstNode): string[] {
@@ -16,23 +49,7 @@ function ids(node: AstNode): string[] {
 
 describe('parseUsecase AST ids (D475)', () => {
   it('names each mention by its resolved kind, with @n for later mentions', () => {
-    const { ast, model } = parseUsecase(
-      H +
-        [
-          'User --> Login',
-          'actor User',
-          'Login --> Logout',
-          'systemBoundary Shop',
-          '  Pay',
-          'end',
-          'json P@{"a": 1}',
-          'User e1@--> P',
-          'note for Login "n"',
-          'note for User "m"',
-          'classDef hot fill:red',
-          'class Login hot',
-        ].join('\n')
-    );
+    const { ast, model } = parseUsecase(fixture('parser-ast-ids'));
     expect(ids(ast)).toEqual([
       'doc',
       'usecase',
@@ -74,7 +91,7 @@ describe('parseUsecase AST ids (D475)', () => {
   });
 
   it('counts parallel relations, and percent-encodes what ids reserve', () => {
-    const { ast } = parseUsecase(H + 'A --> B\nA --> B\n"a#b" --> B');
+    const { ast } = parseUsecase(fixture('parser-parallel-relations'));
     expect(ast.children.filter((c) => c.type === 'Relation').map((c) => c.id)).toEqual([
       'rel:A->B',
       'rel:A->B@2',
@@ -85,10 +102,7 @@ describe('parseUsecase AST ids (D475)', () => {
 
 describe('parseUsecase symbols (D477)', () => {
   it('defines at the first mention and refers at the others', () => {
-    const { symbols } = parseUsecase(
-      H +
-        'User --> Login\nactor User\nnote for Login "x"\nstyle Login fill:red\nUser e1@--> Login\ne1@{ animate: true }'
-    );
+    const { symbols } = parseUsecase(fixture('parser-symbols'));
     expect(symbols.map((s) => [s.name, s.kind, s.role])).toEqual([
       ['User', 'actor', 'def'],
       ['Login', 'usecase', 'def'],
@@ -103,7 +117,7 @@ describe('parseUsecase symbols (D477)', () => {
   });
 
   it('names a quoted element by its label, the text between the quotes (D191)', () => {
-    const src = H + '"Reset password" --> Done\nnote for Reset_password "x"';
+    const src = fixture('parser-quoted-symbol');
     const { symbols } = parseUsecase(src);
     const reset = symbols.filter((s) => s.name === 'Reset password');
     expect(reset.map((s) => [s.role, src.slice(s.range.start, s.range.end)])).toEqual([
@@ -113,14 +127,14 @@ describe('parseUsecase symbols (D477)', () => {
   });
 
   it('has no symbol for a name that resolves to nothing', () => {
-    const { symbols } = parseUsecase(H + 'class Ghost hot');
+    const { symbols } = parseUsecase(testCase('unresolved-class'));
     expect(symbols).toEqual([]);
   });
 });
 
 describe('parseUsecase statements', () => {
   it('spans each statement, a boundary with its members', () => {
-    const src = H + 'actor A\nsystemBoundary S\n  B\n  actor C\nend\nA --> B';
+    const src = fixture('parser-statements');
     const { statements } = parseUsecase(src);
     const text = (r: { start: number; end: number }) => src.slice(r.start, r.end);
     expect(
@@ -136,14 +150,12 @@ describe('parseUsecase statements', () => {
 
 describe('parseUsecase model extras', () => {
   it('keeps the front-matter title (D472)', () => {
-    const { model } = parseUsecase('---\ntitle: Shop\n---\nusecase-beta\nA');
+    const { model } = parseUsecase(fixture('parser-front-matter-title'));
     expect(model.title).toBe('Shop');
   });
 
   it('flattens JSON tables into rows in source key order', () => {
-    const { model } = parseUsecase(
-      H + 'json P@{"2": "b", "1": "a", "list": ["x", "y"], "o": {"k": true}, "e": {}}'
-    );
+    const { model } = parseUsecase(fixture('parser-json-rows'));
     expect(model.jsonTables[0]?.rows).toEqual([
       { key: '2', accessibleKey: '2', value: 'b' },
       { key: '1', accessibleKey: '1', value: 'a' },
@@ -155,14 +167,14 @@ describe('parseUsecase model extras', () => {
   });
 
   it("shows v12's entity codes as their characters, and keeps an author's `&` as written", () => {
-    const { model } = parseUsecase(H + 'A[x #amp; y]\nB["&amp;"]');
+    const { model } = parseUsecase(fixture('parser-entities'));
     expect(model.useCases.map((u) => u.label)).toEqual(['x & y', '&amp;']);
   });
 });
 
 describe('parseUsecase diagnostics (D473)', () => {
   it('words a model error as v12 did, without its location, the earlier declaration related', () => {
-    const src = H + 'actor Shared\nShared';
+    const src = testCase('kind-conflict');
     const [d] = parseUsecase(src).diagnostics;
     expect(d?.message).toBe("ID 'Shared' is declared as both actor and usecase");
     expect(src.slice(d?.range.start, d?.range.end)).toBe('Shared');
@@ -173,7 +185,7 @@ describe('parseUsecase diagnostics (D473)', () => {
   });
 
   it("names a generated id's label as v12 did", () => {
-    const { diagnostics } = parseUsecase(H + '"A B"\n"A-B"');
+    const { diagnostics } = parseUsecase(testCase('generated-collision'));
     expect(diagnostics.map((d) => d.message)).toEqual([
       'Generated ID \'A_B\' collides with another declaration (label "A-B")',
     ]);
@@ -181,14 +193,15 @@ describe('parseUsecase diagnostics (D473)', () => {
   });
 
   it('reports a statement v12 could not choose at its start, where v12 did', () => {
-    const src = H + 'A; B';
+    const src = testCase('statement-choice');
     const [d] = parseUsecase(src).diagnostics;
     expect(d?.range.start).toBe(src.indexOf('A;'));
     expect(d?.message).toMatch(/^Expected .*, got `;`\.$/);
   });
 
   it('never throws', () => {
-    for (const src of [H, H + '"', H + '<<', H + 'json P@{', H + '"`', H + 'accDescr {', '']) {
+    const names = ['header', 'quote', 'stereotype', 'json', 'markdown', 'acc-descr'];
+    for (const src of names.map((n) => testCase(`never-throws-${n}`))) {
       expect(() => parseUsecase(src)).not.toThrow();
     }
   });

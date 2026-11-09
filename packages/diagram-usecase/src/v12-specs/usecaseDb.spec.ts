@@ -6,6 +6,7 @@
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ARROW_TYPE, db } from './adapter.ts';
+// dropped: 3 assertions on db.getAST() — D476, v13 does not port v12's GraphAST
 // skipped: atomically replaces committed state with a detached model — it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB
 // skipped: keeps the previous commit when a replacement is incomplete — it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB
 // skipped: clears every collection, counter, AST, direction, config, title, and accessibility field — it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB
@@ -80,7 +81,6 @@ describe('usecase database', () => {
     expect([...db.getNotes().keys()]).toEqual(['note_0', 'note_1']);
     expect([...db.getJsonNodes().keys()]).toEqual(['Payload']);
     expect(db.getRelationships()).toHaveLength(1);
-    expect(db.getAST()?.source).toBe('usecase-beta\nactor User');
 
     const replacement = db.createModel();
     replacement.useCases.set('Login', {
@@ -99,7 +99,6 @@ describe('usecase database', () => {
     expect([...db.getNotes()]).toEqual([]);
     expect([...db.getJsonNodes()]).toEqual([]);
     expect(db.getRelationships()).toEqual([]);
-    expect(db.getAST()).toBeUndefined();
   });
 
   it.skip('keeps the previous commit when a replacement is incomplete', () => {
@@ -157,7 +156,6 @@ describe('usecase database', () => {
     expect(db.getJsonNodes().size).toBe(0);
     expect(db.getClassDefs().size).toBe(0);
     expect(db.getDirection()).toBe('LR');
-    expect(db.getAST()).toBeUndefined();
     expect(db.getDiagramTitle?.()).toBe('');
     expect(db.getAccTitle?.()).toBe('');
     expect(db.getAccDescription?.()).toBe('');

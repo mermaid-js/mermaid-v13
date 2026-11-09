@@ -1,20 +1,27 @@
 // cspell:words accdescr
 /**
- * The usecase parser's token reader (#563): the token arrays the rules read (v12's significant
- * tokens: the lexer's, without the spans v12 removed before lexing), and how a rule fails and
- * the parse recovers. A rule that fails records a diagnostic and throws {@link STOP}; the
- * statement loop skips to the line end (R-PARSE-4). Messages name what was expected in Mermaid
- * terms, never a token kind or grammar rule (R-ERR-5), and start where v12's parser reported
- * the error, so the first error's offset is v12's (D473).
+ * The usecase parser's token reader (#563): the tokens the rules read, and how a rule fails and
+ * the parse recovers. A rule that fails records a diagnostic and throws a {@link Stop}; the
+ * statement loop recovers as the stop says (R-PARSE-4). Messages name what was expected in
+ * Mermaid terms, never a token kind or grammar rule (R-ERR-5), and start where v12's parser
+ * reported the error, so the first syntax error's offset is v12's (D473).
+ *
+ * The tokens are the lexer's stream without the spans v12 removed before lexing, filtered by
+ * hand rather than with the kit's `significantTokens()`: a removed comment line and the `%%`
+ * line v12's comment removal left (v12's `COMMENT` token, which the grammar reads) are both
+ * `Kind.Comment`, and only the lexer's text offset (`at < 0` for a removed span) tells them
+ * apart. Each token also keeps its offsets into the text v12 lexed (`ats`, `tos`), which labels
+ * and ids are sliced from.
  */
 import {
-  formatExpected,
   Kind,
+  kindSet,
   LineIndex,
   ParseState,
+  skipTo,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, Range, RelatedInfo, TokenView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import {
@@ -24,9 +31,9 @@ import {
 } from '../codes.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
-import { ARROW_SET, EXPECTED, KEYWORD_LINE, LINE_END } from './tables.ts';
+import { EXPECTED, KEYWORD_LINE, LINE_END, WORD_KINDS } from './tables.ts';
 import { shown } from './text.ts';
-import { T } from './tokens.ts';
+import { LABEL_TEXT, T } from './tokens.ts';
 
 export interface UsecaseParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -34,34 +41,38 @@ export interface UsecaseParseOptions extends ParseOptions {
 }
 
 /**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level, which
+ * recovers as `skip` says: to the line end, through the `}` of the `@{ … }` the error is in, or
+ * past the lines of an `accDescr {` that has no `}` (they are text, not statements). One
+ * instance per kind, so a stack is captured once.
  */
-class Stop extends Error {}
-export const STOP = new Stop();
+export class Stop extends Error {
+  constructor(readonly skip: 'line' | 'metadata' | 'description') {
+    super(skip);
+  }
+}
+export const STOP = new Stop('line');
+export const STOP_IN_METADATA = new Stop('metadata');
+export const STOP_IN_DESCRIPTION = new Stop('description');
+
+/** Where plain recovery stops: a line end, or text no rule matched (it is reported). */
+const SKIP_TO = kindSet(Kind.Newline, Kind.Error);
+const SKIP_IN_METADATA = kindSet(Kind.Newline, Kind.Error, T.RBrace);
 
 /** The tokens of one parse, the cursor, and the errors and recovery of the rules. */
 export abstract class UsecaseReader {
   protected readonly pre: PreprocessResult;
-  /** v12's lexed text; token `j` is `text[at[j], to[j])`. */
+  /** v12's lexed text; token `j` is `text[ats[j], tos[j])`. */
   protected readonly text: string;
-  protected readonly kinds: number[] = [];
-  protected readonly starts: number[] = [];
-  protected readonly ends: number[] = [];
-  protected readonly ats: number[] = [];
-  protected readonly tos: number[] = [];
+  protected readonly t: TokenView;
+  protected readonly ats: Int32Array;
+  protected readonly tos: Int32Array;
   protected readonly full: Lexed['tokens'];
   protected readonly input: Lexed['input'];
   protected i = 0;
-  /** The first token of the statement being read. */
-  protected stmt = 0;
   protected readonly st = new ParseState();
   /** Error tokens already reported. */
   private readonly reported = new Set<number>();
-  /** After an `accDescr {` with no `}`: skip its lines, up to one that starts with a keyword. */
-  protected description = false;
-  /** Inside `@{ … }`: an error skips to its `}`. */
-  protected metadataOpen = false;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -80,30 +91,39 @@ export abstract class UsecaseReader {
     this.input = lexed.input;
     this.text = lexed.input.text;
     const { tokens, at, to } = lexed;
+    let n = 0;
+    for (let j = 0; j < tokens.length; j++) if ((at[j] ?? -1) >= 0 || j === tokens.length - 1) n++;
+    const kind = new Uint16Array(n);
+    const start = new Uint32Array(n);
+    const end = new Uint32Array(n);
+    this.ats = new Int32Array(n);
+    this.tos = new Int32Array(n);
+    let o = 0;
     for (let j = 0; j < tokens.length; j++) {
       const k = tokens.kind[j] ?? Kind.EOF;
       const a = at[j] ?? -1;
-      // The spans v12 removed before lexing are trivia; the text's own `%%` lines are not.
-      if (k !== Kind.EOF && a < 0) continue;
       const eof = k === Kind.EOF;
-      this.kinds.push(k);
-      this.starts.push(eof ? src.length : (tokens.start[j] ?? 0));
-      this.ends.push(eof ? src.length : (tokens.end[j] ?? 0));
-      this.ats.push(eof ? this.text.length : a);
-      this.tos.push(eof ? this.text.length : (to[j] ?? a));
+      // The spans v12 removed before lexing are trivia; the text's own `%%` lines are not.
+      if (!eof && a < 0) continue;
+      kind[o] = k;
+      start[o] = eof ? src.length : (tokens.start[j] ?? 0);
+      end[o] = eof ? src.length : (tokens.end[j] ?? 0);
+      this.ats[o] = eof ? this.text.length : a;
+      this.tos[o] = eof ? this.text.length : (to[j] ?? a);
+      o++;
     }
+    this.t = { kind, start, end, length: n };
   }
 
   // ---- tokens -------------------------------------------------------------------------
 
   protected kind(j = this.i): number {
-    return this.kinds[j] ?? Kind.EOF;
+    return this.t.kind[j] ?? Kind.EOF;
   }
 
   protected range(j = this.i): Range {
-    const last = this.kinds.length - 1;
-    const k = Math.min(j, last);
-    return { start: this.starts[k] ?? 0, end: this.ends[k] ?? 0 };
+    const k = Math.min(j, this.t.length - 1);
+    return { start: this.t.start[k] ?? 0, end: this.t.end[k] ?? 0 };
   }
 
   /** Token `j` as v12's lexer read it (without the line break v12 appended). */
@@ -121,7 +141,7 @@ export abstract class UsecaseReader {
 
   /** The end of the last token read. */
   protected end(): number {
-    return this.ends[this.i - 1] ?? 0;
+    return this.t.end[this.i - 1] ?? 0;
   }
 
   /** Consume a token of `kind` and return its index, or fail. */
@@ -130,14 +150,29 @@ export abstract class UsecaseReader {
     return this.i++;
   }
 
-  /** Consume a token of one of `kinds` and return its index, or fail. */
-  protected expectOne(set: Uint8Array, kinds: readonly number[], hint?: string): number {
-    if (set[this.kind()] !== 1) this.fail(kinds, hint);
+  /** Consume a token of one of `kinds` and return its index, or fail (`names` for the message). */
+  protected expectOne(
+    set: Uint8Array,
+    kinds: readonly number[],
+    hint?: string,
+    names?: string[]
+  ): number {
+    if (set[this.kind()] !== 1) this.fail(kinds, hint, names);
     return this.i++;
   }
 
   protected skipNewlines(): void {
     while (this.kind() === Kind.Newline) this.i++;
+  }
+
+  /** `read`, then `',' read` while a `,` follows: the items of a list. */
+  protected commaList<R>(read: () => R): R[] {
+    const out = [read()];
+    while (this.kind() === T.Comma) {
+      this.i++;
+      out.push(read());
+    }
+    return out;
   }
 
   /** `lineEnd: NEWLINE | EOF`; what else may come here is `want`, for the message. */
@@ -165,48 +200,56 @@ export abstract class UsecaseReader {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
-    this.unexpected(this.i, this.i, want, hint);
+  protected fail(want: readonly number[], hint?: string, names?: string[]): never {
+    this.unexpected({ from: this.i, at: this.i, want, hint, names });
     throw STOP;
   }
 
   /**
-   * Report token `j` where one of `want` was expected, the range from token `from` (where v12's
-   * parser reported a failed choice: the start of the statement or of the item) to `j`.
+   * Report token `at` where one of `want` was expected (`names` overrides their human names),
+   * the range from token `from` (where v12's parser reported a failed choice: the start of the
+   * statement) to `at`.
    */
-  protected unexpected(from: number, j: number, want: readonly number[], hint?: string): void {
-    const k = this.kind(j);
+  protected unexpected(p: {
+    from: number;
+    at: number;
+    want: readonly number[];
+    hint?: string | undefined;
+    names?: string[] | undefined;
+  }): void {
+    const { from, at } = p;
+    const k = this.kind(at);
     if (k === Kind.Error) {
-      this.lexError(j);
+      this.lexError(at);
       return;
     }
-    if (k === T.UnclosedMarkdownString) return this.unclosed(j, from, 'markdown');
-    if (k === T.UnclosedStereotypeText) return this.unclosed(j, from, 'stereotype');
-    if (k === T.UnclosedJsonObjectLiteral) return this.unclosed(j, from, 'json');
-    const names = EXPECTED.names(want);
-    const why = hint ?? this.explain(j, want);
-    const message = `Expected ${formatExpected(names)}, got ${this.found(j)}${why ? `; ${why}` : ''}.`;
-    const range = { start: this.range(from).start, end: this.range(j).end };
-    this.st.diagnostics.error('UNEXPECTED', message, range, { expected: names });
+    if (k === T.UnclosedMarkdownString) return this.unclosed(at, from, 'markdown');
+    if (k === T.UnclosedStereotypeText) return this.unclosed(at, from, 'stereotype');
+    if (k === T.UnclosedJsonObjectLiteral) return this.unclosed(at, from, 'json');
+    const names = p.names ?? EXPECTED.names(p.want);
+    const why = p.hint ?? this.hint(at, p.want);
+    const range = { start: this.range(from).start, end: this.range(at).end };
+    const found = `${this.found(at)}${why ? `; ${why}` : ''}`;
+    this.st.diagnostics.unexpected('UNEXPECTED', range, names, found);
   }
 
-  /** A hint for an unexpected token, when one helps. */
-  protected explain(j: number, want: readonly number[]): string | undefined {
+  /** A hint for the token at `j` where one of `want` was expected, when one helps. */
+  protected hint(j: number, want: readonly number[]): string | undefined {
     const k = this.kind(j);
-    const statement = this.kind(this.stmt);
+    const wantsId = want.includes(T.Identifier);
     if (k === T.Percent && this.kind(j + 1) === T.Percent) {
       return 'a comment `%%` goes on a line of its own';
     }
     if (k === T.End) return 'this `end` closes no `systemBoundary`';
     if (k === T.Usecase) return 'a diagram has one `usecase-beta`, at its start';
-    if (k === T.CssIdentifier && want.includes(T.Identifier)) {
+    if (k === T.CssIdentifier && wantsId) {
       return 'an id is letters, digits and `_`; write `my_node`, or a label in quotes';
     }
-    if (k === T.LabelSymbol && want.includes(T.Identifier)) {
+    if (k === T.LabelSymbol && wantsId) {
       return 'an id is ASCII letters, digits and `_`; put other text in a label, such as `A("…")`';
     }
-    if (statement === T.Actor && j > this.stmt && ARROW_SET[k] === 1) {
-      return 'a list of actors takes no relation; write the relation on its own line';
+    if (wantsId && LABEL_TEXT[k] === 1 && WORD_KINDS.includes(k) && k !== T.Identifier) {
+      return `\`${this.raw(j)}\` is a keyword; quote it to use it as a name`;
     }
     if (want.includes(Kind.Newline) && KEYWORD_LINE[k] === 1) {
       return 'each statement goes on a line of its own';
@@ -274,41 +317,42 @@ export abstract class UsecaseReader {
     this.st.diagnostics.error(code, message, range, related ? { related } : undefined);
   }
 
+  /** Skip to the first token of `stops` (or EOF), reporting the unmatched text on the way. */
+  private skip(stops: Uint8Array): void {
+    for (;;) {
+      this.i = skipTo(this.t, this.i, stops);
+      if (this.kind() !== Kind.Error) return;
+      this.lexError(this.i++);
+    }
+  }
+
   /**
-   * Skip to the next line break after an error (R-PARSE-4), reporting the unmatched text on the
-   * way. Inside `@{ … }`, skip to its `}` first; after an unclosed `accDescr {`, skip to a line
-   * that starts with a keyword (the description's lines are text, not statements).
+   * Recover after `stop` (R-PARSE-4): skip to the next line break. Inside `@{ … }`, first through
+   * its `}` (unless a line that starts with a keyword comes first); after an unclosed
+   * `accDescr {`, on to a line that starts with a keyword.
    */
-  protected recover(): void {
-    const metadata = this.metadataOpen;
-    const description = this.description;
-    this.metadataOpen = false;
-    this.description = false;
-    if (metadata) {
+  protected recover(stop: Stop): void {
+    if (stop.skip === 'metadata') {
       for (;;) {
+        this.skip(SKIP_IN_METADATA);
         const k = this.kind();
-        if (k === Kind.EOF) return;
         if (k === T.RBrace) {
           this.i++;
           break;
         }
-        if (k === Kind.Newline && KEYWORD_LINE[this.kind(this.lineStart(this.i))] === 1) break;
-        if (k === Kind.Error) this.lexError(this.i);
+        if (k !== Kind.Newline || KEYWORD_LINE[this.kind(this.lineStart(this.i))] === 1) break;
         this.i++;
       }
     }
     for (;;) {
-      const k = this.kind();
-      if (k === Kind.EOF) return;
-      if (k === Kind.Newline) {
-        if (!description) return;
-        const next = this.lineStart(this.i);
-        if (KEYWORD_LINE[this.kind(next)] === 1 || this.kind(next) === Kind.EOF) {
-          this.i = next;
-          return;
-        }
-      } else if (k === Kind.Error) this.lexError(this.i);
-      this.i++;
+      this.skip(SKIP_TO);
+      if (stop.skip !== 'description' || this.kind() !== Kind.Newline) return;
+      const next = this.lineStart(this.i);
+      if (KEYWORD_LINE[this.kind(next)] === 1 || this.kind(next) === Kind.EOF) {
+        this.i = next;
+        return;
+      }
+      this.i = next;
     }
   }
 
@@ -319,14 +363,14 @@ export abstract class UsecaseReader {
     return n;
   }
 
-  /** Run one statement rule; on failure, recover. */
-  protected statement(rule: () => void): void {
-    this.stmt = this.i;
+  /** Run one statement rule and return what it read; on failure, recover and return none. */
+  protected statement<R>(rule: () => R): R | undefined {
     try {
-      rule();
+      return rule();
     } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
+      if (!(error instanceof Stop)) throw error;
+      this.recover(error);
+      return undefined;
     }
   }
 }

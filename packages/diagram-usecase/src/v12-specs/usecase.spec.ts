@@ -14,9 +14,7 @@ import {
   sanitizeText,
   setConfig,
 } from './adapter.ts';
-// skipped: projects parser-produced actor and use-case geometry exactly into AST and LayoutData — it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)
-// skipped: projects base, one-extra, N-extra, and labelled minimum lengths from parser to layout — it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)
-// skipped: projects complex source-ordered JSON, a forward edge, classes, and styles end to end — it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)
+// dropped: 4 assertions on db.getAST() — D476, v13 does not port v12's GraphAST
 // skipped: emits every node and boundary variant in committed model order — it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)
 // skipped: maps relationship semantics, markers, animation, styles, and note attachments exactly — it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)
 // skipped: flattens JSON rows depth-first using source property order — it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)
@@ -484,36 +482,13 @@ describe('UseCase diagram with Chevrotain parser', () => {
     });
   });
 
-  it.skip('projects parser-produced actor and use-case geometry exactly into AST and LayoutData', async () => {
+  it('projects parser-produced actor and use-case geometry exactly into AST and LayoutData', async () => {
     await Diagram.fromText(`usecase-beta
 actor Normal
 actor Hollow@{ type: hollow, business: true }
 Business(Business)@{ business: true }
 Ellipse
 RectCase[Rectangle]`);
-
-    expect(db.getAST()?.nodes).toMatchObject({
-      Normal: {
-        shape: 'actor',
-        attrs: { kind: 'actor', actorType: 'normal', business: false },
-      },
-      Hollow: {
-        shape: 'actor-hollow',
-        attrs: { kind: 'actor', actorType: 'hollow', business: true },
-      },
-      Business: {
-        shape: 'ellipse',
-        attrs: { kind: 'usecase', useCaseShape: 'ellipse', business: true },
-      },
-      Ellipse: {
-        shape: 'ellipse',
-        attrs: { kind: 'usecase', useCaseShape: 'ellipse', business: false },
-      },
-      RectCase: {
-        shape: 'rect',
-        attrs: { kind: 'usecase', useCaseShape: 'rect', business: false },
-      },
-    });
 
     const nodes = Object.fromEntries(db.getData().nodes.map((node) => [node.id, node]));
     expect(nodes).toMatchObject({
@@ -525,25 +500,13 @@ RectCase[Rectangle]`);
     });
   });
 
-  it.skip('projects base, one-extra, N-extra, and labelled minimum lengths from parser to layout', async () => {
+  it('projects base, one-extra, N-extra, and labelled minimum lengths from parser to layout', async () => {
     await Diagram.fromText(`usecase-beta
 A base@--> B
 B two@---> C
 C many@-----> D
 D labelled@-- "long" ----> E`);
 
-    expect(
-      db.getAST()?.edges.map(({ id, label, attrs }) => ({
-        id,
-        label,
-        minlen: attrs?.minlen,
-      }))
-    ).toEqual([
-      { id: 'base', label: undefined, minlen: 1 },
-      { id: 'two', label: undefined, minlen: 2 },
-      { id: 'many', label: undefined, minlen: 4 },
-      { id: 'labelled', label: 'long', minlen: 3 },
-    ]);
     expect(db.getData().edges.map(({ id, label, minlen }) => ({ id, label, minlen }))).toEqual([
       { id: 'base', label: undefined, minlen: 1 },
       { id: 'two', label: undefined, minlen: 2 },
@@ -598,7 +561,7 @@ offEdge@{ animate: false }`);
     ]);
   });
 
-  it.skip('projects complex source-ordered JSON, a forward edge, classes, and styles end to end', async () => {
+  it('projects complex source-ordered JSON, a forward edge, classes, and styles end to end', async () => {
     await Diagram.fromText(`usecase-beta
 classDef data fill:#eef,stroke:#369
 json Payload@{
@@ -614,44 +577,6 @@ style Payload stroke-width:4px
 Inspect payloadEdge@--> Payload
 class payloadEdge data
 style payloadEdge stroke:#f00`);
-
-    expect(db.getAST()?.nodes.Payload).toEqual({
-      label: 'Payload',
-      shape: 'json-table',
-      classes: ['data'],
-      styles: ['stroke-width:4px'],
-      attrs: {
-        kind: 'json',
-        value: {
-          1: 'first',
-          2: 'second',
-          colors: ['Red', 'Green'],
-          items: [{ name: 'A' }, {}],
-          empty: {},
-          duplicate: 'new',
-        },
-        propertyOrder: {
-          '': ['2', '1', 'colors', 'items', 'empty', 'duplicate'],
-          '/items/0': ['name'],
-          '/items/1': [],
-          '/empty': [],
-        },
-        labelType: 'text',
-      },
-    });
-    expect(db.getAST()?.edges[0]).toMatchObject({
-      id: 'payloadEdge',
-      source: 'Inspect',
-      target: 'Payload',
-      classes: ['data'],
-      styles: ['stroke:#f00'],
-      attrs: {
-        relationshipType: 'association',
-        arrowType: ARROW_TYPE.SOLID_ARROW,
-        minlen: 1,
-        explicitId: true,
-      },
-    });
 
     const data = db.getData();
     expect(data.nodes.find(({ id }) => id === 'Payload')).toMatchObject({

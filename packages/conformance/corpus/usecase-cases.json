@@ -576,6 +576,46 @@
     "source": "usecase-beta\nactor A\nLogin ..> : extend A"
   },
   {
+    "id": "usecase-cases/parse/unresolved-class",
+    "source": "usecase-beta\nclass Ghost hot"
+  },
+  {
+    "id": "usecase-cases/parse/kind-conflict",
+    "source": "usecase-beta\nactor Shared\nShared"
+  },
+  {
+    "id": "usecase-cases/parse/generated-collision",
+    "source": "usecase-beta\n\"A B\"\n\"A-B\""
+  },
+  {
+    "id": "usecase-cases/parse/statement-choice",
+    "source": "usecase-beta\nA; B"
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-header",
+    "source": "usecase-beta\n"
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-quote",
+    "source": "usecase-beta\n\""
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-stereotype",
+    "source": "usecase-beta\n<<"
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-json",
+    "source": "usecase-beta\njson P@{"
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-markdown",
+    "source": "usecase-beta\n\"`"
+  },
+  {
+    "id": "usecase-cases/parse/never-throws-acc-descr",
+    "source": "usecase-beta\naccDescr {"
+  },
+  {
     "id": "usecase-cases/recovery/two-syntax-lines",
     "name": "Syntax errors on two lines, the statements around them kept",
     "source": "usecase-beta\nactor User\nactor A B\nLogin\nX -->\nactor Admin",

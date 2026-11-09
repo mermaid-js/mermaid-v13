@@ -155,6 +155,4 @@ export interface Built {
 
 export interface BuildReport {
   error(code: string, message: string, range: Range, related?: RelatedInfo[]): void;
-  /** A label's text for a message (v12 printed it as its lexer read it). */
-  shown(raw: string): string;
 }

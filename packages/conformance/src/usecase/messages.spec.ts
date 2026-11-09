@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseUsecase } from '@mermaid-js/diagram-usecase';
-import { CHEVROTAIN_NAMES, UsecaseTokenKind } from '@mermaid-js/diagram-usecase/testing';
 import { mutator, random } from '../fuzz/mutator.ts';
 import { usecaseCases, usecaseCorpus } from './corpus.ts';
+import { INTERNAL_NAMES, withoutQuotes } from './internal-names.ts';
 
 /**
  * R-ERR-5: messages name constructs in Mermaid terms, never a token kind or grammar rule
@@ -10,33 +10,6 @@ import { usecaseCases, usecaseCorpus } from './corpus.ts';
  * source in seeded ways and check every message produced. What a message quotes from the
  * source (a token after `got`, a quoted id) is left out of the check.
  */
-const INTERNAL = new RegExp(
-  `\\b(?:${[
-    ...Object.values(CHEVROTAIN_NAMES).filter((n) => n.includes('_')),
-    ...Object.keys(UsecaseTokenKind).filter((n) => /^[A-Z][a-z]+[A-Z]/.test(n)),
-    'actorItem',
-    'actorName',
-    'entityName',
-    'entityStatement',
-    'relationTail',
-    'nodeLabel',
-    'edgeLabel',
-    'metadataProperty',
-    'metadataSeparator',
-    'systemBoundaryName',
-    'systemBoundaryContent',
-    'boundaryElement',
-    'classSuffix',
-    'styleValue',
-    'styleComponent',
-    'lineEnd',
-  ].join('|')})\\b`
-);
-
-/** A message without what it quotes from the source. */
-const withoutQuotes = (message: string): string =>
-  message.replace(/`[^`\n]*`/g, '`…`').replace(/'[^'\n]*'/g, "'…'");
-
 const FRAGMENTS = [
   ...[' ', '\n', ',', ':', '-->', '--', '---', '<--', '--o', 'o--', '--x', 'x--', '--|>'],
   ...['..>', ': include', '"', '`', '"`', '`"', '(', ')', '[', ']', '@{', '}', '@', 'e1@'],
@@ -57,8 +30,8 @@ describe('usecase error messages', () => {
       for (const d of parseUsecase(src).diagnostics) {
         if (d.severity === 'error') errors++;
         if (
-          INTERNAL.test(withoutQuotes(d.message)) ||
-          d.expected?.some((e) => INTERNAL.test(withoutQuotes(e)))
+          INTERNAL_NAMES.test(withoutQuotes(d.message)) ||
+          d.expected?.some((e) => INTERNAL_NAMES.test(withoutQuotes(e)))
         ) {
           bad.push(`${JSON.stringify(src)}: ${d.message}`);
         }

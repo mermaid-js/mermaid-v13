@@ -28,6 +28,7 @@ import type {
   UsecaseShape,
 } from '../model.ts';
 import type { UsecaseElementKind } from './ast.ts';
+import { shown } from './text.ts';
 import type {
   BoundaryDraft,
   BuildReport,
@@ -38,6 +39,7 @@ import type {
   LabelDraft,
   MetadataAssignment,
   MetadataDraft,
+  Named,
   NoteDraft,
   PropertyDraft,
   RelationshipDraft,
@@ -78,6 +80,34 @@ interface BoundaryState {
   members: string[];
 }
 
+/** The metadata values v12 took: an actor's `type`, a boundary's `type`, an edge's `animation`. */
+const GEOMETRIES = ['normal', 'hollow', 'awesome'] as const;
+const BOUNDARY_TYPES = ['rect', 'package'] as const;
+const ANIMATIONS = ['fast', 'slow'] as const;
+const isGeometry = (v: unknown): v is (typeof GEOMETRIES)[number] =>
+  (GEOMETRIES as readonly unknown[]).includes(v);
+const isBoundaryType = (v: unknown): v is UsecaseBoundaryType =>
+  (BOUNDARY_TYPES as readonly unknown[]).includes(v);
+const isAnimation = (v: unknown): v is (typeof ANIMATIONS)[number] =>
+  (ANIMATIONS as readonly unknown[]).includes(v);
+
+/** A conflict's parts (v12's `conflict()` arguments). */
+interface Conflict {
+  code: string;
+  message: string;
+  /** Where the later declaration is. */
+  at: Range;
+  /** Where the earlier one is. */
+  previous: Range;
+  /** The label a generated id was made from, on either side. */
+  label?: string | undefined;
+  previousLabel?: string | undefined;
+}
+
+/** ` (label "…")` after a message, for an id made from a label. */
+const labelSuffix = (label: string | undefined): string =>
+  label === undefined ? '' : ` (label "${shown(label)}")`;
+
 interface Stylable {
   classes: string[];
   styles: string[];
@@ -116,8 +146,8 @@ export class UsecaseBuilder {
   private readonly styleAssignments: { target: string; range: Range; styles: string[] }[] = [];
   private readonly classDefinitions: { ids: string[]; styles: string[] }[] = [];
   private direction: UsecaseDirection = 'LR';
-  accTitle = '';
-  accDescr = '';
+  private accTitle = '';
+  private accDescr = '';
 
   private readonly unique = new UniqueLists();
 
@@ -150,27 +180,22 @@ export class UsecaseBuilder {
   addStyle(target: string, range: Range, styles: string[]): void {
     this.styleAssignments.push({ target, range, styles });
   }
+  setAccTitle(text: string): void {
+    this.accTitle = text;
+  }
+  setAccDescription(text: string): void {
+    this.accDescr = text;
+  }
   setDirection(direction: string): void {
     this.direction = (direction === 'TD' ? 'TB' : direction) as UsecaseDirection;
   }
 
   // ---- errors -------------------------------------------------------------------------
 
-  private labelSuffix(label: string | undefined): string {
-    return label === undefined ? '' : ` (label "${this.report.shown(label)}")`;
-  }
-
-  /** v12's `conflict()`: the message at `current`, the earlier declaration as related info. */
-  private conflict(
-    code: string,
-    message: string,
-    current: Range,
-    previous: Range,
-    currentLabel?: string,
-    previousLabel?: string
-  ): void {
-    this.report.error(code, `${message}${this.labelSuffix(currentLabel)}`, current, [
-      { message: `previous declaration${this.labelSuffix(previousLabel)}`, range: previous },
+  /** v12's `conflict()`: the message at `at`, the earlier declaration as related info. */
+  private conflict(p: Conflict): void {
+    this.report.error(p.code, `${p.message}${labelSuffix(p.label)}`, p.at, [
+      { message: `previous declaration${labelSuffix(p.previousLabel)}`, range: p.previous },
     ]);
   }
 
@@ -289,35 +314,39 @@ export class UsecaseBuilder {
     }
   }
 
+  /**
+   * v12's checks of a declaration against the id's earlier one: another kind, or a generated id
+   * on either side. Whether one failed (and was reported).
+   */
+  private clash(draft: Named, kind: UsecaseElementKind, origin: Origin | undefined): boolean {
+    if (!origin) return false;
+    let code: string | undefined;
+    let message = '';
+    if (origin.kind !== kind) {
+      code = USECASE_CONFLICT;
+      message = `ID '${draft.id}' is declared as both ${origin.kind} and ${kind}`;
+    } else if (origin.generated || draft.generated) {
+      code = USECASE_DUPLICATE_ID;
+      message = `Generated ID '${draft.id}' collides with another declaration`;
+    }
+    if (code === undefined) return false;
+    this.conflict({
+      code,
+      message,
+      at: draft.range,
+      previous: origin.range,
+      label: draft.generated ? draft.label.raw : undefined,
+      previousLabel: origin.generated ? origin.label : undefined,
+    });
+    return true;
+  }
+
   private collectElement(
     draft: ElementDraft,
     symbols: Map<string, Origin>,
     states: Map<string, ElementState>
   ): void {
-    const origin = symbols.get(draft.id);
-    const draftLabel = draft.generated ? draft.label.raw : undefined;
-    if (origin && origin.kind !== draft.kind) {
-      this.conflict(
-        USECASE_CONFLICT,
-        `ID '${draft.id}' is declared as both ${origin.kind} and ${draft.kind}`,
-        draft.range,
-        origin.range,
-        draftLabel,
-        origin.generated ? origin.label : undefined
-      );
-      return;
-    }
-    if (origin && (origin.generated || draft.generated)) {
-      this.conflict(
-        USECASE_DUPLICATE_ID,
-        `Generated ID '${draft.id}' collides with another declaration`,
-        draft.range,
-        origin.range,
-        draftLabel,
-        origin.generated ? origin.label : undefined
-      );
-      return;
-    }
+    if (this.clash(draft, draft.kind, symbols.get(draft.id))) return;
     const existing = states.get(draft.id);
     if (!existing) {
       const state: ElementState = {
@@ -351,40 +380,40 @@ export class UsecaseBuilder {
   /** A later declaration of an element: v12's checks, then what it adds. */
   private merge(existing: ElementState, draft: ElementDraft): void {
     if (existing.label.raw !== draft.label.raw || existing.label.type !== draft.label.type) {
-      this.conflict(
-        USECASE_CONFLICT,
-        `ID '${draft.id}' has conflicting labels`,
-        draft.range,
-        existing.range
-      );
+      this.conflict({
+        code: USECASE_CONFLICT,
+        message: `ID '${draft.id}' has conflicting labels`,
+        at: draft.range,
+        previous: existing.range,
+      });
     }
     if (draft.shape && existing.shape && draft.shape !== existing.shape) {
-      this.conflict(
-        USECASE_CONFLICT,
-        `Use case '${draft.id}' has conflicting shapes`,
-        draft.range,
-        existing.range
-      );
+      this.conflict({
+        code: USECASE_CONFLICT,
+        message: `Use case '${draft.id}' has conflicting shapes`,
+        at: draft.range,
+        previous: existing.range,
+      });
     }
     if (draft.parent && existing.parent && draft.parent.id !== existing.parent.id) {
-      this.conflict(
-        USECASE_CONFLICT,
-        `Element '${draft.id}' belongs to more than one system boundary`,
-        draft.parent.range,
-        existing.parent.range
-      );
+      this.conflict({
+        code: USECASE_CONFLICT,
+        message: `Element '${draft.id}' belongs to more than one system boundary`,
+        at: draft.parent.range,
+        previous: existing.parent.range,
+      });
     }
     if (
       draft.stereotype !== undefined &&
       existing.stereotype !== undefined &&
       draft.stereotype !== existing.stereotype
     ) {
-      this.conflict(
-        USECASE_CONFLICT,
-        `Element '${draft.id}' has conflicting stereotypes`,
-        draft.range,
-        existing.stereotypeRange ?? existing.range
-      );
+      this.conflict({
+        code: USECASE_CONFLICT,
+        message: `Element '${draft.id}' has conflicting stereotypes`,
+        at: draft.range,
+        previous: existing.stereotypeRange ?? existing.range,
+      });
     }
     existing.shape ??= draft.shape;
     existing.parent ??= draft.parent;
@@ -401,45 +430,21 @@ export class UsecaseBuilder {
     symbols: Map<string, Origin>,
     states: Map<string, BoundaryState>
   ): void {
-    const origin = symbols.get(draft.id);
-    const draftLabel = draft.generated ? draft.label.raw : undefined;
-    let registered = true;
-    if (origin && origin.kind !== 'boundary') {
-      this.conflict(
-        USECASE_CONFLICT,
-        `ID '${draft.id}' is declared as both ${origin.kind} and boundary`,
-        draft.range,
-        origin.range,
-        draftLabel,
-        origin.generated ? origin.label : undefined
-      );
-      registered = false;
-    } else if (origin && (origin.generated || draft.generated)) {
-      this.conflict(
-        USECASE_DUPLICATE_ID,
-        `Generated ID '${draft.id}' collides with another declaration`,
-        draft.range,
-        origin.range,
-        draftLabel,
-        origin.generated ? origin.label : undefined
-      );
-      registered = false;
-    }
+    // A boundary whose id another declaration holds keeps its members, but not the symbol.
+    const registered = !this.clash(draft, 'boundary', symbols.get(draft.id));
     const existing = states.get(draft.id);
     if (existing) {
       if (existing.label.raw !== draft.label.raw || existing.label.type !== draft.label.type) {
-        this.conflict(
-          USECASE_CONFLICT,
-          `Boundary '${draft.id}' has conflicting titles`,
-          draft.range,
-          existing.range
-        );
+        this.conflict({
+          code: USECASE_CONFLICT,
+          message: `Boundary '${draft.id}' has conflicting titles`,
+          at: draft.range,
+          previous: existing.range,
+        });
       }
       this.unique.push(existing.classes, draft.classes);
       return;
     }
-    // A boundary whose id another kind holds still keeps its members (they name it as their
-    // parent), but it is not the id's symbol.
     states.set(draft.id, {
       id: draft.id,
       label: draft.label,
@@ -466,14 +471,13 @@ export class UsecaseBuilder {
   ): void {
     const previous = symbols.get(id);
     if (previous) {
-      this.conflict(
-        USECASE_DUPLICATE_ID,
-        `ID '${id}' is declared more than once (${previous.kind} and ${kind})`,
-        range,
-        previous.range,
-        undefined,
-        previous.generated ? previous.label : undefined
-      );
+      this.conflict({
+        code: USECASE_DUPLICATE_ID,
+        message: `ID '${id}' is declared more than once (${previous.kind} and ${kind})`,
+        at: range,
+        previous: previous.range,
+        previousLabel: previous.generated ? previous.label : undefined,
+      });
       return;
     }
     symbols.set(id, { kind, range, generated: false });
@@ -554,21 +558,21 @@ export class UsecaseBuilder {
       kind === 'actor' || kind === 'usecase' || kind === 'json';
     const at = (id: string) => symbols.get(id)?.range ?? draft.range;
     if (!allowed(sourceKind)) {
-      this.conflict(
-        USECASE_INVALID_RELATION,
-        `Relationship source '${draft.source.id}' cannot be ${sourceKind}`,
-        draft.source.range,
-        at(draft.source.id)
-      );
+      this.conflict({
+        code: USECASE_INVALID_RELATION,
+        message: `Relationship source '${draft.source.id}' cannot be ${sourceKind}`,
+        at: draft.source.range,
+        previous: at(draft.source.id),
+      });
       return;
     }
     if (!allowed(targetKind)) {
-      this.conflict(
-        USECASE_INVALID_RELATION,
-        `Relationship target '${draft.target.id}' cannot be ${targetKind}`,
-        draft.target.range,
-        at(draft.target.id)
-      );
+      this.conflict({
+        code: USECASE_INVALID_RELATION,
+        message: `Relationship target '${draft.target.id}' cannot be ${targetKind}`,
+        at: draft.target.range,
+        previous: at(draft.target.id),
+      });
       return;
     }
     let message: string | undefined;
@@ -617,7 +621,7 @@ export class UsecaseBuilder {
       } else if (origin.kind === 'boundary') {
         const boundary = boundaries.get(a.target);
         for (const p of a.metadata.properties) {
-          if (p.key !== 'type' || (p.value !== 'rect' && p.value !== 'package')) {
+          if (p.key !== 'type' || !isBoundaryType(p.value)) {
             this.invalidMetadata(a.target, origin.kind, p);
           } else if (boundary) boundary.type = p.value;
         }
@@ -651,7 +655,7 @@ export class UsecaseBuilder {
     }
     for (const p of a.metadata.properties) {
       if (p.key === 'animate' && typeof p.value === 'boolean') edge.animate = p.value;
-      else if (p.key === 'animation' && (p.value === 'fast' || p.value === 'slow')) {
+      else if (p.key === 'animation' && isAnimation(p.value)) {
         edge.animation = p.value;
         edge.animate = true;
       } else this.invalidMetadata(a.target, 'edge', p);
@@ -663,12 +667,12 @@ export class UsecaseBuilder {
       if (state.kind === 'actor') this.actorProperty(state, p, false);
       else if (p.key === 'business' && typeof p.value === 'boolean') {
         if (state.business !== undefined && state.business !== p.value) {
-          this.conflict(
-            USECASE_CONFLICT,
-            `Use case '${state.id}' has conflicting business metadata`,
-            p.range,
-            state.range
-          );
+          this.conflict({
+            code: USECASE_CONFLICT,
+            message: `Use case '${state.id}' has conflicting business metadata`,
+            at: p.range,
+            previous: state.range,
+          });
           continue;
         }
         state.business = p.value;
@@ -679,16 +683,13 @@ export class UsecaseBuilder {
   /** `type`, `icon` or `business` of an actor; a standalone `X@{…}` replaces, a declaration may not. */
   private actorProperty(state: ElementState, p: PropertyDraft, replace: boolean): void {
     const clash = (what: string) =>
-      this.conflict(
-        USECASE_CONFLICT,
-        `Actor '${state.id}' has conflicting ${what} metadata`,
-        p.range,
-        state.range
-      );
-    if (
-      p.key === 'type' &&
-      (p.value === 'normal' || p.value === 'hollow' || p.value === 'awesome')
-    ) {
+      this.conflict({
+        code: USECASE_CONFLICT,
+        message: `Actor '${state.id}' has conflicting ${what} metadata`,
+        at: p.range,
+        previous: state.range,
+      });
+    if (p.key === 'type' && isGeometry(p.value)) {
       if (!replace && state.actorType !== undefined && state.actorType !== p.value) clash('type');
       else state.actorType = p.value;
     } else if (p.key === 'icon' && typeof p.value === 'string') {
@@ -740,12 +741,12 @@ export class UsecaseBuilder {
         continue;
       }
       if (origin.kind !== 'actor' && origin.kind !== 'usecase') {
-        this.conflict(
-          USECASE_INVALID_NOTE,
-          `Note target '${d.target}' must be an actor or use case, not ${origin.kind}`,
-          d.targetRange,
-          origin.range
-        );
+        this.conflict({
+          code: USECASE_INVALID_NOTE,
+          message: `Note target '${d.target}' must be an actor or use case, not ${origin.kind}`,
+          at: d.targetRange,
+          previous: origin.range,
+        });
         continue;
       }
       out.push({ astId: d.astId, id: `note-${out.length}`, target: d.target, label: d.label });
@@ -809,8 +810,8 @@ function inferKind(metadata: MetadataDraft): string | undefined {
       possible.add('edge');
     } else if (p.key === 'type') {
       possible.clear();
-      if (p.value === 'rect' || p.value === 'package') possible.add('boundary');
-      else if (p.value === 'normal' || p.value === 'hollow' || p.value === 'awesome') {
+      if (isBoundaryType(p.value)) possible.add('boundary');
+      else if (isGeometry(p.value)) {
         possible.add('actor');
       }
     } else if (p.key === 'business') {
