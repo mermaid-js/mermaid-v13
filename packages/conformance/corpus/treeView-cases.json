@@ -1,0 +1,790 @@
+[
+  {
+    "id": "treeView-cases/header-alone",
+    "source": "treeView-beta"
+  },
+  {
+    "id": "treeView-cases/header-newline",
+    "source": "treeView-beta\n"
+  },
+  {
+    "id": "treeView-cases/header-trailing-blanks",
+    "source": "treeView-beta   \n  a"
+  },
+  {
+    "id": "treeView-cases/header-trailing-tab",
+    "source": "treeView-beta\t\n  a"
+  },
+  {
+    "id": "treeView-cases/header-comment",
+    "source": "treeView-beta %% c\n  a"
+  },
+  {
+    "id": "treeView-cases/header-glued-comment",
+    "source": "treeView-beta%% c\n  a"
+  },
+  {
+    "id": "treeView-cases/header-glued",
+    "source": "treeView-betaX\n  a"
+  },
+  {
+    "id": "treeView-cases/header-glued-dash",
+    "source": "treeView-beta-x\n  a"
+  },
+  {
+    "id": "treeView-cases/header-node-same-line",
+    "source": "treeView-beta a"
+  },
+  {
+    "id": "treeView-cases/header-indented",
+    "source": "   treeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/header-leading-blank-lines",
+    "source": "\n\ntreeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/header-twice",
+    "source": "treeView-beta\ntreeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/header-node-named-header",
+    "source": "treeView-beta\n  treeView-beta"
+  },
+  {
+    "id": "treeView-cases/header-node-named-header-root",
+    "source": "treeView-beta\ntreeView-beta"
+  },
+  {
+    "id": "treeView-cases/header-upper",
+    "source": "TREEVIEW-BETA\n  a"
+  },
+  {
+    "id": "treeView-cases/header-nbsp",
+    "source": "treeView-beta \n  a"
+  },
+  {
+    "id": "treeView-cases/header-line-separator",
+    "source": "treeView-beta   a"
+  },
+  {
+    "id": "treeView-cases/bare-simple",
+    "source": "treeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/bare-root",
+    "source": "treeView-beta\na"
+  },
+  {
+    "id": "treeView-cases/bare-inner-blanks",
+    "source": "treeView-beta\n  a   b\tc"
+  },
+  {
+    "id": "treeView-cases/bare-trailing-blanks",
+    "source": "treeView-beta\n  a   \n  b"
+  },
+  {
+    "id": "treeView-cases/bare-trailing-tab",
+    "source": "treeView-beta\n  a\t"
+  },
+  {
+    "id": "treeView-cases/bare-inline-comment",
+    "source": "treeView-beta\n  a %% c"
+  },
+  {
+    "id": "treeView-cases/bare-glued-class",
+    "source": "treeView-beta\n  a:::hl"
+  },
+  {
+    "id": "treeView-cases/bare-quote-inside",
+    "source": "treeView-beta\n  a\"b'c"
+  },
+  {
+    "id": "treeView-cases/bare-colon-start",
+    "source": "treeView-beta\n  :a"
+  },
+  {
+    "id": "treeView-cases/bare-two-colons",
+    "source": "treeView-beta\n  a :: b"
+  },
+  {
+    "id": "treeView-cases/bare-class-no-name",
+    "source": "treeView-beta\n  a ::: 1"
+  },
+  {
+    "id": "treeView-cases/bare-class-no-name-blank",
+    "source": "treeView-beta\n  a :::"
+  },
+  {
+    "id": "treeView-cases/bare-icon-glued",
+    "source": "treeView-beta\n  aicon(x)"
+  },
+  {
+    "id": "treeView-cases/bare-hash-glued",
+    "source": "treeView-beta\n  a##b"
+  },
+  {
+    "id": "treeView-cases/bare-single-hash",
+    "source": "treeView-beta\n  a # b"
+  },
+  {
+    "id": "treeView-cases/bare-percent",
+    "source": "treeView-beta\n  50% off"
+  },
+  {
+    "id": "treeView-cases/bare-unicode",
+    "source": "treeView-beta\n  📦 pkg/\n    ünï.txt"
+  },
+  {
+    "id": "treeView-cases/bare-slash-only",
+    "source": "treeView-beta\n  /"
+  },
+  {
+    "id": "treeView-cases/bare-dir",
+    "source": "treeView-beta\n  src/\n    a.ts"
+  },
+  {
+    "id": "treeView-cases/bare-entity",
+    "source": "treeView-beta\n  a #amp; b"
+  },
+  {
+    "id": "treeView-cases/bare-entity-number",
+    "source": "treeView-beta\n  a #35; b"
+  },
+  {
+    "id": "treeView-cases/bare-tag-quote",
+    "source": "treeView-beta\n  <a href=\"x\">link</a>"
+  },
+  {
+    "id": "treeView-cases/bare-html",
+    "source": "treeView-beta\n  a<br>b"
+  },
+  {
+    "id": "treeView-cases/bare-paragraph-separator",
+    "source": "treeView-beta\n  a   b"
+  },
+  {
+    "id": "treeView-cases/bare-nel",
+    "source": "treeView-beta\n  ab"
+  },
+  {
+    "id": "treeView-cases/bare-unicode-space",
+    "source": "treeView-beta\n  a  b"
+  },
+  {
+    "id": "treeView-cases/bare-line-separator",
+    "source": "treeView-beta\n  a b"
+  },
+  {
+    "id": "treeView-cases/bare-long-blank-run",
+    "source": "treeView-beta\n  a                                                                                                                                                                                                                                                                                                            b"
+  },
+  {
+    "id": "treeView-cases/bare-blank-run-before-class",
+    "source": "treeView-beta\n  a                                                  :::x"
+  },
+  {
+    "id": "treeView-cases/bare-blank-run-before-icon",
+    "source": "treeView-beta\n  a\t\t icon(x)"
+  },
+  {
+    "id": "treeView-cases/bare-blank-run-before-desc",
+    "source": "treeView-beta\n  a \t ## d"
+  },
+  {
+    "id": "treeView-cases/quoted-double",
+    "source": "treeView-beta\n  \"a b\""
+  },
+  {
+    "id": "treeView-cases/quoted-single",
+    "source": "treeView-beta\n  'a b'"
+  },
+  {
+    "id": "treeView-cases/quoted-empty",
+    "source": "treeView-beta\n  \"\""
+  },
+  {
+    "id": "treeView-cases/quoted-trailing",
+    "source": "treeView-beta\n  \"q x\" trailing"
+  },
+  {
+    "id": "treeView-cases/quoted-glued",
+    "source": "treeView-beta\n  \"a\"b"
+  },
+  {
+    "id": "treeView-cases/quoted-unclosed",
+    "source": "treeView-beta\n  \"a\n  b"
+  },
+  {
+    "id": "treeView-cases/quoted-unclosed-single",
+    "source": "treeView-beta\n  'a\n  b"
+  },
+  {
+    "id": "treeView-cases/quoted-multiline",
+    "source": "treeView-beta\n  \"a\n  b\"\n  c"
+  },
+  {
+    "id": "treeView-cases/quoted-mixed",
+    "source": "treeView-beta\n  \"it's\"\n  'say \"hi\"'"
+  },
+  {
+    "id": "treeView-cases/quoted-dir",
+    "source": "treeView-beta\n  \"my dir/\"\n    \"x\""
+  },
+  {
+    "id": "treeView-cases/quoted-then-class",
+    "source": "treeView-beta\n  \"a\":::x"
+  },
+  {
+    "id": "treeView-cases/quoted-then-blank-class",
+    "source": "treeView-beta\n  \"a\" :::x"
+  },
+  {
+    "id": "treeView-cases/class-basic",
+    "source": "treeView-beta\n  a :::hl"
+  },
+  {
+    "id": "treeView-cases/class-blanks-after",
+    "source": "treeView-beta\n  a :::  hl"
+  },
+  {
+    "id": "treeView-cases/class-dash-name",
+    "source": "treeView-beta\n  a :::my-class_2"
+  },
+  {
+    "id": "treeView-cases/class-digit-start",
+    "source": "treeView-beta\n  a :::1x"
+  },
+  {
+    "id": "treeView-cases/class-twice",
+    "source": "treeView-beta\n  a :::x :::y"
+  },
+  {
+    "id": "treeView-cases/class-next-line",
+    "source": "treeView-beta\n  a\n  :::x"
+  },
+  {
+    "id": "treeView-cases/class-line-start",
+    "source": "treeView-beta\n:::x"
+  },
+  {
+    "id": "treeView-cases/class-only-line-start-indent",
+    "source": "treeView-beta\n  a\n:::x"
+  },
+  {
+    "id": "treeView-cases/class-then-text",
+    "source": "treeView-beta\n  a :::x rest"
+  },
+  {
+    "id": "treeView-cases/icon-basic",
+    "source": "treeView-beta\n  a icon(x)"
+  },
+  {
+    "id": "treeView-cases/icon-pack",
+    "source": "treeView-beta\n  a icon(pack:name)"
+  },
+  {
+    "id": "treeView-cases/icon-empty",
+    "source": "treeView-beta\n  a icon()"
+  },
+  {
+    "id": "treeView-cases/icon-none",
+    "source": "treeView-beta\n  a icon(none)"
+  },
+  {
+    "id": "treeView-cases/icon-space",
+    "source": "treeView-beta\n  a icon(x y)"
+  },
+  {
+    "id": "treeView-cases/icon-colon-empty",
+    "source": "treeView-beta\n  a icon(x:)"
+  },
+  {
+    "id": "treeView-cases/icon-two-colons",
+    "source": "treeView-beta\n  a icon(a:b:c)"
+  },
+  {
+    "id": "treeView-cases/icon-unclosed",
+    "source": "treeView-beta\n  a icon(x"
+  },
+  {
+    "id": "treeView-cases/icon-line-start",
+    "source": "treeView-beta\nicon(x)"
+  },
+  {
+    "id": "treeView-cases/icon-dash",
+    "source": "treeView-beta\n  a icon(-x-:y-)"
+  },
+  {
+    "id": "treeView-cases/desc-basic",
+    "source": "treeView-beta\n  a ## d"
+  },
+  {
+    "id": "treeView-cases/desc-empty",
+    "source": "treeView-beta\n  a ##"
+  },
+  {
+    "id": "treeView-cases/desc-with-class",
+    "source": "treeView-beta\n  a ## d :::x"
+  },
+  {
+    "id": "treeView-cases/desc-with-comment",
+    "source": "treeView-beta\n  a ## d %% c"
+  },
+  {
+    "id": "treeView-cases/desc-line-start",
+    "source": "treeView-beta\n## d"
+  },
+  {
+    "id": "treeView-cases/desc-next-line",
+    "source": "treeView-beta\n  a\n  ## d"
+  },
+  {
+    "id": "treeView-cases/annotations-all",
+    "source": "treeView-beta\n  a :::x icon(p:i) ## d"
+  },
+  {
+    "id": "treeView-cases/annotations-order",
+    "source": "treeView-beta\n  a ## d\n  b icon(i) :::c"
+  },
+  {
+    "id": "treeView-cases/annotations-tabs",
+    "source": "treeView-beta\n  a\t:::x\ticon(i)\t## d"
+  },
+  {
+    "id": "treeView-cases/indent-tabs",
+    "source": "treeView-beta\n\ta\n\t\tb"
+  },
+  {
+    "id": "treeView-cases/indent-mixed",
+    "source": "treeView-beta\n  a\n\t  b"
+  },
+  {
+    "id": "treeView-cases/indent-irregular",
+    "source": "treeView-beta\n      a\n    b\n        c\n  d"
+  },
+  {
+    "id": "treeView-cases/indent-blank-line",
+    "source": "treeView-beta\n  a\n   \n  b"
+  },
+  {
+    "id": "treeView-cases/indent-trailing-blank-line",
+    "source": "treeView-beta\n  a\n    "
+  },
+  {
+    "id": "treeView-cases/indent-trailing-blank-lines",
+    "source": "treeView-beta\n  a\n\n\n"
+  },
+  {
+    "id": "treeView-cases/indent-crlf-trailing",
+    "source": "treeView-beta\r\n  a\r\n"
+  },
+  {
+    "id": "treeView-cases/comment-line",
+    "source": "treeView-beta\n%% c\n  a"
+  },
+  {
+    "id": "treeView-cases/comment-line-indented",
+    "source": "treeView-beta\n  a\n    %% c\n  b"
+  },
+  {
+    "id": "treeView-cases/comment-empty",
+    "source": "treeView-beta\n%%\n  a"
+  },
+  {
+    "id": "treeView-cases/comment-inline-after-quoted",
+    "source": "treeView-beta\n  \"a\" %% c"
+  },
+  {
+    "id": "treeView-cases/comment-inline-after-quoted-glued",
+    "source": "treeView-beta\n  \"a\"%% c"
+  },
+  {
+    "id": "treeView-cases/comment-after-annotation",
+    "source": "treeView-beta\n  a :::x %% c"
+  },
+  {
+    "id": "treeView-cases/directive",
+    "source": "%%{init: {'theme': 'dark'}}%%\ntreeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/directive-in-body",
+    "source": "treeView-beta\n%%{init: {'theme': 'dark'}}%%\n  a"
+  },
+  {
+    "id": "treeView-cases/front-matter",
+    "source": "---\ntitle: T\n---\ntreeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/title-basic",
+    "source": "treeView-beta\ntitle My Tree\n  a"
+  },
+  {
+    "id": "treeView-cases/title-glued-txt",
+    "source": "treeView-beta\n  title.txt\n    b"
+  },
+  {
+    "id": "treeView-cases/title-dir-trap",
+    "source": "treeView-beta\n  titles/\n    b"
+  },
+  {
+    "id": "treeView-cases/title-alone",
+    "source": "treeView-beta\ntitle\n  a"
+  },
+  {
+    "id": "treeView-cases/title-comment",
+    "source": "treeView-beta\ntitle T %% c\n  a"
+  },
+  {
+    "id": "treeView-cases/title-after-node",
+    "source": "treeView-beta\n  a\n  title.txt"
+  },
+  {
+    "id": "treeView-cases/title-after-node-text",
+    "source": "treeView-beta\n  a\ntitle T"
+  },
+  {
+    "id": "treeView-cases/acc-title",
+    "source": "treeView-beta\naccTitle: A t\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-title-blanks",
+    "source": "treeView-beta\naccTitle   :   A\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-title-no-colon",
+    "source": "treeView-beta\naccTitle A\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-descr",
+    "source": "treeView-beta\naccDescr: d\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-descr-block",
+    "source": "treeView-beta\naccDescr {\n  line one\n  line two\n}\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-descr-block-next-line",
+    "source": "treeView-beta\naccDescr\n{ x }\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-descr-unclosed",
+    "source": "treeView-beta\naccDescr {\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-descr-node",
+    "source": "treeView-beta\n  accDescrX"
+  },
+  {
+    "id": "treeView-cases/acc-all",
+    "source": "treeView-beta\ntitle T\naccTitle: A\naccDescr: D\n  a"
+  },
+  {
+    "id": "treeView-cases/acc-indented",
+    "source": "treeView-beta\n  accTitle: A\n  a"
+  },
+  {
+    "id": "treeView-cases/box-basic",
+    "source": "treeView-beta\nroot/\n├── src/\n│   └── index.js\n└── README.md"
+  },
+  {
+    "id": "treeView-cases/box-heavy",
+    "source": "treeView-beta\n┣━━ a/\n┃   ┗━━ b\n┗━━ c"
+  },
+  {
+    "id": "treeView-cases/box-mixed-light-heavy",
+    "source": "treeView-beta\n├── a/\n┃   ┗━━ b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-width-two",
+    "source": "treeView-beta\n├─ a/\n│ ├─ b\n│ │ └─ c\n└─ d"
+  },
+  {
+    "id": "treeView-cases/box-width-three",
+    "source": "treeView-beta\n├─ a/\n│  └─ b\n└─ c"
+  },
+  {
+    "id": "treeView-cases/box-width-odd-round",
+    "source": "treeView-beta\n├── a/\n│     └── b\n│   └── c"
+  },
+  {
+    "id": "treeView-cases/box-root-glyph-col0",
+    "source": "treeView-beta\n├── a\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-tab-before-branch",
+    "source": "treeView-beta\n├── a/\n\t└── b"
+  },
+  {
+    "id": "treeView-cases/box-tab-in-content",
+    "source": "treeView-beta\n├── a\tb\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-tab-after-dashes",
+    "source": "treeView-beta\n├──\t\ta"
+  },
+  {
+    "id": "treeView-cases/box-tab-before-dashes",
+    "source": "treeView-beta\n├\t── a"
+  },
+  {
+    "id": "treeView-cases/box-trailing-blanks",
+    "source": "treeView-beta\n├── a   \n└── b\t"
+  },
+  {
+    "id": "treeView-cases/box-trailing-nbsp",
+    "source": "treeView-beta\n├── a \n└── b"
+  },
+  {
+    "id": "treeView-cases/box-decoration-lines",
+    "source": "treeView-beta\n├── a/\n│\n│   └── b\n┃  \n└── c"
+  },
+  {
+    "id": "treeView-cases/box-glyphs-only-line",
+    "source": "treeView-beta\n├── a\n───\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-glyph-in-name",
+    "source": "treeView-beta\nSection ─ A.txt\n├── b"
+  },
+  {
+    "id": "treeView-cases/box-glyph-mid-line",
+    "source": "treeView-beta\nfoo ├── bar\n└── baz"
+  },
+  {
+    "id": "treeView-cases/box-comment-line",
+    "source": "treeView-beta\n├── a\n%% c\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-comment-after-bar",
+    "source": "treeView-beta\n├── a/\n│   %% c\n│   └── b"
+  },
+  {
+    "id": "treeView-cases/box-comment-indented",
+    "source": "treeView-beta\n├── a\n   %% c\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-metadata",
+    "source": "treeView-beta\ntitle T\naccTitle: A\naccDescr: D\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-metadata-indented",
+    "source": "treeView-beta\n  title T\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-acc-descr-block",
+    "source": "treeView-beta\naccDescr {\n├── x\n}\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-blank-lines",
+    "source": "treeView-beta\n\n├── a\n\n└── b\n"
+  },
+  {
+    "id": "treeView-cases/box-annotations",
+    "source": "treeView-beta\n├── a :::hl icon(p:i) ## d\n└── \"q b\" ## e"
+  },
+  {
+    "id": "treeView-cases/box-quoted",
+    "source": "treeView-beta\n├── \"a b\"\n└── 'c'"
+  },
+  {
+    "id": "treeView-cases/box-only-content-after-header-line",
+    "source": "treeView-beta\na\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-root-and-children",
+    "source": "treeView-beta\nroot/\n├── a/\n│   └── b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-header-trailing-blanks",
+    "source": "treeView-beta   \n├── a\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-header-comment",
+    "source": "treeView-beta %% c\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-header-indented",
+    "source": "  treeView-beta\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-decoration-only",
+    "source": "treeView-beta\n│\n┃"
+  },
+  {
+    "id": "treeView-cases/box-glyph-only-in-comment",
+    "source": "treeView-beta\n%% ├── a\n  b"
+  },
+  {
+    "id": "treeView-cases/box-glyph-only-in-title",
+    "source": "treeView-beta\ntitle ├── a\n  b"
+  },
+  {
+    "id": "treeView-cases/box-glyph-in-quoted-indent",
+    "source": "treeView-beta\n  \"├── a\""
+  },
+  {
+    "id": "treeView-cases/box-entity-before-branch",
+    "source": "treeView-beta\n├── a/\n#amp;   └── b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-entity-number-before-branch",
+    "source": "treeView-beta\n├── a/\n#35;└── b"
+  },
+  {
+    "id": "treeView-cases/box-entity-segment-width",
+    "source": "treeView-beta\n#lt;├── a\n#lt;│   └── b"
+  },
+  {
+    "id": "treeView-cases/box-entity-in-content",
+    "source": "treeView-beta\n├── a #amp; b\n└── #35;"
+  },
+  {
+    "id": "treeView-cases/box-entity-after-width",
+    "source": "treeView-beta\n├── a/\n│   └── b\n#amp;└── c"
+  },
+  {
+    "id": "treeView-cases/box-entity-number-after-width",
+    "source": "treeView-beta\n├── a/\n│   └── b\n#12345;├── c"
+  },
+  {
+    "id": "treeView-cases/box-tab-indent-deep",
+    "source": "treeView-beta\n├── a/\n│   ├── b\n\t│   └── c"
+  },
+  {
+    "id": "treeView-cases/box-decoration-without-branches",
+    "source": "treeView-beta\n  a\n│\n┃\n  b"
+  },
+  {
+    "id": "treeView-cases/box-decoration-tab-without-branches",
+    "source": "treeView-beta\na\n\t│\n  b"
+  },
+  {
+    "id": "treeView-cases/box-indented-glyph-in-name",
+    "source": "treeView-beta\n├── a\n  x ─ y\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-line-separator-indent",
+    "source": "treeView-beta\n├── a\n └── b"
+  },
+  {
+    "id": "treeView-cases/box-crlf",
+    "source": "treeView-beta\r\n├── a/\r\n│   └── b\r\n└── c\r\n"
+  },
+  {
+    "id": "treeView-cases/box-cr-only",
+    "source": "treeView-beta\r├── a/\r│   └── b\r└── c"
+  },
+  {
+    "id": "treeView-cases/box-line-separator",
+    "source": "treeView-beta\n├── a b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-unicode-space-indent",
+    "source": "treeView-beta\n├── a/\n    └── b"
+  },
+  {
+    "id": "treeView-cases/box-tag-quote",
+    "source": "treeView-beta\n├── <a href=\"x\">l</a>\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-front-matter",
+    "source": "---\ntitle: T\n---\ntreeView-beta\n├── a\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-directive",
+    "source": "%%{init: {'theme': 'dark'}}%%\ntreeView-beta\n├── a\n└── b"
+  },
+  {
+    "id": "treeView-cases/box-header-after-front-matter-comment",
+    "source": "%% c\ntreeView-beta\n├── a"
+  },
+  {
+    "id": "treeView-cases/box-long-dashes",
+    "source": "treeView-beta\n├──────────────────────────────────────── a"
+  },
+  {
+    "id": "treeView-cases/box-many-roots",
+    "source": "treeView-beta\na\nb\n├── c\nd"
+  },
+  {
+    "id": "treeView-cases/box-error-empty-node-dashes",
+    "source": "treeView-beta\n├──────"
+  },
+  {
+    "id": "treeView-cases/box-error-empty-node-tab",
+    "source": "treeView-beta\n├──\t\t"
+  },
+  {
+    "id": "treeView-cases/box-error-indent-tab",
+    "source": "treeView-beta\n├── src/\n\tindex.js"
+  },
+  {
+    "id": "treeView-cases/box-error-indent-after-front-matter",
+    "source": "---\ntitle: T\n---\ntreeView-beta\n├── a\n  b"
+  },
+  {
+    "id": "treeView-cases/box-error-indent-after-comment-lines",
+    "source": "treeView-beta\n%% one\n%% two\n├── a\n  b"
+  },
+  {
+    "id": "treeView-cases/box-error-indent-crlf",
+    "source": "treeView-beta\r\n├── a\r\n  b"
+  },
+  {
+    "id": "treeView-cases/box-error-first-wins",
+    "source": "treeView-beta\n├── \n  b"
+  },
+  {
+    "id": "treeView-cases/box-error-indent-nbsp",
+    "source": "treeView-beta\n├── a\n b"
+  },
+  {
+    "id": "treeView-cases/cypress-custom-config-raw",
+    "source": "\n---\nconfig:\n  treeView:\n      rowIndent: 80\n---      \ntreeView-beta\n      \"folder1\"\n          \"file1.js\"\n    "
+  },
+  {
+    "id": "treeView-cases/cypress-custom-config-trailing-indent",
+    "source": "---\nconfig:\n  treeView:\n      rowIndent: 80\n---      \ntreeView-beta\n      \"folder1\"\n          \"file1.js\"\n    "
+  },
+  {
+    "id": "treeView-cases/spec-box-throw-on-empty-content-after-prefix",
+    "source": "treeView-beta\n├── "
+  },
+  {
+    "id": "treeView-cases/spec-box-throw-on-indented-line-without-box-chars",
+    "source": "treeView-beta\n├── src/\n    index.js\n└── README.md"
+  },
+  {
+    "id": "treeView-cases/spec-box-include-line-number-in-empty-content-error",
+    "source": "treeView-beta\nroot/\n├── src/\n│   └── "
+  },
+  {
+    "id": "treeView-cases/not-treeview",
+    "source": "treeview-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/empty-body-lines",
+    "source": "treeView-beta\n\n\n"
+  },
+  {
+    "id": "treeView-cases/error-char-recovery",
+    "source": "treeView-beta\n  \"a\n  b\n  c"
+  },
+  {
+    "id": "treeView-cases/crlf-annotations",
+    "source": "treeView-beta\r\n  a :::x\r\n  b ## d\r\n  c icon(i)"
+  },
+  {
+    "id": "treeView-cases/cr-only",
+    "source": "treeView-beta\r  a\r    b"
+  },
+  {
+    "id": "treeView-cases/bom",
+    "source": "﻿treeView-beta\n  a"
+  },
+  {
+    "id": "treeView-cases/unclosed-directive",
+    "source": "treeView-beta\n%%{init: {\n  a"
+  }
+]

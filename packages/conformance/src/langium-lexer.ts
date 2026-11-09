@@ -26,6 +26,12 @@ export interface LangiumLexerDescriptor {
   factory: string;
   /** The language's key in what the factory returns, e.g. `Pie`. */
   key: string;
+  /**
+   * Where the text v12 lexed is captured. By default it is what v12's diagram parser for the
+   * type received. `'langium'`: what the shared Langium parser's `parse` received during that
+   * call, for a type whose diagram parser rewrites its text first (treeView's box-drawing pass).
+   */
+  capture?: 'langium';
 }
 
 /** The Langium types, by v13 diagram id. */
@@ -41,6 +47,12 @@ export const LANGIUM_LEXERS = {
     probe: 'wardley-beta\ncomponent A [0.5, 0.5]',
     factory: 'createWardleyServices',
     key: 'Wardley',
+  },
+  treeView: {
+    probe: 'treeView-beta\n  a',
+    factory: 'createTreeViewServices',
+    key: 'TreeView',
+    capture: 'langium',
   },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
@@ -66,7 +78,19 @@ export interface LangiumLex {
   errorAt?: number;
 }
 
+/** What v12 did with one source of the type. */
+export interface LangiumTrace {
+  /** The text v12's diagram parser for the type received, if it was reached. */
+  parsed?: string;
+  /** The text v12's Langium lexer read (`parsed`, unless the type rewrites it), if reached. */
+  lexed?: string;
+  /** v12's error message, when it rejected the source. */
+  error?: string;
+}
+
 export interface LangiumLexerOracle {
+  /** What v12 did with `source`: the texts its parsers received, and its error. */
+  trace(source: string): Promise<LangiumTrace>;
   /**
    * The exact text v12's parser for the type received for `source`, or undefined when v12
    * never reached that parser (another type was detected, or preprocessing threw).
@@ -94,6 +118,9 @@ interface ChevrotainLexResult {
 }
 interface LangiumLexer {
   tokenize(text: string): ChevrotainLexResult;
+}
+interface LangiumParserV12 {
+  parse: (text: string, ...rest: unknown[]) => unknown;
 }
 interface ParserDefinitionV12 {
   parse(text: string): Promise<void> | void;
@@ -154,9 +181,12 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
   const parserModule = (await import('mermaid-parser-v12')) as Record<string, unknown>;
   const factory = parserModule[descriptor.factory];
   if (typeof factory !== 'function') throw new Error(`${PARSER} has no ${descriptor.factory}`);
-  const services = (factory as () => Record<string, { parser: { Lexer: LangiumLexer } }>)()[
-    descriptor.key
-  ];
+  const services = (
+    factory as () => Record<
+      string,
+      { parser: { Lexer: LangiumLexer; LangiumParser: LangiumParserV12 } }
+    >
+  )()[descriptor.key];
   if (!services) throw new Error(`${descriptor.factory}() has no ${descriptor.key} services`);
   const lexer = services.parser.Lexer;
 
@@ -165,18 +195,59 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
   // getDiagram(type).parser: the object v12 calls `parse(text)` on for every source of the type.
   const parser = (await mermaid.mermaidAPI.getDiagramFromText(descriptor.probe)).parser;
   const parse = parser.parse.bind(parser);
-  let captured: string | undefined;
-  parser.parse = (text) => {
-    captured = text;
-    return parse(text);
-  };
-  const input = async (source: string): Promise<string | undefined> => {
-    captured = undefined;
-    await oracle.parse(source);
+  let parsed: string | undefined;
+  let lexed: string | undefined;
+  if (descriptor.capture === 'langium') {
+    // v12 builds the type's Langium parser privately; its class is the one our services use
+    // (one `@mermaid-js/parser` realpath, `langiumParserVersions`). Wrap that class's `parse`,
+    // armed only while v12's diagram parser for this type runs.
+    let owner: object | null = services.parser.LangiumParser;
+    while (owner && !Object.prototype.hasOwnProperty.call(owner, 'parse')) {
+      owner = Object.getPrototypeOf(owner) as object | null;
+    }
+    if (!owner) throw new Error(`${descriptor.key}: no LangiumParser parse to wrap`);
+    const target = owner as LangiumParserV12;
+    const langiumParse = target.parse;
+    let armed = false;
+    target.parse = function (this: unknown, text: string, ...rest: unknown[]) {
+      if (armed) lexed = text;
+      return langiumParse.call(this, text, ...rest);
+    };
+    parser.parse = async (text) => {
+      parsed = text;
+      armed = true;
+      try {
+        await parse(text);
+      } finally {
+        armed = false;
+      }
+    };
+  } else {
+    parser.parse = (text) => {
+      parsed = text;
+      lexed = text;
+      return parse(text);
+    };
+  }
+  const trace = async (source: string): Promise<LangiumTrace> => {
+    parsed = undefined;
+    lexed = undefined;
+    const result = await oracle.parse(source);
     // Set by the wrapped `parse` during the await (TS cannot see that).
-    return captured as string | undefined;
+    const out: LangiumTrace = {};
+    const p = parsed as string | undefined;
+    const l = lexed as string | undefined;
+    if (p !== undefined) out.parsed = p;
+    if (l !== undefined) out.lexed = l;
+    if (!result.accepted) out.error = result.error;
+    return out;
   };
+  const input = async (source: string) => (await trace(source)).lexed;
+  if ((await input(descriptor.probe)) === undefined) {
+    throw new Error(`${descriptor.key}: the probe did not reach v12's lexer`);
+  }
   return {
+    trace,
     input,
     lexText: (text) => lexWith(lexer, text, false),
     async lex(source) {
