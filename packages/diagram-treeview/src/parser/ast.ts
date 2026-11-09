@@ -32,13 +32,17 @@ export interface TreeViewNodeNode extends AstNode<'Node'> {
   level: number;
   /** Where the node sits in the tree: 0 at the top (the model's `depth`). */
   depth: number;
-  /** The last `:::name`, and the range of that annotation (blanks before it off). */
+  /**
+   * The annotations as v12's Langium AST held them (the last of each kind wins), each with the
+   * range of that annotation (blanks before it off): the class of `:::name`; the text between
+   * the parentheses of `icon(…)` (`''` for `icon()`); the trimmed text of `## …` (maybe `''`).
+   * The model applies v12's `populate` to them (`icon()` is `'none'`, an empty description
+   * none).
+   */
   cssClass?: string;
   classRange?: Range;
-  /** The last `icon(…)` as the model holds it (`'none'` for `icon()`), and its range. */
   icon?: string;
   iconRange?: Range;
-  /** The last `## …` as the model holds it (absent when empty), and its range. */
   description?: string;
   descriptionRange?: Range;
 }

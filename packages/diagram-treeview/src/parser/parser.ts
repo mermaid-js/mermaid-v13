@@ -52,7 +52,6 @@ import {
   descValue,
   iconValue,
   indentValue,
-  nodeIcon,
   nodeName,
   quotedValue,
   titleValue,
@@ -515,12 +514,10 @@ class TreeViewParser {
       node.cssClass = classValue(image);
       node.classRange = range;
     } else if (kind === T.IconAnnotation) {
-      node.icon = nodeIcon(iconValue(image));
+      node.icon = iconValue(image);
       node.iconRange = range;
     } else {
-      const text = descValue(image);
-      if (text === '') delete node.description;
-      else node.description = text;
+      node.description = descValue(image);
       node.descriptionRange = range;
     }
   }

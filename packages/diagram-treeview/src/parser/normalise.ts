@@ -8,6 +8,7 @@
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import type { TreeViewNodeNode } from './ast.ts';
+import { nodeIcon } from './convert.ts';
 
 /** What the parser read, for {@link normalise}. */
 export interface TreeViewParts {
@@ -61,9 +62,10 @@ export function buildTree(nodes: readonly TreeViewNodeNode[]): {
       astId: n.id,
       range: Object.freeze({ ...n.range }),
     };
-    if (n.icon !== undefined) m.icon = n.icon;
-    if (n.cssClass !== undefined) m.cssClass = n.cssClass;
-    if (n.description !== undefined) m.description = n.description;
+    // v12's `populate`: `icon()` is `'none'`; an empty class or description is none.
+    if (n.icon !== undefined) m.icon = nodeIcon(n.icon);
+    if (n.cssClass) m.cssClass = n.cssClass;
+    if (n.description) m.description = n.description;
     (parent ? parent.m.children : roots).push(m);
     all.push(m);
     stack.push({ m, level: n.level, path });
