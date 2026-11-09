@@ -1,0 +1,36 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: gitgraph
+    title: Git graph syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # A quoted text and a name follow keywords: completion offers them, with the doc.
+      documented:
+        - String
+        - Reference
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - model.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`).'
+  install: 'with `mermaid/slim`'
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # Set only in the themes v12 sets them in (#374, D331): the renderer draws v12's fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too.
+  someThemes: ['commitLineColor', 'gitCherryPickInk']
+  # No theme sets it, only an author: `tagBorder` (D267), v12's other name for `tagLabelBorder`.
+  authorOnly: ['tagBorder']

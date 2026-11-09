@@ -779,7 +779,7 @@ corpus source ──► mermaid@12 (jsdom-free: parser + db only, via its diagra
   - PR CI: in-repo corpus (e2e `.mmd`, docs examples, ported spec strings, the 158-diagram bench corpus).
   - Nightly CI: fuzzing with a seeded mutator (from Pele's `tests/support/corpus.ts` approach).
   - QA, not CI: the external 10k+ set via `PARSE_FIXTURE_PATH`, run by quality assurance with the same runner (R-TEST-1, O-3). Where QA reads the set from is still open.
-- **`divergences.json`:** `{ id, inputHash, kind: 'accept'|'reject'|'model', reason, owner, since }`. Unlisted divergences fail; listed ones that disappear fail too, so the list stays honest (R-COMPAT-4).
+- **`divergences/<type>.json`** (one file per type, read as one list): `{ id, inputHash, kind: 'accept'|'reject'|'model', reason, owner, since }`. Unlisted divergences fail; listed ones that disappear fail too, so the list stays honest (R-COMPAT-4).
 - **Oracle bump job:** a weekly workflow bumps `mermaid@12` and opens an issue per new failure cluster (R-COMPAT-8).
 
 ### 13.2 Render properties (vitest, every corpus input)

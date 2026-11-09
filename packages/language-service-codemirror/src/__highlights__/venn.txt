@@ -1,0 +1,13 @@
+venn-beta:keyword
+set:keyword
+A:variable
+[":string
+Alpha:string
+"]:string
+::punctuation
+union:keyword
+A:variable
+,:punctuation
+B:variable
+text:keyword
+"x":string

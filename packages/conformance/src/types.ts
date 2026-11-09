@@ -44,7 +44,7 @@ export type DivergenceKind =
   /** Both accept; the normalised models differ. */
   | 'model';
 
-/** One entry of `divergences.json` (R-COMPAT-4). */
+/** One entry of `divergences/` (R-COMPAT-4). */
 export interface Divergence {
   id: string;
   inputHash: string;
@@ -76,7 +76,7 @@ export interface ItemResult {
 
 export interface ParityReport {
   results: ItemResult[];
-  /** Divergences seen in this run that `divergences.json` does not list. */
+  /** Divergences seen in this run that `divergences/` does not list. */
   unlisted: ObservedDivergence[];
   /** Listed divergences for corpus items in this run that no longer diverge. */
   disappeared: Divergence[];
