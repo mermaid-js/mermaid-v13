@@ -61,8 +61,9 @@ describe('treeView layout invariants on parser-produced fixtures', () => {
           failures.push(`${item.id} ${JSON.stringify(config)}: ${v.slice(0, 3).join('; ')}`);
       }
     }
-    // The 15 12.2.0 fixtures, the 8 Cypress originals and the 56 parser and box inputs.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(79);
+    // The 15 12.2.0 fixtures, the 8 Cypress originals, the 56 parser and box inputs and the 18
+    // baselines (#577).
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(97);
     // Every part is exercised.
     expect(rows).toBeGreaterThan(25_000);
     expect(descriptions).toBeGreaterThan(1000);

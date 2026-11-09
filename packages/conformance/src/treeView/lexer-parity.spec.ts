@@ -285,8 +285,9 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
     expect(reasons).toEqual([]);
     // Every e2e fixture reaches the treeView lexer: the 15 12.2.0 files, the 8 Cypress
     // originals, v12's 30 parser.spec.ts inputs and the 26 boxDrawingPreprocessor.spec.ts
-    // inputs it accepts (30 `[…].join('\n')` inputs, one a repeat, three rejected: cases).
-    expect(e2e).toBe(15 + 8 + 30 + 26);
+    // inputs it accepts (30 `[…].join('\n')` inputs, one a repeat, three rejected: cases), and
+    // the 18 baselines (#577).
+    expect(e2e).toBe(15 + 8 + 30 + 26 + 18);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 

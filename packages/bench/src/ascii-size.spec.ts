@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,22 @@ import { bundle } from './build.ts';
 import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
+const PACKAGES = fileURLToPath(new URL('../..', import.meta.url));
+
+/**
+ * The diagram packages with a text entry (their manifest's `ascii`), by directory name without
+ * `diagram-`, sorted: a port joins by its manifest, so no list here names it.
+ */
+const ASCII_TYPES = readdirSync(PACKAGES)
+  .filter((dir) => dir.startsWith('diagram-'))
+  .filter((dir) => {
+    const pkg = JSON.parse(readFileSync(join(PACKAGES, dir, 'package.json'), 'utf8')) as {
+      mermaid?: { plugin?: string; ascii?: string };
+    };
+    return pkg.mermaid?.plugin === 'diagram' && pkg.mermaid.ascii !== undefined;
+  })
+  .map((dir) => dir.slice('diagram-'.length))
+  .sort();
 
 /** The production bundle the bench serves as `v13` (R-PERF-1), built once for the file. */
 let prod: Bundle;
@@ -60,6 +76,20 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     ).toEqual([]);
   });
 
+  // Each type with a text entry: its plugin's chunks, as an SVG render loads them, hold no
+  // ascii module (the entry is its own lazily imported chunk, D76).
+  it.each(ASCII_TYPES.map((t) => [t]))(
+    'a %s SVG render loads its plugin and no ascii module',
+    (type) => {
+      const plugin = chunkOf(prod, `packages/diagram-${type}/src/index.ts`);
+      expect(plugin).toBeDefined();
+      const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+      const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+      expect(inputs).toContain(`packages/diagram-${type}/src/plugin.ts`);
+      expect(inputs.filter(isAsciiModule)).toEqual([]);
+    }
+  );
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -70,7 +100,8 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
+    expect(ASCII_TYPES).toEqual(expect.arrayContaining(['er', 'flowchart', 'packet', 'sequence']));
+    for (const type of ASCII_TYPES)
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -78,14 +109,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    expect(paths.map((p) => p.diagram)).toEqual([
-      'er',
-      'flowchart',
-      'info',
-      'kanban',
-      'packet',
-      'sequence',
-    ]);
+    expect(paths.map((p) => p.diagram)).toEqual(ASCII_TYPES);
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
       expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
