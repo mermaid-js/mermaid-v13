@@ -8,7 +8,7 @@
 - **Worktree:** `/Users/ashishj/repos/mermaid-v13/.claude/worktrees/t<N>` on the ticket's branch (`INDEX.md`). Work only there with absolute paths. Run `pnpm install` first (and again after adding a package; then delete `.eslintcache`).
 - **Base:** T0a, T0b and T0c branch off `mermaid-v13` (T0b off T0a's branch) and become their own PRs. T1+ branch off the integration branch `feature/528_swimlane` (checked out at `/Users/ashishj/repos/mermaid-v13/.claude/worktrees/w4-swimlane`; read only, never write there).
 - **Environment:** Node and pnpm from Volta (`~/.volta/bin`). Run checks with `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4`.
-- **Core size (R-PERF-8, D546):** `packages/bench/src/core-size.spec.ts` (`measureCoreSize`) and `packages/mermaid/src/cdn-build.spec.ts`, limit 98,304 B gz. Baseline on `mermaid-v13` at 521fb76 is 93,891 B. Measure before and after anything that touches core or the registry; report both. Over the limit: stop and report; never touch the gate.
+- **Core size (R-PERF-8, D546):** `packages/bench/src/core-size.spec.ts` (`measureCoreSize`) and `packages/mermaid/src/cdn-build.spec.ts`, limit 98,304 B gz. Baseline on `mermaid-v13` at ad3648a91 is 94,217 B (block T0 #589 moved flowchart's theme rows back into core). Measure before and after anything that touches core or the registry; report both. Over the limit: stop and report; never touch the gate.
 - **Decisions:** not covered by the spec or a D-id? Choose the option most consistent with the spec and the D-ids, implement it, and say so under "Deviations" in your reply. Don't wait for an answer.
 - **Stress and timing specs:** pie's ratio pattern (`tLarge / Math.max(tSmall, 2)`, best of N), never absolute times.
 
