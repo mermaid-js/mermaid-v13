@@ -1,0 +1,8 @@
+@ 3:1  |Coal,Heat,5
+  -> 2:1-2:5 "Coal"
+@ 4:8  Gas,"Co|al",3
+  -> 2:1-2:5 "Coal"
+@ 5:9  "Electri|city",Losses,2
+  -> 2:6-2:17 "Electricity"
+@ 6:1  |Gas ,Heat,1
+  -> 4:1-4:4 "Gas"

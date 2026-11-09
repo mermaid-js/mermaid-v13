@@ -119,7 +119,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-quadrant').then((m) => m.quadrant),
   },
-  { type: 'sankey', pattern: /^\s*sankey(-beta)?/ },
+  {
+    type: 'sankey',
+    pattern: /^\s*sankey(-beta)?/,
+    id: 'sankey',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-sankey').then((m) => m.sankey),
+  },
   {
     type: 'packet',
     pattern: /^\s*packet(-beta)?/,

@@ -208,6 +208,7 @@ export default tseslint.config(
       'packages/diagram-pie/src/v12-specs/*.spec.ts',
       'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
       'packages/diagram-kanban/src/v12-specs/*.spec.ts',
+      'packages/diagram-sankey/src/v12-specs/*.spec.ts',
       'packages/diagram-packet/src/v12-specs/*.spec.ts',
       'packages/diagram-radar/src/v12-specs/*.spec.ts',
       'packages/diagram-treemap/src/v12-specs/*.spec.ts',

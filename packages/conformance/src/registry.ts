@@ -16,6 +16,8 @@ import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
 import { radarAdapter } from './radar/v13.ts';
+import { sankeyParityCorpus } from './sankey/corpus.ts';
+import { sankeyAdapter } from './sankey/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
@@ -144,6 +146,15 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: cynefinAdapter,
     corpusDirs: ['e2e/diagrams/cynefin'],
     corpusFiles: ['packages/conformance/corpus/cynefin-v12-specs.json'],
+  },
+  {
+    adapter: sankeyAdapter,
+    corpusDirs: ['e2e/diagrams/sankey'],
+    corpusFiles: [
+      'packages/conformance/corpus/sankey-v12-specs.json',
+      'packages/conformance/corpus/sankey-cases.json',
+    ],
+    corpus: sankeyParityCorpus,
   },
   {
     adapter: wardleyAdapter,

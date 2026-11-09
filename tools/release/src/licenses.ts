@@ -1,6 +1,8 @@
 /**
  * License check (R-REL-4, D12): ported code carries its upstreams' attribution, under each
- * upstream's license (MIT unless the upstream says otherwise; d3's packages are ISC).
+ * upstream's license (MIT unless the upstream says otherwise; d3-sankey, d3-array and d3-shape,
+ * which sankey re-implements, are BSD 3-Clause; d3-hierarchy and d3-format, which treemap
+ * re-implements, are ISC).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
  * block (Pele's, Iconify's and d3's repository URLs; Braintree's sanitize-url package name). A
@@ -15,7 +17,9 @@
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
- * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them.
+ * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them;
+ * - the notices of a package in `BUNDLED_CREDITS` hold the license text and copyright line of
+ *   each upstream listed for it, as for a file of its own.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
  */
@@ -33,11 +37,22 @@ interface Upstream {
   readonly license?: License;
 }
 
-type License = 'MIT' | 'ISC';
+type License = 'MIT' | 'BSD-3-Clause' | 'ISC';
 
-/** Text a notices file must hold for each license: its name and, for ISC, its grant. */
+/** How a file header names each license. */
+const LICENSE_HEADER: Readonly<Record<License, RegExp>> = {
+  MIT: /\bMIT\b/,
+  'BSD-3-Clause': /\bBSD 3-Clause\b/,
+  ISC: /\bISC\b/,
+};
+
+/** Text a notices file must hold for each license: its name and, for BSD and ISC, its grant. */
 const LICENSE_TEXT: Readonly<Record<License, readonly string[]>> = {
   MIT: ['MIT License'],
+  'BSD-3-Clause': [
+    'BSD 3-Clause License',
+    'Redistribution and use in source and binary forms, with or without modification,',
+  ],
   ISC: [
     'ISC License',
     'Permission to use, copy, modify, and/or distribute this software for any purpose',
@@ -67,6 +82,27 @@ export const UPSTREAMS: readonly Upstream[] = [
     copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
   },
   {
+    name: 'd3-sankey',
+    marker: 'https://github.com/d3/d3-sankey',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2015, Mike Bostock',
+    license: 'BSD-3-Clause',
+  },
+  {
+    name: 'd3-array',
+    marker: 'https://github.com/d3/d3-array',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2020 Mike Bostock',
+    license: 'BSD-3-Clause',
+  },
+  {
+    name: 'd3-shape',
+    marker: 'https://github.com/d3/d3-shape',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2015 Mike Bostock',
+    license: 'BSD-3-Clause',
+  },
+  {
     name: 'd3-hierarchy',
     marker: 'https://github.com/d3/d3-hierarchy',
     holder: 'Mike Bostock',
@@ -87,8 +123,20 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
+  'packages/diagram-sankey/src/layout/d3-sankey.ts': ['d3-sankey', 'd3-array'],
+  'packages/diagram-sankey/src/layout/layout.ts': ['d3-shape'],
   'packages/diagram-treemap/src/layout/tiles.ts': ['d3-hierarchy'],
   'packages/diagram-treemap/src/format/d3-format.ts': ['d3-format'],
+};
+
+/**
+ * Workspace packages whose build bundles another package's ported code with the legal comments
+ * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey and
+ * diagram-treemap), so their own notices carry those upstreams. Pending for the maintainer:
+ * core's `@braintree/sanitize-url`.
+ */
+export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
+  'packages/mermaid': ['d3-sankey', 'd3-array', 'd3-shape', 'd3-hierarchy', 'd3-format'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -154,7 +202,7 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
     for (const upstream of UPSTREAMS) {
       if (!header.includes(upstream.marker)) continue;
       const license = licenseOf(upstream);
-      if (!new RegExp(`\\b${license}\\b`).test(header) || !header.includes(upstream.holder))
+      if (!LICENSE_HEADER[license].test(header) || !header.includes(upstream.holder))
         problems.push(
           `${rel}: ${upstream.name}-derived header must name the ${license} license and "${upstream.holder}"`
         );
@@ -204,11 +252,15 @@ export function checkLicenses(root: string): string[] {
     if (manifest.private && !required) continue;
 
     const derived = derivedFiles(root, pkgDir, problems);
+    const bundled = UPSTREAMS.filter((u) => BUNDLED_CREDITS[pkg]?.includes(u.name));
     if (!existsSync(noticesPath)) {
       if (derived.length > 0) {
         const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');
         problems.push(`${pkg}: has files ported from ${from} but no ${NOTICES}`);
-      }
+      } else if (bundled.length > 0)
+        problems.push(
+          `${pkg}: bundles code ported from ${bundled.map((u) => u.name).join(', ')} but has no ${NOTICES}`
+        );
       continue;
     }
 
@@ -225,7 +277,8 @@ export function checkLicenses(root: string): string[] {
     const used = UPSTREAMS.filter(
       (u) =>
         (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
-        derived.some((d) => d.upstream === u)
+        derived.some((d) => d.upstream === u) ||
+        bundled.includes(u)
     );
     for (const u of used) {
       const license = licenseOf(u);

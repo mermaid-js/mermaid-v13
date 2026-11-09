@@ -2143,6 +2143,7 @@ height?: number
  */
 linkColor?: (SankeyLinkColor | string)
 nodeAlignment?: SankeyNodeAlignment
+useWidth?: number
 useMaxWidth?: boolean
 /**
  * Toggle to display or hide values along with title.

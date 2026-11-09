@@ -766,23 +766,23 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `sankey` | object |  | pending |  | The object containing configurations specific for sankey diagrams. |
-| `sankey.useWidth` | number |  | pending |  |  |
-| `sankey.useMaxWidth` | boolean | `false` | pending |  |  |
+| `sankey` | object |  | honoured (13.0.0) |  | The object containing configurations specific for sankey diagrams. |
+| `sankey.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
+| `sankey.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width="100%"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`; a value that is not a boolean is the default and warns `SANKEY_CONFIG_INVALID`. |  |
 | `sankey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `sankey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sankey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `sankey.width` | number | `600` | pending |  |  |
-| `sankey.height` | number | `400` | pending |  |  |
-| `sankey.linkColor` | any | `"gradient"` | pending |  | The color of the links in the sankey diagram. |
-| `sankey.nodeAlignment` | object | `"justify"` | pending |  | Controls the alignment of the Sankey diagrams. See <https://github.com/d3/d3-sankey#alignments>. |
-| `sankey.showValues` | boolean | `true` | pending |  | Toggle to display or hide values along with title. |
-| `sankey.prefix` | string | `""` | pending |  | The prefix to use for values |
-| `sankey.suffix` | string | `""` | pending |  | The suffix to use for values |
-| `sankey.nodeWidth` | number | `10` | pending |  | The width of the nodes in the sankey diagram. |
-| `sankey.nodePadding` | number | `12` | pending |  | The padding between nodes in the sankey diagram. |
-| `sankey.labelStyle` | object | `"legacy"` | pending |  | The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text. |
-| `sankey.nodeColors` | object |  | pending |  | A mapping of node IDs to their colors. Nodes not specified will use the default color scheme. |
+| `sankey.width` | number | `600` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. |  |
+| `sankey.height` | number | `400` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. |  |
+| `sankey.linkColor` | any | `"gradient"` | honoured (13.0.0) | `gradient`, `source`, `target` or one CSS colour for every link. A colour that fails the colour check draws the default `gradient` and warns `SANKEY_COLOR_INVALID`. | The color of the links in the sankey diagram. |
+| `sankey.nodeAlignment` | object | `"justify"` | honoured (13.0.0) | An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`. | Controls the alignment of the Sankey diagrams. See <https://github.com/d3/d3-sankey#alignments>. |
+| `sankey.showValues` | boolean | `true` | honoured (13.0.0) |  | Toggle to display or hide values along with title. |
+| `sankey.prefix` | string | `""` | honoured (13.0.0) |  | The prefix to use for values |
+| `sankey.suffix` | string | `""` | honoured (13.0.0) |  | The suffix to use for values |
+| `sankey.nodeWidth` | number | `10` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. | The width of the nodes in the sankey diagram. |
+| `sankey.nodePadding` | number | `12` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. | The padding between nodes in the sankey diagram. |
+| `sankey.labelStyle` | object | `"legacy"` | honoured (13.0.0) | An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`. | The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text. |
+| `sankey.nodeColors` | object |  | honoured (13.0.0) | A node's entry that fails the colour check is dropped with one `SANKEY_COLOR_INVALID` warning, and the node takes its next default colour, where v12 drew it black. | A mapping of node IDs to their colors. Nodes not specified will use the default color scheme. |
 
 ## `packet`
 

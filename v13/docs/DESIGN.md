@@ -234,8 +234,13 @@ interface LanguageFacet<A extends AstNode = AstNode> {
   namespaces: readonly (readonly string[])[];            // flowchart: [['node','subgraph'], ['class'], ['edge']]
   standalone?: readonly string[];                        // kinds whose occurrences are each a symbol of their own (mindmap: ['node'], D289)
   isValidId(name: string, kind?: string): string | undefined; // per symbol kind; undefined = ok, else the reason (D92)
+  nameSyntax?: NameSyntax;                               // names the service cannot read or write itself (sankey CSV fields, D398)
   completions(probe: ProbeResult, doc: DocumentView<A>): CompletionItem[]; // D95
   hover(at: HoverTarget, doc: DocumentView<A>): Hover | undefined;        // D93; docs from the syntax reference
+}
+interface NameSyntax {
+  read(text: string, s: SymbolOccurrence): { range: Range; quote?: string } | undefined; // what a rename replaces; undefined drops it
+  write(newName: string, at: { range: Range; quote?: string }, text: string): { range: Range; newText: string }; // the edit
 }
 interface DocumentView<A> { text: string; result: ParseResult<unknown, A> } // read-only; hover: the snapshot's parse, completions: the probe parse
 interface HoverTarget {
@@ -275,7 +280,7 @@ All positions are UTF-16 offsets into the full text, as the parser already uses;
 | Feature | From |
 | --- | --- |
 | diagnostics | `preprocess` + `parse` diagnostics as they are, each once (D91); front-matter config warnings (D96); info diagnostic for a type with no facet |
-| definition / references / rename | `symbols` grouped by the facet's `namespaces`; definition = first `def` (D92); an occurrence of a `standalone` kind is its own symbol (D289) |
+| definition / references / rename | `symbols` grouped by the facet's `namespaces`; definition = first `def` (D92); an occurrence of a `standalone` kind is its own symbol (D289); a facet's `nameSyntax` reads where each name is written and writes each rename's edit (escapes, quotes added), and `isValidId` then judges every new name, quoted or not (D398) |
 | folding | every `statements` span covering more than one line (subgraphs, multi-line `accDescr { }` and `@{ }`), plus the front-matter range; `lineFoldingRanges` keeps a closing `end`/`}`/`---` line visible, one fold per start line |
 | semantic tokens | `tokens` × facet `categories`, modifiers from symbol roles (D94); `lineSemanticTokens` cuts them per line without continuation indentation, never overlapping |
 | completion | probe (below) × facet `completions` (D95); config keys from the schema (D96) |

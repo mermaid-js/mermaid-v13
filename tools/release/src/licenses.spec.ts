@@ -240,6 +240,42 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('checks a BSD 3-Clause upstream (d3-sankey) by its own license, in its own section', () => {
+    const header =
+      '/**\n * After https://github.com/d3/d3-sankey, BSD 3-Clause License, Copyright 2015 Mike Bostock.\n */\n';
+    const bsd = (copyright: string) =>
+      `d3-sankey\n---------\n  src/layout/d3-sankey.ts\n\nBSD 3-Clause License\n\n${copyright}\n\nRedistribution and use in source and binary forms, with or without modification,\n`;
+    const files = {
+      'packages/flow/package.json': JSON.stringify({
+        name: 'flow',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+      'packages/flow/src/layout/d3-sankey.ts': `${header}export {};\n`,
+    };
+    // Pele's text is not needed for d3 files.
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/flow/THIRD_PARTY_NOTICES': bsd('Copyright 2015, Mike Bostock'),
+        })
+      )
+    ).toEqual([]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/flow/src/layout/d3-sankey.ts':
+            '// After https://github.com/d3/d3-sankey, MIT, Mike Bostock.\nexport {};\n',
+          'packages/flow/THIRD_PARTY_NOTICES': `MIT License\n\n${bsd('Copyright 2015 Mike Bostock')}`,
+        })
+      )
+    ).toEqual([
+      'packages/flow/src/layout/d3-sankey.ts: d3-sankey-derived header must name the BSD-3-Clause license and "Mike Bostock"',
+      'packages/flow/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2015, Mike Bostock"',
+    ]);
+  });
+
   it('checks an ISC upstream (d3) by its own license, in its own section', () => {
     const header =
       '/**\n * After d3-hierarchy: https://github.com/d3/d3-hierarchy, ISC License, Copyright 2010-2021 Mike Bostock.\n */\n';
@@ -276,6 +312,21 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('requires the sankey d3 ports to credit d3-sankey, d3-array and d3-shape, though the package is private', () => {
+    for (const pkg of [{ name: 'sankey', private: true }, { name: 'sankey' }]) {
+      const root = workspace({
+        'packages/diagram-sankey/package.json': JSON.stringify(pkg),
+        'packages/diagram-sankey/src/layout/d3-sankey.ts': '// Ours.\nexport {};\n',
+        'packages/diagram-sankey/src/layout/layout.ts': '// Ours.\nexport {};\n',
+      });
+      expect(checkLicenses(root)).toEqual([
+        'packages/diagram-sankey/src/layout/d3-sankey.ts: header must credit d3-sankey',
+        'packages/diagram-sankey/src/layout/d3-sankey.ts: header must credit d3-array',
+        'packages/diagram-sankey/src/layout/layout.ts: header must credit d3-shape',
+      ]);
+    }
+  });
+
   it('requires the treemap d3 ports to credit d3, though the package is private', () => {
     const root = workspace({
       'packages/diagram-treemap/package.json': JSON.stringify({ name: 'treemap', private: true }),
@@ -285,6 +336,55 @@ describe('license check (R-REL-4)', () => {
     expect(checkLicenses(root)).toEqual([
       'packages/diagram-treemap/src/format/d3-format.ts: header must credit d3-format',
       'packages/diagram-treemap/src/layout/tiles.ts: header must credit d3-hierarchy',
+    ]);
+  });
+
+  it('requires the d3 notices in mermaid, whose CDN build bundles diagram-sankey and diagram-treemap', () => {
+    const bsd = (name: string, copyright: string) =>
+      `${name}\n----\nBSD 3-Clause License\n\n${copyright}\n\nRedistribution and use in source and binary forms, with or without modification,\n`;
+    const isc = (name: string, copyright: string) =>
+      `${name}\n----\nISC License\n\n${copyright}\n\nPermission to use, copy, modify, and/or distribute this software for any purpose\n`;
+    const files = {
+      'packages/mermaid/package.json': JSON.stringify({
+        name: 'mermaid',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+    };
+    const d3 = [
+      bsd('d3-sankey', 'Copyright 2015, Mike Bostock'),
+      bsd('d3-array', 'Copyright 2010-2020 Mike Bostock'),
+      bsd('d3-shape', 'Copyright 2010-2015 Mike Bostock'),
+      isc('d3-hierarchy', 'Copyright 2010-2021 Mike Bostock'),
+      isc('d3-format', 'Copyright 2010-2026 Mike Bostock'),
+    ];
+    expect(
+      checkLicenses(
+        workspace({ ...files, 'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.join('\n') })
+      )
+    ).toEqual([]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/mermaid/THIRD_PARTY_NOTICES':
+            MIT_NOTICE + [...d3.slice(0, 2), ...d3.slice(3)].join('\n'),
+        })
+      )
+    ).toEqual([
+      'packages/mermaid/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2010-2015 Mike Bostock"',
+    ]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.slice(0, 4).join('\n'),
+        })
+      )
+    ).toEqual([
+      'packages/mermaid/THIRD_PARTY_NOTICES: must contain the ISC License text with "Copyright 2010-2026 Mike Bostock"',
+    ]);
+    expect(checkLicenses(workspace(files))).toEqual([
+      'packages/mermaid: bundles code ported from d3-sankey, d3-array, d3-shape, d3-hierarchy, d3-format but has no THIRD_PARTY_NOTICES',
     ]);
   });
 

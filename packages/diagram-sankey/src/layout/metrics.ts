@@ -1,0 +1,74 @@
+/**
+ * The sankey layout's px constants (spec #427 §Layout, pitfall 13): v12 `sankeyRenderer.ts`'s
+ * fixed lengths and d3-sankey 0.12.3's tuning constants. No other file in `layout/` writes a
+ * length literal (`packages/conformance/src/sankey-layout-literals.spec.ts`); every other
+ * length comes from the `sankey` config, whose defaults are the schema's (`config.ts`). Sankey
+ * draws SVG only (D320), so there is no cell set.
+ */
+
+/** The sankey layout's fixed lengths and factors. */
+export interface SankeyMetrics {
+  /** v12 adds this to `nodePadding` when `showValues` is on (`:123`): room for the value. */
+  readonly valuePadding: number;
+  /** A label sits this far left of `x0` or right of `x1` (`:193-202`). */
+  readonly labelGap: number;
+  /** `g.node-labels` `font-size` (`:206`): labels are measured and drawn at it. */
+  readonly fontSize: number;
+  /**
+   * v12's `dy="0.35em"` when `showValues` is off (`:215`), in em: the layout writes it in px,
+   * `labelShiftEm × fontSize` (v13's `dy` is numeric only, GAPS #502). With `showValues` on,
+   * `dy` is 0.
+   */
+  readonly labelShiftEm: number;
+  /**
+   * The `outlined` style's halo: `.sankey-label-bg` is stroked this wide (`styles.js:11-16`),
+   * with round joins, so it reaches half of it past the text.
+   */
+  readonly outlineWidth: number;
+  readonly outlineJoin: 'round';
+  /** v12 draws a link at least this wide: `max(1, width)` (`:278`, D394's zero links). */
+  readonly minLinkWidth: number;
+  /** `g.links` `stroke-opacity` (`:231`): a factor, not a length. */
+  readonly linkOpacity: number;
+}
+
+export const SANKEY_METRICS: SankeyMetrics = {
+  valuePadding: 15,
+  labelGap: 6,
+  fontSize: 14,
+  labelShiftEm: 0.35,
+  outlineWidth: 4,
+  outlineJoin: 'round',
+  minLinkWidth: 1,
+  linkOpacity: 0.5,
+};
+
+/** d3-sankey 0.12.3's tuning (`sankey.js`): v12 sets none of these, so d3's defaults hold. */
+export const D3_SANKEY = {
+  /** Relaxation passes (`iterations`, L64). */
+  iterations: 6,
+  /** Each pass moves a node `alpha = decay^i` of the way to its ideal place (L238). */
+  decay: 0.99,
+  /** A collision pushes a node only when it overlaps by more than this, in px (L305, L315). */
+  collision: 1e-6,
+} as const;
+
+/** The CSS weight sankey text is measured and drawn at: v12 sets none, so normal. */
+export const NORMAL_WEIGHT = 400;
+
+/**
+ * d3 `schemeTableau10` (d3-scale-chromatic 3.1.0): v12's `scaleOrdinal` gives each node not
+ * named in `nodeColors` the next slot, in node order, mod 10 (D152: a package constant).
+ */
+export const TABLEAU10 = [
+  '#4e79a7',
+  '#f28e2c',
+  '#e15759',
+  '#76b7b2',
+  '#59a14f',
+  '#edc949',
+  '#af7aa1',
+  '#ff9da7',
+  '#9c755f',
+  '#bab0ab',
+] as const;

@@ -229,14 +229,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
   ]),
-  // Pie, packet, cynefin, info, treemap, wardley and xychart draw in the font family but size their
-  // text by their own variables or constants (wardley: its config; xychart: its `xyChart` config).
+  // Pie, packet, cynefin, info, sankey, treemap, wardley and xychart draw in the font family but
+  // size their text by their own variables or constants (sankey: 14 px; wardley: its config;
+  // xychart: its `xyChart` config).
   fontFamily: def('ff', 'font', [
     ...TEXT_USERS,
     'pie',
     'packet',
     'cynefin',
     'info',
+    'sankey',
     'treemap',
     'wardley',
     'xychart',
@@ -264,6 +266,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'info',
     'radar',
+    'sankey',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -274,6 +277,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
+    'sankey',
     'wardley',
   ]),
   nodeBorder: def('nb', 'color', [

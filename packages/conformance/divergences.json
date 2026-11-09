@@ -336,6 +336,286 @@
     "since": "2026-11-06"
   },
   {
+    "id": "v12-specs/parser/sankey.spec.ts#3",
+    "inputHash": "sha256:1ce0e6428b0c2b11",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "v12-specs/parser/sankey.spec.ts#4",
+    "inputHash": "sha256:8c2924856333cd4c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/values-negative-zero",
+    "inputHash": "sha256:77c8b9dff87f0bce",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/links-self",
+    "inputHash": "sha256:0289cd2069b3dd86",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/links-cycle",
+    "inputHash": "sha256:2f016824231d4384",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (commented)",
+    "inputHash": "sha256:cb7f88205a8087e2",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (commented)",
+    "inputHash": "sha256:dff5ef551cb7247a",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (commented)",
+    "inputHash": "sha256:4d923a35ec83a5a8",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (commented)",
+    "inputHash": "sha256:fcc28220955147a4",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (commented)",
+    "inputHash": "sha256:eb45424da55da680",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CR cut)",
+    "inputHash": "sha256:d6b84649b071d3c2",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CR cut)",
+    "inputHash": "sha256:7672b3d55cbdcd70",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CR cut)",
+    "inputHash": "sha256:b1bee28622b4bcb5",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CR cut)",
+    "inputHash": "sha256:83535452eafe2e26",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CR cut)",
+    "inputHash": "sha256:897fe292e876d8cf",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CR cut by a directive)",
+    "inputHash": "sha256:fe82a619b46e7e96",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CR cut by a directive)",
+    "inputHash": "sha256:e7248e7a8c203283",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CR cut by a directive)",
+    "inputHash": "sha256:c0d058465d0cd824",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CR cut by a directive)",
+    "inputHash": "sha256:545bc69c9b0e9de3",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CR cut by a directive)",
+    "inputHash": "sha256:4fc81a2e9456c775",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CRLF)",
+    "inputHash": "sha256:8509b370bf1b1fc6",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CRLF)",
+    "inputHash": "sha256:1c5645f86b076a45",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CRLF)",
+    "inputHash": "sha256:3a1bdf967ce2253b",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CRLF)",
+    "inputHash": "sha256:ad7083c5c24716ba",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CRLF)",
+    "inputHash": "sha256:7bb903d895ca501a",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (blank lines)",
+    "inputHash": "sha256:8249de529d441e2c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (blank lines)",
+    "inputHash": "sha256:f1ba9787c7a51660",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (blank lines)",
+    "inputHash": "sha256:9fafc573704b2a06",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (blank lines)",
+    "inputHash": "sha256:06a2a4dc6f371e4d",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (blank lines)",
+    "inputHash": "sha256:e8bd136b35a53ed9",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (directive mid-line)",
+    "inputHash": "sha256:d6b60b53aa22b6de",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (directive mid-line)",
+    "inputHash": "sha256:56229912d2eae80c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (directive mid-line)",
+    "inputHash": "sha256:95bb116549f28bdb",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (directive mid-line)",
+    "inputHash": "sha256:c50c927c90bef583",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (directive mid-line)",
+    "inputHash": "sha256:6baa032cc2aad8ce",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
     "id": "treemap-cases/unclosed-directive",
     "inputHash": "sha256:de9f73827312fb03",
     "kind": "reject",

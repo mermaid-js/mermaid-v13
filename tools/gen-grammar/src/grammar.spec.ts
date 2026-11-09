@@ -61,6 +61,15 @@ describe('grammar files', () => {
     );
   });
 
+  it('highlights a starred atom as `+`, and leaves out a rule whose atom can match empty', () => {
+    const src =
+      '@lexer\nQ /(?:a|""|,)*/ :string ;\nE /(?:a?)*/ :number ;\nC /[b-c]*/ :variable ;\n@grammar\ns = { Q | E | C } ;';
+    const rules = JSON.stringify(monarch(parseGrammar(src), { id: 'x', extensions: ['x'] }));
+    expect(rules).toContain('(?:a|\\"\\"|,)+');
+    expect(rules).toContain('[b-c]+');
+    expect(rules).not.toContain('a?');
+  });
+
   it('reports unknown symbols, modes and unreachable rules with a line', () => {
     expect(() => parseGrammar('@lexer\nA /a/ push(nope) ;\n@grammar\ns = A ;')).toThrow(
       /line 2: unknown mode/

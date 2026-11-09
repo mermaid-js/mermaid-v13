@@ -291,6 +291,18 @@ const DOCS: Readonly<Record<string, string>> = {
     '    }',
     '',
   ].join('\n'),
+  sankey: [
+    'sankey',
+    '',
+    '%% the flows',
+    'Solar,Electricity,42.5',
+    '"Gas, imported",Electricity,88.1',
+    '"Gas, imported","The ""heat"" network",54.2',
+    'Electricity,"Homes',
+    'and offices",97.4',
+    'Electricity,Losses,0',
+    '',
+  ].join('\n'),
   treemap: [
     'treemap-beta',
     '  title Budget',

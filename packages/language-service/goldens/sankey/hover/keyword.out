@@ -1,0 +1,5 @@
+@ 1:4  san|key
+  1:1-1:7 "sankey"
+  | **`sankey`**
+  |
+  | A sankey diagram is `sankey` on a line of its own, then one or more rows, one per line. Blank lines between rows are skipped; a line of blanks is an error.

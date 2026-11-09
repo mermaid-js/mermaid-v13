@@ -1,0 +1,67 @@
+(** Sankey syntax (R-PARSE-9, D54): the normative grammar of `sankey` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+characters no rule takes; then, as sankey's own step, blanks and line breaks trimmed off both
+ends of the whole text and each run of line breaks read as one. Keywords are matched without
+regard to case.
+
+A sankey diagram is CSV with three fields a row: the source node, the target node and the
+value. A node is its name trimmed; a quoted field may hold commas, line breaks and `""` (read
+as `"`). The value is the number at the start of its field, as JavaScript's `parseFloat` reads
+it. A cycle among the links (a self-link included) is an error; a value that is not a finite
+number of 0 or more (not a number, negative, or infinite such as `Infinity` or `1e999`) counts
+as 0, with a warning. Only printable ASCII characters may be used: any other character (a tab,
+`é`, an entity) is an error. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes csv escaped_text ;
+
+(** `sankey` (or `sankey-beta`): starts a sankey diagram; its rows follow, one per line. *)
+SANKEY                       /sankey-beta\b/              push(csv) :keyword ;
+SANKEY                       /sankey\b/                   push(csv) :keyword ;
+(** The end of the text. *)
+<INITIAL,csv> EOF            /$/ ;
+<INITIAL,csv> NEWLINE        /\r\n|\n/ ;
+(** `,`: separates the three fields of a row. *)
+<INITIAL,csv> COMMA          /,/                          :punctuation ;
+(** `"`: opens a quoted field, which may hold `,`, line breaks and `""` (a `"`). *)
+<INITIAL,csv> DQUOTE         /"/                          push(escaped_text) :string ;
+(** A field outside quotes: printable ASCII but `"` and `,`, blanks included (they are trimmed). *)
+<INITIAL,csv> NON_ESCAPED_TEXT /[\x20-\x21\x23-\x2B\x2D-\x7E]*/ :variable ;
+(* jison lists this rule and the next for every mode; outside quotes the rules above always
+match first, so they are written for `escaped_text` only, where the highlighters need them. *)
+(** `"`, not followed by another `"`: closes a quoted field. *)
+<escaped_text> DQUOTE        /"(?!")/                     pop :string ;
+(** The text of a quoted field. *)
+<escaped_text> ESCAPED_TEXT  /(?:[\x20-\x21\x23-\x2B\x2D-\x7E]|,|\r|\n|"")*/ :string ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                      /^[^\S\n]*%%(?!\{)[^\n]+/    :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                    /[^\S\n]*%%\{[\s\S]*?\}%%/   :meta ;
+
+@grammar
+
+(** A sankey diagram is `sankey` on a line of its own, then one or more rows, one per line.
+Blank lines between rows are skipped; a line of blanks is an error. *)
+diagram = SANKEY NEWLINE Link { NEWLINE Link } [ EOF ] ;
+
+(** A row, `source,target,value` (`Coal,Electricity,12.5`): a link of that value from the
+source node to the target node. The first row naming a node adds it; repeated rows add links. *)
+Link @Link = field COMMA field COMMA field ;
+(** A field: quoted (`"a,b"`, `"say ""hi"""`) or not (`Coal`). *)
+field = DQUOTE ESCAPED_TEXT DQUOTE | NON_ESCAPED_TEXT ;

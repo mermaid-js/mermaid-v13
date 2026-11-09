@@ -1,0 +1,5 @@
+2:4-3:1 "\n" error UNEXPECTED: Expected a comma, got a line break; a row has three fields: source, target and value.
+3:6-4:1 "\n" error UNEXPECTED: Expected a comma, got a line break; a row has three fields: source, target and value.
+4:3-4:4 "," error UNEXPECTED: Expected a target name, got `,`; a field may not be empty.
+5:6-5:7 "," error UNEXPECTED: Expected a line break, got `,`; a row has three fields: source, target and value.
+6:3-6:4 "\"" error UNCLOSED_STRING: Unclosed quote: the `"` at line 6 has no closing `"`. Add `"` after the field's text.

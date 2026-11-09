@@ -1,0 +1,20 @@
+@ 2:3  Co|al,Electricity,10
+  2:1-2:5 "Coal"
+  | **node** `Coal`
+  |
+  | In: 3 (1 link) · out: 15.5 (2 links)
+@ 3:9  Coal,"He|at",5.5
+  3:7-3:11 "Heat"
+  | **node** `Heat`
+  |
+  | In: 5.5 (2 links) · out: 0
+@ 4:7  Gas,Co|al,3
+  4:5-4:9 "Coal"
+  | **node** `Coal`
+  |
+  | In: 3 (1 link) · out: 15.5 (2 links)
+@ 5:9  "Say ""h|i""",Heat,abc
+  5:2-5:12 "Say \"\"hi\"\""
+  | **node** `Say "hi"`
+  |
+  | In: 0 · out: 0 (1 link)

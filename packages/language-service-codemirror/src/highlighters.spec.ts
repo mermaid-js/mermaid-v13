@@ -46,6 +46,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'pie',
       'quadrantChart',
       'radar',
+      'sankey',
       'sequence',
       'state',
       'timeline',
@@ -240,6 +241,20 @@ describe('the per-type first-paint highlighters (D134)', () => {
       const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
       expect(out[0]).toBe('kanban:keyword');
       expect(out.length).toBeGreaterThan(1);
+    });
+
+    it('highlights a sankey diagram with the sankey grammar', () => {
+      const out = spans('sankey\n"Solar, roof",Electricity,40.5\n');
+      expect(out).toEqual([
+        'sankey:keyword',
+        '":string',
+        'Solar, roof:string',
+        '":string',
+        ',:punctuation',
+        'Electricity:variable',
+        ',:punctuation',
+        '40.5:variable',
+      ]);
     });
 
     it('finds the type after front matter, directives and comments', () => {

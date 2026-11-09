@@ -25,6 +25,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-kanban` | The kanban board plugin (SVG; `kanban`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-radar` | The radar chart plugin (SVG; `radar-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-sankey` | The sankey diagram plugin (SVG; `sankey`, `sankey-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-treemap` | The treemap plugin (SVG; `treemap`, `treemap-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |,
 | `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |

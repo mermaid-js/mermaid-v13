@@ -1,0 +1,12 @@
+@ 2:1  |Coal,Electricity,10
+  2:1-2:5 "Coal"
+  3:1-3:5 "Coal"
+@ 3:9  Coal,"He|at",5
+  3:7-3:11 "Heat"
+  4:14-4:18 "Heat"
+  6:5-6:9 "Heat"
+@ 4:9  "Say ""h|i""",Heat,3
+  4:2-4:12 "Say \"\"hi\"\""
+  5:6-5:16 "Say \"\"hi\"\""
+@ 6:10  Gas,Heat,|1
+  none

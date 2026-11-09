@@ -9,7 +9,10 @@ import type { LanguageFacet, Range, SymbolOccurrence } from '@mermaid-js/core/pa
 import type { DocumentContext } from './context.ts';
 import { deepFreeze } from './freeze.ts';
 
-/** A symbol occurrence whose range covers exactly its name, with its namespace. */
+/**
+ * A symbol occurrence whose range covers exactly its name (with a facet's `nameSyntax`, the
+ * text written for it), with its namespace.
+ */
 export interface Occurrence extends SymbolOccurrence {
   /**
    * Namespace key: the index of the facet group holding `kind`, else the kind itself; for a
@@ -85,9 +88,17 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   if (!result || !facet) return [];
   const spaceOf = spaces(facet);
   const out: Occurrence[] = [];
+  const syntax = facet.nameSyntax;
   for (const s of result.symbols) {
-    let { start, end } = s.range;
     if (s.name === '') continue;
+    if (syntax) {
+      const read = syntax.read(text, s);
+      if (!read) continue;
+      const o = { name: s.name, kind: s.kind, role: s.role, range: read.range, space: spaceOf(s) };
+      out.push(read.quote === undefined ? o : { ...o, quote: read.quote });
+      continue;
+    }
+    let { start, end } = s.range;
     const bare = end - start === s.name.length && text.startsWith(s.name, start);
     const quote = bare ? undefined : quoteAround(text, start, end, s.name);
     if (quote) {
@@ -241,7 +252,7 @@ function readsBack(
     shift += delta;
     return { e, start, end: start + e.newText.length, shift: start - e.range.start, delta };
   });
-  if (sameSymbols(before, after, placed, spaceOf, o, newName)) return 'same';
+  if (sameSymbols(before, after, placed, facet, o, newName)) return 'same';
   // Why not: the new text reads as names the namespace already has, that were not there.
   const names = new Set(before.filter((s) => spaceOf(s) === o.space).map((s) => s.name));
   const within = (list: readonly SymbolOccurrence[], start: number, end: number) =>
@@ -269,24 +280,29 @@ interface Placed {
 /**
  * Whether the symbols after the edits are those before, with `o`'s renamed: as many, and the
  * ones named `newName` in the namespace exactly the renamed ones, at their new places. An edit
- * inside an occurrence (its name, between quotes or not) places it exactly; an edit that
+ * inside an occurrence (its name, between quotes or not) places it exactly, as does every edit
+ * of a facet's `nameSyntax` (which may take the blanks around a field); an edit that
  * rewrote a token around occurrences holds them somewhere in its new text.
  */
 function sameSymbols(
   before: readonly SymbolOccurrence[],
   after: readonly SymbolOccurrence[],
   placed: readonly Placed[],
-  spaceOf: (s: SymbolOccurrence) => string,
+  facet: LanguageFacet,
   o: Occurrence,
   newName: string
 ): boolean {
   if (after.length !== before.length) return false;
+  const spaceOf = spaces(facet);
+  const syntax = facet.nameSyntax !== undefined;
   const byStart = (list: readonly SymbolOccurrence[]) => [
     ...new Map(list.map((s) => [s.range.start, s] as const)).values(),
   ];
   const renamed = byStart(before.filter((s) => spaceOf(s) === o.space && s.name === o.name)).sort(
     (a, b) => a.range.start - b.range.start
   );
+  // A name syntax writes one edit per occurrence, over it (and maybe the blanks around it).
+  if (syntax && renamed.length !== placed.length) return false;
   const exact = new Set<string>();
   const loose: { start: number; end: number; kind: string }[] = [];
   let i = 0;
@@ -295,9 +311,13 @@ function sameSymbols(
     while (i < placed.length && (placed[i]?.e.range.end ?? 0) <= s.range.start) i++;
     const p = placed[i];
     if (!p || p.e.range.start >= s.range.end) return false;
-    if (s.range.start <= p.e.range.start && p.e.range.end <= s.range.end)
-      exact.add(`${s.range.start + p.shift}:${s.range.end + p.shift + p.delta}:${s.kind}`);
-    else loose.push({ start: p.start, end: p.end, kind: s.kind });
+    // Placed exactly: over its range and its edit's, shifted by the length change of the edits
+    // before it, its end also by its own (an edit inside it changes it by `delta` alone).
+    if (syntax || (s.range.start <= p.e.range.start && p.e.range.end <= s.range.end)) {
+      const start = Math.min(s.range.start, p.e.range.start) + p.shift;
+      const end = Math.max(s.range.end, p.e.range.end) + p.shift + p.delta;
+      exact.add(`${start}:${end}:${s.kind}`);
+    } else loose.push({ start: p.start, end: p.end, kind: s.kind });
   }
   const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName));
   if (got.length !== renamed.length) return false;
@@ -439,12 +459,29 @@ export function rename(
   const facet = ctx.facet!;
   const refuse = (refused: string): RenameResult => deepFreeze({ refused });
   const all = sameSymbol(list, o);
-  const invalid = quotedReason(all, newName);
-  if (invalid !== undefined) return refuse(invalid);
-  const bare = bareText(facet, all, newName, o.kind);
-  if ('refused' in bare) return refuse(bare.refused);
-  const edits = renameEdits(ctx, facet, all, newName, writtenAs(facet, newName, bare.text), o.kind);
-  if ('refused' in edits) return refuse(edits.refused);
+  const syntax = facet.nameSyntax;
+  let edits: TextEdit[];
+  if (syntax) {
+    // A name syntax escapes what the quotes would not hold, so the facet judges every name.
+    const invalid = facet.isValidId(newName, o.kind);
+    if (invalid !== undefined) return refuse(invalid);
+    edits = all.map((x) => syntax.write(newName, x, ctx.text));
+  } else {
+    const invalid = quotedReason(all, newName);
+    if (invalid !== undefined) return refuse(invalid);
+    const bare = bareText(facet, all, newName, o.kind);
+    if ('refused' in bare) return refuse(bare.refused);
+    const made = renameEdits(
+      ctx,
+      facet,
+      all,
+      newName,
+      writtenAs(facet, newName, bare.text),
+      o.kind
+    );
+    if ('refused' in made) return refuse(made.refused);
+    edits = made;
+  }
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
   if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);

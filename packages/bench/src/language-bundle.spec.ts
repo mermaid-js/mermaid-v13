@@ -91,6 +91,19 @@ const PACKAGES = [
     ],
   },
   {
+    name: 'sankey',
+    dir: 'diagram-sankey',
+    renderer: [
+      'render/',
+      'layout/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
+  {
     name: 'treemap',
     dir: 'diagram-treemap',
     renderer: [
