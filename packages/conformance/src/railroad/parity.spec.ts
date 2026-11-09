@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { railroadGateCorpus } from './corpus.ts';
@@ -12,7 +12,7 @@ import { RAILROAD_ADAPTERS } from './v13.ts';
  * fixtures and v12 spec strings (also in the main parity run), the cases, each also with CRLF
  * line breaks and with comment lines added. Accept/reject and the normalised model (`v12.ts`,
  * `v13.ts`: rules in order with duplicates, each definition as the seven-kind tree, title,
- * accTitle, accDescr) must agree per notation, except listed divergences (`divergences.json`:
+ * accTitle, accDescr) must agree per notation, except listed divergences (`divergences/railroad.json`:
  * an empty front matter block, core's).
  *
  * Excluded ({@link isExcluded}), with the reason the lexer gates give: the unclosed-directive
@@ -34,7 +34,7 @@ describe('railroad oracle parity with mermaid@12', () => {
     const report = await runParity({
       adapters: RAILROAD_ADAPTERS,
       corpus: each(items),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+      divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
     });
     const counts: Record<string, { accepted: number; rejected: number }> = {};
     for (const r of report.results) {

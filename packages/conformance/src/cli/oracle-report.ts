@@ -13,7 +13,7 @@ import {
   resolveCorpus,
   runParity,
 } from '../index.ts';
-import { DIVERGENCES_FILE, PARITY_SUITES } from '../registry.ts';
+import { DIVERGENCES_DIR, PARITY_SUITES } from '../registry.ts';
 
 const out = process.argv[2];
 const oracle = await loadOracle();
@@ -21,7 +21,7 @@ const report = await runParity({
   oracle,
   adapters: PARITY_SUITES.map((s) => s.adapter),
   corpus: resolveCorpus(process.env, PARITY_SUITES),
-  divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+  divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
 });
 const json = JSON.stringify(
   {

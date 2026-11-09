@@ -20,7 +20,13 @@ import {
   type ThemeSpec,
   type NumberedPalette,
 } from '../../../packages/core/src/theme/index.ts';
-import { runtimeVars, type ThemePackage } from './theme-packages.ts';
+import {
+  coreUsers,
+  knownNames,
+  runtimeVars,
+  themeReads,
+  type ThemePackage,
+} from './theme-packages.ts';
 
 export const INVENTORY_PATH = fileURLToPath(
   new URL('../../../v13/docs/theme-variables.md', import.meta.url)
@@ -86,8 +92,13 @@ function packageSection(pkg: ThemePackage, specs: readonly ThemeSpec[]): string[
   ];
 }
 
+/**
+ * The inventory doc. `packages` are the diagram packages (`themePackages`): their own variables
+ * get a section each, and a core row's users are read from their sources ({@link coreUsers}).
+ */
 export async function themeInventory(packages: readonly ThemePackage[] = []): Promise<string> {
   const specs = await Promise.all(THEME_NAMES.map((n) => loadTheme(n)));
+  const reads = themeReads(packages, knownNames(THEME_VARIABLES, packages));
   const base = new Set<string>(BASE_VARIABLES);
   const tokens = new Set<string>(TOKEN_VARIABLES);
   const rows = Object.entries(THEME_VARIABLES).map(([name, def]) => {
@@ -107,7 +118,7 @@ export async function themeInventory(packages: readonly ThemePackage[] = []): Pr
       code(LIGHT_RULES[name]),
       code(DARK_RULES[name]),
       setBy,
-      def.usedBy.join(', '),
+      coreUsers(name, def.usedBy, reads).join(', '),
     ];
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
