@@ -19,6 +19,7 @@ const OVERRIDES: readonly Readonly<Record<string, unknown>>[] = [
   { arcRadius: 24 },
   { arcRadius: 0, padding: 0, verticalSeparation: 0, horizontalSeparation: 0 },
   { verticalSeparation: 40, markerRadius: 15, strokeWidth: 8, fontSize: 30 },
+  { markerRadius: 30, fontSize: 13, padding: 3 },
 ];
 
 let theme: Theme;
@@ -51,7 +52,7 @@ describe('railroad layout invariants on parser-produced fixtures', () => {
             stack.push(...e.children);
           }
         }
-        const v = railroadLayoutViolations(model, layout);
+        const v = railroadLayoutViolations(model, layout, tableMeasurer);
         if (v.length > 0) {
           failures.push(`${item.id} ${JSON.stringify(o)}: ${v.slice(0, 3).join('; ')}`);
         }

@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { tableMeasurer, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { RAILROAD_LAYOUT_DEFAULTS, railroadLayoutConfig } from '../config.ts';
 import { parseRailroad } from '../parser/index.ts';
 import { railroadLayoutViolations } from './invariants.ts';
 import { layoutRailroad } from './layout.ts';
-import { boldMeasurer, context, find, v12Measurer, v12Path } from './layout.fixtures.ts';
+import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
+import type { Theme } from '@mermaid-js/core/theme';
+import {
+  boldMeasurer,
+  context,
+  find,
+  plainTheme,
+  v12Measurer,
+  v12Path,
+} from './layout.fixtures.ts';
 import type { RailroadLayout, RailroadRuleLayout } from './types.ts';
 
 const lay = (
@@ -15,7 +24,7 @@ const lay = (
   const { model, diagnostics } = parseRailroad(src);
   expect(diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   const layout = layoutRailroad(model, context(section, measurer));
-  expect(railroadLayoutViolations(model, layout)).toEqual([]);
+  expect(railroadLayoutViolations(model, layout, measurer)).toEqual([]);
   return layout;
 };
 
@@ -228,6 +237,30 @@ describe('D514', () => {
     );
   });
 
+  it.each([
+    [13, 3],
+    [13, 4],
+    [14, 3],
+  ])(
+    'keeps a branch v12 put on the main line straight under float noise (fontSize %d, padding %d)',
+    (fontSize, padding) => {
+      // The table measurer's widths and line heights leave ~1e-14 between the middle branch's
+      // track and the main line: v12's exact compare (and this layout before review) took it as
+      // off the line and moved it out by 2r.
+      const { model } = parseRailroad(
+        'railroad-beta\nd = choice(terminal("0"), terminal("1"), terminal("2")) ;\n'
+      );
+      const layout = layoutRailroad(model, context({ fontSize, padding }, tableMeasurer));
+      expect(railroadLayoutViolations(model, layout, tableMeasurer)).toEqual([]);
+      const choice = find(layout.rules[0]!, 'choice')!;
+      const [one, two, three] = choice.children.map((c) => c.up + c.down);
+      expect(choice.up + choice.down).toBeCloseTo(one! + two! + three! + 16, 9);
+      expect(choice.paths[2]!.segments).toHaveLength(1);
+      expect(choice.paths[3]!.segments).toHaveLength(1);
+      expect(choice.children[1]!.y + choice.children[1]!.up).toBe(choice.up);
+    }
+  );
+
   it('keeps an optional’s bypass at 2r unless verticalSeparation is larger', () => {
     expect(rule('a = optional(terminal("x")) ;', { verticalSeparation: 30 }).definition.up).toBe(
       48
@@ -285,6 +318,26 @@ describe('config and fonts', () => {
     expect(
       layoutRailroad(model, context({ fontFamily: '', fontSize: 0 }, recording)).fonts.text
     ).toEqual({ family: 'monospace', size: 16, weight: 400 });
+  });
+
+  it('takes the theme font under a resolved config (D515: no railroad font default)', () => {
+    // D515: `fontSize`/`fontFamily` have no default, so the theme's win. The schema still says
+    // 14 and 'monospace' (`config.schema.yaml` RailroadDiagramConfig, pending): when T5 (#615)
+    // generates the section defaults, those two must go, or this fails (GAPS #615).
+    const config = resolveConfig(CORE_DEFAULTS, undefined, undefined, [], undefined, {
+      section: 'railroad',
+    });
+    const { model } = parseRailroad('railroad-beta\na = terminal("x") ;\n');
+    const layout = layoutRailroad(model, { config, measurer: v12Measurer, theme: plainTheme });
+    expect(layout.fonts.text).toEqual({ family: 'monospace', size: 16, weight: 400 });
+    const themed = { ...plainTheme, value: () => 'serif', number: () => 15 } as unknown as Theme;
+    expect(
+      layoutRailroad(model, { config, measurer: v12Measurer, theme: themed }).fonts.text
+    ).toEqual({
+      family: 'serif',
+      size: 15,
+      weight: 400,
+    });
   });
 
   it('grows the bounds over a rule name taller than its rule’s top', () => {

@@ -28,11 +28,14 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice (done):** the layout is a tree mirroring v12's nested `g`s (offsets as v12's `translate`, paths in their group's coordinates), so T4 writes v12's transforms and path strings unchanged.
 - **Choice (done):** texts are measured as raw strings (`measurer.width`, height `lineHeight`), not through `layoutLabel`: v12 wrote them with `.text()`, so `<b>` or `*` are literal. Lengths fall back to v12's defaults silently (v12's `sanitizeNumberValue`); fonts too until T5 adds `RAILROAD_CONFIG_INVALID`.
 - **Choice (done):** `bounds` = v12's canvas grown over everything drawn (half stroke included), as packet's D344; a rule name in a large font can rise above its rule (v12 clipped it).
+- Review fixes: a choice branch's side of the main line takes a 1e-6 tolerance (measured sizes left ~1e-14, which moved an on-line branch out by 2r; on-line branches now sit exactly on the line); the choice's height comes from its branches' extents. Invariants added: v12's on-line branch stays straight, a choice is no taller than D514 needs (both worked out from v12's stack), the track never runs through a box (nor along an edge when `arcRadius` > 0), bounds computed independently from the primitives, texts and bold names against an independent measurement.
+- v12's behaviour kept (not fixed): a marker wider than v12's gaps (`markerRadius` > 20 for the name and start, > 10 for the end) covers part of the name or the definition, its lead line runs back under it, and v12's rule height ignores `markerRadius`, so a tall marker reaches into the next rule. The invariants check the gaps only and leave markers out of the rule extents.
 - The ported `railroadRenderer.spec.ts` stays skipped (it reads the DOM): T4 unskips it; its geometry is checked on the layout in `src/layout/layout.spec.ts`.
 
 ## #613 T4 renderer
 
 ## #615 T5 integration
+- **For T5 (from T3 review):** the schema's `RailroadDiagramConfig` still declares `fontSize: 14` and `fontFamily: 'monospace'` defaults. D515 says no default (the theme's font wins); the layout takes any value in the resolved section as the author's. When `configDefaults: true` generates the section defaults, drop those two schema defaults (and the 14 colour defaults, also "no default"), or `layout.spec.ts` "takes the theme font under a resolved config" fails.
 - #637 wiring (moved on the merge of 18b902dcb): add `e2e/diagrams/railroad/hand-drawn.txt` (`unsketched`, D301) once railroad renders (the unsketched spec renders the folder); add `configDefaults: true`, `release:` (and `languageBundle:` from T6) to `packages/diagram-railroad/workspace.yaml` with the manifest; MIGRATION section goes to `v13/docs/migration/railroad.md`; drop `theme.notDrawnYet` in T4.
 - Exploration: 12.2.0 already fixes neo-dark's `secondBkg` (once the literal `calculated`); tabulate from the oracle, not from older notes.
 

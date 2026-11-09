@@ -10,18 +10,54 @@ import { REPO_ROOT } from './index.ts';
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'the origin, empty sizes, a square corner, no style bits',
   '1': 'the last element, the next index',
-  '2': "halving; v12's `2r` lanes and paddings on both sides; both stroke halves",
-  '4': "v12's `4r`: a choice, optional or repetition is its content plus four arc radii",
-  '1e-6': 'the float tolerance of the invariant checks',
+  '1e-6': 'the float tolerance of the choice side test and the invariant checks',
 };
 
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
+/**
+ * Numbers allowed only as a factor: `2 * x` or `x / 2` (v12's `2r` lanes, padding on both sides,
+ * both stroke halves, halving), and `4 * r` (a choice, optional or repetition is its content
+ * plus four arc radii).
+ */
+const FACTORS: Readonly<Record<string, (before: string, after: string) => boolean>> = {
+  '2': (before, after) => /^\s*\*/.test(after) || /\/\s*$/.test(before),
+  '4': (_before, after) => /^\s*\*\s*r\b/.test(after),
+};
+
+/** The source with comments and string text blanked; a template keeps its `${…}` code. */
+function codeOf(source: string): string {
+  return source
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
+    .replace(/`(?:[^`\\]|\\.)*`/g, (t) =>
+      [...t.matchAll(/\$\{([^}]*)\}/g)].map((m) => ` ${m[1]} `).join(' ')
+    )
+    .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, "''");
+}
+
+const NUMBER = /(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi;
+
+/** The numeric literals in TypeScript source, outside comments and string text. */
+function numericLiterals(source: string): string[] {
+  return codeOf(source).match(NUMBER) ?? [];
+}
+
+/** The literals neither allowed anywhere nor used as an allowed factor. */
+function strayLiterals(source: string): string[] {
+  const code = codeOf(source);
+  const out: string[] = [];
+  for (const m of code.matchAll(NUMBER)) {
+    const n = m[0];
+    if (n in ALLOWED) continue;
+    const at = m.index;
+    const factor = FACTORS[n];
+    if (
+      factor?.(code.slice(Math.max(0, at - 8), at), code.slice(at + n.length, at + n.length + 24))
+    ) {
+      continue;
+    }
+    out.push(n);
+  }
+  return out;
 }
 
 const DIR = join(REPO_ROOT, 'packages/diagram-railroad/src/layout');
@@ -41,6 +77,12 @@ describe('railroad layout', () => {
       '12',
       '1e4',
     ]);
+    expect(numericLiterals('const t = `a 3 ${w + 7} b`;')).toEqual(['7']);
+  });
+
+  it('allows 2 and 4 only as factors', () => {
+    expect(strayLiterals('a = 2 * r + h / 2 + 4 * r;')).toEqual([]);
+    expect(strayLiterals('a = w + 2; b = 4 * w; c = `${x + 4}`;')).toEqual(['2', '4', '4']);
   });
 
   it('scans the layout sources', () => {
@@ -50,9 +92,6 @@ describe('railroad layout', () => {
   });
 
   it.each(SOURCES)('%s holds no length literal outside the metrics table', (file) => {
-    const stray = numericLiterals(readFileSync(join(DIR, file), 'utf8')).filter(
-      (n) => !(n in ALLOWED)
-    );
-    expect(stray).toEqual([]);
+    expect(strayLiterals(readFileSync(join(DIR, file), 'utf8'))).toEqual([]);
   });
 });

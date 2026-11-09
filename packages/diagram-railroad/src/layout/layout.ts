@@ -87,6 +87,12 @@ const at = (e: Sized, x: number, y: number): RailroadExpressionLayout => ({ ...e
 
 const height = (e: Sized): number => e.up + e.down;
 
+/** How far a branch's track may be from a choice's main line and count as on it: float noise. */
+const ON_LINE = 1e-6;
+
+/** -1 above the main line, 1 below, 0 on it (`d` is the track's y less the main line's). */
+const onSide = (d: number): number => (Math.abs(d) <= ON_LINE ? 0 : Math.sign(d));
+
 /** v12's `RailroadRenderer` with the drawing taken out: one measured box per expression. */
 class Placer {
   private readonly widths = new Map<string, number>();
@@ -264,8 +270,10 @@ class Placer {
     const track = (i: number): number => tops[i]! + items[i]!.up;
 
     // D514: the nearest branch above and below the main line reaches at least 2r from it.
-    // `side` is v12's test (`elemCenterY === centerY`, `> centerY`), made before any move.
-    const side = items.map((_, i) => Math.sign(track(i) - centre));
+    // `side` is v12's test (`elemCenterY === centerY`, `> centerY`), made before any move, with
+    // a tolerance: measured sizes leave rounding noise, which must not move a branch v12 drew
+    // on the main line out by 2r.
+    const side = items.map((_, i) => onSide(track(i) - centre));
     let nearAbove = Infinity;
     let nearBelow = Infinity;
     items.forEach((_, i) => {
@@ -275,11 +283,14 @@ class Placer {
     });
     const raise = nearAbove < 2 * r ? 2 * r - nearAbove : 0;
     const lower = nearBelow < 2 * r ? 2 * r - nearBelow : 0;
-    items.forEach((_, i) => {
-      if (side[i]! >= 0) tops[i] = tops[i]! + raise + (side[i]! > 0 ? lower : 0);
-    });
     centre += raise;
-    total += raise + lower;
+    let bottom = 0;
+    items.forEach((it, i) => {
+      // A branch on the main line sits exactly on it.
+      if (side[i] === 0) tops[i] = centre - it.up;
+      else if (side[i]! > 0) tops[i] = tops[i]! + raise + lower;
+      bottom = Math.max(bottom, tops[i]! + height(it));
+    });
 
     const children: RailroadExpressionLayout[] = [];
     const paths: TrackPath[] = [];
@@ -318,7 +329,7 @@ class Placer {
       ast: node.astId,
       width,
       up: centre,
-      down: total - centre,
+      down: bottom - centre,
       children,
       paths,
     };

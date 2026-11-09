@@ -14,6 +14,7 @@ import type { Theme } from '@mermaid-js/core/theme';
 import { railroadSectionOf } from '../config.ts';
 import type { RailroadModel } from '../model.ts';
 import { parseRailroad } from '../parser/index.ts';
+import { visitExpressions } from './geometry.ts';
 import type { RailroadLayoutContext } from './layout.ts';
 import type { RailroadExpressionLayout, RailroadRuleLayout, TrackPath } from './types.ts';
 
@@ -67,12 +68,11 @@ export function find(
   rule: RailroadRuleLayout,
   kind: RailroadExpressionLayout['kind']
 ): RailroadExpressionLayout | undefined {
-  const stack = [rule.definition];
-  for (let e = stack.pop(); e; e = stack.pop()) {
-    if (e.kind === kind) return e;
-    stack.push(...[...e.children].reverse());
-  }
-  return undefined;
+  let hit: RailroadExpressionLayout | undefined;
+  visitExpressions(rule, (e) => {
+    if (!hit && e.kind === kind) hit = e;
+  });
+  return hit;
 }
 
 /** A source parsed: its model, diagnostics and the `railroad` config its text sets. */
