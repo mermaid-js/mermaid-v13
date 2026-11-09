@@ -11,6 +11,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Exploration: Langium gives some punctuation a hidden longer alternative (EBNF `(`, `?`, `-`; ABNF `;`): that is why ABNF `; b = …` on one line is a comment. The lexers copy it.
 - **Choice (done):** one shared token-kind module (`src/parser/tokens.ts`) and one shared base lexer (`src/parser/lexer.ts`), with one subclass per notation under `src/parser/<notation>/lexer.ts`; Chevrotain names per notation in `langium-names.ts`.
 - Found: ABNF `;` followed only by blanks is also a comment (`a = "x" ;␠␠` never ends the rule). A `#name;` entity where a PEG `#` comment starts is a lexer error in v12 (its placeholder starts with `ﬂ`). Both gated.
+- Found (review): core's preprocess reads an empty `---\n---` front-matter block, which v12 rejects before any railroad parser runs (case `header-empty-front-matter`, listed as not reached by v12). Core's behaviour, not the lexer's, and not among core's recorded front-matter divergences. **For the maintainer.**
+- Review (T1, not fixed, out of scope): the railroad lexer's shared Langium terminal rules (title, accTitle, accDescr, YAML, directive, source mapping and memos), `tagQuotes()` and `placeholders()` are near-copies of the same code in about nine other Langium/jison lexers (wardley, radar, pie, info, packet, treemap, gitgraph, cynefin; entity placeholders also in gantt, journey, sequence, timeline, venn). A shared parser-kit helper is a cross-package refactor. **For the maintainer.**
 
 ## #610 T2 parser
 - Exploration: all four v12 types share one DB object (each has its own parser object). `max: Infinity` serialises as `null` in a JSON snapshot: model parity normalises it.
