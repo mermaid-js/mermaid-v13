@@ -25,6 +25,6 @@
 
 ## Machine-wide locks (seven sessions share this machine)
 
-- Every full `pnpm check` and every `pnpm e2e`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 pnpm check`. Targeted `vitest run <files>` while iterating need no lock.
+- Every full `pnpm check`, every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
 - A timing test that fails under load is not a regression: rerun it under the lock. Known flakes: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
