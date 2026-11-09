@@ -1,8 +1,8 @@
 /**
  * The `eventmodeling` options, checked (D226: never NaN, one warning per key), as packet's and
  * cynefin's (D366). The config resolver does not check value types or the schema's minimums, so
- * a directive can set `"padding": -5` or `"padding": "wide"`. The layout reads `padding` (#604);
- * T5 (#611) adds the keys the renderer reads (`useMaxWidth`) here.
+ * a directive can set `"padding": -5` or `"padding": "wide"`. The layout reads `padding` (#604),
+ * the renderer `useMaxWidth` (#606); T5 (#611) marks them honoured.
  *
  * `padding` is a number, or a numeric string as its number (v12 passed it on as given), of 0 or
  * more, small enough that the bounds it pads stay finite (`PADDING_HEADROOM`); anything else is
@@ -37,4 +37,12 @@ export function eventModelingConfig(
     path: 'eventmodeling.padding',
   });
   return { padding: fallback };
+}
+
+/** v12's `useMaxWidth` (default true): only a falsy value turns it off (`setupGraphViewbox`). */
+export function eventModelingUseMaxWidth(
+  section: Readonly<Pick<EventModelingDiagramConfig, 'useMaxWidth'>> | undefined
+): boolean {
+  const value: unknown = section?.useMaxWidth;
+  return value === undefined || Boolean(value);
 }

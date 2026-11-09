@@ -47,6 +47,20 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review (orchestrator, `/code-review`), fixed: data text drawn as written (blanks as U+00A0, `&`, `<`, `\` as core character references, so tags, entities and a written `\n` stay text and nothing wraps mid-token; D523); the self loop's ends moved off the ⅓/⅔ cross-lane anchors, with an invariant; `padding` capped by a headroom test (`EVENTMODELING_CONFIG_INVALID`); the config check in `src/config.ts` over the typed section; parts objects (pitfall 10); one lane source.
 - For the maintainer (accepted, D521's decided routing or v12's geometry): same-lane relations cross the boxes between them, cross-lane segments cross a middle lane's boxes, several cross-lane relations into one box share v12's ⅓ anchor; a long namespace lane label at x 30 runs under the first box at x 250, as in v12.
 
+## T4 (#606)
+
+- **For #611 (T5), the "Event modeling SVG structure" section of `v13/docs/migration/eventmodeling.md`** (each a change from v12's SVG):
+  - Root `class="mermaid mermaid-eventmodeling"`, `font-family` from the theme, `viewBox` = the layout's bounds (content plus `padding`), `useMaxWidth` as v12 (`width="100%"`, `max-width`).
+  - No `<defs>`/`<marker id="em-arrowhead-<id>">` and no `marker-end`: each `path.em-relation` is followed by its own inline `<polygon>` head (v12's `0 0, 10 3.5, 0 7`, filled `emArrowhead`), with no `id`. The only ids are `<id>-title`/`<id>-desc`, from `accTitle`/`accDescr` (v12 wrote none).
+  - No `foreignObject`/XHTML `div`/`span` in `g.em-box`: the bold name and the mono data are SVG `<text>`/`<tspan>` through core label layout (name centred, data left-aligned with its indentation); data is text, never HTML (D523).
+  - Lane labels are `<text>` centred on the measured label (`text-anchor="middle"`, first baseline at v12's `y + 30`, left edge at 30) with `font-weight` on the span; v12 wrote `text-anchor` start at x 30.
+  - Text is filled `emTextColor` (new, rule `textColor`; v12 left box and lane text to the page's colour) and sized at the theme's `fontSize`.
+  - `data-id` on every element and `data-ast` on `g.em-box` and on explicit `path.em-relation` (D528); `g.em-swimlane` and inferred relations carry `data-id` only (`lane:<index>`, `relation:<s>-><t>`).
+  - A self relation is a 4-point path (T3); every other path is `M…L…`, as v12, ending at the head's tip.
+  - Theme (D527): light entry in every family, dark entry for `dark`, `neo-dark`, `redux-dark`, `redux-dark-color` (v12 gave the six redux/neo themes the pastels and `#000` heads); `rgb(250,250,250)`/`rgb(240,240,240)`/`white` written as hex. DIFFERENCES rows per D333(b) are T5's.
+- **Choices (for the maintainer):** lane labels take `emTextColor` too (D527 names box text only; one ink for all diagram text, so a dark theme's lane labels are not black on a dark lane as v12's were); the dark entry is the family's `dark` trait, not `rules.dark`, so `darkMode` keeps v12's light literals as v12 did (cynefin's pattern); rects and paths are `w.leaf`, not `w.outline` (no hand-drawn branch in v12; T5 decides with `hand-drawn.txt`).
+- **For #611:** `src/plugin.ts`'s `eventmodeling` has no `configDefaults` yet (no manifest); `eventModelingUseMaxWidth` is in `src/config.ts`; drop `replace: true` in `conformance/src/eventmodeling/render-api.ts`.
+
 ## #637 migration (orchestrator)
 
 - `mermaid-v13` @ 18b902dcb merged: the Langium lexer and harvest rows are `conformance/src/eventmodeling/tables.ts`, the parity suite `suite.ts`, the 37 divergences `divergences/eventmodeling.json`, the grammar target `grammars:` in `packages/diagram-eventmodeling/workspace.yaml`; the `harvest:eventmodeling` script, the core `TEXT_USERS` line and the `NOT_DRAWN_YET` edit are dropped (the source scan finds the font readers). The yaml-tree digest is `__snapshots__/yaml-tree/eventmodeling.txt`.
