@@ -158,6 +158,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -605,6 +608,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -687,6 +693,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -925,6 +934,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn

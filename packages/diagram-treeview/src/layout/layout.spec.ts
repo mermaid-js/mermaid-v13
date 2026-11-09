@@ -176,13 +176,15 @@ describe('layoutTreeView', () => {
   });
 
   it('takes a finite length of 0 or more and falls back to the default otherwise', () => {
-    // v12 added a string: rowIndent '20' + paddingX 5 was '205'. Not a length here.
     const l = layoutTreeView(
       tree('  a'),
-      context(theme, { rowIndent: '20', paddingX: -1, paddingY: Infinity, lineThickness: null })
+      context(theme, { rowIndent: 'x', paddingX: -1, paddingY: Infinity, lineThickness: null })
     );
     expect(l.rows[1]!.box).toEqual({ x: 15, y: 26, width: 18, height: 26 });
     expect(l.lineThickness).toBe(1);
+    // A numeric string is its number (#577); v12 added it as text: '20' + paddingX 5 was '205'.
+    const text = layoutTreeView(tree('  a'), context(theme, { rowIndent: '20' }));
+    expect(text.rows[1]!.box.x).toBe(25);
     const zero = layoutTreeView(tree('  a'), context(theme, { rowIndent: 0, paddingY: 0 }));
     expect(zero.rows[1]!.box).toEqual({ x: 5, y: 16, width: 18, height: 16 });
   });

@@ -27,6 +27,8 @@ import {
   resolveIcon,
 } from '../icons.ts';
 import { CR, LF } from '@mermaid-js/core/parser-kit';
+import { treeViewLayoutConfig, type TreeViewLayoutConfig } from '../config.ts';
+import { treeViewConfigDefaults } from '../generated/config-defaults.ts';
 import type { TreeViewIconOptions } from '../icons.ts';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import type { TreeViewNodeNode } from '../parser/ast.ts';
@@ -142,9 +144,8 @@ function v12Diagram() {
       state.texts.title = parsedModel(`treeView-beta\ntitle ${t}`).title ?? '';
     },
     getDiagramTitle: (): string => state.parsed?.title ?? state.texts.title,
-    getConfig(): never {
-      throw new Error('the options are ported with the config work (T5, #577)');
-    },
+    /** v12's `cleanAndMerge(defaultConfig, getConfig().treeView)`: the section as read (#577). */
+    getConfig: (): TreeViewLayoutConfig => treeViewLayoutConfig(treeViewConfigDefaults),
   };
   /** v12's diagram parser: parse into `db`. */
   const parser = {

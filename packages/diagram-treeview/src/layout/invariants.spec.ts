@@ -118,7 +118,7 @@ describe('treeViewLayoutViolations', () => {
   it('reads the config itself: a layout of other lengths fails it', () => {
     const l = layoutTreeView(model, context(theme, { rowIndent: 3 }));
     expect(treeViewLayoutViolations(model, l, { rowIndent: 3 })).toEqual([]);
-    expect(treeViewLayoutViolations(model, l, { rowIndent: '3' }).join('\n')).toMatch(
+    expect(treeViewLayoutViolations(model, l, { rowIndent: 'x' }).join('\n')).toMatch(
       /row 1 is at x 8, not 15/
     );
   });

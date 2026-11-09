@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detectTreeView, parseTreeView } from '@mermaid-js/diagram-treeview';
+import { parseTreeView } from '@mermaid-js/diagram-treeview';
 import type { TreeViewNodeNode } from '@mermaid-js/diagram-treeview';
-import { treeViewLanguage } from '@mermaid-js/diagram-treeview/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -21,18 +20,11 @@ import { TREEVIEW_V12_TYPES, treeViewV12Snapshot } from './v12.ts';
  *   name to the end of its last descendant (v12's depths decide which nodes are under it), and
  *   a multi-line v12 `accDescr` an `accDescr` fold.
  *
- * The facet is passed as an eager row until treeView's manifest has its `language` entry (#577).
+ * The service loads the facet through the generated registry row (treeView's manifest
+ * `language` entry, #577).
  */
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'treeView',
-      id: 'treeView',
-      detector: (t) => detectTreeView(t),
-      facet: treeViewLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['treeView'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 
 describe('treeView definition, references and folding through the service match v12', () => {

@@ -1,11 +1,12 @@
 /**
  * `@mermaid-js/diagram-treeview` (spec #518): the treeView plugin with its theme table, and the
  * SVG renderer (#575); the parser, detection, the model, the AST and icon resolution (#572), and
- * the row layout (#573). The registry row and the config defaults follow (T5). The lexer gated
+ * the row layout (#573); the registry row and the config defaults (#577). The lexer gated
  * against v12's Langium lexer and v12's box-drawing pass, the layout invariants and the test
  * context, which only tests read, are at `@mermaid-js/diagram-treeview/testing` (#571, #573).
  */
 export { treeView } from './plugin.ts';
+export { TREEVIEW_CONFIG_INVALID } from './config.ts';
 export { ICON_NOT_RENDERED, renderTreeView } from './render/index.ts';
 export type { TreeViewRenderContext } from './render/index.ts';
 export {

@@ -86,10 +86,6 @@ const NO_REMAP =
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
 export const SKIP: Record<string, Record<string, string>> = {
   'boxDrawingPreprocessor.spec.ts': { remapErrorLines: NO_REMAP },
-  'db.spec.ts': {
-    getConfig:
-      'the treeView options (`getConfig`) are ported with the config work in T5 (#577), see GAPS T5',
-  },
   'icons.spec.ts': {
     'treeViewIcons pack':
       'D485: treeView registers no icon pack; it draws its file and folder glyphs itself (T4 #575)',

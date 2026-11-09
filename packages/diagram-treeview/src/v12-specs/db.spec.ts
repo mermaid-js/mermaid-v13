@@ -6,7 +6,6 @@
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './adapter.ts';
-// skipped: getConfig — the treeView options (`getConfig`) are ported with the config work in T5 (#577), see GAPS T5
 
 describe('treeView db', () => {
   beforeEach(() => {
@@ -135,7 +134,7 @@ describe('treeView db', () => {
     });
   });
 
-  describe.skip('getConfig', () => {
+  describe('getConfig', () => {
     it('should return a config object with required fields', () => {
       const config = db.getConfig();
       expect(config).toBeDefined();

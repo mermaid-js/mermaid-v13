@@ -66,13 +66,17 @@ function preorder(model: TreeViewModel): [TreeViewNode, TreeViewNode | undefined
   return out;
 }
 
-/** The lengths the checker expects: a finite number of 0 or more as given, else v12's default. */
+/**
+ * The lengths the checker expects: a finite number of 0 or more as given (a numeric string as
+ * its number, #577), else the default.
+ */
 function lengthsOf(section: Readonly<Record<string, unknown>>) {
   const read = (
     key: 'rowIndent' | 'paddingX' | 'paddingY' | 'lineThickness',
     d: number
   ): number => {
-    const v = section[key];
+    const given = section[key];
+    const v = typeof given === 'string' && given.trim() !== '' ? Number(given) : given;
     return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : d;
   };
   const d = TREEVIEW_DEFAULTS;

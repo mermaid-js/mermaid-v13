@@ -4,12 +4,12 @@ import { assertInert } from '@mermaid-js/core/svg';
 import {
   detectTreeView,
   resolveIcon,
+  treeView,
   type TreeViewIconOptions,
   type TreeViewModel,
 } from '@mermaid-js/diagram-treeview';
 import {
   MermaidError,
-  UnsupportedFormatError,
   type Mermaid,
   type MermaidConfig,
   type Prepared,
@@ -252,12 +252,13 @@ function within(tree: SvgView, node: SvgElement, outer: SvgElement): boolean {
 }
 
 describe('treeView render: formats', () => {
-  // The text output is the `./ascii` entry (#578, `ascii.spec.ts`); the plugin lists `ascii` in
-  // `formats`, and the manifest loads the entry, with the integration (T5, #577).
-  it('has no ascii output from the plugin alone until T5 lists it', async () => {
+  // The text output is the `./ascii` entry (#578, `ascii.spec.ts`), which the manifest loads
+  // (`ascii: ./dist/ascii.js`, #577); the plugin alone lists it but has no hook.
+  it('draws ascii through the registry, and the plugin passed alone lists it', async () => {
     const api = await treeViewApi();
-    expect(() => api.renderSync('treeView-beta\na', { format: 'ascii' })).toThrow(
-      UnsupportedFormatError
-    );
+    expect(api.supportsFormat('treeView', 'ascii')).toBe(true);
+    await api.prepare('treeView-beta\na', { format: 'ascii' });
+    expect(api.renderSync('treeView-beta\na', { format: 'ascii' }).text).toBe('a');
+    expect(treeView.formats).toEqual(['svg', 'ascii']);
   });
 });

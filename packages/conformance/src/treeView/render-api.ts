@@ -1,13 +1,9 @@
-import { treeView } from '@mermaid-js/diagram-treeview';
-import { ascii } from '@mermaid-js/diagram-treeview/ascii';
 import { createMermaid, type ExtensionPlugin, type Mermaid, type MermaidConfig } from 'mermaid';
 
 /**
- * A fresh `mermaid` API object (`deterministic: true`) that renders treeView diagrams before the
- * package is in the generated registry (T5, #577): the plugin takes over the first-party
- * `treeView` row (`replace: true`), so detection, config and every range are as they will be
- * once it is registered. Optionally in `theme` or any other config, and with `extensions` (an
- * icons extension's glyphs). T5 drops the registration, as treemap's #514 did.
+ * A fresh `mermaid` API object (`deterministic: true`) that renders treeView diagrams, SVG and
+ * text, through the generated registry row (#577). Optionally in `theme` or any other config,
+ * and with `extensions` (an icons extension's glyphs).
  */
 export async function treeViewApi(
   config: MermaidConfig = {},
@@ -15,20 +11,6 @@ export async function treeViewApi(
 ): Promise<Mermaid> {
   const m = createMermaid();
   m.initialize({ deterministic: true, ...config });
-  await m.registerExternalDiagrams([treeView], { lazyLoad: false, replace: true });
   if (extensions.length > 0) await m.registerExternalDiagrams([...extensions]);
-  return m;
-}
-
-/**
- * {@link treeViewApi} with the text output (T7, #578): the plugin with `formats` `svg` and
- * `ascii` and the hook of the `./ascii` entry, as the registry will load them from the manifest
- * (T5, #577, which drops this registration).
- */
-export async function treeViewAsciiApi(config: MermaidConfig = {}): Promise<Mermaid> {
-  const m = createMermaid();
-  m.initialize({ deterministic: true, ...config });
-  const plugin = { ...treeView, formats: ['svg', 'ascii'] as const, ascii };
-  await m.registerExternalDiagrams([plugin], { lazyLoad: false, replace: true });
   return m;
 }

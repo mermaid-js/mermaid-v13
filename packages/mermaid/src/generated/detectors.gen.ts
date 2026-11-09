@@ -28,7 +28,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'xychart', pattern: /^\s*xychart(-beta)?/, id: 'xychart', formats: ['svg'] },
   { type: 'block', pattern: /^\s*block(-beta)?/ },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
-  { type: 'treeView', pattern: /^\s*treeView-beta/ },
+  { type: 'treeView', pattern: /^\s*treeView-beta/, id: 'treeView', formats: ['svg', 'ascii'] },
   { type: 'radar', pattern: /^\s*radar-beta/, id: 'radar', formats: ['svg'] },
   { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
   { type: 'treemap', pattern: /^\s*treemap/, id: 'treemap', formats: ['svg'] },

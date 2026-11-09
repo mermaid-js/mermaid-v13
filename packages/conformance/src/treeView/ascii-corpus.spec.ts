@@ -10,7 +10,7 @@ import {
 } from '@mermaid-js/diagram-treeview';
 import { MermaidError, type TextRenderResult } from 'mermaid';
 import { treeViewGateCorpus } from './corpus.ts';
-import { treeViewAsciiApi } from './render-api.ts';
+import { treeViewApi } from './render-api.ts';
 
 // ASCII render properties over the treeView gate corpus (e2e fixtures, v12 spec strings, the
 // hand-written and recovery cases, the line separators, each also with CRLF and comment lines),
@@ -50,9 +50,9 @@ const failed: Record<string, string> = {};
 let rejected = 0;
 
 beforeAll(async () => {
-  const api = await treeViewAsciiApi();
-  const fresh = await treeViewAsciiApi();
-  const icons = await treeViewAsciiApi({ treeView: { showIcons: true } });
+  const api = await treeViewApi();
+  const fresh = await treeViewApi();
+  const icons = await treeViewApi({ treeView: { showIcons: true } });
   for (const item of await treeViewGateCorpus()) {
     if (!detectTreeView(item.source)) continue;
     const parse = parseTreeView(item.source, { preprocessed: preprocess(item.source) });

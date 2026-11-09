@@ -24,8 +24,12 @@ import { lineBox, rowExtents } from './extent.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
 
-/** What the layout reads from the render context. */
-export type TreeViewLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'>;
+/**
+ * What the layout reads from the render context: `warn` is told of a `treeView` option that
+ * falls back (`TREEVIEW_CONFIG_INVALID`).
+ */
+export type TreeViewLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
+  Partial<Pick<RenderContext, 'warn'>>;
 
 /** v12's virtual root row (`db.ts`: name `/`, a directory). */
 const ROOT = { name: '/', directory: true } as const;
@@ -83,7 +87,7 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
     height: text === '' ? 0 : lineHeight,
   });
   return {
-    config: treeViewLayoutConfig(ctx.config.treeView),
+    config: treeViewLayoutConfig(ctx.config.treeView, ctx.warn),
     measure,
     font,
     bold: { ...font, weight: BOLD_WEIGHT },

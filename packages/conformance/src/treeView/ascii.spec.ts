@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { parseTreeView } from '@mermaid-js/diagram-treeview';
 import type { Mermaid, TextRenderResult } from 'mermaid';
-import { treeViewAsciiApi } from './render-api.ts';
+import { treeViewApi } from './render-api.ts';
 
 // TreeView's text output (spec #518 T7, #578, D488, D320, R-ASCII-5, R-ASCII-6, R-ASCII-8)
 // through the public `format: 'ascii'` API. D488: `tree(1)` style from the first real row (no
@@ -11,7 +11,7 @@ import { treeViewAsciiApi } from './render-api.ts';
 
 let api: Mermaid;
 beforeAll(async () => {
-  api = await treeViewAsciiApi();
+  api = await treeViewApi();
 });
 
 const lines = (...rows: string[]): string => rows.join('\n');

@@ -7,6 +7,7 @@ import type {
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { treeViewLayoutConfig } from './config.ts';
+import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import { isBuiltinIcon, resolveIcon } from './icons.ts';
 import { layoutTreeView, type TreeViewLayout } from './layout/index.ts';
 import type { TreeViewModel } from './model.ts';
@@ -38,18 +39,18 @@ function glyphIcons(
  * config, records on the model the icons the glyphs draw (`glyphIcons`), which `icons` lists so
  * an icons extension loads only the packs a tree names (`icons()` gets only the model); `layout`
  * places the rows and connectors and measures every text; `render` writes the whole `<svg>`
- * document. Text output is the lazily loaded `./ascii` entry (#578, D488); `formats` gains
- * `ascii` with the manifest that loads it (T5, #577).
+ * document. Text output is the lazily loaded `./ascii` entry (#578, D488, manifest key `ascii`,
+ * #577), so `formats` lists `ascii` and an SVG render never loads it.
  *
  * `theme` is treeView's own table (`theme/table.ts`, D331, D483). No `labels`: names and
- * descriptions are plain text (D484) and never go through core's label layout. No
- * `configDefaults` yet: the `treeView` section's keys become `honoured` with the integration
- * (T5, #577).
+ * descriptions are plain text (D484) and never go through core's label layout.
+ * `configDefaults` are the `treeView` section's generated defaults (#577).
  */
 export const treeView = {
   id: 'treeView',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: { ...treeViewConfigDefaults },
   detector: (text: string): boolean => detectTreeView(text),
   parse: (text: string, ctx: DiagramParseContext): TreeViewParseResult => {
     const result = parseTreeView(text, { preprocessed: ctx.preprocessed });
