@@ -307,6 +307,11 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'usecase',
+    title: 'Use case diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
 ];
 
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */

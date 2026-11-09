@@ -6,7 +6,7 @@ Integration branch `feature/517_usecase` (from `mermaid-v13` at 521fb76ee). Draf
 | --- | --- | --- | --- |
 | T0 core rows + `slot()` | #561 | — | merged into `mermaid-v13` as #620 (ade398e6b) |
 | T1 lexer parity gate | #562 | — | merged (a37507281; `./testing` 4.9 KB gz, no core change) |
-| T2 grammar, parser, model, AST | #563 | #562 | open |
+| T2 grammar, parser, model, AST | #563 | #562 | done on `feature/563_usecase-parser` (not merged) |
 | T3 layout | #565 | #563 | open |
 | T4 SVG renderer and theme table | #566 | #565, #561 | open |
 | T5 integration | #567 | #561, #566 | open |

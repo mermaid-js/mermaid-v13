@@ -1,10 +1,19 @@
-/** The usecase parser's public surface so far: the lexer gated against v12's Chevrotain lexer (#562). */
+/**
+ * The usecase parser's public surface: the parser, model builder and AST (#563), detection, and
+ * the lexer gated against v12's Chevrotain lexer (#562).
+ */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { lex, lexText } from './lexer.ts';
+export { parseUsecase } from './parser.ts';
+export type { UsecaseParseOptions, UsecaseParseResult } from './parser.ts';
+export { detectUsecase } from './detect.ts';
+export { parseOrderedJson, jsonRows } from './json.ts';
+export type { JsonProblem, OrderedJson } from './json.ts';
+export type * from './ast.ts';
 export type { Lexed, LexText } from './lexer.ts';
 export {
   ANY_CASE,

@@ -1,0 +1,281 @@
+(** Use case diagram syntax (R-PARSE-9, D54): the normative grammar of `usecase-beta` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4). mermaid@12 lexed and parsed use case diagrams with Chevrotain
+(`usecase.tokens.ts`, `usecase.parser.ts`); the token rules below are its rules, in its order,
+with its three modes.
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive, except `include` and
+`extend`.
+
+The first rule that matches wins, except that a keyword gives way to a longer name (`actors`
+is a name, `actor-x` is `actor`, `-` and `x`), and a name to a longer number (`1.5px`). An id
+is ASCII letters, digits and `_` (`1`, `_x`, `TBD` and `endpoint` are ids; `my-node` and
+`Användare` are not: put such text in a label, `A("Användare")`). Every statement ends its
+line; `%%` comments are whole lines.
+
+**Elements.** `actor User`, `actor A, B`, a use case `Login`, `Login(Sign in)` (an ellipse) or
+`Login[Sign in]` (a rectangle), or a name in quotes, whose id is its text with each character
+other than a letter, digit or `_` as `_` (`"Reset password"` is `Reset_password`). A name may be
+followed by `@{ … }` metadata, a `<<stereotype>>` and `:::class` names, in that order. An end of
+a relation that nothing declares is a use case. An item with `:::` names ends a list of actors:
+a `,` after it adds a class name. A statement cannot start with the PlantUML words
+`allowmixing`, `newpage`, `package`, `rectangle` or `skinparam` (any case), nor with a bare name
+and `@{`, which is a metadata statement.
+
+**Arrows.** `-->` (point), `<--` (point at the start), `--` (no marker), `--o`, `o--`, `--x`,
+`x--`; more dashes make a point or plain arrow longer. `-- label -->` (or `-- label --`,
+`--o`, `--x`), `<-- label --`, `o-- label --` and `x-- label --` carry a label; only exactly
+`--` and `<--` take one. `..> : include`, `..> : extend` and `--|>` (generalization) relate
+like ends. `A e1@--> B` names the relation `e1`.
+
+**Metadata** `@{ key: value, … }`: the properties are separated by `,` or line breaks; after the
+last one a `,`, a line break, `,` and a line break, or two line breaks may come before `}` (two
+or more after a `,`, or three, start another property, as in mermaid@12). *)
+
+@lexer
+
+@modes comment acc jsonBody stereotype ;
+
+(** At a line start, a `%%` line that comment removal left (`%%` alone): its blanks are skipped
+and the comment read in its own mode, so only a whole-line `%%` is a comment. *)
+-                         /(?<=^|\n)[\t ]*(?=%%)/          push(comment) ;
+(** At a line start, `accTitle:`, `accDescr:` or `accDescr { … }`: read in their own mode. *)
+-                         /(?<=^|\n)[\t ]*(?=accTitle[\t ]*:|accDescr[\t ]*(?::|\{[^}]*\}))/ push(acc) ;
+-                         /[\t ]+/ ;
+(** A Markdown text: a quote and a backtick, to a backtick and a quote; it may span lines. *)
+MARKDOWN_STRING           /"`[\s\S]*?`"/                   :string ;
+(** A Markdown text never closed: the rest of the text. *)
+UNCLOSED_MARKDOWN_STRING  /"`[\s\S]*/                      :string ;
+(** A line break. *)
+NEWLINE                   /\n/ ;
+(** `json Id@{ … }`: a JSON object drawn as a table of its keys and values, read with
+`JSON.parse` (a repeated key keeps its last value and its first place). *)
+JSON_DECLARATION_START    /json[\t ]+\w+[\t ]*@[\t ]*(?=\{)/ push(jsonBody) :keyword ;
+(** `usecase-beta`: starts a use case diagram. *)
+USECASE                   /usecase-beta(?!\w)/             :keyword ;
+(** `actor User`, `actor A, B`, `actor User --> Login`: actors, or one actor and a relation. *)
+ACTOR                     /actor(?!\w)/                    :keyword ;
+(** `systemBoundary Shop … end`: a frame around the actors and use cases declared in it, one
+per line; `@{ type: package }` draws it as a package. Boundaries do not nest and hold no
+relations. *)
+SYSTEM_BOUNDARY           /systemBoundary(?!\w)/           :keyword ;
+(** `end`: closes a `systemBoundary`. *)
+END                       /end(?!\w)/                      :keyword ;
+(** `direction LR`: the direction of the layout (the last one wins; `LR` by default). *)
+DIRECTION                 /direction(?!\w)/                :keyword ;
+(** `TD`: top to bottom (the same as `TB`). *)
+TD                        /TD(?!\w)/                       :keyword ;
+(** `TB`: top to bottom. *)
+TB                        /TB(?!\w)/                       :keyword ;
+(** `BT`: bottom to top. *)
+BT                        /BT(?!\w)/                       :keyword ;
+(** `LR`: left to right. *)
+LR                        /LR(?!\w)/                       :keyword ;
+(** `RL`: right to left. *)
+RL                        /RL(?!\w)/                       :keyword ;
+(** `note for Login "text"`: a note attached to an actor or use case. *)
+NOTE                      /note(?!\w)/                     :keyword ;
+(** `for`: in `note for`. *)
+FOR                       /for(?!\w)/                      :keyword ;
+(** `json`: a JSON table, `json Id@{ … }`. *)
+JSON                      /json(?!\w)/                     :keyword ;
+(** `classDef hot fill:#f96`: a class of styles (`default` applies to every element). *)
+CLASS_DEF                 /classDef(?!\w)/                 :keyword ;
+(** `class A, B hot`: adds class names to elements or relations with ids. *)
+CLASS                     /class(?!\w)/                    :keyword ;
+(** `style A fill:#f96`: styles one element or relation with an id. *)
+STYLE                     /style(?!\w)/                    :keyword ;
+(** `include` (any case): in `A ..> : include B`, a use case includes another. *)
+INCLUDE                   /[Ii][Nn][Cc][Ll][Uu][Dd][Ee](?!\w)/  :keyword ;
+(** `extend` (any case): in `A ..> : extend B`, a use case extends another. *)
+EXTEND                    /[Ee][Xx][Tt][Ee][Nn][Dd](?!\w)/   :keyword ;
+(** `true`: a metadata value. *)
+TRUE                      /true(?!\w)/                     :constant ;
+(** `false`: a metadata value. *)
+FALSE                     /false(?!\w)/                    :constant ;
+(** A word that starts with a keyword and goes on (`actors`, `notes-x` is `notes`, `-`, `x`):
+an id. *)
+IDENTIFIER                /(?:actor|systemBoundary|end|direction|TD|TB|BT|LR|RL|note|for|json|classDef|class|style|[Ii][Nn][Cc][Ll][Uu][Dd][Ee]|[Ee][Xx][Tt][Ee][Nn][Dd]|true|false)\w+/ :variable ;
+(** `--|>`: generalization, between two actors or two use cases. *)
+GENERALIZATION            /--\|>/                          :operator ;
+(** `..>`: include or extend, `..> : include`. *)
+DEPENDENCY_ARROW          /\.\.>/                          :operator ;
+(** `<<`: a stereotype, `<<Human>>`, on its line. *)
+STEREOTYPE_START          /<</                             push(stereotype) :punctuation ;
+(** `:::`: class names after an element, `A:::hot,big`. *)
+CLASS_SEPARATOR           /:::/                            :punctuation ;
+(** `-->` (and more dashes): an association with a point at the end. *)
+FORWARD_SOLID             /--+>/                           :operator ;
+(** `<--`: an association with a point at the start; exactly `<--` may take a label. *)
+BACKWARD_LABEL_SOLID      /<--(?!-)/                       :operator ;
+(** `<---` and more dashes: a longer association with a point at the start. *)
+BACKWARD_SOLID            /<--+/                           :operator ;
+(** `--o`: an association with a circle at the end. *)
+FORWARD_CIRCLE            /--o/                            :operator ;
+(** `o--`: an association with a circle at the start; it may take a label. *)
+BACKWARD_CIRCLE           /o--/                            :operator ;
+(** `--x`: an association with a cross at the end. *)
+FORWARD_CROSS             /--x/                            :operator ;
+(** `x--`: an association with a cross at the start; it may take a label. *)
+BACKWARD_CROSS            /x--/                            :operator ;
+(** `--`: an association without markers; exactly `--` may start a label. *)
+LABEL_SOLID               /--(?!-)/                        :operator ;
+(** `---` and more dashes: a longer association without markers. *)
+MARKERLESS_SOLID          /--+/                            :operator ;
+(** `@{`: metadata, `A@{ type: hollow }`. *)
+METADATA_START            /@\{/                            :punctuation ;
+(** `@`: after a relation's id, `A e1@--> B`. *)
+AT                        /@/                              :punctuation ;
+LBRACE                    /\{/                             :punctuation ;
+RBRACE                    /\}/                             :punctuation ;
+LBRACKET                  /\[/                             :punctuation ;
+RBRACKET                  /\]/                             :punctuation ;
+LPAREN                    /\(/                             :punctuation ;
+RPAREN                    /\)/                             :punctuation ;
+COMMA                     /,/                              :punctuation ;
+COLON                     /:/                              :punctuation ;
+(** A colour such as `#f96`. *)
+HASH_COLOR                /#[0-9A-Fa-f]+/                  :constant ;
+(** A text in quotes, `"…"` or `'…'`, on one line, without escapes. *)
+PLAIN_STRING              /"[^\n"]*"|'[^\n']*'/            :string ;
+(** A word and one or more `-` words, such as `stroke-width`: a CSS name, not an id. *)
+CSS_IDENTIFIER            /[A-Z_a-z]\w*(?:-\w+)+/          :variable ;
+(** A decimal before a name could take its digits: `1.5px`. *)
+NUMBER                    /\d+\.\d+[A-Za-z]*/              :number ;
+(** A PlantUML word, which no statement starts with: an id elsewhere. *)
+PLANTUML                  /(?:[Aa][Ll][Ll][Oo][Ww][Mm][Ii][Xx][Ii][Nn][Gg]|[Nn][Ee][Ww][Pp][Aa][Gg][Ee]|[Pp][Aa][Cc][Kk][Aa][Gg][Ee]|[Rr][Ee][Cc][Tt][Aa][Nn][Gg][Ll][Ee]|[Ss][Kk][Ii][Nn][Pp][Aa][Rr][Aa][Mm])(?!\w)/ :variable ;
+(** An id: ASCII letters, digits and `_`. *)
+IDENTIFIER                /\w+/                            :variable ;
+(** A number such as `.5` or `.5em`. *)
+NUMBER                    /\.\d+[A-Za-z]*/                 :number ;
+(** `\,`: a comma inside a style value. *)
+CSS_ESCAPED_COMMA         /\\,/                            :punctuation ;
+DASH                      /-/                              :punctuation ;
+DOT                       /\./                             :punctuation ;
+PERCENT                   /%/                              :punctuation ;
+CSS_PUNCTUATION           /[!#$&*+\/=?^_|~]/               :punctuation ;
+LABEL_PUNCTUATION         /[;<>\\`]/                       :punctuation ;
+(** Text outside printable ASCII, such as `日本語`: only in labels. *)
+LABEL_SYMBOL              /[^\t\n\r -~]+/ ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+(** A whole-line `%%` comment. *)
+<comment> COMMENT         /%%[^\n]*/                       pop :comment ;
+(** `accDescr { … }`: the accessible description over lines, to the first `}`. *)
+<acc> ACC_DESCR_BLOCK     /accDescr[\t ]*\{[^}]*\}/        pop :keyword ;
+(** `accTitle: …`: the accessible title, the rest of the line. *)
+<acc> ACC_TITLE_LINE      /accTitle[\t ]*:[^\n]*/          pop :keyword ;
+(** `accDescr: …`: the accessible description, the rest of the line. *)
+<acc> ACC_DESCR_LINE      /accDescr[\t ]*:[^\n]*/          pop :keyword ;
+
+(** The object: braces and strings balanced (five levels deep here; the parser has no limit). *)
+<jsonBody> JSON_OBJECT_LITERAL /\{(?:[^{}"]|"(?:[^"\\]|\\[\s\S])*"|\{(?:[^{}"]|"(?:[^"\\]|\\[\s\S])*"|\{(?:[^{}"]|"(?:[^"\\]|\\[\s\S])*"|\{(?:[^{}"]|"(?:[^"\\]|\\[\s\S])*"|\{(?:[^{}"]|"(?:[^"\\]|\\[\s\S])*")*\})*\})*\})*\})*\}/ pop :string ;
+(** An object never closed: the rest of the text. *)
+<jsonBody> UNCLOSED_JSON_OBJECT_LITERAL /\{[\s\S]*/        pop :string ;
+
+(** `>>`: closes a stereotype. *)
+<stereotype> STEREOTYPE_END />>/                             pop :punctuation ;
+(** The stereotype's text, up to the first `>>` on its line; not blank. *)
+<stereotype> STEREOTYPE_TEXT /(?=(?:(?!>>)[^\n])*?(?!>>)\S)(?:(?!>>)[^\n])+(?=>>)/ :string ;
+(** The rest of the line, when no `>>` closes the stereotype on it (or its text is blank). *)
+<stereotype> UNCLOSED_STEREOTYPE_TEXT /[^\n]+/              pop :string ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `usecase-beta` on its own line, then statements, each on a line of its own,
+blank lines and whole-line `%%` comments. *)
+usecase = Header NEWLINE { line } EOF ;
+Header @Header = USECASE ;
+line = NEWLINE | COMMENT NEWLINE | statement NEWLINE ;
+statement = AccTitle | AccDescr | Direction | actorStatement | Boundary | Note | Json
+          | ClassDef | Class | Style | Metadata | entityStatement ;
+
+(** `accTitle: …`, the accessible title (the last one wins). *)
+AccTitle @AccTitle = ACC_TITLE_LINE ;
+(** `accDescr: …` or `accDescr { … }`, the accessible description (the last one wins). *)
+AccDescr @AccDescr = ACC_DESCR_LINE | ACC_DESCR_BLOCK ;
+Direction @Direction = DIRECTION ( TD | TB | BT | LR | RL ) ;
+
+id = IDENTIFIER | PLANTUML ;
+keyword = USECASE | ACTOR | SYSTEM_BOUNDARY | END | DIRECTION | TD | TB | BT | LR | RL | NOTE
+        | FOR | JSON | CLASS_DEF | CLASS | STYLE | INCLUDE | EXTEND | TRUE | FALSE ;
+word = keyword | id ;
+plain = LABEL_SOLID | MARKERLESS_SOLID ;
+labelPart = word | NUMBER | AT | COMMA | COLON | HASH_COLOR | CSS_IDENTIFIER | CSS_ESCAPED_COMMA
+          | DASH | DOT | PERCENT | CSS_PUNCTUATION | LABEL_PUNCTUATION | LABEL_SYMBOL ;
+(** A label: a text in quotes, a Markdown text, or words and punctuation up to the `)`, `]`,
+arrow or line end after it. *)
+label = PLAIN_STRING | MARKDOWN_STRING | labelPart { labelPart } ;
+
+(** `actor A`, `actor A, B`, `actor A --> B`. *)
+actorStatement = ACTOR actorItems | ActorRelation ;
+actorItems = { BareActor COMMA } Actor ;
+ActorRelation @Relation = ACTOR Actor relationTail ;
+Actor @Element = actorName [ metadata ] [ stereotype ] [ classSuffix ] ;
+BareActor @Element = actorName [ metadata ] [ stereotype ] ;
+actorName = id [ LPAREN label RPAREN ] | PLAIN_STRING | MARKDOWN_STRING ;
+
+(** A use case, or a relation from an element. At a statement's start a bare name takes no
+`@{ … }` (that is a metadata statement) and is not a PlantUML word. *)
+entityStatement = Declaration | Relation ;
+Declaration @Element = entityHead ;
+Relation @Relation = Source relationTail ;
+Source @Element = entityHead ;
+entityHead = IDENTIFIER ( LPAREN label RPAREN | LBRACKET label RBRACKET ) [ metadata ] [ stereotype ]
+             [ classSuffix ]
+           | ( IDENTIFIER | PLAIN_STRING | MARKDOWN_STRING ) [ stereotype ] [ classSuffix ] ;
+Target @Element = entityName ;
+entityName = ( id [ LPAREN label RPAREN | LBRACKET label RBRACKET ] | PLAIN_STRING | MARKDOWN_STRING )
+             [ metadata ] [ stereotype ] [ classSuffix ] ;
+relationTail = [ id AT ] arrow Target ;
+arrow = DEPENDENCY_ARROW COLON ( INCLUDE | EXTEND ) | GENERALIZATION | FORWARD_SOLID
+      | BACKWARD_LABEL_SOLID | BACKWARD_SOLID | plain | FORWARD_CIRCLE | BACKWARD_CIRCLE
+      | FORWARD_CROSS | BACKWARD_CROSS
+      | LABEL_SOLID label ( FORWARD_SOLID | plain | FORWARD_CIRCLE | FORWARD_CROSS )
+      | ( BACKWARD_LABEL_SOLID | BACKWARD_CIRCLE | BACKWARD_CROSS ) label plain ;
+
+(** `@{ key: value, … }`: properties separated by `,` or line breaks. *)
+metadata = METADATA_START { NEWLINE }
+           [ property { separator property } [ COMMA [ NEWLINE ] | NEWLINE [ NEWLINE ] ] ] RBRACE ;
+separator = COMMA { NEWLINE } | NEWLINE { NEWLINE } [ COMMA ] { NEWLINE } ;
+property = ( id | PLAIN_STRING ) COLON ( id | PLAIN_STRING | TRUE | FALSE ) ;
+stereotype = STEREOTYPE_START STEREOTYPE_TEXT STEREOTYPE_END ;
+classSuffix = CLASS_SEPARATOR id { COMMA id } ;
+
+(** `systemBoundary Id(title)` or `systemBoundary "title"`, then `@{ … }` and `:::` classes,
+then one actor list or use case per line, and `end`. *)
+Boundary @Boundary = SYSTEM_BOUNDARY boundaryName [ metadata ] [ classSuffix ] NEWLINE
+                     { boundaryLine } END ;
+boundaryName = id [ LPAREN label RPAREN | LBRACKET label RBRACKET ] | PLAIN_STRING | MARKDOWN_STRING ;
+boundaryLine = NEWLINE | COMMENT NEWLINE | ACTOR actorItems NEWLINE | Member NEWLINE ;
+Member @Element = entityName ;
+
+(** `Id@{ … }` (or a quoted name): metadata for an element or relation declared anywhere. *)
+Metadata @Metadata = ( id | PLAIN_STRING | MARKDOWN_STRING ) metadata ;
+Note @Note = NOTE FOR id label ;
+Json @Json = JSON_DECLARATION_START JSON_OBJECT_LITERAL [ classSuffix ] ;
+ClassDef @ClassDef = CLASS_DEF id { COMMA id } styles ;
+Class @Class = CLASS id { COMMA id } id { COMMA id } ;
+Style @Style = STYLE id styles ;
+(** `fill:#f96, stroke-width:2px`: CSS declarations separated by `,` (`\,` inside a value). *)
+styles = styleValue { COMMA styleValue } ;
+styleValue = ( word | CSS_IDENTIFIER | plain word ) COLON styleComponent { styleComponent } ;
+styleComponent = word | PLAIN_STRING | NUMBER | HASH_COLOR | CSS_IDENTIFIER | CSS_ESCAPED_COMMA
+               | DASH | DOT | PERCENT | CSS_PUNCTUATION | COLON | LPAREN | RPAREN | LBRACKET
+               | RBRACKET | LBRACE | RBRACE | AT | plain ;
