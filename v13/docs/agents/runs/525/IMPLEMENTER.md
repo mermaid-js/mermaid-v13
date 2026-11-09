@@ -9,11 +9,12 @@
 1. Confirm your base: `git merge-base --is-ancestor feature/525_architecture HEAD` (T0, T0b, T0c: `origin/mermaid-v13`). If that fails, reset onto it.
 2. Test-first. Test through `createMermaid().render()` / `renderSync()`, except where the ticket names another seam (T0: `compass(graph)`; T3: the built `LayoutGraph`).
 3. Stay in the ticket's scope. Touch shared files minimally and additively (other ports edit the same registry, tables and lists). Where the spec and D-ids don't decide, pick the option most consistent with them and write it in `GAPS.md` under your ticket.
-4. Test sources go in `.mmd` fixtures under `e2e/diagrams/architecture/`; rejected or lexer-only inputs in `packages/conformance/corpus/architecture-cases.json`. Never hand-written TS corpus arrays. Files under `generated/` are gitignored: `git add -f`.
-5. Machine is shared: run `pnpm check` (and `pnpm e2e` where asked) as `VITEST_MAX_WORKERS=4 lockf /Users/ashishj/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`. Known flakes (don't edit): R-LANG-4 `language-budget*.spec.ts`, `explorer.spec.ts` "/node-render over 1 MiB is a 413", `preprocess/stress.spec.ts` timeouts under load. Stress specs use pie's ratio pattern (`tLarge / Math.max(tSmall, 2)`).
-6. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Never `--no-verify`. Don't push, open PRs, or comment on or close issues.
-7. Before reporting, merge the base branch again and re-run `pnpm check`.
-8. Write `tickets/<N>.md` (≤ 40 lines): exports, how to use them, test helpers, gz size (and gated core size from `measureCoreSize` in `packages/bench/src/core-size.spec.ts` if core changed), unmet criteria.
-9. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
+4. Shared lists: follow `v13/docs/agents/port-diagram/shared-files.md`. A port only adds files (its `workspace.yaml`, `packages/conformance/src/architecture/{suite,tables}.ts`, `packages/conformance/divergences/architecture.json`, …) and never edits a shared list or a generated file; after changing any of those inputs, run `pnpm regen` and commit what it writes. The package stays pre-manifest (no `mermaid` key) until T5.
+5. Test sources go in `.mmd` fixtures under `e2e/diagrams/architecture/`; rejected or lexer-only inputs in `packages/conformance/corpus/architecture-cases.json`. Never hand-written TS corpus arrays. Files under `generated/` are gitignored: `git add -f`.
+6. Machine is shared: run `pnpm check` (and `pnpm e2e` where asked) as `VITEST_MAX_WORKERS=4 lockf /Users/ashishj/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`. Known flakes (don't edit): R-LANG-4 `language-budget*.spec.ts`, `explorer.spec.ts` "/node-render over 1 MiB is a 413", `preprocess/stress.spec.ts` timeouts under load. Stress specs use pie's ratio pattern (`tLarge / Math.max(tSmall, 2)`).
+7. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Never `--no-verify`. Don't push, open PRs, or comment on or close issues.
+8. Before reporting, merge the base branch again and re-run `pnpm check`.
+9. Write `tickets/<N>.md` (≤ 40 lines): exports, how to use them, test helpers, gz size (and gated core size from `measureCoreSize` in `packages/bench/src/core-size.spec.ts` if core changed), unmet criteria.
+10. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
 
 T4 notes (from base moves): if the renderer reads a core theme row (flowchart shape-geometry rows #589, `actorBkg`/`actorBorder` #620), add `architecture` to that row's `usedBy` in core rather than redeclaring it (D337). For a palette-or-derived colour use `slot(<palette>, <n>, <fallback>)` (D474; CONTRACT.md "DSL additions"). `contrastCss` lives in `core/src/theme/contrast-css.ts`.

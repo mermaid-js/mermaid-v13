@@ -71,3 +71,12 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 - No existing spec asserts `UNSUPPORTED_DIAGRAM` for architecture; add `packages/mermaid/src/architecture.spec.ts` as venn did.
 
 ## T6 #619
+
+## Integration
+
+Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` #638 into `feature/525_architecture`:
+
+- Moved: `LANGIUM_LEXERS` and `HARVESTS` rows → `packages/conformance/src/architecture/tables.ts`; `PARITY_SUITES` entry → `src/architecture/suite.ts`; the 12 `divergences.json` entries → `divergences/architecture.json` (`parity.spec.ts` reads `DIVERGENCES_DIR`); `GRAMMARS` entry → `grammars:` and the theme spec's not-drawn-yet line → `theme: { notDrawnYet: true }` in `packages/diagram-architecture/workspace.yaml`. Dropped: the `harvest:architecture` script (run `harvest:v12 architecture`) and the eslint v12-specs line (a glob now).
+- **#638 is not merged yet**; this branch carries it. Re-merge `mermaid-v13` once it lands.
+- **Waiting on #638**: `tools/workspace/sync.spec.ts` ("take a new diagram package from its own folder alone") copied only `diagramPackages()` into its scratch root, so it dropped architecture, a real pre-manifest package, from conformance's devDependencies and failed. 8e7d0f7b6 copies the fix proposed on #638 (the one railroad carries in #633: copy `workspaceDiagrams()`). Drop that commit on re-merge once #638 lands with it.
+- **Deferred to T5 #618**: `configDefaults: true`, `release:` and `languageBundle:` in `workspace.yaml` all need the manifest (and the `./language` facet); add them with it. Remove `theme.notDrawnYet` at T4 #614 once the renderer reads a theme variable.
