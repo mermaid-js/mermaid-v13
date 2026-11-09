@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-quadrant",
-  "version": "13.0.0-alpha.1",
+  "version": "13.0.0-alpha.2",
   "description": "Quadrant chart plugin for Mermaid: parser, model, layout and renderer.",
   "type": "module",
   "license": "MIT",

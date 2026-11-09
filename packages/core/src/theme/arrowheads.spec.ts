@@ -3,16 +3,25 @@ import { createTheme, loadTheme, THEME_NAMES, type ThemeName } from './index.ts'
 
 // v12 12.2.0 markers.js, written out by hand (D152). Redux themes carry `look: neo` geometry
 // (`*-margin` markers); classic themes carry classic geometry.
-// Flowchart's circle and cross arrowheads: diagram-flowchart/src/theme/table.spec.ts (#414 T4).
 const NEO = {
   arrowheadGap: 4,
   arrowheadLength: 10.5,
   arrowheadWidth: 12.78,
+  circleArrowheadSize: 14,
+  circleArrowheadGap: 3.15,
+  crossArrowheadSize: 10.4,
+  crossArrowheadGap: 2.96,
+  crossArrowheadStrokeWidth: 2,
 };
 const CLASSIC = {
   arrowheadGap: 0,
   arrowheadLength: 8,
   arrowheadWidth: 8,
+  circleArrowheadSize: 11,
+  circleArrowheadGap: 1.1,
+  crossArrowheadSize: 9,
+  crossArrowheadGap: 2,
+  crossArrowheadStrokeWidth: 2,
 };
 const EXPECTED: Record<ThemeName, typeof NEO> = {
   redux: NEO,
@@ -43,9 +52,9 @@ describe('arrowhead geometry per theme (D152)', () => {
   });
 
   it('lets themeVariables override them, as numbers or px lengths', async () => {
-    const r = await resolve('redux-color', { arrowheadGap: 0, arrowheadLength: '20px' });
+    const r = await resolve('redux-color', { arrowheadGap: 0, crossArrowheadSize: '20px' });
     expect(r.arrowheadGap).toBe(0);
-    expect(r.arrowheadLength).toBe(20);
+    expect(r.crossArrowheadSize).toBe(20);
     expect((await resolve('default', { arrowheadGap: 4 })).arrowheadGap).toBe(4);
   });
 

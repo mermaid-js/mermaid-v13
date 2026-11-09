@@ -265,6 +265,90 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(t.value('a')).toBe('#000002');
   });
 
+  describe('slot(<palette>, <n>, <fallback>) (D474)', () => {
+    const rules = {
+      a: 'slot(borderColorArray, 5, actorBorder)',
+      b: 'slot(bkgColorArray, 1, mainBkg)',
+    };
+
+    it('reads the slot as a literal colour when the palette is non-empty', () => {
+      const t = createTheme(spec['redux-color'], { diagram: table(rules) });
+      t.color('a');
+      t.color('b');
+      expect(t.rootStyle()).toEqual({
+        '--_x0': `var(--mermaid-a,${t.palette('borderColorArray')[5]})`,
+        '--_x1': `var(--mermaid-b,${t.palette('bkgColorArray')[1]})`,
+      });
+    });
+
+    it('reads the fallback, as a rule, when the palette is empty', () => {
+      for (const name of ['default', 'base', 'redux', 'neo-dark'] as const) {
+        const t = createTheme(spec[name], { diagram: table(rules) });
+        expect(t.palette('borderColorArray'), name).toEqual([]);
+        t.color('a');
+        t.color('b');
+        expect(t.rootStyle()['--_x0'], name).toBe('var(--mermaid-a,var(--_ar))');
+        expect(t.rootStyle()['--_x1'], name).toBe('var(--mermaid-b,var(--_mb))');
+        const plain = createTheme(spec[name], { cssVariables: false, diagram: table(rules) });
+        expect(plain.value('a'), name).toBe(plain.value('actorBorder'));
+        expect(plain.value('b'), name).toBe(plain.value('mainBkg'));
+      }
+    });
+
+    it('checks each palette on its own: an empty bkgColorArray reads the fallback', () => {
+      const t = createTheme(spec['redux-dark-color'], {
+        cssVariables: false,
+        diagram: table(rules),
+      });
+      expect(t.palette('bkgColorArray')).toEqual([]);
+      expect(t.value('a')).toBe(t.palette('borderColorArray')[5]);
+      expect(t.value('b')).toBe(t.value('mainBkg'));
+    });
+
+    it("follows the author's palette, which turns the slot on in any theme", () => {
+      const t = createTheme(spec.default, {
+        cssVariables: false,
+        diagram: table(rules),
+        themeVariables: { bkgColorArray: '#000001, #000002' },
+      });
+      expect(t.value('b')).toBe('#000002');
+      expect(t.value('a')).toBe(t.value('actorBorder'));
+    });
+
+    it('reads past the end of a non-empty palette as currentColor', () => {
+      const t = createTheme(spec['redux-color'], {
+        cssVariables: false,
+        diagram: table({ a: 'slot(bkgColorArray, 99, mainBkg)' }),
+      });
+      expect(t.value('a')).toBe('currentColor');
+    });
+
+    it('takes a palette name, a slot number and a fallback', () => {
+      expect(parseRule('slot(borderColorArray, 5, lighten(actorBorder, 10%))')).toEqual({
+        k: 'call',
+        fn: 'slot',
+        args: [
+          { k: 'ref', name: 'borderColorArray' },
+          { k: 'num', value: 5 },
+          {
+            k: 'call',
+            fn: 'lighten',
+            args: [
+              { k: 'ref', name: 'actorBorder' },
+              { k: 'pct', value: 10 },
+            ],
+          },
+        ],
+      });
+      expect(() => parseRule('slot(borderColorArray, 5)')).toThrow(/slot takes 3 arguments/);
+      const bad = (r: string) => () =>
+        createTheme(spec['redux-color'], { diagram: table({ a: r }) }).value('a');
+      expect(bad('slot(mainBkg, 1, lineColor)')).toThrow(/slot needs a palette/);
+      expect(bad('slot(borderColorArray, -1, lineColor)')).toThrow(/slot needs a slot number/);
+      expect(bad('slot(borderColorArray, 1.5, lineColor)')).toThrow(/slot needs a slot number/);
+    });
+  });
+
   it('reads past the end of a palette as currentColor', () => {
     const t = createTheme(spec['redux-dark-color'], {
       cssVariables: false,
