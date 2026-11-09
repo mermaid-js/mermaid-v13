@@ -4,6 +4,7 @@ import type { Theme } from '@mermaid-js/core/theme';
 import { parseSankey } from '../parser/index.ts';
 import { sankeyTestContext, sankeyTestTheme } from '../test-context.ts';
 import { layoutSankey, sankeyLayoutViolations, type SankeyLayout } from './index.ts';
+import { TABLEAU10 } from './metrics.ts';
 
 let theme: Theme;
 beforeAll(async () => {
@@ -139,27 +140,29 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
   it('gives nodes not in nodeColors the next Tableau10 slot, mod 10', () => {
     const rows = Array.from({ length: 11 }, (_, i) => `s,t${i},1`).join('\n');
     const l = lay(`sankey\n${rows}`, { nodeColors: { t0: '#123456', constructor: '#fff' } });
-    expect(l.nodes.map((n) => n.slot)).toEqual([0, undefined, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
+    expect(l.nodes.map((n) => n.fill)).toEqual([
+      ...[0, undefined, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((slot) =>
+        slot === undefined ? '#123456' : TABLEAU10[slot]
+      ),
+    ]);
     expect(node(l, 't0').fill).toBe('#123456');
     expect(node(l, 's').fill).toBe('#4e79a7');
     expect(node(l, 't10').fill).toBe('#4e79a7');
     expect(l.links[0]).toMatchObject({ sourceFill: '#4e79a7', targetFill: '#123456' });
     // Only own entries count: `__proto__` and `constructor` are names like any other.
     const p = lay('sankey\n__proto__,constructor,1', { nodeColors: {} });
-    expect(p.nodes.map((n) => n.slot)).toEqual([0, 1]);
+    expect(p.nodes.map((n) => n.fill)).toEqual([TABLEAU10[0], TABLEAU10[1]]);
   });
 
   it('takes a node out of the slots only for a nodeColors entry that is a colour', () => {
     // v12 never asked the scale for a's slot, so b took slot 0; null fell through to the scale.
     const l = lay('sankey\na,b,1\nb,c,1', { nodeColors: { a: ' red ', c: null } });
-    expect(l.nodes.map((n) => n.slot)).toEqual([undefined, 0, 1]);
     expect(l.nodes.map((n) => n.fill)).toEqual(['red', '#4e79a7', '#f28e2c']);
     // Dropped (spec #427: the default used): a number, an unsafe value, an object. v12 drew
     // these black and asked the scale for no slot.
     const bad = lay('sankey\na,b,1\nb,c,1', {
       nodeColors: { a: 5, b: 'red;x:url(y)', c: { r: 1 } },
     });
-    expect(bad.nodes.map((n) => n.slot)).toEqual([0, 1, 2]);
     expect(bad.nodes.map((n) => n.fill)).toEqual(['#4e79a7', '#f28e2c', '#e15759']);
     expect(bad.links.map((k) => [k.sourceFill, k.targetFill])).toEqual([
       ['#4e79a7', '#f28e2c'],

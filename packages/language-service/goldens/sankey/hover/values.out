@@ -5,7 +5,7 @@
   3:5-3:8 "1;2"
   | **value** 1
   |
-  | Only the number at the start is read: `;2` is ignored.
+  | Only the number at the start of the value "1;2" is read (1): the text ";2" after it is ignored.
 @ 4:6  a,d,a|bc
   4:5-4:8 "abc"
   | **value** NaN

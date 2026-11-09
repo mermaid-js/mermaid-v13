@@ -9,7 +9,7 @@ import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyModel } from '../model.ts';
 import type { SankeyDocument, SankeyField } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
-import { invalidity, numberEnd } from '../parser/values.ts';
+import { invalidity, readValue, trailingTextMessage } from '../parser/values.ts';
 import { code } from './tables.ts';
 
 const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
@@ -40,16 +40,12 @@ function nodeHover(name: string, model: SankeyModel): string {
 }
 
 function valueHover(field: SankeyField): string {
-  const value = parseFloat(field.text);
-  const head = `**value** ${String(value)}`;
-  const why = invalidity(value);
+  const read = readValue(field.text);
+  const head = `**value** ${String(read.value)}`;
+  const why = invalidity(read.value);
   if (why !== undefined) return `${head}\n\n${code(field.text)} ${why}, so the link counts as 0.`;
-  const end = numberEnd(field.text);
-  if (end < field.text.length) {
-    const rest = field.text.slice(end).trimStart();
-    return `${head}\n\nOnly the number at the start is read: ${code(rest)} is ignored.`;
-  }
-  return head;
+  // The parse's SANKEY_VALUE_TRAILING_TEXT message.
+  return read.rest === undefined ? head : `${head}\n\n${trailingTextMessage(field.text, read)}`;
 }
 
 export function sankeyHover(at: HoverTarget, doc: DocumentView<SankeyDocument>): Hover | undefined {

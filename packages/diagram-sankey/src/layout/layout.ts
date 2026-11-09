@@ -111,7 +111,6 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
     const source = model.nodes[i]!;
     // v12's `nodeColors[id] ?? scale(id)`: a node with a colour asks the scale for no slot.
     const named = config.nodeColors.get(source.id);
-    const slot = named ? undefined : slots++ % TABLEAU10.length;
     // v12's getLabelPosition (`:189-203`).
     const left =
       config.labelStyle === 'outlined' ? node.layer < central : !(node.x0 < config.width / 2);
@@ -136,8 +135,7 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
       y1: node.y1,
       value: node.value / graph.scale,
       layer: node.layer,
-      ...(slot === undefined ? {} : { slot }),
-      fill: named ?? (TABLEAU10[slot!] as SafeColor),
+      fill: named ?? (TABLEAU10[slots++ % TABLEAU10.length] as SafeColor),
       label,
     };
   });
@@ -201,6 +199,8 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
     nodes,
     links: out,
     labelStyle: config.labelStyle,
+    linkColor: config.linkColor,
+    useMaxWidth: config.useMaxWidth,
     font,
     bounds: union(boxes),
   };

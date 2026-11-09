@@ -22,7 +22,6 @@ import {
 import type { SankeyLabel, SankeyLayout, SankeyLinkLayout } from '../layout/index.ts';
 import { SANKEY_METRICS } from '../layout/metrics.ts';
 import type { SankeyModel } from '../model.ts';
-import { sankeyRenderOptions, type SankeyRenderOptions } from './options.ts';
 import { paints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
@@ -32,7 +31,6 @@ interface Scene {
   readonly w: SvgWriter;
   readonly layout: SankeyLayout;
   readonly paint: Paints;
-  readonly options: SankeyRenderOptions;
 }
 
 /** v12's inline `style="mix-blend-mode: multiply"` on every `g.link` (D392). */
@@ -45,9 +43,8 @@ export function renderSankey(
   ctx: SankeyRenderContext,
   w: SvgWriter
 ): void {
-  const options = sankeyRenderOptions(ctx.config.sankey);
   // Every theme variable is read before the root, so its style declares them.
-  const scene: Scene = { w, layout, paint: paints(ctx.theme, layout.labelStyle), options };
+  const scene: Scene = { w, layout, paint: paints(ctx.theme, layout.labelStyle) };
   openRoot(model, scene, ctx);
   drawNodes(scene);
   drawLabels(scene);
@@ -60,17 +57,13 @@ export function renderSankey(
  * the accessible name (D396), as a `<title>`; it is never drawn. The font family is the
  * theme's: the layout measured the labels in it.
  */
-function openRoot(
-  model: SankeyModel,
-  { w, layout, options }: Scene,
-  ctx: SankeyRenderContext
-): void {
+function openRoot(model: SankeyModel, { w, layout }: Scene, ctx: SankeyRenderContext): void {
   const { theme } = ctx;
   const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = options.useMaxWidth;
+  const maxWidth = layout.useMaxWidth;
   const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
@@ -171,10 +164,10 @@ function drawLinks(scene: Scene): void {
  * user-space gradient from the source's colour at `source.x1` to the target's at `target.x0`
  * (D391). The colours are the layout's, so every link has one.
  */
-function linkStroke({ w, options }: Scene, link: SankeyLinkLayout): OutlinePaint {
+function linkStroke({ w, layout }: Scene, link: SankeyLinkLayout): OutlinePaint {
   const from = link.sourceFill;
   const to = link.targetFill;
-  switch (options.linkColor) {
+  switch (layout.linkColor) {
     case 'source':
       return from;
     case 'target':
@@ -182,6 +175,6 @@ function linkStroke({ w, options }: Scene, link: SankeyLinkLayout): OutlinePaint
     case 'gradient':
       return w.linearGradient({ x1: link.path.from.x, x2: link.path.to.x, from, to });
     default:
-      return options.linkColor;
+      return layout.linkColor;
   }
 }

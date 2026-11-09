@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import type { SafeColor } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import { parseSankey } from '../parser/index.ts';
 import { sankeyTestContext, sankeyTestTheme } from '../test-context.ts';
 import { layoutSankey, sankeyLayoutViolations, type SankeyLayout } from './index.ts';
+import { TABLEAU10 } from './metrics.ts';
 
 let theme: Theme;
 beforeAll(async () => {
@@ -82,7 +84,7 @@ describe('sankeyLayoutViolations', () => {
   it('catches a wrong colour slot and contents outside the bounds', () => {
     const v = broken((l) => ({
       ...l,
-      nodes: at(l.nodes, 2, (n) => ({ ...n, slot: 5 })),
+      nodes: at(l.nodes, 2, (n) => ({ ...n, fill: TABLEAU10[5] as SafeColor })),
       bounds: { ...l.bounds, width: l.bounds.width / 2 },
     }));
     expect(v).toEqual(

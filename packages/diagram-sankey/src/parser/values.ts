@@ -39,6 +39,26 @@ export function numberEnd(s: string): number {
   return end > at ? end : i;
 }
 
+/** A value field as v12 read it: `parseFloat`'s number, and the text after it (D394). */
+export interface ReadValue {
+  readonly value: number;
+  /** The text after the number, from its first non-blank; undefined when there is none. */
+  readonly rest?: string;
+}
+
+/** Reads a (trimmed) value field as v12 did. */
+export function readValue(text: string): ReadValue {
+  const value = parseFloat(text);
+  const end = numberEnd(text);
+  return end === 0 || end === text.length
+    ? { value }
+    : { value, rest: text.slice(end).trimStart() };
+}
+
+/** The `SANKEY_VALUE_TRAILING_TEXT` message (and the hover's) for a value with `rest`. */
+export const trailingTextMessage = (text: string, { value, rest = '' }: ReadValue): string =>
+  `Only the number at the start of the value "${text}" is read (${String(value)}): the text "${rest}" after it is ignored.`;
+
 /**
  * Whether the layout draws `value` as it is (D394): a finite number of 0 or more. NaN and
  * negative values count as 0; so does an infinite one, with which d3-sankey would draw that

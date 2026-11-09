@@ -19,6 +19,7 @@ export type {
 export type * from './model.ts';
 export { layoutSankey } from './layout/index.ts';
 export type {
+  LinkPaint,
   SankeyAlignment,
   SankeyLabel,
   SankeyLabelStyle,
@@ -28,7 +29,6 @@ export type {
   SankeyLinkPath,
   SankeyNodeLayout,
 } from './layout/index.ts';
-export { sankeyLayoutConfig, type SankeyLayoutConfig } from './config.ts';
 export {
   SANKEY_COLOR_INVALID,
   SANKEY_CONFIG_INVALID,

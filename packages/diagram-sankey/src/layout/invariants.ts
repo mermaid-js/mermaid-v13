@@ -181,10 +181,8 @@ function colours({ layout, config, out }: Check): void {
   let slot = 0;
   for (const n of layout.nodes) {
     const named = config.nodeColors.has(n.id);
-    const want = named ? undefined : slot++ % TABLEAU10.length;
-    const fill = named ? config.nodeColors.get(n.id) : TABLEAU10[want!];
-    if (n.slot !== want || n.fill !== fill)
-      out.push(`node ${n.id} is filled ${n.fill} (slot ${n.slot})`);
+    const fill = named ? config.nodeColors.get(n.id) : TABLEAU10[slot++ % TABLEAU10.length];
+    if (n.fill !== fill) out.push(`node ${n.id} is filled ${n.fill}, not ${fill}`);
   }
 }
 

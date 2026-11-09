@@ -152,7 +152,7 @@ describe('sankey hover', () => {
     ]);
     expect(hover('sankey\nA,B,1;2\nA,C,-1\n'.replace('1;', '1¦;'))).toEqual([
       '1;2',
-      '**value** 1\n\nOnly the number at the start is read: `;2` is ignored.',
+      '**value** 1\n\nOnly the number at the start of the value "1;2" is read (1): the text ";2" after it is ignored.',
     ]);
     expect(hover('sankey\nA,B,1\nA,C,-1\n'.replace('-1', '-¦1'))).toEqual([
       '-1',

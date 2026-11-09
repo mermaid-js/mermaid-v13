@@ -16,7 +16,9 @@
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
- * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them.
+ * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them;
+ * - the notices of a package in `BUNDLED_CREDITS` hold the license text and copyright line of
+ *   each upstream listed for it, as for a file of its own.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
  */
@@ -103,6 +105,15 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
   'packages/diagram-sankey/src/layout/d3-sankey.ts': ['d3-sankey', 'd3-array'],
   'packages/diagram-sankey/src/layout/layout.ts': ['d3-shape'],
+};
+
+/**
+ * Workspace packages whose build bundles another package's ported code with the legal comments
+ * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey), so their own
+ * notices carry those upstreams. Pending for the maintainer: core's `@braintree/sanitize-url`.
+ */
+export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
+  'packages/mermaid': ['d3-sankey', 'd3-array', 'd3-shape'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -215,12 +226,16 @@ export function checkLicenses(root: string): string[] {
 
     const pkg = relative(root, pkgDir);
     const derived = derivedFiles(root, pkgDir, problems);
+    const bundled = UPSTREAMS.filter((u) => BUNDLED_CREDITS[pkg]?.includes(u.name));
     const noticesPath = join(pkgDir, NOTICES);
     if (!existsSync(noticesPath)) {
       if (derived.length > 0) {
         const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');
         problems.push(`${pkg}: has files ported from ${from} but no ${NOTICES}`);
-      }
+      } else if (bundled.length > 0)
+        problems.push(
+          `${pkg}: bundles code ported from ${bundled.map((u) => u.name).join(', ')} but has no ${NOTICES}`
+        );
       continue;
     }
 
@@ -237,7 +252,8 @@ export function checkLicenses(root: string): string[] {
     const used = UPSTREAMS.filter(
       (u) =>
         (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
-        derived.some((d) => d.upstream === u)
+        derived.some((d) => d.upstream === u) ||
+        bundled.includes(u)
     );
     for (const u of used) {
       const license = licenseOf(u);

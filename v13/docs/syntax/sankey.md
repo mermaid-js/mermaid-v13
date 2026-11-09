@@ -20,9 +20,10 @@ regard to case.
 A sankey diagram is CSV with three fields a row: the source node, the target node and the
 value. A node is its name trimmed; a quoted field may hold commas, line breaks and `""` (read
 as `"`). The value is the number at the start of its field, as JavaScript's `parseFloat` reads
-it. A cycle among the links (a self-link included) is an error; a value that is not a number
-of 0 or more counts as 0, with a warning. Only printable ASCII characters may be used: any
-other character (a tab, `é`, an entity) is an error.
+it. A cycle among the links (a self-link included) is an error; a value that is not a finite
+number of 0 or more (not a number, negative, or infinite such as `Infinity` or `1e999`) counts
+as 0, with a warning. Only printable ASCII characters may be used: any other character (a tab,
+`é`, an entity) is an error.
 
 ## Grammar
 

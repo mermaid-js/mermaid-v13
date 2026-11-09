@@ -295,6 +295,40 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('requires the d3 notices in mermaid, whose CDN build bundles diagram-sankey', () => {
+    const bsd = (name: string, copyright: string) =>
+      `${name}\n----\nBSD 3-Clause License\n\n${copyright}\n\nRedistribution and use in source and binary forms, with or without modification,\n`;
+    const files = {
+      'packages/mermaid/package.json': JSON.stringify({
+        name: 'mermaid',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+    };
+    const d3 = [
+      bsd('d3-sankey', 'Copyright 2015, Mike Bostock'),
+      bsd('d3-array', 'Copyright 2010-2020 Mike Bostock'),
+      bsd('d3-shape', 'Copyright 2010-2015 Mike Bostock'),
+    ];
+    expect(
+      checkLicenses(
+        workspace({ ...files, 'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.join('\n') })
+      )
+    ).toEqual([]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.slice(0, 2).join('\n'),
+        })
+      )
+    ).toEqual([
+      'packages/mermaid/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2010-2015 Mike Bostock"',
+    ]);
+    expect(checkLicenses(workspace(files))).toEqual([
+      'packages/mermaid: bundles code ported from d3-sankey, d3-array, d3-shape but has no THIRD_PARTY_NOTICES',
+    ]);
+  });
+
   it('passes on this repository', () => {
     expect(checkLicenses(join(import.meta.dirname, '..', '..', '..'))).toEqual([]);
   });

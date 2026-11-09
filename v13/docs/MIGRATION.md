@@ -121,6 +121,9 @@ works everywhere (R-PLUG-6).
 - First-party diagram types need none of this: `mermaid` depends on every
   `@mermaid-js/diagram-*` package and bundlers split them per type (R-PLUG-4).
 - The `mermaid` CLI does not discover plugins yet.
+- **Writer wrappers.** `SvgWriter` (`@mermaid-js/core/svg`) gains a required `linearGradient`
+  member, for the user-space gradients sankey draws (D391): a third-party plugin that wraps the
+  writer must forward it.
 
 ## Public API
 
@@ -948,6 +951,9 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
   property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
   `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.
+  `mix-blend-mode` joined the allow-list with `normal` and `multiply` only (D392): author
+  `style` and `classDef` keep it in every type, where they used to drop it with a warning.
+  Output without it is unchanged.
 - **`maxEdges`** (default 5,000; v12 had 500) is still the edge limit; going over it fails
   with a `LIMIT` error. See Limits under Public API.
 
@@ -2056,7 +2062,8 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 - **Values** (D394): a value that is not a number, negative or infinite counts as 0, where d3
   drew `NaN` or negative boxes, with one `SANKEY_INVALID_VALUE` warning per render naming every
   such row. Zero links are still drawn 1 px wide, as in v12. A value with text after its number
-  (`1 2`, `1;`) is still read by `parseFloat`, with one `SANKEY_VALUE_TRAILING_TEXT` warning.
+  (`1 2`, `1;`) is still read by `parseFloat`, with one `SANKEY_VALUE_TRAILING_TEXT` warning
+  per such value.
 - **Labels** (D395) read as v12 drew them, one line `<name> <value>`, and the front-matter
   `title` is the accessible name, never drawn (D396): see
   [Sankey SVG structure](#sankey-svg-structure).
@@ -2094,7 +2101,7 @@ first-appearance order and links in row order, as in v12.
 | --- | --- | --- |
 | Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="sankey"`, a `<style>` scoped by the id, an empty leading `<g>`, `width="100%"` and `max-width` unless `sankey.useMaxWidth: false` | No root `id`; `class="mermaid mermaid-sankey"`, `role="img"`, `aria-roledescription="sankey"` (kept), `data-mermaid-version`; no `<style>` (except `theme: 'auto'`); `width="100%"` and `max-width` unless `sankey.useMaxWidth: false`, as in v12. The `viewBox` is still what is drawn with no padding, now measured: nodes, label boxes (with the outline's halo), and link strokes | Inert output (R-SEC-2), D224 |
 | Each `g.node` had `id="node-<n>"` and stray `x`/`y` attributes; each link's gradient `id="linearGradient-<n>"`, numbered across every diagram on the page | No element id but `<render id>-title` (below) and the gradients' (below) | No colliding ids (R-A11Y-1) |
-| No title: the front-matter `title` was neither drawn nor the accessible name | Still not drawn; when the front matter has a `title`, it becomes `<title id="<render id>-title">` and the root's `aria-labelledby`, since sankey has no `accTitle` syntax. No other type does this yet (D133) | D396 |
+| No title: the front-matter `title` was neither drawn nor the accessible name | Still not drawn; when the front matter has a `title`, it becomes `<title id="<render id>-title">` and the root's `aria-labelledby`, since sankey has no `accTitle` syntax. D133 keeps the title out of the accessible name of types with `accTitle`; ishikawa, which has none either, does the same (D492) | D396 |
 | No source mapping | `data-id` and `data-ast` on each `g.node` (`node:<name>`) and `g.link` (`link:<source>-><target>`, `@2`, `@3` for repeated rows); labels carry `data-id` only (`%`, `>`, `@` and `#` in names percent-encoded) | One `data-ast` element per AST node (R-PARSE-8, D397) |
 | `linkColor: gradient` (the default): a `<linearGradient gradientUnits="userSpaceOnUse" x1 x2>` with stops at `0%`/`100%` inside each `g.link`, before its path | The same gradient (from the source's colour at its right edge to the target's at its left edge), written by the writer into the root's `<defs>` with `y1="0" y2="0"` and stops at `0`/`1`, its id `<scope>-g-<hash of its ends and colours>`: links with the same ends and colours share one, and two diagrams on a page never collide | D391 |
 | `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient, with one `SANKEY_COLOR_INVALID` warning | R-SEC-2 |

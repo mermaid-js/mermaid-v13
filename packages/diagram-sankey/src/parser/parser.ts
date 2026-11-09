@@ -49,7 +49,7 @@ import { fieldName } from './names.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import { SankeyKind as T } from './tokens.ts';
-import { drawable, invalidity, numberEnd } from './values.ts';
+import { drawable, invalidity, readValue, trailingTextMessage, type ReadValue } from './values.ts';
 
 export interface SankeyParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -505,7 +505,8 @@ class SankeyParser {
     const firsts: SankeyNodeNode[] = [];
     const from = this.node(source, firsts);
     const to = this.node(target, firsts);
-    const number = parseFloat(value.text);
+    const read = readValue(value.text);
+    const number = read.value;
     const range = { start: source.range.start, end: value.range.end };
     const ast = this.ids.next(source.text, target.text, from, to);
     this.links.push({
@@ -530,19 +531,16 @@ class SankeyParser {
     };
     if (firsts.length > 0) link.children = firsts;
     this.children.push(link);
-    this.trailingText(value, number);
+    this.trailingText(value, read);
   }
 
   /** `1;`, `1 2`: v12's `parseFloat` read the number and dropped the rest (D394). */
-  private trailingText(value: ReadField, number: number): void {
-    const { text } = value;
-    const end = numberEnd(text);
-    if (end === 0 || end === text.length) return;
-    const rest = text.slice(end).trimStart();
+  private trailingText(value: ReadField, read: ReadValue): void {
+    if (read.rest === undefined) return;
     this.st.diagnostics.warning(
       SANKEY_VALUE_TRAILING_TEXT,
-      `Only the number at the start of the value "${text}" is read (${String(number)}): the text "${rest}" after it is ignored.`,
-      this.restRange(value, rest)
+      trailingTextMessage(value.text, read),
+      this.restRange(value, read.rest)
     );
   }
 
