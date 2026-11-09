@@ -1,0 +1,262 @@
+// `compass`'s orthogonal router, ported from Pele (https://github.com/obsidianmd/pele,
+// src/diagrams/architecture/render.ts:106-170, `route` and `simplify`, MIT, (c) 2026 kepano; see
+// THIRD_PARTY_NOTICES). Each end leaves along its side's normal: straight when the ends face and
+// are in line, one bend when the sides are perpendicular and the corner is ahead of both, a turn
+// midway when they face but are offset, and otherwise a detour between or around the two boxes.
+//
+// Changed from Pele: `route` split into one function per case, with the same cases in the same
+// order; route points with an axis; and `clearSpot`, which moves an edge label off any node.
+import type { Point, RoutePoint } from '../types.ts';
+import { METRICS } from './metrics.ts';
+
+export interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface Port extends Rect {
+  // Where the end is, and its side's outward normal. The rect is the box the route has to stay
+  // out of when it cannot leave straight.
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+}
+
+export const hits = (a: Rect, b: Rect): boolean =>
+  a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+// Bucket keys pack a cell's column and row into one number, as `grid.ts`'s cell map does.
+const OFFSET = 2 ** 25;
+const SPAN = 2 ** 26;
+
+/**
+ * Rects bucketed by a uniform grid of `cell`-sized squares, so asking what a small rect hits
+ * looks at the few rects near it rather than at all of them. Each rect has an owner (an edge
+ * index, or -1) that a query may skip.
+ */
+export class Space {
+  readonly cell: number;
+  readonly rects: Rect[] = [];
+  readonly owners: number[] = [];
+  readonly buckets = new Map<number, number[]>();
+
+  constructor(cell: number) {
+    this.cell = cell > 0 && Number.isFinite(cell) ? cell : 1;
+  }
+
+  private span(r: Rect): [number, number, number, number] {
+    const c = this.cell;
+    return [Math.floor(r.x0 / c), Math.floor(r.y0 / c), Math.floor(r.x1 / c), Math.floor(r.y1 / c)];
+  }
+
+  add(r: Rect, owner = -1): void {
+    const k = this.rects.length;
+    this.rects.push(r);
+    this.owners.push(owner);
+    const [cx0, cy0, cx1, cy1] = this.span(r);
+    for (let cx = cx0; cx <= cx1; cx++) {
+      for (let cy = cy0; cy <= cy1; cy++) {
+        const key = (cx + OFFSET) * SPAN + cy + OFFSET;
+        const list = this.buckets.get(key);
+        if (list) list.push(k);
+        else this.buckets.set(key, [k]);
+      }
+    }
+  }
+
+  /** The first-added rect `r` overlaps, other than those owned by `skip`. */
+  hit(r: Rect, skip = -2): Rect | undefined {
+    let best = -1;
+    const [cx0, cy0, cx1, cy1] = this.span(r);
+    for (let cx = cx0; cx <= cx1; cx++) {
+      for (let cy = cy0; cy <= cy1; cy++) {
+        for (const k of this.buckets.get((cx + OFFSET) * SPAN + cy + OFFSET) ?? []) {
+          if ((best < 0 || k < best) && this.owners[k] !== skip && hits(this.rects[k]!, r))
+            best = k;
+        }
+      }
+    }
+    return best < 0 ? undefined : this.rects[best];
+  }
+}
+
+/** Perpendicular sides: one bend when the corner is ahead of both ends, else out and back. */
+function turn(s: Port, e: Port): number[] {
+  const STUB = METRICS.stub;
+  const cx = s.dx !== 0 ? e.x : s.x;
+  const cy = s.dx !== 0 ? s.y : e.y;
+  if ((cx - s.x) * s.dx + (cy - s.y) * s.dy > 0 && (cx - e.x) * e.dx + (cy - e.y) * e.dy > 0)
+    return [s.x, s.y, cx, cy, e.x, e.y];
+  const s1x = s.x + s.dx * STUB;
+  const s1y = s.y + s.dy * STUB;
+  const e1x = e.x + e.dx * STUB;
+  const e1y = e.y + e.dy * STUB;
+  return s.dx !== 0
+    ? [s.x, s.y, s1x, s1y, s1x, e1y, e1x, e1y, e.x, e.y]
+    : [s.x, s.y, s1x, s1y, e1x, s1y, e1x, e1y, e.x, e.y];
+}
+
+/** Facing sides with the target ahead: straight, or a turn midway between the two boxes. */
+function facing(s: Port, e: Port, offset: number): number[] {
+  if (Math.abs(offset) < 0.5) return [s.x, s.y, e.x, e.y];
+  // Turn midway between the two boxes, which is clear of both titles, when there is such a place.
+  if (s.dx !== 0) {
+    const lo = s.dx > 0 ? s.x1 : e.x1;
+    const hi = s.dx > 0 ? e.x0 : s.x0;
+    const mx = lo < hi ? (lo + hi) / 2 : (s.x + e.x) / 2;
+    return [s.x, s.y, mx, s.y, mx, e.y, e.x, e.y];
+  }
+  const lo = s.dy > 0 ? s.y1 : e.y1;
+  const hi = s.dy > 0 ? e.y0 : s.y0;
+  const my = lo < hi ? (lo + hi) / 2 : (s.y + e.y) / 2;
+  return [s.x, s.y, s.x, my, e.x, my, e.x, e.y];
+}
+
+/** Like sides, offset: out past the further end and back. */
+function alike(s: Port, e: Port): number[] {
+  const STUB = METRICS.stub;
+  if (s.dx !== 0) {
+    const x = s.dx > 0 ? Math.max(s.x, e.x) + STUB : Math.min(s.x, e.x) - STUB;
+    return [s.x, s.y, x, s.y, x, e.y, e.x, e.y];
+  }
+  const y = s.dy > 0 ? Math.max(s.y, e.y) + STUB : Math.min(s.y, e.y) - STUB;
+  return [s.x, s.y, s.x, y, e.x, y, e.x, e.y];
+}
+
+/** A lane between two boxes along one axis, or past both when they overlap on it. */
+function lane(a0: number, a1: number, b0: number, b1: number): number {
+  const STUB = METRICS.stub;
+  if (a1 + STUB <= b0) return (a1 + b0) / 2;
+  if (b1 + STUB <= a0) return (b1 + a0) / 2;
+  return Math.max(a1, b1) + STUB;
+}
+
+// The straight way is blocked by one of the two nodes: go between them, or around both.
+function around(s: Port, e: Port): number[] {
+  const STUB = METRICS.stub;
+  const s1x = s.x + s.dx * STUB;
+  const s1y = s.y + s.dy * STUB;
+  const e1x = e.x + e.dx * STUB;
+  const e1y = e.y + e.dy * STUB;
+  if (s.dx !== 0) {
+    const y = lane(s.y0, s.y1, e.y0, e.y1);
+    return [s.x, s.y, s1x, s.y, s1x, y, e1x, y, e1x, e.y, e.x, e.y];
+  }
+  const x = lane(s.x0, s.x1, e.x0, e.x1);
+  return [s.x, s.y, s.x, s1y, x, s1y, x, e1y, e.x, e1y, e.x, e.y];
+}
+
+/** An orthogonal route from one port to another, each left along its side's normal. */
+export function route(s: Port, e: Port): number[] {
+  if (s.dx * e.dx + s.dy * e.dy === 0) return turn(s, e);
+  const offset = s.dx !== 0 ? e.y - s.y : e.x - s.x;
+  if (s.dx === -e.dx && s.dy === -e.dy) {
+    if ((e.x - s.x) * s.dx + (e.y - s.y) * s.dy > 0) return facing(s, e, offset);
+  } else if (Math.abs(offset) >= 1) {
+    return alike(s, e);
+  }
+  return around(s, e);
+}
+
+// Drops repeated points and joins runs that continue in a straight line.
+export function simplify(p: number[]): number[] {
+  const out = [p[0]!, p[1]!];
+  for (let i = 2; i < p.length; i += 2) {
+    const x = p[i]!;
+    const y = p[i + 1]!;
+    const n = out.length;
+    const sameX = Math.abs(x - out[n - 2]!) < 0.01;
+    const sameY = Math.abs(y - out[n - 1]!) < 0.01;
+    if (sameX && sameY) continue;
+    if (
+      n >= 4 &&
+      ((sameX && Math.abs(out[n - 4]! - out[n - 2]!) < 0.01) ||
+        (sameY && Math.abs(out[n - 3]! - out[n - 1]!) < 0.01))
+    ) {
+      out[n - 2] = x;
+      out[n - 1] = y;
+    } else {
+      out.push(x, y);
+    }
+  }
+  return out;
+}
+
+/** Flat `[x, y, …]` to route points, each with the axis the route runs into it along. */
+export function toRoute(p: number[]): RoutePoint[] {
+  const out: RoutePoint[] = [];
+  for (let i = 0; i < p.length; i += 2) {
+    const j = i === 0 ? 2 : i;
+    const flat = Math.abs(p[j - 1]! - p[j + 1]!) < 0.01 && Math.abs(p[j - 2]! - p[j]!) >= 0.01;
+    out.push({ x: p[i]!, y: p[i + 1]!, axis: flat ? 'h' : 'v' });
+  }
+  return out;
+}
+
+/** Which way, -1 or 1, `v` lies from the middle of `lo`..`hi`. */
+const away = (v: number, lo: number, hi: number): number => (v >= (lo + hi) / 2 ? 1 : -1);
+
+/**
+ * Where a `w` × `h` label centred at `at` sits clear of every node: `at` itself when it is clear,
+ * else the first clear spot at the middle, quarters or eighths of a run (longest run first), on
+ * the line or beside it, else `at` pushed across its run past each node it lands on.
+ */
+export function clearSpot(
+  points: number[],
+  at: Point,
+  size: { w: number; h: number },
+  upright: boolean,
+  nodes: Space
+): Point {
+  const { w, h } = size;
+  const box = (p: Point): Rect => ({
+    x0: p.x - w / 2,
+    y0: p.y - h / 2,
+    x1: p.x + w / 2,
+    y1: p.y + h / 2,
+  });
+  const hit = (p: Point): Rect | undefined => nodes.hit(box(p));
+  if (!hit(at)) return at;
+  const runs: number[] = [];
+  for (let i = 0; i + 3 < points.length; i += 2) runs.push(i);
+  const length = (i: number): number =>
+    Math.abs(points[i]! - points[i + 2]!) + Math.abs(points[i + 1]! - points[i + 3]!);
+  runs.sort((a, b) => length(b) - length(a) || a - b);
+  for (const i of runs) {
+    const spot = runSpot(points, i, size, hit);
+    if (spot) return spot;
+  }
+  // Past every node in the way, across the run, in one direction so it ends.
+  const p = { ...at };
+  const first = hit(p)!;
+  const dir = upright ? away(p.x, first.x0, first.x1) : away(p.y, first.y0, first.y1);
+  const clear = METRICS.labelClear;
+  for (let n = hit(p); n; n = hit(p)) {
+    if (upright) p.x = dir > 0 ? n.x1 + w / 2 + clear : n.x0 - w / 2 - clear;
+    else p.y = dir > 0 ? n.y1 + h / 2 + clear : n.y0 - h / 2 - clear;
+  }
+  return p;
+}
+
+/** The first clear spot on run `i` or beside it, at its middle, quarters or eighths. */
+function runSpot(
+  points: number[],
+  i: number,
+  size: { w: number; h: number },
+  hit: (p: Point) => Rect | undefined
+): Point | undefined {
+  const vertical = Math.abs(points[i]! - points[i + 2]!) < 0.01;
+  const off = (vertical ? size.w : size.h) / 2 + METRICS.labelClear;
+  for (const t of [1 / 2, 1 / 4, 3 / 4, 1 / 8, 7 / 8]) {
+    const px = points[i]! + (points[i + 2]! - points[i]!) * t;
+    const py = points[i + 1]! + (points[i + 3]! - points[i + 1]!) * t;
+    for (const side of [0, 1, -1]) {
+      const p = vertical ? { x: px + side * off, y: py } : { x: px, y: py + side * off };
+      if (!hit(p)) return p;
+    }
+  }
+  return undefined;
+}
