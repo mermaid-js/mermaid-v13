@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { quotedReadsBack } from './facet/names.ts';
 import { language, requirementLanguage } from './language.ts';
 
 const CURSOR = '¦';
@@ -152,6 +153,40 @@ describe('requirement language facet: names (rename, D437)', () => {
   it.each(['', 'a"b', 'a\nb'])('cannot quote %j', (name) => {
     expect(quoteId?.(name)).toBeUndefined();
   });
+
+  it.each(['r#1', 'A&B', '50%', 'a;b', '%%{', '#a', 'a&amp;b'])(
+    'quotes %j without parsing',
+    (name) => {
+      expect(quoteId?.(name)).toBe(`"${name}"`);
+    }
+  );
+
+  it.each(['a#b;c', '#9829;', 'x #y; z', '%%{init}%%', 'a %%{ b'])(
+    'cannot quote %j: an entity or a directive is read inside quotes',
+    (name) => {
+      expect(quoteId?.(name)).toBeUndefined();
+    }
+  );
+
+  it('quotes exactly the names that read back in quotes in every place', () => {
+    const chars = ['a', '1', '_', ' ', '#', ';', '%', '&', '{', '}', "'", ':', '-', '<', 'é', '\\'];
+    let seed = 7;
+    const next = (k: number) => {
+      seed = (seed * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff;
+      return seed % k;
+    };
+    const wrong: string[] = [];
+    for (let i = 0; i < 1500; i++) {
+      let name = '';
+      for (let j = 1 + next(7); j > 0; j--) name += chars[next(chars.length)];
+      if (i % 50 === 0) name = `%%{${name}`;
+      for (const kind of ['requirement', 'class']) {
+        if ((quoteId?.(name, kind) !== undefined) !== quotedReadsBack(name, kind))
+          wrong.push(`${kind} ${JSON.stringify(name)}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
 });
 
 describe('requirement language facet: completions (D95)', () => {
@@ -180,8 +215,8 @@ describe('requirement language facet: completions (D95)', () => {
       'class',
       'direction TB',
       'direction BT',
-      'direction LR',
       'direction RL',
+      'direction LR',
       'accTitle',
       'accDescr',
       'r1',

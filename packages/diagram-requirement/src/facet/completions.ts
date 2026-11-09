@@ -23,7 +23,7 @@ import type { RequirementModel } from '../model.ts';
 import type { RequirementDocument } from '../parser/ast.ts';
 import { NAME, REQ_KINDS } from '../parser/syntax.ts';
 import { T } from '../parser/tokens.ts';
-import { written } from './names.ts';
+import { nameAsWritten } from './names.ts';
 import type { KeywordItem } from './tables.ts';
 import {
   FIELDS,
@@ -82,7 +82,7 @@ class Items {
       const documentation = requirementDocs[k.kind];
       this.add(k.label, kind, {
         insertText: k.insert ?? k.label,
-        ...('meaning' in k ? { detail: (k as { meaning: string }).meaning } : {}),
+        ...(k.detail === undefined ? {} : { detail: k.detail }),
         ...(documentation === undefined ? {} : { documentation }),
       });
     }
@@ -163,22 +163,20 @@ function nameContext(st: Statement): NameContext {
   }
 }
 
-/** The boxes' names, as written where a name goes (quoted when not bare), first box first. */
+/** The boxes' names, as written where a name goes (quoted when not bare), in palette order. */
 function boxes(items: Items, model: RequirementModel): void {
-  for (const b of [...model.requirements, ...model.elements].sort((x, y) => x.slot - y.slot)) {
-    const insert = written(b.name, 'requirement');
-    if (insert === undefined) continue;
-    items.add(b.name, 'node', {
-      insertText: insert,
-      detail: 'kind' in b ? b.kind : 'Element',
-    });
-  }
+  const add = (name: string, detail: string) => {
+    const insert = nameAsWritten(name, 'requirement');
+    if (insert !== undefined) items.add(name, 'node', { insertText: insert, detail });
+  };
+  for (const r of model.requirements) add(r.name, r.kind);
+  for (const e of model.elements) add(e.name, 'Element');
 }
 
 function classes(items: Items, model: RequirementModel): void {
   for (const c of model.classes) {
     if (c.name === 'default') continue;
-    const insert = written(c.name, 'class');
+    const insert = nameAsWritten(c.name, 'class');
     if (insert !== undefined) items.add(c.name, 'class', { insertText: insert });
   }
 }

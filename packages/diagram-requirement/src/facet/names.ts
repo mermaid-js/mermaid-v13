@@ -4,15 +4,19 @@
  * places: a box header, either end of a relation, the `:::` shorthand, and the targets of `style`
  * and `class`, which lex as `\w+` only (v12's style state). A bare name must read back as itself
  * in every one of them, so only `\w+` that is no keyword, nor starts one (`title x`), is bare; any
- * other name a quoted string can hold is written in quotes (`quoteId`). The checks parse each
- * place, so the parser's own rules (D431, D432, keyword prefixes) decide.
+ * other name a quoted string can hold is written in quotes (`quoteId`).
+ *
+ * Neither check parses per name, so completion costs the same whatever the names are: a `\w+`
+ * that no keyword rule can take is bare, and the few words one can (the keywords, `title`, the
+ * `acc…` openers, `direction`) are parsed in each place once per word (case-insensitive, as the
+ * lexer) and remembered. Quoting is decided by the two things that read text inside quotes:
+ * v12's `#name;` entities and core's directives. `quotedReadsBack` is the parse-based check the
+ * spec holds that rule to.
  */
 import { kindSet } from '@mermaid-js/core/parser-kit';
 import { requirementTokens } from '../parser/index.ts';
-import { KEYWORDS as LEXER_KEYWORDS } from '../parser/lexer.ts';
 import { parseRequirement } from '../parser/parser.ts';
-import { REQ_FIELDS, ELEMENT_FIELDS, METHODS, REQ_KINDS, RELS, RISKS } from '../parser/syntax.ts';
-import { T } from '../parser/tokens.ts';
+import { KEYWORD_SPELLINGS, T } from '../parser/tokens.ts';
 
 const HEADER = 'requirementDiagram\n';
 
@@ -27,26 +31,33 @@ const BOX_PLACES = [
   'class @ c\n',
 ];
 const CLASS_PLACES = ['classDef @ fill:#f00\n', 'x:::@\n', 'class x @\n'];
+const BOX_KINDS = ['requirement', 'element'];
 
-const KINDS = ['requirement', 'element'];
-/** Keyword kinds a word may lex as. */
-const WORDS = kindSet(
-  ...REQ_KINDS,
-  ...REQ_FIELDS,
-  ...ELEMENT_FIELDS,
-  ...RISKS,
-  ...METHODS,
-  ...RELS,
-  T.Rd,
-  T.Element,
-  T.Style,
-  T.ClassDef,
-  T.Class,
+/** Kinds a word may lex as other than a name: the keyword rules, `title …`, the `acc…` openers. */
+const KEYWORD_KINDS = kindSet(
+  ...KEYWORD_SPELLINGS.map(([kind]) => kind),
   T.Title,
   T.AccTitle,
   T.AccDescr,
   T.AccDescrOpen
 );
+
+/**
+ * The lower-case words a token other than a name can start with (the keyword rules, `title x`,
+ * `accDescr {`, a line-start `direction LR`); every other `\w+` reads back bare everywhere.
+ */
+const KEYWORD_LIKE_WORDS: ReadonlySet<string> = new Set([
+  ...KEYWORD_SPELLINGS.map(([, s]) => s.toLowerCase()),
+  'title',
+  'acctitle',
+  'accdescr',
+  'direction',
+]);
+
+/** v12 reads `#name;` as an entity, in quotes too: such a name never reads back. */
+const ENTITY = /#\w+;/;
+/** `%%{` and a word is a directive (core's `scanDirectives`), in quotes too. */
+const DIRECTIVE_OPENER = /%%\{[ \t]*\w/;
 
 /** Whether `as` (the name as written) reads back as one `name` symbol of `kinds` there. */
 function readsBack(place: string, as: string, name: string, kinds: readonly string[]): boolean {
@@ -62,30 +73,33 @@ function readsBack(place: string, as: string, name: string, kinds: readonly stri
   );
 }
 
-/**
- * Words that may start a token other than a name somewhere (the keywords, `title x`, the `acc…`
- * openers, a line-start `direction`): a `\w+` name that is none of them reads back bare
- * everywhere, so only these are parsed (completion asks for every box).
- */
-const SLOW_WORDS = new Set([
-  ...LEXER_KEYWORDS.map(([w]) => w),
-  'title',
-  'acctitle',
-  'accdescr',
-  'direction',
-]);
-/** Characters the preprocessing or the lexer may read inside quotes (entities, comments). */
-const QUOTE_SLOW = /[#%;&]/;
-
 const places = (kind: string | undefined) => (kind === 'class' ? CLASS_PLACES : BOX_PLACES);
-const kindsOf = (kind: string | undefined) => (kind === 'class' ? ['class'] : KINDS);
+const kindsOf = (kind: string | undefined) => (kind === 'class' ? ['class'] : BOX_KINDS);
 
 /** Whether the lexer reads a keyword (`test`, `title x`) where `as` starts in `place`. */
 function keywordAt(place: string, as: string): boolean {
   const at = HEADER.length + place.indexOf('@');
   return requirementTokens(HEADER + place.replace('@', () => as)).some(
-    (t) => t.range.start === at && WORDS[t.kind] === 1
+    (t) => t.range.start === at && KEYWORD_KINDS[t.kind] === 1
   );
+}
+
+/**
+ * For each keyword-like word (lower case) and symbol kind: `keyword`, `unread` (it does not read
+ * back bare somewhere) or `bare`. A bounded table, filled on first use.
+ */
+const keywordLikeVerdicts = new Map<string, 'keyword' | 'unread' | 'bare'>();
+
+function keywordLikeVerdict(word: string, kind: string | undefined): 'keyword' | 'unread' | 'bare' {
+  const key = `${kind === 'class' ? 'class' : 'box'}:${word}`;
+  let verdict = keywordLikeVerdicts.get(key);
+  if (verdict === undefined) {
+    const failed = places(kind).find((p) => !readsBack(p, word, word, kindsOf(kind)));
+    if (failed === undefined) verdict = 'bare';
+    else verdict = keywordAt(failed, word) ? 'keyword' : 'unread';
+    keywordLikeVerdicts.set(key, verdict);
+  }
+  return verdict;
 }
 
 /** Why `name` cannot be written bare as a symbol of `kind`, if it cannot (`isValidId`). */
@@ -97,25 +111,32 @@ export function nameReason(name: string, kind?: string): string | undefined {
   if (!/^\w+$/.test(name)) {
     return `'${name}' is written in quotes: a bare name is letters, digits and \`_\` only.`;
   }
-  if (!SLOW_WORDS.has(name.toLowerCase())) return undefined;
-  const failed = places(kind).find((p) => !readsBack(p, name, name, kindsOf(kind)));
-  if (failed === undefined) return undefined;
-  return keywordAt(failed, name)
-    ? `'${name}' is a keyword.`
-    : `'${name}' is written in quotes: it does not read back bare.`;
+  const word = name.toLowerCase();
+  if (!KEYWORD_LIKE_WORDS.has(word)) return undefined;
+  switch (keywordLikeVerdict(word, kind)) {
+    case 'bare':
+      return undefined;
+    case 'keyword':
+      return `'${name}' is a keyword.`;
+    case 'unread':
+      return `'${name}' is written in quotes: it does not read back bare.`;
+  }
 }
 
-/** `name` in double quotes, when it reads back so in every place (`quoteId`). */
+/** `name` in double quotes, when a quoted string holds it as written (`quoteId`). */
 export function quoteName(name: string, kind?: string): string | undefined {
   if (name === '' || /["\r\n]/.test(name) || (kind === 'class' && name === 'default')) {
     return undefined;
   }
-  const quoted = `"${name}"`;
-  if (!QUOTE_SLOW.test(name) && name.trim() !== '') return quoted;
-  return places(kind).every((p) => readsBack(p, quoted, name, kindsOf(kind))) ? quoted : undefined;
+  return ENTITY.test(name) || DIRECTIVE_OPENER.test(name) ? undefined : `"${name}"`;
 }
 
-/** `name` as a rename or completion writes it: bare when it can be, else quoted, else none. */
-export function written(name: string, kind: string): string | undefined {
+/** Whether `"name"` reads back as `name` in every place a `kind` name goes (by parsing each). */
+export function quotedReadsBack(name: string, kind?: string): boolean {
+  return places(kind).every((p) => readsBack(p, `"${name}"`, name, kindsOf(kind)));
+}
+
+/** The text that stands for `name` where a name goes: bare, else quoted, else none. */
+export function nameAsWritten(name: string, kind: string): string | undefined {
   return nameReason(name, kind) === undefined ? name : quoteName(name, kind);
 }

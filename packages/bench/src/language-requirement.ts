@@ -1,7 +1,8 @@
 /**
  * The language-service bench (R-LANG-4, D90) for requirement, as `language-venn.ts` does for
  * venn: one editing cycle on the committed 50k-character requirement diagram,
- * `fixtures/language/requirement-50k.mmd` (264 requirements of the six kinds with all four
+ * `fixtures/language/requirement-50k.mmd`, and `requirement-quoted-50k.mmd` with the same shape and every
+ * name quoted with `#`, `&` and `%` in it (264 and 216 requirements of the six kinds with all four
  * fields, an element and a relation to it for every third, a relation between each two in a
  * row, and `style`, `:::` and `class` lines). A cycle is `update` (a full re-parse) and then
  * every query: diagnostics, folding ranges, semantic tokens, and definition, references,
@@ -21,6 +22,14 @@ export const REQUIREMENT_FIXTURE = readFileSync(
   `${FIXTURES_DIR}language/requirement-50k.mmd`,
   'utf8'
 );
+/**
+ * The same shape with every name in quotes and holding `#`, `&` and `%` (`"r#3 & 3%"`): names
+ * that are not bare, which completion and rename must write quoted.
+ */
+export const REQUIREMENT_QUOTED_FIXTURE = readFileSync(
+  `${FIXTURES_DIR}language/requirement-quoted-50k.mmd`,
+  'utf8'
+);
 
 const STAGES = [
   'update',
@@ -37,8 +46,11 @@ const STAGES = [
 ] as const;
 type Stage = (typeof STAGES)[number];
 
-/** The cursor: on the requirement `r3` where it is defined. */
-const cursorOf = (text: string) => text.indexOf(' r3 {\n') + 1;
+/** The cursor: on the requirement `r3` (or `"r#3 & 3%"`) where it is defined. */
+const cursorOf = (text: string) => {
+  const m = / ("?)r#?3\b/.exec(text);
+  return m ? m.index + 1 + (m[1]?.length ?? 0) : 0;
+};
 /** Completions: right after the first ` -> `, where a box name goes. */
 const completionAt = (text: string) => text.indexOf(' -> ') + 4;
 

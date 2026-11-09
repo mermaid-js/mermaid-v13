@@ -108,6 +108,45 @@ export const T = {
 } as const;
 
 /**
+ * Every keyword rule of v12's `requirementDiagram.jison`, in its rule order, spelled as v12's
+ * syntax page writes it. The lexer matches each case-insensitively (then `\b`); completion and
+ * hover show this spelling. A keyword is added here and nowhere else.
+ */
+export const KEYWORD_SPELLINGS: readonly (readonly [kind: number, spelling: string])[] = [
+  [T.Rd, 'requirementDiagram'],
+  [T.Id, 'id'],
+  [T.Text, 'text'],
+  [T.Risk, 'risk'],
+  [T.VerifyMethod, 'verifymethod'],
+  [T.Requirement, 'requirement'],
+  [T.FunctionalRequirement, 'functionalRequirement'],
+  [T.InterfaceRequirement, 'interfaceRequirement'],
+  [T.PerformanceRequirement, 'performanceRequirement'],
+  [T.PhysicalRequirement, 'physicalRequirement'],
+  [T.DesignConstraint, 'designConstraint'],
+  [T.LowRisk, 'low'],
+  [T.MedRisk, 'medium'],
+  [T.HighRisk, 'high'],
+  [T.VerifyAnalysis, 'analysis'],
+  [T.VerifyDemonstration, 'demonstration'],
+  [T.VerifyInspection, 'inspection'],
+  [T.VerifyTest, 'test'],
+  [T.Element, 'element'],
+  [T.Contains, 'contains'],
+  [T.Copies, 'copies'],
+  [T.Derives, 'derives'],
+  [T.Satisfies, 'satisfies'],
+  [T.Verifies, 'verifies'],
+  [T.Refines, 'refines'],
+  [T.Traces, 'traces'],
+  [T.Type, 'type'],
+  [T.DocRef, 'docref'],
+  [T.Style, 'style'],
+  [T.ClassDef, 'classDef'],
+  [T.Class, 'class'],
+];
+
+/**
  * The v12 `requirementDiagram.jison` terminal each kind stands for (dev and test use: the
  * lexer-parity gate compares token streams by these names). Never shown to users (R-ERR-5).
  * Kinds without an entry have no jison token; `LEXICAL_ERROR` marks where jison threw. A run of

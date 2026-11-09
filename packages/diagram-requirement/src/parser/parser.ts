@@ -239,7 +239,7 @@ class RequirementParser {
     return st.result(model, ast, this.lexed.tokens, this.options, this.probe);
   }
 
-  private occur(as: Occurrence['as'], names: readonly RequirementText[]): void {
+  private recordNames(as: Occurrence['as'], names: readonly RequirementText[]): void {
     for (const n of names) this.occurrences.push({ as, name: n.text, range: n.range });
   }
 
@@ -580,7 +580,7 @@ class RequirementParser {
       node.id = named ? this.ids.named(kind, node.name.text) : st.ids.statement(kind);
       node.range.end = Math.max(node.range.end, this.last.end);
       if (named) {
-        this.occur(kind, [node.name]);
+        this.recordNames(kind, [node.name]);
         const at = { ast: node.id, range: node.range, nameRange: node.name.range };
         const fields = body?.fields;
         if (element) this.db.addElement(node.name.text, at, { ...emptyElement(), ...fields });
@@ -598,7 +598,7 @@ class RequirementParser {
   /** v12's `setClass([$2], $4)` after the definition's `:::`. */
   private classes(node: RequirementDefNode | ElementDefNode): void {
     if (!node.classNames) return;
-    this.occur('class', node.classNames);
+    this.recordNames('class', node.classNames);
     this.db.setClass(
       [{ name: node.name.text, range: node.name.range }],
       node.classNames.map((n) => n.text),
@@ -750,8 +750,8 @@ class RequirementParser {
       const classNames = this.idList(CLASS_NAMES);
       const range = { start, end: this.last.end };
       const id = this.st.ids.statement('class');
-      this.occur('name', [a]);
-      this.occur('class', classNames);
+      this.recordNames('name', [a]);
+      this.recordNames('class', classNames);
       this.db.setClass(
         [{ name: a.text, range: a.range }],
         classNames.map((n) => n.text),
@@ -770,7 +770,7 @@ class RequirementParser {
     const kind = REL_OF[rel.kind] as RelationshipKind;
     const range = { start, end: b.range.end };
     const id = this.ids.relation(src.text, dst.text);
-    this.occur('name', [a, b]);
+    this.recordNames('name', [a, b]);
     this.db.addRelationship(kind, src.text, dst.text, { ast: id, range });
     this.st.statement('relation', range);
     this.children.push({ id, type: 'Relation', range, kind, src, dst });
@@ -881,7 +881,7 @@ class RequirementParser {
     const ids = this.idList(style ? NAMES : CLASS_NAMES);
     const styles = this.styles();
     const range = { start, end: this.last.end };
-    this.occur(style ? 'name' : 'classDef', ids);
+    this.recordNames(style ? 'name' : 'classDef', ids);
     if (style) {
       const id = this.st.ids.statement('style');
       this.db.setCssStyle(refs(ids), styles, { ast: id, range });
@@ -906,8 +906,8 @@ class RequirementParser {
     const classNames = this.idList(CLASS_NAMES);
     const range = { start, end: this.last.end };
     const id = this.st.ids.statement('class');
-    this.occur('name', ids);
-    this.occur('class', classNames);
+    this.recordNames('name', ids);
+    this.recordNames('class', classNames);
     this.db.setClass(
       refs(ids),
       classNames.map((n) => n.text),

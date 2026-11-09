@@ -4,7 +4,19 @@
  * (`generated/docs.ts`).
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { T } from '../parser/tokens.ts';
+import type { RelationshipKind } from '../model.ts';
+import {
+  DIRECTION_OF,
+  DIRECTIONS,
+  ELEMENT_FIELDS,
+  METHODS,
+  REL_OF,
+  RELS,
+  REQ_FIELDS,
+  REQ_KINDS,
+  RISKS,
+} from '../parser/syntax.ts';
+import { KEYWORD_SPELLINGS, T } from '../parser/tokens.ts';
 
 /** A keyword item: offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -12,59 +24,52 @@ export interface KeywordItem {
   readonly label: string;
   /** Text inserted, when it is not the label. */
   readonly insert?: string;
+  /** One short line next to the label. */
+  readonly detail?: string;
 }
 
-/** Statement keywords, in the order they are offered (v12's syntax page spelling). */
+const SPELLING: ReadonlyMap<number, string> = new Map(KEYWORD_SPELLINGS);
+
+/** How v12's syntax page spells the keyword `kind` (`KEYWORD_SPELLINGS`). */
+export const spelling = (kind: number): string => SPELLING.get(kind) ?? '';
+
+const keyword = (kind: number): KeywordItem => ({ kind, label: spelling(kind) });
+
+/** Statement keywords, in the order they are offered. */
 export const STATEMENT_KEYWORDS: readonly KeywordItem[] = [
-  { kind: T.Requirement, label: 'requirement' },
-  { kind: T.FunctionalRequirement, label: 'functionalRequirement' },
-  { kind: T.InterfaceRequirement, label: 'interfaceRequirement' },
-  { kind: T.PerformanceRequirement, label: 'performanceRequirement' },
-  { kind: T.PhysicalRequirement, label: 'physicalRequirement' },
-  { kind: T.DesignConstraint, label: 'designConstraint' },
-  { kind: T.Element, label: 'element' },
-  { kind: T.Style, label: 'style' },
-  { kind: T.ClassDef, label: 'classDef' },
-  { kind: T.Class, label: 'class' },
-  { kind: T.DirectionTB, label: 'direction TB' },
-  { kind: T.DirectionBT, label: 'direction BT' },
-  { kind: T.DirectionLR, label: 'direction LR' },
-  { kind: T.DirectionRL, label: 'direction RL' },
+  ...[...REQ_KINDS, T.Element, T.Style, T.ClassDef, T.Class].map(keyword),
+  ...DIRECTIONS.map((kind) => ({ kind, label: `direction ${DIRECTION_OF[kind] ?? ''}` })),
+  // The `acc…` openers are no keyword rule: the lexer reads them with their `:` or `{`.
   { kind: T.AccTitle, label: 'accTitle', insert: 'accTitle: ' },
   { kind: T.AccDescr, label: 'accDescr', insert: 'accDescr: ' },
 ];
 
 /** Body fields, inserted with their `: `. */
-export const FIELDS: readonly KeywordItem[] = [
-  { kind: T.Id, label: 'id', insert: 'id: ' },
-  { kind: T.Text, label: 'text', insert: 'text: ' },
-  { kind: T.Risk, label: 'risk', insert: 'risk: ' },
-  { kind: T.VerifyMethod, label: 'verifymethod', insert: 'verifymethod: ' },
-  { kind: T.Type, label: 'type', insert: 'type: ' },
-  { kind: T.DocRef, label: 'docref', insert: 'docref: ' },
-];
+export const FIELDS: readonly KeywordItem[] = [...REQ_FIELDS, ...ELEMENT_FIELDS].map((kind) => ({
+  kind,
+  label: spelling(kind),
+  insert: `${spelling(kind)}: `,
+}));
 
 /** Field values with a fixed set: the risks and the verification methods. */
-export const VALUES: readonly KeywordItem[] = [
-  { kind: T.LowRisk, label: 'low' },
-  { kind: T.MedRisk, label: 'medium' },
-  { kind: T.HighRisk, label: 'high' },
-  { kind: T.VerifyAnalysis, label: 'analysis' },
-  { kind: T.VerifyDemonstration, label: 'demonstration' },
-  { kind: T.VerifyInspection, label: 'inspection' },
-  { kind: T.VerifyTest, label: 'test' },
-];
+export const VALUES: readonly KeywordItem[] = [...RISKS, ...METHODS].map(keyword);
 
-/** The relationship kinds and what each says of the source and the target (v12's syntax page). */
-export const RELATIONSHIPS: readonly (KeywordItem & { readonly meaning: string })[] = [
-  { kind: T.Contains, label: 'contains', meaning: 'the source contains the target' },
-  { kind: T.Copies, label: 'copies', meaning: 'the source copies the target' },
-  { kind: T.Derives, label: 'derives', meaning: 'the source derives from the target' },
-  { kind: T.Satisfies, label: 'satisfies', meaning: 'the source satisfies the target' },
-  { kind: T.Verifies, label: 'verifies', meaning: 'the source verifies the target' },
-  { kind: T.Refines, label: 'refines', meaning: 'the source refines the target' },
-  { kind: T.Traces, label: 'traces', meaning: 'the source traces to the target' },
-];
+/** What each relationship says of the source and the target (v12's syntax page). */
+const RELATION_MEANING: Readonly<Record<RelationshipKind, string>> = {
+  contains: 'the source contains the target',
+  copies: 'the source copies the target',
+  derives: 'the source derives from the target',
+  satisfies: 'the source satisfies the target',
+  verifies: 'the source verifies the target',
+  refines: 'the source refines the target',
+  traces: 'the source traces to the target',
+};
+
+/** The relationship kinds, each with its meaning as the detail. */
+export const RELATIONSHIPS: readonly KeywordItem[] = RELS.map((kind) => {
+  const rel = REL_OF[kind];
+  return { ...keyword(kind), ...(rel ? { detail: RELATION_MEANING[rel] } : {}) };
+});
 
 /** The operators of a relation and the class shorthand. */
 export const OPERATORS: readonly KeywordItem[] = [

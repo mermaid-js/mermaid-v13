@@ -14,39 +14,51 @@ import type {
 import { requirementDocs } from '../generated/docs.ts';
 import type { Element, Requirement, RequirementModel } from '../model.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
-import { RELATIONSHIPS, code, plural, span } from './tables.ts';
+import { T } from '../parser/tokens.ts';
+import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';
 
 const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {
   const set = fields.filter(([, v]) => v !== '');
   return set.length === 0 ? 'No fields.' : set.map(([k, v]) => `${k}: ${code(v)}`).join(' · ');
 };
 
-function boxHover(name: string, kind: string, model: RequirementModel): string | undefined {
+/** A box and which of the two it is. */
+type Box =
+  | { readonly is: 'requirement'; readonly box: Requirement }
+  | { readonly is: 'element'; readonly box: Element };
+
+/** The box `name` denotes: the requirement first (v12), the element for an element's own name. */
+function findBox(name: string, kind: string, model: RequirementModel): Box | undefined {
   const req = model.requirements.find((r) => r.name === name);
   const el = model.elements.find((e) => e.name === name);
-  const box: Requirement | Element | undefined = kind === 'element' ? (el ?? req) : (req ?? el);
-  if (!box) return undefined;
+  if (el && (kind === 'element' || !req)) return { is: 'element', box: el };
+  return req ? { is: 'requirement', box: req } : undefined;
+}
+
+function boxHover(name: string, kind: string, model: RequirementModel): string | undefined {
+  const found = findBox(name, kind, model);
+  if (!found) return undefined;
   const parts =
-    'kind' in box
+    found.is === 'requirement'
       ? [
-          `**${box.kind}** ${code(name)}`,
+          `**${found.box.kind}** ${code(name)}`,
           fieldList([
-            ['id', box.requirementId],
-            ['text', box.text],
-            ['risk', box.risk],
-            ['verifymethod', box.verifyMethod],
+            [spelling(T.Id), found.box.requirementId],
+            [spelling(T.Text), found.box.text],
+            [spelling(T.Risk), found.box.risk],
+            [spelling(T.VerifyMethod), found.box.verifyMethod],
           ]),
         ]
       : [
           `**Element** ${code(name)}`,
           fieldList([
-            ['type', box.type],
-            ['docref', box.docRef],
+            [spelling(T.Type), found.box.type],
+            [spelling(T.DocRef), found.box.docRef],
           ]),
         ];
   const relations = model.relations.filter((r) => r.src === name || r.dst === name).length;
   const facts = [plural(relations, 'relation')];
-  const classes = [...new Set(box.classes.filter((c) => c !== 'default'))];
+  const classes = [...new Set(found.box.classes.filter((c) => c !== 'default'))];
   if (classes.length > 0) {
     facts.push(`${classes.length === 1 ? 'Class' : 'Classes'}: ${classes.map(code).join(', ')}`);
   }
@@ -110,7 +122,9 @@ export function requirementHover(
   const rel = RELATIONSHIPS.find((r) => r.kind === t.kind);
   if (rel) {
     const node = relationAt(result.ast, at.offset);
-    const what = node ? `${code(node.src.text)} ${rel.label} ${code(node.dst.text)}` : rel.meaning;
+    const what = node
+      ? `${code(node.src.text)} ${rel.label} ${code(node.dst.text)}`
+      : (rel.detail ?? '');
     return { range, contents: `**${code(word)}** ${what}\n\n${docText}` };
   }
   return { range, contents: `**${code(word)}**\n\n${docText}` };

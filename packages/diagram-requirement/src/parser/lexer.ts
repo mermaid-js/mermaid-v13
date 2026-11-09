@@ -68,7 +68,7 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { T } from './tokens.ts';
+import { KEYWORD_SPELLINGS, T } from './tokens.ts';
 
 // Start conditions of requirementDiagram.jison that rules enter (`token` and `unqString` are
 // declared there but never entered).
@@ -110,39 +110,9 @@ const isLineBlank = (c: number) => isSpace(c) && !isLineEnd(c);
  * The keyword rules in jison's order (lower case), each with `\b` after it, by first letter.
  * `style`, `classDef` and `class` begin the style state.
  */
-export const KEYWORDS: readonly (readonly [word: string, kind: number])[] = [
-  ['requirementdiagram', T.Rd],
-  ['id', T.Id],
-  ['text', T.Text],
-  ['risk', T.Risk],
-  ['verifymethod', T.VerifyMethod],
-  ['requirement', T.Requirement],
-  ['functionalrequirement', T.FunctionalRequirement],
-  ['interfacerequirement', T.InterfaceRequirement],
-  ['performancerequirement', T.PerformanceRequirement],
-  ['physicalrequirement', T.PhysicalRequirement],
-  ['designconstraint', T.DesignConstraint],
-  ['low', T.LowRisk],
-  ['medium', T.MedRisk],
-  ['high', T.HighRisk],
-  ['analysis', T.VerifyAnalysis],
-  ['demonstration', T.VerifyDemonstration],
-  ['inspection', T.VerifyInspection],
-  ['test', T.VerifyTest],
-  ['element', T.Element],
-  ['contains', T.Contains],
-  ['copies', T.Copies],
-  ['derives', T.Derives],
-  ['satisfies', T.Satisfies],
-  ['verifies', T.Verifies],
-  ['refines', T.Refines],
-  ['traces', T.Traces],
-  ['type', T.Type],
-  ['docref', T.DocRef],
-  ['style', T.Style],
-  ['classdef', T.ClassDef],
-  ['class', T.Class],
-];
+const KEYWORDS: readonly (readonly [word: string, kind: number])[] = KEYWORD_SPELLINGS.map(
+  ([kind, spelling]) => [spelling.toLowerCase(), kind] as const
+);
 const BEGINS_STYLE: ReadonlySet<number> = new Set([T.Style, T.ClassDef, T.Class]);
 const KEYWORDS_BY_LETTER: ReadonlyMap<number, readonly (readonly [string, number])[]> =
   /* @__PURE__ */ (() => {
