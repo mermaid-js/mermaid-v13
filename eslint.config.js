@@ -211,6 +211,7 @@ export default tseslint.config(
       'packages/diagram-sankey/src/v12-specs/*.spec.ts',
       'packages/diagram-packet/src/v12-specs/*.spec.ts',
       'packages/diagram-radar/src/v12-specs/*.spec.ts',
+      'packages/diagram-railroad/src/v12-specs/*.spec.ts',
       'packages/diagram-treemap/src/v12-specs/*.spec.ts',
       'packages/diagram-cynefin/src/v12-specs/*.spec.ts',
       'packages/diagram-wardley/src/v12-specs/*.spec.ts',

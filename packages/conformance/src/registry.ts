@@ -16,6 +16,12 @@ import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
 import { radarAdapter } from './radar/v13.ts';
+import {
+  railroadAbnfAdapter,
+  railroadAdapter,
+  railroadEbnfAdapter,
+  railroadPegAdapter,
+} from './railroad/v13.ts';
 import { sankeyParityCorpus } from './sankey/corpus.ts';
 import { sankeyAdapter } from './sankey/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
@@ -182,6 +188,28 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  // Railroad: one suite per notation (D511), over the one corpus; each claims its v12 type.
+  // The cases run in `railroad/parity.spec.ts`, with its unclosed-directive exclusion.
+  {
+    adapter: railroadAdapter,
+    corpusDirs: ['e2e/diagrams/railroad'],
+    corpusFiles: ['packages/conformance/corpus/railroad-v12-specs.json'],
+  },
+  {
+    adapter: railroadEbnfAdapter,
+    corpusDirs: ['e2e/diagrams/railroad'],
+    corpusFiles: ['packages/conformance/corpus/railroad-v12-specs.json'],
+  },
+  {
+    adapter: railroadAbnfAdapter,
+    corpusDirs: ['e2e/diagrams/railroad'],
+    corpusFiles: ['packages/conformance/corpus/railroad-v12-specs.json'],
+  },
+  {
+    adapter: railroadPegAdapter,
+    corpusDirs: ['e2e/diagrams/railroad'],
+    corpusFiles: ['packages/conformance/corpus/railroad-v12-specs.json'],
   },
 ];
 

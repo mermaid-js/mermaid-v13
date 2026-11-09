@@ -107,3 +107,116 @@ export const RAILROAD_TRIVIA = /* @__PURE__ */ kindSet(
   T.SemiComment,
   T.HashComment
 );
+
+/*
+ * Each notation's kinds, named as its grammar file names its tokens (`grammar/<notation>.ebnf`):
+ * `gen:grammar` builds each notation's kind → category and doc tables from one of these (D512).
+ */
+
+/** The IR notation's kinds (`grammar/railroad.ebnf`). */
+export const IrKind = {
+  Header: T.Header,
+  KwNonterminal: T.KwNonterminal,
+  KwZeroOrMore: T.KwZeroOrMore,
+  KwOneOrMore: T.KwOneOrMore,
+  KwSequence: T.KwSequence,
+  KwOptional: T.KwOptional,
+  KwTerminal: T.KwTerminal,
+  KwSpecial: T.KwSpecial,
+  KwChoice: T.KwChoice,
+  Equals: T.Equals,
+  Semi: T.Semi,
+  LParen: T.LParen,
+  Comma: T.Comma,
+  RParen: T.RParen,
+  Title: T.Title,
+  AccTitle: T.AccTitle,
+  AccDescr: T.AccDescr,
+  Id: T.Id,
+  String: T.String,
+  Yaml: T.Yaml,
+  BlockComment: T.BlockComment,
+} as const;
+
+/** The EBNF notation's kinds (`grammar/railroad-ebnf.ebnf`). */
+export const EbnfKind = {
+  Header: T.Header,
+  Define: T.Define,
+  Equals: T.Equals,
+  Semi: T.Semi,
+  Pipe: T.Pipe,
+  Comma: T.Comma,
+  IsoComment: T.IsoComment,
+  LParen: T.LParen,
+  RParen: T.RParen,
+  LBracket: T.LBracket,
+  RBracket: T.RBracket,
+  LBrace: T.LBrace,
+  RBrace: T.RBrace,
+  Special: T.Special,
+  Question: T.Question,
+  Star: T.Star,
+  Plus: T.Plus,
+  Yaml: T.Yaml,
+  Minus: T.Minus,
+  Title: T.Title,
+  AccTitle: T.AccTitle,
+  AccDescr: T.AccDescr,
+  Id: T.Id,
+  String: T.String,
+  BlockComment: T.BlockComment,
+} as const;
+
+/** The ABNF notation's kinds (`grammar/railroad-abnf.ebnf`). */
+export const AbnfKind = {
+  Header: T.Header,
+  Equals: T.Equals,
+  SemiComment: T.SemiComment,
+  Semi: T.Semi,
+  Slash: T.Slash,
+  LParen: T.LParen,
+  RParen: T.RParen,
+  LBracket: T.LBracket,
+  RBracket: T.RBracket,
+  Title: T.Title,
+  AccTitle: T.AccTitle,
+  AccDescr: T.AccDescr,
+  Id: T.Id,
+  String: T.String,
+  NumVal: T.NumVal,
+  Repeat: T.Repeat,
+  ExactRepeat: T.ExactRepeat,
+  Yaml: T.Yaml,
+} as const;
+
+/** The PEG notation's kinds (`grammar/railroad-peg.ebnf`). */
+export const PegKind = {
+  Header: T.Header,
+  Arrow: T.Arrow,
+  Semi: T.Semi,
+  Slash: T.Slash,
+  Amp: T.Amp,
+  Bang: T.Bang,
+  Question: T.Question,
+  Star: T.Star,
+  Plus: T.Plus,
+  LParen: T.LParen,
+  RParen: T.RParen,
+  Dot: T.Dot,
+  Title: T.Title,
+  AccTitle: T.AccTitle,
+  AccDescr: T.AccDescr,
+  Id: T.Id,
+  String: T.String,
+  Yaml: T.Yaml,
+  HashComment: T.HashComment,
+} as const;
+
+/** Each notation's kinds, by notation. */
+export const NOTATION_KINDS: Readonly<Record<RailroadNotation, Readonly<Record<string, number>>>> =
+  {
+    railroad: IrKind,
+    railroadEbnf: EbnfKind,
+    railroadAbnf: AbnfKind,
+    railroadPeg: PegKind,
+  };

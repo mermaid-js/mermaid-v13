@@ -1,7 +1,8 @@
 /**
  * The railroad corpora (#526): the e2e fixtures and the harvested v12 spec strings, and the
  * gates' set, which adds the hand-written cases of `corpus/railroad-cases.json` (the spec's
- * quirks and rejected inputs, line separators) and a CRLF and a commented copy of every source.
+ * quirks and rejected inputs, line separators), the recovery set of
+ * `corpus/railroad-recovery.json` and a CRLF and a commented copy of every source.
  * One corpus holds all four notations (D511); {@link notationOf} routes each source.
  */
 import { readFileSync } from 'node:fs';
@@ -29,14 +30,22 @@ export function railroadCases(): CorpusItem[] {
   return readItems('packages/conformance/corpus/railroad-cases.json');
 }
 
+/** The recovery set (#610): documents with planted errors, per notation (`recovery.spec.ts`). */
+export function railroadRecovery(): CorpusItem[] {
+  return readItems('packages/conformance/corpus/railroad-recovery.json').map(({ id, source }) => ({
+    id,
+    source,
+  }));
+}
+
 /** A gate corpus item: a source as written, or a generated copy of one (`variant`). */
 export interface GateItem extends CorpusItem {
   variant?: 'CRLF' | 'commented';
 }
 
-/** The corpus, the cases, and a CRLF and a commented copy of each. */
+/** The corpus, the cases, the recovery set, and a CRLF and a commented copy of each. */
 export async function railroadGateCorpus(): Promise<GateItem[]> {
-  const all = [...(await railroadCorpus()), ...railroadCases()];
+  const all = [...(await railroadCorpus()), ...railroadCases(), ...railroadRecovery()];
   return [
     ...all,
     ...all.map((item) => ({

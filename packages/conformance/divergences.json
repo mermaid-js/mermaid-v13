@@ -1062,5 +1062,21 @@
     "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
     "owner": "#488",
     "since": "2026-11-08"
+  },
+  {
+    "id": "railroad-cases/header-empty-front-matter",
+    "inputHash": "sha256:a60039e8016e0862",
+    "kind": "accept",
+    "reason": "An empty front matter block (`---` then `---`) before the header: v12's front-matter check rejected the text before any railroad parser ran (\"Diagrams beginning with --- are not valid\"); core's preprocess reads it as front matter with nothing in it, and v13 parses the diagram after it. Core preprocess behaviour shared by every type, not the railroad parser's (spec #526 T1 #608, GAPS.md).",
+    "owner": "#610",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "railroad-cases/header-empty-front-matter (CRLF)",
+    "inputHash": "sha256:efd04aef81af8aaf",
+    "kind": "accept",
+    "reason": "An empty front matter block (`---` then `---`) before the header: v12's front-matter check rejected the text before any railroad parser ran (\"Diagrams beginning with --- are not valid\"); core's preprocess reads it as front matter with nothing in it, and v13 parses the diagram after it. Core preprocess behaviour shared by every type, not the railroad parser's (spec #526 T1 #608, GAPS.md).",
+    "owner": "#610",
+    "since": "2026-11-09"
   }
 ]

@@ -307,6 +307,33 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  // Railroad: one package, one grammar per notation (D511, D512).
+  {
+    type: 'railroad',
+    title: 'Railroad diagram syntax (IR)',
+    kinds: { module: 'parser/tokens.ts', object: 'IrKind' },
+  },
+  {
+    type: 'railroadEbnf',
+    package: 'railroad',
+    grammar: 'railroad-ebnf',
+    title: 'Railroad diagram syntax (EBNF)',
+    kinds: { module: 'parser/tokens.ts', object: 'EbnfKind' },
+  },
+  {
+    type: 'railroadAbnf',
+    package: 'railroad',
+    grammar: 'railroad-abnf',
+    title: 'Railroad diagram syntax (ABNF)',
+    kinds: { module: 'parser/tokens.ts', object: 'AbnfKind' },
+  },
+  {
+    type: 'railroadPeg',
+    package: 'railroad',
+    grammar: 'railroad-peg',
+    title: 'Railroad diagram syntax (PEG)',
+    kinds: { module: 'parser/tokens.ts', object: 'PegKind' },
+  },
 ];
 
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */

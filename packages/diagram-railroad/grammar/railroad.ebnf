@@ -1,0 +1,116 @@
+(** Railroad diagram syntax, IR notation (R-PARSE-9, D54, D512): the normative grammar of
+`railroad-beta` diagrams.
+
+The hand-written parser in `src/parser/ir/` implements it; `tools/gen-grammar` builds a
+reference parser, a sentence generator, highlighters and the syntax reference page from it.
+mermaid@12 decides what is valid, this file is fixed to match, and the parser must match this
+file (DESIGN §4.4). mermaid@12 parsed the IR notation with Langium (`railroad.langium` in
+`@mermaid-js/parser`, which does not import `common.langium`); the rules below are its token
+rules, in its order, and its grammar. The EBNF, ABNF and PEG notations have grammars of their
+own (`railroad-ebnf.ebnf`, `railroad-abnf.ebnf`, `railroad-peg.ebnf`).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive.
+
+A keyword followed by more name characters is a name (`sequenceX`), but a keyword alone is
+never a name, so no rule can be called `choice` (D513). A name that starts with `title` reads
+as a `title` line. Line breaks are blanks: a rule may span lines, and ends at its `;`. *)
+
+@lexer
+
+(** `railroad-beta`: starts a railroad diagram in the IR notation, followed by a blank, a line
+break or `%%`. *)
+HEADER                    /railroad-beta(?:(?=%%)|(?!\S))/ :keyword ;
+(** `nonterminal("name")`: a reference to the rule `name`, drawn in a square box. *)
+KW_NONTERMINAL            /nonterminal(?![\w-])/          :keyword ;
+(** `zeroOrMore(e)`: `e` any number of times, or not at all: a loop below and a bypass
+above. *)
+KW_ZERO_OR_MORE           /zeroOrMore(?![\w-])/           :keyword ;
+(** `oneOrMore(e)`: `e` once or more: a loop below. *)
+KW_ONE_OR_MORE            /oneOrMore(?![\w-])/            :keyword ;
+(** `sequence(a, b, …)`: the expressions one after another. *)
+KW_SEQUENCE               /sequence(?![\w-])/             :keyword ;
+(** `optional(e)`: `e` or nothing: a bypass above. *)
+KW_OPTIONAL               /optional(?![\w-])/             :keyword ;
+(** `terminal("text")`: literal text, drawn in a rounded box. *)
+KW_TERMINAL               /terminal(?![\w-])/             :keyword ;
+(** `special("text")`: a description, drawn in a dashed box. *)
+KW_SPECIAL                /special(?![\w-])/              :keyword ;
+(** `choice(a, b, …)`: one of the expressions: branches stacked around the track. *)
+KW_CHOICE                 /choice(?![\w-])/               :keyword ;
+(** `=` between a rule's name and its definition. *)
+EQUALS                    /=/                              :operator ;
+(** `;` at the end of a rule. *)
+SEMI                      /;/                              :punctuation ;
+LPAREN                    /\(/                             :punctuation ;
+COMMA                     /,/                              :punctuation ;
+RPAREN                    /\)/                             :punctuation ;
+(** `title …`: the diagram's title, the rest of the line (quotes around it are dropped). It is
+not drawn. *)
+TITLE                     /title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line. *)
+ACC_TITLE                 /accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /accDescr\s*\{[\s\S]*?\}/        :keyword ;
+(** A rule's name: a letter or `_`, then letters, digits, `_` and `-`. *)
+ID                        /[A-Z_a-z][\w-]*/                :variable ;
+(** `"…"` or `'…'`: `\n`, `\r` and `\t` are a line feed, a carriage return and a tab, and `\`
+before any other character is that character. A string may span lines. *)
+STRING                    /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/ :string ;
+-                         /[\t \r\n]+/ ;
+(** A `---` … `---` block inside the body: skipped. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /%%[^\n\r]*/                    :comment ;
+(** `/* … */`: a comment, over lines. *)
+BLOCK_COMMENT             /\/\*[\s\S]*?\*\//               :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `railroad-beta`, then `title`, `accTitle` and `accDescr` lines, then rules.
+The `YAML`, `DIRECTIVE`, `COMMENT` and `BLOCK_COMMENT` tokens of the lexer are skipped before
+parsing. *)
+railroad = Header { text } { Rule } EOF ;
+Header @Header = HEADER ;
+text = Title | AccTitle | AccDescr ;
+
+(** `name = expression ;`: a rule, drawn as a track from its name. A name defined twice is
+drawn twice. *)
+Rule @Rule = ID EQUALS expression SEMI ;
+
+(** An expression is one call: a list, a wrapper or a leaf. A list with one item is that
+item. *)
+expression = KW_SEQUENCE LPAREN list RPAREN
+           | KW_CHOICE LPAREN list RPAREN
+           | KW_OPTIONAL LPAREN expression RPAREN
+           | KW_ONE_OR_MORE LPAREN expression RPAREN
+           | KW_ZERO_OR_MORE LPAREN expression RPAREN
+           | KW_TERMINAL LPAREN STRING RPAREN
+           | KW_NONTERMINAL LPAREN STRING RPAREN
+           | KW_SPECIAL LPAREN STRING RPAREN ;
+list = expression { COMMA expression } ;
+
+(** `title Grammar`: the title (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

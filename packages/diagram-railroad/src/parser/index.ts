@@ -1,28 +1,22 @@
 /**
- * The railroad parser's public surface so far: the four lexers (#608), each gated against its
- * notation's v12 Langium lexer. The parsers, model and detection land with T2 (#610).
+ * The railroad parser's public surface: the four parsers (#610), detection, and the four lexers
+ * (#608), each gated against its notation's v12 Langium lexer.
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { lexAbnf } from './abnf/lexer.ts';
-import { lexEbnf } from './ebnf/lexer.ts';
-import { lexIr } from './ir/lexer.ts';
-import { lexPeg } from './peg/lexer.ts';
+import { LEXERS } from './lexers.ts';
 import type { RailroadNotation } from './tokens.ts';
 
 export { RAILROAD_TRIVIA, T as RailroadTokenKind } from './tokens.ts';
 export type { RailroadNotation } from './tokens.ts';
+export { parseRailroad } from './parse.ts';
+export { RULE_SYMBOL } from './base.ts';
+export type { RailroadParseOptions, RailroadParseResult } from './base.ts';
+export { detectRailroad, RAILROAD_HEADERS } from './detect.ts';
+export type * from './ast.ts';
 
-/** Each notation's lexer: `lex(src, from, view)` over the body `src[from…]`. */
-export const LEXERS: Readonly<
-  Record<RailroadNotation, (src: string, from: number, view: SourceView) => TokenStream>
-> = {
-  railroad: lexIr,
-  railroadEbnf: lexEbnf,
-  railroadAbnf: lexAbnf,
-  railroadPeg: lexPeg,
-};
+export { LEXERS } from './lexers.ts';
 
 export interface RailroadToken {
   /** A `RailroadTokenKind` or a shared `Kind`. */

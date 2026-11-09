@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-railroad",
   "version": "0.0.0",
   "private": true,
-  "description": "Railroad diagram plugin for Mermaid (IR, EBNF, ABNF and PEG): parser, layout and SVG renderer (in progress).",
+  "description": "Railroad diagram plugin for Mermaid (IR, EBNF, ABNF and PEG): lexers, parsers and model (layout and renderer to follow).",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -31,7 +31,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*"
