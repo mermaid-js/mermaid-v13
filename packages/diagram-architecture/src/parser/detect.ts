@@ -1,4 +1,4 @@
-// cspell:words betax
+// cspell:words betax archi tecture
 /**
  * Architecture detection, as v12's detector saw the text (`/^\s*architecture/`, case-sensitive,
  * no boundary): after the front matter, with directives and `%%` comments removed. A directive
