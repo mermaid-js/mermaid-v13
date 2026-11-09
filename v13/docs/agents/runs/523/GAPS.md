@@ -15,7 +15,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - From exploration: v13 flowchart drops an authored `x --> x` whose `x` is inside a collapsed flow (`prepare.ts:335`); v12 agentflow keeps an authored self-loop.
 
 ## #548 T4 renderer
-- Blocked on block's shape-geometry T0 (#521) merging into `mermaid-v13`.
+- Unblocked: block's shape-geometry T0 (#589) is merged into `mermaid-v13` (ad3648a91) and into this branch (ce62f350c). The `subroutinePadding*`, `leanPadding*` and `crossArrowhead*` rows are core rows (`packages/core/src/theme/vocabulary.ts`, values in `specs/geometry.ts`); add `'agentflow'` to the `usedBy` of each row agentflow's sources read, and nothing else in core.
 
 ## #549 T6 language facet
 
