@@ -69,3 +69,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Open: tests use requirement as "the unsupported type": `packages/mermaid/src/api.spec.ts:86-94, 214, 606`, `packages/mermaid/src/cli.spec.ts:220-228`. Move them to a type no M5b port ships (check `registry.gen.ts` and the open M5b specs first; other ports may make the same edit).
 
 ## #588 T7 ASCII
+
+## Final merge of `mermaid-v13`
+- When `fix/pre-manifest-language` has merged into `mermaid-v13`: take theirs for `tools/workspace/sync.spec.ts` (this branch's one-line `workspaceDiagrams()` fix is a stopgap; the shared file has one owner), then `pnpm regen`.
