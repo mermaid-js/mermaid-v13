@@ -1,3 +1,4 @@
+// cspell:words nonterminals
 /**
  * The railroad layout's invariants (spec #526 §Testing, R-LAYOUT-3): what every `RailroadLayout`
  * of a model must satisfy, as messages (none when it holds).
