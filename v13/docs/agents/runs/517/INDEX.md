@@ -8,7 +8,7 @@ Integration branch `feature/517_usecase` (from `mermaid-v13` at 521fb76ee). Draf
 | T1 lexer parity gate | #562 | — | merged (a37507281; `./testing` 4.9 KB gz, no core change) |
 | T2 grammar, parser, model, AST | #563 | #562 | merged (d6986472d; `.` 18.3 KB gz, no core change) |
 | T3 layout | #565 | #563 | merged (81b4ac949; `.` 22.5 KB gz, no core change) |
-| T4 SVG renderer and theme table | #566 | #565, #561 | open |
+| T4 SVG renderer and theme table | #566 | #565, #561 | merged (ff 3444cda86; `.` 30.4 KB gz, core usedBy only) |
 | T5 integration | #567 | #561, #566 | open |
 | T6 language facet | #568 | #563 | open |
 | T7 ASCII (Should) | #569 | #565, #567 | open |
@@ -32,8 +32,11 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | #562 T1 | 94,352 | 0 (no core or registry change) |
 | #563 T2 | unchanged | 0 (no core or registry change) |
 | #565 T3 | unchanged | 0 (no core or registry change) |
+| #566 T4 | 94,412 → 94,412 | 0 (core `usedBy` lists only, dropped from the bundle) |
 
 ## Merge log
+
+- 2026-11-09: `feature/566_usecase-render` fast-forwarded (3444cda86, after a two-axis review: plain labels escaped as v12, kind narrowing, `slot()` direction check). #637's migration was merged and dropped on the coordinator's hold (never pushed); it waits for the shared `tools/workspace/diagrams.ts` fix.
 
 - 2026-11-09: `feature/565_usecase-layout` merged (81b4ac949, after a two-axis review: clip.ts source-axis bug and edge cases, note rank adjacency, duplication). `mermaid-v13` unchanged since e1e953abc.
 
