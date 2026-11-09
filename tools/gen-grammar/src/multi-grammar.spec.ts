@@ -3,6 +3,7 @@
  * `gen:grammar` writes highlighters, a syntax doc, and kind → category and doc tables for each.
  */
 import { describe, expect, it } from 'vitest';
+import { highlighters } from './agreement-testing.ts';
 import { generate, targetPaths } from './generate.ts';
 import type { GrammarTarget } from './generate.ts';
 
@@ -83,6 +84,28 @@ describe('several grammars in one package (D512)', () => {
     expect(() => generate((p) => rest[p], targets)).toThrow(
       'missing packages/diagram-dual/grammar/dual-alt.ebnf'
     );
+  });
+
+  it('runs the highlighters of a second grammar by its target', async () => {
+    const sameFiles = generate((p) => sources[p], targets);
+    expect(sameFiles.size).toBe(files.size);
+    // The real GRAMMARS hold no second grammar yet: the lookup names the path it missed.
+    await expect(highlighters(targets[1]!)).rejects.toThrowError(
+      'gen:grammar writes no packages/diagram-dual/grammar/generated/dual-alt.tmLanguage.json'
+    );
+  });
+
+  it('refuses a type that is not an identifier, or a second type with no grammar file', () => {
+    expect(() => targetPaths({ ...targets[0]!, type: 'dual-alt' })).toThrow('not an identifier');
+    expect(() => targetPaths({ ...targets[1]!, grammar: undefined })).toThrow(
+      'type dualAlt of package dual names no grammar file'
+    );
+  });
+
+  it("keeps the plain table names for the package's own type", () => {
+    const own = targetPaths({ ...targets[0]!, grammar: 'dual-v2' });
+    expect(own.categories).toBe('packages/diagram-dual/src/generated/categories.ts');
+    expect(own.file).toBe('packages/diagram-dual/grammar/dual-v2.ebnf');
   });
 
   it('refuses two grammars that write the same file', () => {

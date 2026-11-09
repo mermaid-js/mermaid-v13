@@ -312,9 +312,10 @@ export const GRAMMARS: GrammarTarget[] = [
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */
 export const grammarPath = (grammar: string, pkg: string = grammar): string =>
   `packages/diagram-${pkg}/grammar/${grammar}.ebnf`;
-export const generatedDir = (type: string): string => `packages/diagram-${type}/grammar/generated`;
+/** The highlighters' folder of `packages/diagram-<pkg>`. */
+export const generatedDir = (pkg: string): string => `packages/diagram-${pkg}/grammar/generated`;
 /** The diagram package's source dir. */
-export const sourceDir = (type: string): string => `packages/diagram-${type}/src`;
+export const sourceDir = (pkg: string): string => `packages/diagram-${pkg}/src`;
 
 /** Where one target's grammar file is, and what it generates (repo-relative paths). */
 export interface TargetPaths {
@@ -335,10 +336,16 @@ export interface TargetPaths {
 
 /** Where one target's grammar file is, and what it generates. */
 export function targetPaths(target: GrammarTarget): TargetPaths {
-  const pkg = target.package ?? target.type;
-  const grammar = target.grammar ?? target.type;
-  // The package's own grammar keeps the plain table names; each other one prefixes them.
-  const table = grammar === pkg ? '' : `${grammar}.`;
+  const { type } = target;
+  const pkg = target.package ?? type;
+  if (!/^[A-Za-z_$][\w$]*$/.test(type)) throw new Error(`type ${type} is not an identifier`);
+  // A second type of a package names its grammar file (`railroad-ebnf`, not `railroadEbnf`).
+  if (type !== pkg && target.grammar === undefined) {
+    throw new Error(`type ${type} of package ${pkg} names no grammar file`);
+  }
+  const grammar = target.grammar ?? type;
+  // The package's own type keeps the plain table names; each other one prefixes them.
+  const table = type === pkg ? '' : `${grammar}.`;
   const generated = `${sourceDir(pkg)}/generated`;
   return {
     pkg,
@@ -388,9 +395,8 @@ export function generate(
     const paths = targetPaths(target);
     const text = read(paths.file);
     if (text === undefined) throw new Error(`missing ${paths.file}`);
-    const kindsPath = paths.kinds;
-    const kindsText = read(kindsPath);
-    if (kindsText === undefined) throw new Error(`missing ${kindsPath}`);
+    const kindsText = read(paths.kinds);
+    if (kindsText === undefined) throw new Error(`missing ${paths.kinds}`);
     for (const [k, v] of generateFor(target, text, kindsText)) {
       if (files.has(k)) throw new Error(`two grammars generate ${k}`);
       files.set(k, v);

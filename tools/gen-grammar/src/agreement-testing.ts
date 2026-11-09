@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { generate, generatedDir } from './generate.ts';
+import { generate, generatedDir, targetPaths } from './generate.ts';
+import type { GrammarTarget } from './generate.ts';
 import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
@@ -19,17 +20,19 @@ let files: Map<string, string> | undefined;
 /** A generated highlighter file of package `pkg`, e.g. `class.monarch.json`. */
 function outOf(pkg: string, name: string): string {
   files ??= generate((p) => readFileSync(join(ROOT, p), 'utf8'));
-  return files.get(`${generatedDir(pkg)}/${name}`) ?? '';
+  const path = `${generatedDir(pkg)}/${name}`;
+  const text = files.get(path);
+  if (text === undefined) throw new Error(`gen:grammar writes no ${path}`);
+  return text;
 }
 
 /**
- * The three highlighters generated from grammar `type` of package `pkg` (`railroad-ebnf` of
- * `railroad`, D512), run in their real engines.
+ * The three highlighters generated for a diagram type, run in their real engines: `type` names
+ * a package with one grammar; a {@link GrammarTarget} names any grammar (D512).
  */
-export async function highlighters(
-  type: string,
-  pkg: string = type
-): Promise<[string, Categorise][]> {
+export async function highlighters(of: string | GrammarTarget): Promise<[string, Categorise][]> {
+  const { pkg, grammar: type } =
+    typeof of === 'string' ? { pkg: of, grammar: of } : targetPaths(of);
   const out = (name: string) => outOf(pkg, name);
   return [
     [
