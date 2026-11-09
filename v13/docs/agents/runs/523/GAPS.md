@@ -7,6 +7,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - From exploration: `fa796a943` is past 12.2.0 for `shapes.ts` (the `lean_right` alias fix) and flowchart's `LINK_ID`; the harvest reads post-tag specs. Exclude or skip what 12.2.0 rejects, with a reason.
 
 ## #546 T2 parser
+- From the #544 review: D467's test-only parity spec (v12's flowchart `SHARED_SYNTAX` bodies fed to both v13 flowchart and agentflow) is this ticket's.
 - From exploration: v13 flowchart's model differs from v12 agentflow in three places to cut: subgraph parent is last-write-wins with no cycle cut (`nesting.ts:32–35`; D461 wants the cycle cut and `CONTAINMENT_VIOLATION`); `inheritDir` also falls back to the top-level `direction` in v12 (`agentflowDb.ts:1218`), though a top-level `direction` does not change the diagram direction; v12 keeps a dangling edge from `connectors --> b` after dropping the vertex.
 
 ## #547 T3 layout
