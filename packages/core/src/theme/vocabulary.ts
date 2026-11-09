@@ -222,6 +222,7 @@ const TEXT_USERS = [
   'gantt',
   'kanban',
   'radar',
+  'railroad',
 ];
 
 /**
