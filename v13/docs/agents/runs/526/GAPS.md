@@ -24,6 +24,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Ported specs: 30 of 141 skipped: the renderer (6) and styles (18) specs and the four loaders' `renderer` until T3/T4 (#612, #613: unskip in `scripts/port-v12-specs.ts`), and DB sanitising (2, R-SEC-2).
 
 ## #612 T3 layout
+- **Choice (done):** D514's guard read as "every arc excursion reaches at least `max(extent + verticalSeparation, 2r)`": a choice's nearest branch on each side (and all beyond it) moves out to `2r` from the main line (the main line then sits off half height); an optional's bypass and a repetition's loop keep v12's `2r` gap unless `verticalSeparation` is larger. With v12's defaults only overshooting choices change. MIGRATION rows for both D514 fixes: T5.
+- **Choice (done):** the layout is a tree mirroring v12's nested `g`s (offsets as v12's `translate`, paths in their group's coordinates), so T4 writes v12's transforms and path strings unchanged.
+- **Choice (done):** texts are measured as raw strings (`measurer.width`, height `lineHeight`), not through `layoutLabel`: v12 wrote them with `.text()`, so `<b>` or `*` are literal. Lengths fall back to v12's defaults silently (v12's `sanitizeNumberValue`); fonts too until T5 adds `RAILROAD_CONFIG_INVALID`.
+- **Choice (done):** `bounds` = v12's canvas grown over everything drawn (half stroke included), as packet's D344; a rule name in a large font can rise above its rule (v12 clipped it).
+- The ported `railroadRenderer.spec.ts` stays skipped (it reads the DOM): T4 unskips it; its geometry is checked on the layout in `src/layout/layout.spec.ts`.
 
 ## #613 T4 renderer
 

@@ -76,7 +76,7 @@ const SOURCES: Source[] = [
 
 const RENDERER = 'v12 drew with its renderer, which lands with T4 (#613)';
 const LAYOUT =
-  "v12's renderer and its jsdom measurements; the layout and renderer land with T3 (#612) and T4 (#613)";
+  "v12's renderer, read through the DOM it drew; the renderer lands with T4 (#613). Its geometry (the 6 cases' path strings and positions) is checked on the layout in `src/layout/layout.spec.ts` (T3, #612)";
 const STYLES =
   "v12's `getStyles` CSS; v13 writes no `<style>` (R-SEC-2) and the theme table lands with T4 (#613)";
 const SANITIZE =

@@ -19,3 +19,5 @@ export { railroadCategories } from './generated/categories.ts';
 export { railroadEbnfCategories } from './generated/railroad-ebnf.categories.ts';
 export { railroadAbnfCategories } from './generated/railroad-abnf.categories.ts';
 export { railroadPegCategories } from './generated/railroad-peg.categories.ts';
+export { railroadLayoutViolations, RAILROAD_METRICS } from './layout/index.ts';
+export { railroadSectionOf } from './config.ts';
