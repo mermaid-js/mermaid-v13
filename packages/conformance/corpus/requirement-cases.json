@@ -666,5 +666,65 @@
   {
     "id": "requirement-cases/style-before-definition",
     "source": "requirementDiagram\nstyle a fill:red\nclass a c\na:::c\nrequirement a {\n  id: 1\n}\n"
+  },
+  {
+    "id": "requirement-cases/parser-style-stops-at-unknown",
+    "source": "requirementDiagram\nrequirement a {\n}\nstyle x,a fill:red\nstyle a stroke:blue\n"
+  },
+  {
+    "id": "requirement-cases/parser-class-multiplies",
+    "source": "requirementDiagram\nrequirement a {\n}\nclass a,a c,c\nclassDef c fill:red,color:blue\nclass a c\n"
+  },
+  {
+    "id": "requirement-cases/parser-duplicate-shorthand-classes",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\nrequirement a:::c {\n  id: 2\n}\nelement e {\n}\nelement e:::d {\n  type: t\n}"
+  },
+  {
+    "id": "requirement-cases/parser-shared-name-style",
+    "source": "requirementDiagram\nelement a {\n  type: t\n}\nrequirement a {\n}\nstyle a fill:red\na:::c\na - traces -> a"
+  },
+  {
+    "id": "requirement-cases/parser-classdef-default-order",
+    "source": "requirementDiagram\nclassDef default fill:red\nrequirement a {\n}\nclassDef default stroke:blue\nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/parser-statements-on-one-line",
+    "source": "requirementDiagram\n\"a\" - traces -> \"b\" \"c\" - copies -> \"d\""
+  },
+  {
+    "id": "requirement-cases/parser-style-quoted-ids",
+    "source": "requirementDiagram\nrequirement \"a b\" {\n}\nrequirement c {\n}\nstyle \"a b\",c fill:red\nclass \"a b\",c k"
+  },
+  {
+    "id": "requirement-cases/parser-classdef-twice",
+    "source": "requirementDiagram\nrequirement a:::c {\n}\nclassDef c fill:red\nclassDef c,c stroke:blue"
+  },
+  {
+    "id": "requirement-cases/parser-style-then-quoted",
+    "source": "requirementDiagram\nrequirement a {\n}\nstyle a fill:red \"x\"\n- traces -> a"
+  },
+  {
+    "id": "requirement-cases/parser-nested-body",
+    "source": "requirementDiagram\nrequirement a {\n  requirement b {\n  }\n}"
+  },
+  {
+    "id": "requirement-cases/parser-missing-close",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\nelement b {\n}"
+  },
+  {
+    "id": "requirement-cases/parser-relation-missing-target",
+    "source": "requirementDiagram\na - traces ->\n"
+  },
+  {
+    "id": "requirement-cases/parser-class-one-list",
+    "source": "requirementDiagram\nclass a\nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/parser-field-in-element",
+    "source": "requirementDiagram\nelement e {\n  id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/parser-risk-unknown",
+    "source": "requirementDiagram\nrequirement a {\n  risk: extreme\n  verifymethod: guess\n}"
   }
 ]

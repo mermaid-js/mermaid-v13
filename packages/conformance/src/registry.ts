@@ -16,6 +16,7 @@ import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
 import { radarAdapter } from './radar/v13.ts';
+import { requirementAdapter } from './requirement/v13.ts';
 import { sankeyParityCorpus } from './sankey/corpus.ts';
 import { sankeyAdapter } from './sankey/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
@@ -182,6 +183,16 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: requirementAdapter,
+    corpusDirs: ['e2e/diagrams/requirement'],
+    // The gate's variants run in `requirement/parity.spec.ts`, against v12 with D431's and
+    // D432's lexer rules (a blank before every line break is D431's case everywhere).
+    corpusFiles: [
+      'packages/conformance/corpus/requirement-v12-specs.json',
+      'packages/conformance/corpus/requirement-cases.json',
+    ],
   },
 ];
 

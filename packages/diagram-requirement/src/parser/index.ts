@@ -1,5 +1,6 @@
 /**
- * The requirement parser's public surface (so far): the lexer gated against v12's jison lexer.
+ * The requirement parser's public surface: the parser, detection, and the lexer gated against
+ * v12's jison lexer.
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,19 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as RequirementTokenKind } from './tokens.ts';
+export { parseRequirement } from './parser.ts';
+export type { RequirementParseOptions, RequirementParseResult } from './parser.ts';
+export { detectRequirement } from './detect.ts';
+export { RequirementBuilder } from './builder.ts';
+export type {
+  At,
+  BuilderOptions,
+  DefAt,
+  ElementFields,
+  Ref,
+  RequirementFields,
+} from './builder.ts';
+export type * from './ast.ts';
 
 export interface RequirementToken {
   /** A `RequirementTokenKind` or a shared `Kind`. */

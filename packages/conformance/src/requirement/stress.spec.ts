@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { requirementTokens } from '@mermaid-js/diagram-requirement';
+import { parseRequirement, requirementTokens } from '@mermaid-js/diagram-requirement';
 
 /**
  * R-PARSE-7, pitfall 5: the requirement lexer is linear in input size, in every rule that scans
@@ -7,7 +7,7 @@ import { requirementTokens } from '@mermaid-js/diagram-requirement';
  * token (a 47 KB line takes 2.1 s), and its shared `style.*:\S*#.*;` rewrite is cubic on a long
  * `style` line (16 KB: 8.8 s). Shape from `../pie/stress.spec.ts`: n and 8n units, up to 80k
  * lines; linear is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time,
- * best of five, and small and large lexes alternate.
+ * best of five, and small and large lexes alternate. The parser shapes are at the end.
  */
 const H = 'requirementDiagram\n';
 const BLOCK = 'requirement a {\n  id: 1\n  text: t\n  risk: high\n  verifymethod: test\n}\n';
@@ -108,5 +108,101 @@ describe('stress: the requirement lexer is linear in input size', () => {
     // RD NEWLINE, then unqString LINE SATISFIES END_ARROW_R unqString NEWLINE per line, then EOF.
     const tokens = requirementTokens(H + 'a - satisfies -> b\n'.repeat(80_000));
     expect(tokens).toHaveLength(3 + 6 * 80_000);
+  });
+});
+
+/** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
+const ratio = (build: (n: number) => string, run: (src: string) => unknown): number => {
+  const small = build(4_000);
+  const large = build(32_000);
+  run(small); // warm up
+  run(large);
+  let tSmall = Infinity;
+  let tLarge = Infinity;
+  for (let round = 0; round < 5; round++) {
+    tSmall = Math.min(
+      tSmall,
+      cost(() => run(small))
+    );
+    tLarge = Math.min(
+      tLarge,
+      cost(() => run(large))
+    );
+  }
+  return tLarge / Math.max(tSmall, 2);
+};
+
+/** `n` lines of `line(k)` after the header. */
+const lines = (n: number, line: (k: number) => string): string =>
+  H + Array.from({ length: n }, (_, k) => line(k)).join('\n');
+
+/**
+ * R-PARSE-7, pitfalls 11 and 19: the parser (boxes and classes by name, AST ids, the D433 and
+ * D434 warnings, the style-copy cap, recovery) is linear in input size on the lexer's shapes
+ * and on its own, with the same n and 8n ratio test (4k and 32k units).
+ */
+const PARSE_SHAPES: [string, (n: number) => string][] = [
+  ...SHAPES,
+  ['many requirements', (n) => lines(n / 3, (k) => `requirement r${k} {\n  id: ${k}\n}`)],
+  ['many elements', (n) => lines(n / 3, (k) => `element e${k} {\n  type: t\n}`)],
+  ['many distinct relations', (n) => lines(n, (k) => `r${k} - traces -> r${k + 1}`)],
+  ['fan-out from one box', (n) => lines(n, (k) => `hub - satisfies -> r${k}`)],
+  ['repeated relations', (n) => lines(n, () => `a - satisfies -> b`)],
+  ['relations to unknown names', (n) => lines(n, (k) => `x${k} <- copies - y${k}`)],
+  ['duplicate definitions', (n) => lines(n / 2, () => `requirement a {\n}`)],
+  ['shared names', (n) => lines(n / 2, (k) => `requirement n${k} {\n}\nelement n${k} {\n}`)],
+  [
+    'styles before their definitions',
+    (n) =>
+      lines(n / 2, (k) => `style r${k} fill:red`) +
+      '\n' +
+      Array.from({ length: n / 4 }, (_, k) => `requirement r${k} {\n}`).join('\n'),
+  ],
+  [
+    'a classDef per box',
+    (n) =>
+      lines(n / 2, (k) => `requirement r${k}:::c${k} {\n}`) +
+      '\n' +
+      Array.from({ length: n / 2 }, (_, k) => `classDef c${k} fill:red`).join('\n'),
+  ],
+  [
+    'classDef default between definitions',
+    (n) => lines(n / 3, (k) => `requirement r${k} {\n}\nclassDef default stroke:#333`),
+  ],
+  ['class statements', (n) => lines(n / 3, (k) => `element e${k} {\n}\nclass e${k} c${k % 7}`)],
+  ['a long style id list', (n) => H + 'element a {\n}\nstyle ' + 'a,'.repeat(n) + 'a fill:red'],
+  [
+    'the style-copy cap',
+    (n) =>
+      H +
+      'element a {\n}\nclassDef c fill:red\nclass ' +
+      'a,'.repeat(n / 2) +
+      'a ' +
+      'c,'.repeat(n / 2) +
+      'c',
+  ],
+  ['syntax errors on every line', (n) => lines(n, (k) => `r${k} - foo -> x`)],
+  ['bad fields in a body', (n) => H + 'requirement a {\n' + '  risk: extreme\n'.repeat(n) + '}'],
+  ['unclosed bodies', (n) => lines(n / 2, (k) => `requirement r${k} {\n  id: 1`)],
+  ['text after directions', (n) => lines(n, () => `direction LR a`)],
+];
+
+describe('stress: the requirement parser is linear in input size', () => {
+  it.each(PARSE_SHAPES)(
+    '%s',
+    (_name, build) => expect(ratio(build, (src) => parseRequirement(src))).toBeLessThan(24),
+    60_000
+  );
+
+  it('parses 3,000 requirements and their relations', () => {
+    const body = Array.from(
+      { length: 3_000 },
+      (_, k) =>
+        `requirement r${k} {\n  id: ${k}\n  risk: high\n}\nr${k} - traces -> r${(k + 1) % 3_000}`
+    );
+    const r = parseRequirement(H + body.join('\n'));
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.requirements).toHaveLength(3_000);
+    expect(r.model.relations).toHaveLength(3_000);
   });
 });

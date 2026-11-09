@@ -1062,5 +1062,157 @@
     "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
     "owner": "#488",
     "since": "2026-11-08"
+  },
+  {
+    "id": "e2e/diagrams/requirement/visual-check/with-a-theme-default.mmd",
+    "inputHash": "sha256:1e9d8b61a957c195",
+    "kind": "accept",
+    "reason": "Core reads front matter after a leading blank line (as `packages/core/src/preprocess/preprocess.spec.ts` records for this file), so v13 renders it with the forest theme; v12's render() lexed its `---` fences as diagram text and rejected it. Not a requirement rule (the lexer gate excludes it too, #560).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/header-trailing-blank",
+    "inputHash": "sha256:b3c3ed8ae3dd9c1e",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/header-trailing-tab",
+    "inputHash": "sha256:aa884d7e6737c9b0",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/header-trailing-blanks-then-blank-line",
+    "inputHash": "sha256:a02dff8a267444d0",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-mid-line",
+    "inputHash": "sha256:41d099dab3193a21",
+    "kind": "model",
+    "reason": "D432: `direction` is read only as a statement at the start of a line, so `a - traces -> b direction LR` is a relation to `b direction LR` and the direction stays TB; v12 made the whole line a direction token and dropped the relation.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-in-value",
+    "inputHash": "sha256:f7b2ec682e62f031",
+    "kind": "accept",
+    "reason": "D432: `text: go direction LR now` is text; v12 read the line from `text` on as a direction token and rejected the body.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-two-on-a-line",
+    "inputHash": "sha256:3f8b7e0264e3e642",
+    "kind": "reject",
+    "reason": "`direction BT x direction TB`: A direction statement ends its line (D432 read literally, GAPS #560/#564): the text after `direction LR` is one error, where v12 made the whole line one direction token and dropped the rest silently. (v12: TB, from the last `direction` on the line)",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-suffix",
+    "inputHash": "sha256:fdd8318329564ea0",
+    "kind": "reject",
+    "reason": "D432: `direction` is read only as a statement at the start of a line, ending at a word boundary, so `direction TBX` is a name with no relation after it (an error), where v12's `.*direction\\s+XX[^\\n]*` took the whole line as a direction.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-trailing-text",
+    "inputHash": "sha256:e9d6d7c99e0c4e1b",
+    "kind": "reject",
+    "reason": "A direction statement ends its line (D432 read literally, GAPS #560/#564): the text after `direction LR` is one error, where v12 made the whole line one direction token and dropped the rest silently.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-word-before",
+    "inputHash": "sha256:29ac9f215571979d",
+    "kind": "reject",
+    "reason": "D432: `direction` is read only as a statement at the start of a line, ending at a word boundary, so `foo direction LR` is a name with no relation after it (an error), where v12's `.*direction\\s+XX[^\\n]*` took the whole line as a direction.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-then-relation",
+    "inputHash": "sha256:0b81753d96c160b2",
+    "kind": "reject",
+    "reason": "A direction statement ends its line (D432 read literally, GAPS #560/#564): the text after `direction LR` is one error, where v12 made the whole line one direction token and dropped the rest silently. Here the dropped text is a relation (v12 with D432's lexer alone would read it).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-then-semicolon",
+    "inputHash": "sha256:3d0f29f6f6ad21cb",
+    "kind": "reject",
+    "reason": "A direction statement ends its line (D432 read literally, GAPS #560/#564): the text after `direction LR` is one error, where v12 made the whole line one direction token and dropped the rest silently. (`;` is no requirement syntax.)",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/direction-glued",
+    "inputHash": "sha256:46427f0d53ff8204",
+    "kind": "reject",
+    "reason": "D432: `direction` is read only as a statement at the start of a line, ending at a word boundary, so `xdirection LR` is a name with no relation after it (an error), where v12's `.*direction\\s+XX[^\\n]*` took the whole line as a direction.",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/blank-before-brace-end",
+    "inputHash": "sha256:057b7463a04f2796",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/blank-after-keyword-value",
+    "inputHash": "sha256:1d75ca219a5a427d",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/blank-after-quoted-value",
+    "inputHash": "sha256:fa265baa918bb30b",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/blank-line-separator",
+    "inputHash": "sha256:0a5640d3f4dc33b6",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/blank-lines-with-blanks",
+    "inputHash": "sha256:bfc1b7afdbbd7455",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/line-separator-between-tokens",
+    "inputHash": "sha256:4df8450a07e44edf",
+    "kind": "accept",
+    "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
+    "owner": "#564",
+    "since": "2026-11-09"
   }
 ]

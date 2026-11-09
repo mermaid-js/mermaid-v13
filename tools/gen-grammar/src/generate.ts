@@ -307,6 +307,36 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'requirement',
+    title: 'Requirement diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      // `VerifyMethod` is jison's `VERIFYMTHD`, whose name does not fold to the kind's.
+      unnamed: {
+        AccDescrOpen: {
+          mode: 'INITIAL',
+          pattern: 'accDescr\\s*\\{\\s*',
+          docOf: 'acc_descr_multiline_value',
+        },
+        AccDescrClose: {
+          mode: 'acc_descr_multiline',
+          pattern: '\\}',
+          docOf: 'acc_descr_multiline_value',
+        },
+        Quote: { mode: 'INITIAL', pattern: '"' },
+        StyleEnd: { mode: 'style', pattern: '\\n' },
+        VerifyMethod: {
+          mode: 'INITIAL',
+          pattern: 'verifyMethod\\b',
+          terminal: 'VERIFYMTHD',
+          docOf: 'VERIFYMTHD',
+        },
+      },
+    },
+  },
 ];
 
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */

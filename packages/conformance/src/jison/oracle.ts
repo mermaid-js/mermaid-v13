@@ -75,6 +75,13 @@ export interface JisonLexerOracle {
    * parser's part (venn's).
    */
   pulledTokens(source: string): Promise<JisonToken[] | undefined>;
+  /**
+   * Run `run` (which parses through the v12 oracle, e.g. `oracle.parse`) with `rules` in place
+   * of v12's own lexer rules, as {@link TokensOptions.rules} does for one `tokens` call: v12's
+   * parser with a decided lexer change applied (requirement's D431 and D432). v12's own rules
+   * are back when the returned promise settles.
+   */
+  withRules<R>(rules: Readonly<Record<number, JisonRule>>, run: () => Promise<R>): Promise<R>;
   readonly LEXICAL_ERROR: typeof LEXICAL_ERROR;
 }
 
@@ -156,6 +163,25 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
         pulled = undefined;
       }
     },
+    async withRules(rules, run) {
+      // jison's `parse` lexes with `Object.create(parser.lexer)`: a replaced rule reads what
+      // that lexer matched so far, so `lex` notes which lexer is running.
+      let current: JisonLexer = lexer;
+      const running = (l: JisonLexer) => {
+        current = l;
+      };
+      const restore = replaceRules(lexer, rules, () => current);
+      lexer.lex = function (this: JisonLexer) {
+        running(this);
+        return lex.call(this);
+      };
+      try {
+        return await run();
+      } finally {
+        lexer.lex = lex;
+        restore();
+      }
+    },
     async tokens(source, options = {}) {
       const input = await lexedText(source);
       if (input === undefined) return undefined;
@@ -196,15 +222,24 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
   };
 }
 
-/** Put `rules` in place of the lexer's own; the returned function puts them back. */
-function replaceRules(lexer: JisonLexer, rules: Readonly<Record<number, JisonRule>>): () => void {
+/**
+ * Put `rules` in place of the lexer's own; the returned function puts them back. `running` is
+ * the lexer whose matched text a rule reads (`lexer` itself unless a parse lexes with a copy).
+ */
+function replaceRules(
+  lexer: JisonLexer,
+  rules: Readonly<Record<number, JisonRule>>,
+  running: () => JisonLexer = () => lexer
+): () => void {
   const table = lexer as unknown as RuleTable;
   const saved = new Map<number, unknown>();
   for (const [key, rule] of Object.entries(rules)) {
     const k = Number(key);
     saved.set(k, table.rules[k]);
     // jison matches with `input.match(rule)`, which calls `Symbol.match`.
-    table.rules[k] = { [Symbol.match]: (text: string) => rule(text, table.matched) };
+    table.rules[k] = {
+      [Symbol.match]: (text: string) => rule(text, (running() as unknown as RuleTable).matched),
+    };
   }
   return () => {
     for (const [k, rule] of saved) table.rules[k] = rule;

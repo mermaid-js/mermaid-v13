@@ -8,7 +8,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonRule } from '../jison/oracle.ts';
+import { loadOracle } from '../oracle.ts';
+import type { Oracle } from '../oracle.ts';
 import { body, crlf, tabs } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
@@ -146,3 +149,17 @@ export const DECIDED_RULES: Readonly<Record<number, JisonRule>> = {
   ...D431_RULES,
   ...D432_RULES,
 };
+
+/**
+ * mermaid\@12 with {@link DECIDED_RULES} in its own lexer: v12's parser and DB on the token
+ * stream v13's lexer is gated on, for model parity and the grammar differential over the
+ * gate's variants (a blank before every line break is D431's case everywhere).
+ */
+export async function decidedOracle(): Promise<Oracle> {
+  const oracle = await loadOracle();
+  const lexer = await loadJisonLexerOracle('requirement');
+  return {
+    version: oracle.version,
+    parse: (text, config) => lexer.withRules(DECIDED_RULES, () => oracle.parse(text, config)),
+  };
+}
