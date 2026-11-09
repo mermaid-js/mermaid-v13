@@ -13,17 +13,20 @@ const SHAPES: [string, (n: number) => string][] = [
   ['nested lines', (n) => H + '  A\n    a1\n      a2\n'.repeat(n / 3)],
   ['blank lines', (n) => H + '\n'.repeat(n) + '  A'],
   ['blank lines with blanks', (n) => H + '   \n'.repeat(n / 4) + '  A'],
-  ['blank lines with tabs and separators', (n) => H + ' \t \n'.repeat(n / 4) + '  A'],
+  ['blank lines with tabs and separators', (n) => H + ' \t\u2028\n'.repeat(n / 4) + '  A'],
   ['a long indent', (n) => H + ' '.repeat(n) + 'A'],
   ['a long indent at the end', (n) => H + ' '.repeat(n)],
   ['a line break then a long indent', (n) => H + '\n' + ' '.repeat(n) + 'A'],
   ['a long blank run then a line break', (n) => H + ' '.repeat(n) + '\n  A'],
-  ['a long indent of line separators', (n) => H + ' '.repeat(n) + 'A'],
+  ['a long indent of line separators', (n) => H + '\u2028'.repeat(n) + 'A'],
   ['a long line', (n) => H + '  ' + 'x '.repeat(n / 2)],
   ['a long effect on the header line', (n) => 'ishikawa-beta ' + 'x '.repeat(n / 2)],
   ['a long line with inline comments', (n) => H + '  A' + ' %% c'.repeat(n / 5)],
-  ['a long line with line separators', (n) => H + '  A' + ' x'.repeat(n / 2)],
-  ['header comments split by line separators', (n) => 'ishikawa-beta %% c' + ' %% c'.repeat(n / 5)],
+  ['a long line with line separators', (n) => H + '  A' + '\u2028x'.repeat(n / 2)],
+  [
+    'header comments split by line separators',
+    (n) => 'ishikawa-beta %% c' + '\u2028%% c'.repeat(n / 5),
+  ],
   ['a long blank run before a comment', (n) => H + ' '.repeat(n) + '%% c'],
   ['bare percent lines', (n) => H + '%%\n'.repeat(n / 3)],
   ['indented bare percent lines', (n) => H + '   %%\n'.repeat(n / 6)],

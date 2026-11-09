@@ -14,8 +14,8 @@ import { ishikawaGateCorpus, VARIANTS } from './corpus.ts';
  * - images are compared as v12's parser read them: entity placeholders decoded, CRLF as LF;
  * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
  *   clipped to the source, so the oracle takes that `\n` off the token that matched it;
- * - after a lexical error jison stops, so both streams are cut at the first `LEXICAL_ERROR`
- *   (no input reaches one: every character matches `[\n]+` or `[^\n]+`).
+ * - no input makes jison throw (every character matches `[\n]+` or `[^\n]+`), so no kind maps
+ *   to `LEXICAL_ERROR`; the gate asserts that the oracle never ends a stream with one.
  *
  * Every source is also lexed in each generated variant (`VARIANTS`): with comment lines added
  * (and one through the middle of a short body), with every line break a CR followed by a
@@ -39,12 +39,7 @@ function v13Tokens(source: string): JisonToken[] {
   const out: JisonToken[] = [];
   for (const t of ishikawaTokens(source)) {
     const name = JISON_NAMES[t.kind];
-    if (!name) continue;
-    if (name === LEXICAL_ERROR) {
-      out.push([LEXICAL_ERROR, '']);
-      break;
-    }
-    out.push([name, t.text]);
+    if (name) out.push([name, t.text]);
   }
   return out;
 }
@@ -68,6 +63,7 @@ describe('ishikawa lexer parity with mermaid@12 (jison)', () => {
         continue;
       }
       compared++;
+      if (v12.some(([n]) => n === LEXICAL_ERROR)) diffs.push(`${item.id}: v12 threw`);
       if (!VARIANT.test(item.id)) {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
