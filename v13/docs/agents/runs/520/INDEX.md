@@ -6,8 +6,8 @@ Integration branch `feature/520_requirement` (from `mermaid-v13` at 521fb76ee). 
 | --- | --- | --- | --- |
 | T1 lexer parity gate and corpus | #560 | #285 (merged) | merged (ff 6062cd372; package entry 4,471 B gz; core unchanged 93,891 B) |
 | T2 grammar, parser, model, AST | #564 | #560 | merged (ff d0e481371; package entry ~12.5 kB gz; no core change) |
-| T3 layout | #570 | #564 | in progress (t570) |
-| T4 SVG renderer | #574 | #570 | open |
+| T3 layout | #570 | #564 | merged (ff ddc255f6d; package entry 14,430 B gz; core 94,385 B unchanged, `TEXT_USERS` metadata only) |
+| T4 SVG renderer | #574 | #570 | in progress (t574) |
 | T6 language facet | #579 | #564 | open |
 | T5 integration | #587 | #574, #579 | open |
 | T7 ASCII renderer (optional, D320) | #588 | #587 | open |
