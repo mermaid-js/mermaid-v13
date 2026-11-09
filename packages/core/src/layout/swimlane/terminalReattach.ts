@@ -1,3 +1,4 @@
+// cspell:ignore pebr
 // Route ends brought back onto their boxes (v13). v12 routes LR and RL in TB coordinates with the
 // nodes' unturned sizes and turns the result, so a port on a node's side, or the router's anchor
 // 20 off it, can land off the turned box; endpoint clipping only moves ends that lie inside a box
