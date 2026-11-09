@@ -8,7 +8,7 @@ import { postProcessSwimlaneLayout } from './postProcessing.ts';
 import { toGraphView, writeBackToLayoutData } from './helpers.ts';
 import { sugiyamaLayout } from './pipeline.ts';
 import { resolveTopLaneOrder } from './phase2.options.ts';
-import { routeEdgesOrthogonal } from './orthogonalRouter/router.ts';
+import { routeForDirection } from './turnedRouting.ts';
 import { routeSelfLoops } from './selfLoops.ts';
 import { fitLanesToRoutes } from './laneFit.ts';
 import { reattachTerminals } from './terminalReattach.ts';
@@ -46,7 +46,8 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   for (const edge of data4Layout.edges) {
     delete edge.points;
   }
-  routeEdgesOrthogonal(data4Layout, direction);
+  // v13: LR/RL route on the sizes the nodes are drawn at once turned (`turnedRouting.ts`).
+  routeForDirection(data4Layout, direction);
 
   postProcessSwimlaneLayout(data4Layout, direction);
   // v12's router skips self-loops; v13's model routes every edge.

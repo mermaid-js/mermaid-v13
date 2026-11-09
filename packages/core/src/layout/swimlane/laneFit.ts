@@ -10,6 +10,11 @@ import { buildLaneModel } from './lanes.ts';
 
 type Axis = 'x' | 'y';
 
+interface Pt {
+  x: number;
+  y: number;
+}
+
 /** Room kept between a route and a lane's outer border: v12's least lane margin. */
 const MARGIN = 10;
 
@@ -40,17 +45,49 @@ function setSpan(lane: Node, axis: Axis, to: Span): void {
     : { ...r, [lo]: r[lo] + shift, [hi]: r[hi] + shift };
 }
 
-/** The route points that must stay inside the lanes: all but ends on a group's border. */
-function routePoints(data: LayoutData, groups: ReadonlySet<string>): { x: number; y: number }[] {
-  const out: { x: number; y: number }[] = [];
+const same = (a: Pt, b: Pt): boolean => Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
+
+/**
+ * What must stay inside the lanes: every route point but the ends on a group's border (with the
+ * copies of them post-processing leaves for v12's renderer), and the corners of edge labels.
+ */
+function routePoints(data: LayoutData, groups: ReadonlySet<string>): Pt[] {
+  const out: Pt[] = [];
   for (const e of data.edges) {
     const pts = e.points ?? [];
     if (e.isLayoutOnly || pts.length < 2) continue;
-    const from = groups.has(e.start) ? 1 : 0;
-    const to = groups.has(e.end) ? pts.length - 1 : pts.length;
+    let from = 0;
+    let to = pts.length;
+    if (groups.has(e.start)) while (from < to && same(pts[from]!, pts[0]!)) from++;
+    if (groups.has(e.end)) while (to > from && same(pts[to - 1]!, pts.at(-1)!)) to--;
     out.push(...pts.slice(from, to));
   }
+  for (const n of data.nodes) {
+    if (!n.isEdgeLabel || n.x === undefined || n.y === undefined) continue;
+    const [w, h] = [(n.width ?? 0) / 2, (n.height ?? 0) / 2];
+    out.push({ x: n.x - w, y: n.y - h }, { x: n.x + w, y: n.y + h });
+  }
   return out;
+}
+
+/** Moves one end of `pts` (and its copies) from `at` to `to` along `axis`, when it lies there. */
+function moveEnd(pts: Pt[], atStart: boolean, axis: Axis, at: number, to: number): void {
+  const route = atStart ? pts : pts.reverse();
+  const end = route[0]!;
+  if (Math.abs(end[axis] - at) > 0.5) {
+    if (!atStart) pts.reverse();
+    return;
+  }
+  let copies = 1;
+  while (copies < route.length && same(route[copies]!, end)) copies++;
+  const next = route[copies];
+  const other: Axis = axis === 'x' ? 'y' : 'x';
+  // A leg that runs along `axis` stretches to the new border; otherwise a stub joins it.
+  const along = next !== undefined && Math.abs(next[other] - end[other]) < 0.5;
+  const moved = { ...end, [axis]: to };
+  if (along) route.splice(0, copies, moved);
+  else route.unshift(moved);
+  if (!atStart) pts.reverse();
 }
 
 /** Moves the ends of `edges` that lay on `lane`'s old side `at` along `axis` onto `to`. */
@@ -58,19 +95,8 @@ function followBorder(edges: Edge[], lane: Node, axis: Axis, at: number, to: num
   for (const e of edges) {
     const pts = e.points;
     if (!pts || pts.length < 2) continue;
-    for (const [end, next] of [
-      [e.start === lane.id ? 0 : -1, 1],
-      [e.end === lane.id ? pts.length - 1 : -1, pts.length - 2],
-    ] as const) {
-      const p = pts[end];
-      if (!p || Math.abs(p[axis] - at) > 0.5) continue;
-      const along =
-        Math.abs(pts[next]![axis === 'x' ? 'y' : 'x'] - p[axis === 'x' ? 'y' : 'x']) < 0.5;
-      const moved = { ...p, [axis]: to };
-      if (along) pts[end] = moved;
-      else if (end === 0) pts.unshift(moved);
-      else pts.push(moved);
-    }
+    if (e.start === lane.id) moveEnd(pts, true, axis, at, to);
+    if (e.end === lane.id) moveEnd(pts, false, axis, at, to);
   }
 }
 

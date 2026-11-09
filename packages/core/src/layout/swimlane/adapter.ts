@@ -15,6 +15,7 @@ import type { LayoutData, Node, SwimlaneTuning } from './layoutData.ts';
 import { buildLaneModel } from './lanes.ts';
 import { leftTitleBandWidth } from './direction/lrTransform.ts';
 import { placeEndLabels } from './endLabels.ts';
+import { type PlacedBox, placeholderRoute } from './placeholderRoutes.ts';
 
 function finite(v: number, what: string): void {
   if (!Number.isFinite(v) || v < 0)
@@ -169,13 +170,6 @@ function placeEmptyLanes(data: LayoutData, laneOrder: readonly string[]): void {
   }
 }
 
-interface PlacedBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 const boxOf = (n: Node): PlacedBox => ({
   x: n.x ?? 0,
   y: n.y ?? 0,
@@ -194,13 +188,27 @@ function sideOf(b: PlacedBox, p: Point): Side {
   return d.reduce((best, s) => (s[1] < best[1] ? s : best))[0];
 }
 
+/** Whether group `group` holds `id`, however deep. */
+function holds(byId: ReadonlyMap<string, Node>, group: string, id: string): boolean {
+  const seen = new Set<string>();
+  for (let p = byId.get(id)?.parentId; p !== undefined && !seen.has(p); p = byId.get(p)?.parentId) {
+    if (p === group) return true;
+    seen.add(p);
+  }
+  return false;
+}
+
 /**
  * The edges' routes, from the router's points (self-loops from `routeSelfLoops`). Each point's
  * axis is the way the route runs into it; the first takes its next segment's. Post-processing
- * repeats a route's end points for v12's renderer, so repeats are dropped.
+ * repeats a route's end points for v12's renderer, so repeats are dropped. An edge between a
+ * node and a group around it (which v12's router doubles back through), or one the router left
+ * without two distinct points, takes T0a's right-angled placeholder instead: one edge never
+ * fails the render.
  */
 function routes(graph: LayoutGraph, data: LayoutData): Map<string, LayoutModelEdge> {
   const byId = new Map(data.nodes.map((n) => [n.id, n]));
+  const flowVertical = data.direction === 'TB' || data.direction === 'BT';
   const edgeById = new Map(data.edges.map((e) => [e.id, e]));
   const out = new Map<string, LayoutModelEdge>();
   for (const e of graph.edges) {
@@ -210,15 +218,20 @@ function routes(graph: LayoutGraph, data: LayoutData): Map<string, LayoutModelEd
     const routed = (own?.points ?? []).filter(
       (p, i, all) => i === 0 || Math.abs(p.x - all[i - 1]!.x) + Math.abs(p.y - all[i - 1]!.y) > 1e-6
     );
-    if (routed.length < 2) throw new Error(`swimlane: edge '${e.id}' was not routed`);
-    const points: RoutePoint[] = routed.map((p, i) => {
-      const prev = routed[i - 1] ?? routed[i + 1]!;
-      return { x: p.x, y: p.y, axis: Math.abs(prev.x - p.x) < 0.5 ? 'v' : 'h' };
-    });
-    const placed: LayoutModelEdge = {
-      points,
-      ports: { source: sideOf(s, points[0]!), target: sideOf(t, points.at(-1)!) },
-    };
+    const nested = holds(byId, e.source, e.target) || holds(byId, e.target, e.source);
+    let placed: LayoutModelEdge;
+    if (routed.length < 2 || nested) {
+      placed = placeholderRoute(s, t, flowVertical, e.source === e.target);
+    } else {
+      const points: RoutePoint[] = routed.map((p, i) => {
+        const prev = routed[i - 1] ?? routed[i + 1]!;
+        return { x: p.x, y: p.y, axis: Math.abs(prev.x - p.x) < 0.5 ? 'v' : 'h' };
+      });
+      placed = {
+        points,
+        ports: { source: sideOf(s, points[0]!), target: sideOf(t, points.at(-1)!) },
+      };
+    }
     const label = own?.labelNodeId ? byId.get(own.labelNodeId) : undefined;
     if (label) placed.label = { x: label.x ?? 0, y: label.y ?? 0 };
     out.set(e.id, placed);

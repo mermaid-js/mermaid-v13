@@ -21,20 +21,20 @@ const MEASURED_IN_VIEWER: Record<string, NodeSizes> = {
 };
 
 // Touches no stage resolves yet: two parallel tracks on one node, side by side, with a corner
-// of one beside the other and no crossing between them. Updated for v13's geometry: v12 listed
-// `14-messy-layout` (L_33a_39_0 on L_33b_39_0) and `6-legal-constr-sales` (L_D_E_0 on L_D_H_0),
-// which v13 resolves; the same D -> E / D -> H pair now touches in `5-car-fun-sales-wide-tb`.
-// `8-query-process-2` and `regressions/title-band-rails` were not in v12's list (v12 swept only
-// fixtures with sizes files, and laid 8-query-process-2 out on v12 geometry): both are reported
-// on #595 as expected failures. In 8-query-process-2, A2, E and B share a column and the two
-// edges out of A2 turn 3px apart.
+// of one beside the other and no crossing between them. Updated for v13's geometry (v13 sizes,
+// LR/RL routed on drawn sizes, `turnedRouting.ts`): v12 listed `14-messy-layout` (L_33a_39_0 on
+// L_33b_39_0), which v13 resolves; v12's `6-legal-constr-sales` pair (L_D_E_0 on L_D_H_0) still
+// touches, and the same pair touches in `5-car-fun-sales-wide-tb`. The others were not in
+// v12's list (v12 swept only fixtures with sizes files); reported on #595.
 const UNRESOLVED_TOUCHES: Record<string, string[]> = {
   '5-car-fun-sales-wide-tb': ['L_D_E_0 turns at (242.6, 150.2) on L_D_H_0'],
-  '8-query-process-2': [
-    'L_A2_B_0 turns at (315.1, 252.9) on L_A2_E_0',
-    'L_A2_E_0 turns at (315.1, 255.9) on L_A2_B_0',
+  '6-legal-constr-sales': ['L_D_E_0 turns at (570.0, 756.0) on L_D_H_0'],
+  'mermaid-work': ['L_R2_G3_0 turns at (635.8, 252.0) on L_G1_G3_0'],
+  'pebr-2-edge-intrudes-lane-label': [
+    'L_Dep1.Proc2_Dep2.Proc1_0 turns at (1082.3, 258.7) on L_Dep1.Proc3_Dep2.Proc2_0',
+    'L_Dep1.Proc3_Dep2.Proc2_0 turns at (1102.3, 262.0) on L_Dep1.Proc2_Dep2.Proc1_0',
   ],
-  'regressions/title-band-rails': ['L_HE_CA_HE_Inv_0 turns at (524.1, 416.9) on L_B_HE_CA_0'],
+  'regressions/title-band-rails': ['L_HE_CA_HE_Inv_0 turns at (619.1, 460.0) on L_HE_CA_HE_Ans_0'],
 };
 
 describe('route touches in the swimlane fixtures', () => {

@@ -32,11 +32,10 @@ const layout = () => layOutFixture('8-query-process-2', VIEWER_SIZES_8_QUERY_PRO
 
 /**
  * Expected failures with v13's capture (v13 label sizes and 20px group padding under v12's viewer
- * sizes), reported on #595. A2, E and B share one rank, one column: A2 to B takes A2's bottom
- * vertex and B to E takes B's top and E's bottom vertex, so A2 to B lands beside B's top vertex,
- * E to G leaves beside E's bottom vertex, and A2 to E detours round A2's right to E's top.
+ * sizes), reported on #595. A2, E and B share one rank, one column, and A2 to E lands beside
+ * E's vertex; E to G leaves beside E's bottom vertex, and A2 to E detours round A2's right.
  */
-const KNOWN_TERMINAL_VIOLATIONS = ['L_A2_B_0 ends off the boundary of B'];
+const KNOWN_TERMINAL_VIOLATIONS = ['L_A2_E_0 ends off the boundary of E'];
 
 describe('where an edge ends on the node it points at', () => {
   it('8-query-process-2: every edge ends on its target, perpendicular to the face', () => {

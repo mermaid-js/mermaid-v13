@@ -10,8 +10,9 @@ import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 import { swimlaneGateIssues } from './ddltGates.ts';
 
 /**
- * v12's allowed level-1 failures (`ddlt-manifest.json` `allowLevel1Failure`), allowed here too
- * (D538). With v13's sizes all three pass the gates today.
+ * v12's allowed level-1 failures (`ddlt-manifest.json` `allowLevel1Failure`). D538 allows them
+ * here too, but with v13's sizes all three pass, so they are gated like the rest: a regression
+ * shows. Should one fail again, D538 lets it move to `KNOWN_FAILURES` with its issue.
  */
 const ALLOWED_LEVEL1_FAILURES = new Set([
   'commant',
@@ -29,18 +30,13 @@ const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
   '5-car-fun-sales-wide-tb': [
     'edge-border-hugging: Edge "L_I_K_0" hugs border of node "edge-label-L_I_J_0" for 36.2 units',
   ],
-  // J's long label wraps to a node 217 tall (v12 measured it wide); I -> K detours below the
-  // row at a depth that still cuts through J.
-  '6-legal-constr-sales': ['edge-intersects-obstacle: Edge "L_I_K_0" intersects obstacle "J"'],
   // Never in v12's sweep (no sizes). Every node of one lane joins every node of the other.
-  // The router routes LR in TB coordinates with unturned sizes, so Dep2.Proc2's same-rank back
-  // edge leaves a side port that lands off the turned node; `terminalReattach.ts` puts the end
-  // back on the box, but the route still doubles back through its target, and Dep2.Proc3's
-  // back edge cuts its own source.
+  // Since LR routes on drawn sizes (`turnedRouting.ts`) only Dep2.Proc2's same-rank back edge
+  // fails: `swapDestinationTerminalTailsToReduceCrossings` swaps its tail onto a rail along
+  // Dep1.Proc2's top, through the node.
   'pebr-2-edge-intrudes-lane-label': [
     'edge-intersects-obstacle: Edge "L_Dep2.Proc2_Dep1.Proc2_0" intersects obstacle "Dep1.Proc2"',
-    'edge-border-hugging: Edge "L_Dep2.Proc2_Dep1.Proc2_0" hugs border of node "Dep1.Proc2" for 40.0 units',
-    'edge-intersects-obstacle: Edge "L_Dep2.Proc3_Dep1.Proc1_0" intersects obstacle "Dep2.Proc3"',
+    'edge-border-hugging: Edge "L_Dep2.Proc2_Dep1.Proc2_0" hugs border of node "Dep1.Proc2" for 92.0 units',
   ],
 };
 
@@ -65,14 +61,8 @@ describe('swimlane DDLT fixtures', () => {
       expect(ids).toContain(id);
   });
 
-  it.each(ids.filter((id) => !ALLOWED_LEVEL1_FAILURES.has(id)))('%s holds the gates', (id) => {
+  it.each(ids)('%s holds the gates', (id) => {
     expect(gateIssues(id)).toEqual(KNOWN_FAILURES[id] ?? []);
-  });
-
-  it.each([...ALLOWED_LEVEL1_FAILURES])('%s lays out (allowed level-1 failure)', (id) => {
-    const graph = fixtureGraph(id);
-    const model = swimlaneLayout(graph, DDLT_FIXTURES[id]!.tuning);
-    expect(model.edges.size).toBe(graph.edges.length);
   });
 
   it("returns v12's own validation issues as data (no logging)", () => {

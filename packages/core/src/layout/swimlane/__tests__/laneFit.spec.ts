@@ -96,4 +96,67 @@ describe('fitLanesToRoutes', () => {
       { x: 160, y: 305 },
     ]);
   });
+
+  it("ignores the copies post-processing keeps of an end on a lane's border", () => {
+    const data = internalData(
+      [...lanes(), ...nodes],
+      [
+        {
+          start: 'B',
+          end: 'L2',
+          points: [
+            { x: 150, y: 90 },
+            { x: 150, y: 90 },
+            { x: 150, y: 300 },
+            { x: 150, y: 300 },
+          ],
+        },
+      ]
+    );
+    const before = JSON.stringify(data.nodes);
+    fitLanesToRoutes(data);
+    expect(JSON.stringify(data.nodes)).toBe(before);
+  });
+
+  it('moves both ends of an edge from one lane to the other with their borders', () => {
+    const data = internalData(
+      [...lanes(), ...nodes],
+      [
+        {
+          id: 'r',
+          start: 'A',
+          end: 'B',
+          points: [
+            { x: 50, y: 90 },
+            { x: 50, y: 295 },
+            { x: 130, y: 295 },
+            { x: 130, y: 80 },
+          ],
+        },
+        // Out of L1's bottom and into L2's bottom, along the border between.
+        {
+          id: 'g',
+          start: 'L1',
+          end: 'L2',
+          points: [
+            { x: 20, y: 300 },
+            { x: 20, y: 300 },
+            { x: 180, y: 300 },
+            { x: 180, y: 300 },
+          ],
+        },
+      ]
+    );
+    fitLanesToRoutes(data);
+    // The leg along the old border stays; each end gets a stub to the new one (both indices
+    // right, though the source stub shifted the route).
+    expect(data.edges[1]!.points).toEqual([
+      { x: 20, y: 305 },
+      { x: 20, y: 300 },
+      { x: 20, y: 300 },
+      { x: 180, y: 300 },
+      { x: 180, y: 300 },
+      { x: 180, y: 305 },
+    ]);
+  });
 });
