@@ -4,7 +4,7 @@ Integration branch `feature/527_eventmodeling`, cut from `mermaid-v13` at `521fb
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate on the Langium oracle | #600 | — | open |
+| T1 lexer parity gate on the Langium oracle | #600 | — | merged (ff 85478e5c0; `./testing` 3.6 KB gz, no core change) |
 | T2 grammar, parser, model, AST, ported specs | #602 | #600 | open |
 | T3 custom layout (`EventModelLayout`) | #604 | #602 (soft) | open |
 | T4 SVG renderer and theme table | #606 | #602, #604 | open |
