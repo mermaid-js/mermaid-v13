@@ -6,6 +6,7 @@ import type { MermaidConfig } from './config.type.ts';
 export const CORE_DEFAULTS: MermaidConfig = {
   "theme": "redux-color",
   "layout": "layered",
+  "lineHops": false,
   "maxTextSize": 50000,
   "maxEdges": 5000,
   "darkMode": false,

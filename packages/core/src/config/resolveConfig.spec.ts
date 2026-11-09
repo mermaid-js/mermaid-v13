@@ -438,6 +438,7 @@ describe('CORE_DEFAULTS', () => {
       ...v12,
       theme: 'redux-color',
       layout: 'layered',
+      lineHops: false, // new in v13, shared by every edge-drawing diagram (D537)
       securityLevel: 'default',
       maxEdges: 5000,
       look: undefined, // removed, no default (D153)

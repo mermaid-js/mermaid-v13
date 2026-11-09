@@ -132,9 +132,10 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
   });
 
   // D280, D533, R-LAYOUT-8: `mermaid` loads the `tree` and `swimlane` engines lazily; none of
-  // either may reach core.
-  it.each(['tree', 'swimlane'])(
-    'keeps the %s engine out of core, in a lazy chunk of its own',
+  // either may reach core. D537 (maintainer, 2026-11-08, "Lazy chunk for hops"): line hops too,
+  // loaded only for a render whose resolved `lineHops` is not `false`.
+  it.each(['tree', 'swimlane', 'hops'])(
+    'keeps the %s code out of core, in a lazy chunk of its own',
     (e) => {
       const isEngine = (input: string) => input.includes(`core/src/layout/${e}/`);
       expect(coreModules(stable).filter(isEngine)).toEqual([]);

@@ -1,19 +1,18 @@
 /**
- * `lineHops` (D174): where two edges cross, the one that gives way draws a small arc (`arc`) or
- * a break (`gap`). A port of v12 develop's `lineJump.ts` as a `postRender` edit of the drawn
- * tree: a hop is how an edge is drawn, not where it goes, so the `LayoutModel` is untouched.
+ * Line hops (D537, #78): where two edges cross, the one that gives way draws a small arc (`arc`)
+ * or a break (`gap`). Moved from the ELK plugin's hop module (itself v12 develop's
+ * `lineJump.ts`): a pure function over the path data of edges drawn in one coordinate frame.
  *
- * It reads each edge's line (`g.edgePaths > g > path`, the first non-marker path) as drawn, so
- * it sees exactly what the diagram drew. Crossings are looked for on straight `L` runs only: a
- * corner (`A`, `Q`) or a curve (`C`) is drawn off its route points, so a crossing found there
- * would be somewhere the stroke is not (v12 skips smoothed curves and rounded corners for the
- * same reason). Unlike v12, the corners of an edge that hops keep their rounding: only the run
- * that carries the hop is split. Each `g.edgePaths` group is one coordinate frame and is
- * handled on its own.
+ * Crossings are looked for on straight `L` runs only: a corner (`A`, `Q`) or a curve (`C`) is
+ * drawn off its route points, so a crossing found there would be somewhere the stroke is not
+ * (v12 skips smoothed curves and rounded corners for the same reason). Unlike v12, the corners
+ * of an edge that hops keep their rounding: only the run that carries the hop is split.
  */
-import type { Point } from '@mermaid-js/core/layout';
-import { pathBuilder, type PathBuilder, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
+import { pathBuilder, type PathBuilder } from '../../svg/path.ts';
+import type { PathData } from '../../svg/types.ts';
+import type { Point } from '../types.ts';
 
+/** `arc` draws a half circle over the crossing; `gap` breaks the line there. */
 export type HopStyle = 'arc' | 'gap';
 
 /** The arc's radius. Fixed, as in v12: a hop reads as one because every hop is the same size. */
@@ -26,7 +25,7 @@ const MIN_USEFUL_RADIUS_RATIO = 0.6;
 const ENDPOINT_EPSILON = 1e-6;
 
 /** One command of a path, absolute. */
-interface Command {
+export interface PathCommand {
   op: 'M' | 'L' | 'C' | 'Q' | 'A' | 'Z';
   args: number[];
 }
@@ -34,9 +33,9 @@ interface Command {
 const ARITY = { M: 2, L: 2, C: 6, Q: 4, A: 7, Z: 0 } as const;
 
 /** The commands of `d`, or undefined for anything but absolute M, L, C, Q, A and Z. */
-export function parsePath(d: string): Command[] | undefined {
+export function parsePath(d: string): PathCommand[] | undefined {
   const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g) ?? [];
-  const out: Command[] = [];
+  const out: PathCommand[] = [];
   let i = 0;
   while (i < tokens.length) {
     const op = tokens[i++]!;
@@ -45,7 +44,7 @@ export function parsePath(d: string): Command[] | undefined {
     const args = tokens.slice(i, i + n).map(Number);
     if (args.length !== n || args.some((a) => !Number.isFinite(a))) return undefined;
     i += n;
-    out.push({ op: op as Command['op'], args });
+    out.push({ op: op as PathCommand['op'], args });
   }
   return out.length > 0 && out[0]!.op === 'M' ? out : undefined;
 }
@@ -58,7 +57,7 @@ interface Run {
   b: Point;
 }
 
-function runsOf(edge: number, commands: Command[]): Run[] {
+function runsOf(edge: number, commands: PathCommand[]): Run[] {
   const runs: Run[] = [];
   let at: Point = { x: 0, y: 0 };
   let start = at;
@@ -110,8 +109,8 @@ interface Hop {
  * Which edge gives way at each crossing, per edge and command (v12 `findEdgeIntersections`):
  * of a horizontal and a vertical run, the horizontal one hops; otherwise the later edge does.
  */
-function hopsOf(lines: Command[][]): Map<number, Map<number, Hop[]>> {
-  const runs = lines.map((commands, edge) => runsOf(edge, commands));
+function hopsOf(lines: (PathCommand[] | undefined)[]): Map<number, Map<number, Hop[]>> {
+  const runs = lines.map((commands, edge) => (commands ? runsOf(edge, commands) : []));
   const out = new Map<number, Map<number, Hop[]>>();
   const add = (run: Run, t: number, point: Point): void => {
     const byCommand = out.get(run.edge) ?? new Map<number, Hop[]>();
@@ -157,7 +156,7 @@ function fitted(hops: Hop[], length: number): Hop[] {
 }
 
 /** `commands` with the hops on their `L` runs, as path data. */
-function withHops(commands: Command[], hops: Map<number, Hop[]>, style: HopStyle): PathBuilder {
+function withHops(commands: PathCommand[], hops: Map<number, Hop[]>, style: HopStyle): PathBuilder {
   const b = pathBuilder();
   let at: Point = { x: 0, y: 0 };
   let start = at;
@@ -191,30 +190,19 @@ function withHops(commands: Command[], hops: Map<number, Hop[]>, style: HopStyle
   return b;
 }
 
-/** An edge group's line: its first `path` child that is not a marker. */
-function lineOf(tree: SvgTree, edge: SvgNode): SvgNode | undefined {
-  return tree
-    .children(edge)
-    .find(
-      (c) =>
-        tree.tag(c) === 'path' && !(tree.getAttr(c, 'class') ?? '').split(/\s+/).includes('marker')
-    );
-}
-
-/** Draws the hops of every `g.edgePaths` group in `tree`. */
-export function drawLineHops(tree: SvgTree, style: HopStyle): void {
-  for (const group of tree.find({ tag: 'g', class: 'edgePaths' })) {
-    const lines: { node: SvgNode; commands: Command[] }[] = [];
-    for (const edge of tree.children(group)) {
-      if (tree.tag(edge) !== 'g') continue;
-      const node = lineOf(tree, edge);
-      const commands = node === undefined ? undefined : parsePath(tree.getAttr(node, 'd') ?? '');
-      if (node !== undefined && commands) lines.push({ node, commands });
-    }
-    const hops = hopsOf(lines.map((l) => l.commands));
-    for (const [index, byCommand] of hops) {
-      const line = lines[index]!;
-      tree.setAttr(line.node, 'd', withHops(line.commands, byCommand, style).done());
-    }
+/**
+ * The edges' lines with their hops: one entry per line of `paths` (the path data of edges drawn
+ * in one coordinate frame, in drawing order), the new path data where the line gives way at a
+ * crossing, else undefined (also when no crossing on it has room for a hop). A line that is not plain absolute path data neither hops nor is
+ * hopped over.
+ */
+export function lineHops(paths: readonly string[], style: HopStyle): (PathData | undefined)[] {
+  const lines = paths.map(parsePath);
+  const out: (PathData | undefined)[] = paths.map(() => undefined);
+  for (const [edge, byCommand] of hopsOf(lines)) {
+    const d = withHops(lines[edge]!, byCommand, style).done();
+    // Every crossing on it may be too close to a bend to carry a hop.
+    if (d !== paths[edge]) out[edge] = d;
   }
+  return out;
 }

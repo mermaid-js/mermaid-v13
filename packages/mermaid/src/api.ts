@@ -67,7 +67,9 @@ import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-pack
 import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
+  hopStyle,
   isElkName,
+  LINE_HOPS,
   Registry,
   type AnyPlugin,
   layoutName,
@@ -229,6 +231,8 @@ interface Analysis {
   readonly prepared: Prepared;
   /** The front-matter title, for text output (D82). */
   readonly title?: string;
+  /** The author's config layers (`initialize`, front matter, directives), for `hopStyle`. */
+  readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
 }
 
 /** What `detect` found, for a type with a plugin package. */
@@ -279,6 +283,14 @@ function themeNames(config: ResolvedConfig): ThemeName[] {
   return choice.dark ? [choice.name, choice.dark] : [choice.name];
 }
 
+/**
+ * The line-hop style of an SVG render of `a` (D537): a graph diagram's `layout` names the config
+ * section that overrides the shared key. (A name no engine answers to has no such section: an
+ * unknown key is dropped from diagram text.)
+ */
+const hopsOf = ({ prepared: { config }, plugin, sources }: Analysis): 'arc' | 'gap' | false =>
+  hopStyle(config, sources, plugin.layoutKind === 'graph' ? layoutName(config, plugin) : undefined);
+
 /** The layout, themes and plugin resources `a` needs that are not loaded yet. */
 function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const missing: Resource[] = [];
@@ -288,6 +300,8 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
     const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
   }
+  // D537: the line-hop chunk, only when this render hops; text output never does.
+  if (!text && !registry.hops() && hopsOf(a)) missing.push({ kind: 'layout', name: LINE_HOPS });
   // Text output draws no colours, so it needs no theme (D82).
   for (const name of text ? [] : themeNames(config)) {
     if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
@@ -431,6 +445,7 @@ export function createMermaid(
       plugin,
       prepared: { diagramType: detected.type, config, parse, warnings },
       ...(title !== undefined ? { title } : {}),
+      sources: [hit.site.site, front, ...directives],
     };
   }
 
@@ -788,13 +803,17 @@ export function createMermaid(
       units: pxProfile,
       width: options?.availableWidth,
     });
+    // D537: hops when this render has them and the chunk is loaded (else a placeholder render).
+    const hops = registry.hops();
+    const style = hops && hopsOf(analysis);
+    const drawer = style ? hops(plugin, style) : plugin;
     const renderHooks = hooksFor(analysis);
     if (renderHooks.size === 0) {
-      const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
+      const drawn = drawDiagram(drawer, prepared.parse.model, ctx);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
     }
     const run = renderHooks.start(ctx, plugin.id);
-    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
+    const drawn = drawDiagram(drawer, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
     const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
     if (run.mounts) result.bindFunctions = (element) => run.afterMount(element, result);

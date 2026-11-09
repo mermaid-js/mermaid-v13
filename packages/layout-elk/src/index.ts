@@ -12,8 +12,9 @@
  *
  * Every loader carries the package's config fragment (the `elk` section, D153), so core knows
  * the `elk.*` keys from registration on, and the package's extension (`elkExtension`): its
- * `postRender` draws `lineHops`, and its `postLayout` turns what the engine noted into warnings.
- * Both are small and do nothing until an ELK engine has loaded.
+ * `postLayout` turns what the engine noted into warnings. It is small and does nothing until an
+ * ELK engine has loaded. `elk.lineHops` is drawn by core (D537): it overrides the shared
+ * `lineHops` key whenever an ELK layout lays the diagram out, with no hook here.
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
 import type { ConfigFragment } from '@mermaid-js/core/config';
@@ -44,29 +45,19 @@ const NAMES: readonly (readonly [string, ElkAlgorithm])[] = [
   ['elk.rectpacking', 'rectpacking'],
   ['elk.radial', 'radial'],
 ];
-const ELK_NAMES = new Set(NAMES.map(([name]) => name));
-
 /** The engine module, once a loader has imported it (the hooks below wait for it). */
 let engine: typeof Engine | undefined;
 
-const elkLaidOut = (config: unknown): boolean =>
-  engine !== undefined && ELK_NAMES.has(String((config as { layout?: unknown }).layout));
-
 /**
  * The package's extension (`id: layout-elk`), on every loader: `mermaid` runs it only on renders
- * laid out with one of the names above, so other renders keep the stream writer.
+ * laid out with one of the names above. It has no `postRender`, so every render keeps the stream
+ * writer.
  */
 export const elkExtension: ExtensionPlugin = {
   id: 'layout-elk',
   postLayout(laidOut, ctx) {
     if (engine) for (const n of engine.takeNotes(ctx.config)) ctx.warn(n);
     return laidOut;
-  },
-  postRender(tree, ctx) {
-    if (!elkLaidOut(ctx.config)) return;
-    const hops = (ctx.config as { elk?: { lineHops?: unknown } }).elk?.lineHops;
-    if (hops === false) return;
-    engine!.drawLineHops(tree, hops === 'gap' ? 'gap' : 'arc');
   },
 };
 
