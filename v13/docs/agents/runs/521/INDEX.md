@@ -4,7 +4,7 @@ Integration branch `feature/521_block` (from `mermaid-v13` at 521fb76ee). Draft 
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T0 shape-geometry theme rows move to core | #552 | — | own core PR into `mermaid-v13` |
+| T0 shape-geometry theme rows move to core | #552 | — | merged into `mermaid-v13` as #589 (ad3648a91); merged into `feature/521_block` |
 | T1 lexer parity gate | #553 | #285 (merged) | |
 | T2 grammar, parser, model, AST | #554 | #553 | |
 | T3 layout | #555 | #554 | |
