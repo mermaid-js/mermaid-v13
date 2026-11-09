@@ -2,7 +2,7 @@
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
  * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
- * kanban, sankey, xychart and venn (M5). Pie and gitGraph are Langium in v12 and gate on
+ * kanban, sankey, xychart, venn and agentflow (M5). Pie and gitGraph are Langium in v12 and gate on
  * its tokens instead (D213).
  */
 
@@ -252,6 +252,56 @@ export const JISON_TYPES = {
         parsers: ['parser'],
         // The DB spec calls the DB's setters only, so it adds no source.
         specs: ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'],
+      },
+    },
+  },
+  agentflow: {
+    probe: 'agentflow-beta TB\n a',
+    e2e: ['agentflow'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/agentflow`,
+      docs: 'agentflow.md',
+      // v12's 33 spec files but `conformance/conformance.spec.ts`, which reads `import.meta.url`
+      // (a syntax error in the runner's function body) and parses only through the fixture
+      // runner, so it adds no source; its 8 fixtures are ported by hand. The specs that parse
+      // through `mermaidAPI` or no parser add nothing either.
+      method: {
+        kind: 'run',
+        parsers: ['agentflow'],
+        specs: [
+          'agentflow-diagnostics-lifecycle.spec.ts',
+          'agentflow-diagnostics.spec.ts',
+          'agentflow-link-style.spec.ts',
+          'agentflow-max-text-size.spec.ts',
+          'agentflow-render-positions.spec.ts',
+          'agentflow-semantic-model.spec.ts',
+          'agentflow-shape-catalogue.spec.ts',
+          'colorSlots.spec.ts',
+          'conformance/runner.spec.ts',
+          'containerOrder.spec.ts',
+          'diagnostics.spec.ts',
+          'parser/agentflow-attachment-mapping.spec.ts',
+          'parser/agentflow-blank-line-fold.spec.ts',
+          'parser/agentflow-comments.spec.ts',
+          'parser/agentflow-containment-cycle.spec.ts',
+          'parser/agentflow-edge-instruction.spec.ts',
+          'parser/agentflow-edge-semantic.spec.ts',
+          'parser/agentflow-empty-metadata.spec.ts',
+          'parser/agentflow-flow-metadata.spec.ts',
+          'parser/agentflow-flow-self-reference.spec.ts',
+          'parser/agentflow-flowchart-parity.spec.ts',
+          'parser/agentflow-global.spec.ts',
+          'parser/agentflow-inline-metadata-mapping.spec.ts',
+          'parser/agentflow-mappings.spec.ts',
+          'parser/agentflow-metadata-no-validation.spec.ts',
+          'parser/agentflow-metadata-prototype-keys.spec.ts',
+          'parser/agentflow-metadata-trailing-comma.spec.ts',
+          'parser/agentflow-subgraph-span.spec.ts',
+          'parser/agentflow-tool-validators.spec.ts',
+          'parser/agentflow-yaml-error-position.spec.ts',
+          'parser/agentflow.spec.ts',
+          'renderer.spec.ts',
+        ],
       },
     },
   },

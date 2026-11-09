@@ -69,15 +69,15 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since sankey's (#499) and
- * xychart's (#509) layouts.
+ * must read none (so it is removed as soon as it reads one). Agentflow until its layout (#547).
  */
-const NOT_DRAWN_YET = new Set<string>([]);
+const NOT_DRAWN_YET = new Set<string>(['agentflow']);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
     expect(TYPES).toEqual([
+      'agentflow',
       'class',
       'cynefin',
       'er',
