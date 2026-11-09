@@ -19,8 +19,8 @@
 1. Confirm the base: `git merge-base --is-ancestor feature/520_requirement HEAD`. If that fails, `git reset --hard feature/520_requirement`.
 2. Use the Skill tool with `tdd` (and `ddlt` for layout). Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, model parity, layout invariants). Before T5's manifest lands, render through the package's own test harness as ER's and kanban's T4 did.
 3. Stay within the ticket's scope. Touch shared files (registry, detectors, `SECTION_OWNERS`, `HARVESTS`, `JISON_TYPES`, knip, theme vocabulary lists, adapter regex, language goldens' `empty.out`, licence tables, MIGRATION.md, RELEASING.md) minimally and additively: up to eleven ports edit them at once.
-4. `pnpm check` must pass, and the `packages/conformance` specs (pitfall 26). Commit. Don't push, open PRs, or comment on or close issues.
-5. Before reporting, `git merge feature/520_requirement` and run the checks again.
+4. **Scoped handoff checks (Knut, 2026-11-09):** no lock, `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-requirement`, the requirement conformance and parity specs in `packages/conformance` (`src/requirement/`, `src/parity.spec.ts`), `tsc --noEmit -p` for each touched package, and eslint on the changed files; paste the results into the handoff. **Exception:** a ticket that changes core, shared conformance code (oracle, harvester, registry), `tools/*` or another package runs the full `pnpm check` under the lock instead. The full check also runs once per integration push (pre-push hook). Commit. Don't push, open PRs, or comment on or close issues.
+5. Before reporting, `git merge feature/520_requirement` and run the step 4 checks again.
 6. Write `v13/docs/agents/runs/520/tickets/<N>.md` (≤ 40 lines) in your own worktree, committed on your branch: exports, how to use them, test helpers, gz size, core size before/after, decisions, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
 
