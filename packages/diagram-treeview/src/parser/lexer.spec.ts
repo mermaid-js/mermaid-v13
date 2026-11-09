@@ -66,28 +66,28 @@ describe('box-drawing errors', () => {
   it("reports v12's message, its line, and the source line", () => {
     const src = '%% c\ntreeView-beta\n├── a\n  b';
     const { box } = treeViewLex(src);
-    expect(box.rewrite).toBeUndefined();
-    expect(box.error?.message).toBe(
+    expect(box.kind).toBe('error');
+    expect(box.kind === 'error' && box.error.message).toBe(
       'Line 3: Unexpected indentation without box-drawing characters. In box-drawing format, use ├── or └── prefixes for indented nodes.'
     );
-    expect(box.error?.line).toBe(3);
+    expect(box.kind === 'error' && box.error.line).toBe(3);
   });
 
   it('lexes the text as written when the pass fails', () => {
     const src = 'treeView-beta\n├── ';
     const { box, tokens } = treeViewLex(src);
-    expect(box.error?.message).toMatch(/^Line 2: Empty node/);
+    expect(box.kind === 'error' && box.error.message).toMatch(/^Line 2: Empty node/);
     expect(tokens.filter((t) => t.kind === T.BareName).map((t) => slice(src, t))).toEqual(['├── ']);
   });
 });
 
 describe('no box drawing', () => {
   it('leaves an indented tree alone', () => {
-    expect(treeViewLex('treeView-beta\n  a\n    b').box).toEqual({});
+    expect(treeViewLex('treeView-beta\n  a\n    b').box).toEqual({ kind: 'none' });
   });
 
   it('leaves box glyphs in names alone when no content line has one', () => {
-    expect(treeViewLex('treeView-beta %% x\n├── a').box).toEqual({});
-    expect(treeViewLex('treeView-beta\n%% ├── a\n  b').box).toEqual({});
+    expect(treeViewLex('treeView-beta %% x\n├── a').box).toEqual({ kind: 'none' });
+    expect(treeViewLex('treeView-beta\n%% ├── a\n  b').box).toEqual({ kind: 'none' });
   });
 });

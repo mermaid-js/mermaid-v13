@@ -21,26 +21,24 @@
  * Columns are v12's: an entity (`#name;`, `#123;`) before the glyph counts as long as v12's
  * placeholder for it. Every scan is linear in the text.
  */
-import {
-  CR,
-  HASH,
-  isDigit,
-  isSpace,
-  isWord,
-  LF,
-  SEMI,
-  SPACE,
-  TAB,
-} from '@mermaid-js/core/parser-kit';
+import { isSpace, lineEnd, newlineAt, SPACE, TAB } from '@mermaid-js/core/parser-kit';
+import { entityAt, grow, numericEntity } from './text.ts';
+import { HEADER } from './tokens.ts';
 
-const HEADER = 'treeView-beta';
+/** Columns a tab counts, and the spaces v12 wrote for it. */
+const TAB_WIDTH = 4;
+/** Spaces of indent v12 wrote per depth. */
 const INDENT_UNIT = 4;
+/** The segment width when no branch glyph sits past column 0. */
+const DEFAULT_WIDTH = 4;
+/** How much longer v12's placeholder was than the entity: `ﬂ°…¶ß`, `ﬂ°°…¶ß` for a number. */
+const PLACEHOLDER_EXTRA = 2;
+const NUMERIC_PLACEHOLDER_EXTRA = 3;
 
-/** `─━│┃└┗├┣`. */
-const BOX_GLYPH = /[─━│┃└┗├┣]/g;
 const isDash = (c: number) => c === 0x2500 || c === 0x2501;
 const isVertical = (c: number) => c === 0x2502 || c === 0x2503;
 const isBranch = (c: number) => c === 0x2514 || c === 0x2517 || c === 0x251c || c === 0x2523;
+/** `[─━│┃└┗├┣]`. */
 const isGlyph = (c: number) => isDash(c) || isVertical(c) || isBranch(c);
 const COMMENT_LINE = /^\s*%%/;
 const METADATA_LINE = /^\s*(title[\t ]|accTitle[\t ]*:|accDescr[\t ]*[:{])/;
@@ -70,11 +68,13 @@ export interface BoxRewrite {
   last: Uint32Array;
 }
 
-/** What the pass did: nothing (neither field), a rewrite, or an error. */
-export interface BoxPass {
-  rewrite?: BoxRewrite;
-  error?: BoxError;
-}
+/** What the pass did: nothing, a rewrite, or an error (v12 threw; nothing was rewritten). */
+export type BoxPass =
+  | { kind: 'none' }
+  | { kind: 'rewrite'; rewrite: BoxRewrite }
+  | { kind: 'error'; error: BoxError };
+
+const NONE: BoxPass = { kind: 'none' };
 
 /** A line of the text: `[start, end)`, its line break `[end, next)`. */
 interface Line {
@@ -89,28 +89,32 @@ interface Line {
  * as LF.
  */
 export function boxDrawing(text: string, from: number): BoxPass {
-  BOX_GLYPH.lastIndex = from;
-  if (!BOX_GLYPH.test(text)) return {};
+  let glyph = from;
+  while (glyph < text.length && !isGlyph(text.charCodeAt(glyph))) glyph++;
+  if (glyph >= text.length) return NONE;
   const lines = splitLines(text, from);
   const at = (l: Line) => text.slice(l.start, l.end);
   const header = lines.findIndex((l) => at(l).trim() === HEADER);
-  if (header < 0) return {};
-
+  if (header < 0) return NONE;
   const width = segmentWidth(lines.slice(header + 1).map(at));
-  if (width === 0) return {};
+  if (width === 0) return NONE;
 
-  const out = new Output(text.length - from);
+  const out = new Output(text, text.length - from);
   let previous: Line | undefined;
   const keep = (l: Line) => {
     if (previous) out.lineBreak(previous.end, previous.next);
     previous = l;
   };
+  const fail = (i: number, l: Line, message: string): BoxPass => ({
+    kind: 'error',
+    error: { message: `Line ${i + 1}: ${message}`, line: i + 1, start: l.start, end: l.end },
+  });
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]!;
     const line = at(l);
     if (i <= header || passes(line)) {
       keep(l);
-      out.copy(l.start, l.end, text);
+      out.copy(l.start, l.end);
       continue;
     }
     if (decoration(line)) continue;
@@ -118,14 +122,11 @@ export function boxDrawing(text: string, from: number): BoxPass {
     if (branch) {
       const content = branchContent(line, branch.index, l.start);
       if (!content) {
-        return {
-          error: {
-            message: `Line ${i + 1}: Empty node — expected a filename or directory name after the box-drawing prefix`,
-            line: i + 1,
-            start: l.start,
-            end: l.end,
-          },
-        };
+        return fail(
+          i,
+          l,
+          'Empty node — expected a filename or directory name after the box-drawing prefix'
+        );
       }
       keep(l);
       const depth = Math.round(branch.col / width) + 1;
@@ -133,30 +134,20 @@ export function boxDrawing(text: string, from: number): BoxPass {
       out.mapped(content.text, content.map);
       continue;
     }
-    let glyphsOnly = true;
-    let glyph = false;
-    for (let j = 0; j < line.length; j++) {
-      const c = line.charCodeAt(j);
-      if (isGlyph(c)) glyph = true;
-      else if (!isSpace(c)) glyphsOnly = false;
-    }
-    if (glyphsOnly) continue;
-    if (!glyph && isSpace(line.charCodeAt(0))) {
-      return {
-        error: {
-          message:
-            `Line ${i + 1}: Unexpected indentation without box-drawing characters. ` +
-            'In box-drawing format, use ├── or └── prefixes for indented nodes.',
-          line: i + 1,
-          start: l.start,
-          end: l.end,
-        },
-      };
+    const kind = glyphs(line);
+    if (kind === 'only') continue;
+    if (kind === 'none' && isSpace(line.charCodeAt(0))) {
+      return fail(
+        i,
+        l,
+        'Unexpected indentation without box-drawing characters. ' +
+          'In box-drawing format, use ├── or └── prefixes for indented nodes.'
+      );
     }
     keep(l);
-    out.copy(l.start, l.end, text);
+    out.copy(l.start, l.end);
   }
-  return { rewrite: out.finish() };
+  return { kind: 'rewrite', rewrite: out.finish() };
 }
 
 /**
@@ -169,14 +160,7 @@ function segmentWidth(lines: readonly string[]): number {
   let width = 0;
   for (const line of lines) {
     if (passes(line) || decoration(line)) continue;
-    if (!boxed) {
-      for (let j = 0; j < line.length; j++) {
-        if (isGlyph(line.charCodeAt(j))) {
-          boxed = true;
-          break;
-        }
-      }
-    }
+    if (!boxed) boxed = glyphs(line) !== 'none';
     if (width === 0) {
       const col = branchColumn(line)?.col ?? 0;
       if (col > 0) width = col;
@@ -184,26 +168,20 @@ function segmentWidth(lines: readonly string[]): number {
     if (boxed && width > 0) break;
   }
   if (!boxed) return 0;
-  return width === 0 ? INDENT_UNIT : width;
+  return width === 0 ? DEFAULT_WIDTH : width;
 }
 
 /** The lines of `text[from…]` plus v12's appended `\n`, so the last line is always empty. */
 function splitLines(text: string, from: number): Line[] {
   const n = text.length;
   const lines: Line[] = [];
-  let s = from;
-  for (;;) {
-    let e = s;
-    while (e < n) {
-      const c = text.charCodeAt(e);
-      if (c === LF || c === CR) break;
-      e++;
-    }
+  for (let s = from; ; ) {
+    const e = lineEnd(text, s);
     if (e >= n) {
       lines.push({ start: s, end: n, next: n }, { start: n, end: n, next: n });
       return lines;
     }
-    const next = text.charCodeAt(e) === CR && text.charCodeAt(e + 1) === LF ? e + 2 : e + 1;
+    const next = e + newlineAt(text, e);
     lines.push({ start: s, end: e, next });
     s = next;
   }
@@ -223,6 +201,19 @@ function decoration(line: string): boolean {
   return line.length > 0;
 }
 
+/** Whether the line holds no box glyph, some, or only glyphs and blanks. */
+function glyphs(line: string): 'none' | 'some' | 'only' {
+  let only = true;
+  let some = false;
+  for (let j = 0; j < line.length; j++) {
+    const c = line.charCodeAt(j);
+    if (isGlyph(c)) some = true;
+    else if (!isSpace(c)) only = false;
+  }
+  if (!some) return 'none';
+  return only ? 'only' : 'some';
+}
+
 /**
  * The line's first branch glyph: its index in the line, and its column as v12 counted it
  * (tabs as four, entity placeholders at their length).
@@ -233,22 +224,15 @@ function branchColumn(line: string): { index: number; col: number } | undefined 
     const c = line.charCodeAt(j);
     if (isBranch(c)) return { index: j, col };
     if (c === TAB) {
-      col += INDENT_UNIT;
+      col += TAB_WIDTH;
       continue;
     }
-    if (c === HASH) {
-      // `#\w+;` became `ﬂ°name¶ß` (`ﬂ°°123¶ß` for a number) before v12's pass.
-      let k = j + 1;
-      let digits = true;
-      while (k < line.length && isWord(line.charCodeAt(k))) {
-        if (!isDigit(line.charCodeAt(k))) digits = false;
-        k++;
-      }
-      if (k > j + 1 && line.charCodeAt(k) === SEMI) {
-        col += k + 1 - j + (digits ? 3 : 2);
-        j = k;
-        continue;
-      }
+    const end = entityAt(line, j);
+    if (end > 0) {
+      const extra = numericEntity(line, j, end) ? NUMERIC_PLACEHOLDER_EXTRA : PLACEHOLDER_EXTRA;
+      col += end - j + extra;
+      j = end - 1;
+      continue;
     }
     col++;
   }
@@ -277,8 +261,8 @@ function branchContent(
   const map: number[] = [];
   for (let k = j; k < e; k++) {
     if (line.charCodeAt(k) === TAB) {
-      text += '    ';
-      map.push(lineStart + k, lineStart + k, lineStart + k, lineStart + k);
+      text += ' '.repeat(TAB_WIDTH);
+      for (let t = 0; t < TAB_WIDTH; t++) map.push(lineStart + k);
     } else {
       text += line[k];
       map.push(lineStart + k);
@@ -294,34 +278,37 @@ class Output {
   private first: Uint32Array;
   private last: Uint32Array;
 
-  constructor(capacity: number) {
+  constructor(
+    private readonly input: string,
+    capacity: number
+  ) {
     const size = Math.max(16, capacity + (capacity >> 1));
     this.first = new Uint32Array(size);
     this.last = new Uint32Array(size);
   }
 
-  /** `text[start, end)` as it is. */
-  copy(start: number, end: number, text: string): void {
+  /** `[start, end)` of the input, as it is. */
+  copy(start: number, end: number): void {
     this.reserve(end - start);
     for (let i = start; i < end; i++) this.put(i, i);
-    this.parts.push(text.slice(start, end));
+    this.parts.push(this.input.slice(start, end));
   }
 
-  /** `count` spaces standing for the source `[first, last]` (a box prefix). */
+  /** `count` spaces standing for the input `[first, last]` (a box prefix). */
   indent(count: number, first: number, last: number): void {
     this.reserve(count);
     for (let k = 0; k < count; k++) this.put(first, last);
     this.parts.push(' '.repeat(count));
   }
 
-  /** `text`, character `k` standing for the source offset `map[k]`. */
+  /** `text`, character `k` standing for the input offset `map[k]`. */
   mapped(text: string, map: readonly number[]): void {
     this.reserve(text.length);
     for (const m of map) this.put(m, m);
     this.parts.push(text);
   }
 
-  /** `\n` standing for the source line break `[end, next)`. */
+  /** `\n` standing for the input line break `[end, next)`. */
   lineBreak(end: number, next: number): void {
     this.reserve(1);
     this.put(end, Math.max(end, next - 1));
@@ -344,12 +331,10 @@ class Output {
 
   private reserve(more: number): void {
     if (this.n + more <= this.first.length) return;
-    const size = Math.max(this.first.length * 2, this.n + more);
-    const first = new Uint32Array(size);
-    first.set(this.first.subarray(0, this.n));
-    this.first = first;
-    const last = new Uint32Array(size);
-    last.set(this.last.subarray(0, this.n));
-    this.last = last;
+    [this.first, this.last] = grow(
+      this.first,
+      this.last,
+      Math.max(this.first.length * 2, this.n + more)
+    );
   }
 }

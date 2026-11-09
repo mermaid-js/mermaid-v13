@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { LANGIUM_NAMES, treeViewLex } from '@mermaid-js/diagram-treeview/testing';
+import { ampEntities, LANGIUM_NAMES, treeViewLex } from '@mermaid-js/diagram-treeview/testing';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
@@ -97,6 +97,7 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
     'treeView-cases/bare-blank-run-before-desc',
     'treeView-cases/bare-class-no-name',
     'treeView-cases/bare-class-no-name-blank',
+    ...[1, 3, 8, 20, 23, 24].map((k) => `line separators ${k}`),
     'treeView-cases/bare-colon-start',
     'treeView-cases/bare-entity',
     'treeView-cases/bare-entity-number',
@@ -212,10 +213,6 @@ function firstDiff(a: LangiumToken[], b: LangiumToken[]): string | undefined {
   return `@${at}\n    v12 ${show(a.slice(from, at + 3))}\n    v13 ${show(b.slice(from, at + 3))}`;
 }
 
-/** v13's rewritten text as v12's parser read it: entities decoded as v12's placeholders are. */
-const cookedRewrite = (text: string) =>
-  text.replace(/#(\w+);/g, (_, name: string) => (/^\d+$/.test(name) ? `&#${name};` : `&${name};`));
-
 describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
   it('emits the same tokens over the e2e fixtures, the v12 spec strings and the cases', async () => {
     const oracle = await loadLangiumLexerOracle('treeView');
@@ -244,7 +241,7 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
       compared++;
       if (item.id.startsWith('e2e/') && !item.id.endsWith(')')) e2e++;
       if (lexed.errorAt !== undefined) errors++;
-      if (treeViewLex(item.source).box.rewrite) boxed++;
+      if (treeViewLex(item.source).box.kind === 'rewrite') boxed++;
       const v12 = v12Streams(lexed);
       const v13 = v13Streams(item.source);
       const tokens = firstDiff(v12.tokens, v13.tokens);
@@ -272,7 +269,8 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
     expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
     expect(reasons).toEqual([]);
     // Every e2e fixture reaches the treeView lexer: the 15 12.2.0 files, the 8 Cypress
-    // originals, and v12's 30 parser.spec.ts and 29 boxDrawingPreprocessor.spec.ts inputs.
+    // originals, v12's 30 parser.spec.ts inputs and the 26 boxDrawingPreprocessor.spec.ts
+    // inputs it accepts (30 `[…].join('\n')` inputs, one a repeat, three rejected: cases).
     expect(e2e).toBe(15 + 8 + 30 + 26);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
@@ -288,10 +286,11 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
       if (trace.parsed === undefined) continue;
       const { box } = treeViewLex(item.source);
       const v12Error = trace.lexed === undefined && BOX_MESSAGE.test(trace.error ?? '');
-      if (v12Error || box.error) {
+      const v13Error = box.kind === 'error' ? box.error.message : undefined;
+      if (v12Error || v13Error !== undefined) {
         thrown++;
-        if (box.error?.message !== (v12Error ? trace.error : undefined)) {
-          diffs.push(`${item.id}: v12 ${trace.error}\n    v13 ${box.error?.message}`);
+        if (v13Error !== (v12Error ? trace.error : undefined)) {
+          diffs.push(`${item.id}: v12 ${trace.error}\n    v13 ${v13Error}`);
         }
         continue;
       }
@@ -300,9 +299,9 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
         continue;
       }
       const v12 = decodeEntities(trace.lexed);
-      if (box.rewrite) {
+      if (box.kind === 'rewrite') {
         rewritten++;
-        const v13 = cookedRewrite(box.rewrite.text);
+        const v13 = ampEntities(box.rewrite.text);
         if (v13 !== v12) {
           diffs.push(`${item.id}:\n    v12 ${JSON.stringify(v12)}\n    v13 ${JSON.stringify(v13)}`);
         }

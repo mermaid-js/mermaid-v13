@@ -43,6 +43,7 @@ import {
   isWord,
   Kind,
   LBRACE,
+  lineEnd,
   LF,
   localOffset,
   newlineAt,
@@ -50,7 +51,7 @@ import {
   QUOTE,
   RBRACE,
   RPAREN,
-  SEMI,
+  scanWhile,
   SourceOffsets,
   TokenWriter,
   UNDERSCORE,
@@ -58,12 +59,12 @@ import {
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { boxDrawing } from './box.ts';
 import type { BoxPass, BoxRewrite } from './box.ts';
-import { T } from './tokens.ts';
+import { ampEntities, grow } from './text.ts';
+import { HEADER, T } from './tokens.ts';
 
 /** A memo not set yet. */
 const UNSET = -2;
 
-const HEADER = 'treeView-beta';
 const ICON = 'icon(';
 
 /** Not in `[^\n\r]`. */
@@ -134,7 +135,7 @@ class TreeViewLexer {
     // v12 trimmed leading blanks (after removing comment lines) before its parser ran.
     while (p < viewText.length && isSpace(viewText.charCodeAt(p))) p++;
     this.box = boxDrawing(viewText, p);
-    this.rewrite = this.box.rewrite;
+    this.rewrite = this.box.kind === 'rewrite' ? this.box.rewrite : undefined;
     if (this.rewrite) {
       this.text = this.rewrite.text;
       this.len = this.text.length - 1;
@@ -179,7 +180,7 @@ class TreeViewLexer {
     this.record(-1, -1);
     const { src, view, rewrite, starts, ends, len } = this;
     const fromRewrite = (s: number, e: number) =>
-      decodeEntities((rewrite?.text ?? '').slice(s, Math.min(e, len)));
+      ampEntities((rewrite?.text ?? '').slice(s, Math.min(e, len)));
     return {
       tokens,
       box: this.box,
@@ -215,7 +216,7 @@ class TreeViewLexer {
     if (e < 0 && blank) e = this.match(T.Indentation, q);
     if (e < 0 && (c === DQUOTE || c === APOSTROPHE)) e = this.quoted(p, c);
     if (e < 0 && c === PERCENT && text.charCodeAt(p + 1) === PERCENT) {
-      e = this.match(Kind.Comment, this.lineEnd(p + 2));
+      e = this.match(Kind.Comment, lineEnd(this.text, p + 2));
     }
     if (e < 0 && isBreak(c)) e = this.match(Kind.Newline, p + newlineAt(text, p));
     if (e < 0) {
@@ -285,7 +286,7 @@ class TreeViewLexer {
       return text.charCodeAt(r) === RPAREN ? this.match(T.IconAnnotation, r + 1) : -1;
     }
     if (c === HASH && text.charCodeAt(q + 1) === HASH) {
-      return this.match(T.DescAnnotation, this.lineEnd(q + 2));
+      return this.match(T.DescAnnotation, lineEnd(this.text, q + 2));
     }
     return -1;
   }
@@ -340,30 +341,17 @@ class TreeViewLexer {
 
   /** The end of the run of `[\w-]` from `q`. */
   private nameChars(q: number): number {
-    let j = q;
-    while (j < this.n && isNameChar(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isNameChar);
   }
 
   /** The end of the run of `[\t ]` from `q`. */
   private blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isBlank);
   }
 
   /** The end of the run of `\s` from `q`. */
   private spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
-  }
-
-  /** The end of the run of `[^\n\r]` from `q` (v12's `[^\n]`, where CR was LF). */
-  private lineEnd(q: number): number {
-    let j = q;
-    while (j < this.n && !isBreak(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isSpace);
   }
 
   /** `[^\n\r]*?(?=%%)|[^\n\r]*` from `q`: the first `%%` on the line, else the line end. */
@@ -432,13 +420,7 @@ class TreeViewLexer {
   /** Keep a token's start and end in {@link text} (-1 for a removed span). */
   private record(s: number, e: number): void {
     if (this.count === this.starts.length) {
-      const size = this.count * 2 + 8;
-      const starts = new Int32Array(size);
-      starts.set(this.starts);
-      this.starts = starts;
-      const ends = new Int32Array(size);
-      ends.set(this.ends);
-      this.ends = ends;
+      [this.starts, this.ends] = grow(this.starts, this.ends, this.count * 2 + 8);
     }
     this.starts[this.count] = s;
     this.ends[this.count] = e;
@@ -453,24 +435,6 @@ class TreeViewLexer {
     const h = hs[k];
     return h && h.start === b && h.kind === 'drop' ? h.end : b;
   }
-}
-
-/** `#name;` and `#123;` as `&name;` and `&#123;`, as {@link cook} decodes v12's placeholders. */
-function decodeEntities(text: string): string {
-  if (!text.includes('#')) return text;
-  let out = '';
-  let from = 0;
-  for (let i = text.indexOf('#'); i !== -1; i = text.indexOf('#', i + 1)) {
-    if (i < from) continue;
-    let j = i + 1;
-    while (j < text.length && isWord(text.charCodeAt(j))) j++;
-    if (j === i + 1 || text.charCodeAt(j) !== SEMI) continue;
-    const name = text.slice(i + 1, j);
-    out += text.slice(from, i) + (/^\d+$/.test(name) ? `&#${name};` : `&${name};`);
-    from = j + 1;
-    i = j;
-  }
-  return out + text.slice(from);
 }
 
 /** The view's text with the tag-attribute quotes v12 turned into `'` turned so too. */

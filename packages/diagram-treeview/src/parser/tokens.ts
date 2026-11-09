@@ -7,6 +7,9 @@ import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 
 const F = FIRST_DIAGRAM_KIND;
 
+/** The header: v12's one keyword, and the line its box-drawing pass looks for. */
+export const HEADER = 'treeView-beta';
+
 export const T = {
   /**
    * `treeView-beta` followed by `%%`, a `\s` character or the end. Its longer alternative is
@@ -37,11 +40,12 @@ export const T = {
 } as const;
 
 /**
- * Trivia for the treeView parser: the shared trivia kinds. Line breaks (`Kind.Newline`) are not
+ * Trivia for the treeView parser: comments and directives (the lexer writes no `Kind.Space`:
+ * every blank run is INDENTATION or part of a token). Line breaks (`Kind.Newline`) are not
  * trivia here, though v12 skipped them: the parser reads them for its diagnostics. In-text `%%`
  * comments are `Kind.Comment`, like the comment lines v12 removed before lexing.
  */
-export const TREEVIEW_TRIVIA = /* @__PURE__ */ kindSet(Kind.Comment, Kind.Directive, Kind.Space);
+export const TREEVIEW_TRIVIA = /* @__PURE__ */ kindSet(Kind.Comment, Kind.Directive);
 
 /**
  * The Chevrotain token type each kind stands for in `@mermaid-js/parser@2.0.1` (dev and test

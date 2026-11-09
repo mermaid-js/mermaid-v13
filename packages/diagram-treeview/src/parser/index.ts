@@ -6,6 +6,7 @@ import { lex } from './lexer.ts';
 import type { BoxPass } from './box.ts';
 
 export { LANGIUM_NAMES, T as TreeViewTokenKind, TREEVIEW_TRIVIA } from './tokens.ts';
+export { ampEntities } from './text.ts';
 export type { BoxError, BoxPass, BoxRewrite } from './box.ts';
 
 export interface TreeViewToken {
@@ -43,7 +44,7 @@ export function treeViewView(src: string): TreeViewView {
 /** What {@link treeViewTokens} gives: the tokens, the box pass, and v12's text before each. */
 export interface TreeViewTokens {
   tokens: TreeViewToken[];
-  /** What v12's box-drawing pass did (`rewrite.text` is what v12's Langium lexer read). */
+  /** What v12's box-drawing pass did (a rewrite's `text` is what v12's Langium lexer read). */
   box: BoxPass;
   /** The text v12's lexer read before `tokens[i]`, as the tokens' `text` gives it. */
   before(i: number): string;

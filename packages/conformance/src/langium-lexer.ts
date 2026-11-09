@@ -92,8 +92,10 @@ export interface LangiumLexerOracle {
   /** What v12 did with `source`: the texts its parsers received, and its error. */
   trace(source: string): Promise<LangiumTrace>;
   /**
-   * The exact text v12's parser for the type received for `source`, or undefined when v12
-   * never reached that parser (another type was detected, or preprocessing threw).
+   * The exact text v12's lexer for the type read for `source` ({@link LangiumTrace.lexed}): what
+   * its diagram parser received, or with `capture: 'langium'` what the Langium parser received
+   * after the diagram parser's own rewrite (treeView's box pass). Undefined when v12 never
+   * reached it: another type was detected, preprocessing threw, or (treeView) the box pass threw.
    */
   input(source: string): Promise<string | undefined>;
   /**
@@ -123,7 +125,7 @@ interface LangiumParserV12 {
   parse: (text: string, ...rest: unknown[]) => unknown;
 }
 interface ParserDefinitionV12 {
-  parse(text: string): Promise<void> | void;
+  parse: (text: string) => Promise<void> | void;
 }
 interface MermaidV12 {
   mermaidAPI: {
@@ -173,6 +175,8 @@ export function loadLangiumLexerOracle(type: LangiumLexerType): Promise<LangiumL
   if (!oracle) {
     oracle = load(LANGIUM_LEXERS[type]);
     loading.set(type, oracle);
+    // A failed load is not kept: the next call tries again (and `load` undid its patches).
+    oracle.catch(() => loading.delete(type));
   }
   return oracle;
 }
@@ -197,6 +201,12 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
   const parse = parser.parse.bind(parser);
   let parsed: string | undefined;
   let lexed: string | undefined;
+  /** Undoes the patches below, when `load` fails after making them. */
+  const undo: (() => void)[] = [];
+  const diagramParse = parser.parse;
+  undo.push(() => {
+    parser.parse = diagramParse;
+  });
   if (descriptor.capture === 'langium') {
     // v12 builds the type's Langium parser privately; its class is the one our services use
     // (one `@mermaid-js/parser` realpath, `langiumParserVersions`). Wrap that class's `parse`,
@@ -208,9 +218,16 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
     if (!owner) throw new Error(`${descriptor.key}: no LangiumParser parse to wrap`);
     const target = owner as LangiumParserV12;
     const langiumParse = target.parse;
+    undo.push(() => {
+      target.parse = langiumParse;
+    });
+    // The oracle is sequential only (await each call before the next, as for every type): the
+    // wrapper cannot tell v12's treeView parser instance from another type's, so `armed` is
+    // what scopes it to the treeView diagram parser's own call, and only that call's first
+    // Langium parse is taken.
     let armed = false;
     target.parse = function (this: unknown, text: string, ...rest: unknown[]) {
-      if (armed) lexed = text;
+      if (armed && lexed === undefined) lexed = text;
       return langiumParse.call(this, text, ...rest);
     };
     parser.parse = async (text) => {
@@ -243,8 +260,13 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
     return out;
   };
   const input = async (source: string) => (await trace(source)).lexed;
-  if ((await input(descriptor.probe)) === undefined) {
-    throw new Error(`${descriptor.key}: the probe did not reach v12's lexer`);
+  try {
+    if ((await input(descriptor.probe)) === undefined) {
+      throw new Error(`${descriptor.key}: the probe did not reach v12's lexer`);
+    }
+  } catch (error) {
+    for (const u of undo) u();
+    throw error;
   }
   return {
     trace,
