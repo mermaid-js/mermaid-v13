@@ -1,12 +1,12 @@
 # Run notes, spec #519 (M5b ishikawa, `@mermaid-js/diagram-ishikawa`)
 
-Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Draft PR: —.
+Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Draft PR: #626.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #580 | #285 (merged) | merged (ff 40d678fff; package entry 1,803 B gz, no core change) |
 | T2 grammar, parser, model, AST | #581 | #580 | merged (ff a2cab0f30; package entry 4,178 B gz, no core change) |
-| T3 fishbone layout | #582 | #581 | — |
+| T3 fishbone layout | #582 | #581 | merged (ff 8deb7a764; package entry 7,154 B gz, no core code change) |
 | T4 SVG renderer | #583 | #582 | — |
 | T6 language facet | #584 | #581 | — |
 | T5 integration | #585 | #583, #584 | — |
