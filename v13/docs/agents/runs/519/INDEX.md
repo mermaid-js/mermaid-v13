@@ -4,7 +4,7 @@ Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Dra
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate | #580 | #285 (merged) | — |
+| T1 lexer parity gate | #580 | #285 (merged) | merged (ff 40d678fff; package entry 1,803 B gz, no core change) |
 | T2 grammar, parser, model, AST | #581 | #580 | — |
 | T3 fishbone layout | #582 | #581 | — |
 | T4 SVG renderer | #583 | #582 | — |
