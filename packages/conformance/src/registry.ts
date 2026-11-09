@@ -22,6 +22,7 @@ import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
 import { treemapAdapter } from './treemap/v13.ts';
+import { treeViewAdapter } from './treeView/v13.ts';
 import { vennParityCorpus } from './venn/corpus.ts';
 import { vennAdapter } from './venn/v13.ts';
 import { wardleyAdapter } from './wardley/v13.ts';
@@ -143,6 +144,12 @@ export const PARITY_SUITES: ParitySuite[] = [
     corpusDirs: ['e2e/diagrams/treemap'],
     // The cases run in `treemap/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
     corpusFiles: ['packages/conformance/corpus/treemap-v12-specs.json'],
+  },
+  {
+    adapter: treeViewAdapter,
+    corpusDirs: ['e2e/diagrams/tree-view'],
+    // The cases run in `treeView/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
+    corpusFiles: ['packages/conformance/corpus/treeView-v12-specs.json'],
   },
   {
     adapter: cynefinAdapter,

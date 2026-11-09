@@ -85,6 +85,13 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
       (v) => [`treeView-cases/${v}`, BOX_ERROR] as const
     )
   ),
+  // The recovery set's box-drawing errors (#572).
+  ...[
+    'an-empty-box-drawing-node',
+    'an-empty-box-drawing-node-and-a-title-after-a-node',
+    'an-indented-line-in-box-drawing',
+    'two-box-drawing-errors',
+  ].flatMap((id) => variants(`treeView-recovery/${id}`).map((v) => [v, BOX_ERROR] as const)),
   // The commented() cut splits a box line: an empty node.
   ...['box-cr-only', 'box-long-dashes'].map(
     (id) => [`treeView-cases/${id} (commented)`, BOX_ERROR] as const
@@ -161,6 +168,8 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
     'treeView-cases/quoted-then-blank-class',
     'treeView-cases/quoted-then-class',
     'treeView-cases/spec-box-throw-on-empty-content-after-prefix',
+    'treeView-recovery/a-blank-after-the-header',
+    'treeView-recovery/text-after-the-header',
     'v12-specs/boxDrawingPreprocessor.spec.ts#2',
     'v12-specs/treeView.test.ts#16',
     'v12-specs/treeView.test.ts#2',

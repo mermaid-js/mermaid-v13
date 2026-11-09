@@ -88,6 +88,11 @@ export interface TreeViewLex {
   text(j: number): string;
   /** The text v12's lexer read before token `j`, as {@link text} gives it. */
   before(j: number): string;
+  /**
+   * The source offset of offset `v` of the text given to the box pass (the view's text): where
+   * a box error's line is in the source.
+   */
+  source(v: number): number;
 }
 
 /**
@@ -193,6 +198,7 @@ class TreeViewLexer {
         if (rewrite) return fromRewrite(0, Math.max(0, starts[j] ?? 0));
         return cook(src, this.from, tokens.start[j] ?? 0, view).trimStart();
       },
+      source: (v) => (this.offsets ? this.offsets.source(v) : v),
     };
   }
 

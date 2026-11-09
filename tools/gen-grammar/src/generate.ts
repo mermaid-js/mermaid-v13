@@ -206,6 +206,12 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
+    // The package's own type: its tables are `treeviewCategories` and `treeviewDocs`.
+    type: 'treeview',
+    title: 'Tree view syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {

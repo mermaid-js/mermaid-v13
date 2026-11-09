@@ -68,11 +68,15 @@ export interface BoxRewrite {
   last: Uint32Array;
 }
 
-/** What the pass did: nothing, a rewrite, or an error (v12 threw; nothing was rewritten). */
+/**
+ * What the pass did: nothing, a rewrite, or an error (v12 threw at `error`; nothing was
+ * rewritten). `errors` are every line v12's rules reject, `error` first: v12 stopped at the
+ * first, the parser reports each (R-PARSE-4).
+ */
 export type BoxPass =
   | { kind: 'none' }
   | { kind: 'rewrite'; rewrite: BoxRewrite }
-  | { kind: 'error'; error: BoxError };
+  | { kind: 'error'; error: BoxError; errors: readonly BoxError[] };
 
 const NONE: BoxPass = { kind: 'none' };
 
@@ -105,10 +109,10 @@ export function boxDrawing(text: string, from: number): BoxPass {
     if (previous) out.lineBreak(previous.end, previous.next);
     previous = l;
   };
-  const fail = (i: number, l: Line, message: string): BoxPass => ({
-    kind: 'error',
-    error: { message: `Line ${i + 1}: ${message}`, line: i + 1, start: l.start, end: l.end },
-  });
+  const errors: BoxError[] = [];
+  const fail = (i: number, l: Line, message: string): void => {
+    errors.push({ message: `Line ${i + 1}: ${message}`, line: i + 1, start: l.start, end: l.end });
+  };
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]!;
     const line = at(l);
@@ -122,11 +126,12 @@ export function boxDrawing(text: string, from: number): BoxPass {
     if (branch) {
       const content = branchContent(line, branch.index, l.start);
       if (!content) {
-        return fail(
+        fail(
           i,
           l,
           'Empty node — expected a filename or directory name after the box-drawing prefix'
         );
+        continue;
       }
       keep(l);
       const depth = Math.round(branch.col / width) + 1;
@@ -137,16 +142,19 @@ export function boxDrawing(text: string, from: number): BoxPass {
     const kind = glyphs(line);
     if (kind === 'only') continue;
     if (kind === 'none' && isSpace(line.charCodeAt(0))) {
-      return fail(
+      fail(
         i,
         l,
         'Unexpected indentation without box-drawing characters. ' +
           'In box-drawing format, use ├── or └── prefixes for indented nodes.'
       );
+      continue;
     }
     keep(l);
     out.copy(l.start, l.end);
   }
+  const [error] = errors;
+  if (error) return { kind: 'error', error, errors };
   return { kind: 'rewrite', rewrite: out.finish() };
 }
 

@@ -59,9 +59,19 @@ export async function treeViewCorpus(): Promise<CorpusItem[]> {
   return [...items, ...readItems('packages/conformance/corpus/treeView-v12-specs.json')];
 }
 
-/** The hand-written cases: the spec's quirks, the box pass's corners and its errors. */
+/**
+ * The hand-written cases: the spec's quirks, the box pass's corners and its errors
+ * (`corpus/treeView-cases.json`), and the parser's recovery set (`treeView-recovery.json`,
+ * whose expected diagnostics `recovery.spec.ts` checks).
+ */
 export function treeViewCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/treeView-cases.json');
+  return [
+    ...readItems('packages/conformance/corpus/treeView-cases.json'),
+    ...readItems('packages/conformance/corpus/treeView-recovery.json').map(({ id, source }) => ({
+      id,
+      source,
+    })),
+  ];
 }
 
 /** The corpus, the cases, the line-separator cases, and a CRLF and a commented copy of each. */

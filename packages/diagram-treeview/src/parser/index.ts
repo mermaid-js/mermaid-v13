@@ -1,4 +1,7 @@
-/** The treeView parser's public surface so far: the lexer gated against v12's Langium lexer (#571). */
+/**
+ * The treeView parser's public surface: the parser and detection (#572), and the lexer gated
+ * against v12's Langium lexer (#571).
+ */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -8,6 +11,16 @@ import type { BoxPass } from './box.ts';
 export { LANGIUM_NAMES, T as TreeViewTokenKind, TREEVIEW_TRIVIA } from './tokens.ts';
 export { ampEntities } from './text.ts';
 export type { BoxError, BoxPass, BoxRewrite } from './box.ts';
+export {
+  parseTreeView,
+  TREEVIEW_ANNOTATION_NEXT_LINE,
+  TREEVIEW_NAME_READ_AS_TITLE,
+  TREEVIEW_NODES_ON_ONE_LINE,
+  TREEVIEW_TRAILING_BLANK,
+} from './parser.ts';
+export type { TreeViewParseOptions, TreeViewParseResult } from './parser.ts';
+export { detectTreeView } from './detect.ts';
+export type * from './ast.ts';
 
 export interface TreeViewToken {
   /** A `TreeViewTokenKind` or a shared `Kind`. */
