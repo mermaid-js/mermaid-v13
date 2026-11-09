@@ -9,7 +9,7 @@ Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Dra
 | T3 fishbone layout | #582 | #581 | merged (ff 8deb7a764; package entry 7,154 B gz, no core code change) |
 | T4 SVG renderer | #583 | #582 | merged (ff ff665803f; package entry 8,478 B gz; core 94,412 B gz unchanged) |
 | T6 language facet | #584 | #581 | merged (ff 9b751af9f; package entry 8,758 B gz, `./language` 5,984 B gz; core unchanged) |
-| T5 integration | #585 | #583, #584 | — |
+| T5 integration | #585 | #583, #584 | merged (ff b6c536108; package entry 8,784 B gz, `./language` 6,010 B gz; core 94,431 B gz, +19) |
 | T7 ASCII outline (optional) | #586 | #585 | — |
 
 - `01-v12-ishikawa.md`: pointer notes on v12's grammar, DB, renderer, specs, docs page and the corpus.
@@ -27,6 +27,8 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | After | Core gz | Δ |
 | --- | --- | --- |
 | base (521fb76ee) | 93,891 | — |
+| T1–T4, T6 (base moved to 1a78e25d7) | 94,412 | 0 (base moves only) |
+| T5 (registry row) | 94,431 | +19 |
 
 ## Worktrees
 
