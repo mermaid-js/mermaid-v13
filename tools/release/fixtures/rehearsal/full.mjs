@@ -18,9 +18,9 @@ assert.ok(Array.isArray(warnings), 'warnings');
 const { text } = await mermaid.render('id', 'flowchart LR\n  A --> B', { format: 'ascii' });
 assert.match(text, /A/);
 
-// A type every build still detects but has no renderer for yet; change it when gitGraph is ported.
+// A type every build still detects but has no renderer for yet; change it when requirement is ported.
 await assert.rejects(
-  mermaid.render('u', 'gitGraph\n  commit'),
+  mermaid.render('u', 'requirementDiagram\n  requirement R {\n    id: 1\n  }\n'),
   (e) => e instanceof MermaidError && e.code === 'UNSUPPORTED_DIAGRAM'
 );
 await assert.rejects(

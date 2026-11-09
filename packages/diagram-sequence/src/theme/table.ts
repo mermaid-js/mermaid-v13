@@ -35,8 +35,6 @@ export const theme: DiagramThemeTable = {
   // it reads a shared input as each theme wrote it (`inline()`, D332), byte for byte.
   rules: {
     light: {
-      actorBkg: 'mainBkg',
-      actorBorder: 'inline(softBorder)',
       // v12's label ink, which v12 derives `scaleLabelColor` from.
       actorTextColor: 'inline(scaleLabelColor)',
       actorLineColor: 'actorBorder',
