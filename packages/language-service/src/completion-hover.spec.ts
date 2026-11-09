@@ -4,7 +4,8 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartDocs, FlowTokenKind as T } from '@mermaid-js/diagram-flowchart/language';
-import { createLanguageService } from './index.ts';
+import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import { createLanguageService, firstPartyFacets } from './index.ts';
 import type { CompletionItem } from './index.ts';
 
 const service = createLanguageService();
@@ -34,53 +35,29 @@ const STATEMENT_KEYWORDS = [
 ];
 
 describe('completion', () => {
-  it('in an empty document or a partial header: the diagram keywords', () => {
-    expect(labels('|')).toEqual([
-      'flowchart',
-      'graph',
-      'flowchart-elk',
-      'swimlane-beta',
-      'mindmap',
-      'kanban',
-      'classDiagram',
-      'erDiagram',
-      'gantt',
-      'info',
-      'pie',
-      'sequenceDiagram',
-      'timeline',
-      'timeline LR',
-      'timeline TD',
-      'gitGraph',
-      'gitGraph LR:',
-      'gitGraph TB:',
-      'gitGraph BT:',
-      'stateDiagram-v2',
-      'stateDiagram',
-      'journey',
-      'quadrantChart',
-      'sankey',
-      'packet',
-      'xychart',
-      'radar-beta',
-      'treemap',
-      'treemap-beta',
-      'venn-beta',
-      'wardley-beta',
-      'cynefin-beta',
-    ]);
+  it('in an empty document or a partial header: the diagram keywords', async () => {
+    // The whole list is the golden goldens/no-diagram/completions/empty.out. The rule: each
+    // facet's own header keywords, the facets in detector order, each label once.
+    const facets: LanguageFacet[] = [];
+    for (const e of firstPartyFacets.filter((f) => f.load)) {
+      const facet = await e.load!();
+      if (!facets.includes(facet)) facets.push(facet);
+    }
+    const own = facets.flatMap((facet) => {
+      const result = facet.parse('', { keepTokens: true, probe: 0 });
+      return result.probe ? facet.completions(result.probe, { text: '', result }) : [];
+    });
+    const headers = [...new Set(own.filter((i) => i.kind === 'keyword').map((i) => i.label))];
+    expect(headers.length).toBeGreaterThan(20);
+    expect(labels('|')).toEqual(headers);
+    // A partial header keeps the keywords it starts, in the same order: every type's.
+    for (const header of headers) {
+      const typed = header.slice(0, 3);
+      expect(labels(`${typed}|`), typed).toEqual(headers.filter((h) => h.startsWith(typed)));
+    }
     expect(labels('qua|')).toEqual(['quadrantChart']);
-    expect(labels('pac|')).toEqual(['packet']);
-    expect(labels('rad|')).toEqual(['radar-beta']);
     expect(labels('tree|')).toEqual(['treemap', 'treemap-beta']);
-    expect(labels('war|')).toEqual(['wardley-beta']);
     expect(labels('xy|')).toEqual(['xychart']);
-    expect(labels('cla|')).toEqual(['classDiagram']);
-    expect(labels('jour|')).toEqual(['journey']);
-    expect(labels('kan|')).toEqual(['kanban']);
-    expect(labels('san|')).toEqual(['sankey']);
-    expect(labels('cyn|')).toEqual(['cynefin-beta']);
-    expect(labels('ven|')).toEqual(['venn-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),

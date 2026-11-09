@@ -1,0 +1,19 @@
+---
+title: Agreement
+config:
+  theme: dark
+---
+flowchart LR
+  accDescr {
+    two lines
+    of description
+  }
+  A["one
+     two"] --> B
+  subgraph S [Group]
+    B --> C
+    C@{ shape: rounded,
+        label: "x" }
+  end
+  classDef hot fill:#f00
+  class A,B hot
