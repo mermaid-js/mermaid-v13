@@ -60,6 +60,7 @@ describe('completion', () => {
       'journey',
       'quadrantChart',
       'packet',
+      'xychart',
       'radar-beta',
       'treemap',
       'treemap-beta',
@@ -71,6 +72,7 @@ describe('completion', () => {
     expect(labels('rad|')).toEqual(['radar-beta']);
     expect(labels('tree|')).toEqual(['treemap', 'treemap-beta']);
     expect(labels('war|')).toEqual(['wardley-beta']);
+    expect(labels('xy|')).toEqual(['xychart']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);

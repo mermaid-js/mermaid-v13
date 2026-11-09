@@ -47,7 +47,8 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
-    "@mermaid-js/diagram-wardley": "workspace:*"
+    "@mermaid-js/diagram-wardley": "workspace:*",
+    "@mermaid-js/diagram-xychart": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-class": {
@@ -106,6 +107,9 @@
     },
     "@mermaid-js/diagram-wardley": {
       "optional": true
+    },
+    "@mermaid-js/diagram-xychart": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -128,6 +132,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
-    "@mermaid-js/diagram-wardley": "workspace:*"
+    "@mermaid-js/diagram-wardley": "workspace:*",
+    "@mermaid-js/diagram-xychart": "workspace:*"
   }
 }

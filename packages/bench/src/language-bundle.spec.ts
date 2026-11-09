@@ -118,6 +118,24 @@ const PACKAGES = [
       'testing.ts',
     ],
   },
+  {
+    name: 'xychart',
+    dir: 'diagram-xychart',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'v12-specs/',
+      'plugin.ts',
+      'index.ts',
+      'labels.ts',
+      'model.ts',
+      'config.ts',
+      'generated/config-defaults.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

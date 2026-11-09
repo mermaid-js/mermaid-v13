@@ -41,6 +41,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-timeline',
       '@mermaid-chart/diagram-treemap',
       '@mermaid-chart/diagram-wardley',
+      '@mermaid-chart/diagram-xychart',
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',

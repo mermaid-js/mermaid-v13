@@ -158,6 +158,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -267,6 +270,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../diagram-xychart
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -492,6 +498,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-xychart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/language-server:
     dependencies:
       '@mermaid-js/core':
@@ -554,6 +566,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -627,6 +642,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
 
   packages/language-service-codemirror:
     devDependencies:
@@ -856,6 +874,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
     devDependencies:
       esbuild:
         specifier: ^0.25.12
@@ -1008,6 +1029,9 @@ importers:
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../../packages/diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../../packages/diagram-xychart
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

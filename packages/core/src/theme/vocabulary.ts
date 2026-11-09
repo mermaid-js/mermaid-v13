@@ -209,7 +209,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'wardley']),
+  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'wardley', 'xychart']),
   primaryTextColor: def('pt', 'color', [
     'core',
     'class',
@@ -217,6 +217,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'packet',
     'cynefin',
     'wardley',
+    'xychart',
   ]),
   lineColor: def('l', 'color', [
     'flowchart',
@@ -228,8 +229,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
   ]),
-  // Pie, packet, cynefin, info, treemap and wardley draw in the font family but size their text by
-  // their own variables or constants (wardley: its config).
+  // Pie, packet, cynefin, info, treemap, wardley and xychart draw in the font family but size their
+  // text by their own variables or constants (wardley: its config; xychart: its `xyChart` config).
   fontFamily: def('ff', 'font', [
     ...TEXT_USERS,
     'pie',
@@ -238,6 +239,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'info',
     'treemap',
     'wardley',
+    'xychart',
   ]),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived

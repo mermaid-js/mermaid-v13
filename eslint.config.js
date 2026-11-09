@@ -201,6 +201,7 @@ export default tseslint.config(
       'packages/diagram-state/src/v12-specs/**',
       'packages/diagram-journey/src/v12-specs/*.spec.ts',
       'packages/diagram-quadrant/src/v12-specs/**',
+      'packages/diagram-xychart/src/v12-specs/**',
       'packages/diagram-timeline/src/v12-specs/**',
       'packages/diagram-mindmap/src/v12-specs/*.spec.ts',
       'packages/diagram-gantt/src/v12-specs/*.spec.ts',

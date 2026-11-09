@@ -1,0 +1,10 @@
+@ 2:11  bar [1, |]
+  none
+@ 3:14  x-axis [a, |]
+  none
+@ 4:10  line Co|
+  none
+@ 5:16  x-axis Month |
+  [ operator (the data) 5:16-5:16 "" -> "["
+@ 6:13  bar Sales |
+  [ operator (the data) 6:13-6:13 "" -> "["

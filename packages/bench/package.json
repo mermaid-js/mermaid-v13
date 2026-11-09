@@ -36,6 +36,7 @@
     "@mermaid-js/diagram-timeline": "workspace:^",
     "@mermaid-js/diagram-treemap": "workspace:^",
     "@mermaid-js/diagram-wardley": "workspace:^",
+    "@mermaid-js/diagram-xychart": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",
     "@playwright/test": "^1.62.1",
     "@types/node": "^22.19.21",

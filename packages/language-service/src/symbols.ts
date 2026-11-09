@@ -342,6 +342,21 @@ function bareText(
   return quoted === undefined ? { refused: reason } : { text: quoted };
 }
 
+/**
+ * How a bare occurrence of each kind writes the new name: `bare` (from {@link bareText}), or,
+ * when that is `newName` itself, the facet's written form of it for the occurrence's kind
+ * ({@link LanguageFacet.writtenName}: xychart quotes `Q1 2024`, D389), asked once per kind.
+ */
+function writtenAs(facet: LanguageFacet, newName: string, bare: string): (kind: string) => string {
+  if (bare !== newName || !facet.writtenName) return () => bare;
+  const byKind = new Map<string, string>();
+  return (kind) => {
+    let w = byKind.get(kind);
+    if (w === undefined) byKind.set(kind, (w = facet.writtenName?.(newName, kind) ?? newName));
+    return w;
+  };
+}
+
 /** The smallest non-empty token of the parse holding `r`. */
 function tokenAround(ctx: DocumentContext, r: Range): Range | undefined {
   const tokens = ctx.result?.tokens;
@@ -357,8 +372,8 @@ function tokenAround(ctx: DocumentContext, r: Range): Range | undefined {
 }
 
 /**
- * The edits renaming `all` to `newName`. Where the name must be quoted (`bare` is the quoted
- * form) and an occurrence sits inside a longer token, a part of another name (a wardley
+ * The edits renaming `all` to `newName`. Where the name must be quoted (`bareOf` gives the
+ * quoted form for the occurrence's kind) and an occurrence sits inside a longer token, a part of another name (a wardley
  * pipeline component's id `Kettle_Gas`), quotes cannot go around the part: the whole token is
  * rewritten and quoted (`"note_Gas"`); inside a token already quoted the name goes in as it is.
  */
@@ -367,12 +382,13 @@ function renameEdits(
   facet: LanguageFacet,
   all: readonly Occurrence[],
   newName: string,
-  bare: string,
+  bareOf: (kind: string) => string,
   kind: string
 ): TextEdit[] | { refused: string } {
   const edits: TextEdit[] = [];
   const parts = new Map<number, { token: Range; inside: Occurrence[] }>();
   for (const x of all) {
+    const bare = bareOf(x.kind);
     const token = x.quote === undefined && bare !== newName ? tokenAround(ctx, x.range) : undefined;
     if (!token || (token.start === x.range.start && token.end === x.range.end)) {
       edits.push({ range: x.range, newText: x.quote === undefined ? bare : newName });
@@ -427,7 +443,7 @@ export function rename(
   if (invalid !== undefined) return refuse(invalid);
   const bare = bareText(facet, all, newName, o.kind);
   if ('refused' in bare) return refuse(bare.refused);
-  const edits = renameEdits(ctx, facet, all, newName, bare.text, o.kind);
+  const edits = renameEdits(ctx, facet, all, newName, writtenAs(facet, newName, bare.text), o.kind);
   if ('refused' in edits) return refuse(edits.refused);
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);

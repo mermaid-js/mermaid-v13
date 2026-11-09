@@ -1,0 +1,11 @@
+@ 3:3  |
+  title keyword 3:3-3:3 "" -> "title "
+  x-axis keyword 3:3-3:3 "" -> "x-axis "
+  y-axis keyword 3:3-3:3 "" -> "y-axis "
+  bar keyword 3:3-3:3 "" -> "bar "
+  line keyword 3:3-3:3 "" -> "line "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  accDescr { keyword 3:3-3:3 "" -> "accDescr {"
+@ 5:4  l|
+  line keyword 5:3-5:4 "l" -> "line "

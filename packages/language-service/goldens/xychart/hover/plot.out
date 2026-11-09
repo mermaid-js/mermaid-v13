@@ -1,0 +1,25 @@
+@ 3:9  bar Sa|les [1, 2, 3, 4]
+  3:7-3:12 "Sales"
+  | **bar** `Sales` (plot 1)
+  |
+  | Colour 1 of the plot palette (`xyChart.plotColorPalette`; past its end the colours start over) · 4 values
+@ 3:17  bar Sales [1, |2, 3, 4]
+  3:17-3:18 "2"
+  | **bar** `Sales` (plot 1)
+  |
+  | Colour 1 of the plot palette (`xyChart.plotColorPalette`; past its end the colours start over) · 4 values · Value 2: `2` at x `b`
+@ 3:24  bar Sales [1, 2, 3, 4|]
+  3:23-3:24 "4"
+  | **bar** `Sales` (plot 1)
+  |
+  | Colour 1 of the plot palette (`xyChart.plotColorPalette`; past its end the colours start over) · 4 values · Value 4: `4`, not drawn: the x axis has no place for it
+@ 4:9  line [|5 "peak", 6]
+  4:9-4:17 "5 \"peak\""
+  | **line** (plot 2, unnamed: no legend entry)
+  |
+  | Colour 2 of the plot palette (`xyChart.plotColorPalette`; past its end the colours start over) · 2 values · Value 1: `5` at x `a`
+@ 5:15  bar Cost [1,| 2]
+  5:3-5:18 "bar Cost [1, 2]"
+  | **bar** `Cost` (plot 3)
+  |
+  | Colour 3 of the plot palette (`xyChart.plotColorPalette`; past its end the colours start over) · 2 values

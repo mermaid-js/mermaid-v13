@@ -102,6 +102,16 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   quoteId?(name: string, kind?: string): string | undefined;
   /**
+   * The written name: how `name`, which {@link isValidId} accepts, is written where a bare
+   * occurrence of symbol kind `kind` stands, which is what a rename puts there; `name` itself
+   * when omitted ({@link quoteId} covers a name `isValidId` refuses unquoted). A facet whose names
+   * may also be written quoted gives the quoted form where bare text cannot hold the name
+   * (xychart, D389: a category renamed to `Q1 2024` is written `"Q1 2024"`). A quoted occurrence
+   * keeps its quotes and takes `name` between them (D191); the read-back check still has the
+   * last word.
+   */
+  writtenName?(name: string, kind: string): string;
+  /**
    * Completion items at the probe (D95): `probe` is `ParseResult.probe` of a parse of
    * `doc.text` with `probe: offset`. Items are filtered by the probe's prefix.
    */

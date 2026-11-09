@@ -1,0 +1,8 @@
+@ 4:9  bar Sa|les [1, 2]
+  prepare: 4:7-4:12 "Sales"; rename to "Revenue":
+  %% rename-to: Revenue
+  xychart
+    x-axis [a, b]
+    bar Revenue [1, 2]
+    line Sales [2, 1]
+    line Cost [1, 1]

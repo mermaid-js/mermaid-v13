@@ -44,6 +44,7 @@
     "@mermaid-js/diagram-timeline": "workspace:^",
     "@mermaid-js/diagram-treemap": "workspace:^",
     "@mermaid-js/diagram-wardley": "workspace:^",
+    "@mermaid-js/diagram-xychart": "workspace:^",
     "@mermaid-js/gen-grammar": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",
     "@mermaid-js/layout-elk": "workspace:^",

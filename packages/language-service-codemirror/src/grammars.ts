@@ -26,6 +26,7 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   radar: () => import('./generated/radar.parser.js').then((m) => m.parser),
   treemap: () => import('./generated/treemap.parser.js').then((m) => m.parser),
   wardley: () => import('./generated/wardley.parser.js').then((m) => m.parser),
+  xychart: () => import('./generated/xychart.parser.js').then((m) => m.parser),
   cynefin: () => import('./generated/cynefin.parser.js').then((m) => m.parser),
   kanban: () => import('./generated/kanban.parser.js').then((m) => m.parser),
 };

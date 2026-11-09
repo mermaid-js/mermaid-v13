@@ -1,0 +1,5 @@
+2:19-2:20 "[" error UNEXPECTED: Expected `-->` and the end of the range, got `[`; after `x-axis` and `y-axis`, digits start a range: quote a title with digits, e.g. `"Year 2024"`.
+3:11-3:12 "]" error UNEXPECTED: Expected a number such as `12`, `-3.5` or `.25`, got `]`; a value is a plain number such as `12`, `-3.5` or `.25` (no exponent), with an optional quoted label after it.
+4:14-4:15 "(" error UNEXPECTED_CHARACTER: Unexpected character `(`; quote the text to use it, e.g. `"a (b)"`.
+5:10-5:11 "[" error UNEXPECTED: Expected an axis title such as `Month` or `"Month of year"` or a range such as `0 --> 100`, got `[`; write the y axis as `y-axis <title> <min> --> <max>`, e.g. `y-axis Revenue 0 --> 100`; it takes no categories.
+6:9-6:10 "\"" error UNCLOSED_STRING: Unclosed string: the `"` at line 6 has no closing `"`. Add it after the text.

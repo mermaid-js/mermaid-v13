@@ -1,0 +1,10 @@
+@ 2:13  y-axis 0 -|
+  --> operator 2:12-2:13 "-" -> "-->"
+@ 3:14  x-axis 1 --|
+  --> operator 3:12-3:14 "--" -> "-->"
+@ 4:12  x-axis 0 |--> 10
+  none
+@ 5:15  y-axis 0 -->|
+  none
+@ 6:20  y-axis Revenue 0 |
+  --> operator 6:20-6:20 "" -> "-->"

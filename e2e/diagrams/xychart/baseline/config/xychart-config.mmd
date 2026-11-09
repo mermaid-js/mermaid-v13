@@ -1,0 +1,37 @@
+---
+config:
+  xyChart:
+    width: 600
+    height: 400
+    titleFontSize: 26
+    titlePadding: 20
+    showDataLabel: true
+    showDataLabelOutsideBar: true
+    showLegend: true
+    legendFontSize: 12
+    legendPadding: 16
+    chartOrientation: horizontal
+    plotReservedSpacePercent: 60
+    useMaxWidth: false
+    xAxis:
+      labelFontSize: 12
+      labelPadding: 8
+      titleFontSize: 18
+      titlePadding: 8
+      tickLength: 8
+      tickWidth: 3
+      axisLineWidth: 3
+    yAxis:
+      showTick: false
+      labelRotation: 30
+description: >-
+  every top-level xyChart key and the axis keys from front matter: a 600 × 400 fixed-size
+  canvas (useMaxWidth false, D387), horizontal, data labels outside the bars, a larger title,
+  a smaller legend, thicker x axis parts, no y ticks (labelRotation reads the bottom axis only)
+---
+xychart
+  title "Configured chart"
+  x-axis Quarter [Q1, Q2, Q3, Q4]
+  y-axis Units 0 --> 50
+  bar North [12, 25, 31, 44]
+  line South [8, 18, 22, 30]

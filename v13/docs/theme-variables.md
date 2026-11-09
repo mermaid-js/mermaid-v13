@@ -15,10 +15,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, treemap, wardley |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, treemap, wardley, xychart |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
@@ -429,3 +429,21 @@ flags and opacities, which are read literally.
 | `wardleyAnnotationTextColor` | `wardley.annotationTextColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `wardleyAnnotationFill` | `wardley.annotationFill` | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#1f2020` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#2a2020` |
 | `wardleyEvolutionColor` | | color | `#dc3545` | `#dc3545` | `#ff6b6b` | `#ff6b6b` | `#dc3545` | `#ff6b6b` | `#dc3545` | `#dc3545` | `#dc3545` | `#dc3545` | `#ff6b6b` |
+
+### xychart
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xyChartBackgroundColor` | `xyChart.backgroundColor` | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `xyChartTitleColor` | `xyChart.titleColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartDataLabelColor` | `xyChart.dataLabelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartLegendTextColor` | `xyChart.legendTextColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartXAxisTitleColor` | `xyChart.xAxisTitleColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartXAxisLabelColor` | `xyChart.xAxisLabelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartXAxisTickColor` | `xyChart.xAxisTickColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartXAxisLineColor` | `xyChart.xAxisLineColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartYAxisTitleColor` | `xyChart.yAxisTitleColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartYAxisLabelColor` | `xyChart.yAxisLabelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartYAxisTickColor` | `xyChart.yAxisTickColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartYAxisLineColor` | `xyChart.yAxisLineColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartPlotColorPalette` | `xyChart.plotColorPalette` | palette | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#ECECFF,#8493A6,#FFC3A0,#DCDDE1,#B8E994,#D1A36F,#C3CDE6,#FFB6C1,#496078,#F8F3E3` | `#3498db,#2ecc71,#e74c3c,#f1c40f,#bdc3c7,#ffffff,#34495e,#9b59b6,#1abc9c,#e67e22` | `#CDE498,#FF6B6B,#A0D2DB,#D7BDE2,#F0F0F0,#FFC3A0,#7FD8BE,#FF9A8B,#FAF3E0,#FFF176` | `#EEE,#6BB8E4,#8ACB88,#C7ACD6,#E8DCC2,#FFB2A8,#FFF380,#7E8D91,#FFD8B1,#FAF3E0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` | `#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0` |

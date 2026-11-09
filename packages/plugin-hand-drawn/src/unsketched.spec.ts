@@ -27,6 +27,7 @@ const UNSKETCHED: Readonly<Record<string, string>> = {
   cynefin: 'cynefin',
   treemap: 'treemap',
   wardley: 'wardley',
+  xychart: 'xychart',
 };
 
 const HAND_DRAWN = /look["']?\s*:\s*["']?handDrawn/;

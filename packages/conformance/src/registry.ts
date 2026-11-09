@@ -21,6 +21,8 @@ import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
 import { treemapAdapter } from './treemap/v13.ts';
 import { wardleyAdapter } from './wardley/v13.ts';
+import { xyChartParityCorpus } from './xychart/corpus.ts';
+import { xyChartAdapter } from './xychart/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -148,6 +150,16 @@ export const PARITY_SUITES: ParitySuite[] = [
     corpusDirs: ['e2e/diagrams/wardley'],
     // The cases run in `wardley/parity.spec.ts`, with their unclosed-directive divergences.
     corpusFiles: ['packages/conformance/corpus/wardley-v12-specs.json'],
+  },
+  {
+    adapter: xyChartAdapter,
+    corpusDirs: ['e2e/diagrams/xychart'],
+    corpusFiles: [
+      'packages/conformance/corpus/xychart-v12-specs.json',
+      'packages/conformance/corpus/xychart-cases.json',
+      'packages/conformance/corpus/xychart-recovery.json',
+    ],
+    corpus: xyChartParityCorpus,
   },
 ];
 

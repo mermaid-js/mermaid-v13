@@ -1,0 +1,35 @@
+@ 1:9  xychart |horizontal
+  1:9-1:19 "horizontal"
+  | **`horizontal`**
+  |
+  | `vertical` (the default) or `horizontal`, right after `xychart`: which way the bars run.
+@ 2:3  |title Sales
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the chart title. The last one wins.
+@ 3:7  x-ax|is [a, b]
+  3:3-3:9 "x-axis"
+  | **`x-axis`**
+  |
+  | `x-axis [<title>] [<a>, <b>, …]` (categories) or `x-axis [<title>] <min> --> <max>` (a range), or just a title. Without data, the x axis is the range `1 --> n` of the first plot's n values.
+@ 4:13  y-axis 0 -|-> 10
+  4:12-4:15 "-->"
+  | **`-->`**
+  |
+  | `-->`: between the two ends of an axis range.
+@ 5:5  ba|r [1, 2]
+  5:3-5:6 "bar"
+  | **`bar`**
+  |
+  | `bar [<name>] [<v>, <v>, …]` or `line [<name>] [<v>, …]`: a plot. A value may carry a point label, `line [5 "peak", 6]` (drawn for lines only). A named plot gets a legend entry.
+@ 6:6  acc|Descr {
+  6:3-6:13 "accDescr {"
+  | **`accDescr {`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the chart.
+@ 8:3  |}
+  8:3-8:4 "}"
+  | **`}`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the chart.

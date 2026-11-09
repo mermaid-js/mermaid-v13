@@ -109,12 +109,10 @@ describe('theme direction (D331)', () => {
   });
 
   // The oracle specs leave D332's inputs out of their v12 comparison, so each must be read by a
-  // table, where the diagram variable that reads it is compared. plotColorArray waits for xychart
-  // (D381).
+  // table, where the diagram variable that reads it is compared. xychart's
+  // `xyChartPlotColorPalette` reads plotColorArray (D381, D545).
   it('reads every shared input from some table', () => {
-    const inputs = D332_INPUTS.filter((n) => n !== 'plotColorArray');
-    expect(unreadInputs(repo.tables, inputs)).toEqual([]);
-    expect(unreadInputs(repo.tables, ['plotColorArray'])).toEqual(['plotColorArray']);
+    expect(unreadInputs(repo.tables, D332_INPUTS)).toEqual([]);
     const t = { demo: TABLE };
     expect(unreadInputs(t, ['mainBkg', 'cScale', 'mutedBkg'])).toEqual(['mutedBkg']);
   });

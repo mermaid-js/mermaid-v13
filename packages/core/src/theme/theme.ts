@@ -824,9 +824,14 @@ function familyEntries(
   return { rules, lits };
 }
 
+/** An author's value that sets nothing: absent, empty, or an empty list (D545). */
+const unset = (v: unknown): boolean =>
+  v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+
 /**
  * `themeVariables` with the table's nested section (`themeVariables.packet.startByteColor`)
- * mapped onto its flat names key by key (D335, D540). A flat name the author set wins.
+ * mapped onto its flat names key by key (D335, D540). A flat name the author set wins; one
+ * {@link unset} leaves the nested key to apply.
  */
 function flatten(
   tv: Readonly<Record<string, unknown>> | undefined,
@@ -835,12 +840,9 @@ function flatten(
   const sec = table?.section !== undefined ? tv?.[table.section] : undefined;
   if (!tv || typeof sec !== 'object' || sec === null) return tv;
   const out: Record<string, unknown> = { ...tv };
-  for (const [name, v] of Object.entries(table!.vars)) {
-    const key = v.nested;
-    const flat = out[name];
-    if (key !== undefined && own(sec, key) && (flat === undefined || flat === null || flat === ''))
+  for (const [name, { nested: key }] of Object.entries(table!.vars))
+    if (key !== undefined && own(sec, key) && unset(out[name]))
       out[name] = (sec as Record<string, unknown>)[key];
-  }
   return out;
 }
 

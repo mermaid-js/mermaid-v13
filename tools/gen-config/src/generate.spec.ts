@@ -71,6 +71,7 @@ describe('gen-config', () => {
       );
     }
     expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
+    expect(SECTION_OWNERS.xyChart).toBe('packages/diagram-xychart');
   });
 
   it('camel-cases a dashed section in its defaults name', () => {
