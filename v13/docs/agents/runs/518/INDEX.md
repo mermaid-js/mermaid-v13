@@ -9,7 +9,7 @@ Integration branch `feature/518_treeview` (draft PR #627), cut from `mermaid-v13
 | T3 custom row layout (`TreeViewLayout`) | #573 | #572 (soft) | merged (ff; runtime 10.5 KB gz, `./testing` 6.7 KB gz; core: `fontFamily` usedBy only) |
 | T4 SVG renderer, icons and theme table | #575 | #572, #573 | merged (ff; runtime 14.0 KB gz; core: `usedBy` rows only, lint `layout.*`/`render.*`) |
 | T6 language facet | #576 | #572 | merged (--no-ff; `./language` 13.2 KB gz, runtime 11.6 KB gz, no core change) |
-| T5 integration | #577 | #575, #576 | open |
+| T5 integration | #577 | #575, #576 | merged (ff; core 94,465 B gz (+53) of 98,304; chunk 18,977 B; load path 113,442 B) |
 | T7 ASCII renderer (Should, D320, D488) | #578 | #572, #577 | merged (ff; `./ascii` 1.7 KB gz; `formats` and bench row left to T5) |
 
 No T0 (no core change, D481). One ticket agent at a time (AI-Max rule).
