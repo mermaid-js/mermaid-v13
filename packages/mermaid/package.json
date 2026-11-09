@@ -74,7 +74,8 @@
     "@mermaid-js/diagram-radar": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",
-    "@mermaid-js/diagram-timeline": "workspace:*"
+    "@mermaid-js/diagram-timeline": "workspace:*",
+    "@mermaid-js/diagram-treemap": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.25.12",

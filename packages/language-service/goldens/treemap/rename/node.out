@@ -1,0 +1,20 @@
+@ 3:4  "|Home"
+  prepare: 3:4-3:8 "Home"; rename to "Living costs":
+  %% rename-to: Living costs
+  treemap
+    "Living costs"
+      "Home": 1
+    'Food'
+      "Rice": 2
+    "Home"
+      "Gas": 3
+@ 5:6  'Fo|od'
+  prepare: 5:4-5:8 "Food"; rename to "Living costs":
+  %% rename-to: Living costs
+  treemap
+    "Home"
+      "Home": 1
+    'Living costs'
+      "Rice": 2
+    "Home"
+      "Gas": 3

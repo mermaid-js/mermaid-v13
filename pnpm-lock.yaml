@@ -152,6 +152,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -255,6 +258,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -465,6 +471,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/language-server:
     dependencies:
       '@mermaid-js/core':
@@ -521,6 +533,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -588,6 +603,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
 
   packages/language-service-codemirror:
     devDependencies:
@@ -811,6 +829,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
     devDependencies:
       esbuild:
         specifier: ^0.25.12
@@ -957,6 +978,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treemap
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

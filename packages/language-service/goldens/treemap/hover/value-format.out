@@ -1,0 +1,15 @@
+@ 7:6  "Ho|me"
+  7:3-7:9 "\"Home\""
+  | **section** `Home`
+  |
+  | Value: `$1,200`, the sum of its 2 leaves.
+@ 8:15  "Rent": 12|00
+  8:13-8:17 "1200"
+  | **value** `1200` of `Rent` (`valueFormat` `$0,0`)
+  |
+  | Value: `$1,200`
+@ 9:13  "Free": |0
+  9:13-9:14 "0"
+  | **value** `0` of `Free` (`valueFormat` `$0,0`)
+  |
+  | Value: `$0`; no value is shown for 0

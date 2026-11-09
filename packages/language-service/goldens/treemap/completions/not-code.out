@@ -1,0 +1,14 @@
+@ 2:9  title: B|udget
+  none
+@ 5:11  %% a com|ment
+  none
+@ 6:12  title Bud|get
+  none
+@ 7:6  "Ho|me"
+  none
+@ 8:15  "Rent": 12|00
+  none
+@ 9:14  classDef ho|t fill:red
+  none
+@ 10:19  accDescr { long |text }
+  none

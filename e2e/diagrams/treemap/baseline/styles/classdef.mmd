@@ -1,0 +1,15 @@
+---
+description: >-
+  classDef fills, strokes, widths, dashes and text colours on sections and leaves, a class used
+  before its classDef, and the class name on the leaf group without v12's x (D403)
+---
+treemap
+  "Hot section":::hot
+    "Plain leaf": 20
+    "Cold leaf": 15:::cold
+  "Normal section"
+    "Dashed leaf": 25:::dashed
+    "Other leaf": 10
+  classDef hot fill:#ffcdd2,stroke:#c62828,stroke-width:3px
+  classDef cold fill:#bbdefb,stroke:#1565c0,color:#0d47a1
+  classDef dashed stroke:#2e7d32,stroke-dasharray:5 5,font-weight:bold

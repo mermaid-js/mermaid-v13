@@ -1,0 +1,30 @@
+@ 1:5  tree|map
+  1:1-1:8 "treemap"
+  | **`treemap`**
+  |
+  | `treemap` or `treemap-beta`: starts a treemap.
+@ 2:5  ti|tle Budget
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Budget`: the title drawn above the treemap (the last one wins).
+@ 3:8  accTi|tle: Household
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr: Spending
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
+@ 5:7  "A":|::hot
+  5:6-5:9 ":::"
+  | **`:::`**
+  |
+  | `:::name`: the class of a row, right after its name or value.
+@ 6:8  class|Def hot fill:red
+  6:3-6:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name styles;`: a class of styles that rows take with `:::name`; a repeat adds styles.

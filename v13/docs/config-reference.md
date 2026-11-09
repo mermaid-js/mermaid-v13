@@ -550,6 +550,26 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `ishikawa.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `ishikawa.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
 
+## `treemap`
+
+| Key | Type | Default | Status | Notes | Description |
+| --- | --- | --- | --- | --- | --- |
+| `treemap` | object |  | honoured (13.0.0) |  | The object containing configurations specific for treemap diagrams. |
+| `treemap.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the treemap renderer never did. |  |
+| `treemap.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `treemap.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `treemap.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
+| `treemap.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
+| `treemap.padding` | number | `10` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | The space between sibling sections and leaves, in pixels (d3's `paddingInner`). |
+| `treemap.diagramPadding` | number | `8` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | The space around the drawn treemap, in pixels. |
+| `treemap.showValues` | boolean | `true` | honoured (13.0.0) | As in v12, only `false` hides the values. | Whether sections and leaves print their values. |
+| `treemap.nodeWidth` | number | `100` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | A tenth of the treemap's width, in pixels: the canvas is `nodeWidth × 10` wide, or 960 when it is 0. |
+| `treemap.nodeHeight` | number | `40` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | A tenth of the treemap's height, in pixels: the canvas is `nodeHeight × 10` high, or 500 when it is 0. |
+| `treemap.borderWidth` | number | `1` | ignored (13.0.0) | v12 set a default and never read it. | Unused. |
+| `treemap.valueFontSize` | number | `12` | ignored (13.0.0) | v12 set a default and never read it: values are fitted to their box from the treemap's own sizes, as in v12. | Unused. |
+| `treemap.labelFontSize` | number | `14` | ignored (13.0.0) | v12 set a default and never read it: labels are fitted to their box from the treemap's own sizes, as in v12. | Unused. |
+| `treemap.valueFormat` | string | `","` | honoured (13.0.0) | Every specifier formats as in v12 (D409): an empty one is `,`, and one d3-format rejects falls back to `,`, as v12 did. A value that is not a string falls back to `,` with one `TREEMAP_CONFIG_INVALID` warning. | The d3-format specifier values are printed with (`,`, `$0,0`, `.1%`, `$,.2f`, …), with v12's `$` cases. |
+
 ## `kanban`
 
 | Key | Type | Default | Status | Notes | Description |
@@ -995,6 +1015,7 @@ Legacy alias: `requirement.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `architecture.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `mindmap.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `ishikawa.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `treemap.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `kanban.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `gitGraph.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `c4.look: "handDrawn"` sets `handDrawn`.

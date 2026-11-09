@@ -1,0 +1,114 @@
+[
+  {
+    "id": "v12-specs/treemap.test.ts#1",
+    "source": "treemap"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#2",
+    "source": "treemap\n\"Root\""
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#3",
+    "source": "treemap\n\"Root\"\n  \"Child1\" , 100\n  \"Child2\" : 200\n"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#4",
+    "source": "treemap\n\"My Section\""
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#5",
+    "source": "treemap\n\"Item\" : 123.45"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#6",
+    "source": "treemap\n\"Root1\"\n\"Root2\""
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#7",
+    "source": "treemap\ntitle My Treemap Diagram\n\"Root\"\n  \"Child\": 100"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#8",
+    "source": "treemap\naccTitle: Accessible Title\n\"Root\"\n  \"Child\": 100"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#9",
+    "source": "treemap\naccDescr: This is an accessible description\n\"Root\"\n  \"Child\": 100"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#10",
+    "source": "treemap\ntitle My Treemap Diagram\naccTitle: Accessible Title\naccDescr: This is an accessible description\n\"Root\"\n  \"Child\": 100"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#11",
+    "source": "treemap\nclassDef myClass fill:red;"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#12",
+    "source": "treemap\nclassDef myClass fill:red"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#13",
+    "source": "treemap\nclassDef complexClass fill:blue stroke:#ff0000 stroke-width:2px"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#14",
+    "source": "treemap\nclass myNode myClass"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#15",
+    "source": "treemap\nclass myNode myClass;"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#16",
+    "source": "treemap\n\"My Section\":::sectionClass"
+  },
+  {
+    "id": "v12-specs/treemap.test.ts#17",
+    "source": "treemap\n\"My Leaf\" : 100:::leafClass"
+  },
+  {
+    "id": "v12-specs/treemap.ts#2",
+    "source": "---\nconfig:\n  treemap:\n    valueFormat: '$0,0'\n---\ntreemap-beta\n\"Monthly Budget\"\n    \"Housing\"\n        \"Rent\": 1400\n        \"Utilities\": 220\n        \"Internet\": 60\n    \"Food\"\n        \"Groceries\": 480\n        \"Dining out\": 180\n    \"Transport\"\n        \"Car payment\": 320\n        \"Fuel\": 140\n    \"Savings\"\n        \"Emergency fund\": 300\n        \"Retirement\": 400"
+  },
+  {
+    "id": "v12-specs/treemap.ts#3",
+    "source": "treemap-beta\n\"Storage Used\"\n    \"Media\":::warning\n        \"Videos\": 120\n        \"Photos\": 80\n        \"Music\": 25\n    \"Documents\"\n        \"Work\": 35\n        \"Personal\": 15\n    \"Apps\": 60\n    \"System\": 40\n\nclassDef warning fill:#f96,stroke:#333;"
+  },
+  {
+    "id": "v12-specs/multi-diagram-id-uniqueness.spec.ts#1",
+    "source": "treemap-beta\n\"Section 1\"\n    \"Leaf 1.1\": 12\n    \"Leaf 1.2\": 8\n\"Section 2\"\n    \"Leaf 2.1\": 20"
+  },
+  {
+    "id": "v12-docs/treemap.md#1",
+    "source": "treemap-beta\n\"Category A\"\n    \"Item A1\": 10\n    \"Item A2\": 20\n\"Category B\"\n    \"Item B1\": 15\n    \"Item B2\": 25\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#2",
+    "source": "treemap-beta\n\"Products\"\n    \"Electronics\"\n        \"Phones\": 50\n        \"Computers\": 30\n        \"Accessories\": 20\n    \"Clothing\"\n        \"Men's\": 40\n        \"Women's\": 40\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#3",
+    "source": "treemap-beta\n\"Section 1\"\n    \"Leaf 1.1\": 12\n    \"Section 1.2\":::class1\n      \"Leaf 1.2.1\": 12\n\"Section 2\"\n    \"Leaf 2.1\": 20:::class1\n    \"Leaf 2.2\": 25\n    \"Leaf 2.3\": 12\n\nclassDef class1 fill:red,color:blue,stroke:#FFD600;\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#4",
+    "source": "treemap-beta\n\"Main\"\n    \"A\": 20\n    \"B\":::important\n        \"B1\": 10\n        \"B2\": 15\n    \"C\": 5\n\nclassDef important fill:#f96,stroke:#333,stroke-width:2px;\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#5",
+    "source": "---\nconfig:\n    theme: 'forest'\n---\ntreemap-beta\n\"Category A\"\n    \"Item A1\": 10\n    \"Item A2\": 20\n\"Category B\"\n    \"Item B1\": 15\n    \"Item B2\": 25\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#6",
+    "source": "---\nconfig:\n  treemap:\n    diagramPadding: 200\n---\ntreemap-beta\n\"Category A\"\n    \"Item A1\": 10\n    \"Item A2\": 20\n\"Category B\"\n    \"Item B1\": 15\n    \"Item B2\": 25\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#7",
+    "source": "---\nconfig:\n  treemap:\n    valueFormat: '$0,0'\n---\ntreemap-beta\n\"Budget\"\n    \"Operations\"\n        \"Salaries\": 700000\n        \"Equipment\": 200000\n        \"Supplies\": 100000\n    \"Marketing\"\n        \"Advertising\": 400000\n        \"Events\": 100000\n"
+  },
+  {
+    "id": "v12-docs/treemap.md#8",
+    "source": "---\nconfig:\n  treemap:\n    valueFormat: '$.1%'\n---\ntreemap-beta\n\"Market Share\"\n    \"Company A\": 0.35\n    \"Company B\": 0.25\n    \"Company C\": 0.15\n    \"Others\": 0.25\n"
+  }
+]

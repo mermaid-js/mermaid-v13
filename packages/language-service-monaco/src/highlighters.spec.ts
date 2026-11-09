@@ -46,6 +46,7 @@ const DOCS = {
   radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
   kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
+  treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -68,6 +69,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'treemap',
     ]);
   });
 

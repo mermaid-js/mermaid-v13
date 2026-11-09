@@ -90,6 +90,20 @@ const PACKAGES = [
       'test-context.ts',
     ],
   },
+  {
+    name: 'treemap',
+    dir: 'diagram-treemap',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

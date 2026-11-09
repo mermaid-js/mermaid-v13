@@ -277,6 +277,22 @@ const DOCS: Readonly<Record<string, string>> = {
     '    }',
     '',
   ].join('\n'),
+  treemap: [
+    'treemap-beta',
+    '  title Budget',
+    '  accTitle: Budget',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  %% the sections',
+    '  "Operations"',
+    '    "Salaries": 700000:::big',
+    '    "Rent", 1,000',
+    "  'Marketing'",
+    '    "Ads": 1.5',
+    '  classDef big fill:#f96,stroke:#333;',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */
