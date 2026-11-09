@@ -1,0 +1,6 @@
+architecture-beta
+    group left(cloud)[Left]
+    group right(cloud)[Right]
+    service a(server)[A] in left
+    service b(server)[B] in right
+    a{group}:R -[crosses]- L:b{group}

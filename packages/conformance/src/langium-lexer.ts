@@ -42,6 +42,11 @@ export const LANGIUM_LEXERS = {
     factory: 'createWardleyServices',
     key: 'Wardley',
   },
+  architecture: {
+    probe: 'architecture-beta\nservice a',
+    factory: 'createArchitectureServices',
+    key: 'Architecture',
+  },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

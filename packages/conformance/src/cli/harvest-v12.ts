@@ -102,6 +102,18 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/wardley.md',
   },
+  architecture: {
+    header: 'architecture(?:-beta)?',
+    files: [
+      'packages/mermaid/src/diagrams/architecture/architecture.spec.ts',
+      'packages/mermaid/src/diagrams/architecture/architectureSeed.spec.ts',
+      'packages/mermaid/src/diagrams/architecture/svgDraw.spec.ts',
+      'packages/parser/tests/architecture.test.ts',
+      'packages/examples/src/examples/architecture.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/architecture.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;

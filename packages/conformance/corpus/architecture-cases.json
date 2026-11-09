@@ -1,0 +1,570 @@
+[
+  {
+    "id": "architecture-cases/header-alone",
+    "source": "architecture-beta"
+  },
+  {
+    "id": "architecture-cases/header-upper",
+    "source": "ARCHITECTURE-BETA\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-mixed-case",
+    "source": "Architecture-Beta\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-bare",
+    "source": "architecture\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-glued",
+    "source": "architecture-betax\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-glued-dash",
+    "source": "architecture-beta-x\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-trailing-dash",
+    "source": "architecture-beta-\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-trailing-blanks",
+    "source": "architecture-beta   \nservice a"
+  },
+  {
+    "id": "architecture-cases/header-comment",
+    "source": "architecture-beta %% c\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-same-line",
+    "source": "architecture-beta service a"
+  },
+  {
+    "id": "architecture-cases/header-same-line-glued",
+    "source": "architecture-beta:service a"
+  },
+  {
+    "id": "architecture-cases/header-leading-lines",
+    "source": "\n\n  architecture-beta\n\n"
+  },
+  {
+    "id": "architecture-cases/header-twice",
+    "source": "architecture-beta\narchitecture-beta\nservice a"
+  },
+  {
+    "id": "architecture-cases/ids-capital-direction",
+    "source": "architecture-beta\nservice Backend(server)[B]\nservice Left\nservice Right\nservice Top\nservice LRTB"
+  },
+  {
+    "id": "architecture-cases/ids-capital-other",
+    "source": "architecture-beta\nservice Api\nservice DB\nservice Zeta"
+  },
+  {
+    "id": "architecture-cases/ids-direction-alone",
+    "source": "architecture-beta\nservice L\nservice b in R"
+  },
+  {
+    "id": "architecture-cases/ids-keywords",
+    "source": "architecture-beta\nservice row(server)\nservice in\nservice group\nservice column\nservice align\nservice service\nservice junction"
+  },
+  {
+    "id": "architecture-cases/ids-keyword-prefixes",
+    "source": "architecture-beta\nservice rows\nservice inx\nservice groups\nservice columnar\nservice aligned\nservice services\nservice junctions\nservice in-a\nservice row_1"
+  },
+  {
+    "id": "architecture-cases/ids-keyword-suffixes",
+    "source": "architecture-beta\nservice arow\nservice ingroup\nservice xin"
+  },
+  {
+    "id": "architecture-cases/ids-title-prefix",
+    "source": "architecture-beta\nservice titlex\nservice title\nservice Title\nservice subtitle"
+  },
+  {
+    "id": "architecture-cases/ids-acc-prefix",
+    "source": "architecture-beta\nservice accTitlex\nservice accDescription\nservice accDescr"
+  },
+  {
+    "id": "architecture-cases/ids-digits",
+    "source": "architecture-beta\nservice 1Leftofmid\nservice 20\nservice _x\nservice __proto__"
+  },
+  {
+    "id": "architecture-cases/ids-dashes",
+    "source": "architecture-beta\nservice a-b\nservice a--b\nservice a-\nservice -a\nservice a---b"
+  },
+  {
+    "id": "architecture-cases/ids-unicode",
+    "source": "architecture-beta\nservice h\u00e9llo"
+  },
+  {
+    "id": "architecture-cases/ids-unicode-cjk",
+    "source": "architecture-beta\nservice \u4f60\u597d"
+  },
+  {
+    "id": "architecture-cases/ids-dot",
+    "source": "architecture-beta\nservice a.b"
+  },
+  {
+    "id": "architecture-cases/keywords-case",
+    "source": "architecture-beta\nService a\nSERVICE b\nGroup g\nJunction j"
+  },
+  {
+    "id": "architecture-cases/keywords-glued",
+    "source": "architecture-beta\nservicea\ngroupg(cloud)\njunctionj"
+  },
+  {
+    "id": "architecture-cases/keywords-in-forms",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice b in  g\nservice c in\ng\njunction j in g"
+  },
+  {
+    "id": "architecture-cases/icons-forms",
+    "source": "architecture-beta\nservice a(server)\nservice b(logos:aws-lambda)\nservice c(mdi:a_b-c)\nservice d(:)\nservice e(-)"
+  },
+  {
+    "id": "architecture-cases/icons-inner-blanks",
+    "source": "architecture-beta\nservice a( server )"
+  },
+  {
+    "id": "architecture-cases/icons-blanks",
+    "source": "architecture-beta\nservice b (server)\nservice c(server) [A]"
+  },
+  {
+    "id": "architecture-cases/icons-empty",
+    "source": "architecture-beta\nservice a()"
+  },
+  {
+    "id": "architecture-cases/icons-dot",
+    "source": "architecture-beta\nservice a(a.b)"
+  },
+  {
+    "id": "architecture-cases/icons-slash",
+    "source": "architecture-beta\nservice b(a/b)"
+  },
+  {
+    "id": "architecture-cases/icons-blank-inside",
+    "source": "architecture-beta\nservice c(a b)"
+  },
+  {
+    "id": "architecture-cases/icons-unclosed",
+    "source": "architecture-beta\nservice a(server\nservice b"
+  },
+  {
+    "id": "architecture-cases/icons-nested",
+    "source": "architecture-beta\nservice a((server))"
+  },
+  {
+    "id": "architecture-cases/text-icons",
+    "source": "architecture-beta\nservice a \"text\"[A]\nservice b 'x y'\nservice c\"glued\"\nservice d \"a\\\"b\""
+  },
+  {
+    "id": "architecture-cases/text-icon-multiline",
+    "source": "architecture-beta\nservice a \"x\ny\"[A]"
+  },
+  {
+    "id": "architecture-cases/text-icon-and-icon",
+    "source": "architecture-beta\nservice a \"x\"(server)[A]"
+  },
+  {
+    "id": "architecture-cases/labels-raw",
+    "source": "architecture-beta\nservice a(server)[<b>x</b> & y]"
+  },
+  {
+    "id": "architecture-cases/labels-nested",
+    "source": "architecture-beta\nservice b[a [b] c]"
+  },
+  {
+    "id": "architecture-cases/labels-quoted-bracket",
+    "source": "architecture-beta\nservice c[\"a]b\"]"
+  },
+  {
+    "id": "architecture-cases/labels-quoted-then-text",
+    "source": "architecture-beta\nservice d[\"a\"b]"
+  },
+  {
+    "id": "architecture-cases/labels-quoted-multiline",
+    "source": "architecture-beta\nservice e[\"a\nb\"]"
+  },
+  {
+    "id": "architecture-cases/labels-single-quoted",
+    "source": "architecture-beta\nservice f['a]b']\nservice g['it\\'s']"
+  },
+  {
+    "id": "architecture-cases/labels-unicode",
+    "source": "architecture-beta\nservice f[h\u00e9llo]\ngroup g1(server)[\u4f60\u597d\u4e16\u754c]"
+  },
+  {
+    "id": "architecture-cases/labels-empty",
+    "source": "architecture-beta\nservice d[]"
+  },
+  {
+    "id": "architecture-cases/labels-blank",
+    "source": "architecture-beta\nservice d[ ]\nservice e[  x  ]"
+  },
+  {
+    "id": "architecture-cases/labels-unclosed",
+    "source": "architecture-beta\nservice a[abc\nservice b"
+  },
+  {
+    "id": "architecture-cases/labels-unclosed-quote",
+    "source": "architecture-beta\nservice a[\"abc]\nservice b"
+  },
+  {
+    "id": "architecture-cases/labels-blank-before",
+    "source": "architecture-beta\nservice a(server) [A]\nservice b [B]"
+  },
+  {
+    "id": "architecture-cases/labels-escapes",
+    "source": "architecture-beta\nservice a[\"The \\\"Main\\\" API\"]\nservice b[\"a\\\\\"]"
+  },
+  {
+    "id": "architecture-cases/labels-escaped-line-end",
+    "source": "architecture-beta\nservice a[\"a\\\nb\"]"
+  },
+  {
+    "id": "architecture-cases/labels-quote-in-run",
+    "source": "architecture-beta\nservice a[it's]\nservice b[say \"hi\" now]"
+  },
+  {
+    "id": "architecture-cases/labels-percent",
+    "source": "architecture-beta\nservice a[50%% done]\nservice b[a %% b] %% c"
+  },
+  {
+    "id": "architecture-cases/labels-hash",
+    "source": "architecture-beta\nservice a[#1 item]"
+  },
+  {
+    "id": "architecture-cases/labels-in-after",
+    "source": "architecture-beta\ngroup g\nservice a[A]in g"
+  },
+  {
+    "id": "architecture-cases/edges-forms",
+    "source": "architecture-beta\na:R -- L:b\na:R --> L:b\na:R <-- L:b\na:R <--> L:b\na:B -[x]- T:b"
+  },
+  {
+    "id": "architecture-cases/edges-both-sides-arrow",
+    "source": "architecture-beta\na:R > -- < L:b\na:R < -- > L:b"
+  },
+  {
+    "id": "architecture-cases/edges-blanks",
+    "source": "architecture-beta\na : R -- L : b\na:R--L:b\na :R  --  L: b"
+  },
+  {
+    "id": "architecture-cases/edges-sides-lowercase",
+    "source": "architecture-beta\na:r -- l:b\na:t -- b:b"
+  },
+  {
+    "id": "architecture-cases/edges-sides-words",
+    "source": "architecture-beta\na:Right -- Left:b"
+  },
+  {
+    "id": "architecture-cases/edges-group",
+    "source": "architecture-beta\na{group}:R --> L:b{group}\na {group} :R -- L: b {group}"
+  },
+  {
+    "id": "architecture-cases/edges-group-case",
+    "source": "architecture-beta\na{Group}:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-group-blanks",
+    "source": "architecture-beta\na{ group }:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-group-unclosed",
+    "source": "architecture-beta\na{group:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-label-forms",
+    "source": "architecture-beta\na:B -[x]- T:b\na:B -[ x ]- T:b\na:B - [x] - T:b\na:B -[\"x\"]- T:b\na:B -[x]-> T:b\na:B <-[x]- T:b"
+  },
+  {
+    "id": "architecture-cases/edges-triple-dash",
+    "source": "architecture-beta\na:R --- L:b\na:R ---- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-dash-runs",
+    "source": "architecture-beta\na:R -------- L:b\n-\n--\n---"
+  },
+  {
+    "id": "architecture-cases/edges-single-dash",
+    "source": "architecture-beta\na:R - L:b"
+  },
+  {
+    "id": "architecture-cases/edges-self",
+    "source": "architecture-beta\na:L -- R:a"
+  },
+  {
+    "id": "architecture-cases/edges-like-side",
+    "source": "architecture-beta\na:L -- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-dashed-ids",
+    "source": "architecture-beta\na-b:R -- L:c\na:R -- L:b-c\na-:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-arrow-glued",
+    "source": "architecture-beta\na:R-->L:b\na:R<--L:b"
+  },
+  {
+    "id": "architecture-cases/edges-multiline",
+    "source": "architecture-beta\na:R\n-- L:b"
+  },
+  {
+    "id": "architecture-cases/edges-fat",
+    "source": "architecture-beta\na:R == L:b"
+  },
+  {
+    "id": "architecture-cases/edges-tilde",
+    "source": "architecture-beta\na:R ~~ L:b"
+  },
+  {
+    "id": "architecture-cases/align-forms",
+    "source": "architecture-beta\nalign row a b\nalign column a b c\nalign  row  a  b"
+  },
+  {
+    "id": "architecture-cases/align-keyword-ids",
+    "source": "architecture-beta\nalign row row column\nalign column in group"
+  },
+  {
+    "id": "architecture-cases/align-other",
+    "source": "architecture-beta\nalign grid a b\nalign Row a b"
+  },
+  {
+    "id": "architecture-cases/junction-forms",
+    "source": "architecture-beta\njunction j\njunction j2 in g\njunction j3(server)[x]"
+  },
+  {
+    "id": "architecture-cases/group-forms",
+    "source": "architecture-beta\ngroup g\ngroup g1(cloud)\ngroup g2[G]\ngroup g3(cloud)[G] in g\ngroup g4 \"x\""
+  },
+  {
+    "id": "architecture-cases/title-forms",
+    "source": "architecture-beta\ntitle Hello\n  title  Indented %% c\ntitle\ntitle\tTab"
+  },
+  {
+    "id": "architecture-cases/title-same-line",
+    "source": "architecture-beta title Simple"
+  },
+  {
+    "id": "architecture-cases/title-glued",
+    "source": "architecture-beta\ntitleX\ntitle:x"
+  },
+  {
+    "id": "architecture-cases/title-at-end",
+    "source": "architecture-beta\nservice a\ntitle"
+  },
+  {
+    "id": "architecture-cases/acc-forms",
+    "source": "architecture-beta\naccTitle: T\n  accTitle : t\naccDescr: d\n accDescr {\n x\n }\naccDescr{y}\naccDescr\n{\nz\n}"
+  },
+  {
+    "id": "architecture-cases/acc-descr-unclosed",
+    "source": "architecture-beta\naccDescr {\nunclosed\nservice a"
+  },
+  {
+    "id": "architecture-cases/acc-descr-bare",
+    "source": "architecture-beta\naccDescr\nservice a"
+  },
+  {
+    "id": "architecture-cases/acc-title-no-colon",
+    "source": "architecture-beta\naccTitle x\nservice a"
+  },
+  {
+    "id": "architecture-cases/acc-descr-percent",
+    "source": "architecture-beta\naccDescr: a %% b\naccTitle: c%%d"
+  },
+  {
+    "id": "architecture-cases/acc-descr-brace-percent",
+    "source": "architecture-beta\naccDescr { a %% b }"
+  },
+  {
+    "id": "architecture-cases/strings-unclosed-double",
+    "source": "architecture-beta\nservice \"unterminated\nservice b"
+  },
+  {
+    "id": "architecture-cases/strings-unclosed-single",
+    "source": "architecture-beta\nservice 'unterminated\nservice b"
+  },
+  {
+    "id": "architecture-cases/strings-escaped-line-end",
+    "source": "architecture-beta\nservice a \"a\\\nb\""
+  },
+  {
+    "id": "architecture-cases/strings-escaped-end",
+    "source": "architecture-beta\nservice a \"a\\"
+  },
+  {
+    "id": "architecture-cases/error-hash",
+    "source": "architecture-beta\nservice a # x"
+  },
+  {
+    "id": "architecture-cases/error-star",
+    "source": "architecture-beta\nservice a *"
+  },
+  {
+    "id": "architecture-cases/error-run",
+    "source": "architecture-beta\nservice a ?!*$ b"
+  },
+  {
+    "id": "architecture-cases/error-brace",
+    "source": "architecture-beta\nservice a {x}"
+  },
+  {
+    "id": "architecture-cases/error-close-paren",
+    "source": "architecture-beta\nservice a)"
+  },
+  {
+    "id": "architecture-cases/error-close-bracket",
+    "source": "architecture-beta\nservice a]"
+  },
+  {
+    "id": "architecture-cases/error-semicolon",
+    "source": "architecture-beta\nservice a; service b"
+  },
+  {
+    "id": "architecture-cases/error-equals",
+    "source": "architecture-beta\na:R = L:b"
+  },
+  {
+    "id": "architecture-cases/comments",
+    "source": "architecture-beta\n%% whole line\nservice a %% trailing\n  %% indented\nservice b%%glued\nservice c[x %% y]"
+  },
+  {
+    "id": "architecture-cases/directives",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\narchitecture-beta\nservice a\n%%{ init: {} }%%\nservice b %%{x}%%\nservice c %%{x}%%y"
+  },
+  {
+    "id": "architecture-cases/directive-unclosed-in-line",
+    "source": "architecture-beta\nservice a %%{ never"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive",
+    "source": "architecture-beta\n%%{ never closed\nservice a"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive-init",
+    "source": "architecture-beta\n%%{init: {\nservice a"
+  },
+  {
+    "id": "architecture-cases/front-matter",
+    "source": "---\ntitle: FM\nconfig:\n  architecture:\n    iconSize: 40\n---\narchitecture-beta\nservice a"
+  },
+  {
+    "id": "architecture-cases/yaml-body",
+    "source": "architecture-beta\n---\nx: 1\n---\nservice a"
+  },
+  {
+    "id": "architecture-cases/yaml-body-unclosed",
+    "source": "architecture-beta\n---\nx\nservice a"
+  },
+  {
+    "id": "architecture-cases/yaml-body-empty",
+    "source": "architecture-beta\n---\n---\nservice a"
+  },
+  {
+    "id": "architecture-cases/yaml-body-after-edge",
+    "source": "architecture-beta\na:R ---\nx\n---\nservice b"
+  },
+  {
+    "id": "architecture-cases/entities",
+    "source": "architecture-beta\nservice a[Tea #amp; Cups]\nservice b[\"#9829; love\"]\nservice c \"#quot;x#quot;\"\nservice d #y;"
+  },
+  {
+    "id": "architecture-cases/entities-drop",
+    "source": "architecture-beta\nservice a[style x:#fff;]\nservice b[classDef y:#000;]"
+  },
+  {
+    "id": "architecture-cases/entities-outside-core",
+    "source": "architecture-beta\nservice a[A #alpha; B]\nservice b[#nbsp;#hellip; #frac12;]"
+  },
+  {
+    "id": "architecture-cases/tag-quotes",
+    "source": "architecture-beta\nservice a[\"a <b class=\"c\">d</b>\"]\nservice b[<i class=\"x\">y</i>]"
+  },
+  {
+    "id": "architecture-cases/crlf-and-cr",
+    "source": "architecture-beta\rservice a\r\nservice b[B]\r"
+  },
+  {
+    "id": "architecture-cases/yaml-body-cr-end",
+    "source": "architecture-beta\n---\nx\n---\r"
+  },
+  {
+    "id": "architecture-cases/title-cr-end",
+    "source": "architecture-beta\ntitle x\r"
+  },
+  {
+    "id": "architecture-cases/bom",
+    "source": "\ufeffarchitecture-beta\nservice a"
+  },
+  {
+    "id": "architecture-cases/line-separators-header",
+    "source": "architecture-beta\u2028service a"
+  },
+  {
+    "id": "architecture-cases/line-separators-statements",
+    "source": "architecture-beta\nservice a\u2028service b"
+  },
+  {
+    "id": "architecture-cases/line-separators-label",
+    "source": "architecture-beta\nservice a[x\u2028y]\nservice b[\"x\u2029y\"]"
+  },
+  {
+    "id": "architecture-cases/line-separators-string",
+    "source": "architecture-beta\nservice a \"a\u2029b\""
+  },
+  {
+    "id": "architecture-cases/line-separators-string-escaped",
+    "source": "architecture-beta\nservice b \"a\\\u2028b\""
+  },
+  {
+    "id": "architecture-cases/line-separators-title",
+    "source": "architecture-beta\ntitle a\u2028b"
+  },
+  {
+    "id": "architecture-cases/line-separators-title-alone",
+    "source": "architecture-beta\ntitle\u2028x"
+  },
+  {
+    "id": "architecture-cases/line-separators-acc-descr",
+    "source": "architecture-beta\naccDescr {\na\u2028b\n}\naccDescr\u2029{ x }"
+  },
+  {
+    "id": "architecture-cases/line-separators-edge",
+    "source": "architecture-beta\na:R --\u2028L:b"
+  },
+  {
+    "id": "architecture-cases/spaces-nbsp",
+    "source": "architecture-beta\nservice\u00a0a"
+  },
+  {
+    "id": "architecture-cases/spaces-nbsp-label",
+    "source": "architecture-beta\nservice b[x\u00a0y]"
+  },
+  {
+    "id": "architecture-cases/spaces-title-nbsp",
+    "source": "architecture-beta\ntitle\u00a0x"
+  },
+  {
+    "id": "architecture-cases/spaces-title-form-feed",
+    "source": "architecture-beta\ntitle\fy"
+  },
+  {
+    "id": "architecture-cases/spaces-title-vertical-tab",
+    "source": "architecture-beta\ntitle\u000bz"
+  },
+  {
+    "id": "architecture-cases/spaces-vertical-tab",
+    "source": "architecture-beta\nservice a\u000b[x]"
+  },
+  {
+    "id": "architecture-cases/edge-to-group-id",
+    "source": "architecture-beta\ngroup g\nservice a in g\na:R -- L:g"
+  },
+  {
+    "id": "architecture-cases/edges-duplicate-pair",
+    "source": "architecture-beta\nservice a\nservice b\na:R -- L:b\na:T -- B:b"
+  },
+  {
+    "id": "architecture-cases/edges-group-no-group",
+    "source": "architecture-beta\nservice a\nservice b\na{group}:R -- L:b"
+  }
+]

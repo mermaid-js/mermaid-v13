@@ -1,0 +1,10 @@
+architecture-beta
+    service a(server)[A]
+    service b(server)[B]
+    service c(server)[C]
+    service d(server)[D]
+    service e(server)[E]
+    a:R --> L:b
+    b:B <-- T:c
+    c:L <--> R:d
+    d:T > -- < B:e
