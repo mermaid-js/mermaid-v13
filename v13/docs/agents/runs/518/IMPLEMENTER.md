@@ -29,7 +29,8 @@
 
 ## Machine-wide locks (seven sessions share this machine)
 
-- Every full `pnpm check`: `VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
-- Every `pnpm e2e` / Playwright run: under the same lock, `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock <command>`.
+- `PARSE_FIXTURE_PATH` may be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and `pnpm check` (and the pre-push hook) fails. Always unset it.
+- Every full `pnpm check`: `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
+- Every `pnpm e2e` / Playwright run: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock <command>`.
 - Targeted vitest runs outside the lock are fine with `VITEST_MAX_WORKERS=4`.
 - A timing test that fails under load is not a regression: rerun it under the lock before acting on it. Known flakes: `language-budget*.spec.ts` (R-LANG-4), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, `packages/core/src/preprocess/stress.spec.ts` timeouts.
