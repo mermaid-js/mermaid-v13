@@ -2,6 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { patchC4Oracle } from './c4/oracle-env.ts';
 import { patchGanttOracle } from './gantt/oracle-env.ts';
 import { patchQuadrantOracle } from './quadrant/oracle-env.ts';
 import { patchSequenceOracle } from './sequence/oracle-env.ts';
@@ -84,6 +85,9 @@ async function load(): Promise<Oracle> {
   await patchGanttOracle(mermaid);
   // XY chart acceptance includes having a plot, as v12's render requires (xychart/oracle-env.ts).
   await patchXyChartOracle(mermaid);
+  // C4: accessibility values cleared per parse, relation ends checked as v12's render did
+  // (c4/oracle-env.ts).
+  await patchC4Oracle(mermaid);
 
   return {
     version,

@@ -1,5 +1,6 @@
 /**
- * The C4 parser's public surface (so far): the lexer gated against v12's jison lexer.
+ * The C4 parser's public surface: the parser, detection, and the lexer gated against v12's
+ * jison lexer.
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as C4TokenKind } from './tokens.ts';
+export { parseC4 } from './parser.ts';
+export type { C4ParseOptions, C4ParseResult } from './parser.ts';
+export { detectC4 } from './detect.ts';
+export type * from './ast.ts';
 
 export interface C4Token {
   /** A `C4TokenKind` or a shared `Kind`. */

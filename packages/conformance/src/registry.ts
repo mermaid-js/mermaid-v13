@@ -1,3 +1,4 @@
+import { c4Adapter } from './c4/v13.ts';
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { cynefinAdapter } from './cynefin/v13.ts';
@@ -182,6 +183,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: c4Adapter,
+    corpusDirs: ['e2e/diagrams/c4'],
+    corpusFiles: [
+      'packages/conformance/corpus/c4-v12-specs.json',
+      'packages/conformance/corpus/c4-cases.json',
+    ],
+    // The gate variants run in `c4/parity.spec.ts`, with D452's lexing exclusions.
   },
 ];
 

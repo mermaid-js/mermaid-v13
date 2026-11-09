@@ -104,3 +104,14 @@ export async function c4GateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/**
+ * The gate corpus less the items the parity suite already reads from its dirs and files
+ * (`registry.ts`), ids prefixed `c4-gate/`: model parity over the whole gate corpus.
+ */
+export async function c4ParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await c4Corpus()), ...c4Cases()].map((c) => c.id));
+  return (await c4GateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `c4-gate/${item.id}`, source: item.source }));
+}
