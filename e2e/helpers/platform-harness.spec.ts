@@ -90,6 +90,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',
       '@mermaid-js/diagram-treemap',
+      '@mermaid-js/diagram-venn',
       '@mermaid-js/diagram-wardley',
       '@mermaid-js/diagram-xychart',
       'mermaid',

@@ -50,6 +50,7 @@ const DOCS = {
   sankey: 'sankey\n"Solar, roof",Electricity,40.5\n',
   treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
   wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
+  venn: 'venn-beta\n  set A["Alpha"]: 10\n  union A, B\n    text "x"\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -74,6 +75,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'state',
       'timeline',
       'treemap',
+      'venn',
       'wardley',
       'xychart',
     ]);

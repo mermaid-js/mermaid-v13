@@ -51,6 +51,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'state',
       'timeline',
       'treemap',
+      'venn',
       'wardley',
       'xychart',
     ]);
@@ -255,6 +256,14 @@ describe('the per-type first-paint highlighters (D134)', () => {
         ',:punctuation',
         '40.5:variable',
       ]);
+    });
+
+    it('highlights a venn diagram with the venn grammar', () => {
+      const out = spans('venn-beta\n  set A["Alpha"]: 10\n  union A, B\n    text "x"\n');
+      expect(out[0]).toBe('venn-beta:keyword');
+      expect(out).toContain('set:keyword');
+      expect(out).toContain('union:keyword');
+      expect(out).toContain('"x":string');
     });
 
     it('finds the type after front matter, directives and comments', () => {

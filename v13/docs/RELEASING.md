@@ -29,6 +29,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-treemap` | The treemap plugin (SVG; `treemap`, `treemap-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |,
 | `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-venn` | The Venn diagram plugin (SVG; `venn-beta`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.

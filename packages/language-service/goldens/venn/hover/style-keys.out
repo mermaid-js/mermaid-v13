@@ -1,0 +1,27 @@
+@ 3:11  style A |fill: red, fill-opacity: 0.2, stroke: blue, stroke-width: 3, color: #fff, font: x
+  3:11-3:15 "fill"
+  | **`fill`**
+  |
+  | The fill of a set's circle (its outline too, unless `stroke` is given) or of an overlap, which is transparent without one, as in `fill: #f00`.
+@ 3:28  style A fill: red, fill-o|pacity: 0.2, stroke: blue, stroke-width: 3, color: #fff, font: x
+  3:22-3:34 "fill-opacity"
+  | **`fill-opacity`**
+  |
+  | How opaque a set's fill is, from 0 to 1 (0.1 when not given), as in `fill-opacity: 0.3`.
+@ 3:44  style A fill: red, fill-opacity: 0.2, str|oke: blue, stroke-width: 3, color: #fff, font: x
+  3:41-3:47 "stroke"
+  | **`stroke`**
+  |
+  | The outline colour of a set's circle (its fill colour when not given), as in `stroke: #333`.
+@ 3:63  style A fill: red, fill-opacity: 0.2, stroke: blue, stroke-w|idth: 3, color: #fff, font: x
+  3:55-3:67 "stroke-width"
+  | **`stroke-width`**
+  |
+  | The outline width of a set's circle, as in `stroke-width: 2px`.
+@ 3:74  style A fill: red, fill-opacity: 0.2, stroke: blue, stroke-width: 3, co|lor: #fff, font: x
+  3:72-3:77 "color"
+  | **`color`**
+  |
+  | The colour of the label of a set or overlap, or of a text node, as in `color: #fff`.
+@ 3:87  style A fill: red, fill-opacity: 0.2, stroke: blue, stroke-width: 3, color: #fff, fo|nt: x
+  none

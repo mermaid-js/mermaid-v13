@@ -1,0 +1,22 @@
+@ 3:7  set |A
+  prepare: 3:7-3:8 "A"; rename to "Alpha":
+  %% rename-to: Alpha
+  venn-beta
+    set Alpha
+    set B
+    union Alpha,B
+      text a1
+    style Alpha,B fill: red
+    text "Alpha" t1
+    style Alpha color: blue
+@ 7:9  style |A,B fill: red
+  prepare: 7:9-7:10 "A"; rename to "Alpha":
+  %% rename-to: Alpha
+  venn-beta
+    set Alpha
+    set B
+    union Alpha,B
+      text a1
+    style Alpha,B fill: red
+    text "Alpha" t1
+    style Alpha color: blue

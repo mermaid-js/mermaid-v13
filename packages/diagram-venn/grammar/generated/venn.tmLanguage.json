@@ -1,0 +1,555 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-venn",
+  "scopeName": "source.mermaid-venn",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-venn"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-venn"
+    },
+    "rule-0": {
+      "match": "(?i)%%(?!\\{)[^\\n]*",
+      "name": "comment.line.mermaid-venn"
+    },
+    "rule-1": {
+      "match": "(?i)[^}]%%[^\\n]*",
+      "name": "comment.line.mermaid-venn"
+    },
+    "rule-8": {
+      "begin": "(?i)[\\n\\r]+",
+      "end": "((?i)(?=[^ \\t\\n\\r]))",
+      "patterns": [
+        {
+          "include": "#mode-bol"
+        }
+      ]
+    },
+    "rule-11": {
+      "match": "(?i)%%[^\\n]*",
+      "name": "comment.line.mermaid-venn"
+    },
+    "rule-12": {
+      "match": "(?i)[ \\t]+"
+    },
+    "rule-14": {
+      "match": "(?i)title\\s[^#\\n;]+",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "rule-15": {
+      "match": "(?i)venn-beta\\b",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "rule-16": {
+      "begin": "(?i)set\\b",
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#mode-on"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-venn"
+        }
+      }
+    },
+    "rule-18": {
+      "begin": "(?i)union\\b",
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#mode-on"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-venn"
+        }
+      }
+    },
+    "rule-20": {
+      "match": "(?i)text\\b",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "rule-21": {
+      "match": "(?i)style\\b",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "phase-quotedLabel": {
+      "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\"]*(?=\"\\])))",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\"]*(?=\"\\]))",
+      "patterns": [
+        {
+          "include": "#mode-quotedLabel"
+        }
+      ]
+    },
+    "switch-23": {
+      "begin": "(?i)[^\"]*(?=\"\\])",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)\"?\\s*\\])",
+      "patterns": [
+        {
+          "include": "#mode-labelEnd"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      }
+    },
+    "rule-22": {
+      "begin": "(?i)\\[\"(?=[^\"]*\"\\])",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-quotedLabel"
+        },
+        {
+          "include": "#switch-23"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      }
+    },
+    "phase-label": {
+      "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\\]\"]*?(?=\\s*\\])))",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^\\]\"]*?(?=\\s*\\]))",
+      "patterns": [
+        {
+          "include": "#mode-label"
+        }
+      ]
+    },
+    "switch-25": {
+      "begin": "(?i)[^\\]\"]*?(?=\\s*\\])",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)\"?\\s*\\])",
+      "patterns": [
+        {
+          "include": "#mode-labelEnd"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      }
+    },
+    "rule-24": {
+      "begin": "(?i)\\[\\s*(?=[^\\]\"]+\\])",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-label"
+        },
+        {
+          "include": "#switch-25"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      }
+    },
+    "rule-27": {
+      "match": "(?i)[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)",
+      "name": "constant.numeric.mermaid-venn"
+    },
+    "rule-28": {
+      "match": "(?i)#[0-9a-fA-F]{3,8}",
+      "name": "constant.language.mermaid-venn"
+    },
+    "rule-29": {
+      "match": "(?i)rgba\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+      "name": "constant.language.mermaid-venn"
+    },
+    "rule-30": {
+      "match": "(?i)rgb\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+      "name": "constant.language.mermaid-venn"
+    },
+    "rule-31": {
+      "match": "(?i)[A-Za-z_][A-Za-z0-9\\-_]*",
+      "name": "variable.other.mermaid-venn"
+    },
+    "rule-32": {
+      "match": "(?i)\"[^\"]*\"",
+      "name": "string.quoted.mermaid-venn"
+    },
+    "rule-33": {
+      "match": "(?i),",
+      "name": "punctuation.definition.mermaid-venn"
+    },
+    "rule-34": {
+      "match": "(?i):",
+      "name": "punctuation.definition.mermaid-venn"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        }
+      ]
+    },
+    "rule-2": {
+      "match": "(?i)[ \\t]+(?=[\\n\\r])"
+    },
+    "rule-4": {
+      "match": "(?i)[ \\t]+"
+    },
+    "rule-10": {
+      "match": "(?i)[\\n\\r]+"
+    },
+    "mode-bol": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-10"
+        }
+      ]
+    },
+    "phase-onBol": {
+      "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{|(?i)%%(?!\\{)[^\\n]*|(?i)[^}]%%[^\\n]*|(?i)[ \\t]+(?=[\\n\\r]))(?=(?i)[ \\t]+(?=text\\b)))",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{|(?i)%%(?!\\{)[^\\n]*|(?i)[^}]%%[^\\n]*|(?i)[ \\t]+(?=[\\n\\r]))(?=(?i)[ \\t]+(?=text\\b))|(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{|(?i)%%(?!\\{)[^\\n]*|(?i)[^}]%%[^\\n]*|(?i)[ \\t]+(?=[\\n\\r])|(?i)[ \\t]+)((?i)(?=[^ \\t\\n\\r]))",
+      "patterns": [
+        {
+          "include": "#mode-onBol"
+        }
+      ]
+    },
+    "switch-3": {
+      "begin": "(?i)[ \\t]+(?=text\\b)",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)text\\b)",
+      "patterns": [
+        {
+          "include": "#mode-indentText"
+        }
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-venn"
+        }
+      }
+    },
+    "rule-9": {
+      "begin": "(?i)[\\n\\r]+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-onBol"
+        },
+        {
+          "include": "#switch-3"
+        }
+      ]
+    },
+    "rule-17": {
+      "match": "(?i)set\\b",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "rule-19": {
+      "match": "(?i)union\\b",
+      "name": "keyword.control.mermaid-venn"
+    },
+    "mode-on": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        }
+      ]
+    },
+    "mode-onBol": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-10"
+        }
+      ]
+    },
+    "mode-indentText": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-quotedLabel": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-label": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-labelEnd": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-venn"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-venn"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-venn"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-venn"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

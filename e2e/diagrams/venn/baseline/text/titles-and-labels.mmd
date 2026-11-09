@@ -1,0 +1,11 @@
+---
+config:
+  theme: neo
+description: labels wrapped by core's label layout to at most three lines (D414), a line break and an entity included, and a text node's label wrapped to its cell
+---
+venn-beta
+  title Team overlap
+  set A["A rather long label for the first set that has to wrap onto several lines"]
+  set B["Line one<br>line two"]
+  union A, B["Fish &amp; chips"]
+    text "A text node with a longer label than its cell"

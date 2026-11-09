@@ -1,0 +1,7 @@
+@ 3:7  set |A
+  prepare: 3:7-3:8 "A"; rename to "text-b":
+  %% rename-to: text-b
+  venn-beta
+    set "text-b"
+    set B
+    union "text-b",B

@@ -1,0 +1,6 @@
+@ 4:10  text |a1["Docs"]
+  prepare: 4:10-4:12 "a1"; rename to "A":
+  refused: 'A' would not read as the same text id everywhere it is used.
+@ 6:9  style |a1 color: red
+  prepare: 6:9-6:11 "a1"; rename to "A":
+  refused: 'A' would not read as the same text id everywhere it is used.

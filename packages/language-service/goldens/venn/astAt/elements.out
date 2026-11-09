@@ -1,0 +1,18 @@
+@ 2:3  |title Overlap
+  title 2:3-2:16 "title Overlap"
+@ 3:7  set |A["Alpha"]:10
+  set:A 3:3-3:20 "set A[\"Alpha\"]:10"
+@ 4:11  text a|1
+  text:a1 4:5-4:12 "text a1"
+@ 6:9  union |A,B
+  union:A+B 6:3-6:12 "union A,B"
+@ 7:5  |text ab1
+  text:ab1 7:5-7:13 "text ab1"
+@ 8:13  style A,B |fill: red
+  style:1 8:3-8:22 "style A,B fill: red"
+@ 9:13  text A,B "|t 2"
+  text:t 2 9:3-9:17 "text A,B \"t 2\""
+@ 11:7  set |A:3
+  set:A@2 11:3-11:10 "set A:3"
+@ 12:3  |
+  none

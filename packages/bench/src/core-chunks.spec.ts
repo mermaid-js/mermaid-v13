@@ -5,8 +5,9 @@
  * Without that, esbuild gives each set of lazy importers its own shared chunk, and a diagram
  * that imports one more combination of `svg`, `text`, `layout` or `parser-kit` re-splits core.
  *
- * Each case registers one stub diagram, as a port does: it turns the `venn` placeholder row of
- * the generated registry into a lazily loaded row. The stubs import different core subpaths.
+ * Each case registers one stub diagram, as a port does: it turns the first placeholder row of
+ * the generated registry (a type with no package, so no `load`) into a lazily loaded row. The
+ * stubs import different core subpaths.
  *
  * Spec #414 (D331, D322): a diagram's theme table is plain data on its plugin, loaded with its
  * chunk, so a themed stub grows core by its row only too. Its control imports the same table
@@ -32,7 +33,8 @@ const ENTRY = fileURLToPath(new URL('../../mermaid/src/cdn.ts', import.meta.url)
 const REGISTRY = fileURLToPath(
   new URL('../../mermaid/src/generated/registry.gen.ts', import.meta.url)
 );
-const PLACEHOLDER = "{ type: 'venn', pattern: /^\\s*venn-beta/ },";
+/** The first registry row with no `load` (a one-line row: a type with no package yet). */
+const PLACEHOLDER = /^ {2}\{ type: '([^']+)', pattern: (\/.+\/[a-z]*) \},$/m;
 
 const STUBS = {
   'svg and text, no layout': new URL('./__fixtures__/stub-diagram/svg-text.ts', import.meta.url),
@@ -45,7 +47,7 @@ const STUBS = {
 type Stub = keyof typeof STUBS;
 
 /**
- * Registers `stub` as a lazily loaded first-party diagram, in place of the `venn` placeholder.
+ * Registers `stub` as a lazily loaded first-party diagram, in place of the first placeholder row.
  * `inCore` imports it statically instead, into core's closure (the control for a theme table).
  */
 function registerStub(stub: URL, inCore = false): Plugin {
@@ -54,16 +56,18 @@ function registerStub(stub: URL, inCore = false): Plugin {
     setup(b) {
       b.onLoad({ filter: /registry\.gen\.ts$/ }, () => {
         const source = readFileSync(REGISTRY, 'utf8');
-        if (!source.includes(PLACEHOLDER)) throw new Error(`no ${PLACEHOLDER} row to replace`);
+        const placeholder = PLACEHOLDER.exec(source);
+        if (!placeholder) throw new Error('no registry row without a load to replace');
+        const [whole, type, pattern] = placeholder;
         const path = JSON.stringify(fileURLToPath(stub));
         const load = inCore
           ? `() => Promise.resolve(stubInCore)`
           : `() => import(${path}).then((m) => m.stub)`;
         const row =
-          `{ type: 'venn', pattern: /^\\s*venn-beta/, id: 'venn', formats: ['svg'], ` +
+          `{ type: '${type}', pattern: ${pattern}, id: '${type}', formats: ['svg'], ` +
           `load: ${load} },`;
         const head = inCore ? `import { stub as stubInCore } from ${path};\n` : '';
-        return { contents: head + source.replace(PLACEHOLDER, row), loader: 'ts' };
+        return { contents: head + source.replace(whole, () => `  ${row}`), loader: 'ts' };
       });
     },
   };

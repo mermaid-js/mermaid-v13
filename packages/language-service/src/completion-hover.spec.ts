@@ -65,6 +65,7 @@ describe('completion', () => {
       'radar-beta',
       'treemap',
       'treemap-beta',
+      'venn-beta',
       'wardley-beta',
       'cynefin-beta',
     ]);
@@ -79,6 +80,7 @@ describe('completion', () => {
     expect(labels('kan|')).toEqual(['kanban']);
     expect(labels('san|')).toEqual(['sankey']);
     expect(labels('cyn|')).toEqual(['cynefin-beta']);
+    expect(labels('ven|')).toEqual(['venn-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),

@@ -41,6 +41,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/diagram-timeline',
       '@mermaid-chart/diagram-treemap',
+      '@mermaid-chart/diagram-venn',
       '@mermaid-chart/diagram-wardley',
       '@mermaid-chart/diagram-xychart',
       '@mermaid-chart/mermaid',

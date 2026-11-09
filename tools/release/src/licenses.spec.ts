@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -240,6 +240,64 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  // cspell:ignore Frederickson Gratzl
+  const VENN_HEADER =
+    '// Ported from venn.js (https://github.com/upsetjs/venn.js), MIT License, Copyright (c) 2013 Ben Frederickson, Copyright (c) 2021 Samuel Gratzl.\n';
+  const FMIN_HEADER =
+    '// Ported from fmin (https://github.com/benfred/fmin), BSD 3-Clause License, Copyright 2016, Ben Frederickson.\n';
+  const VENN_NOTICE =
+    'venn.js\n-------\n\n  src/a.ts\n  src/b.ts\n\nMIT License\n\nCopyright (c) 2013 Ben Frederickson\nCopyright (c) 2021 Samuel Gratzl\n';
+  const FMIN_NOTICE =
+    'fmin\n----\n\n  src/b.ts\n\nBSD 3-Clause License\n\nCopyright 2016, Ben Frederickson\n\nRedistribution and use in source and binary forms, with or without modification,\n';
+  const vennManifest = JSON.stringify({ name: 'venn', files: ['dist', 'THIRD_PARTY_NOTICES'] });
+
+  it('credits every holder of an upstream with several, and a BSD-3-Clause upstream', () => {
+    const good = workspace({
+      'packages/venn/package.json': vennManifest,
+      'packages/venn/THIRD_PARTY_NOTICES': `${VENN_NOTICE}\n${FMIN_NOTICE}`,
+      'packages/venn/src/a.ts': `${VENN_HEADER}export {};\n`,
+      'packages/venn/src/b.ts': `${FMIN_HEADER}${VENN_HEADER}export {};\n`,
+    });
+    expect(checkLicenses(good)).toEqual([]);
+    const bad = workspace({
+      'packages/venn/package.json': vennManifest,
+      'packages/venn/THIRD_PARTY_NOTICES':
+        VENN_NOTICE.replace('Copyright (c) 2021 Samuel Gratzl\n', '') +
+        FMIN_NOTICE.replace(/Redistribution.*\n/, ''),
+      'packages/venn/src/a.ts': `${VENN_HEADER.replace(', Copyright (c) 2021 Samuel Gratzl', '')}export {};\n`,
+      'packages/venn/src/b.ts': `${FMIN_HEADER.replace('BSD 3-Clause', 'MIT')}${VENN_HEADER}export {};\n`,
+    });
+    expect(checkLicenses(bad)).toEqual([
+      'packages/venn/src/a.ts: venn.js-derived header must name the MIT license and "Ben Frederickson" and "Samuel Gratzl"',
+      'packages/venn/src/b.ts: fmin-derived header must name the BSD-3-Clause license and "Ben Frederickson"',
+      'packages/venn/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2013 Ben Frederickson" and "Copyright (c) 2021 Samuel Gratzl"',
+      'packages/venn/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2016, Ben Frederickson"',
+    ]);
+  });
+
+  it('checks the published venn package, whose solver credits venn.js and fmin', () => {
+    // diagram-venn is public since its integration ticket (#501), so the check covers it in
+    // this repository; on a copy, a ported file without its credit is caught.
+    const repo = join(import.meta.dirname, '..', '..', '..');
+    const root = mkdtempSync(join(tmpdir(), 'licenses-venn-'));
+    const pkg = join(repo, 'packages', 'diagram-venn');
+    for (const entry of ['src', 'THIRD_PARTY_NOTICES', 'package.json'])
+      cpSync(join(pkg, entry), join(root, 'packages', 'diagram-venn', entry), { recursive: true });
+    const published = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')) as {
+      private?: boolean;
+    };
+    expect(published.private).toBeUndefined();
+    expect(checkLicenses(root)).toEqual([]);
+    // It checks the solver: a ported file without its credit is caught.
+    writeFileSync(
+      join(root, 'packages', 'diagram-venn', 'src', 'solver', 'solve.ts'),
+      'export {};\n'
+    );
+    expect(checkLicenses(root)).toEqual([
+      'packages/diagram-venn/src/solver/solve.ts: header must credit venn.js',
+    ]);
+  });
+
   it('checks a BSD 3-Clause upstream (d3-sankey) by its own license, in its own section', () => {
     const header =
       '/**\n * After https://github.com/d3/d3-sankey, BSD 3-Clause License, Copyright 2015 Mike Bostock.\n */\n';
@@ -339,7 +397,7 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
-  it('requires the d3 notices in mermaid, whose CDN build bundles diagram-sankey and diagram-treemap', () => {
+  it('requires the d3, venn.js and fmin notices in mermaid, whose CDN build bundles diagram-sankey, diagram-treemap and diagram-venn', () => {
     const bsd = (name: string, copyright: string) =>
       `${name}\n----\nBSD 3-Clause License\n\n${copyright}\n\nRedistribution and use in source and binary forms, with or without modification,\n`;
     const isc = (name: string, copyright: string) =>
@@ -356,6 +414,8 @@ describe('license check (R-REL-4)', () => {
       bsd('d3-shape', 'Copyright 2010-2015 Mike Bostock'),
       isc('d3-hierarchy', 'Copyright 2010-2021 Mike Bostock'),
       isc('d3-format', 'Copyright 2010-2026 Mike Bostock'),
+      'venn.js\n----\nMIT License\n\nCopyright (c) 2013 Ben Frederickson\nCopyright (c) 2021 Samuel Gratzl\n',
+      bsd('fmin', 'Copyright 2016, Ben Frederickson'),
     ];
     expect(
       checkLicenses(
@@ -377,14 +437,26 @@ describe('license check (R-REL-4)', () => {
       checkLicenses(
         workspace({
           ...files,
-          'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.slice(0, 4).join('\n'),
+          'packages/mermaid/THIRD_PARTY_NOTICES':
+            MIT_NOTICE + [...d3.slice(0, 4), ...d3.slice(5)].join('\n'),
         })
       )
     ).toEqual([
       'packages/mermaid/THIRD_PARTY_NOTICES: must contain the ISC License text with "Copyright 2010-2026 Mike Bostock"',
     ]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.slice(0, 5).join('\n'),
+        })
+      )
+    ).toEqual([
+      'packages/mermaid/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2013 Ben Frederickson" and "Copyright (c) 2021 Samuel Gratzl"',
+      'packages/mermaid/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2016, Ben Frederickson"',
+    ]);
     expect(checkLicenses(workspace(files))).toEqual([
-      'packages/mermaid: bundles code ported from d3-sankey, d3-array, d3-shape, d3-hierarchy, d3-format but has no THIRD_PARTY_NOTICES',
+      'packages/mermaid: bundles code ported from d3-sankey, d3-array, d3-shape, d3-hierarchy, d3-format, venn.js, fmin but has no THIRD_PARTY_NOTICES',
     ]);
   });
 

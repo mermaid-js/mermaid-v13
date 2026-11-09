@@ -1,0 +1,14 @@
+---
+description: >-
+  A `text` statement naming a set that no `set` declares: v12 stores it and
+  silently draws nothing for it; v13 keeps it in the model, does not draw it,
+  and warns (D417). It follows a `style` line, which ends indent mode, so its
+  indented `text` is a plain `text` statement.
+---
+venn-beta
+  set A
+    text a1
+  set B
+  union A, B
+  style A fill:#ff6b6b
+  text Z z1["Never drawn"]

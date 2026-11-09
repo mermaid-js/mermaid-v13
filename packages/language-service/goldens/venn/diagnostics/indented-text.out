@@ -1,0 +1,2 @@
+4:9-4:10 "," error UNEXPECTED: Expected `set`, `union`, `text`, `style` or `title`, got `,`.
+6:8-6:11 "A,B" warning VENN_UNKNOWN_TARGET: Not drawn: no `union A,B` declares the overlap the text node `t2` at line 6 names. Declare it with `union A,B`.

@@ -893,16 +893,16 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `venn` | object |  | pending |  | The object containing configurations specific for Venn diagrams. |
-| `venn.useWidth` | number |  | pending |  |  |
-| `venn.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `venn.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `venn` | object |  | honoured (13.0.0) |  | The object containing configurations specific for Venn diagrams. |
+| `venn.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the venn renderer never did. |  |
+| `venn.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `venn.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) | v12's default: a venn diagram with no theme set draws in `redux-color`. A `theme` from `initialize()` or the diagram text wins over this default; set here, it wins over the top-level `theme` for venn diagrams (a diagram section beats the top level within a config layer). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `venn.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `venn.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `venn.width` | number | `800` | pending |  | The width of the Venn diagram. |
-| `venn.height` | number | `450` | pending |  | The height of the Venn diagram. |
-| `venn.padding` | number | `8` | pending |  |  |
-| `venn.useDebugLayout` | boolean | `false` | pending |  |  |
+| `venn.width` | number | `800` | honoured (13.0.0) | A number, or a numeric string, of at least 1; anything else lays out with the default 800, with no warning. | The width of the Venn diagram. |
+| `venn.height` | number | `450` | honoured (13.0.0) | A number, or a numeric string, of at least 1; anything else lays out with the default 450, with no warning. | The height of the Venn diagram. |
+| `venn.padding` | number | `15` | honoured (13.0.0) | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. | The margin round the circles, in pixels (D412). |
+| `venn.useDebugLayout` | boolean | `false` | honoured (13.0.0) | Draws each region's inner circle and text-node cells as dashed shapes; a value that is not a boolean counts as `false`. |  |
 
 ## `wardley-beta`
 

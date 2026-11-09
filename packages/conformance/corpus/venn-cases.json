@@ -1,0 +1,1052 @@
+[
+  {
+    "id": "venn-cases/header-alone",
+    "source": "venn-beta"
+  },
+  {
+    "id": "venn-cases/header-newline",
+    "source": "venn-beta\n"
+  },
+  {
+    "id": "venn-cases/header-blank-lines",
+    "source": "venn-beta\n\n   \n\t\n"
+  },
+  {
+    "id": "venn-cases/header-leading-lines",
+    "source": "\n\n  venn-beta\n\n\nset A\n\n"
+  },
+  {
+    "id": "venn-cases/header-no-suffix",
+    "source": "venn\n  set A"
+  },
+  {
+    "id": "venn-cases/header-upper-case",
+    "source": "VENN-BETA\n  set A"
+  },
+  {
+    "id": "venn-cases/header-word-suffix",
+    "source": "venn-betax\n  set A"
+  },
+  {
+    "id": "venn-cases/header-dash-suffix",
+    "source": "venn-beta-x\n  set A"
+  },
+  {
+    "id": "venn-cases/header-one-line",
+    "source": "venn-beta set A"
+  },
+  {
+    "id": "venn-cases/header-one-line-title",
+    "source": "venn-beta title Hello\n  set A"
+  },
+  {
+    "id": "venn-cases/header-twice",
+    "source": "venn-beta\n  venn-beta\n  set A"
+  },
+  {
+    "id": "venn-cases/keywords-case-insensitive",
+    "source": "venn-beta\n  SET A\n  Set B\n  UNION A,B\n  Text A x\n  STYLE A fill:red"
+  },
+  {
+    "id": "venn-cases/ids-case-sensitive",
+    "source": "venn-beta\n  set A\n  set B\n  union a,B"
+  },
+  {
+    "id": "venn-cases/keyword-then-dash-id",
+    "source": "venn-beta\n  set set-x"
+  },
+  {
+    "id": "venn-cases/keyword-prefix-id",
+    "source": "venn-beta\n  set settings\n  set unions\n  set texts\n  set styles"
+  },
+  {
+    "id": "venn-cases/keyword-suffix-id",
+    "source": "venn-beta\n  set a-text\n  set b-set"
+  },
+  {
+    "id": "venn-cases/keyword-dash-id",
+    "source": "venn-beta\n  set text-b"
+  },
+  {
+    "id": "venn-cases/id-non-ascii",
+    "source": "venn-beta\n  set Ä"
+  },
+  {
+    "id": "venn-cases/id-non-ascii-string",
+    "source": "venn-beta\n  set \"Ä\"\n  set \"a b\""
+  },
+  {
+    "id": "venn-cases/id-empty-string",
+    "source": "venn-beta\n  set \"\""
+  },
+  {
+    "id": "venn-cases/id-title-keyword",
+    "source": "venn-beta\n  set title"
+  },
+  {
+    "id": "venn-cases/id-title-word",
+    "source": "venn-beta\n  set titlex\n  set titled"
+  },
+  {
+    "id": "venn-cases/id-header-keyword",
+    "source": "venn-beta\n  set venn-beta\n  set venn-betas"
+  },
+  {
+    "id": "venn-cases/id-rgb-word",
+    "source": "venn-beta\n  set rgb\n  set rgba"
+  },
+  {
+    "id": "venn-cases/id-rgb-call",
+    "source": "venn-beta\n  set rgb(1,2,3)"
+  },
+  {
+    "id": "venn-cases/id-underscore-dash",
+    "source": "venn-beta\n  set _a-b_1\n  set a--"
+  },
+  {
+    "id": "venn-cases/id-digit-start",
+    "source": "venn-beta\n  set 1a"
+  },
+  {
+    "id": "venn-cases/id-dash-start",
+    "source": "venn-beta\n  set -a"
+  },
+  {
+    "id": "venn-cases/id-hex",
+    "source": "venn-beta\n  set #abc"
+  },
+  {
+    "id": "venn-cases/size-forms",
+    "source": "venn-beta\n  set A:01\n  set B:0\n  set C:-1\n  set D:.5\n  set E:+2\n  set F:-.5\n  set G:+.25\n  set H:12.75"
+  },
+  {
+    "id": "venn-cases/size-trailing-dot",
+    "source": "venn-beta\n  set A:1."
+  },
+  {
+    "id": "venn-cases/size-exponent",
+    "source": "venn-beta\n  set A:1e3"
+  },
+  {
+    "id": "venn-cases/size-two-colons",
+    "source": "venn-beta\n  set A:3:4"
+  },
+  {
+    "id": "venn-cases/size-spaced",
+    "source": "venn-beta\n  set A : 2\n  set B:\t3"
+  },
+  {
+    "id": "venn-cases/size-sign-alone",
+    "source": "venn-beta\n  set A:+"
+  },
+  {
+    "id": "venn-cases/size-two-dots",
+    "source": "venn-beta\n  set A:1.2.3"
+  },
+  {
+    "id": "venn-cases/size-on-union",
+    "source": "venn-beta\n  set A:5\n  set B:5\n  union A,B:2.5"
+  },
+  {
+    "id": "venn-cases/size-missing",
+    "source": "venn-beta\n  set A:"
+  },
+  {
+    "id": "venn-cases/size-before-label",
+    "source": "venn-beta\n  set A:2[\"a\"]"
+  },
+  {
+    "id": "venn-cases/label-trimmed",
+    "source": "venn-beta\n  set A[  spaced  ]"
+  },
+  {
+    "id": "venn-cases/label-quoted-blanks-kept",
+    "source": "venn-beta\n  set A[\" q \"]"
+  },
+  {
+    "id": "venn-cases/label-empty-quoted",
+    "source": "venn-beta\n  set A[\"\"]"
+  },
+  {
+    "id": "venn-cases/label-empty",
+    "source": "venn-beta\n  set A[]"
+  },
+  {
+    "id": "venn-cases/label-blank",
+    "source": "venn-beta\n  set A[   ]"
+  },
+  {
+    "id": "venn-cases/label-inner-quote",
+    "source": "venn-beta\n  set A[\"x\"y\"]"
+  },
+  {
+    "id": "venn-cases/label-unquoted-quote",
+    "source": "venn-beta\n  set A[a\"b]"
+  },
+  {
+    "id": "venn-cases/label-multi-line",
+    "source": "venn-beta\n  set A[a\nb]\n  set B[\"c\nd\"]"
+  },
+  {
+    "id": "venn-cases/label-then-size",
+    "source": "venn-beta\n  set A[l]:3\n  set B[\"m\"]:4"
+  },
+  {
+    "id": "venn-cases/label-unclosed",
+    "source": "venn-beta\n  set A[abc\n  set B"
+  },
+  {
+    "id": "venn-cases/label-quoted-unclosed",
+    "source": "venn-beta\n  set A[\"abc\n  set B"
+  },
+  {
+    "id": "venn-cases/label-nested",
+    "source": "venn-beta\n  set A[a[b]]"
+  },
+  {
+    "id": "venn-cases/label-punctuation",
+    "source": "venn-beta\n  set A[a:b, c#d; e%f]"
+  },
+  {
+    "id": "venn-cases/label-percent-inside",
+    "source": "venn-beta\n  set A[a %% b]"
+  },
+  {
+    "id": "venn-cases/label-comment-at-open",
+    "source": "venn-beta\n  set A[%% x]\n  set B"
+  },
+  {
+    "id": "venn-cases/label-entity",
+    "source": "venn-beta\n  set A[a #35; b]\n  set B[\"c #amp; d\"]"
+  },
+  {
+    "id": "venn-cases/label-html-attribute-quotes",
+    "source": "venn-beta\n  set A[<span class=\"x\">a</span>]"
+  },
+  {
+    "id": "venn-cases/label-html-attribute-quotes-quoted",
+    "source": "venn-beta\n  set A[\"<b id=\"i\">b</b>\"]"
+  },
+  {
+    "id": "venn-cases/label-without-id",
+    "source": "venn-beta\n  set [\"a\"]"
+  },
+  {
+    "id": "venn-cases/set-repeated",
+    "source": "venn-beta\n  set A\n  set A:3"
+  },
+  {
+    "id": "venn-cases/set-two-ids",
+    "source": "venn-beta\n  set A,B"
+  },
+  {
+    "id": "venn-cases/union-unsorted",
+    "source": "venn-beta\n  set A\n  set B\n  union B,A"
+  },
+  {
+    "id": "venn-cases/union-self",
+    "source": "venn-beta\n  set A\n  union A,A"
+  },
+  {
+    "id": "venn-cases/union-spaced",
+    "source": "venn-beta\n  set A\n  set B\n  union A , B\n  union A,\tB"
+  },
+  {
+    "id": "venn-cases/union-strings",
+    "source": "venn-beta\n  set \"A\"\n  set B\n  union \"A\",\"B\""
+  },
+  {
+    "id": "venn-cases/union-repeated",
+    "source": "venn-beta\n  set A\n  set B\n  union A,B\n  union A,B:1"
+  },
+  {
+    "id": "venn-cases/union-one-id",
+    "source": "venn-beta\n  set A\n  union A"
+  },
+  {
+    "id": "venn-cases/union-unknown-id",
+    "source": "venn-beta\n  set A\n  union A,Q"
+  },
+  {
+    "id": "venn-cases/union-unknown-case",
+    "source": "venn-beta\n  set A\n  set B\n  union A,b"
+  },
+  {
+    "id": "venn-cases/union-four-sets",
+    "source": "venn-beta\n  set A\n  set B\n  set C\n  set D\n  union A,B,C,D"
+  },
+  {
+    "id": "venn-cases/union-trailing-comma",
+    "source": "venn-beta\n  set A\n  set B\n  union A,B,"
+  },
+  {
+    "id": "venn-cases/union-label-size",
+    "source": "venn-beta\n  set A\n  set B\n  union A,B[\"ab\"]:2"
+  },
+  {
+    "id": "venn-cases/text-forms",
+    "source": "venn-beta\n  text Z z1\n  text A,B x[\"l\"]\n  text A 12\n  text A \"s\"\n  text A \"s\"[l]"
+  },
+  {
+    "id": "venn-cases/text-unknown-set",
+    "source": "venn-beta\n  set A\n  text Z z1"
+  },
+  {
+    "id": "venn-cases/text-id-only",
+    "source": "venn-beta\n  set A\n  text A"
+  },
+  {
+    "id": "venn-cases/text-label-only",
+    "source": "venn-beta\n  set A\n  text A [l]"
+  },
+  {
+    "id": "venn-cases/text-number-label",
+    "source": "venn-beta\n  set A\n  text A 12[l]"
+  },
+  {
+    "id": "venn-cases/indent-after-set",
+    "source": "venn-beta\n  set A\n    text a1\n    text a2"
+  },
+  {
+    "id": "venn-cases/indent-after-union",
+    "source": "venn-beta\n  set A\n  set B\n  union A,B\n    text ab"
+  },
+  {
+    "id": "venn-cases/indent-before-any-set",
+    "source": "venn-beta\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-after-header-line",
+    "source": "venn-beta set A\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-through-blank-lines",
+    "source": "venn-beta\n  set A\n    text a1\n\n   \n\t\n    text a2"
+  },
+  {
+    "id": "venn-cases/indent-through-comment-lines",
+    "source": "venn-beta\n  set A\n    text a1\n  %% c\n%% d\n    text a2"
+  },
+  {
+    "id": "venn-cases/indent-through-glued-comment-line",
+    "source": "venn-beta\n  set A\nx%% c\n  text a1"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-bare-percent-line",
+    "source": "venn-beta\n  set A\n%%\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-through-removed-percent-brace-line",
+    "source": "venn-beta\n  set A\n%%{-}\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-percent-brace-line",
+    "source": "venn-beta\n  set A\n  %%{-}\n    text a"
+  },
+  {
+    "id": "venn-cases/unclosed-directive-line",
+    "source": "venn-beta\n  set A\n%%{x}\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-title",
+    "source": "venn-beta\n  set A\n    text a1\n  title T\n    text a2"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-style",
+    "source": "venn-beta\n  set A\n  style A fill:red\n    text a"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-unindented-style",
+    "source": "venn-beta\n  set A\nstyle A fill:red\n  text a"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-text-line",
+    "source": "venn-beta\n  set A\n  text A x\n    text y"
+  },
+  {
+    "id": "venn-cases/indent-ended-by-error-line",
+    "source": "venn-beta\n  set A\n  ;\n    text a"
+  },
+  {
+    "id": "venn-cases/indent-depth-not-compared",
+    "source": "venn-beta\nset A\n        text a1\n text a2\n\t text a3"
+  },
+  {
+    "id": "venn-cases/indent-text-case",
+    "source": "venn-beta\n  set A\n    TEXT a1\n    Text a2"
+  },
+  {
+    "id": "venn-cases/indent-tab",
+    "source": "venn-beta\n  set A\n\ttext a1\n \t text a2"
+  },
+  {
+    "id": "venn-cases/indent-textual",
+    "source": "venn-beta\n  set A\n    textual"
+  },
+  {
+    "id": "venn-cases/indent-text-dash",
+    "source": "venn-beta\n  set A\n    text-x y"
+  },
+  {
+    "id": "venn-cases/indent-text-alone",
+    "source": "venn-beta\n  set A\n    text\n    text a1"
+  },
+  {
+    "id": "venn-cases/indent-text-comment",
+    "source": "venn-beta\n  set A\n    text a1 %% c\n    text a2%% c\n    text%% c"
+  },
+  {
+    "id": "venn-cases/indent-forms",
+    "source": "venn-beta\n  set A\n    text \"q\"\n    text 12\n    text x[l]\n    text \"y\"[\"m\"]\n    text z a"
+  },
+  {
+    "id": "venn-cases/indent-unindented-text",
+    "source": "venn-beta\n  set A\ntext a"
+  },
+  {
+    "id": "venn-cases/indent-after-set-error",
+    "source": "venn-beta\n  set A B\n    text a"
+  },
+  {
+    "id": "venn-cases/indent-mode-per-diagram",
+    "source": "venn-beta\n  set A\n    text a"
+  },
+  {
+    "id": "venn-cases/indent-mode-starts-off",
+    "source": "venn-beta\n    text a\n  set A"
+  },
+  {
+    "id": "venn-cases/title-blanks",
+    "source": "venn-beta\n  title  Hello  \n  set A"
+  },
+  {
+    "id": "venn-cases/title-quoted",
+    "source": "venn-beta\n  title \"Team overlap\""
+  },
+  {
+    "id": "venn-cases/title-bare-line",
+    "source": "venn-beta\n  title\n  set A"
+  },
+  {
+    "id": "venn-cases/title-bare-at-end",
+    "source": "venn-beta\n  title"
+  },
+  {
+    "id": "venn-cases/title-bare-then-blank",
+    "source": "venn-beta\n  title\n\n  set A"
+  },
+  {
+    "id": "venn-cases/title-semicolon",
+    "source": "venn-beta\n  title a;b"
+  },
+  {
+    "id": "venn-cases/title-hash",
+    "source": "venn-beta\n  title a#b"
+  },
+  {
+    "id": "venn-cases/title-tab",
+    "source": "venn-beta\n  title\tx"
+  },
+  {
+    "id": "venn-cases/title-upper-case",
+    "source": "venn-beta\n  TITLE x\n  Title y"
+  },
+  {
+    "id": "venn-cases/title-word",
+    "source": "venn-beta\n  titlex"
+  },
+  {
+    "id": "venn-cases/title-comment",
+    "source": "venn-beta\n  title x %% c"
+  },
+  {
+    "id": "venn-cases/title-glued-comment",
+    "source": "venn-beta\n  title x%% c"
+  },
+  {
+    "id": "venn-cases/title-entity",
+    "source": "venn-beta\n  title a #35; b"
+  },
+  {
+    "id": "venn-cases/title-twice",
+    "source": "venn-beta\n  title a\n  title b"
+  },
+  {
+    "id": "venn-cases/title-after-statement",
+    "source": "venn-beta\n  set A title x"
+  },
+  {
+    "id": "venn-cases/title-punctuation",
+    "source": "venn-beta\n  title a, b: c [d] \"e\""
+  },
+  {
+    "id": "venn-cases/comment-glued-one-char",
+    "source": "venn-beta\n  set A%% c"
+  },
+  {
+    "id": "venn-cases/comment-glued-two-chars",
+    "source": "venn-beta\n  set AB%% c"
+  },
+  {
+    "id": "venn-cases/comment-spaced",
+    "source": "venn-beta\n  set A %% c\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-after-brace",
+    "source": "venn-beta\n  set A}%% c"
+  },
+  {
+    "id": "venn-cases/comment-bare-line",
+    "source": "venn-beta\n  set A\n%%\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-glued-line-start",
+    "source": "venn-beta\n  set A\nx%% c\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-after-size",
+    "source": "venn-beta\n  set A:2%% c\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-after-label",
+    "source": "venn-beta\n  set A[l]%% c"
+  },
+  {
+    "id": "venn-cases/comment-after-string",
+    "source": "venn-beta\n  set \"A\"%% c"
+  },
+  {
+    "id": "venn-cases/comment-percent-brace",
+    "source": "venn-beta\n  set A %%{-}\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-glued-percent-brace",
+    "source": "venn-beta\n  set A%%{-}\n  set B"
+  },
+  {
+    "id": "venn-cases/unclosed-directive-mid-line",
+    "source": "venn-beta\n  set A %%{x}\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-after-header",
+    "source": "venn-beta %% c\n  set A"
+  },
+  {
+    "id": "venn-cases/comment-glued-header",
+    "source": "venn-beta%% c\n  set A"
+  },
+  {
+    "id": "venn-cases/comment-triple-percent",
+    "source": "venn-beta\n  set A %%% c\n  set B"
+  },
+  {
+    "id": "venn-cases/comment-glued-comma",
+    "source": "venn-beta\n  set A\n  set B\n  union A,%% c\n  union A,B"
+  },
+  {
+    "id": "venn-cases/comment-glued-colon",
+    "source": "venn-beta\n  set A:%% c"
+  },
+  {
+    "id": "venn-cases/style-hex",
+    "source": "venn-beta\n  set A\n  style A fill:#f00, stroke:#123456, color:\"red\""
+  },
+  {
+    "id": "venn-cases/style-hex-lengths",
+    "source": "venn-beta\n  set A\n  style A a:#123, b:#1234, c:#12345, d:#123456, e:#1234567, f:#12345678"
+  },
+  {
+    "id": "venn-cases/style-hex-short",
+    "source": "venn-beta\n  set A\n  style A fill:#12"
+  },
+  {
+    "id": "venn-cases/style-hex-long",
+    "source": "venn-beta\n  set A\n  style A fill:#123456789"
+  },
+  {
+    "id": "venn-cases/style-hex-not-hex",
+    "source": "venn-beta\n  set A\n  style A fill:#ggg"
+  },
+  {
+    "id": "venn-cases/style-units",
+    "source": "venn-beta\n  set A\n  style A font-size: 12px"
+  },
+  {
+    "id": "venn-cases/style-rgb",
+    "source": "venn-beta\n  set A\n  style A fill: rgb(1, 2, 3), stroke:rgba( 1 ,2,3, 0.5 )"
+  },
+  {
+    "id": "venn-cases/style-rgb-upper-case",
+    "source": "venn-beta\n  set A\n  style A fill:RGB(1,2,3), stroke:Rgba(1,2,3,4)"
+  },
+  {
+    "id": "venn-cases/style-rgb-too-few",
+    "source": "venn-beta\n  set A\n  style A fill:rgb(1,2)"
+  },
+  {
+    "id": "venn-cases/style-rgba-too-few",
+    "source": "venn-beta\n  set A\n  style A fill:rgba(1,2,3)"
+  },
+  {
+    "id": "venn-cases/style-rgb-multi-line",
+    "source": "venn-beta\n  set A\n  style A fill:rgb(1,\n2,\n3)"
+  },
+  {
+    "id": "venn-cases/style-rgb-dots",
+    "source": "venn-beta\n  set A\n  style A fill:rgb(..,1.2.3,.)"
+  },
+  {
+    "id": "venn-cases/style-string",
+    "source": "venn-beta\n  set A\n  style A fill:\"#f00\", color:\"a b\""
+  },
+  {
+    "id": "venn-cases/style-value-tokens",
+    "source": "venn-beta\n  set A\n  style A fill:#f00 #0f0 red 12 rgb(1,2,3)"
+  },
+  {
+    "id": "venn-cases/style-targets-unsorted",
+    "source": "venn-beta\n  set A\n  style Q,A fill:red"
+  },
+  {
+    "id": "venn-cases/style-text-node-target",
+    "source": "venn-beta\n  set A\n    text a1\n  style a1 color:red"
+  },
+  {
+    "id": "venn-cases/style-semicolon-dropped",
+    "source": "venn-beta\n  set A\n  style A fill:#f00;"
+  },
+  {
+    "id": "venn-cases/style-two-semicolons",
+    "source": "venn-beta\n  set A\n  style A fill:#f00; stroke:#000;"
+  },
+  {
+    "id": "venn-cases/style-semicolon-no-hash",
+    "source": "venn-beta\n  set A\n  style A fill:red;"
+  },
+  {
+    "id": "venn-cases/style-entity",
+    "source": "venn-beta\n  set A\n  style A fill:#f00, color:#red;x"
+  },
+  {
+    "id": "venn-cases/style-numbers",
+    "source": "venn-beta\n  set A\n  style A stroke-width: 2.5, fill-opacity:.3, stroke:-1"
+  },
+  {
+    "id": "venn-cases/style-no-value",
+    "source": "venn-beta\n  set A\n  style A fill:"
+  },
+  {
+    "id": "venn-cases/style-no-field",
+    "source": "venn-beta\n  set A\n  style A"
+  },
+  {
+    "id": "venn-cases/style-string-key",
+    "source": "venn-beta\n  set A\n  style A \"fill\":red"
+  },
+  {
+    "id": "venn-cases/style-quoted-target",
+    "source": "venn-beta\n  set \"A b\"\n  style \"A b\" fill:red"
+  },
+  {
+    "id": "venn-cases/semicolon",
+    "source": "venn-beta\n  set A;"
+  },
+  {
+    "id": "venn-cases/acc-title",
+    "source": "venn-beta\n  accTitle: x"
+  },
+  {
+    "id": "venn-cases/acc-descr",
+    "source": "venn-beta\n  accDescr: x"
+  },
+  {
+    "id": "venn-cases/class-def",
+    "source": "venn-beta\n  classDef x fill:red"
+  },
+  {
+    "id": "venn-cases/form-feed",
+    "source": "venn-beta\n  set A\fB"
+  },
+  {
+    "id": "venn-cases/no-break-space",
+    "source": "venn-beta\n  set A B"
+  },
+  {
+    "id": "venn-cases/vertical-tab-indent",
+    "source": "venn-beta\n  set A\n\u000btext a"
+  },
+  {
+    "id": "venn-cases/entity-in-id",
+    "source": "venn-beta\n  set a#35;b"
+  },
+  {
+    "id": "venn-cases/entity-in-string",
+    "source": "venn-beta\n  set \"a#9829;b\""
+  },
+  {
+    "id": "venn-cases/entity-in-text",
+    "source": "venn-beta\n  set A\n  text A x #35;"
+  },
+  {
+    "id": "venn-cases/crlf",
+    "source": "venn-beta\r\n  set A\r\n    text a\r\n  set B\r\n"
+  },
+  {
+    "id": "venn-cases/cr",
+    "source": "venn-beta\r  set A\r    text a\r"
+  },
+  {
+    "id": "venn-cases/cr-in-label",
+    "source": "venn-beta\n  set A[a\rb]\n  set B[\"c\r\nd\"]"
+  },
+  {
+    "id": "venn-cases/cr-after-title",
+    "source": "venn-beta\n  title\r\n  set A"
+  },
+  {
+    "id": "venn-cases/blank-lines-between",
+    "source": "venn-beta\n\n\n  set A\n\n\n  set B\n"
+  },
+  {
+    "id": "venn-cases/trailing-blanks",
+    "source": "venn-beta\n  set A   \n  set B\t\n"
+  },
+  {
+    "id": "venn-cases/unknown-character",
+    "source": "venn-beta\n  set A\n  @"
+  },
+  {
+    "id": "venn-cases/backslash",
+    "source": "venn-beta\n  set A\\B"
+  },
+  {
+    "id": "venn-cases/brace",
+    "source": "venn-beta\n  set {A}"
+  },
+  {
+    "id": "venn-cases/parenthesis",
+    "source": "venn-beta\n  set (A)"
+  },
+  {
+    "id": "venn-cases/four-sets-many-overlaps",
+    "source": "venn-beta\n  set A\n  set B\n  set C\n  set D\n  union A,B\n  union B,C\n  union C,D\n  union A,D\n  union A,B,C,D:1"
+  },
+  {
+    "id": "venn-cases/line-separator-between-statements",
+    "source": "venn-beta\n  set A   set B"
+  },
+  {
+    "id": "venn-cases/line-separator-after-header",
+    "source": "venn-beta   set A"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-before-line-break",
+    "source": "venn-beta \n  set A"
+  },
+  {
+    "id": "venn-cases/line-separator-in-title",
+    "source": "venn-beta\n  title a b\n  set A"
+  },
+  {
+    "id": "venn-cases/line-separator-after-title-keyword",
+    "source": "venn-beta\n  title x\n  set A"
+  },
+  {
+    "id": "venn-cases/line-separators-in-labels",
+    "source": "venn-beta\n  set A[a b]\n  set B[\"c d\"]"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-in-string",
+    "source": "venn-beta\n  set \"a b\""
+  },
+  {
+    "id": "venn-cases/line-separator-in-removed-comment-line",
+    "source": "venn-beta\n  set A\n%% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-in-mid-line-comment",
+    "source": "venn-beta\n  set A %% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/paragraph-separator-in-glued-comment",
+    "source": "venn-beta\n  set A%% c set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-at-line-start",
+    "source": "venn-beta\n  set A\n   text a"
+  },
+  {
+    "id": "venn-cases/line-separator-in-indented-text",
+    "source": "venn-beta\n  set A\n  text a b"
+  },
+  {
+    "id": "venn-cases/line-separator-before-comment-line",
+    "source": "venn-beta\n  set A %% c\n  set B"
+  },
+  {
+    "id": "venn-cases/separators-around-indented-comment",
+    "source": "venn-beta\n  set A   %% c   set B\n  set C"
+  },
+  {
+    "id": "venn-cases/line-separator-in-rgb",
+    "source": "venn-beta\n  set A\n  style A fill:rgb(1, 2,3)"
+  },
+  {
+    "id": "venn-cases/line-separator-after-colon",
+    "source": "venn-beta\n  set A: 1"
+  },
+  {
+    "id": "venn-cases/union-entity-sort",
+    "source": "venn-beta\n  set \"#35;x\"\n  set \"b\"\n  union \"b\",\"#35;x\""
+  },
+  {
+    "id": "venn-cases/recovery-two-bad-lines",
+    "source": "venn-beta\n  set A B\n  set C\n  union ,\n  set D",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "C", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-union-checks",
+    "source": "venn-beta\n  set A\n  union A\n  union A,Q\n  set B\n  union A,B",
+    "errors": [
+      ["VENN_UNION_ONE_SET", 3],
+      ["VENN_UNKNOWN_SET", 4]
+    ],
+    "keeps": ["A", "B", "A+B"]
+  },
+  {
+    "id": "venn-cases/recovery-union-check-and-syntax-on-one-line",
+    "source": "venn-beta\n  set A\n  union A,Q set ;\n  set B",
+    "errors": [
+      ["VENN_UNKNOWN_SET", 3],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-unclosed-string",
+    "source": "venn-beta\n  set \"A\n  set B\n  set C:x",
+    "errors": [
+      ["UNCLOSED_STRING", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-unclosed-and-empty-labels",
+    "source": "venn-beta\n  set C[]\n  set D\n  set A[abc",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED_LABEL", 4]
+    ],
+    "keeps": ["C", "D", "A"]
+  },
+  {
+    "id": "venn-cases/recovery-missing-header",
+    "source": "set A\n  set B",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-header-twice",
+    "source": "venn-beta\n  venn-beta\n  set A\n  set B,C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-text-errors",
+    "source": "venn-beta\nset A\ntext A\ntext A t1[x] y\ntext 12\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-style-errors",
+    "source": "venn-beta\nset A\nstyle A\nstyle A fill red\nstyle A fill:, color:red\nstyle A fill:red,\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-size-errors",
+    "source": "venn-beta\nset A:\nset B:x\nset C:1.\nset D:1e3\nset E",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["C", "D", "E"]
+  },
+  {
+    "id": "venn-cases/recovery-bad-characters",
+    "source": "venn-beta\nset Ä\nset A;\nset @B\nset C",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-statements-on-one-line",
+    "source": "venn-beta\nset A set B set ; set C\nunion A,Q union B\nset D",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["VENN_UNKNOWN_SET", 3],
+      ["VENN_UNION_ONE_SET", 3]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-five-errors",
+    "source": "venn-beta\nset A\nset\nunion A\nset B[]\ntext Z\nstyle B fill\nset C",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["VENN_UNION_ONE_SET", 4],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED", 6],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-indented-text",
+    "source": "venn-beta\nset A\ntitle T\n  text a1\nset B\n  text\n  text b1",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-colon-and-comma",
+    "source": "venn-beta\nset A\n: 3\n, B\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-label-without-id",
+    "source": "venn-beta\nset [\"a\"]\nset A[\"a\"] [\"b\"]\nset B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-union-commas",
+    "source": "venn-beta\nset A\nset B\nunion A,\nunion ,B\nunion A,B,\nunion A,B",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "A+B"]
+  },
+  {
+    "id": "venn-cases/recovery-text-ids",
+    "source": "venn-beta\nset A\ntext A 12[l]\ntext A, t1\ntext A 12\nset B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-character-runs",
+    "source": "venn-beta\nset A\n@@@\nset B ~~ set C\n{x}\nset D",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "venn-cases/recovery-glued-comments",
+    "source": "venn-beta\nset A%% c\nset B\nunion B,%% c\nset C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["VENN_UNION_ONE_SET", 4]
+    ],
+    "keeps": ["B", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-title-errors",
+    "source": "venn-beta\ntitle\nset A\ntitle a;b\ntitle x#y\nset B",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-header-word",
+    "source": "venn-betax\nset A\nset B,",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "venn-cases/recovery-two-errors-on-one-line",
+    "source": "venn-beta\nset A: set Ä\nset B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 2]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "venn-cases/recovery-four-errors-on-one-line",
+    "source": "venn-beta\nset A B set : union A text A\nset C",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 2],
+      ["VENN_UNION_ONE_SET", 2],
+      ["UNEXPECTED", 2]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-label-and-string-on-one-line",
+    "source": "venn-beta\nset A[] set \"B\nset C",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED_STRING", 2]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "venn-cases/recovery-text-after-unknown-union",
+    "source": "venn-beta\n  set A\n  union A,Q\n    text t1\n  set B\n    text t2",
+    "errors": [["VENN_UNKNOWN_SET", 3]],
+    "keeps": ["A", "B"],
+    "warnings": []
+  },
+  {
+    "id": "venn-cases/recovery-text-after-one-set-union",
+    "source": "venn-beta\n  set A\n  union A\n    text t1\n  set B",
+    "errors": [["VENN_UNION_ONE_SET", 3]],
+    "keeps": ["A", "B"],
+    "warnings": []
+  }
+]

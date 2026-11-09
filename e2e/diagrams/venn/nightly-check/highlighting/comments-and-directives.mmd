@@ -1,0 +1,13 @@
+---
+description: >-
+  Comments and directives inside a venn body, as the highlighters colour them
+  (#498): a comment line, a comment after a statement, a directive line, and
+  several statements on one line, which v12 parses.
+---
+venn-beta
+  %% a comment line
+  %%{init: {"venn": {"padding": 10}}}%%
+  set A %% after a set
+  set "B b" set C
+  union A,"B b" union A,C
+  style A stroke-width: 2 px, fill-opacity: "0.3"

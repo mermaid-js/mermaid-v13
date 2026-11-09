@@ -1,24 +1,25 @@
+// cspell:ignore fmin
 /**
  * License check (R-REL-4, D12): ported code carries its upstreams' attribution, under each
  * upstream's license (MIT unless the upstream says otherwise; d3-sankey, d3-array and d3-shape,
- * which sankey re-implements, are BSD 3-Clause; d3-hierarchy and d3-format, which treemap
- * re-implements, are ISC).
+ * which sankey re-implements, and fmin, which venn.js bundles, are BSD 3-Clause; d3-hierarchy
+ * and d3-format, which treemap re-implements, are ISC).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's, Iconify's and d3's repository URLs; Braintree's sanitize-url package name). A
- * file is derived from an upstream when its header has that marker. Then:
- * - that header names the upstream's license and copyright holder;
+ * block (the repository URLs of Pele, Iconify, d3, venn.js and fmin; Braintree's sanitize-url
+ * package name). A file is derived from an upstream when its header has that marker. Then:
+ * - that header names the upstream's license and every copyright holder of the upstream;
  * - in a published package (`packages/*` without `"private": true`), and in a private one that
  *   holds a file of `REQUIRED_CREDITS` (so making a package private does not drop its credits),
  *   the package root has a `THIRD_PARTY_NOTICES` that holds the upstream's license text and
- *   copyright line (an upstream that is not MIT in its own section), lists the file by its
+ *   every copyright line of it (an upstream that is not MIT in its own section), lists the file by its
  *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
  *   as layout-elk's elkjs, or code the package bundles from a dev dependency, such as
  *   plugin-math's MathJax, with no file listed);
  * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them;
- * - the notices of a package in `BUNDLED_CREDITS` hold the license text and copyright line of
+ * - the notices of a package in `BUNDLED_CREDITS` hold the license text and copyright lines of
  *   each upstream listed for it, as for a file of its own.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
@@ -31,8 +32,10 @@ interface Upstream {
   readonly name: string;
   /** Text in a file header that marks the file as derived from this upstream. */
   readonly marker: string;
-  readonly holder: string;
-  readonly copyright: string;
+  /** The copyright holders a header names, every one. */
+  readonly holder: readonly string[];
+  /** The copyright lines the notices hold, every one. */
+  readonly copyright: readonly string[];
   /** The upstream's license; MIT when absent. */
   readonly license?: License;
 }
@@ -61,60 +64,78 @@ const LICENSE_TEXT: Readonly<Record<License, readonly string[]>> = {
 
 const licenseOf = (u: Upstream): License => u.license ?? 'MIT';
 
+/** `"a"`, or `"a" and "b"`: how a message names holders or copyright lines. */
+const quoted = (items: readonly string[]): string => items.map((i) => `"${i}"`).join(' and ');
+
 export const UPSTREAMS: readonly Upstream[] = [
   {
     name: 'Pele',
     marker: 'https://github.com/obsidianmd/pele',
-    holder: 'kepano',
-    copyright: 'Copyright (c) 2026 kepano',
+    holder: ['kepano'],
+    copyright: ['Copyright (c) 2026 kepano'],
   },
   {
     name: '@braintree/sanitize-url',
     marker: '@braintree/sanitize-url',
-    holder: 'Braintree',
-    copyright: 'Copyright (c) 2017 Braintree',
+    holder: ['Braintree'],
+    copyright: ['Copyright (c) 2017 Braintree'],
   },
   {
     // cspell:ignore Vjacheslav Trushkin
     name: '@iconify/utils',
     marker: 'https://github.com/iconify/iconify',
-    holder: 'Vjacheslav Trushkin',
-    copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
+    holder: ['Vjacheslav Trushkin'],
+    copyright: ['Copyright (c) 2021-PRESENT Vjacheslav Trushkin'],
   },
   {
     name: 'd3-sankey',
     marker: 'https://github.com/d3/d3-sankey',
-    holder: 'Mike Bostock',
-    copyright: 'Copyright 2015, Mike Bostock',
+    holder: ['Mike Bostock'],
+    copyright: ['Copyright 2015, Mike Bostock'],
     license: 'BSD-3-Clause',
   },
   {
     name: 'd3-array',
     marker: 'https://github.com/d3/d3-array',
-    holder: 'Mike Bostock',
-    copyright: 'Copyright 2010-2020 Mike Bostock',
+    holder: ['Mike Bostock'],
+    copyright: ['Copyright 2010-2020 Mike Bostock'],
     license: 'BSD-3-Clause',
   },
   {
     name: 'd3-shape',
     marker: 'https://github.com/d3/d3-shape',
-    holder: 'Mike Bostock',
-    copyright: 'Copyright 2010-2015 Mike Bostock',
+    holder: ['Mike Bostock'],
+    copyright: ['Copyright 2010-2015 Mike Bostock'],
     license: 'BSD-3-Clause',
   },
   {
     name: 'd3-hierarchy',
     marker: 'https://github.com/d3/d3-hierarchy',
-    holder: 'Mike Bostock',
-    copyright: 'Copyright 2010-2021 Mike Bostock',
+    holder: ['Mike Bostock'],
+    copyright: ['Copyright 2010-2021 Mike Bostock'],
     license: 'ISC',
   },
   {
     name: 'd3-format',
     marker: 'https://github.com/d3/d3-format',
-    holder: 'Mike Bostock',
-    copyright: 'Copyright 2010-2026 Mike Bostock',
+    holder: ['Mike Bostock'],
+    copyright: ['Copyright 2010-2026 Mike Bostock'],
     license: 'ISC',
+  },
+  {
+    // cspell:ignore Frederickson Gratzl
+    name: 'venn.js',
+    marker: 'https://github.com/upsetjs/venn.js',
+    holder: ['Ben Frederickson', 'Samuel Gratzl'],
+    copyright: ['Copyright (c) 2013 Ben Frederickson', 'Copyright (c) 2021 Samuel Gratzl'],
+  },
+  {
+    // venn.js bundles fmin's optimisers, under fmin's own license.
+    name: 'fmin',
+    marker: 'https://github.com/benfred/fmin',
+    holder: ['Ben Frederickson'],
+    copyright: ['Copyright 2016, Ben Frederickson'],
+    license: 'BSD-3-Clause',
   },
 ];
 
@@ -127,16 +148,30 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/diagram-sankey/src/layout/layout.ts': ['d3-shape'],
   'packages/diagram-treemap/src/layout/tiles.ts': ['d3-hierarchy'],
   'packages/diagram-treemap/src/format/d3-format.ts': ['d3-format'],
+  'packages/diagram-venn/src/solver/circles.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/fmin.ts': ['fmin', 'venn.js'],
+  'packages/diagram-venn/src/solver/index.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/normalize.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/regions.ts': ['venn.js'],
+  'packages/diagram-venn/src/solver/solve.ts': ['venn.js'],
 };
 
 /**
  * Workspace packages whose build bundles another package's ported code with the legal comments
- * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey and
- * diagram-treemap), so their own notices carry those upstreams. Pending for the maintainer:
+ * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey,
+ * diagram-treemap and diagram-venn), so their own notices carry those upstreams. Pending for the maintainer:
  * core's `@braintree/sanitize-url`.
  */
 export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
-  'packages/mermaid': ['d3-sankey', 'd3-array', 'd3-shape', 'd3-hierarchy', 'd3-format'],
+  'packages/mermaid': [
+    'd3-sankey',
+    'd3-array',
+    'd3-shape',
+    'd3-hierarchy',
+    'd3-format',
+    'venn.js',
+    'fmin',
+  ],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -202,9 +237,10 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
     for (const upstream of UPSTREAMS) {
       if (!header.includes(upstream.marker)) continue;
       const license = licenseOf(upstream);
-      if (!LICENSE_HEADER[license].test(header) || !header.includes(upstream.holder))
+      const holders = upstream.holder;
+      if (!LICENSE_HEADER[license].test(header) || !holders.every((h) => header.includes(h)))
         problems.push(
-          `${rel}: ${upstream.name}-derived header must name the ${license} license and "${upstream.holder}"`
+          `${rel}: ${upstream.name}-derived header must name the ${license} license and ${quoted(holders)}`
         );
       derived.push({ file: relative(dir, file), upstream });
     }
@@ -285,9 +321,13 @@ export function checkLicenses(root: string): string[] {
       // MIT text may stand anywhere in the notices (older ones have no sections); any other
       // license's must stand in its upstream's own section.
       const text = license === 'MIT' ? notices : section(notices, u.name);
-      if (!LICENSE_TEXT[license].every((t) => text.includes(t)) || !text.includes(u.copyright))
+      const lines = u.copyright;
+      if (
+        !LICENSE_TEXT[license].every((t) => text.includes(t)) ||
+        !lines.every((c) => text.includes(c))
+      )
         problems.push(
-          `${pkg}/${NOTICES}: must contain the ${license} License text with "${u.copyright}"`
+          `${pkg}/${NOTICES}: must contain the ${license} License text with ${quoted(lines)}`
         );
     }
     if (!(manifest.files ?? []).includes(NOTICES))

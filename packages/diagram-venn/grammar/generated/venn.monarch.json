@@ -1,0 +1,562 @@
+{
+  "tokenPostfix": ".mermaid-venn",
+  "defaultToken": "",
+  "ignoreCase": true,
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^}]%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[\\n\\r]+",
+        {
+          "token": "",
+          "next": "@bol"
+        }
+      ],
+      [
+        "%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "title\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "venn-beta\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "set\\b",
+        {
+          "token": "keyword",
+          "next": "@on"
+        }
+      ],
+      [
+        "union\\b",
+        {
+          "token": "keyword",
+          "next": "@on"
+        }
+      ],
+      [
+        "text\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "style\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\[\"(?=[^\"]*\"\\])",
+        {
+          "token": "string",
+          "next": "@quotedLabel"
+        }
+      ],
+      [
+        "\\[\\s*(?=[^\\]\"]+\\])",
+        {
+          "token": "string",
+          "next": "@label"
+        }
+      ],
+      [
+        "[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "#[0-9a-fA-F]{3,8}",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "rgba\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "rgb\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "[A-Za-z_][A-Za-z0-9\\-_]*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"[^\"]*\"",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        ":",
+        {
+          "token": "delimiter"
+        }
+      ]
+    ],
+    "bol": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^}]%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[ \\t]+(?=[\\n\\r])",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?=[^ \\t\\n\\r])",
+        {
+          "token": "",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[\\n\\r]+",
+        {
+          "token": ""
+        }
+      ]
+    ],
+    "on": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^}]%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[\\n\\r]+",
+        {
+          "token": "",
+          "next": "@onBol"
+        }
+      ],
+      [
+        "%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "title\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "venn-beta\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "set\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "union\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "text\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "style\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\[\"(?=[^\"]*\"\\])",
+        {
+          "token": "string",
+          "next": "@quotedLabel"
+        }
+      ],
+      [
+        "\\[\\s*(?=[^\\]\"]+\\])",
+        {
+          "token": "string",
+          "next": "@label"
+        }
+      ],
+      [
+        "[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "#[0-9a-fA-F]{3,8}",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "rgba\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "rgb\\(\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*,\\s*[0-9.]+\\s*\\)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "[A-Za-z_][A-Za-z0-9\\-_]*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"[^\"]*\"",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        ":",
+        {
+          "token": "delimiter"
+        }
+      ]
+    ],
+    "onBol": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^}]%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[ \\t]+(?=[\\n\\r])",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "[ \\t]+(?=text\\b)",
+        {
+          "token": "",
+          "switchTo": "@indentText"
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?=[^ \\t\\n\\r])",
+        {
+          "token": "",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[\\n\\r]+",
+        {
+          "token": ""
+        }
+      ]
+    ],
+    "indentText": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "text\\b",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "quotedLabel": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\"]*(?=\"\\])",
+        {
+          "token": "string",
+          "switchTo": "@labelEnd"
+        }
+      ]
+    ],
+    "label": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\\]\"]*?(?=\\s*\\])",
+        {
+          "token": "string",
+          "switchTo": "@labelEnd"
+        }
+      ]
+    ],
+    "labelEnd": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\"?\\s*\\]",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

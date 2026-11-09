@@ -6,6 +6,7 @@ import { flowchart } from '@mermaid-js/diagram-flowchart';
 import { kanban } from '@mermaid-js/diagram-kanban';
 import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
+import { venn } from '@mermaid-js/diagram-venn';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { outlineFixture, outliningEveryLeaf } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type DiagramPlugin, type ExtensionPlugin } from 'mermaid';
@@ -15,9 +16,10 @@ import { REPO_ROOT, corpusFromDir } from './index.ts';
 /**
  * The outline hook (D302) changes no byte of the corpus unless a drawer draws. The base writes
  * every outline as its plain leaf, as flowchart, class, state and ER did before they adopted
- * the hook (#340) and kanban before #459. Against it: the adopted diagrams with no drawer, with
- * T0's fixture drawer registered but inactive (stream and tree backing), and with every leaf of
- * every first-party diagram drawn through `w.outline` and a drawer declining each one.
+ * the hook (#340), kanban before #459 and venn before #501. Against it: the adopted diagrams
+ * with no drawer, with T0's fixture drawer registered but inactive (stream and tree backing),
+ * and with every leaf of every first-party diagram drawn through `w.outline` and a drawer
+ * declining each one.
  */
 
 const DIRS = [
@@ -28,10 +30,19 @@ const DIRS = [
   'er-diagram',
   'sequence',
   'kanban',
+  'venn',
 ];
 
 type AnyPlugin = DiagramPlugin<unknown, unknown>;
-const PLUGINS = [flowchart, classDiagram, state, er, sequence, kanban] as unknown as AnyPlugin[];
+const PLUGINS = [
+  flowchart,
+  classDiagram,
+  state,
+  er,
+  sequence,
+  kanban,
+  venn,
+] as unknown as AnyPlugin[];
 
 /** `w`, writing each outline as the plain leaf, without the hook. */
 const plainLeaves = (w: SvgWriter): SvgWriter => ({

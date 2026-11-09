@@ -31,6 +31,8 @@ export interface ThemePackage {
   readonly dir: string;
   /** `src/theme/vocabulary.ts`'s `THEME_VARIABLES`, when the package has one. */
   readonly vocabulary?: Vocabulary;
+  /** `src/theme/vocabulary.ts`'s optional `THEME_NOTE`: one line for the inventory doc. */
+  readonly note?: string;
   /** The `theme` of the plugin `src/index.ts` exports, when it has one. */
   readonly table?: DiagramThemeTable;
 }
@@ -70,7 +72,9 @@ export async function themePackages(
   const out: ThemePackage[] = [];
   for (const d of dirs) {
     const dir = join(root, d);
-    const vocabulary = (await load(vocabularyPath(dir)))?.THEME_VARIABLES as Vocabulary | undefined;
+    const vocabularyModule = await load(vocabularyPath(dir));
+    const vocabulary = vocabularyModule?.THEME_VARIABLES as Vocabulary | undefined;
+    const note = vocabularyModule?.THEME_NOTE as string | undefined;
     const index =
       tables === 'all' || vocabulary ? await load(join(dir, 'src/index.ts')) : undefined;
     const table = index && pluginTable(index);
@@ -78,6 +82,7 @@ export async function themePackages(
       type: d.slice('diagram-'.length),
       dir,
       ...(vocabulary && { vocabulary }),
+      ...(note !== undefined && { note }),
       ...(table && { table }),
     });
   }

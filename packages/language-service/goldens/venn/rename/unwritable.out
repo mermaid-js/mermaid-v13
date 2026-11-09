@@ -1,0 +1,6 @@
+@ 3:7  set |A
+  prepare: 3:7-3:8 "A"; rename to "say \"hi\"":
+  refused: 'say "hi"' cannot be a venn id: an id is not empty and has no `"`, no line break and no blank at either end.
+@ 4:8  set "|B"
+  prepare: 4:8-4:9 "B"; rename to "say \"hi\"":
+  refused: 'say "hi"' cannot be written inside "…".

@@ -1,0 +1,8 @@
+@ 4:3  |
+  set keyword 4:3-4:3 "" -> "set "
+  union keyword 4:3-4:3 "" -> "union "
+  text keyword 4:3-4:3 "" -> "text "
+  style keyword 4:3-4:3 "" -> "style "
+  title keyword 4:3-4:3 "" -> "title Title"
+@ 6:11  union A,|
+  C node (set) 6:11-6:11 "" -> "C"

@@ -257,6 +257,7 @@ const TYPE_DOCS: Record<string, string> = {
   sankey: 'sankey\n"Solar, roof",Electricity,40.5\n',
   treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
   wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
+  venn: 'venn-beta\n  set A\n  set B\n  union A, B\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */

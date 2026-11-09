@@ -53,4 +53,5 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
   kanban: { load: () => import('./generated/kanban.monarch.js').then((m) => m.default) },
   sankey: { load: () => import('./generated/sankey.monarch.js').then((m) => m.default) },
+  venn: { load: () => import('./generated/venn.monarch.js').then((m) => m.default) },
 };

@@ -1,0 +1,15 @@
+---
+description: >-
+  `text` and `style` statements naming ids no `set` declares, and an overlap
+  no `union` declares: v12 stores them and draws nothing for them; v13 keeps
+  them in the model, does not draw them, and warns once per render (D417),
+  while the editor marks each id (#498).
+---
+venn-beta
+  set A
+  set B
+  style A fill: #ccc
+  text Z z1
+  text A,B ab1
+  style Q,A fill: red
+  style Y color: blue

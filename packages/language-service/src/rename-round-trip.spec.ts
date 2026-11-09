@@ -77,6 +77,36 @@ const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
     const m = model as { items: { ast: string }[] };
     return { ...m, items: m.items.map(({ ast: _, ...item }) => item) };
   },
+  // Venn keeps the ids of an overlap, a text node's area and a style's targets sorted, as v12
+  // does, and its `ast` ids are made of them (`union:A+B`, D418), so a rename moves the name in
+  // both. The lists are sorted again and the `ast` ids dropped; the ids are compared as they are.
+  // A warning quotes its statement cut to 24 characters, so a longer name cuts it elsewhere:
+  // warnings are compared by code (the spec compares every diagnostic's code too).
+  venn: (model) => {
+    interface Entry {
+      ast: string;
+      sets?: string[];
+      targets?: string[];
+    }
+    const m = model as {
+      subsets: Entry[];
+      textNodes: Entry[];
+      styles: Entry[];
+      warnings: { code: string }[];
+    };
+    const strip = ({ ast: _, ...e }: Entry) => ({
+      ...e,
+      ...(e.sets ? { sets: [...e.sets].sort() } : {}),
+      ...(e.targets ? { targets: [...e.targets].sort() } : {}),
+    });
+    return {
+      ...m,
+      subsets: m.subsets.map(strip),
+      textNodes: m.textNodes.map(strip),
+      styles: m.styles.map(strip),
+      warnings: m.warnings.map((w) => w.code),
+    };
+  },
 };
 
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */

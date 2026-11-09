@@ -22,6 +22,8 @@ import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
 import { treemapAdapter } from './treemap/v13.ts';
+import { vennParityCorpus } from './venn/corpus.ts';
+import { vennAdapter } from './venn/v13.ts';
 import { wardleyAdapter } from './wardley/v13.ts';
 import { xyChartParityCorpus } from './xychart/corpus.ts';
 import { xyChartAdapter } from './xychart/v13.ts';
@@ -171,6 +173,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/xychart-recovery.json',
     ],
     corpus: xyChartParityCorpus,
+  },
+  {
+    adapter: vennAdapter,
+    corpusDirs: ['e2e/diagrams/venn'],
+    corpusFiles: [
+      'packages/conformance/corpus/venn-v12-specs.json',
+      'packages/conformance/corpus/venn-cases.json',
+    ],
+    corpus: vennParityCorpus,
   },
 ];
 

@@ -180,7 +180,11 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
-/** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
+/**
+ * Who reads both base text variables (`fontFamily`, `fontSize`): a new type that reads both
+ * appends here. A type that reads only `fontFamily` (pie, packet, cynefin, info, sankey, treemap,
+ * wardley, xychart, venn) is listed on that row.
+ */
 const TEXT_USERS = [
   'core',
   'flowchart',
@@ -206,10 +210,18 @@ const TEXT_USERS = [
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
+  primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'state', 'packet', 'kanban', 'wardley', 'xychart']),
+  background: def('bg', 'color', [
+    'core',
+    'state',
+    'packet',
+    'kanban',
+    'wardley',
+    'xychart',
+    'venn',
+  ]),
   primaryTextColor: def('pt', 'color', [
     'core',
     'class',
@@ -229,8 +241,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
   ]),
-  // Pie, packet, cynefin, info, sankey, treemap, wardley and xychart draw in the font family but
-  // size their text by their own variables or constants (sankey: 14 px; wardley: its config;
+  // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
+  // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
   // xychart: its `xyChart` config).
   fontFamily: def('ff', 'font', [
     ...TEXT_USERS,
@@ -242,6 +254,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'treemap',
     'wardley',
     'xychart',
+    'venn',
   ]),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
@@ -249,7 +262,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
-  tertiaryTextColor: def('tt', 'color', ['core']),
+  tertiaryTextColor: def('tt', 'color', ['core', 'venn']),
   textColor: def('tx', 'color', [
     'core',
     'flowchart',
@@ -267,6 +280,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'info',
     'radar',
     'sankey',
+    'venn',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -295,7 +309,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap', 'venn']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),

@@ -1,0 +1,42 @@
+@ 1:6  venn-|beta
+  1:1-1:10 "venn-beta"
+  | **`venn-beta`**
+  |
+  | `venn-beta`: starts a venn diagram.
+@ 2:5  ti|tle Overlap
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the diagram title, the rest of the line; one pair of surrounding quotes is removed, as in `title "Team overlap"`.
+@ 3:4  s|et A
+  3:3-3:6 "set"
+  | **`set`**
+  |
+  | `set <id>`: a set, with an optional `[label]` and `:size` (10 by default), as in `set A["Alpha"]:20`.
+@ 4:5  un|ion A,A
+  4:3-4:8 "union"
+  | **`union`**
+  |
+  | `union <id>,<id>…`: the overlap of two or more sets declared before it, with an optional `[label]` and `:size` (10 / n² for n sets by default), as in `union A,B["Both"]:2`.
+@ 5:7  te|xt a1
+  5:5-5:9 "text"
+  | **`text`**
+  |
+  | `text <id>` on an indented line right under a `set` or `union` (or another such line): a text node in its area, which takes that statement's sets.
+@ 6:6  sty|le A fill: red
+  6:3-6:8 "style"
+  | **`style`**
+  |
+  | `style <ids> key: value, …`: the `fill`, `fill-opacity`, `stroke`, `stroke-width` and `color` of a set, an overlap or a text node, as in `style A,B fill: #f00`.
+@ 7:5  te|xt A t1
+  7:3-7:7 "text"
+  | **`text`**
+  |
+  | `text <ids> <id>`: a text node in the area of those sets, with an optional `[label]` (not after an id that is a number), as in `text A,B t1["In both"]`.
+@ 8:8  set B|["Label"]
+  8:7-8:8 "B"
+  | **`B`** set · Label
+  |
+  | Size 10 (the default).
+@ 9:9  set C:|10
+  none

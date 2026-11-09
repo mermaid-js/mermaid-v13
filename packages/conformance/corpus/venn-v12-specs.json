@@ -1,0 +1,102 @@
+[
+  {
+    "id": "v12-specs/parser/venn.spec.ts#1",
+    "source": "venn-beta\n          title foo bar\n          set A\n          set B\n          union A,B\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#2",
+    "source": "venn-beta\n          set A[\"Alpha\"]\n          set B[\"Beta\"]\n          union A,B[\"AB\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#3",
+    "source": "venn-beta\n          set A[Alpha]\n          set B[Beta]\n          union A,B[AB]\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#4",
+    "source": "venn-beta\n          set A:20\n          set B:12\n          union A,B:3\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#5",
+    "source": "venn-beta\n          title foo bar\n          set A[\"Alpha\"]:20\n          set B[\"Beta\"]:12\n          set C[\"Gamma\"]:30\n          union A,B[\"AB\"]:5.3\n          union C,A,B:1\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#6",
+    "source": "venn-beta\n          set A\n            text A1[\"foo bar\"]\n          set B\n            text B1[\"hello, world\"]\n          union A,B\n            text AB1[\"shared note\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#7",
+    "source": "venn-beta\n          set A[\"Frontend\"]\n            text A1\n            text A2\n          set B[\"Backend\"]\n            text B1\n          union A,B[\"APIs\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#8",
+    "source": "venn-beta\n          set A\n          set B\n          union A,B\n          style A fill:#ff6b6b\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#9",
+    "source": "venn-beta\n          set A\n          set B\n          union A,B\n          style A,B color:#333\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#10",
+    "source": "venn-beta\n          set A\n            text A1[\"React\"]\n          style A1 color:red\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#11",
+    "source": "venn-beta\n          set A\n          set B\n          union A,B\n          style A fill:#ff6b6b, color:#333\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#12",
+    "source": "venn-beta\n          set A\n          set B\n          style A fill:rgb(255, 0, 128)\n          style B fill:rgba(255, 0, 128, 0.5)\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#13",
+    "source": "venn-beta\n          set A[\"Frontend\"]:20\n            text A1[\"React\"]\n          set B[\"Backend\"]:12\n          union A,B[\"Shared\"]:3\n            text AB1[\"OpenAPI\"]\n          style A fill:#ff6b6b\n          style A,B color:#333\n          style A1 color:red\n      "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#14",
+    "source": "venn-beta\n        set A,B\n    "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#15",
+    "source": "venn-beta\n        union A\n    "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#16",
+    "source": "venn-beta\n        set Foo\n        union Foo,Buz\n    "
+  },
+  {
+    "id": "v12-specs/parser/venn.spec.ts#17",
+    "source": "venn-beta\n        set \"Foo Bar\"\n        set Buz\n        union \"Foo Bar\",Buz\n    "
+  },
+  {
+    "id": "v12-docs/venn.md#1",
+    "source": "venn-beta\n  title What makes a good feature\n  set Desirable\n  set Feasible\n  set Viable\n  union Desirable,Feasible[\"Buildable\"]\n  union Feasible,Viable[\"Sustainable\"]\n  union Desirable,Viable[\"Marketable\"]\n  union Desirable,Feasible,Viable[\"Ship it\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#2",
+    "source": "---\nconfig:\n  theme: default\n  look: classic\n---\nvenn-beta\n  title What makes a good feature\n  set Desirable\n  set Feasible\n  set Viable\n  union Desirable,Feasible[\"Buildable\"]\n  union Feasible,Viable[\"Sustainable\"]\n  union Desirable,Viable[\"Marketable\"]\n  union Desirable,Feasible,Viable[\"Ship it\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#3",
+    "source": "venn-beta\n  title \"Team overlap\"\n  set Frontend\n  set Backend\n  union Frontend,Backend[\"APIs\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#4",
+    "source": "venn-beta\n  set A[\"Alpha\"]\n  set B[\"Beta\"]\n  union A,B[\"AB\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#5",
+    "source": "venn-beta\n  set Desirable\n  set Feasible\n  set Viable\n  union Desirable,Feasible,Viable[\"Innovation\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#6",
+    "source": "venn-beta\n  set A[\"Alpha\"]:20\n  set B[\"Beta\"]:12\n  union A,B[\"AB\"]:3\n"
+  },
+  {
+    "id": "v12-docs/venn.md#7",
+    "source": "venn-beta\n  set A[\"Frontend\"]\n    text A1[\"React\"]\n    text A2[\"Design Systems\"]\n  set B[\"Backend\"]\n    text B1[\"API\"]\n  union A,B[\"Shared\"]\n    text AB1[\"OpenAPI\"]\n"
+  },
+  {
+    "id": "v12-docs/venn.md#8",
+    "source": "venn-beta\n  set A[\"Alpha\"]:20\n    text A1[\"React\"]\n    text A2[\"Design Systems\"]\n  set B[\"Beta\"]:12\n  union A,B[\"AB\"]:3\n  style A fill:#ff6b6b\n  style A,B color:#333\n  style A1 color:red\n"
+  }
+]

@@ -10,7 +10,7 @@ describe('renderDiagram (the page adapter)', () => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
       expect(svg).toMatch(
-        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|packet|cynefin|info|radar|kanban|sankey|treemap|wardley|xychart)"/
+        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|packet|cynefin|info|radar|kanban|sankey|treemap|wardley|xychart|venn)"/
       );
     }
   );
@@ -109,6 +109,7 @@ describe('renderDiagram (the page adapter)', () => {
       ),
       ...mindmap.flatMap((shape) => each(`mindmap/handdrawn/${shape}`)),
       ...each('state-diagram-v2/handdrawn'),
+      ...each('venn/handdrawn'),
     ]);
   });
 });

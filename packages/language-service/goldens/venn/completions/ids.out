@@ -1,0 +1,26 @@
+@ 4:11  union A,|
+  B b node (set) 4:11-4:11 "" -> "\"B b\""
+@ 5:9  union |
+  A node (set · Alpha) 5:9-5:9 "" -> "A"
+  B b node (set) 5:9-5:9 "" -> "\"B b\""
+@ 9:8  text |
+  A node (set · Alpha) 9:8-9:8 "" -> "A"
+  B b node (set) 9:8-9:8 "" -> "\"B b\""
+  Late node (set) 9:8-9:8 "" -> "Late"
+@ 10:10  text A,|
+  B b node (set) 10:10-10:10 "" -> "\"B b\""
+  Late node (set) 10:10-10:10 "" -> "Late"
+@ 11:10  text A |
+  none
+@ 12:9  style |
+  A node (set · Alpha) 12:9-12:9 "" -> "A"
+  B b node (set) 12:9-12:9 "" -> "\"B b\""
+  Late node (set) 12:9-12:9 "" -> "Late"
+  t1 node (text node) 12:9-12:9 "" -> "t1"
+@ 13:11  style A,|
+  B b node (set) 13:11-13:11 "" -> "\"B b\""
+  Late node (set) 13:11-13:11 "" -> "Late"
+@ 14:16  style "B b",L|
+  Late node (set) 14:15-14:16 "L" -> "Late"
+@ 15:7  set |
+  none

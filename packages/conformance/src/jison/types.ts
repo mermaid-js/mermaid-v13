@@ -2,8 +2,8 @@
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
  * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
- * kanban, sankey and xychart (M5). Pie and gitGraph are Langium in v12 and gate on its tokens
- * instead (D213).
+ * kanban, sankey, xychart and venn (M5). Pie and gitGraph are Langium in v12 and gate on
+ * its tokens instead (D213).
  */
 
 /** The part of a v12 jison lexer the oracle drives. */
@@ -51,6 +51,19 @@ export type HarvestMethod =
       readsFiles?: boolean;
     };
 
+/** What a descriptor's `yy` builder is handed for one run of the lexer. */
+export interface JisonYyContext {
+  /** The probe's DB. */
+  db: object;
+  lexer: JisonLexer;
+  /**
+   * Call `listener` with each token of this run (its terminal name and image, as `tokens()`
+   * returns them) before the lexer is asked for the next one. For a lexer that reads state its
+   * parser's actions write (venn's indent mode), so the builder can play the parser's part.
+   */
+  onToken: (listener: (name: string, image: string) => void) => void;
+}
+
 export interface JisonTypeDescriptor {
   /** A diagram v12 parses with this type's jison parser; loading it hands the oracle that parser. */
   probe: string;
@@ -59,7 +72,7 @@ export interface JisonTypeDescriptor {
    * a new instance of the DB's class, or the DB itself when it is a plain module object (its
    * lexer actions do not call into it).
    */
-  yy?: (context: { db: object; lexer: JisonLexer }) => unknown;
+  yy?: (context: JisonYyContext) => unknown;
   /** The type's fixture directories under `e2e/diagrams`. */
   e2e: readonly string[];
   harvest: {
@@ -72,6 +85,30 @@ export interface JisonTypeDescriptor {
 }
 
 const V12_DIAGRAMS = 'packages/mermaid/src/diagrams';
+
+/**
+ * A fresh `yy` for one run of venn's lexer. `venn.jison`'s lexer reads the DB's indent mode
+ * (`yy.getIndentMode()`, an indented `text` is `INDENT_TEXT` only while it is on), turns it
+ * off itself at a line that starts with a non-blank (`yy.setIndentMode(false)`), and keeps
+ * `yy.consumeIndentText` on `yy`. Only the parser turns the mode on: the actions of every
+ * `set` and `union` statement. This `yy` plays that part: the mode is on from each `SET` or
+ * `UNION` token. The mode is read only at a line start, which a reduced statement's action
+ * always runs before, so the two differ only after a parse error, where v12 lexes no further.
+ * The DB's own module state is never touched, so runs do not leak into each other.
+ * `venn/yy-emulation.spec.ts` checks it against the stream v12's parser pulls.
+ */
+function vennYy({ onToken }: JisonYyContext): unknown {
+  let indent = false;
+  onToken((name) => {
+    if (name === 'SET' || name === 'UNION') indent = true;
+  });
+  return {
+    getIndentMode: () => indent,
+    setIndentMode: (on: boolean) => {
+      indent = on;
+    },
+  };
+}
 
 /** The literal's raw text starts (after blanks and an escaped line break) with `keyword`. */
 const startsWith = (keyword: string) => new RegExp(String.raw`^\s*(?:\\n)?\s*(?:${keyword})`);
@@ -216,6 +253,16 @@ export const JISON_TYPES = {
         // The DB spec calls the DB's setters only, so it adds no source.
         specs: ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'],
       },
+    },
+  },
+  venn: {
+    probe: 'venn-beta\n  set A',
+    yy: vennYy,
+    e2e: ['venn'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/venn`,
+      docs: 'venn.md',
+      method: { kind: 'literals', header: startsWith('venn-beta') },
     },
   },
 } as const satisfies Record<string, JisonTypeDescriptor>;

@@ -74,6 +74,8 @@ export interface AttrTypes {
   'data-p': string;
   /** A palette slot, `color-<n>`, so tests and user CSS can target it (v12 `data-color-id`). */
   'data-color-id': `color-${number}`;
+  /** A venn area's member ids joined with `_` (v12 venn.js's `data-venn-sets`). */
+  'data-venn-sets': string;
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';

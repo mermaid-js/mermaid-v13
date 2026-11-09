@@ -1,0 +1,20 @@
+@ 3:7  set |A
+  prepare: 3:7-3:8 "A"; rename to "Big set":
+  %% rename-to: Big set
+  venn-beta
+    set "Big set"
+    set "B"
+    union "Big set","B"
+    title Quotes
+    text "Big set" t1
+    style "Big set" color: red
+@ 5:12  union A,"|B"
+  prepare: 5:12-5:13 "B"; rename to "Big set":
+  %% rename-to: Big set
+  venn-beta
+    set A
+    set "Big set"
+    union A,"Big set"
+    title Quotes
+    text A t1
+    style A color: red

@@ -7,9 +7,11 @@ import { REPO_ROOT, corpusFromDir } from './index.ts';
 
 /**
  * Flowchart, class, state and ER draw their outlines through `w.outline` with a role (D302,
- * #340), and kanban its columns and cards (D379, #459). With T0's fixture drawer over each
- * type's corpus: every role the type has reaches the drawer, every shape does (only arrowheads,
- * label backgrounds, kanban's priority bar and text stay plain), and no arrowhead or text does.
+ * #340), kanban its columns and cards (D379, #459), and venn its circles and filled overlaps
+ * (D319, #501). With T0's fixture drawer over each type's corpus: every role the type has
+ * reaches the drawer, every shape does (only arrowheads, label backgrounds, kanban's priority
+ * bar, venn's unfilled overlaps and debug shapes, and text stay plain), and no arrowhead or text
+ * does.
  */
 
 interface Call {
@@ -40,6 +42,17 @@ const TYPES: Readonly<Record<string, TypeCase>> = {
     dirs: ['kanban'],
     roles: ['group', 'node'],
     plain: [/<line class="kanban-priority" x1="([^"]+)" y1="[^"]+" x2="\1"[^>]*\/>/g],
+  },
+  // v12 sketched each circle and an overlap a style fills; an unfilled overlap is a transparent
+  // path, and `useDebugLayout`'s dashed circle and cells were never sketched.
+  venn: {
+    dirs: ['venn'],
+    roles: ['node'],
+    plain: [
+      /<path d="[^"]*" fill="transparent" fill-opacity="0"\/>/g,
+      /<circle class="venn-text-debug-circle"[^>]*\/>/g,
+      /<rect class="venn-text-debug-cell"[^>]*\/>/g,
+    ],
   },
 };
 
@@ -74,7 +87,7 @@ async function api(...extensions: ExtensionPlugin[]) {
   return m;
 }
 
-describe('flowchart, class, state, ER and kanban outline through the hook (D302, #340)', () => {
+describe('the outlining types draw through the hook (D302, #340, #459, #501)', () => {
   for (const [type, { dirs, roles, plain: own = [] }] of Object.entries(TYPES)) {
     it(`${type}: each role reaches the drawer, and no arrowhead, label or text does`, async () => {
       const calls: Call[] = [];

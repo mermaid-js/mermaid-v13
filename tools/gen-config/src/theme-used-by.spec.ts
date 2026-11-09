@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
+import { slotVar, VENN_SLOTS } from '../../../packages/diagram-venn/src/theme/slots.ts';
 import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts';
 
 /**
@@ -35,6 +36,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
   // `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
   treemap: Array.from({ length: 12 }, (_, n) => `cScalePeer${n}`),
+  // `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
+  venn: Array.from({ length: VENN_SLOTS }, (_, i) => slotVar(i)),
 };
 
 function sources(dir: string): string[] {
@@ -94,6 +97,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
       'treemap',
+      'venn',
       'wardley',
       'xychart',
     ]);

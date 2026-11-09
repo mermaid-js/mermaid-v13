@@ -23,7 +23,7 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
     const doc = await themeInventory();
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt |'
+      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |'
     );
     expect(doc).toContain(
       '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |'

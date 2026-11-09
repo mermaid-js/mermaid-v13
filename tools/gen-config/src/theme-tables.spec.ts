@@ -107,10 +107,13 @@ const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = {
 
 /**
  * Rows set only in the themes v12 sets them in (#374, D331): the gitGraph renderer draws v12's
- * fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too.
+ * fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too; venn's
+ * slot colours, which redux and neo leave unset as v12 did (the renderer cycles the slots that
+ * are set, else the palette, else `primaryColor`, #495).
  */
 const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
   gitgraph: ['commitLineColor', 'gitCherryPickInk'],
+  venn: Array.from({ length: 8 }, (_, i) => `venn${i + 1}`),
 };
 
 function resolve(

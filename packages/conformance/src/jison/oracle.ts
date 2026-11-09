@@ -49,6 +49,15 @@ export interface JisonLexerOracle {
   tokens(source: string, options?: TokensOptions): Promise<JisonToken[] | undefined>;
   /** The exact text v12's lexer for this type received for `source`, or undefined. */
   lexedText(source: string): Promise<string | undefined>;
+  /**
+   * The tokens v12's parser itself pulled from its lexer while it parsed `source` (the lexer
+   * then read the parser's own `yy`, not the descriptor's builder), in the form `tokens()`
+   * returns them, or undefined when v12 never ran this type's parser on it. The parser stops
+   * at its first error, so this is a prefix of what the lexer gives on its own; a lexical
+   * error ends it with `[LEXICAL_ERROR, '']`. For checking a `yy` builder that plays the
+   * parser's part (venn's).
+   */
+  pulledTokens(source: string): Promise<JisonToken[] | undefined>;
   readonly LEXICAL_ERROR: typeof LEXICAL_ERROR;
 }
 
@@ -96,8 +105,12 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
   const yy = descriptor.yy ?? defaultYy;
   const setInput = lexer.setInput.bind(lexer);
   let captured: string | undefined;
+  /** The parser's tokens, while `pulledTokens` records them. */
+  let pulled: Recording | undefined;
   lexer.setInput = (input, yyArg) => {
     captured = input;
+    // A new parse starts over.
+    if (pulled) pulled = recording(parser.terminals_);
     setInput(input, yyArg);
   };
   const lexedText = async (source: string): Promise<string | undefined> => {
@@ -106,14 +119,31 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
     // Set by the wrapped setInput during the parse.
     return captured as string | undefined;
   };
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- called with jison's lexer as `this`
+  const lex = lexer.lex;
   return {
     type,
     LEXICAL_ERROR,
     lexedText,
+    async pulledTokens(source) {
+      // Only while recording: every other parse runs v12's own `lex`.
+      pulled = recording(parser.terminals_);
+      lexer.lex = function (this: JisonLexer) {
+        return pulled ? pulled.lex(lex, this) : lex.call(this);
+      };
+      try {
+        const input = await lexedText(source);
+        return input === undefined ? undefined : pulled.out;
+      } finally {
+        lexer.lex = lex;
+        pulled = undefined;
+      }
+    },
     async tokens(source, options = {}) {
       const input = await lexedText(source);
       if (input === undefined) return undefined;
-      setInput(input, yy({ db, lexer }));
+      const listeners: ((name: string, image: string) => void)[] = [];
+      setInput(input, yy({ db, lexer, onToken: (listener) => listeners.push(listener) }));
       const out: JisonToken[] = [];
       let clipped = options.keepAppendedNewline === true;
       let left = input.length;
@@ -136,8 +166,50 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
           if (image.endsWith('\n')) image = image.slice(0, -1);
         }
         out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
+        for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
       }
       return out;
+    },
+  };
+}
+
+interface Recording {
+  readonly out: JisonToken[];
+  /** v12's `lex` on `self` (the parse's own lexer), recording the token it returns. */
+  lex(original: () => number | string, self: JisonLexer): number | string;
+}
+
+/**
+ * A fresh record of the tokens one parse pulls, decoded and clipped as `tokens()` does. jison's
+ * `parse` lexes with `Object.create(parser.lexer)`, and its `lex` calls itself again after a
+ * rule that returns no token: only the outer call records.
+ */
+function recording(terminals: Record<number, string>): Recording {
+  const out: JisonToken[] = [];
+  let clipped = false;
+  let depth = 0;
+  return {
+    out,
+    lex(original, self) {
+      if (depth > 0) return original.call(self);
+      let t: number | string;
+      depth++;
+      try {
+        t = original.call(self);
+      } catch (error) {
+        out.push([LEXICAL_ERROR, '']);
+        throw error;
+      } finally {
+        depth--;
+      }
+      if (t === 1) return t; // $end
+      let image = self.yytext;
+      if (!clipped && self._input === '') {
+        clipped = true;
+        if (image.endsWith('\n')) image = image.slice(0, -1);
+      }
+      out.push([typeof t === 'number' ? (terminals[t] ?? String(t)) : t, image]);
+      return t;
     },
   };
 }
