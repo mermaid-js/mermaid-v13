@@ -4,6 +4,7 @@
  * a value the layout cannot use falls back to its default without a warning: a number, or a
  * numeric string as its number, at or above the schema's minimum.
  */
+import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
 
 /** The `ishikawa` options the layout reads, every one set. */
 export interface IshikawaLayoutConfig {
@@ -12,11 +13,13 @@ export interface IshikawaLayoutConfig {
 }
 
 /**
- * The `IshikawaDiagramConfig` defaults (`packages/core/schema/config.schema.yaml`), which the
- * layout falls back to for a value it cannot use. The section is `pending` until T5, so core
- * resolves no defaults for it yet.
+ * The defaults the layout falls back to for a value it cannot use: the section's generated
+ * defaults (`packages/core/schema/config.schema.yaml`, `gen:config`), which the plugin also hands
+ * core as its `configDefaults`.
  */
-const ISHIKAWA_CONFIG_DEFAULTS: IshikawaLayoutConfig = { diagramPadding: 20 };
+const ISHIKAWA_CONFIG_DEFAULTS: IshikawaLayoutConfig = {
+  diagramPadding: ishikawaConfigDefaults.diagramPadding ?? 20,
+};
 
 /** A finite number, or a string that reads as one; else undefined. */
 function configNumber(value: unknown): number | undefined {

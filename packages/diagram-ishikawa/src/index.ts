@@ -1,7 +1,7 @@
 /**
  * `@mermaid-js/diagram-ishikawa`: the ishikawa (fishbone) diagram plugin (spec #519): the
  * plugin, the parser, its model and AST, detection, the lexer, the codes of the warnings it
- * raises, the fishbone layout and the renderer. The manifest and config defaults land with T5.
+ * raises, the fishbone layout and the renderer.
  * The language facet is at `./language`; what only the conformance gates read is at `./testing`.
  */
 export { ishikawa } from './plugin.ts';

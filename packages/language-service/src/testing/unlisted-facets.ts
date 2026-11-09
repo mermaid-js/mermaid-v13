@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #519: the manifest comes with T5 (#585).
-  {
-    type: 'ishikawa',
-    id: 'ishikawa',
-    section: 'ishikawa',
-    pattern: /^\s*ishikawa(-beta)?\b/i,
-    detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text),
-    load: () => import('@mermaid-js/diagram-ishikawa/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

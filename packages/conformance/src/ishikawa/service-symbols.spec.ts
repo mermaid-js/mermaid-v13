@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  detectIshikawa,
-  ishikawaLanguage,
-  parseIshikawa,
-} from '@mermaid-js/diagram-ishikawa/language';
+import { parseIshikawa } from '@mermaid-js/diagram-ishikawa/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
@@ -23,19 +19,11 @@ import { ishikawaV13Snapshot } from './v13.ts';
  * - renaming a cause to a fresh label, v12 reads the new text with that cause's label changed
  *   and nothing else; a rename to a label with a line break or a leading keyword is refused.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until ishikawa's
- * manifest has its `language` entry (#585); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (ishikawa's manifest
+ * `language` entry, #585).
  */
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'ishikawa',
-      id: 'ishikawa',
-      detector: (t) => detectIshikawa(t),
-      facet: ishikawaLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['ishikawa'] });
 
 const FRESH = 'Renamed cause Zq7';
 const key = (r: Range | undefined) => (r ? `${r.start}:${r.end}` : 'none');
@@ -145,7 +133,8 @@ describe('ishikawa symbols, folding and rename through the service match v12', (
     process.stdout.write(`ishikawa service symbols: ${JSON.stringify(n)}\n`);
   }, 600_000);
 
-  it('the facet is not in the generated registry yet (#585: drop the eager row then)', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'ishikawa')?.load).toBeUndefined();
+  it('loads the facet from the generated registry (#585)', () => {
+    expect(firstPartyFacets.find((e) => e.type === 'ishikawa')?.load).toBeTypeOf('function');
+    expect(service.update('x:///i', 'ishikawa\n  Effect\n    Cause\n').facet?.id).toBe('ishikawa');
   });
 });

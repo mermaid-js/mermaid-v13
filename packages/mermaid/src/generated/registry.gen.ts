@@ -151,7 +151,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-radar').then((m) => m.radar),
   },
-  { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
+  {
+    type: 'ishikawa',
+    pattern: /^\s*ishikawa(-beta)?\b/i,
+    id: 'ishikawa',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-ishikawa').then((m) => m.ishikawa),
+  },
   {
     type: 'treemap',
     pattern: /^\s*treemap/,

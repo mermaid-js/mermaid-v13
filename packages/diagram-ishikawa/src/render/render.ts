@@ -261,7 +261,7 @@ function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRende
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  // v12's runtime default is true (spec #519 §Integration), whatever its schema said.
+  // The section's default is true, v12's runtime value (spec #519 §Integration).
   const maxWidth =
     (config.ishikawa as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
   const title = model.title?.trim() || (layout.head && plainText(layout.head.label));

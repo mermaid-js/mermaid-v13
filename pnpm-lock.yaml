@@ -122,6 +122,9 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:^
         version: link:../diagram-info
+      '@mermaid-js/diagram-ishikawa':
+        specifier: workspace:^
+        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -569,6 +572,9 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:*
         version: link:../diagram-info
+      '@mermaid-js/diagram-ishikawa':
+        specifier: workspace:*
+        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -651,6 +657,9 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:*
         version: link:../diagram-info
+      '@mermaid-js/diagram-ishikawa':
+        specifier: workspace:*
+        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -889,6 +898,9 @@ importers:
       '@mermaid-js/diagram-info':
         specifier: workspace:*
         version: link:../diagram-info
+      '@mermaid-js/diagram-ishikawa':
+        specifier: workspace:*
+        version: link:../diagram-ishikawa
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
