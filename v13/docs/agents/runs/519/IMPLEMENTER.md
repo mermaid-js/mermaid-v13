@@ -18,13 +18,13 @@
 1. Confirm the base: `git merge-base --is-ancestor feature/519_ishikawa HEAD`. If that fails, `git reset --hard feature/519_ishikawa`.
 2. Use the Skill tool with `tdd` (and `ddlt` for layout). Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, model parity, layout invariants). Before T5's manifest lands, render through the package's own test harness as pie's and venn's T4 did.
 3. Stay within the ticket's scope. Touch shared files minimally and additively.
-4. `pnpm check` must pass, and the `packages/conformance` specs (pitfall 26). Commit. Don't push, open PRs, or comment on or close issues.
-5. Before reporting, `git merge feature/519_ishikawa` and run the checks again.
+4. **Scoped handoff checks** (maintainer, 2026-11-09: the shared lock queue was over an hour). With no lock, `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-ishikawa`, the ishikawa conformance and parity specs (`vitest run packages/conformance/src/ishikawa` plus any `packages/conformance/src/ishikawa-*.spec.ts`), `tsc --noEmit -p` for each touched package, and eslint on the changed files. Paste the results into the handoff. **Exception:** a ticket that changes core (`packages/core/**`), shared conformance code (oracle, harvester, registry), `tools/*` or another package still runs the full `pnpm check` under the lock (below). The full check also runs on every integration-branch push. Commit. Don't push, open PRs, or comment on or close issues.
+5. Before reporting, `git merge feature/519_ishikawa` and run the step-4 checks again.
 6. Write `v13/docs/agents/runs/519/tickets/<N>.md` (≤ 40 lines) in your own worktree, committed on your branch: exports, how to use them, test helpers, gz size, core size before/after, decisions, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
 
 ## Machine-wide locks (seven sessions share this machine)
 
-- Every full `pnpm check`, every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
+- Every full `pnpm check` (only for the exception in step 4), every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
 - A timing test that fails under load is not a regression: rerun it under the lock. Known flakes: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
