@@ -161,7 +161,7 @@ describe('the real fixture folders', () => {
   it('runs every folder whose types all have a v13 package, and skips the rest', async () => {
     // From the diagram packages' manifests, not the registry the discovery reads, so a new
     // port's folder joins here unchanged and a registry that drops a package fails.
-    const ported = new Set(diagramPackages().flatMap((p) => p.manifest?.types ?? []));
+    const ported = new Set(diagramPackages().flatMap((p) => p.manifest.types));
     const folders = supportedFixtureFolders();
     const declared = Object.keys(FIXTURE_FOLDER_TYPES).sort();
     const runs = declared.filter((f) => FIXTURE_FOLDER_TYPES[f].every((t) => ported.has(t)));

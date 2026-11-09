@@ -17,7 +17,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { diagramPackages, hasManifest, ROOT, type DiagramPackage } from './diagrams.ts';
+import { diagramPackages, ROOT, type DiagramPackage } from './diagrams.ts';
 
 type DependencyField =
   | 'dependencies'
@@ -36,9 +36,7 @@ interface DependencyRule {
 }
 
 const all = (): boolean => true;
-/** A package the registry loads: one with its manifest (a port before T5 has none yet). */
-const manifested = (d: DiagramPackage): boolean => hasManifest(d);
-const withLanguage = (d: DiagramPackage): boolean => d.manifest?.language !== undefined;
+const withLanguage = (d: DiagramPackage): boolean => d.manifest.language !== undefined;
 
 /** The diagram packages named by an import in `dir`'s sources (its own per-diagram specs). */
 function importedBy(dir: string): (d: DiagramPackage, root: string) => boolean {
@@ -69,9 +67,8 @@ function importedBy(dir: string): (d: DiagramPackage, root: string) => boolean {
 
 /** Every package.json block that lists diagram packages, and which diagrams it lists. */
 export const DEPENDENCY_RULES: readonly DependencyRule[] = [
-  // The public package bundles every diagram the registry loads (the CDN build and `mermaid`'s
-  // registry): a port joins with its manifest.
-  { pkg: 'packages/mermaid', field: 'dependencies', value: 'workspace:*', select: manifested },
+  // The public package bundles every diagram (the CDN build and `mermaid`'s registry).
+  { pkg: 'packages/mermaid', field: 'dependencies', value: 'workspace:*', select: all },
   // The language service loads each type's `/language` facet; the diagrams are optional peers.
   {
     pkg: 'packages/language-service',
@@ -98,7 +95,7 @@ export const DEPENDENCY_RULES: readonly DependencyRule[] = [
     value: 'workspace:*',
     select: withLanguage,
   },
-  // Private: the parity oracle and the benchmarks run every type, a port's before its manifest.
+  // Private: the parity oracle and the benchmarks run every type.
   { pkg: 'packages/conformance', field: 'devDependencies', value: 'workspace:^', select: all },
   { pkg: 'packages/bench', field: 'devDependencies', value: 'workspace:^', select: all },
   // The grammar tool's per-type agreement specs import their own package.
@@ -140,7 +137,7 @@ export const RELEASING_END = '<!-- END GENERATED DIAGRAM ROWS -->';
 /** The RELEASING.md table rows of the diagram packages that have a `release:` entry. */
 function releaseRows(diagrams: readonly DiagramPackage[]): string[] {
   return diagrams
-    .filter((d) => hasManifest(d) && !d.private && d.wiring.release !== undefined)
+    .filter((d) => !d.private && d.wiring.release !== undefined)
     .map((d) => `| \`${d.name}\` | ${d.wiring.release!.summary} | ${d.wiring.release!.install} |`);
 }
 
@@ -191,10 +188,7 @@ export function syncedFiles(root = ROOT): Map<string, string> {
   if (existsSync(own)) {
     const parts = [
       own,
-      ...diagrams
-        .filter(hasManifest)
-        .map((d) => join(root, d.dir, BUNDLED_NOTICES))
-        .filter((p) => existsSync(p)),
+      ...diagrams.map((d) => join(root, d.dir, BUNDLED_NOTICES)).filter((p) => existsSync(p)),
     ];
     files.set(
       MERMAID_NOTICES,
