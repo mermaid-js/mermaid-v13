@@ -219,6 +219,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -398,6 +401,12 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+
+  packages/diagram-block:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
 
   packages/diagram-class:
     devDependencies:

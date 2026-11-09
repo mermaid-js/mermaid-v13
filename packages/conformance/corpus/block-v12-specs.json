@@ -1,0 +1,250 @@
+[
+  {
+    "id": "v12-specs/parser/block.spec.ts#1",
+    "source": "block-beta\n          id\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#2",
+    "source": "block\n          id[\"A label\"]\n          "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#3",
+    "source": "block\n          id[\"<b>Bold</b>\"]\n          "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#4",
+    "source": "block\n          id1\n          id2\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#5",
+    "source": "block\n          id1\n          id2\n          id3\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#6",
+    "source": "block\n          id[\"A label\"]\n          id2"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#7",
+    "source": "block\n          id1[\"first\"]  -->   id2[\"second\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#8",
+    "source": "block\n          id1[\"first\"]  -- \"a label\" -->   id2[\"second\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#9",
+    "source": "block\n          columns 2\n          block1[\"Block 1\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#10",
+    "source": "block\n          block1[\"Block 1\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#11",
+    "source": "block\n          columns auto\n          block1[\"Block 1\"]\n      "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#12",
+    "source": "block\n          columns 2\n          block1[\"Block 1\"]\n          block2[\"Block 2\"]\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#13",
+    "source": "block\n          columns 1\n          block1[\"Block 1\"]\n          block2[\"Block 2\"]\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#14",
+    "source": "block\n          block\n            aBlock[\"ABlock\"]\n            bBlock[\"BBlock\"]\n          end\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#15",
+    "source": "block\n          block\n            aBlock[\"ABlock\"]\n            block\n              bBlock[\"BBlock\"]\n            end\n          end\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#16",
+    "source": "block\n          block:compoundBlock[\"Compound block\"]\n            columns 1\n            block2[\"Block 2\"]\n          end\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#17",
+    "source": "block\n          columns 1\n          block1[\"Block 1\"]\n\n          block\n            columns 2\n            block2[\"Block 2\"]\n            block3[\"Block 3\"]\n          end\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#18",
+    "source": "block\n        columns 3\n        block1[\"Block 1\"]\n        blockArrow<[\"&nbsp;&nbsp;&nbsp;\"]>(right)\n        block2[\"Block 2\"]"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#19",
+    "source": "block\n        columns 1\n        A\n        blockArrow<[\"&nbsp;&nbsp;&nbsp;\"]>(up, down)\n        block\n          columns 3\n            B\n            C\n            D\n        end"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#20",
+    "source": "block\n        columns 3\n        one[\"One Slot\"]\n        two[\"Two slots\"]:2\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#21",
+    "source": "block\n        columns 3\n        space\n        middle[\"In the middle\"]\n        space\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#22",
+    "source": "block\n        classDef black color:#ffffff, fill:#000000;\n\n        mc[\"Memcache\"]\n        class mc black\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#23",
+    "source": "block\ncolumns 1\n    B[\"A wide one in the middle\"]\n  style B fill:#f9F,stroke:#333,stroke-width:4px\n        "
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#24",
+    "source": "block-beta\n  columns 1\n  A:1\n  B:2\n  C:3\n  D:4\n  E:3\n  F:2\n  G:1"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#25",
+    "source": "block\n__proto__"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#26",
+    "source": "block\nA; classDef __proto__ color:#ffffff,fill:#000000; class A __proto__"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#27",
+    "source": "block\nconstructor"
+  },
+  {
+    "id": "v12-specs/parser/block.spec.ts#28",
+    "source": "block\nA; classDef constructor color:#ffffff,fill:#000000; class A constructor"
+  },
+  {
+    "id": "v12-specs/blockColorIndex.spec.ts#1",
+    "source": "block-beta\n      block:first\n        a\n      end\n      block:second\n        b\n      end\n      block:third\n        c\n      end\n    "
+  },
+  {
+    "id": "v12-specs/blockColorIndex.spec.ts#2",
+    "source": "block-beta\n      a\n      b\n      block:group\n        c\n      end\n    "
+  },
+  {
+    "id": "v12-specs/blockColorIndex.spec.ts#3",
+    "source": "block-beta\n      block:outer\n        block:inner\n          a\n        end\n      end\n      block:sibling\n        b\n      end\n    "
+  },
+  {
+    "id": "v12-specs/blockColorIndex.spec.ts#4",
+    "source": "block-beta\n      block:a1\n        block:a2\n          x\n        end\n      end\n      block:b1\n        block:b2\n          y\n        end\n      end\n    "
+  },
+  {
+    "id": "v12-docs/block.md#1",
+    "source": "block\ncolumns 1\n  db((\"DB\"))\n  blockArrowId6<[\"&nbsp;&nbsp;&nbsp;\"]>(down)\n  block:ID\n    A\n    B[\"A wide one in the middle\"]\n    C\n  end\n  space\n  D\n  ID --> D\n  C --> D\n  style B fill:#969,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-docs/block.md#2",
+    "source": "block\n  a b c\n"
+  },
+  {
+    "id": "v12-docs/block.md#3",
+    "source": "block\n  columns 3\n  a b c d\n"
+  },
+  {
+    "id": "v12-docs/block.md#4",
+    "source": "block\n  columns 3\n  a[\"A label\"] b:2 c:2 d\n"
+  },
+  {
+    "id": "v12-docs/block.md#5",
+    "source": "block\n    block\n      D\n    end\n    A[\"A: I am a wide one\"]\n"
+  },
+  {
+    "id": "v12-docs/block.md#6",
+    "source": "block\n  columns 3\n  a:3\n  block:group1:2\n    columns 2\n    h i j k\n  end\n  g\n  block:group2:3\n    %% columns auto (default)\n    l m n o p q r\n  end\n"
+  },
+  {
+    "id": "v12-docs/block.md#7",
+    "source": "block\n  block\n    columns 1\n    a[\"A label\"] b c d\n  end\n"
+  },
+  {
+    "id": "v12-docs/block.md#8",
+    "source": "block\n    id1(\"This is the text in the box\")\n"
+  },
+  {
+    "id": "v12-docs/block.md#9",
+    "source": "block\n    id1([\"This is the text in the box\"])\n"
+  },
+  {
+    "id": "v12-docs/block.md#10",
+    "source": "block\n    id1[[\"This is the text in the box\"]]\n"
+  },
+  {
+    "id": "v12-docs/block.md#11",
+    "source": "block\n    id1[(\"Database\")]\n"
+  },
+  {
+    "id": "v12-docs/block.md#12",
+    "source": "block\n    id1((\"This is the text in the circle\"))\n"
+  },
+  {
+    "id": "v12-docs/block.md#13",
+    "source": "block\n  id1>\"This is the text in the box\"]\n"
+  },
+  {
+    "id": "v12-docs/block.md#14",
+    "source": "block\n    id1{\"This is the text in the box\"}\n"
+  },
+  {
+    "id": "v12-docs/block.md#15",
+    "source": "block\n    id1{{\"This is the text in the box\"}}\n"
+  },
+  {
+    "id": "v12-docs/block.md#16",
+    "source": "block\n  id1[/\"This is the text in the box\"/]\n  id2[\\\"This is the text in the box\"\\]\n  A[/\"Christmas\"\\]\n  B[\\\"Go shopping\"/]\n"
+  },
+  {
+    "id": "v12-docs/block.md#17",
+    "source": "block\n    id1(((\"This is the text in the circle\")))\n"
+  },
+  {
+    "id": "v12-docs/block.md#18",
+    "source": "block\n  blockArrowId<[\"Label\"]>(right)\n  blockArrowId2<[\"Label\"]>(left)\n  blockArrowId3<[\"Label\"]>(up)\n  blockArrowId4<[\"Label\"]>(down)\n  blockArrowId5<[\"Label\"]>(x)\n  blockArrowId6<[\"Label\"]>(y)\n  blockArrowId7<[\"Label\"]>(x, down)\n"
+  },
+  {
+    "id": "v12-docs/block.md#19",
+    "source": "block\n  columns 3\n  a space b\n  c   d   e\n"
+  },
+  {
+    "id": "v12-docs/block.md#20",
+    "source": "block\n  ida space:3 idb idc\n"
+  },
+  {
+    "id": "v12-docs/block.md#21",
+    "source": "block\n  A space B\n  A-->B\n"
+  },
+  {
+    "id": "v12-docs/block.md#22",
+    "source": "block\n  A space:2 B\n  A-- \"X\" -->B\n"
+  },
+  {
+    "id": "v12-docs/block.md#23",
+    "source": "block\ncolumns 1\n  db((\"DB\"))\n  blockArrowId6<[\"&nbsp;&nbsp;&nbsp;\"]>(down)\n  block:ID\n    A\n    B[\"A wide one in the middle\"]\n    C\n  end\n  space\n  D\n  ID --> D\n  C --> D\n  style B fill:#939,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-docs/block.md#24",
+    "source": "block\n  id1 space id2\n  id1(\"Start\")-->id2(\"Stop\")\n  style id1 fill:#636,stroke:#333,stroke-width:4px\n  style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5\n"
+  },
+  {
+    "id": "v12-docs/block.md#25",
+    "source": "block\n  A space B\n  A-->B\n  classDef blue fill:#6e6ce6,stroke:#333,stroke-width:4px;\n  class A blue\n  style B fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5\n"
+  },
+  {
+    "id": "v12-docs/block.md#26",
+    "source": "block\n  columns 3\n  Frontend blockArrowId6<[\" \"]>(right) Backend\n  space:2 down<[\" \"]>(down)\n  Disk left<[\" \"]>(left) Database[(\"Database\")]\n\n  classDef front fill:#696,stroke:#333;\n  classDef back fill:#969,stroke:#333;\n  class Frontend front\n  class Backend,Database back\n"
+  },
+  {
+    "id": "v12-docs/block.md#27",
+    "source": "block\n  columns 3\n  Start((\"Start\")) space:2\n  down<[\" \"]>(down) space:2\n  Decision{{\"Make Decision\"}} right<[\"Yes\"]>(right) Process1[\"Process A\"]\n  downAgain<[\"No\"]>(down) space r3<[\"Done\"]>(down)\n  Process2[\"Process B\"] r2<[\"Done\"]>(right) End((\"End\"))\n\n  style Start fill:#969;\n  style End fill:#696;\n"
+  },
+  {
+    "id": "v12-docs/block.md#28",
+    "source": "block\n  A space B\n  A --> B\n"
+  },
+  {
+    "id": "v12-docs/block.md#29",
+    "source": "  block\n    A\n    style A fill#969;\n"
+  },
+  {
+    "id": "v12-docs/block.md#30",
+    "source": "block\n  A\n  style A fill:#969,stroke:#333;\n\n"
+  }
+]

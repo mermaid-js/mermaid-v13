@@ -1,0 +1,722 @@
+[
+  {
+    "id": "block-cases/header-alone",
+    "source": "block"
+  },
+  {
+    "id": "block-cases/header-newline",
+    "source": "block\n"
+  },
+  {
+    "id": "block-cases/header-beta",
+    "source": "block-beta\n  a"
+  },
+  {
+    "id": "block-cases/header-beta-word-suffix",
+    "source": "block-betax\n  a"
+  },
+  {
+    "id": "block-cases/header-beta-dash-suffix",
+    "source": "block-beta-x\n  a"
+  },
+  {
+    "id": "block-cases/header-word-suffix",
+    "source": "blockchain\n  a"
+  },
+  {
+    "id": "block-cases/header-upper-case",
+    "source": "Block\n  a"
+  },
+  {
+    "id": "block-cases/header-leading-lines",
+    "source": "\n\n  block\n\n  a\n\n"
+  },
+  {
+    "id": "block-cases/header-one-line",
+    "source": "block a b c"
+  },
+  {
+    "id": "block-cases/header-colon",
+    "source": "block:\n  a"
+  },
+  {
+    "id": "block-cases/header-twice",
+    "source": "block\n  block-beta\n    a\n  end"
+  },
+  {
+    "id": "block-cases/header-blanks-after",
+    "source": "block   \t \n  a"
+  },
+  {
+    "id": "block-cases/line-breaks-mean-nothing",
+    "source": "block\n  columns 2 a b c"
+  },
+  {
+    "id": "block-cases/statements-on-one-line",
+    "source": "block\n  a[\"A\"] b[\"B\"] --> c space:2 d:2"
+  },
+  {
+    "id": "block-cases/blank-lines-between",
+    "source": "block\n  a\n\n\n   \n\t\n  b"
+  },
+  {
+    "id": "block-cases/id-punctuation",
+    "source": "block\n  a; b, c. d| e& f% g# h"
+  },
+  {
+    "id": "block-cases/id-unicode",
+    "source": "block\n  ä öö 日本 été 😀"
+  },
+  {
+    "id": "block-cases/id-quotes-inside",
+    "source": "block\n  a\"b\"c a'b"
+  },
+  {
+    "id": "block-cases/id-slashes",
+    "source": "block\n  a/b c\\d"
+  },
+  {
+    "id": "block-cases/id-inline-percent",
+    "source": "block\n  a %% c"
+  },
+  {
+    "id": "block-cases/id-glued-percent",
+    "source": "block\n  a%%c"
+  },
+  {
+    "id": "block-cases/id-title",
+    "source": "block\n  title Hello"
+  },
+  {
+    "id": "block-cases/id-tildes",
+    "source": "block\n  a ~~~ b"
+  },
+  {
+    "id": "block-cases/id-x-marker",
+    "source": "block\n  x--x\n  o--o"
+  },
+  {
+    "id": "block-cases/id-pipe-label",
+    "source": "block\n  a -->|x| b"
+  },
+  {
+    "id": "block-cases/id-keyword-prefixes",
+    "source": "block\n  blocks spaces ends columnsx classes styles defaults accTitles"
+  },
+  {
+    "id": "block-cases/id-keyword-mid",
+    "source": "block\n  ablock aend aspace"
+  },
+  {
+    "id": "block-cases/id-with-digits",
+    "source": "block\n  1 2a a2 _a"
+  },
+  {
+    "id": "block-cases/id-equals",
+    "source": "block\n  a = b"
+  },
+  {
+    "id": "block-cases/id-colon-word",
+    "source": "block\n  a: b"
+  },
+  {
+    "id": "block-cases/id-lone-brace",
+    "source": "block\n  a } b"
+  },
+  {
+    "id": "block-cases/id-lone-lt",
+    "source": "block\n  a < b"
+  },
+  {
+    "id": "block-cases/id-lone-dash",
+    "source": "block\n  a - b"
+  },
+  {
+    "id": "block-cases/label-square",
+    "source": "block\n  a[\"x\"]"
+  },
+  {
+    "id": "block-cases/label-empty",
+    "source": "block\n  a[\"\"]"
+  },
+  {
+    "id": "block-cases/label-escaped-quote",
+    "source": "block\n  a[\"x\\\"y\"]"
+  },
+  {
+    "id": "block-cases/label-markdown",
+    "source": "block\n  a[\"`md`\"]"
+  },
+  {
+    "id": "block-cases/label-markdown-lone-backtick",
+    "source": "block\n  a[\"`m`d`\"]"
+  },
+  {
+    "id": "block-cases/label-markdown-unclosed",
+    "source": "block\n  a[\"`md"
+  },
+  {
+    "id": "block-cases/label-unquoted",
+    "source": "block\n  a[x]"
+  },
+  {
+    "id": "block-cases/label-blanks-in-shape",
+    "source": "block\n  a[ \"x\" ]"
+  },
+  {
+    "id": "block-cases/label-multi-line",
+    "source": "block\n  a[\"x\n  y\n\"]"
+  },
+  {
+    "id": "block-cases/label-unclosed-string",
+    "source": "block\n  a[\"x"
+  },
+  {
+    "id": "block-cases/label-unclosed-shape",
+    "source": "block\n  a[\"x\""
+  },
+  {
+    "id": "block-cases/label-mismatched",
+    "source": "block\n  a(\"x\"]\n  b{{\"x\")\n  c((\"x\"]"
+  },
+  {
+    "id": "block-cases/shape-round",
+    "source": "block\n  a(\"x\")"
+  },
+  {
+    "id": "block-cases/shape-stadium",
+    "source": "block\n  a([\"x\"])"
+  },
+  {
+    "id": "block-cases/shape-subroutine",
+    "source": "block\n  a[[\"x\"]]"
+  },
+  {
+    "id": "block-cases/shape-cylinder",
+    "source": "block\n  a[(\"x\")]"
+  },
+  {
+    "id": "block-cases/shape-circle",
+    "source": "block\n  a((\"x\"))"
+  },
+  {
+    "id": "block-cases/shape-double-circle",
+    "source": "block\n  a(((\"x\")))"
+  },
+  {
+    "id": "block-cases/shape-odd",
+    "source": "block\n  a>\"x\"]"
+  },
+  {
+    "id": "block-cases/shape-diamond",
+    "source": "block\n  a{\"x\"}"
+  },
+  {
+    "id": "block-cases/shape-hexagon",
+    "source": "block\n  a{{\"x\"}}"
+  },
+  {
+    "id": "block-cases/shape-lean-right",
+    "source": "block\n  a[/\"x\"/]"
+  },
+  {
+    "id": "block-cases/shape-lean-left",
+    "source": "block\n  a[\\\"x\"\\]"
+  },
+  {
+    "id": "block-cases/shape-trapezoid",
+    "source": "block\n  a[/\"x\"\\]"
+  },
+  {
+    "id": "block-cases/shape-inv-trapezoid",
+    "source": "block\n  a[\\\"x\"/]"
+  },
+  {
+    "id": "block-cases/shape-pipe",
+    "source": "block\n  a[|\"x\"]"
+  },
+  {
+    "id": "block-cases/shape-dash-paren",
+    "source": "block\n  a(-\"x\"-)\n  b-)\"x\"(-"
+  },
+  {
+    "id": "block-cases/shape-triple-close-paren",
+    "source": "block\n  a)))\"x\")))"
+  },
+  {
+    "id": "block-cases/shape-close-paren-open",
+    "source": "block\n  a)\"x\")"
+  },
+  {
+    "id": "block-cases/shape-arrow-closer",
+    "source": "block\n  a[\"x\"]>"
+  },
+  {
+    "id": "block-cases/shape-closers-in-order",
+    "source": "block\n  a(\"x\"(((\n  b(\"x\")]\n  c(\"x\"])\n  d(\"x\"]]\n  e(\"x\"((\n  f(\"x\"}}"
+  },
+  {
+    "id": "block-cases/shape-without-id",
+    "source": "block\n  [\"x\"]"
+  },
+  {
+    "id": "block-cases/shape-then-size",
+    "source": "block\n  a[\"x\"]:3 b"
+  },
+  {
+    "id": "block-cases/shape-surrogate-error",
+    "source": "block\n  a[😀]"
+  },
+  {
+    "id": "block-cases/acc-title",
+    "source": "block\n  accTitle: hi there\n  a"
+  },
+  {
+    "id": "block-cases/acc-title-blanks",
+    "source": "block\n  accTitle  :  hi\n  a"
+  },
+  {
+    "id": "block-cases/acc-title-at-end",
+    "source": "block\n  accTitle:"
+  },
+  {
+    "id": "block-cases/acc-descr",
+    "source": "block\n  accDescr: hi\n  a"
+  },
+  {
+    "id": "block-cases/acc-descr-multiline",
+    "source": "block\n  accDescr { x\n  y }\n  a"
+  },
+  {
+    "id": "block-cases/acc-descr-multiline-unclosed",
+    "source": "block\n  accDescr {\n  x"
+  },
+  {
+    "id": "block-cases/acc-title-no-colon",
+    "source": "block\n  accTitle hi"
+  },
+  {
+    "id": "block-cases/front-matter-title",
+    "source": "---\ntitle: Hello\n---\nblock\n  a"
+  },
+  {
+    "id": "block-cases/columns-auto",
+    "source": "block\n  columns auto\n  a"
+  },
+  {
+    "id": "block-cases/columns-auto-suffix",
+    "source": "block\n  columns autox"
+  },
+  {
+    "id": "block-cases/columns-leading-zero",
+    "source": "block\n  columns 03 a"
+  },
+  {
+    "id": "block-cases/columns-negative",
+    "source": "block\n  columns -1"
+  },
+  {
+    "id": "block-cases/columns-upper-case",
+    "source": "block\n  Columns 3"
+  },
+  {
+    "id": "block-cases/columns-next-line",
+    "source": "block\n  columns\n  3 a"
+  },
+  {
+    "id": "block-cases/columns-zero",
+    "source": "block\n  columns 0\n  a"
+  },
+  {
+    "id": "block-cases/columns-twice",
+    "source": "block\n  columns 2\n  a b\n  columns 3"
+  },
+  {
+    "id": "block-cases/columns-glued-digits",
+    "source": "block\n  columns 3a"
+  },
+  {
+    "id": "block-cases/columns-alone",
+    "source": "block\n  columns"
+  },
+  {
+    "id": "block-cases/columns-no-blank",
+    "source": "block\n  columns3"
+  },
+  {
+    "id": "block-cases/span",
+    "source": "block\n  a:2 b"
+  },
+  {
+    "id": "block-cases/span-zero",
+    "source": "block\n  a:0"
+  },
+  {
+    "id": "block-cases/span-composite",
+    "source": "block\n  block:g[\"L\"]:2\n    a\n  end"
+  },
+  {
+    "id": "block-cases/span-composite-before-label",
+    "source": "block\n  block:g:2[\"L\"]\n    a\n  end"
+  },
+  {
+    "id": "block-cases/span-blank-before",
+    "source": "block\n  a :2"
+  },
+  {
+    "id": "block-cases/span-no-digits",
+    "source": "block\n  a:x"
+  },
+  {
+    "id": "block-cases/composite-anonymous-leaf",
+    "source": "block\n  block BL\n    a\n  end"
+  },
+  {
+    "id": "block-cases/composite-id",
+    "source": "block\n  block:g\n    a\n  end"
+  },
+  {
+    "id": "block-cases/composite-id-blank",
+    "source": "block\n  block: g\n  end"
+  },
+  {
+    "id": "block-cases/composite-nested",
+    "source": "block\n  block:a\n    block:b\n      c\n    end\n  end"
+  },
+  {
+    "id": "block-cases/arrow-directions",
+    "source": "block\n  a<[\"x\"]>(right, left)"
+  },
+  {
+    "id": "block-cases/arrow-directions-blanks",
+    "source": "block\n  a<[\"x\"]>( right , left )"
+  },
+  {
+    "id": "block-cases/arrow-direction-no-boundary",
+    "source": "block\n  a<[\"x\"]>(rightx)"
+  },
+  {
+    "id": "block-cases/arrow-axes",
+    "source": "block\n  a<[\"x\"]>(x, y)\n  b<[\"x\"]>(up,down)"
+  },
+  {
+    "id": "block-cases/arrow-blank-before-paren",
+    "source": "block\n  a<[\"x\"]> (up)\n  b"
+  },
+  {
+    "id": "block-cases/arrow-direction-lines",
+    "source": "block\n  a<[\"x\"]>(\n  up\n  ,\n  down\n  )\n  b"
+  },
+  {
+    "id": "block-cases/arrow-blank-before-close",
+    "source": "block\n  a<[\"x\"] >(up)"
+  },
+  {
+    "id": "block-cases/arrow-no-directions",
+    "source": "block\n  a<[\"x\"]>()"
+  },
+  {
+    "id": "block-cases/arrow-bad-direction",
+    "source": "block\n  a<[\"x\"]>(north)"
+  },
+  {
+    "id": "block-cases/arrow-markdown",
+    "source": "block\n  a<[\"`x`\"]>(up)"
+  },
+  {
+    "id": "block-cases/arrow-unclosed",
+    "source": "block\n  a<[\"x\"]>(up"
+  },
+  {
+    "id": "block-cases/arrow-unquoted",
+    "source": "block\n  a<[x]>(up)"
+  },
+  {
+    "id": "block-cases/arrow-nbsp",
+    "source": "block\n  a<[\"&nbsp;&nbsp;\"]>(down)"
+  },
+  {
+    "id": "block-cases/arrow-without-id",
+    "source": "block\n  <[\"x\"]>(up)"
+  },
+  {
+    "id": "block-cases/edge-kinds",
+    "source": "block\n  a --> b\n  a --- b\n  a --x b\n  a --o b\n  a <--> b\n  a ==> b\n  a === b\n  a ==x b\n  a -.-> b\n  a -.- b\n  a -..-> b\n  a .-> b"
+  },
+  {
+    "id": "block-cases/edge-glued",
+    "source": "block\n  a-->b\n  a---b\n  a<-->b\n  a==>b"
+  },
+  {
+    "id": "block-cases/edge-long",
+    "source": "block\n  a ------> b\n  a =====> b\n  a ----- b"
+  },
+  {
+    "id": "block-cases/edge-double-tip",
+    "source": "block\n  a-->>b"
+  },
+  {
+    "id": "block-cases/edge-x-start",
+    "source": "block\n  a x--> b\n  a o--o b"
+  },
+  {
+    "id": "block-cases/edge-labelled",
+    "source": "block\n  a -- \"lbl\" --> b"
+  },
+  {
+    "id": "block-cases/edge-labelled-thick",
+    "source": "block\n  a == \"lbl\" ==> b"
+  },
+  {
+    "id": "block-cases/edge-labelled-dotted",
+    "source": "block\n  a -. \"lbl\" .-> b"
+  },
+  {
+    "id": "block-cases/edge-labelled-markdown",
+    "source": "block\n  a -- \"`lbl`\" --> b"
+  },
+  {
+    "id": "block-cases/edge-labelled-multi-line",
+    "source": "block\n  a -- \"x\n  y\" -->\n  b"
+  },
+  {
+    "id": "block-cases/edge-labelled-unquoted",
+    "source": "block\n  a -- b"
+  },
+  {
+    "id": "block-cases/edge-labelled-no-end",
+    "source": "block\n  a -- \"x\" b"
+  },
+  {
+    "id": "block-cases/edge-labelled-start-x",
+    "source": "block\n  a x-- \"l\" --> b\n  c <-- \"l\" --> d"
+  },
+  {
+    "id": "block-cases/edge-chain",
+    "source": "block\n  a --> b --> c"
+  },
+  {
+    "id": "block-cases/edge-with-shapes",
+    "source": "block\n  a[\"A\"] --> b(\"B\")"
+  },
+  {
+    "id": "block-cases/edge-to-composite",
+    "source": "block\n  block:g\n    x\n  end\n  a --> g"
+  },
+  {
+    "id": "block-cases/edge-line-break-after",
+    "source": "block\n  a -->\n\n  b"
+  },
+  {
+    "id": "block-cases/edge-single-equals-run",
+    "source": "block\n  a == b"
+  },
+  {
+    "id": "block-cases/edge-dash-dot-no-close",
+    "source": "block\n  a -.... b"
+  },
+  {
+    "id": "block-cases/edge-dots-label",
+    "source": "block\n  a -- .... b"
+  },
+  {
+    "id": "block-cases/classdef",
+    "source": "block\n  classDef c fill:#f00,stroke:#333;\n  a:::c"
+  },
+  {
+    "id": "block-cases/classdef-default",
+    "source": "block\n  classDef DEFAULT fill:red\n  a"
+  },
+  {
+    "id": "block-cases/classdef-default-suffix",
+    "source": "block\n  classDef DEFAULTS fill:red"
+  },
+  {
+    "id": "block-cases/classdef-mid-line-entity",
+    "source": "block\n  classDef c fill:#f00; color:#fff\n  a"
+  },
+  {
+    "id": "block-cases/classdef-no-styles",
+    "source": "block\n  classDef a"
+  },
+  {
+    "id": "block-cases/classdef-alone",
+    "source": "block\n  classDef"
+  },
+  {
+    "id": "block-cases/classdef-glued",
+    "source": "block\n  classDefx a"
+  },
+  {
+    "id": "block-cases/classdef-id-line-break",
+    "source": "block\n  classDef\n  c\n  fill:red"
+  },
+  {
+    "id": "block-cases/classdef-bad-id",
+    "source": "block\n  classDef #a fill:red"
+  },
+  {
+    "id": "block-cases/class-list",
+    "source": "block\n  class a, b,c ,d e"
+  },
+  {
+    "id": "block-cases/class-list-lines",
+    "source": "block\n  class a,\n  b c"
+  },
+  {
+    "id": "block-cases/class-alone",
+    "source": "block\n  class a"
+  },
+  {
+    "id": "block-cases/class-at-end",
+    "source": "block\n  class"
+  },
+  {
+    "id": "block-cases/class-bad-id",
+    "source": "block\n  class -a c"
+  },
+  {
+    "id": "block-cases/class-trailing-comma",
+    "source": "block\n  class a, c"
+  },
+  {
+    "id": "block-cases/style",
+    "source": "block\n  a\n  style a fill:#f9F,stroke:#333,stroke-width:4px"
+  },
+  {
+    "id": "block-cases/style-ids",
+    "source": "block\n  style a,b fill:red"
+  },
+  {
+    "id": "block-cases/style-no-definition",
+    "source": "block\n  style a"
+  },
+  {
+    "id": "block-cases/style-entity",
+    "source": "block\n  style a fill:#f00;stroke:#00f;"
+  },
+  {
+    "id": "block-cases/style-keyword-glued",
+    "source": "block\n  stylex a"
+  },
+  {
+    "id": "block-cases/end-blanks",
+    "source": "block\n  block\n    a\n  end   \n\n  b"
+  },
+  {
+    "id": "block-cases/end-suffix",
+    "source": "block\n  endx end-x end"
+  },
+  {
+    "id": "block-cases/space",
+    "source": "block\n  space space:3 spaces space:x"
+  },
+  {
+    "id": "block-cases/space-in-composite",
+    "source": "block\n  columns 3\n  space\n  a\n  space"
+  },
+  {
+    "id": "block-cases/unused-keywords",
+    "source": "block\n  default linkStyle interpolate defaultx"
+  },
+  {
+    "id": "block-cases/comment-line",
+    "source": "block\n  a\n  %% c\n  b"
+  },
+  {
+    "id": "block-cases/comment-bare-percent",
+    "source": "block\n  %%\n  a"
+  },
+  {
+    "id": "block-cases/comment-in-string",
+    "source": "block\n  a[\"x\n%% c\ny\"]"
+  },
+  {
+    "id": "block-cases/comment-in-class-line",
+    "source": "block\n  class a,\n%% c\n  b c"
+  },
+  {
+    "id": "block-cases/directive-mid-line",
+    "source": "block\n  a%%{init: {}}%%b"
+  },
+  {
+    "id": "block-cases/directive-in-string",
+    "source": "block\n  a[\"x%%{init: {}}%%y\"]"
+  },
+  {
+    "id": "block-cases/unclosed-directive-1",
+    "source": "block\n  a %%{init\n  b"
+  },
+  {
+    "id": "block-cases/cr-line-breaks",
+    "source": "block\r  a\r  b[\"x\ry\"]"
+  },
+  {
+    "id": "block-cases/crlf-in-string",
+    "source": "block\r\n  a[\"x\r\ny\"]"
+  },
+  {
+    "id": "block-cases/cr-in-class-line",
+    "source": "block\r  class a c\r  b"
+  },
+  {
+    "id": "block-cases/entity-in-id",
+    "source": "block\n  a#35;b"
+  },
+  {
+    "id": "block-cases/entity-in-string",
+    "source": "block\n  a[\"x#35;y #amp; z\"]"
+  },
+  {
+    "id": "block-cases/entity-in-class-line",
+    "source": "block\n  class a #35;c"
+  },
+  {
+    "id": "block-cases/tag-quotes",
+    "source": "block\n  a[\"<span style=\"c\">x</span>\"]"
+  },
+  {
+    "id": "block-cases/line-separator-between-statements",
+    "source": "block\n  a b c"
+  },
+  {
+    "id": "block-cases/line-separator-after-header",
+    "source": "block a"
+  },
+  {
+    "id": "block-cases/line-separator-in-string",
+    "source": "block\n  a[\"x y\"]"
+  },
+  {
+    "id": "block-cases/line-separator-in-classdef",
+    "source": "block\n  classDef c fill:red b\n  a"
+  },
+  {
+    "id": "block-cases/line-separator-in-class-list",
+    "source": "block\n  class a, b c"
+  },
+  {
+    "id": "block-cases/line-separator-after-columns",
+    "source": "block\n  columns 3"
+  },
+  {
+    "id": "block-cases/line-separator-in-directions",
+    "source": "block\n  a<[\"x\"]>( up )"
+  },
+  {
+    "id": "block-cases/line-separator-after-end",
+    "source": "block\n  block a end b"
+  },
+  {
+    "id": "block-cases/line-separator-before-comment",
+    "source": "block\n  a %% c\n  b"
+  },
+  {
+    "id": "block-cases/line-separator-after-link",
+    "source": "block\n  a --> b"
+  },
+  {
+    "id": "block-cases/nbsp-between-ids",
+    "source": "block\n  a b﻿c"
+  }
+]
