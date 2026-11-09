@@ -1,4 +1,5 @@
-// Ported from v12 `swimlanes/pipeline.ts` at upstream `c9b12739f` (D532).
+// Ported from v12 `swimlanes/pipeline.ts` at upstream `c9b12739f` (D532). Changed: the result
+// also carries the automatic lane order, when one was computed.
 import type { Graph, Layering, OrderedLayers, Coordinates, Edge } from './helpers.ts';
 import { normalizeGraph } from './phase0.helpers.ts';
 import { removeCycles_DFS } from './phase1.cycles.ts';
@@ -30,6 +31,8 @@ export interface LayoutResult {
   layering: Layering;
   ordered: OrderedLayers;
   coordinates: Coordinates;
+  /** The automatic lane order (`automaticLaneOrdering`), else undefined: source order. */
+  laneOrder?: string[];
 }
 
 export function sugiyamaLayout(g: Graph, opts?: LayoutOptions): LayoutResult {
@@ -74,5 +77,6 @@ export function sugiyamaLayout(g: Graph, opts?: LayoutOptions): LayoutResult {
     layering: properLayering,
     ordered,
     coordinates,
+    laneOrder,
   };
 }

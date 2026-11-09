@@ -1,10 +1,12 @@
 // Ported from v12 `swimlanes/edgeLabelNodes.ts` at upstream `c9b12739f` (D532). Changed: the label
 // is a measured size (`LayoutEdge.label`), so the label node takes it as its own size; no logger,
 // an edge with an unknown end is skipped silently (the adapter rejects one before this runs).
+// Synthetic ids carry a `\0`, which no author id holds, so they cannot clash with the graph's.
+// An edge that ends on a lane puts its label in that lane (v12 read the lane's own parent, none).
 /**
  * Edge Label Nodes Transformation (label-as-waypoint variant)
  *
- * For each labelled edge, this transform creates an `edge-label-*` node that
+ * For each labelled edge, this transform creates an `\0edge-label\0…` node that
  * participates in the Sugiyama layout (so the label text gets a deterministic
  * position in a lane). Unlike the older split-edge model, it leaves the
  * original labelled edge in place and stamps `labelNodeId` on it — the router
@@ -18,6 +20,13 @@
  */
 
 import type { Edge, LayoutData, Node } from './layoutData.ts';
+
+/** The id of the label node of edge `edgeId`. */
+export const labelNodeIdOf = (edgeId: string): string => `\0edge-label\0${edgeId}`;
+
+/** The container a label at `node` belongs in: the node's parent, or the node when it is a lane. */
+const containerOf = (node: Node): string | undefined =>
+  node.isGroup && !node.parentId ? node.id : node.parentId;
 
 /**
  * Transforms edges with labels into label nodes + layout-only virtual edges.
@@ -64,13 +73,13 @@ export function createEdgeLabelNodes(data: LayoutData): LayoutData {
       continue;
     }
 
-    const labelNodeId = `edge-label-${edge.start}-${edge.end}-${edge.id}`;
+    const labelNodeId = labelNodeIdOf(edge.id);
 
     // For cross-lane edges, assign to the target lane for better routing:
     // it keeps the label closer to where the edge is heading and avoids long
     // detours back to the source lane.
-    const isCrossLane = sourceNode.parentId !== targetNode.parentId;
-    const labelLane = isCrossLane ? targetNode.parentId : sourceNode.parentId;
+    const isCrossLane = containerOf(sourceNode) !== containerOf(targetNode);
+    const labelLane = isCrossLane ? containerOf(targetNode) : containerOf(sourceNode);
 
     const labelNode: Node = {
       id: labelNodeId,
@@ -95,8 +104,8 @@ export function createEdgeLabelNodes(data: LayoutData): LayoutData {
     // between source and target. They are not routed or rendered — consumers
     // must skip any edge with `isLayoutOnly: true`.
     layoutOnlyEdges.push(
-      { id: `${edge.id}-to-label`, start: edge.start, end: labelNodeId, isLayoutOnly: true },
-      { id: `${edge.id}-from-label`, start: labelNodeId, end: edge.end, isLayoutOnly: true }
+      { id: `${edge.id}\0to-label`, start: edge.start, end: labelNodeId, isLayoutOnly: true },
+      { id: `${edge.id}\0from-label`, start: labelNodeId, end: edge.end, isLayoutOnly: true }
     );
   }
 

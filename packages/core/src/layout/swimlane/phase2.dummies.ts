@@ -15,7 +15,8 @@ export function makeProperLayering(
   let dummySeq = 0;
   const nodeById = new Map(g.nodeById);
   const addDummyAt = (L: number): NodeId => {
-    const id: NodeId = `placeholder-${dummySeq++}`;
+    // A `\0` keeps the id apart from every author id (v12: `placeholder-N`).
+    const id: NodeId = `\0placeholder\0${dummySeq++}`;
     const dn: Node = { id, isGroup: false, isDummy: true, width: 0, height: 0 };
     nodeById.set(id, dn);
     dummy.add(id);

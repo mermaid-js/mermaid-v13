@@ -7,6 +7,7 @@ import type { Dir, LayoutGraph, LayoutModel } from '../types.ts';
 import { validateLayout } from '../validate.ts';
 import { swimlane } from './index.ts';
 import { layoutGraph } from './__tests__/graphs.ts';
+import { runSwimlane } from './swimlane.ts';
 
 const LABEL = { width: 30, height: 16 };
 
@@ -165,5 +166,133 @@ describe('inputs', () => {
     const graph = layoutGraph({ nodes: ['A'] });
     graph.edges.push({ id: 'e', source: 'A', target: 'nope', minLen: 1 });
     expect(() => swimlane(graph)).toThrow(/unknown target 'nope'/);
+  });
+});
+
+describe('review cases (#593)', () => {
+  it.each(['TB', 'LR'] as const)(
+    '%s: gives an empty nested group a box in its lane',
+    (direction) => {
+      const graph = layoutGraph({
+        direction,
+        lanes: { A: ['a1', 'a2'], B: ['b1'] },
+        nested: { N: ['B', []] },
+        edges: [['a1', 'a2']],
+        size: { width: 60, height: 30 },
+        padding: 8,
+        titles: true,
+      });
+      const model = swimlane(graph);
+      expect(validateLayout(graph, model)).toEqual([]);
+      const n = model.groups.get('N')!;
+      expect(n.width).toBe(8 + 8 + 8);
+      expect(n.height).toBe(21 + 8);
+    }
+  );
+
+  it.each(['TB', 'LR'] as const)(
+    '%s: puts the label of an edge from a lane in a row beside the other end',
+    (direction) => {
+      const graph = layoutGraph({
+        direction,
+        lanes: { A: ['a1'], B: ['b1'] },
+        edges: [['A', 'b1', LABEL]],
+        size: { width: 60, height: 30 },
+      });
+      const model = swimlane(graph);
+      expect(validateLayout(graph, model)).toEqual([]);
+      const label = model.edges.get('e0')!.label!;
+      const b1 = model.nodes.get('b1')!;
+      const lane = model.groups.get('B')!;
+      // Beside b1, not on it, and inside b1's lane.
+      expect(Math.abs(label.x - b1.x) + Math.abs(label.y - b1.y)).toBeGreaterThan(0);
+      expect(Math.abs(label.x - lane.x)).toBeLessThanOrEqual(lane.width / 2);
+      expect(Math.abs(label.y - lane.y)).toBeLessThanOrEqual(lane.height / 2);
+    }
+  );
+
+  it.each(['TB', 'BT', 'LR', 'RL'] as const)('%s: places start and end labels', (direction) => {
+    const end = { width: 12, height: 14 };
+    const graph = layoutGraph({
+      direction,
+      lanes: { A: ['a1', 'a2'], B: ['b1'] },
+      edges: [
+        ['a1', 'a2'],
+        ['a1', 'b1'],
+      ],
+      size: { width: 60, height: 30 },
+    });
+    for (const e of graph.edges) Object.assign(e, { startLabel: end, endLabel: end });
+    const model = swimlane(graph);
+    expect(validateLayout(graph, model)).toEqual([]);
+    for (const [, e] of model.edges) {
+      const [first, last] = [e.points[0]!, e.points.at(-1)!];
+      // Each sits near its own end of the route.
+      const near = (p: { x: number; y: number }, q: { x: number; y: number }) =>
+        Math.hypot(p.x - q.x, p.y - q.y) < 40;
+      expect(near(e.startLabel!, first)).toBe(true);
+      expect(near(e.endLabel!, last)).toBe(true);
+    }
+  });
+
+  it('rejects bad sizes and spacing, with layered’s messages', () => {
+    const base = () => layoutGraph({ lanes: { A: ['a', 'b'] }, edges: [['a', 'b']] });
+    const cases: [string, (g: LayoutGraph) => void][] = [
+      ['label width of edge', (g) => (g.edges[0]!.label = { width: -1, height: 1 })],
+      ['label height of edge', (g) => (g.edges[0]!.endLabel = { width: 1, height: NaN })],
+      ['title width of group', (g) => (g.groups[0]!.title = { width: Infinity, height: 1 })],
+      ['spacing.node', (g) => (g.spacing = { ...g.spacing, node: -5 })],
+      ['spacing.rank', (g) => (g.spacing = { ...g.spacing, rank: NaN })],
+      ['diagramPadding', (g) => (g.diagramPadding = -1)],
+    ];
+    for (const [what, spoil] of cases) {
+      const g = base();
+      spoil(g);
+      expect(() => swimlane(g), what).toThrow(RangeError);
+      expect(() => swimlane(g), what).toThrow(what);
+    }
+  });
+
+  it('throws a RangeError on grid: text output never hands this engine cells (D179)', () => {
+    expect(() => swimlane({ ...layoutGraph({ nodes: ['a'] }), grid: 1 })).toThrow(RangeError);
+  });
+
+  it('places an empty lane beside its neighbours in the automatic lane order', () => {
+    const graph = layoutGraph({
+      lanes: { L1: ['a'], L2: ['b'], Empty: [], L3: ['c'], L4: ['d'] },
+      edges: [
+        ['a', 'd'],
+        ['a', 'd'],
+        ['a', 'd'],
+        ['a', 'd'],
+      ],
+      size: { width: 40, height: 20 },
+    });
+    const tuning = { automaticLaneOrdering: true };
+    const order = runSwimlane(graph, tuning).laneOrder!;
+    expect(order).not.toEqual(['L1', 'L2', 'Empty', 'L3', 'L4']);
+    const model = swimlane(graph, withConfig(tuning));
+    const across = [...model.groups.keys()].sort(
+      (a, b) => model.groups.get(a)!.x - model.groups.get(b)!.x
+    );
+    expect(across).toEqual(order);
+    expect(validateLayout(graph, model)).toEqual([]);
+  });
+
+  it('keeps synthetic nodes apart from author ids that look like them', () => {
+    const graph = layoutGraph({
+      lanes: { A: ['a', 'edge-label-a-b-e0', 'placeholder-0', 'b'] },
+      edges: [
+        ['a', 'b', LABEL],
+        ['a', 'placeholder-0'],
+        ['placeholder-0', 'edge-label-a-b-e0'],
+        ['edge-label-a-b-e0', 'b'],
+      ],
+      size: { width: 40, height: 20 },
+    });
+    graph.edges.push({ id: 'e0-to-label', source: 'a', target: 'b', minLen: 1 });
+    const model = swimlane(graph);
+    expect(validateLayout(graph, model)).toEqual([]);
+    expect(model.nodes.get('edge-label-a-b-e0')!.width).toBe(40);
   });
 });

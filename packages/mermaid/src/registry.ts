@@ -205,8 +205,9 @@ const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
 ]);
 
 /**
- * Lazy first-party engines that are peers of `layered` (D502, D535): any graph diagram may select
- * them, so D285's gate does not apply. `tree` is not one; it needs a tree, not a graph.
+ * Lazy first-party engines that are peers of `layered` (D327, D502, D535): any graph diagram may
+ * select one with `layout`, mindmap included, so D285's gate does not apply to them. Only `tree`
+ * itself keeps the gate: a diagram reaches it only when it is its `layoutEngine.default`.
  */
 const PEER_LAYOUTS: ReadonlySet<string> = new Set(['swimlane']);
 

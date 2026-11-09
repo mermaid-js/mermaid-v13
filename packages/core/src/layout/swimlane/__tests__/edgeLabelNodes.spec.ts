@@ -3,7 +3,7 @@
 // as its own and the edge keeps (the model writes the label position back onto the edge).
 import { describe, expect, it } from 'vitest';
 import { toLayoutData } from '../adapter.ts';
-import { createEdgeLabelNodes } from '../edgeLabelNodes.ts';
+import { createEdgeLabelNodes, labelNodeIdOf } from '../edgeLabelNodes.ts';
 import { type GraphSpec, layoutGraph } from './graphs.ts';
 
 const LABEL = { width: 30, height: 16 };
@@ -24,7 +24,7 @@ describe('createEdgeLabelNodes', () => {
     expect(result.nodes).toHaveLength(4);
     const labelNode = result.nodes.find((n) => n.isEdgeLabel);
     expect(labelNode).toMatchObject({
-      id: 'edge-label-A-B-e0',
+      id: labelNodeIdOf('e0'),
       width: 30,
       height: 16,
       edgeStart: 'A',
@@ -36,18 +36,18 @@ describe('createEdgeLabelNodes', () => {
 
     expect(result.edges).toHaveLength(3);
     const original = result.edges.find((e) => e.id === 'e0')!;
-    expect(original.labelNodeId).toBe('edge-label-A-B-e0');
+    expect(original.labelNodeId).toBe(labelNodeIdOf('e0'));
     expect(original.isLayoutOnly).toBeUndefined();
     expect(original.start).toBe('A');
     expect(original.end).toBe('B');
 
-    expect(result.edges.find((e) => e.id === 'e0-to-label')).toMatchObject({
+    expect(result.edges.find((e) => e.id === 'e0\0to-label')).toMatchObject({
       start: 'A',
-      end: 'edge-label-A-B-e0',
+      end: labelNodeIdOf('e0'),
       isLayoutOnly: true,
     });
-    expect(result.edges.find((e) => e.id === 'e0-from-label')).toMatchObject({
-      start: 'edge-label-A-B-e0',
+    expect(result.edges.find((e) => e.id === 'e0\0from-label')).toMatchObject({
+      start: labelNodeIdOf('e0'),
       end: 'B',
       isLayoutOnly: true,
     });

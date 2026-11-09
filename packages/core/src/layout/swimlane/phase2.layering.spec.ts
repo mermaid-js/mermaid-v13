@@ -21,7 +21,7 @@ describe('Lane-aware compact layering', () => {
         ['T6', 'T5'],
       ],
     });
-    expect(g.nodes.some((id) => id.startsWith('edge-label-'))).toBe(false);
+    expect(g.nodes.some((id) => id.includes('edge-label'))).toBe(false);
     const layering = assignLayers_LaneAwareCompact(g, {
       ignoreCrossLaneEdges: true,
       direction: 'LR',

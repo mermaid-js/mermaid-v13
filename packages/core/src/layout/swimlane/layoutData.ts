@@ -71,6 +71,11 @@ export interface LayoutData {
   nodes: Node[];
   edges: Edge[];
   direction: Dir;
+  /**
+   * The lanes in the order the phases placed them across the flow (source order, or the
+   * automatic order), written by `runSwimlaneLayoutCore`.
+   */
+  laneOrder?: string[];
   config: {
     /** From `graph.spacing`: `node` and `rank`. */
     flowchart: { nodeSpacing: number; rankSpacing: number };

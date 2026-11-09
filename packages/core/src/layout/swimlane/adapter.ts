@@ -6,24 +6,27 @@ import type {
   LayoutGraph,
   LayoutModel,
   LayoutModelEdge,
-  LayoutModelGroup,
-  LayoutModelNode,
   Point,
   RoutePoint,
   Side,
 } from '../types.ts';
-import { DEFAULT_SWIMLANE_ID, topLaneTitleBandHeight } from './helpers.ts';
+import { topLaneTitleBandHeight } from './helpers.ts';
 import type { LayoutData, Node, SwimlaneTuning } from './layoutData.ts';
 import { buildLaneModel } from './lanes.ts';
 import { leftTitleBandWidth } from './direction/lrTransform.ts';
 import { type PlacedBox, placeholderRoute } from './placeholderRoutes.ts';
+import { placeEndLabels } from './endLabels.ts';
 
 function finite(v: number, what: string): void {
   if (!Number.isFinite(v) || v < 0)
     throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
 }
 
-/** Rejects what `tree` and `layered` reject: duplicate ids, unknown ends, bad sizes. */
+/**
+ * Rejects what `tree` and `layered` reject, with their messages: duplicate ids, unknown ends,
+ * sizes and spacing that are not finite numbers of at least 0. `grid` is a RangeError: text output lays
+ * out with `layered` (D179), so no caller hands this engine character cells.
+ */
 function check(graph: LayoutGraph): void {
   const ids = new Set<string>();
   const add = (id: string, what: string): void => {
@@ -39,6 +42,10 @@ function check(graph: LayoutGraph): void {
     add(g.id, 'group');
     for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
       finite(v, `padding of group '${g.id}'`);
+    if (g.title) {
+      finite(g.title.width, `title width of group '${g.id}'`);
+      finite(g.title.height, `title height of group '${g.id}'`);
+    }
   }
   const edges = new Set<string>();
   for (const e of graph.edges) {
@@ -48,7 +55,17 @@ function check(graph: LayoutGraph): void {
       throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
     if (!ids.has(e.target))
       throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
+    for (const s of [e.label, e.startLabel, e.endLabel]) {
+      if (!s) continue;
+      finite(s.width, `label width of edge '${e.id}'`);
+      finite(s.height, `label height of edge '${e.id}'`);
+    }
   }
+  finite(graph.spacing.node, 'spacing.node');
+  finite(graph.spacing.rank, 'spacing.rank');
+  finite(graph.diagramPadding ?? 0, 'diagramPadding');
+  if (graph.grid !== undefined)
+    throw new RangeError(`layout: grid is not supported by swimlane, got ${graph.grid}`);
 }
 
 /**
@@ -114,8 +131,8 @@ const edgeOf = (n: Node, axis: Axis, far: boolean): number => {
 };
 
 /**
- * Lanes the author left empty get a band of their own, in source order between their
- * neighbours, as wide as their title needs: the phases give them no size (v12 collapses them).
+ * Lanes the author left empty get a band of their own, between their neighbours in the order
+ * the phases placed the lanes (`laneOrder`: source order, or the automatic order), as wide as their title needs: the phases give them no size (v12 collapses them).
  */
 function placeEmptyLanes(data: LayoutData, laneOrder: readonly string[]): void {
   const byId = new Map(data.nodes.map((n) => [n.id, n]));
@@ -210,74 +227,70 @@ function titleOf(g: Node, isLane: boolean): Point {
   return { x: g.x ?? 0, y: top + band / 2 };
 }
 
-/**
- * The `LayoutModel`: every graph node and group, plus the default lane when the engine made one
- * (`__swimlane_default__`), moved so the drawing starts at `diagramPadding`.
- */
-export function toLayoutModel(
-  graph: LayoutGraph,
-  data: LayoutData,
-  laneOrder: readonly string[]
-): LayoutModel {
-  placeEmptyLanes(data, laneOrder);
-  const edges = routes(graph, data);
-  const laneModel = buildLaneModel(data.nodes);
-  const byId = new Map(data.nodes.map((n) => [n.id, n]));
-  const nodes = graph.nodes.map((n) => byId.get(n.id)!);
-  const groups = data.nodes.filter((n) => n.isGroup);
-
-  let x0 = Infinity;
-  let y0 = Infinity;
-  let x1 = -Infinity;
-  let y1 = -Infinity;
-  const take = (x: number, y: number, w = 0, h = 0): void => {
-    x0 = Math.min(x0, x - w / 2);
-    x1 = Math.max(x1, x + w / 2);
-    y0 = Math.min(y0, y - h / 2);
-    y1 = Math.max(y1, y + h / 2);
-  };
-  for (const n of [...nodes, ...groups]) take(n.x ?? 0, n.y ?? 0, n.width ?? 0, n.height ?? 0);
-  for (const e of edges.values()) for (const p of e.points) take(p.x, p.y);
-  for (const n of data.nodes)
-    if (n.isEdgeLabel) take(n.x ?? 0, n.y ?? 0, n.width ?? 0, n.height ?? 0);
-  if (x0 === Infinity) [x0, y0, x1, y1] = [0, 0, 0, 0];
-
-  const pad = graph.diagramPadding ?? 0;
-  const dx = pad - x0;
-  const dy = pad - y0;
+/** Moves the whole model by `dx`, `dy`. */
+function translate(model: LayoutModel, dx: number, dy: number): void {
   const move = <P extends Point>(p: P): P => ({ ...p, x: p.x + dx, y: p.y + dy });
-  const box = (n: Node): LayoutModelNode => ({
-    x: (n.x ?? 0) + dx,
-    y: (n.y ?? 0) + dy,
-    width: n.width ?? 0,
-    height: n.height ?? 0,
-  });
-
-  const modelGroups = new Map<string, LayoutModelGroup>();
-  for (const g of groups) {
-    modelGroups.set(g.id, { ...box(g), title: move(titleOf(g, laneModel.isLane(g.id))) });
+  for (const b of [...model.nodes.values(), ...model.groups.values()]) {
+    b.x += dx;
+    b.y += dy;
   }
-  for (const e of edges.values()) {
+  for (const g of model.groups.values()) g.title = move(g.title);
+  for (const e of model.edges.values()) {
     e.points = e.points.map(move);
     if (e.label) e.label = move(e.label);
+    if (e.startLabel) e.startLabel = move(e.startLabel);
+    if (e.endLabel) e.endLabel = move(e.endLabel);
   }
-  return {
-    width: x1 - x0 + 2 * pad,
-    height: y1 - y0 + 2 * pad,
-    nodes: new Map(graph.nodes.map((n, i) => [n.id, box(nodes[i]!)])),
-    edges,
-    groups: modelGroups,
-    direction: graph.direction,
+}
+
+/** The extent of everything drawn: boxes, routes and labels. */
+function extent(graph: LayoutGraph, model: LayoutModel): [number, number, number, number] {
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  const take = (p: Point, s?: { width: number; height: number }): void => {
+    const [w, h] = [s?.width ?? 0, s?.height ?? 0];
+    x0 = Math.min(x0, p.x - w / 2);
+    x1 = Math.max(x1, p.x + w / 2);
+    y0 = Math.min(y0, p.y - h / 2);
+    y1 = Math.max(y1, p.y + h / 2);
   };
+  for (const b of [...model.nodes.values(), ...model.groups.values()]) take(b, b);
+  for (const e of graph.edges) {
+    const placed = model.edges.get(e.id);
+    if (!placed) continue;
+    for (const p of placed.points) take(p);
+    if (placed.label) take(placed.label, e.label);
+    if (placed.startLabel) take(placed.startLabel, e.startLabel);
+    if (placed.endLabel) take(placed.endLabel, e.endLabel);
+  }
+  return x0 === Infinity ? [0, 0, 0, 0] : [x0, y0, x1, y1];
 }
 
 /**
- * The lanes in source order, as the phases place them: the default lane first (v12 adds it last
- * to a list it reads backwards), then the top-level groups as the graph lists them.
+ * The `LayoutModel`: every graph node and group, plus the default lane when the engine made one
+ * (`__swimlane_default__`), with end labels placed, moved so the drawing starts at
+ * `diagramPadding`.
  */
-export function laneOrderOf(data: LayoutData, graph: LayoutGraph): string[] {
-  const order = graph.groups.filter((g) => g.parent === undefined).map((g) => g.id);
-  if (!order.includes(DEFAULT_SWIMLANE_ID) && data.nodes.some((n) => n.id === DEFAULT_SWIMLANE_ID))
-    order.unshift(DEFAULT_SWIMLANE_ID);
-  return order;
+export function toLayoutModel(graph: LayoutGraph, data: LayoutData): LayoutModel {
+  placeEmptyLanes(data, data.laneOrder ?? []);
+  const laneModel = buildLaneModel(data.nodes);
+  const byId = new Map(data.nodes.map((n) => [n.id, n]));
+  const model: LayoutModel = {
+    width: 0,
+    height: 0,
+    nodes: new Map(graph.nodes.map((n) => [n.id, boxOf(byId.get(n.id)!)])),
+    edges: routes(graph, data),
+    groups: new Map(
+      data.nodes
+        .filter((n) => n.isGroup)
+        .map((g) => [g.id, { ...boxOf(g), title: titleOf(g, laneModel.isLane(g.id)) }])
+    ),
+    direction: graph.direction,
+  };
+  placeEndLabels(graph, model);
+  const [x0, y0, x1, y1] = extent(graph, model);
+  const pad = graph.diagramPadding ?? 0;
+  translate(model, pad - x0, pad - y0);
+  model.width = x1 - x0 + 2 * pad;
+  model.height = y1 - y0 + 2 * pad;
+  return model;
 }

@@ -1,10 +1,12 @@
 // Ported from v12 `swimlanes/layoutCore.ts` at upstream `c9b12739f` (D532). Changed: spacing and
 // tuning come from the adapter's `LayoutData.config` (`graph.spacing`, `ctx.config.swimlane`);
-// the orthogonal router and curve choice arrive with T0b (#595), so edges leave here unrouted.
+// the orthogonal router and curve choice arrive with T0b (#595), so edges leave here unrouted;
+// the lane order the phases used is kept on `laneOrder` for the adapter.
 import type { LayoutData } from './layoutData.ts';
 import { postProcessSwimlaneLayout } from './postProcessing.ts';
 import { toGraphView, writeBackToLayoutData } from './helpers.ts';
 import { sugiyamaLayout } from './pipeline.ts';
+import { resolveTopLaneOrder } from './phase2.options.ts';
 
 export type SwimlaneDirection = 'TB' | 'LR' | 'BT' | 'RL';
 
@@ -21,7 +23,7 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   const automaticLaneOrdering = data4Layout.config.swimlane.automaticLaneOrdering ?? false;
   const direction = data4Layout.direction;
 
-  const { ordered, coordinates } = sugiyamaLayout(g, {
+  const { ordered, coordinates, laneOrder } = sugiyamaLayout(g, {
     nodeGap,
     layerGap,
     ignoreCrossLaneEdges,
@@ -30,6 +32,7 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
     direction,
   });
   writeBackToLayoutData(g, ordered, coordinates, { nodeGap, layerGap });
+  data4Layout.laneOrder = resolveTopLaneOrder(g, laneOrder);
 
   // The layout phases above position nodes only; they do not emit edge routing.
   // Reset any edge points carried on the input so the router is the single

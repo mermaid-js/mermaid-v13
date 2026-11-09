@@ -100,8 +100,26 @@ export function assignCoordinates(
     const rs = rankOf.get(start);
     const rt = rankOf.get(end);
     if (rs === undefined || rt === undefined) {
-      // An endpoint without a rank leaves the label nothing to sit between.
-      unrankedLabels.push({ labelId, near: rs === undefined ? end : start });
+      const near = rs === undefined ? end : start;
+      const nearRank = rankOf.get(near);
+      if (nearRank === undefined) {
+        // Neither end has a rank: the label has nothing to sit between or beside.
+        unrankedLabels.push({ labelId, near });
+        continue;
+      }
+      // Changed from v12, which put the label on the ranked end: an end without a rank (a group)
+      // leaves the label nothing to sit between, so it sits in the ranked end's row, beyond that
+      // lane's nodes on the side the other end lies.
+      const other = near === start ? end : start;
+      const lane = topLaneOfNode(near);
+      const order = (id: string | null) => laneOrderGlobal.indexOf(id ?? '');
+      labelLane.set(labelId, lane);
+      rowLabels.push({
+        labelId,
+        rank: nearRank,
+        lane,
+        side: order(topLaneOfNode(other) ?? other) < order(lane) ? 'before' : 'after',
+      });
       continue;
     }
     labelLane.set(labelId, topLaneOfNode(end));
