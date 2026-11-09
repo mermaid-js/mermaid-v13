@@ -73,7 +73,7 @@
     "id": "treeView-recovery/an-icon-with-no-closing-parenthesis",
     "name": "an icon with no closing parenthesis",
     "source": "treeView-beta\na icon(x\nb",
-    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "errors": [["UNCLOSED_ICON", 2]],
     "keeps": ["a", "b"]
   },
   {
@@ -189,7 +189,7 @@
     "source": "treeView-beta\n  a icon(x y)\n  b icon(\n  c",
     "errors": [
       ["UNEXPECTED_CHARACTER", 2],
-      ["UNEXPECTED_CHARACTER", 3]
+      ["UNCLOSED_ICON", 3]
     ],
     "keeps": ["a", "b", "c"]
   },

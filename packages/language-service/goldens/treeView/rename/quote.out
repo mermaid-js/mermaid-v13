@@ -1,0 +1,21 @@
+@ 3:8  "my f|ile"
+  prepare: 3:4-3:11 "my file"; rename to "say \"hi\"":
+  %% rename-to: say "hi"
+  treeView-beta
+    'say "hi"'
+    'other file'
+    plain
+@ 4:11  'other f|ile'
+  prepare: 4:4-4:14 "other file"; rename to "say \"hi\"":
+  %% rename-to: say "hi"
+  treeView-beta
+    "my file"
+    'say "hi"'
+    plain
+@ 5:6  pla|in
+  prepare: 5:3-5:8 "plain"; rename to "say \"hi\"":
+  %% rename-to: say "hi"
+  treeView-beta
+    "my file"
+    'other file'
+    say "hi"

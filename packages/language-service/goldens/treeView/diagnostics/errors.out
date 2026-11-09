@@ -1,0 +1,4 @@
+3:5-3:6 "\"" error UNCLOSED_STRING: Unclosed name: the `"` at line 3 has no closing `"`. Add `"` after the name.
+4:1-4:15 "  :::highlight" error UNEXPECTED: Expected a name (`index.js`, `src/` or `"my file"`), got `:::highlight`; an annotation follows the name it belongs to, as in `index.js :::highlight`.
+5:8-5:9 "i" error UNCLOSED_ICON: Unclosed icon: the `icon(` at line 5 has no closing `)`. Add `)` after the icon name, as in `icon(logos:react)`.
+7:1-7:11 "title late" error UNEXPECTED: Expected a name (`index.js`, `src/` or `"my file"`) or the end of the text, got `title late`; `title`, `accTitle` and `accDescr` go before the first node.

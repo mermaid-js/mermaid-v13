@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #518: the manifest comes with T5 (#577).
+  {
+    type: 'treeView',
+    id: 'treeView',
+    section: 'treeView',
+    detector: (text) => /^\s*treeView-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-treeview/language').then((m) => m.language),
+  },
+];

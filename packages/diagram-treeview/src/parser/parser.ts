@@ -21,15 +21,18 @@
  * column (D486).
  */
 import {
+  APOSTROPHE,
   DQUOTE,
   ExpectedTable,
   formatExpected,
   isBlank,
   isSpace,
   Kind,
+  kindSet,
   LineIndex,
   ParseState,
   PERCENT,
+  Probe,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -39,6 +42,7 @@ import type {
   ParseOptions,
   ParseResult,
   Range,
+  StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -88,6 +92,61 @@ export const TREEVIEW_NAME_READ_AS_TITLE = 'TREEVIEW_NAME_READ_AS_TITLE';
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 const NAME = [T.QuotedName, T.BareName];
 const ANNOTATION = [T.ClassAnnotation, T.IconAnnotation, T.DescAnnotation];
+/** What may start a statement before the first node: a text statement, a node, the end. */
+const DOC_NEXT = [...TEXT, T.Indentation, ...NAME, Kind.EOF];
+/** What may start a statement once a node has started. */
+const NODE_NEXT = [T.Indentation, ...NAME, Kind.EOF];
+/**
+ * What may follow a blank before the first node: a name, or a text statement, whose token takes
+ * the blanks before it.
+ */
+const AFTER_BLANK = [...NAME, ...TEXT];
+
+/**
+ * Kinds a probe's cursor follows rather than extends: a blank (an indent), a quoted name, which
+ * its closing quote ends, and `icon(…)`, which its `)` ends.
+ */
+const PROBE_FOLLOWS = /* @__PURE__ */ kindSet(T.Indentation, T.QuotedName, T.IconAnnotation);
+
+/** The text statements' keywords by token kind, for the probe's mode. */
+const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
+ * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
+ * `accTitle` or `accDescr` past the keyword of that statement, `description` past the `##` of a
+ * description, else `INITIAL` (code).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    const c = src.charCodeAt(start);
+    if (kind === T.QuotedName && o < end) return 'string';
+    // An unclosed name is an error token from its quote on.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+    if (kind === T.DescAnnotation) {
+      if (o >= src.indexOf('##', start) + 2) return 'description';
+      continue;
+    }
+    const word = TEXT_WORDS[kind];
+    if (word === undefined) continue;
+    let k = start;
+    while (isBlank(src.charCodeAt(k))) k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
 
 /** Trivia of the parser's view: the lexer's trivia and the line breaks. */
 const isTrivia = (k: number) =>
@@ -198,11 +257,14 @@ class TreeViewParser {
   /** Where the statement that failed stopped. */
   private failedAt = 0;
   private readonly st = new ParseState();
+  private readonly probe: Probe | undefined;
   private readonly children: TreeViewStatementNode[] = [];
   private lines: LineIndex | undefined;
   /** Mentions per id base (`title`, …), for the `@n` suffixes. */
   private readonly mentions = new Map<string, number>();
   private readonly nodes: TreeViewNodeNode[] = [];
+  /** The statement span of each of {@link nodes}. */
+  private readonly nodeSpans: StatementSpan[] = [];
   /** Whether a node has started: `title`, `accTitle` and `accDescr` are allowed only before. */
   private started = false;
   /** Whether the statement before is a node. */
@@ -230,6 +292,14 @@ class TreeViewParser {
     );
     this.lexed = lex(src, pre.bodyStart, view);
     this.t = lineView(this.lexed.tokens);
+    if (opts.probe !== undefined) {
+      const tokens = this.lexed.tokens;
+      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(tokens);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, tokens, probe.offset));
+    }
   }
 
   parse(): TreeViewParseResult {
@@ -238,13 +308,14 @@ class TreeViewParser {
     this.statement(() => this.header());
     this.document();
     const model = this.model();
+    this.foldSubtrees(model);
     const ast: TreeViewDocument = {
       id: 'doc',
       type: 'Document',
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    const result = st.result(model, ast, lexed.tokens, this.opts);
+    const result = st.result(model, ast, lexed.tokens, this.opts, this.probe);
     // The box errors are found before the parse: report them in source order with the rest.
     return { ...result, diagnostics: [...result.diagnostics].sort(bySource) };
   }
@@ -280,6 +351,16 @@ class TreeViewParser {
   /** A token's text as v12's lexer read it (the box pass's on a rewritten line). */
   private text(j = this.i): string {
     return this.lexed.text(this.t.index[j] ?? this.lexed.tokens.length - 1);
+  }
+
+  /**
+   * Probe hook: the parser tests the token at `j` for `kinds` (a constant list), or would accept
+   * them there. Records them when it is the probed token; a plain parse returns at once.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p === undefined) return;
+    if (p.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
   }
 
   /** `id`, then `id@2`, `id@3`, … */
@@ -318,9 +399,21 @@ class TreeViewParser {
     this.stop('UNEXPECTED', message, this.range(), { expected: names });
   }
 
+  /** Whether a `)` follows `at` on its line. */
+  private closedOnLine(at: number): boolean {
+    const { src } = this;
+    for (let k = at; k < src.length; k++) {
+      const c = src.charAt(k);
+      if (c === ')') return true;
+      if (c === '\n' || c === '\r') return false;
+    }
+    return false;
+  }
+
   /**
    * Text no token rule matched: an unclosed name, an annotation with no name before it on its
-   * line, or an `icon(` that does not close.
+   * line, an `icon(` with no `)` after it on its line (`UNCLOSED_ICON`, so a completion that
+   * opens one is still to be closed), or one that is no icon annotation.
    */
   private badCharacters(): never {
     const where = this.range();
@@ -345,6 +438,13 @@ class TreeViewParser {
       why = `\`${mark}\` annotates the name before it on its line, so a line cannot start with it: write the name first (\`index.js ${MARK_EXAMPLE[mark]}\`), or put a name that starts so in quotes`;
     } else if (mark !== undefined && this.kind(prev) === T.QuotedName && this.glued(prev)) {
       why = `\`${mark}\` after a quoted name needs a blank before it, as in \`"my file" ${MARK_EXAMPLE[mark]}\``;
+    } else if (mark === 'icon(' && !this.closedOnLine(where.start)) {
+      this.stop(
+        'UNCLOSED_ICON',
+        `Unclosed icon: the \`icon(\` at line ${line} has no closing \`)\`. Add \`)\` after the icon name, as in \`icon(logos:react)\`.`,
+        where,
+        { expected: ['`)`'] }
+      );
     } else if (mark === 'icon(') {
       why =
         '`icon(` needs its `)`, and an icon name is letters, digits, `-` and `_`, with an optional `pack:` before it, as in `icon(logos:react)`';
@@ -385,6 +485,7 @@ class TreeViewParser {
    * it.
    */
   private recover(from: number): void {
+    this.probe?.freeze();
     let j = this.failedAt > from ? this.failedAt : from + 1;
     while (j < this.t.length && this.kind(j) !== Kind.EOF && !this.startsLine(j)) j++;
     this.i = Math.min(j, Math.max(this.t.length - 1, 0));
@@ -407,6 +508,7 @@ class TreeViewParser {
 
   /** `"treeView-beta"` */
   private header(): void {
+    this.tested([T.TreeViewBeta]);
     if (this.kind() !== T.TreeViewBeta) {
       const text = this.text();
       let hint = 'a treeView starts with `treeView-beta`, alone on its line';
@@ -425,6 +527,7 @@ class TreeViewParser {
   /** `(ACC_DESCR | ACC_TITLE | TITLE)* TreeNode* EOF` */
   private document(): void {
     for (;;) {
+      this.tested(this.started ? NODE_NEXT : DOC_NEXT);
       const k = this.kind();
       if (k === Kind.EOF) return;
       const text = TEXT_STATEMENTS[k];
@@ -479,8 +582,10 @@ class TreeViewParser {
 
   /** `TreeNode: INDENTATION? (QUOTED_NAME | BARE_NAME) (annotation)*` */
   private node(): void {
+    const first = !this.started;
     this.started = true;
     const blank = this.kind() === T.Indentation ? this.i++ : -1;
+    if (blank >= 0) this.tested(first ? AFTER_BLANK : NAME);
     const level = blank >= 0 ? indentValue(this.text(blank)) : 0;
     const k = this.kind();
     if (k !== T.QuotedName && k !== T.BareName) this.notName(blank);
@@ -501,15 +606,18 @@ class TreeViewParser {
       level,
       depth: 0,
     };
-    for (let a = this.kind(); ANNOTATION.includes(a); a = this.kind()) this.annotation(node, a);
+    for (;;) {
+      this.tested(ANNOTATION);
+      const a = this.kind();
+      if (!ANNOTATION.includes(a)) break;
+      this.annotation(node, a);
+    }
     this.nodes.push(node);
     this.children.push(node);
-    this.st.statement('node', { ...node.range });
-    // D487: each node is a `node` symbol of its own; the range holds just the name.
-    const symbol = { start: nameRange.start + (quoted ? 1 : 0), end: nameRange.end };
-    if (quoted) symbol.end--;
-    if (directory) symbol.end--;
-    this.st.symbol(name, 'node', symbol, 'def');
+    this.nodeSpans.push(this.st.statement('node', { ...node.range }));
+    // D487: each node is a `node` symbol of its own, over its name as written (its quotes and
+    // a directory's `/` included); the facet's name syntax reads the name inside them.
+    this.st.symbol(name, 'node', { ...nameRange }, 'def');
     this.afterNode = true;
   }
 
@@ -626,6 +734,39 @@ class TreeViewParser {
   }
 
   // ---- the model ----------------------------------------------------------------------
+
+  /**
+   * Folding: each node with nodes under it gets a span over its subtree, from its name to the
+   * end of its last descendant, and the spans of the nodes under it nest in it. The model's
+   * nodes are {@link nodes} in the same order.
+   */
+  private foldSubtrees(model: TreeViewModel): void {
+    const { nodes } = model;
+    const parents = new Set<StatementSpan>();
+    // From the end: a node's last child's subtree end is known before the node's own.
+    const ends = new Map<TreeViewModel['nodes'][number], number>();
+    for (let k = nodes.length - 1; k >= 0; k--) {
+      const n = nodes[k]!;
+      const last = n.children[n.children.length - 1];
+      const end = last === undefined ? n.range.end : (ends.get(last) ?? n.range.end);
+      ends.set(n, end);
+      const span = this.nodeSpans[k];
+      if (span === undefined || last === undefined) continue;
+      span.range.end = end;
+      parents.add(span);
+    }
+    const { statements } = this.st;
+    const flat = statements.splice(0);
+    const stack: StatementSpan[] = [];
+    for (const s of flat) {
+      while (stack.length > 0 && s.range.start >= (stack[stack.length - 1]?.range.end ?? 0))
+        stack.pop();
+      const parent = stack[stack.length - 1];
+      if (parent) (parent.children ??= []).push(s);
+      else statements.push(s);
+      if (parents.has(s)) stack.push(s);
+    }
+  }
 
   private model(): TreeViewModel {
     const { diagnostics } = this.st;

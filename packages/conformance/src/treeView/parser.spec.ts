@@ -80,13 +80,13 @@ describe('treeView parser', () => {
     expect(lib?.children.map((n) => n.level)).toEqual([2]);
   });
 
-  it('records a node symbol per node, over just its name', () => {
+  it('records a node symbol per node, over its name as written (#576)', () => {
     const { src, result } = parsed('parser-symbols');
     expect(result.symbols.map((s) => [s.name, s.kind, s.role, at(src, s.range)])).toEqual([
-      ['my dir', 'node', 'def', 'my dir'],
+      ['my dir', 'node', 'def', '"my dir/"'],
       ['index.js', 'node', 'def', 'index.js'],
-      ['my file', 'node', 'def', 'my file'],
-      ['lib', 'node', 'def', 'lib'],
+      ['my file', 'node', 'def', '"my file"'],
+      ['lib', 'node', 'def', 'lib/'],
     ]);
     expect(result.model.nodes.map((n) => at(src, n.range))).toEqual([
       '"my dir/"',
