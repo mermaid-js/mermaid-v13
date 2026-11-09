@@ -31,3 +31,7 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 ## Worktrees
 
 Ticket worktrees live at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>`, never inside the integration worktree: `knip --no-gitignore` in the pre-push `pnpm check` scans nested worktrees and fails (it blocked the first push).
+
+## #637 migration (per-diagram shared files)
+
+After T6 merges and before T5 starts, merge `mermaid-v13` (with #637, 18b902dcb) per `v13/docs/agents/port-diagram/shared-files.md` "Moving an in-flight port": parity suite and the `JISON_TYPES` row → `packages/conformance/src/ishikawa/{suite,tables}.ts` (the smoke-list line goes); `GRAMMARS` → `grammars:` and config/release → `packages/diagram-ishikawa/workspace.yaml`; the theme-used-by list line goes; **the ishikawa entries on core `usedBy` lists (`TEXT_USERS`, `lineColor`/`mainBkg`/`textColor`, added by T3/T4) are removed**; any divergences → `divergences/ishikawa.json`. Then `pnpm regen`, `CI= vitest run packages/conformance/src/yaml-tree.spec.ts`, `vitest run packages/language-service-codemirror -u`, scoped checks, full `pnpm check` on slot A, push. T5 then writes its MIGRATION rows to `v13/docs/migration/ishikawa.md` and its hand-drawn fixture list to `e2e/diagrams/ishikawa/hand-drawn.txt`.
