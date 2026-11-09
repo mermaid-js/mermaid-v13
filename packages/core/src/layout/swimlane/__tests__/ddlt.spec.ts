@@ -32,11 +32,12 @@ const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
   // J's long label wraps to a node 217 tall (v12 measured it wide); I -> K detours below the
   // row at a depth that still cuts through J.
   '6-legal-constr-sales': ['edge-intersects-obstacle: Edge "L_I_K_0" intersects obstacle "J"'],
-  // Never in v12's sweep (no sizes). The router routes LR in TB coordinates with unrotated
-  // sizes, so the side port of Dep2.Proc2's same-rank back edge lands off the node once turned,
-  // and endpoint clipping does not bring it back.
+  // Never in v12's sweep (no sizes). Every node of one lane joins every node of the other.
+  // The router routes LR in TB coordinates with unturned sizes, so Dep2.Proc2's same-rank back
+  // edge leaves a side port that lands off the turned node; `terminalReattach.ts` puts the end
+  // back on the box, but the route still doubles back through its target, and Dep2.Proc3's
+  // back edge cuts its own source.
   'pebr-2-edge-intrudes-lane-label': [
-    "validate: edge 'L_Dep2.Proc2_Dep1.Proc2_0' does not start at its source",
     'edge-intersects-obstacle: Edge "L_Dep2.Proc2_Dep1.Proc2_0" intersects obstacle "Dep1.Proc2"',
     'edge-border-hugging: Edge "L_Dep2.Proc2_Dep1.Proc2_0" hugs border of node "Dep1.Proc2" for 40.0 units',
     'edge-intersects-obstacle: Edge "L_Dep2.Proc3_Dep1.Proc1_0" intersects obstacle "Dep2.Proc3"',

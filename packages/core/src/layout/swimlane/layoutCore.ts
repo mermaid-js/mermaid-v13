@@ -11,6 +11,7 @@ import { resolveTopLaneOrder } from './phase2.options.ts';
 import { routeEdgesOrthogonal } from './orthogonalRouter/router.ts';
 import { routeSelfLoops } from './selfLoops.ts';
 import { fitLanesToRoutes } from './laneFit.ts';
+import { reattachTerminals } from './terminalReattach.ts';
 
 export type SwimlaneDirection = 'TB' | 'LR' | 'BT' | 'RL';
 
@@ -50,6 +51,8 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   postProcessSwimlaneLayout(data4Layout, direction);
   // v12's router skips self-loops; v13's model routes every edge.
   routeSelfLoops(data4Layout);
+  // v13: ends v12 leaves off their (turned) boxes go back on them (`terminalReattach.ts`).
+  reattachTerminals(data4Layout);
   // v13: lanes hold every route, now that flowchart's groups have 20 padding (`laneFit.ts`).
   fitLanesToRoutes(data4Layout);
 
