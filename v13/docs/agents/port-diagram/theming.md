@@ -58,6 +58,7 @@ The DSL forms a table uses most (D332):
 - `seriesColorArray<n>`: the series palette's slot as the theme wrote it, CSS included; where a theme writes none, v12 theme-base's derivation from the base colours (slots 0–19). Read the series for any per-item colour, so a new theme with only base colours draws the diagram.
 - `literal(adjustHue(primaryColor, 64))`: a computed colour as a literal, for a v12 hue turn.
 - `inline(mutedBkg)`: a shared input as the theme wrote it; `inline(frameBorder, actorBorder)` falls back to the second where the theme wrote no first.
+- `slot(borderColorArray, 5, actorBorder)`: the palette's slot when the theme (or the author) carries that palette, else the fallback (D474), for a role colour that follows per-item colour.
 
 Any value that departs from v12 (as circle padding and the hexagon axes do in D151) is a decision: escalate it and record a D-id.
 
