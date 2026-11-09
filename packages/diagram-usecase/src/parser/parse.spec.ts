@@ -121,7 +121,7 @@ describe('parseUsecase symbols (D477)', () => {
     const { symbols } = parseUsecase(src);
     const reset = symbols.filter((s) => s.name === 'Reset password');
     expect(reset.map((s) => [s.role, src.slice(s.range.start, s.range.end)])).toEqual([
-      ['def', 'Reset password'],
+      ['def', '"Reset password"'],
       ['ref', 'Reset_password'],
     ]);
   });

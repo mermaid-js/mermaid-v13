@@ -18,10 +18,17 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
   skipTo,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, Range, RelatedInfo, TokenView } from '@mermaid-js/core/parser-kit';
+import type {
+  ParseOptions,
+  Range,
+  RelatedInfo,
+  TokenStream,
+  TokenView,
+} from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import {
@@ -31,7 +38,7 @@ import {
 } from '../codes.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
-import { EXPECTED, KEYWORD_LINE, LINE_END, WORD_KINDS } from './tables.ts';
+import { EXPECTED, KEYWORD_LINE, LINE_END, PROBE_FOLLOWS, WORD_KINDS } from './tables.ts';
 import { shown } from './text.ts';
 import { LABEL_TEXT, T } from './tokens.ts';
 
@@ -58,6 +65,67 @@ export const STOP_IN_DESCRIPTION = new Stop('description');
 /** Where plain recovery stops: a line end, or text no rule matched (it is reported). */
 const SKIP_TO = kindSet(Kind.Newline, Kind.Error);
 const SKIP_IN_METADATA = kindSet(Kind.Newline, Kind.Error, T.RBrace);
+const P_NEWLINE = [Kind.Newline];
+const P_COMMA = [T.Comma];
+
+/**
+ * The probe's mode at `o` (R-LANG-7): v12's lexer mode there (`default`, `jsonBody`,
+ * `stereotype`: the mode of the step whose text holds `o`, else of the first step after it), or
+ * the value `o` is inside: `string` in a quoted or Markdown text (closed or not), `acc` in the
+ * text of `accTitle:`, `accDescr:` or `accDescr { … }`, `jsonBody` inside a JSON object. Read
+ * from the token stream, whose kinds give the lexer's mode changes (`push_mode`, `pop_mode`).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  let mode = 'default';
+  for (let j = 0; j < tokens.length; j++) {
+    const k = tokens.kind[j] ?? Kind.EOF;
+    const s = tokens.start[j] ?? 0;
+    const e = tokens.end[j] ?? 0;
+    const value = s < o && o <= e ? valueMode(src, k, s, e, o) : undefined;
+    if (value !== undefined) return value;
+    if (k === Kind.EOF || s >= o || e > o) return mode;
+    mode = MODE_AFTER[k] ?? mode;
+  }
+  return mode;
+}
+
+/** The lexer mode after a token of each kind that changes it (`push_mode`, `pop_mode`). */
+const MODE_AFTER: Readonly<Record<number, string>> = {
+  [T.JsonDeclarationStart]: 'jsonBody',
+  [T.StereotypeStart]: 'stereotype',
+  [T.JsonObjectLiteral]: 'default',
+  [T.UnclosedJsonObjectLiteral]: 'default',
+  [T.StereotypeEnd]: 'default',
+  [T.UnclosedStereotypeText]: 'default',
+};
+
+/** The value mode at `o` inside token `[s, e)` of kind `k` (`s < o <= e`), if it holds a value. */
+function valueMode(src: string, k: number, s: number, e: number, o: number): string | undefined {
+  const inside = o < e;
+  switch (k) {
+    case T.PlainString:
+    case T.MarkdownString:
+      return inside ? 'string' : undefined;
+    case T.UnclosedMarkdownString:
+      return 'string';
+    case T.JsonObjectLiteral:
+      return inside ? 'jsonBody' : undefined;
+    case T.UnclosedJsonObjectLiteral:
+      return 'jsonBody';
+    case T.AccTitleLine:
+    case T.AccDescrLine:
+    case T.AccDescrBlock: {
+      const block = k === T.AccDescrBlock;
+      const open = src.slice(s, e).search(block ? /\{/ : /:/);
+      return open >= 0 && o > s + open && (inside || !block) ? 'acc' : undefined;
+    }
+    case Kind.Error:
+      // An unclosed quote: the rest of its line is the text.
+      return /^["']/.test(src.charAt(s)) && !/[\n\r]/.test(src.slice(s, o)) ? 'string' : undefined;
+    default:
+      return undefined;
+  }
+}
 
 /** The tokens of one parse, the cursor, and the errors and recovery of the rules. */
 export abstract class UsecaseReader {
@@ -74,6 +142,8 @@ export abstract class UsecaseReader {
   /** Error tokens already reported. */
   private readonly reported = new Set<number>();
   private lines: LineIndex | undefined;
+  /** With `probe` (R-LANG-7): what the rules test at that offset. */
+  protected readonly probe: Probe | undefined;
 
   constructor(
     protected readonly src: string,
@@ -113,6 +183,22 @@ export abstract class UsecaseReader {
       o++;
     }
     this.t = { kind, start, end, length: n };
+    if (opts.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
+    }
+  }
+
+  /**
+   * Probe hook: the rule tests token `j` for `kinds` (a constant list), or would accept them
+   * there. Recorded when `j` is the probed token.
+   */
+  protected tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -146,6 +232,7 @@ export abstract class UsecaseReader {
 
   /** Consume a token of `kind` and return its index, or fail. */
   protected expect(kind: number, hint?: string): number {
+    this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
@@ -157,26 +244,34 @@ export abstract class UsecaseReader {
     hint?: string,
     names?: string[]
   ): number {
+    this.tested(kinds);
     if (set[this.kind()] !== 1) this.fail(kinds, hint, names);
     return this.i++;
   }
 
   protected skipNewlines(): void {
-    while (this.kind() === Kind.Newline) this.i++;
+    for (;;) {
+      this.tested(P_NEWLINE);
+      if (this.kind() !== Kind.Newline) return;
+      this.i++;
+    }
   }
 
   /** `read`, then `',' read` while a `,` follows: the items of a list. */
   protected commaList<R>(read: () => R): R[] {
     const out = [read()];
-    while (this.kind() === T.Comma) {
+    for (;;) {
+      this.tested(P_COMMA);
+      if (this.kind() !== T.Comma) return out;
       this.i++;
       out.push(read());
     }
-    return out;
   }
 
   /** `lineEnd: NEWLINE | EOF`; what else may come here is `want`, for the message. */
   protected lineEnd(want: readonly number[] = LINE_END, hint?: string): void {
+    this.tested(want);
+    this.tested(LINE_END);
     const k = this.kind();
     if (k === Kind.EOF) return;
     if (k !== Kind.Newline) this.fail([...want, ...LINE_END], hint);
@@ -332,6 +427,7 @@ export abstract class UsecaseReader {
    * `accDescr {`, on to a line that starts with a keyword.
    */
   protected recover(stop: Stop): void {
+    this.probe?.freeze();
     if (stop.skip === 'metadata') {
       for (;;) {
         this.skip(SKIP_IN_METADATA);

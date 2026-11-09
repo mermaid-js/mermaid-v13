@@ -1,0 +1,43 @@
+@ 10:8  note |
+  for keyword 10:8-10:8 "" -> "for"
+@ 11:12  note for |
+  User node (actor) 11:12-11:12 "" -> "User"
+  Reset_password node (use case · Reset password) 11:12-11:12 "" -> "Reset_password"
+  Login node (use case) 11:12-11:12 "" -> "Login"
+@ 12:17  note for User |
+  none
+@ 13:9  class |
+  User node (actor) 13:9-13:9 "" -> "User"
+  Reset_password node (use case · Reset password) 13:9-13:9 "" -> "Reset_password"
+  Login node (use case) 13:9-13:9 "" -> "Login"
+  Shop subgraph (system boundary) 13:9-13:9 "" -> "Shop"
+  Data node (JSON table) 13:9-13:9 "" -> "Data"
+  e1 node (relation) 13:9-13:9 "" -> "e1"
+@ 14:14  class User,|
+  User node (actor) 14:14-14:14 "" -> "User"
+  Reset_password node (use case · Reset password) 14:14-14:14 "" -> "Reset_password"
+  Login node (use case) 14:14-14:14 "" -> "Login"
+  Shop subgraph (system boundary) 14:14-14:14 "" -> "Shop"
+  Data node (JSON table) 14:14-14:14 "" -> "Data"
+  e1 node (relation) 14:14-14:14 "" -> "e1"
+@ 15:14  class User |
+  hot class 15:14-15:14 "" -> "hot"
+  cold class 15:14-15:14 "" -> "cold"
+@ 16:25  class User, Login hot,|
+  hot class 16:25-16:25 "" -> "hot"
+  cold class 16:25-16:25 "" -> "cold"
+@ 17:9  style |
+  User node (actor) 17:9-17:9 "" -> "User"
+  Reset_password node (use case · Reset password) 17:9-17:9 "" -> "Reset_password"
+  Login node (use case) 17:9-17:9 "" -> "Login"
+  Shop subgraph (system boundary) 17:9-17:9 "" -> "Shop"
+  Data node (JSON table) 17:9-17:9 "" -> "Data"
+  e1 node (relation) 17:9-17:9 "" -> "e1"
+@ 18:14  style User |
+  none
+@ 19:11  Login:::|
+  hot class 19:11-19:11 "" -> "hot"
+  cold class 19:11-19:11 "" -> "cold"
+@ 20:15  Login:::hot,|
+  hot class 20:15-20:15 "" -> "hot"
+  cold class 20:15-20:15 "" -> "cold"

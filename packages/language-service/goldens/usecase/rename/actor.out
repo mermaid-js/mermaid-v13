@@ -1,0 +1,10 @@
+@ 3:9  actor |User
+  prepare: 3:9-3:13 "User"; rename to "Customer":
+  %% rename-to: Customer
+  usecase-beta
+    actor Customer
+    Customer --> Login
+    note for Customer "x"
+    style Customer fill:red
+    class Customer hot
+    Customer@{ business: true }

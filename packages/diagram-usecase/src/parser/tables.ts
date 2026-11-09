@@ -173,3 +173,53 @@ export const INCLUDE_EXTEND_SET = kindSet(...INCLUDE_EXTEND);
 export const AFTER_DASH_LABEL_SET = kindSet(...AFTER_DASH_LABEL);
 export const WORD_SET = kindSet(...WORD_KINDS);
 export const STYLE_PROPERTY_SET = kindSet(...STYLE_PROPERTY);
+
+/**
+ * Kinds a completion probe's cursor follows rather than extends (R-LANG-7): the arrows and the
+ * punctuation, and a closed quoted text or JSON object, which their closer ends. A word, a
+ * number and a lone `-` are extended, so `A -|` is the start of an arrow being typed.
+ */
+export const PROBE_FOLLOWS = kindSet(
+  ...ARROWS,
+  T.StereotypeStart,
+  T.StereotypeEnd,
+  T.ClassSeparator,
+  T.MetadataStart,
+  T.At,
+  T.LBrace,
+  T.RBrace,
+  T.LBracket,
+  T.RBracket,
+  T.LParen,
+  T.RParen,
+  T.Comma,
+  T.Colon,
+  T.PlainString,
+  T.MarkdownString,
+  T.JsonObjectLiteral
+);
+
+// What each decision point accepts, for the probe (R-LANG-7): the kinds its test reads.
+/** A statement's first token, at the top level. */
+export const P_STATEMENT = [...STARTS, Kind.Newline, Kind.Comment, Kind.EOF];
+/** A line of a boundary's body. */
+export const P_IN_BOUNDARY = [...IN_BOUNDARY, Kind.Newline, Kind.Comment, Kind.EOF];
+/** After a statement's name (`entityName relationTail?`, a metadata statement). */
+export const P_AFTER_NAME = [
+  T.LParen,
+  T.LBracket,
+  T.MetadataStart,
+  T.StereotypeStart,
+  T.ClassSeparator,
+  T.Identifier,
+  ...ARROWS,
+  ...LINE_END,
+];
+/** An unquoted or quoted label (`nodeLabel`). */
+export const P_LABEL = [...QUOTED, ...labelText()];
+/** After `--` / `<--` and the like: a label, or the target's name. */
+export const P_AFTER_DASHES = [...NAMES, ...labelText(), ...QUOTED];
+/** Inside `@{`, where a property or the `}` goes. */
+export const P_PROPERTY_START = [...PROPERTY_KEYS, T.RBrace, Kind.Newline];
+/** After a property: a separator, or the `}`. */
+export const P_AFTER_PROPERTY = [T.Comma, Kind.Newline, T.RBrace];

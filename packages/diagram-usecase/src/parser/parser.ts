@@ -73,6 +73,10 @@ import {
   LINE_END,
   METADATA_THIRD,
   NAME_SET,
+  P_AFTER_NAME,
+  P_IN_BOUNDARY,
+  P_PROPERTY_START,
+  P_STATEMENT,
   PLANTUML,
   PROPERTY_KEYS,
   RELATION_START,
@@ -111,6 +115,10 @@ interface RelationParts {
 
 type Parent = { id: string; range: Range } | undefined;
 
+const P_RELATION_START = [T.Identifier, ...ARROWS];
+const P_METADATA = [T.MetadataStart];
+const P_CLASSES = [T.ClassSeparator];
+
 const STYLE_NAMES = ['a CSS property such as `fill` or `stroke-width`'];
 const STYLE_VALUE_NAMES = ['a CSS value such as `red`, `#f96` or `2px`'];
 
@@ -148,7 +156,7 @@ class UsecaseParser extends ItemReader {
       range: { start: this.pre.bodyStart, end: src.length },
       children,
     };
-    return st.result(model, ast, this.full, this.opts);
+    return st.result(model, ast, this.full, this.opts, this.probe);
   }
 
   // ---- rules: document ----------------------------------------------------------------
@@ -165,6 +173,7 @@ class UsecaseParser extends ItemReader {
   /** `( NEWLINE | COMMENT lineEnd | statement )* EOF`, the statements' nodes into `out`. */
   private document(out: UsecaseStatementNode[]): void {
     for (;;) {
+      this.tested(P_STATEMENT);
       const k = this.kind();
       if (k === Kind.EOF) return;
       if (k === Kind.Newline || k === Kind.Comment) {
@@ -199,7 +208,9 @@ class UsecaseParser extends ItemReader {
   private named(k: number): UsecaseStatementNode {
     const s = this.i;
     const k2 = this.kind(s + 1);
+    this.tested(P_AFTER_NAME, s + 1);
     if (k2 === T.MetadataStart) {
+      this.tested(P_PROPERTY_START, s + 2);
       if (METADATA_THIRD[this.kind(s + 2)] === 1) return this.metadataStatement();
       this.unexpected({ from: s, at: s + 2, want: [...PROPERTY_KEYS, T.RBrace, Kind.Newline] });
       throw STOP;
@@ -239,6 +250,7 @@ class UsecaseParser extends ItemReader {
   private actorStatement(): UsecaseStatementNode[] {
     const start = this.range(this.i++).start;
     const items = this.commaList(() => this.item(false));
+    if (items.length === 1) this.tested(P_RELATION_START);
     const tail =
       items.length === 1 && RELATION_START[this.kind()] === 1 ? this.relationTail() : undefined;
     const range = { start, end: this.end() };
@@ -262,6 +274,7 @@ class UsecaseParser extends ItemReader {
   /** `entityName relationTail? lineEnd` */
   private entityStatement(): UsecaseStatementNode {
     const source = this.item(true);
+    this.tested(P_RELATION_START);
     const tail = RELATION_START[this.kind()] === 1 ? this.relationTail() : undefined;
     const range = { start: source.span.start, end: this.end() };
     this.lineEnd(tail ? [] : ARROWS);
@@ -366,7 +379,7 @@ class UsecaseParser extends ItemReader {
   }
 
   private elementNode(it: ItemRead, declares: boolean): UsecaseElementNode {
-    this.occurrences.push({ id: it.id, range: it.range });
+    this.occurrences.push({ id: it.id, range: it.written });
     const node: UsecaseElementNode = {
       id: '',
       type: 'Element',
@@ -396,7 +409,7 @@ class UsecaseParser extends ItemReader {
         generated: name.generated,
         classes: header.classes,
       });
-      this.occurrences.push({ id: name.id, range: name.range });
+      this.occurrences.push({ id: name.id, range: name.written });
     }
     const span = this.st.beginStatement('boundary', keyword.start);
     const node: UsecaseBoundaryNode = {
@@ -421,7 +434,9 @@ class UsecaseParser extends ItemReader {
   /** `bName metadata? classSuffix? lineEnd` */
   private boundaryHeader(): { name: NameRead; metadata?: MetadataDraft; classes: string[] } {
     const name = this.name(true);
+    this.tested(P_METADATA);
     const metadata = this.kind() === T.MetadataStart ? this.metadata() : undefined;
+    this.tested(P_CLASSES);
     const classes = this.kind() === T.ClassSeparator ? this.classSuffix() : [];
     const misplaced =
       this.kind() === T.StereotypeStart || (this.kind() === T.MetadataStart && classes.length > 0);
@@ -444,6 +459,7 @@ class UsecaseParser extends ItemReader {
     const members: UsecaseElementNode[] = [];
     const open: Range[] = [keyword];
     for (;;) {
+      this.tested(P_IN_BOUNDARY);
       const k = this.kind();
       if (k === Kind.Newline || k === Kind.Comment) {
         this.i++;
@@ -515,11 +531,12 @@ class UsecaseParser extends ItemReader {
       const q = this.quotedLabel(j);
       target = { id: generatedId(q.label.raw), range: q.range };
     }
+    const written = this.range(j);
     const metadata = this.metadata();
     const range = { start: this.range(j).start, end: this.end() };
     this.lineEnd();
     this.builder.addMetadata(target.id, target.range, metadata);
-    this.occurrences.push(target);
+    this.occurrences.push({ id: target.id, range: written });
     return this.simple('Metadata', range, [target.id]);
   }
 
@@ -548,6 +565,7 @@ class UsecaseParser extends ItemReader {
     const from = this.range(decl).start + (m ? m[0].length - id.length : 0);
     const nameRange = { start: from, end: from + id.length };
     const body = this.expect(T.JsonObjectLiteral);
+    this.tested(P_CLASSES);
     const classes = this.kind() === T.ClassSeparator ? this.classSuffix() : [];
     const range = { start: this.range(decl).start, end: this.end() };
     this.lineEnd();

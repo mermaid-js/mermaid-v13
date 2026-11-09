@@ -1,0 +1,3 @@
+@ 3:9  actor |User
+  prepare: 3:9-3:13 "User"; rename to "Login":
+  refused: 'Login' is already an usecase id in this diagram.

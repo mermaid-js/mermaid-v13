@@ -1,0 +1,13 @@
+@ 4:12  User --> |
+  User node (actor) 4:12-4:12 "" -> "User"
+@ 6:3  |
+  actor keyword 6:3-6:3 "" -> "actor"
+  systemBoundary keyword 6:3-6:3 "" -> "systemBoundary"
+  note keyword 6:3-6:3 "" -> "note for "
+  json keyword 6:3-6:3 "" -> "json "
+  classDef keyword 6:3-6:3 "" -> "classDef"
+  class keyword 6:3-6:3 "" -> "class"
+  style keyword 6:3-6:3 "" -> "style"
+  direction keyword 6:3-6:3 "" -> "direction"
+  accTitle keyword 6:3-6:3 "" -> "accTitle: "
+  accDescr keyword 6:3-6:3 "" -> "accDescr: "

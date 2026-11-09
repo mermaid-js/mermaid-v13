@@ -1,0 +1,21 @@
+@ 2:3  |
+  actor keyword 2:3-2:3 "" -> "actor"
+  systemBoundary keyword 2:3-2:3 "" -> "systemBoundary"
+  note keyword 2:3-2:3 "" -> "note for "
+  json keyword 2:3-2:3 "" -> "json "
+  classDef keyword 2:3-2:3 "" -> "classDef"
+  class keyword 2:3-2:3 "" -> "class"
+  style keyword 2:3-2:3 "" -> "style"
+  direction keyword 2:3-2:3 "" -> "direction"
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr keyword 2:3-2:3 "" -> "accDescr: "
+@ 3:4  a|
+  actor keyword 3:3-3:4 "a" -> "actor"
+  accTitle keyword 3:3-3:4 "a" -> "accTitle: "
+  accDescr keyword 3:3-3:4 "a" -> "accDescr: "
+@ 4:5  cl|
+  classDef keyword 4:3-4:5 "cl" -> "classDef"
+  class keyword 4:3-4:5 "cl" -> "class"
+@ 6:5  |
+  actor keyword 6:5-6:5 "" -> "actor"
+  end keyword 6:5-6:5 "" -> "end"

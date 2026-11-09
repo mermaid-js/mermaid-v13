@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #517: the manifest comes with T5 (#567).
+  {
+    type: 'usecase',
+    id: 'usecase',
+    section: 'usecase',
+    pattern: /^\s*usecase-beta(?:\s|$)/,
+    detector: (text) => /^\s*usecase-beta(?:\s|$)/.test(text),
+    load: () => import('@mermaid-js/diagram-usecase/language').then((m) => m.language),
+  },
+];
