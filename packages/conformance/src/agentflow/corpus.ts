@@ -5,10 +5,26 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
-import { body, crlf, tabs } from '../kanban/corpus.ts';
-import { commented } from '../sequence/corpus.ts';
+import { body, crlf, FRONT_MATTER, tabs } from '../kanban/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
+import { lineSeparators, paragraphSeparators } from '../xychart/corpus.ts';
 import type { CorpusItem } from '../types.ts';
+
+/**
+ * `src` with nine comment lines after every line of the body, or, for a body of two lines or
+ * fewer, one through the middle of it but never inside the header line (sequence's variant
+ * cut `agentflow-beta` itself there, which v12 no longer detects). v12 kept comments in the
+ * text it lexed, so both lexers read them as `COMMENT` tokens.
+ */
+export function commented(src: string): string {
+  const head = FRONT_MATTER.exec(src)?.[0] ?? '';
+  const b = src.slice(head.length);
+  const lines = b.split('\n');
+  if (lines.length > 2) return head + lines.join('\n' + '  %% c\n'.repeat(9));
+  const header = /agentflow-beta\b[^\n]*/.exec(b);
+  const cut = Math.max(Math.floor(b.length / 2), header ? header.index + header[0].length : 0);
+  return head + b.slice(0, cut) + '\n%% cut\n' + b.slice(cut);
+}
 
 /** A directive v12 removes, wherever in a line it is. */
 const DIRECTIVE = '%%{init: {}}%%';
@@ -84,6 +100,8 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],
+  ['line separators', lineSeparators],
+  ['paragraph separators', paragraphSeparators],
   ['tabs', tabs],
   ['multi-line shape data', multiLineData],
   ['mid-line directive', midLineDirective],

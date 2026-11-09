@@ -17,8 +17,9 @@
  * view reads like core's, so `cook`, `localOffset`, `firstHole` and `SourceOffsets` apply.
  * Every scan is linear (R-PARSE-7).
  *
- * v12 fell back to the comment-free text when `withComments` was longer than `maxTextSize`;
- * that choice belongs to the parser (#546).
+ * v12 parsed the comment-free text instead (`code.cleaned`: comments cut, then `trimStart`)
+ * when `withComments` was longer than `maxTextSize` (default 50,000); so does this view, with
+ * comments as core's holes and the leading blanks a `drop` hole.
  */
 import {
   COLON,
@@ -32,17 +33,27 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range, SourceView } from '@mermaid-js/core/parser-kit';
 
+/** v12's default `maxTextSize`. */
+export const MAX_TEXT_SIZE = 50_000;
+
 const NO_DIRECTIVES: readonly Range[] = [];
 
 /**
  * The agentflow source view of `src[from…]` (the text after the front matter); `directives`
- * are the `%%{…}%%` ranges from core's preprocess, sorted.
+ * are the `%%{…}%%` ranges from core's preprocess, sorted. `maxTextSize` is the site config's.
  */
 export function agentflowSourceView(
   src: string,
   from: number,
-  directives: readonly Range[]
+  directives: readonly Range[],
+  maxTextSize = MAX_TEXT_SIZE
 ): SourceView {
+  if (withCommentsLength(src, from, directives) > maxTextSize) {
+    // v12's `cleaned`: core's view (comments, directives and the `;` drops it read without
+    // them), then `trimStart` and agentflow's `}` rewrite.
+    const core = sourceView(src, from, directives);
+    return withDrops(src, from, core.holes, core.mask, true);
+  }
   // Tag quotes only: core reads its other rewrites from the text with comments cut out.
   const { mask } = sourceView(src, from, NO_DIRECTIVES, { styleSemicolons: false });
   const holes: Hole[] = [];
@@ -58,23 +69,56 @@ export function agentflowSourceView(
     holes.push({ start: s, end: s + 1, kind: 'drop' });
   }
   holes.sort((a, b) => a.start - b.start);
-  const t2 = holes.length > 0 ? cut(src, holes) : t1;
-  const at2 = t2.runs && new SourceOffsets(t2.runs);
+  return withDrops(src, from, holes, mask, false);
+}
+
+/**
+ * The length of v12's `withComments` for `src[from…]`: CRLF as one LF, directives removed
+ * (their own CRLFs with them).
+ */
+function withCommentsLength(src: string, from: number, directives: readonly Range[]): number {
+  let n = src.length - from;
+  let d = 0;
+  for (const r of directives) if (r.start >= from) n -= r.end - r.start;
+  for (let i = src.indexOf('\r\n', from); i !== -1; i = src.indexOf('\r\n', i + 2)) {
+    while (d < directives.length && (directives[d]?.end ?? 0) <= i) d++;
+    const r = directives[d];
+    if (!r || r.start > i) n--;
+  }
+  return n;
+}
+
+/**
+ * The view over `holes` (sorted, disjoint) plus the blanks v12 removed after them: the
+ * blanks between a `}` and its line break, and with `trim` the leading blanks.
+ */
+function withDrops(
+  src: string,
+  from: number,
+  holes: Hole[],
+  mask: Uint8Array | undefined,
+  trim: boolean
+): SourceView {
+  const t = holes.length > 0 ? cut(src, holes) : { text: src, runs: undefined };
+  const at = t.runs && new SourceOffsets(t.runs);
+  const spans = braceBlanks(t.text, from);
+  if (trim) {
+    let e = from;
+    while (e < t.text.length && isSpace(t.text.charCodeAt(e))) e++;
+    if (e > from) spans.unshift([from, e]);
+  }
   let last: Hole | undefined;
   const blanks: Hole[] = [];
-  for (const [a, b] of braceBlanks(t2.text, from)) {
+  for (const [a, b] of spans) {
     for (let i = a; i < b; i++) {
-      const s = at2 ? at2.source(i) : i;
+      const s = at ? at.source(i) : i;
       if (last?.end === s) last.end++;
       else blanks.push((last = { start: s, end: s + 1, kind: 'drop' }));
     }
   }
-  if (blanks.length > 0) {
-    holes.push(...blanks);
-    holes.sort((a, b) => a.start - b.start);
-  }
-  const view = blanks.length > 0 ? cut(src, holes) : t2;
-  return { mask, holes, text: view.text, runs: view.runs, braceNewline: false };
+  if (blanks.length === 0) return { mask, holes, text: t.text, runs: t.runs, braceNewline: false };
+  const all = [...holes, ...blanks].sort((a, b) => a.start - b.start);
+  return { mask, holes: all, ...cut(src, all), braceNewline: false };
 }
 
 /** `src` without the (sorted, disjoint) `removed` spans, and where each kept run was. */
@@ -103,7 +147,7 @@ function cut(src: string, removed: readonly Hole[]): Pick<SourceView, 'text' | '
 }
 
 /** What a regex `.` does not match. */
-const LINE_ENDS = ['\n', '\r', ' ', ' '] as const;
+const LINE_ENDS = ['\n', '\r', '\u2028', '\u2029'] as const;
 
 /**
  * The first line end at or after `q`, or the end. Found with `indexOf`, keeping the next of

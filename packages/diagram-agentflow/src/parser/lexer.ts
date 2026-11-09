@@ -38,6 +38,7 @@ import {
   GT,
   hasClass,
   HASH,
+  isBlank,
   isDigit,
   isLineEnd,
   isSpace,
@@ -76,7 +77,6 @@ import {
   CHARS,
   ELLIPSE_STOP,
   isNl,
-  isTab,
   NODE,
   S,
   Scanner,
@@ -87,7 +87,9 @@ import {
 import { T } from './tokens.ts';
 
 /** Start condition names by number, for the probe's lexer mode. */
-const S_NAMES = /* @__PURE__ */ Object.keys(S);
+const S_NAMES: Readonly<Record<number, string>> = /* @__PURE__ */ Object.fromEntries(
+  Object.entries(S).map(([name, value]) => [value, name])
+);
 
 // jison's <<EOF>> in states whose value rule matches the empty string: the empty value token.
 function eofValueKind(state: number): number {
@@ -226,13 +228,13 @@ class AgentflowLexer extends Scanner {
   /** The INITIAL links at p: `--+[x>]`, then `--` (opening edge text), then `-.+-`. */
   private link(): boolean {
     const p = this.p;
-    this.links(p);
-    if (this.linkEnd >= 0) return this.token(T.Link, this.linkEnd - p);
-    if (this.startLinkEnd >= 0) {
+    const { link, startLink, dotted } = this.links(p);
+    if (link >= 0) return this.token(T.Link, link - p);
+    if (startLink >= 0) {
       this.push(S.edgeText);
-      return this.token(T.StartLink, this.startLinkEnd - p);
+      return this.token(T.StartLink, startLink - p);
     }
-    return this.dottedEnd >= 0 && this.token(T.Link, this.dottedEnd - p);
+    return dotted >= 0 && this.token(T.Link, dotted - p);
   }
 
   /** `[ \t]*"%%"(?!\{)[^\n]*` at p: a comment, to its line break. */
@@ -396,7 +398,7 @@ class AgentflowLexer extends Scanner {
   /** A keyword of `length` characters at p and the `[ \t]*` after it (`global`, `end`). */
   private blankEnded(kind: number, length: number): true {
     let e = this.p + length;
-    while (isTab(this.text.charCodeAt(e))) e++;
+    while (isBlank(this.text.charCodeAt(e))) e++;
     this.emit(kind, this.p, e);
     return true;
   }
@@ -520,7 +522,7 @@ class AgentflowLexer extends Scanner {
   private blanks(c: number): boolean {
     if (!isSpace(c)) return false;
     if (this.link()) return true;
-    if (isTab(c) && this.comment()) return true;
+    if (isBlank(c) && this.comment()) return true;
     const e = this.newlineEnd(this.p);
     if (e >= 0) {
       this.emit(Kind.Newline, this.p, e);
@@ -735,10 +737,10 @@ class AgentflowLexer extends Scanner {
       this.quote();
       return true;
     }
-    this.links(p);
-    if (this.linkEnd >= 0) {
+    const { link } = this.links(p);
+    if (link >= 0) {
       this.pop();
-      return this.token(T.Link, this.linkEnd - p);
+      return this.token(T.Link, link - p);
     }
     if (c === DASH && this.text.charCodeAt(p + 1) === DASH) return false;
     let q = p + 1;
@@ -748,8 +750,7 @@ class AgentflowLexer extends Scanner {
       if (ch === DASH) {
         if (this.text.charCodeAt(q + 1) === DASH) break;
       } else if (isSpace(ch)) {
-        this.links(q);
-        if (this.linkEnd >= 0) break;
+        if (this.links(q).link >= 0) break;
         // The link pattern opens with `\s*`: from any later blank of this run it reaches the
         // same character and fails the same way, so the run is skipped (linear, R-PARSE-7).
         q = this.blankRunEnd(q);

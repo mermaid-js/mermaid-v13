@@ -3,7 +3,6 @@ import { agentflowTokens, AgentflowTokenKind, JISON_NAMES } from '@mermaid-js/di
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
-import { FRONT_MATTER } from '../kanban/corpus.ts';
 import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
 
 /**
@@ -11,7 +10,8 @@ import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
  * with the same images, as mermaid 12.2.0's jison lexer on the text v12 lexed. That text keeps
  * the comments (agentflow's DB set `preserveCommentsWhenParsing`), so `COMMENT` tokens are
  * compared too, and the generated variants that add comment lines check them rather than
- * their removal.
+ * their removal. Past `maxTextSize` v12 lexed the comment-free text instead, and so does v13
+ * (the `v12-max-text-size-4000` case).
  *
  * Normalisation, both sides:
  * - runs of `TEXT`, `EDGE_TEXT`, `STR` and `MD_STR` are merged (jison splits some per
@@ -170,7 +170,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     ).toEqual([]);
     // Every e2e fixture, every harvested spec and syntax-page string and every case but one
     // reaches the lexer.
-    expect({ e2e, specs, cases }).toEqual({ e2e: 39, specs: 179, cases: 163 });
+    expect({ e2e, specs, cases }).toEqual({ e2e: 39, specs: 179, cases: 180 });
     // D463: the cases with a lone `%` in a text or trapezoid label, in each variant that keeps
     // it; a lone `%` elsewhere (ellipse and edge text, ids, strings, shape data) and `%%` in a
     // label lex as in v12.
@@ -179,21 +179,13 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
         (c) => `agentflow-cases/percent-${c}`
       )
     );
-    expect(percent).toHaveLength(51);
-    // The only sources v12 does not lex: `agentflow-betax` (no agentflow to v12's detector,
-    // `^\s*agentflow-beta\b`) and commented copies of a body (after the front matter) of two lines or fewer, where
-    // `%% cut` goes through the middle of the header. Each original is lexed as written above.
-    const byId = new Map(items.map((item) => [item.id, item.source]));
-    expect(
-      skipped.filter((id) => {
-        if (id.startsWith('agentflow-cases/header-word')) return false;
-        const original = byId.get(id.replace(VARIANT, '')) ?? '';
-        const cut = byId.get(id) ?? '';
-        const lines = original.replace(FRONT_MATTER, '').split('\n').length;
-        const header = id.endsWith(' (commented)') && lines <= 2;
-        return !(header && !/^\s*agentflow-beta\b/.test(cut));
-      })
-    ).toEqual([]);
-    expect(skipped.length).toBeLessThan(80);
+    expect(percent).toHaveLength(58);
+    // The only source v12 does not lex: `agentflow-betax`, no agentflow to v12's detector
+    // (`^\s*agentflow-beta\b`), in each variant that changes it.
+    expect(skipped).toEqual(
+      ['', ' (commented)', ' (CR cut)', ' (CR cut by a directive)', ' (CRLF)', ' (tabs)'].map(
+        (v) => `agentflow-cases/header-word${v}`
+      )
+    );
   }, 300_000);
 });

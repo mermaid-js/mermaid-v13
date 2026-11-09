@@ -7,7 +7,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Closed: post-tag specs. Every harvested string lexes as 12.2.0 does (`LINK_ID` is 12.2.0's; `shapes.ts` is not the lexer), so no lexer exclusion; `[/…/]` (D462) differs only in the model (#546).
 
 ## #546 T2 parser
-- From #544: v12 parsed the comment-free text when `withComments` exceeded `maxTextSize` (with a `log.warn`); `agentflowSourceView` always keeps comments, so the parser decides that fallback.
+- From #544: v12 parsed the comment-free text when `withComments` exceeded `maxTextSize` (with a `log.warn`); `agentflowSourceView(…, maxTextSize)` reproduces it, so pass the site config's value (and decide whether to warn).
+- From review of #544: the D467 `SHARED_SYNTAX` flowchart parity spec.
 - From #544: `agentflow-beta %% c` is a lexical error in v12 (the `dir` state has no comment rule); a top-level `%% direction LR` lexes as `direction_lr` (the `.*direction` rules run first).
 - From exploration: v13 flowchart's model differs from v12 agentflow in three places to cut: subgraph parent is last-write-wins with no cycle cut (`nesting.ts:32–35`; D461 wants the cycle cut and `CONTAINMENT_VIOLATION`); `inheritDir` also falls back to the top-level `direction` in v12 (`agentflowDb.ts:1218`), though a top-level `direction` does not change the diagram direction; v12 keeps a dangling edge from `connectors --> b` after dropping the vertex.
 

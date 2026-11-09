@@ -218,6 +218,26 @@ describe('agentflow lexer', () => {
     expect(tokens[1]?.range).toEqual({ start: 14, end: 16 });
   });
 
+  it('lexes the comment-free, trimmed text past maxTextSize, as v12 fell back to', () => {
+    const src = '\n%% c\n  agentflow-beta\n a %% d\n%% e\n b';
+    expect(
+      agentflowTokens(src, 10).map((t) => `${JISON_NAMES[t.kind] ?? t.kind}:${t.text}`)
+    ).toEqual([
+      'GRAPH:agentflow-beta',
+      'NODIR:\n',
+      'SPACE: ',
+      'NODE_STRING:a',
+      'COMMENT: %% d',
+      'NEWLINE:\n',
+      'SPACE: ',
+      'NODE_STRING:b',
+      'NEWLINE:',
+      'EOF:',
+      `${Kind.EOF}:`,
+    ]);
+    expect(names(src)[0]).toBe('NEWLINE:\n');
+  });
+
   it('lexes an empty text and a lone header', () => {
     expect(names('')).toEqual(['NEWLINE:', 'EOF:']);
     expect(names('agentflow-beta')).toEqual(['GRAPH:agentflow-beta', 'NODIR:', 'EOF:']);

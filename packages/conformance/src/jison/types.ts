@@ -262,9 +262,12 @@ export const JISON_TYPES = {
       dir: `${V12_DIAGRAMS}/agentflow`,
       docs: 'agentflow.md',
       // v12's 33 spec files but `conformance/conformance.spec.ts`, which reads `import.meta.url`
-      // (a syntax error in the runner's function body) and parses only through the fixture
-      // runner, so it adds no source; its 8 fixtures are ported by hand. The specs that parse
-      // through `mermaidAPI` or no parser add nothing either.
+      // (a syntax error in the runner's function body) and its 8 fixture files. Six of the 32
+      // add no source here, as they call no `agentflow.parse`: `containerOrder`
+      // (`Diagram.fromText` in a helper), `conformance/runner` (`runFixture`), `renderer`
+      // (`draw`), `agentflow-render-positions` and `agentflow-max-text-size` (`mermaidAPI` in
+      // `jsdomIt` bodies, which the runner does not run) and `colorSlots` (no source). Their
+      // sources and the 8 fixtures are cases in `corpus/agentflow-cases.json` (`v12-*`).
       method: {
         kind: 'run',
         parsers: ['agentflow'],

@@ -38,7 +38,7 @@ const SHAPES: [string, (n: number) => string][] = [
   ['a blank run before a dot link', (n) => H + 'a' + ' '.repeat(n) + '-.b'],
   ['a blank run before a link', (n) => H + 'a' + ' '.repeat(n) + '--> b'],
   ['a blank run before a comment', (n) => H + 'a' + ' \t'.repeat(n / 2) + '%% c'],
-  ['a blank run of other blanks', (n) => H + 'a' + '  '.repeat(n / 2) + '%% c'],
+  ['a blank run of other blanks', (n) => H + 'a' + ' \u00a0'.repeat(n / 2) + '%% c'],
   ['a long dash run', (n) => H + 'a ' + '-'.repeat(n) + ' b'],
   ['blanks and dashes', (n) => H + 'a' + times(' -', n) + ' b'],
   ['a long dot run', (n) => H + 'a -' + '.'.repeat(n) + ' b'],
@@ -90,7 +90,7 @@ const SHAPES: [string, (n: number) => string][] = [
   ['many errors', (n) => H + times('a=b ', n)],
   ['unicode ids', (n) => H + times('ä --> ö\n', n)],
   ['click lines', (n) => H + times('click a call f(x)\n', n)],
-  ['line separators', (n) => H + times('a %% c ', n)],
+  ['line separators', (n) => H + times('a\u2028%% c\u2029', n)],
 ];
 
 /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
@@ -129,7 +129,18 @@ const ratio = (build: (n: number) => string, run: (src: string) => unknown): num
 describe('stress: the agentflow lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
-    (_name, build) => expect(ratio(build, agentflowTokens)).toBeLessThan(24),
+    (_name, build) => expect(ratio(build, (src) => agentflowTokens(src))).toBeLessThan(24),
+    30_000
+  );
+});
+
+/** Past `maxTextSize` v12 lexed the comment-free text: the same shapes through that view. */
+const COMMENT_FREE = SHAPES.filter(([name]) => /comment|blank|brace|style|directive/.test(name));
+
+describe('stress: the agentflow lexer is linear past maxTextSize', () => {
+  it.each(COMMENT_FREE)(
+    '%s',
+    (_name, build) => expect(ratio(build, (src) => agentflowTokens(src, 0))).toBeLessThan(24),
     30_000
   );
 });

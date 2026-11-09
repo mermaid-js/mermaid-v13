@@ -13,6 +13,7 @@ import {
   DOT,
   DQUOTE,
   GT,
+  isBlank,
   isSpace,
   isWord,
   Kind,
@@ -24,9 +25,7 @@ import {
   PERCENT,
   PIPE,
   SEMI,
-  SPACE,
   SLASH,
-  TAB,
   TokenWriter,
   firstHole,
   localOffset,
@@ -36,11 +35,21 @@ import {
 import type { Hole, SourceView } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
-export const RE_ENTITY = /#\w+;/y;
+const RE_ENTITY = /#\w+;/y;
 
 export const isNl = (c: number): boolean => c === LF || c === CR;
-/** jison's `[ \t]`. */
-export const isTab = (c: number): boolean => c === SPACE || c === TAB;
+
+/** The text offsets where the links after a blank run end (see `Scanner.links`). */
+export interface LinkEnds {
+  /** The character after the blanks the links start at. */
+  from: number;
+  /** `\s*--+[x>]\s*`. */
+  link: number;
+  /** `\s*--\s*`, opening edge text. */
+  startLink: number;
+  /** `\s*-.+-\s*`. */
+  dotted: number;
+}
 
 // Character classes of agentflow.jison's lexer rules.
 /** jison's NODE_STRING (`-` and `=` are handled separately). */
@@ -111,11 +120,8 @@ export class Scanner {
   protected wsTo = -1;
   protected tabFrom = -1;
   protected tabTo = -1;
-  /** The links that start after the blanks at {@link linkFrom}: their ends, or -1. */
-  protected linkFrom = -1;
-  protected linkEnd = -1;
-  protected startLinkEnd = -1;
-  protected dottedEnd = -1;
+  /** The last {@link links} result, kept for the character after the blanks it started at. */
+  private readonly linkMemo: LinkEnds = { from: -1, link: -1, startLink: -1, dotted: -1 };
   /** The dash run `[dashFrom, dashTo)` last scanned. */
   protected dashFrom = -1;
   protected dashTo = -1;
@@ -153,7 +159,9 @@ export class Scanner {
   protected trivia(at: number): void {
     const hs = this.holes;
     for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind !== 'drop') this.w.push(Kind.Directive, h.start, h.end);
+      if (h.kind === 'drop') continue;
+      // Comments are holes only in the comment-free view (`source.ts`).
+      this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
     }
   }
 
@@ -274,7 +282,7 @@ export class Scanner {
   protected skipTabs(q: number): number {
     if (q >= this.tabFrom && q <= this.tabTo) return this.tabTo;
     let j = q;
-    while (j < this.n && isTab(this.text.charCodeAt(j))) j++;
+    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
     this.tabFrom = q;
     this.tabTo = j;
     return j;
@@ -290,30 +298,33 @@ export class Scanner {
   }
 
   /**
-   * The links after the blanks at `q`: `\s*--+[x>]\s*`, `\s*--\s*` and `\s*-.+-\s*`. They
-   * differ only after the blanks, so the result is kept for the character after them, and the
-   * end of a dash run is kept too: from any blank of a run, and from any dash of a dash run,
-   * the scans run once (linear, R-PARSE-7).
+   * The ends of the links after the blanks at `q` (each -1 when it does not match):
+   * `\s*--+[x>]\s*`, `\s*--\s*` and `\s*-.+-\s*`. Why a memo: the INITIAL rules and the edge
+   * text run try them from every blank of a run and every dash of a dash run, and they differ
+   * only after the blanks, so the result is kept for the character after them (and the end
+   * of a dash run too). Each scan then runs once per run (linear, R-PARSE-7). The returned
+   * object is the memo itself: read it before the next call.
    */
-  protected links(q: number): void {
+  protected links(q: number): Readonly<LinkEnds> {
+    const m = this.linkMemo;
     const j = this.skipWs(q);
-    if (j === this.linkFrom) return;
-    this.linkFrom = j;
-    this.linkEnd = this.startLinkEnd = this.dottedEnd = -1;
+    if (j === m.from) return m;
+    m.from = j;
+    m.link = m.startLink = m.dotted = -1;
     const t = this.text;
-    if (t.charCodeAt(j) !== DASH) return;
+    if (t.charCodeAt(j) !== DASH) return m;
     const d = t.charCodeAt(j + 1);
     if (d === DASH) {
       const e = this.dashRunEnd(j);
       const c = t.charCodeAt(e);
-      const startEnd = this.skipWs(j + 2);
-      if (c === LOWER_X || c === GT) this.linkEnd = this.skipWs(e + 1);
-      this.startLinkEnd = startEnd;
+      m.startLink = this.skipWs(j + 2);
+      if (c === LOWER_X || c === GT) m.link = this.skipWs(e + 1);
     } else if (d === DOT) {
       let e = j + 2;
       while (t.charCodeAt(e) === DOT) e++;
-      if (t.charCodeAt(e) === DASH) this.dottedEnd = this.skipWs(e + 1);
+      if (t.charCodeAt(e) === DASH) m.dotted = this.skipWs(e + 1);
     }
+    return m;
   }
 
   /** The end of the dash run at `j`; each run is scanned once. */
