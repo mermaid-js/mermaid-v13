@@ -262,6 +262,17 @@ describe('text output keeps layered (D179)', () => {
     expect(r.warnings[0]?.message).toContain('"elk"');
   });
 
+  // So the swimlane engine never sees a grid graph; it throws on one (#593).
+  it('draws `layout: swimlane` with layered and one ASCII_DROPPED, loading no engine', async () => {
+    const m = createMermaid();
+    // Prepared for text: the flowchart only, no layout engine, yet renderSync draws it.
+    await m.prepare(withLayout('swimlane'), { format: 'ascii' });
+    const r = m.renderSync(withLayout('swimlane'), { format: 'ascii' });
+    expect(r.text).toBe(await plain());
+    expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'layout']]);
+    expect(r.warnings[0]?.message).toContain('"swimlane"');
+  });
+
   it('draws the flowchart-elk header with layered and one ASCII_DROPPED', async () => {
     const r = await createMermaid().render('t', FLOW.replace('flowchart', 'flowchart-elk'), {
       format: 'ascii',
