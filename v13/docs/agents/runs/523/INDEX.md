@@ -1,6 +1,6 @@
 # Run notes, spec #523 (M5b agentflow, `@mermaid-js/diagram-agentflow`)
 
-Integration branch `feature/523_agentflow` (from `mermaid-v13` at 521fb76ee). Draft PR: none yet.
+Integration branch `feature/523_agentflow` (from `mermaid-v13` at 521fb76ee). Draft PR: #632.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
