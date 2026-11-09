@@ -8,6 +8,9 @@ The files below are ported from, or based on, Pele (https://github.com/obsidianm
 commit 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is
 used under the MIT License:
 
+  src/layout/compass/compass.ts
+  src/layout/compass/grid.ts
+  src/layout/compass/route.ts
   src/layout/layered/compound.ts
   src/layout/layered/index.ts
   src/layout/layered/layered.ts

@@ -209,3 +209,21 @@ describe('countCrossings', () => {
     expect(countCrossings(model)).toBe(0);
   });
 });
+
+describe('validateLayout: `border` ends (D501)', () => {
+  // The end meets the group's top border (y 70), 10 above node b's box.
+  const atBorder = (): LayoutModel => {
+    const model = good();
+    model.edges.get('e')!.points[1] = { x: 50, y: 70, axis: 'v' };
+    return model;
+  };
+
+  it('takes a border end at the box of the node’s group', () => {
+    const bordered = { ...graph, edges: [{ ...graph.edges[0]!, border: { target: true } }] };
+    expect(validateLayout(bordered, atBorder())).toEqual([]);
+  });
+
+  it('still wants a plain end at its node', () => {
+    expect(validateLayout(graph, atBorder())).toEqual(["edge 'e' does not end at its target"]);
+  });
+});

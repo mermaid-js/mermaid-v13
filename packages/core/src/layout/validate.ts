@@ -1,6 +1,7 @@
 // Engine-agnostic checks on a LayoutModel, for DDLT-style tests of any layout engine: every
 // coordinate finite, everything placed inside the drawing, no boxes overlapping, groups holding
-// their members, and edges starting and ending at their own boxes. `countCrossings` gives a
+// their members, and edges starting and ending at their own boxes (or, for a `border` end, at
+// the box of the node's group). `countCrossings` gives a
 // quality number to record per fixture.
 import type { LayoutGraph, LayoutModel, Point } from './types.ts';
 
@@ -135,8 +136,13 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
         break;
       }
     }
-    const from = boxes.get(e.source);
-    const to = boxes.get(e.target);
+    // A `border` end (D501) meets the border of the group its node sits in.
+    const endBox = (id: string, border: boolean | undefined): Rect | undefined => {
+      const up = border ? parent.get(id) : undefined;
+      return (up !== undefined && groupIds.has(up) ? boxes.get(up) : undefined) ?? boxes.get(id);
+    };
+    const from = endBox(e.source, e.border?.source);
+    const to = endBox(e.target, e.border?.target);
     if (from && !near(from, placed.points[0]!))
       problems.push(`edge '${e.id}' does not start at its source`);
     if (to && !near(to, placed.points[placed.points.length - 1]!)) {
