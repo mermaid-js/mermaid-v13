@@ -10,7 +10,6 @@ export const NAMES = [T.Identifier, T.PlainString, T.MarkdownString];
 export const NAME_SET = kindSet(...NAMES);
 export const QUOTED = [T.PlainString, T.MarkdownString];
 export const LINE_END = [Kind.Newline, Kind.EOF];
-export const LINE_END_SET = kindSet(...LINE_END);
 
 /** The first token of each arrow (v12's `arrow` rule). */
 export const ARROWS = [
@@ -108,7 +107,7 @@ export const STYLE_PART = kindSet(
 );
 
 /** Statement starts that are keywords (a line that starts with one ends a skipped block). */
-export const KEYWORD_STARTS = [
+const KEYWORD_STARTS = [
   T.Actor,
   T.SystemBoundary,
   T.Note,
