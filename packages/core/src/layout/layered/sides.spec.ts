@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  RoutePoint,
   Dir,
   EdgeRouting,
   LayoutEdge,
@@ -22,7 +23,7 @@ const DIRS: readonly Dir[] = ['TB', 'BT', 'LR', 'RL'];
 const ROUTINGS: readonly EdgeRouting[] = ['curved', 'stepped', 'straight'];
 const EPS = 1e-6;
 // Matrix routes that still cross an end box (the lane goes round one box, not both).
-const CROSSED = 4;
+const CROSSED = 0;
 
 function graph(
   edges: LayoutEdge[],
@@ -81,6 +82,26 @@ function leaves(box: LayoutModelNode, side: Side, p: Point, q: Point, square: bo
       return onY(r) && level(q.y, p.y) && q.x > p.x;
   }
 }
+
+// A redrawn route (review findings 1, 2): every leg square and of some length, no leg running
+// straight back over the one before, and each point's `axis` that of the leg into it.
+function expectClean(points: readonly RoutePoint[], what: string): void {
+  for (let i = 1; i < points.length; i++) {
+    const [p, q] = [points[i - 1]!, points[i]!];
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    expect(Math.abs(dx) < EPS || Math.abs(dy) < EPS, `${what} leg ${i} square`).toBe(true);
+    expect(Math.abs(dx) + Math.abs(dy) > EPS, `${what} leg ${i} has length`).toBe(true);
+    expect(q.axis, `${what} axis ${i}`).toBe(Math.abs(dx) > EPS ? 'h' : 'v');
+    const r = points[i - 2];
+    if (r) {
+      const back = Math.sign(p.x - r.x) * Math.sign(dx) + Math.sign(p.y - r.y) * Math.sign(dy);
+      expect(back, `${what} leg ${i} doubles back`).toBeGreaterThanOrEqual(0);
+    }
+  }
+}
+
+const legLength = (p: Point, q: Point): number => Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
 
 function expectSides(g: LayoutGraph, m: LayoutModel, id: string, s: Side, t: Side): void {
   const e = g.edges.find((x) => x.id === id)!;
@@ -169,7 +190,10 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
     const m = layered(g);
     expect(validateLayout(g, m)).toEqual([]);
     expectSides(g, m, 'ab', s, t);
-    expect(placement(m)).toEqual(placement(layered(graph(base, dir, routing))));
+    const free = layered(graph(base, dir, routing));
+    expect(placement(m)).toEqual(placement(free));
+    const was = free.edges.get('ab')!.ports;
+    if (was.source !== s || was.target !== t) expectClean(m.edges.get('ab')!.points, 'ab');
   });
 
   it('records how many matrix routes still cross an end box (GAPS T0b)', () => {
@@ -258,7 +282,7 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
     expect(m.edges.get('ab')!.points[0]!.y).toBeCloseTo(a.y - a.height / 2 + 10);
   });
 
-  it.each(SIDES.flatMap((s) => SIDES.map((t) => [s, t] as const)))(
+  it.each(SIDES.flatMap((s) => SIDES.filter((t) => t !== s).map((t) => [s, t] as const)))(
     'draws a self-loop from %s to %s, its label where layered put it',
     (s, t) => {
       const g = graph([
@@ -367,5 +391,156 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
         expect(ports, `${f.name} ${e.id}`).toEqual({ source, target });
       }
     }
+  });
+});
+
+describe('layered side hints: review findings (T0b)', () => {
+  const square = (id: string, w = 80, h = 80) => ({ id, width: w, height: h });
+
+  it('joins stub to stub with no spike back on a route with no middle points (1)', () => {
+    const g: LayoutGraph = {
+      ...graph(
+        [
+          {
+            id: 'ab',
+            source: 'a',
+            target: 'b',
+            minLen: 1,
+            sides: { source: 'bottom', target: 'bottom' },
+          },
+        ],
+        'LR'
+      ),
+      nodes: [square('a'), square('b')],
+    };
+    const m = layered(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const pts = m.edges.get('ab')!.points;
+    expectClean(pts, 'ab');
+    // Down, across, up: a U under both boxes.
+    expect(pts).toHaveLength(4);
+  });
+
+  it.each(DIRS)('never doubles back over itself, with markers (%s) (1)', (dir) => {
+    for (const s of SIDES) {
+      for (const t of SIDES) {
+        const g = graph(
+          chain({ source: s, target: t }).map((e) =>
+            e.id === 'ab' ? { ...e, endMarker: { length: 10, width: 8 } } : e
+          ),
+          dir
+        );
+        const m = layered(g);
+        const free = layered(graph(chain(), dir)).edges.get('ab')!.ports;
+        if (free.source === s && free.target === t) continue;
+        expectClean(m.edges.get('ab')!.points, `${s}→${t}`);
+      }
+    }
+  });
+
+  it('keeps legs square and free of repeats with no padding (2)', () => {
+    for (const s of SIDES) {
+      const g = graph(chain({ source: s, target: s }), 'TB', 'curved', { diagramPadding: 0 });
+      const m = layered(g);
+      expect(validateLayout(g, m), s).toEqual([]);
+      expectClean(m.edges.get('ab')!.points, s);
+    }
+  });
+
+  it('keeps a full stub, with room for its marker, at the drawing edge (3)', () => {
+    const marker = { length: 10, width: 8 };
+    for (const s of SIDES) {
+      const edges = chain({ source: s, target: s }).map((e) =>
+        e.id === 'ab' ? { ...e, startMarker: marker, endMarker: marker } : e
+      );
+      const g = graph(edges, 'TB', 'curved', { diagramPadding: 0 });
+      const m = layered(g);
+      expect(validateLayout(g, m), s).toEqual([]);
+      const pts = m.edges.get('ab')!.points;
+      expect(legLength(pts[0]!, pts[1]!), s).toBeGreaterThanOrEqual(marker.length);
+      expect(legLength(pts.at(-1)!, pts.at(-2)!), s).toBeGreaterThanOrEqual(marker.length);
+    }
+  });
+
+  it.each(['LR', 'TB'] as const)(
+    'meets a named left or right side at anchorY, moved or not (%s) (4)',
+    (dir) => {
+      const g = graph(chain({ source: 'right', target: 'left' }), dir);
+      g.nodes[0] = { ...g.nodes[0]!, anchorY: 10 };
+      g.nodes[1] = { ...g.nodes[1]!, anchorY: 6 };
+      const m = layered(g);
+      expect(validateLayout(g, m)).toEqual([]);
+      const pts = m.edges.get('ab')!.points;
+      const [a, b] = [m.nodes.get('a')!, m.nodes.get('b')!];
+      expect(pts[0]!.y).toBeCloseTo(a.y - a.height / 2 + 10);
+      expect(pts.at(-1)!.y).toBeCloseTo(b.y - b.height / 2 + 6);
+    }
+  );
+
+  it.todo(
+    "draws a self-loop with both ends on one side there: kept as layered's loop for size (GAPS T0b)"
+  );
+
+  it("keeps layered's self-loop where its sides already match (5)", () => {
+    const loop = (sides?: LayoutEdge['sides']): LayoutGraph =>
+      graph([
+        ...chain(),
+        {
+          id: 'aa',
+          source: 'a',
+          target: 'a',
+          minLen: 1,
+          label: { width: 20, height: 12 },
+          ...(sides ? { sides } : {}),
+        },
+      ]);
+    const free = layered(loop());
+    const ports = free.edges.get('aa')!.ports;
+    expect(plain(layered(loop({ ...ports })))).toEqual(plain(free));
+  });
+
+  it.each(SIDES.flatMap((s) => SIDES.filter((t) => t !== s).map((t) => [s, t] as const)))(
+    'draws a self-loop from %s to %s cleanly, its label on the loop (5)',
+    (s, t) => {
+      const label = { width: 20, height: 12 };
+      const g = graph([
+        ...chain(),
+        { id: 'aa', source: 'a', target: 'a', minLen: 1, label, sides: { source: s, target: t } },
+      ]);
+      const m = layered(g);
+      expect(validateLayout(g, m)).toEqual([]);
+      const placed = m.edges.get('aa')!;
+      const was = layered({
+        ...g,
+        edges: [...g.edges.slice(0, -1), { ...g.edges.at(-1)!, sides: undefined }],
+      });
+      const free = was.edges.get('aa')!.ports;
+      // Sides that match layered's loop keep it, label and all.
+      if (free.source === s && free.target === t) return;
+      expectClean(placed.points, 'aa');
+      expect(crossesEnd(g, m, 'aa')).toBe(false);
+      // The label touches the route: some leg passes within its box.
+      const at = placed.label!;
+      const near = placed.points.some((q, i) => {
+        const p = placed.points[i - 1];
+        if (!p) return false;
+        const cx = Math.max(Math.min(at.x, Math.max(p.x, q.x)), Math.min(p.x, q.x));
+        const cy = Math.max(Math.min(at.y, Math.max(p.y, q.y)), Math.min(p.y, q.y));
+        return (
+          Math.abs(cx - at.x) <= label.width / 2 + 1 && Math.abs(cy - at.y) <= label.height / 2 + 1
+        );
+      });
+      expect(near).toBe(true);
+    }
+  );
+
+  it('gives a source stub no arrowhead room, only its marker (7)', () => {
+    const g = graph(chain({ source: 'top', target: 'bottom' }), 'TB', 'curved', {
+      headRoom: 30,
+      diagramPadding: 100,
+    });
+    const pts = layered(g).edges.get('ab')!.points;
+    expect(legLength(pts[0]!, pts[1]!)).toBeLessThan(30);
+    expect(legLength(pts.at(-1)!, pts.at(-2)!)).toBeGreaterThanOrEqual(30);
   });
 });

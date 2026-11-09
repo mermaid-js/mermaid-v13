@@ -26,7 +26,7 @@ import {
 import { markerRect, type Rect } from './end-markers.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
-import { honourSides } from './sides.ts';
+import { honourSides, OUTWARD } from './sides.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -624,16 +624,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     groups,
     direction: rootDir,
   };
-  return grid ? laid : honourSides(graph, laid, M, margin); // sides are hints (D503)
+  return grid ? laid : honourSides(graph, laid, M, index, margin); // sides are hints (D503)
 }
-
-// The axis a side faces along, and which way is out of the box.
-const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
-  top: { axis: 'y', sign: -1 },
-  bottom: { axis: 'y', sign: 1 },
-  left: { axis: 'x', sign: -1 },
-  right: { axis: 'x', sign: 1 },
-};
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
 // leaves its end's side, `endLabelAlong` out from the side (the target's also past the
