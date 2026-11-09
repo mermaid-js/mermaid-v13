@@ -14,3 +14,8 @@ export const EVENTMODELING_UNKNOWN_DATA = 'EVENTMODELING_UNKNOWN_DATA';
 export const EVENTMODELING_UNKNOWN_FRAME = 'EVENTMODELING_UNKNOWN_FRAME';
 /** A frame id used twice (v12's thrown error, with its message). An error. */
 export const EVENTMODELING_DUPLICATE_FRAME = 'EVENTMODELING_DUPLICATE_FRAME';
+/**
+ * An `eventmodeling.padding` that is not a number of 0 or more: the layout uses v12's 30 (D226:
+ * never NaN, one warning). Not a D525 code: it changes nothing v12 would have drawn.
+ */
+export const EVENTMODELING_CONFIG_INVALID = 'EVENTMODELING_CONFIG_INVALID';

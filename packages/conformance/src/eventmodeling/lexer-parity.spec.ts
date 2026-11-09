@@ -181,7 +181,7 @@ describe('event modeling lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)
     expect(accepted).toEqual([]);
     expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
     expect(headerKept).toEqual([]);
-    expect(e2e).toBe(21);
+    expect(e2e).toBe(24);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

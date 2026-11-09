@@ -215,3 +215,67 @@ export function eventModelingV12Snapshot(dbValue: unknown): EventModelSnapshot {
     accDescr: converted(opt(db.getAccDescription()) ?? '', ACC_DESCR),
   };
 }
+
+// ---- v12's geometry, for the layout comparison (#604) ------------------------------------------
+
+/** v12's placement and relation segments, under the stub document's 0 × 1 px text. */
+export interface EventModelV12Geometry {
+  lanes: { index: number; y: number; height: number; width: number }[];
+  boxes: { frame: string; lane: number; x: number; y: number; width: number; height: number }[];
+  /** v12's `renderer.ts` segment for each relation: `[x1, y1, x2, y2]`. */
+  relations: { source: string; target: string; sameLane: boolean; points: number[] }[];
+}
+
+interface PlacedBoxV12 extends BoxV12 {
+  x: number;
+  dimension: { width: number; height: number };
+  swimlane: { index: number; y: number };
+}
+
+/**
+ * The boxes, lanes and relation segments of v12's `getState()` and `renderer.ts`: a box at
+ * `(x, swimlane.y + 15)`; a lane from x 0, `maxR + 15` wide; a relation from ⅔ of the source's
+ * width to ⅓ of the target's, bottom to top or top to bottom (`renderer.ts:62-100`).
+ */
+export function eventModelingV12Geometry(dbValue: unknown): EventModelV12Geometry {
+  const db = dbValue as EventModelingDbV12;
+  const state = withStubDocument(() => db.getState()) as unknown as {
+    boxes: PlacedBoxV12[];
+    relations: { sourceBox: PlacedBoxV12; targetBox: PlacedBoxV12 }[];
+    sortedSwimlanesArray: { index: number; y: number; height: number }[];
+    maxR: number;
+  };
+  const pad = 15;
+  return {
+    lanes: state.sortedSwimlanesArray.map((l) => ({
+      index: l.index,
+      y: l.y,
+      height: l.height,
+      width: state.maxR + pad,
+    })),
+    boxes: state.boxes.map((b) => ({
+      frame: b.frame.name,
+      lane: b.swimlane.index,
+      x: b.x,
+      y: b.swimlane.y + pad,
+      width: b.dimension.width,
+      height: b.dimension.height,
+    })),
+    relations: state.relations.map(({ sourceBox: s, targetBox: t }) => {
+      const sy = s.swimlane.y + pad;
+      const ty = t.swimlane.y + pad;
+      const up = sy > ty;
+      return {
+        source: s.frame.name,
+        target: t.frame.name,
+        sameLane: s.swimlane.index === t.swimlane.index,
+        points: [
+          s.x + (s.dimension.width * 2) / 3,
+          up ? sy : sy + s.dimension.height,
+          t.x + t.dimension.width / 3,
+          up ? ty + t.dimension.height : ty,
+        ],
+      };
+    }),
+  };
+}

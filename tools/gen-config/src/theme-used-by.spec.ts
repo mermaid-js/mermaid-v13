@@ -69,10 +69,10 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Event modeling until its renderer
- * (#606).
+ * must read none (so it is removed as soon as it reads one). Empty: event modeling's layout reads
+ * the font (#604).
  */
-const NOT_DRAWN_YET = new Set<string>(['eventmodeling']);
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
