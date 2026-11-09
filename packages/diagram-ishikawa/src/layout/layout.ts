@@ -100,28 +100,22 @@ export function layoutIshikawa(model: IshikawaModel, ctx: IshikawaLayoutContext)
 
   const pairs: IshikawaPairLayout[] = [];
   let spineX = causes.length > 0 ? m.firstPairX : 0;
-  const draw = {
-    font: fonts.label,
-    subWrap: m.subCauseWrap * scale,
-    measure,
-  };
+  const draw = { font: fonts.label, subWrap: m.subCauseWrap * scale, measure };
   for (let p = 0; p * 2 < causes.length; p++) {
-    const place = (x: number): IshikawaCauseLayout[] => {
-      const out: IshikawaCauseLayout[] = [];
-      for (const index of [p * 2, p * 2 + 1]) {
-        const cause = causes[index];
-        if (cause === undefined) continue;
-        const side: IshikawaSide = index % 2 === 0 ? 'upper' : 'lower';
-        out.push(placeCause(cause, index, side, sides[side], { x, y: spineY }, draw));
-      }
-      return out;
-    };
-    let laid = place(spineX);
-    const over = overHead(laid, head);
-    if (over > 0) {
-      spineX -= over;
-      laid = place(spineX);
-    }
+    // Measure first, then place: the start may move left off the head (`overHead`).
+    const members = [p * 2, p * 2 + 1].flatMap((index): Member[] => {
+      const cause = causes[index];
+      if (cause === undefined) return [];
+      const side: IshikawaSide = index % 2 === 0 ? 'upper' : 'lower';
+      const text = measure(cause.text, fonts.label, Infinity);
+      return [{ cause, index, side, length: sides[side], text }];
+    });
+    const at = (x: number): Point => ({ x, y: spineY });
+    spineX -= overHead(
+      members.map((mb) => causeBone(mb, at(spineX)).box),
+      head
+    );
+    const laid = members.map((mb) => placeCause(mb, at(spineX), draw));
     pairs.push({ x: spineX, causes: laid });
     let left = Infinity;
     for (const c of laid) {
@@ -148,9 +142,9 @@ export function layoutIshikawa(model: IshikawaModel, ctx: IshikawaLayoutContext)
  * they clear it. Fixed on the way: v12 started every first pair at −20 and so drew a short leaf
  * cause's box over the head; the pair now starts that much further left (GAPS #582).
  */
-function overHead(causes: readonly IshikawaCauseLayout[], head: IshikawaHead): number {
+function overHead(boxes: readonly Rect[], head: IshikawaHead): number {
   let over = 0;
-  for (const { box } of causes) {
+  for (const box of boxes) {
     if (box.y < head.bottom.y && box.y + box.height > head.top.y) {
       over = Math.max(over, box.x + box.width - head.x);
     }
@@ -325,17 +319,22 @@ interface CauseDraw {
   readonly measure: Measure;
 }
 
-/** A cause's bone from `start`, its boxed label, and its sub-causes (v12 `drawBranch`). */
-function placeCause(
-  cause: IshikawaCause,
-  index: number,
-  side: IshikawaSide,
-  length: number,
-  start: Point,
-  { font, subWrap, measure }: CauseDraw
-): IshikawaCauseLayout {
+/** A cause of a pair, its label measured. */
+interface Member {
+  readonly cause: IshikawaCause;
+  readonly index: number;
+  readonly side: IshikawaSide;
+  /** Its side's length. */
+  readonly length: number;
+  readonly text: MeasuredLabel;
+}
+
+/** A cause's bone from `start` and its boxed label. */
+function causeBone(
+  { cause, side, length, text }: Member,
+  start: Point
+): { seg: Segment; dy: number; label: PlacedLabel; box: Rect } {
   const dir = side === 'upper' ? -1 : 1;
-  const text = measure(cause.text, font, Infinity);
   // Fixed on the way: long enough that the label's box clears the spine (v12 drew a tall label
   // on a short bone across it).
   const clear = (text.height / 2 + m.boxPadY - m.labelOffset) / SIN;
@@ -350,6 +349,18 @@ function placeCause(
     width: label.width + 2 * m.boxPadX,
     height: label.height + 2 * m.boxPadY,
   };
+  return { seg, dy, label, box };
+}
+
+/** A cause's bone from `start`, its boxed label, and its sub-causes (v12 `drawBranch`). */
+function placeCause(
+  member: Member,
+  start: Point,
+  { font, subWrap, measure }: CauseDraw
+): IshikawaCauseLayout {
+  const { cause, index, side } = member;
+  const dir = side === 'upper' ? -1 : 1;
+  const { seg, dy, label, box } = causeBone(member, start);
 
   const { entries, order } = flatten(cause, side);
   const ys: number[] = new Array<number>(entries.length).fill(start.y);
