@@ -1,0 +1,379 @@
+{
+  "tokenPostfix": ".mermaid-eventmodeling",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia0": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "spanRule45": [
+      [
+        "\\*\\/",
+        {
+          "token": "comment",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\*\\/)[\\s\\S])+",
+        {
+          "token": "comment"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia0"
+        }
+      ],
+      [
+        "eventmodeling(?=\\s|%%|$)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "resetframe(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "readmodel(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "processor(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "timeframe(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "command(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "entity(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "event(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "jsobj(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "figma(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "given(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "json(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "salt(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "html(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "text(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "data(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "note(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "when(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "then(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "rmo(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "cmd(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "evt(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "pcr(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "uri(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "->>",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "gwt(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "ui(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "md(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "tf(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\[\\[",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\]\\]",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "rf(?!\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "`",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\.",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "[_a-zA-Z][\\w_]*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\d{1,3}",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "\\{(.*)\\}|\"(.*)\"|'(.*)'",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "\\{[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?\\}(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "[\\t ]*accDescr(?:[\\t ]*:([^\\n\\r]*?(?=%%)|[^\\n\\r]*)|\\s*\\{([^}]*)\\})",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\s+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[\\t ]*%%[^\\n\\r]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "\\/\\*",
+        {
+          "token": "comment",
+          "next": "@spanRule45"
+        }
+      ],
+      [
+        "\\/\\/[^\\n\\r]*",
+        {
+          "token": "comment"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

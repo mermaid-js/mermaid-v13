@@ -1,0 +1,6 @@
+eventmodeling
+tf 01 ui Screen ->> 01
+tf 02 cmd Submit ->> 05 ->> 01
+tf 03 evt Done ->> 02 ->> 02
+tf 04 rmo View ->> 03 ->> 01 ->> 09
+tf 05 evt Late ->> 04

@@ -674,5 +674,113 @@
   {
     "id": "eventmodeling-cases/full",
     "source": "eventmodeling\ntitle ignored\ntf 01 ui CartScreen\ntf 02 cmd AddItem ->> 01 { productId: 7 }\ntf 03 evt ItemAdded ->> 02 [[ItemAddedData]]\nrf 04 rmo Cart.Items ->> 03\n\ndata ItemAddedData {\n  productId: 7\n}\nnote 02 {\n  A note\n}\ngwt 03 given evt ItemAdded when cmd AddItem then evt ItemAdded"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-id",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd Command\ntf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-reset",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd Command\nrf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-after-front-matter",
+    "source": "---\ntitle: T\n---\neventmodeling\ntf 01 ui UI\ntf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-after-comment",
+    "source": "eventmodeling\n  tf 01 ui UI\n  %% This comment occupies a source line.\n  rf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-three",
+    "source": "eventmodeling\ntf 7 ui A\ntf 7 cmd B\ntf 7 evt C"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-no-then",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A when evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-no-given",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 when evt A then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-step-no-name",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-qualified-step",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt Ns.A then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-inline",
+    "source": "eventmodeling\ntf 01 evt A [[D]]\ndata D { x: 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-note-inline",
+    "source": "eventmodeling\ntf 01 evt A\nnote 01 { x }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-unclosed",
+    "source": "eventmodeling\ntf 01 evt A [[D\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-qualified",
+    "source": "eventmodeling\ntf 01 evt A [[D.E]]"
+  },
+  {
+    "id": "eventmodeling-cases/parser-arrow-no-id",
+    "source": "eventmodeling\ntf 01 evt A ->>\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-arrow-name",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 evt B ->> A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-second-header",
+    "source": "eventmodeling\ntf 01 evt A\neventmodeling\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-typed-block-on-frame",
+    "source": "eventmodeling\ntf 01 evt A `json` {\n  a: 1\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-type-no-data",
+    "source": "eventmodeling\ntf 01 evt A `json`\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-type-unknown",
+    "source": "eventmodeling\ntf 01 evt A `yaml` { a: 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-entity-no-name",
+    "source": "eventmodeling\nentity\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-frame-no-kind",
+    "source": "eventmodeling\ntf 01 A\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-kind-as-name",
+    "source": "eventmodeling\ntf 01 evt cmd"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-no-name",
+    "source": "eventmodeling\ndata {\n  a\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-before-arrow",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 evt B [[D]] ->> 01"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-before-ref",
+    "source": "eventmodeling\ntf 01 evt A { a } [[D]]"
+  },
+  {
+    "id": "eventmodeling-cases/parser-note-no-frame",
+    "source": "eventmodeling\ntf 01 evt A\nnote A {\n  x\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-frame-id-name",
+    "source": "eventmodeling\ntf 01 evt A\ntf A evt B"
   }
 ]
