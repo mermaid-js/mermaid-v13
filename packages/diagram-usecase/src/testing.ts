@@ -13,3 +13,4 @@ export {
   usecaseView,
 } from './parser/index.ts';
 export type { UsecaseToken, UsecaseView } from './parser/index.ts';
+export { usecaseLayoutProblems } from './layout/invariants.ts';
