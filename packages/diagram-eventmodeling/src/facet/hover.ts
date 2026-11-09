@@ -1,3 +1,4 @@
+// cspell:words gwts
 /**
  * Event modeling hover (DESIGN §4.5, D93, spec #527 "Language facet (T6)"). A frame id, where
  * it is declared or referred to, shows the frame's kind and name, its lane, and its resolved
