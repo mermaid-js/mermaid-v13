@@ -40,6 +40,20 @@ const all = (): boolean => true;
 /** A package with its plugin manifest: the published-package lists name only these. */
 const plugin = (d: WorkspaceDiagram): boolean => d.manifest !== undefined;
 const withLanguage = (d: WorkspaceDiagram): boolean => d.manifest?.language !== undefined;
+/**
+ * A package whose facet the language service's own specs can load: a manifest with
+ * `language`, or a pre-manifest package (its T6 before its T5) whose package.json exports
+ * `./language`, which a test-only `UNLISTED_FACETS` row imports. The facet table and the
+ * published peers wait for the manifest.
+ */
+const withFacetForSpecs = (d: WorkspaceDiagram, root: string): boolean => {
+  if (withLanguage(d)) return true;
+  if (d.manifest !== undefined) return false;
+  const pkg = JSON.parse(readFileSync(join(root, d.dir, 'package.json'), 'utf8')) as {
+    exports?: unknown;
+  };
+  return typeof pkg.exports === 'object' && pkg.exports !== null && './language' in pkg.exports;
+};
 
 /** The diagram packages named by an import in `dir`'s sources (its own per-diagram specs). */
 function importedBy(dir: string): (d: WorkspaceDiagram, root: string) => boolean {
@@ -73,11 +87,13 @@ export const DEPENDENCY_RULES: readonly DependencyRule[] = [
   // The public package bundles every diagram (the CDN build and `mermaid`'s registry).
   { pkg: 'packages/mermaid', field: 'dependencies', value: 'workspace:*', select: plugin },
   // The language service loads each type's `/language` facet; the diagrams are optional peers.
+  // Its specs also load a pre-manifest package's facet (`withFacetForSpecs`), a dev dependency
+  // only.
   {
     pkg: 'packages/language-service',
     field: 'devDependencies',
     value: 'workspace:*',
-    select: withLanguage,
+    select: withFacetForSpecs,
   },
   {
     pkg: 'packages/language-service',
