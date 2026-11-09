@@ -1,10 +1,10 @@
 # Run notes, spec #518 (M5b treeView, `@mermaid-js/diagram-treeview`)
 
-Integration branch `feature/518_treeview`, cut from `mermaid-v13` at `521fb76ee` (M5a merged, D546). Worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/518-treeview-e1abe2`. Machine: AI-Max (seven wave-3 ports share it; the coordinator runs on Office-max).
+Integration branch `feature/518_treeview` (draft PR #627), cut from `mermaid-v13` at `521fb76ee` (M5a merged, D546). Worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/518-treeview-e1abe2`. Machine: AI-Max (seven wave-3 ports share it; the coordinator runs on Office-max).
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate, box-drawing pass and corpus | #571 | — | open |
+| T1 lexer parity gate, box-drawing pass and corpus | #571 | — | merged (--no-ff; `./testing` 4.4 KB gz, no core change) |
 | T2 grammar, parser, model, AST | #572 | #571 | open |
 | T3 custom row layout (`TreeViewLayout`) | #573 | #572 (soft) | open |
 | T4 SVG renderer, icons and theme table | #575 | #572, #573 | open |
