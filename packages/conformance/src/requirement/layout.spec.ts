@@ -10,12 +10,23 @@ import {
 } from '@mermaid-js/core/layout';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, isThemeName, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
+  createTheme,
+  isThemeName,
+  loadTheme,
+  THEME_NAMES,
+  type Theme,
+} from '@mermaid-js/core/theme';
+import {
+  CLASSIC_MARKERS,
   layoutRequirement,
-  MARKER_ROOM,
+  markerGeometry,
+  markerRoom,
   parseRequirement,
+  requirement,
   REQUIREMENT_METRICS,
+  type MarkerExtent,
+  type MarkerGeometry,
   type RequirementLayout,
   type RequirementModel,
 } from '@mermaid-js/diagram-requirement';
@@ -52,7 +63,11 @@ beforeAll(async () => {
     const name =
       typeof config.theme === 'string' && isThemeName(config.theme) ? config.theme : 'default';
     let theme = themes.get(name);
-    if (!theme) themes.set(name, (theme = createTheme(await loadTheme(name))));
+    if (!theme)
+      themes.set(
+        name,
+        (theme = createTheme(await loadTheme(name), { diagram: requirement.theme }))
+      );
     fixtures.push({ id: item.id, model: parse.model, config, theme });
   }
 }, 60_000);
@@ -104,14 +119,14 @@ const onOutline = (r: Rect, p: Point): boolean =>
 
 /**
  * The box a marker is drawn in: from the line's end on the outline out along its first leg,
- * `MARKER_ROOM.length` long and `MARKER_ROOM.width` across, centred on the line.
+ * `room.length` long and `room.width` across, centred on the line.
  */
-function markerRect(end: Point, next: Point): Rect {
+function markerRect(end: Point, next: Point, room: MarkerExtent): Rect {
   const len = Math.hypot(next.x - end.x, next.y - end.y) || 1;
   const dx = (next.x - end.x) / len;
   const dy = (next.y - end.y) / len;
-  const h = MARKER_ROOM.width / 2;
-  const reach = MARKER_ROOM.length;
+  const h = room.width / 2;
+  const reach = room.length;
   const xs = [
     end.x - dy * h,
     end.x + dy * h,
@@ -128,14 +143,18 @@ function markerRect(end: Point, next: Point): Rect {
 }
 
 /**
- * The corners of a classic marker as v12 draws it, stroke included, in its own frame: `d` out
- * from the outline along the line, `s` across it. The chevron is two butt-capped strokes from
- * the tip on the outline to `(length, ±width/2)`; the `contains` circle's square (its plus lies
- * inside it).
+ * The corners of a marker as the renderer draws it under `g`, stroke included, in its own
+ * frame: `d` out from the outline along the line, `s` across it. The chevron is two
+ * butt-capped strokes from the tip on the outline to `(length, ±width/2)`, scaled with its
+ * stroke by `g.arrowScale`; the `contains` circle's square (its plus lies inside it).
  */
-function drawnMarker(marker: 'contains' | 'arrow'): [d: number, s: number][] {
+function drawnMarker(
+  marker: 'contains' | 'arrow',
+  g: MarkerGeometry = CLASSIC_MARKERS
+): [d: number, s: number][] {
   const M = REQUIREMENT_METRICS;
-  const half = M.markerStroke / 2;
+  const k = marker === 'arrow' ? g.arrowScale : 1;
+  const half = (g.stroke * k) / 2;
   if (marker === 'contains') {
     const { cx, r } = M.circle;
     const o = r + half;
@@ -148,7 +167,7 @@ function drawnMarker(marker: 'contains' | 'arrow'): [d: number, s: number][] {
   }
   const out: [number, number][] = [];
   for (const side of [-1, 1]) {
-    const back: [number, number] = [M.chevron.length, (side * M.chevron.width) / 2];
+    const back: [number, number] = [M.chevron.length * k, (side * M.chevron.width * k) / 2];
     const leg = Math.hypot(...back);
     // A butt cap: half the stroke each way, square to the leg.
     const n = [(-back[1] / leg) * half, (back[0] / leg) * half] as const;
@@ -159,11 +178,11 @@ function drawnMarker(marker: 'contains' | 'arrow'): [d: number, s: number][] {
 }
 
 /** The page box of a drawn marker at `end`, pointing away from it towards `next`. */
-function drawnRect(marker: 'contains' | 'arrow', end: Point, next: Point): Rect {
+function drawnRect(marker: 'contains' | 'arrow', end: Point, next: Point, g: MarkerGeometry): Rect {
   const len = Math.hypot(next.x - end.x, next.y - end.y) || 1;
   const dx = (next.x - end.x) / len;
   const dy = (next.y - end.y) / len;
-  const pts = drawnMarker(marker).map(([d, a]) => [
+  const pts = drawnMarker(marker, g).map(([d, a]) => [
     end.x + dx * d - dy * a,
     end.y + dy * d + dx * a,
   ]);
@@ -216,8 +235,8 @@ function problems(layout: RequirementLayout): string[] {
     if (!onOutline(from, pts[0]!)) out.push(`relation '${e.id}' does not start on its outline`);
     if (!onOutline(to, pts.at(-1)!)) out.push(`relation '${e.id}' does not end on its outline`);
     const [end, next] = e.markerAt === 'source' ? [pts[0]!, pts[1]!] : [pts.at(-1)!, pts.at(-2)!];
-    const room = markerRect(end, next);
-    const drawn = drawnRect(e.marker, end, next);
+    const room = markerRect(end, next, markerRoom(p.markers));
+    const drawn = drawnRect(e.marker, end, next, p.markers);
     for (const [id, r] of boxes) {
       if (overlaps(room, r)) out.push(`the marker room of '${e.id}' overlaps box '${id}'`);
       if (overlaps(drawn, r)) out.push(`the marker of '${e.id}' overlaps box '${id}'`);
@@ -231,15 +250,40 @@ function problems(layout: RequirementLayout): string[] {
 }
 
 describe('requirement layout over parser-produced fixtures', () => {
-  it('reserves room that holds each marker as drawn, stroke included', () => {
-    for (const marker of ['contains', 'arrow'] as const) {
-      for (const [d, a] of drawnMarker(marker)) {
-        // The chevron's tip caps poke 0.22 into the box, inside the outline's slack.
-        expect(d, marker).toBeGreaterThanOrEqual(-SLACK);
-        expect(d, marker).toBeLessThanOrEqual(MARKER_ROOM.length);
-        expect(Math.abs(a), marker).toBeLessThanOrEqual(MARKER_ROOM.width / 2);
+  it("reserves room from each theme's marker tokens that holds each marker as drawn", async () => {
+    /** The room holds every corner, and is the largest corner rounded up. */
+    const check = (g: MarkerGeometry, what: string): void => {
+      const room = markerRoom(g);
+      let far = 0;
+      let wide = 0;
+      for (const marker of ['contains', 'arrow'] as const) {
+        for (const [d, a] of drawnMarker(marker, g)) {
+          // The chevron's tip caps poke a little into the box: less than half its stroke.
+          expect(d, `${what} ${marker}`).toBeGreaterThanOrEqual(-(g.stroke * g.arrowScale) / 2);
+          expect(d, `${what} ${marker}`).toBeLessThanOrEqual(room.length);
+          expect(Math.abs(a), `${what} ${marker}`).toBeLessThanOrEqual(room.width / 2);
+          far = Math.max(far, d);
+          wide = Math.max(wide, 2 * Math.abs(a));
+        }
+      }
+      expect(room, what).toEqual({ length: Math.ceil(far - 1e-9), width: Math.ceil(wide - 1e-9) });
+    };
+    const rooms = new Map<string, MarkerExtent>();
+    for (const name of THEME_NAMES) {
+      const theme = createTheme(await loadTheme(name), { diagram: requirement.theme });
+      check(markerGeometry(theme), name);
+      rooms.set(name, markerRoom(markerGeometry(theme)));
+      // A larger strokeWidth: the neo markers widen with it, and the room with them.
+      for (const strokeWidth of [3, 6, 20]) {
+        const wide = createTheme(await loadTheme(name), {
+          diagram: requirement.theme,
+          themeVariables: { strokeWidth },
+        });
+        check(markerGeometry(wide), `${name} strokeWidth ${strokeWidth}`);
       }
     }
+    expect(rooms.get('default')).toEqual({ length: 21, width: 21 });
+    expect(rooms.get('neo')).toEqual({ length: 20, width: 20 });
     // The chevron's caps reach past its 20 × 20: 20.22 out, 20.89 across.
     const arrow = drawnMarker('arrow');
     expect(Math.max(...arrow.map(([d]) => d))).toBeCloseTo(20.2236, 3);

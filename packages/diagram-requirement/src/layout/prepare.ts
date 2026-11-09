@@ -19,7 +19,13 @@ import {
 } from '@mermaid-js/core/text';
 import type { Element, Relation, Requirement, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
-import { MARKER_ROOM, REQUIREMENT_METRICS as M } from './metrics.ts';
+import {
+  markerGeometry,
+  markerRoom,
+  REQUIREMENT_METRICS as M,
+  type MarkerExtent,
+  type MarkerGeometry,
+} from './metrics.ts';
 
 /** What a box's line shows: the kind, the name, or one body field. */
 export type LinePart =
@@ -100,6 +106,10 @@ export interface RequirementPrepared {
   readonly relations: readonly RelationView[];
   /** `flowchart.curve`, `rounded` when unset; the graph's `routing` follows it. */
   readonly curve: RequirementCurve;
+  /** The theme's marker geometry, which the room was sized for and the renderer draws. */
+  readonly markers: MarkerGeometry;
+  /** The front-matter title (D218), as plain text in the theme's font; unset without one. */
+  readonly title?: MeasuredLabel;
 }
 
 /** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
@@ -134,10 +144,10 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 
 /** `<<text>>`, as v12 wrote it (entities, decoded by the label layout). */
-const angled = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
+export const angled = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
 
 /** v12's head and body lines, in order: an empty field draws nothing. */
-function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
+export function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
   const [kind, fields]: [string, [LinePart, string, string][]] =
     of.kind === 'requirement'
       ? [
@@ -221,12 +231,12 @@ function boxView(of: BoxOf, { font, measure, styleOf }: BoxEnv): BoxView {
 }
 
 /** The engine metrics: self-loops and edge ends along a side sized for the markers. */
-function requirementMetrics(): LayoutMetrics {
+function requirementMetrics(room: MarkerExtent): LayoutMetrics {
   const m = pxProfile.engine;
   return {
     ...m,
-    loop: Math.max(m.loop, MARKER_ROOM.length + m.loopGap),
-    portPitch: Math.max(m.portPitch, MARKER_ROOM.width + m.minPitch),
+    loop: Math.max(m.loop, room.length + m.loopGap),
+    portPitch: Math.max(m.portPitch, room.width + m.minPitch),
   };
 }
 
@@ -273,7 +283,8 @@ export function prepareRequirement(
   }
   const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded');
   const b = pxProfile.builder;
-  const room = { length: MARKER_ROOM.length, width: MARKER_ROOM.width };
+  const markers = markerGeometry(theme);
+  const room = markerRoom(markers);
   const graph: LayoutGraph = {
     direction: model.direction,
     nodes: boxes.map(
@@ -286,15 +297,24 @@ export function prepareRequirement(
         target: e.target,
         minLen: 1,
         label: { width: e.label.width + b.labelPatch.x, height: e.label.height + b.labelPatch.y },
-        ...(e.markerAt === 'source' ? { startMarker: room } : { endMarker: room }),
+        ...(e.markerAt === 'source' ? { startMarker: { ...room } } : { endMarker: { ...room } }),
       })
     ),
     groups: [],
     spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
     diagramPadding: M.viewBoxPadding,
     routing: ROUTING[curve] ?? 'stepped',
-    headRoom: MARKER_ROOM.length,
-    metrics: requirementMetrics(),
+    headRoom: room.length,
+    metrics: requirementMetrics(room),
   };
-  return { graph, boxes, relations, curve };
+  // v12 `insertTitle` writes the title as plain text in the diagram's font.
+  const title = model.title?.trim();
+  return {
+    graph,
+    boxes,
+    relations,
+    curve,
+    markers,
+    ...(title ? { title: layoutLabel(title, font, Infinity, measurer) } : {}),
+  };
 }

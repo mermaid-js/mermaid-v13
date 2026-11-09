@@ -205,3 +205,8 @@ pkbw
 pkbz
 pklz
 pktz
+rqas
+rqlb
+rqlc
+rqmw
+rqrc

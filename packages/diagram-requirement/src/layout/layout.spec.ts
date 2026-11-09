@@ -3,13 +3,16 @@ import { CORE_DEFAULTS, resolveConfig, type MermaidConfig } from '@mermaid-js/co
 import { layered, type LayoutGraph } from '@mermaid-js/core/layout';
 import { LimitError } from '@mermaid-js/core/limits';
 import { Style, tableMeasurer, type FontKey, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { parseRequirement } from '../index.ts';
 import type { RequirementModel } from '../model.ts';
 import { layoutRequirement, type RequirementLayout } from './layout.ts';
 import type { RequirementRenderContext } from './context.ts';
+import { theme as table } from '../theme/table.ts';
 
-const theme = createTheme(await loadTheme('default'));
+const themed = async (name: string, themeVariables?: Record<string, unknown>): Promise<Theme> =>
+  createTheme(await loadTheme(name as 'default'), { diagram: table, themeVariables });
+const theme = await themed('default');
 const font: FontKey = {
   family: theme.value('fontFamily'),
   size: theme.number('fontSize'),
@@ -28,13 +31,14 @@ function modelOf(src: string): RequirementModel {
 function lay(
   src: string | RequirementModel,
   init?: MermaidConfig,
-  measurer: Measurer = tableMeasurer
+  measurer: Measurer = tableMeasurer,
+  t: Theme = theme
 ): { graph: LayoutGraph; layout: RequirementLayout } {
   let graph: LayoutGraph | undefined;
   const ctx: RequirementRenderContext = {
     config: resolveConfig(CORE_DEFAULTS, init),
     measurer,
-    theme,
+    theme: t,
     warn: () => {},
     layout: (g) => layered((graph = g)),
   };
@@ -176,6 +180,36 @@ describe('relations', () => {
     expect(graph.edges[1]!.endMarker).toEqual({ length: 21, width: 21 });
     expect(graph.headRoom).toBe(21);
     expect(graph.edges[0]!.label!.width).toBeGreaterThan(width('<<contains>>'));
+  });
+
+  it("sizes the marker room from the theme's marker tokens, wider strokes included", async () => {
+    const src =
+      'requirementDiagram\nrequirement a {\n}\nrequirement b {\n}\na - contains -> b\na - traces -> b\n';
+    const room = async (name: string, vars?: Record<string, unknown>) => {
+      const { graph } = lay(src, undefined, tableMeasurer, await themed(name, vars));
+      return [graph.edges[0]!.startMarker, graph.edges[1]!.endMarker, graph.headRoom];
+    };
+    // Classic: the 1px chevron, 20.22 out and 20.89 across, rounded up.
+    expect(await room('forest')).toEqual([
+      { length: 21, width: 21 },
+      { length: 21, width: 21 },
+      21,
+    ]);
+    // Neo: the r 9 circle with a 2px stroke is 20 × 20; the 0.8 chevron is smaller.
+    expect(await room('neo')).toEqual([{ length: 20, width: 20 }, { length: 20, width: 20 }, 20]);
+    // A 6px strokeWidth: the circle reaches 10 + 9 + 3 out and 18 + 6 across.
+    expect(await room('redux', { strokeWidth: 6 })).toEqual([
+      { length: 22, width: 24 },
+      { length: 22, width: 24 },
+      22,
+    ]);
+    // Past 8px the marker strokes stop growing, and so does the room.
+    expect(await room('redux', { strokeWidth: 500 })).toEqual(
+      await room('redux', { strokeWidth: 8 })
+    );
+    const prepared = lay(src, undefined, tableMeasurer, await themed('redux', { strokeWidth: 500 }))
+      .layout.requirement!;
+    expect(prepared.markers).toEqual({ stroke: 8, arrowScale: 0.8 });
   });
 
   it('leaves relations to unknown names out of the layout (D434)', () => {

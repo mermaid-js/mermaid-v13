@@ -11,5 +11,11 @@ export type {
   RequirementPrepared,
 } from './prepare.ts';
 export { prepareRequirement, requirementCurve } from './prepare.ts';
-export { MARKER_ROOM, markerExtent, REQUIREMENT_METRICS } from './metrics.ts';
-export type { MarkerExtent } from './metrics.ts';
+export {
+  CLASSIC_MARKERS,
+  markerExtent,
+  markerGeometry,
+  markerRoom,
+  REQUIREMENT_METRICS,
+} from './metrics.ts';
+export type { MarkerExtent, MarkerGeometry } from './metrics.ts';

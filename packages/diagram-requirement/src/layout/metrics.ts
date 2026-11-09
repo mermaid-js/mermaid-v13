@@ -33,12 +33,20 @@ export const REQUIREMENT_METRICS = Object.freeze({
   circle: Object.freeze({ cx: 10, r: 9 }),
   /** The classic marker strokes' width (butt caps, as v12's paths). */
   markerStroke: 1,
+  /**
+   * The most a theme's marker stroke (`relationMarkerStrokeWidth`) and chevron scale
+   * (`relationArrowScale`) are taken at, so the room they give stays bounded.
+   */
+  maxMarkerStroke: 8,
+  maxArrowScale: 2,
   /** Between boxes in a rank, and between ranks (requirement has no spacing keys). */
   spacing: Object.freeze({ node: 50, rank: 50 }),
   /** Above the front-matter title (`state.titleTopMargin ?? 25`). */
   titleMargin: 25,
   /** Around the drawing (`setupViewPortForSVG(svg, 8, …)`). */
   viewBoxPadding: 8,
+  /** Room left and right of a relation label on its chip (ER's and the flowchart's). */
+  labelPad: 4,
   /** A font size a style sets is taken below this, in px (ER's cap). */
   maxFontSize: 1000,
 });
@@ -52,19 +60,58 @@ export interface MarkerExtent {
 }
 
 /**
- * The drawn extent of each classic marker, stroke included. The chevron is two butt-capped
- * strokes from the tip on the outline to `(length, ±width/2)`, each `leg` long: each cap sticks
- * out half the stroke square to its leg, so the chevron reaches `stroke/2 · (width/2) / leg` past
- * its back and is `stroke · length / leg` wider across (20.22 × 20.89 at a 1 px stroke; its tip
- * pokes the same 0.22 into the box). The `contains` circle reaches its centre plus its radius
- * and half the stroke; its plus lies inside it.
+ * How one render draws the markers (spec #520 T4, D152): the strokes' width, and the scale of
+ * the chevron and its stroke. v12 classic drew both markers at 1 and its 1px line, v12 neo with
+ * `strokeWidth` strokes in user space and the chevron at 0.8 (`viewBox 0 0 25 20` in a 20 × 20
+ * marker); the families' tokens carry each (`relationMarkerStrokeWidth`, `relationArrowScale`).
  */
-export function markerExtent(marker: 'contains' | 'arrow', stroke = M.markerStroke): MarkerExtent {
+export interface MarkerGeometry {
+  readonly stroke: number;
+  readonly arrowScale: number;
+}
+
+/** v12 classic's markers. */
+export const CLASSIC_MARKERS: MarkerGeometry = Object.freeze({
+  stroke: M.markerStroke,
+  arrowScale: 1,
+});
+
+const within = (v: number, max: number, fallback: number): number =>
+  Number.isFinite(v) && v >= 0 ? Math.min(v, max) : fallback;
+
+/**
+ * The marker geometry a theme gives (`relationMarkerStrokeWidth`, `relationArrowScale`), each
+ * taken at no more than its cap; a chevron scale of 0 draws v12's.
+ */
+export function markerGeometry(theme: { number(name: string): number }): MarkerGeometry {
+  const scale = theme.number('relationArrowScale');
+  return {
+    stroke: within(theme.number('relationMarkerStrokeWidth'), M.maxMarkerStroke, M.markerStroke),
+    arrowScale: scale > 0 ? within(scale, M.maxArrowScale, 1) : 1,
+  };
+}
+
+/**
+ * The drawn extent of a marker, stroke included. The chevron is two butt-capped strokes from
+ * the tip on the outline to `(length, ±width/2)`, all scaled by `arrowScale` (its stroke too),
+ * each `leg` long: each cap sticks out half the stroke square to its leg, so the chevron reaches
+ * `stroke/2 · (width/2) / leg` past its back and is `stroke · length / leg` wider across
+ * (20.22 × 20.89 at v12 classic's 1px; its tip pokes the same 0.22 into the box). The `contains`
+ * circle reaches its centre plus its radius and half the stroke; its plus lies inside it, and it
+ * is never scaled (v12 neo drew it at r 9).
+ */
+export function markerExtent(
+  marker: 'contains' | 'arrow',
+  g: MarkerGeometry = CLASSIC_MARKERS
+): MarkerExtent {
   if (marker === 'contains') {
-    const r = M.circle.r + stroke / 2;
+    const r = M.circle.r + g.stroke / 2;
     return { length: M.circle.cx + r, width: 2 * r };
   }
-  const { length, width } = M.chevron;
+  const k = g.arrowScale;
+  const length = M.chevron.length * k;
+  const width = M.chevron.width * k;
+  const stroke = g.stroke * k;
   const leg = Math.hypot(length, width / 2);
   return {
     length: length + ((stroke / 2) * (width / 2)) / leg,
@@ -74,11 +121,15 @@ export function markerExtent(marker: 'contains' | 'arrow', stroke = M.markerStro
 
 /**
  * The room a marker takes out from its box along the line, and across it: the larger drawn
- * extent of the two classic markers (`markerExtent`), rounded up to 21 × 21. A constant, as
- * flowchart's and class's head room (D154), so the layout never moves with a theme; T4 moves it
- * to the family tokens (GAPS #574).
+ * extent of the two markers under the render's geometry, rounded up (spec #520: "marker room
+ * comes from the family tokens"). Classic themes give 21 × 21, redux and neo 20 × 20 (the r 9
+ * circle with its 2px stroke); a wider `strokeWidth` widens the room with the strokes, up to
+ * the cap.
  */
-export const MARKER_ROOM: MarkerExtent = Object.freeze({
-  length: Math.ceil(Math.max(markerExtent('arrow').length, markerExtent('contains').length)),
-  width: Math.ceil(Math.max(markerExtent('arrow').width, markerExtent('contains').width)),
-});
+export function markerRoom(g: MarkerGeometry = CLASSIC_MARKERS): MarkerExtent {
+  const a = markerExtent('arrow', g);
+  const c = markerExtent('contains', g);
+  // Rounded to 1e-9 first, so 20 computed as 20.000000000000004 stays 20.
+  const up = (v: number): number => Math.ceil(Math.round(v * 1e9) / 1e9);
+  return { length: up(Math.max(a.length, c.length)), width: up(Math.max(a.width, c.width)) };
+}
