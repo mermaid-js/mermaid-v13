@@ -73,8 +73,8 @@ const MINIMUM: Readonly<Record<LengthKey, number>> = {
   usecaseFontSize: 1,
 };
 
-/** Lengths at or above this are not taken (the cap every graph port has). */
-const MAX = 1e4;
+/** Lengths at or above this are not taken (the cap every graph port has); styled font sizes too. */
+export const MAX_LENGTH = 1e4;
 
 /** A whole decimal number, spaces around it allowed: `"20"`, `" 2.5 "`; not `"20px"`. */
 const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
@@ -89,10 +89,16 @@ export interface ConfigWarning {
   readonly path: string;
 }
 
-function weightOf(value: string): number {
+/**
+ * A CSS `font-weight` (the config's or a style's) as the number a label is measured with:
+ * `bold`/`bolder` 700, `normal`/`lighter` 400 (the measurer only tells bold from not), a whole
+ * number as itself; undefined for anything else (`inherit`, …), which keeps the font's own.
+ */
+export function fontWeight(value: unknown): number | undefined {
   if (value === 'bold' || value === 'bolder') return FONT_WEIGHT.bold;
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0 ? n : FONT_WEIGHT.normal;
+  if (value === 'normal' || value === 'lighter') return FONT_WEIGHT.normal;
+  const n = typeof value === 'number' || typeof value === 'string' ? Number(value) : Number.NaN;
+  return Number.isInteger(n) && n > 0 ? n : undefined;
 }
 
 /** The layout's options from the resolved `usecase` section, warning once per key not taken. */
@@ -112,7 +118,8 @@ export function usecaseLayoutConfig(
     const fallback = USECASE_CONFIG_DEFAULTS[key];
     if (value === undefined) return fallback;
     const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
-    if (typeof n === 'number' && Number.isFinite(n) && n >= MINIMUM[key] && n < MAX) return n;
+    if (typeof n === 'number' && Number.isFinite(n) && n >= MINIMUM[key] && n < MAX_LENGTH)
+      return n;
     ignored(key, String(fallback));
     return fallback;
   };
@@ -130,10 +137,10 @@ export function usecaseLayoutConfig(
       else ignored(familyKey, "the theme's fontFamily");
     }
     const w = given[weightKey];
-    let weight = weightOf(USECASE_CONFIG_DEFAULTS[weightKey]);
+    let weight = fontWeight(USECASE_CONFIG_DEFAULTS[weightKey]) ?? FONT_WEIGHT.normal;
     if (w !== undefined) {
       const text = typeof w === 'number' ? String(w) : w;
-      if (typeof text === 'string' && WEIGHT.test(text)) weight = weightOf(text);
+      if (typeof text === 'string' && WEIGHT.test(text)) weight = fontWeight(text) ?? weight;
       else ignored(weightKey, USECASE_CONFIG_DEFAULTS[weightKey]);
     }
     return {

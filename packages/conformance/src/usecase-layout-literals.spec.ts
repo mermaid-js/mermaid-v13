@@ -13,7 +13,7 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '2': 'both sides of a box; halving; squaring',
   '4': 'the quadratic formula (where a line meets the oval)',
   '0.5': "the half-pixel slack of the invariant checks (core validateLayout's)",
-  '1e4': 'the cap on a font size taken from a style',
+  '1e-9': 'the float tolerance of a step along a segment (clip.ts)',
 };
 
 /** The numeric literals in TypeScript source, outside comments and strings. */

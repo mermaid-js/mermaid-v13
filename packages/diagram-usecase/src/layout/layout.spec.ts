@@ -135,7 +135,7 @@ describe('boundaries, notes and edges', () => {
       { id: 'note:1-edge', source: 'note:1', target: 'usecase:A', minLen: 1 },
     ]);
     const e = out.usecase!.edges[0]!;
-    expect([e.kind, e.dotted, e.label]).toEqual(['note', true, undefined]);
+    expect([e.kind, e.dotted, 'label' in e]).toEqual(['note', true, false]);
   });
 
   it('takes minLen from the dash count and labels include and extend', async () => {
@@ -144,7 +144,7 @@ describe('boundaries, notes and edges', () => {
     );
     expect(graph.edges.map((e) => e.minLen)).toEqual([3, 1, 1]);
     const labels = out.usecase!.edges.map((e) =>
-      e.label?.lines
+      (e.kind === 'relation' ? e.label : undefined)?.lines
         .flat()
         .map((r) => r.text)
         .join('')
@@ -207,5 +207,27 @@ describe('edge ends on ovals', () => {
         expect(level, `${id} at ${node}`).toBeCloseTo(1, 6);
       }
     }
+  });
+});
+
+describe('styled labels', () => {
+  it('measures a label in its style font-size and weight, and the view keeps that font', async () => {
+    const { out, warnings } = await lay(
+      'usecase-beta\nA\nclassDef big font-size:16px,font-weight:bold\nclass A big'
+    );
+    const v = out.usecase!.nodes.get('usecase:A')!;
+    expect([v.font.size, v.font.weight]).toEqual([16, 700]);
+    expect(v.height).toBeCloseTo(18.576 + 40);
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns once per font-size it cannot measure, and measures at the own size', async () => {
+    const { out, warnings } = await lay(
+      'usecase-beta\nA\nB\nstyle A font-size:10vw\nstyle B font-size:10vw'
+    );
+    expect(warnings).toEqual(['USECASE_STYLE_IGNORED']);
+    const v = out.usecase!.nodes.get('usecase:A')!;
+    expect(v.font.size).toBe(12);
+    expect(v.height).toBeCloseTo(13.932 + 40);
   });
 });

@@ -19,8 +19,11 @@ import {
   type FontKey,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { USECASE_STYLE_IGNORED } from '../codes.ts';
 import {
   FONT_WEIGHT,
+  fontWeight,
+  MAX_LENGTH,
   usecaseLayoutConfig,
   type ConfigFont,
   type UsecaseLayoutConfig,
@@ -47,6 +50,8 @@ interface NodeViewBase {
   readonly height: number;
   /** `default`, then the element's classes (v12's `cssCompiledStyles`), then its `style`. */
   readonly style: CheckedStyle;
+  /** The font its labels were measured in, so are drawn in (pitfall 16): the style's applied. */
+  readonly font: FontKey;
   /** Layout group id of its boundary. */
   readonly parent?: string;
 }
@@ -55,7 +60,6 @@ interface NodeViewBase {
 export interface ActorView extends NodeViewBase {
   readonly kind: 'actor';
   readonly actor: UsecaseActor;
-  readonly font: FontKey;
   readonly label: MeasuredLabel;
   /** `«stereotype»`, above the name. */
   readonly stereotype?: MeasuredLabel;
@@ -73,7 +77,6 @@ export interface UseCaseView extends NodeViewBase {
   readonly kind: 'usecase';
   readonly useCase: UsecaseUseCase;
   readonly shape: 'ellipse' | 'rect';
-  readonly font: FontKey;
   readonly label: MeasuredLabel;
   readonly stereotype?: MeasuredLabel;
   readonly stereotypeGap: number;
@@ -113,48 +116,67 @@ export interface JsonTableView extends NodeViewBase {
 
 export type UsecaseNodeView = ActorView | UseCaseView | NoteView | JsonTableView;
 
+/** An oval use case (plain or business): its edge ends are clipped to the oval (`clip.ts`). */
+export function isOval(view: UsecaseNodeView | undefined): boolean {
+  return view?.kind === 'usecase' && view.shape === 'ellipse';
+}
+
 export interface BoundaryView {
   /** Layout group id: the boundary's AST id. */
   readonly id: string;
   readonly boundary: UsecaseBoundary;
   readonly label: MeasuredLabel;
   readonly style: CheckedStyle;
+  readonly font: FontKey;
   /** A `package` boundary's tab, at its top left; the title is centred in it. */
   readonly tab?: { readonly width: number; readonly height: number };
 }
 
-/**
- * - `relation`: a relationship.
- * - `note`: a note to its target, dotted with no markers (v12's internal `<note>-edge`).
- */
-export type UsecaseEdgeKind = 'relation' | 'note';
-
-export interface UsecaseEdgeView {
-  /** Layout edge id: the relationship's AST id, or `<note AST id>-edge`. */
-  readonly id: string;
-  readonly kind: UsecaseEdgeKind;
-  readonly relationship?: UsecaseRelationship;
-  readonly note?: UsecaseNote;
+interface EdgeViewBase {
   /** Layout ids of the ends. */
   readonly source: string;
   readonly target: string;
   /** Include, extend and note edges are dotted (v12 `pattern: 'dotted'`). */
   readonly dotted: boolean;
-  /** As drawn: `«include»`, `«extend»`, or an association's label. */
-  readonly label?: MeasuredLabel;
   readonly style: CheckedStyle;
 }
+
+/** A relationship. */
+export interface RelationEdgeView extends EdgeViewBase {
+  /** Layout edge id: the relationship's AST id. */
+  readonly id: string;
+  readonly kind: 'relation';
+  readonly relationship: UsecaseRelationship;
+  /** As drawn: `«include»`, `«extend»`, or an association's label. */
+  readonly label?: MeasuredLabel;
+  /** The font the label was measured in. */
+  readonly font: FontKey;
+}
+
+/** A note to its target, dotted with no markers (v12's internal `<note>-edge`). */
+export interface NoteEdgeView extends EdgeViewBase {
+  /** Layout edge id: `<note AST id>-edge`. */
+  readonly id: string;
+  readonly kind: 'note';
+  readonly note: UsecaseNote;
+}
+
+export type UsecaseEdgeView = RelationEdgeView | NoteEdgeView;
+
+export type UsecaseEdgeKind = UsecaseEdgeView['kind'];
 
 export interface UsecasePrepared {
   readonly graph: LayoutGraph;
   /** By layout id, in graph order (actors, use cases, notes, JSON tables). */
   readonly nodes: ReadonlyMap<string, UsecaseNodeView>;
+  /** Model id → layout id, for actors, use cases and JSON tables (what relations name). */
+  readonly layoutIds: ReadonlyMap<string, string>;
   readonly boundaries: readonly BoundaryView[];
   readonly edges: readonly UsecaseEdgeView[];
   readonly config: UsecaseLayoutConfig;
 }
 
-/** An include or extend label as v12 drew it. */
+/** A relationship's label as v12 drew it: `«include»`, `«extend»`, an association's label. */
 export function relationText(r: UsecaseRelationship): string | undefined {
   if (r.type === 'include' || r.type === 'extend') return `«${r.type}»`;
   if (r.type === 'association' && r.label) return r.label;
@@ -164,7 +186,9 @@ export function relationText(r: UsecaseRelationship): string | undefined {
 const sideways = (d: UsecaseModel['direction']): boolean => d === 'LR' || d === 'RL';
 
 interface Measure {
-  /** Measures `text` in `font` (with the element's text style), wrapped at `max`. */
+  /** The font a label is drawn in: `font` with the style's size, weight. */
+  font(font: FontKey, style: CheckedStyle): FontKey;
+  /** Measures `text` in `font` (already styled, see `font`), wrapped at `max`. */
   label(
     text: string,
     font: FontKey,
@@ -175,27 +199,63 @@ interface Measure {
   styleOf(classes: readonly string[], own?: readonly string[]): CheckedStyle;
 }
 
+/** The fonts the views start from, before an element's style. */
+interface Fonts {
+  /** Actor labels and stereotypes (`actorFont*`). */
+  readonly actor: FontKey;
+  /** Use case labels and stereotypes (`usecaseFont*`). */
+  readonly usecase: FontKey;
+  /** Notes, JSON tables, boundary titles: the theme's font. */
+  readonly base: FontKey;
+  /** Edge labels: the theme's family at v12's 10px. */
+  readonly edge: FontKey;
+}
+
+/** What every view builder reads. */
+interface Parts {
+  readonly fonts: Fonts;
+  readonly config: UsecaseLayoutConfig;
+  readonly measure: Measure;
+}
+
 /** A config font in the theme's family when it names none. */
 function fontOf(font: ConfigFont, family: string): FontKey {
   return { family: font.family ?? family, size: font.size, weight: font.weight };
 }
 
-/** A style's `font-weight` as a number, else `fallback`. */
-function weightOf(w: unknown, fallback: number): number {
-  if (w === 'bold' || w === 'bolder') return FONT_WEIGHT.bold;
-  if (w === 'normal') return FONT_WEIGHT.normal;
-  const n = Number(w);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
-}
+/** Text style bits a style sets (italics; weight and size go in the font). */
+const styleBits = (style: CheckedStyle): number =>
+  style.text['font-style'] === 'italic' ? Style.Italic : 0;
 
-/** The font a styled label is drawn in: the style's `font-size`, `font-weight` and italics. */
-function styled(font: FontKey, style: CheckedStyle): [FontKey, number] {
-  const t = style.text;
-  const weight = weightOf(t['font-weight'], font.weight);
-  const size = fontSizePx(t['font-size'], font.size);
-  const bits = t['font-style'] === 'italic' ? Style.Italic : 0;
-  const ok = size !== undefined && size > 0 && size < 1e4;
-  return [{ ...font, size: ok ? size : font.size, weight }, bits];
+/** Builds the measure: styled fonts (one warning per size it cannot use), labels, styles. */
+function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
+  const warned = new Set<string>();
+  return {
+    font(font, style) {
+      const t = style.text;
+      const weight = fontWeight(t['font-weight']) ?? font.weight;
+      const given = t['font-size'];
+      if (given === undefined) return { ...font, weight };
+      const size = fontSizePx(given, font.size);
+      if (size !== undefined && size > 0 && size < MAX_LENGTH) return { ...font, size, weight };
+      const text = String(given);
+      if (!warned.has(text)) {
+        warned.add(text);
+        ctx.warn({
+          code: USECASE_STYLE_IGNORED,
+          message: `Ignored font-size ${JSON.stringify(text)}: the usecase layout cannot measure it; using ${font.size}px`,
+        });
+      }
+      return { ...font, weight };
+    },
+    label: (text, font, max, style, type = 'text') =>
+      layoutLabel(text, font, max, ctx.measurer, {
+        markdown: type === 'markdown',
+        style: styleBits(style),
+        inline: ctx.inline,
+      }),
+    styleOf: styleCache(model, ctx),
+  };
 }
 
 /**
@@ -208,19 +268,15 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
   );
   const family = ctx.theme.value('fontFamily');
   const base: FontKey = { family, size: ctx.theme.number('fontSize'), weight: FONT_WEIGHT.normal };
-  const actorFont = fontOf(config.actorFont, family);
-  const usecaseFont = fontOf(config.usecaseFont, family);
-  const edgeFont: FontKey = { ...base, size: PX.edgeFontSize };
-  const m: Measure = {
-    label: (text, font, max, style, type = 'text') => {
-      const [f, bits] = styled(font, style);
-      return layoutLabel(text, f, max, ctx.measurer, {
-        markdown: type === 'markdown',
-        style: bits,
-        inline: ctx.inline,
-      });
+  const parts: Parts = {
+    fonts: {
+      actor: fontOf(config.actorFont, family),
+      usecase: fontOf(config.usecaseFont, family),
+      base,
+      edge: { ...base, size: PX.edgeFontSize },
     },
-    styleOf: styleCache(model, ctx),
+    config,
+    measure: measureFor(model, ctx),
   };
 
   const boundaryOf = new Map<string, string>();
@@ -229,52 +285,39 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
     id === undefined ? undefined : boundaryOf.get(id);
 
   const nodes = new Map<string, UsecaseNodeView>();
-  const layoutId = new Map<string, string>();
+  const layoutIds = new Map<string, string>();
   for (const a of model.actors) {
-    const v = actorView(a, parentOf(a.parentId), actorFont, config, m);
+    const v = actorView(a, parentOf(a.parentId), parts);
     nodes.set(v.id, v);
-    layoutId.set(a.id, v.id);
+    layoutIds.set(a.id, v.id);
   }
   for (const u of model.useCases) {
-    const v = useCaseView(u, parentOf(u.parentId), usecaseFont, config, m);
+    const v = useCaseView(u, parentOf(u.parentId), parts);
     nodes.set(v.id, v);
-    layoutId.set(u.id, v.id);
+    layoutIds.set(u.id, v.id);
   }
   const notes: NoteView[] = [];
   for (const n of model.notes) {
-    const target = layoutId.get(n.target);
+    const target = layoutIds.get(n.target);
     if (target === undefined) continue;
-    const v = noteView(n, target, base, config, m);
+    const v = noteView(n, target, parts);
     nodes.set(v.id, v);
     notes.push(v);
   }
   for (const t of model.jsonTables) {
-    const v = jsonView(t, base, config, m);
+    const v = jsonView(t, parts);
     nodes.set(v.id, v);
-    layoutId.set(t.id, v.id);
+    layoutIds.set(t.id, v.id);
   }
 
-  const boundaries = model.boundaries.map((b) => boundaryView(b, base, m));
+  const boundaries = model.boundaries.map((b) => boundaryView(b, parts));
 
   const edges: UsecaseEdgeView[] = [];
   for (const r of model.relationships) {
-    const source = layoutId.get(r.source);
-    const target = layoutId.get(r.target);
+    const source = layoutIds.get(r.source);
+    const target = layoutIds.get(r.target);
     if (source === undefined || target === undefined) continue;
-    const text = relationText(r);
-    const style = m.styleOf(r.classes, r.styles);
-    edges.push({
-      id: r.astId,
-      kind: 'relation',
-      relationship: r,
-      source,
-      target,
-      dotted: r.type === 'include' || r.type === 'extend',
-      ...(text !== undefined
-        ? { label: m.label(text, edgeFont, pxProfile.builder.edgeWrap, style, r.labelType) }
-        : {}),
-      style,
-    });
+    edges.push(relationView(r, source, target, parts));
   }
   for (const n of notes) {
     edges.push({
@@ -284,12 +327,12 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
       source: n.id,
       target: n.target,
       dotted: true,
-      style: m.styleOf([]),
+      style: parts.measure.styleOf([]),
     });
   }
 
-  const graph = layoutGraph(model, nodes, boundaries, edges, config);
-  return { graph, nodes, boundaries, edges, config };
+  const graph = layoutGraph({ direction: model.direction, nodes, boundaries, edges }, config);
+  return { graph, nodes, layoutIds, boundaries, edges, config };
 }
 
 /** The checked style of class names plus own declarations, one per distinct list. */
@@ -315,23 +358,19 @@ function withParent<T extends object>(view: T, parent: string | undefined): T {
 }
 
 /** v12 `renderUsecaseActor`: the glyph, the stereotype and the name, padded; no least width. */
-function actorView(
-  actor: UsecaseActor,
-  parent: string | undefined,
-  font: FontKey,
-  config: UsecaseLayoutConfig,
-  m: Measure
-): ActorView {
-  const A = PX.actor;
-  const style = m.styleOf(actor.classes, actor.styles);
-  const label = m.label(actor.label, font, config.wrappingWidth, style, actor.labelType);
+function actorView(actor: UsecaseActor, parent: string | undefined, parts: Parts): ActorView {
+  const actorPx = PX.actor;
+  const { measure, config } = parts;
+  const style = measure.styleOf(actor.classes, actor.styles);
+  const font = measure.font(parts.fonts.actor, style);
+  const label = measure.label(actor.label, font, config.wrappingWidth, style, actor.labelType);
   const stereotype =
     actor.stereotype !== undefined
-      ? m.label(`«${actor.stereotype}»`, font, config.wrappingWidth, style)
+      ? measure.label(`«${actor.stereotype}»`, font, config.wrappingWidth, style)
       : undefined;
-  const glyphTop = A.pad;
-  const stereotypeTop = glyphTop + A.glyphHeight + A.labelGap;
-  const labelTop = stereotypeTop + (stereotype ? stereotype.height + A.stereotypeGap : 0);
+  const glyphTop = actorPx.pad;
+  const stereotypeTop = glyphTop + actorPx.glyphHeight + actorPx.labelGap;
+  const labelTop = stereotypeTop + (stereotype ? stereotype.height + actorPx.stereotypeGap : 0);
   return withParent(
     {
       kind: 'actor',
@@ -341,8 +380,8 @@ function actorView(
       label,
       ...(stereotype ? { stereotype } : {}),
       style,
-      width: Math.max(A.glyphWidth, label.width, stereotype?.width ?? 0) + 2 * A.pad,
-      height: labelTop + label.height + A.pad,
+      width: Math.max(actorPx.glyphWidth, label.width, stereotype?.width ?? 0) + 2 * actorPx.pad,
+      height: labelTop + label.height + actorPx.pad,
       glyphTop,
       stereotypeTop,
       labelTop,
@@ -360,15 +399,15 @@ function actorView(
 function useCaseView(
   useCase: UsecaseUseCase,
   parent: string | undefined,
-  font: FontKey,
-  config: UsecaseLayoutConfig,
-  m: Measure
+  parts: Parts
 ): UseCaseView {
-  const style = m.styleOf(useCase.classes, useCase.styles);
-  const label = m.label(useCase.label, font, config.wrappingWidth, style, useCase.labelType);
+  const { measure, config } = parts;
+  const style = measure.styleOf(useCase.classes, useCase.styles);
+  const font = measure.font(parts.fonts.usecase, style);
+  const label = measure.label(useCase.label, font, config.wrappingWidth, style, useCase.labelType);
   const stereotype =
     useCase.stereotype !== undefined
-      ? m.label(`«${useCase.stereotype}»`, font, config.wrappingWidth, style)
+      ? measure.label(`«${useCase.stereotype}»`, font, config.wrappingWidth, style)
       : undefined;
   const business = useCase.shape === 'ellipse' && useCase.business;
   const stereotypeGap = stereotype && business ? PX.ellipse.stereotypeGap : 0;
@@ -400,15 +439,11 @@ function useCaseView(
 }
 
 /** v12's generic `note` shape: the label, at least `minNodeWidth` wide, padded. */
-function noteView(
-  note: UsecaseNote,
-  target: string,
-  font: FontKey,
-  config: UsecaseLayoutConfig,
-  m: Measure
-): NoteView {
-  const style = m.styleOf([]);
-  const label = m.label(note.label, font, config.wrappingWidth, style, note.labelType);
+function noteView(note: UsecaseNote, target: string, parts: Parts): NoteView {
+  const { measure, config } = parts;
+  const style = measure.styleOf([]);
+  const font = measure.font(parts.fonts.base, style);
+  const label = measure.label(note.label, font, config.wrappingWidth, style, note.labelType);
   const pad = PX.note.pad;
   return {
     kind: 'note',
@@ -417,6 +452,7 @@ function noteView(
     label,
     target,
     style,
+    font,
     width: Math.max(label.width, config.minNodeWidth) + 2 * pad,
     height: label.height + 2 * pad,
   };
@@ -426,19 +462,16 @@ function noteView(
  * v12 `usecaseJsonTable`: a title row (the id, at least `minNodeWidth` wide), then one row per
  * key and value, each cell padded; the value column takes what the title leaves over.
  */
-function jsonView(
-  table: UsecaseJsonTable,
-  font: FontKey,
-  config: UsecaseLayoutConfig,
-  m: Measure
-): JsonTableView {
-  const J = PX.json;
-  const style = m.styleOf(table.classes, table.styles);
-  const title = m.label(table.id, font, Infinity, style);
+function jsonView(table: UsecaseJsonTable, parts: Parts): JsonTableView {
+  const jsonPx = PX.json;
+  const { measure, config } = parts;
+  const style = measure.styleOf(table.classes, table.styles);
+  const font = measure.font(parts.fonts.base, style);
+  const title = measure.label(table.id, font, Infinity, style);
   const cells = table.rows.map((row) => ({
     row,
-    key: m.label(row.key, font, J.cellWrap, style),
-    value: m.label(row.value, font, J.cellWrap, style),
+    key: measure.label(row.key, font, jsonPx.cellWrap, style),
+    value: measure.label(row.value, font, jsonPx.cellWrap, style),
   }));
   let keys = 0;
   let values = 0;
@@ -446,13 +479,13 @@ function jsonView(
     keys = Math.max(keys, c.key.width);
     values = Math.max(values, c.value.width);
   }
-  const keyWidth = keys + 2 * J.cellPadX;
-  const titleWidth = Math.max(title.width, config.minNodeWidth) + 2 * J.cellPadX;
-  const inner = Math.max(titleWidth, keyWidth + values + 2 * J.cellPadX);
-  const titleHeight = title.height + 2 * J.cellPadY;
-  let top = J.border + titleHeight;
+  const keyWidth = keys + 2 * jsonPx.cellPadX;
+  const titleWidth = Math.max(title.width, config.minNodeWidth) + 2 * jsonPx.cellPadX;
+  const inner = Math.max(titleWidth, keyWidth + values + 2 * jsonPx.cellPadX);
+  const titleHeight = title.height + 2 * jsonPx.cellPadY;
+  let top = jsonPx.border + titleHeight;
   const rows = cells.map((c): JsonRowView => {
-    const height = Math.max(c.key.height, c.value.height) + 2 * J.cellPadY;
+    const height = Math.max(c.key.height, c.value.height) + 2 * jsonPx.cellPadY;
     const view = { ...c, top, height };
     top += height;
     return view;
@@ -463,81 +496,120 @@ function jsonView(
     table,
     title,
     style,
-    border: J.border,
+    font,
+    border: jsonPx.border,
     titleHeight,
     keyWidth,
     valueWidth: inner - keyWidth,
     rows,
-    width: inner + 2 * J.border,
-    height: top + J.border,
+    width: inner + 2 * jsonPx.border,
+    height: top + jsonPx.border,
   };
 }
 
 /** v12 `usecaseSystemBoundary`: the title over the content; a package's in its tab. */
-function boundaryView(boundary: UsecaseBoundary, font: FontKey, m: Measure): BoundaryView {
-  const B = PX.boundary;
-  const style = m.styleOf(boundary.classes, boundary.styles);
-  const label = m.label(boundary.label, font, B.titleWrap, style, boundary.labelType);
-  const view: BoundaryView = { id: boundary.astId, boundary, label, style };
+function boundaryView(boundary: UsecaseBoundary, parts: Parts): BoundaryView {
+  const boundaryPx = PX.boundary;
+  const { measure } = parts;
+  const style = measure.styleOf(boundary.classes, boundary.styles);
+  const font = measure.font(parts.fonts.base, style);
+  const label = measure.label(
+    boundary.label,
+    font,
+    boundaryPx.titleWrap,
+    style,
+    boundary.labelType
+  );
+  const view: BoundaryView = { id: boundary.astId, boundary, label, style, font };
   if (boundary.type !== 'package') return view;
   return {
     ...view,
     tab: {
-      width: Math.max(B.tabMin, label.width + B.tabWidthPad),
-      height: label.height + B.tabPad,
+      width: Math.max(boundaryPx.tabMin, label.width + boundaryPx.tabWidthPad),
+      height: label.height + boundaryPx.tabPad,
     },
   };
 }
 
+/**
+ * A relationship's edge. Include and extend labels are plain text whatever the model says (v12
+ * forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
+ */
+function relationView(
+  r: UsecaseRelationship,
+  source: string,
+  target: string,
+  parts: Parts
+): RelationEdgeView {
+  const { measure } = parts;
+  const text = relationText(r);
+  const style = measure.styleOf(r.classes, r.styles);
+  const font = measure.font(parts.fonts.edge, style);
+  const type = r.type === 'association' ? r.labelType : 'text';
+  return {
+    id: r.astId,
+    kind: 'relation',
+    relationship: r,
+    source,
+    target,
+    dotted: r.type === 'include' || r.type === 'extend',
+    ...(text !== undefined
+      ? { label: measure.label(text, font, pxProfile.builder.edgeWrap, style, type) }
+      : {}),
+    style,
+    font,
+  };
+}
+
+/** What the graph is built from. */
+interface Views {
+  readonly direction: UsecaseModel['direction'];
+  readonly nodes: ReadonlyMap<string, UsecaseNodeView>;
+  readonly boundaries: readonly BoundaryView[];
+  readonly edges: readonly UsecaseEdgeView[];
+}
+
 /** The graph the layout engine gets. */
-function layoutGraph(
-  model: UsecaseModel,
-  nodes: ReadonlyMap<string, UsecaseNodeView>,
-  boundaries: readonly BoundaryView[],
-  edges: readonly UsecaseEdgeView[],
-  config: UsecaseLayoutConfig
-): LayoutGraph {
-  const b = pxProfile.builder;
-  const across = sideways(model.direction);
+function layoutGraph(views: Views, config: UsecaseLayoutConfig): LayoutGraph {
+  const builder = pxProfile.builder;
+  const across = sideways(views.direction);
   const pad = PX.boundary.pad;
   return {
-    direction: model.direction,
-    nodes: [...nodes.values()].map((v): LayoutNode => {
+    direction: views.direction,
+    nodes: [...views.nodes.values()].map((v): LayoutNode => {
       const node: LayoutNode = { id: v.id, width: v.width, height: v.height, shape: v.kind };
       if (v.parent !== undefined) node.parent = v.parent;
       // Ends on an oval keep to the middle half of its side, where the oval is near the box,
       // so clipping them to the oval (`clip.ts`) moves them little.
-      if (v.kind === 'usecase' && v.shape === 'ellipse')
-        node.span = (across ? v.height : v.width) / 2;
+      if (isOval(v)) node.span = (across ? v.height : v.width) / 2;
       return node;
     }),
-    groups: boundaries.map((g): LayoutGroup => {
-      const titled = g.label.height > 0;
+    groups: views.boundaries.map((g): LayoutGroup => {
       const group: LayoutGroup = {
         id: g.id,
         padding: { top: pad, right: pad, bottom: pad, left: pad },
       };
       if (g.tab) group.title = { ...g.tab };
-      else if (titled) group.title = { width: g.label.width, height: g.label.height };
+      else if (g.label.height > 0) group.title = { width: g.label.width, height: g.label.height };
       return group;
     }),
-    edges: edges.map((e): LayoutEdge => {
+    edges: views.edges.map((e): LayoutEdge => {
       const edge: LayoutEdge = {
         id: e.id,
         source: e.source,
         target: e.target,
-        minLen: e.relationship?.minlen ?? 1,
+        minLen: e.kind === 'relation' ? e.relationship.minlen : 1,
       };
-      if (e.label && e.label.width > 0)
+      if (e.kind === 'relation' && e.label && e.label.width > 0)
         edge.label = {
-          width: e.label.width + b.labelPatch.x,
-          height: e.label.height + b.labelPatch.y,
+          width: e.label.width + builder.labelPatch.x,
+          height: e.label.height + builder.labelPatch.y,
         };
       return edge;
     }),
-    spacing: { node: config.nodeSpacing, rank: config.rankSpacing, edge: b.spacing.edge },
+    spacing: { node: config.nodeSpacing, rank: config.rankSpacing, edge: builder.spacing.edge },
     diagramPadding: config.diagramPadding,
-    headRoom: b.headRoom,
+    headRoom: builder.headRoom,
     metrics: pxProfile.engine,
   };
 }

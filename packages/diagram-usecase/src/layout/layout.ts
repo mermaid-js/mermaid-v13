@@ -10,7 +10,7 @@ import { layered, type LayoutModel } from '@mermaid-js/core/layout';
 import type { UsecaseModel } from '../model.ts';
 import { clipToOvals } from './clip.ts';
 import type { UsecaseLayoutContext } from './context.ts';
-import { prepareUsecase, type UsecasePrepared } from './prepare.ts';
+import { isOval, prepareUsecase, type UsecasePrepared } from './prepare.ts';
 
 export interface UsecaseLayout extends LayoutModel {
   /** Set by `layoutUsecase`; a `postLayout` hook that builds a new model drops it. */
@@ -22,11 +22,8 @@ export function layoutUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): U
   const prepared = prepareUsecase(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
   const ends = new Map(prepared.edges.map((e) => [e.id, e]));
-  const isOval = (id: string): boolean => {
-    const v = prepared.nodes.get(id);
-    return v?.kind === 'usecase' && v.shape === 'ellipse';
-  };
-  return { ...clipToOvals(laid, ends, isOval), usecase: prepared };
+  const oval = (id: string): boolean => isOval(prepared.nodes.get(id));
+  return { ...clipToOvals(laid, ends, oval), usecase: prepared };
 }
 
 export type { UsecaseLayoutContext } from './context.ts';
