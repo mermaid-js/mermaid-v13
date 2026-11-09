@@ -7,7 +7,7 @@ Integration branch `feature/518_treeview` (draft PR #627), cut from `mermaid-v13
 | T1 lexer parity gate, box-drawing pass and corpus | #571 | — | merged (--no-ff; `./testing` 4.4 KB gz, no core change) |
 | T2 grammar, parser, model, AST | #572 | #571 | merged (--no-ff; runtime 9.2 KB gz, `./testing` 4.6 KB gz, no core change) |
 | T3 custom row layout (`TreeViewLayout`) | #573 | #572 (soft) | merged (ff; runtime 10.5 KB gz, `./testing` 6.7 KB gz; core: `fontFamily` usedBy only) |
-| T4 SVG renderer, icons and theme table | #575 | #572, #573 | open |
+| T4 SVG renderer, icons and theme table | #575 | #572, #573 | merged (ff; runtime 14.0 KB gz; core: `usedBy` rows only, lint `layout.*`/`render.*`) |
 | T6 language facet | #576 | #572 | merged (--no-ff; `./language` 13.2 KB gz, runtime 11.6 KB gz, no core change) |
 | T5 integration | #577 | #575, #576 | open |
 | T7 ASCII renderer (Should, D320, D488) | #578 | #572, #577 | open |
