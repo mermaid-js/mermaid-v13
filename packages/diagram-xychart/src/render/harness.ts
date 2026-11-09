@@ -19,6 +19,7 @@ import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme
 import type { XyChartLayout } from '../layout/index.ts';
 import type { XyChartModel } from '../model.ts';
 import type { XyChartDocument } from '../parser/index.ts';
+import { XYCHART_SECTION } from '../config.ts';
 import { xychart } from '../plugin.ts';
 
 export interface RenderXyChartOptions {
@@ -66,7 +67,7 @@ export async function renderXyChartForTest(
     pre?.frontMatter?.config,
     directives,
     undefined,
-    { warn, section: 'xyChart' }
+    { warn, section: XYCHART_SECTION }
   );
   const limits = resolveLimits(config);
   let model: XyChartModel;

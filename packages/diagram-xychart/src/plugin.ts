@@ -6,6 +6,7 @@ import type { XyChartModel } from './model.ts';
 import { detectXyChart, parseXyChart, type XyChartParseResult } from './parser/index.ts';
 import { renderXyChart } from './render/index.ts';
 import { xyChartConfigDefaults } from './generated/config-defaults.ts';
+import { XYCHART_SECTION } from './config.ts';
 import { theme } from './theme/table.ts';
 
 /**
@@ -21,7 +22,7 @@ import { theme } from './theme/table.ts';
  */
 export const xychart = {
   id: 'xychart',
-  configSection: 'xyChart',
+  configSection: XYCHART_SECTION,
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
   configDefaults: xyChartConfigDefaults as Readonly<Record<string, unknown>>,

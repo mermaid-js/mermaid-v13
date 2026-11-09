@@ -44,14 +44,29 @@ export interface XyChartOptions
   readonly yAxis: XyChartAxisOptions;
 }
 
-const { xAxis: X_DEFAULTS, yAxis: Y_DEFAULTS, ...TOP } = xyChartConfigDefaults;
-const DEFAULTS = TOP as Omit<XyChartOptions, 'xAxis' | 'yAxis'>;
-const AXIS_DEFAULTS = {
-  xAxis: X_DEFAULTS as XyChartAxisOptions,
-  yAxis: Y_DEFAULTS as XyChartAxisOptions,
-};
+/** v12's config section name, which the plugin names as its `configSection` (the id is `xychart`). */
+export const XYCHART_SECTION = 'xyChart';
 
+type Warn = (w: Warning) => void;
 type Section = Readonly<Record<string, unknown>> | undefined;
+type TopOptions = Omit<XyChartOptions, 'xAxis' | 'yAxis' | 'chartOrientation'>;
+
+/*
+ * The generated defaults are typed `XYChartConfig`, whose keys are all optional, so these casts
+ * cannot fail on a missing key; `config.spec.ts` checks every option has a default, and
+ * `conformance/src/xychart/config.spec.ts` that the defaults are v12's.
+ */
+const {
+  xAxis: X_AXIS_DEFAULTS,
+  yAxis: Y_AXIS_DEFAULTS,
+  chartOrientation: _orientation,
+  ...TOP_LEVEL_DEFAULTS
+} = xyChartConfigDefaults;
+const DEFAULTS = TOP_LEVEL_DEFAULTS as TopOptions;
+const AXIS_DEFAULTS = {
+  xAxis: X_AXIS_DEFAULTS as XyChartAxisOptions,
+  yAxis: Y_AXIS_DEFAULTS as XyChartAxisOptions,
+};
 
 /** A finite number, or a string that reads as one; else undefined. */
 export function configNumber(value: unknown): number | undefined {
@@ -61,34 +76,33 @@ export function configNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-const shown = (value: unknown): string =>
+/** A value as a warning quotes it. */
+const quoted = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
+/** One `XYCHART_CONFIG_INVALID` warning: `path` is `value`, not `wants`; `fallback` is drawn. */
+function invalid(warn: Warn, path: string, value: unknown, wants: string, fallback: string): void {
+  warn({
+    code: XYCHART_CONFIG_INVALID,
+    message: `${path} is ${quoted(value)}, not ${wants}; using ${fallback}`,
+    path,
+  });
+}
+
 /**
- * `defaults` with each key of `given` that has the default's type taken; any other value set
- * for a key warns once (`path` names the section) and keeps the default.
+ * `defaults` with each number or boolean key of `given` taken when it has the default's type
+ * (a number also as a numeric string); any other value warns once and keeps the default.
  */
-function read<T extends object>(
-  defaults: T,
-  given: Section,
-  path: string,
-  warn: (w: Warning) => void
-): T {
+function read<T extends object>(defaults: T, given: unknown, path: string, warn: Warn): T {
   const out: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
   if (!given || typeof given !== 'object') return out as T;
-  for (const key of Object.keys(defaults) as (keyof T & string)[]) {
-    const v = given[key];
-    const d = defaults[key];
-    if (v === undefined || typeof d === 'object' || key === 'chartOrientation') continue;
+  for (const [key, d] of Object.entries(defaults)) {
+    const v = (given as Record<string, unknown>)[key];
+    if (v === undefined) continue;
     const n = typeof d === 'number' ? configNumber(v) : undefined;
     if (typeof d === 'boolean' && typeof v === 'boolean') out[key] = v;
     else if (n !== undefined) out[key] = n;
-    else
-      warn({
-        code: XYCHART_CONFIG_INVALID,
-        message: `${path}.${key} is ${shown(v)}, not a ${typeof d}; using the default ${String(d)}`,
-        path: `${path}.${key}`,
-      });
+    else invalid(warn, `${path}.${key}`, v, `a ${typeof d}`, `the default ${String(d)}`);
   }
   return out as T;
 }
@@ -96,36 +110,35 @@ function read<T extends object>(
 /** v12's rotation rule: inside ±90 as given, else 0 (`axis/baseAxis.ts:37-40`). */
 const rotation = (deg: number): number => (deg >= -90 && deg <= 90 ? deg : 0);
 
-/** No warning sink: the options alone (the v12 spec adapter). */
-const ignoreWarning = (): void => undefined;
+/** No warning sink: the options alone (the v12 spec adapter, a layout without `warn`). */
+export const ignoreWarning: Warn = () => undefined;
+
+/** v12's orientation rule: `horizontal` only as written; any other value is `vertical`. */
+function orientationOf(value: unknown, warn: Warn): XyChartOptions['chartOrientation'] {
+  if (value !== undefined && value !== 'vertical' && value !== 'horizontal')
+    invalid(
+      warn,
+      `${XYCHART_SECTION}.chartOrientation`,
+      value,
+      '"vertical" or "horizontal"',
+      '"vertical"'
+    );
+  return value === 'horizontal' ? 'horizontal' : 'vertical';
+}
 
 /** The layout's options from the resolved `xyChart` section. */
-export function xyChartOptions(
-  section: Section,
-  warn: (w: Warning) => void = ignoreWarning
-): XyChartOptions {
-  const top = read(DEFAULTS, section, 'xyChart', warn);
+export function xyChartOptions(section: Section, warn: Warn = ignoreWarning): XyChartOptions {
   const axis = (key: 'xAxis' | 'yAxis'): XyChartAxisOptions => {
     const given = section?.[key];
+    const path = `${XYCHART_SECTION}.${key}`;
     if (given !== undefined && (given === null || typeof given !== 'object'))
-      warn({
-        code: XYCHART_CONFIG_INVALID,
-        message: `xyChart.${key} is ${shown(given)}, not an object; using the defaults`,
-        path: `xyChart.${key}`,
-      });
-    const options = read(AXIS_DEFAULTS[key], given as Section, `xyChart.${key}`, warn);
+      invalid(warn, path, given, 'an object', 'the defaults');
+    const options = read(AXIS_DEFAULTS[key], given, path, warn);
     return { ...options, labelRotation: rotation(options.labelRotation) };
   };
-  const orientation = section?.chartOrientation;
-  if (orientation !== undefined && orientation !== 'vertical' && orientation !== 'horizontal')
-    warn({
-      code: XYCHART_CONFIG_INVALID,
-      message: `xyChart.chartOrientation is ${shown(orientation)}, not "vertical" or "horizontal"; using "vertical"`,
-      path: 'xyChart.chartOrientation',
-    });
   return {
-    ...top,
-    chartOrientation: orientation === 'horizontal' ? 'horizontal' : 'vertical',
+    ...read(DEFAULTS, section, XYCHART_SECTION, warn),
+    chartOrientation: orientationOf(section?.chartOrientation, warn),
     xAxis: axis('xAxis'),
     yAxis: axis('yAxis'),
   };

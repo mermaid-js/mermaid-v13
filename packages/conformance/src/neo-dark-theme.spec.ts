@@ -19,7 +19,7 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { D332_INPUTS, VOCABULARY, everyTable, v12Value } from './diagram-themes.ts';
+import { D332_INPUTS, VOCABULARY, everyTable, paletteColours, v12Value } from './diagram-themes.ts';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -136,14 +136,7 @@ function same(name: string): boolean {
   if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
   const kind = VOCABULARY[name]?.kind;
   // A diagram's palette variable (xychart's plotColorPalette): v12's comma-separated list.
-  if (kind === 'palette')
-    return (
-      JSON.stringify(
-        String(old)
-          .split(',')
-          .map((c) => hex(c.trim()))
-      ) === JSON.stringify(neoDark.palette(name).map(hex))
-    );
+  if (kind === 'palette') return paletteColours(old) === paletteColours(neoDark.palette(name));
   const now = v13Value(neoDark, name);
   if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
   if (kind === 'length') return Number.parseFloat(String(old)) === now;

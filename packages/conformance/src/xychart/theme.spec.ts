@@ -26,6 +26,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { flatName, paletteColours } from '../diagram-themes.ts';
 import { loadOracle } from '../oracle.ts';
 
 interface V12 {
@@ -66,11 +67,7 @@ const hex = (v: unknown): string | undefined => {
   const rgba = parseColor(v.trim());
   return rgba ? formatColor(rgba) : undefined;
 };
-/** A palette as hex colours: v12's comma-separated string, or v13's list. */
-const colours = (v: unknown): string =>
-  (typeof v === 'string' ? v.split(',') : Array.isArray(v) ? (v as unknown[]) : [])
-    .map((c) => hex(c) ?? String(c))
-    .join(',');
+const SECTION = xychart.theme.section!;
 
 const v13Theme = async (name: ThemeName, themeVariables?: Vars): Promise<Theme> =>
   createTheme(await loadTheme(name), {
@@ -79,10 +76,12 @@ const v13Theme = async (name: ThemeName, themeVariables?: Vars): Promise<Theme> 
     ...(themeVariables ? { themeVariables } : {}),
   });
 
-const now = (t: Theme, name: string): string | undefined =>
-  name === PALETTE ? colours(t.palette(name)) : hex(t.value(name));
-const then = (block: Block, key: string, name: string): string | undefined =>
-  name === PALETTE ? colours(block[key]) : hex(block[key]);
+/** A variable's v13 value, comparable with v12's. */
+const v13Of = (t: Theme, name: string): string | undefined =>
+  name === PALETTE ? paletteColours(t.palette(name)) : hex(t.value(name));
+/** The value v12 drew a variable with, from its `xyChart` block. */
+const v12Of = (block: Block, key: string, name: string): string | undefined =>
+  name === PALETTE ? paletteColours(block[key]) : hex(block[key]);
 
 /** Every variable where v13 differs from v12, by theme, with its decision. */
 const D333B =
@@ -103,7 +102,7 @@ const DIFFERENCES: Readonly<Record<string, Readonly<Record<string, string>>>> = 
 async function differing(name: ThemeName, themeVariables?: Vars): Promise<string[]> {
   const old = v12XyChart(name, themeVariables);
   const theme = await v13Theme(name, themeVariables);
-  return NESTED.filter(([n, key]) => now(theme, n) !== then(old, key, n)).map(([n]) => n);
+  return NESTED.filter(([n, key]) => v13Of(theme, n) !== v12Of(old, key, n)).map(([n]) => n);
 }
 
 /** Shared-variable overrides and the variables in which v13 differs from v12, with why. */
@@ -132,9 +131,7 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
     const keys = Object.keys(v12Vars('default').xyChart as Block).sort();
     expect(NESTED.map(([, key]) => key).sort()).toEqual(keys);
     expect(xychart.theme.section).toBe('xyChart');
-    expect(NESTED.every(([n, key]) => n === `xyChart${key[0]!.toUpperCase()}${key.slice(1)}`)).toBe(
-      true
-    );
+    expect(NESTED.every(([n, key]) => n === flatName(SECTION, key))).toBe(true);
   });
 
   it.each(THEME_NAMES.map((n) => [n]))(
@@ -145,8 +142,8 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
       const old = v12XyChart(name);
       const theme = await v13Theme(name);
       const names = NESTED.filter(([n]) => !listed.includes(n));
-      expect(Object.fromEntries(names.map(([n]) => [n, now(theme, n)]))).toEqual(
-        Object.fromEntries(names.map(([n, key]) => [n, then(old, key, n)]))
+      expect(Object.fromEntries(names.map(([n]) => [n, v13Of(theme, n)]))).toEqual(
+        Object.fromEntries(names.map(([n, key]) => [n, v12Of(old, key, n)]))
       );
     }
   );
@@ -175,9 +172,9 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
           ? { ...nested, plotColorPalette: nested.plotColorPalette.join(',') }
           : nested;
         const old = v12XyChart(name, { xyChart: asV12 });
-        const listed = Object.keys(nested).map((k) => `xyChart${k[0]!.toUpperCase()}${k.slice(1)}`);
+        const listed = Object.keys(nested).map((k) => flatName(SECTION, k));
         for (const n of listed)
-          expect(now(theme, n), `${name} ${n}`).toBe(then(old, VARS[n]!.nested!, n));
+          expect(v13Of(theme, n), `${name} ${n}`).toBe(v12Of(old, VARS[n]!.nested!, n));
         // The keys not set keep the theme's values.
         expect(await differing(name, { xyChart: nested }), JSON.stringify(nested)).toEqual(
           Object.keys(DIFFERENCES[name] ?? {}).filter((n) => !listed.includes(n))

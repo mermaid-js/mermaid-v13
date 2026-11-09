@@ -21,7 +21,7 @@
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
-import { xyChartOptions, type XyChartOptions } from '../config.ts';
+import { ignoreWarning, XYCHART_SECTION, xyChartOptions, type XyChartOptions } from '../config.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { Axis, type AxisData } from './axis.ts';
 import { NORMAL_WEIGHT, XYCHART_METRICS } from './metrics.ts';
@@ -60,9 +60,6 @@ const {
   valueLimit,
 } = XYCHART_METRICS;
 
-/** For a layout run without a `warn` sink (unit tests, the invariants). */
-const ignoreWarning = (): void => undefined;
-
 /** `v` held to ±`valueLimit` (a 309-digit value is Infinity). */
 const finiteValue = (v: number): number => clamp(v, -valueLimit, valueLimit);
 
@@ -74,8 +71,8 @@ interface Size {
 /** Lays out an XY chart in px. */
 export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): XyChartLayout {
   const options = xyChartOptions(
-    ctx.config.xyChart as Readonly<Record<string, unknown>>,
-    ctx.warn ?? ignoreWarning
+    ctx.config[XYCHART_SECTION] as Readonly<Record<string, unknown>> | undefined,
+    ctx.warn
   );
   const warn = once(ctx.warn ?? ignoreWarning);
   const family = ctx.theme.value('fontFamily');

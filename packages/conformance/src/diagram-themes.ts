@@ -13,6 +13,8 @@ import {
   type ThemeOptions,
   type ThemeSpec,
   type ThemeVarEntry,
+  formatColor,
+  parseColor,
 } from '@mermaid-js/core/theme';
 import { classDiagram } from '@mermaid-js/diagram-class';
 import { er } from '@mermaid-js/diagram-er';
@@ -64,6 +66,26 @@ export function v12Value(old: Readonly<Record<string, unknown>>, name: string): 
       : undefined;
   }
   return undefined;
+}
+
+/** The flat v13 name of a key v12 kept nested (D335): `xyChart` + `titleColor` → `xyChartTitleColor`. */
+export const flatName = (section: string, nested: string): string =>
+  `${section}${nested[0]!.toUpperCase()}${nested.slice(1)}`;
+
+/**
+ * A palette as hex colours joined by `,`, comparable across versions: v12's comma-separated
+ * string (`xyChart.plotColorPalette`) or v13's list (`theme.palette()`).
+ */
+export function paletteColours(v: unknown): string {
+  let items: readonly unknown[] = [];
+  if (typeof v === 'string') items = v.split(',');
+  else if (Array.isArray(v)) items = v as unknown[];
+  return items
+    .map((c) => {
+      const rgba = typeof c === 'string' ? parseColor(c.trim()) : undefined;
+      return rgba ? formatColor(rgba) : String(c);
+    })
+    .join(',');
 }
 
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */

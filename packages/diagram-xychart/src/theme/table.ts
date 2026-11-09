@@ -1,5 +1,6 @@
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
+import { XYCHART_SECTION } from '../config.ts';
 
 /**
  * The XY chart's theme table (`DiagramPlugin.theme`, D322, D331, spec #426 §Theme): the
@@ -13,7 +14,7 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * `plotColorPalette`.
  */
 export const theme: DiagramThemeTable = {
-  section: 'xyChart',
+  section: XYCHART_SECTION,
   vars: THEME_VARIABLE_TABLE,
   rules: {
     light: {
