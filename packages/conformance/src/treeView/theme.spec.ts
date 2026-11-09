@@ -135,7 +135,7 @@ async function differing(c: Case, author?: Readonly<Record<string, unknown>>): P
   return NAMES.filter((n) => !same(theme, n, old[n]!));
 }
 
-/** The eleven themes with the `dark` trait (D483's dark entry). */
+/** The four dark themes: of the eleven, those with the `dark` trait (D483's dark entry). */
 const DARK_THEMES = ['dark', 'redux-dark', 'redux-dark-color', 'neo-dark'];
 /** What D483's dark entry writes: the label ink and connectors, and the icons. */
 const DARK_ENTRY = ['treeViewLabelColor', 'treeViewLineColor', 'treeViewIconColor'];

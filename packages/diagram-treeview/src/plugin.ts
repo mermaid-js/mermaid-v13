@@ -6,7 +6,7 @@ import type {
 } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { treeViewLayoutConfig } from './config.ts';
+import { treeViewOptions } from './config.ts';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import { isBuiltinIcon, resolveIcon } from './icons.ts';
 import { layoutTreeView, type TreeViewLayout } from './layout/index.ts';
@@ -24,7 +24,7 @@ function glyphIcons(
   model: TreeViewModel,
   section: Readonly<TreeViewDiagramConfig> | undefined
 ): readonly string[] {
-  const options = treeViewLayoutConfig(section);
+  const options = treeViewOptions(section);
   const names = new Set<string>();
   for (const node of model.nodes) {
     const name = resolveIcon(node, options);
@@ -50,7 +50,7 @@ export const treeView = {
   id: 'treeView',
   formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
-  configDefaults: { ...treeViewConfigDefaults },
+  configDefaults: treeViewConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectTreeView(text),
   parse: (text: string, ctx: DiagramParseContext): TreeViewParseResult => {
     const result = parseTreeView(text, { preprocessed: ctx.preprocessed });

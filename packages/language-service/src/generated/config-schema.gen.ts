@@ -6312,7 +6312,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text: `rowIndent: \"20\"` indented by 205 px)."
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text where it added it: `paddingX: \"5\"` indented each level by `10 + \"5\"`, 105 px, and drew a label whose row starts at x 105 at x 1055)."
           }
         },
         "paddingY": {
@@ -6323,7 +6323,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text: `rowIndent: \"20\"` indented by 205 px)."
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 doubled it as a number for the row height, but joined it as text in an icon's position, so every icon below the first row was drawn far below its label)."
           }
         },
         "lineThickness": {
@@ -6334,7 +6334,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text: `rowIndent: \"20\"` indented by 205 px)."
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number, as v12 drew it (it only halved the value or wrote it as the stroke width)."
           }
         },
         "showIcons": {

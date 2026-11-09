@@ -13,10 +13,13 @@ grammars:
       object: T
 
 # languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+# config.ts is not listed: the facet reads the options through it.
 languageBundle:
   renderer:
     - render/
     - layout/
+    - theme/
+    - plugin.ts
     - ascii/
     - ascii.ts
     - v12-specs/

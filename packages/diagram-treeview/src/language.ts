@@ -1,8 +1,8 @@
 /**
  * TreeView language facet (`@mermaid-js/diagram-treeview/language`, DESIGN §4.5, R-LANG-8, D89,
  * #576): the parser entry and the tables the language service needs. Nothing reachable from
- * here imports the layout or a renderer: the bench's language bundle spec holds that in place
- * (the import-boundary lint knows `render/`, which T4 adds, but not `layout/`).
+ * here imports the layout or a renderer; the import-boundary lint and the bench's language bundle
+ * spec hold that in place.
  *
  * Symbols (D487): each node is a `node` symbol, its own definition with no references, though
  * names repeat (`standalone`). The parser records it over the name as written, its quotes and a

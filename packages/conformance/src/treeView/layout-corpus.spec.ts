@@ -7,7 +7,7 @@ import {
   treeViewTestTheme,
 } from '@mermaid-js/diagram-treeview/testing';
 import type { CorpusItem } from '../types.ts';
-import { treeViewGateCorpus } from './corpus.ts';
+import { TREEVIEW_E2E_AT_LEAST, treeViewE2eIds, treeViewGateCorpus } from './corpus.ts';
 
 /**
  * Layout invariants on parser-produced fixtures (R-LAYOUT-3, #573): every source of the treeView
@@ -61,9 +61,10 @@ describe('treeView layout invariants on parser-produced fixtures', () => {
           failures.push(`${item.id} ${JSON.stringify(config)}: ${v.slice(0, 3).join('; ')}`);
       }
     }
-    // The 15 12.2.0 fixtures, the 8 Cypress originals, the 56 parser and box inputs and the 18
-    // baselines (#577).
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(97);
+    // Every e2e fixture in the folder was laid out, and there are at least the #577 set.
+    const e2e = corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')'));
+    expect(e2e.map((i) => i.id).sort()).toEqual(treeViewE2eIds());
+    expect(e2e.length).toBeGreaterThanOrEqual(TREEVIEW_E2E_AT_LEAST);
     // Every part is exercised.
     expect(rows).toBeGreaterThan(25_000);
     expect(descriptions).toBeGreaterThan(1000);

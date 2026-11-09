@@ -20,7 +20,7 @@
  * - everything drawn (labels, icons, descriptions, highlight boxes with their stroke, lines
  *   with their thickness) lies inside `bounds`.
  */
-import { TREEVIEW_DEFAULTS } from '../config.ts';
+import { treeViewOptions } from '../config.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
@@ -79,7 +79,7 @@ function lengthsOf(section: Readonly<Record<string, unknown>>) {
     const v = typeof given === 'string' && given.trim() !== '' ? Number(given) : given;
     return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : d;
   };
-  const d = TREEVIEW_DEFAULTS;
+  const d = treeViewOptions(undefined);
   return {
     rowIndent: read('rowIndent', d.rowIndent),
     paddingX: read('paddingX', d.paddingX),

@@ -17,7 +17,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
-import { treeViewLayoutConfig, type TreeViewLayoutConfig } from '../config.ts';
+import { treeViewOptions, type TreeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { lineBox, rowExtents } from './extent.ts';
@@ -36,7 +36,7 @@ const ROOT = { name: '/', directory: true } as const;
 
 /** What every step of one layout reads. */
 interface Frame {
-  readonly config: TreeViewLayoutConfig;
+  readonly config: TreeViewOptions;
   /** One line of `text` in `font` and `style`, at (0, 0) until placed. */
   readonly measure: (text: string, font: FontKey, style: StyleBits) => TreeViewText;
   /** The label font (normal weight) and the directory font (bold). */
@@ -87,7 +87,7 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
     height: text === '' ? 0 : lineHeight,
   });
   return {
-    config: treeViewLayoutConfig(ctx.config.treeView, ctx.warn),
+    config: treeViewOptions(ctx.config.treeView, ctx.warn),
     measure,
     font,
     bold: { ...font, weight: BOLD_WEIGHT },
@@ -153,7 +153,7 @@ function placeRows(model: TreeViewModel, frame: Frame): Placed {
 function connect(
   rows: readonly TreeViewRow[],
   parents: readonly number[],
-  config: TreeViewLayoutConfig
+  config: TreeViewOptions
 ): TreeViewLine[] {
   const { rowIndent, paddingX, lineThickness } = config;
   const lastChild = new Map<number, number>();

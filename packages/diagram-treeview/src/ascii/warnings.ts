@@ -5,7 +5,7 @@
 import type { Warning } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import { treeViewLayoutConfig } from '../config.ts';
+import { treeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel } from '../model.ts';
 
@@ -35,7 +35,7 @@ export function asciiWarnings(
   section: Readonly<TreeViewDiagramConfig> | undefined,
   ast?: AstNode
 ): AsciiDroppedWarning[] {
-  const options = treeViewLayoutConfig(section);
+  const options = treeViewOptions(section);
   const found: Record<AsciiDroppedFeature, string[]> = { icon: [], style: [], accessibility: [] };
   for (const node of model.nodes) {
     if (resolveIcon(node, options) !== undefined) found.icon.push(node.astId);

@@ -5,8 +5,8 @@
  * `corpus/treeView-cases.json` (the spec's quirks, the box pass's corners and errors) and
  * {@link LINE_SEPARATORS}, and a CRLF and a commented copy of every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -50,10 +50,31 @@ export const LINE_SEPARATORS: CorpusItem[] = [
   'treeView-beta\u2029\n├── a',
 ].map((source, k) => ({ id: `line separators ${k}`, source }));
 
+const E2E_DIR = 'e2e/diagrams/tree-view';
+
+/**
+ * The ids `treeViewCorpus` gives the e2e fixtures, from a listing of the folder: every `.mmd`
+ * under it, so a spec counting the fixtures it reached follows a fixture added or removed.
+ */
+export function treeViewE2eIds(): string[] {
+  return readdirSync(join(REPO_ROOT, E2E_DIR), { recursive: true, encoding: 'utf8' })
+    .filter((file) => file.endsWith('.mmd'))
+    .map((file) => `e2e/${file.split(sep).join('/')}`)
+    .sort();
+}
+
+/**
+ * The fewest e2e fixtures there may be (#577): the 15 12.2.0 files, the 8 Cypress originals,
+ * v12's 30 `parser.spec.ts` inputs, the 26 `boxDrawingPreprocessor.spec.ts` inputs it accepts
+ * (30 `[…].join('\n')` inputs, one a repeat, three rejected: cases) and the 18 baselines. A
+ * sanity floor under `treeViewE2eIds`, so an empty or misread folder fails.
+ */
+export const TREEVIEW_E2E_AT_LEAST = 15 + 8 + 30 + 26 + 18;
+
 /** The treeView corpus: the e2e fixtures and the harvested v12 spec strings. */
 export async function treeViewCorpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/tree-view'), 'e2e')) {
+  for await (const item of corpusFromDir(join(REPO_ROOT, E2E_DIR), 'e2e')) {
     items.push(item);
   }
   return [...items, ...readItems('packages/conformance/corpus/treeView-v12-specs.json')];

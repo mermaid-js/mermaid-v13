@@ -21,7 +21,8 @@ import type { TreeViewIconOptions } from './icons.ts';
 
 export const TREEVIEW_CONFIG_INVALID = 'TREEVIEW_CONFIG_INVALID';
 
-export interface TreeViewLayoutConfig extends TreeViewIconOptions {
+/** The `treeView` section's options, each checked and set (`treeViewOptions`). */
+export interface TreeViewOptions extends TreeViewIconOptions {
   /** How much further in a child's connector starts than its parent's label. */
   readonly rowIndent: number;
   /** Around a label, left and right. */
@@ -34,17 +35,28 @@ export interface TreeViewLayoutConfig extends TreeViewIconOptions {
 
 type LengthKey = 'rowIndent' | 'paddingX' | 'paddingY' | 'lineThickness';
 
-const SCHEMA = treeViewConfigDefaults as Required<TreeViewDiagramConfig>;
+/** The keys the schema gives a default: all but `useWidth`, which treeView ignores. */
+type DefaultKey = Exclude<keyof TreeViewDiagramConfig, 'useWidth'>;
 
-/** The section's defaults (generated from the schema). */
-export const TREEVIEW_DEFAULTS: Readonly<Record<LengthKey, number>> & TreeViewIconOptions = {
-  rowIndent: SCHEMA.rowIndent,
-  paddingX: SCHEMA.paddingX,
-  paddingY: SCHEMA.paddingY,
-  lineThickness: SCHEMA.lineThickness,
-  showIcons: SCHEMA.showIcons,
-  defaultIconPack: SCHEMA.defaultIconPack,
+/**
+ * The schema's default for `key`. `pnpm gen:config` writes one for every `DefaultKey`
+ * (`conformance/src/treeView/config.spec.ts` pins them), so the throw only fires on a schema
+ * edit that drops one without a regenerate.
+ */
+function schemaDefault<K extends DefaultKey>(key: K): NonNullable<TreeViewDiagramConfig[K]> {
+  const value = treeViewConfigDefaults[key];
+  if (value === undefined) throw new Error(`treeView.${key} has no default: run pnpm gen:config`);
+  return value;
+}
+
+const DEFAULT_LENGTHS: Readonly<Record<LengthKey, number>> = {
+  rowIndent: schemaDefault('rowIndent'),
+  paddingX: schemaDefault('paddingX'),
+  paddingY: schemaDefault('paddingY'),
+  lineThickness: schemaDefault('lineThickness'),
 };
+const DEFAULT_SHOW_ICONS = schemaDefault('showIcons');
+const DEFAULT_ICON_PACK = schemaDefault('defaultIconPack');
 
 const LENGTHS: readonly LengthKey[] = ['rowIndent', 'paddingX', 'paddingY', 'lineThickness'];
 const MAPS = ['filenameIcons', 'extensionIcons'] as const;
@@ -68,32 +80,31 @@ const shown = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /**
- * The options from the resolved `treeView` section, each checked; `warn` is told once per key
- * that falls back.
+ * The options from the resolved `treeView` section, each checked (`undefined`: the defaults);
+ * `warn` is told once per key that falls back.
  */
-export function treeViewLayoutConfig(
+export function treeViewOptions(
   section: Readonly<TreeViewDiagramConfig> | undefined,
   warn?: (w: Warning) => void
-): TreeViewLayoutConfig {
+): TreeViewOptions {
   // Read as unknown: the resolver passes what the author wrote, whatever its type.
   const given: Readonly<Record<string, unknown>> = section ?? {};
-  const d = TREEVIEW_DEFAULTS;
   const invalid = (key: string, wants: string, used: unknown): void =>
     warn?.({
       code: TREEVIEW_CONFIG_INVALID,
       message: `treeView.${key} is ${shown(given[key])}, not ${wants}; using the default ${shown(used)}`,
     });
-  const lengths = { ...d } as Record<LengthKey, number>;
+  const lengths: Record<LengthKey, number> = { ...DEFAULT_LENGTHS };
   for (const key of LENGTHS) {
     if (given[key] === undefined) continue;
     const n = configNumber(given[key]);
     if (Number.isFinite(n) && n >= 0) lengths[key] = n;
-    else invalid(key, 'a number of 0 or more', d[key]);
+    else invalid(key, 'a number of 0 or more', DEFAULT_LENGTHS[key]);
   }
-  let defaultIconPack = d.defaultIconPack;
+  let defaultIconPack = DEFAULT_ICON_PACK;
   if (typeof given.defaultIconPack === 'string') defaultIconPack = given.defaultIconPack;
   else if (given.defaultIconPack !== undefined)
-    invalid('defaultIconPack', 'a string', d.defaultIconPack);
+    invalid('defaultIconPack', 'a string', DEFAULT_ICON_PACK);
   const maps: Partial<Record<(typeof MAPS)[number], Readonly<Record<string, string>>>> = {};
   for (const key of MAPS) {
     if (given[key] === undefined) continue;
@@ -106,7 +117,7 @@ export function treeViewLayoutConfig(
     paddingX: lengths.paddingX,
     paddingY: lengths.paddingY,
     lineThickness: lengths.lineThickness,
-    showIcons: Boolean(given.showIcons),
+    showIcons: given.showIcons === undefined ? DEFAULT_SHOW_ICONS : Boolean(given.showIcons),
     defaultIconPack,
     ...maps,
   };

@@ -17,7 +17,7 @@
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { treeViewLayoutConfig } from '../config.ts';
+import { treeViewOptions } from '../config.ts';
 import type { TreeViewIconOptions } from '../icons.ts';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import { writtenName } from '../parser/convert.ts';
@@ -48,7 +48,7 @@ function readIconOptions(text: string): TreeViewIconOptions {
     if (!isPlain(s)) continue;
     for (const key of ICON_KEYS) merged[key] = s[key] ?? merged[key];
   }
-  const { showIcons, defaultIconPack, filenameIcons, extensionIcons } = treeViewLayoutConfig(
+  const { showIcons, defaultIconPack, filenameIcons, extensionIcons } = treeViewOptions(
     merged as TreeViewDiagramConfig
   );
   return {
