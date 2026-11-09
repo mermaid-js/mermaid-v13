@@ -84,6 +84,10 @@
     "source": "---\ntitle: Front\n---\nrailroad-abnf-beta\na = \"x\"\n;"
   },
   {
+    "id": "railroad-cases/header-empty-front-matter",
+    "source": "---\n---\nrailroad-peg-beta\na <- \"x\" ;"
+  },
+  {
     "id": "railroad-cases/header-directive",
     "source": "%%{init: {\"theme\": \"dark\"}}%%\nrailroad-beta\na = terminal(\"x\") ;"
   },

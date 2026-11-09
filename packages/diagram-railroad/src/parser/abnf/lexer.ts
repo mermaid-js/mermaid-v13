@@ -15,11 +15,10 @@
 // cspell:words numval rulename
 import {
   DASH,
-  DIGIT_0,
-  DIGIT_9,
   DOT,
   DQUOTE,
   EQUALS,
+  isDigit,
   isHex,
   isLetter,
   LBRACKET,
@@ -45,7 +44,6 @@ const PUNCTUATION: Readonly<Record<number, number>> = {
   [RBRACKET]: T.RBracket,
 };
 
-const isDigit = (c: number) => c >= DIGIT_0 && c <= DIGIT_9;
 /** In `[A-Za-z0-9-]`. */
 const isNamePart = (c: number) => isLetter(c) || isDigit(c) || c === DASH;
 /** `x`, `X`, `d`, `D`, `b` or `B`. */

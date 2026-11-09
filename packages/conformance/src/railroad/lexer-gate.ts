@@ -47,24 +47,21 @@ function v12Streams(lexed: LangiumLex): Streams {
 
 /** The v13 streams of `source` for `notation`, named as 2.0.1 names them. */
 export function v13Streams(notation: RailroadNotation, source: string): Streams {
+  const { bodyStart, view } = railroadView(source);
   const names = LANGIUM_NAMES[notation];
   const hidden = LANGIUM_HIDDEN[notation];
   const out: Streams = { tokens: [], hidden: [] };
   for (const t of railroadTokens(notation, source)) {
     const name = names[t.kind] ?? `kind ${t.kind}`;
     if (t.kind === Kind.Error) {
-      out.tokens.push([ERROR, `@${lexedBefore(source, t.range.start).length}`]);
+      // The text v12's lexer read before the error: v12's text, trimmed at its start.
+      const before = cook(source, bodyStart, t.range.start, view).trimStart();
+      out.tokens.push([ERROR, `@${before.length}`]);
       break;
     }
     (hidden.has(name) ? out.hidden : out.tokens).push([name, t.text]);
   }
   return out;
-}
-
-/** The text v12's lexer read before source offset `at`: v12's text, trimmed at its start. */
-function lexedBefore(source: string, at: number): string {
-  const { bodyStart, view } = railroadView(source);
-  return cook(source, bodyStart, at, view).trimStart();
 }
 
 const show = (t: LangiumToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
@@ -133,7 +130,7 @@ export async function gateLexer(
       continue;
     }
     result.compared++;
-    if (item.id.startsWith('e2e/') && !item.id.endsWith(')')) result.e2e++;
+    if (item.id.startsWith('e2e/') && item.variant === undefined) result.e2e++;
     if (lexed.errorAt !== undefined) result.errors++;
     const v12 = v12Streams(lexed);
     const v13 = v13Streams(notation, item.source);

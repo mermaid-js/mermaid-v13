@@ -36,8 +36,10 @@ import {
   DQUOTE,
   firstHole,
   isBlank,
+  isLetter,
   isLineEnd,
   isSpace,
+  isWord,
   Kind,
   LBRACE,
   LF,
@@ -52,6 +54,7 @@ import {
   STAR,
   TAB,
   TokenWriter,
+  UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
@@ -66,10 +69,9 @@ export const isBreak = (c: number): boolean => c === LF || c === CR;
 /** In `[\t \r\n]`, the grammars' whitespace. */
 export const isWhite = (c: number): boolean => c === SPACE || c === TAB || c === LF || c === CR;
 /** In `[A-Z_a-z]`. */
-export const isIdStart = (c: number): boolean =>
-  (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95;
+export const isIdStart = (c: number): boolean => isLetter(c) || c === UNDERSCORE;
 /** In `[\w-]`. */
-export const isIdPart = (c: number): boolean => isIdStart(c) || (c >= 48 && c <= 57) || c === DASH;
+export const isIdPart = (c: number): boolean => isWord(c) || c === DASH;
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
 export abstract class RailroadLexer {
@@ -105,11 +107,13 @@ export abstract class RailroadLexer {
     from: number,
     view: SourceView
   ) {
-    const text = placeholders(view.mask ? tagQuotes(view) : view.text);
+    this.offsets = view.runs && new SourceOffsets(view.runs);
+    const text = placeholders(
+      view.mask ? tagQuotes(view.text, view.mask, this.offsets) : view.text
+    );
     this.text = text + '\n';
     this.len = text.length;
     this.n = this.text.length;
-    this.offsets = view.runs && new SourceOffsets(view.runs);
     this.holes = view.holes;
     this.hole = firstHole(view, from);
     this.p = localOffset(view, from);
@@ -191,7 +195,8 @@ export abstract class RailroadLexer {
     const { text } = this;
     const colon = this.blanks(r);
     if (text.charCodeAt(colon) === COLON) return this.lineTail(colon + 1);
-    let b = r;
+    // The blanks are `\s` too: go on from where the colon scan stopped.
+    let b = colon;
     while (b < this.n && isSpace(text.charCodeAt(b))) b++;
     if (text.charCodeAt(b) !== LBRACE) return -1;
     const close = this.brace(b + 1);
@@ -398,11 +403,11 @@ export abstract class RailroadLexer {
   }
 }
 
-/** The view's text with the tag-attribute quotes v12 turned into `'` turned so too. */
-function tagQuotes(view: SourceView): string {
-  const { text, mask, runs } = view;
-  if (!mask) return text;
-  const at = runs ? new SourceOffsets(runs) : undefined;
+/**
+ * The view's `text` with the tag-attribute quotes v12 turned into `'` (marked in `mask`, by
+ * source offset; `at` maps text offsets to the source) turned so too.
+ */
+function tagQuotes(text: string, mask: Uint8Array, at: SourceOffsets | undefined): string {
   let out = '';
   let from = 0;
   for (let i = text.indexOf('"'); i !== -1; i = text.indexOf('"', i + 1)) {
