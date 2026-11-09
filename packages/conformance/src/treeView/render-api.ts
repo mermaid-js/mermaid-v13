@@ -1,4 +1,5 @@
 import { treeView } from '@mermaid-js/diagram-treeview';
+import { ascii } from '@mermaid-js/diagram-treeview/ascii';
 import { createMermaid, type ExtensionPlugin, type Mermaid, type MermaidConfig } from 'mermaid';
 
 /**
@@ -16,5 +17,18 @@ export async function treeViewApi(
   m.initialize({ deterministic: true, ...config });
   await m.registerExternalDiagrams([treeView], { lazyLoad: false, replace: true });
   if (extensions.length > 0) await m.registerExternalDiagrams([...extensions]);
+  return m;
+}
+
+/**
+ * {@link treeViewApi} with the text output (T7, #578): the plugin with `formats` `svg` and
+ * `ascii` and the hook of the `./ascii` entry, as the registry will load them from the manifest
+ * (T5, #577, which drops this registration).
+ */
+export async function treeViewAsciiApi(config: MermaidConfig = {}): Promise<Mermaid> {
+  const m = createMermaid();
+  m.initialize({ deterministic: true, ...config });
+  const plugin = { ...treeView, formats: ['svg', 'ascii'] as const, ascii };
+  await m.registerExternalDiagrams([plugin], { lazyLoad: false, replace: true });
   return m;
 }

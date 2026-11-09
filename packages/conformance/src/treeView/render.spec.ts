@@ -252,7 +252,9 @@ function within(tree: SvgView, node: SvgElement, outer: SvgElement): boolean {
 }
 
 describe('treeView render: formats', () => {
-  it('has no ascii output yet (T7)', async () => {
+  // The text output is the `./ascii` entry (#578, `ascii.spec.ts`); the plugin lists `ascii` in
+  // `formats`, and the manifest loads the entry, with the integration (T5, #577).
+  it('has no ascii output from the plugin alone until T5 lists it', async () => {
     const api = await treeViewApi();
     expect(() => api.renderSync('treeView-beta\na', { format: 'ascii' })).toThrow(
       UnsupportedFormatError

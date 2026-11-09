@@ -38,7 +38,8 @@ function glyphIcons(
  * config, records on the model the icons the glyphs draw (`glyphIcons`), which `icons` lists so
  * an icons extension loads only the packs a tree names (`icons()` gets only the model); `layout`
  * places the rows and connectors and measures every text; `render` writes the whole `<svg>`
- * document. SVG only until the ASCII entry (T7, D488).
+ * document. Text output is the lazily loaded `./ascii` entry (#578, D488); `formats` gains
+ * `ascii` with the manifest that loads it (T5, #577).
  *
  * `theme` is treeView's own table (`theme/table.ts`, D331, D483). No `labels`: names and
  * descriptions are plain text (D484) and never go through core's label layout. No
