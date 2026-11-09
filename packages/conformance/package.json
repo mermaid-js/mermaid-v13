@@ -12,6 +12,7 @@
     "harvest": "tsx --conditions=mermaid-source src/cli/harvest.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
     "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
+    "harvest:v12": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts",
     "harvest:pie": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts pie",
     "harvest:gitgraph": "tsx --conditions=mermaid-source src/cli/harvest-gitgraph.ts",
     "harvest:cynefin": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts cynefin",
@@ -19,8 +20,7 @@
     "harvest:info": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts info",
     "harvest:radar": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts radar",
     "harvest:treemap": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts treemap",
-    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley",
-    "harvest:railroad": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts railroad"
+    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",

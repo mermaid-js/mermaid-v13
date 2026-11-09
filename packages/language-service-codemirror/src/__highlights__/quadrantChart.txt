@@ -1,0 +1,6 @@
+quadrantChart:keyword
+x-axis:keyword
+-->:operator
+: [:punctuation
+,:punctuation
+]:punctuation

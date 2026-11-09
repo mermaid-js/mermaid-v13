@@ -1,17 +1,32 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { renderDiagram } from './adapter.ts';
+import { FIXTURE_FOLDER_TYPES } from './fixture-discovery.ts';
 import { galleryFixtures } from './fixtures.ts';
+import { diagramManifests, handDrawnVerdict } from './manifests.ts';
+
+/**
+ * The `aria-roledescription` values a fixture folder's diagrams may carry: the id and the v12
+ * types of each package that renders one of the folder's types (`flowchart` for
+ * `flowchart-v2`, `classDiagram` for class), read from the manifests.
+ */
+function roleDescriptions(folder: string): Set<string> {
+  const types = FIXTURE_FOLDER_TYPES[folder] ?? [];
+  return new Set(
+    diagramManifests().flatMap((m) =>
+      m.types.some((t) => types.includes(t)) ? [m.id, ...m.types] : []
+    )
+  );
+}
 
 describe('renderDiagram (the page adapter)', () => {
   it.each(galleryFixtures().map((f) => [f.path, f.source]))(
     'renders %s without warnings',
-    async (_path, source) => {
+    async (path, source) => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
-      expect(svg).toMatch(
-        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart|mindmap|gitGraph|gantt|packet|cynefin|info|radar|kanban|sankey|treemap|wardley|xychart|venn)"/
-      );
+      const role = /^<svg [^>]*aria-roledescription="([^"]+)"/.exec(svg)?.[1];
+      expect([...roleDescriptions(path.split('/')[0]!)]).toContain(role);
     }
   );
 
@@ -103,13 +118,17 @@ describe('renderDiagram (the page adapter)', () => {
       families.map((theme) => [`${prefix}/${theme}.mmd`, theme, true]);
     // Mindmap has one per node shape, plus its edges (H4, #344).
     const mindmap = ['bang', 'circle', 'cloud', 'default', 'edges', 'hexagon', 'rounded', 'square'];
-    expect(handDrawn).toEqual([
-      ...['class-diagram', 'er-diagram', 'flowchart', 'kanban'].flatMap((f) =>
-        each(`${f}/handdrawn`)
-      ),
-      ...mindmap.flatMap((shape) => each(`mindmap/handdrawn/${shape}`)),
-      ...each('state-diagram-v2/handdrawn'),
-      ...each('venn/handdrawn'),
-    ]);
+    // The gallery folders of the types the plugin sketches: their `hand-drawn.txt` says so.
+    const sketched = [...new Set(galleryFixtures().map((f) => f.path.split('/')[0]!))].filter(
+      (folder) => handDrawnVerdict(folder) === 'sketched'
+    );
+    expect(sketched).toContain('flowchart');
+    expect(handDrawn).toEqual(
+      sketched.flatMap((folder) =>
+        folder === 'mindmap'
+          ? mindmap.flatMap((shape) => each(`mindmap/handdrawn/${shape}`))
+          : each(`${folder}/handdrawn`)
+      )
+    );
   });
 });

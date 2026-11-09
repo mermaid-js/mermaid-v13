@@ -4,7 +4,8 @@
  * read from git at the last v12 commit. They are a parity corpus next to the e2e fixtures
  * (R-TEST-3, DESIGN §13.1). Repeated sources are kept once.
  *
- * Usage: `pnpm --filter @mermaid-js/conformance harvest:<type>` (`harvest-v12.ts <type>`).
+ * Usage: `pnpm --filter @mermaid-js/conformance harvest:v12 <type>` (`harvest-v12.ts <type>`), for
+ * a type with a `harvest` row in its `src/<type>/tables.ts`.
  * `harvest-v12.spec.ts` checks that every committed corpus is what this writes.
  *
  * A literal is a source of the type when, after optional blanks and an optional `---` front
@@ -24,9 +25,11 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO_ROOT } from '../corpus.ts';
 import { V12_COMMIT } from '../jison/harvest.ts';
+import { HARVESTS, rowOf } from '../tables.ts';
 import type { CorpusItem } from '../types.ts';
 
-interface Harvest {
+/** How one Langium type's v12 sources are harvested: a row of `HARVESTS`. */
+export interface Harvest {
   /** The headers that start a source of the type, as a regex alternation. */
   header: string;
   /** The files whose string literals are harvested. */
@@ -35,97 +38,11 @@ interface Harvest {
   docs?: string;
 }
 
-/** The Langium types harvested, by v13 diagram id. */
-export const HARVESTS = {
-  pie: {
-    header: 'pie',
-    files: [
-      'packages/mermaid/src/diagrams/pie/pie.spec.ts',
-      'packages/mermaid/src/diagrams/pie/pieRenderer.spec.ts',
-      'packages/parser/tests/pie.test.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/pie.md',
-  },
-  packet: {
-    header: 'packet(?:-beta)?',
-    files: [
-      'packages/mermaid/src/diagrams/packet/packet.spec.ts',
-      'packages/mermaid/src/diagrams/packet/renderer.spec.ts',
-      'packages/parser/tests/packet.test.ts',
-      'packages/examples/src/examples/packet.ts',
-      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/packet.md',
-  },
-  info: {
-    header: 'info',
-    files: [
-      'packages/mermaid/src/diagrams/info/info.spec.ts',
-      'packages/parser/tests/info.test.ts',
-    ],
-  },
-  radar: {
-    header: 'radar-beta',
-    files: [
-      'packages/mermaid/src/diagrams/radar/radar.spec.ts',
-      'packages/parser/tests/radar.test.ts',
-      'packages/examples/src/examples/radar.ts',
-      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/radar.md',
-  },
-  treemap: {
-    header: 'treemap(?:-beta)?',
-    files: [
-      'packages/mermaid/src/diagrams/treemap/utils.test.ts',
-      'packages/parser/tests/treemap.test.ts',
-      'packages/examples/src/examples/treemap.ts',
-      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/treemap.md',
-  },
-  cynefin: {
-    header: 'cynefin-beta',
-    files: [
-      'packages/mermaid/src/diagrams/cynefin/cynefin.integration.spec.ts',
-      'packages/examples/src/examples/cynefin.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/cynefin.md',
-  },
-  wardley: {
-    header: 'wardley-beta',
-    files: [
-      'packages/mermaid/src/diagrams/wardley/wardleyParser.spec.ts',
-      'packages/mermaid/src/diagrams/wardley/wardleyBuilder.spec.ts',
-      'packages/examples/src/examples/wardley.ts',
-      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/wardley.md',
-  },
-  // All four railroad notations (#526, D511): one corpus, each source routed by its header.
-  railroad: {
-    header: 'railroad(?:-ebnf|-abnf|-peg)?-beta',
-    files: [
-      'packages/mermaid/src/diagrams/railroad/parser/railroadDiagram.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/parser/ebnfDiagram.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/parser/abnfDiagram.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/parser/pegDiagram.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/railroadRenderer.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/railroadDetector.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/ebnfDetector.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/abnfDetector.spec.ts',
-      'packages/mermaid/src/diagrams/railroad/pegDetector.spec.ts',
-      'packages/parser/tests/railroad.test.ts',
-      'packages/examples/src/examples/railroad.ts',
-      'packages/examples/src/examples/railroad-ebnf.ts',
-      'packages/examples/src/examples/railroad-abnf.ts',
-      'packages/examples/src/examples/railroad-peg.ts',
-    ],
-    docs: 'packages/mermaid/src/docs/syntax/railroad.md',
-  },
-} as const satisfies Record<string, Harvest>;
-
-export type HarvestType = keyof typeof HARVESTS;
+/**
+ * A harvested type's name: its key in `HARVESTS` (`src/tables.ts`), the union of each type's
+ * `src/<type>/tables.ts` `harvest` rows.
+ */
+export type HarvestType = string;
 
 /** Where `harvest-v12.ts <type>` writes the type's corpus. */
 export const harvestPath = (type: HarvestType): string =>
@@ -162,7 +79,7 @@ const TITLE_CALL = /\b(?:describe|it|test)(?:\.only|\.skip)?\(\s*$/;
 
 /** The sources `harvest-v12.ts <type>` writes, in file order, without duplicates. */
 export function harvest(type: HarvestType): CorpusItem[] {
-  const spec: Harvest = HARVESTS[type];
+  const spec: Harvest = rowOf(HARVESTS, type, 'HARVESTS');
   const items: CorpusItem[] = [];
   const seen = new Set<string>();
   const add = (id: string, source: string) => {
@@ -208,7 +125,7 @@ if (entry && realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url)
     process.stderr.write(`usage: harvest-v12.ts <${Object.keys(HARVESTS).join('|')}>\n`);
     process.exit(2);
   }
-  const items = harvest(type as HarvestType);
-  writeFileSync(harvestPath(type as HarvestType), JSON.stringify(items, null, 2) + '\n');
+  const items = harvest(type);
+  writeFileSync(harvestPath(type), JSON.stringify(items, null, 2) + '\n');
   process.stdout.write(`${items.length} sources\n`);
 }

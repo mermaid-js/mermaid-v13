@@ -2,7 +2,7 @@
  * The v13 side of gitGraph parity: the gitGraph parser and the normaliser from its `GitModel` to
  * the {@link GitSnapshot} that `v12.ts` takes from mermaid\@12's gitGraph DB.
  *
- * One listed divergence is applied here rather than in `divergences.json` (D263): v12's DB ran
+ * One listed divergence is applied here rather than in `divergences/` (D263): v12's DB ran
  * `sanitizeText` on every id, message, tag, branch name and title, which (with no
  * `securityLevel`) turns `<`, `>` and `=` into `&lt;`, `&gt;`, `&equals;` and `<br>` into
  * `<br/>`. v13 keeps the text as written, so {@link sanitizeLikeV12} applies the same

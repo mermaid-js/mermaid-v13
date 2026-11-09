@@ -143,6 +143,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-railroad':
+        specifier: workspace:^
+        version: link:../diagram-railroad
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -179,6 +182,9 @@ importers:
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
+      js-yaml:
+        specifier: ^4.3.2
+        version: 4.3.2
       mermaid:
         specifier: workspace:*
         version: link:../mermaid

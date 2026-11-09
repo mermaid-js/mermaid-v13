@@ -1,0 +1,14 @@
+radar-beta:keyword
+axis:keyword
+a:variable
+[:punctuation
+"Speed":string
+]:punctuation
+,:punctuation
+b:variable
+curve:keyword
+c:variable
+{:punctuation
+,:punctuation
+}:punctuation
+max:keyword

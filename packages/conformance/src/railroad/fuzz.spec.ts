@@ -18,7 +18,7 @@ const DIRECTIVE = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*
  * Whether `source` reaches a difference in core's preprocess, which every type shares and the
  * parity suite leaves out (as `cynefin/fuzz.spec.ts`): a directive that v12's `directiveRegex`
  * and core read differently (unclosed, over lines, or cut short by v12), or a front matter
- * block that v12 and core read differently (an empty one, listed in `divergences.json`; an
+ * block that v12 and core read differently (an empty one, listed in `divergences/railroad.json`; an
  * indented one, which core reads and v12 did not, as radar's divergences list; YAML that core's
  * reader refuses).
  */

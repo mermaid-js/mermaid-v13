@@ -1,0 +1,33 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+# One grammar per v12 notation in one package (D511, D512).
+grammars:
+  - type: railroad
+    title: Railroad diagram syntax (IR)
+    kinds:
+      module: parser/tokens.ts
+      object: IrKind
+  - type: railroadEbnf
+    grammar: railroad-ebnf
+    title: Railroad diagram syntax (EBNF)
+    kinds:
+      module: parser/tokens.ts
+      object: EbnfKind
+  - type: railroadAbnf
+    grammar: railroad-abnf
+    title: Railroad diagram syntax (ABNF)
+    kinds:
+      module: parser/tokens.ts
+      object: AbnfKind
+  - type: railroadPeg
+    grammar: railroad-peg
+    title: Railroad diagram syntax (PEG)
+    kinds:
+      module: parser/tokens.ts
+      object: PegKind
+
+# theme: what the theme specs need. Railroad reads no theme variable until its renderer (#613).
+theme:
+  notDrawnYet: true

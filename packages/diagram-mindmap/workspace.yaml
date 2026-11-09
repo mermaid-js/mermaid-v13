@@ -1,0 +1,57 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: mindmap
+    title: Mindmap syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      unnamed:
+        ClassStart:
+          mode: INITIAL
+          pattern: ':::'
+          docOf: CLASS
+        ClassEnd:
+          mode: class
+          pattern: \n
+        IconStart:
+          mode: INITIAL
+          pattern: '::icon\('
+          docOf: ICON
+        IconEnd:
+          mode: icon
+          pattern: \)
+        MdStringStart:
+          mode: node
+          pattern: '["][`]'
+        MdStringEnd:
+          mode: nstr2
+          pattern: '[`]["]'
+        StringStart:
+          mode: node
+          pattern: '["]'
+        StringEnd:
+          mode: nstr
+          pattern: '["]'
+      # A `%%` comment v12 left and a blank run are both SPACELINE.
+      mixed:
+        - SPACELINE
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - icons.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The mindmap plugin (SVG; `mindmap`).'
+  install: 'with `mermaid/slim`'

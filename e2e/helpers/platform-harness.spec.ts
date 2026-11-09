@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readManifest } from '../../packages/core/src/index.ts';
+import { diagramPackages } from '../../tools/workspace/diagrams.ts';
 import {
   FIXTURE_DIAGRAM,
   appEnv,
@@ -69,32 +70,12 @@ describe('fixture plugins', () => {
 describe('packClosure', () => {
   it('brings every workspace package `mermaid` depends on, each before its dependents', () => {
     const list = names(packClosure(['mermaid']));
-    expect([...list].sort()).toEqual([
-      '@mermaid-js/core',
-      '@mermaid-js/diagram-class',
-      '@mermaid-js/diagram-cynefin',
-      '@mermaid-js/diagram-er',
-      '@mermaid-js/diagram-flowchart',
-      '@mermaid-js/diagram-gantt',
-      '@mermaid-js/diagram-gitgraph',
-      '@mermaid-js/diagram-info',
-      '@mermaid-js/diagram-journey',
-      '@mermaid-js/diagram-kanban',
-      '@mermaid-js/diagram-mindmap',
-      '@mermaid-js/diagram-packet',
-      '@mermaid-js/diagram-pie',
-      '@mermaid-js/diagram-quadrant',
-      '@mermaid-js/diagram-radar',
-      '@mermaid-js/diagram-sankey',
-      '@mermaid-js/diagram-sequence',
-      '@mermaid-js/diagram-state',
-      '@mermaid-js/diagram-timeline',
-      '@mermaid-js/diagram-treemap',
-      '@mermaid-js/diagram-venn',
-      '@mermaid-js/diagram-wardley',
-      '@mermaid-js/diagram-xychart',
-      'mermaid',
-    ]);
+    // Every published diagram package (found from its manifest, so a new port joins unchanged).
+    const diagrams = diagramPackages()
+      .filter((p) => p.manifest !== undefined && !p.private)
+      .map((p) => p.name);
+    expect(diagrams.length).toBeGreaterThan(20);
+    expect([...list].sort()).toEqual(['@mermaid-js/core', ...diagrams, 'mermaid'].sort());
     expect(list[0]).toBe('@mermaid-js/core');
     expect(list.at(-1)).toBe('mermaid');
   });
