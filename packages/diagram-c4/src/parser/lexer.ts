@@ -55,7 +55,7 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { KEYWORD_MAX, KEYWORDS, T } from './tokens.ts';
+import { HEADERS, KEYWORD_MAX, KEYWORDS, T } from './tokens.ts';
 
 const DOLLAR = 0x24;
 
@@ -75,7 +75,8 @@ const S = {
 } as const;
 
 /** What a regex `.` does not match, once CRs are LFs. */
-const DOT_ENDS = ['\n', ' ', ' '] as const;
+// LF, U+2028 (line separator) and U+2029 (paragraph separator).
+const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 
 /** The four `direction` rules, in order: the two letters after the blanks, and the kind. */
 const DIRECTIONS: readonly (readonly [string, number])[] = [
@@ -94,6 +95,9 @@ const TITLES: readonly (readonly [string, number])[] = [
 
 const LOWER_T = 0x74;
 
+const ACC_TITLE = 'accTitle';
+const ACC_DESCR = 'accDescr';
+
 /**
  * The token each state's rules give on the empty text at the end, by state. ATTRIBUTE,
  * STRING_KV_KEY and STRING_KV_VALUE match nothing there; STRING_KV never gets there (`[^=]*`
@@ -109,9 +113,11 @@ const END_KINDS: Readonly<Partial<Record<number, number>>> = {
 };
 
 /** Stands for the `#` of an entity v12 encoded: no rule stops at it, as at v12's placeholder. */
-const ENTITY = 'ﬂ';
+// U+FB02 (LATIN SMALL LIGATURE FL), the first character of v12's placeholder.
+const ENTITY = '\ufb02';
 /** Stands for the entity's `;`. */
-const ENTITY_END = '¶';
+// U+00B6 (the paragraph sign), the first character of the placeholder's end.
+const ENTITY_END = '\u00b6';
 
 /**
  * Lex the C4 body `src[from…]`. `view` comes from {@link sourceView} with default options
@@ -127,13 +133,12 @@ export function lex(src: string, from: number, view: SourceView): TokenStream {
  * {@link ENTITY_END} (v12's placeholder holds neither, and `title` and `accDescription` stop
  * at both).
  */
-function rewritten(view: SourceView): string {
+function rewritten(view: SourceView, offsets: SourceOffsets | undefined): string {
   const { text, mask } = view;
   let out = text.includes('#')
     ? text.replace(/#(\w+);/g, (_m, name: string) => `${ENTITY}${name}${ENTITY_END}`)
     : text;
   if (mask && out.includes('"')) {
-    const offsets = view.runs && new SourceOffsets(view.runs);
     out = out.replace(/"/g, (q, i: number) =>
       ((mask[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0 ? "'" : q
     );
@@ -186,7 +191,7 @@ class C4Lexer {
     this.holes = view.holes;
     this.hole = firstHole(view, from);
     const start = localOffset(view, from);
-    const { text, at } = this.v12Text(rewritten(view), start);
+    const { text, at } = this.v12Text(rewritten(view, this.offsets), start);
     this.at = at;
     this.len = text.length;
     this.text = text + '\n';
@@ -332,7 +337,7 @@ class C4Lexer {
    */
   private dotEnd(q: number): number {
     let min = this.n;
-    for (let k = 0; k < 3; k++) {
+    for (let k = 0; k < DOT_ENDS.length; k++) {
       let e = this.nextEnd[k] ?? -1;
       if (e !== -1 && e < q) this.nextEnd[k] = e = this.text.indexOf(DOT_ENDS[k] ?? '', q);
       if (e !== -1 && e < min) min = e;
@@ -369,7 +374,7 @@ class C4Lexer {
   private direction(p: number): number {
     const line = this.dotEnd(p);
     if (line !== this.directionLine) this.directionsOn(p, line);
-    for (let k = 0; k < 4; k++) if ((this.directionAt[k] ?? -1) >= p) return k;
+    for (let k = 0; k < DIRECTIONS.length; k++) if ((this.directionAt[k] ?? -1) >= p) return k;
     return -1;
   }
 
@@ -384,7 +389,7 @@ class C4Lexer {
       const b = this.blanks(s + DIRECTION.length);
       if (b > s + DIRECTION.length) {
         const two = text.slice(b, b + 2);
-        for (let k = 0; k < 4; k++) {
+        for (let k = 0; k < DIRECTIONS.length; k++) {
           if (DIRECTIONS[k]?.[0] !== two) continue;
           this.directionAt[k] = s;
           this.directionEnd[k] = this.find('\n', b + 2);
@@ -426,9 +431,7 @@ class C4Lexer {
         this.string(c);
         return;
       case S.STRING_KV:
-        this.emit(T.StrKey, this.p, this.find('=', this.p));
-        this.stack.push(this.state);
-        this.state = S.STRING_KV_KEY;
+        this.begin(T.StrKey, this.find('=', this.p), S.STRING_KV_KEY);
         return;
       case S.STRING_KV_KEY:
         this.stringKvKey(c);
@@ -481,7 +484,7 @@ class C4Lexer {
       while (e < this.n && e <= p + KEYWORD_MAX && isWord(text.charCodeAt(e))) e++;
       const kind = KEYWORDS.get(text.slice(p, e));
       if (kind !== undefined) {
-        if (kind <= T.C4Deployment) this.emit(kind, p, e);
+        if (HEADERS.has(kind)) this.emit(kind, p, e);
         else this.begin(kind, e, S.MACRO);
         return;
       }
@@ -509,9 +512,10 @@ class C4Lexer {
   /** The `accTitle` and `accDescr` rules at `p` (after `acc`); whether one matched. */
   private accessibility(p: number): boolean {
     const { text } = this;
-    const title = this.startsWith('accTitle', p);
-    if (!title && !this.startsWith('accDescr', p)) return false;
-    const b = this.blanks(p + 8);
+    const title = this.startsWith(ACC_TITLE, p);
+    if (!title && !this.startsWith(ACC_DESCR, p)) return false;
+    // Both words are as long.
+    const b = this.blanks(p + ACC_TITLE.length);
     const c = text.charCodeAt(b);
     if (c === COLON) {
       if (title) this.begin(T.AccTitle, this.blanks(b + 1), S.ACC_TITLE);

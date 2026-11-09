@@ -42,11 +42,14 @@ import { c4GateCorpus, VARIANTS } from './corpus.ts';
  * holding `direction LR` stays one `direction_lr` token, so the parser reports it as D452's
  * `direction` diagnostic.
  *
- * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test bounds
- * which: commented copies of a one-line body, where `%% cut` goes through the header.
+ * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test lists
+ * them: five commented copies of a short body, where `%% cut` goes through the header.
  */
 /** The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus and #538's 12). */
 const E2E_FIXTURES = 44;
+
+/** A C4 header at the start of a text, as v12's detector and lexer read it. */
+const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
 
 const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
@@ -110,20 +113,20 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     expect(e2e).toBe(E2E_FIXTURES);
     expect(specs).toBe(160);
     expect(cases).toBe(173);
+    // The only sources v12 does not lex: the commented copies of these bodies of two lines or
+    // fewer, where `%% cut` goes through the middle of the header, so v12 detects no C4.
+    expect(skipped).toEqual(
+      ['header-alone', 'header-newline', 'keyword-at-end', 'paren-at-end', 'title-alone'].map(
+        (name) => `c4-cases/${name} (commented)`
+      )
+    );
     const byId = new Map(items.map((item) => [item.id, item.source]));
-    expect(
-      skipped.filter((id) => {
-        const original = byId.get(id.replace(VARIANT, '')) ?? '';
-        const cut = byId.get(id) ?? '';
-        const header = id.endsWith(' (commented)') && original.split('\n').length <= 2;
-        return !(
-          header &&
-          !/^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/.test(
-            cut.replace(/%%[^\n]*\n/g, '')
-          )
-        );
-      })
-    ).toEqual([]);
-    expect(skipped.length).toBeLessThan(8);
+    for (const id of skipped) {
+      const original = byId.get(id.replace(VARIANT, '')) ?? '';
+      const cut = (byId.get(id) ?? '').replace(/%%[^\n]*\n/g, '');
+      expect(original.split('\n').length, id).toBeLessThanOrEqual(2);
+      expect(original, id).toMatch(HEADER);
+      expect(cut, id).not.toMatch(HEADER);
+    }
   }, 300_000);
 });

@@ -185,6 +185,15 @@ export const KEYWORDS: ReadonlyMap<string, number> = new Map([
   ['UpdateLayoutConfig', T.UpdateLayoutConfig],
 ]);
 
+/** The header kinds (`C4Context` … `C4Deployment`): every other keyword opens a macro. */
+export const HEADERS: ReadonlySet<number> = new Set([
+  T.C4Context,
+  T.C4Container,
+  T.C4Component,
+  T.C4Dynamic,
+  T.C4Deployment,
+]);
+
 /** The longest keyword's length: a word run is read no further than one past it. */
 export const KEYWORD_MAX = Math.max(...[...KEYWORDS.keys()].map((k) => k.length));
 
