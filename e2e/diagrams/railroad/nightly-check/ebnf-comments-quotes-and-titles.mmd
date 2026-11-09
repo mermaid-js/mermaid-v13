@@ -1,0 +1,10 @@
+---
+description: EBNF with ISO (* *) and /* */ comments, single quotes, escapes, a title and accessibility text.
+---
+railroad-ebnf-beta
+title "Quoted strings"
+accTitle: A string literal
+accDescr: Double or single quoted, with backslash escapes
+(* ISO 14977 comment *)
+string = '"' { char } '"' | "'" { char } "'" ; /* C comment */
+char = "\\" "n" | "\"" | 'x' ;

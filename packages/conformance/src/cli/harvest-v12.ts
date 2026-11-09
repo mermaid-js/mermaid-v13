@@ -102,6 +102,27 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/wardley.md',
   },
+  // All four railroad notations (#526, D511): one corpus, each source routed by its header.
+  railroad: {
+    header: 'railroad(?:-ebnf|-abnf|-peg)?-beta',
+    files: [
+      'packages/mermaid/src/diagrams/railroad/parser/railroadDiagram.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/parser/ebnfDiagram.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/parser/abnfDiagram.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/parser/pegDiagram.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/railroadRenderer.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/railroadDetector.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/ebnfDetector.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/abnfDetector.spec.ts',
+      'packages/mermaid/src/diagrams/railroad/pegDetector.spec.ts',
+      'packages/parser/tests/railroad.test.ts',
+      'packages/examples/src/examples/railroad.ts',
+      'packages/examples/src/examples/railroad-ebnf.ts',
+      'packages/examples/src/examples/railroad-abnf.ts',
+      'packages/examples/src/examples/railroad-peg.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/railroad.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;

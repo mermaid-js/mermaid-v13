@@ -9,6 +9,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #608 T1 lexer
 - Exploration: `@mermaid-js/parser@2.0.1` exports `createRailroadServices` (`Railroad`), `createRailroadEbnfServices` (`RailroadEbnf`), `createRailroadAbnfServices` (`RailroadAbnf`), `createRailroadPegServices` (`RailroadPeg`); each `.parser.Lexer` has `tokenize`. The 106-source harvest dry run matches the spec (IR 44, EBNF 26, ABNF 17, PEG 19).
 - Exploration: Langium gives some punctuation a hidden longer alternative (EBNF `(`, `?`, `-`; ABNF `;`): that is why ABNF `; b = …` on one line is a comment. The lexers copy it.
+- **Choice (done):** one shared token-kind module (`src/parser/tokens.ts`) and one shared base lexer (`src/parser/lexer.ts`), with one subclass per notation under `src/parser/<notation>/lexer.ts`; Chevrotain names per notation in `langium-names.ts`.
+- Found: ABNF `;` followed only by blanks is also a comment (`a = "x" ;␠␠` never ends the rule). A `#name;` entity where a PEG `#` comment starts is a lexer error in v12 (its placeholder starts with `ﬂ`). Both gated.
 
 ## #610 T2 parser
 - Exploration: all four v12 types share one DB object (each has its own parser object). `max: Infinity` serialises as `null` in a JSON snapshot: model parity normalises it.

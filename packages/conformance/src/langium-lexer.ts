@@ -42,6 +42,27 @@ export const LANGIUM_LEXERS = {
     factory: 'createWardleyServices',
     key: 'Wardley',
   },
+  // Railroad (#526, D511): one row per v12 notation, each with its own parser object.
+  railroad: {
+    probe: 'railroad-beta\na = terminal("x") ;',
+    factory: 'createRailroadServices',
+    key: 'Railroad',
+  },
+  railroadEbnf: {
+    probe: 'railroad-ebnf-beta\na = "x" ;',
+    factory: 'createRailroadEbnfServices',
+    key: 'RailroadEbnf',
+  },
+  railroadAbnf: {
+    probe: 'railroad-abnf-beta\na = "x" ;',
+    factory: 'createRailroadAbnfServices',
+    key: 'RailroadAbnf',
+  },
+  railroadPeg: {
+    probe: 'railroad-peg-beta\na <- "x" ;',
+    factory: 'createRailroadPegServices',
+    key: 'RailroadPeg',
+  },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

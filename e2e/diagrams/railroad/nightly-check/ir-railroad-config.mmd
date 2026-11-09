@@ -1,0 +1,16 @@
+---
+description: IR with the railroad config section set (spacing, arcs, markers and colours).
+config:
+  railroad:
+    padding: 16
+    verticalSeparation: 12
+    horizontalSeparation: 20
+    arcRadius: 6
+    markerRadius: 4
+    strokeWidth: 1
+    terminalFill: '#E0F0FF'
+    nonTerminalFill: '#FFF8E0'
+    lineColor: '#333366'
+---
+railroad-beta
+list = sequence(terminal("["), optional(sequence(nonterminal("item"), zeroOrMore(sequence(terminal(","), nonterminal("item"))))), terminal("]")) ;
