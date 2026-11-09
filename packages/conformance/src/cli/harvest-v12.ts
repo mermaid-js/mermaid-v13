@@ -102,6 +102,23 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/wardley.md',
   },
+  usecase: {
+    header: 'usecase-beta',
+    files: [
+      'packages/mermaid/src/diagrams/usecase/usecase.parser.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/usecase.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/parser/usecase.parser.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/parser/usecase.lexer.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/parser/usecaseJson.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/usecaseDb.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/usecase-colorIndex.spec.ts',
+      'packages/mermaid/src/diagrams/usecase/usecaseRenderer.spec.ts',
+      'packages/mermaid/src/config.appearance.spec.ts',
+      'packages/examples/src/examples/usecase.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/usecase.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;
@@ -153,9 +170,13 @@ export function harvest(type: HarvestType): CorpusItem[] {
     `^\\s*(?:---\\n[^]*?\\n---[\\t ]*\\n\\s*)?(?:${spec.header})(?![\\w.-])`
   );
   const bare = new RegExp(`^(?:${spec.header})$`);
+  const base = (file: string) => file.slice(file.lastIndexOf('/') + 1);
   for (const file of spec.files) {
     const text = git('show', `${V12_COMMIT}:${file}`);
-    const name = file.slice(file.lastIndexOf('/') + 1);
+    // The file's name, or its folder and name when another file of the type shares the name
+    // (usecase's `usecase.parser.spec.ts` and `parser/usecase.parser.spec.ts`).
+    const shared = spec.files.some((f) => f !== file && base(f) === base(file));
+    const name = shared ? file.split('/').slice(-2).join('/') : base(file);
     let n = 0;
     for (const m of text.matchAll(LITERAL)) {
       const raw = m[1] ?? m[2] ?? m[3] ?? '';
