@@ -6,7 +6,7 @@
  * `currentColor`, which the icon group's `color` sets (`treeViewIconColor`).
  */
 import { pathBuilder, type Attrs, type PathData } from '@mermaid-js/core/svg';
-import { BUILTIN_ICON_PACK } from '../icons.ts';
+import { BUILTIN_ICON_PACK, isBuiltinIcon } from '../icons.ts';
 
 /** An absolute command: move, line, arc (rx ry rotation large sweep x y), close. */
 type Command =
@@ -77,14 +77,13 @@ function scaled(commands: readonly Command[], size: number): PathData {
  * `size` square at the origin; undefined for any other name, which goes to `ctx.icon`.
  */
 export function builtinGlyph(name: string, size: number): Attrs | undefined {
+  if (!isBuiltinIcon(name)) return undefined;
   if (name === `${BUILTIN_ICON_PACK}:folder`)
     return { d: scaled(FOLDER, size), fill: 'currentColor' };
-  if (name === `${BUILTIN_ICON_PACK}:file`)
-    return {
-      d: scaled(FILE, size),
-      fill: 'currentColor',
-      'fill-rule': 'evenodd',
-      'clip-rule': 'evenodd',
-    };
-  return undefined;
+  return {
+    d: scaled(FILE, size),
+    fill: 'currentColor',
+    'fill-rule': 'evenodd',
+    'clip-rule': 'evenodd',
+  };
 }

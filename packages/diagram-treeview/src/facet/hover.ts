@@ -7,7 +7,7 @@
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { treeviewDocs } from '../generated/docs.ts';
-import { BUILTIN_ICON_PACK, detectIcon, resolveIcon } from '../icons.ts';
+import { BUILTIN_ICON_PACK, detectIcon, isBuiltinIcon, resolveIcon } from '../icons.ts';
 import type { TreeViewIconOptions } from '../icons.ts';
 import type { TreeViewNode } from '../model.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
@@ -37,7 +37,7 @@ function iconLine(node: TreeViewNode, options: TreeViewIconOptions): string {
     return 'Icon: none, since `showIcons` is off and it has no `icon(…)`.';
   }
   if (icon === undefined) return 'Icon: none, since the icon maps give it `none`.';
-  const builtin = icon.startsWith(`${BUILTIN_ICON_PACK}:`)
+  const builtin = isBuiltinIcon(icon)
     ? `, the built-in ${icon.slice(BUILTIN_ICON_PACK.length + 1)} glyph`
     : '';
   let from = '';

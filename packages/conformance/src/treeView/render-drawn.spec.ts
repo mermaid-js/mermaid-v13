@@ -376,6 +376,10 @@ describe('treeView render: icons (D485, D486, D299)', () => {
   it('lists the icons the glyphs draw for the icons extension, under the parse config', async () => {
     const m = await api({ treeView: { showIcons: true, ...MAPS } });
     const { parse } = await m.prepare(probe('icons'));
+    // Recorded on the model by the plugin's parse, which has the config.
+    expect((parse.model as TreeViewModel).glyphIcons).toEqual(
+      treeView.icons(parse.model as TreeViewModel)
+    );
     expect(treeView.icons(parse.model as TreeViewModel)).toEqual([
       'pk:whale',
       'pk:ts',

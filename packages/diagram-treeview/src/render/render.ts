@@ -49,14 +49,21 @@ export function renderTreeView(
   let next = 0;
   layout.rows.forEach((row, i) => {
     drawRow(row, paint, ctx, w, missed);
-    // The lines v12 drew before the next row: this row's branch and the stems of the subtrees
-    // it closes (`drawTree` draws a row's branch with it and a parent's stem after its subtree).
-    while (next < lines.length && !(lines[next]!.kind === 'branch' && lines[next]!.row > i))
+    while (next < lines.length && drawnBefore(lines[next]!, i + 1))
       drawLine(lines[next++]!, layout, paint, w);
   });
   w.close();
   w.close();
   if (missed.length > 0) iconsNotRendered(ctx, [...new Set(missed)]);
+}
+
+/**
+ * Whether v12 drew `line` before row `row`'s group: every line but the branches into that row
+ * and later ones (`drawTree` draws a row's branch with it, a parent's stem after its subtree), so
+ * after a row come its branch and the stems of the subtrees it closes.
+ */
+function drawnBefore(line: TreeViewLine, row: number): boolean {
+  return line.kind === 'stem' || line.row < row;
 }
 
 /** A row (`positionLabel`): highlight box, icon, label, then its description. */

@@ -57,4 +57,11 @@ export interface TreeViewModel {
   readonly accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
+  /**
+   * The icons the nodes draw through the extensions' glyphs (`DiagramPlugin.icons`, D293):
+   * every name `resolveIcon` gives a node under the parse's `treeView` options but the built-in
+   * glyphs, in source order without repeats. Set by the plugin's `parse` (#575), which has the
+   * config; absent from `parseTreeView` alone.
+   */
+  readonly glyphIcons?: readonly string[];
 }

@@ -15,6 +15,11 @@ export const BUILTIN_ICON_PACK = 'mermaid-treeview';
 /** The built-in glyphs. */
 export const BUILTIN_ICONS: readonly string[] = ['file', 'folder'];
 
+/** Whether `name` (as `resolveIcon` gives it) is one of the built-in glyphs treeView draws. */
+export function isBuiltinIcon(name: string): boolean {
+  return name === `${BUILTIN_ICON_PACK}:file` || name === `${BUILTIN_ICON_PACK}:folder`;
+}
+
 /** The `treeView` options icon resolution reads. */
 export interface TreeViewIconOptions {
   showIcons: boolean;
