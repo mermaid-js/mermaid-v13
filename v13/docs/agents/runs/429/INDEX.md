@@ -9,7 +9,7 @@ Integration branch `feature/429_venn` (from `mermaid-v13` at 12ba676cb). Draft P
 | T3 layout and venn.js solver | #491 | #488 | merged (ff f95271949; package entry 16,410 B gz, core 93,426 B gz unchanged) |
 | T4 SVG renderer and theme table | #495 | #491 | merged (ff 51e92a401; package entry 19,137 B gz, CDN core closure 94,095 B gz) |
 | T6 language facet | #498 | #488 | merged (ff b74e4ae02; package entry 19,965 B gz, `./language` 12,329 B gz) |
-| T5 integration | #501 | #495, #498 | open |
+| T5 integration | #501 | #495, #498 | merged (ff a0505085c; CDN core closure 94,132 B gz, 76 B headroom; warm render 9.8× geomean vs 12.2.0) |
 
 No T7 (D320: `format: 'ascii'` throws `UnsupportedFormatError`).
 
@@ -33,6 +33,7 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 | #491 T3 | 93,426 | 0 (schema `venn.padding` default 8 → 15 and its doc comment only) |
 | #495 T4 | bench 93,682 → 93,695; CDN closure 94,088 → 94,095 | +7 (`data-venn-sets` in the SVG allowlist; the bench base includes #534) |
 | #498 T6 | 93,695 | 0 (`LanguageFacet.quoteId` is type-only) |
+| #501 T5 | bench 93,695 → 93,746; CDN closure 94,094 → 94,132 | +51 bench / +38 CDN (registry row, detector, config keys) |
 
 ## Merge log
 
