@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). The usecase diagram's eight (`usecaseActorBkg`, `usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`, `usecaseBoundaryBkg`, `usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`) are the same rules in both families, keyed by the palette, not the family (D474): where the theme or the author carries a palette, `borderColorArray` slots 5, 1, 10 and 2 for the actor and use case borders and the include and extend lines and `bkgColorArray` slots 5 and 1 for the two fills (an empty `bkgColorArray`, as `redux-dark-color`'s, keeps the fallback); else `actorBkg`, `actorBorder`, `mainBkg`, `nodeBorder` and `lineColor`; the boundaries `clusterBkg` and `clusterBorder` (redux-color's own boundary grey `#FAFAFC` is not kept, D541). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -1283,7 +1283,8 @@ export const configSchema: ConfigSchema = {
     "usecase": {
       "$ref": "#/$defs/UsecaseDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "venn": {
@@ -6488,7 +6489,33 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's default: a usecase diagram with no theme set draws in `redux-color`. A `theme` from `initialize()` or the diagram text wins over this default; set here, it wins over the top-level `theme` for usecase diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the usecase renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`false` gives the root its drawn width and height; any other value keeps `width=\"100%\"` and a `max-width`."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Defaults to `layered`, not v12's `elk` (R-LAYOUT-7: ELK is never the default; v12 laid usecase out with the top-level `layout`, `elk` in 12.2.0). Set here, it wins over the top-level `layout` for usecase diagrams. `dagre` draws with `layered`; `compass` takes its sides from `direction` (D327); `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered, and without it draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173)."
           }
         },
         "look": {
@@ -6504,14 +6531,18 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/FlowchartDiagramConfig/properties/wrappingWidth",
           "default": 120,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 120 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "minNodeWidth": {
           "$ref": "#/$defs/FlowchartDiagramConfig/properties/minNodeWidth",
           "default": 120,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 120 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "actorFontSize": {
@@ -6520,16 +6551,19 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 14 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "actorFontFamily": {
           "description": "Font family for actor labels.\n\nWritten verbatim into an inline CSS custom property, so the characters that could\nterminate a declaration or open a new one are excluded: `;`, `<`, `>`, `(`, `)`,\n`{`, `}`, and `\\`. Quotes, commas, and spaces stay allowed for font stacks such as\n`\"Open Sans\", sans-serif`.\n",
           "type": "string",
           "pattern": "^[^;<>(){}\\\\]*$",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `\"Open Sans\", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "actorFontWeight": {
@@ -6538,7 +6572,9 @@ export const configSchema: ConfigSchema = {
           "pattern": "^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$",
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold` and `bolder` measure and draw bold, `normal` and `lighter` regular, a number as given; a value outside the pattern draws `normal` and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "usecaseFontSize": {
@@ -6547,16 +6583,19 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 12 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "usecaseFontFamily": {
           "description": "Font family for usecase labels.\n\nConstrained the same way as `actorFontFamily`.\n",
           "type": "string",
           "pattern": "^[^;<>(){}\\\\]*$",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `\"Open Sans\", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "usecaseFontWeight": {
@@ -6565,7 +6604,9 @@ export const configSchema: ConfigSchema = {
           "pattern": "^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$",
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold` and `bolder` measure and draw bold, `normal` and `lighter` regular, a number as given; a value outside the pattern draws `normal` and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "nodeSpacing": {
@@ -6574,7 +6615,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 50 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "rankSpacing": {
@@ -6583,7 +6626,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 50 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "diagramPadding": {
@@ -6592,7 +6637,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 20 and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "colorScheme": {
@@ -6604,7 +6651,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "role",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, also when an author's `borderColorArray` gives a theme without one a palette (D474). Any other value colours by role and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         }
       }

@@ -39,5 +39,5 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'venn', pattern: /^\s*venn-beta/, id: 'venn', formats: ['svg'] },
   { type: 'wardley', pattern: /^\s*wardley-beta/i, id: 'wardley', formats: ['svg'] },
   { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, id: 'cynefin', formats: ['svg'] },
-  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
+  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, id: 'usecase', formats: ['svg'] },
 ];

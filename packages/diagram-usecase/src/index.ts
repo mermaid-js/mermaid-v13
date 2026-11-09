@@ -1,11 +1,12 @@
 /**
- * `@mermaid-js/diagram-usecase`: the usecase diagram plugin (spec #517), in progress. A graph
+ * `@mermaid-js/diagram-usecase`: the usecase diagram plugin (spec #517). A graph
  * type (`layoutKind: 'graph'`, laid out by `ctx.layout ?? layered`). This entry has the parser
  * (#563): `parseUsecase(text, { preprocessed })` gives the {@link UsecaseModel}, the AST,
  * diagnostics, symbols and statement spans. `layoutUsecase(model, ctx)` (#565) measures it and
  * lays it out with `ctx.layout ?? layered`; `renderUsecase` (#566) draws it, and `usecase` is the
- * plugin with its theme table; the manifest lands with T5. The lexer, its parity gate's helpers,
- * the layout invariants and the render harness are in `./testing`.
+ * plugin with its theme table and config defaults, which `mermaid` loads through its generated
+ * registry (#567). The lexer, its parity gate's helpers, the layout invariants and the render
+ * harness are in `./testing`; the language facet is `./language`.
  */
 export { usecase } from './plugin.ts';
 export { renderUsecase } from './render/index.ts';

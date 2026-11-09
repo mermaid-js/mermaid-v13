@@ -184,5 +184,11 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-cynefin').then((m) => m.cynefin),
   },
-  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
+  {
+    type: 'usecase',
+    pattern: /^\s*usecase-beta(?:\s|$)/,
+    id: 'usecase',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-usecase').then((m) => m.usecase),
+  },
 ];

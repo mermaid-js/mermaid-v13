@@ -2,8 +2,10 @@
  * The `usecase` options the layout and the renderer read, from the resolved config's `usecase`
  * section, resolved once per render (`UsecasePrepared.config`). The
  * defaults are v12's schema defaults (`UsecaseDiagramConfig` in `config.schema.yaml` at
- * fa796a943, the same in `packages/core/schema/config.schema.yaml`). Until T5 adds the manifest
- * and the generated defaults, nothing fills the section, so this file holds them.
+ * fa796a943, the same in `packages/core/schema/config.schema.yaml`). The plugin's
+ * `configDefaults` (`generated/config-defaults.ts`, #567) fill the section with them; this file
+ * keeps them as the value a key the layout cannot use falls back to (`config-defaults.spec.ts`
+ * holds the two equal).
  *
  * The config resolver checks no value types, so a directive can set any of these to anything. A
  * length is a number, or a numeric string as its number, from the schema's minimum up to 10000;
@@ -12,8 +14,8 @@
  *
  * The two font families inherit the theme's `fontFamily` (D132: fonts are uniform across
  * diagrams) unless the author sets one: v12's default `"Open Sans", sans-serif` is not applied.
- * The resolved config cannot tell a default from an author's value, so T5's section defaults
- * must leave both family keys out, as venn's leave out `padding`.
+ * The resolved config cannot tell a default from an author's value, so the schema gives both
+ * family keys no default (as sequence's `actorFontFamily`) and the section defaults leave them out.
  */
 import { checkStyle } from '@mermaid-js/core/svg';
 import { USECASE_CONFIG_IGNORED } from './codes.ts';

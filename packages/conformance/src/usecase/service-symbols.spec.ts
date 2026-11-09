@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { detectUsecase, language } from '@mermaid-js/diagram-usecase/language';
+import { language } from '@mermaid-js/diagram-usecase/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
-import { createLanguageService } from '@mermaid-js/language-service';
+import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { usecaseCases, usecaseCorpus } from './corpus.ts';
@@ -22,8 +22,8 @@ import { parseUsecaseForParity, usecaseV13Snapshot } from './v13.ts';
  * - renaming each element to a fresh id, v12 reads the new text with that id (and a quoted
  *   element's label) changed and nothing else; renaming one to another element's id is refused.
  *
- * The manifest (#567) is not there yet, so the facet is given to the service as a row of its
- * own; once it is, the row only replaces the generated one.
+ * The service loads the facet through the generated registry row (usecase's manifest
+ * `language` entry, #567).
  */
 const FRESH = 'renamedZq7';
 const key = (r: Range | undefined) => (r ? `${r.start}:${r.end}` : 'none');
@@ -77,11 +77,7 @@ function renamed(snap: UsecaseSnapshot, from: string, to: string, quoted: boolea
 describe('usecase symbols, folding and rename through the service match v12', () => {
   it('over the corpus and cases', async () => {
     const oracle = await loadOracle();
-    const service = createLanguageService({
-      facets: [
-        { type: 'usecase', id: 'usecase', detector: (src) => detectUsecase(src), facet: language },
-      ],
-    });
+    const service = createLanguageService();
     await service.preload({ types: ['usecase'] });
     const problems: string[] = [];
     const n = { checked: 0, names: 0, quoted: 0, folds: 0, renamed: 0, clashes: 0 };
@@ -207,4 +203,11 @@ describe('usecase symbols, folding and rename through the service match v12', ()
     expect(n.renamed).toBeGreaterThan(300);
     expect(n.clashes).toBeGreaterThan(100);
   }, 300_000);
+
+  it('loads the facet from the generated registry (#567)', async () => {
+    expect(firstPartyFacets.find((e) => e.type === 'usecase')?.load).toBeTypeOf('function');
+    const service = createLanguageService();
+    await service.preload({ types: ['usecase'] });
+    expect(service.update('x:///u', 'usecase-beta\n  actor A\n').facet?.id).toBe('usecase');
+  });
 });
