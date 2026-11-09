@@ -6,7 +6,7 @@ Integration branch `feature/527_eventmodeling`, cut from `mermaid-v13` at `521fb
 | --- | --- | --- | --- |
 | T1 lexer parity gate on the Langium oracle | #600 | — | merged (ff 85478e5c0; `./testing` 3.6 KB gz, no core change) |
 | T2 grammar, parser, model, AST, ported specs | #602 | #600 | merged (no-ff, review fixes 2f749abbd; runtime entry 9.3 KB gz, no core change) |
-| T3 custom layout (`EventModelLayout`) | #604 | #602 (soft) | open |
+| T3 custom layout (`EventModelLayout`) | #604 | #602 (soft) | merged (ff e7939fc5f; runtime entry 11.5 KB gz, no core code change) |
 | T4 SVG renderer and theme table | #606 | #602, #604 | open |
 | T6 language facet | #609 | #602 | open |
 | T5 integration | #611 | #606, #609 | open |
