@@ -72,7 +72,7 @@ describe('packClosure', () => {
     const list = names(packClosure(['mermaid']));
     // Every published diagram package (found from its manifest, so a new port joins unchanged).
     const diagrams = diagramPackages()
-      .filter((p) => !p.private)
+      .filter((p) => p.manifest !== undefined && !p.private)
       .map((p) => p.name);
     expect(diagrams.length).toBeGreaterThan(20);
     expect([...list].sort()).toEqual(['@mermaid-js/core', ...diagrams, 'mermaid'].sort());
