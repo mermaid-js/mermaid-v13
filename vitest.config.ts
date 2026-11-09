@@ -1,4 +1,3 @@
-import { availableParallelism } from 'node:os';
 import { defineConfig } from 'vitest/config';
 
 // Workspace packages resolve to their TypeScript sources via the `mermaid-source` export
@@ -26,10 +25,6 @@ export default defineConfig({
   ssr,
   test: {
     environment: 'node',
-    // Vitest's default is one worker less than the cores. On the 4-core CI runner that leaves a
-    // core to the main process, which is mostly idle once the first files are transformed, so CI
-    // runs one worker per core. VITEST_MAX_WORKERS still overrides this; local runs keep the default.
-    maxWorkers: process.env.CI ? availableParallelism() : undefined,
     projects: [
       {
         resolve,
