@@ -87,6 +87,20 @@ const PACKAGES = [
     ],
   },
   {
+    name: 'ishikawa',
+    dir: 'diagram-ishikawa',
+    renderer: [
+      'render/',
+      'layout/',
+      'plugin.ts',
+      'index.ts',
+      'labels.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
+  {
     name: 'info',
     dir: 'diagram-info',
     renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],

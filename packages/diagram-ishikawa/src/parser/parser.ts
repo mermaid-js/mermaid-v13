@@ -26,13 +26,21 @@
  * Symbols (D497): each cause is a `cause` symbol, its own definition with no references.
  * Statement spans: `header`, `effect`, and `cause`, each holding the spans of the causes under
  * it (for folding). The D496 warnings are made here: `ISHIKAWA_EMPTY` and
- * `ISHIKAWA_INDENT_CLAMPED`.
+ * `ISHIKAWA_INDENT_CLAMPED` (with `clampInfo`, the language facet's, one information
+ * diagnostic per clamped cause instead).
+ *
+ * With `probe` (R-LANG-7, D95, #584) the rules also record what they would accept at that
+ * offset: the header keyword (after the blank and comment lines before it), what starts a
+ * statement, the text after an indent, and what ends a statement. The lexer has no start
+ * conditions, so the probe's mode is `INITIAL` in code.
  */
 import {
   Kind,
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   syncTo,
   TokenCursor,
@@ -56,6 +64,11 @@ import { T } from './tokens.ts';
 export interface IshikawaParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /**
+   * The language facet's diagnostics: one `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped
+   * cause, in place of the one warning a render gives (D496, spec #519 "Language facet").
+   */
+  clampInfo?: boolean;
 }
 
 export type IshikawaParseResult = ParseResult<IshikawaModel, IshikawaDocument>;
@@ -66,6 +79,20 @@ const STOPS = kindSet(Kind.Newline, T.Eof, T.SpaceLine, T.CommentLine);
 const BLANK_LINES = kindSet(T.SpaceLine, T.CommentLine);
 /** What an error after an indent names: the text or keyword after it, not the blanks. */
 const AFTER_INDENT = kindSet(T.Text, T.Ishikawa);
+
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** The blank and comment lines before the header. */
+const BLANK_LINE_KINDS = [T.SpaceLine, T.CommentLine];
+/** What may start a statement: an indent, a line of text, a blank or comment line. */
+const STATEMENT_KINDS = [T.SpaceList, T.Text, T.SpaceLine, T.CommentLine];
+/** What ends a statement. */
+const STOP_KINDS = [Kind.Newline, T.Eof, T.SpaceLine, T.CommentLine];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset: an
+ * indent and a blank line (the cursor is then where a line's text goes).
+ */
+const PROBE_FOLLOWS = kindSet(T.SpaceList, T.SpaceLine);
 
 /**
  * What a statement read, for the message of a missing separator after it: a line of text, a
@@ -135,6 +162,8 @@ class IshikawaParser {
   private readonly lexed: Lexed;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly children: IshikawaLineNode[] = [];
   private headerRange: Range | undefined;
   private effect: IshikawaEffect | undefined;
@@ -161,7 +190,16 @@ class IshikawaParser {
       pre.directives.map((d) => d.range)
     );
     this.lexed = lex(src, pre.bodyStart, view);
-    this.c = new TokenCursor(this.lexed.tokens);
+    if (options.probe === undefined) {
+      this.c = new TokenCursor(this.lexed.tokens);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    // v12's lexer has no start conditions.
+    probe.lexed(probe.offset, probe.offset, 'INITIAL');
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(this.lexed.tokens, probe);
   }
 
   parse(): IshikawaParseResult {
@@ -185,7 +223,7 @@ class IshikawaParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.lexed.tokens, this.options);
+    return st.result(model, ast, this.lexed.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -271,12 +309,13 @@ class IshikawaParser {
   /** `start`: blank and comment lines, then the keyword and an optional line break. */
   private start(): void {
     const { c } = this;
+    c.tested(BLANK_LINE_KINDS);
     if (BLANK_LINES[c.kind]) {
       // `spaceLines`.
       c.next();
       while (BLANK_LINES[c.kind] || c.kind === Kind.Newline) c.next();
     }
-    if (c.kind !== T.Ishikawa) {
+    if (!c.at(T.Ishikawa)) {
       this.report(HEADER, HEADER_HINT);
       // The lines are still read; line breaks before them are no statement.
       while (c.kind === Kind.Newline || c.kind === T.Eof) c.next();
@@ -307,10 +346,11 @@ class IshikawaParser {
   /** `statement`: an indent and an optional line of text, a line of text, or a blank line. */
   private statement(): Read {
     const { c } = this;
+    c.tested(STATEMENT_KINDS);
     const k = c.kind;
     if (k === T.SpaceList) {
       const indent = this.raw(c.next()).length;
-      if (c.kind !== T.Text) return 'indent';
+      if (!c.at(T.Text)) return 'indent';
       this.line(indent);
       return 'line';
     }
@@ -332,6 +372,7 @@ class IshikawaParser {
    */
   private stop(read: Read): void {
     const { c } = this;
+    c.tested(STOP_KINDS);
     if (STOPS[c.kind]) {
       this.separator();
       return;
@@ -342,6 +383,8 @@ class IshikawaParser {
       // line separator ends a comment line without a separator after it (a line break would be
       // one), so the text after a comment line is on its line.
       this.report(LINE_BREAK, read === 'comment' ? SEPARATOR_HINT : PAIRS_HINT);
+      // The line is still read, but what is tested on it now is recovery.
+      this.probe?.freeze();
       return;
     }
     this.fail(LINE_BREAK);
@@ -409,6 +452,18 @@ class IshikawaParser {
     const baseline = this.causes[0];
     if (!first || !baseline) return;
     const shown = (c: OpenCause) => `${quote(c.text)} at line ${this.lineOf(c.range.start)}`;
+    if (this.options.clampInfo) {
+      // The editor's: the indent's meaning at each line it changes.
+      for (const c of clamped) {
+        d.add(
+          'info',
+          ISHIKAWA_INDENT_CLAMPED,
+          `Indented less than the first cause (${shown(baseline)}), so read as a top-level cause. Indent it at least as deep as the first cause to nest it.`,
+          c.range
+        );
+      }
+      return;
+    }
     const list = clamped.slice(0, 3).map(shown).join(', ') + (clamped.length > 3 ? ', …' : '');
     const message =
       clamped.length === 1
