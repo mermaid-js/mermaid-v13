@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-class",
-  "version": "13.0.0-alpha.1",
+  "version": "13.0.0-alpha.2",
   "description": "Class diagram plugin for Mermaid: parser, model, layout and renderer.",
   "type": "module",
   "license": "MIT",

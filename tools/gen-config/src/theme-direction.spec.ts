@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { DiagramThemeTable } from '../../../packages/core/src/theme/diagram.ts';
 import { THEME_NAMES, THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
+import { DARK_RULES, LIGHT_RULES } from '../../../packages/core/src/theme/spec.ts';
 import { D332_INPUTS } from '../../../packages/conformance/src/diagram-themes.ts';
 import {
   checkThemeDirection,
@@ -112,7 +113,10 @@ describe('theme direction (D331)', () => {
   // table, where the diagram variable that reads it is compared. xychart's
   // `xyChartPlotColorPalette` reads plotColorArray (D381, D545).
   it('reads every shared input from some table', () => {
-    expect(unreadInputs(repo.tables, D332_INPUTS)).toEqual([]);
+    // Core's shared rules count too: a core row that reads an input (`actorBorder` reads
+    // `inline(softBorder)`, #561) is compared with v12 as every core row is.
+    const core: DiagramThemeTable = { vars: {}, rules: { light: LIGHT_RULES, dark: DARK_RULES } };
+    expect(unreadInputs({ ...repo.tables, core }, D332_INPUTS)).toEqual([]);
     const t = { demo: TABLE };
     expect(unreadInputs(t, ['mainBkg', 'cScale', 'mutedBkg'])).toEqual(['mutedBkg']);
   });
