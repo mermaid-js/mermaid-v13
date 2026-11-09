@@ -22,15 +22,15 @@
 1. Confirm the base: `git merge-base --is-ancestor feature/518_treeview HEAD`. If that fails, `git reset --hard feature/518_treeview`.
 2. Use the Skill tool with `tdd`. Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, parser/model, layout invariants).
 3. Stay within the ticket's scope.
-4. `pnpm check` must pass, and the `packages/conformance` specs (pitfall 26). Commit with no AI attribution. Don't push, open PRs, or comment on or close issues.
-5. Before reporting, `git merge feature/518_treeview` and run the checks again.
+4. **Scoped handoff checks** (maintainer, 2026-11-09: "Yes, scope ticket checks"), no lock, `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-treeview`, the treeView conformance and parity specs (`vitest run packages/conformance/src/treeView` plus any other conformance spec you touched), `tsc --noEmit -p` for each touched package, and eslint on the changed files. Paste the results into the handoff. **Exception:** a ticket that changes core, shared conformance code (oracle, harvester, registry), `tools/*` or another package runs the full `pnpm check` under the lock instead. The full check otherwise runs once per integration-branch push (pre-push hook). Commit with no AI attribution. Don't push, open PRs, or comment on or close issues.
+5. Before reporting, `git merge feature/518_treeview` and run the step-4 checks again.
 6. Write `tickets/<N>.md` (≤ 40 lines) in **your own worktree** at `v13/docs/agents/runs/518/tickets/<N>.md`, committed on your branch: exports, how to use them, test helpers, gz size, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
 
 ## Machine-wide locks (seven sessions share this machine)
 
 - `PARSE_FIXTURE_PATH` may be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and `pnpm check` (and the pre-push hook) fails. Always unset it.
-- Every full `pnpm check`: `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
+- Every full `pnpm check` (exception tickets and integration pushes only): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
 - Every `pnpm e2e` / Playwright run: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock <command>`.
 - Targeted vitest runs outside the lock are fine with `VITEST_MAX_WORKERS=4`.
 - A timing test that fails under load is not a regression: rerun it under the lock before acting on it. Known flakes: `language-budget*.spec.ts` (R-LANG-4), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, `packages/core/src/preprocess/stress.spec.ts` timeouts.
