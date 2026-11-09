@@ -1,5 +1,12 @@
 # @mermaid-js/diagram-pie
 
+## 13.0.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [[`86281a5`](https://github.com/mermaid-js/mermaid-v13/commit/86281a5cbfc7db68cf98fadf794a24f8c7cb21e3), [`e7cd18d`](https://github.com/mermaid-js/mermaid-v13/commit/e7cd18dc351b56a1edc0f11caf5b805574e28a68), [`2aced86`](https://github.com/mermaid-js/mermaid-v13/commit/2aced865fc2ef103e0d389aeb98d99e6709385c1), [`68f716a`](https://github.com/mermaid-js/mermaid-v13/commit/68f716a31d35c8f19450247f8f986639d7f3bde0), [`afd727e`](https://github.com/mermaid-js/mermaid-v13/commit/afd727ee115c937194432f0de0359f9566abed1d), [`0248ea2`](https://github.com/mermaid-js/mermaid-v13/commit/0248ea2f8da3fadff3b332f2982e65773c9ca78a), [`3f39c31`](https://github.com/mermaid-js/mermaid-v13/commit/3f39c3138e2df8c5054f9abe5ca8c37f574c1249), [`d001a3b`](https://github.com/mermaid-js/mermaid-v13/commit/d001a3bf89e7260fcf2f8b084f12be152a361b87), [`e28ee4f`](https://github.com/mermaid-js/mermaid-v13/commit/e28ee4f9013902bce3eb4c906314b77276391fa4), [`57dcc78`](https://github.com/mermaid-js/mermaid-v13/commit/57dcc782c29bf3dca26e7c64a97be6abda7d7e82), [`dfd125b`](https://github.com/mermaid-js/mermaid-v13/commit/dfd125b9575f8e917f289eefc85cdf468e3f1918), [`af0fee8`](https://github.com/mermaid-js/mermaid-v13/commit/af0fee81237ee9148e8dd53310302f0d94ea3174), [`d49db99`](https://github.com/mermaid-js/mermaid-v13/commit/d49db999493c5c590b137279ac135de6c7968a22), [`6deab2c`](https://github.com/mermaid-js/mermaid-v13/commit/6deab2cba5192c7da756cf71a150953501c897c1), [`7fbd64a`](https://github.com/mermaid-js/mermaid-v13/commit/7fbd64a653296e115c3d7d594a90840cb1f0693e), [`69cad79`](https://github.com/mermaid-js/mermaid-v13/commit/69cad796a2d78a14540274e537d43356962ab3e8), [`0af5e95`](https://github.com/mermaid-js/mermaid-v13/commit/0af5e957b6fcebc3abe48e9ecd5ae9982dc8be86)]:
+  - @mermaid-js/core@13.0.0-alpha.2
+
 ## 13.0.0-alpha.1
 
 ### Patch Changes

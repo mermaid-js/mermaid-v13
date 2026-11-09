@@ -48,6 +48,7 @@ import {
   type Rgba,
 } from './color.ts';
 import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
+import { contrastCss } from './contrast-css.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { BASE_PLOT, BASE_SERIES } from './specs/palettes.ts';
@@ -242,8 +243,8 @@ function rule(source: string): Expr {
   return e;
 }
 
-/** A call of a colour function; `literal()` and `inline()` are handled by `evaluate`. */
-type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal' | 'inline'> };
+/** A call of a colour function; `literal()`, `inline()` and `slot()` are handled by `evaluate`. */
+type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal' | 'inline' | 'slot'> };
 
 /** Resolves every variable of one spec under one set of overrides. */
 class Resolver {
@@ -390,6 +391,17 @@ class Resolver {
     return r === undefined ? undefined : this.evaluate(rule(r));
   }
 
+  /** A rule's read of palette entry `i`, `bkgColorArray2` or `slot()`'s (D258, D332, D474). */
+  private entry(p: string, i: number): Resolved {
+    const r = this.slot(p, i);
+    // A series entry reads as the theme wrote it, so its CSS follows the base colours as the
+    // rule it replaces did (D332).
+    if (r && p === 'seriesColorArray') return r;
+    // Any other palette entry is a literal colour, so a rule over one is too (D258).
+    const lit = r?.lit ?? 'currentColor';
+    return { css: lit, lit, rgba: r?.rgba, hsl: r?.hsl, deps: [] };
+  }
+
   private evaluate(e: Expr): Resolved {
     switch (e.k) {
       case 'pct':
@@ -402,15 +414,7 @@ class Resolver {
         return this.literal('', e.text);
       case 'ref': {
         const slot = own(this.defs, e.name) ? undefined : PALETTE_SLOT.exec(e.name);
-        if (slot) {
-          const r = this.slot(slot[1]!, Number(slot[2]));
-          // A series entry reads as the theme wrote it, so its CSS follows the base colours as
-          // the rule it replaces did (D332).
-          if (r && slot[1] === 'seriesColorArray') return r;
-          // Any other palette entry is a literal colour, so a rule over one is too (D258).
-          const lit = r?.lit ?? 'currentColor';
-          return { css: lit, lit, rgba: r?.rgba, hsl: r?.hsl, deps: [] };
-        }
+        if (slot) return this.entry(slot[1]!, Number(slot[2]));
         if (!own(this.defs, e.name)) {
           if (parseColor(e.name) === undefined) throw new SyntaxError(`Unknown colour ${e.name}`);
           return this.literal('', e.name);
@@ -437,6 +441,16 @@ class Resolver {
           const b = e.args[1];
           if (b !== undefined && !this.isSet(x.name)) return this.evaluate(b);
           return this.written(x.name);
+        }
+        if (e.fn === 'slot') {
+          // The slot when the palette is non-empty, else the fallback (D474).
+          const [, n, b] = e.args as [Expr, Expr, Expr];
+          if (x.k !== 'ref' || !(PALETTE_VARIABLES as readonly string[]).includes(x.name))
+            throw new SyntaxError('slot needs a palette');
+          if (n.k !== 'num' || !Number.isInteger(n.value) || n.value < 0)
+            throw new SyntaxError('slot needs a slot number');
+          const list = this.palettes.user[x.name] ?? this.palettes.spec[x.name];
+          return list?.length ? this.entry(x.name, n.value) : this.evaluate(b);
         }
         if (e.fn !== 'literal') return this.call(e as Call);
         // The computed colour, written as a literal (D332): a hue turn stays byte-identical
@@ -581,55 +595,6 @@ class Resolver {
     const bg = under ?? this.opaque(this.get('background').rgba, WHITE) ?? WHITE;
     return composite(c, bg);
   }
-}
-
-/** A number for CSS calc(), to 6 decimals. */
-const dec = (n: number): string => String(Number(n.toFixed(6)));
-
-/** `[r, g, b]` as 0–1 srgb, and alpha. */
-const unit = (c: Rgba): [number, number, number, number] => [
-  c[0] / 255,
-  c[1] / 255,
-  c[2] / 255,
-  c[3],
-];
-
-/**
- * `contrast(bg, a, b)` as live CSS (R-THEME-4): the same choice as the JS rule (a unless it
- * misses AA and b reads better), made by the browser on the current value of `bg`.
- *
- * With the inks fixed, the choice depends only on bg's WCAG luminance L: a wins when
- * L >= 4.5(La+.05)-.05 or L <= (La+.05)/4.5-.05 (AA either way), or when L is on a's far side
- * of the geometric midpoint sqrt((La+.05)(Lb+.05))-.05 (a's ratio beats b's). The inner
- * relative colour reads L from bg in srgb-linear (exact WCAG weights) and turns those tests
- * into t = 0 (a) or 1 (b) with steep clamps; the outer one maps t onto the two inks. Limits:
- * the inks are the theme's values (a host override of the ink variables doesn't reach this
- * colour), and bg's own alpha is ignored (the JS rule composites it over the background).
- */
-function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): string {
-  const ka = la + 0.05;
-  const kb = lb + 0.05;
-  // Equal luminances tie on every background, and JS keeps a.
-  if (la === lb) return formatColor(a);
-  // a wins when L >= above or L <= below (the union of the three tests above).
-  const mid = Math.sqrt(ka * kb) - 0.05;
-  const hi = 4.5 * ka - 0.05;
-  const lo = ka / 4.5 - 0.05;
-  const above = Math.min(hi, la < lb ? mid : Infinity);
-  const below = Math.max(lo, la > lb ? mid : -Infinity);
-  const L = '(0.2126*r + 0.7152*g + 0.0722*b)';
-  const step = (expr: string) => `clamp(0,(${expr})*1e9,1)`;
-  const checks: string[] = [];
-  if (above <= 1) checks.push(step(`${L} - ${dec(above)}`));
-  if (below >= 0) checks.push(step(`${dec(below)} - ${L}`));
-  if (checks.length === 0) return formatColor(b);
-  const [ar, ag, ab, aa] = unit(a);
-  const [br, bgr, bb, ba] = unit(b);
-  const t = `color(from ${bg} srgb-linear calc(1 - max(${checks.join(',')})) 0 0)`;
-  const ch = (x: number, y: number) => (x === y ? dec(x) : `calc(${dec(x)} + ${dec(y - x)}*r)`);
-  const opaque = aa === ba && aa >= 1;
-  const alpha = opaque ? '' : ` / ${ch(aa, ba)}`;
-  return `color(from ${t} srgb ${ch(ar, br)} ${ch(ag, bgr)} ${ch(ab, bb)}${alpha})`;
 }
 
 function checkOverrides(
