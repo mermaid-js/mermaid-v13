@@ -1,0 +1,11 @@
+kanban:keyword
+todo:variable
+[:punctuation
+Todo:string
+]:punctuation
+a:variable
+[:punctuation
+":string
+Card:string
+":string
+]:punctuation

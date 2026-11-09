@@ -1,0 +1,4 @@
+flowchart:keyword
+A:variable
+-->:operator
+B:variable

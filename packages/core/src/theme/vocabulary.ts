@@ -222,7 +222,6 @@ const TEXT_USERS = [
   'gantt',
   'kanban',
   'radar',
-  'usecase',
 ];
 
 /**
@@ -253,7 +252,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
     'xychart',
-    'usecase',
   ]),
   lineColor: def('l', 'color', [
     'flowchart',
@@ -264,7 +262,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'cynefin',
     'wardley',
-    'usecase',
   ]),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
   // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
@@ -306,7 +303,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'radar',
     'sankey',
     'venn',
-    'usecase',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -319,7 +315,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'gitgraph',
     'sankey',
     'wardley',
-    'usecase',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',
@@ -331,30 +326,20 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'mindmap',
     'gitgraph',
     'kanban',
-    'usecase',
   ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
-  clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er', 'usecase']),
-  clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er', 'usecase']),
-  titleColor: def('tc', 'color', [
-    'flowchart',
-    'class',
-    'state',
-    'er',
-    'gantt',
-    'treemap',
-    'venn',
-    'usecase',
-  ]),
-  edgeLabelBackground: def('el', 'color', ['flowchart', 'state', 'usecase']),
+  clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
+  clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap', 'venn']),
+  edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),
   border1: def('b1', 'color', []),
   border2: def('b2', 'color', []),
-  noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state', 'usecase']),
-  noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state', 'usecase']),
-  noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state', 'usecase']),
+  noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
+  noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
+  noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
 
@@ -369,7 +354,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'timeline',
     'mindmap',
     'gitgraph',
-    'usecase',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),

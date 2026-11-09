@@ -1,0 +1,11 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# Pre-manifest until integration (#567): this file alone makes the workspace tools count it.
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: usecase
+    title: Use case diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
