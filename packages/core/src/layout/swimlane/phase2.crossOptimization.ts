@@ -8,7 +8,7 @@ import {
 import { LAYERING } from './config.ts';
 import { createTopLaneResolver } from './phase2.options.ts';
 import { buildMultitreeLayerOrder } from './phase2.multitree.order.ts';
-// cspell:ignore acyclicity preds
+// cspell:ignore acyclicity preds multitree
 
 function countCrossingsBetweenAdjacent(upper: NodeId[], lower: NodeId[], edges: EdgeRef[]): number {
   const upperSet = new Set(upper);

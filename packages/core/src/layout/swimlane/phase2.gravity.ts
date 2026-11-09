@@ -11,7 +11,7 @@ import { createTopLaneResolver } from './phase2.options.ts';
 import { LAYERING } from './config.ts';
 import { assignLayers_LongestPath } from './phase2.longestPath.ts';
 
-// cspell:ignore acyclicity preds succs
+// cspell:ignore acyclicity preds succs topo
 
 /**
  * Gravity-based layering algorithm that minimizes edge lengths while maintaining acyclicity.

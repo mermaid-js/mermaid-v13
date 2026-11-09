@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.longestPath.ts` at upstream `c9b12739f` (D532).
+// cspell:ignore multitree topo
 import type { Graph, Layering, NodeId } from './helpers.ts';
 import { incoming, topoSortIfAcyclic, normalizeGraph } from './phase0.helpers.ts';
 import type { LayeringOptions } from './phase2.options.ts';
