@@ -67,7 +67,7 @@ import {
   SPACE,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of requirementDiagram.jison that rules enter (`token` and `unqString` are
@@ -80,6 +80,8 @@ const S = {
   ACC_DESCR: 4,
   ACC_DESCR_MULTILINE: 5,
 } as const;
+/** Start condition names by number, for the probe's lexer mode. */
+const S_NAMES = ['INITIAL', 'string', 'style', 'accTitle', 'accDescr', 'accDescrMultiline'];
 
 const APOS = "'";
 
@@ -108,7 +110,7 @@ const isLineBlank = (c: number) => isSpace(c) && !isLineEnd(c);
  * The keyword rules in jison's order (lower case), each with `\b` after it, by first letter.
  * `style`, `classDef` and `class` begin the style state.
  */
-const KEYWORDS: readonly (readonly [word: string, kind: number])[] = [
+export const KEYWORDS: readonly (readonly [word: string, kind: number])[] = [
   ['requirementdiagram', T.Rd],
   ['id', T.Id],
   ['text', T.Text],
@@ -174,10 +176,10 @@ export interface Lexed {
 
 /**
  * Lex the requirement body `src[from…]`. `from` and `view` come from `requirementView`
- * (`./index.ts`).
+ * (`./index.ts`). With a `probe`, the start condition at its offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView): Lexed {
-  const tokens = new RequirementLexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {
+  const tokens = new RequirementLexer(src, from, view).run(probe);
   const textOf = (start: number, end: number): string => cook(src, start, end, view);
   return {
     tokens,
@@ -295,11 +297,19 @@ class RequirementLexer {
     return !o || o.source(q + 1) === o.source(q) + 1;
   }
 
-  run(): TokenStream {
+  run(probe?: Probe): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) this.step();
+    if (probe) {
+      while (this.p < n) {
+        const mode = S_NAMES[this.state()] ?? '';
+        const before = this.p;
+        this.step();
+        probe.lexed(this.source(before), this.source(this.p), mode);
+      }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state()] ?? '');
+    } else while (this.p < n) this.step();
     // jison's last match, on the empty rest of the input.
     const end = this.len;
     switch (this.state()) {

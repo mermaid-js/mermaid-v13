@@ -1,0 +1,14 @@
+@ 3:15  requirement |r1 {
+  prepare: 3:15-3:17 "r1"; rename to "e1":
+  refused: 'e1' is already an element id in this diagram.
+@ 8:13  classDef h|ot fill:#f96
+  prepare: 8:12-8:15 "hot"; rename to "e1":
+  %% rename-to: e1
+  requirementDiagram
+    requirement r1 {
+    }
+    element e1 {
+    }
+    e1 - satisfies -> r1
+    classDef e1 fill:#f96
+    classDef cold fill:#00f

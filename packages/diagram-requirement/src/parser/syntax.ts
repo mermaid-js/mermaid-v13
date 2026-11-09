@@ -174,3 +174,34 @@ export const STATEMENT_HINT =
 export const NAMES = ['a name'];
 export const CLASS_NAMES = ['a class name'];
 export const TEXT_VALUE = ['a value, unquoted or in quotes'];
+
+/**
+ * Kinds a probe's cursor follows rather than extends: punctuation, and the line breaks the
+ * lexer gives kinds of its own.
+ */
+export const PROBE_FOLLOWS = kindSet(
+  T.StructStart,
+  T.StructStop,
+  T.StyleSeparator,
+  T.ColonSep,
+  T.Colon,
+  T.Comma,
+  T.Line,
+  T.EndArrowL,
+  T.EndArrowR,
+  T.Quote,
+  T.NewlineAfterBlank,
+  T.StyleEnd,
+  T.Eof
+);
+
+/** Tokens the parser steps over (`skipSoft`) and trivia: a probe on one expects what follows. */
+export const SOFT = kindSet(
+  T.StyleEnd,
+  T.NewlineAfterBlank,
+  T.AccDescrOpen,
+  T.AccDescrClose,
+  Kind.Comment,
+  Kind.Directive,
+  Kind.Space
+);

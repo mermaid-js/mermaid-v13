@@ -1,0 +1,117 @@
+/**
+ * Requirement hover (DESIGN §4.5, D93): a name shows its box's kind, its fields as the model
+ * holds them (the first definition's), its relation count and classes; a class its `classDef`
+ * styles and how many boxes use it; a relationship keyword what the relation it is in says; any
+ * other keyword the one-line doc of the grammar file (`generated/docs.ts`).
+ */
+import type {
+  DocumentView,
+  Hover,
+  HoverTarget,
+  Range,
+  SymbolOccurrence,
+} from '@mermaid-js/core/parser-kit';
+import { requirementDocs } from '../generated/docs.ts';
+import type { Element, Requirement, RequirementModel } from '../model.ts';
+import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
+import { RELATIONSHIPS, code, plural, span } from './tables.ts';
+
+const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {
+  const set = fields.filter(([, v]) => v !== '');
+  return set.length === 0 ? 'No fields.' : set.map(([k, v]) => `${k}: ${code(v)}`).join(' · ');
+};
+
+function boxHover(name: string, kind: string, model: RequirementModel): string | undefined {
+  const req = model.requirements.find((r) => r.name === name);
+  const el = model.elements.find((e) => e.name === name);
+  const box: Requirement | Element | undefined = kind === 'element' ? (el ?? req) : (req ?? el);
+  if (!box) return undefined;
+  const parts =
+    'kind' in box
+      ? [
+          `**${box.kind}** ${code(name)}`,
+          fieldList([
+            ['id', box.requirementId],
+            ['text', box.text],
+            ['risk', box.risk],
+            ['verifymethod', box.verifyMethod],
+          ]),
+        ]
+      : [
+          `**Element** ${code(name)}`,
+          fieldList([
+            ['type', box.type],
+            ['docref', box.docRef],
+          ]),
+        ];
+  const relations = model.relations.filter((r) => r.src === name || r.dst === name).length;
+  const facts = [plural(relations, 'relation')];
+  const classes = [...new Set(box.classes.filter((c) => c !== 'default'))];
+  if (classes.length > 0) {
+    facts.push(`${classes.length === 1 ? 'Class' : 'Classes'}: ${classes.map(code).join(', ')}`);
+  }
+  parts.push(facts.join(' · '));
+  return parts.join('\n\n');
+}
+
+function classHover(name: string, model: RequirementModel): string {
+  const c = model.classes.find((x) => x.name === name);
+  let styles = 'No `classDef` defines it.';
+  if (c !== undefined) {
+    styles =
+      c.styles.length === 0
+        ? 'Its `classDef` sets no styles.'
+        : code(`classDef ${name} ${c.styles.join(',')}`);
+  }
+  const boxes = [...model.requirements, ...model.elements];
+  const used =
+    name === 'default'
+      ? 'Applies to every box.'
+      : `Used by ${plural(boxes.filter((b) => b.classes.includes(name)).length, 'box', 'boxes')}`;
+  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
+}
+
+function symbolHover(s: SymbolOccurrence, model: RequirementModel): string | undefined {
+  return s.kind === 'class' ? classHover(s.name, model) : boxHover(s.name, s.kind, model);
+}
+
+/** A range without its leading and trailing blanks. */
+function trimmed(text: string, r: Range): Range {
+  let { start, end } = r;
+  while (start < end && /\s/.test(text[start]!)) start++;
+  while (end > start && /\s/.test(text[end - 1]!)) end--;
+  return span(start, end);
+}
+
+const relationAt = (doc: RequirementDocument, at: number): RelationNode | undefined =>
+  doc.children.find(
+    (c): c is RelationNode => c.type === 'Relation' && c.range.start <= at && at <= c.range.end
+  );
+
+export function requirementHover(
+  at: HoverTarget,
+  doc: DocumentView<RequirementDocument>
+): Hover | undefined {
+  const { text, result } = doc;
+  const model = result.model as RequirementModel;
+  if (at.symbol) {
+    const contents = symbolHover(at.symbol, model);
+    if (contents !== undefined) return { range: at.symbol.range, contents };
+  }
+  const t = at.token;
+  if (!t) return undefined;
+  const range = trimmed(text, t.range);
+  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
+    return undefined;
+  }
+  const docText = requirementDocs[t.kind];
+  if (docText === undefined) return undefined;
+  const word = text.slice(range.start, range.end);
+  const rel = RELATIONSHIPS.find((r) => r.kind === t.kind);
+  if (rel) {
+    const node = relationAt(result.ast, at.offset);
+    const what = node ? `${code(node.src.text)} ${rel.label} ${code(node.dst.text)}` : rel.meaning;
+    return { range, contents: `**${code(word)}** ${what}\n\n${docText}` };
+  }
+  return { range, contents: `**${code(word)}**\n\n${docText}` };
+}

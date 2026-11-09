@@ -2,7 +2,8 @@
 /**
  * Requirement parser: recursive descent over the {@link lex} tokens (gated against v12's jison
  * lexer, #560), producing a {@link RequirementModel}, the typed AST, statement spans and
- * diagnostics (DESIGN §4.3). Symbols and the probe are the language facet's (T6).
+ * diagnostics (DESIGN §4.3), the symbols (D437) and, with a probe, what it expects at the probed
+ * offset (R-LANG-7: `ProbeCursor`, and `tested` where a rule looks at a token's kind itself).
  *
  * The grammar is v12's `requirementDiagram.jison` (LALR), ported rule for rule;
  * `grammar/requirement.ebnf` is the normative form. Statements need no separator, as in v12:
@@ -30,6 +31,8 @@ import {
   Kind,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   syncTo,
   TokenCursor,
@@ -55,6 +58,8 @@ import type {
 import { RequirementBuilder } from './builder.ts';
 import type { ElementFields, Ref, RequirementFields } from './builder.ts';
 import { NameIds } from './ids.ts';
+import { symbolsOf } from './symbols.ts';
+import type { Occurrence } from './symbols.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import {
@@ -86,6 +91,7 @@ import {
   NAMES,
   NEWLINES,
   PERCENT_HINT,
+  PROBE_FOLLOWS,
   RELATION_HINT,
   RELS,
   REL_OF,
@@ -96,6 +102,7 @@ import {
   RISKS,
   RISK_OF,
   SHORTHAND_HINT,
+  SOFT,
   STATEMENT,
   STATEMENT_HINT,
   STRAY_BRACE_HINT,
@@ -163,9 +170,12 @@ class RequirementParser {
   private readonly lexed: Lexed;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  private readonly probe: Probe | undefined;
   private readonly db: RequirementBuilder;
   private readonly ids = new NameIds();
   private readonly children: RequirementStatementNode[] = [];
+  /** Name and class occurrences in the order read; roles and kinds are settled at the end. */
+  private readonly occurrences: Occurrence[] = [];
   private lines: LineIndex | undefined;
   /** The token after the last one consumed: soft tokens after it are not part of a rule. */
   private mark = 0;
@@ -189,8 +199,16 @@ class RequirementParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.lexed = lex(src, pre.bodyStart, view);
-    this.c = new TokenCursor(this.lexed.tokens);
+    const probe =
+      options.probe === undefined
+        ? undefined
+        : (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    this.lexed = lex(src, pre.bodyStart, view, probe);
+    if (probe === undefined) this.c = new TokenCursor(this.lexed.tokens);
+    else {
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      this.c = new ProbeCursor(this.lexed.tokens, probe);
+    }
     this.mark = this.c.pos;
     this.db = new RequirementBuilder(
       options.maxStyleCopies !== undefined ? { maxStyleCopies: options.maxStyleCopies } : {}
@@ -205,6 +223,9 @@ class RequirementParser {
     st.diagnostics.list.push(...built.warnings);
     // Warnings are made after the statements are read: keep source order.
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
+    for (const o of symbolsOf(this.occurrences, built.model)) {
+      st.symbol(o.name, o.kind, o.range, o.role);
+    }
     const model: RequirementModel = {
       ...built.model,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
@@ -215,7 +236,11 @@ class RequirementParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.lexed.tokens, this.options);
+    return st.result(model, ast, this.lexed.tokens, this.options, this.probe);
+  }
+
+  private occur(as: Occurrence['as'], names: readonly RequirementText[]): void {
+    for (const n of names) this.occurrences.push({ as, name: n.text, range: n.range });
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -235,6 +260,7 @@ class RequirementParser {
    */
   private in(kinds: readonly number[]): boolean {
     this.skipSoft(false);
+    this.test(kinds);
     return kinds.includes(this.c.kind);
   }
 
@@ -253,6 +279,23 @@ class RequirementParser {
         c.next();
       } else return;
     }
+  }
+
+  /**
+   * Tell a probe the rule tests the token at the cursor for `kinds`, and the soft tokens (and
+   * trivia) the cursor stepped over just before it: a probe on one of those expects the same.
+   */
+  private test(kinds: number | readonly number[]): void {
+    const { c } = this;
+    c.tested(kinds);
+    if (this.probe === undefined) return;
+    const at = c.pos;
+    const { kind } = c.tokens;
+    for (let j = at - 1; j >= 0 && SOFT[kind[j] ?? 0] === 1; j--) {
+      c.pos = j;
+      c.tested(kinds);
+    }
+    c.pos = at;
   }
 
   /** Consume a token of one of `kinds` (past soft tokens), or fail. */
@@ -276,6 +319,7 @@ class RequirementParser {
   private newline(hint: string): void {
     const { c } = this;
     this.skipSoft(true);
+    this.test(NEWLINES);
     if (NEWLINES.includes(c.kind)) {
       c.next();
       this.mark = c.pos;
@@ -338,6 +382,7 @@ class RequirementParser {
    */
   private fail(want: readonly number[], names = EXPECTED.names(want)): never {
     const { st, c } = this;
+    this.test(want);
     const k = c.kind;
     const at =
       k === Kind.EOF || k === T.Eof || NEWLINES.includes(k)
@@ -425,6 +470,7 @@ class RequirementParser {
     const { c, st } = this;
     for (;;) {
       const k = c.kind;
+      this.test(STATEMENT);
       if (k === Kind.EOF) break;
       if (k === T.NewlineAfterBlank || k === T.StyleEnd || k === Kind.Newline) {
         c.next();
@@ -445,6 +491,7 @@ class RequirementParser {
 
   private stmt(): void {
     const { c } = this;
+    this.test(STATEMENT);
     const k = c.kind;
     if (REQ_KINDS.includes(k)) return this.box(false);
     if (k === T.Element) return this.box(true);
@@ -533,6 +580,7 @@ class RequirementParser {
       node.id = named ? this.ids.named(kind, node.name.text) : st.ids.statement(kind);
       node.range.end = Math.max(node.range.end, this.last.end);
       if (named) {
+        this.occur(kind, [node.name]);
         const at = { ast: node.id, range: node.range, nameRange: node.name.range };
         const fields = body?.fields;
         if (element) this.db.addElement(node.name.text, at, { ...emptyElement(), ...fields });
@@ -550,6 +598,7 @@ class RequirementParser {
   /** v12's `setClass([$2], $4)` after the definition's `:::`. */
   private classes(node: RequirementDefNode | ElementDefNode): void {
     if (!node.classNames) return;
+    this.occur('class', node.classNames);
     this.db.setClass(
       [{ name: node.name.text, range: node.name.range }],
       node.classNames.map((n) => n.text),
@@ -614,6 +663,8 @@ class RequirementParser {
     }, BODY_BOUNDARY);
     for (;;) {
       const k = c.kind;
+      this.test(own);
+      this.test(T.StructStop);
       if (NEWLINES.includes(k) || k === T.StyleEnd) {
         c.next();
         continue;
@@ -699,6 +750,8 @@ class RequirementParser {
       const classNames = this.idList(CLASS_NAMES);
       const range = { start, end: this.last.end };
       const id = this.st.ids.statement('class');
+      this.occur('name', [a]);
+      this.occur('class', classNames);
       this.db.setClass(
         [{ name: a.text, range: a.range }],
         classNames.map((n) => n.text),
@@ -717,6 +770,7 @@ class RequirementParser {
     const kind = REL_OF[rel.kind] as RelationshipKind;
     const range = { start, end: b.range.end };
     const id = this.ids.relation(src.text, dst.text);
+    this.occur('name', [a, b]);
     this.db.addRelationship(kind, src.text, dst.text, { ast: id, range });
     this.st.statement('relation', range);
     this.children.push({ id, type: 'Relation', range, kind, src, dst });
@@ -827,6 +881,7 @@ class RequirementParser {
     const ids = this.idList(style ? NAMES : CLASS_NAMES);
     const styles = this.styles();
     const range = { start, end: this.last.end };
+    this.occur(style ? 'name' : 'classDef', ids);
     if (style) {
       const id = this.st.ids.statement('style');
       this.db.setCssStyle(refs(ids), styles, { ast: id, range });
@@ -851,6 +906,8 @@ class RequirementParser {
     const classNames = this.idList(CLASS_NAMES);
     const range = { start, end: this.last.end };
     const id = this.st.ids.statement('class');
+    this.occur('name', ids);
+    this.occur('class', classNames);
     this.db.setClass(
       refs(ids),
       classNames.map((n) => n.text),

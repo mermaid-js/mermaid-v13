@@ -1,0 +1,10 @@
+@ 3:5  |
+  id property 3:5-3:5 "" -> "id: "
+  text property 3:5-3:5 "" -> "text: "
+  risk property 3:5-3:5 "" -> "risk: "
+  verifymethod property 3:5-3:5 "" -> "verifymethod: "
+@ 4:7  ri|
+  risk property 4:5-4:7 "ri" -> "risk: "
+@ 7:5  |
+  type property 7:5-7:5 "" -> "type: "
+  docref property 7:5-7:5 "" -> "docref: "
