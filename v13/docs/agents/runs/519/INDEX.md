@@ -10,7 +10,7 @@ Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Dra
 | T4 SVG renderer | #583 | #582 | merged (ff ff665803f; package entry 8,478 B gz; core 94,412 B gz unchanged) |
 | T6 language facet | #584 | #581 | merged (ff 9b751af9f; package entry 8,758 B gz, `./language` 5,984 B gz; core unchanged) |
 | T5 integration | #585 | #583, #584 | merged (ff b6c536108; package entry 8,784 B gz, `./language` 6,010 B gz; core 94,431 B gz, +19) |
-| T7 ASCII outline (optional) | #586 | #585 | — |
+| T7 ASCII outline (optional) | #586 | #585 | merged (ff 62a6acd3e; text path 7,258 B gz, `./ascii` 1,032 B gz; core 94,448 B gz, +15) |
 
 - `01-v12-ishikawa.md`: pointer notes on v12's grammar, DB, renderer, specs, docs page and the corpus.
 - `02-v13-seams.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring and the seams T1–T7 touch.
@@ -29,6 +29,7 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | base (521fb76ee) | 93,891 | — |
 | T1–T4, T6 (base moved to 1a78e25d7) | 94,412 | 0 (base moves only) |
 | T5 (registry row) | 94,431 | +19 |
+| T7 (`ascii` format) | 94,448 | +15 |
 
 ## Worktrees
 
