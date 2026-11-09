@@ -7,7 +7,7 @@ Integration branch `feature/519_ishikawa` (from `mermaid-v13` at 521fb76ee). Dra
 | T1 lexer parity gate | #580 | #285 (merged) | merged (ff 40d678fff; package entry 1,803 B gz, no core change) |
 | T2 grammar, parser, model, AST | #581 | #580 | merged (ff a2cab0f30; package entry 4,178 B gz, no core change) |
 | T3 fishbone layout | #582 | #581 | merged (ff 8deb7a764; package entry 7,154 B gz, no core code change) |
-| T4 SVG renderer | #583 | #582 | — |
+| T4 SVG renderer | #583 | #582 | done on `feature/583_ishikawa-render` (package entry 8,478 B gz; core 94,412 B gz before and after) |
 | T6 language facet | #584 | #581 | — |
 | T5 integration | #585 | #583, #584 | — |
 | T7 ASCII outline (optional) | #586 | #585 | — |

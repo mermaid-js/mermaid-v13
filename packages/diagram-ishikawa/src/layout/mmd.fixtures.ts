@@ -26,11 +26,16 @@ export const FIXTURES: readonly string[] = Object.keys(SOURCES).map((k) =>
   k.slice(ROOT.length, -'.mmd'.length)
 );
 
-/** The fixture at `path` (under `e2e/diagrams/ishikawa/`, without `.mmd`), parsed; it must parse. */
-export function fixture(path: string): ParsedIshikawa {
+/** The source of the fixture at `path` (under `e2e/diagrams/ishikawa/`, without `.mmd`). */
+export function fixtureSource(path: string): string {
   const source = SOURCES[`${ROOT}${path}.mmd`];
   if (source === undefined) throw new Error(`no fixture e2e/diagrams/ishikawa/${path}.mmd`);
-  const parsed = parsedIshikawa(source);
+  return source;
+}
+
+/** The fixture at `path` (under `e2e/diagrams/ishikawa/`, without `.mmd`), parsed; it must parse. */
+export function fixture(path: string): ParsedIshikawa {
+  const parsed = parsedIshikawa(fixtureSource(path));
   const errors = parsed.diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) throw new Error(`${path}: ${errors.map((d) => d.message).join('; ')}`);
   return parsed;

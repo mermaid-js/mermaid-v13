@@ -5,7 +5,7 @@
  * its defaults, the integrator's config and the source's front matter and directives; the theme
  * that config names, with its `themeVariables` and its dark half for `theme: 'auto'` (ishikawa
  * has no theme table of its own); and a render context with a measurer (the table measurer by
- * default) and the warnings collected.
+ * default) and the warnings collected. The render harness (`render/harness.ts`) builds on it.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import {
@@ -65,13 +65,42 @@ export async function ishikawaTestTheme(
   });
 }
 
+/** What {@link ishikawaRenderContext} takes besides the config and the theme. */
+export interface IshikawaContextOptions {
+  readonly measurer?: Measurer;
+  readonly idPrefix?: string;
+  readonly warn: (w: Warning) => void;
+}
+
+/** The render context the pipeline would give ishikawa under `config` and `theme`. */
+export function ishikawaRenderContext(
+  config: ResolvedConfig,
+  theme: Theme,
+  { measurer = tableMeasurer, idPrefix = ID_PREFIX, warn }: IshikawaContextOptions
+): RenderContext {
+  return {
+    config,
+    measurer,
+    units: pxProfile,
+    theme,
+    securityLevel: 'default',
+    idPrefix,
+    version: TEST_VERSION,
+    layout: () => {
+      throw new Error('ishikawa lays itself out (layoutKind: custom)');
+    },
+    limits: resolveLimits(config),
+    warn,
+  };
+}
+
 /** Core's defaults under no source, resolved once. */
 let plain: ResolvedConfig | undefined;
 
 /**
- * The render context the pipeline would give ishikawa over `theme`, with core's defaults and the
- * `ishikawa` section `section` as given (the resolver passes a section's values through as they
- * are), for the layout specs; warnings go to `warnings`.
+ * {@link ishikawaRenderContext} over `theme`, with core's defaults and the `ishikawa` section
+ * `section` as given (the resolver passes a section's values through as they are), for the
+ * layout specs; warnings go to `warnings`.
  */
 export function ishikawaTestContext(
   theme: Theme,
@@ -81,20 +110,7 @@ export function ishikawaTestContext(
 ): RenderContext {
   plain ??= ishikawaTestConfig();
   const config = { ...plain, ishikawa: section } as unknown as ResolvedConfig;
-  return {
-    config,
-    measurer,
-    units: pxProfile,
-    theme,
-    securityLevel: 'default',
-    idPrefix: ID_PREFIX,
-    version: TEST_VERSION,
-    layout: () => {
-      throw new Error('ishikawa lays itself out (layoutKind: custom)');
-    },
-    limits: resolveLimits(config),
-    warn: (w) => void warnings.push(w),
-  };
+  return ishikawaRenderContext(config, theme, { measurer, warn: (w) => void warnings.push(w) });
 }
 
 /** A source parsed: its model, its diagnostics, and the config its text sets. */
