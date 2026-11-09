@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { journeyGateCorpus } from './corpus.ts';
@@ -24,7 +24,7 @@ describe('journey oracle parity with mermaid@12', () => {
     const report = await runParity({
       adapters: [journeyAdapter],
       corpus: each(items),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+      divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
     });
     const agree = report.results.filter((r) => r.status === 'agree');
     const rejected = agree.filter((r) => !r.oracleAccepted).length;

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { parseUsecase } from '@mermaid-js/diagram-usecase';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { usecaseGateCorpus } from './corpus.ts';
@@ -83,7 +83,7 @@ const run = async () =>
   runParity({
     adapters: [usecaseAdapter],
     corpus: each(await usecaseGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 describe('usecase oracle parity with mermaid@12', () => {

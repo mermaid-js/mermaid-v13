@@ -1,0 +1,82 @@
+[
+  {
+    "id": "usecase-cases/directive-unclosed",
+    "inputHash": "sha256:bd2c5a6dc103926c",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it with the line break after it; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for wardley, pie, quadrant and radar; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core",
+    "inputHash": "sha256:174a52f4737bd3aa",
+    "kind": "model",
+    "reason": "v12's `#name;` codes were drawn by a browser from the full HTML entity table; core decodes its own, smaller table, so `#mp;` (∓) stays `&mp;` (core entity table, as for wardley; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed (CRLF)",
+    "inputHash": "sha256:9a6c82812659c683",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it with the line break after it; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for wardley, pie, quadrant and radar; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core (CRLF)",
+    "inputHash": "sha256:8bba7b931487bb29",
+    "kind": "model",
+    "reason": "v12's `#name;` codes were drawn by a browser from the full HTML entity table; core decodes its own, smaller table, so `#mp;` (∓) stays `&mp;` (core entity table, as for wardley; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed (commented)",
+    "inputHash": "sha256:dd69593b054396f5",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it with the line break after it; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for wardley, pie, quadrant and radar; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core (commented)",
+    "inputHash": "sha256:18043e6e2c68ce13",
+    "kind": "model",
+    "reason": "v12's `#name;` codes were drawn by a browser from the full HTML entity table; core decodes its own, smaller table, so `#mp;` (∓) stays `&mp;` (core entity table, as for wardley; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed (CR cut)",
+    "inputHash": "sha256:3c1d29c73f5399f5",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it with the line break after it; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for wardley, pie, quadrant and radar; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core (CR cut)",
+    "inputHash": "sha256:9c5e6b14feb3db67",
+    "kind": "model",
+    "reason": "v12's `#name;` codes were drawn by a browser from the full HTML entity table; core decodes its own, smaller table, so `#mp;` (∓) stays `&mp;` (core entity table, as for wardley; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/directive-unclosed-in-line (CR cut by a directive)",
+    "inputHash": "sha256:1354ac3751f52d32",
+    "kind": "accept",
+    "reason": "Cut after a CR by an added `%%{init: {}}%%`, core reads the unclosed `%%{` and that directive as one directive and removes both, so the rest parses; v12 removed only the added one and rejected the `%%{ not a directive` text (core preprocess behaviour; #562's lexer gate excludes the same copy).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core (CR cut by a directive)",
+    "inputHash": "sha256:b92833a3c00f59a4",
+    "kind": "model",
+    "reason": "v12's `#name;` codes were drawn by a browser from the full HTML entity table; core decodes its own, smaller table, so `#mp;` (∓) stays `&mp;` (core entity table, as for wardley; GAPS #517).",
+    "owner": "#563",
+    "since": "2026-11-09"
+  }
+]

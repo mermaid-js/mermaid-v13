@@ -6,10 +6,10 @@
  */
 import { writeFileSync } from 'node:fs';
 import { harvest, harvestPath } from '../jison/harvest.ts';
-import { JISON_TYPES } from '../jison/types.ts';
 import type { JisonType } from '../jison/types.ts';
+import { JISON_TYPES } from '../tables.ts';
 
-const types = Object.keys(JISON_TYPES) as JisonType[];
+const types: JisonType[] = Object.keys(JISON_TYPES);
 const arg = process.argv[2];
 const isType = (t: string | undefined): t is JisonType => types.includes(t as JisonType);
 

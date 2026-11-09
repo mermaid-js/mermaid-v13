@@ -1,10 +1,10 @@
 /**
  * Diagram id → its first-paint Monarch file (D134), a copy of gen-grammar's
- * `<id>.monarch.json` (`src/generated/<id>.monarch.js`) imported on demand. This table is the
- * list: `scripts/monarch.ts` copies the file of each id in it, and the keys are the
- * first-party facet ids, so a port's new facet does not compile here until it has its row
- * (`agents/port-diagram/language.md`). Which header picks a type comes from the facets'
- * detectors (`highlighters.ts`).
+ * `<id>.monarch.json` (`src/generated/<id>.monarch.js`) imported on demand. The map at the end
+ * of this file is generated: `scripts/monarch.ts` writes a row for each diagram package whose
+ * manifest has a `language` entry (`pnpm --filter @mermaid-js/language-service-monaco gen`).
+ * The keys are the first-party facet ids, so a facet with no row does not compile here. Which
+ * header picks a type comes from the facets' detectors (`highlighters.ts`).
  */
 import type { FirstPartyFacetId } from '@mermaid-js/language-service';
 
@@ -30,28 +30,28 @@ export interface MonarchHighlighter {
 }
 
 export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHighlighter>> = {
-  flowchart: { load: () => import('./generated/flowchart.monarch.js').then((m) => m.default) },
-  sequence: { load: () => import('./generated/sequence.monarch.js').then((m) => m.default) },
   class: { load: () => import('./generated/class.monarch.js').then((m) => m.default) },
-  state: { load: () => import('./generated/state.monarch.js').then((m) => m.default) },
+  cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
   er: { load: () => import('./generated/er.monarch.js').then((m) => m.default) },
+  flowchart: { load: () => import('./generated/flowchart.monarch.js').then((m) => m.default) },
+  gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
+  gitGraph: { load: () => import('./generated/gitGraph.monarch.js').then((m) => m.default) },
+  info: { load: () => import('./generated/info.monarch.js').then((m) => m.default) },
   journey: { load: () => import('./generated/journey.monarch.js').then((m) => m.default) },
+  kanban: { load: () => import('./generated/kanban.monarch.js').then((m) => m.default) },
+  mindmap: { load: () => import('./generated/mindmap.monarch.js').then((m) => m.default) },
+  packet: { load: () => import('./generated/packet.monarch.js').then((m) => m.default) },
+  pie: { load: () => import('./generated/pie.monarch.js').then((m) => m.default) },
   quadrantChart: {
     load: () => import('./generated/quadrantChart.monarch.js').then((m) => m.default),
   },
-  timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
-  gitGraph: { load: () => import('./generated/gitGraph.monarch.js').then((m) => m.default) },
-  pie: { load: () => import('./generated/pie.monarch.js').then((m) => m.default) },
-  info: { load: () => import('./generated/info.monarch.js').then((m) => m.default) },
-  mindmap: { load: () => import('./generated/mindmap.monarch.js').then((m) => m.default) },
-  gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
-  packet: { load: () => import('./generated/packet.monarch.js').then((m) => m.default) },
   radar: { load: () => import('./generated/radar.monarch.js').then((m) => m.default) },
+  sankey: { load: () => import('./generated/sankey.monarch.js').then((m) => m.default) },
+  sequence: { load: () => import('./generated/sequence.monarch.js').then((m) => m.default) },
+  state: { load: () => import('./generated/state.monarch.js').then((m) => m.default) },
+  timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
   treemap: { load: () => import('./generated/treemap.monarch.js').then((m) => m.default) },
+  venn: { load: () => import('./generated/venn.monarch.js').then((m) => m.default) },
   wardley: { load: () => import('./generated/wardley.monarch.js').then((m) => m.default) },
   xychart: { load: () => import('./generated/xychart.monarch.js').then((m) => m.default) },
-  cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
-  kanban: { load: () => import('./generated/kanban.monarch.js').then((m) => m.default) },
-  sankey: { load: () => import('./generated/sankey.monarch.js').then((m) => m.default) },
-  venn: { load: () => import('./generated/venn.monarch.js').then((m) => m.default) },
 };

@@ -4,14 +4,15 @@ import type { Attrs, OutlineRole, OutlineTag } from '@mermaid-js/core/svg';
 import { outlineFixture } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type ExtensionPlugin } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
+import { OUTLINE_CASES } from './outline-cases.ts';
 
 /**
  * Flowchart, class, state and ER draw their outlines through `w.outline` with a role (D302,
  * #340), kanban its columns and cards (D379, #459), and venn its circles and filled overlaps
- * (D319, #501). With T0's fixture drawer over each type's corpus: every role the type has
- * reaches the drawer, every shape does (only arrowheads, label backgrounds, kanban's priority
- * bar, venn's unfilled overlaps and debug shapes, and text stay plain), and no arrowhead or text
- * does.
+ * (D319, #501); each type's case is its `src/<type>/outline.ts`. With T0's fixture drawer over
+ * each type's corpus: every role the type has reaches the drawer, every shape does (only
+ * arrowheads, label backgrounds, kanban's priority bar, venn's unfilled overlaps and debug
+ * shapes, and text stay plain), and no arrowhead or text does.
  */
 
 interface Call {
@@ -20,41 +21,10 @@ interface Call {
   readonly attrs: Attrs;
 }
 
-interface TypeCase {
-  dirs: string[];
-  roles: OutlineRole[];
-  /** Shapes the type keeps plain besides `PLAIN`. */
-  plain?: RegExp[];
-}
-
-const TYPES: Readonly<Record<string, TypeCase>> = {
-  flowchart: { dirs: ['flowchart'], roles: ['node', 'part', 'divider', 'mark', 'group', 'edge'] },
-  class: { dirs: ['class-diagram'], roles: ['node', 'divider', 'group', 'edge'] },
-  state: {
-    dirs: ['state-diagram', 'state-diagram-v2'],
-    roles: ['node', 'part', 'divider', 'mark', 'group', 'edge'],
-  },
-  er: { dirs: ['er-diagram'], roles: ['node', 'part', 'divider', 'group', 'edge'] },
-  // The priority bar is a vertical line (x1 = x2): a zero-width box, which an outline
-  // cannot fill or hachure (as D185's lines), so it stays a plain line, kept under hand-drawn
-  // (D379). Every other kanban shape goes to the drawer.
-  kanban: {
-    dirs: ['kanban'],
-    roles: ['group', 'node'],
-    plain: [/<line class="kanban-priority" x1="([^"]+)" y1="[^"]+" x2="\1"[^>]*\/>/g],
-  },
-  // v12 sketched each circle and an overlap a style fills; an unfilled overlap is a transparent
-  // path, and `useDebugLayout`'s dashed circle and cells were never sketched.
-  venn: {
-    dirs: ['venn'],
-    roles: ['node'],
-    plain: [
-      /<path d="[^"]*" fill="transparent" fill-opacity="0"\/>/g,
-      /<circle class="venn-text-debug-circle"[^>]*\/>/g,
-      /<rect class="venn-text-debug-cell"[^>]*\/>/g,
-    ],
-  },
-};
+/** The outlining types that name their roles (`OUTLINE_CASES`, `src/<type>/outline.ts`). */
+const TYPES = [...OUTLINE_CASES].flatMap(([type, { dirs, roles, plain }]) =>
+  roles === undefined ? [] : [{ type, dirs, roles, plain: plain ?? [] }]
+);
 
 /** `<g class="outline-…">` around its one path: what the fixture drew. */
 const OUTLINED = /<g class="outline-[a-z]+"><path [^>]*\/><\/g>/g;
@@ -88,7 +58,11 @@ async function api(...extensions: ExtensionPlugin[]) {
 }
 
 describe('the outlining types draw through the hook (D302, #340, #459, #501)', () => {
-  for (const [type, { dirs, roles, plain: own = [] }] of Object.entries(TYPES)) {
+  it('has outlining types with roles', () => {
+    expect(TYPES.length).toBeGreaterThan(0);
+  });
+
+  for (const { type, dirs, roles, plain: own } of TYPES) {
     it(`${type}: each role reaches the drawer, and no arrowhead, label or text does`, async () => {
       const calls: Call[] = [];
       const recording: ExtensionPlugin = {

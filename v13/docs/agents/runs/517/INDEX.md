@@ -36,6 +36,8 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 
 ## Merge log
 
+- 2026-11-09: `mermaid-v13` 1a78e25d7 (#637 conflict-free ports, #638 pre-manifest packages) merged in, with the move: parity suite and harvest row to `conformance/src/usecase/{suite,tables}.ts`, divergences to `divergences/usecase.json`, grammar target to `diagram-usecase/workspace.yaml` (no `theme:` keys: the scan finds 17 core reads, `actorBkg`/`actorBorder` through `slot()`), MIGRATION section to `migration/usecase.md`; core `usedBy` back to `mermaid-v13`'s (readers come from the scan). Shared code merged: T4's `slot()` read in `themeReads`, the harvest folder-in-name change, and `sync.spec.ts` copying pre-manifest packages.
+
 - 2026-11-09: `feature/566_usecase-render` fast-forwarded (3444cda86, after a two-axis review: plain labels escaped as v12, kind narrowing, `slot()` direction check). #637's migration was merged and dropped on the coordinator's hold (never pushed); it waits for the shared `tools/workspace/diagrams.ts` fix.
 
 - 2026-11-09: `feature/565_usecase-layout` merged (81b4ac949, after a two-axis review: clip.ts source-axis bug and edge cases, note rank adjacency, duplication). `mermaid-v13` unchanged since e1e953abc.
