@@ -26,7 +26,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Note: the front-matter title is in the model (D218) but not compared in parity: the oracle never passes the front matter on (pie's and treemap's note). Symbols and the probe are T6's, as kanban's T2.
 
 ## #570 T3 layout
-- Open (from #564, D433): call `checkStyleCopies(model)` first in the layout (gantt's `Steps` in `layout.ts`), so a diagram past the style-copy cap ends in the `LimitError`; `relations` with an undefined `from`/`to` stay out of the graph (D434).
+- Closed (from #564, D433, D434): `layoutRequirement` calls `checkStyleCopies(model)` before it measures anything (`layout/layout.ts`), so a model past the cap ends in the `LimitError` (`layout.spec.ts`: nothing measured, no engine call); relations with an undefined `from`/`to` stay out of the graph, and a shared name is two boxes.
+- **For the maintainer** (visible, needs a D-id): v12 drew each box line at its centre offset (`translate(-w/2, -h/2 + yOffset)`), so a multi-line value (a quoted text spanning lines) overlapped the line above by half its extra height. v13 stacks every line in its own line box; single-line boxes keep v12's places: the text `padding − h₀/2` below the top (clamped at 0 for fonts whose half line passes 20 px) and the divider `h₀ + h₁ + gap` down.
+- **Choice** (D154): marker room is a constant 20 out × 20 across (the classic chevron and the `contains` circle, stroke included, rounded up: `MARKER_ROOM`), at the marked end (`startMarker` for `contains`, `endMarker` for the rest), `headRoom` 20 for every relation, self-loop reach and port pitch grown to fit (ER's `erMetrics` pattern). The family tokens (v12's neo chevron is the classic × 0.8) are T4's; T4 should check they fit in `MARKER_ROOM`, as class's `MARKER_ROOM` spec does.
+- **Choice**: the layout is px only (`pxProfile`; `ctx.units` is not read). T7 (D438) adds a cell profile.
+- **Choice**: a box's font size, weight and italics come from its `styles` through `checkStyle` (ER's `textStyle`), so `style a font-size:40px` grows the box; the name is always bold (v12). Style warnings are raised here once: T4 draws from `BoxView.style` and must not check the styles again.
+- **Choice**: `routing` follows `flowchart.curve` in the layout (class's `classCurve` table: `linear` straight, an S-curve name curved, the rest right angles; `rounded` when unset), and the curve is kept in `RequirementPrepared.curve` for T4.
 
 ## #574 T4 renderer
 

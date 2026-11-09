@@ -1,0 +1,288 @@
+// RequirementModel → LayoutGraph (DESIGN §6.1): every box and every relation label measured
+// before layout. The box is v12's `requirementBox.ts`; every length comes from the metrics
+// table (`metrics.ts`) or the px unit profile (pitfall 13).
+import type {
+  EdgeRouting,
+  LayoutEdge,
+  LayoutGraph,
+  LayoutMetrics,
+  LayoutNode,
+} from '@mermaid-js/core/layout';
+import { pxProfile } from '@mermaid-js/core/layout';
+import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  fontSizePx,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
+import type { Element, Relation, Requirement, RequirementModel } from '../model.ts';
+import type { RequirementRenderContext } from './context.ts';
+import { MARKER_ROOM, REQUIREMENT_METRICS as M } from './metrics.ts';
+
+/** What a box's line shows: the kind, the name, or one body field. */
+export type LinePart =
+  | 'kind'
+  | 'name'
+  | 'id'
+  | 'text'
+  | 'risk'
+  | 'verification'
+  | 'type'
+  | 'docRef';
+
+/** One line of a box, placed in the box: `x` and `y` are its top left from the box's. */
+export interface LineView {
+  readonly part: LinePart;
+  readonly label: MeasuredLabel;
+  readonly x: number;
+  readonly y: number;
+  /** The kind and the name are centred; body lines start `bodyInset` in. */
+  readonly align: 'center' | 'start';
+}
+
+/** A requirement or an element measured as v12's `requirementBox`. */
+export interface BoxView {
+  /** Layout node id: the box's AST id (`requirement:<name>`, `element:<name>`). */
+  readonly id: string;
+  readonly kind: 'requirement' | 'element';
+  readonly box: Requirement | Element;
+  readonly style: CheckedStyle;
+  /** `default` plus the box's classes, as v12's `cssClasses`. */
+  readonly classes: readonly string[];
+  /** Palette slot (v12's `colorIndex`). */
+  readonly slot: number;
+  readonly width: number;
+  readonly height: number;
+  /** The kind, the name, then each body line with text, top to bottom. */
+  readonly lines: readonly LineView[];
+  /** The divider's offset from the box's top; unset when no body line has text. */
+  readonly divider?: number;
+}
+
+export interface RelationView {
+  /** Layout edge id: the relation's AST id. */
+  readonly id: string;
+  readonly relation: Relation;
+  /** Layout ids of the boxes the ends resolve to. */
+  readonly source: string;
+  readonly target: string;
+  /** `<<kind>>`, at the middle of the line. */
+  readonly label: MeasuredLabel;
+  /** `contains` draws a circle with a plus at the source; the rest an open chevron at the target. */
+  readonly marker: 'contains' | 'arrow';
+  readonly markerAt: 'source' | 'target';
+  /** Every kind but `contains` is drawn dashed. */
+  readonly dashed: boolean;
+}
+
+/** How relation lines are drawn: v12 drew them with `flowchart.curve` (class's precedent). */
+export type RequirementCurve =
+  | 'curved'
+  | 'linear'
+  | 'step'
+  | 'stepBefore'
+  | 'stepAfter'
+  | 'rounded';
+
+export interface RequirementPrepared {
+  readonly graph: LayoutGraph;
+  /** Requirements, then elements, in model order. */
+  readonly boxes: readonly BoxView[];
+  /** The relations whose two ends name boxes, in model order (D434). */
+  readonly relations: readonly RelationView[];
+  /** `flowchart.curve`, `rounded` when unset; the graph's `routing` follows it. */
+  readonly curve: RequirementCurve;
+}
+
+/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
+export function requirementCurve(curve: string | undefined): RequirementCurve {
+  return curve === 'linear' ||
+    curve === 'step' ||
+    curve === 'stepBefore' ||
+    curve === 'stepAfter' ||
+    curve === 'rounded'
+    ? curve
+    : 'curved';
+}
+
+/** How the engine routes each curve (flowchart's table): the rest are right angles. */
+const ROUTING: Readonly<Partial<Record<RequirementCurve, EdgeRouting>>> = {
+  linear: 'straight',
+  curved: 'curved',
+};
+
+/** The least bold font weight. */
+const BOLD = 600;
+/** Font sizes a style may set: below this, in px. */
+const MAX_FONT = 1000;
+
+function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
+  const t = style.text;
+  const weight = t['font-weight'];
+  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= BOLD;
+  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
+  const size = fontSizePx(t['font-size'], font.size);
+  return [size !== undefined && size > 0 && size < MAX_FONT ? { ...font, size } : font, bits];
+}
+
+type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
+
+/** v12's body lines, in order: an empty field draws nothing. */
+function bodyOf(box: Requirement | Element, kind: BoxView['kind']): [LinePart, string][] {
+  const fields: [LinePart, string, string][] =
+    kind === 'requirement'
+      ? [
+          ['id', 'ID', (box as Requirement).requirementId],
+          ['text', 'Text', (box as Requirement).text],
+          ['risk', 'Risk', (box as Requirement).risk],
+          ['verification', 'Verification', (box as Requirement).verifyMethod],
+        ]
+      : [
+          ['type', 'Type', (box as Element).type],
+          ['docRef', 'Doc Ref', (box as Element).docRef],
+        ];
+  return fields.filter(([, , v]) => v !== '').map(([part, key, v]) => [part, `${key}: ${v}`]);
+}
+
+/**
+ * v12's `requirementBox`: `<<Kind>>` and the bold name centred, then, after `gap` and the
+ * divider, the body lines `bodyInset` in; as wide as the widest line plus `padding`, as tall as
+ * the lines (and the gap, with a body) plus `padding`. v12 put the text `padding` less half the
+ * first line's height below the top (8 px at 24 px lines, the rest below) and the divider the
+ * two head lines and `gap` down from the top; both are kept, the text never above the top. Each
+ * line has its own line box (v12 centred each on its offset, so a taller line overlapped the
+ * one above).
+ */
+function boxView(
+  box: Requirement | Element,
+  kind: BoxView['kind'],
+  font: FontKey,
+  measure: Measure,
+  styleOf: (styles: readonly string[]) => CheckedStyle
+): BoxView {
+  const style = styleOf(box.styles);
+  const [f, bits] = textStyle(style, font);
+  const head: [LinePart, MeasuredLabel][] = [
+    [
+      'kind',
+      measure(
+        `&lt;&lt;${kind === 'requirement' ? (box as Requirement).kind : 'Element'}&gt;&gt;`,
+        f,
+        bits
+      ),
+    ],
+    ['name', measure(box.name, f, bits | Style.Bold)],
+  ];
+  const body = bodyOf(box, kind).map(([part, text]): [LinePart, MeasuredLabel] => [
+    part,
+    measure(text, f, bits),
+  ]);
+  let widest = 0;
+  for (const [, l] of [...head, ...body]) widest = Math.max(widest, l.width);
+  const width = widest + M.padding;
+  const top = Math.max(0, M.padding - head[0]![1].height / 2);
+  const lines: LineView[] = [];
+  let y = top;
+  for (const [part, label] of head) {
+    lines.push({ part, label, x: (width - label.width) / 2, y, align: 'center' });
+    y += label.height;
+  }
+  const nameBottom = y;
+  if (body.length > 0) y += M.gap;
+  for (const [part, label] of body) {
+    lines.push({ part, label, x: M.bodyInset, y, align: 'start' });
+    y += label.height;
+  }
+  return {
+    id: box.ast,
+    kind,
+    box,
+    style,
+    classes: box.classes,
+    slot: box.slot,
+    width,
+    height: y - top + M.padding,
+    lines,
+    ...(body.length > 0 ? { divider: nameBottom + M.gap - top } : {}),
+  };
+}
+
+/** The engine metrics: self-loops and edge ends along a side sized for the markers. */
+function requirementMetrics(): LayoutMetrics {
+  const m = pxProfile.engine;
+  return {
+    ...m,
+    loop: Math.max(m.loop, MARKER_ROOM.length + m.loopGap),
+    portPitch: Math.max(m.portPitch, MARKER_ROOM.width + m.minPitch),
+  };
+}
+
+/** Measures the model and builds the graph the layout engine gets. */
+export function prepareRequirement(
+  model: RequirementModel,
+  ctx: RequirementRenderContext
+): RequirementPrepared {
+  const { measurer, theme } = ctx;
+  const font: FontKey = {
+    family: theme.value('fontFamily'),
+    size: theme.number('fontSize'),
+    weight: 400,
+  };
+  const measure: Measure = (text, f, bits) =>
+    layoutLabel(text, f, Infinity, measurer, { markdown: true, style: bits, inline: ctx.inline });
+  const styles = new Map<string, CheckedStyle>();
+  const styleOf = (decls: readonly string[]): CheckedStyle => {
+    const key = decls.join(';');
+    let style = styles.get(key);
+    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
+    return style;
+  };
+  const boxes = [
+    ...model.requirements.map((r) => boxView(r, 'requirement', font, measure, styleOf)),
+    ...model.elements.map((e) => boxView(e, 'element', font, measure, styleOf)),
+  ];
+  const relations: RelationView[] = [];
+  for (const r of model.relations) {
+    // D434: a relation to a name no box has stays out of the layout.
+    if (r.from === undefined || r.to === undefined) continue;
+    const contains = r.kind === 'contains';
+    relations.push({
+      id: r.ast,
+      relation: r,
+      source: r.from,
+      target: r.to,
+      label: measure(`&lt;&lt;${r.kind}&gt;&gt;`, font, 0),
+      marker: contains ? 'contains' : 'arrow',
+      markerAt: contains ? 'source' : 'target',
+      dashed: !contains,
+    });
+  }
+  const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded');
+  const b = pxProfile.builder;
+  const room = { length: MARKER_ROOM.length, width: MARKER_ROOM.width };
+  const graph: LayoutGraph = {
+    direction: model.direction,
+    nodes: boxes.map(
+      (v): LayoutNode => ({ id: v.id, width: v.width, height: v.height, shape: 'requirementBox' })
+    ),
+    edges: relations.map(
+      (e): LayoutEdge => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        minLen: 1,
+        label: { width: e.label.width + b.labelPatch.x, height: e.label.height + b.labelPatch.y },
+        ...(e.markerAt === 'source' ? { startMarker: room } : { endMarker: room }),
+      })
+    ),
+    groups: [],
+    spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
+    diagramPadding: M.viewBoxPadding,
+    routing: ROUTING[curve] ?? 'stepped',
+    headRoom: MARKER_ROOM.length,
+    metrics: requirementMetrics(),
+  };
+  return { graph, boxes, relations, curve };
+}

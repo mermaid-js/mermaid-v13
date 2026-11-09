@@ -1,6 +1,6 @@
 /**
  * `@mermaid-js/diagram-requirement`: the requirement diagram plugin (spec #520). The lexer, the
- * parser, the model and AST and the codes of the warnings it raises are here; the layout,
+ * parser, the model and AST, the codes of the warnings it raises and the layout are here; the
  * renderer, plugin export and manifest land with the other tickets of that spec.
  */
 export {
@@ -34,6 +34,24 @@ export type {
 } from './parser/index.ts';
 export type * from './model.ts';
 export { checkStyleCopies } from './limits.ts';
+export {
+  layoutRequirement,
+  MARKER_ROOM,
+  prepareRequirement,
+  REQUIREMENT_METRICS,
+  requirementCurve,
+} from './layout/index.ts';
+export type {
+  BoxView,
+  LinePart,
+  LineView,
+  RelationView,
+  RequirementCurve,
+  RequirementLayout,
+  RequirementLayoutWarning,
+  RequirementPrepared,
+  RequirementRenderContext,
+} from './layout/index.ts';
 export {
   MAX_STYLE_COPIES,
   REQUIREMENT_DUPLICATE,
