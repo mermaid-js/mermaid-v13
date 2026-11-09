@@ -538,5 +538,316 @@
   {
     "id": "usecase-cases/v12-unharvested/parser-usecase.parser.spec.ts#L104-23",
     "source": "usecase-beta\nA dependency@..> : include B"
+  },
+  {
+    "id": "usecase-cases/entities-outside-core",
+    "source": "usecase-beta\nA[x #amp; y #35; z]\nB(\"#quot;q#quot;\")\nC[ä#mp;ö]\nD[#copy; #lt;b#gt;]"
+  },
+  {
+    "id": "usecase-cases/model-boundary-titles",
+    "source": "usecase-beta\nsystemBoundary Shop(Store)\nend\nsystemBoundary Shop(Market)\nend"
+  },
+  {
+    "id": "usecase-cases/model-classes-undeclared",
+    "source": "usecase-beta\nA --> B:::hot"
+  },
+  {
+    "id": "usecase-cases/model-usecase-business",
+    "source": "usecase-beta\nLogin(Sign in)@{ business: true }\nLogin(Sign in)@{ business: false }"
+  },
+  {
+    "id": "usecase-cases/model-actor-type",
+    "source": "usecase-beta\nactor A@{ type: hollow }\nactor A@{ type: awesome }"
+  },
+  {
+    "id": "usecase-cases/model-actor-icon",
+    "source": "usecase-beta\nactor A@{ icon: \"fa:user\" }\nactor A@{ icon: \"fa:cog\" }"
+  },
+  {
+    "id": "usecase-cases/model-actor-business",
+    "source": "usecase-beta\nactor A@{ business: true }\nactor A@{ business: false }"
+  },
+  {
+    "id": "usecase-cases/model-relation-target-boundary",
+    "source": "usecase-beta\nsystemBoundary Shop\nend\nLogin --> Shop"
+  },
+  {
+    "id": "usecase-cases/model-extend-actor",
+    "source": "usecase-beta\nactor A\nLogin ..> : extend A"
+  },
+  {
+    "id": "usecase-cases/recovery/two-syntax-lines",
+    "name": "Syntax errors on two lines, the statements around them kept",
+    "source": "usecase-beta\nactor User\nactor A B\nLogin\nX -->\nactor Admin",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["User", "Login", "Admin"]
+  },
+  {
+    "id": "usecase-cases/recovery/comment-and-unknown",
+    "name": "An inline comment and a statement v12 does not know",
+    "source": "usecase-beta\nactor A %% the user\nunknown command\nA --> Login",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/kind-and-note",
+    "name": "An id declared as two kinds, and a note on nothing",
+    "source": "usecase-beta\nactor Shared\nShared\nnote for Ghost \"lost\"\nShared --> Login",
+    "errors": [
+      ["USECASE_CONFLICT", 3],
+      ["USECASE_UNRESOLVED", 4]
+    ],
+    "keeps": ["Shared", "Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/metadata-and-include",
+    "name": "A metadata key an actor does not take, and an include between actors",
+    "source": "usecase-beta\nactor A@{ colour: red }\nactor B\nA ..> : include B",
+    "errors": [
+      ["USECASE_INVALID_METADATA", 2],
+      ["USECASE_INVALID_RELATION", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-header",
+    "name": "A boundary header that fails still opens the block, so its end closes it",
+    "source": "usecase-beta\nsystemBoundary Shop <<System>>\n  Browse\nend\nBrowse --> Pay\nPay --> Ship\n  )",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Browse", "Pay", "Ship"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-unclosed",
+    "name": "A boundary without its end: the relation after it falls inside it",
+    "source": "usecase-beta\nactor User\nsystemBoundary Shop\n  Browse\nUser --> Browse",
+    "errors": [
+      ["UNEXPECTED", 5],
+      ["USECASE_UNCLOSED_BOUNDARY", 5]
+    ],
+    "keeps": ["User", "Browse"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-nested",
+    "name": "A boundary inside a boundary is one error, and its end is its own",
+    "source": "usecase-beta\nsystemBoundary Outer\n  systemBoundary Inner\n    Browse\n  end\n  Pay\nend\nPay --> Ship",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Pay", "Ship"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-relation-note",
+    "name": "A relation and a note inside a boundary",
+    "source": "usecase-beta\nsystemBoundary Shop\n  User --> Browse\n  note for Browse \"x\"\n  Pay\nend\nactor User",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["Pay", "User"]
+  },
+  {
+    "id": "usecase-cases/recovery/unclosed-string-stereotype",
+    "name": "An unclosed quote and an unclosed stereotype",
+    "source": "usecase-beta\nA(\"Sign in)\nB <<primary\nC --> D",
+    "errors": [
+      ["UNCLOSED_STRING", 2],
+      ["USECASE_UNCLOSED_STEREOTYPE", 3]
+    ],
+    "keeps": ["C", "D"]
+  },
+  {
+    "id": "usecase-cases/recovery/json-invalid-duplicate",
+    "name": "Invalid JSON and a JSON id declared twice",
+    "source": "usecase-beta\njson P@{\"a\": }\njson Q@{\"b\": 1}\njson Q@{\"c\": 2}\nQ --> R",
+    "errors": [
+      ["USECASE_INVALID_JSON", 2],
+      ["USECASE_DUPLICATE_ID", 4]
+    ],
+    "keeps": ["R"]
+  },
+  {
+    "id": "usecase-cases/recovery/class-style-targets",
+    "name": "class and style on ids nothing declares",
+    "source": "usecase-beta\nA --> B\nclass Ghost important\nstyle Phantom fill:red\nclassDef important fill:#f96",
+    "errors": [
+      ["USECASE_UNRESOLVED", 3],
+      ["USECASE_UNRESOLVED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/generalization-json-circle",
+    "name": "A generalization from a use case to an actor, and a circle arrow on a JSON table",
+    "source": "usecase-beta\nactor A\nLogin --|> A\njson P@{}\nP --o Login",
+    "errors": [
+      ["USECASE_INVALID_RELATION", 3],
+      ["USECASE_INVALID_RELATION", 5]
+    ],
+    "keeps": ["A", "Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/business-geometry",
+    "name": "A business icon actor and a business rectangular use case",
+    "source": "usecase-beta\nactor A@{ icon: \"fa:user\", business: true }\nR[Report]@{ business: true }\nA --> R",
+    "errors": [
+      ["USECASE_INVALID_ELEMENT", 2],
+      ["USECASE_INVALID_ELEMENT", 3]
+    ],
+    "keeps": ["A", "R"]
+  },
+  {
+    "id": "usecase-cases/recovery/classes-and-labels",
+    "name": "::: on an end that is not declared, and two labels for one use case",
+    "source": "usecase-beta\nA --> B:::hot\nLogin(Sign in)\nLogin(Log in)\nA --> Login",
+    "errors": [
+      ["USECASE_UNDECLARED_CLASS", 2],
+      ["USECASE_CONFLICT", 4]
+    ],
+    "keeps": ["A", "B", "Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/metadata-multiline",
+    "name": "An error inside a multi-line @{ … } skips to its }",
+    "source": "usecase-beta\nactor A@{\n  type: \n  business: true\n}\nA --> Login\nLogin --> ",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/acc-descr-unclosed",
+    "name": "An accDescr { without its }: its lines are no statements",
+    "source": "usecase-beta\naccDescr {\n  A user signs in,\n  and signs out.\nactor User\nUser -->",
+    "errors": [
+      ["USECASE_UNCLOSED_ACC_DESCR", 2],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["User"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-metadata-note",
+    "name": "A boundary type v12 does not draw, and a note on a boundary",
+    "source": "usecase-beta\nsystemBoundary Shop@{ type: round }\n  Browse\nend\nnote for Shop \"x\"",
+    "errors": [
+      ["USECASE_INVALID_METADATA", 2],
+      ["USECASE_INVALID_NOTE", 5]
+    ],
+    "keeps": ["Browse"]
+  },
+  {
+    "id": "usecase-cases/recovery/three-lines",
+    "name": "Three broken lines between good ones",
+    "source": "usecase-beta\nactor A,\nB(\nC --> D\nD -->\nE --> F",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["C", "D", "E", "F"]
+  },
+  {
+    "id": "usecase-cases/recovery/edge-metadata",
+    "name": "An edge metadata key v12 does not take, and metadata for an edge id nothing declares",
+    "source": "usecase-beta\nA e1@--> B\ne1@{ speed: fast }\ne2@{ animate: true }",
+    "errors": [
+      ["USECASE_INVALID_METADATA", 3],
+      ["USECASE_UNRESOLVED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/header-same-line",
+    "name": "A statement on the header's line, and another broken line",
+    "source": "usecase-beta actor A\nB --> C\nD E\nC --> F",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["B", "C", "F"]
+  },
+  {
+    "id": "usecase-cases/recovery/plantuml-and-end",
+    "name": "A PlantUML statement and an end that closes nothing",
+    "source": "usecase-beta\npackage Auth\nend\nA --> B",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/direction-and-actor-case",
+    "name": "A lower-case direction and an upper-case actor keyword",
+    "source": "usecase-beta\ndirection td\nActor A\nUser --> Login",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["User", "Login"]
+  },
+  {
+    "id": "usecase-cases/recovery/stereotypes-and-boundaries",
+    "name": "Conflicting stereotypes and an element in two boundaries",
+    "source": "usecase-beta\nLogin <<Primary>>\nLogin <<Secondary>>\nsystemBoundary One\n  Pay\nend\nsystemBoundary Two\n  Pay\nend",
+    "errors": [
+      ["USECASE_CONFLICT", 3],
+      ["USECASE_CONFLICT", 7]
+    ],
+    "keeps": ["Login", "Pay"]
+  },
+  {
+    "id": "usecase-cases/recovery/duplicate-edge-and-generated",
+    "name": "An edge id used twice, and two quoted names with one id",
+    "source": "usecase-beta\nA link@--> B\nB link@--> C\n\"Reset password\"\n\"Reset-password\"",
+    "errors": [
+      ["USECASE_DUPLICATE_ID", 3],
+      ["USECASE_DUPLICATE_ID", 5]
+    ],
+    "keeps": ["A", "B", "C", "Reset_password"]
+  },
+  {
+    "id": "usecase-cases/recovery/icon-type-and-awesome",
+    "name": "An icon actor with a type, and a business awesome actor",
+    "source": "usecase-beta\nactor A@{ icon: \"fa:user\", type: hollow }\nactor B@{ type: awesome, business: true }\nA --> B",
+    "errors": [
+      ["USECASE_INVALID_ELEMENT", 2],
+      ["USECASE_INVALID_ELEMENT", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/markdown-unclosed-last",
+    "name": "An unclosed Markdown text reads to the end: one error",
+    "source": "usecase-beta\nactor A\nA --> B(\"`**bold**)\nC --> D",
+    "errors": [["USECASE_UNCLOSED_MARKDOWN", 3]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "usecase-cases/recovery/note-on-edge-and-json",
+    "name": "Notes on an edge id and on a JSON table",
+    "source": "usecase-beta\nA e1@--> B\njson P@{}\nnote for e1 \"x\"\nnote for P \"y\"",
+    "errors": [
+      ["USECASE_INVALID_NOTE", 4],
+      ["USECASE_INVALID_NOTE", 5]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "usecase-cases/recovery/boundary-edge-ends",
+    "name": "A boundary as a relation end",
+    "source": "usecase-beta\nsystemBoundary Shop\n  Browse\nend\nShop --> Browse\nBrowse --> Shop",
+    "errors": [
+      ["USECASE_INVALID_RELATION", 5],
+      ["USECASE_INVALID_RELATION", 6]
+    ],
+    "keeps": ["Browse"]
   }
 ]

@@ -1,0 +1,34 @@
+{
+  "usecase.parser.spec.ts": {
+    "accepts the header at EOF and publishes an empty AST": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "publishes accessibility text through common DB and normalized AST transactionally": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "accepts a final statement without a newline and keeps end-exclusive source spans": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "isolates success, clear, failure, and a second success across singleton reuse": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "publishes no draft collection or AST when final semantic resolution fails": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "distinguishes generated and explicit IDs and records their exact occurrences": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "preserves entity codes and literal backslash-n": "it calls v12's parser without the pipeline's `encodeEntities`, so `#40;` stays as written; mermaid@12 (the oracle) shows it as `(`, as v13 does (parity, `usecase-cases/entities-label`); and it reads `db.getAST()` (D476)",
+    "accepts markdown markers, punctuation, and non-ASCII characters in unquoted labels": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "publishes exact true, fast, slow, and false animation state and rejects invalid values": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "records the boundary id, title, and inline metadata spans in the AST": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "publishes a complete serializable AST v1 with ordered statements and exact spans": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "locates the JSON id %s even when it is a substring of the json keyword": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)"
+  },
+  "usecase.spec.ts": {
+    "projects parser-produced actor and use-case geometry exactly into AST and LayoutData": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "projects base, one-extra, N-extra, and labelled minimum lengths from parser to layout": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "projects complex source-ordered JSON, a forward edge, classes, and styles end to end": "it reads v12's `GraphAST` (`db.getAST()`), which v13 does not port (D476)",
+    "emits every node and boundary variant in committed model order": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "maps relationship semantics, markers, animation, styles, and note attachments exactly": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "flattens JSON rows depth-first using source property order": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "consolidates canonical selectors and relies on shared animation keyframes": "it reads v12's CSS (`getStyles`); v13 writes no `<style>` (R-SEC-2) and colours through the theme table (T4, #566)"
+  },
+  "usecase.grammar.spec.ts": {
+    "defines the stable canonical CST rule names": "it reads Chevrotain's grammar productions; v13's parser is hand-written and builds no CST (D14)"
+  },
+  "usecaseDb.spec.ts": {
+    "atomically replaces committed state with a detached model": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "keeps the previous commit when a replacement is incomplete": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "clears every collection, counter, AST, direction, config, title, and accessibility field": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "gives oval use cases extra label clearance over rectangular use cases": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs; the padding is T3's (#565)"
+  }
+}

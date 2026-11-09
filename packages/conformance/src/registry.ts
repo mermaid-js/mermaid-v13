@@ -22,6 +22,7 @@ import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
 import { treemapAdapter } from './treemap/v13.ts';
+import { usecaseAdapter } from './usecase/v13.ts';
 import { vennParityCorpus } from './venn/corpus.ts';
 import { vennAdapter } from './venn/v13.ts';
 import { wardleyAdapter } from './wardley/v13.ts';
@@ -182,6 +183,12 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: usecaseAdapter,
+    corpusDirs: ['e2e/diagrams/usecase'],
+    // The cases run in `usecase/parity.spec.ts`, with their core divergences and offset checks.
+    corpusFiles: ['packages/conformance/corpus/usecase-v12-specs.json'],
   },
 ];
 
