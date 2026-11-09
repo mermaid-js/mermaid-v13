@@ -2,9 +2,11 @@
  * Engine selection by plugin (D282, D284, D285): a diagram plugin's `layoutEngine` names the
  * engine it lays out with when no config layer sets `layout`, and aliases for v12's names.
  * `tree` is a first-party engine `mermaid` loads lazily, and only plugins that declare it reach it.
+ * `compass` is lazy too, and any graph type reaches it by name (D502).
  * `swimlane` is loaded lazily too, but any graph diagram may select it (D535).
  */
 import { layered, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
+import { compass } from '@mermaid-js/core/layout/compass';
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
 import { tree } from '@mermaid-js/core/layout/tree';
 import type { DiagramPlugin } from '@mermaid-js/core';
@@ -161,6 +163,23 @@ describe('a plugin’s layout engine (D284)', () => {
     ]);
     await both.render('o', TEXT.replace('probe', 'other'));
     expect(desc((await both.render('p', withLayout('tree'))).svg)).toBe(BY_LAYERED);
+  });
+
+  it('lets any graph type select `compass` by name, while `tree` stays gated (D502)', async () => {
+    const BY_COMPASS = drawn(compass(graphOf(EDGES)));
+    expect(BY_COMPASS).not.toBe(BY_LAYERED);
+    const m = await withProbe();
+    const r = await m.render('p', withLayout('compass'));
+    expect(r.warnings).toEqual([]);
+    expect(desc(r.svg)).toBe(BY_COMPASS);
+    // prepare() loads it for renderSync, as for a default.
+    const sync = await withProbe();
+    expect(() => sync.renderSync(withLayout('compass'))).toThrow(NotLoadedError);
+    await sync.prepare(withLayout('compass'));
+    expect(desc(sync.renderSync(withLayout('compass')).svg)).toBe(BY_COMPASS);
+    const gated = await m.render('p', withLayout('tree'));
+    expect(gated.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(desc(gated.svg)).toBe(BY_LAYERED);
   });
 
   it('lets a registered `tree` loader replace the first-party one, for every plugin', async () => {
