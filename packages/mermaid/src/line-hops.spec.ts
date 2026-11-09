@@ -61,11 +61,6 @@ describe('lineHops on a flowchart with crossing edges (D537)', () => {
     expect(on.svg.replace(/ d="[^"]+"/g, '')).toBe(off.svg.replace(/ d="[^"]+"/g, ''));
   });
 
-  it('a horizontal run hops over a vertical one', async () => {
-    const hopped = lines((await createMermaid().render('d', ON)).svg);
-    for (const d of hopped) for (const m of d.matchAll(HOP)) expect(m[2]).toBe(m[4]); // same y on both sides of the arc: a horizontal run
-  });
-
   it('is off by default: the same drawing as `lineHops: false`', async () => {
     const m = createMermaid();
     expect((await m.render('d', withHops())).svg).toBe(

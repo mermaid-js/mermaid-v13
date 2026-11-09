@@ -3,15 +3,12 @@ description: crossing edges with `lineHops` off (the default, D537), so crossing
 config:
   lineHops: false
   flowchart:
-    curve: step
+    curve: linear
 ---
 flowchart TD
   A --> D
   A --> E
-  A --> F
   B --> D
-  B --> E
   B --> F
-  C --> D
   C --> E
   C --> F

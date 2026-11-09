@@ -82,6 +82,9 @@ describe('the outline hook leaves the corpus byte-identical (D302)', () => {
     let compared = 0;
     for (const dir of DIRS)
       for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir)) {
+        // Line hops (D537) are drawn at the edge outline on purpose; the plain-leaf base cannot
+        // draw them, so a fixture that turns them on is checked by its own specs instead.
+        if (/^\s*lineHops: (true|arc|gap)$/m.test(item.source)) continue;
         let expected: string;
         try {
           await plain.prepare(item.source, { id: 'm' });
