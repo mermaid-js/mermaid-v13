@@ -123,7 +123,8 @@ export class IrParser extends RailroadParser {
       return 'write text as `terminal("…")`';
     }
     if (k === T.RParen && want.some((w) => EXPRESSION.includes(w))) {
-      return 'a `,` needs an expression after it';
+      if (this.kind(this.i - 1) === T.Comma) return 'a `,` needs an expression after it';
+      return 'a call needs an expression between its parentheses';
     }
     return super.explain(want);
   }

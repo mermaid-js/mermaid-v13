@@ -15,7 +15,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Review (T1, not fixed, out of scope): the railroad lexer's shared Langium terminal rules (title, accTitle, accDescr, YAML, directive, source mapping and memos), `tagQuotes()` and `placeholders()` are near-copies of the same code in about nine other Langium/jison lexers (wardley, radar, pie, info, packet, treemap, gitgraph, cynefin; entity placeholders also in gantt, journey, sequence, timeline, venn). A shared parser-kit helper is a cross-package refactor. **For the maintainer.**
 
 ## #610 T2 parser
-- Exploration: all four v12 types share one DB object (each has its own parser object). `max: Infinity` serialises as `null` in a JSON snapshot: model parity normalises it.
+- Exploration: all four v12 types share one DB object (each has its own parser object). `max: Infinity` serialises as `null` in a JSON snapshot: model parity normalises it. **Done** (`conformance/src/railroad/v12.ts`).
+- **Choice (done):** the definition is child `0` of its rule, so ids are `rule:a/0`, `rule:a/0/1`, … (D517 leaves the root's path open).
+- **Choice (done):** core's `maxDepth` (100) caps expression nesting and tree height (stacked EBNF postfixes) with `DEPTH_LIMIT`, so deep input never exhausts the stack in the parser, layout or renderer. v12 had no cap; nothing in the corpus or the fuzz reaches it.
+- **Choice (done):** `detectRailroad` tests the text as core's registry tests a first-party row (`firstPartyDetects`), so a directive inside the header (`ra%%{…}%%ilroad-peg-beta`) reads as v12 read it (found by the fuzz).
+- Found (fuzz): core's preprocess differs from v12 on unclosed or multi-line directives, indented or empty front matter and YAML its reader refuses (`? key` entries); `fuzz.spec.ts` leaves those inputs out (as cynefin's fuzz), counted in its output. `header-empty-front-matter` is listed in `divergences.json` (accept). Core's, **for the maintainer** (GAPS #608 already names the empty block).
+- Ported specs: 30 of 141 skipped: the renderer (6) and styles (18) specs and the four loaders' `renderer` until T3/T4 (#612, #613: unskip in `scripts/port-v12-specs.ts`), and DB sanitising (2, R-SEC-2).
 
 ## #612 T3 layout
 

@@ -191,7 +191,10 @@ export abstract class RailroadParser {
     protected readonly src: string,
     protected readonly notation: RailroadNotation,
     private readonly options: RailroadParseOptions,
-    /** The text's preprocess result when the caller computed it (diagnostics not reported). */
+    /**
+     * The text's preprocess result when the caller computed it for detection: used in place of
+     * computing it again, and its diagnostics reported as if the parser had.
+     */
     computed?: PreprocessResult
   ) {
     this.headerWord = RAILROAD_HEADERS.find(([n]) => n === notation)?.[1] ?? 'railroad-beta';
