@@ -1,0 +1,25 @@
+---
+description: >-
+  The lengths agentflow reads from config: its own spacing, wrap and least node width, and
+  `flowchart.padding` and `flowchart.subGraphTitleMargin` (D466).
+config:
+  agentflow:
+    nodeSpacing: 90
+    rankSpacing: "30"
+    wrappingWidth: 60
+    minNodeWidth: 40
+    diagramPadding: 20
+  flowchart:
+    padding: 4
+    subGraphTitleMargin:
+      top: 6
+      bottom: 4
+---
+agentflow-beta TB
+  flow f["A flow with a title"]
+    a["A rather long label that wraps at sixty"]
+    b["B"]
+  end
+  a --> b
+  b --> c["C"]
+  b --> e["E"]

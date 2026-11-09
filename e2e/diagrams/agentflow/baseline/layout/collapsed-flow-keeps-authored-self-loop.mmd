@@ -1,0 +1,17 @@
+---
+description: >-
+  A collapsed flow holding a self-loop, an edge between two of its members and edges across
+  its border: the authored `plan --> plan` stays as a loop on the card (v12 keeps it), the
+  `plan --> act` that folds into the card is dropped, and the edges in and out end at the card.
+---
+agentflow-beta TB
+  start["Start"]@{ shape: input }
+  flow worker["Worker"]
+    plan["Plan"]@{ shape: task }
+    act["Act"]@{ shape: tool }
+    plan --> plan
+    plan --> act
+  end
+  worker@{ view: "collapsed" }
+  start --> plan
+  act --> done["Done"]@{ shape: refdoc }

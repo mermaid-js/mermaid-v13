@@ -1,0 +1,480 @@
+/**
+ * AgentflowModel → LayoutGraph: v12's `getData` rules (`fa796a943` `agentflowDb.ts`), over the
+ * nesting the model already resolved (`parent`, `collapsedInto`, the containment cycle cut,
+ * D461). A collapsed flow is a card node standing in for everything inside it; an edge into it
+ * ends at the card, an edge whose two distinct ends fold into one card is dropped, and an
+ * authored self-loop is kept. Flows are groups with their own direction (`flowchart.inheritDir`
+ * applied by the parser, D466) and `algorithm` for the engine (D174). Every label is measured
+ * before layout (DESIGN §6.1), each length from the unit profile, the theme, config or the
+ * metrics table (pitfall 13). Written from a copy of v13 flowchart's builder (D446).
+ */
+import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
+import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  fontSizePx,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
+import type {
+  AgentflowFlowModel,
+  AgentflowModel,
+  AgentflowModelEdge,
+  AgentflowVertex,
+} from '../parser/index.ts';
+import { configLengths, type ConfigLength } from './config-length.ts';
+import type { AgentflowLayoutContext } from './context.ts';
+import {
+  agentflowMetrics,
+  AGENTFLOW_LENGTH_DEFAULTS,
+  FLOWCHART_LENGTH_DEFAULTS,
+  TITLE_MARGIN_DEFAULTS,
+  type AgentflowMetrics,
+} from './metrics.ts';
+import { shapeSize, shapeSpan, type LayoutShape, type Pads } from './shapes.ts';
+
+/** A vertex or a collapsed flow, drawn as a node. */
+export interface AgentflowNodeView {
+  id: string;
+  ast: string;
+  shape: LayoutShape;
+  label: MeasuredLabel;
+  w: number;
+  h: number;
+  /** Label shift from the centre. */
+  dy: number;
+  style: CheckedStyle;
+  classes: readonly string[];
+  /** The flow it is drawn in. */
+  parent?: string;
+  /** Set for a vertex or connector. */
+  vertex?: AgentflowVertex;
+  /** Set for a collapsed flow. */
+  flow?: AgentflowFlowModel;
+}
+
+/** A flow drawn as a frame around its members. */
+export interface AgentflowGroupView {
+  id: string;
+  ast: string;
+  flow: AgentflowFlowModel;
+  label: MeasuredLabel;
+  style: CheckedStyle;
+  classes: readonly string[];
+  parent?: string;
+  /** How many flows hold it (0 at the top). */
+  depth: number;
+}
+
+export interface AgentflowEdgeView {
+  edge: AgentflowModelEdge;
+  /** Layout edge id (the model id, made unique). */
+  id: string;
+  /** The ends drawn: the model's, or the collapsed flow each one is hidden in. */
+  source: string;
+  target: string;
+  label: MeasuredLabel;
+  style: CheckedStyle;
+  /** Arrowheads: `none`, `arrow_point` or `arrow_cross`. */
+  start: string;
+  end: string;
+  /** `linkStyle … interpolate`, the default's, or `flowchart.curve` (v12's order). */
+  curve: string | undefined;
+}
+
+export interface AgentflowPrepared {
+  graph: LayoutGraph;
+  /** Flows drawn as frames, outermost first. */
+  groups: AgentflowGroupView[];
+  nodes: AgentflowNodeView[];
+  edges: AgentflowEdgeView[];
+  /** Every node view by id. */
+  views: ReadonlyMap<string, AgentflowNodeView>;
+  pads: Pads;
+  metrics: AgentflowMetrics;
+  /** `flowchart.subGraphTitleMargin` (D466): room above and below each flow title. */
+  titleMargin: { readonly top: number; readonly bottom: number };
+}
+
+const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
+const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
+const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
+
+/** v12's routing for the diagram's default curve (`linear` straight, the d3 curves curved). */
+function routingOf(curve: string | undefined): 'straight' | 'curved' | 'stepped' {
+  if (curve === 'linear') return 'straight';
+  return curve === 'step' || curve === 'stepBefore' || curve === 'stepAfter' || curve === 'rounded'
+    ? 'stepped'
+    : 'curved';
+}
+
+/** v12 `destructEdgeType`: an open link has no head; a cross or point head at the end. */
+const arrowsOf = (type: string): [string, string] =>
+  type === 'arrow_open'
+    ? ['none', 'none']
+    : ['none', type === 'arrow_cross' ? type : 'arrow_point'];
+
+function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
+  const t = style.text;
+  const weight = t['font-weight'];
+  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
+  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
+  const size = fontSizePx(t['font-size'], font.size);
+  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
+}
+
+/** Everything the views and the graph are measured with. */
+interface Measure {
+  readonly ctx: AgentflowLayoutContext;
+  readonly font: FontKey;
+  readonly pads: Pads;
+  readonly metrics: AgentflowMetrics;
+  readonly wrap: number;
+  readonly minWidth: number;
+  readonly edgeWrap: number;
+  readonly label: (
+    text: string,
+    markdown: boolean,
+    f: FontKey,
+    max: number,
+    bits?: number
+  ) => MeasuredLabel;
+  readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
+}
+
+/** Measures the model and builds the graph the layout engine gets. */
+export function prepareAgentflow(
+  model: AgentflowModel,
+  ctx: AgentflowLayoutContext
+): AgentflowPrepared {
+  const { theme, measurer, inline } = ctx;
+  const units = ctx.units ?? pxProfile;
+  const warn = (w: { code: string; message: string; path: string }) => ctx.warn(w);
+  const own = configLengths(ctx.config.agentflow, AGENTFLOW_LENGTH_DEFAULTS, 'agentflow', warn);
+  const flowchart = ctx.config.flowchart;
+  const shared = configLengths(flowchart, FLOWCHART_LENGTH_DEFAULTS, 'flowchart', warn);
+  const margin = configLengths(
+    flowchart?.subGraphTitleMargin,
+    TITLE_MARGIN_DEFAULTS,
+    'flowchart.subGraphTitleMargin',
+    warn
+  );
+  const font: FontKey = {
+    family: theme.value('fontFamily'),
+    size: theme.number('fontSize'),
+    weight: 400,
+  };
+  const pad = shared('padding');
+  const metrics = agentflowMetrics(units);
+  const m: Measure = {
+    ctx,
+    font,
+    pads: padsOf(theme, pad),
+    metrics,
+    wrap: fromPx(units, own('wrappingWidth'), 'x') || units.builder.wrapWidth,
+    minWidth: fromPx(units, own('minNodeWidth'), 'x'),
+    edgeWrap: units.builder.edgeWrap,
+    label: (text, markdown, f, max, bits = 0) =>
+      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+    styleOf: styleCache(model, ctx),
+  };
+  const rootDir = dirOf(model.direction) ?? 'TB';
+  const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);
+  const edges = edgeViews(model, views, groups, m);
+  const titleMargin = { top: margin('top'), bottom: margin('bottom') };
+  const graph = layoutGraph(model, rootDir, { groups, nodes, edges, flowDir, titleMargin }, m, own);
+  return { graph, groups, nodes, edges, views, pads: m.pads, metrics, titleMargin };
+}
+
+function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
+  return {
+    node: { x: theme.padding('nodePaddingX', pad), y: theme.padding('nodePaddingY', pad) },
+    r: theme.number('radius'),
+    pad,
+    hexagon: { x: theme.padding('hexagonPaddingX', pad), y: theme.padding('hexagonPaddingY', pad) },
+    // A slant of 0 would put an action's points at infinity: at least as deep as it is tall.
+    hexagonSlant: Math.max(theme.number('hexagonSlant'), 1),
+    subroutine: {
+      x: theme.padding('subroutinePaddingX', pad),
+      y: theme.padding('subroutinePaddingY', pad),
+    },
+    lean: { x: theme.padding('leanPaddingX', pad), y: theme.padding('leanPaddingY', pad) },
+  };
+}
+
+/** The checked style of class names plus own declarations, one per distinct list. */
+function styleCache(model: AgentflowModel, ctx: AgentflowLayoutContext): Measure['styleOf'] {
+  const classDefs = new Map<string, string[]>();
+  for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
+  const styles = new Map<string, CheckedStyle>();
+  return (classes, own = []) => {
+    const decls: string[] = [];
+    for (const name of classes) {
+      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
+    }
+    for (const s of own) decls.push(s.trim());
+    const key = decls.join(';');
+    let style = styles.get(key);
+    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
+    return style;
+  };
+}
+
+interface Views {
+  views: Map<string, AgentflowNodeView>;
+  groups: AgentflowGroupView[];
+  nodes: AgentflowNodeView[];
+  /** The direction a node's nearest flow lays out in, else the diagram's. */
+  flowDir: (id: string | undefined) => Dir;
+}
+
+/** One view per drawn flow, vertex and connector, measured; frames sorted outermost first. */
+function nodeViews(model: AgentflowModel, rootDir: Dir, m: Measure): Views {
+  const views = new Map<string, AgentflowNodeView>();
+  const groupById = new Map<string, AgentflowGroupView>();
+  const nodes: AgentflowNodeView[] = [];
+  const empty = m.label('', false, m.font, 0);
+  // v12 drew a hidden flow nowhere; a collapsed one as a card, the rest as frames.
+  for (const flow of model.flows) {
+    if (flow.collapsedInto !== undefined) continue;
+    const style = m.styleOf(flow.classes, flow.styles);
+    if (flow.collapsed) {
+      const view: AgentflowNodeView = {
+        id: flow.id,
+        ast: flow.ast,
+        shape: 'collapsedGroup',
+        label: empty,
+        w: 0,
+        h: 0,
+        dy: 0,
+        style,
+        classes: flow.classes,
+        flow,
+      };
+      views.set(flow.id, view);
+      nodes.push(view);
+    } else {
+      groupById.set(flow.id, {
+        id: flow.id,
+        ast: flow.ast,
+        flow,
+        label: empty,
+        style,
+        classes: flow.classes,
+        depth: 0,
+      });
+    }
+  }
+  for (const v of model.vertices) {
+    if (v.collapsedInto !== undefined || views.has(v.id) || groupById.has(v.id)) continue;
+    const view: AgentflowNodeView = {
+      id: v.id,
+      ast: v.ast,
+      shape: v.shape,
+      label: empty,
+      w: 0,
+      h: 0,
+      dy: 0,
+      style: m.styleOf(['default', 'node', ...v.classes], v.styles),
+      classes: v.classes,
+      vertex: v,
+    };
+    views.set(v.id, view);
+    nodes.push(view);
+  }
+  // A parent is a frame; the model's nesting has no cycle (D461), so the walks end.
+  const parentOf = (p: string | undefined): string | undefined =>
+    p !== undefined && groupById.has(p) ? p : undefined;
+  for (const view of nodes) {
+    const parent = parentOf(view.flow?.parent ?? view.vertex?.parent);
+    if (parent !== undefined) view.parent = parent;
+  }
+  for (const g of groupById.values()) {
+    const parent = parentOf(g.flow.parent);
+    if (parent !== undefined) g.parent = parent;
+  }
+  // `f(flow)` = `step(flow, f(its parent))`, `base` above the top, memoised and without recursion.
+  const upward = <T>(base: T, step: (g: AgentflowGroupView, above: T) => T) => {
+    const memo = new Map<string, T>();
+    return (id: string | undefined): T => {
+      const chain: AgentflowGroupView[] = [];
+      let value = base;
+      for (let at = id; at !== undefined; at = chain[chain.length - 1]!.parent) {
+        const seen = memo.get(at);
+        if (seen !== undefined) {
+          value = seen;
+          break;
+        }
+        chain.push(groupById.get(at)!);
+      }
+      for (let i = chain.length - 1; i >= 0; i--) {
+        value = step(chain[i]!, value);
+        memo.set(chain[i]!.id, value);
+      }
+      return value;
+    };
+  };
+  const flowDir = upward<Dir>(rootDir, (g, above) => dirOf(g.flow.dir) ?? above);
+  // Depth of the frame itself: 1 for a top-level flow.
+  const depthOf = upward<number>(0, (_g, above) => above + 1);
+  for (const view of nodes) measureNode(view, m);
+  const groups = [...groupById.values()];
+  for (const g of groups) {
+    g.depth = depthOf(g.id) - 1;
+    const [f, bits] = textStyle(g.style, m.font);
+    g.label = m.label(g.flow.title, g.flow.labelType === 'markdown', f, Infinity, bits);
+  }
+  groups.sort((a, b) => a.depth - b.depth);
+  return { views, groups, nodes, flowDir };
+}
+
+function measureNode(view: AgentflowNodeView, m: Measure): void {
+  const [f, bits] = textStyle(view.style, m.font);
+  const text = view.vertex?.text ?? view.flow?.title ?? '';
+  const markdown = (view.vertex?.labelType ?? view.flow?.labelType) === 'markdown';
+  view.label = m.label(text, markdown, f, m.wrap, bits);
+  const lw = view.label.width;
+  // v12 widens a vertex label to `agentflow.minNodeWidth`; a collapsed card keeps its own.
+  const keep = view.shape === 'collapsedGroup';
+  const s = shapeSize(
+    view.shape,
+    lw > 0 && !keep ? Math.max(lw, m.minWidth) : lw,
+    view.label.height,
+    m.pads,
+    m.metrics
+  );
+  view.w = s.w;
+  view.h = s.h;
+  view.dy = s.dy;
+}
+
+/**
+ * One view per drawn edge (v12's rules): an end hidden in a collapsed flow is redirected to it;
+ * an edge whose two distinct ends fold into one card is dropped, an authored `x --> x` is kept;
+ * an edge with an end that is drawn nowhere (the reserved `connectors` id) is left out.
+ */
+function edgeViews(
+  model: AgentflowModel,
+  views: ReadonlyMap<string, AgentflowNodeView>,
+  groups: readonly AgentflowGroupView[],
+  m: Measure
+): AgentflowEdgeView[] {
+  const into = new Map<string, string>();
+  for (const v of model.vertices)
+    if (v.collapsedInto !== undefined) into.set(v.id, v.collapsedInto);
+  for (const f of model.flows) if (f.collapsedInto !== undefined) into.set(f.id, f.collapsedInto);
+  const drawn = new Set<string>([...views.keys(), ...groups.map((g) => g.id)]);
+  const flowchart = m.ctx.config.flowchart;
+  const edges: AgentflowEdgeView[] = [];
+  const ids = new Set<string>();
+  for (const e of model.edges) {
+    const source = into.get(e.start) ?? e.start;
+    const target = into.get(e.end) ?? e.end;
+    if (!drawn.has(source) || !drawn.has(target)) continue;
+    if (source === target && e.start !== e.end) continue;
+    let id = e.id;
+    for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
+    ids.add(id);
+    const [start, end] = arrowsOf(e.type);
+    const style = m.styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    const [f, bits] = textStyle(style, m.font);
+    edges.push({
+      edge: e,
+      id,
+      source,
+      target,
+      label: m.label(e.text, e.labelType === 'markdown', f, m.edgeWrap, bits),
+      style,
+      start,
+      end,
+      curve: e.interpolate ?? model.defaultInterpolate ?? flowchart?.curve,
+    });
+  }
+  return edges;
+}
+
+/** The graph the layout engine gets. */
+function layoutGraph(
+  model: AgentflowModel,
+  rootDir: Dir,
+  {
+    groups,
+    nodes,
+    edges,
+    flowDir,
+    titleMargin,
+  }: Pick<AgentflowPrepared, 'groups' | 'nodes' | 'edges' | 'titleMargin'> & Pick<Views, 'flowDir'>,
+  m: Measure,
+  own: ConfigLength
+): LayoutGraph {
+  const units = m.ctx.units ?? pxProfile;
+  const b = units.builder;
+  // Node spacing runs across the flow and rank spacing along it (px config, v12 `|| 50`).
+  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
+    node: fromPx(units, own('nodeSpacing'), node, b.minSpacing.node),
+    rank: fromPx(units, own('rankSpacing'), rank, b.minSpacing.rank),
+    edge: b.spacing.edge,
+  });
+  const along = sideways(rootDir) ? 'x' : 'y';
+  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
+  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
+  const down = spacingOn('y', 'x');
+  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const titleRoom = fromPx(units, titleMargin.top + titleMargin.bottom, 'y');
+  const graph: LayoutGraph = {
+    direction: rootDir,
+    nodes: nodes.map((n): LayoutNode => {
+      const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
+      if (n.parent !== undefined) node.parent = n.parent;
+      node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.metrics);
+      return node;
+    }),
+    groups: groups.map((g): LayoutGroup => {
+      const titled = g.label.height > 0;
+      const group: LayoutGroup = {
+        id: g.id,
+        padding: {
+          top: titled ? b.titlePad + titleRoom : b.groupPad,
+          right: b.groupPad,
+          bottom: b.groupPad,
+          left: b.groupPad,
+        },
+      };
+      if (titled) group.title = { width: g.label.width, height: g.label.height };
+      if (g.parent !== undefined) group.parent = g.parent;
+      const d = dirOf(g.flow.dir);
+      if (d) group.direction = d;
+      // `@{ algorithm }` is for an ELK engine to read; `mermaid` warns ELK_ALGORITHM_IGNORED (D174).
+      const algorithm = g.flow.metadata?.algorithm;
+      if (typeof algorithm === 'string') group.algorithm = algorithm;
+      return group;
+    }),
+    edges: edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      minLen: e.edge.length ?? 1,
+      ...(e.label.width > 0
+        ? {
+            label: {
+              width: e.label.width + b.labelPatch.x,
+              height: e.label.height + b.labelPatch.y,
+            },
+          }
+        : {}),
+    })),
+    spacing,
+    ...(turned ? { turnedSpacing: down } : {}),
+    diagramPadding: fromPx(units, own('diagramPadding'), 'x', 0),
+    routing:
+      units.grid === undefined
+        ? routingOf(model.defaultInterpolate ?? m.ctx.config.flowchart?.curve)
+        : 'stepped',
+    headRoom: b.headRoom,
+    metrics: units.engine,
+  };
+  if (units.grid !== undefined) graph.grid = units.grid;
+  return graph;
+}

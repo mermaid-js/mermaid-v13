@@ -1,0 +1,16 @@
+---
+description: >-
+  `flowchart.inheritDir` (D466): a flow with no `direction` of its own takes the diagram's.
+config:
+  flowchart:
+    inheritDir: true
+---
+agentflow-beta LR
+  flow steps["Steps"]
+    one["One"] --> two["Two"] --> three["Three"]
+  end
+  flow other["Other"]
+    direction TB
+    four["Four"] --> five["Five"]
+  end
+  three --> four
