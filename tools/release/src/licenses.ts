@@ -24,7 +24,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { diagramPackages } from '../../workspace/diagrams.ts';
+import { workspaceDiagrams } from '../../workspace/diagrams.ts';
 
 interface Upstream {
   /** The section heading in THIRD_PARTY_NOTICES. */
@@ -93,7 +93,8 @@ const SHARED_UPSTREAMS: readonly Upstream[] = [
   },
 ];
 
-const DIAGRAMS = diagramPackages();
+// A pre-manifest package's ported files need their credits as soon as they exist.
+const DIAGRAMS = workspaceDiagrams();
 
 /** A `credits.upstreams` row of `pkg`'s workspace.yaml, checked to be an {@link Upstream}. */
 function upstreamOf(pkg: string, row: Readonly<Record<string, unknown>>): Upstream {
@@ -156,7 +157,14 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
  * package's upstreams. Pending for the maintainer: core's `@braintree/sanitize-url`.
  */
 export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
-  'packages/mermaid': [...DIAGRAM_UPSTREAMS.keys()],
+  // A pre-manifest package is not in mermaid's registry yet, so mermaid does not bundle it.
+  'packages/mermaid': [
+    ...new Set(
+      DIAGRAMS.filter((d) => d.manifest !== undefined).flatMap((d) =>
+        (d.wiring.credits?.upstreams ?? []).map((u) => upstreamOf(d.dir, u).name)
+      )
+    ),
+  ],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
