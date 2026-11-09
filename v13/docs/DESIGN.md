@@ -234,8 +234,13 @@ interface LanguageFacet<A extends AstNode = AstNode> {
   namespaces: readonly (readonly string[])[];            // flowchart: [['node','subgraph'], ['class'], ['edge']]
   standalone?: readonly string[];                        // kinds whose occurrences are each a symbol of their own (mindmap: ['node'], D289)
   isValidId(name: string, kind?: string): string | undefined; // per symbol kind; undefined = ok, else the reason (D92)
+  nameSyntax?: NameSyntax;                               // names the service cannot read or write itself (sankey CSV fields, D398)
   completions(probe: ProbeResult, doc: DocumentView<A>): CompletionItem[]; // D95
   hover(at: HoverTarget, doc: DocumentView<A>): Hover | undefined;        // D93; docs from the syntax reference
+}
+interface NameSyntax {
+  read(text: string, s: SymbolOccurrence): { range: Range; quote?: string } | undefined; // what a rename replaces; undefined drops it
+  write(newName: string, at: { range: Range; quote?: string }, text: string): { range: Range; newText: string }; // the edit
 }
 interface DocumentView<A> { text: string; result: ParseResult<unknown, A> } // read-only; hover: the snapshot's parse, completions: the probe parse
 interface HoverTarget {
@@ -275,7 +280,7 @@ All positions are UTF-16 offsets into the full text, as the parser already uses;
 | Feature | From |
 | --- | --- |
 | diagnostics | `preprocess` + `parse` diagnostics as they are, each once (D91); front-matter config warnings (D96); info diagnostic for a type with no facet |
-| definition / references / rename | `symbols` grouped by the facet's `namespaces`; definition = first `def` (D92); an occurrence of a `standalone` kind is its own symbol (D289) |
+| definition / references / rename | `symbols` grouped by the facet's `namespaces`; definition = first `def` (D92); an occurrence of a `standalone` kind is its own symbol (D289); a facet's `nameSyntax` reads where each name is written and writes each rename's edit (escapes, quotes added), and `isValidId` then judges every new name, quoted or not (D398) |
 | folding | every `statements` span covering more than one line (subgraphs, multi-line `accDescr { }` and `@{ }`), plus the front-matter range; `lineFoldingRanges` keeps a closing `end`/`}`/`---` line visible, one fold per start line |
 | semantic tokens | `tokens` × facet `categories`, modifiers from symbol roles (D94); `lineSemanticTokens` cuts them per line without continuation indentation, never overlapping |
 | completion | probe (below) × facet `completions` (D95); config keys from the schema (D96) |
@@ -647,6 +652,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
   layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
   ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2: lazily loaded entry, draws with core/ascii (§6.3)
+  configSection?: string;                       // M5a (#497): its config section when not `id` (wardley's v12 `wardley-beta`, D421); the manifest's `section` says the same for the language service
   configDefaults?: object;                      // its schema section defaults
   theme?: DiagramThemeTable;                    // M5a (D331): its own theme variables, rules and family entries (§8.1)
 }
@@ -803,7 +809,7 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 | Budget | What is measured | Limit (gz) | Enforced by |
 | --- | --- | --- | --- |
 | `loaded`, R-PERF-1 (D160, D311, D312, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 128 KB | bench gate `size` |
-| `core`, R-PERF-8 (D161, D310) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 92 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
+| `core`, R-PERF-8 (D161, D310, D546) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 96 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
 
 Measured at the M3.5 close-out (2026-11-05, #232): loaded 110.9 KB (113550 B, 10 files), core 78.0 KB (79871 B, 7 files), CDN loader `mermaid.min.js` 0.9 KB (917 B). Diagram packages still have no budget of their own (D59). M3.5 had no size-reduction pass; the 80 KB below was the M1 target.
 

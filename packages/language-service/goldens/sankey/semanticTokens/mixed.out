@@ -1,0 +1,12 @@
+1:1-1:7 "sankey" keyword
+2:1-2:11 "%% comment" comment
+3:1-3:5 "Coal" node [declaration, definition]
+3:5-3:6 "," operator
+3:6-3:19 "\"Electricity\"" node [declaration, definition]
+3:19-3:20 "," operator
+3:20-3:22 "10" variable
+4:1-4:13 "\"Say \"\"hi\"\"\"" node [declaration, definition]
+4:13-4:14 "," operator
+4:14-4:18 "Coal" node
+4:18-4:19 "," operator
+4:19-4:22 "abc" variable

@@ -1,0 +1,188 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-treemap",
+  "scopeName": "source.mermaid-treemap",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-treemap"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-treemap"
+    },
+    "rule-0": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-1": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-2": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-3": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-4": {
+      "match": "treemap-beta|treemap",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-5": {
+      "match": "classDef\\s+[a-zA-Z_][a-zA-Z0-9_]+(?:\\s+[^;\\r\\n]*)?;?",
+      "name": "keyword.control.mermaid-treemap"
+    },
+    "rule-6": {
+      "match": ":::",
+      "name": "keyword.operator.mermaid-treemap"
+    },
+    "rule-7": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-treemap"
+    },
+    "rule-8": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-treemap"
+    },
+    "rule-9": {
+      "match": "[\\t ]+"
+    },
+    "rule-10": {
+      "match": "%%[^\\n]*",
+      "name": "comment.line.mermaid-treemap"
+    },
+    "rule-11": {
+      "match": "\\n"
+    },
+    "rule-12": {
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*",
+      "name": "variable.other.mermaid-treemap"
+    },
+    "rule-13": {
+      "match": "[0-9_.,]+",
+      "name": "constant.numeric.mermaid-treemap"
+    },
+    "rule-14": {
+      "match": "\"[^\"]*\"|'[^']*'",
+      "name": "string.quoted.mermaid-treemap"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-treemap"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-treemap"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-treemap"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-treemap"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

@@ -59,17 +59,26 @@ describe('completion', () => {
       'stateDiagram',
       'journey',
       'quadrantChart',
+      'sankey',
       'packet',
+      'xychart',
       'radar-beta',
+      'treemap',
+      'treemap-beta',
       'venn-beta',
+      'wardley-beta',
       'cynefin-beta',
     ]);
     expect(labels('qua|')).toEqual(['quadrantChart']);
     expect(labels('pac|')).toEqual(['packet']);
     expect(labels('rad|')).toEqual(['radar-beta']);
+    expect(labels('tree|')).toEqual(['treemap', 'treemap-beta']);
+    expect(labels('war|')).toEqual(['wardley-beta']);
+    expect(labels('xy|')).toEqual(['xychart']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);
+    expect(labels('san|')).toEqual(['sankey']);
     expect(labels('cyn|')).toEqual(['cynefin-beta']);
     expect(labels('ven|')).toEqual(['venn-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);

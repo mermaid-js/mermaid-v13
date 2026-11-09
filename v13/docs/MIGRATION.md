@@ -121,6 +121,9 @@ works everywhere (R-PLUG-6).
 - First-party diagram types need none of this: `mermaid` depends on every
   `@mermaid-js/diagram-*` package and bundlers split them per type (R-PLUG-4).
 - The `mermaid` CLI does not discover plugins yet.
+- **Writer wrappers.** `SvgWriter` (`@mermaid-js/core/svg`) gains a required `linearGradient`
+  member, for the user-space gradients sankey draws (D391): a third-party plugin that wraps the
+  writer must forward it.
 
 ## Public API
 
@@ -348,13 +351,21 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `quadrantChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did. |  |
 | `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `xyChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the XY chart renderer never did. |  |
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `xyChart.xAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
+| `xyChart.yAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `treemap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treemap renderer never did. |  |
+| `treemap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `treemap.borderWidth` | ignored | v12 set a default and never read it. |  |
+| `treemap.valueFontSize` | ignored | v12 set a default and never read it: values are fitted to their box from the treemap's own sizes, as in v12. |  |
+| `treemap.labelFontSize` | ignored | v12 set a default and never read it: labels are fitted to their box from the treemap's own sizes, as in v12. |  |
 | `kanban.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the kanban renderer never did. |  |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `gitGraph.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the gitGraph renderer never did. |  |
@@ -366,6 +377,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gitGraph.nodeLabel.y` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `sankey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -377,6 +389,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `usecase.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `venn.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the venn renderer never did. |  |
 | `venn.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `wardley-beta.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the Wardley renderer never did. |  |
 | `wardley-beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `cynefin.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the cynefin renderer never did. |  |
 | `cynefin.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -710,8 +723,9 @@ npm install @mermaid-js/plugin-hand-drawn
   (flowchart's `text` and brace hit boxes, state's region frame) stays the plain element.
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
-  later. Types v12 sketched that v13 has not ported yet (requirement, block, swimlanes,
-  ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
+  later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
+  v13 has not ported yet (requirement, block, swimlanes, ishikawa, usecase, agentflow) are
+  sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
   included (D305).
@@ -949,6 +963,9 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
   property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
   `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.
+  `mix-blend-mode` joined the allow-list with `normal` and `multiply` only (D392): author
+  `style` and `classDef` keep it in every type, where they used to drop it with a warning.
+  Output without it is unchanged.
 - **`maxEdges`** (default 5,000; v12 had 500) is still the edge limit; going over it fails
   with a `LIMIT` error. See Limits under Public API.
 
@@ -1996,6 +2013,73 @@ curves, legend, title.
 | A fixed `viewBox` (the 700 × 700 canvas by default) that axis labels, wide legend labels, a fractional-`ticks` ring and a large title overflowed (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`. A chart where everything fits keeps v12's canvas | D354 |
 | `look: neo` and the redux themes: the same chart as the classic themes | The same: radar differs between families by colour only (computed styles checked in `neo` and `neo-dark`) | D227 |
 
+## Treemap
+
+The treemap parser accepts the v12 language, `treemap` and `treemap-beta` (oracle parity over
+every e2e fixture, the v12 spec strings and the syntax page; grammar in
+[syntax/treemap.md](./syntax/treemap.md)). Layout, value formatting and colours are v12's (spec
+#428). What changes:
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Syntax errors: Langium's first message, naming tokens (`Expecting: one of these possible Token sequences: …`) | Every error, in words. The traps v12 has are kept, each with its own diagnostic: a blank at the end of a line before an indented row is an error that names it; a trailing blank or `%%` comment that indents the next row warns `TREEMAP_TRAILING_BLANK`; two rows on one line warn `TREEMAP_ROWS_ON_ONE_LINE`; a `classDef` with no styles that takes the next line warns `TREEMAP_CLASSDEF_NEXT_LINE`; a one-character class name is an error saying class names need two characters | D401 |
+| A value `parseFloat` cut short (`1_000` as 1, `1,2,3` as 123) was drawn silently; `.` gave `NaN` and drew a `NaN` rectangle | The same numbers, with one `TREEMAP_INVALID_VALUE` warning per render listing them; a `NaN` leaf takes no area and prints no value | D402 |
+| A leaf's group had the class `leaf<i> <class>x` (a stray `x`), so CSS written for the class never matched | `leaf<i> <class>`; inline styles apply as before | D403 |
+| A leaf directly under the root drew with no fill and no stroke (the hidden root takes the scales' first slot, `transparent`) | The same: kept | D404 |
+| Labels and values fitted with `getComputedTextLength()` in the browser and clipped to their box | The same fitting rules (shrink 1 px at a time, section headers truncated with `...`), measured by the injected measurer; text is kept inside its box instead of clipped: a section label or value that does not fit is left out, and the label of a treemap of more than 20 leaves that is still too wide at the smallest size is truncated with `...`. Entities decode and tags print as text | D405 |
+| `valueFormat` passed to d3-format, with v12's own `$0,0`, `$…,…` and `$x` cases; a specifier d3 rejects fell back to `,`, and `$` with such a rest (`$abc`) threw | d3-format's specifier grammar re-implemented in the package, with v12's `$` cases: every specifier formats as in v12. `$abc` falls back to `,` too | D409 |
+| A `treemap` config value of the wrong type or a negative length (`padding: -5`, `nodeWidth: "wide"`) was used as it was | A number, or a numeric string as its number, of 0 or more; anything else draws with the default and one `TREEMAP_CONFIG_INVALID` warning per key. `nodeWidth`/`nodeHeight` of 0 still draws v12's 960 × 500 canvas, and an empty `valueFormat` is `,` | D226 |
+| The `treemap` section's `borderWidth`, `valueFontSize` and `labelFontSize` had defaults and were never read | Accepted and ignored, with no warning ([Config](#config)) | |
+| `themeVariables.treemap.*`: of the twelve keys v12's styles read, only `titleColor` and `titleFontSize` took effect (the section and leaf rules never matched, the label and value rules lost to inline attributes) | `titleColor` and `titleFontSize` set `treemapTitleColor` and `treemapTitleFontSize` (also flat; the flat name wins when both are set). `sectionStrokeColor`, `sectionStrokeWidth`, `sectionFillColor`, `leafStrokeColor`, `leafStrokeWidth`, `leafFillColor`, `labelColor`, `labelFontSize`, `valueColor` and `valueFontSize` are accepted and change nothing, as in v12 | D407, D335, D540 |
+| `look: handDrawn` (top level or `treemap.look`): v12 never sketched a treemap | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the treemap draws exactly as without it: not sketched | D301, D303 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+### Treemap theme colours
+
+Treemap reads the shared `cScale` and `cScaleLabel` palettes (v12's values in every theme, D258)
+and owns `cScalePeer0`–`cScalePeer11`, the section outlines (CSS `--mermaid-cScalePeer0`, …; an
+author's `cScalePeer<n>` is drawn as given, as in v12). v13 derives each peer from its `cScale`
+slot by one rule, the theme's `dark` trait: `lighten(cScale<i>, 10)` in a dark theme or under
+`darkMode`, `darken(cScale<i>, 10)` otherwise, and the same rule over an author's `cScale<n>`.
+With each theme's own slots, that is what v12 drew in `base`, `neutral`, `neo`, `redux`,
+`redux-color` and `dark`; v12 used another step in `default` (15 points) and `forest` (25), the
+light branch in the three dark redux and neo themes, and another rule for an author's `cScale<n>`
+in `redux`, `base` and `neo`. `treemapTitleFontSize` is 14 px, as v12's `.treemapTitle`, and
+`treemapTitleColor` follows core's `titleColor`, which differs from v12's in `base`, `redux` and
+`redux-color`. What changed (`packages/conformance/src/treemap/theme.spec.ts` lists each one);
+only section outlines and the title change:
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `default` | Peers from `darken(cScale<i>, 25)` (15 HSL points under the drawn slot, as `updateColors()` darkens the slot again), slots 1 and 2 from `darken(secondaryColor, 45)` and `darken(tertiaryColor, 40)` | The light rule: 10 points under every slot, so the outlines are a little lighter | D406, D541 |
+| `forest` | Peers from `darken(cScale<i>, 25)`, slots 1 and 2 from the secondary and tertiary colours | The light rule: 10 points under every slot | D406, D541 |
+| `redux-dark` | The light branch (the theme sets no `darkMode`): peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot, so the outlines show on the dark fills | D406 |
+| `redux-dark-color` | The light branch: peers 10 points under the slot | The dark rule: 10 points over every slot | D406 |
+| `neo-dark` | The light branch: peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot | D406 |
+| `redux`, `base`, `neo` | An author's `cScale<n>` moved its peer by another rule: `redux` kept the theme's own peer, `base` and `neo` darkened the author's slot by 35 points | The theme's rule over the author's slot (10 points), as without the override | D406 |
+| `base` (with or without `darkMode`), `redux`, `redux-color` | The title in v12's `titleColor` (`rgb(8.5, 5.75, 0)` in `base`, `#000000` in the redux themes) | Core's `titleColor` (`#333333`, `#28253d`), which every type's titles take | D407, R-THEME-9 |
+
+## Treemap SVG structure
+
+What changed in the treemap's SVG compared with v12 (spec #428, DESIGN §7.2). v12's class names
+are kept (`treemapTitle`, `treemapContainer`, `treemapSection`, `treemapSectionHeader`,
+`section<n>`, `treemapSectionLabel`, `treemapSectionValue`, `treemapNode`, `treemapLeafGroup`,
+`leaf<n>`, `treemapLeaf`, `treemapLabel`, `treemapValue`), and so are the rectangles, the paints
+and the draw order.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="treemap"`, and `class="flowchart"` from v12's `setupViewPortForSVG(…, 'flowchart', …)` | No root `id` and no `flowchart` class; `class="mermaid mermaid-treemap"`, `role="img"`, `aria-roledescription="treemap"`, `data-mermaid-version`, `font-family`; the `viewBox` is the bounding box of what is drawn, padded by `diagramPadding`, as v12 measured it | R-SEC-2, R-A11Y-1, D224 |
+| A `<style>` scoped by the id; its one effective rule, `.treemapTitle`, gave the title's fill and size | No `<style>` (except under `theme: 'auto'`, core's light/dark sheet): the title carries `fill` (`treemapTitleColor`) and `font-size` (`treemapTitleFontSize`), colours reading `var(--_x)` aliases on the root `style` | Inert output (R-SEC-2), host re-theming with `--mermaid-*` (R-THEME-3) |
+| A `<clipPath>` per section and leaf (`clip-section-<id>-<i>`, `clip-<id>-<i>`) and `clip-path` on their texts | No `clipPath`: text is fitted, truncated or left out so it stays inside its box | D405, R-SEC-2 |
+| `g.treemapContainer` moved down by the title band and each group moved to its box with `transform`, rects at 0,0 | No transforms: every rect and text has absolute `x`/`y` | The layout places everything |
+| The hidden root drawn as `g.treemapSection` (`section0`) with `display: none` on its four children, and with no rows as one transparent `leaf0` | Not drawn (it still counts, so sections start at `section1`); with no rows there is no `g.treemapContainer` | Nothing invisible is drawn |
+| A leaf label or value that did not fit written with `display: none`; an empty section value for 0; an empty label when truncation left nothing | Left out | Nothing invisible is drawn |
+| Leaf groups `treemapNode treemapLeafGroup leaf<i> <class>x` | `treemapNode treemapLeafGroup leaf<i> <class>` | D403 |
+| Inline `style` attributes (class styles with `!important`, and `white-space`, `overflow`, `text-overflow` on texts) | Presentation attributes: `fill`, `stroke`, `font-*`, `text-anchor`, `dominant-baseline`. `classDef` styles are checked: an unsupported property or unsafe value is dropped with `STYLE_PROPERTY_DROPPED` / `STYLE_VALUE_DROPPED` | R-SEC-2 |
+| No source mapping | Each section's and leaf's group carries `data-id` and `data-ast` (`node:<name path>`, `@2` for a repeated path), their rects and texts `data-id`; an in-text title's text carries both (`title`) | R-PARSE-8, D408, pitfall 12 |
+| `look: neo` and the redux themes: the same treemap as the classic themes | The same: treemap differs between families by colour only | D227 |
+
 ## Cynefin SVG structure
 
 What changed in the cynefin diagram's SVG compared with v12 (spec #423, D361–D366). v12's groups
@@ -2038,6 +2122,216 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo`, `redux`, `redux-color` | No cynefin block: `default`'s literals, so boundaries and arrows `#333333`, text `#333`, labels `#131300`, whatever the theme's own colours, and a `lineColor` override changed nothing | Boundaries and arrows in the theme's `lineColor`, text in its `textColor`, labels in its `primaryTextColor` (`#000000`, `#333333`/`#28253d`, `#333333`/`#28253d`); a `lineColor` override moves them | D333(b), R-THEME-11 |
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
+
+## Sankey
+
+- **Detection:** `sankey` and `sankey-beta` are detected by v12's case-sensitive detector with
+  no word boundary, between `quadrantChart` and `packet` as in v12. So `sankeyx` is detected as
+  a sankey diagram and then rejected as a syntax error (`SYNTAX`), and `Sankey` is not detected
+  at all (`UNSUPPORTED_DIAGRAM`), as in v12. The language service, CodeMirror and Monaco know it.
+- **Syntax** is v12's CSV: a differential test runs v12 and v13 over every e2e fixture and the
+  v12 spec and docs examples, and the grammar is in [syntax/sankey.md](./syntax/sankey.md).
+  Every error is reported, not only the first, with messages in words and a range at the field
+  (R-PARSE-4). Names stay printable ASCII, quotes and `""` as in v12.
+- **Cycles** (D393): a self-link or any cycle parsed in v12 and then threw d3-sankey's bare
+  `circular link` at render. It is now a parse error at the cycle's first row,
+  `Sankey diagrams cannot have circular links, and "<node>" is part of one.`, one per group of
+  nodes that reach each other; the diagram is still rejected (`SYNTAX`), and the language
+  service reports it.
+- **Values** (D394): a value that is not a number, negative or infinite counts as 0, where d3
+  drew `NaN` or negative boxes, with one `SANKEY_INVALID_VALUE` warning per render naming every
+  such row. Zero links are still drawn 1 px wide, as in v12. A value with text after its number
+  (`1 2`, `1;`) is still read by `parseFloat`, with one `SANKEY_VALUE_TRAILING_TEXT` warning
+  per such value.
+- **Labels** (D395) read as v12 drew them, one line `<name> <value>`, and the front-matter
+  `title` is the accessible name, never drawn (D396): see
+  [Sankey SVG structure](#sankey-svg-structure).
+- **Config.** The `sankey` section is honoured with v12's defaults: `width` (600), `height`
+  (400), `linkColor` (`gradient`), `nodeAlignment` (`justify`), `nodeWidth` (10), `nodePadding`
+  (12), `showValues` (true), `prefix` and `suffix` (empty), `labelStyle` (`legacy`),
+  `nodeColors` (none) and `useMaxWidth`, whose default is `true`: v12's schema documented
+  `false`, but its bundled defaults held `true`, so every sankey without the key drew
+  `width="100%"` with a `max-width`, and v13 keeps that. A length is a number of 0 or more or a
+  numeric string as its number; a negative or non-numeric length, an unknown `nodeAlignment` or
+  `labelStyle` and a value of the wrong type lay out with the default and warn
+  `SANKEY_CONFIG_INVALID`, once per key (v12 passed them to d3 as they were: a negative
+  `nodePadding` overlapped nodes, and a string one was concatenated with 15). A `linkColor` or
+  `nodeColors` value that fails the colour check is dropped, the default drawn (the gradient,
+  or the node's next Tableau10 colour), with one `SANKEY_COLOR_INVALID` warning per render
+  naming each. `useWidth` is ignored (v12's sankey never read it), and `look` as everywhere
+  (D153).
+- **Text output** (`format: 'ascii'`) throws `UnsupportedFormatError` (D320), and sankey is not
+  sketched under `look: handDrawn`, as v12 never sketched it (D301).
+- **Limits** (R-SEC-5): a diagram may have up to `limits.maxNodes` nodes (10,000) and
+  `limits.maxEdges` links (5,000); over either, render rejects with a `LIMIT` `MermaidError`.
+  v12 had no such limit. Only the integrator can raise them ([Limits](#limits)).
+
+## Sankey SVG structure
+
+What changed in the sankey's SVG compared with v12 (spec #427, D391, D392, D395–D397). v12's
+groups and classes are kept, in v12's order, so selectors that use them keep working:
+`g.nodes` holds one `g.node` per node (translated to its corner, holding its `rect`), then
+`g.node-labels` (`font-size="14"`) one `text` per node (`text.sankey-label-bg` for every node,
+then `text.sankey-label-fg` for every node, under `labelStyle: outlined`), then `g.links`
+(`fill="none"`, `stroke-opacity="0.5"`) one `g.link` per row holding its `path`. Nodes are in
+first-appearance order and links in row order, as in v12.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="sankey"`, a `<style>` scoped by the id, an empty leading `<g>`, `width="100%"` and `max-width` unless `sankey.useMaxWidth: false` | No root `id`; `class="mermaid mermaid-sankey"`, `role="img"`, `aria-roledescription="sankey"` (kept), `data-mermaid-version`; no `<style>` (except `theme: 'auto'`); `width="100%"` and `max-width` unless `sankey.useMaxWidth: false`, as in v12. The `viewBox` is still what is drawn with no padding, now measured: nodes, label boxes (with the outline's halo), and link strokes | Inert output (R-SEC-2), D224 |
+| Each `g.node` had `id="node-<n>"` and stray `x`/`y` attributes; each link's gradient `id="linearGradient-<n>"`, numbered across every diagram on the page | No element id but `<render id>-title` (below) and the gradients' (below) | No colliding ids (R-A11Y-1) |
+| No title: the front-matter `title` was neither drawn nor the accessible name | Still not drawn; when the front matter has a `title`, it becomes `<title id="<render id>-title">` and the root's `aria-labelledby`, since sankey has no `accTitle` syntax. D133 keeps the title out of the accessible name of types with `accTitle`; ishikawa, which has none either, does the same (D492) | D396 |
+| No source mapping | `data-id` and `data-ast` on each `g.node` (`node:<name>`) and `g.link` (`link:<source>-><target>`, `@2`, `@3` for repeated rows); labels carry `data-id` only (`%`, `>`, `@` and `#` in names percent-encoded) | One `data-ast` element per AST node (R-PARSE-8, D397) |
+| `linkColor: gradient` (the default): a `<linearGradient gradientUnits="userSpaceOnUse" x1 x2>` with stops at `0%`/`100%` inside each `g.link`, before its path | The same gradient (from the source's colour at its right edge to the target's at its left edge), written by the writer into the root's `<defs>` with `y1="0" y2="0"` and stops at `0`/`1`, its id `<scope>-g-<hash of its ends and colours>`: links with the same ends and colours share one, and two diagrams on a page never collide | D391 |
+| `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient, with one `SANKEY_COLOR_INVALID` warning | R-SEC-2 |
+| `style="mix-blend-mode: multiply"` on each `g.link`, and again in `.link` in the `<style>` | `style="mix-blend-mode:multiply"` on each `g.link` only: crossing links still darken where they overlap, and on dark pages too | D392 |
+| Labels: `id\n<prefix><value><suffix>` set with d3 `.text()`, drawn on one line; `dy="0em"`, or `dy="0.35em"` with `showValues: false`; `fill` from the root `<style>` (`textColor`) | The same one line with a blank between the name and the value (D395); `dy` in px (`0`, or `4.9`, 0.35 × 14); `fill` on `g.node-labels`, the theme's `textColor` | D395, D152 |
+| `labelStyle: outlined`: `.sankey-label-bg` stroked `mainBkg` (`|| background || '#fff'`), 4 px, round joins, `paint-order: stroke`, under `.sankey-label-fg` filled `textColor` | The background text carries `stroke` (`mainBkg`), `stroke-width="4"` and `stroke-linejoin="round"` as attributes, with no `paint-order`: the foreground text drawn over it gives the same picture | Allow-list (no `paint-order`), D215 |
+| `.node rect { shape-rendering: crispEdges }` | Not written: the allow-list has no `shape-rendering`, so node edges are anti-aliased | Allow-list |
+| Node fills: a `nodeColors` entry as written, else the next of d3's `schemeTableau10`; an entry that was no colour (a number, `red;x`) drew the node black, and links stroked from it black or not at all, and took no slot | The same for an entry that passes the colour check; any other entry is dropped and the node takes the next Tableau10 slot, as if it were not listed, so later nodes may take other slots than in v12 | D152, R-SEC-2, spec #427 §Integration |
+| `look: neo` and the neo and redux themes drew the same shapes as the classic themes (no `data-look` on sankey rects, so the neo rules missed them) | The same: sankey differs between families by `textColor`, `mainBkg` and the font family only. Checked against v12 12.2.0's computed styles (`default`, `dark`, `neo` with `look: neo`) | D215, D227 |
+
+## Wardley map
+
+The Wardley parser accepts the v12 language (oracle parity over every e2e fixture, the v12 spec
+strings and the syntax page; grammar in [syntax/wardley.md](./syntax/wardley.md)). What changes
+in config and drawing (spec #430):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `wardley-beta` settings were read from `initialize()` only: the section is not in v12's `defaultConfig`, so its sanitiser dropped it from front matter and `%%{init}` (`width` stayed 900) | `wardley-beta` is honoured from every source: `initialize()`, front matter (`config: wardley-beta: …`), `%%{init: {"wardley-beta": …}}` and an init `config` key. Documents that set it today get what they asked for | D421 |
+| A `wardley-beta` value below its minimum or of the wrong type was used as it was: `width: 0`, `nodeRadius: 0` or `padding` of half the canvas drew nothing, `"wide"` drew `NaN` | A number, or a numeric string as its number, at or above the key's schema minimum (`nodeRadius` above 0); anything else draws with the default and one `WARDLEY_CONFIG_INVALID` warning per key. A padding that leaves no chart falls back to 48, or to 0 where 48 leaves none either | D424, D226 |
+| `size [0, 0]` (or any dimension below 1) drew a 0 × 0 view box | The dimension falls back to the config's `width` or `height`, with one `WARDLEY_CONFIG_INVALID` warning | D424 |
+| `evolution` boundaries outside [0, 1] (`B@40.0`) drew stages off the chart | Clamped to [0, 1] when drawn, with one `WARDLEY_STAGE_CLAMPED` warning; decreasing boundaries still draw backwards, as in v12 | D424 |
+| No codes: v12 dropped what it could not draw without a word (a link to an unknown name or to itself, an `evolve` naming no node, a second `pipeline` for a parent), read `1.5` as 1.5 % silently, and threw a plain `Error` at the first coordinate above 100 or `pipeline` naming no node | New codes. Warnings, in `RenderResult.warnings` (each with the `astIds` of the statements involved) and in the language service (one per kind, the other places in `related`): `WARDLEY_CONFIG_INVALID` and `WARDLEY_STAGE_CLAMPED` (the rows above), `WARDLEY_LINK_DROPPED`, `WARDLEY_UNKNOWN_TARGET`, `WARDLEY_PIPELINE_REPLACED` and `WARDLEY_COORDINATE_AMBIGUOUS` (a coordinate in (1, 2)). Errors, with v12's message, every one reported (`render()` rejects with a `SYNTAX` `MermaidError` whose `diagnostics` carry the codes): `WARDLEY_OUT_OF_RANGE` and `WARDLEY_UNKNOWN_PARENT` | D424, D425, D428, R-PARSE-4 |
+
+### Wardley theme colours
+
+v12 read `themeVariables.wardley` (`backgroundColor` … `annotationFill`) and the flat
+`wardleyEvolutionColor`, and only the five classic themes set them. v13 keeps the nested object
+and adds a flat name for each key (`wardleyBackgroundColor` … `wardleyAnnotationFill`, CSS
+`--mermaid-wardleyAxisColor`, …); the flat name wins when both are set (D335, D540). The colours
+in `default`, `forest`, `base` and `dark`, and in `neutral` but its grid, are v12's. What changed
+(`packages/conformance/src/wardley/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `redux` | No `wardley` block: the renderer's fallbacks, the theme's own `background` and text, black strokes, white fills, `#dc3545` trends and a translucent grey grid (`rgba(100, 100, 100, 0.2)`) | The same colours, but the grid in `lightgrey` | D333(b) |
+| `redux-color` | No `wardley` block: as `redux` | The same colours, but the grid in `lightgrey` | D333(b) |
+| `neo` | No `wardley` block: as `redux` | The same colours, but the grid in `lightgrey` | D333(b) |
+| `redux-dark` | No `wardley` block: black axes, strokes and links, white component fills and `#dc3545` trends on the dark page; the annotation markers and box white, as in every theme (D426) | Axes, strokes and links in the theme's `lineColor` (`#cccccc`), component and annotation fills `mainBkg` (`#111113`), trends `#ff6b6b`, the grid `lightgrey`; anchor labels, stage dividers and annotation markers follow (D426) | D333(b), D426 |
+| `redux-dark-color` | No `wardley` block: as `redux-dark` | As `redux-dark`: `#cccccc` lines, `#111113` fills, `#ff6b6b` trends | D333(b), D426 |
+| `neo-dark` | No `wardley` block: as `redux-dark` | As `redux-dark`, with fills `#2a2020` | D333(b), D426 |
+| `neutral` | The grid in the theme's `gridColor`, `hsl(0, 0%, 90%)` | The grid in `lightgrey`, as in the other themes (`wardleyGridColor` is a literal, gantt's) | #430 |
+| `base` | Anchor labels and stage dividers `#000`, annotation markers and box white | Anchor labels `#333333`, dividers `#0b0b0b` (the axis colours), markers and box `#f4f4f4` (`wardleyAnnotationFill`, the background) | D426 |
+| `dark` | Anchor labels and stage dividers `#000` on the `#333` page, annotation markers and box white | Anchor labels `#e0dfdf`, dividers `lightgrey`, markers and box `#1f2020` (`mainBkg`) | D426 |
+| `base` with an author `background` | Axes, strokes and links `invert(background)` (`#543210` for `#abcdef`) | The theme's own `lineColor`, `#0b0b0b` (core's base keeps it) | Core |
+| `base` with `darkMode: true` | Labels and annotation text `#eeeeee` | The theme's `primaryTextColor`, `#333333` (core keeps text colours under `darkMode`) | Core |
+| `dark` with an author `primaryColor` | Component and annotation fills stayed `#1f2020` | They follow `mainBkg`, which follows `primaryColor` | Core |
+| `default` with an author `background` or `wardleyEvolutionColor` | Ignored: `default` built its `wardley` block before the author's values were applied | The background, fills and trends follow them, as in the other themes | R-THEME-4 |
+
+## Wardley SVG structure
+
+What changed in the Wardley map's SVG compared with v12 (spec #430, #493). v12's groups and
+classes are kept, in v12's order, as the children of `g.wardley-map`: `rect.wardley-background`,
+`text.wardley-title`, `g.wardley-axes` (two lines, `text.wardley-axis-label
+wardley-axis-label-x`, `-y`), `g.wardley-stages` (each divider line before its
+`text.wardley-stage-label`), `g.wardley-grid`, `g.wardley-pipelines` (`rect.wardley-pipeline-box`),
+`g.wardley-pipeline-links` (`line.wardley-pipeline-evolution-link`), `g.wardley-links`
+(`line.wardley-link`, `wardley-link--dashed`, then every `text.wardley-link-label`),
+`g.wardley-trends` (`line.wardley-trend`), `g.wardley-nodes` (`g.wardley-node
+wardley-node--<anchor|component|pipeline-component>` holding the strategy overlay
+`circle.wardley-<build|buy|outsource|market>-overlay`, the circle, `line.wardley-market-line` and
+`circle.wardley-market-dot`, the pipeline parent's square, `line.wardley-inertia` and
+`text.wardley-node-label`), `g.wardley-annotations` (`g.wardley-annotation` per marker, then
+`g.wardley-annotations-box`), `g.wardley-notes`, `g.wardley-accelerators` and
+`g.wardley-deaccelerators`. Selectors that use these classes keep working.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="wardley"`; the renderer wiped the SVG first, so Mermaid's `<style>` was gone and every colour, width and font size was a presentation attribute | No root `id`; `class="mermaid mermaid-wardley"`, `role="img"`, `aria-roledescription="wardley"` (kept), `data-mermaid-version`; still presentation attributes, the theme colours reading `var(--_x)` aliases on the root `style`; `<style>` only for `theme: 'auto'` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Arrowheads: `<defs>` with three `<marker>`s (`arrow-<id>`, `link-arrow-end-<id>`, `link-arrow-start-<id>`) after `g.wardley-map`, referenced by `marker-start`/`marker-end` | No `<defs>`, `<marker>` or id: `path.wardley-link-head` after a link's line for each end that flows (`+>`, `+<`, both for `+<>`), `path.wardley-trend-head` after each trend's line, v12's marker triangle (5 × 5 and 6 × 6, the tip a tenth past the line end as `refX 9` put it), filled in the line's colour | `<marker>` is not in the allow-list, and the ids broke R-SEC-2 (R-ARCH-6) |
+| No source mapping | `data-ast` (with the same `data-id`) on each node's `g.wardley-node`, each link's and trend's line, each pipeline box, note, annotation marker `g` and (de)accelerator outline, the annotation box `g`, the in-text title (`title@2`, … for the last of several; a front-matter title has none) and, for an `evolution`, `g.wardley-stages`; the parts drawn for them (labels, heads, joins) carry its `data-id` only. A repeated `component`, which v12 merged, and a dropped link have no element | One `data-ast` element per AST node (R-PARSE-8, pitfall 12) |
+| `g.wardley-links`, `g.wardley-trends` and `g.wardley-nodes` always written, and `g.wardley-pipeline-links` with any pipeline, empty when there was nothing to draw | A group with nothing in it is left out | No empty elements |
+| A `viewBox` and background of the canvas (`0 0 width height`): labels and accelerators near an edge ran off it (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`, and the background covers the `viewBox`. A map where everything fits keeps v12's canvas | D224 |
+| No font: with the `<style>` wiped, text took the browser's default (often a serif) | The theme's `fontFamily` on the root; v12's sizes and weights | D422 |
+| Texts set with d3 `.text()`; `font-weight="normal"` and `dominant-baseline="auto"` written on component labels | The same one literal line (no `<br>` or markup; a `#amp;` code shows as `&`, a literal `&amp;` as written), at v12's anchor and alignment; the default `normal` and `auto` are left out | v12's `.text()` (#490, #493) |
+| `#name;` codes: v12 wrote `&name;` into its SVG, which a browser draws from the full HTML table (`#alpha;` as α) | `#name;` codes outside core's entity table draw literally (`&alpha;`); core's names (`#amp;`, `#nbsp;`, `#hellip;`, `#hearts;`, … about 50) and every numeric code (`#945;`) still draw their character. Write a numeric code for any other | Core's table (R-PERF-8); parity lists it (`entities-outside-core`) |
+| Anchor labels and stage dividers `#000` in every theme, black on `dark`'s `#333` | Anchor labels in `wardleyAxisTextColor`, stage dividers in `wardleyAxisColor`, as the other labels and the axes: near v12's black in the light themes (labels / dividers `#131300` / `#333333` in `default`, `#333` / `#0b0b0b` in `base`, `#321b67` / `#000000` in `forest`, `#111111` / `#666` in `neutral`), readable in `dark` (`#e0dfdf` / `lightgrey`) | D426 |
+| Annotation markers and box filled `white`, stroked `axisColor`, their text `axisTextColor`; `annotationStroke`, `annotationTextColor` and `annotationFill` read and never used | The three annotation variables colour them: the same in `default`, `forest` and `neutral`; `#f4f4f4` in `base`; in `dark` filled `mainBkg` (`#1f2020`) | D426 |
+| Strategy overlays (`#666`, `#ccc`, `#eee` with a `#000` stroke), market circles and (de)accelerators (`white`) | Kept as v12's literals in every theme | D426 |
+| `themeVariables.wardley.*` (nested only) and the flat `wardleyEvolutionColor` | Each key is also the flat variable `wardley<Key>` (`wardleyAxisColor`, … `wardleyAnnotationFill`); the nested key still works, the flat name wins when both are set, and `wardleyEvolutionColor` still feeds `wardleyEvolutionStroke` | D335, D540 |
+| `look: neo`, hand-drawn and the redux and neo themes: the classic drawing | The same shapes: wardley differs between families by colour only, with no gradient, shadow or hand-drawn outline | D227, D301 |
+| `format: 'ascii'` | Throws `UnsupportedFormatError`: wardley has no text output | D320 |
+
+## XY chart
+
+The XY chart parser accepts the v12 language for `xychart` and `xychart-beta` (oracle parity over
+every e2e fixture, the v12 spec strings and the syntax page; grammar in
+[syntax/xychart.md](./syntax/xychart.md)), and the layout is v12's orchestrator, checked against
+v12's chart builder to 0.01 px. What changes in config and drawing (spec #426):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `xyChart.useMaxWidth: false` was ignored: the chart always scaled to its container | Honoured: `false` writes the canvas's `width` and `height`; the default (`true`) is unchanged | D387 |
+| A `%%{init: {"config": …}}` key went under the detected type, `xychart`, which nothing read | It goes to the `xyChart` section, as `initialize()`, front matter and `%%{init: {"xyChart": …}}` do (the plugin's `configSection`) | Choice, for the maintainer (#513) |
+| A config value of the wrong type was used as it was: `width: "wide"` drew `NaN` sizes, `showDataLabel: "no"` counted as true | A number, or a numeric string as its number, for a number key, and a boolean for a boolean key; anything else draws with the default and one `XYCHART_CONFIG_INVALID` warning per key. Numbers outside the schema's range are still taken, as v12 took them (`plotReservedSpacePercent: 20`, a negative padding) | Choice, for the maintainer (#513), as radar's config row (D356) |
+| A `chartOrientation` other than `horizontal` (`diagonal`, `HORIZONTAL`) drew a vertical chart, silently | The same vertical chart, with one `XYCHART_CONFIG_INVALID` warning | Choice, for the maintainer (#513) |
+| 12.2.0's default config holds a `$ref` key in `xyChart.xAxis` and `yAxis` | Accepted and ignored, with no warning, so a copy of that config still works; the axes' defaults are their keys' own | Choice, for the maintainer (#513) |
+| With `showDataLabel`, every bar plot was labelled with the values of the first plot, so a second bar plot (or a bar plot after a line) showed another plot's numbers; legend swatches got labels too | Each bar plot is labelled with its own values; legend swatches get none | D382 |
+| A band axis with more categories than values wrote `NaN` bars and points | Those bars and points are not drawn, with one `XYCHART_MISSING_VALUE` warning | D383 |
+| A line plot with a missing band value wrote `NaN` into the line's path | The line breaks there (d3's `defined` gap): the parts on either side are drawn, nothing joins them | Choice (#509) |
+| Values past ±1e300 (a 309-digit number reads as `Infinity`) wrote `Infinity` or `NaN` coordinates | Drawn at ±1e300 | D383 |
+| A range with `min = max` (given or inferred) mapped values to the middle of the axis | The same, with one `XYCHART_EMPTY_RANGE` warning | D383 |
+| Data labels with no room in any bar wrote `font-size="Infinitypx"` | None are drawn, with one `XYCHART_LABEL_TOO_SMALL` warning | D383 |
+| A plot written before its `x-axis` kept the x values of the axis it saw, silently; on a linear axis a category x had no position | The same, with one `XYCHART_PLOT_BEFORE_AXIS` warning naming the plots; a value with no x on the axis is drawn at the axis start, on a band and a linear axis alike | D386 |
+| An unclosed `accDescr {` ended in an empty description, silently | The same, with one `XYCHART_UNCLOSED_DESCRIPTION` warning | #508 |
+| `mermaid.parse()` accepted a chart with no plot (`xychart` alone); the render then failed with `No Plot to render, please provide a plot with some data` | Rejected at parse, with v12's message (`XYCHART_NO_PLOT`) | Choice, for the maintainer (#508) |
+| A bar whose value is below the range minimum drew with a negative height, one above the maximum past the plot | The bar is held inside the plot box, its end at the box edge | Choice, for the maintainer (#509) |
+| The title, axis titles, categories, legend names and line point labels were set with d3 `.text()`: `<br>` and tags printed as written | Core's label layout: `<br>` breaks the line (a legend name of several lines takes as many rows), math and icons work, entities decode; tick numbers and data labels stay plain text. Point labels are author text like the others (a choice, #509; D385 names the rest) | D385 |
+| Line point labels in the line's colour | The same (near-white on the redux and base palettes, as in v12) | D384 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+### XY chart theme colours
+
+v12 read `themeVariables.xyChart` (`backgroundColor` … `plotColorPalette`), merged over
+theme-default's block. v13 keeps that nested object and adds a flat name for each key
+(`xyChartBackgroundColor` … `xyChartPlotColorPalette`, CSS `--mermaid-xyChartTitleColor`, …); the
+flat name wins when both are set (D335, D540). `plotColorPalette` takes a comma-separated string, as
+in v12, or an array; each theme's ten colours are v12's (D381). Every other value is v12's in all
+eleven themes, but (`packages/conformance/src/xychart/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `redux` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#28253d` | D333(b) |
+| `redux-color` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#28253d` | D333(b) |
+| `redux-dark` | No `dataLabelColor`: theme-default's `#131300`. Inside a bar (the default) it reads well on the light plot palette (5.5–18.6:1); outside a bar (`showDataLabelOutsideBar`) it is barely visible on the `#333333` background (1.5:1) | The theme's `primaryTextColor`, `#e0dfdf`: readable outside a bar (9.5:1), but inside one it is about as light as the bar (1.0–1.5:1, 2.5:1 on the ninth colour), so labels inside bars are effectively invisible unless `xyChart.dataLabelColor` or `plotColorPalette` is set | D333(b) |
+| `redux-dark-color` | No `dataLabelColor`: theme-default's `#131300`. Inside a bar (the default) it reads well on the light plot palette (5.5–18.6:1); outside a bar (`showDataLabelOutsideBar`) it is barely visible on the `#333333` background (1.5:1) | The theme's `primaryTextColor`, `#e0dfdf`: readable outside a bar (9.5:1), but inside one it is about as light as the bar (1.0–1.5:1, 2.5:1 on the ninth colour), so labels inside bars are effectively invisible unless `xyChart.dataLabelColor` or `plotColorPalette` is set | D333(b) |
+| `neo` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#333333` | D333(b) |
+| `neo-dark` | No `dataLabelColor`: theme-default's `#131300`. Inside a bar (the default) it reads well on the light plot palette (5.5–18.6:1); outside a bar (`showDataLabelOutsideBar`) it is barely visible on the `#333333` background (1.5:1) | The theme's `primaryTextColor`, `#e0dfdf`: readable outside a bar (9.5:1), but inside one it is about as light as the bar (1.0–1.5:1, 2.5:1 on the ninth colour), so labels inside bars are effectively invisible unless `xyChart.dataLabelColor` or `plotColorPalette` is set | D333(b) |
+| `default` with an author `primaryTextColor` or `background` | Ignored: `default` built its `xyChart` block before the author's values were applied | The text, axis and label colours follow `primaryTextColor`, the background follows `background`, as in the other themes; an explicit `xyChart.*` value still wins | D388 |
+
+## XY chart SVG structure
+
+What changed in the XY chart's SVG compared with v12 (spec #426, #510). v12's class names are kept
+(`main`, `background`, `plot`, `bar-plot-<n>`, `line-plot-<n>`, `chart-title`, `legend`,
+`bottom-axis`/`left-axis`/`top-axis` with `axis-line`, `ticks`, `label`, `title`), and so is v12's
+draw order.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"` and a `g.mermaid-tmp-group` used to measure text | No root `id` and no measuring group; `class="mermaid mermaid-xychart"`, `role="img"`, `aria-roledescription="xychart"`, `data-mermaid-version` and the theme's `font-family` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1) |
+| `<title>` and `<desc>` | Written only from `accTitle` and `accDescr`, with the ids `<id>-title` and `<id>-desc` | D133 |
+| A fixed `viewBox` (the 700 × 500 canvas) | v12's positions; the `viewBox` grows to cover everything drawn (the axis strokes make the default 701 wide). The background `rect` is still v12's canvas | D224 |
+| `width="100%"` and `max-width` always | The same by default; `width` and `height` with `xyChart.useMaxWidth: false` | D387 |
+| Colours as fills and strokes from the `xyChart` block | Presentation attributes reading `var(--_x)` aliases on the root `style` (literal with `output.cssVariables: false`); the plot colours are always literal. Under `theme: 'auto'` the root has `data-p` and a theme `<style>` | R-THEME-3, R-THEME-8 |
+| No source mapping | `data-ast` on the in-text title's `g.chart-title`, each plot's `g.bar-plot-<n>`/`g.line-plot-<n>` and each drawn axis's `g.<position>-axis`; `data-id` (the plot's AST id) on bars, lines, point labels, data labels and legend rows. The legend has no `data-ast` | R-PARSE-8, pitfall 12 |
+| Paths as d3 wrote them | `M…L…` with two decimals (axis lines, ticks, legend strokes); a line plot's `d` keeps d3 `line()`'s three decimals | Core's path writer |
+| Data labels' `font-size="<n>px"` | `font-size="<n>"` | Presentation attributes |
+| A label with `<br>` printed as one `<text>` | A `<text>` of `<tspan>`s, one per line (core's label writer); a one-line text that v12's chart builder drew (title, axis text, legend names, point labels) is v12's `<text>` at `translate(x,y) rotate(r)` | D385 |
+| Data labels placed with `x` and `y` | `x="0" y="0"` with `transform="translate(x,y) rotate(0)"`, as every other text; the same position | Choice (#510): one text writer |
+| A plot whose values are all missing threw | The plot's group is written, with nothing drawn in it; a hidden axis part writes no group, an axis with every part hidden none at all | D383 |
+| `look: neo` and the redux themes: the same chart as the classic themes | The same: the XY chart differs between families by colour only | D227 |
 
 ## Venn diagram
 

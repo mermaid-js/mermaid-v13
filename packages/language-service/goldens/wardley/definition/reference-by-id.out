@@ -1,0 +1,8 @@
+@ 6:9  evolve G|as 0.8
+  -> none
+@ 7:16  evolve Kettle_G|as 0.6
+  -> 4:13-4:16 "Gas"
+@ 8:11  pipeline G|as {
+  -> none
+@ 11:12  Kettle -> G|as
+  -> 4:13-4:16 "Gas"

@@ -1,0 +1,15 @@
+@ 1:7  sankey|
+  none
+@ 2:1  |Coal,Electricity,10
+  node:Coal 2:1-2:5 "Coal"
+  link:Coal->Electricity 2:1-2:20 "Coal,Electricity,10"
+@ 2:10  Coal,Elec|tricity,10
+  node:Electricity 2:6-2:17 "Electricity"
+  link:Coal->Electricity 2:1-2:20 "Coal,Electricity,10"
+@ 2:19  Coal,Electricity,1|0
+  link:Coal->Electricity 2:1-2:20 "Coal,Electricity,10"
+@ 3:9  Coal,"He|at",5
+  node:Heat 3:6-3:12 "\"Heat\""
+  link:Coal->Heat 3:1-3:14 "Coal,\"Heat\",5"
+@ 4:1  |
+  none

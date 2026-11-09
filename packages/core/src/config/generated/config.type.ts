@@ -226,6 +226,7 @@ requirement?: RequirementDiagramConfig
 architecture?: ArchitectureDiagramConfig
 mindmap?: MindmapDiagramConfig
 ishikawa?: IshikawaDiagramConfig
+treemap?: TreemapDiagramConfig
 kanban?: KanbanDiagramConfig
 gitGraph?: GitGraphDiagramConfig
 c4?: C4DiagramConfig
@@ -1332,6 +1333,14 @@ quadrantExternalBorderStrokeWidth?: number
  * via the `definition` "XYChartConfig".
  */
 export interface XYChartConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * width of the chart
  */
@@ -1390,6 +1399,12 @@ plotReservedSpacePercent?: number
  * via the `definition` "XYChartAxisConfig".
  */
 export interface XYChartAxisConfig {
+/**
+ * 12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its
+ * schema's `default` for the axis objects), so a copy of that config carries it.
+ * 
+ */
+$ref?: string
 /**
  * Should show the axis labels (tick text)
  */
@@ -1587,6 +1602,64 @@ export interface IshikawaDiagramConfig extends BaseDiagramConfig {
  */
 diagramPadding?: number
 useMaxWidth?: boolean
+}
+/**
+ * The object containing configurations specific for treemap diagrams.
+ * 
+ * This interface was referenced by `MermaidConfig`'s JSON-Schema
+ * via the `definition` "TreemapDiagramConfig".
+ */
+export interface TreemapDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * The space between sibling sections and leaves, in pixels (d3's `paddingInner`).
+ */
+padding?: number
+/**
+ * The space around the drawn treemap, in pixels.
+ */
+diagramPadding?: number
+/**
+ * Whether sections and leaves print their values.
+ */
+showValues?: boolean
+/**
+ * A tenth of the treemap's width, in pixels: the canvas is `nodeWidth × 10` wide, or 960
+ * when it is 0.
+ * 
+ */
+nodeWidth?: number
+/**
+ * A tenth of the treemap's height, in pixels: the canvas is `nodeHeight × 10` high, or 500
+ * when it is 0.
+ * 
+ */
+nodeHeight?: number
+/**
+ * Unused.
+ */
+borderWidth?: number
+/**
+ * Unused.
+ */
+valueFontSize?: number
+/**
+ * Unused.
+ */
+labelFontSize?: number
+/**
+ * The d3-format specifier values are printed with (`,`, `$0,0`, `.1%`, `$,.2f`, …), with
+ * v12's `$` cases.
+ * 
+ */
+valueFormat?: string
 }
 /**
  * The object containing configurations specific for kanban diagrams
@@ -2070,6 +2143,7 @@ height?: number
  */
 linkColor?: (SankeyLinkColor | string)
 nodeAlignment?: SankeyNodeAlignment
+useWidth?: number
 useMaxWidth?: boolean
 /**
  * Toggle to display or hide values along with title.
@@ -2463,6 +2537,14 @@ useDebugLayout?: boolean
  * via the `definition` "WardleyDiagramConfig".
  */
 export interface WardleyDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * The width of the Wardley diagram canvas.
  */

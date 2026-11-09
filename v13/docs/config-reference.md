@@ -17,7 +17,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
 | `theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "auto" \\| "null" | `"redux-color"` | honoured (13.0.0) | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12 `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `themeVariables` | any |  | honoured (13.0.0) | Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. "padding" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value. |  |
+| `themeVariables` | any |  | honoured (13.0.0) | Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). "padding" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value. |  |
 | `themeVariables.borderColorArray` | array \\| string |  | honoured (13.0.0) | Tailwind-400 × 12 in `redux-color` and `redux-dark-color`; empty in every other theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole list with `THEME_VARIABLE_DROPPED`. | Per-subgraph border colours, used by slot (declaration order, cycling). A list of colours, or one comma-separated string. Empty or unset: no per-subgraph colour. |
 | `themeVariables.bkgColorArray` | array \\| string |  | honoured (13.0.0) | Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole list with `THEME_VARIABLE_DROPPED`. | Per-subgraph fill colours, by the same slot as `borderColorArray`. A list of colours, or one comma-separated string. Empty: subgraphs are coloured on the border only. |
 | `themeVariables.cScale` | array \\| string |  | honoured (13.0.0) | Every theme carries v12's values (D258): derived from `primaryColor`, `secondaryColor` and `tertiaryColor` by hue steps and khroma `darken` in `base` (25, 75 under `darkMode`), `forest` (10), `neo-dark` and `redux-dark` (25), from `mainBkg` in `redux`; fixed lists in `default`, `dark` (slot 0 is `primaryColor`), `neutral`, `neo` and the colour themes (Tailwind-300). Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`. The timeline paints with it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark`, as v12's redux and neo timeline paint ignored it (D227, D257); v12's default theme was `default`. | The section colour scale (timeline, mindmap), twelve slots. A list of colours, or one comma-separated string; `cScale0`–`cScale11` replace one slot. |
@@ -438,50 +438,52 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `xyChart` | object |  | pending |  | This object contains configuration specific to XYCharts |
-| `xyChart.useWidth` | number |  | pending |  |  |
-| `xyChart.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `xyChart` | object |  | honoured (13.0.0) |  | This object contains configuration specific to XYCharts |
+| `xyChart.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the XY chart renderer never did. |  |
+| `xyChart.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `xyChart.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `xyChart.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `xyChart.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `xyChart.width` | number | `700` | pending |  | width of the chart |
-| `xyChart.height` | number | `500` | pending |  | height of the chart |
-| `xyChart.titleFontSize` | number | `20` | pending |  | Font size of the chart title |
-| `xyChart.titlePadding` | number | `10` | pending |  | Top and bottom space from the chart title |
-| `xyChart.showDataLabel` | boolean | `false` | pending |  | Should show the value corresponding to the bar within the bar |
-| `xyChart.showDataLabelOutsideBar` | boolean | `false` | pending |  | If showing data label then show it outside the bar |
-| `xyChart.showTitle` | boolean | `true` | pending |  | Should show the chart title |
-| `xyChart.showLegend` | boolean | `true` | pending |  | Should show a legend for named plots |
-| `xyChart.legendFontSize` | number | `14` | pending |  | Font size of the legend text |
-| `xyChart.legendPadding` | number | `10` | pending |  | Padding around the legend |
-| `xyChart.xAxis` | object | `{"$ref":"#/$defs/XYChartAxisConfig"}` | pending |  | This object contains configuration for XYChart axis config |
-| `xyChart.xAxis.showLabel` | boolean | `true` | pending |  | Should show the axis labels (tick text) |
-| `xyChart.xAxis.labelFontSize` | number | `14` | pending |  | font size of the axis labels (tick text) |
-| `xyChart.xAxis.labelPadding` | number | `5` | pending |  | top and bottom space from axis label (tick text) |
-| `xyChart.xAxis.showTitle` | boolean | `true` | pending |  | Should show the axis title |
-| `xyChart.xAxis.titleFontSize` | number | `16` | pending |  | font size of the axis title |
-| `xyChart.xAxis.titlePadding` | number | `5` | pending |  | top and bottom space from axis title |
-| `xyChart.xAxis.showTick` | boolean | `true` | pending |  | Should show the axis tick lines |
-| `xyChart.xAxis.tickLength` | number | `5` | pending |  | length of the axis tick lines |
-| `xyChart.xAxis.tickWidth` | number | `2` | pending |  | width of the axis tick lines |
-| `xyChart.xAxis.showAxisLine` | boolean | `true` | pending |  | Show line across the axis |
-| `xyChart.xAxis.axisLineWidth` | number | `2` | pending |  | Width of the axis line |
-| `xyChart.xAxis.labelRotation` | number | `0` | pending |  | Label rotation in degrees |
-| `xyChart.yAxis` | object | `{"$ref":"#/$defs/XYChartAxisConfig"}` | pending |  | This object contains configuration for XYChart axis config |
-| `xyChart.yAxis.showLabel` | boolean | `true` | pending |  | Should show the axis labels (tick text) |
-| `xyChart.yAxis.labelFontSize` | number | `14` | pending |  | font size of the axis labels (tick text) |
-| `xyChart.yAxis.labelPadding` | number | `5` | pending |  | top and bottom space from axis label (tick text) |
-| `xyChart.yAxis.showTitle` | boolean | `true` | pending |  | Should show the axis title |
-| `xyChart.yAxis.titleFontSize` | number | `16` | pending |  | font size of the axis title |
-| `xyChart.yAxis.titlePadding` | number | `5` | pending |  | top and bottom space from axis title |
-| `xyChart.yAxis.showTick` | boolean | `true` | pending |  | Should show the axis tick lines |
-| `xyChart.yAxis.tickLength` | number | `5` | pending |  | length of the axis tick lines |
-| `xyChart.yAxis.tickWidth` | number | `2` | pending |  | width of the axis tick lines |
-| `xyChart.yAxis.showAxisLine` | boolean | `true` | pending |  | Show line across the axis |
-| `xyChart.yAxis.axisLineWidth` | number | `2` | pending |  | Width of the axis line |
-| `xyChart.yAxis.labelRotation` | number | `0` | pending |  | Label rotation in degrees |
-| `xyChart.chartOrientation` | "vertical" \\| "horizontal" | `"vertical"` | pending |  | How to plot will be drawn horizontal or vertical |
-| `xyChart.plotReservedSpacePercent` | number | `50` | pending |  | Minimum percent of space plots of the chart will take |
+| `xyChart.width` | number | `700` | honoured (13.0.0) |  | width of the chart |
+| `xyChart.height` | number | `500` | honoured (13.0.0) |  | height of the chart |
+| `xyChart.titleFontSize` | number | `20` | honoured (13.0.0) |  | Font size of the chart title |
+| `xyChart.titlePadding` | number | `10` | honoured (13.0.0) |  | Top and bottom space from the chart title |
+| `xyChart.showDataLabel` | boolean | `false` | honoured (13.0.0) |  | Should show the value corresponding to the bar within the bar |
+| `xyChart.showDataLabelOutsideBar` | boolean | `false` | honoured (13.0.0) |  | If showing data label then show it outside the bar |
+| `xyChart.showTitle` | boolean | `true` | honoured (13.0.0) |  | Should show the chart title |
+| `xyChart.showLegend` | boolean | `true` | honoured (13.0.0) |  | Should show a legend for named plots |
+| `xyChart.legendFontSize` | number | `14` | honoured (13.0.0) |  | Font size of the legend text |
+| `xyChart.legendPadding` | number | `10` | honoured (13.0.0) |  | Padding around the legend |
+| `xyChart.xAxis` | object |  | honoured (13.0.0) |  | This object contains configuration for XYChart axis config |
+| `xyChart.xAxis.$ref` | string |  | ignored (13.0.0) | Not an option; 12.2.0's default config leaked it (a schema reference). | 12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its schema's `default` for the axis objects), so a copy of that config carries it. |
+| `xyChart.xAxis.showLabel` | boolean | `true` | honoured (13.0.0) |  | Should show the axis labels (tick text) |
+| `xyChart.xAxis.labelFontSize` | number | `14` | honoured (13.0.0) |  | font size of the axis labels (tick text) |
+| `xyChart.xAxis.labelPadding` | number | `5` | honoured (13.0.0) |  | top and bottom space from axis label (tick text) |
+| `xyChart.xAxis.showTitle` | boolean | `true` | honoured (13.0.0) |  | Should show the axis title |
+| `xyChart.xAxis.titleFontSize` | number | `16` | honoured (13.0.0) |  | font size of the axis title |
+| `xyChart.xAxis.titlePadding` | number | `5` | honoured (13.0.0) |  | top and bottom space from axis title |
+| `xyChart.xAxis.showTick` | boolean | `true` | honoured (13.0.0) |  | Should show the axis tick lines |
+| `xyChart.xAxis.tickLength` | number | `5` | honoured (13.0.0) |  | length of the axis tick lines |
+| `xyChart.xAxis.tickWidth` | number | `2` | honoured (13.0.0) |  | width of the axis tick lines |
+| `xyChart.xAxis.showAxisLine` | boolean | `true` | honoured (13.0.0) |  | Show line across the axis |
+| `xyChart.xAxis.axisLineWidth` | number | `2` | honoured (13.0.0) |  | Width of the axis line |
+| `xyChart.xAxis.labelRotation` | number | `0` | honoured (13.0.0) |  | Label rotation in degrees |
+| `xyChart.yAxis` | object |  | honoured (13.0.0) |  | This object contains configuration for XYChart axis config |
+| `xyChart.yAxis.$ref` | string |  | ignored (13.0.0) | Not an option; 12.2.0's default config leaked it (a schema reference). | 12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its schema's `default` for the axis objects), so a copy of that config carries it. |
+| `xyChart.yAxis.showLabel` | boolean | `true` | honoured (13.0.0) |  | Should show the axis labels (tick text) |
+| `xyChart.yAxis.labelFontSize` | number | `14` | honoured (13.0.0) |  | font size of the axis labels (tick text) |
+| `xyChart.yAxis.labelPadding` | number | `5` | honoured (13.0.0) |  | top and bottom space from axis label (tick text) |
+| `xyChart.yAxis.showTitle` | boolean | `true` | honoured (13.0.0) |  | Should show the axis title |
+| `xyChart.yAxis.titleFontSize` | number | `16` | honoured (13.0.0) |  | font size of the axis title |
+| `xyChart.yAxis.titlePadding` | number | `5` | honoured (13.0.0) |  | top and bottom space from axis title |
+| `xyChart.yAxis.showTick` | boolean | `true` | honoured (13.0.0) |  | Should show the axis tick lines |
+| `xyChart.yAxis.tickLength` | number | `5` | honoured (13.0.0) |  | length of the axis tick lines |
+| `xyChart.yAxis.tickWidth` | number | `2` | honoured (13.0.0) |  | width of the axis tick lines |
+| `xyChart.yAxis.showAxisLine` | boolean | `true` | honoured (13.0.0) |  | Show line across the axis |
+| `xyChart.yAxis.axisLineWidth` | number | `2` | honoured (13.0.0) |  | Width of the axis line |
+| `xyChart.yAxis.labelRotation` | number | `0` | honoured (13.0.0) |  | Label rotation in degrees |
+| `xyChart.chartOrientation` | "vertical" \\| "horizontal" | `"vertical"` | honoured (13.0.0) |  | How to plot will be drawn horizontal or vertical |
+| `xyChart.plotReservedSpacePercent` | number | `50` | honoured (13.0.0) |  | Minimum percent of space plots of the chart will take |
 
 ## `requirement`
 
@@ -549,6 +551,26 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `ishikawa.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `ishikawa.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `ishikawa.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
+
+## `treemap`
+
+| Key | Type | Default | Status | Notes | Description |
+| --- | --- | --- | --- | --- | --- |
+| `treemap` | object |  | honoured (13.0.0) |  | The object containing configurations specific for treemap diagrams. |
+| `treemap.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the treemap renderer never did. |  |
+| `treemap.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `treemap.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `treemap.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
+| `treemap.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
+| `treemap.padding` | number | `10` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | The space between sibling sections and leaves, in pixels (d3's `paddingInner`). |
+| `treemap.diagramPadding` | number | `8` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | The space around the drawn treemap, in pixels. |
+| `treemap.showValues` | boolean | `true` | honoured (13.0.0) | As in v12, only `false` hides the values. | Whether sections and leaves print their values. |
+| `treemap.nodeWidth` | number | `100` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | A tenth of the treemap's width, in pixels: the canvas is `nodeWidth × 10` wide, or 960 when it is 0. |
+| `treemap.nodeHeight` | number | `40` | honoured (13.0.0) | A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | A tenth of the treemap's height, in pixels: the canvas is `nodeHeight × 10` high, or 500 when it is 0. |
+| `treemap.borderWidth` | number | `1` | ignored (13.0.0) | v12 set a default and never read it. | Unused. |
+| `treemap.valueFontSize` | number | `12` | ignored (13.0.0) | v12 set a default and never read it: values are fitted to their box from the treemap's own sizes, as in v12. | Unused. |
+| `treemap.labelFontSize` | number | `14` | ignored (13.0.0) | v12 set a default and never read it: labels are fitted to their box from the treemap's own sizes, as in v12. | Unused. |
+| `treemap.valueFormat` | string | `","` | honoured (13.0.0) | Every specifier formats as in v12 (D409): an empty one is `,`, and one d3-format rejects falls back to `,`, as v12 did. A value that is not a string falls back to `,` with one `TREEMAP_CONFIG_INVALID` warning. | The d3-format specifier values are printed with (`,`, `$0,0`, `.1%`, `$,.2f`, …), with v12's `$` cases. |
 
 ## `kanban`
 
@@ -744,23 +766,23 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `sankey` | object |  | pending |  | The object containing configurations specific for sankey diagrams. |
-| `sankey.useWidth` | number |  | pending |  |  |
-| `sankey.useMaxWidth` | boolean | `false` | pending |  |  |
+| `sankey` | object |  | honoured (13.0.0) |  | The object containing configurations specific for sankey diagrams. |
+| `sankey.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
+| `sankey.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width="100%"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`; a value that is not a boolean is the default and warns `SANKEY_CONFIG_INVALID`. |  |
 | `sankey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `sankey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sankey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `sankey.width` | number | `600` | pending |  |  |
-| `sankey.height` | number | `400` | pending |  |  |
-| `sankey.linkColor` | any | `"gradient"` | pending |  | The color of the links in the sankey diagram. |
-| `sankey.nodeAlignment` | object | `"justify"` | pending |  | Controls the alignment of the Sankey diagrams. See <https://github.com/d3/d3-sankey#alignments>. |
-| `sankey.showValues` | boolean | `true` | pending |  | Toggle to display or hide values along with title. |
-| `sankey.prefix` | string | `""` | pending |  | The prefix to use for values |
-| `sankey.suffix` | string | `""` | pending |  | The suffix to use for values |
-| `sankey.nodeWidth` | number | `10` | pending |  | The width of the nodes in the sankey diagram. |
-| `sankey.nodePadding` | number | `12` | pending |  | The padding between nodes in the sankey diagram. |
-| `sankey.labelStyle` | object | `"legacy"` | pending |  | The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text. |
-| `sankey.nodeColors` | object |  | pending |  | A mapping of node IDs to their colors. Nodes not specified will use the default color scheme. |
+| `sankey.width` | number | `600` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. |  |
+| `sankey.height` | number | `400` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. |  |
+| `sankey.linkColor` | any | `"gradient"` | honoured (13.0.0) | `gradient`, `source`, `target` or one CSS colour for every link. A colour that fails the colour check draws the default `gradient` and warns `SANKEY_COLOR_INVALID`. | The color of the links in the sankey diagram. |
+| `sankey.nodeAlignment` | object | `"justify"` | honoured (13.0.0) | An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`. | Controls the alignment of the Sankey diagrams. See <https://github.com/d3/d3-sankey#alignments>. |
+| `sankey.showValues` | boolean | `true` | honoured (13.0.0) |  | Toggle to display or hide values along with title. |
+| `sankey.prefix` | string | `""` | honoured (13.0.0) |  | The prefix to use for values |
+| `sankey.suffix` | string | `""` | honoured (13.0.0) |  | The suffix to use for values |
+| `sankey.nodeWidth` | number | `10` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. | The width of the nodes in the sankey diagram. |
+| `sankey.nodePadding` | number | `12` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was. | The padding between nodes in the sankey diagram. |
+| `sankey.labelStyle` | object | `"legacy"` | honoured (13.0.0) | An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`. | The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text. |
+| `sankey.nodeColors` | object |  | honoured (13.0.0) | A node's entry that fails the colour check is dropped with one `SANKEY_COLOR_INVALID` warning, and the node takes its next default colour, where v12 drew it black. | A mapping of node IDs to their colors. Nodes not specified will use the default color scheme. |
 
 ## `packet`
 
@@ -886,20 +908,20 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `wardley-beta` | object |  | pending |  | The object containing configurations specific for Wardley Maps diagrams. |
-| `wardley-beta.useWidth` | number |  | pending |  |  |
-| `wardley-beta.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `wardley-beta` | object |  | honoured (13.0.0) |  | The object containing configurations specific for Wardley Maps diagrams. |
+| `wardley-beta.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the Wardley renderer never did. |  |
+| `wardley-beta.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `wardley-beta.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `wardley-beta.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `wardley-beta.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `wardley-beta.width` | number | `900` | pending |  | The width of the Wardley diagram canvas. |
-| `wardley-beta.height` | number | `600` | pending |  | The height of the Wardley diagram canvas. |
-| `wardley-beta.padding` | number | `48` | pending |  | The padding around the Wardley diagram. |
-| `wardley-beta.nodeRadius` | number | `6` | pending |  | The radius of component nodes. |
-| `wardley-beta.nodeLabelOffset` | number | `8` | pending |  | The offset distance for node labels. |
-| `wardley-beta.axisFontSize` | number | `12` | pending |  | The font size for axis labels. |
-| `wardley-beta.labelFontSize` | number | `10` | pending |  | The font size for component labels. |
-| `wardley-beta.showGrid` | boolean | `false` | pending |  | Whether to display a background grid. |
+| `wardley-beta.width` | number | `900` | honoured (13.0.0) |  | The width of the Wardley diagram canvas. |
+| `wardley-beta.height` | number | `600` | honoured (13.0.0) |  | The height of the Wardley diagram canvas. |
+| `wardley-beta.padding` | number | `48` | honoured (13.0.0) |  | The padding around the Wardley diagram. |
+| `wardley-beta.nodeRadius` | number | `6` | honoured (13.0.0) |  | The radius of component nodes. |
+| `wardley-beta.nodeLabelOffset` | number | `8` | honoured (13.0.0) |  | The offset distance for node labels. |
+| `wardley-beta.axisFontSize` | number | `12` | honoured (13.0.0) |  | The font size for axis labels. |
+| `wardley-beta.labelFontSize` | number | `10` | honoured (13.0.0) |  | The font size for component labels. |
+| `wardley-beta.showGrid` | boolean | `false` | honoured (13.0.0) |  | Whether to display a background grid. |
 
 ## `cynefin`
 
@@ -995,6 +1017,7 @@ Legacy alias: `requirement.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `architecture.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `mindmap.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `ishikawa.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `treemap.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `kanban.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `gitGraph.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `c4.look: "handDrawn"` sets `handDrawn`.

@@ -85,10 +85,14 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-pie',
       '@mermaid-js/diagram-quadrant',
       '@mermaid-js/diagram-radar',
+      '@mermaid-js/diagram-sankey',
       '@mermaid-js/diagram-sequence',
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',
+      '@mermaid-js/diagram-treemap',
       '@mermaid-js/diagram-venn',
+      '@mermaid-js/diagram-wardley',
+      '@mermaid-js/diagram-xychart',
       'mermaid',
     ]);
     expect(list[0]).toBe('@mermaid-js/core');

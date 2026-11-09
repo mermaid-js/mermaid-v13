@@ -40,6 +40,7 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 - 2026-11-08: `mermaid-v13` 0a472e044 (#482, core `cScale`/git palette derivation, D544) merged in 1d9ca69b7, clean. The brief still says not to depend on it for venn's palette rows.
 - 2026-11-08: `mermaid-v13` 98d3c3ffa (#515 keepWords, #524 sankey core T0, #530 M5b decisions, #531 packet stress timer) merged in ab81ad803, clean.
 - 2026-11-08: `mermaid-v13` 05a786ad8 (#534 xychart core T0: shared chart series palette, D381, D545) merged in 493da7fcd, clean.
+- 2026-11-09: `mermaid-v13` f31a8b181 (treemap #516, wardley #529, xychart #535, sankey #532, D546) merged on `feature/429_venn-merge`: 54 conflicted files, every side's rows kept; `licenses.ts` takes sankey/treemap's per-license shape with venn's holder and copyright lists, venn.js and fmin added to `REQUIRED_CREDITS` and mermaid's `BUNDLED_CREDITS` (mermaid's notices gain both sections); `language.ts`/`symbols.ts` are `mermaid-v13`'s; generated files, lockfile, goldens and the yaml-tree digest regenerated. `pnpm check` 899 files, 18,589 tests; core 93,891 B gz (limit 98,304), CDN closure 94,007 B gz.
 
 ## Final review
 

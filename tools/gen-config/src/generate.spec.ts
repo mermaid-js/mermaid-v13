@@ -7,6 +7,7 @@ import {
   MIGRATION_END,
   SCHEMA_PATH,
   SECTION_OWNERS,
+  defaultsName,
   generate,
   spliceMigration,
 } from './generate.ts';
@@ -66,9 +67,16 @@ describe('gen-config', () => {
     const { files } = await generate(read(SCHEMA_PATH)!, read);
     for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
       expect(files.get(`${pkg}/src/generated/config-defaults.ts`), section).toContain(
-        `export const ${section}ConfigDefaults: `
+        `export const ${defaultsName(section)}: `
       );
     }
+    expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
+    expect(SECTION_OWNERS.xyChart).toBe('packages/diagram-xychart');
+  });
+
+  it('camel-cases a dashed section in its defaults name', () => {
+    expect(defaultsName('flowchart')).toBe('flowchartConfigDefaults');
+    expect(defaultsName('wardley-beta')).toBe('wardleyBetaConfigDefaults');
   });
 
   it('fails when a key has no x-mermaid annotation', async () => {

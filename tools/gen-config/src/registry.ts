@@ -77,6 +77,11 @@ export interface DiagramManifest {
   readonly ascii?: string;
   /** Module path of the language facet entry, read by the language service (R-LANG-8, D89). */
   readonly language?: string;
+  /**
+   * The config section the renderer reads, when it is not `id` (the plugin's `configSection`:
+   * `wardley-beta`, D421).
+   */
+  readonly section?: string;
 }
 
 /** A package.json `exports` map: subpath → conditions → file. */
@@ -171,8 +176,9 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
  * detector order, so the service tells a type with no facet yet (an info diagnostic) from an
  * unknown one (`UNSUPPORTED_DIAGRAM`). A package whose manifest has a `language` entry gets a
  * lazy `load` of that subpath's `language` export (a fixed name, as `ascii` is for the text hook).
- * `section` is the config section the renderer reads for the type: the package id, as the
- * registry's `id` (`sectionOf` in mermaid's api.ts); a type with no package has none.
+ * `section` is the config section the renderer reads for the type: the manifest's `section`, else
+ * the package id, as the plugin's `configSection` else its `id` (`sectionOf` in mermaid's api.ts);
+ * a type with no package has none.
  */
 export function generateFacets(manifests: readonly ManifestSource[]): string {
   const byType = manifestsByType(manifests);
@@ -198,7 +204,7 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
       `  {`,
       `    type: '${type}',`,
       `    id: '${m.manifest.id}',`,
-      `    section: '${m.manifest.id}',`,
+      `    section: '${m.manifest.section ?? m.manifest.id}',`,
       `    pattern: ${pattern},`,
       `    detector: ${detector},`
     );

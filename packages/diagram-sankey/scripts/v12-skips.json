@@ -1,0 +1,12 @@
+{
+  "sankey.spec.ts": {
+    "allows __proto__ as id with sankey-beta syntax": {
+      "reason": "the two rows are a cycle, an error at parse in v13 (D393); `__proto__` as a name is covered by the #7528 tests and sankey-cases/fields-proto",
+      "divergence": "v12-specs/parser/sankey.spec.ts#3"
+    },
+    "allows __proto__ as id with sankey syntax": {
+      "reason": "the two rows are a cycle, an error at parse in v13 (D393); `__proto__` as a name is covered by the #7528 tests and sankey-cases/fields-proto",
+      "divergence": "v12-specs/parser/sankey.spec.ts#4"
+    }
+  }
+}

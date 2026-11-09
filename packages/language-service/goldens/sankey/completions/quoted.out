@@ -1,0 +1,5 @@
+@ 4:6  Gas,"|
+  Coal node 4:6-4:6 "" -> "Coal"
+  Electricity node 4:6-4:6 "" -> "Electricity"
+  Oil, "crude" node 4:6-4:6 "" -> "Oil, \"\"crude\"\""
+  Heat node 4:6-4:6 "" -> "Heat"

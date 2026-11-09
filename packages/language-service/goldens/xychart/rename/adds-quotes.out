@@ -1,0 +1,6 @@
+@ 3:11  x-axis [|jan, "feb"]
+  prepare: 3:11-3:14 "jan"; rename to "Q1 2024":
+  %% rename-to: Q1 2024
+  xychart
+    x-axis ["Q1 2024", "feb"]
+    bar Sales [1, 2]

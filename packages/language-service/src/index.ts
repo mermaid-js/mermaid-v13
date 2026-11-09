@@ -46,6 +46,7 @@ export type {
   Hover,
   HoverTarget,
   LanguageFacet,
+  NameSyntax,
   ParseResult,
   Position,
   ProbeResult,

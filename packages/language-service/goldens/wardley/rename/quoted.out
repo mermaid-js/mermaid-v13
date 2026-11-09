@@ -1,0 +1,8 @@
+@ 3:16  component "Hot |Water" [0.4, 0.3]
+  prepare: 3:12-3:21 "Hot Water"; rename to "Hot Milk":
+  %% rename-to: Hot Milk
+  wardley-beta
+  component "Hot Milk" [0.4, 0.3]
+  component Tea [0.5, 0.7]
+  Tea -> Hot Milk
+  Tea -> 'Hot Milk'

@@ -1,0 +1,19 @@
+---
+description: >-
+  Parser model check (#484): a title, accTitle and accDescr, two sections with
+  leaves written with `:` and `,`, a class used before its classDef, a class
+  defined twice (the styles append) and a leaf with a class.
+---
+treemap-beta
+  title Household budget
+  accTitle: Budget
+  accDescr: Monthly spending by category
+  "Home":::home
+    "Rent", 1200
+    "Power": 80.5
+  "Food"
+    "Groceries": 400:::food
+    "Eating out": 150
+  classDef home fill:#cde,stroke:#345
+  classDef food fill:#fdc
+  classDef home color:#111

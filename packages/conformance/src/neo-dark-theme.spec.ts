@@ -19,7 +19,7 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
+import { D332_INPUTS, VOCABULARY, everyTable, paletteColours, v12Value } from './diagram-themes.ts';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -82,6 +82,8 @@ const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
 
 /** Each difference from v12 neo-dark, with the decision that makes it. */
 const DIFFERENCES: Readonly<Record<string, string>> = {
+  xyChartDataLabelColor:
+    'D333(b): v12 neo-dark sets no xyChart.dataLabelColor (its DB drew theme-default’s); v13 takes primaryTextColor',
   ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
   strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
   quadrantPointFill:
@@ -130,10 +132,12 @@ function v13Value(t: Theme, name: string): string | number {
 }
 
 function same(name: string): boolean {
-  const old = OLD[name];
+  const old = v12Value(OLD, name);
   if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
-  const now = v13Value(neoDark, name);
   const kind = VOCABULARY[name]?.kind;
+  // A diagram's palette variable (xychart's plotColorPalette): v12's comma-separated list.
+  if (kind === 'palette') return paletteColours(old) === paletteColours(neoDark.palette(name));
+  const now = v13Value(neoDark, name);
   if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
   if (kind === 'length') return Number.parseFloat(String(old)) === now;
   return String(old).trim() === String(now).trim();

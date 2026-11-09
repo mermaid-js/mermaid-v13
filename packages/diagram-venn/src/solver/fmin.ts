@@ -4,7 +4,7 @@
  * simplex) and the conjugate gradient method with a Wolfe line search, with the vector helpers
  * they use.
  *
- * Ported from fmin 0.0.4 (https://github.com/benfred/fmin), BSD-3-Clause License, Copyright
+ * Ported from fmin 0.0.4 (https://github.com/benfred/fmin), BSD 3-Clause License, Copyright
  * 2016, Ben Frederickson, as venn.js 2.0.0 bundles it (https://github.com/upsetjs/venn.js,
  * `build/venn.esm.js`), MIT License, Copyright (c) 2013 Ben Frederickson, Copyright (c) 2021
  * Samuel Gratzl. The arithmetic and its order are theirs; the options venn.js never passes

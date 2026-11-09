@@ -74,6 +74,16 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/radar.md',
   },
+  treemap: {
+    header: 'treemap(?:-beta)?',
+    files: [
+      'packages/mermaid/src/diagrams/treemap/utils.test.ts',
+      'packages/parser/tests/treemap.test.ts',
+      'packages/examples/src/examples/treemap.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/treemap.md',
+  },
   cynefin: {
     header: 'cynefin-beta',
     files: [
@@ -81,6 +91,16 @@ export const HARVESTS = {
       'packages/examples/src/examples/cynefin.ts',
     ],
     docs: 'packages/mermaid/src/docs/syntax/cynefin.md',
+  },
+  wardley: {
+    header: 'wardley-beta',
+    files: [
+      'packages/mermaid/src/diagrams/wardley/wardleyParser.spec.ts',
+      'packages/mermaid/src/diagrams/wardley/wardleyBuilder.spec.ts',
+      'packages/examples/src/examples/wardley.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/wardley.md',
   },
 } as const satisfies Record<string, Harvest>;
 

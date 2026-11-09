@@ -1,0 +1,6 @@
+@ 3:16  x-axis [jan, |feb, feb]
+  prepare: 3:16-3:19 "feb"; rename to "march":
+  %% rename-to: march
+  xychart
+    x-axis [jan, march, feb]
+    bar [1, 2, 3]

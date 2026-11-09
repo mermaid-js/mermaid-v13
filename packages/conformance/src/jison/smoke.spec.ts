@@ -16,6 +16,8 @@ const M4_M5: JisonType[] = [
   'journey',
   'quadrant',
   'kanban',
+  'sankey',
+  'xychart',
   'venn',
 ];
 

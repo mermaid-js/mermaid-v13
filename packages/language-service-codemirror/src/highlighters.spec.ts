@@ -46,10 +46,14 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'pie',
       'quadrantChart',
       'radar',
+      'sankey',
       'sequence',
       'state',
       'timeline',
+      'treemap',
       'venn',
+      'wardley',
+      'xychart',
     ]);
   });
 
@@ -153,6 +157,77 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('"Speed":string');
     });
 
+    it('highlights a treemap with the treemap grammar', () => {
+      const out = spans('treemap\n  "Root"\n    "Leaf": 12:::hot\n  classDef hot fill:red\n');
+      expect(out).toEqual([
+        'treemap:keyword',
+        '"Root":string',
+        '"Leaf":string',
+        '::punctuation',
+        '::::operator',
+        'hot:variable',
+        'classDef hot fill:red:keyword',
+      ]);
+    });
+
+    it('highlights a Wardley map with the wardley grammar', () => {
+      const out = spans(
+        'wardley-beta\n  title Tea\n  anchor Customer [0.95, 0.63]\n  component "Cup of Tea" [0.79, 0.61] (build)\n  Customer -> "Cup of Tea"\n  evolve Customer 0.8\n'
+      );
+      expect(out).toEqual([
+        'wardley-beta:keyword',
+        'title Tea:keyword',
+        'anchor:keyword',
+        'Customer:variable',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        'component:keyword',
+        '"Cup of Tea":string',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        '(:punctuation',
+        'build:keyword',
+        '):punctuation',
+        'Customer:variable',
+        '->:operator',
+        '"Cup of Tea":string',
+        'evolve:keyword',
+        'Customer:variable',
+      ]);
+    });
+
+    it('highlights an XY chart with the xychart grammar', () => {
+      const out = spans(
+        'xychart\n  title "Sales"\n  x-axis [jan, "feb"]\n  y-axis "Revenue" 0 --> 100\n  bar [10, 20]\n'
+      );
+      // A string's quotes and its text are three tokens (jison's string state, D212).
+      expect(out).toEqual([
+        'xychart:keyword',
+        'title:keyword',
+        '":string',
+        'Sales:string',
+        '":string',
+        'x-axis:keyword',
+        '[:punctuation',
+        ',:punctuation',
+        '":string',
+        'feb:string',
+        '":string',
+        ']:punctuation',
+        'y-axis:keyword',
+        '":string',
+        'Revenue:string',
+        '":string',
+        '-->:operator',
+        'bar:keyword',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+      ]);
+    });
+
     it('highlights a cynefin diagram with the cynefin grammar', () => {
       const out = spans(
         'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
@@ -167,6 +242,20 @@ describe('the per-type first-paint highlighters (D134)', () => {
       const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
       expect(out[0]).toBe('kanban:keyword');
       expect(out.length).toBeGreaterThan(1);
+    });
+
+    it('highlights a sankey diagram with the sankey grammar', () => {
+      const out = spans('sankey\n"Solar, roof",Electricity,40.5\n');
+      expect(out).toEqual([
+        'sankey:keyword',
+        '":string',
+        'Solar, roof:string',
+        '":string',
+        ',:punctuation',
+        'Electricity:variable',
+        ',:punctuation',
+        '40.5:variable',
+      ]);
     });
 
     it('highlights a venn diagram with the venn grammar', () => {

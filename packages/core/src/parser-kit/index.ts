@@ -56,4 +56,5 @@ export type {
   Hover,
   HoverTarget,
   LanguageFacet,
+  NameSyntax,
 } from './language.ts';

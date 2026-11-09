@@ -146,8 +146,14 @@ export interface TextRenderContext extends RenderContext {
 
 /** A diagram plugin (DESIGN §12.1). `M` is its model, `L` its layout. */
 export interface DiagramPlugin<M = unknown, L = unknown> {
-  /** Also the config section that holds its options (`flowchart`). */
+  /** Also the config section that holds its options (`flowchart`), unless `configSection` names it. */
   readonly id: string;
+  /**
+   * The config section that holds its options when it is not `id`: v12's name, which documents
+   * already use (`wardley-beta` for `wardley`, D421). Front matter, `%%{init}` (its `config` key
+   * included) and `configDefaults` all go to it.
+   */
+  readonly configSection?: string;
   readonly aliases?: readonly string[];
   /**
    * v12's detector contract (DESIGN §12.1): the text with front matter, directives and `%%`

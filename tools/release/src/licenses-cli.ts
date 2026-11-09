@@ -1,4 +1,8 @@
-/** `pnpm check:licenses`: fails when ported code (Pele, sanitize-url) lacks its MIT attribution (R-REL-4). */
+/**
+ * `pnpm check:licenses`: fails when ported code (Pele, sanitize-url, Iconify, and the d3 packages
+ * sankey and treemap re-implement) lacks its upstream's attribution under that upstream's
+ * license (R-REL-4).
+ */
 import { join } from 'node:path';
 import { checkLicenses } from './licenses.ts';
 
@@ -8,5 +12,5 @@ if (problems.length > 0) {
   process.exit(1);
 }
 process.stdout.write(
-  'License check passed: ported files carry their upstream MIT headers and are listed in THIRD_PARTY_NOTICES.\n'
+  "License check passed: ported files credit their upstreams under each upstream's license and are listed in THIRD_PARTY_NOTICES.\n"
 );

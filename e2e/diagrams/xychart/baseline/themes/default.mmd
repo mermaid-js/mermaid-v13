@@ -1,0 +1,16 @@
+---
+config:
+  theme: default
+  xyChart:
+    showDataLabel: true
+description: >-
+  one representative XY chart (two named bar plots with data labels, a named line, the legend)
+  in the default theme: the classic family (D227)
+---
+xychart
+  title "Monthly sales"
+  x-axis Month [jan, feb, mar, apr, may, jun]
+  y-axis "Revenue (k$)" 0 --> 120
+  bar Online [42, 55, 61, 78, 90, 104]
+  bar Store [30, 38, 35, 44, 52, 49]
+  line Target [40, 50, 60, 70, 80, 90]

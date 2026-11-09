@@ -1,0 +1,6 @@
+@ 3:9  "Say ""h|i""",Sink,1
+  prepare: 3:2-3:12 "Say \"\"hi\"\""; rename to "The \"big\" one":
+  %% rename-to: The "big" one
+  sankey
+  "The ""big"" one",Sink,1
+  Source,"The ""big"" one",2

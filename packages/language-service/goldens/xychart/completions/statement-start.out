@@ -1,0 +1,26 @@
+@ 2:3  |
+  title keyword 2:3-2:3 "" -> "title "
+  x-axis keyword 2:3-2:3 "" -> "x-axis "
+  y-axis keyword 2:3-2:3 "" -> "y-axis "
+  bar keyword 2:3-2:3 "" -> "bar "
+  line keyword 2:3-2:3 "" -> "line "
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr keyword 2:3-2:3 "" -> "accDescr: "
+  accDescr { keyword 2:3-2:3 "" -> "accDescr {"
+@ 3:5  x-|
+  x-axis keyword 3:3-3:5 "x-" -> "x-axis "
+@ 4:6  acc|
+  accTitle keyword 4:3-4:6 "acc" -> "accTitle: "
+  accDescr keyword 4:3-4:6 "acc" -> "accDescr: "
+  accDescr { keyword 4:3-4:6 "acc" -> "accDescr {"
+@ 5:13  bar [1] ; |
+  title keyword 5:13-5:13 "" -> "title "
+  x-axis keyword 5:13-5:13 "" -> "x-axis "
+  y-axis keyword 5:13-5:13 "" -> "y-axis "
+  bar keyword 5:13-5:13 "" -> "bar "
+  line keyword 5:13-5:13 "" -> "line "
+  accTitle keyword 5:13-5:13 "" -> "accTitle: "
+  accDescr keyword 5:13-5:13 "" -> "accDescr: "
+  accDescr { keyword 5:13-5:13 "" -> "accDescr {"
+@ 6:15  title Sales |
+  none

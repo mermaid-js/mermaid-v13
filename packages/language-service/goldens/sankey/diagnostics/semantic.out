@@ -1,0 +1,3 @@
+2:1-2:6 "a,b,1" error SANKEY_CYCLE: Sankey diagrams cannot have circular links, and "a" is part of one.
+3:5-3:8 "abc" warning SANKEY_INVALID_VALUE: 2 links have a value that is not a finite number of 0 or more (the first is the value "abc" of the link from "b" to "c"), so each counts as 0.
+5:7-5:10 "kWh" warning SANKEY_VALUE_TRAILING_TEXT: Only the number at the start of the value "1 kWh" is read (1): the text "kWh" after it is ignored.

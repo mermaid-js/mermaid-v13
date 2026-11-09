@@ -1,0 +1,6 @@
+@ 3:7  bar |Sales [1, 2]
+  prepare: 3:7-3:12 "Sales"; rename to "Cost":
+  %% rename-to: Cost
+  xychart
+    bar Cost [1, 2]
+    line Cost [2, 1]

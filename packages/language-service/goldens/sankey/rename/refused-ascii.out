@@ -1,0 +1,3 @@
+@ 3:1  |Gas,Electricity,10
+  prepare: 3:1-3:4 "Gas"; rename to "Café":
+  refused: 'Café' has a character outside printable ASCII: sankey names take printable ASCII only (and line breaks, in quotes).

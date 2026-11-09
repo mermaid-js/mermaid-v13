@@ -1,0 +1,590 @@
+[
+  {
+    "id": "wardley-cases/header-alone",
+    "source": "wardley-beta"
+  },
+  {
+    "id": "wardley-cases/header-mixed-case",
+    "source": "Wardley-Beta\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/header-upper",
+    "source": "WARDLEY-BETA"
+  },
+  {
+    "id": "wardley-cases/header-glued",
+    "source": "wardley-betax\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/header-glued-dash",
+    "source": "wardley-beta-x\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/header-trailing-blanks",
+    "source": "wardley-beta   \ncomponent A [0.5,0.5]"
+  },
+  {
+    "id": "wardley-cases/header-comment",
+    "source": "wardley-beta %% c\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/header-same-line",
+    "source": "wardley-beta component A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/header-leading-lines",
+    "source": "\n\n  wardley-beta\n\n"
+  },
+  {
+    "id": "wardley-cases/not-wardley-bare",
+    "source": "wardley\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/keyword-names-note",
+    "source": "wardley-beta\ncomponent notebook [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/keyword-names-strategy",
+    "source": "wardley-beta\ncomponent marketing [0.5, 0.5]\ncomponent buyer [0.1, 0.2]\nbuilder -> outsourced"
+  },
+  {
+    "id": "wardley-cases/keyword-names-label",
+    "source": "wardley-beta\ncomponent labels [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/keyword-names-component",
+    "source": "wardley-beta\ncomponent component [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/keyword-names-title",
+    "source": "wardley-beta\ncomponent title x [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/keyword-names-glued",
+    "source": "wardley-beta\nannotationsX\nannotation1\nevolved\nevolutionary\nsizeable\nanchored\ninertial\npipelines\ndeaccelerators\naccelerators\nnoteX\ncomponentA"
+  },
+  {
+    "id": "wardley-cases/keyword-names-inner",
+    "source": "wardley-beta\ncomponent Campfire build note [0.5, 0.5]\nA note -> B market"
+  },
+  {
+    "id": "wardley-cases/keyword-names-capitalised",
+    "source": "wardley-beta\ncomponent Note [0.5, 0.5]\nComponent Build [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-digit-word",
+    "source": "wardley-beta\ncomponent Kettle 2 [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/names-amp",
+    "source": "wardley-beta\ncomponent Tea & Cups [0.5, 0.5]\ncomponent Tea&Cups [0.1, 0.1]\ncomponent A &B [0.2, 0.2]"
+  },
+  {
+    "id": "wardley-cases/names-dot",
+    "source": "wardley-beta\ncomponent Cup.Tea [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/names-digit-start",
+    "source": "wardley-beta\ncomponent 1A [0.5, 0.5]\ncomponent 0x [0.1, 0.1]\ncomponent 05 [0.1, 0.1]\ncomponent 1-2 [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-spaces",
+    "source": "wardley-beta\ncomponent Campfire Kettle [0.5, 0.5]\ncomponent real-time processing [0.4, 0.4]\ncomponent byte pair encoding (BPE) [0.3, 0.3]\ncomponent A  B [0.2, 0.2]\ncomponent A\tB [0.1, 0.1]\ncomponent A \t (b) [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-quoted",
+    "source": "wardley-beta\ncomponent \"Tea & Cups\" [0.5, 0.5]\ncomponent 'single q' [0.1, 0.1]\ncomponent \"esc \\\" q\" [0.2, 0.2]\ncomponent \"a\\nb\" [0.3, 0.3]\ncomponent \"\" [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-paren-start",
+    "source": "wardley-beta\ncomponent (BPE) [0.5, 0.5]\ncomponent A(B)C [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-underscore",
+    "source": "wardley-beta\ncomponent _a [0.5, 0.5]\ncomponent _a-b- [0.1, 0.1]\ncomponent __ [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-unicode",
+    "source": "wardley-beta\ncomponent \u00fcber [0.5, 0.5]\ncomponent Caf\u00e9 [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-dash-arrows",
+    "source": "wardley-beta\na-->b\na->b\na--b\na-.->b\na- b\nreal-time->x\na--->b\na- ->b"
+  },
+  {
+    "id": "wardley-cases/names-trailing-dash",
+    "source": "wardley-beta\ncomponent a- [0.5, 0.5]\ncomponent a-- [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/names-title-prefix",
+    "source": "wardley-beta\ntitled -> titles\nTitle x\naccTitleX\naccDescrY\naccDescr-x\naccTitle-y\naccTitle_z"
+  },
+  {
+    "id": "wardley-cases/title-forms",
+    "source": "wardley-beta\ntitle Tea Shop\ntitle\ntitle\tTab\ntitle%%c\ntitle x %% c\n  title indented\ntitle  two  blanks  "
+  },
+  {
+    "id": "wardley-cases/title-at-end",
+    "source": "wardley-beta\ntitle"
+  },
+  {
+    "id": "wardley-cases/title-only-blank",
+    "source": "wardley-beta\ntitle "
+  },
+  {
+    "id": "wardley-cases/acc-forms",
+    "source": "wardley-beta\naccTitle: T\naccTitle : spaced\naccTitle:\naccDescr: D\naccDescr { multi\nline }\naccDescr\n\n{ next }\naccDescr: x %% c\naccDescr{}"
+  },
+  {
+    "id": "wardley-cases/acc-descr-unclosed",
+    "source": "wardley-beta\naccDescr {\nnever closed"
+  },
+  {
+    "id": "wardley-cases/acc-descr-bare",
+    "source": "wardley-beta\naccDescr\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/acc-title-no-colon",
+    "source": "wardley-beta\naccTitle x"
+  },
+  {
+    "id": "wardley-cases/coords-int",
+    "source": "wardley-beta\ncomponent A [1, 0]"
+  },
+  {
+    "id": "wardley-cases/coords-leading-dot",
+    "source": "wardley-beta\ncomponent A [.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-near-one",
+    "source": "wardley-beta\ncomponent A [1.0, 1.000001]\ncomponent B [00.5, 0.50]"
+  },
+  {
+    "id": "wardley-cases/coords-trailing-dot",
+    "source": "wardley-beta\ncomponent A [12., 0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-zero-dot",
+    "source": "wardley-beta\ncomponent A [0., 0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-double-dot",
+    "source": "wardley-beta\ncomponent A [1.2.3, 0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-negative",
+    "source": "wardley-beta\ncomponent A [-0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-no-blanks",
+    "source": "wardley-beta\ncomponent A[0.5,0.5]"
+  },
+  {
+    "id": "wardley-cases/coords-blank-runs",
+    "source": "wardley-beta\ncomponent A [0.5 , 0.5 ]\t\n   \n\t\ncomponent B\t[0.1,\t0.1]"
+  },
+  {
+    "id": "wardley-cases/label-forms",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [-10, 5]\ncomponent B [0.1, 0.1] label [10,-5]\ncomponent C [0.1, 0.1] label[0,0]"
+  },
+  {
+    "id": "wardley-cases/label-blank-sign",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [- 10, +5]"
+  },
+  {
+    "id": "wardley-cases/label-leading-zero",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [007, 10]"
+  },
+  {
+    "id": "wardley-cases/label-decimal",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [1.5, 10]"
+  },
+  {
+    "id": "wardley-cases/suffix-forms",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [1, 2] (build) inertia\ncomponent B [0.1, 0.2] (buy) (inertia)\ncomponent C [0.3, 0.4] inertia (build)\ncomponent D [0.3, 0.4] (foo)\ncomponent E [0.1, 0.1] (outsource)\ncomponent F [0.2, 0.2] (market)\ncomponent G [0.2, 0.2] ( build )"
+  },
+  {
+    "id": "wardley-cases/suffix-wrong-order",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] (buy) label [1, 2]"
+  },
+  {
+    "id": "wardley-cases/links-arrows",
+    "source": "wardley-beta\nA -> B\nA --> B\nA -.-> B\nA > B\nA->B\nA-->B\nA-.->B\nA>B"
+  },
+  {
+    "id": "wardley-cases/links-ports",
+    "source": "wardley-beta\nA +> B\nA +< B\nA +<> B\nA +'backup'> B\nA +'x'< B\nA +'y'<> B\nA+>B"
+  },
+  {
+    "id": "wardley-cases/links-labels",
+    "source": "wardley-beta\nA -> B; label text\nA->B;x\nA -> B ; two  blanks\nA -> B; a ; b"
+  },
+  {
+    "id": "wardley-cases/links-label-empty",
+    "source": "wardley-beta\nA -> B;\nA -> B ;  "
+  },
+  {
+    "id": "wardley-cases/links-quoted",
+    "source": "wardley-beta\n\"A\" \"B\"\n\"A\" -> \"B\"\n'A' +> 'B'"
+  },
+  {
+    "id": "wardley-cases/links-chain",
+    "source": "wardley-beta\nA -> B -> A"
+  },
+  {
+    "id": "wardley-cases/links-port-then-arrow",
+    "source": "wardley-beta\nA +> -> B\nA +< --> B"
+  },
+  {
+    "id": "wardley-cases/links-arrow-label-and-label",
+    "source": "wardley-beta\nA +'x'> B; y"
+  },
+  {
+    "id": "wardley-cases/links-bare-arrow-label",
+    "source": "wardley-beta\n+'x'>"
+  },
+  {
+    "id": "wardley-cases/links-bare-unquoted",
+    "source": "wardley-beta\nA B"
+  },
+  {
+    "id": "wardley-cases/links-plus-odd",
+    "source": "wardley-beta\nA + B\nA +' B"
+  },
+  {
+    "id": "wardley-cases/links-plus-multiline",
+    "source": "wardley-beta\nA +'multi\nline'> B\nA +'' > B"
+  },
+  {
+    "id": "wardley-cases/links-plus-unclosed",
+    "source": "wardley-beta\nA +'never closed > B"
+  },
+  {
+    "id": "wardley-cases/links-reverse",
+    "source": "wardley-beta\nA <- B"
+  },
+  {
+    "id": "wardley-cases/links-diamond",
+    "source": "wardley-beta\nA <> B"
+  },
+  {
+    "id": "wardley-cases/links-dotted-dead",
+    "source": "wardley-beta\nA .-. B"
+  },
+  {
+    "id": "wardley-cases/links-dash-dot-dash",
+    "source": "wardley-beta\nA -.- B"
+  },
+  {
+    "id": "wardley-cases/links-fat",
+    "source": "wardley-beta\nA => B"
+  },
+  {
+    "id": "wardley-cases/evolve-forms",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nevolve A 0.8\nevolve A 80\nevolve \"A\" 0.9\nevolve Campfire Kettle 0.1"
+  },
+  {
+    "id": "wardley-cases/evolution-forms",
+    "source": "wardley-beta\nevolution A@0.5/X -> \"Q R\" -> S T U\nevolution Genesis -> Custom Built -> Product -> Commodity\nevolution a @ 0.25 / b -> c@0.75"
+  },
+  {
+    "id": "wardley-cases/size-forms",
+    "source": "wardley-beta\nsize [1100, 800]\nsize [0,0]\nsize [1.5, 2]\nsize[600,800]"
+  },
+  {
+    "id": "wardley-cases/note-forms",
+    "source": "wardley-beta\nnote \"a note\" [0.5, 0.5]\nnote 'single' [0.1, 0.1]\nnote unquoted [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/note-multiline",
+    "source": "wardley-beta\nnote \"line one\nline two\" [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/annotations-forms",
+    "source": "wardley-beta\nannotations [1, 0]\nannotations [0.5, 0.25]\nannotation 1,[0.5, 0.5] \"text\"\nannotation 2, [1, 0] 'x'\nannotation 01, [0,0] \"y\""
+  },
+  {
+    "id": "wardley-cases/annotation-duplicate-numbers",
+    "source": "wardley-beta\nannotations [0.1, 0.9]\nannotation 1,[0.5, 0.5] \"a\"\nannotation 1,[0.2, 0.2] \"b\""
+  },
+  {
+    "id": "wardley-cases/accelerators",
+    "source": "wardley-beta\naccelerator Fast [0.5, 0.5]\ndeaccelerator Slow [0.1, 0.2]\naccelerator \"Q\" [0.3, 0.3]"
+  },
+  {
+    "id": "wardley-cases/pipeline-forms",
+    "source": "wardley-beta\ncomponent K [0.5, 0.5]\npipeline K {\n  component A [0.3] label [-60, 35]\n  component B [0.6]\n}\npipeline K\n{\n}\npipeline K { component C [0.1] }"
+  },
+  {
+    "id": "wardley-cases/anchor-forms",
+    "source": "wardley-beta\nanchor Business [0.95, 0.63]\nanchor \"Public\" [0.9, 0.2]\nanchor A [0.5, 0.5] label [1, 2]"
+  },
+  {
+    "id": "wardley-cases/error-colon",
+    "source": "wardley-beta\ncomponent A: [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/error-hash",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] # x"
+  },
+  {
+    "id": "wardley-cases/error-backslash",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] \\"
+  },
+  {
+    "id": "wardley-cases/error-star",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] *"
+  },
+  {
+    "id": "wardley-cases/error-run",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] ?!*$ B"
+  },
+  {
+    "id": "wardley-cases/strings-unclosed-double",
+    "source": "wardley-beta\ncomponent \"A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/strings-unclosed-single",
+    "source": "wardley-beta\ncomponent 'A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/strings-escaped-line-end",
+    "source": "wardley-beta\ncomponent \"a\\\nb\" [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/strings-escaped-end",
+    "source": "wardley-beta\ncomponent \"a\\"
+  },
+  {
+    "id": "wardley-cases/comments",
+    "source": "wardley-beta\n%% whole line\ncomponent A [0.5, 0.5] %% trailing\n  %% indented\ncomponent B [0.1, 0.1]%%glued\nA -> B ; label %% not a comment"
+  },
+  {
+    "id": "wardley-cases/directives",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\nwardley-beta\ncomponent A [0.5, 0.5]\n%%{ init: {} }%%\ncomponent B [0.1, 0.1] %%{x}%%\ncomponent C [0.1, 0.1] %%{x}%%y"
+  },
+  {
+    "id": "wardley-cases/directive-unclosed-in-line",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] %%{ never"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive",
+    "source": "wardley-beta\n%%{ never closed\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive-init",
+    "source": "wardley-beta\n%%{init: {\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/front-matter",
+    "source": "---\ntitle: FM\n---\nwardley-beta\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/yaml-body",
+    "source": "wardley-beta\n---\nx: 1\n---\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/yaml-body-unclosed",
+    "source": "wardley-beta\n---\nx\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/yaml-body-empty",
+    "source": "wardley-beta\n---\n---\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/dash-runs",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] label [--10, 5]\n----\n---x\n- - -"
+  },
+  {
+    "id": "wardley-cases/entities",
+    "source": "wardley-beta\ncomponent \"Tea #amp; Cups\" [0.5, 0.5]\nnote \"#9829; love\" [0.1, 0.1]\nA -> B ; #quot;q#quot;\ncomponent X #y; [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/entities-drop",
+    "source": "wardley-beta\nA -> B ; style x:#fff;\nA -> B ; classDef y:#000;"
+  },
+  {
+    "id": "wardley-cases/tag-quotes",
+    "source": "wardley-beta\nnote \"a <b class=\"c\">d</b>\" [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/crlf-and-cr",
+    "source": "wardley-beta\rcomponent A [0.5, 0.5]\r\ncomponent B [0.1, 0.1]\r"
+  },
+  {
+    "id": "wardley-cases/yaml-body-cr-end",
+    "source": "wardley-beta\n---\nx\n---\r"
+  },
+  {
+    "id": "wardley-cases/title-cr-end",
+    "source": "wardley-beta\ntitle x\r"
+  },
+  {
+    "id": "wardley-cases/bom",
+    "source": "\ufeffwardley-beta\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/line-separators-header",
+    "source": "wardley-beta\u2028component A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/line-separators-statements",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\u2028component B [0.1, 0.1]"
+  },
+  {
+    "id": "wardley-cases/line-separators-title",
+    "source": "wardley-beta\ntitle a\u2028b\ntitle\u2028x"
+  },
+  {
+    "id": "wardley-cases/line-separators-acc-descr",
+    "source": "wardley-beta\naccDescr {\na\u2028b\n}\naccDescr\u2029{ x }"
+  },
+  {
+    "id": "wardley-cases/line-separators-string",
+    "source": "wardley-beta\nnote \"a\u2029b\" [0.5, 0.5]\nnote \"a\\\u2028b\" [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/line-separators-link-label",
+    "source": "wardley-beta\nA -> B; x\u2028y"
+  },
+  {
+    "id": "wardley-cases/line-separators-name",
+    "source": "wardley-beta\ncomponent A\u2028B [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/spaces-nbsp-name",
+    "source": "wardley-beta\ncomponent A\u00a0B [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/spaces-title",
+    "source": "wardley-beta\ntitle\u00a0x\ntitle\fy\ntitle\u000bz"
+  },
+  {
+    "id": "wardley-cases/spaces-vertical-tab",
+    "source": "wardley-beta\ncomponent A [0.5,\u000b0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-anchor",
+    "source": "wardley-beta\ntitle Range\nanchor Business [1.5, 200.0]\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-component-visibility",
+    "source": "wardley-beta\ntitle Range\ncomponent Cup [300.0, 0.5]\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-component-both",
+    "source": "wardley-beta\ntitle Range\ncomponent Cup [300.0, 101.5]\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-note",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nnote \"Hot\" [0.5, 101.0]\nA -> A"
+  },
+  {
+    "id": "wardley-cases/parser-range-pipeline-component",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [150.0]\n}"
+  },
+  {
+    "id": "wardley-cases/parser-range-evolve",
+    "source": "wardley-beta\ncomponent Tea [0.5, 0.5]\nevolve Tea 120.0\nTea -> Tea"
+  },
+  {
+    "id": "wardley-cases/parser-range-annotations-box",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotations [500, 0.5]\nannotation 1, [0.5, 0.5] \"x\""
+  },
+  {
+    "id": "wardley-cases/parser-range-annotation",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotation 7, [0.5, 300] \"Seven\"\nannotation 8, [0.5, 0.5] \"Eight\""
+  },
+  {
+    "id": "wardley-cases/parser-range-accelerator",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [0.5, 102.0]\ndeaccelerator Legacy [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-deaccelerator",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [0.5, 0.5]\ndeaccelerator Legacy [102.0, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-category-order",
+    "source": "wardley-beta\naccelerator Cloud [0.5, 102.0]\nnote \"n\" [0.5, 0.5]\nanchor User [103.0, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-just-over",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [100.01, 0.5]\nA -> B"
+  },
+  {
+    "id": "wardley-cases/parser-pipeline-unknown-parent",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Pot {\n  component Gas [0.3]\n}"
+  },
+  {
+    "id": "wardley-cases/parser-statements-one-line",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] component B [0.4, 0.4]\ncomponent C [0.4, 0.4]\nC -> A"
+  },
+  {
+    "id": "wardley-cases/parser-pipeline-brace-next-line",
+    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P\n{\n  component c [0.2]\n}"
+  },
+  {
+    "id": "wardley-cases/parser-pipeline-empty",
+    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n}\nP -> P"
+  },
+  {
+    "id": "wardley-cases/parser-pipeline-brace-on-line",
+    "source": "wardley-beta\ncomponent P [0.5, 0.5]\npipeline P {\n  component c [0.2] }\nP -> P"
+  },
+  {
+    "id": "wardley-cases/parser-range-anchor-visibility",
+    "source": "wardley-beta\nanchor User [150.0, 0.5]\ncomponent A [0.5, 0.5]\nUser -> A"
+  },
+  {
+    "id": "wardley-cases/parser-range-note-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nnote \"Hot\" [150.0, 0.5]\nA -> A"
+  },
+  {
+    "id": "wardley-cases/parser-range-annotations-box-evolution",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotations [0.5, 150.0]\nannotation 1, [0.5, 0.5] \"x\""
+  },
+  {
+    "id": "wardley-cases/parser-range-annotation-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\nannotation 7, [150.0, 0.5] \"Seven\"\nannotation 8, [0.5, 0.5] \"Eight\""
+  },
+  {
+    "id": "wardley-cases/parser-range-accelerator-visibility",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [150.0, 0.5]\ndeaccelerator Legacy [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/parser-range-deaccelerator-evolution",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [0.5, 0.5]\ndeaccelerator Legacy [0.5, 150.0]"
+  },
+  {
+    "id": "wardley-cases/layout-label-literal",
+    "source": "wardley-beta\ncomponent \"a\\nb\" [0.5, 0.2]\ncomponent \"a<br>b\" [0.3, 0.5]\ncomponent \"x &lt; y\" [0.7, 0.5]\ncomponent \"Tea #amp; #quot;Cups#quot;\" [0.1, 0.8]\nnote \"#9829; love<br/>x\" [0.9, 0.1]\n\"a\\nb\" -> \"a<br>b\" ; x &amp; *y* <br> z"
+  },
+  {
+    "id": "wardley-cases/layout-stages-decreasing",
+    "source": "wardley-beta\nevolution A@0.8 -> B@0.3 -> C@1.0\ncomponent X [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/layout-link-coincident",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.5, 0.5]\nA -> B\nB +> A"
+  },
+  {
+    "id": "wardley-cases/layout-pipeline-merged-child",
+    "source": "wardley-beta\ncomponent P [0.5, 0.5]\ncomponent P_x [0.2, 0.3]\npipeline P {\n  component x_y [0.4]\n}\npipeline P_x {\n  component y [0.6]\n}"
+  },
+  {
+    "id": "wardley-cases/render-hostile-title",
+    "source": "wardley-beta\ntitle <svg onload=alert(1)>\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/render-hostile-labels",
+    "source": "wardley-beta\ncomponent \"<script>alert(1)</script>\" [0.5, 0.5]\ncomponent \"\\\"><img src=x onerror=alert(1)>\" [0.3, 0.3]\n\"<script>alert(1)</script>\" -> \"\\\"><img src=x onerror=alert(1)>\" ; javascript:alert(1)\nnote \"<a href='javascript:alert(1)'>x</a>\" [0.1, 0.1]\naccelerator \"<style>*{}</style>\" [0.5, 0.2]"
+  },
+  {
+    "id": "wardley-cases/render-hostile-accessibility",
+    "source": "wardley-beta\naccTitle: </title><script>alert(1)</script>\naccDescr {\n  ]]><svg onload=alert(1)>\n}\ncomponent A [0.5, 0.5]"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core",
+    "source": "wardley-beta\ncomponent \"A #alpha; B\" [0.5, 0.5]\nnote \"#nbsp;#hellip; #frac12;\" [0.1, 0.1]"
+  }
+]

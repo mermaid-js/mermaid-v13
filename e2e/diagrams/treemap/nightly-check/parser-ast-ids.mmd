@@ -1,0 +1,18 @@
+---
+description: >-
+  Parser AST id check (#484): repeated names and paths get `@2`, names with
+  `/`, `@` and `%` are percent-encoded in their path, repeated classDefs and
+  titles get `@2`.
+---
+treemap
+  title First
+  "A"
+    "x": 1
+    "x": 2
+  "A"
+    "x": 3
+  "a/b@c%"
+    "y": 4
+  classDef hot fill:#f99
+  classDef hot stroke:#900
+  title Second

@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -1186,7 +1186,8 @@ export const configSchema: ConfigSchema = {
     "xyChart": {
       "$ref": "#/$defs/XYChartConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "requirement": {
@@ -1214,6 +1215,13 @@ export const configSchema: ConfigSchema = {
         "status": "pending"
       }
     },
+    "treemap": {
+      "$ref": "#/$defs/TreemapDiagramConfig",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0"
+      }
+    },
     "kanban": {
       "$ref": "#/$defs/KanbanDiagramConfig",
       "x-mermaid": {
@@ -1236,7 +1244,8 @@ export const configSchema: ConfigSchema = {
     "sankey": {
       "$ref": "#/$defs/SankeyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "packet": {
@@ -1287,7 +1296,8 @@ export const configSchema: ConfigSchema = {
     "wardley-beta": {
       "$ref": "#/$defs/WardleyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "cynefin": {
@@ -3076,6 +3086,128 @@ export const configSchema: ConfigSchema = {
         }
       }
     },
+    "TreemapDiagramConfig": {
+      "title": "Treemap Diagram Config",
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseDiagramConfig"
+        }
+      ],
+      "description": "The object containing configurations specific for treemap diagrams.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the treemap renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
+        "padding": {
+          "description": "The space between sibling sections and leaves, in pixels (d3's `paddingInner`).",
+          "type": "number",
+          "minimum": 0,
+          "default": 10,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "diagramPadding": {
+          "description": "The space around the drawn treemap, in pixels.",
+          "type": "number",
+          "minimum": 0,
+          "default": 8,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "showValues": {
+          "description": "Whether sections and leaves print their values.",
+          "type": "boolean",
+          "default": true,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, only `false` hides the values."
+          }
+        },
+        "nodeWidth": {
+          "description": "A tenth of the treemap's width, in pixels: the canvas is `nodeWidth × 10` wide, or 960\nwhen it is 0.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 100,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "nodeHeight": {
+          "description": "A tenth of the treemap's height, in pixels: the canvas is `nodeHeight × 10` high, or 500\nwhen it is 0.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 40,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "borderWidth": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 1,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it."
+          }
+        },
+        "valueFontSize": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 12,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it: values are fitted to their box from the treemap's own sizes, as in v12."
+          }
+        },
+        "labelFontSize": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 14,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it: labels are fitted to their box from the treemap's own sizes, as in v12."
+          }
+        },
+        "valueFormat": {
+          "description": "The d3-format specifier values are printed with (`,`, `$0,0`, `.1%`, `$,.2f`, …), with\nv12's `$` cases.\n",
+          "type": "string",
+          "default": ",",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Every specifier formats as in v12 (D409): an empty one is `,`, and one d3-format rejects falls back to `,`, as v12 did. A value that is not a string falls back to `,` with one `TREEMAP_CONFIG_INVALID` warning."
+          }
+        }
+      }
+    },
     "KanbanDiagramConfig": {
       "title": "Kanban Diagram Config",
       "allOf": [
@@ -3447,12 +3579,22 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": true,
       "properties": {
+        "$ref": {
+          "description": "12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its\nschema's `default` for the axis objects), so a copy of that config carries it.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Not an option; 12.2.0's default config leaked it (a schema reference)."
+          }
+        },
         "showLabel": {
           "description": "Should show the axis labels (tick text)",
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelFontSize": {
@@ -3461,7 +3603,8 @@ export const configSchema: ConfigSchema = {
           "default": 14,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelPadding": {
@@ -3470,7 +3613,8 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showTitle": {
@@ -3478,7 +3622,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titleFontSize": {
@@ -3487,7 +3632,8 @@ export const configSchema: ConfigSchema = {
           "default": 16,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titlePadding": {
@@ -3496,7 +3642,8 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showTick": {
@@ -3504,7 +3651,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "tickLength": {
@@ -3513,7 +3661,8 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "tickWidth": {
@@ -3522,7 +3671,8 @@ export const configSchema: ConfigSchema = {
           "default": 2,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showAxisLine": {
@@ -3530,7 +3680,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "axisLineWidth": {
@@ -3539,7 +3690,8 @@ export const configSchema: ConfigSchema = {
           "default": 2,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelRotation": {
@@ -3549,7 +3701,8 @@ export const configSchema: ConfigSchema = {
           "minimum": -90,
           "maximum": 90,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }
@@ -3565,13 +3718,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the XY chart renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "width of the chart",
           "type": "number",
           "default": 700,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -3580,7 +3749,8 @@ export const configSchema: ConfigSchema = {
           "default": 500,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titleFontSize": {
@@ -3589,7 +3759,8 @@ export const configSchema: ConfigSchema = {
           "default": 20,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titlePadding": {
@@ -3598,7 +3769,8 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showDataLabel": {
@@ -3606,7 +3778,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showDataLabelOutsideBar": {
@@ -3614,7 +3787,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showTitle": {
@@ -3622,7 +3796,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showLegend": {
@@ -3630,7 +3805,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "legendFontSize": {
@@ -3639,7 +3815,8 @@ export const configSchema: ConfigSchema = {
           "default": 14,
           "minimum": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "legendPadding": {
@@ -3648,32 +3825,30 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxis": {
           "$ref": "#/$defs/XYChartAxisConfig",
-          "default": {
-            "$ref": "#/$defs/XYChartAxisConfig"
-          },
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxis": {
           "$ref": "#/$defs/XYChartAxisConfig",
-          "default": {
-            "$ref": "#/$defs/XYChartAxisConfig"
-          },
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "chartOrientation": {
           "description": "How to plot will be drawn horizontal or vertical",
           "default": "vertical",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "plotReservedSpacePercent": {
@@ -3682,7 +3857,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 30,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }
@@ -5802,14 +5978,18 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "height": {
           "type": "number",
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "linkColor": {
@@ -5825,21 +6005,35 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "gradient",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`gradient`, `source`, `target` or one CSS colour for every link. A colour that fails the colour check draws the default `gradient` and warns `SANKEY_COLOR_INVALID`."
           }
         },
         "nodeAlignment": {
           "$ref": "#/$defs/SankeyNodeAlignment",
           "default": "justify",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the sankey renderer never did."
           }
         },
         "useMaxWidth": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width=\"100%\"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`; a value that is not a boolean is the default and warns `SANKEY_CONFIG_INVALID`."
           }
         },
         "showValues": {
@@ -5847,7 +6041,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "prefix": {
@@ -5855,7 +6050,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "suffix": {
@@ -5863,7 +6059,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeWidth": {
@@ -5871,7 +6068,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "nodePadding": {
@@ -5879,7 +6078,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "labelStyle": {
@@ -5887,7 +6088,9 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/SankeyLabelStyle",
           "default": "legacy",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`."
           }
         },
         "nodeColors": {
@@ -5897,7 +6100,9 @@ export const configSchema: ConfigSchema = {
             "type": "string"
           },
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A node's entry that fails the colour check is dropped with one `SANKEY_COLOR_INVALID` warning, and the node takes its next default colour, where v12 drew it black."
           }
         }
       }
@@ -6503,13 +6708,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the Wardley renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "The width of the Wardley diagram canvas.",
           "type": "number",
           "minimum": 1,
           "default": 900,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -6518,7 +6739,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "padding": {
@@ -6527,7 +6749,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 48,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeRadius": {
@@ -6536,7 +6759,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 6,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeLabelOffset": {
@@ -6545,7 +6769,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "axisFontSize": {
@@ -6554,7 +6779,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelFontSize": {
@@ -6563,7 +6789,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showGrid": {
@@ -6571,7 +6798,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

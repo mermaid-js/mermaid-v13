@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { patchGanttOracle } from './gantt/oracle-env.ts';
 import { patchQuadrantOracle } from './quadrant/oracle-env.ts';
 import { patchSequenceOracle } from './sequence/oracle-env.ts';
+import { patchXyChartOracle } from './xychart/oracle-env.ts';
 
 /**
  * The `mermaid@12` oracle: parser + DB only, through v12's diagram API, with no DOM.
@@ -81,6 +82,8 @@ async function load(): Promise<Oracle> {
   await patchQuadrantOracle(mermaid);
   // Gantt acceptance includes `getTasks()`, and its clicks are recorded (gantt/oracle-env.ts).
   await patchGanttOracle(mermaid);
+  // XY chart acceptance includes having a plot, as v12's render requires (xychart/oracle-env.ts).
+  await patchXyChartOracle(mermaid);
 
   return {
     version,

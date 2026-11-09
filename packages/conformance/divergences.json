@@ -336,6 +336,470 @@
     "since": "2026-11-06"
   },
   {
+    "id": "v12-specs/parser/sankey.spec.ts#3",
+    "inputHash": "sha256:1ce0e6428b0c2b11",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "v12-specs/parser/sankey.spec.ts#4",
+    "inputHash": "sha256:8c2924856333cd4c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/values-negative-zero",
+    "inputHash": "sha256:77c8b9dff87f0bce",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/links-self",
+    "inputHash": "sha256:0289cd2069b3dd86",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-cases/links-cycle",
+    "inputHash": "sha256:2f016824231d4384",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (commented)",
+    "inputHash": "sha256:cb7f88205a8087e2",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (commented)",
+    "inputHash": "sha256:dff5ef551cb7247a",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (commented)",
+    "inputHash": "sha256:4d923a35ec83a5a8",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (commented)",
+    "inputHash": "sha256:fcc28220955147a4",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (commented)",
+    "inputHash": "sha256:eb45424da55da680",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CR cut)",
+    "inputHash": "sha256:d6b84649b071d3c2",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CR cut)",
+    "inputHash": "sha256:7672b3d55cbdcd70",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CR cut)",
+    "inputHash": "sha256:b1bee28622b4bcb5",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CR cut)",
+    "inputHash": "sha256:83535452eafe2e26",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CR cut)",
+    "inputHash": "sha256:897fe292e876d8cf",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CR cut by a directive)",
+    "inputHash": "sha256:fe82a619b46e7e96",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CR cut by a directive)",
+    "inputHash": "sha256:e7248e7a8c203283",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CR cut by a directive)",
+    "inputHash": "sha256:c0d058465d0cd824",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CR cut by a directive)",
+    "inputHash": "sha256:545bc69c9b0e9de3",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CR cut by a directive)",
+    "inputHash": "sha256:4fc81a2e9456c775",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (CRLF)",
+    "inputHash": "sha256:8509b370bf1b1fc6",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (CRLF)",
+    "inputHash": "sha256:1c5645f86b076a45",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (CRLF)",
+    "inputHash": "sha256:3a1bdf967ce2253b",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (CRLF)",
+    "inputHash": "sha256:ad7083c5c24716ba",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (CRLF)",
+    "inputHash": "sha256:7bb903d895ca501a",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (blank lines)",
+    "inputHash": "sha256:8249de529d441e2c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (blank lines)",
+    "inputHash": "sha256:f1ba9787c7a51660",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (blank lines)",
+    "inputHash": "sha256:9fafc573704b2a06",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (blank lines)",
+    "inputHash": "sha256:06a2a4dc6f371e4d",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (blank lines)",
+    "inputHash": "sha256:e8bd136b35a53ed9",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#3 (directive mid-line)",
+    "inputHash": "sha256:d6b60b53aa22b6de",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/v12-specs/parser/sankey.spec.ts#4 (directive mid-line)",
+    "inputHash": "sha256:56229912d2eae80c",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/values-negative-zero (directive mid-line)",
+    "inputHash": "sha256:95bb116549f28bdb",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-self (directive mid-line)",
+    "inputHash": "sha256:c50c927c90bef583",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "sankey-gate/sankey-cases/links-cycle (directive mid-line)",
+    "inputHash": "sha256:6baa032cc2aad8ce",
+    "kind": "reject",
+    "reason": "A cycle among the links (a self-link included) parses in v12 and then makes d3-sankey throw `circular link` at render; v13 rejects it at parse with SANKEY_CYCLE, at the cycle's first link (D393, MIGRATION.md, #496).",
+    "owner": "#496",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive",
+    "inputHash": "sha256:de9f73827312fb03",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive-init",
+    "inputHash": "sha256:2b0245ca534c531a",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:b408ca02f85ea99f",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive-init (CRLF)",
+    "inputHash": "sha256:7938cf34b74caac7",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:4a4aa4d561bea47a",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "treemap-cases/unclosed-directive-init (commented)",
+    "inputHash": "sha256:5c0e8e8638c165fc",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treemap is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and packet; the lexer gate excludes the same cases, #483).",
+    "owner": "#484",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive",
+    "inputHash": "sha256:66c99d0cf72eb822",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:bd284c211a061599",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:083bdceb7905e4be",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive-init",
+    "inputHash": "sha256:04007fa4d1d94fd6",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive-init (CRLF)",
+    "inputHash": "sha256:13815f2de32563e0",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/unclosed-directive-init (commented)",
+    "inputHash": "sha256:9c87e1177b35673f",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the map is rejected rather than silently cut (core preprocess behaviour, as for pie, quadrant and radar; GAPS #300, #301).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/directive-unclosed-in-line",
+    "inputHash": "sha256:b839f5dfc4a8da76",
+    "kind": "reject",
+    "reason": "v12 lexed an unclosed `%%{` after a statement as a `%%` comment; v13's preprocess reports UNCLOSED_DIRECTIVE for any `%%{` with no `}%%`, so the map is rejected (core preprocess behaviour, shared by every type).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/directive-unclosed-in-line (CRLF)",
+    "inputHash": "sha256:ae95a21adb01f24f",
+    "kind": "reject",
+    "reason": "v12 lexed an unclosed `%%{` after a statement as a `%%` comment; v13's preprocess reports UNCLOSED_DIRECTIVE for any `%%{` with no `}%%`, so the map is rejected (core preprocess behaviour, shared by every type).",
+    "owner": "#489",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core",
+    "inputHash": "sha256:4c822bf8d295a2fa",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core (CRLF)",
+    "inputHash": "sha256:e0b5d3ce1065bb44",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "wardley-cases/entities-outside-core (commented)",
+    "inputHash": "sha256:6f8a8a4f8048f612",
+    "kind": "model",
+    "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
+    "owner": "#493",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-in-data",
+    "inputHash": "sha256:9c29fa36fac0c13c",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-own-line",
+    "inputHash": "sha256:f76bb18325c4c10d",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-word-argument",
+    "inputHash": "sha256:aac34c6d2c6b1dbe",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-colon-word",
+    "inputHash": "sha256:d2db7244fa5d65da",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-line-separator",
+    "inputHash": "sha256:8e6875e474f48ca5",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-twice",
+    "inputHash": "sha256:ee0f43d0a1c78edd",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
     "id": "venn-cases/unclosed-directive-line",
     "inputHash": "sha256:85606c74ded53195",
     "kind": "reject",

@@ -34,6 +34,8 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
   // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
   kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
+  // `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
+  treemap: Array.from({ length: 12 }, (_, n) => `cScalePeer${n}`),
   // `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
   venn: Array.from({ length: VENN_SLOTS }, (_, i) => slotVar(i)),
 };
@@ -67,7 +69,8 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one).
+ * must read none (so it is removed as soon as it reads one). Empty since sankey's (#499) and
+ * xychart's (#509) layouts.
  */
 const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
@@ -89,10 +92,14 @@ describe('theme vocabulary usedBy (#207)', () => {
       'pie',
       'quadrant',
       'radar',
+      'sankey',
       'sequence',
       'state',
       'timeline',
+      'treemap',
       'venn',
+      'wardley',
+      'xychart',
     ]);
     for (const type of TYPES) {
       if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);

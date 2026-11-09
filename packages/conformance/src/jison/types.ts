@@ -2,8 +2,8 @@
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
  * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
- * kanban and venn (M5). Pie and gitGraph are Langium in v12 and gate on its tokens instead
- * (D213).
+ * kanban, sankey, xychart and venn (M5). Pie and gitGraph are Langium in v12 and gate on
+ * its tokens instead (D213).
  */
 
 /** The part of a v12 jison lexer the oracle drives. */
@@ -34,7 +34,22 @@ export type HarvestMethod =
    * `<name>.parse`, for each name in `parsers` (the names the specs give v12's jison parser).
    * For specs that build sources in loops, `+` chains or `[…].join('\n')`, which no regex reads.
    */
-  | { kind: 'run'; parsers: readonly string[]; specs: readonly string[] };
+  | {
+      kind: 'run';
+      parsers: readonly string[];
+      specs: readonly string[];
+      /**
+       * Imported helpers the specs pass each source through before `parse`: v12's own
+       * preprocessing, which the oracle runs again on the recorded source. They are stubbed
+       * as the identity, so the recorded source is the text as the spec wrote it.
+       */
+      identity?: readonly string[];
+      /**
+       * The specs read files next to them (`fs.readFileSync(path.resolve(__dirname, f))`):
+       * `fs`, `path` and `__dirname` read them from git at the v12 commit.
+       */
+      readsFiles?: boolean;
+    };
 
 /** What a descriptor's `yy` builder is handed for one run of the lexer. */
 export interface JisonYyContext {
@@ -207,6 +222,37 @@ export const JISON_TYPES = {
       dir: `${V12_DIAGRAMS}/quadrant-chart`,
       docs: 'quadrantChart.md',
       method: { kind: 'run', parsers: ['parser'], specs: ['parser/quadrant.jison.spec.ts'] },
+    },
+  },
+  sankey: {
+    probe: 'sankey\na,b,1',
+    e2e: ['sankey'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/sankey`,
+      docs: 'sankey.md',
+      // Every parse goes through `prepareTextForParsing` (two of them through `cleanupComments`
+      // too), and two read `energy.csv`.
+      method: {
+        kind: 'run',
+        parsers: ['sankey'],
+        specs: ['parser/sankey.spec.ts'],
+        identity: ['prepareTextForParsing', 'cleanupComments'],
+        readsFiles: true,
+      },
+    },
+  },
+  xychart: {
+    probe: 'xychart\n  bar [1]',
+    e2e: ['xychart'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/xychart`,
+      docs: 'xyChart.md',
+      method: {
+        kind: 'run',
+        parsers: ['parser'],
+        // The DB spec calls the DB's setters only, so it adds no source.
+        specs: ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'],
+      },
     },
   },
   venn: {
