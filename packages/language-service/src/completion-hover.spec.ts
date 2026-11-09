@@ -59,6 +59,7 @@ describe('completion', () => {
       'stateDiagram',
       'journey',
       'quadrantChart',
+      'sankey',
       'packet',
       'radar-beta',
       'cynefin-beta',
@@ -69,6 +70,7 @@ describe('completion', () => {
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);
+    expect(labels('san|')).toEqual(['sankey']);
     expect(labels('cyn|')).toEqual(['cynefin-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([

@@ -73,6 +73,16 @@ describe('sankey completion', () => {
     ]);
   });
 
+  it('replaces a quoted name that runs on over a line break only up to that line break', () => {
+    const [text, at] = split(`${rows}Gas,"¦Savings\nand pension",3`);
+    const result = sankeyLanguage.parse(text, { keepTokens: true, probe: at });
+    const items = sankeyLanguage.completions(result.probe!, { text, result });
+    expect(items.map((c) => [c.label, text.slice(c.range.start, c.range.end)])).toEqual([
+      ['Coal', 'Savings'],
+      ['Electricity', 'Savings'],
+    ]);
+  });
+
   it('offers nothing in a value, and not the source of the row as its target', () => {
     expect(complete(`${rows}Gas,Coal,¦`)).toEqual([]);
     expect(complete(`${rows}Coal,¦`)).toEqual(['Electricity']);

@@ -2,7 +2,8 @@
  * The sankey layout's px constants (spec #427 §Layout, pitfall 13): v12 `sankeyRenderer.ts`'s
  * fixed lengths and d3-sankey 0.12.3's tuning constants. No other file in `layout/` writes a
  * length literal (`packages/conformance/src/sankey-layout-literals.spec.ts`); every other
- * length comes from the `sankey` config. Sankey draws SVG only (D320), so there is no cell set.
+ * length comes from the `sankey` config, whose defaults are the schema's (`config.ts`). Sankey
+ * draws SVG only (D320), so there is no cell set.
  */
 
 /** The sankey layout's fixed lengths and factors. */
@@ -41,14 +42,6 @@ export const SANKEY_METRICS: SankeyMetrics = {
   minLinkWidth: 1,
   linkOpacity: 0.5,
 };
-
-/** The `sankey` config's length defaults (v12 `config.schema.yaml` `SankeyDiagramConfig`). */
-export const SANKEY_LENGTH_DEFAULTS = {
-  width: 600,
-  height: 400,
-  nodeWidth: 10,
-  nodePadding: 12,
-} as const;
 
 /** d3-sankey 0.12.3's tuning (`sankey.js`): v12 sets none of these, so d3's defaults hold. */
 export const D3_SANKEY = {

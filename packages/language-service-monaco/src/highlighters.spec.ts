@@ -46,6 +46,7 @@ const DOCS = {
   radar: 'radar-beta\n  axis A, B\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
   kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
+  sankey: 'sankey\n"Solar, roof",Electricity,40.5\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -65,6 +66,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'pie',
       'quadrantChart',
       'radar',
+      'sankey',
       'sequence',
       'state',
       'timeline',

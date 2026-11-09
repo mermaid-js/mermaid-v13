@@ -1236,7 +1236,8 @@ export const configSchema: ConfigSchema = {
     "sankey": {
       "$ref": "#/$defs/SankeyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "packet": {
@@ -5801,14 +5802,18 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 600,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "height": {
           "type": "number",
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "linkColor": {
@@ -5824,21 +5829,35 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "gradient",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`gradient`, `source`, `target` or one CSS colour for every link. A colour that fails the colour check draws the default `gradient` and warns `SANKEY_COLOR_INVALID`."
           }
         },
         "nodeAlignment": {
           "$ref": "#/$defs/SankeyNodeAlignment",
           "default": "justify",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the sankey renderer never did."
           }
         },
         "useMaxWidth": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 documented `false`, but its bundled defaults held `true` and every sankey without the key drew `width=\"100%\"` with a `max-width`; v13 keeps that output. False draws the diagram's own `width` and `height`."
           }
         },
         "showValues": {
@@ -5846,7 +5865,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "prefix": {
@@ -5854,7 +5874,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "suffix": {
@@ -5862,7 +5883,8 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "nodeWidth": {
@@ -5870,7 +5892,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "nodePadding": {
@@ -5878,7 +5902,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else (negative, not a number) lays out with the default and warns `SANKEY_CONFIG_INVALID`, where v12 passed it to d3-sankey as it was."
           }
         },
         "labelStyle": {
@@ -5886,7 +5912,9 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/SankeyLabelStyle",
           "default": "legacy",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unknown value lays out with the default and warns `SANKEY_CONFIG_INVALID`."
           }
         },
         "nodeColors": {
@@ -5896,7 +5924,9 @@ export const configSchema: ConfigSchema = {
             "type": "string"
           },
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A node's entry that fails the colour check is dropped with one `SANKEY_COLOR_INVALID` warning, and the node takes its next default colour, where v12 drew it black."
           }
         }
       }

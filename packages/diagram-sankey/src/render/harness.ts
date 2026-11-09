@@ -6,8 +6,8 @@
  * the theme with its `themeVariables` and its dark half for `theme: 'auto'` (sankey has no
  * theme table), the table measurer, and the stream or tree writer with the theme's gradient and
  * the render's id prefix (for the user-space gradient ids, D391). `mermaid` renders sankey
- * through the registry once T5 (#503) adds the manifest; this renders the plugin alone, with
- * what the public API does not take (a model, a measurer, the writer backing).
+ * through the registry (#503); this renders the plugin alone, with what the public API does not
+ * take (a model, a measurer, the writer backing).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';

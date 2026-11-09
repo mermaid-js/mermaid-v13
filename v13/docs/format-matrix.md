@@ -28,7 +28,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `stateDiagram` | `@mermaid-js/diagram-state` | yes | no |
 | `journey` | `@mermaid-js/diagram-journey` | yes | no |
 | `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |
-| `sankey` | not ported | no | no |
+| `sankey` | `@mermaid-js/diagram-sankey` | yes | no |
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | not ported | no | no |
 | `block` | not ported | no | no |

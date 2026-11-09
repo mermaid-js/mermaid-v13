@@ -13,15 +13,16 @@ import { sankeyCases, sankeyCorpus } from './corpus.ts';
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page
  * strings and the cases, each in every theme and `theme: 'auto'` set as `initialize()` would,
  * and in the default theme under each `linkColor` mode and both label styles (a source's own
- * front matter and directives still win). The manifest is T5's (#503), so sources go through
- * the plugin's own seam, parse → layout → render, with core's render context
- * (`renderSankeyForTest`); sources the parser rejects (cycles, D393; syntax errors) stay out.
+ * front matter and directives still win). Sources go through the plugin's own seam, parse →
+ * layout → render, with core's render context (`renderSankeyForTest`); sources the parser
+ * rejects (cycles, D393; syntax errors) stay out.
  *
  * Properties: well-formed XML, `assertInert` (with the render's style scope, so the user-space
  * gradients are checked as D391's), deterministic, no NaN/Infinity/undefined (D394), no
  * `foreignObject`, no id but `<prefix>-title` and the writer's gradients, every drawn point,
  * link stroke and label box inside the viewBox, every alias declared, and no render warning
- * (the parse's warnings reach `render()` once, through `analyse`, not again here). Round-trip:
+ * (the parse's warnings reach `render()` once, through `analyse`, not again here) but the one
+ * `SANKEY_COLOR_INVALID` for the colour a config plants. Round-trip:
  * each `Node` and `Link` of the AST has exactly one `data-ast` element, its `g.node` or
  * `g.link`, and its range holds its text.
  */
@@ -72,7 +73,8 @@ beforeAll(async () => {
 
 describe('sankey render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, every linkColor mode and both label styles', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(18);
+    // The 18 restored fixtures and the 9 baselines (#503).
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(27);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(rejected.size).toBeLessThan(corpus.length / 2);
     expect(cases.length).toBeGreaterThan(80 * (THEMES.length + CONFIGS.length));
@@ -135,7 +137,7 @@ describe('sankey render properties over the parsed corpus', () => {
     }
   });
 
-  it('writes no id but the title and the gradients, and raises no render warning', () => {
+  it('writes no id but the title and the gradients, and raises no render warning but the planted colour', () => {
     for (const c of cases) {
       const ids = c.tree
         .find((n, t) => t.getAttr(n, 'id') !== undefined)
@@ -147,10 +149,12 @@ describe('sankey render properties over the parsed corpus', () => {
         c.id
       ).toEqual([]);
       expect(ids.includes('title#mermaid-0-title'), c.id).toBe(!!c.r.model.title?.trim());
+      // The one colour the configs plant that fails the colour check: one warning (#503).
+      const planted = (c.r.config.sankey?.nodeColors as Record<string, unknown> | undefined)?.b;
       expect(
-        c.r.warnings.filter((w) => w.code.startsWith('SANKEY_')),
+        c.r.warnings.filter((w) => w.code.startsWith('SANKEY_')).map((w) => w.code),
         c.id
-      ).toEqual([]);
+      ).toEqual(planted === 'url(x)' ? ['SANKEY_COLOR_INVALID'] : []);
     }
   });
 

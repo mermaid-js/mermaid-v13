@@ -44,6 +44,7 @@ import type { SankeyLink, SankeyModel, SankeyNode, SankeyWarning } from '../mode
 import type { SankeyDocument, SankeyField, SankeyLinkNode, SankeyNodeNode } from './ast.ts';
 import { cycleLinks } from './cycles.ts';
 import { LinkIds, nodeAstId } from './ids.ts';
+import { checkLimit } from './limits.ts';
 import { fieldName } from './names.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
@@ -53,6 +54,10 @@ import { drawable, invalidity, numberEnd } from './values.ts';
 export interface SankeyParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's node cap (R-SEC-5): one `NODE_LIMIT` error past it. None when absent. */
+  maxNodes?: number;
+  /** The integrator's link cap (R-SEC-5): one `EDGE_LIMIT` error past it. None when absent. */
+  maxEdges?: number;
 }
 
 export type SankeyParseResult = ParseResult<SankeyModel, SankeyDocument>;
@@ -490,6 +495,7 @@ class SankeyParser {
     const ast = nodeAstId(name);
     this.byName.set(name, this.nodes.length);
     this.nodes.push({ id: name, ast, range: field.range });
+    checkLimit(this.st, 'maxNodes', this.nodes.length, this.options.maxNodes, field.range);
     into.push({ id: ast, type: 'Node', range: field.range, name });
     return this.nodes.length - 1;
   }
@@ -513,6 +519,7 @@ class SankeyParser {
       to,
       valueField: value,
     });
+    checkLimit(this.st, 'maxEdges', this.links.length, this.options.maxEdges, range);
     const link: SankeyLinkNode = {
       id: ast,
       type: 'Link',

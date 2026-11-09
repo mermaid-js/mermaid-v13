@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { detectSankey } from '@mermaid-js/diagram-sankey';
 import { sankeyLanguage, SankeyTokenKind, sankeyTokens } from '@mermaid-js/diagram-sankey/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
@@ -23,14 +22,11 @@ import type { SankeySnapshot } from './v12.ts';
  *   rewrite: `style,b,1 :#f;`, whose last `;` v12 drops only while the line holds `style`);
  * - folding: the body folds from `sankey` over every row v12 read.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until sankey's
- * manifest has its `language` entry (#503); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (sankey's manifest
+ * `language` entry, #503).
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'sankey', id: 'sankey', detector: (t) => detectSankey(t), facet: sankeyLanguage },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['sankey'] });
 
 const key = (r: Range) => `${r.start}:${r.end}`;
 
@@ -155,7 +151,9 @@ describe('sankey symbols, rename and folding through the service match v12', () 
     expect(folds).toBeGreaterThan(600);
   }, 600_000);
 
-  it('gets sankey from an eager row while the manifest has no `language` entry', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'sankey')?.load).toBeUndefined();
+  it('loads the sankey facet from the generated registry row', () => {
+    const row = firstPartyFacets.find((e) => e.type === 'sankey');
+    expect(row?.load).toBeDefined();
+    expect(service.update('x:///s', 'sankey\na,b,1\n').facet?.id).toBe('sankey');
   });
 });

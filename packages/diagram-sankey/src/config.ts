@@ -1,19 +1,25 @@
 /**
- * The `sankey` options the layout reads, each with v12's default (`SankeyDiagramConfig`). The
+ * The `sankey` options, read here for the layout and the renderer, each with the schema's
+ * default (`pnpm gen:config`, the plugin's `configDefaults`: v12's `SankeyDiagramConfig`). The
  * config resolver does not check value types, so a directive can set `"width": "wide"`. A
  * length is read as a finite number of 0 or more, or a numeric string as its number; anything
- * else, and an unknown alignment or label style, falls back to the default. v12 differs (GAPS
- * #499): d3 took `+value`, so a negative `nodePadding` overlapped nodes and a negative
- * `nodeWidth` drew boxes inside out, and a string `nodePadding` was concatenated with v12's
- * `+ 15` before d3 read it. A `nodeColors` entry counts when it is the node's own entry and a
- * string that passes core's colour check: it takes the node out of the Tableau10 slots (v12's
- * `??`). Any other entry counts as absent (spec #427 §Integration: dropped, and the default
- * used), so the node takes its slot; v12 drew such a node, and a link stroked from it, black
- * or not at all (GAPS #502). #503 warns on each dropped or invalid value.
+ * else, an unknown alignment or label style, and a value of the wrong type fall back to the
+ * default with one `SANKEY_CONFIG_INVALID` warning per key. v12 differs (GAPS #499): d3 took
+ * `+value`, so a negative `nodePadding` overlapped nodes and a negative `nodeWidth` drew boxes
+ * inside out, and a string `nodePadding` was concatenated with v12's `+ 15` before d3 read it.
+ *
+ * A `nodeColors` entry counts when it is the node's own entry and a string that passes core's
+ * colour check: it takes the node out of the Tableau10 slots (v12's `??`). Any other entry, and
+ * a `linkColor` that is neither a mode nor a colour, is dropped (spec #427 §Integration) with
+ * one `SANKEY_COLOR_INVALID` warning per render naming each, and the default is drawn: the
+ * node takes its slot, the links the gradient. v12 drew such a node, and a link stroked from
+ * it, black or not at all (GAPS #502).
  */
+import type { Warning } from '@mermaid-js/core';
 import type { SankeyDiagramConfig } from '@mermaid-js/core/config';
 import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
-import { SANKEY_LENGTH_DEFAULTS } from './layout/metrics.ts';
+import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
+import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { SankeyAlignment, SankeyLabelStyle } from './layout/types.ts';
 
 export interface SankeyLayoutConfig {
@@ -30,44 +36,125 @@ export interface SankeyLayoutConfig {
   readonly nodeColors: ReadonlyMap<string, SafeColor>;
 }
 
+/** How links are stroked: a mode, or one colour for every link. */
+export type LinkPaint = 'gradient' | 'source' | 'target' | SafeColor;
+
+type Key = Exclude<keyof SankeyLayoutConfig, 'nodeColors'>;
+
+/** The schema gives every key the layout reads a default (`config.spec.ts` pins it). */
+const DEFAULTS = sankeyConfigDefaults as Pick<SankeyLayoutConfig, Key>;
+
 const ALIGNMENTS: readonly SankeyAlignment[] = ['left', 'right', 'center', 'justify'];
 const LABEL_STYLES: readonly SankeyLabelStyle[] = ['legacy', 'outlined'];
+const MODES: ReadonlySet<string> = new Set(['gradient', 'source', 'target']);
 
-/** A finite number of 0 or more, or a string that reads as one; else `fallback`. */
-function length(value: unknown, fallback: number): number {
+/**
+ * `linkColor` as drawn: a mode is matched before the colour check (`checkColor('gradient')`
+ * passes as a named colour); any other string is one colour for every link when it passes the
+ * check. Undefined when it is neither.
+ */
+export function linkPaint(given: unknown): LinkPaint | undefined {
+  if (typeof given !== 'string') return undefined;
+  return MODES.has(given) ? (given as LinkPaint) : checkColor(given);
+}
+
+const shown = (value: unknown): string =>
+  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
+
+type Reader = (value: unknown) => unknown;
+
+/** A finite number of 0 or more, or a string that reads as one; else undefined. */
+const length: Reader = (value) => {
   let n = Number.NaN;
   if (typeof value === 'number') n = value;
   else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : fallback;
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+};
+const oneOf =
+  (values: readonly string[]): Reader =>
+  (value) =>
+    typeof value === 'string' && values.includes(value) ? value : undefined;
+const ofType =
+  (type: 'boolean' | 'string'): Reader =>
+  (value) =>
+    typeof value === type ? value : undefined;
+
+const LENGTH = [length, 'a number of 0 or more'] as const;
+
+/** Each key the layout reads: how it is read, and how a warning says what it wants. */
+const READERS: Readonly<Record<Key, readonly [Reader, string]>> = {
+  width: LENGTH,
+  height: LENGTH,
+  nodeWidth: LENGTH,
+  nodePadding: LENGTH,
+  nodeAlignment: [oneOf(ALIGNMENTS), `one of ${ALIGNMENTS.join(', ')}`],
+  showValues: [ofType('boolean'), 'true or false'],
+  prefix: [ofType('string'), 'a string'],
+  suffix: [ofType('string'), 'a string'],
+  labelStyle: [oneOf(LABEL_STYLES), `one of ${LABEL_STYLES.join(', ')}`],
+};
+
+/** `nodeColors`' entries that pass the colour check; each other one is added to `dropped`. */
+function nodeColours(
+  given: unknown,
+  dropped: string[],
+  warn: ((w: Warning) => void) | undefined
+): Map<string, SafeColor> {
+  const colours = new Map<string, SafeColor>();
+  if (given === undefined) return colours;
+  if (given === null || typeof given !== 'object' || Array.isArray(given)) {
+    warn?.({
+      code: SANKEY_CONFIG_INVALID,
+      message: `sankey.nodeColors is ${shown(given)}, not an object of node colours; using none`,
+      path: 'sankey.nodeColors',
+    });
+    return colours;
+  }
+  for (const [id, value] of Object.entries(given)) {
+    const colour = typeof value === 'string' ? checkColor(value) : undefined;
+    if (colour) colours.set(id, colour);
+    else dropped.push(`nodeColors.${id}`, shown(value));
+  }
+  return colours;
 }
 
-function oneOf<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
-  return values.includes(value as T) ? (value as T) : fallback;
-}
-
-/** The layout's options from the resolved `sankey` section. */
+/**
+ * The layout's options from the resolved `sankey` section, each checked. With `warn`, each key
+ * that falls back warns once, and every dropped colour (`linkColor` too, which the renderer
+ * reads) is named in one `SANKEY_COLOR_INVALID`.
+ */
 export function sankeyLayoutConfig(
-  section: Readonly<SankeyDiagramConfig> | Readonly<Record<string, unknown>> | undefined
+  section: Readonly<SankeyDiagramConfig> | Readonly<Record<string, unknown>> | undefined,
+  warn?: (w: Warning) => void
 ): SankeyLayoutConfig {
   const s = (section ?? {}) as Readonly<Record<string, unknown>>;
-  const d = SANKEY_LENGTH_DEFAULTS;
-  const colours = new Map<string, SafeColor>();
-  const given = s.nodeColors;
-  if (given !== null && typeof given === 'object')
-    for (const [id, value] of Object.entries(given)) {
-      const colour = typeof value === 'string' ? checkColor(value) : undefined;
-      if (colour) colours.set(id, colour);
-    }
-  return {
-    width: length(s.width, d.width),
-    height: length(s.height, d.height),
-    nodeWidth: length(s.nodeWidth, d.nodeWidth),
-    nodePadding: length(s.nodePadding, d.nodePadding),
-    nodeAlignment: oneOf(s.nodeAlignment, ALIGNMENTS, 'justify'),
-    showValues: typeof s.showValues === 'boolean' ? s.showValues : true,
-    prefix: typeof s.prefix === 'string' ? s.prefix : '',
-    suffix: typeof s.suffix === 'string' ? s.suffix : '',
-    labelStyle: oneOf(s.labelStyle, LABEL_STYLES, 'legacy'),
-    nodeColors: colours,
-  };
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(READERS) as Key[]) {
+    const [read, wants] = READERS[key];
+    const value = s[key];
+    const got = value === undefined ? undefined : read(value);
+    out[key] = got ?? DEFAULTS[key];
+    if (value !== undefined && got === undefined)
+      warn?.({
+        code: SANKEY_CONFIG_INVALID,
+        message: `sankey.${key} is ${shown(value)}, not ${wants}; using the default ${shown(DEFAULTS[key])}`,
+        path: `sankey.${key}`,
+      });
+  }
+  // Pairs: the key under `sankey`, and the value shown.
+  const dropped: string[] = [];
+  if (s.linkColor !== undefined && linkPaint(s.linkColor) === undefined)
+    dropped.push('linkColor', shown(s.linkColor));
+  const nodeColors = nodeColours(s.nodeColors, dropped, warn);
+  if (dropped.length > 0) {
+    const named: string[] = [];
+    for (let i = 0; i < dropped.length; i += 2)
+      named.push(`sankey.${dropped[i]} ${dropped[i + 1]}`);
+    warn?.({
+      code: SANKEY_COLOR_INVALID,
+      message: `Not a colour, so the default is drawn instead: ${named.join(', ')}`,
+      path: `sankey.${dropped[0]}`,
+    });
+  }
+  return { ...(out as Pick<SankeyLayoutConfig, Key>), nodeColors };
 }

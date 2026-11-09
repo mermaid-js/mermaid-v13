@@ -25,8 +25,12 @@ import type {
   SankeyNodeLayout,
 } from './types.ts';
 
-/** What the layout reads from the render context. */
-export type SankeyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'>;
+/**
+ * What the layout reads from the render context. With `warn`, the config's problems are
+ * reported (`SANKEY_CONFIG_INVALID`, `SANKEY_COLOR_INVALID`); the plugin always passes it.
+ */
+export type SankeyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
+  Partial<Pick<RenderContext, 'warn'>>;
 
 const ROUND = 100;
 
@@ -66,7 +70,7 @@ function union(boxes: readonly Rect[]): Rect {
 
 /** Lays out a sankey diagram in px. */
 export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): SankeyLayout {
-  const config = sankeyLayoutConfig(ctx.config.sankey);
+  const config = sankeyLayoutConfig(ctx.config.sankey, ctx.warn);
   const m = SANKEY_METRICS;
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),

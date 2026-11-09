@@ -1,7 +1,6 @@
 {
   "name": "@mermaid-js/diagram-sankey",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "Sankey diagram plugin for Mermaid: parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
@@ -45,5 +44,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "sankey",
+    "types": [
+      "sankey"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "sankey",
+    "language": "./dist/language.js"
   }
 }

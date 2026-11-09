@@ -120,6 +120,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'pie',
       'quadrant-chart',
       'radar',
+      'sankey',
       'sequence',
       'state-diagram-v2',
       'timeline',

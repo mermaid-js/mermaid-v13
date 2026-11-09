@@ -366,6 +366,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gitGraph.nodeLabel.y` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `sankey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -2037,6 +2038,48 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
 
+## Sankey
+
+- **Detection:** `sankey` and `sankey-beta` are detected by v12's case-sensitive detector with
+  no word boundary, between `quadrantChart` and `packet` as in v12. So `sankeyx` is detected as
+  a sankey diagram and then rejected as a syntax error (`SYNTAX`), and `Sankey` is not detected
+  at all (`UNSUPPORTED_DIAGRAM`), as in v12. The language service, CodeMirror and Monaco know it.
+- **Syntax** is v12's CSV: a differential test runs v12 and v13 over every e2e fixture and the
+  v12 spec and docs examples, and the grammar is in [syntax/sankey.md](./syntax/sankey.md).
+  Every error is reported, not only the first, with messages in words and a range at the field
+  (R-PARSE-4). Names stay printable ASCII, quotes and `""` as in v12.
+- **Cycles** (D393): a self-link or any cycle parsed in v12 and then threw d3-sankey's bare
+  `circular link` at render. It is now a parse error at the cycle's first row,
+  `Sankey diagrams cannot have circular links, and "<node>" is part of one.`, one per group of
+  nodes that reach each other; the diagram is still rejected (`SYNTAX`), and the language
+  service reports it.
+- **Values** (D394): a value that is not a number, negative or infinite counts as 0, where d3
+  drew `NaN` or negative boxes, with one `SANKEY_INVALID_VALUE` warning per render naming every
+  such row. Zero links are still drawn 1 px wide, as in v12. A value with text after its number
+  (`1 2`, `1;`) is still read by `parseFloat`, with one `SANKEY_VALUE_TRAILING_TEXT` warning.
+- **Labels** (D395) read as v12 drew them, one line `<name> <value>`, and the front-matter
+  `title` is the accessible name, never drawn (D396): see
+  [Sankey SVG structure](#sankey-svg-structure).
+- **Config.** The `sankey` section is honoured with v12's defaults: `width` (600), `height`
+  (400), `linkColor` (`gradient`), `nodeAlignment` (`justify`), `nodeWidth` (10), `nodePadding`
+  (12), `showValues` (true), `prefix` and `suffix` (empty), `labelStyle` (`legacy`),
+  `nodeColors` (none) and `useMaxWidth`, whose default is `true`: v12's schema documented
+  `false`, but its bundled defaults held `true`, so every sankey without the key drew
+  `width="100%"` with a `max-width`, and v13 keeps that. A length is a number of 0 or more or a
+  numeric string as its number; a negative or non-numeric length, an unknown `nodeAlignment` or
+  `labelStyle` and a value of the wrong type lay out with the default and warn
+  `SANKEY_CONFIG_INVALID`, once per key (v12 passed them to d3 as they were: a negative
+  `nodePadding` overlapped nodes, and a string one was concatenated with 15). A `linkColor` or
+  `nodeColors` value that fails the colour check is dropped, the default drawn (the gradient,
+  or the node's next Tableau10 colour), with one `SANKEY_COLOR_INVALID` warning per render
+  naming each. `useWidth` is ignored (v12's sankey never read it), and `look` as everywhere
+  (D153).
+- **Text output** (`format: 'ascii'`) throws `UnsupportedFormatError` (D320), and sankey is not
+  sketched under `look: handDrawn`, as v12 never sketched it (D301).
+- **Limits** (R-SEC-5): a diagram may have up to `limits.maxNodes` nodes (10,000) and
+  `limits.maxEdges` links (5,000); over either, render rejects with a `LIMIT` `MermaidError`.
+  v12 had no such limit. Only the integrator can raise them ([Limits](#limits)).
+
 ## Sankey SVG structure
 
 What changed in the sankey's SVG compared with v12 (spec #427, D391, D392, D395–D397). v12's
@@ -2054,7 +2097,7 @@ first-appearance order and links in row order, as in v12.
 | No title: the front-matter `title` was neither drawn nor the accessible name | Still not drawn; when the front matter has a `title`, it becomes `<title id="<render id>-title">` and the root's `aria-labelledby`, since sankey has no `accTitle` syntax. No other type does this yet (D133) | D396 |
 | No source mapping | `data-id` and `data-ast` on each `g.node` (`node:<name>`) and `g.link` (`link:<source>-><target>`, `@2`, `@3` for repeated rows); labels carry `data-id` only (`%`, `>`, `@` and `#` in names percent-encoded) | One `data-ast` element per AST node (R-PARSE-8, D397) |
 | `linkColor: gradient` (the default): a `<linearGradient gradientUnits="userSpaceOnUse" x1 x2>` with stops at `0%`/`100%` inside each `g.link`, before its path | The same gradient (from the source's colour at its right edge to the target's at its left edge), written by the writer into the root's `<defs>` with `y1="0" y2="0"` and stops at `0`/`1`, its id `<scope>-g-<hash of its ends and colours>`: links with the same ends and colours share one, and two diagrams on a page never collide | D391 |
-| `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient (#503 adds its warning) | R-SEC-2 |
+| `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient, with one `SANKEY_COLOR_INVALID` warning | R-SEC-2 |
 | `style="mix-blend-mode: multiply"` on each `g.link`, and again in `.link` in the `<style>` | `style="mix-blend-mode:multiply"` on each `g.link` only: crossing links still darken where they overlap, and on dark pages too | D392 |
 | Labels: `id\n<prefix><value><suffix>` set with d3 `.text()`, drawn on one line; `dy="0em"`, or `dy="0.35em"` with `showValues: false`; `fill` from the root `<style>` (`textColor`) | The same one line with a blank between the name and the value (D395); `dy` in px (`0`, or `4.9`, 0.35 × 14); `fill` on `g.node-labels`, the theme's `textColor` | D395, D152 |
 | `labelStyle: outlined`: `.sankey-label-bg` stroked `mainBkg` (`|| background || '#fff'`), 4 px, round joins, `paint-order: stroke`, under `.sankey-label-fg` filled `textColor` | The background text carries `stroke` (`mainBkg`), `stroke-width="4"` and `stroke-linejoin="round"` as attributes, with no `paint-order`: the foreground text drawn over it gives the same picture | Allow-list (no `paint-order`), D215 |

@@ -124,8 +124,9 @@ describe('sankey lexer parity with mermaid@12 (jison)', () => {
       `lexer parity: ${compared} of ${items.length} sources lexed by v12, ${stalls.length} stall\n`
     );
     // Every e2e fixture, every harvested spec and syntax-page string and every case (the
-    // line-separator ones among them) reaches the lexer.
-    expect(e2e).toBe(18);
+    // line-separator ones among them) reaches the lexer: 18 restored e2e fixtures and 9
+    // baselines (#503).
+    expect(e2e).toBe(27);
     expect(specs).toBe(14);
     expect(cases).toBe(130);
     expect(separators).toBe(9);
