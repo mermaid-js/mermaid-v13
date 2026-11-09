@@ -8,6 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { IshikawaTokenKind, JISON_NAMES } from '@mermaid-js/diagram-ishikawa';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { body, crlf, tabs } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
@@ -88,3 +89,38 @@ export async function ishikawaGateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/**
+ * The gate's generated variants for the parity suite (the e2e fixtures, spec strings and cases
+ * themselves are in the suite's dirs and files), ids prefixed `ishikawa-gate/`.
+ */
+export async function ishikawaParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await ishikawaCorpus()), ...ishikawaCases()].map((c) => c.id));
+  return (await ishikawaGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `ishikawa-gate/${item.id}`, source: item.source }));
+}
+
+/**
+ * Names no message may hold (R-ERR-5): v12's jison terminals (all capitals, `ISHIKAWA` as well:
+ * the keyword is shown in lower case), v13's compound kind names (`CommentLine`, `SpaceList`,
+ * …), and the compound rule names of v12's `ishikawa.jison` (`spaceLines`); `start`, `stop`,
+ * `document` and `statement` are plain words.
+ */
+export const INTERNAL_NAMES = new RegExp(
+  `\\b(?:${[
+    ...Object.values(JISON_NAMES).filter((n) => /_|^[A-Z]{2,}$/.test(n)),
+    ...Object.keys(IshikawaTokenKind).filter((n) => /^[A-Z][a-z]+[A-Z]/.test(n)),
+    'spaceLines',
+  ].join('|')})\\b`
+);
+
+/**
+ * A message without the author's own text it quotes (what was found, the causes a warning
+ * names), which may hold any word.
+ */
+export const withoutQuotes = (message: string): string =>
+  message
+    .replace(/got `[\s\S]*?`/g, 'got `…`')
+    .replace(/`[^`]*` at line/g, '`…` at line')
+    .replace(/after `[^`]*`/g, 'after `…`');

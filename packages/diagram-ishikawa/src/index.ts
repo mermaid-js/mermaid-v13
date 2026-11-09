@@ -1,7 +1,15 @@
 /**
- * `@mermaid-js/diagram-ishikawa`: the ishikawa (fishbone) diagram plugin (spec #519). The
- * lexer is here; the parser, model, layout, renderer, plugin export and manifest land with the
- * other tickets of that spec.
+ * `@mermaid-js/diagram-ishikawa`: the ishikawa (fishbone) diagram plugin (spec #519): the
+ * parser, its model and AST, detection, the lexer, and the codes of the warnings it raises. The
+ * layout, renderer, plugin export and manifest land with the other tickets of that spec.
  */
-export { ishikawaTokens, IshikawaTokenKind, JISON_NAMES } from './parser/index.ts';
-export type { IshikawaToken } from './parser/index.ts';
+export {
+  detectIshikawa,
+  ishikawaTokens,
+  IshikawaTokenKind,
+  JISON_NAMES,
+  parseIshikawa,
+} from './parser/index.ts';
+export type * from './parser/index.ts';
+export type * from './model.ts';
+export { ISHIKAWA_EMPTY, ISHIKAWA_INDENT_CLAMPED } from './codes.ts';

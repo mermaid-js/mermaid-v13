@@ -85,7 +85,7 @@ describe('ishikawa lexer parity with mermaid@12 (jison)', () => {
     // syntax-page string and case reaches the lexer, the one case v12 does not detect aside.
     expect(e2e).toBe(33);
     expect(specs).toBe(4);
-    expect(cases).toBe(81);
+    expect(cases).toBe(104);
     // The only sources v12 does not lex: `ishikawas` (no word boundary after the keyword) and
     // its variants, and commented copies of a body of two lines or fewer, where `%% cut` goes
     // through the middle of the header.

@@ -326,5 +326,179 @@
   {
     "id": "ishikawa-cases/vertical-tab-and-form-feed",
     "source": "ishikawa-beta\n  P\n\u000bA\n\f\fa1"
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-line",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa review\n  B",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-lines",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa x\n  B\n  Ishikawa-beta y\n  C",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-unindented-lines",
+    "source": "ishikawa-beta\nP\n  A\nishikawa\n  B\nISHIKAWA again\n  C",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-on-header-line",
+    "source": "ishikawa-beta ishikawa\nP\n  A",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-header-twice",
+    "source": "ishikawa-beta\nishikawa-beta\nP\n  A\n  B",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-line-after-header",
+    "source": "ishikawa-beta\n\nP\n  A\n  B",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-lines-after-header",
+    "source": "ishikawa-beta\n\n \n\t\nP\n  A",
+    "errors": [["UNEXPECTED", 5]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-then-blank-line",
+    "source": "ishikawa-beta\nP\n  A\n%%\n\n  B\n  C",
+    "errors": [["UNEXPECTED", 6]],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-then-blank-lines-twice",
+    "source": "ishikawa-beta\nP\n  A\n%%\n\n  B\n%%\n\n\n  C\n  D",
+    "errors": [
+      ["UNEXPECTED", 6],
+      ["UNEXPECTED", 10]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-after-header-and-comment-pairs",
+    "source": "ishikawa-beta\n\nP\n  A\n%%\n\n  B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-separator-ends-header-comment",
+    "source": "ishikawa-beta %% c P\n  A",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-separator-ends-header-comment-then-keyword",
+    "source": "ishikawa-beta %% c P\n  A\n  ishikawa\n  B",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header",
+    "source": "ishikawa",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header-beta",
+    "source": "ishikawa-beta",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header-after-comment-lines",
+    "source": "%%\nishikawa",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-mixed",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa\n  B\n%%\n\n  C\n  ishikawa-beta\n  D",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 8],
+      ["UNEXPECTED", 9]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-many-errors",
+    "source": "ishikawa-beta\n\nP\n  ishikawa\n  A\n%%\n\n  B\nishikawa-beta\n  C\n%%\n\n  D\n  ishikawa x\n  E",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 8],
+      ["UNEXPECTED", 9],
+      ["UNEXPECTED", 13],
+      ["UNEXPECTED", 14]
+    ],
+    "keeps": ["A", "B", "C", "D", "E"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-deep-causes",
+    "source": "ishikawa-beta\nP\n  A\n    a1\n    ishikawa\n    a2\n      ishikawa-beta\n  B",
+    "errors": [
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "a1", "a2", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-tab-indent",
+    "source": "ishikawa-beta\nP\n\tA\n\tishikawa\n\tB",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-crlf",
+    "source": "ishikawa-beta\r\nP\r\n  A\r\n  ishikawa\r\n  B\r\n",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-blank-crlf",
+    "source": "ishikawa-beta\r\nP\r\n  A\r\n%%\r\n\r\n  B\r\n",
+    "errors": [["UNEXPECTED", 6]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-each-line",
+    "source": "ishikawa-beta\nP\n  ishikawa\n  ishikawa\n  ishikawa\n  A",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-after-header-keyword-later",
+    "source": "ishikawa-beta\n\nP\n  A\n  ishikawa-beta\n  B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B"]
   }
 ]

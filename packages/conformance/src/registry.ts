@@ -4,6 +4,8 @@ import { cynefinAdapter } from './cynefin/v13.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { infoAdapter } from './info/v13.ts';
+import { ishikawaParityCorpus } from './ishikawa/corpus.ts';
+import { ishikawaAdapter } from './ishikawa/v13.ts';
 import { ganttAdapter } from './gantt/v13.ts';
 import { gitGraphAdapter } from './gitgraph/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
@@ -182,6 +184,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: ishikawaAdapter,
+    corpusDirs: ['e2e/diagrams/ishikawa'],
+    corpusFiles: [
+      'packages/conformance/corpus/ishikawa-v12-specs.json',
+      'packages/conformance/corpus/ishikawa-cases.json',
+    ],
+    corpus: ishikawaParityCorpus,
   },
 ];
 

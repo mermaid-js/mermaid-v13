@@ -293,6 +293,19 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'ishikawa',
+    title: 'Ishikawa diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Both `SPACELINE` rules: the lexer keeps a kind per rule (a comment, a blank run).
+      unnamed: {
+        CommentLine: { mode: 'INITIAL', pattern: '\\s*%%.*', terminal: 'SPACELINE' },
+        SpaceLine: { mode: 'INITIAL', pattern: '[\\s]+[\\n]', terminal: 'SPACELINE' },
+      },
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-ishikawa",
   "version": "0.0.0",
   "private": true,
-  "description": "Ishikawa (fishbone) diagram plugin for Mermaid: lexer (parser, model, layout and renderer to follow).",
+  "description": "Ishikawa (fishbone) diagram plugin for Mermaid: parser, model and AST (layout and renderer to follow).",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -21,7 +21,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*"
