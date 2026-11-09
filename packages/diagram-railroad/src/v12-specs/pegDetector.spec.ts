@@ -6,7 +6,6 @@
 // cspell:disable
 import { describe, it, expect } from 'vitest';
 import { railroadPeg } from './adapter.ts';
-// skipped: should load the diagram — v12 drew with its renderer, which lands with T4 (#613)
 describe('PEG Detector', () => {
   it('should have correct id', () => {
     expect(railroadPeg.id).toBe('railroadPeg');
@@ -29,7 +28,7 @@ describe('PEG Detector', () => {
     expect(railroadPeg.detector('flowchart TD\nA --> B')).toBe(false);
   });
 
-  it.skip('should load the diagram', async () => {
+  it('should load the diagram', async () => {
     const result = await railroadPeg.loader();
     expect(result.id).toBe('railroadPeg');
     expect(result.diagram).toBeDefined();

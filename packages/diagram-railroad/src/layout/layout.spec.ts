@@ -37,9 +37,8 @@ const paths = (r: RailroadRuleLayout, kind: 'choice' | 'repetition' | 'optional'
 /**
  * v12's renderer spec (`railroadRenderer.spec.ts`, 6 cases), on the layout: the same sources and
  * the same measurements (8 px a character, 16 px high), and its exact path strings in v12's
- * `PathBuilder` format, compared whole where v12 checked a part. The DOM checks (the `svg`'s
- * `width` and `max-width`) are the renderer's (T4, #613): the ported file
- * `src/v12-specs/railroadRenderer.spec.ts` stays skipped until then.
+ * `PathBuilder` format, compared whole where v12 checked a part. The ported file
+ * `src/v12-specs/railroadRenderer.spec.ts` runs the same cases on the rendered SVG (T4, #613).
  *
  * D514's changes do not reach these cases: v12's spec measurer ignores the weight, and every
  * branch here is at least `2r` (22 px) from its main line. Listed differences: none.

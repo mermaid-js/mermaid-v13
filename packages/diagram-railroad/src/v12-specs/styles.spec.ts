@@ -6,7 +6,7 @@
 // cspell:disable
 import { beforeEach, describe, it, expect } from 'vitest';
 import { configApi, getStyles, themes } from './adapter.ts';
-// skipped: Railroad Styles — v12's `getStyles` CSS; v13 writes no `<style>` (R-SEC-2) and the theme table lands with T4 (#613)
+// skipped: Railroad Styles — v12's `getStyles` CSS text; v13 writes no `<style>` (R-SEC-2) but presentation attributes, and the same colour and font precedence (config key, then `themeVariables.railroad.*`, then the shared variable) is checked on the rendered SVG in `src/render/render.spec.ts` (T4, #613)
 describe.skip('Railroad Styles', () => {
   beforeEach(() => {
     configApi.setSiteConfig({});

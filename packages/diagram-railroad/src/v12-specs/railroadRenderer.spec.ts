@@ -5,8 +5,7 @@
 // @ts-nocheck
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db, irParser as parser, renderer, reset } from './adapter.ts';
-// skipped: Railroad Renderer — v12's renderer, read through the DOM it drew; the renderer lands with T4 (#613). Its geometry (the 6 cases' path strings and positions) is checked on the layout in `src/layout/layout.spec.ts` (T3, #612)
+import { db, document, irParser as parser, renderer, reset, SVGElement } from './adapter.ts';
 const diagramId = 'railroad-test';
 
 const stubSvgTextMeasurement = (): void => {
@@ -25,7 +24,7 @@ const stubSvgTextMeasurement = (): void => {
   });
 };
 
-describe.skip('Railroad Renderer', () => {
+describe('Railroad Renderer', () => {
   beforeEach(() => {
     reset();
     db.clear();

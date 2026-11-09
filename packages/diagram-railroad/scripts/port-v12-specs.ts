@@ -4,7 +4,8 @@
  * spec, the renderer and styles specs, and the parser package's `railroad.test.ts`. The spec
  * bodies are copied unchanged from the last v12 commit; only imports are rewritten (the vitest
  * import is kept), and tests listed in `SKIP` (with a reason) are turned into `it.skip` (or
- * `describe.skip`).
+ * `describe.skip`). `railroadRenderer.spec.ts` (T4, #613) draws through the v13 layout and
+ * renderer, read back through the adapter's `document` shim.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-railroad port:v12-specs` (also runs prettier).
  */
@@ -60,7 +61,7 @@ const SOURCES: Source[] = [
   {
     file: `${DIR}/railroadRenderer.spec.ts`,
     name: 'railroadRenderer.spec.ts',
-    adapter: 'db, irParser as parser, renderer, reset',
+    adapter: 'db, document, irParser as parser, renderer, reset, SVGElement',
   },
   {
     file: `${DIR}/styles.spec.ts`,
@@ -74,25 +75,17 @@ const SOURCES: Source[] = [
   },
 ];
 
-const RENDERER = 'v12 drew with its renderer, which lands with T4 (#613)';
-const LAYOUT =
-  "v12's renderer, read through the DOM it drew; the renderer lands with T4 (#613). Its geometry (the 6 cases' path strings and positions) is checked on the layout in `src/layout/layout.spec.ts` (T3, #612)";
 const STYLES =
-  "v12's `getStyles` CSS; v13 writes no `<style>` (R-SEC-2) and the theme table lands with T4 (#613)";
+  "v12's `getStyles` CSS text; v13 writes no `<style>` (R-SEC-2) but presentation attributes, and the same colour and font precedence (config key, then `themeVariables.railroad.*`, then the shared variable) is checked on the rendered SVG in `src/render/render.spec.ts` (T4, #613)";
 const SANITIZE =
   "v12's DB ran DOMPurify on text; v13 keeps text as written and never reads it as HTML (R-SEC-2), and the oracle's DOMPurify is the identity, so parity shows no other change";
 
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
 export const SKIP: Record<string, Record<string, string>> = {
-  'railroadDetector.spec.ts': { 'should return diagram with renderer': RENDERER },
-  'ebnfDetector.spec.ts': { 'should load the diagram': RENDERER },
-  'abnfDetector.spec.ts': { 'should load the diagram': RENDERER },
-  'pegDetector.spec.ts': { 'should load the diagram': RENDERER },
   'railroadDb.spec.ts': {
     'should sanitize titles before storing them': SANITIZE,
     'should sanitize rule names and terminal values at the db boundary': SANITIZE,
   },
-  'railroadRenderer.spec.ts': { 'Railroad Renderer': LAYOUT },
   'styles.spec.ts': { 'Railroad Styles': STYLES },
 };
 

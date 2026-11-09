@@ -6,7 +6,6 @@
 // cspell:disable
 import { describe, it, expect } from 'vitest';
 import { railroad } from './adapter.ts';
-// skipped: should return diagram with renderer — v12 drew with its renderer, which lands with T4 (#613)
 describe('Railroad Detector', () => {
   it('should have correct id', () => {
     expect(railroad.id).toBe('railroad');
@@ -76,7 +75,7 @@ describe('Railroad Detector', () => {
       expect(result.diagram.db).toBeDefined();
     });
 
-    it.skip('should return diagram with renderer', async () => {
+    it('should return diagram with renderer', async () => {
       const result = await railroad.loader();
       expect(result.diagram.renderer).toBeDefined();
     });

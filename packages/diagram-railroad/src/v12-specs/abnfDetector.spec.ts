@@ -6,7 +6,6 @@
 // cspell:disable
 import { describe, it, expect } from 'vitest';
 import { railroadAbnf } from './adapter.ts';
-// skipped: should load the diagram — v12 drew with its renderer, which lands with T4 (#613)
 describe('ABNF Detector', () => {
   it('should have correct id', () => {
     expect(railroadAbnf.id).toBe('railroadAbnf');
@@ -29,7 +28,7 @@ describe('ABNF Detector', () => {
     expect(railroadAbnf.detector('flowchart TD\nA --> B')).toBe(false);
   });
 
-  it.skip('should load the diagram', async () => {
+  it('should load the diagram', async () => {
     const result = await railroadAbnf.loader();
     expect(result.id).toBe('railroadAbnf');
     expect(result.diagram).toBeDefined();

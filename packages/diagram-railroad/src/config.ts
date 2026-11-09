@@ -5,11 +5,15 @@
  * v12's default, with no warning (`sanitizeNumberValue`, `styles.ts:103-112`).
  *
  * `fontSize` and `fontFamily` have no default (D515): unset, the theme's `fontSize` and
- * `fontFamily` are used. A size must be above 0 (v12's `parseThemeFontSize`); a family must be a
- * non-empty string. T5 (#615) moves the keys to `honoured`, generates the section defaults and
- * adds the `RAILROAD_CONFIG_INVALID` warning for a font or colour that fails core's checks.
+ * `fontFamily` are used. A size must be above 0 (v12's `parseThemeFontSize`); a family must pass
+ * core's style check. The colour keys have no default either: unset, the theme variable's colour
+ * is drawn (D516). A colour or font that fails core's checks is dropped with one
+ * `RAILROAD_CONFIG_INVALID` (the renderer raises it). T5 (#615) moves the keys to `honoured` and
+ * generates the section defaults.
  */
+import type { Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
 
 /** The `railroad` lengths the layout reads, every one set. */
 export interface RailroadLayoutConfig {
@@ -68,16 +72,93 @@ export interface RailroadFontOverride {
   readonly size?: number;
 }
 
-/** `fontFamily` and `fontSize` from the resolved `railroad` section, where usable. */
+/** A `font-family` value that passes core's style check, as the writer takes it. */
+export function checkFontFamily(value: unknown): SafeValue | undefined {
+  if (typeof value !== 'string' || value.trim() === '') return undefined;
+  return checkStyle([`font-family:${value.trim()}`]).text['font-family'] as SafeValue | undefined;
+}
+
+/**
+ * `fontFamily` and `fontSize` from the resolved `railroad` section, where usable: a family that
+ * passes core's style check (the renderer writes it), a size above 0.
+ */
 export function railroadFontOverride(
   section: Readonly<Record<string, unknown>> | undefined
 ): RailroadFontOverride {
   const given = section ?? {};
-  const family = typeof given.fontFamily === 'string' ? given.fontFamily.trim() : '';
+  const family = checkFontFamily(given.fontFamily);
   const size = configNumber(given.fontSize);
   return {
-    ...(family === '' ? {} : { family }),
+    ...(family === undefined ? {} : { family }),
     ...(Number.isFinite(size) && size > 0 ? { size } : {}),
+  };
+}
+
+/**
+ * The `railroad` colour keys the renderer draws and the theme variable each one beats (D515,
+ * D516): v12's style keys, as `themeVariables.railroad.*` names them too. v12's three `comment*`
+ * keys style nothing that is drawn.
+ */
+export const RAILROAD_COLOUR_KEYS = {
+  terminalFill: 'railroadTerminalFill',
+  terminalStroke: 'railroadTerminalStroke',
+  terminalTextColor: 'railroadTerminalTextColor',
+  nonTerminalFill: 'railroadNonTerminalFill',
+  nonTerminalStroke: 'railroadNonTerminalStroke',
+  nonTerminalTextColor: 'railroadNonTerminalTextColor',
+  lineColor: 'railroadLineColor',
+  markerFill: 'railroadMarkerFill',
+  specialFill: 'railroadSpecialFill',
+  specialStroke: 'railroadSpecialStroke',
+  ruleNameColor: 'railroadRuleNameColor',
+} as const;
+
+export type RailroadColourKey = keyof typeof RAILROAD_COLOUR_KEYS;
+
+/** The colours the `railroad` section sets that pass core's colour check, key by key. */
+export function railroadColourOverrides(
+  section: Readonly<Record<string, unknown>> | undefined
+): Partial<Record<RailroadColourKey, SafeColor>> {
+  const given = section ?? {};
+  const out: Partial<Record<RailroadColourKey, SafeColor>> = {};
+  for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
+    const value = given[key];
+    const colour = typeof value === 'string' ? checkColor(value.trim()) : undefined;
+    if (colour) out[key] = colour;
+  }
+  return out;
+}
+
+/** A `railroad` colour or font the renderer cannot use (D515). */
+export const RAILROAD_CONFIG_INVALID = 'RAILROAD_CONFIG_INVALID';
+
+const shown = (v: unknown): string => (typeof v === 'string' ? JSON.stringify(v) : String(v));
+
+/**
+ * One `RAILROAD_CONFIG_INVALID` naming every colour or font key of the `railroad` section that
+ * is set but unusable (D515), or none. Each such key is drawn with the theme's value, where v12
+ * fell back silently. A length that is not a number of 0 or more falls back silently, as in v12.
+ */
+export function railroadConfigWarning(
+  section: Readonly<Record<string, unknown>> | undefined
+): Warning | undefined {
+  const given = section ?? {};
+  const dropped: string[] = [];
+  const colours = railroadColourOverrides(given);
+  for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
+    if (given[key] !== undefined && colours[key] === undefined)
+      dropped.push(`railroad.${key} ${shown(given[key])}`);
+  }
+  const font = railroadFontOverride(given);
+  if (given.fontFamily !== undefined && font.family === undefined)
+    dropped.push(`railroad.fontFamily ${shown(given.fontFamily)}`);
+  if (given.fontSize !== undefined && font.size === undefined)
+    dropped.push(`railroad.fontSize ${shown(given.fontSize)}`);
+  if (dropped.length === 0) return undefined;
+  return {
+    code: RAILROAD_CONFIG_INVALID,
+    message: `${dropped.join(', ')}: not usable; using the theme's value`,
+    path: dropped[0]!.split(' ')[0]!,
   };
 }
 
