@@ -1,5 +1,6 @@
 /**
- * The block parser's public surface (so far): the lexer gated against v12's jison lexer.
+ * The block parser's public surface: the parser, detection, and the lexer gated against v12's
+ * jison lexer.
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,11 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as BlockTokenKind } from './tokens.ts';
+export { MAX_SPACE_CELLS, MAX_SPAN } from './builder.ts';
+export { parseBlock } from './parser.ts';
+export type { BlockParseOptions, BlockParseResult } from './parser.ts';
+export { detectBlock } from './detect.ts';
+export type * from './ast.ts';
 
 export interface BlockToken {
   /** A `BlockTokenKind` or a shared `Kind`. */

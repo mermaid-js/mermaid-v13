@@ -2402,3 +2402,26 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## Block diagram
+
+- **Syntax** is v12's (the grammar is in [syntax/block.md](./syntax/block.md)): line breaks
+  separate nothing, ids take `;`, `,`, `.`, `|`, `%`, `#` and Unicode, labels are quoted, and
+  every error is reported, not only the first, with messages in words (R-PARSE-4). What v12
+  rejected is still rejected, except `style` (below).
+- **Model fixes** (D442). An `a --> b --> c` chain keeps `a`, `b` and the first edge (v12 drew
+  a block `undefined` and only `→ c`). A `class` written before its block no longer hides the
+  block. `class a, b` gives `b` the class too (v12 looked up ` b`). `root` is an ordinary id
+  (v12 merged it into its own top level). A block written as a leaf and later opened as
+  `block:a … end` keeps its place and holds the children (v12 lost them); so does a composite
+  opened a second time. In `block:a --> b … end` the composite is `a`, and the edge and `b`
+  stand next to it (v12 drew a composite with no id).
+- **`style`** (D443) applies after every statement, so `style a …` before `a` and
+  `style a,b …` work; ids that never appear get one `BLOCK_STYLE_UNKNOWN` warning. v12 threw a
+  TypeError and rejected the diagram.
+- **Degenerate sizes** (D445). `columns 0` lays out as `columns auto` and a span `:0` as `:1`,
+  with one `BLOCK_SIZE_INVALID` warning (v12 threw or drew NaN). Spans are capped at 1,000
+  columns and `space:n` at 100,000 cells, with one `BLOCK_TRUNCATED` warning. Block-arrow
+  directions are trimmed, so `( right , left )` draws (v12 drew no arrow).
+- **Generated ids** of spaces and anonymous composites are `id-1`, `id-2`, … in source order,
+  where v12 drew random ones (R-ARCH-6).

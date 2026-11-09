@@ -1,0 +1,2139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-block",
+  "scopeName": "source.mermaid-block",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-block"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-block"
+    },
+    "rule-0": {
+      "match": "block-beta\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-1": {
+      "match": "block:",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-2": {
+      "match": "block\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-3": {
+      "match": "[\\s]+"
+    },
+    "rule-4": {
+      "match": "columns\\s+auto\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-5": {
+      "match": "columns\\s+[\\d]+",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-6": {
+      "begin": "[\"][`]",
+      "end": "([`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-md_string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-9": {
+      "begin": "[\"]",
+      "end": "([\"])",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-12": {
+      "match": "space[:]\\d+",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-13": {
+      "match": "space\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-14": {
+      "match": "default\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-15": {
+      "match": "linkStyle\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-16": {
+      "match": "interpolate\\b",
+      "name": "keyword.control.mermaid-block"
+    },
+    "phase-CLASSDEF": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=DEFAULT\\s+)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+\\s+))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=DEFAULT\\s+)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+\\s+)",
+      "patterns": [
+        {
+          "include": "#mode-CLASSDEF"
+        }
+      ]
+    },
+    "switch-18": {
+      "begin": "DEFAULT\\s+",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-CLASSDEFID"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "variable.other.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "switch-19": {
+      "begin": "\\w+\\s+",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-CLASSDEFID"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "variable.other.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-17": {
+      "begin": "classDef\\s+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-CLASSDEF"
+        },
+        {
+          "include": "#switch-18"
+        },
+        {
+          "include": "#switch-19"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      }
+    },
+    "phase-CLASS": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+(?:,\\s*\\w+)*))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+(?:,\\s*\\w+)*)",
+      "patterns": [
+        {
+          "include": "#mode-CLASS"
+        }
+      ]
+    },
+    "switch-22": {
+      "begin": "\\w+(?:,\\s*\\w+)*",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-CLASS_STYLE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "variable.other.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-block"
+        }
+      }
+    },
+    "rule-21": {
+      "begin": "class\\s+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-CLASS"
+        },
+        {
+          "include": "#switch-22"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      }
+    },
+    "phase-STYLE_STMNT": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+(?:,\\s*\\w+)*))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\w+(?:,\\s*\\w+)*)",
+      "patterns": [
+        {
+          "include": "#mode-STYLE_STMNT"
+        }
+      ]
+    },
+    "switch-25": {
+      "begin": "\\w+(?:,\\s*\\w+)*",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-STYLE_DEFINITION"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "variable.other.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-24": {
+      "begin": "style\\s+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-STYLE_STMNT"
+        },
+        {
+          "include": "#switch-25"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      }
+    },
+    "rule-27": {
+      "begin": "accTitle\\s*:\\s*",
+      "end": "([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-29": {
+      "begin": "accDescr\\s*:\\s*",
+      "end": "([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-31": {
+      "begin": "accDescr\\s*\\{\\s*",
+      "end": "([\\}])",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr_multiline"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-block"
+        }
+      }
+    },
+    "rule-34": {
+      "match": "end\\b\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-52": {
+      "begin": "-\\)",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-53": {
+      "begin": "\\(-",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-54": {
+      "begin": "\\)\\)",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-55": {
+      "begin": "\\)",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-56": {
+      "begin": "\\(\\(\\(",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-57": {
+      "begin": "\\(\\(",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-58": {
+      "begin": "\\{\\{",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-59": {
+      "begin": "\\{",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-60": {
+      "begin": ">",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-61": {
+      "begin": "\\(\\[",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-62": {
+      "begin": "\\(",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-63": {
+      "begin": "\\[\\[",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-64": {
+      "begin": "\\[\\|",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-65": {
+      "begin": "\\[\\(",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-66": {
+      "begin": "\\[\\\\",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-67": {
+      "begin": "\\[\\/",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-68": {
+      "begin": "\\[",
+      "end": "(\\(\\(\\()|(\\)\\)\\))|([\\)]\\))|(\\}\\})|(\\})|(\\(-)|(-\\))|(\\(\\()|(\\]\\])|(\\()|(\\]\\))|(\\\\\\])|(\\/\\])|(\\)\\])|([\\)])|(\\]>)|([\\]])",
+      "patterns": [
+        {
+          "include": "#mode-NODE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "2": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "3": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "4": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "5": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "6": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "7": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "8": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "9": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "10": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "11": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "12": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "13": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "14": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "15": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "16": {
+          "name": "punctuation.definition.mermaid-block"
+        },
+        "17": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-69": {
+      "begin": "<\\[",
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#mode-BLOCK_ARROW"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-70": {
+      "match": "[^\\(\\[\\n\\-\\)\\{\\}\\s\\<\\>:=]+",
+      "name": "variable.other.mermaid-block"
+    },
+    "rule-84": {
+      "match": "\\s*[xo<]?--+[-xo>]\\s*",
+      "name": "keyword.operator.mermaid-block"
+    },
+    "rule-85": {
+      "match": "\\s*[xo<]?==+[=xo>]\\s*",
+      "name": "keyword.operator.mermaid-block"
+    },
+    "rule-86": {
+      "match": "\\s*[xo<]?-?\\.+-[xo>]?\\s*",
+      "name": "keyword.operator.mermaid-block"
+    },
+    "rule-87": {
+      "begin": "\\s*[xo<]?--\\s*",
+      "end": "(\\s*[xo<]?--+[-xo>]\\s*)|(\\s*[xo<]?==+[=xo>]\\s*)|(\\s*[xo<]?-?\\.+-[xo>]?\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-LLABEL"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "2": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "3": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      }
+    },
+    "rule-88": {
+      "begin": "\\s*[xo<]?==\\s*",
+      "end": "(\\s*[xo<]?--+[-xo>]\\s*)|(\\s*[xo<]?==+[=xo>]\\s*)|(\\s*[xo<]?-?\\.+-[xo>]?\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-LLABEL"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "2": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "3": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      }
+    },
+    "rule-89": {
+      "begin": "\\s*[xo<]?-\\.\\s*",
+      "end": "(\\s*[xo<]?--+[-xo>]\\s*)|(\\s*[xo<]?==+[=xo>]\\s*)|(\\s*[xo<]?-?\\.+-[xo>]?\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-LLABEL"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "2": {
+          "name": "keyword.operator.mermaid-block"
+        },
+        "3": {
+          "name": "keyword.operator.mermaid-block"
+        }
+      }
+    },
+    "rule-95": {
+      "match": ":\\d+",
+      "name": "constant.numeric.mermaid-block"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-52"
+        },
+        {
+          "include": "#rule-53"
+        },
+        {
+          "include": "#rule-54"
+        },
+        {
+          "include": "#rule-55"
+        },
+        {
+          "include": "#rule-56"
+        },
+        {
+          "include": "#rule-57"
+        },
+        {
+          "include": "#rule-58"
+        },
+        {
+          "include": "#rule-59"
+        },
+        {
+          "include": "#rule-60"
+        },
+        {
+          "include": "#rule-61"
+        },
+        {
+          "include": "#rule-62"
+        },
+        {
+          "include": "#rule-63"
+        },
+        {
+          "include": "#rule-64"
+        },
+        {
+          "include": "#rule-65"
+        },
+        {
+          "include": "#rule-66"
+        },
+        {
+          "include": "#rule-67"
+        },
+        {
+          "include": "#rule-68"
+        },
+        {
+          "include": "#rule-69"
+        },
+        {
+          "include": "#rule-70"
+        },
+        {
+          "include": "#rule-84"
+        },
+        {
+          "include": "#rule-85"
+        },
+        {
+          "include": "#rule-86"
+        },
+        {
+          "include": "#rule-87"
+        },
+        {
+          "include": "#rule-88"
+        },
+        {
+          "include": "#rule-89"
+        },
+        {
+          "include": "#rule-95"
+        }
+      ]
+    },
+    "rule-11": {
+      "match": "[^\"]+",
+      "name": "string.quoted.mermaid-block"
+    },
+    "mode-string": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-11"
+        }
+      ]
+    },
+    "rule-7": {
+      "match": "[^`\"]+",
+      "name": "string.quoted.mermaid-block"
+    },
+    "mode-md_string": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-7"
+        }
+      ]
+    },
+    "rule-73": {
+      "begin": "[\"][`]",
+      "end": "([`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-md_string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-74": {
+      "begin": "[\"]",
+      "end": "([\"])",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "mode-NODE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-73"
+        },
+        {
+          "include": "#rule-74"
+        }
+      ]
+    },
+    "rule-72": {
+      "begin": "[\"][`]",
+      "end": "([`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-md_string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-75": {
+      "begin": "[\"]",
+      "end": "([\"])",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-76": {
+      "begin": "\\]>\\s*\\(",
+      "end": "(\\)\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-ARROW_DIR"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "mode-BLOCK_ARROW": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-72"
+        },
+        {
+          "include": "#rule-75"
+        },
+        {
+          "include": "#rule-76"
+        }
+      ]
+    },
+    "rule-77": {
+      "match": ",?\\s*right\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-78": {
+      "match": ",?\\s*left\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-79": {
+      "match": ",?\\s*x\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-80": {
+      "match": ",?\\s*y\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-81": {
+      "match": ",?\\s*up\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "rule-82": {
+      "match": ",?\\s*down\\s*",
+      "name": "keyword.control.mermaid-block"
+    },
+    "mode-ARROW_DIR": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-77"
+        },
+        {
+          "include": "#rule-78"
+        },
+        {
+          "include": "#rule-79"
+        },
+        {
+          "include": "#rule-80"
+        },
+        {
+          "include": "#rule-81"
+        },
+        {
+          "include": "#rule-82"
+        }
+      ]
+    },
+    "rule-90": {
+      "begin": "[\"][`]",
+      "end": "([`][\"])",
+      "patterns": [
+        {
+          "include": "#mode-md_string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "rule-91": {
+      "begin": "[\"]",
+      "end": "([\"])",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
+        }
+      }
+    },
+    "mode-LLABEL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-90"
+        },
+        {
+          "include": "#rule-91"
+        }
+      ]
+    },
+    "mode-CLASSDEF": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASSDEFID": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASS": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASS_STYLE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-STYLE_STMNT": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-STYLE_DEFINITION": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_descr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-33": {
+      "match": "[^\\}]+",
+      "name": "string.quoted.mermaid-block"
+    },
+    "mode-acc_descr_multiline": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-33"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-block"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-block"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-block"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-block"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

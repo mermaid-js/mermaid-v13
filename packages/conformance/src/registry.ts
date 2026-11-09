@@ -1,3 +1,5 @@
+import { blockParityCorpus } from './block/corpus.ts';
+import { blockAdapter } from './block/v13.ts';
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { cynefinAdapter } from './cynefin/v13.ts';
@@ -182,6 +184,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: blockAdapter,
+    corpusDirs: ['e2e/diagrams/block'],
+    corpusFiles: [
+      'packages/conformance/corpus/block-v12-specs.json',
+      'packages/conformance/corpus/block-cases.json',
+    ],
+    corpus: blockParityCorpus,
   },
 ];
 

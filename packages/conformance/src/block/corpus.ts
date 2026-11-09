@@ -97,3 +97,26 @@ export async function blockGateCorpus(): Promise<CorpusItem[]> {
   }
   return out;
 }
+
+/** The cases cut off by an unclosed directive, which core reads differently (GAPS #553). */
+export const UNCLOSED = 'block-cases/unclosed-directive-';
+
+/**
+ * The lexer gate's set without the unclosed directives (and their variants): every source the
+ * syntax gates (grammar lexer, grammar differential, generated sentences) compare.
+ */
+export async function blockSyntaxCorpus(): Promise<CorpusItem[]> {
+  return (await blockGateCorpus()).filter((item) => !item.id.startsWith(UNCLOSED));
+}
+
+/**
+ * The gate's generated variants for the parity suite (the e2e fixtures, spec strings and cases
+ * themselves are in the suite's dirs and files), ids prefixed `block-gate/`. The unclosed
+ * directives are left out: the case is a listed divergence of core's directive reading.
+ */
+export async function blockParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await blockCorpus()), ...blockCases()].map((c) => c.id));
+  return (await blockSyntaxCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `block-gate/${item.id}`, source: item.source }));
+}

@@ -307,6 +307,35 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'block',
+    title: 'Block diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      unnamed: {
+        // `block` and `block-beta` are both jison's `BLOCK_DIAGRAM_KEY`.
+        Block: {
+          mode: 'INITIAL',
+          pattern: 'block\\b',
+          terminal: 'BLOCK_DIAGRAM_KEY',
+          docOf: 'BLOCK_DIAGRAM_KEY',
+        },
+        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        StringStart: { mode: 'INITIAL', pattern: '["]' },
+        StringEnd: { mode: 'string', pattern: '["]' },
+        MdStringStart: { mode: 'INITIAL', pattern: '["][`]' },
+        MdStringEnd: { mode: 'md_string', pattern: '[`]["]' },
+        ArrowDirStart: { mode: 'BLOCK_ARROW', pattern: '\\]>\\s*\\(' },
+        AccDescrMultiline: {
+          mode: 'INITIAL',
+          pattern: 'accDescr\\s*\\{\\s*',
+          docOf: 'acc_descr',
+        },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '[\\}]', docOf: 'acc_descr' },
+      },
+    },
+  },
 ];
 
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */
