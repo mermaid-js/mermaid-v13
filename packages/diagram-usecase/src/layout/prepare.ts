@@ -232,6 +232,15 @@ function fontOf(font: ConfigFont, family: string): FontKey {
 const styleBits = (style: CheckedStyle): number =>
   style.text['font-style'] === 'italic' ? Style.Italic : 0;
 
+/**
+ * A plain label as text: v12 escaped `&`, `<` and `>` in every plain label, stereotype, JSON cell
+ * and edge label (`usecaseRenderer.ts` `escapePlainLabel`), so its markup showed as written.
+ * Core's label layout decodes the entities back to those characters, as text, so `<b>` and
+ * `<img …>` stay text and only Markdown labels read the HTML subset.
+ */
+const escapePlain = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 /** Builds the measure: styled fonts (one warning per size it cannot use), labels, styles. */
 function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
   const warned = new Set<string>();
@@ -254,7 +263,7 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
       return { ...font, weight };
     },
     label: (text, font, max, style, type = 'text') =>
-      layoutLabel(text, font, max, ctx.measurer, {
+      layoutLabel(type === 'markdown' ? text : escapePlain(text), font, max, ctx.measurer, {
         markdown: type === 'markdown',
         style: styleBits(style),
         inline: ctx.inline,

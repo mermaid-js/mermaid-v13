@@ -31,7 +31,7 @@ interface Case {
   readonly id: string;
   readonly config: Readonly<Record<string, unknown>>;
   readonly source: string;
-  readonly r: RenderedUsecase;
+  readonly rendered: RenderedUsecase;
   readonly tree: SvgView;
 }
 
@@ -41,15 +41,21 @@ const rejected = new Set<string>();
 
 async function add(item: CorpusItem, label: string, config: Readonly<Record<string, unknown>>) {
   if (rejected.has(item.id)) return;
-  let r: RenderedUsecase;
+  let rendered: RenderedUsecase;
   try {
-    r = await renderUsecaseForTest(item.source, { config });
+    rendered = await renderUsecaseForTest(item.source, { config });
   } catch (e) {
     if (!(e as Error).message.startsWith('usecase parse error')) throw e;
     rejected.add(item.id);
     return;
   }
-  cases.push({ id: `${item.id} ${label}`, config, source: item.source, r, tree: parseSvg(r.svg) });
+  cases.push({
+    id: `${item.id} ${label}`,
+    config,
+    source: item.source,
+    rendered,
+    tree: parseSvg(rendered.svg),
+  });
 }
 
 beforeAll(async () => {
@@ -64,7 +70,7 @@ describe('usecase render properties over the parsed corpus', () => {
     expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(40);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
-    const all = cases.map((c) => c.r.svg).join('');
+    const all = cases.map((c) => c.rendered.svg).join('');
     for (const part of [
       'usecase-actor-normal',
       'usecase-actor-hollow',
@@ -93,13 +99,19 @@ describe('usecase render properties over the parsed corpus', () => {
 
   it('writes well-formed, inert XML with no NaN, Infinity, undefined, foreignObject or style sheet', () => {
     for (const c of cases) {
-      expect(wellFormed(c.r.svg), c.id).toBeUndefined();
+      expect(wellFormed(c.rendered.svg), c.id).toBeUndefined();
       expect(
-        () => assertInert(c.r.svg, { gradient: c.r.gradient, themeStyle: c.r.themeStyle }),
+        () =>
+          assertInert(c.rendered.svg, {
+            gradient: c.rendered.gradient,
+            themeStyle: c.rendered.themeStyle,
+          }),
         c.id
       ).not.toThrow();
-      expect(c.r.svg, c.id).not.toMatch(/NaN|Infinity|undefined|foreignObject|<marker|<defs/);
-      expect(c.r.svg.includes('<style'), c.id).toBe(c.r.themeStyle);
+      expect(c.rendered.svg, c.id).not.toMatch(
+        /NaN|Infinity|undefined|foreignObject|<marker|<defs/
+      );
+      expect(c.rendered.svg.includes('<style'), c.id).toBe(c.rendered.themeStyle);
     }
   });
 
@@ -107,17 +119,22 @@ describe('usecase render properties over the parsed corpus', () => {
     const hostile = cases.filter((c) => c.source.includes('Hostile("<img'));
     expect(hostile.length).toBeGreaterThanOrEqual(2 * THEMES.length);
     for (const c of hostile) {
-      expect(c.r.svg, c.id).not.toMatch(/<img\b/);
+      expect(c.rendered.svg, c.id).not.toMatch(/<img\b/);
       const handlers = c.tree.find((n, t) => t.getAttr(n, 'onerror') !== undefined);
       expect(handlers, c.id).toEqual([]);
-      // Core's label layout drops the tag (D225); only the accessible name keeps it, escaped.
-      expect(c.r.svg, c.id).toContain('aria-label="use case &lt;img src=x onerror=alert(1)&gt;"');
+      // Shown as text, escaped, as v12 escaped plain labels; the accessible name keeps it too.
+      expect(c.rendered.svg, c.id).toContain('&lt;img src=x');
+      expect(c.rendered.svg, c.id).toContain(
+        'aria-label="use case &lt;img src=x onerror=alert(1)&gt;"'
+      );
     }
   });
 
   it('is deterministic: a second render gives the same bytes (R-ARCH-6)', async () => {
     for (const c of cases.filter((_, i) => i % 3 === 0))
-      expect((await renderUsecaseForTest(c.source, { config: c.config })).svg, c.id).toBe(c.r.svg);
+      expect((await renderUsecaseForTest(c.source, { config: c.config })).svg, c.id).toBe(
+        c.rendered.svg
+      );
   });
 
   it('writes no element id but <id>-title and <id>-desc, each only with its text (D475)', () => {
@@ -126,8 +143,8 @@ describe('usecase render properties over the parsed corpus', () => {
         .find((n, t) => t.getAttr(n, 'id') !== undefined)
         .map((n) => `${c.tree.tag(n)}#${c.tree.getAttr(n, 'id')}`);
       const expected = [
-        ...(c.r.model.accTitle.trim() ? ['title#mermaid-0-title'] : []),
-        ...(c.r.model.accDescr.trim() ? ['desc#mermaid-0-desc'] : []),
+        ...(c.rendered.model.accTitle.trim() ? ['title#mermaid-0-title'] : []),
+        ...(c.rendered.model.accDescr.trim() ? ['desc#mermaid-0-desc'] : []),
       ];
       expect(ids, c.id).toEqual(expected);
     }
@@ -141,11 +158,11 @@ describe('usecase render properties over the parsed corpus', () => {
         p.x < x! - TOL || p.y < y! - TOL || p.x > x! + w! + TOL || p.y > y! + h! + TOL;
       expect(extents(c.tree).filter(off).slice(0, 3), c.id).toEqual([]);
       // Ovals, by the layout's boxes, shifted by the title band and centring.
-      const p = c.r.layout.usecase!;
+      const p = c.rendered.layout.usecase!;
       const band = p.title ? p.title.height + p.config.diagramPadding : 0;
       const pad = p.config.diagramPadding;
-      const dx = p.title ? Math.max(0, (p.title.width + 2 * pad - c.r.layout.width) / 2) : 0;
-      const boxes = [...c.r.layout.nodes.values()].flatMap((b) => [
+      const dx = p.title ? Math.max(0, (p.title.width + 2 * pad - c.rendered.layout.width) / 2) : 0;
+      const boxes = [...c.rendered.layout.nodes.values()].flatMap((b) => [
         { x: b.x - b.width / 2 + dx, y: b.y - b.height / 2 + band },
         { x: b.x + b.width / 2 + dx, y: b.y + b.height / 2 + band },
       ]);
@@ -155,8 +172,8 @@ describe('usecase render properties over the parsed corpus', () => {
 
   it('declares every alias it refers to on the root', () => {
     for (const c of cases) {
-      const declared = new Set([...c.r.svg.matchAll(/(--_[\w-]+)\s*:/g)].map((m) => m[1]));
-      const used = [...c.r.svg.matchAll(/var\((--_[\w-]+)\)/g)].map((m) => m[1]);
+      const declared = new Set([...c.rendered.svg.matchAll(/(--_[\w-]+)\s*:/g)].map((m) => m[1]));
+      const used = [...c.rendered.svg.matchAll(/var\((--_[\w-]+)\)/g)].map((m) => m[1]);
       expect(
         used.filter((a) => !declared.has(a)),
         c.id
@@ -169,8 +186,8 @@ describe('usecase AST round-trip (R-PARSE-8, D475)', () => {
   it('maps every element and relationship to one <g> with its model id, and only those', () => {
     let drawn = 0;
     for (const c of cases.filter((k) => k.id.endsWith(' default'))) {
-      const index = astIndex(c.r.ast!);
-      const m = c.r.model;
+      const index = astIndex(c.rendered.ast!);
+      const m = c.rendered.model;
       const expected = new Map<string, string>();
       for (const e of [...m.actors, ...m.useCases, ...m.boundaries, ...m.notes, ...m.jsonTables])
         expected.set(e.astId, e.id);
@@ -219,7 +236,7 @@ describe('usecase hand-drawn: every outline goes through w.outline (D301, D302, 
         },
       });
       for (const re of [...PLAIN, /<text\b/g, /<tspan\b/g])
-        expect(count(drawn.svg, re), `${c.id}: ${String(re)}`).toBe(count(c.r.svg, re));
+        expect(count(drawn.svg, re), `${c.id}: ${String(re)}`).toBe(count(c.rendered.svg, re));
       let rest = drawn.svg.replace(OUTLINED, '');
       for (const re of PLAIN) rest = rest.replace(re, '');
       expect(SHAPE.exec(rest)?.[0], c.id).toBeUndefined();

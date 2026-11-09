@@ -23,7 +23,7 @@ import {
 } from './glyphs.ts';
 import { DRAW } from './metrics.ts';
 import { actorName, jsonName, noteName, useCaseName } from './names.ts';
-import type { Fill, Tint } from './paint.ts';
+import { need, type Fill, type Tint } from './paint.ts';
 import { cls, type Scene } from './scene.ts';
 import { PX } from '../layout/metrics.ts';
 
@@ -124,7 +124,7 @@ function drawActor(scene: Scene, view: ActorView, slot: Tint | undefined): boole
     slot,
   });
   if (!box) return false;
-  const role = paint.actor!;
+  const role = need(paint.actor, 'actor');
   const shape = shapeOf(scene, role, slot, view.style.shape);
   const top = -box.height / 2;
   w.open('g', {
@@ -224,7 +224,7 @@ function drawUseCase(scene: Scene, view: UseCaseView, slot: Tint | undefined): v
     slot,
   });
   if (!box) return;
-  const role = paint.usecase!;
+  const role = need(paint.usecase, 'use case');
   const shape = shapeOf(scene, role, slot, view.style.shape);
   const business = view.shape === 'ellipse' && u.business;
   const rx = box.width / 2;
@@ -272,7 +272,8 @@ function businessMark(scene: Scene, view: UseCaseView, rx: number, ry: number, s
     d: scene.w.path().moveTo(sx, onOval(sx)).lineTo(ex, -onOval(ex)).done(),
     fill: 'none',
     stroke: shape.stroke,
-    'stroke-width': view.style.shape['stroke-width'],
+    // v12 gave the oval's mark no width of its own (1) unless styled; an actor's inherits its glyph's.
+    'stroke-width': view.style.shape['stroke-width'] ?? DRAW.businessStroke,
     opacity: shape.opacity,
   });
 }
@@ -289,7 +290,7 @@ function drawNote(scene: Scene, view: NoteView): void {
     name: noteName(view, target),
   });
   if (!box) return;
-  const note = paint.note!;
+  const note = need(paint.note, 'note');
   w.outline('node', 'rect', {
     class: 'basic label-container outer-path',
     x: -box.width / 2,
@@ -317,7 +318,7 @@ function drawJson(scene: Scene, view: JsonTableView): void {
     name: jsonName(view),
   });
   if (!box) return;
-  const json = paint.json!;
+  const json = need(paint.json, 'JSON table');
   const shape: Attrs = {
     fill: json.fill,
     stroke: json.stroke,

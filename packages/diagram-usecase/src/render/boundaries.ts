@@ -8,6 +8,7 @@ import type { Attrs } from '@mermaid-js/core/svg';
 import type { BoundaryView } from '../layout/prepare.ts';
 import { DRAW } from './metrics.ts';
 import { boundaryName } from './names.ts';
+import { need } from './paint.ts';
 import { cls, type Scene } from './scene.ts';
 
 export function drawBoundaries(scene: Scene): void {
@@ -26,7 +27,7 @@ function drawBoundary(
   const box = layout.groups.get(view.id);
   if (!box) return;
   const b = view.boundary;
-  const role = paint.boundary!;
+  const role = need(paint.boundary, 'boundary');
   const slot = paint.slotOf(order);
   w.open('g', {
     class: `cluster usecase-system-boundary usecase-system-boundary-${b.type} default system-boundary system-boundary-${b.type}${cls(b.classes)}`,

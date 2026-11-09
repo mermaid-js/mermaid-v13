@@ -1,5 +1,6 @@
 /**
- * The `usecase` options the layout reads, from the resolved config's `usecase` section. The
+ * The `usecase` options the layout and the renderer read, from the resolved config's `usecase`
+ * section, resolved once per render (`UsecasePrepared.config`). The
  * defaults are v12's schema defaults (`UsecaseDiagramConfig` in `config.schema.yaml` at
  * fa796a943, the same in `packages/core/schema/config.schema.yaml`). Until T5 adds the manifest
  * and the generated defaults, nothing fills the section, so this file holds them.
@@ -38,6 +39,10 @@ export interface UsecaseLayoutConfig {
   readonly actorFont: ConfigFont;
   /** Use case labels and stereotypes. */
   readonly usecaseFont: ConfigFont;
+  /** `rotate`: actors and use cases take their palette slot's colours (the renderer's). */
+  readonly colorScheme: 'role' | 'rotate';
+  /** The root's width is `100%` with a `max-width` (the renderer's). */
+  readonly useMaxWidth: boolean;
 }
 
 /** v12's schema defaults for the keys the layout reads. */
@@ -51,6 +56,8 @@ export const USECASE_CONFIG_DEFAULTS = Object.freeze({
   nodeSpacing: 50,
   rankSpacing: 50,
   diagramPadding: 20,
+  colorScheme: 'role',
+  useMaxWidth: true,
 });
 
 type LengthKey =
@@ -99,6 +106,16 @@ export function fontWeight(value: unknown): number | undefined {
   if (value === 'normal' || value === 'lighter') return FONT_WEIGHT.normal;
   const n = typeof value === 'number' || typeof value === 'string' ? Number(value) : Number.NaN;
   return Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
+/** v12's `colorScheme`: `role` or `rotate`; anything else is `role`, with a warning. */
+function colorScheme(
+  value: unknown,
+  ignored: (key: string, using: string) => void
+): UsecaseLayoutConfig['colorScheme'] {
+  if (value === undefined || value === 'role' || value === 'rotate') return value ?? 'role';
+  ignored('colorScheme', 'role');
+  return 'role';
 }
 
 /** The layout's options from the resolved `usecase` section, warning once per key not taken. */
@@ -157,5 +174,7 @@ export function usecaseLayoutConfig(
     diagramPadding: length('diagramPadding'),
     actorFont: font('actor'),
     usecaseFont: font('usecase'),
+    colorScheme: colorScheme(given.colorScheme, ignored),
+    useMaxWidth: given.useMaxWidth !== false,
   };
 }

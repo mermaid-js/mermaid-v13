@@ -75,14 +75,13 @@ function spokenLabels(p: UsecasePrepared): Map<string, string> {
  * with the front-matter title's band above it (D472, D224), at least as wide as the title.
  */
 function openRoot({ w, layout, p, ctx, paint, model }: Scene): { width: number; band: number } {
-  const { theme, config } = ctx;
+  const { theme } = ctx;
   const prefix = ctx.idPrefix;
   const padding = p.config.diagramPadding;
   const band = p.title ? p.title.height + padding : 0;
   const width = Math.max(1, Math.ceil(Math.max(layout.width, titleWidth(p))));
   const height = Math.max(1, Math.ceil(layout.height + band));
-  const section = config.usecase as Readonly<Record<string, unknown>> | undefined;
-  const maxWidth = section?.useMaxWidth !== false;
+  const maxWidth = p.config.useMaxWidth;
   const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();

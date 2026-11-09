@@ -7,10 +7,12 @@
  * in the flowchart: the keyframes would need a `<style>` (out of scope, spec #517).
  */
 import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
-import type { NoteEdgeView, RelationEdgeView, UsecaseEdgeView } from '../layout/prepare.ts';
+import type { RelationEdgeView, UsecaseEdgeView } from '../layout/prepare.ts';
+import type { UsecaseRelationship } from '../model.ts';
 import { marker, markersOf, markerTrim } from './markers.ts';
 import { DRAW } from './metrics.ts';
 import { relationName } from './names.ts';
+import { need } from './paint.ts';
 import { routePath } from './route.ts';
 import { cls, type Scene } from './scene.ts';
 
@@ -22,8 +24,8 @@ export function drawEdges(scene: Scene): void {
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
-    stroke: paint.edges!.line,
-    'stroke-width': paint.edges!.width,
+    stroke: need(paint.edges, 'edge').line,
+    'stroke-width': need(paint.edges, 'edge').width,
   });
   for (const e of p.edges) drawEdge(scene, e);
   w.close();
@@ -37,27 +39,41 @@ function edgeClass(e: UsecaseEdgeView): string {
   return `relationship relationship-${r.type}${cls(r.classes)}${animation}`;
 }
 
-function lineColour(scene: Scene, e: UsecaseEdgeView): Paint | undefined {
-  if (e.kind !== 'relation') return undefined;
-  const edges = scene.paint.edges!;
-  if (e.relationship.type === 'include') return edges.include;
-  if (e.relationship.type === 'extend') return edges.extend;
+function lineColour(scene: Scene, r: UsecaseRelationship): Paint | undefined {
+  const edges = need(scene.paint.edges, 'edge');
+  if (r.type === 'include') return edges.include;
+  if (r.type === 'extend') return edges.extend;
   return undefined;
 }
 
+/** A relationship's own attributes: colour, caps, accessible name; a note connector's are hidden. */
+function lineAttrs(scene: Scene, e: UsecaseEdgeView): Attrs {
+  if (e.kind === 'note') return { 'aria-hidden': 'true' };
+  const r = e.relationship;
+  const source = scene.spokenOf.get(r.source) ?? r.source;
+  const target = scene.spokenOf.get(r.target) ?? r.target;
+  return {
+    stroke: lineColour(scene, r),
+    // v12's `.relationship.edge-animation-*` rounded the caps; other lines keep butt caps.
+    'stroke-linecap': r.animate || r.animation ? 'round' : undefined,
+    role: 'img',
+    'aria-label': relationName(e, source, target),
+  };
+}
+
 function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
-  const { w, layout, paint } = scene;
+  const { w, layout } = scene;
+  const edges = need(scene.paint.edges, 'edge');
   const route = layout.edges.get(e.id);
-  const relation = e.kind === 'relation' ? e.relationship : undefined;
   w.open('g', {
     class: edgeClass(e),
     // v12's ids: the relationship's, `<note id>-edge` for a note's connector.
-    'data-id': relation ? relation.id : `${(e as NoteEdgeView).note.id}-edge`,
+    'data-id': e.kind === 'relation' ? e.relationship.id : `${e.note.id}-edge`,
     // A note's AST node is drawn by its box; a relationship's by its line.
-    'data-ast': relation?.astId,
+    'data-ast': e.kind === 'relation' ? e.relationship.astId : undefined,
   });
   if (route && route.points.length > 1) {
-    const ends = relation ? markersOf(relation) : NONE;
+    const ends = e.kind === 'relation' ? markersOf(e.relationship) : NONE;
     const path = routePath(
       w,
       route.points,
@@ -65,23 +81,16 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
       markerTrim(ends.start),
       markerTrim(ends.end)
     );
-    const animated = relation !== undefined && (relation.animate || relation.animation);
-    const line: Attrs = {
+    w.outline('edge', 'path', {
       d: path.d,
-      stroke: lineColour(scene, e),
       'stroke-dasharray': e.dotted ? DASH : undefined,
-      // v12's `.relationship.edge-animation-*` rounded the caps; other lines keep butt caps.
-      'stroke-linecap': animated ? 'round' : undefined,
-      ...(relation
-        ? { role: 'img', 'aria-label': relationName(e as RelationEdgeView, ...endNames(scene, e)) }
-        : { 'aria-hidden': 'true' }),
+      ...lineAttrs(scene, e),
       ...e.style.shape,
       fill: 'none',
-    };
-    w.outline('edge', 'path', line);
+    });
     const head = {
-      line: e.style.shape.stroke ?? paint.edges!.line,
-      hollow: paint.edges!.hollow,
+      line: e.style.shape.stroke ?? edges.line,
+      hollow: edges.hollow,
       opacity: e.style.shape.opacity,
     };
     marker(w, ends.start, { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy }, head);
@@ -91,12 +100,6 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
 }
 
 const DASH = String(DRAW.dash) as SafeValue;
-
-/** The spoken labels of a relationship's ends. */
-function endNames(scene: Scene, e: UsecaseEdgeView): [string, string] {
-  const r = (e as RelationEdgeView).relationship;
-  return [scene.spokenOf.get(r.source) ?? r.source, scene.spokenOf.get(r.target) ?? r.target];
-}
 
 export function drawEdgeLabels(scene: Scene): void {
   const { w, p, paint } = scene;
@@ -110,7 +113,7 @@ function drawEdgeLabel({ w, layout, paint, fontOf }: Scene, e: RelationEdgeView)
   const at = layout.edges.get(e.id)?.label;
   const label = e.label;
   if (!at || !label || label.width === 0) return;
-  const bg = paint.edgeLabel!;
+  const bg = need(paint.edgeLabel, 'edge label');
   const width = label.width + 2 * DRAW.edgeLabelPad;
   w.open('g', { class: 'edgeLabel', 'data-id': e.relationship.id });
   w.leaf('rect', {

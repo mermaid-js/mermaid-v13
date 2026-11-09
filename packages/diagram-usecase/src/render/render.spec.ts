@@ -192,6 +192,15 @@ describe('the front-matter title (D472)', () => {
 });
 
 describe('labels', () => {
+  it('shows a plain label’s markup as text, as v12 escaped it (`escapePlainLabel`)', async () => {
+    const { svg } = await render('pr-check/small-representative-visual-snapshot');
+    // The decoded `Hostile("<img …>")` of D471: the tag's text, escaped (wrapped over two lines),
+    // and no element.
+    const label = texts(inside(svg, 'node', 'Hostile')).find((t) => t.cls === 'usecase-label')!;
+    expect(decode(label.text).replace(/\s+/g, '')).toBe('<imgsrc=xonerror=alert(1)>');
+    expect(svg).not.toMatch(/<img\b/);
+  });
+
   it('draws a stereotype as a first line «s» above the label, for actors and use cases', async () => {
     const { svg } = await render('pr-check/small-representative-visual-snapshot');
     const of = (id: string) => texts(inside(svg, 'node', id)).map((t) => [t.cls, t.text]);
@@ -373,6 +382,16 @@ describe('colours (D474, theming.md)', () => {
     expect(byClass(svg, 'usecase-actor-hollow-body', 'path')[0]).toMatchObject({ fill: 'none' });
   });
 
+  it('paints by role, with one USECASE_CONFIG_IGNORED, for a colorScheme it does not know', async () => {
+    const { svg, warnings } = await render('nightly-check/themed-elements-redux-color-theme', {
+      config: { usecase: { colorScheme: 'sideways' } },
+    });
+    expect(warnings.filter((w) => w.code === 'USECASE_CONFIG_IGNORED')).toEqual([
+      expect.objectContaining({ path: 'usecase.colorScheme' }),
+    ]);
+    expect(byClass(svg, 'usecase-actor-stick', 'path')[0]!.fill).toBe('var(--_uab)');
+  });
+
   it('colours outlines only where bkgColorArray is empty (redux-dark-color)', async () => {
     const { svg } = await render('pr-check/palette-rotation-redux-dark-color-theme');
     const oval = elements(inside(svg, 'node', 'Login'), 'ellipse')[0]!;
@@ -398,6 +417,22 @@ describe('colours (D474, theming.md)', () => {
     expect(byClass(inside(svg, 'node', 'Payload'), 'usecase-json-cell', 'rect')[0]).toMatchObject({
       fill: '#eef7ff',
       stroke: '#123456',
+    });
+  });
+});
+
+describe('business marks (v12 shapes)', () => {
+  it('draws an actor’s mark at the glyph’s width, a use case’s at 1 unless styled', async () => {
+    const { svg } = await render('pr-check/palette-rotation-redux-color-theme');
+    const mark = (id: string) => byClass(inside(svg, 'node', id), 'usecase-business-marker')[0]!;
+    // v12: the actor's mark inherits the glyph's 2px; the oval's has no width of its own.
+    expect(mark('Business')['stroke-width']).toBe('2');
+    expect(mark('Checkout')['stroke-width']).toBe('1');
+    const styled = await render('pr-check/small-representative-visual-snapshot');
+    expect(
+      byClass(inside(styled.svg, 'node', 'Checkout'), 'usecase-business-marker')[0]
+    ).toMatchObject({
+      'stroke-width': '4px',
     });
   });
 });

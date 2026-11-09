@@ -90,7 +90,6 @@ export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRend
   const { theme } = ctx;
   const c = (name: string): Paint => theme.color(name);
   const text = model.actors.length + model.useCases.length > 0 ? c('primaryTextColor') : undefined;
-  const section = ctx.config.usecase as Readonly<Record<string, unknown>> | undefined;
   const labelled = p.edges.some((e) => e.kind === 'relation' && e.label && e.label.width > 0);
   const json = model.jsonTables.length > 0;
   const generalization = model.relationships.some((r) => r.type === 'generalization');
@@ -98,7 +97,7 @@ export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRend
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     family: theme.value('fontFamily'),
-    rotate: section?.colorScheme === 'rotate',
+    rotate: p.config.colorScheme === 'rotate',
     slotOf: paletteSlots(theme),
     ...(model.actors.length > 0 && {
       actor: { fill: c('usecaseActorBkg'), stroke: c('usecaseActorBorder'), text: text! },
@@ -141,4 +140,14 @@ export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRend
     }),
     ...(p.title && { title: c('textColor') }),
   };
+}
+
+/**
+ * The paints of a kind of part a section draws. `paints` reads a kind's variables exactly when
+ * the model has one to draw (so an unread variable declares no alias on the root), and a section
+ * draws a kind only when the model has one: a missing paint is a bug, never a theme's doing.
+ */
+export function need<T>(paint: T | undefined, kind: string): T {
+  if (paint === undefined) throw new Error(`usecase renderer: no paints for a ${kind}`);
+  return paint;
 }

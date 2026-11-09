@@ -25,7 +25,7 @@ import { usecase } from './plugin.ts';
 export const TEST_VERSION = '13.0.0-alpha.0';
 
 /** The id prefix of a test render when none is given. */
-const ID_PREFIX = 'mermaid-0';
+export const ID_PREFIX = 'mermaid-0';
 
 /**
  * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`

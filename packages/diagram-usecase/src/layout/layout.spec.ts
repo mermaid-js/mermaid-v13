@@ -210,6 +210,20 @@ describe('edge ends on ovals', () => {
   });
 });
 
+describe('plain and Markdown labels', () => {
+  const text = (l: { lines: { text: string }[][] }) =>
+    l.lines.map((r) => r.map((x) => x.text).join(''));
+
+  it('measures a plain label’s markup as text, as v12 escaped it, and a Markdown label’s HTML', async () => {
+    const { out } = await lay('usecase-beta\nA("a<br>b & <b>c</b>")\nB("`a<br>**b**`")');
+    const a = out.usecase!.nodes.get('usecase:A')!;
+    const b = out.usecase!.nodes.get('usecase:B')!;
+    if (a.kind !== 'usecase' || b.kind !== 'usecase') throw new Error('kind');
+    expect(text(a.label)).toEqual(['a<br>b & <b>c</b>']);
+    expect(text(b.label)).toEqual(['a', 'b']);
+  });
+});
+
 describe('styled labels', () => {
   it('measures a label in its style font-size and weight, and the view keeps that font', async () => {
     const { out, warnings } = await lay(

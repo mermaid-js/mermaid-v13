@@ -18,7 +18,12 @@ import type { UsecaseLayout } from '../layout/layout.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseDocument } from '../parser/index.ts';
 import { usecase } from '../plugin.ts';
-import { usecaseRenderContext, usecaseTestConfig, usecaseTestTheme } from '../test-context.ts';
+import {
+  ID_PREFIX,
+  usecaseRenderContext,
+  usecaseTestConfig,
+  usecaseTestTheme,
+} from '../test-context.ts';
 
 export interface RenderUsecaseOptions {
   /** Integrator config, as `initialize()` would get it (`theme`, `themeVariables`, …). */
@@ -56,7 +61,7 @@ export async function renderUsecaseForTest(
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = typeof input === 'string' ? preprocess(input) : undefined;
   const config = usecaseTestConfig(pre, options.config, warn);
-  const idPrefix = options.idPrefix ?? 'mermaid-0';
+  const idPrefix = options.idPrefix ?? ID_PREFIX;
   let model: UsecaseModel;
   let ast: UsecaseDocument | undefined;
   if (typeof input === 'string') {
