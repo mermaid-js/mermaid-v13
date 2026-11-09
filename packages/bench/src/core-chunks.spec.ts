@@ -142,6 +142,17 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(file.inputs.every(isTree)).toBe(true);
   });
 
+  // D326, D327: `compass` too, and any graph type may select it.
+  it('keeps the compass engine out of core, in a lazy chunk of its own', () => {
+    const isCompass = (input: string) => input.includes('core/src/layout/compass/');
+    expect(coreModules(stable).filter(isCompass)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isCompass));
+    expect(files).toHaveLength(1);
+    const [path, file] = files[0]!;
+    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(file.inputs.every(isCompass)).toBe(true);
+  });
+
   it.each(stubs)('grows core by the registry row only for one more lazy diagram (%s)', (s) => {
     const { stable: next } = withStub[s];
     expect(next.files, 'core files').toBe(stable.files);
