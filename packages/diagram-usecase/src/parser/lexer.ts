@@ -248,7 +248,7 @@ export function lexText(src: string, from: number, view: SourceView): LexText {
   copy(v.length);
   put('\n', src.length, src.length);
   const texts = Int32Array.from(runText);
-  const froms = Int32Array.from(runFrom);
+  const runStarts = Int32Array.from(runFrom);
   const tos = Int32Array.from(runTo);
   /** The run holding `text[k]`, or -1 past the end. */
   const runOf = (k: number): number => {
@@ -266,7 +266,7 @@ export function lexText(src: string, from: number, view: SourceView): LexText {
     const r = runOf(k);
     if (r < 0) return src.length;
     const to = tos[r] ?? -1;
-    return to >= 0 ? (froms[r] ?? 0) : source((froms[r] ?? 0) + k - (texts[r] ?? 0));
+    return to >= 0 ? (runStarts[r] ?? 0) : source((runStarts[r] ?? 0) + k - (texts[r] ?? 0));
   };
   return {
     text: parts.join(''),
