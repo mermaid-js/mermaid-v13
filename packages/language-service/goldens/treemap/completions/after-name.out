@@ -1,0 +1,14 @@
+@ 2:9  "Home"|
+  : operator (then the value: a leaf) 2:9-2:9 "" -> ": "
+  ::: operator (then a class name) 2:9-2:9 "" -> ":::"
+  :::cool class 2:9-2:9 "" -> ":::cool"
+  :::warm class 2:9-2:9 "" -> ":::warm"
+@ 3:12  "Rent" |
+  : operator (then the value: a leaf) 3:12-3:12 "" -> ": "
+@ 4:15  "Power":::|
+  cool class 4:15-4:15 "" -> "cool"
+  warm class 4:15-4:15 "" -> "warm"
+@ 5:15  "Gas":::co|
+  cool class 5:13-5:15 "co" -> "cool"
+@ 6:13  "Food" :::|
+  none

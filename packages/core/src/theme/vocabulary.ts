@@ -228,9 +228,17 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'cynefin',
     'wardley',
   ]),
-  // Pie, packet, cynefin, info and wardley draw in the font family but size their text by their
-  // own variables (wardley: its config).
-  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet', 'cynefin', 'info', 'wardley']),
+  // Pie, packet, cynefin, info, treemap and wardley draw in the font family but size their text by
+  // their own variables or constants (wardley: its config).
+  fontFamily: def('ff', 'font', [
+    ...TEXT_USERS,
+    'pie',
+    'packet',
+    'cynefin',
+    'info',
+    'treemap',
+    'wardley',
+  ]),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core', 'quadrant', 'gantt']),
@@ -281,7 +289,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt', 'treemap']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   arrowheadColor: def('ah', 'color', ['flowchart', 'state']),
   defaultLinkColor: def('dl', 'color', []),

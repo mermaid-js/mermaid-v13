@@ -91,6 +91,20 @@ const PACKAGES = [
     ],
   },
   {
+    name: 'treemap',
+    dir: 'diagram-treemap',
+    renderer: [
+      'render/',
+      'layout/',
+      'theme/',
+      'plugin.ts',
+      'index.ts',
+      'config.ts',
+      'testing.ts',
+      'test-context.ts',
+    ],
+  },
+  {
     name: 'wardley',
     dir: 'diagram-wardley',
     renderer: [

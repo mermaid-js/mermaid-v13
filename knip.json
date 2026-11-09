@@ -51,6 +51,7 @@
         "@mermaid-js/diagram-radar",
         "@mermaid-js/diagram-cynefin",
         "@mermaid-js/diagram-kanban",
+        "@mermaid-js/diagram-treemap",
         "@mermaid-js/diagram-wardley"
       ]
     },

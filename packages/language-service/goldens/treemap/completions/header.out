@@ -1,0 +1,3 @@
+@ 1:5  tree|
+  treemap keyword 1:1-1:5 "tree" -> "treemap"
+  treemap-beta keyword 1:1-1:5 "tree" -> "treemap-beta"

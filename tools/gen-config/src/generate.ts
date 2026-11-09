@@ -46,6 +46,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   radar: 'packages/diagram-radar',
   cynefin: 'packages/diagram-cynefin',
   kanban: 'packages/diagram-kanban',
+  treemap: 'packages/diagram-treemap',
   'wardley-beta': 'packages/diagram-wardley',
 };
 

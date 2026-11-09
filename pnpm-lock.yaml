@@ -152,6 +152,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../diagram-wardley
@@ -258,6 +261,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../diagram-wardley
@@ -474,6 +480,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-wardley:
     devDependencies:
       '@mermaid-js/core':
@@ -536,6 +548,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
@@ -606,6 +621,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
@@ -832,6 +850,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:*
         version: link:../diagram-wardley
@@ -981,6 +1002,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treemap
       '@mermaid-js/diagram-wardley':
         specifier: workspace:^
         version: link:../../packages/diagram-wardley

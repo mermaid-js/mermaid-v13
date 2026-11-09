@@ -1,0 +1,5 @@
+3:13-3:14 "-" error UNEXPECTED_CHARACTER: Unexpected character `-`; a treemap has no negative values.
+4:12-4:13 "c" error UNEXPECTED: Expected a class name after `classDef`, got `c`; class names need two characters or more, and `c` has one: rename the class.
+5:10-5:13 ":::" error UNEXPECTED: Expected a name in quotes (`"Root"`) or `classDef`, got `:::`; `:::` and the class name go right after the name or the value, with no blank before them.
+6:15-6:17 "e3" error UNEXPECTED: Expected a name in quotes (`"Root"`) or `classDef`, got `e3`; a value is digits, with `.` before the decimals, and has no exponent or unit.
+7:3-7:4 "\"" error UNCLOSED_STRING: Unclosed name: the `"` at line 7 has no closing `"`. Add `"` after the name.

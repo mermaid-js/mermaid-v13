@@ -30,6 +30,7 @@
   architecture property (object) 3:3-3:5 "se" -> "architecture:\n    "
   mindmap property (object) 3:3-3:5 "se" -> "mindmap:\n    "
   ishikawa property (object) 3:3-3:5 "se" -> "ishikawa:\n    "
+  treemap property (object) 3:3-3:5 "se" -> "treemap:\n    "
   kanban property (object) 3:3-3:5 "se" -> "kanban:\n    "
   gitGraph property (object) 3:3-3:5 "se" -> "gitGraph:\n    "
   c4 property (object) 3:3-3:5 "se" -> "c4:\n    "

@@ -1214,6 +1214,13 @@ export const configSchema: ConfigSchema = {
         "status": "pending"
       }
     },
+    "treemap": {
+      "$ref": "#/$defs/TreemapDiagramConfig",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0"
+      }
+    },
     "kanban": {
       "$ref": "#/$defs/KanbanDiagramConfig",
       "x-mermaid": {
@@ -3072,6 +3079,128 @@ export const configSchema: ConfigSchema = {
           "default": false,
           "x-mermaid": {
             "status": "pending"
+          }
+        }
+      }
+    },
+    "TreemapDiagramConfig": {
+      "title": "Treemap Diagram Config",
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseDiagramConfig"
+        }
+      ],
+      "description": "The object containing configurations specific for treemap diagrams.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the treemap renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
+        "padding": {
+          "description": "The space between sibling sections and leaves, in pixels (d3's `paddingInner`).",
+          "type": "number",
+          "minimum": 0,
+          "default": 10,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "diagramPadding": {
+          "description": "The space around the drawn treemap, in pixels.",
+          "type": "number",
+          "minimum": 0,
+          "default": 8,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "showValues": {
+          "description": "Whether sections and leaves print their values.",
+          "type": "boolean",
+          "default": true,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, only `false` hides the values."
+          }
+        },
+        "nodeWidth": {
+          "description": "A tenth of the treemap's width, in pixels: the canvas is `nodeWidth × 10` wide, or 960\nwhen it is 0.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 100,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "nodeHeight": {
+          "description": "A tenth of the treemap's height, in pixels: the canvas is `nodeHeight × 10` high, or 500\nwhen it is 0.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 40,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEMAP_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
+          }
+        },
+        "borderWidth": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 1,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it."
+          }
+        },
+        "valueFontSize": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 12,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it: values are fitted to their box from the treemap's own sizes, as in v12."
+          }
+        },
+        "labelFontSize": {
+          "description": "Unused.",
+          "type": "number",
+          "default": 14,
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 set a default and never read it: labels are fitted to their box from the treemap's own sizes, as in v12."
+          }
+        },
+        "valueFormat": {
+          "description": "The d3-format specifier values are printed with (`,`, `$0,0`, `.1%`, `$,.2f`, …), with\nv12's `$` cases.\n",
+          "type": "string",
+          "default": ",",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Every specifier formats as in v12 (D409): an empty one is `,`, and one d3-format rejects falls back to `,`, as v12 did. A value that is not a string falls back to `,` with one `TREEMAP_CONFIG_INVALID` warning."
           }
         }
       }

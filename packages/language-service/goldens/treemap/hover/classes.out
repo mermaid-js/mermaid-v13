@@ -1,0 +1,20 @@
+@ 2:9  "A":::|hot
+  2:9-2:12 "hot"
+  | **class** `hot`
+  |
+  | Styles: `fill:red`, `stroke:blue`, `color:#111`
+@ 3:11  "B":::lo|st
+  3:9-3:13 "lost"
+  | **class** `lost`
+  |
+  | No `classDef` defines `lost`, so it styles nothing.
+@ 4:13  classDef h|ot fill:red, stroke:blue
+  4:12-4:15 "hot"
+  | **class** `hot`
+  |
+  | Styles: `fill:red`, `stroke:blue`, `color:#111`
+@ 6:14  classDef ba|re
+  6:12-6:16 "bare"
+  | **class** `bare`
+  |
+  | Styles: `"C": 1`

@@ -240,6 +240,54 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('checks an ISC upstream (d3) by its own license, in its own section', () => {
+    const header =
+      '/**\n * After d3-hierarchy: https://github.com/d3/d3-hierarchy, ISC License, Copyright 2010-2021 Mike Bostock.\n */\n';
+    const isc = (copyright: string) =>
+      `d3-hierarchy\n------------\n  src/layout/tiles.ts\n\nISC License\n\n${copyright}\n\nPermission to use, copy, modify, and/or distribute this software for any purpose\n`;
+    const files = {
+      'packages/tree/package.json': JSON.stringify({
+        name: 'tree',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+      'packages/tree/src/layout/tiles.ts': `${header}export {};\n`,
+    };
+    // Pele's text is not needed for d3 files.
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/tree/THIRD_PARTY_NOTICES': isc('Copyright 2010-2021 Mike Bostock'),
+        })
+      )
+    ).toEqual([]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/tree/src/layout/tiles.ts':
+            '// After https://github.com/d3/d3-hierarchy, MIT, Mike Bostock.\nexport {};\n',
+          'packages/tree/THIRD_PARTY_NOTICES': `MIT License\n\n${isc('Copyright 2010 Mike Bostock')}`,
+        })
+      )
+    ).toEqual([
+      'packages/tree/src/layout/tiles.ts: d3-hierarchy-derived header must name the ISC license and "Mike Bostock"',
+      'packages/tree/THIRD_PARTY_NOTICES: must contain the ISC License text with "Copyright 2010-2021 Mike Bostock"',
+    ]);
+  });
+
+  it('requires the treemap d3 ports to credit d3, though the package is private', () => {
+    const root = workspace({
+      'packages/diagram-treemap/package.json': JSON.stringify({ name: 'treemap', private: true }),
+      'packages/diagram-treemap/src/layout/tiles.ts': '// Ours.\nexport {};\n',
+      'packages/diagram-treemap/src/format/d3-format.ts': '// Ours.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([
+      'packages/diagram-treemap/src/format/d3-format.ts: header must credit d3-format',
+      'packages/diagram-treemap/src/layout/tiles.ts: header must credit d3-hierarchy',
+    ]);
+  });
+
   it('passes on this repository', () => {
     expect(checkLicenses(join(import.meta.dirname, '..', '..', '..'))).toEqual([]);
   });

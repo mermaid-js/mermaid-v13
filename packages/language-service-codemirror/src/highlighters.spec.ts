@@ -49,6 +49,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'treemap',
       'wardley',
     ]);
   });
@@ -151,6 +152,19 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('axis:keyword');
       expect(out).toContain('curve:keyword');
       expect(out).toContain('"Speed":string');
+    });
+
+    it('highlights a treemap with the treemap grammar', () => {
+      const out = spans('treemap\n  "Root"\n    "Leaf": 12:::hot\n  classDef hot fill:red\n');
+      expect(out).toEqual([
+        'treemap:keyword',
+        '"Root":string',
+        '"Leaf":string',
+        '::punctuation',
+        '::::operator',
+        'hot:variable',
+        'classDef hot fill:red:keyword',
+      ]);
     });
 
     it('highlights a Wardley map with the wardley grammar', () => {

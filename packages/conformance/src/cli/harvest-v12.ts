@@ -74,6 +74,16 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/radar.md',
   },
+  treemap: {
+    header: 'treemap(?:-beta)?',
+    files: [
+      'packages/mermaid/src/diagrams/treemap/utils.test.ts',
+      'packages/parser/tests/treemap.test.ts',
+      'packages/examples/src/examples/treemap.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/treemap.md',
+  },
   cynefin: {
     header: 'cynefin-beta',
     files: [

@@ -1,0 +1,27 @@
+---
+config:
+  theme: neutral
+description: >-
+  one representative treemap in the neutral theme: a title, nested sections over several cScale
+  slots, leaves under sections and one at the top (D404), and a classDef, so every treemap
+  colour and size shows
+---
+treemap
+  title Budget in neutral
+  "Operations"
+    "Salaries": 700
+    "Rent": 300
+    "Utilities"
+      "Power": 80
+      "Water": 40
+  "Marketing"
+    "Ads": 450
+    "Events": 150:::accent
+  "Research"
+    "Lab": 380
+    "Travel": 90
+  "Support"
+    "Tier 1": 210
+    "Tier 2": 120
+  "Reserve": 160
+  classDef accent fill:#f96,stroke:#333,stroke-width:2px,color:#000

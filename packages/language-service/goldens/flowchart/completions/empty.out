@@ -24,5 +24,7 @@
   quadrantChart keyword 1:1-1:1 "" -> "quadrantChart"
   packet keyword 1:1-1:1 "" -> "packet"
   radar-beta keyword 1:1-1:1 "" -> "radar-beta"
+  treemap keyword 1:1-1:1 "" -> "treemap"
+  treemap-beta keyword 1:1-1:1 "" -> "treemap-beta"
   wardley-beta keyword 1:1-1:1 "" -> "wardley-beta"
   cynefin-beta keyword 1:1-1:1 "" -> "cynefin-beta"

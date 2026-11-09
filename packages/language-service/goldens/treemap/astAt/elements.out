@@ -1,0 +1,16 @@
+@ 1:5  tree|map
+  treemap 1:1-1:8 "treemap"
+@ 2:5  ti|tle Budget
+  title 2:3-2:15 "title Budget"
+@ 3:6  "Ho|me":::home
+  node:Home 3:3-3:16 "\"Home\":::home"
+@ 4:13  "Rent": |1200
+  node:Home/Rent 4:5-4:17 "\"Rent\": 1200"
+@ 5:12  "Power"|, 80.5
+  node:Home/Power 5:5-5:18 "\"Power\", 80.5"
+@ 6:14  classDef ho|me fill:#cde
+  classDef:home 6:3-6:26 "classDef home fill:#cde"
+@ 8:10  long |text
+  accDescr 7:3-9:4 "accDescr {\n    long text\n  }"
+@ 10:1  |
+  none
