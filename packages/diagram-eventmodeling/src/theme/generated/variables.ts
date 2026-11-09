@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('emUiFill emuf color - emUiStroke emus color - emProcessorFill empf color - emProcessorStroke emps color - emReadModelFill emrf color - emReadModelStroke emrs color - emCommandFill emcf color - emCommandStroke emcs color - emEventFill emef color - emEventStroke emes color - emSwimlaneBackgroundOdd emlb color - emSwimlaneBackgroundStroke emls color - emRelationStroke emrl color - emArrowhead emah color - emTextColor emtx color -');
+  /* @__PURE__ */ table('emUiFill euf color - emUiStroke eus color - emProcessorFill epf color - emProcessorStroke eps color - emReadModelFill erf color - emReadModelStroke ers color - emCommandFill ecf color - emCommandStroke ecs color - emEventFill eef color - emEventStroke ees color - emSwimlaneBackgroundOdd elb color - emSwimlaneBackgroundStroke els color - emRelationStroke erl color - emArrowhead eah color - emTextColor etx color -');
