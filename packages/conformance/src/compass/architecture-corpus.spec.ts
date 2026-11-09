@@ -17,7 +17,9 @@ beforeAll(async () => {
     join(REPO_ROOT, 'e2e/diagrams/architecture'),
     'architecture'
   )) {
-    fixtures.push(item);
+    // D326's metrics are over the 20 fixtures carried over from v12 (all named `should-…`); the
+    // port's own fixtures (T1's `lexer-…` and later) are measured through the parser in T3.
+    if (/(^|\/)should-[^/]*$/.test(item.id)) fixtures.push(item);
   }
 });
 
