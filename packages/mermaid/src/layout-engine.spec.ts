@@ -3,9 +3,11 @@
  * engine it lays out with when no config layer sets `layout`, and aliases for v12's names.
  * `tree` is a first-party engine `mermaid` loads lazily, and only plugins that declare it reach it.
  * `compass` is lazy too, and any graph type reaches it by name (D502).
+ * `swimlane` is loaded lazily too, but any graph diagram may select it (D535).
  */
 import { layered, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
+import { swimlane } from '@mermaid-js/core/layout/swimlane';
 import { tree } from '@mermaid-js/core/layout/tree';
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
@@ -186,5 +188,33 @@ describe('a plugin’s layout engine (D284)', () => {
     const r = await m.render('p', withLayout('tree'));
     expect(r.warnings).toEqual([]);
     expect(desc(r.svg)).toBe(BY_TREE);
+  });
+});
+
+describe('the swimlane engine, a peer of layered (D535)', () => {
+  const BY_SWIMLANE = drawn(swimlane(graphOf(EDGES)));
+
+  it('is selected by `layout: swimlane` on a plugin that does not declare it, once loaded', async () => {
+    expect(BY_SWIMLANE).not.toBe(BY_LAYERED);
+    const m = await withProbe();
+    const e = thrown(() => m.renderSync(withLayout('swimlane')));
+    expect((e as NotLoadedError).missing).toEqual([{ kind: 'layout', name: 'swimlane' }]);
+    const r = await m.render('p', withLayout('swimlane'));
+    expect(r.warnings).toEqual([]);
+    expect(desc(r.svg)).toBe(BY_SWIMLANE);
+    expect(desc(m.renderSync(withLayout('swimlane')).svg)).toBe(BY_SWIMLANE);
+  });
+
+  it('lays out a plain flowchart with `layout: swimlane`, while `tree` stays gated', async () => {
+    const flow = (layout: string) =>
+      `---\nconfig:\n  layout: ${layout}\n---\nflowchart TD\n  subgraph Sales\n    A --> B\n  end\n  B --> C\n`;
+    const m = createMermaid();
+    const r = await m.render('f', flow('swimlane'));
+    expect(r.warnings).toEqual([]);
+    const byLayered = await m.render('f', flow('layered'));
+    expect(r.svg).not.toBe(byLayered.svg);
+    const gated = await m.render('f', flow('tree'));
+    expect(gated.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(gated.svg).toBe(byLayered.svg);
   });
 });
