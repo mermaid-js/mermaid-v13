@@ -10,7 +10,7 @@ Integration branch `feature/518_treeview` (draft PR #627), cut from `mermaid-v13
 | T4 SVG renderer, icons and theme table | #575 | #572, #573 | merged (ff; runtime 14.0 KB gz; core: `usedBy` rows only, lint `layout.*`/`render.*`) |
 | T6 language facet | #576 | #572 | merged (--no-ff; `./language` 13.2 KB gz, runtime 11.6 KB gz, no core change) |
 | T5 integration | #577 | #575, #576 | open |
-| T7 ASCII renderer (Should, D320, D488) | #578 | #572, #577 | open |
+| T7 ASCII renderer (Should, D320, D488) | #578 | #572, #577 | merged (ff; `./ascii` 1.7 KB gz; `formats` and bench row left to T5) |
 
 No T0 (no core change, D481). One ticket agent at a time (AI-Max rule).
 
