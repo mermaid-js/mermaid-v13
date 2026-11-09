@@ -13,7 +13,6 @@ import {
 } from '@mermaid-js/gen-grammar';
 import type { AstShape, ParseNode, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
 import { parseRequirement } from '@mermaid-js/diagram-requirement';
-import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { Oracle } from '../../oracle.ts';
 import { grammarTokens, requirementGrammar } from './requirement-grammar.ts';
@@ -64,9 +63,6 @@ export function referenceVerdict(source: string): Verdict {
   return { accepted: true, ast: astOf(tree).map(toShape) };
 }
 
-/** Errors from checks beyond the syntax: the style-copy cap (D433). */
-const SEMANTIC: ReadonlySet<string> = new Set([LIMIT_CODES.maxLayoutWork]);
-
 /**
  * Accept/reject and AST shape by the hand-written parser. Preprocess diagnostics are left out
  * (an unclosed directive): the grammar reads the text after v12's preprocessing.
@@ -75,7 +71,7 @@ export function handWrittenVerdict(source: string): Verdict {
   const pre = preprocess(source);
   const result = parseRequirement(source, { preprocessed: pre });
   const errors = result.diagnostics.filter((d) => d.severity === 'error');
-  if (errors.some((d) => !SEMANTIC.has(d.code))) return { accepted: false, ast: undefined };
+  if (errors.length > 0) return { accepted: false, ast: undefined };
   const directives = pre.directives.map((d) => d.range);
   return {
     accepted: true,

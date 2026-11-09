@@ -14,9 +14,7 @@ const def = (ast: string): DefAt => ({ ast, range: R, nameRange: R });
 const at = (ast: string): At => ({ ast, range: R });
 const refs = (...names: string[]): Ref[] => names.map((name) => ({ name, range: R }));
 
-function builder(): RequirementBuilder {
-  return new RequirementBuilder({ error: () => undefined });
-}
+const builder = (): RequirementBuilder => new RequirementBuilder();
 
 const built = (db: RequirementBuilder) => db.model(undefined, () => 1).model;
 
@@ -114,15 +112,34 @@ describe('requirementDb (v12) as the model builder', () => {
 });
 
 describe('the builder beyond v12 (D433, D434)', () => {
-  it('stops copying at the cap with one error, keeping what fit', () => {
-    const errors: string[] = [];
-    const db = new RequirementBuilder({ maxStyleCopies: 5, error: (code) => errors.push(code) });
+  it('stops copying at the cap and records the overflow, keeping what fit', () => {
+    const db = new RequirementBuilder({ maxStyleCopies: 5 });
     db.addRequirement('a', 'Requirement', def('requirement:a'));
     db.defineClass(['c'], ['fill:red'], at('classDef:c'));
-    db.setClass(refs('a', 'a', 'a'), ['c', 'c'], at('class:1'));
-    expect(errors).toEqual(['LAYOUT_LIMIT']);
+    db.setClass(refs('a', 'a', 'a'), ['c', 'c'], { ast: 'class:1', range: { start: 3, end: 9 } });
     // The class's style (1), then `a` gets c + fill:red (2), c + fill:red (2): 5; no more.
-    expect(built(db).requirements[0]?.classes).toEqual(['default', 'c', 'c']);
+    const m = built(db);
+    expect(m.requirements[0]?.classes).toEqual(['default', 'c', 'c']);
+    expect(m.styleCopies).toEqual({ max: 5, found: 6, range: { start: 3, end: 9 } });
+  });
+
+  it('copies a class of any number of styles (no spread into a call)', () => {
+    const db = builder();
+    db.addElement('a', def('element:a'));
+    for (let k = 0; k < 300_000; k++) db.defineClass(['c'], ['fill:red'], at('classDef:c'));
+    db.setClass(refs('a'), ['c'], at('class:1'));
+    expect(built(db).elements[0]?.styles).toHaveLength(300_000);
+  });
+
+  it('lists each lost statement once, with all its lost names', () => {
+    const db = builder();
+    db.setClass(refs('x', 'y', 'x'), ['c'], at('class:1'));
+    db.addRequirement('y', 'Requirement', { ast: 'requirement:y', range: R, nameRange: R });
+    const w = db.model(undefined, () => 4).warnings[0];
+    expect(w?.astIds).toEqual(['class:1']);
+    expect(w?.message).toBe(
+      'The class for "x" and "y" is lost: no requirement or element is named "x"; "y" is defined only later, at line 4. Move the statement after the definition.'
+    );
   });
 
   it('gives palette slots requirements first, then elements', () => {

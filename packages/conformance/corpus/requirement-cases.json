@@ -726,5 +726,97 @@
   {
     "id": "requirement-cases/parser-risk-unknown",
     "source": "requirementDiagram\nrequirement a {\n  risk: extreme\n  verifymethod: guess\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-a-bad-risk-and-a-bad-method-in-one-body",
+    "source": "requirementDiagram\nrequirement a {\n  risk: extreme\n  verifymethod: guess\n  id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-fields-of-the-other-kind",
+    "source": "requirementDiagram\nrequirement a {\n  type: t\n}\nelement e {\n  risk: low\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-a-missing-before-the-next-definition",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\nelement b {\n}\na - traces -> b"
+  },
+  {
+    "id": "requirement-cases/recovery-a-body-on-the-line-of-its-then-a-good-one",
+    "source": "requirementDiagram\nrequirement a { }\nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-a-header-without-its-body-on-the-next-lines",
+    "source": "requirementDiagram\nrequirement \"a\" x\n{\n  id: 1\n}\nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-a-keyword-as-a-name-twice",
+    "source": "requirementDiagram\nelement test {\n}\na - traces -> element\nrequirement ok {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-broken-relations-around-a-good-one",
+    "source": "requirementDiagram\na - traces ->\na - foo -> b\nc - copies -> d\ne <- copies -> f"
+  },
+  {
+    "id": "requirement-cases/recovery-a-lone-and-an",
+    "source": "requirementDiagram\na<-b\nx=y\nc - traces -> d"
+  },
+  {
+    "id": "requirement-cases/recovery-styles-with-and-a-tab",
+    "source": "requirementDiagram\nrequirement a {\n}\nstyle a fill:50%\nstyle a fill:a.b\nstyle a fill:\tred\nstyle a stroke:#333"
+  },
+  {
+    "id": "requirement-cases/recovery-a-class-statement-with-one-list-then-a-definition",
+    "source": "requirementDiagram\nclass a\nrequirement b {\n}\nclass b"
+  },
+  {
+    "id": "requirement-cases/recovery-title-statements",
+    "source": "requirementDiagram\ntitle x\nrequirement a {\n}\ntitle y"
+  },
+  {
+    "id": "requirement-cases/recovery-stray-and",
+    "source": "requirementDiagram\n}\nrequirement a {\n}\n{"
+  },
+  {
+    "id": "requirement-cases/recovery-text-after-directions",
+    "source": "requirementDiagram\ndirection LR a - traces -> b\ndirection TB;\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-empty-quotes-twice",
+    "source": "requirementDiagram\nrequirement \"\" {\n}\n\"\" - traces -> a\nelement e {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-two-values-in-a-field",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1, 2\n  text: \"x\" y\n  risk: low\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-an-unclosed-string-ends-the-text",
+    "source": "requirementDiagram\nrequirement a {\n}\nrequirement \"b {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-an-unclosed-description-ends-the-text",
+    "source": "requirementDiagram\nrequirement a {\n}\naccDescr {\n  text"
+  },
+  {
+    "id": "requirement-cases/recovery-a-missing-title-after-acctitle-at-the-end",
+    "source": "requirementDiagram\nrequirement a {\n}\naccTitle:"
+  },
+  {
+    "id": "requirement-cases/recovery-statements-on-the-header-line",
+    "source": "requirementDiagram requirement a {\n}\nb - traces -> a"
+  },
+  {
+    "id": "requirement-cases/recovery-a-wrong-header",
+    "source": "requirementDiagramx\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-an-unknown-character-in-a-body-and-at-the-start-of-a-line",
+    "source": "requirementDiagram\nrequirement a {\n  @id: 1\n  id: 2\n}\n😀\nelement e {\n}"
+  },
+  {
+    "id": "requirement-cases/recovery-a-class-shorthand-without-a-class-then-one-with",
+    "source": "requirementDiagram\nrequirement a {\n}\na:::\na:::c"
+  },
+  {
+    "id": "requirement-cases/recovery-a-nested-definition",
+    "source": "requirementDiagram\nrequirement a {\n  requirement b {\n  }\n}"
   }
 ]

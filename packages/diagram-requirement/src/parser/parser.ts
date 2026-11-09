@@ -48,7 +48,6 @@ import type {
   RequirementDefNode,
   RequirementDocument,
   RequirementFieldNode,
-  RequirementSimpleKind,
   RequirementSimpleNode,
   RequirementStatementNode,
   RequirementText,
@@ -113,7 +112,7 @@ export interface RequirementParseOptions extends ParseOptions {
   preprocessed?: PreprocessResult;
   /**
    * Entries `style`, `class` and `classDef` statements may add to boxes and classes before
-   * one `LAYOUT_LIMIT` error (D433); default `MAX_STYLE_COPIES`.
+   * the model records the overflow (`styleCopies`, D433); default `MAX_STYLE_COPIES`.
    */
   maxStyleCopies?: number;
 }
@@ -148,7 +147,8 @@ interface Taken {
 /** What a body's lines give: the fields in order and what the model keeps. */
 interface Body<F> {
   nodes: RequirementFieldNode[];
-  fields: F;
+  /** The fields read so far (the model fills in the rest with `''`). */
+  fields: Partial<F>;
   /** Keys read so far: a repeated one keeps the first value. */
   seen: Set<string>;
   range: Range;
@@ -192,13 +192,9 @@ class RequirementParser {
     this.lexed = lex(src, pre.bodyStart, view);
     this.c = new TokenCursor(this.lexed.tokens);
     this.mark = this.c.pos;
-    const diagnostics = this.st.diagnostics;
-    this.db = new RequirementBuilder({
-      ...(options.maxStyleCopies !== undefined ? { maxStyleCopies: options.maxStyleCopies } : {}),
-      error: (code, message, range) => {
-        diagnostics.error(code, message, range);
-      },
-    });
+    this.db = new RequirementBuilder(
+      options.maxStyleCopies !== undefined ? { maxStyleCopies: options.maxStyleCopies } : {}
+    );
   }
 
   parse(): RequirementParseResult {
@@ -450,8 +446,8 @@ class RequirementParser {
   private stmt(): void {
     const { c } = this;
     const k = c.kind;
-    if (REQ_KINDS.includes(k)) return this.requirement();
-    if (k === T.Element) return this.element();
+    if (REQ_KINDS.includes(k)) return this.box(false);
+    if (k === T.Element) return this.box(true);
     if (NAME.includes(k)) return this.nameStatement();
     if (k === T.AccTitle || k === T.AccDescr) return this.accessible(k);
     if (k === T.AccDescrOpen) return this.accDescrBlock();
@@ -462,16 +458,10 @@ class RequirementParser {
     this.fail(STATEMENT);
   }
 
-  private simple(
-    type: RequirementSimpleKind,
-    kind: string,
-    range: Range,
-    parts: Omit<RequirementSimpleNode, 'id' | 'type' | 'range'> = {},
-    id = this.st.ids.statement(kind)
-  ): string {
-    this.st.statement(kind, range);
-    this.children.push({ id, type, range, ...parts });
-    return id;
+  /** Record a statement with no box of its own: its span and its AST node. */
+  private simple({ kind, id = this.st.ids.statement(kind), ...node }: SimpleParts): void {
+    this.st.statement(kind, node.range);
+    this.children.push({ id, ...node });
   }
 
   // ---- names --------------------------------------------------------------------------
@@ -522,80 +512,37 @@ class RequirementParser {
 
   // ---- requirements and elements ------------------------------------------------------
 
-  private requirement(): void {
+  /** `requirement name { … }` (any of the six kinds) or `element name { … }`. */
+  private box(element: boolean): void {
     const { c, st } = this;
     const start = c.start;
-    this.hint = REQUIREMENT_HINT;
+    this.hint = element ? ELEMENT_HINT : REQUIREMENT_HINT;
     const keyword = this.consume();
-    const kind = KIND_OF[keyword.kind] as RequirementKind;
-    const node: RequirementDefNode = {
-      id: '',
-      type: 'Requirement',
-      range: { start, end: keyword.range.end },
-      keyword: keyword.text,
-      name: { text: '', quoted: false, range: keyword.range },
-      fields: [],
-    };
-    let body: Body<RequirementFields> | undefined;
+    const range = { start, end: keyword.range.end };
+    const name = { text: '', quoted: false, range: keyword.range };
+    const node: RequirementDefNode | ElementDefNode = element
+      ? { id: '', type: 'Element', range, name, fields: [] }
+      : { id: '', type: 'Requirement', range, name, fields: [], keyword: keyword.text };
+    let body: Body<RequirementFields | ElementFields> | undefined;
     try {
       this.boxHeader(node);
-      body = this.body(
-        node,
-        REQ_FIELDS,
-        ELEMENT_FIELDS,
-        REQUIREMENT_FIELD_HINT,
-        (b, f, colon) => this.requirementField(b, f, colon),
-        emptyRequirement()
-      );
+      body = this.body(node, element ? ELEMENT_BODY : REQUIREMENT_BODY);
     } finally {
       const named = node.name.text !== '' || node.name.quoted;
-      node.id = named
-        ? this.ids.named('requirement', node.name.text)
-        : st.ids.statement('requirement');
+      const kind = element ? 'element' : 'requirement';
+      node.id = named ? this.ids.named(kind, node.name.text) : st.ids.statement(kind);
       node.range.end = Math.max(node.range.end, this.last.end);
       if (named) {
         const at = { ast: node.id, range: node.range, nameRange: node.name.range };
-        this.db.addRequirement(node.name.text, kind, at, body?.fields ?? emptyRequirement());
+        const fields = body?.fields;
+        if (element) this.db.addElement(node.name.text, at, { ...emptyElement(), ...fields });
+        else {
+          const k = KIND_OF[keyword.kind] as RequirementKind;
+          this.db.addRequirement(node.name.text, k, at, { ...emptyRequirement(), ...fields });
+        }
         this.classes(node);
       }
-      st.statement('requirement', node.range);
-      this.children.push(node);
-    }
-  }
-
-  private element(): void {
-    const { c, st } = this;
-    const start = c.start;
-    this.hint = ELEMENT_HINT;
-    const keyword = this.consume();
-    const node: ElementDefNode = {
-      id: '',
-      type: 'Element',
-      range: { start, end: keyword.range.end },
-      name: { text: '', quoted: false, range: keyword.range },
-      fields: [],
-    };
-    let body: Body<ElementFields> | undefined;
-    try {
-      this.boxHeader(node);
-      body = this.body(
-        node,
-        ELEMENT_FIELDS,
-        REQ_FIELDS,
-        ELEMENT_FIELD_HINT,
-        (b, f, colon) => this.elementField(b, f, colon),
-        emptyElement()
-      );
-    } finally {
-      const named = node.name.text !== '' || node.name.quoted;
-      node.id = named ? this.ids.named('element', node.name.text) : st.ids.statement('element');
-      node.range.end = Math.max(node.range.end, this.last.end);
-      if (named) {
-        const at = { ast: node.id, range: node.range, nameRange: node.name.range };
-        this.db.addElement(node.name.text, at, body?.fields ?? emptyElement());
-        this.classes(node);
-      }
-      st.statement('element', node.range);
+      st.statement(kind, node.range);
       this.children.push(node);
     }
   }
@@ -641,24 +588,20 @@ class RequirementParser {
    * skips to the end of that line, inside the body. A statement keyword or the end of the text
    * before the `}` ends the body there (one error, one diagnostic).
    */
-  private body<F>(
+  private body(
     node: RequirementDefNode | ElementDefNode,
-    own: readonly number[],
-    other: readonly number[],
-    otherHint: string,
-    field: (body: Body<F>, key: Taken, colon: () => void) => void,
-    empty: F
-  ): Body<F> {
+    { own, other, otherHint }: BodyKind
+  ): Body<RequirementFields | ElementFields> {
     const { c } = this;
     const open = this.consume().range;
-    const body: Body<F> = {
+    const body: Body<RequirementFields | ElementFields> = {
       nodes: node.fields,
-      fields: empty,
+      fields: {},
       seen: new Set(),
       range: { start: open.start, end: open.end },
     };
     node.bodyRange = body.range;
-    const close = (): Body<F> => {
+    const close = () => {
       body.range.end = this.last.end;
       return body;
     };
@@ -694,7 +637,8 @@ class RequirementParser {
         }
         if (!own.includes(k)) this.fail([...own, T.StructStop]);
         const key = this.consume();
-        field(body, key, () => this.take([T.ColonSep]));
+        this.take([T.ColonSep]);
+        this.record(body, key, this.value(key));
         this.newline(FIELD_LINE_HINT);
       }, BODY_BOUNDARY);
     }
@@ -715,38 +659,30 @@ class RequirementParser {
   }
 
   /** Record a field line; the first of a repeated key is the one the model keeps. */
-  private record<F>(
-    body: Body<F>,
-    key: Taken,
-    name: RequirementFieldNode['key'],
-    value: string,
-    valueRange: Range
-  ): void {
-    body.nodes.push({ key: name, keyRange: key.range, value, valueRange });
-    const fields = body.fields as Record<string, string>;
-    if (body.seen.has(name)) return;
-    body.seen.add(name);
-    fields[FIELD_SLOT[name]] = value;
+  private record(body: Body<RequirementFields | ElementFields>, key: Taken, field: Field): void {
+    body.nodes.push({
+      key: field.key,
+      keyRange: key.range,
+      value: field.value,
+      valueRange: field.range,
+    });
+    if (body.seen.has(field.key)) return;
+    body.seen.add(field.key);
+    (body.fields as Record<string, string>)[FIELD_SLOT[field.key]] = field.value;
   }
 
-  private requirementField(body: Body<RequirementFields>, key: Taken, colon: () => void): void {
-    colon();
+  /** A field's value: a risk or method in its display form, else a name or text. */
+  private value(key: Taken): Field {
     if (key.kind === T.Risk) {
       const v = this.take(RISKS);
-      this.record(body, key, 'risk', RISK_OF[v.kind] ?? '', v.range);
-    } else if (key.kind === T.VerifyMethod) {
-      const v = this.take(METHODS);
-      this.record(body, key, 'verifyMethod', METHOD_OF[v.kind] ?? '', v.range);
-    } else {
-      const v = this.name(TEXT_VALUE);
-      this.record(body, key, key.kind === T.Id ? 'id' : 'text', v.text, v.range);
+      return { key: 'risk', value: RISK_OF[v.kind] ?? '', range: v.range };
     }
-  }
-
-  private elementField(body: Body<ElementFields>, key: Taken, colon: () => void): void {
-    colon();
+    if (key.kind === T.VerifyMethod) {
+      const v = this.take(METHODS);
+      return { key: 'verifyMethod', value: METHOD_OF[v.kind] ?? '', range: v.range };
+    }
     const v = this.name(TEXT_VALUE);
-    this.record(body, key, key.kind === T.Type ? 'type' : 'docRef', v.text, v.range);
+    return { key: FIELD_KEY[key.kind] ?? 'text', value: v.text, range: v.range };
   }
 
   // ---- relations and the class shorthand ----------------------------------------------
@@ -768,7 +704,7 @@ class RequirementParser {
         classNames.map((n) => n.text),
         { ast: id, range }
       );
-      this.simple('Class', 'class', range, { targets: [a], classNames }, id);
+      this.simple({ type: 'Class', kind: 'class', range, targets: [a], classNames, id });
       return;
     }
     this.hint ??= RELATION_HINT;
@@ -811,8 +747,8 @@ class RequirementParser {
     if (title) this.db.setAccTitle(v);
     else this.db.setAccDescr(v);
     const range = { start: keyword.range.start, end: trimEnd(this.src, value.range).end };
-    if (title) this.simple('AccTitle', 'accTitle', range);
-    else this.simple('AccDescr', 'accDescr', range);
+    if (title) this.simple({ type: 'AccTitle', kind: 'accTitle', range });
+    else this.simple({ type: 'AccDescr', kind: 'accDescr', range });
   }
 
   /** `accDescr { … }`: the description runs to the first `}`, over lines. */
@@ -838,7 +774,7 @@ class RequirementParser {
       return;
     }
     this.db.setAccDescr(value.text.trim());
-    this.simple('AccDescr', 'accDescr', range);
+    this.simple({ type: 'AccDescr', kind: 'accDescr', range });
   }
 
   /** `direction LR`: a statement of its own line (D432); text after it is one error. */
@@ -846,7 +782,7 @@ class RequirementParser {
     const { c, st } = this;
     const d = this.consume();
     this.db.setDirection(DIRECTION_OF[d.kind] as RequirementDirection);
-    this.simple('Direction', 'direction', d.range);
+    this.simple({ type: 'Direction', kind: 'direction', range: d.range });
     if (this.atLineEnd()) return;
     const from = c.range;
     let to = from;
@@ -894,7 +830,7 @@ class RequirementParser {
     if (style) {
       const id = this.st.ids.statement('style');
       this.db.setCssStyle(refs(ids), styles, { ast: id, range });
-      this.simple('Style', 'style', range, { targets: ids }, id);
+      this.simple({ type: 'Style', kind: 'style', range, targets: ids, id });
       return;
     }
     const id = this.ids.named('classDef', ids[0]?.text ?? '');
@@ -903,7 +839,7 @@ class RequirementParser {
       styles,
       { ast: id, range }
     );
-    this.simple('ClassDef', 'classDef', range, { classNames: ids }, id);
+    this.simple({ type: 'ClassDef', kind: 'classDef', range, classNames: ids, id });
   }
 
   private classStatement(): void {
@@ -920,9 +856,44 @@ class RequirementParser {
       classNames.map((n) => n.text),
       { ast: id, range }
     );
-    this.simple('Class', 'class', range, { targets: ids, classNames }, id);
+    this.simple({ type: 'Class', kind: 'class', range, targets: ids, classNames, id });
   }
 }
+
+/** A field line's key and value, as read. */
+interface Field {
+  key: RequirementFieldNode['key'];
+  value: string;
+  range: Range;
+}
+
+/** What a body of each kind takes: its own keys, and the other kind's (an error with a hint). */
+interface BodyKind {
+  own: readonly number[];
+  other: readonly number[];
+  otherHint: string;
+}
+const REQUIREMENT_BODY: BodyKind = {
+  own: REQ_FIELDS,
+  other: ELEMENT_FIELDS,
+  otherHint: REQUIREMENT_FIELD_HINT,
+};
+const ELEMENT_BODY: BodyKind = {
+  own: ELEMENT_FIELDS,
+  other: REQ_FIELDS,
+  otherHint: ELEMENT_FIELD_HINT,
+};
+
+/** The AST key of each text field's keyword. */
+const FIELD_KEY: Readonly<Record<number, RequirementFieldNode['key']>> = {
+  [T.Id]: 'id',
+  [T.Text]: 'text',
+  [T.Type]: 'type',
+  [T.DocRef]: 'docRef',
+};
+
+/** A statement with no box of its own (`simple`): its node, its span's kind, maybe its id. */
+type SimpleParts = Omit<RequirementSimpleNode, 'id'> & { kind: string; id?: string };
 
 /** The model's field each body key fills. */
 const FIELD_SLOT: Readonly<Record<RequirementFieldNode['key'], string>> = {

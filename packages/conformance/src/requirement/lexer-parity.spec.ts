@@ -215,12 +215,12 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // header case and the excluded sources.
     expect(e2e).toBe(179);
     expect(specs).toBe(48);
-    expect(cases).toBe(180);
+    expect(cases).toBe(203);
     // No e2e fixture, harvested string or syntax-page example depends on either decision, but
     // for the leading blanks D432 leaves out of an indented direction token.
     expect(changed.D431.filter((id) => !id.startsWith('requirement-cases/'))).toEqual([]);
     expect(changed.D432.filter((id) => !id.startsWith('requirement-cases/'))).toEqual([]);
-    expect([changed.D431.length, changed.D432.length]).toEqual([19, 12]);
+    expect([changed.D431.length, changed.D432.length]).toEqual([19, 13]);
     // The only sources v12 does not lex: the cases whose header v12 does not detect (and their
     // variants), and commented copies of a body of two lines or fewer, where `%% cut` goes
     // through the middle of the header.

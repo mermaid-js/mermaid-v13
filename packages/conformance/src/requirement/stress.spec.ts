@@ -170,6 +170,10 @@ const PARSE_SHAPES: [string, (n: number) => string][] = [
     (n) => lines(n / 3, (k) => `requirement r${k} {\n}\nclassDef default stroke:#333`),
   ],
   ['class statements', (n) => lines(n / 3, (k) => `element e${k} {\n}\nclass e${k} c${k % 7}`)],
+  [
+    'one class of many styles',
+    (n) => H + 'element a {\n}\n' + 'classDef c fill:red\n'.repeat(n) + 'class a c',
+  ],
   ['a long style id list', (n) => H + 'element a {\n}\nstyle ' + 'a,'.repeat(n) + 'a fill:red'],
   [
     'the style-copy cap',

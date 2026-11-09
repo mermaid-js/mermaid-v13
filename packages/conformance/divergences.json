@@ -1214,5 +1214,13 @@
     "reason": "D431: a blank before a line end no longer swallows the line break, so this is a line break where the grammar needs one (after `requirementDiagram`, after `{`, after a keyword or quoted value), where v12 rejected the diagram. A listed lexer-gate exclusion (#560); MIGRATION.md row (T5).",
     "owner": "#564",
     "since": "2026-11-09"
+  },
+  {
+    "id": "requirement-cases/recovery-text-after-directions",
+    "inputHash": "sha256:930a64744f7bae89",
+    "kind": "reject",
+    "reason": "A direction statement ends its line (D432 read literally, GAPS #560/#564): the text after `direction LR` is one error, where v12 made the whole line one direction token and dropped the rest silently. Here two direction lines carry text after them: two errors (a recovery case).",
+    "owner": "#564",
+    "since": "2026-11-09"
   }
 ]

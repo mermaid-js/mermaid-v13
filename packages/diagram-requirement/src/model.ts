@@ -109,6 +109,17 @@ export interface RequirementWarning extends Diagnostic {
   readonly astIds?: readonly AstId[];
 }
 
+/**
+ * The style copies past the cap (D433, R-SEC-5): the parse stopped copying at `max`, where
+ * the statement at `range` wanted `found`. The layout ends the render with a `LimitError`
+ * (`checkStyleCopies`).
+ */
+export interface StyleCopies {
+  readonly max: number;
+  readonly found: number;
+  readonly range: Range;
+}
+
 export interface RequirementModel {
   readonly requirements: readonly Requirement[];
   readonly elements: readonly Element[];
@@ -121,6 +132,8 @@ export interface RequirementModel {
   readonly accDescr: string;
   /** The front-matter `title` (D218). */
   readonly title?: string;
+  /** Set when `style`, `class` and `classDef` would copy past the cap (D433). */
+  readonly styleCopies?: StyleCopies;
   /** Warning diagnostics of the parse (the same objects as in `ParseResult.diagnostics`). */
   readonly warnings: readonly RequirementWarning[];
 }

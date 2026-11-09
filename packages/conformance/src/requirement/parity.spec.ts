@@ -191,4 +191,19 @@ describe('requirement oracle parity over the gate corpus (v12 with D431 and D432
       'requirement-cases/direction-mid-line',
     ]);
   }, 300_000);
+
+  it('compares each relation by type and both ends, in order', async () => {
+    const r = await run();
+    const plain = await loadOracle();
+    const item = r.items.find((i) => i.id === 'requirement-cases/keyword-every-relation');
+    const ref = await v12(plain, item?.source ?? '');
+    const ours = v13(item?.source ?? '');
+    const relations = (ours.model as { relations: { type: string; src: string; dst: string }[] })
+      .relations;
+    expect(relations).toHaveLength(14);
+    expect(relations[1]).toEqual({ type: 'contains', src: 'a', dst: 'b' });
+    expect(ours.model).toEqual(ref.model);
+    const swapped = { ...(ours.model as object), relations: [...relations].reverse() };
+    expect(divergence(ref, { accepted: true, model: swapped })?.kind).toBe('model');
+  }, 300_000);
 });

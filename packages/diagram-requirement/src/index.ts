@@ -33,6 +33,7 @@ export type {
   RequirementToken,
 } from './parser/index.ts';
 export type * from './model.ts';
+export { checkStyleCopies } from './limits.ts';
 export {
   MAX_STYLE_COPIES,
   REQUIREMENT_DUPLICATE,

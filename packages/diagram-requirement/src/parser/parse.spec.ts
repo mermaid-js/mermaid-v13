@@ -215,18 +215,12 @@ describe('D433: styling lost to the order of the text', () => {
     ).toBe(undefined);
   });
 
-  it('caps style copies with one limit error (R-SEC-5)', () => {
+  it('records style copies past the cap, with no diagnostic (R-SEC-5, `../limits.spec.ts`)', () => {
     const r = parse('requirement a {\n}\nclassDef c fill:red\nclass a,a,a c,c', {
       maxStyleCopies: 4,
     });
-    expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code)).toEqual([
-      'LAYOUT_LIMIT',
-    ]);
-    const ids = Array.from({ length: 1001 }, () => 'a').join(',');
-    const classes = Array.from({ length: 1000 }, () => 'c').join(',');
-    const big = parse(`requirement a {\n}\nclass ${ids} ${classes}`);
-    expect(big.diagnostics.map((d) => d.code)).toEqual(['LAYOUT_LIMIT']);
-    expect(big.diagnostics[0]?.message).toMatch(/more than 1000000 styles/);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.styleCopies).toMatchObject({ max: 4, found: 5 });
   });
 });
 
@@ -259,21 +253,5 @@ describe('D434: unknown ends, duplicates and shared names', () => {
     expect(r.model.relations[0]).toMatchObject({ from: 'requirement:a', to: 'requirement:a' });
     const w = r.model.warnings.find((x) => x.code === 'REQUIREMENT_SHARED_NAME');
     expect(w?.astIds).toEqual(['requirement:a']);
-  });
-});
-
-describe('what v12 rejects', () => {
-  it.each([
-    ['a body on the line of `{`', 'requirement a { }'],
-    ['a field of the other kind', 'element e {\n  risk: low\n}'],
-    ['a keyword as a name', 'element test {\n}'],
-    ['a keyword as a value', 'requirement a {\n  text: high quality\n}'],
-    ['empty quotes', 'requirement "" {\n}'],
-    ['`%` in a style', 'style a fill:50%'],
-    ['a title statement', 'title x'],
-    ['an unclosed body', 'requirement a {\n  id: 1'],
-    ['two values', 'requirement a {\n  id: 1, 2\n}'],
-  ])('%s', (_name, body) => {
-    expect(errors(body)).toHaveLength(1);
   });
 });

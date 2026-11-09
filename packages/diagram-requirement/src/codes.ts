@@ -1,7 +1,7 @@
 /**
  * Every warning code requirement raises itself, one definition each. Syntax errors use core's
  * shared codes (`UNEXPECTED`, `UNEXPECTED_CHARACTER`, `UNCLOSED_STRING`, …); the style-copy
- * cap is core's `LAYOUT_LIMIT` (D433).
+ * cap ends the render in core's `LimitError` (`limits.ts`, D433).
  */
 
 /**

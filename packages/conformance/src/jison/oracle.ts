@@ -79,7 +79,9 @@ export interface JisonLexerOracle {
    * Run `run` (which parses through the v12 oracle, e.g. `oracle.parse`) with `rules` in place
    * of v12's own lexer rules, as {@link TokensOptions.rules} does for one `tokens` call: v12's
    * parser with a decided lexer change applied (requirement's D431 and D432). v12's own rules
-   * are back when the returned promise settles.
+   * are back when the returned promise settles. Not reentrant: callers must be sequential
+   * (await each call before the next, and never call it from inside `run`), as every call on
+   * this oracle.
    */
   withRules<R>(rules: Readonly<Record<number, JisonRule>>, run: () => Promise<R>): Promise<R>;
   readonly LEXICAL_ERROR: typeof LEXICAL_ERROR;
