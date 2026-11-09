@@ -21,14 +21,16 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T0b #591
 
-Unmet criteria: none. Choices the spec and D-ids leave open:
+Unmet criteria: none. Size rework (coordinator brief): gated core +589 B gz, down from +2,704 in the first version. Choices and known limits:
 
-- **Only moved ends are redrawn.** An end already on its named side keeps layered's route (curved S-legs included); a graph whose sides match layered's ports is byte-identical. A moved end's stub is square to the side; it joins the route's first middle point (dropping a stepped route's old stub point unless it holds the label) by the right-angle path that crosses neither end box, turns least, then is shortest.
-- **Re-spreading a side.** When a side gains a moved end, all ends on it (sided or not) are spread again, `portPitch` apart within `corner`, ordered by where each heads, so a kept end can shift along its side. Not done for sides that gain none.
-- **`anchorY` is read for moved `left`/`right` ends** (D501 said only `compass` reads it): architecture under `layered` then meets services at the icon centre, as under `compass`. Doc comment updated.
-- **The drawing grows** (everything shifts) when a stub or redrawn loop passes the diagram padding; otherwise sizes are layered's.
-- **Not handled:** the grid (ASCII), where sides are ignored (D140 cells would need their own spreading); edges between a group and its own member (layered's inside route kept); redrawn routes may cross other nodes or edges (no global avoidance, as D503 is a hint).
-- **Size: +2,704 B gz to gated core** (97,116 of 98,304). `layered` is synchronous and in core, so the code cannot be lazy without an engine-side hook. If the remaining 1,188 B headroom matters more than D503 in `layered`, a smaller variant (no re-spread, no loop label) or a lazily registered hook **needs a D-id**.
+- **Only moved ends are redrawn.** An end already on its named side keeps layered's route; a graph whose sides match layered's ports is byte-identical. A moved end goes to the side's middle, or `anchorY` down a `left`/`right` side (D501 said only `compass` reads it; the doc comment is updated). Its stub is `corner + headRoom + marker length`. Then right angles join the route's middle: along the stub first where the route lies ahead, else across to a lane one stub past the box. That is up to three turns, against the brief's two: the lane cut end-box crossings in the matrix from 164 to 4 of 384 for about 20 B. A 2-point route gives both ends stubs.
+- **Dropped for size (limits):**
+  - Ends on one side are not spread apart, so a moved end may meet another end at the side's middle (`it.todo`).
+  - The drawing does not grow. New points are clamped to half the padding, so a stub at the drawing's edge can be shorter than its marker room.
+  - In-line and doubled-back points are not removed; the extra points draw over the same line.
+  - An unknown side is not a `RangeError` (`Side` is typed; `compass` still checks it) (`it.todo`).
+  - No global avoidance: routes may cross other nodes and edges, and 4 matrix routes still cross an end box (counted in the spec).
+- **No special cases.** Self-loops and group ends go through the same path; the self-loop label stays where layered put it. The grid (ASCII) ignores sides.
 
 ## T0c #592
 
@@ -80,3 +82,5 @@ Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` 
 - **#638 is not merged yet**; this branch carries it. Re-merge `mermaid-v13` once it lands.
 - **Waiting on #638**: `tools/workspace/sync.spec.ts` ("take a new diagram package from its own folder alone") copied only `diagramPackages()` into its scratch root, so it dropped architecture, a real pre-manifest package, from conformance's devDependencies and failed. 8e7d0f7b6 copies the fix proposed on #638 (the one railroad carries in #633: copy `workspaceDiagrams()`). Drop that commit on re-merge once #638 lands with it.
 - **Deferred to T5 #618**: `configDefaults: true`, `release:` and `languageBundle:` in `workspace.yaml` all need the manifest (and the `./language` facet); add them with it. Remove `theme.notDrawnYet` at T4 #614 once the renderer reads a theme variable.
+
+- `tools/workspace/sync.spec.ts` one-line copy: on the re-merge after #640 (`fix/pre-manifest-language`) lands, take theirs, drop the copy, run `pnpm regen`. #640 also counts a pre-manifest `./language` export, which T6 (#619) needs if it lands before T5.
