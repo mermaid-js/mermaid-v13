@@ -17,7 +17,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { diagramPackages, ROOT, type DiagramPackage } from './diagrams.ts';
+import { ROOT, workspaceDiagrams, type WorkspaceDiagram } from './diagrams.ts';
 
 type DependencyField =
   | 'dependencies'
@@ -32,14 +32,17 @@ interface DependencyRule {
   /** The value each diagram's entry gets. */
   readonly value: unknown;
   /** Which diagram packages it depends on. */
-  readonly select: (d: DiagramPackage, root: string) => boolean;
+  readonly select: (d: WorkspaceDiagram, root: string) => boolean;
 }
 
+/** Every diagram package, a pre-manifest one too (`WorkspaceDiagram`). */
 const all = (): boolean => true;
-const withLanguage = (d: DiagramPackage): boolean => d.manifest.language !== undefined;
+/** A package with its plugin manifest: the published-package lists name only these. */
+const plugin = (d: WorkspaceDiagram): boolean => d.manifest !== undefined;
+const withLanguage = (d: WorkspaceDiagram): boolean => d.manifest?.language !== undefined;
 
 /** The diagram packages named by an import in `dir`'s sources (its own per-diagram specs). */
-function importedBy(dir: string): (d: DiagramPackage, root: string) => boolean {
+function importedBy(dir: string): (d: WorkspaceDiagram, root: string) => boolean {
   const cache = new Map<string, Set<string>>();
   return (d, root) => {
     let names = cache.get(root);
@@ -68,7 +71,7 @@ function importedBy(dir: string): (d: DiagramPackage, root: string) => boolean {
 /** Every package.json block that lists diagram packages, and which diagrams it lists. */
 export const DEPENDENCY_RULES: readonly DependencyRule[] = [
   // The public package bundles every diagram (the CDN build and `mermaid`'s registry).
-  { pkg: 'packages/mermaid', field: 'dependencies', value: 'workspace:*', select: all },
+  { pkg: 'packages/mermaid', field: 'dependencies', value: 'workspace:*', select: plugin },
   // The language service loads each type's `/language` facet; the diagrams are optional peers.
   {
     pkg: 'packages/language-service',
@@ -95,9 +98,10 @@ export const DEPENDENCY_RULES: readonly DependencyRule[] = [
     value: 'workspace:*',
     select: withLanguage,
   },
-  // Private: the parity oracle and the benchmarks run every type.
+  // Private: the parity oracle runs every type from its T1 on, before the type has a
+  // manifest; the benchmarks run the registered ones.
   { pkg: 'packages/conformance', field: 'devDependencies', value: 'workspace:^', select: all },
-  { pkg: 'packages/bench', field: 'devDependencies', value: 'workspace:^', select: all },
+  { pkg: 'packages/bench', field: 'devDependencies', value: 'workspace:^', select: plugin },
   // The grammar tool's per-type agreement specs import their own package.
   {
     pkg: 'tools/gen-grammar',
@@ -135,9 +139,9 @@ export const RELEASING_BEGIN = '<!-- BEGIN GENERATED DIAGRAM ROWS: pnpm regen --
 export const RELEASING_END = '<!-- END GENERATED DIAGRAM ROWS -->';
 
 /** The RELEASING.md table rows of the diagram packages that have a `release:` entry. */
-function releaseRows(diagrams: readonly DiagramPackage[]): string[] {
+function releaseRows(diagrams: readonly WorkspaceDiagram[]): string[] {
   return diagrams
-    .filter((d) => !d.private && d.wiring.release !== undefined)
+    .filter((d) => d.manifest !== undefined && !d.private && d.wiring.release !== undefined)
     .map((d) => `| \`${d.name}\` | ${d.wiring.release!.summary} | ${d.wiring.release!.install} |`);
 }
 
@@ -165,7 +169,7 @@ function spliceReleasing(existing: string, rows: readonly string[]): string {
  * what is on disk is up to date.
  */
 export function syncedFiles(root = ROOT): Map<string, string> {
-  const diagrams = diagramPackages(root);
+  const diagrams = workspaceDiagrams(root);
   const files = new Map<string, string>();
   const manifests = new Map<string, Record<string, unknown>>();
   for (const rule of DEPENDENCY_RULES) {
@@ -188,7 +192,11 @@ export function syncedFiles(root = ROOT): Map<string, string> {
   if (existsSync(own)) {
     const parts = [
       own,
-      ...diagrams.map((d) => join(root, d.dir, BUNDLED_NOTICES)).filter((p) => existsSync(p)),
+      // mermaid bundles a package once it is registered, so only then do its notices join.
+      ...diagrams
+        .filter(plugin)
+        .map((d) => join(root, d.dir, BUNDLED_NOTICES))
+        .filter((p) => existsSync(p)),
     ];
     files.set(
       MERMAID_NOTICES,
