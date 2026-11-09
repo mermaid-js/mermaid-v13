@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseVenn } from '@mermaid-js/diagram-venn';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5 and 11: the venn parser, model and warnings included, is linear in
@@ -39,38 +40,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['repeated titles', (n) => V + 'title x\n'.repeat(n / 8)],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the venn parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseVenn(small); // warm up
-      parseVenn(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseVenn(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseVenn(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseVenn(small),
+          () => parseVenn(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );

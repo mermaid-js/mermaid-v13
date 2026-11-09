@@ -6,6 +6,7 @@
 import type { LayoutGraph } from '@mermaid-js/core/layout';
 import { tree } from '@mermaid-js/core/layout/tree';
 import { describe, expect, it } from 'vitest';
+import { linearRatio } from './linear-time.ts';
 
 /** A small deterministic generator (mulberry32). */
 function rng(seed: number): () => number {
@@ -52,18 +53,6 @@ function randomTree(n: number): LayoutGraph {
   );
 }
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('tree: linear in the number of nodes', () => {
   it.each([
     ['random trees', randomTree],
@@ -105,21 +94,12 @@ describe('tree: linear in the number of nodes', () => {
     (_, build) => {
       const small = build(2_000);
       const large = build(16_000);
-      tree(small); // warm up
-      tree(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => tree(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => tree(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => tree(small),
+          () => tree(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

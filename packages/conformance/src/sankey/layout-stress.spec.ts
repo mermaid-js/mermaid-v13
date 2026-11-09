@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { layoutSankey, parseSankey, type SankeyModel } from '@mermaid-js/diagram-sankey';
 import { sankeyTestContext, sankeyTestTheme } from '@mermaid-js/diagram-sankey/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PERF, pitfall 5: the sankey layout is near linear in the node count on bounded-degree
@@ -37,17 +38,6 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = await sankeyTestTheme();
@@ -63,15 +53,7 @@ describe('stress: the sankey layout is near linear in the node count', () => {
       expect(large.nodes.length).toBeGreaterThan(3_000);
       const ctx = sankeyTestContext(theme);
       const lay = (m: SankeyModel) => () => layoutSankey(m, ctx);
-      lay(small)(); // warm up
-      lay(large)();
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(tSmall, cost(lay(small)));
-        tLarge = Math.min(tLarge, cost(lay(large)));
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(linearRatio(lay(small), lay(large))).toBeLessThan(24);
     },
     60_000
   );

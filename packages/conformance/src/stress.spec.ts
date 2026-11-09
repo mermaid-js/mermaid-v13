@@ -4,6 +4,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { assertInert } from '@mermaid-js/core/svg';
 import { flowchartTokens, parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError, type InitializeConfig } from 'mermaid';
+import { linearRatio } from './linear-time.ts';
 
 /**
  * Stress suite (R-PARSE-7, R-SEC-5, DESIGN §10), run in PR CI as part of `pnpm test`.
@@ -287,37 +288,17 @@ describe('stress: parse is linear in input size', () => {
     ['linkStyle lines', (n) => 'graph TD\nA-->B\n' + 'linkStyle 0 stroke:red\n'.repeat(n)],
     ['class assignments', (n) => 'graph TD\n' + repeat(n, (i) => `n${i}:::c${i % 7}\n`)],
   ];
-  /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-  const cpuMs = (): number => {
-    const u =
-      typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-    return (u.user + u.system) / 1000;
-  };
-  const cost = (run: () => unknown): number => {
-    const t0 = cpuMs();
-    run();
-    return cpuMs() - t0;
-  };
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(2_000);
       const large = build(16_000);
-      parse(small); // warm up
-      parse(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parse(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parse(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parse(small),
+          () => parse(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

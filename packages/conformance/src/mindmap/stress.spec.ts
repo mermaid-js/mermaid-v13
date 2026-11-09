@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mindmapTokens, parseMindmap } from '@mermaid-js/diagram-mindmap';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the mindmap lexer is linear in input size, in every free-text state.
@@ -40,39 +41,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the mindmap lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      mindmapTokens(small); // warm up
-      mindmapTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => mindmapTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => mindmapTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => mindmapTokens(small),
+          () => mindmapTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
@@ -113,21 +93,12 @@ describe('stress: the mindmap parser is linear in input size', () => {
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseMindmap(small); // warm up
-      parseMindmap(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseMindmap(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseMindmap(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseMindmap(small),
+          () => parseMindmap(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
