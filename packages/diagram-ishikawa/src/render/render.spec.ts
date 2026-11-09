@@ -197,6 +197,8 @@ describe('AST marks (D497, pitfall 12)', () => {
       if (e.class === 'ishikawa-head') expect(e['data-id']).toBeUndefined();
       else expect(e['data-id'], e.class).toMatch(/^(effect|cause:[\d.]+)$/);
     }
+    // The marked groups carry data-ast only.
+    for (const g of elements(svg, 'g')) if (g['data-ast']) expect(g['data-id']).toBeUndefined();
     expect(texts(svg).find((t) => t.text === 'Race condition')?.id).toBe('cause:2.1.1');
   });
 });
@@ -235,6 +237,16 @@ describe('root and accessible name (D492, D133)', () => {
       const ids = [...svg.matchAll(/\sid="([^"]*)"/g)].map((m) => m[1]);
       expect(ids).toEqual(['mermaid-0-title']);
     }
+  });
+
+  it('names it by the effect as plain text: entities decoded, a <br> a space (D492)', async () => {
+    const { svg, model } = await render('nightly-check/markup-in-effect');
+    expect(model.effect?.text).toBe('Blurry<br>photo &amp; x');
+    expect(svg).toContain('<title id="mermaid-0-title">Blurry photo &amp; x</title>');
+    // Drawn as two lines, the entity decoded once.
+    expect(svg).toMatch(/<tspan [^>]*>Blurry<\/tspan><tspan [^>]*>photo &amp; x<\/tspan>/);
+    const breaks = await render('nightly-check/line-breaks-in-labels');
+    expect(breaks.svg).toContain('<title id="mermaid-0-title">Coffee tastes bitter</title>');
   });
 
   it('draws an effect alone as the head and a zero-length spine, and an empty body as an empty svg', async () => {

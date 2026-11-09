@@ -18,9 +18,10 @@
  * `fontSize` (D493, the layout's `fonts`).
  *
  * `data-ast` marks one element per AST node (D497, pitfall 12): the head group (the effect),
- * each cause's label group, each sub-cause's sub-group. Bones, arrowheads and text carry
- * `data-id` (the node's AST id) only. The SVG `<title>` is the front-matter `title`, else the
- * effect (D492); no title is drawn.
+ * each cause's label group, each sub-cause's sub-group (a sub-cause has no label group). Bones,
+ * arrowheads and text carry `data-id`, the node's AST id; the spine the effect's. The SVG
+ * `<title>` is the front-matter `title`, else the effect's text as drawn, plain (entities
+ * decoded, a line break a space) (D492); no title is drawn.
  *
  * Hand-drawn (D494): the head and the label boxes are `node` outlines, the spine and bones
  * `edge` outlines (`line`); the drawer sketches them with its role's options, as venn's (the
@@ -47,6 +48,7 @@ import type {
   IshikawaPairLayout,
   IshikawaSubCauseLayout,
   PlacedLabel,
+  Segment,
 } from '../layout/index.ts';
 import type { IshikawaModel } from '../model.ts';
 
@@ -101,28 +103,38 @@ function paints(theme: RenderContext['theme']): Paints {
   };
 }
 
-/** The spine, from the last pair's start to the head's back: an edge outline. */
+/** The spine, from the last pair's start to the head's back. */
 function drawSpine(
-  { w, paint }: Scene,
+  scene: Scene,
   spine: NonNullable<IshikawaLayout['spine']>,
   head: IshikawaHead
 ): void {
+  drawLine(scene, spine, 'ishikawa-spine', head.ast);
+}
+
+/** A spine or bone line as an edge outline (v12's style sheet: no fill). */
+function drawLine(
+  { w, paint }: Scene,
+  line: Segment & { readonly stroke: number },
+  cls: string,
+  id: string
+): void {
   w.outline('edge', 'line', {
-    class: 'ishikawa-spine',
-    'data-id': head.ast,
-    x1: spine.x1,
-    y1: spine.y1,
-    x2: spine.x2,
-    y2: spine.y2,
+    class: cls,
+    'data-id': id,
+    x1: line.x1,
+    y1: line.y1,
+    x2: line.x2,
+    y2: line.y2,
     fill: 'none',
     stroke: paint.line,
-    'stroke-width': spine.stroke,
+    'stroke-width': line.stroke,
   });
 }
 
 /** `g.ishikawa-head-group`: the head's outline (`M top L bottom Q control top Z`), then its label. */
 function drawHead({ w, layout, paint }: Scene, head: IshikawaHead): void {
-  w.open('g', { class: 'ishikawa-head-group', 'data-id': head.ast, 'data-ast': head.ast });
+  w.open('g', { class: 'ishikawa-head-group', 'data-ast': head.ast });
   const { top, bottom, control } = head;
   w.outline('node', 'path', {
     class: 'ishikawa-head',
@@ -137,7 +149,7 @@ function drawHead({ w, layout, paint }: Scene, head: IshikawaHead): void {
     stroke: paint.line,
     'stroke-width': head.stroke,
   });
-  label(w, head.label, head.label.text, {
+  label(w, head.label, {
     class: 'ishikawa-head-label',
     'data-id': head.ast,
     fill: paint.text,
@@ -158,7 +170,7 @@ function drawPair(scene: Scene, pair: IshikawaPairLayout): void {
 function drawCause(scene: Scene, cause: IshikawaCauseLayout): void {
   const { w, layout, paint } = scene;
   drawBone(scene, cause.bone, 'ishikawa-branch', cause.ast);
-  w.open('g', { class: 'ishikawa-label-group', 'data-id': cause.ast, 'data-ast': cause.ast });
+  w.open('g', { class: 'ishikawa-label-group', 'data-ast': cause.ast });
   w.outline('node', 'rect', {
     class: 'ishikawa-label-box',
     x: cause.box.x,
@@ -169,7 +181,7 @@ function drawCause(scene: Scene, cause: IshikawaCauseLayout): void {
     stroke: paint.line,
     'stroke-width': cause.boxStroke,
   });
-  label(w, cause.label, cause.label.text, {
+  label(w, cause.label, {
     class: 'ishikawa-label cause',
     'data-id': cause.ast,
     fill: paint.text,
@@ -182,30 +194,26 @@ function drawCause(scene: Scene, cause: IshikawaCauseLayout): void {
 /** `g.ishikawa-sub-group`: a sub-cause's bone, arrowhead and end-anchored label. */
 function drawSubCause(scene: Scene, sub: IshikawaSubCauseLayout): void {
   const { w, layout, paint } = scene;
-  w.open('g', { class: 'ishikawa-sub-group', 'data-id': sub.ast, 'data-ast': sub.ast });
+  w.open('g', { class: 'ishikawa-sub-group', 'data-ast': sub.ast });
   drawBone(scene, sub.bone, 'ishikawa-sub-branch', sub.ast);
-  label(w, sub.label, endAligned(sub.label.text), {
-    class: `ishikawa-label ${sub.kind}`,
-    'data-id': sub.ast,
-    fill: paint.text,
-    'font-size': layout.fonts.label.size,
-  });
+  label(
+    w,
+    sub.label,
+    {
+      class: `ishikawa-label ${sub.kind}`,
+      'data-id': sub.ast,
+      fill: paint.text,
+      'font-size': layout.fonts.label.size,
+    },
+    endAligned(sub.label.text)
+  );
   w.close();
 }
 
 /** A bone as an edge outline, then its arrowhead: a filled triangle, never an outline (D302). */
-function drawBone({ w, paint }: Scene, bone: IshikawaBone, cls: string, ast: string): void {
-  w.outline('edge', 'line', {
-    class: cls,
-    'data-id': ast,
-    x1: bone.x1,
-    y1: bone.y1,
-    x2: bone.x2,
-    y2: bone.y2,
-    fill: 'none',
-    stroke: paint.line,
-    'stroke-width': bone.stroke,
-  });
+function drawBone(scene: Scene, bone: IshikawaBone, cls: string, ast: string): void {
+  const { w, paint } = scene;
+  drawLine(scene, bone, cls, ast);
   const { tip, left, right } = bone.arrow;
   // A bone of no length has no direction, so no arrowhead (v12's marker drew none either).
   if (tip.x === left.x && tip.y === left.y) return;
@@ -229,9 +237,21 @@ function endAligned(text: PlacedLabel['text']): LabelBox {
   };
 }
 
-/** A placed label, centred in its box. */
-function label(w: SvgWriter, p: PlacedLabel, box: LabelBox, attrs: Attrs): void {
+/** A placed label, centred in its box, its lines laid out as `box` (default: its own). */
+function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs, box: LabelBox = p.text): void {
   w.label(box, p.x + p.width / 2, p.y + p.height / 2, attrs);
+}
+
+/**
+ * A label's text as plain text, for the accessible name: its lines as drawn (entities decoded,
+ * markup gone), joined by a space, so a `<br>` or a wrap reads as one.
+ */
+function plainText(p: PlacedLabel): string {
+  return p.text.lines
+    .map((line) => line.map((span) => span.text).join(''))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** The `<svg>` root with its title (R-A11Y-1, D133, D492). */
@@ -244,7 +264,7 @@ function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRende
   // v12's runtime default is true (spec #519 §Integration), whatever its schema said.
   const maxWidth =
     (config.ishikawa as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
-  const title = model.title?.trim() || model.effect?.text.trim();
+  const title = model.title?.trim() || (layout.head && plainText(layout.head.label));
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   const auto = theme.autoDeclarations();

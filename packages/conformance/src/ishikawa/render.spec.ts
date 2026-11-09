@@ -1,9 +1,12 @@
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { THEME_NAMES } from '@mermaid-js/core/theme';
 import { renderIshikawaForTest, type RenderedIshikawa } from '@mermaid-js/diagram-ishikawa/testing';
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
+import { REPO_ROOT } from '../index.ts';
 import type { CorpusItem } from '../types.ts';
 import { ishikawaCases, ishikawaCorpus } from './corpus.ts';
 
@@ -20,8 +23,8 @@ import { ishikawaCases, ishikawaCorpus } from './corpus.ts';
  * `foreignObject`, `<marker>` or `<defs>` and no `<style>` but `theme: 'auto'`'s, no element id
  * but `<id>-title`, every drawn coordinate (line ends included) inside the viewBox, every alias
  * declared. Round-trip: each `Effect` and `Cause` node of the AST has exactly one `data-ast`
- * element (the head group, a cause's label group, a sub-cause's sub-group), and every `data-ast`
- * names an AST node.
+ * element (the head group, a cause's label group, a sub-cause's sub-group), with no `data-id` of
+ * its own, and every `data-ast` names an AST node.
  */
 const THEMES = [...THEME_NAMES, 'auto'] as const;
 const TOL = 0.01;
@@ -63,7 +66,19 @@ beforeAll(async () => {
 
 describe('ishikawa render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of bone and label', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(35);
+    // Every `.mmd` fixture is in the corpus, and each one renders.
+    const files = readdirSync(join(REPO_ROOT, 'e2e/diagrams/ishikawa'), { recursive: true })
+      .map(String)
+      .filter((f) => f.endsWith('.mmd'))
+      .map((f) => `e2e/${f}`)
+      .sort();
+    expect(files.length).toBeGreaterThan(0);
+    expect(
+      corpus
+        .filter((i) => i.id.startsWith('e2e/'))
+        .map((i) => i.id)
+        .sort()
+    ).toEqual(files);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const all = cases.map((c) => c.r.svg).join('');
@@ -150,7 +165,8 @@ describe('ishikawa AST round-trip (R-PARSE-8)', () => {
       for (const el of c.tree.find((n, t) => t.getAttr(n, 'data-ast') !== undefined)) {
         const id = c.tree.getAttr(el, 'data-ast')!;
         expect(index.has(id), `${c.id}: ${id}`).toBe(true);
-        expect(c.tree.getAttr(el, 'data-id'), `${c.id}: ${id}`).toBe(id);
+        // `data-id` is on the bones and text inside, not on the marked group (D497).
+        expect(c.tree.getAttr(el, 'data-id'), `${c.id}: ${id}`).toBeUndefined();
         const what = `${c.tree.tag(el)} ${c.tree.getAttr(el, 'class')}`;
         byAst.set(id, [...(byAst.get(id) ?? []), what]);
       }

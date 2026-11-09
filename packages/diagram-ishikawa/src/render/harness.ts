@@ -52,7 +52,8 @@ export async function renderIshikawaForTest(
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = typeof input === 'string' ? preprocess(input) : undefined;
   const config = ishikawaTestConfig(pre, options.config, warn);
-  const idPrefix = options.idPrefix ?? 'mermaid-0';
+  // Without one, the test context's default prefix.
+  const { idPrefix } = options;
   let model: IshikawaModel;
   let ast: IshikawaDocument | undefined;
   if (typeof input === 'string') {
@@ -69,7 +70,7 @@ export async function renderIshikawaForTest(
   const theme = await ishikawaTestTheme(config, warn, idPrefix);
   const ctx = ishikawaRenderContext(config, theme, {
     ...(options.measurer ? { measurer: options.measurer } : {}),
-    idPrefix,
+    ...(idPrefix === undefined ? {} : { idPrefix }),
     warn,
   });
   const layout = ishikawa.layout(model, ctx);
