@@ -6,7 +6,7 @@ Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then
 | --- | --- | --- | --- |
 | T0 `gen:grammar` for several grammars | #605 | — | merged into `mermaid-v13` (#621, c66d9ab1a) |
 | T1 lexer parity gates | #608 | #605 | merged (ff ed0e4aa7c; `./testing` 4,674 B gz, runtime entry 20 B; no core change) |
-| T2 grammars, parsers, model, AST | #610 | #608 | open |
+| T2 grammars, parsers, model, AST | #610 | #608 | merged (ff 35d9a65f9; runtime entry 10,668 B gz, `./testing` 5,332 B gz; no core change) |
 | T3 layout | #612 | #610 | open |
 | T4 renderer and theme table | #613 | #612 | open |
 | T6 language facet | #616 | #610 | open |
@@ -31,3 +31,4 @@ architecture, railroad, eventmodeling and swimlane run in parallel with wave 3 o
 | base `mermaid-v13` @ ad3648a (#589) | 94,217 | +326 (not ours) |
 | base `mermaid-v13` @ ade398e (#620) | 94,352 | +135 (not ours) |
 | base `mermaid-v13` @ e540d3e (#628) | 94,385 | +33 (not ours) |
+| base `mermaid-v13` @ e1e953a (#630) | 94,412 | +27 (not ours) |
