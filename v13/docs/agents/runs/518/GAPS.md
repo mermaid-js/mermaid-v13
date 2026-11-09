@@ -8,6 +8,8 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 
 ## T2 (#572)
 
+- From T1's review: T1's box pass keeps per-character `first`/`last` maps in place of v12's `lineMap`, and nothing checks them against v12's `remapErrorLines` over the corpus. T2 must gate box-mode error lines against v12's messages (oracle) and source columns per D486.
+
 ## T3 (#573)
 
 - Exploration found v12's highlight box starts at the row's indent, not the label's x as the spec says, and each `:::highlight` row widens the diagram by 10 px cumulatively. Follow v12's code for the box origin (parity, D482's spirit); do not copy the cumulative widening unless the oracle shows it changes the viewBox, and record which.
@@ -22,3 +24,5 @@ Unmet criteria and choices not covered by the spec or its D-ids, per ticket. "Fo
 ## T7 (#578)
 
 ## For the maintainer
+
+- Follow-up, not this spec: `tagQuotes` now exists in three lexer copies (treemap, wardley, treeView). A core kit helper would dedupe them after M5b (no core change here, D481).
