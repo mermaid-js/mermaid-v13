@@ -13,7 +13,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - From exploration: v13 flowchart drops an authored `x --> x` whose `x` is inside a collapsed flow (`prepare.ts:335`); v12 agentflow keeps an authored self-loop.
 
 ## #548 T4 renderer
-- Blocked on block's shape-geometry T0 (#521) merging into `mermaid-v13`.
+- Blocked on block's shape-geometry T0 (#521, core PR #589) merging into `mermaid-v13`; the coordinator says when.
 
 ## #549 T6 language facet
 
