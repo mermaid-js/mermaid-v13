@@ -10,14 +10,6 @@ import { lex } from './lexer.ts';
 export { LANGIUM_NAMES, T as WardleyTokenKind, WARDLEY_TRIVIA } from './tokens.ts';
 export { parseWardley } from './parser.ts';
 export type { WardleyParseOptions, WardleyParseResult } from './parser.ts';
-export {
-  WARDLEY_COORDINATE_AMBIGUOUS,
-  WARDLEY_LINK_DROPPED,
-  WARDLEY_OUT_OF_RANGE,
-  WARDLEY_PIPELINE_REPLACED,
-  WARDLEY_UNKNOWN_PARENT,
-  WARDLEY_UNKNOWN_TARGET,
-} from './normalise.ts';
 export { detectWardley } from './detect.ts';
 export type * from './ast.ts';
 

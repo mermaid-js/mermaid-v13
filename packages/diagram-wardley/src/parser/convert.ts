@@ -169,3 +169,25 @@ function dropLineEnds(text: string): string {
   }
   return out;
 }
+
+/** A coordinate as the model holds it ({@link toPercent}). */
+export interface Percent {
+  /** 0–100; 100 when out of range. */
+  readonly percent: number;
+  /** Written as a fraction of the axis (at most 1), not as a percentage. */
+  readonly fraction: boolean;
+  /** Inside 0–100 % (else `WARDLEY_OUT_OF_RANGE`, kept as 100). */
+  readonly inRange: boolean;
+}
+
+/**
+ * A coordinate as the model holds it (v12 `toPercent`, D428): up to 1 a fraction of the axis,
+ * above it a percentage; outside 0–100 out of range (`WARDLEY_OUT_OF_RANGE`) and kept as 100.
+ */
+export function toPercent(value: number): Percent {
+  const fraction = value <= 1;
+  const percent = fraction ? value * 100 : value;
+  return percent < 0 || percent > 100
+    ? { percent: 100, fraction, inRange: false }
+    : { percent, fraction, inRange: true };
+}

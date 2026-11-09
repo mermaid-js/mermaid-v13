@@ -13,15 +13,22 @@
  * front matter and `%%{init}` included (D421; v12's sanitiser dropped it there). The defaults are
  * the schema's, generated into `generated/config-defaults.ts` (v12's, `wardleyRenderer.ts:52-65`).
  */
-import type { Warning } from '@mermaid-js/core';
+import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
+import { WARDLEY_CONFIG_INVALID } from './codes.ts';
 import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
 
-export const WARDLEY_CONFIG_INVALID = 'WARDLEY_CONFIG_INVALID';
-
 /** The config section wardley reads: v12's name (D421). */
 export const WARDLEY_SECTION = 'wardley-beta';
+
+/** A section's options, as the resolved config holds them. */
+type Section = Readonly<Record<string, unknown>>;
+
+/** The resolved `wardley-beta` section (D421), which the layout and the renderer read. */
+export function wardleySection(config: RenderContext['config']): Section | undefined {
+  return config[WARDLEY_SECTION] as Section | undefined;
+}
 
 /** The options the layout reads, every one set. */
 export type WardleyLayoutConfig = Required<
@@ -83,7 +90,7 @@ const shown = (value: unknown): string =>
  * checked: the canvas is the `size`'s, else the config's.
  */
 export function wardleyLayoutConfig(
-  section: Readonly<Record<string, unknown>> | undefined,
+  section: Section | undefined,
   size: WardleyModel['size'],
   warn: (w: Warning) => void
 ): WardleyLayoutConfig {
@@ -96,8 +103,8 @@ export function wardleyLayoutConfig(
     warned.add(key);
     warn({
       code: WARDLEY_CONFIG_INVALID,
-      message: `wardley-beta.${key} is ${shown(given[key])}, not ${RANGES[key].wants}; using the default ${DEFAULTS[key]}`,
-      path: `wardley-beta.${key}`,
+      message: `${WARDLEY_SECTION}.${key} is ${shown(given[key])}, not ${RANGES[key].wants}; using the default ${DEFAULTS[key]}`,
+      path: `${WARDLEY_SECTION}.${key}`,
     });
     return DEFAULTS[key];
   };
@@ -120,7 +127,7 @@ export function wardleyLayoutConfig(
     padding: paddingFor(length('padding'), { width, height }, (message) => {
       // One warning per key: a padding already reported falls back without a second.
       if (!warned.has('padding'))
-        warn({ code: WARDLEY_CONFIG_INVALID, message, path: 'wardley-beta.padding' });
+        warn({ code: WARDLEY_CONFIG_INVALID, message, path: `${WARDLEY_SECTION}.padding` });
     }),
     nodeRadius: length('nodeRadius'),
     nodeLabelOffset: length('nodeLabelOffset'),
@@ -149,9 +156,7 @@ function paddingFor(
  * `wardley-beta.useMaxWidth`, for the renderer, as v12 read it (`?? true`, then for truth):
  * unset or truthy scales to the container.
  */
-export function wardleyUseMaxWidth(
-  section: Readonly<Record<string, unknown>> | undefined
-): boolean {
+export function wardleyUseMaxWidth(section: Section | undefined): boolean {
   const value = section?.useMaxWidth;
   return value === undefined ? true : Boolean(value);
 }

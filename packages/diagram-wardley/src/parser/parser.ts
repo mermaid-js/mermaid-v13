@@ -71,7 +71,7 @@ import {
   stringValue,
   titleValue,
 } from './convert.ts';
-import { astName, linkName } from './ids.ts';
+import { astName, childId, linkName } from './ids.ts';
 import { lex } from './lexer.ts';
 import {
   characterHint,
@@ -837,7 +837,7 @@ class WardleyParser {
     this.define(name);
     this.st.statement('component', range);
     // Without a parent (its name failed) the component has no id; its values are still checked.
-    const id = parent ? this.id(astName('node', `${parent.value}_${name.value}`)) : '';
+    const id = parent ? this.id(astName('node', childId(parent.value, name.value))) : '';
     const node: WardleyPipelineComponentNode = {
       id,
       type: 'PipelineComponent',

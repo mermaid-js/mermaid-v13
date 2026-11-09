@@ -21,9 +21,9 @@
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
-import { WARDLEY_SECTION, wardleyLayoutConfig, type WardleyLayoutConfig } from '../config.ts';
+import { wardleyLayoutConfig, wardleySection, type WardleyLayoutConfig } from '../config.ts';
+import { WARDLEY_LINK_DROPPED, WARDLEY_STAGE_CLAMPED } from '../codes.ts';
 import type { WardleyAccelerator, WardleyModel, WardleyNode } from '../model.ts';
-import { WARDLEY_LINK_DROPPED } from '../parser/normalise.ts';
 import { Box, HALF_TURN } from './geometry.ts';
 import {
   AXIS_LABELS,
@@ -52,8 +52,6 @@ import type {
 /** What the layout reads from the render context. */
 export type WardleyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
   Partial<Pick<RenderContext, 'warn'>>;
-
-export const WARDLEY_STAGE_CLAMPED = 'WARDLEY_STAGE_CLAMPED';
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -102,8 +100,7 @@ interface Env {
 /** Lays out a Wardley map in px. */
 export function layoutWardley(model: WardleyModel, ctx: WardleyLayoutContext): WardleyLayout {
   const warn = ctx.warn ?? ignoreWarning;
-  const section = ctx.config[WARDLEY_SECTION] as Readonly<Record<string, unknown>> | undefined;
-  const config = wardleyLayoutConfig(section, model.size, warn);
+  const config = wardleyLayoutConfig(wardleySection(ctx.config), model.size, warn);
   const { width, height, padding } = config;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;

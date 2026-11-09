@@ -2,15 +2,16 @@
  * Wardley hover (DESIGN §4.5, D93, D428): a node name, where it is declared or referred to,
  * shows what the map draws for it, its kind and its visibility and evolution in percent (the
  * model's values: the last statement for the name wins, as v12 merged them), and says when no
- * anchor or component has the name; a coordinate shows the percentage it is read as (up to 1 a
+ * anchor or component has the name (after `evolve` and `pipeline` a pipeline component's name is
+ * none: the parser reads a node id there); a coordinate shows the percentage it is read as (up to 1 a
  * fraction of the axis, above 1 a percentage); a keyword the one-line doc of the grammar file
  * (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { wardleyDocs } from '../generated/docs.ts';
-import { toPercent } from '../model.ts';
 import type { WardleyModel, WardleyNode } from '../model.ts';
 import type { WardleyDocument, WardleyName } from '../parser/ast.ts';
+import { toPercent } from '../parser/convert.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 import {
   code,
@@ -26,16 +27,22 @@ import {
 /** Tokens with a doc that hover leaves alone: names, values and text. */
 const NO_DOC = new Set<number>([T.String, T.Decimal, T.Int, T.Id, T.Name, T.LinkLabel]);
 
-/** The model's node for `name`: by id, then by the first label (how v12 resolved link ends). */
-function nodeOf(model: WardleyModel, name: string): WardleyNode | undefined {
-  return model.nodes.find((n) => n.id === name) ?? model.nodes.find((n) => n.label === name);
+/**
+ * The model's node for `name`: by id, then by the first label (how v12 resolved link ends); by
+ * id only after `evolve` and `pipeline`, as the parser resolves those.
+ */
+function nodeOf(model: WardleyModel, name: string, idOnly: boolean): WardleyNode | undefined {
+  const byId = model.nodes.find((n) => n.id === name);
+  return byId ?? (idOnly ? undefined : model.nodes.find((n) => n.label === name));
 }
 
-function nodeHover(name: string, doc: DocumentView<WardleyDocument>): string {
-  const first = declaredNodes(doc.result.ast).get(name)?.[0];
+function nodeHover(name: string, doc: DocumentView<WardleyDocument>, idOnly: boolean): string {
+  const declared = declaredNodes(doc.result.ast).get(name) ?? [];
+  // A pipeline component's name is no node id: only an anchor or component declares one.
+  const first = idOnly ? declared.find((d) => d.type !== 'PipelineComponent') : declared[0];
   // The facet's own parse: its model is a WardleyModel.
   const model = doc.result.model as WardleyModel;
-  const node = first && nodeOf(model, name);
+  const node = first && nodeOf(model, name, idOnly);
   if (!first || !node) {
     return `**node** ${code(name)}\n\nNo anchor or component is named ${code(name)}.`;
   }
@@ -48,11 +55,18 @@ function nodeHover(name: string, doc: DocumentView<WardleyDocument>): string {
   return lines.join('\n\n');
 }
 
-/** The name under `offset` that refers to a node, if any (one no node has has no symbol). */
-function referenceAt(doc: WardleyDocument, offset: number): WardleyName | undefined {
+/**
+ * The name under `offset` that refers to a node, if any (one no node has has no symbol), and
+ * whether it names a node by id only (after `evolve` and `pipeline`).
+ */
+function referenceAt(
+  doc: WardleyDocument,
+  offset: number
+): { name: WardleyName; idOnly: boolean } | undefined {
   for (const n of doc.children) {
     if (!inside(offset, n.range)) continue;
-    return referencesOf(n).find((r) => inside(offset, r.range));
+    const name = referencesOf(n).find((r) => inside(offset, r.range));
+    return name && { name, idOnly: n.type === 'Evolve' || n.type === 'Pipeline' };
   }
   return undefined;
 }
@@ -62,10 +76,10 @@ function coordinateHover(doc: DocumentView<WardleyDocument>, offset: number): Ho
     if (!inside(offset, n.range)) continue;
     for (const { axis, number } of coordinatesOf(n)) {
       if (!inside(offset, number.range)) continue;
-      const { percent, inRange } = toPercent(number.value);
+      const { percent, fraction, inRange } = toPercent(number.value);
       let how = 'a value above 1 is a percentage (`1.0` is 100 %)';
       if (!inRange) how = 'a value above 100 is out of range, and the map draws it at 100 %';
-      else if (number.value <= 1) how = 'a value up to 1 is a fraction of it';
+      else if (fraction) how = 'a value up to 1 is a fraction of it';
       const written = doc.text.slice(number.range.start, number.range.end);
       const contents = `**${axis}** ${code(written)}\n\n${showPercent(percent)} of the axis: ${how}.`;
       return { range: number.range, contents };
@@ -79,12 +93,14 @@ export function wardleyHover(
   doc: DocumentView<WardleyDocument>
 ): Hover | undefined {
   const { text } = doc;
+  const ref = referenceAt(doc.result.ast, at.offset);
   if (at.symbol?.kind === 'node') {
-    return { range: at.symbol.range, contents: nodeHover(at.symbol.name, doc) };
+    // A part of a pipeline component's id (`Kettle_Gas`) is a name, not an id.
+    const idOnly = ref?.idOnly === true && ref.name.value === at.symbol.name;
+    return { range: at.symbol.range, contents: nodeHover(at.symbol.name, doc, idOnly) };
   }
   // A reference to a name no anchor or component has has no symbol (D427): still described.
-  const ref = referenceAt(doc.result.ast, at.offset);
-  if (ref) return { range: ref.range, contents: nodeHover(ref.value, doc) };
+  if (ref) return { range: ref.name.range, contents: nodeHover(ref.name.value, doc, ref.idOnly) };
   const coordinate = coordinateHover(doc, at.offset);
   if (coordinate) return coordinate;
   const t = at.token;

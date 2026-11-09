@@ -24,3 +24,8 @@ export function astName(kind: string, name: string): AstId {
 export function linkName(from: string, to: string): AstId {
   return `link:${esc(from)}->${esc(to)}`;
 }
+
+/** A pipeline component's node id, `<parent>_<name>`, as v12 built it (D427). */
+export function childId(parent: string, name: string): string {
+  return `${parent}_${name}`;
+}

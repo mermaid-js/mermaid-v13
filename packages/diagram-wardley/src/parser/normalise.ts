@@ -12,6 +12,14 @@
  * it. v12's silent drops warn (D425), and so do coordinates in (1, 2) (D428).
  */
 import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
+import {
+  WARDLEY_COORDINATE_AMBIGUOUS,
+  WARDLEY_LINK_DROPPED,
+  WARDLEY_OUT_OF_RANGE,
+  WARDLEY_PIPELINE_REPLACED,
+  WARDLEY_UNKNOWN_PARENT,
+  WARDLEY_UNKNOWN_TARGET,
+} from '../codes.ts';
 import type {
   WardleyAccelerator,
   WardleyAnnotation,
@@ -25,7 +33,6 @@ import type {
   WardleyStrategy,
   WardleyTrend,
 } from '../model.ts';
-import { toPercent } from '../model.ts';
 import type {
   WardleyAcceleratorNode,
   WardleyAnchorNode,
@@ -40,20 +47,8 @@ import type {
   WardleyPipelineNode,
   WardleyStatementNode,
 } from './ast.ts';
-import { astName } from './ids.ts';
-
-/** A coordinate above 100 % (v12's thrown range error, with its message). */
-export const WARDLEY_OUT_OF_RANGE = 'WARDLEY_OUT_OF_RANGE';
-/** A `pipeline` whose parent names no anchor or component (v12's thrown error). */
-export const WARDLEY_UNKNOWN_PARENT = 'WARDLEY_UNKNOWN_PARENT';
-/** D428: a coordinate in (1, 2), read as a percentage although it looks like a fraction. */
-export const WARDLEY_COORDINATE_AMBIGUOUS = 'WARDLEY_COORDINATE_AMBIGUOUS';
-/** D425: an `evolve` naming no node; v12 skipped it. */
-export const WARDLEY_UNKNOWN_TARGET = 'WARDLEY_UNKNOWN_TARGET';
-/** D425: a link with an end that names no node, or from a node to itself; not drawn. */
-export const WARDLEY_LINK_DROPPED = 'WARDLEY_LINK_DROPPED';
-/** D425: a second `pipeline` for a parent, which replaces the first one's children. */
-export const WARDLEY_PIPELINE_REPLACED = 'WARDLEY_PIPELINE_REPLACED';
+import { toPercent } from './convert.ts';
+import { astName, childId } from './ids.ts';
 
 /** What the parser read, for {@link normalise}. */
 export interface Parsed {
@@ -153,8 +148,17 @@ interface Raised {
   /** Its `related` message otherwise. */
   also: string;
   range: Range;
-  /** Further places this one points at (the first `pipeline` a second one replaces). */
-  extra?: RelatedInfo;
+  /** The AST id of the statement at this place (`''` for a component without a pipeline). */
+  astId: AstId;
+  /** A further place this one points at (the first `pipeline` a second one replaces). */
+  extra?: { readonly info: RelatedInfo; readonly astId: AstId };
+}
+
+/** A statement with a position: `[visibility, evolution]` and its AST id. */
+interface Positioned {
+  readonly visibility: WardleyNumber;
+  readonly evolution: WardleyNumber;
+  readonly id: AstId;
 }
 
 /** v12 `getFlowFromPort`. */
@@ -213,7 +217,7 @@ class Populate {
     const trends = this.trends(of('Evolve'));
     const box = of('Annotations')[0];
     const annotationsBox = box && {
-      ...this.at(box.visibility, box.evolution, 'Annotations box'),
+      ...this.at(box, 'Annotations box'),
       astId: box.id,
     };
     const annotations = of('Annotation').map((a) => this.annotation(a));
@@ -251,10 +255,13 @@ class Populate {
 
   // ---- values ---------------------------------------------------------------------------
 
-  /** v12 `toPercent`: a fraction up to 1, else a percentage; above 100 an error (kept as 100). */
-  private percent(n: WardleyNumber, context: string): number {
+  /**
+   * v12 `toPercent`: a fraction up to 1, else a percentage; above 100 an error (kept as 100).
+   * `astId` is the statement's, which a D428 warning names.
+   */
+  private percent(n: WardleyNumber, context: string, astId: AstId): number {
     const { value, range } = n;
-    const { percent, inRange } = toPercent(value);
+    const { percent, fraction, inRange } = toPercent(value);
     if (!inRange) {
       this.diagnostics.error(
         WARDLEY_OUT_OF_RANGE,
@@ -263,10 +270,11 @@ class Populate {
       );
       return percent;
     }
-    if (value > 1 && value < 2) {
+    if (!fraction && value < 2) {
       this.raise(WARDLEY_COORDINATE_AMBIGUOUS, {
         message: `\`${value}\` is read as ${value} %, not as a fraction: only values up to 1 are fractions of the axis (\`1.0\` is 100 %). Write the fraction you meant, such as \`0.5\`, or a percentage of 2 or more.`,
         range,
+        astId,
         also: `\`${value}\` is read as ${value} % too`,
       });
     }
@@ -274,10 +282,10 @@ class Populate {
   }
 
   /** v12 `toCoordinates`: `[visibility, evolution]` as `{ x: evolution, y: visibility }`. */
-  private at(visibility: WardleyNumber, evolution: WardleyNumber, context: string) {
+  private at(s: Positioned, context: string) {
     return {
-      x: this.percent(evolution, `${context} evolution`),
-      y: this.percent(visibility, `${context} visibility`),
+      x: this.percent(s.evolution, `${context} evolution`, s.id),
+      y: this.percent(s.visibility, `${context} visibility`, s.id),
     };
   }
 
@@ -298,7 +306,7 @@ class Populate {
 
   private anchor(a: WardleyAnchorNode): void {
     const name = a.name.value;
-    const { x, y } = this.at(a.visibility, a.evolution, `Anchor "${name}"`);
+    const { x, y } = this.at(a, `Anchor "${name}"`);
     this.nodes.add({
       id: name,
       label: name,
@@ -314,7 +322,7 @@ class Populate {
 
   private component(c: WardleyComponentNode): void {
     const name = c.name.value;
-    const { x, y } = this.at(c.visibility, c.evolution, `Component "${name}"`);
+    const { x, y } = this.at(c, `Component "${name}"`);
     this.nodes.add({
       id: name,
       label: name,
@@ -331,7 +339,7 @@ class Populate {
   private note(n: WardleyNoteNode): WardleyNote {
     return Object.freeze({
       text: n.text,
-      ...this.at(n.visibility, n.evolution, `Note "${n.text}"`),
+      ...this.at(n, `Note "${n.text}"`),
       astId: n.id,
     });
   }
@@ -339,7 +347,7 @@ class Populate {
   private pipelines(list: readonly WardleyPipelineNode[]): WardleyPipeline[] {
     const byParent = new Map<
       string,
-      { nodeId: string; componentIds: string[]; astId: AstId; range: Range }
+      { nodeId: string; componentIds: string[]; astId: AstId; firstAstId: AstId; range: Range }
     >();
     for (const p of list) {
       const parent = p.parent.value;
@@ -360,8 +368,12 @@ class Populate {
         this.raise(WARDLEY_PIPELINE_REPLACED, {
           message: `A second \`pipeline ${parent}\` replaces the first one's components, which stay on the map outside the pipeline. Write one \`pipeline ${parent} { … }\` with all its components.`,
           range: p.parent.range,
+          astId: p.id,
           also: `\`pipeline ${parent}\` repeated`,
-          extra: { message: `the first \`pipeline ${parent}\``, range: before.range },
+          extra: {
+            info: { message: `the first \`pipeline ${parent}\``, range: before.range },
+            astId: before.firstAstId,
+          },
         });
       }
       // v12 `startPipeline`: a new child list, at the first block's position.
@@ -369,6 +381,7 @@ class Populate {
         nodeId: parent,
         componentIds: [] as string[],
         astId: p.id,
+        firstAstId: p.id,
         range: p.parent.range,
       };
       if (before) {
@@ -378,8 +391,8 @@ class Populate {
       parentNode.isPipelineParent = true;
       const target = before ?? pipeline;
       for (const c of p.children) {
-        const id = `${parent}_${c.name.value}`;
-        const x = this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`);
+        const id = childId(parent, c.name.value);
+        const x = this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`, c.id);
         this.nodes.add({
           id,
           label: c.name.value,
@@ -404,7 +417,7 @@ class Populate {
   /** Range checks of pipeline components that add no node (their parent is unknown or failed). */
   private check(children: readonly WardleyPipelineComponentNode[]): void {
     for (const c of children) {
-      this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`);
+      this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`, c.id);
     }
   }
 
@@ -434,11 +447,12 @@ class Populate {
         this.raise(WARDLEY_UNKNOWN_TARGET, {
           message: `\`evolve ${name}\` names no anchor or component, so it draws nothing. Name a component by its name as written (a pipeline component cannot evolve).`,
           range: e.name.range,
+          astId: e.id,
           also: `\`evolve ${name}\` names no node either`,
         });
         continue;
       }
-      const targetX = this.percent(e.target, `Evolve target for "${name}"`);
+      const targetX = this.percent(e.target, `Evolve target for "${name}"`, e.id);
       byNode.set(name, Object.freeze({ nodeId: name, targetX, targetY: node.y, astId: e.id }));
     }
     return [...byNode.values()];
@@ -448,7 +462,7 @@ class Populate {
     const n = a.number.value;
     return Object.freeze({
       number: n,
-      ...this.at(a.visibility, a.evolution, `Annotation ${n}`),
+      ...this.at(a, `Annotation ${n}`),
       text: a.text,
       astId: a.id,
     });
@@ -458,7 +472,7 @@ class Populate {
     const name = a.name.value;
     return Object.freeze({
       name,
-      ...this.at(a.visibility, a.evolution, `${context} "${name}"`),
+      ...this.at(a, `${context} "${name}"`),
       astId: a.id,
     });
   }
@@ -494,6 +508,7 @@ class Populate {
       this.raise(WARDLEY_LINK_DROPPED, {
         message: `The link \`${from} -> ${to}\` is not drawn: ${why}.`,
         range,
+        astId: link.astId,
         also: `the link \`${from} -> ${to}\` is not drawn either: ${why}`,
       });
     }
@@ -508,7 +523,9 @@ class Populate {
 
   /**
    * One warning per kind (D425, D428): at its first place in the text, the others in
-   * `related`. v12's categories are not in source order, so the places are sorted first.
+   * `related`. v12's categories are not in source order, so the places are sorted first. The
+   * warning also names the AST ids of its places, in the same order and each once, which
+   * `render()` reports (`Warning.astIds`; it keeps no ranges).
    */
   private flush(): void {
     for (const [code, list] of this.raised) {
@@ -516,14 +533,24 @@ class Populate {
       const [first, ...rest] = list;
       if (!first) continue;
       const related: RelatedInfo[] = [];
-      for (const r of list) if (r.extra) related.push(r.extra);
-      for (const r of rest) related.push({ message: r.also, range: r.range });
-      this.diagnostics.warning(
+      const ids = [first.astId];
+      for (const r of list) {
+        if (!r.extra) continue;
+        related.push(r.extra.info);
+        ids.push(r.extra.astId);
+      }
+      for (const r of rest) {
+        related.push({ message: r.also, range: r.range });
+        ids.push(r.astId);
+      }
+      const d = this.diagnostics.warning(
         code,
         first.message,
         first.range,
         related.length > 0 ? { related } : undefined
       );
+      const astIds: readonly AstId[] = [...new Set(ids.filter((id) => id !== ''))];
+      Object.assign(d, { astIds });
     }
   }
 }

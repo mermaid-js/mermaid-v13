@@ -5,15 +5,21 @@
  * `<parent>_<name>` as v12 builds it (`evolve Kettle_Gas 0.8`, or a component of that name,
  * which v12 merges into the same node), is the parent's name and the component's, each a
  * reference: renaming either keeps the id it is part of.
+ *
+ * The name after `evolve` and `pipeline` is a node id, as the parser resolves it: an anchor's or
+ * a component's name, or a pipeline component's id. A pipeline component's own name there names
+ * no node (`WARDLEY_UNKNOWN_TARGET`, `WARDLEY_UNKNOWN_PARENT`), so it has no symbol; a link's
+ * ends, which v12 also resolved by label, keep it.
  */
 import type { SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import type { WardleyStatementNode } from './ast.ts';
+import { childId } from './ids.ts';
 
 export interface SymbolPass {
   /** The occurrences the parser recorded, in order: replaced by those kept. */
   readonly symbols: SymbolOccurrence[];
   readonly src: string;
-  /** The names an anchor or component declares. */
+  /** The names an anchor or component declares, a pipeline's components included. */
   readonly defined: ReadonlySet<string>;
   readonly statements: readonly WardleyStatementNode[];
 }
@@ -22,18 +28,20 @@ type ChildIds = ReadonlyMap<string, readonly [parent: string, name: string]>;
 
 /** Keep the occurrences that name a node, each pipeline component id split in two. */
 export function resolveSymbols({ symbols, src, defined, statements }: SymbolPass): void {
-  const ids = childIds(statements);
+  const ids = pipelineChildIds(statements);
+  const { topLevel, idOnly } = idReferences(statements);
   const out: SymbolOccurrence[] = [];
   for (const s of symbols) {
+    const names = idOnly.has(s.range.start) ? topLevel : defined;
     if (!ids.has(s.name)) {
-      if (defined.has(s.name)) out.push(s);
+      if (names.has(s.name)) out.push(s);
       continue;
     }
     const { start, end } = s.range;
     // The name as written, between its quotes when it has them; else (an escape) no symbol.
     const at = end - start === s.name.length ? start : start + 1;
     if (src.slice(at, at + s.name.length) !== s.name) continue;
-    for (const part of parts(s.name, at, ids, defined)) out.push(part);
+    for (const part of parts(s.name, at, ids, names)) out.push(part);
   }
   // In place, one push at a time (a spread is unbounded on a large map).
   symbols.length = 0;
@@ -41,16 +49,34 @@ export function resolveSymbols({ symbols, src, defined, statements }: SymbolPass
 }
 
 /** Each pipeline component's node id, with its parent's name and its own (the first wins). */
-function childIds(statements: readonly WardleyStatementNode[]): ChildIds {
+function pipelineChildIds(statements: readonly WardleyStatementNode[]): ChildIds {
   const out = new Map<string, readonly [string, string]>();
   for (const n of statements) {
     if (n.type !== 'Pipeline') continue;
     for (const c of n.children) {
-      const id = `${n.parent.value}_${c.name.value}`;
+      const id = childId(n.parent.value, c.name.value);
       if (!out.has(id)) out.set(id, [n.parent.value, c.name.value]);
     }
   }
   return out;
+}
+
+/**
+ * The names anchors and components declare outside pipelines, and where a name is read as a
+ * node id only: the starts of the names after `evolve` and `pipeline`.
+ */
+function idReferences(statements: readonly WardleyStatementNode[]): {
+  topLevel: ReadonlySet<string>;
+  idOnly: ReadonlySet<number>;
+} {
+  const topLevel = new Set<string>();
+  const idOnly = new Set<number>();
+  for (const n of statements) {
+    if (n.type === 'Anchor' || n.type === 'Component') topLevel.add(n.name.value);
+    else if (n.type === 'Evolve') idOnly.add(n.name.range.start);
+    else if (n.type === 'Pipeline') idOnly.add(n.parent.range.start);
+  }
+  return { topLevel, idOnly };
 }
 
 /**

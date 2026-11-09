@@ -25,7 +25,7 @@ except that `wardley-beta` may share its line with the first one.
 
 Coordinates are `[visibility, evolution]`, each a decimal with a `.`: up to 1 a fraction of
 the axis (`0.5` is half way, `1.0` is the end), above 1 a percentage (`1.5` is 1.5 %, D428),
-above 100 an error.
+above 100 an error. A stage's `@boundary` is a fraction of the axis, whatever its value.
 
 ## Grammar
 
@@ -186,7 +186,7 @@ Modes: `INITIAL`.
 | INITIAL | DASH | `-(?!>\|->\|\.->\|--[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n\|(?!\S)))` |  | `-` before a label offset: `label [-10, 5]`. A `->`, `-->`, `-.->` or `---` block starting here is that token instead (mermaid@12's longer alternatives of `-`). |
 | INITIAL | LBRACE | `\{` |  |  |
 | INITIAL | RBRACE | `\}` |  |  |
-| INITIAL | DECIMAL | `[0-9]+\.[0-9]+` |  | A coordinate or boundary: a decimal such as `0.5`, with digits on both sides of its `.`; up to 1 a fraction of the axis, above 1 a percentage. |
+| INITIAL | DECIMAL | `[0-9]+\.[0-9]+` |  | A coordinate or boundary: a decimal such as `0.5`, with digits on both sides of its `.`. A coordinate up to 1 is a fraction of the axis, above 1 a percentage; a stage boundary is always a fraction, drawn clamped to [0, 1] (D424). |
 | INITIAL | ARROW | `->` |  | `->`: a link from one component to another, or the next evolution stage. |
 | INITIAL | LINK_PORT | `\+<>\|\+>\|\+<` |  | `+>`, `+<` or `+<>`: a flow along a link (forward, backward or both ways), after either name. |
 | INITIAL | LINK_ARROW | `-->\|-\.->\|>\|\+'[^']*'<>\|\+'[^']*'<\|\+'[^']*'>` |  | A link's arrow: `-->`, `-.->` (dashed) or `>`, or a labelled flow such as `+'label'>`, `+'label'<` or `+'label'<>`. |

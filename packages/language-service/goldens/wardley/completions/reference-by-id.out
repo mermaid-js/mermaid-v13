@@ -1,0 +1,9 @@
+@ 6:8  evolve |
+  Kettle node (component) 6:8-6:8 "" -> "Kettle"
+@ 7:9  evolve G|
+  none
+@ 8:10  pipeline |
+  Kettle node (component) 8:10-8:10 "" -> "Kettle"
+@ 9:11  Kettle -> |
+  Kettle node (component) 9:11-9:11 "" -> "Kettle"
+  Gas node (pipeline component) 9:11-9:11 "" -> "Gas"

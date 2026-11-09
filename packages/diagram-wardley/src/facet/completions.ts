@@ -6,7 +6,8 @@
  * order (a strategy only before one is written); the strategies and `inertia` inside its `(`;
  * the arrows and flows after a link's first name, the flows after its second; and the declared
  * node names after an arrow or flow, `evolve`, `pipeline`, `accelerator` and `deaccelerator`,
- * quoted where they must be (D423). Inside a quoted name, a note's or annotation's text, a
+ * quoted where they must be (D423), but no pipeline component's name after `evolve` and
+ * `pipeline`, which the parser resolves by node id only. Inside a quoted name, a note's or annotation's text, a
  * statement's text (probe modes `string`, `title`, `accTitle`, `accDescr`) and outside code
  * nothing is offered.
  */
@@ -110,7 +111,10 @@ export function wardleyCompletions(
   const reference =
     BEFORE_REFERENCE.has(last) && before[before.length - 1] !== T.Evolution && !lineStart;
   if (reference && [...expected].some((k) => NAME_SET[k] === 1)) {
-    for (const [name, [first]] of declaredNodes(result.ast)) {
+    // After `evolve` and `pipeline` a node id, as the parser reads it: no pipeline component.
+    const idOnly = last === T.Evolve || last === T.Pipeline;
+    for (const [name, declared] of declaredNodes(result.ast)) {
+      const first = idOnly ? declared.find((d) => d.type !== 'PipelineComponent') : declared[0];
       if (!first || !name.startsWith(prefix)) continue;
       const insertText = nameReason(name) === undefined ? name : quoteName(name);
       if (insertText === undefined) continue;

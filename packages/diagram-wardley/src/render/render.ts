@@ -20,13 +20,13 @@ import {
   styleScope,
   styleText,
   themeStyleSheet,
+  type Attrs,
   type Paint,
   type PathBuilder,
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import type { Attrs } from '@mermaid-js/core/svg';
-import { WARDLEY_SECTION, wardleyUseMaxWidth } from '../config.ts';
+import { wardleySection, wardleyUseMaxWidth } from '../config.ts';
 import { BOLD_WEIGHT, WARDLEY_METRICS as metrics } from '../layout/metrics.ts';
 import type {
   PlacedText,
@@ -470,8 +470,7 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const section = config[WARDLEY_SECTION] as Readonly<Record<string, unknown>> | undefined;
-  const maxWidth = wardleyUseMaxWidth(section);
+  const maxWidth = wardleyUseMaxWidth(wardleySection(config));
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
