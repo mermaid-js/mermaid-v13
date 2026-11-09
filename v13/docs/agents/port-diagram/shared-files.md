@@ -37,6 +37,16 @@ Until wave 3, every port edited the same ~60 shared files: package lists, table 
 
 What still is a shared edit, by design: a change to shared code itself (a new core primitive in a T0, a new field on an oracle descriptor, a core theme row that moves from a package to core, the hand-written top of MIGRATION.md). Those are features, not list rows; they conflict rarely and are merged as code.
 
+## Before T5: a package with no manifest yet
+
+Until T5 adds the `mermaid` manifest, your `packages/diagram-<type>` is a **pre-manifest** package. Give it a `workspace.yaml` from T1 on (an empty one, a comment only, is enough), and the workspace tools count it (`workspaceDiagrams()` in `tools/workspace/diagrams.ts`):
+
+- `pnpm regen` adds it to `packages/conformance`'s devDependencies (and to `tools/gen-grammar`'s once a spec there imports it);
+- `gen:grammar` reads its `grammars:`;
+- the theme scan reads its sources (set `theme: { notDrawnYet: true }` until it draws), and the licence check its `credits:`.
+
+It stays out of everything that registers or publishes a diagram until the manifest lands: the generated registry, detectors and facets (so the type is still `UNSUPPORTED_DIAGRAM`), gen-config's sections (`configDefaults` waits for T5), the `mermaid`, `bench` and language packages' dependencies, the RELEASING rows and mermaid's notices. Do not add the manifest early to get any of this: it gives the type a registry loader before it has a plugin. A `diagram-*` folder with neither a manifest nor a `workspace.yaml` is not counted at all (`tools/workspace/pre-manifest.spec.ts`).
+
 ## Moving an in-flight port (do this on your next merge of `mermaid-v13`)
 
 1. Merge `mermaid-v13`. For every conflicted file in the table above, and every generated file, take theirs (`git checkout --theirs <file>`).
@@ -48,8 +58,9 @@ What still is a shared edit, by design: a change to shared code itself (a new co
    - MIGRATION.md sections → `v13/docs/migration/<type>.md`.
    - Lines in shared specs (type lists, `TYPE_DOCS`, per-type `it`s): drop the list lines; samples → `grammar/<type>.sample.mmd` / `.agree.mmd`; a type-only `it` → your own spec file; your `goldens/<id>/completions/empty.*` → delete.
    - Hand-drawn: add `e2e/diagrams/<folder>/hand-drawn.txt`.
-3. Run `pnpm regen`, then `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
-4. Run your scoped checks, then `pnpm check`.
+3. Not at T5 yet? Make sure your package has a `workspace.yaml` (see above), or `pnpm regen` drops your conformance dependency.
+4. Run `pnpm regen`, then `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
+5. Run your scoped checks, then `pnpm check`.
 
 Per in-flight port:
 

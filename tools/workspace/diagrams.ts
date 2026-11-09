@@ -3,12 +3,7 @@
  * `packages/diagram-<type>/` and every shared tool finds it here, so no shared list names it.
  *
  * A package is a diagram package when its package.json has a `mermaid` manifest with
- * `plugin: 'diagram'` (DESIGN §12.1), or when it is a `packages/diagram-*` package with no
- * `mermaid` manifest yet: a port before its integration ticket (T5) adds the manifest, so the
- * registry does not load it before it draws. Such a package has no {@link DiagramPackage.manifest};
- * readers of the manifest (registry, config sections, the bundled and published lists) skip it,
- * and the tools that only need its wiring (grammars, the private tools' dependencies, licence
- * credits, theme flags) read it as any other. Its optional `workspace.yaml` holds what the shared
+ * `plugin: 'diagram'` (DESIGN §12.1). Its optional `workspace.yaml` holds what the shared
  * tools need from it beyond the manifest: config defaults, grammar targets, licence credits,
  * its release-table row. That file is not published (it is not in the package's `files`).
  * The keys are documented on {@link DiagramWiring}; a key a tool does not know is an error,
@@ -88,19 +83,9 @@ export interface DiagramPackage {
   /** package.json's `description`. */
   readonly description?: string;
   readonly private: boolean;
-  /**
-   * The `mermaid` manifest; absent while the port has not reached its integration ticket (T5),
-   * which adds it. Every reader of the manifest skips a package without one.
-   */
-  readonly manifest?: DiagramManifestShape;
+  readonly manifest: DiagramManifestShape;
   readonly wiring: DiagramWiring;
 }
-
-/** A {@link DiagramPackage} that has its manifest: one the registry loads. */
-export type ManifestedPackage = DiagramPackage & { readonly manifest: DiagramManifestShape };
-
-/** Whether `p` has its `mermaid` manifest (a port before T5 has none yet). */
-export const hasManifest = (p: DiagramPackage): p is ManifestedPackage => p.manifest !== undefined;
 
 export const WIRING_FILE = 'workspace.yaml';
 
@@ -116,9 +101,24 @@ export function readWiring(root: string, dir = ''): DiagramWiring {
   return parsed as DiagramWiring;
 }
 
-/** Every first-party diagram package, in directory order. */
-export function diagramPackages(root = ROOT): DiagramPackage[] {
-  const out: DiagramPackage[] = [];
+/**
+ * A `packages/diagram-<type>` package as the workspace tools see it. Before a port's T5 adds
+ * the manifest (`mermaid.plugin: 'diagram'`), its package has no `manifest` yet: it counts once
+ * it has a `workspace.yaml` (even an empty one), so conformance can depend on it, gen-grammar
+ * reads its grammars and the theme scan reads its sources, while the registry, the config
+ * sections and the published-package lists still leave it out.
+ */
+export interface WorkspaceDiagram extends Omit<DiagramPackage, 'manifest'> {
+  /** The plugin manifest; absent while the port has not reached T5 (a pre-manifest package). */
+  readonly manifest?: DiagramManifestShape;
+}
+
+/**
+ * Every diagram package the workspace tools work over, in directory order: each one with a
+ * manifest, and each pre-manifest one with a `workspace.yaml` ({@link WorkspaceDiagram}).
+ */
+export function workspaceDiagrams(root = ROOT): WorkspaceDiagram[] {
+  const out: WorkspaceDiagram[] = [];
   for (const entry of readdirSync(join(root, 'packages')).sort()) {
     const dir = `packages/${entry}`;
     const path = join(root, dir, 'package.json');
@@ -127,19 +127,24 @@ export function diagramPackages(root = ROOT): DiagramPackage[] {
       name: string;
       description?: string;
       private?: boolean;
-      mermaid?: { readonly plugin?: unknown };
+      mermaid?: DiagramManifestShape;
     };
-    // A manifest for another kind of plugin is not a diagram; no manifest is a port before T5.
-    if (pkg.mermaid !== undefined && pkg.mermaid.plugin !== 'diagram') continue;
+    const manifest = pkg.mermaid?.plugin === 'diagram' ? pkg.mermaid : undefined;
+    if (manifest === undefined && !existsSync(join(root, dir, WIRING_FILE))) continue;
     out.push({
       dir,
       type: entry.slice('diagram-'.length),
       name: pkg.name,
       ...(pkg.description !== undefined && { description: pkg.description }),
       private: pkg.private === true,
-      ...(pkg.mermaid !== undefined && { manifest: pkg.mermaid as DiagramManifestShape }),
+      ...(manifest !== undefined && { manifest }),
       wiring: readWiring(root, dir),
     });
   }
   return out;
+}
+
+/** Every first-party diagram package with a manifest (DESIGN §12.1), in directory order. */
+export function diagramPackages(root = ROOT): DiagramPackage[] {
+  return workspaceDiagrams(root).filter((d): d is DiagramPackage => d.manifest !== undefined);
 }

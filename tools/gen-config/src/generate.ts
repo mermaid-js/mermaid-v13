@@ -42,8 +42,6 @@ export function sectionOwners(root?: string): Readonly<Record<string, string>> {
   const owners: Record<string, string> = {};
   for (const p of diagramPackages(root)) {
     if (p.wiring.configDefaults !== true) continue;
-    // The section is the manifest's: a port gets `configDefaults` with its manifest (T5).
-    if (!p.manifest) throw new Error(`${p.dir}: configDefaults needs the package's manifest`);
     const section = p.manifest.section ?? p.manifest.id;
     const other = owners[section];
     if (other !== undefined)
