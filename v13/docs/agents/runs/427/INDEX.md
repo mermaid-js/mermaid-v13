@@ -9,7 +9,7 @@ Integration branch `feature/427_sankey` (from `mermaid-v13` at 12ba676cb). Draft
 | T2 grammar, parser, model, AST | #496 | #494 | merged (ff bde56c3e4; main entry 5,936 B gz, no core change) |
 | T3 layout | #499 | #496 | merged (ff de3cbda74; main entry 9,167 B gz, core unchanged 93,682 B) |
 | T4 SVG renderer | #502 | #499, #492 | merged (ff 04a49d812; main entry 10,450 B gz, core unchanged 93,682 B) |
-| T6 language facet | #504 | #496 | done on `feature/504_sankey-language` (`./language` 8,614 B gz core external; main entry 10,954 B gz; core unchanged; 50k cycle 16.1 ms vs flowchart 20.5) |
+| T6 language facet | #504 | #496 | merged (ff edbd8e19e; `./language` 8,614 B gz core external; main entry 10,954 B gz; core unchanged; 50k cycle 16.1 ms vs flowchart 20.5) |
 | T5 integration | #503 | #502, #504 | pending |
 
 No T7 (D320: sankey throws `UnsupportedFormatError` for ascii). One ticket agent at a time (five ports share AI-Max).
