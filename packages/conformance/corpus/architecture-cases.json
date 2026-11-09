@@ -654,5 +654,13 @@
   {
     "id": "architecture-cases/db-proto-missing",
     "source": "architecture-beta\ngroup marker\nservice a in __proto__"
+  },
+  {
+    "id": "architecture-cases/header-cut-by-directive",
+    "source": "archi%%{init: {}}%%tecture-beta\nservice a"
+  },
+  {
+    "id": "architecture-cases/header-cut-short-by-directive",
+    "source": "archi%%{init: {}}%%tect\nservice a"
   }
 ]

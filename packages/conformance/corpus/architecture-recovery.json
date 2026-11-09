@@ -235,5 +235,16 @@
       ["ARCHITECTURE_ALIGN_REPEAT", 8]
     ],
     "keeps": ["a"]
+  },
+  {
+    "id": "architecture-recovery/broken-end-and-unknown-end",
+    "name": "A broken declaration at one edge end does not hide an unknown id at the other",
+    "source": "architecture-beta\nservice a\nservice q extra\nq:R -- L:zz\nalign row q a ghost",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["ARCHITECTURE_UNKNOWN_ID", 4],
+      ["ARCHITECTURE_ALIGN_MEMBER", 5]
+    ],
+    "keeps": ["a"]
   }
 ]

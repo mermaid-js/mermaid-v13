@@ -56,40 +56,43 @@ export interface Problem {
   readonly at: 'id' | 'parent' | 'lhs' | 'rhs' | number;
 }
 
+/** What {@link ArchitectureRegistry.add} did. */
+export interface Added {
+  /** The first check that failed, if any. */
+  readonly problem?: Problem;
+  /** Whether the id was registered (false only when it was taken). */
+  readonly added: boolean;
+  /** The parent registered with it: `undefined` for none or when its check failed. */
+  readonly parent: string | undefined;
+}
+
 /**
  * v12's `ArchitectureDB` checks, in its order, over its id table (a `Map`, so `__proto__` is an
- * id like any other). Each `add…` registers what it is given and returns the first check that
- * failed, or `undefined`: v12 threw that check's message and stopped. Unlike v12's DB, a
- * declaration whose parent check fails is still registered, without its parent (see the module
- * comment); {@link added} says what was.
+ * id like any other). Each check returns the first one that failed, or `undefined`: v12 threw
+ * that check's message and stopped. Unlike v12's DB, a declaration whose parent check fails is
+ * still registered, without its parent (see the module comment).
  */
 export class ArchitectureRegistry {
   private readonly ids = new Map<string, 'node' | 'group'>();
   /** Each service's and junction's group (`undefined`: none). */
   private readonly parents = new Map<string, string | undefined>();
-  /** The parent the last `add…` registered, after its checks. */
-  parent: string | undefined;
-  /** Whether the last `add…` registered its id. */
-  added = false;
 
   /** v12's `addService`, `addJunction` and `addGroup` (one shape, the kind in the message). */
-  add(kind: DeclarationKind, id: string, parent: string | undefined): Problem | undefined {
-    this.added = false;
-    this.parent = undefined;
+  add(kind: DeclarationKind, id: string, parent: string | undefined): Added {
     const known = this.ids.get(id);
     if (known !== undefined) {
-      return problem(
+      const taken = problem(
         ARCHITECTURE_DUPLICATE_ID,
         `The ${kind} id [${id}] is already in use by another ${known}`,
         'id'
       );
+      return { problem: taken, added: false, parent: undefined };
     }
     const failed = parent === undefined ? undefined : this.parentProblem(kind, id, parent);
+    const kept = failed ? undefined : parent;
     this.ids.set(id, kind === 'group' ? 'group' : 'node');
-    if (kind !== 'group') this.parents.set(id, failed ? undefined : parent);
-    this.added = true;
-    this.parent = failed ? undefined : parent;
-    return failed;
+    if (kind !== 'group') this.parents.set(id, kept);
+    return failed ? { problem: failed, added: true, parent: kept } : { added: true, parent: kept };
   }
 
   private parentProblem(kind: DeclarationKind, id: string, parent: string): Problem | undefined {
@@ -185,6 +188,11 @@ export class ArchitectureRegistry {
         0
       );
     }
+    return this.members(direction, members);
+  }
+
+  /** {@link align}'s checks of each member: a service or junction, listed once. */
+  members(direction: 'row' | 'column', members: readonly string[]): Problem | undefined {
     const seen = new Set<string>();
     for (let k = 0; k < members.length; k++) {
       const id = members[k] ?? '';
@@ -251,6 +259,8 @@ type Declaration = ArchitectureGroupNode | ArchitectureServiceNode | Architectur
 class Normaliser {
   private readonly db = new ArchitectureRegistry();
   private readonly registered = new Map<string, { kind: DeclarationKind; astId: AstId }>();
+  /** Ids registered without the parent they named (the parent check failed). */
+  private readonly parentDropped = new Set<string>();
   /** `{group}` ends in no group (D504), for one warning. */
   private readonly ungrouped: { range: Range; id: string; astId: AstId }[] = [];
 
@@ -337,22 +347,32 @@ class Normaliser {
     return out;
   }
 
-  /** v12's `addLayoutHint` for each `align`; one that fails a check is left out. */
+  /**
+   * v12's `addLayoutHint` for each `align`; one that fails a check is left out. A member whose
+   * declaration had a syntax error raises no error, and the others are still checked.
+   */
   private alignments(): ArchitectureAlignment[] {
     const out: ArchitectureAlignment[] = [];
     for (const n of this.parts.alignments) {
-      const members = n.members.map((m) => m.value);
-      const failed = this.db.align(n.direction, members);
-      if (!failed) {
-        out.push(freeze({ direction: n.direction, members: freeze(members), astId: n.id }));
-        continue;
+      const checked = n.members.filter((m) => !this.isBroken(m.value));
+      const broken = checked.length < n.members.length;
+      const members = checked.map((m) => m.value);
+      const failed = broken
+        ? this.db.members(n.direction, members)
+        : this.db.align(n.direction, members);
+      if (failed) {
+        const at = typeof failed.at === 'number' ? checked[failed.at] : undefined;
+        this.error(failed, at?.range ?? n.range);
       }
-      const at = typeof failed.at === 'number' ? n.members[failed.at] : undefined;
-      // A member whose declaration had a syntax error: no second error.
-      if (at && this.parts.broken.has(at.value) && !this.db.has(at.value)) continue;
-      this.error(failed, at?.range ?? n.range);
+      if (failed || broken) continue;
+      out.push(freeze({ direction: n.direction, members: freeze(members), astId: n.id }));
     }
     return out;
+  }
+
+  /** Whether `id` was declared only by a statement with a syntax error. */
+  private isBroken(id: string): boolean {
+    return this.parts.broken.has(id) && !this.db.has(id);
   }
 
   /**
@@ -361,7 +381,8 @@ class Normaliser {
    */
   private declare(kind: DeclarationKind, n: Declaration): string | undefined | null {
     const id = n.name.value;
-    const failed = this.db.add(kind, id, n.parent?.value);
+    const { problem: failed, added, parent: kept } = this.db.add(kind, id, n.parent?.value);
+    if (failed?.at === 'parent') this.parentDropped.add(id);
     if (failed) {
       const parent = n.parent;
       // A parent whose own declaration had a syntax error: no second error.
@@ -372,13 +393,27 @@ class Normaliser {
       if (!quiet)
         this.error(failed, failed.at === 'parent' && parent ? parent.range : n.name.range);
     }
-    if (!this.db.added) return null;
+    if (!added) return null;
     this.registered.set(id, { kind, astId: n.id });
-    return this.db.parent;
+    return kept;
   }
 
   private edge(n: ArchitectureEdgeNode): ArchitectureEdge | undefined {
     const { lhs, rhs } = n;
+    if (this.isBroken(lhs.name.value) || this.isBroken(rhs.name.value)) {
+      // An end whose declaration had a syntax error: no error for it, but the other end is
+      // still checked; the edge is left out.
+      const other = this.isBroken(lhs.name.value) ? rhs : lhs;
+      if (!this.isBroken(other.name.value) && !this.db.has(other.name.value)) {
+        const side = other === lhs ? 'left' : 'right';
+        this.diagnostics.error(
+          ARCHITECTURE_UNKNOWN_ID,
+          `The ${side}-hand id [${other.name.value}] does not yet exist. Please create the service/group before declaring an edge to it.`,
+          other.name.range
+        );
+      }
+      return undefined;
+    }
     const failed = this.db.edge(
       lhs.name.value,
       rhs.name.value,
@@ -386,9 +421,7 @@ class Normaliser {
       rhs.group !== undefined
     );
     if (failed) {
-      const end = failed.at === 'lhs' ? lhs : rhs;
-      const missing = failed.code === ARCHITECTURE_UNKNOWN_ID;
-      if (!(missing && this.parts.broken.has(end.name.value))) this.error(failed, end.name.range);
+      this.error(failed, (failed.at === 'lhs' ? lhs : rhs).name.range);
       return undefined;
     }
     return freeze({
@@ -409,6 +442,8 @@ class Normaliser {
   private groupFlag(end: ArchitectureEdgeEnd, astId: AstId): boolean {
     if (end.group === undefined) return false;
     if (this.db.groupOf(end.name.value) !== undefined) return true;
+    // Its `in` failed and was reported: no second diagnostic.
+    if (this.parentDropped.has(end.name.value)) return false;
     this.ungrouped.push({ range: end.group, id: end.name.value, astId });
     return false;
   }

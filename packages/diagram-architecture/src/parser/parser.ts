@@ -182,14 +182,30 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     }
     const word = TEXT_STATEMENTS[kind]?.word;
     if (!word) continue;
-    let k = start;
-    while (/[\t ]/.test(src.charAt(k))) k++;
-    k += word.length;
+    const { from, block } = valueStart(src, start, end, kind, word);
     // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
+    if (o >= from && (o < end || !block)) return word;
   }
   return 'INITIAL';
+}
+
+/**
+ * Where the value of a `title`, `accTitle` or `accDescr` token starts: after `title` and its
+ * blank, after the `:`, or after the `{` of a block `accDescr`.
+ */
+function valueStart(
+  src: string,
+  start: number,
+  end: number,
+  kind: number,
+  word: string
+): { from: number; block: boolean } {
+  let k = start;
+  while (/[\t ]/.test(src.charAt(k))) k++;
+  k += word.length;
+  if (kind === T.Title) return { from: k + 1, block: false };
+  while (k < end && /\s/.test(src.charAt(k))) k++;
+  return { from: k + 1, block: src.charAt(k) === '{' };
 }
 
 /**
@@ -230,7 +246,6 @@ class ArchitectureParser {
   private lines: LineIndex | undefined;
   /** Mentions per id base (`service:a`, `title`, …), for the `@n` suffixes. */
   private readonly mentions = new Map<string, number>();
-  private alignCount = 0;
   private readonly groups: ArchitectureGroupNode[] = [];
   private readonly services: ArchitectureServiceNode[] = [];
   private readonly junctions: ArchitectureJunctionNode[] = [];
@@ -239,6 +254,8 @@ class ArchitectureParser {
   private readonly ids: Mention[] = [];
   /** The id the declaration being read declares, once read. */
   private declaring: string | undefined;
+  /** The index of the token the current statement starts with. */
+  private statementStart = 0;
   /** The kind of the token the current statement starts with. */
   private statementKind: number = Kind.EOF;
   /** Ids declared by a statement with a syntax error. */
@@ -323,7 +340,10 @@ class ArchitectureParser {
     return this.i++;
   }
 
-  /** `id`, then `id@2`, `id@3`, … */
+  /**
+   * D508's `<kind>:<name>`, then `@2`, `@3`, … per mention of a kept statement (core's
+   * `AstIds` has the `kind:n` ordinals `align` uses, but no `<kind>:<name>@n` form).
+   */
   private id(base: string): AstId {
     const n = (this.mentions.get(base) ?? 0) + 1;
     this.mentions.set(base, n);
@@ -351,7 +371,7 @@ class ArchitectureParser {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    if (this.kind() === T.Id) this.accessibilityName(where);
+    if (this.kind() === T.Id && this.i === this.statementStart) this.accessibilityName(where);
     const names = EXPECTED.names(want === DOC ? DOC_NAMES : want);
     const why = hint ?? this.explain(want);
     const message = `Expected ${formatExpected(names)}, got ${this.found()}${why ? `; ${why}` : ''}.`;
@@ -566,6 +586,7 @@ class ArchitectureParser {
   private begin(): void {
     this.declaring = undefined;
     this.statementKind = this.kind();
+    this.statementStart = this.i;
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -638,9 +659,7 @@ class ArchitectureParser {
   /** `("in" ID)?` */
   private parent(want: readonly number[]): ArchitectureName | undefined {
     if (this.accept(T.In, want) === undefined) return undefined;
-    const parent = this.name();
-    this.ids.push({ name: parent });
-    return parent;
+    return this.name();
   }
 
   /** Where the statement that started at `start` ends: the token before the cursor. */
@@ -661,12 +680,12 @@ class ArchitectureParser {
     const parent = this.parent(want);
     if (parent) want = LINE_END;
     const range = this.span(start);
+    this.eol(want);
     const id = this.id(`group:${name.value}`);
     const node: ArchitectureGroupNode = { id, type: 'Group', range, name };
     if (icon) node.icon = icon;
     if (label) node.label = label;
     if (parent) node.parent = parent;
-    this.eol(want);
     this.declare(node, 'group');
     this.groups.push(node);
   }
@@ -684,13 +703,13 @@ class ArchitectureParser {
     const parent = this.parent(want);
     if (parent) want = LINE_END;
     const range = this.span(start);
+    this.eol(want);
     const id = this.id(`service:${name.value}`);
     const node: ArchitectureServiceNode = { id, type: 'Service', range, name };
     if (iconText) node.iconText = iconText;
     if (icon) node.icon = icon;
     if (label) node.label = label;
     if (parent) node.parent = parent;
-    this.eol(want);
     this.declare(node, 'service');
     this.services.push(node);
   }
@@ -702,15 +721,15 @@ class ArchitectureParser {
     const want = [T.In, ...LINE_END];
     const parent = this.parent(want);
     const range = this.span(start);
+    this.eol(parent ? LINE_END : want);
     const id = this.id(`junction:${name.value}`);
     const node: ArchitectureJunctionNode = { id, type: 'Junction', range, name };
     if (parent) node.parent = parent;
-    this.eol(parent ? LINE_END : want);
     this.declare(node, 'junction');
     this.junctions.push(node);
   }
 
-  /** Record a declaration that parsed: its AST node, statement span and id mention. */
+  /** Record a declaration that parsed: its AST node, statement span and id mentions. */
   private declare(
     node: ArchitectureGroupNode | ArchitectureServiceNode | ArchitectureJunctionNode,
     kind: string
@@ -718,6 +737,7 @@ class ArchitectureParser {
     this.children.push(node);
     this.st.statement(kind, node.range);
     this.ids.push({ name: node.name, declaredBy: node.id });
+    if (node.parent) this.ids.push({ name: node.parent });
   }
 
   /**
@@ -745,6 +765,7 @@ class ArchitectureParser {
     const rhsName = this.name();
     const rhsGroup = this.groupMark(AFTER_RHS_ID);
     const range = this.span(lhsName.range.start);
+    this.eol(rhsGroup ? LINE_END : AFTER_RHS_ID);
     const end = (
       name: ArchitectureName,
       side: [ArchitectureSide, Range],
@@ -765,7 +786,6 @@ class ArchitectureParser {
     };
     if (label) node.label = label;
     this.ids.push({ name: lhsName }, { name: rhsName });
-    this.eol(rhsGroup ? LINE_END : AFTER_RHS_ID);
     this.children.push(node);
     this.edges.push(node);
     this.st.statement('edge', range);
@@ -797,15 +817,15 @@ class ArchitectureParser {
       members.push(this.name());
     }
     const range = this.span(start);
+    this.eol(AFTER_MEMBER);
     const node: ArchitectureAlignmentNode = {
-      id: `align:${++this.alignCount}`,
+      id: this.st.ids.statement('align'),
       type: 'Alignment',
       range,
       direction: k === T.Row ? 'row' : 'column',
       members,
     };
     for (const m of members) this.ids.push({ name: m });
-    this.eol(AFTER_MEMBER);
     this.children.push(node);
     this.alignments.push(node);
     this.st.statement('align', range);
@@ -818,6 +838,7 @@ class ArchitectureParser {
     const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
     const range = this.range(j);
     while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    this.eol();
     let text: string;
     if (type === 'Title') text = this.title = titleValue(image);
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
@@ -826,7 +847,6 @@ class ArchitectureParser {
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
     this.st.statement(word, range);
-    this.eol();
   }
 
   // ---- the model ----------------------------------------------------------------------

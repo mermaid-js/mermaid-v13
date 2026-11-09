@@ -39,7 +39,8 @@ import { architectureGateCorpus } from './corpus.ts';
  *   statement (`architecture-cases/directive-unclosed-in-line`) is gated.
  * - {@link NOT_REACHED}: the sources v12 never lexed as architecture: the cases written so
  *   (`header-upper`, `header-mixed-case`: v12's detector is `/^\s*architecture/`, case
- *   sensitive) in every variant, and the `commented()` copies of short sources, whose cut falls
+ *   sensitive) and `header-cut-short-by-directive` (no `architecture` once the directive is cut)
+ *   in every variant, and the `commented()` copies of short sources, whose cut falls
  *   inside the header. `architecture` alone is detected and lexed (as an ID), so it is gated.
  */
 const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
@@ -57,9 +58,13 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
     ...variants('architecture-cases/header-mixed-case'),
     ...variants('architecture-cases/header-upper'),
   ].map((id) => [id, 'v12 detects architecture in lower case only'] as const),
+  ...variants('architecture-cases/header-cut-short-by-directive').map(
+    (id) => [id, 'with the directive cut, the header is `architect`: v12 detects nothing'] as const
+  ),
   ...[
     'architecture-cases/header-alone',
     'architecture-cases/header-bare',
+    'architecture-cases/header-cut-by-directive',
     'v12-specs/architecture.spec.ts#1',
     'v12-specs/architecture.test.ts#1',
     'v12-specs/architecture.test.ts#3',

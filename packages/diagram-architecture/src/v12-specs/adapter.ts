@@ -70,7 +70,7 @@ export class ArchitectureDB {
   }
 
   private check(kind: DeclarationKind, id: string, parent: string | undefined): void {
-    const problem = this.registry.add(kind, id, parent);
+    const { problem } = this.registry.add(kind, id, parent);
     if (problem) throw new Error(problem.message);
   }
 
