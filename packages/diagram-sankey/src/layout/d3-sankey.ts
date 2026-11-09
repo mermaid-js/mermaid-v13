@@ -1,10 +1,12 @@
 /**
- * d3-sankey 0.12.3's layout (`src/sankey.js`, `src/align.js`; Copyright 2015 Mike Bostock,
- * BSD 3-Clause License: see THIRD_PARTY_NOTICES in \@mermaid-js/diagram-sankey), re-implemented
- * step for step with no dependency, as v12 configures it (`sankeyRenderer.ts:121-134`): node ids, no
- * `nodeSort`, no `linkSort`, d3's 6 iterations. Node boxes and link breadths equal d3's
+ * d3-sankey 0.12.3's layout (https://github.com/d3/d3-sankey, `src/sankey.js`, `src/align.js`;
+ * Copyright 2015 Mike Bostock, BSD 3-Clause License: see THIRD_PARTY_NOTICES in
+ * \@mermaid-js/diagram-sankey), re-implemented step for step with no dependency, as v12
+ * configures it (`sankeyRenderer.ts:121-134`): node ids, no `nodeSort`, no `linkSort`, d3's 6
+ * iterations. Node boxes and link breadths equal d3's
  * (`packages/conformance/src/sankey/layout-d3.spec.ts`), down to the order of every float
- * operation and of every stable sort. d3-array 2.12.1's `sum`, `min` and `max` are copied
+ * operation and of every stable sort. d3-array 2.12.1's (https://github.com/d3/d3-array,
+ * Copyright 2010-2020 Mike Bostock, BSD 3-Clause License) `sum`, `min` and `max` are copied
  * with their semantics: `sum` skips 0 and NaN, `min`/`max` skip `undefined` and NaN.
  *
  * What changed, each only where d3 writes NaN (D394: never draw NaN):

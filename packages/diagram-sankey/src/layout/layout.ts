@@ -4,8 +4,9 @@
  * labels are measured first through the injected measurer at 14 px in `fontFamily`
  * (pitfall 16), the boxes come from d3-sankey 0.12.3 as v12 configures it (`./d3-sankey.ts`),
  * then each node gets its fill and label and each link its path (d3-sankey's
- * `sankeyLinkHorizontal`, d3-shape 1.3.7's `linkHorizontal`: BSD 3-Clause License, see
- * THIRD_PARTY_NOTICES), where v12 put them. The bounds cover what is drawn with no padding, as
+ * `sankeyLinkHorizontal`, d3-shape 1.3.7's `linkHorizontal`, https://github.com/d3/d3-shape,
+ * Copyright 2010-2015 Mike Bostock: BSD 3-Clause License, see THIRD_PARTY_NOTICES), where v12
+ * put them. The bounds cover what is drawn with no padding, as
  * v12's `setupGraphViewbox(…, 0)` took the drawn box (D224): the nodes, the labels with the
  * outlined style's halo, and the link strokes. Lengths come from the `sankey` config and the
  * metrics table (pitfall 13).

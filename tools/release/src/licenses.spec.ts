@@ -240,6 +240,61 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('checks a BSD 3-Clause upstream (d3-sankey) by its own license, in its own section', () => {
+    const header =
+      '/**\n * After https://github.com/d3/d3-sankey, BSD 3-Clause License, Copyright 2015 Mike Bostock.\n */\n';
+    const bsd = (copyright: string) =>
+      `d3-sankey\n---------\n  src/layout/d3-sankey.ts\n\nBSD 3-Clause License\n\n${copyright}\n\nRedistribution and use in source and binary forms, with or without modification,\n`;
+    const files = {
+      'packages/flow/package.json': JSON.stringify({
+        name: 'flow',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+      'packages/flow/src/layout/d3-sankey.ts': `${header}export {};\n`,
+    };
+    // Pele's text is not needed for d3 files.
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/flow/THIRD_PARTY_NOTICES': bsd('Copyright 2015, Mike Bostock'),
+        })
+      )
+    ).toEqual([]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/flow/src/layout/d3-sankey.ts':
+            '// After https://github.com/d3/d3-sankey, MIT, Mike Bostock.\nexport {};\n',
+          'packages/flow/THIRD_PARTY_NOTICES': `MIT License\n\n${bsd('Copyright 2015 Mike Bostock')}`,
+        })
+      )
+    ).toEqual([
+      'packages/flow/src/layout/d3-sankey.ts: d3-sankey-derived header must name the BSD-3-Clause license and "Mike Bostock"',
+      'packages/flow/THIRD_PARTY_NOTICES: must contain the BSD-3-Clause License text with "Copyright 2015, Mike Bostock"',
+    ]);
+  });
+
+  it('requires the sankey d3 ports to credit d3-sankey, d3-array and d3-shape', () => {
+    const root = workspace({
+      'packages/diagram-sankey/package.json': JSON.stringify({ name: 'sankey', private: true }),
+      'packages/diagram-sankey/src/layout/d3-sankey.ts': '// Ours.\nexport {};\n',
+      'packages/diagram-sankey/src/layout/layout.ts': '// Ours.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([]);
+    const published = workspace({
+      'packages/diagram-sankey/package.json': JSON.stringify({ name: 'sankey' }),
+      'packages/diagram-sankey/src/layout/d3-sankey.ts': '// Ours.\nexport {};\n',
+      'packages/diagram-sankey/src/layout/layout.ts': '// Ours.\nexport {};\n',
+    });
+    expect(checkLicenses(published)).toEqual([
+      'packages/diagram-sankey/src/layout/d3-sankey.ts: header must credit d3-sankey',
+      'packages/diagram-sankey/src/layout/d3-sankey.ts: header must credit d3-array',
+      'packages/diagram-sankey/src/layout/layout.ts: header must credit d3-shape',
+    ]);
+  });
+
   it('passes on this repository', () => {
     expect(checkLicenses(join(import.meta.dirname, '..', '..', '..'))).toEqual([]);
   });
