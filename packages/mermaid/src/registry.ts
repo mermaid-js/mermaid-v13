@@ -197,10 +197,22 @@ export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 /**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
  * closure (R-PERF-8). A diagram reaches one only when it is its `layoutEngine.default` (D285),
- * unless a loader of the same name is registered.
+ * unless a loader of the same name is registered or the engine is in `PEER_LAYOUTS`.
  */
 const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
+  ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
+  ['swimlane', () => import('@mermaid-js/core/layout/swimlane').then((m) => m.swimlane)],
+]);
+
+/**
+ * Lazy first-party engines that are peers of `layered` (D327, D502, D535): any graph diagram may
+ * select one with `layout`, mindmap included, so D285's gate does not apply to them. Only `tree`
+ * itself keeps the gate: a diagram reaches it only when it is its `layoutEngine.default`.
+ */
+const PEER_LAYOUTS: ReadonlySet<string> = new Set([
+  'compass', // D327, D502
+  'swimlane', // D535
 ]);
 
 /** The engine a render asks for: `layout`, through the diagram's aliases (D284). */
@@ -893,7 +905,8 @@ export class Registry {
    * loaded, `unknown` when nobody registered it, and `elk` for an ELK name while no ELK engine
    * is registered at all. For the last two the diagram's own default stands in (D282), else
    * the built-in engine. `need` is the engine to load first. A lazy first-party engine is
-   * `unknown` to a diagram whose default it is not (D285).
+   * `unknown` to a diagram whose default it is not (D285), except those in `PEER_LAYOUTS`
+   * (D502).
    */
   layout(name: string, own?: DiagramPlugin['layoutEngine']): LayoutFound {
     const found = this.find(name, name === own?.default);
@@ -905,8 +918,14 @@ export class Registry {
 
   private find(name: string, declares: boolean): LayoutFound {
     const loader = this.layoutLoader(name);
-    // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285).
-    if (!declares && loader !== undefined && loader === LAZY_LAYOUTS.get(name))
+    // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285),
+    // unless it is a peer of `layered` (D502, D535).
+    if (
+      !declares &&
+      !PEER_LAYOUTS.has(name) &&
+      loader !== undefined &&
+      loader === LAZY_LAYOUTS.get(name)
+    )
       return { engine: layered, state: 'unknown' };
     const engine = this.layouts.get(name);
     if (engine) return { engine, state: 'ready' };

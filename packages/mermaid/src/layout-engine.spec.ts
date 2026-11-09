@@ -2,8 +2,12 @@
  * Engine selection by plugin (D282, D284, D285): a diagram plugin's `layoutEngine` names the
  * engine it lays out with when no config layer sets `layout`, and aliases for v12's names.
  * `tree` is a first-party engine `mermaid` loads lazily, and only plugins that declare it reach it.
+ * `compass` is lazy too, and any graph type reaches it by name (D502).
+ * `swimlane` is loaded lazily too, but any graph diagram may select it (D535).
  */
 import { layered, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
+import { compass } from '@mermaid-js/core/layout/compass';
+import { swimlane } from '@mermaid-js/core/layout/swimlane';
 import { tree } from '@mermaid-js/core/layout/tree';
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
@@ -161,11 +165,56 @@ describe('a plugin’s layout engine (D284)', () => {
     expect(desc((await both.render('p', withLayout('tree'))).svg)).toBe(BY_LAYERED);
   });
 
+  it('lets any graph type select `compass` by name, while `tree` stays gated (D502)', async () => {
+    const BY_COMPASS = drawn(compass(graphOf(EDGES)));
+    expect(BY_COMPASS).not.toBe(BY_LAYERED);
+    const m = await withProbe();
+    const r = await m.render('p', withLayout('compass'));
+    expect(r.warnings).toEqual([]);
+    expect(desc(r.svg)).toBe(BY_COMPASS);
+    // prepare() loads it for renderSync, as for a default.
+    const sync = await withProbe();
+    expect(() => sync.renderSync(withLayout('compass'))).toThrow(NotLoadedError);
+    await sync.prepare(withLayout('compass'));
+    expect(desc(sync.renderSync(withLayout('compass')).svg)).toBe(BY_COMPASS);
+    const gated = await m.render('p', withLayout('tree'));
+    expect(gated.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(desc(gated.svg)).toBe(BY_LAYERED);
+  });
+
   it('lets a registered `tree` loader replace the first-party one, for every plugin', async () => {
     const m = await withProbe();
     m.registerLayoutLoaders([{ name: 'tree', loader: () => Promise.resolve(tree) }]);
     const r = await m.render('p', withLayout('tree'));
     expect(r.warnings).toEqual([]);
     expect(desc(r.svg)).toBe(BY_TREE);
+  });
+});
+
+describe('the swimlane engine, a peer of layered (D535)', () => {
+  const BY_SWIMLANE = drawn(swimlane(graphOf(EDGES)));
+
+  it('is selected by `layout: swimlane` on a plugin that does not declare it, once loaded', async () => {
+    expect(BY_SWIMLANE).not.toBe(BY_LAYERED);
+    const m = await withProbe();
+    const e = thrown(() => m.renderSync(withLayout('swimlane')));
+    expect((e as NotLoadedError).missing).toEqual([{ kind: 'layout', name: 'swimlane' }]);
+    const r = await m.render('p', withLayout('swimlane'));
+    expect(r.warnings).toEqual([]);
+    expect(desc(r.svg)).toBe(BY_SWIMLANE);
+    expect(desc(m.renderSync(withLayout('swimlane')).svg)).toBe(BY_SWIMLANE);
+  });
+
+  it('lays out a plain flowchart with `layout: swimlane`, while `tree` stays gated', async () => {
+    const flow = (layout: string) =>
+      `---\nconfig:\n  layout: ${layout}\n---\nflowchart TD\n  subgraph Sales\n    A --> B\n  end\n  B --> C\n`;
+    const m = createMermaid();
+    const r = await m.render('f', flow('swimlane'));
+    expect(r.warnings).toEqual([]);
+    const byLayered = await m.render('f', flow('layered'));
+    expect(r.svg).not.toBe(byLayered.svg);
+    const gated = await m.render('f', flow('tree'));
+    expect(gated.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(gated.svg).toBe(byLayered.svg);
   });
 });
