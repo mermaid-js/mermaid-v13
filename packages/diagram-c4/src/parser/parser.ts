@@ -289,7 +289,7 @@ class C4Parser {
   /**
    * A line break, and one after a `%%` comment right after it: the comment keeps its line break
    * (D452), where v12's ate it. Two line breaks with anything else between them (an empty
-   * `accDescr {}`) stay two, as in v12.
+   * `accDescr {}`, which is no statement) stay two, as in v12.
    */
   private lineBreaks(): boolean {
     const { c } = this;
@@ -299,10 +299,16 @@ class C4Parser {
     return true;
   }
 
-  /** Whether a `%%` comment is among the tokens between `a` and `b`. */
+  /** Whether only trivia, a `%%` comment among it, lies between tokens `a` and `b`. */
   private commentBetween(a: number, b: number): boolean {
-    for (let i = a + 1; i < b; i++) if (this.c.tokens.kind[i] === Kind.Comment) return true;
-    return false;
+    const t = this.c.tokens;
+    let comment = false;
+    for (let i = a + 1; i < b; i++) {
+      const k = t.kind[i];
+      if (k === Kind.Comment) comment = true;
+      else if (k !== Kind.Space && k !== Kind.Directive) return false;
+    }
+    return comment;
   }
 
   /** What the message says was found at the cursor. */

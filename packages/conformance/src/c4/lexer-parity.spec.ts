@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
 import { decodeEntities } from '../flowchart/v12.ts';
-import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import { loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { c4GateCorpus, VARIANTS } from './corpus.ts';
+import { exclusion, v13Tokens } from './d452.ts';
+import type { Exclusion } from './d452.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #538): the v13 C4 lexer emits the same terminals, with
@@ -93,63 +94,6 @@ const D452_COUNTS = [367, 43, 17];
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
 
 const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
-
-/** The v13 tokens with a jison name, as `[name, image]`, and where each starts and ends. */
-function v13Tokens(source: string): { tokens: JisonToken[]; ranges: [number, number][] } {
-  const tokens: JisonToken[] = [];
-  const ranges: [number, number][] = [];
-  // Where the last token (with or without a jison name) ended.
-  let end = 0;
-  for (const t of c4Tokens(source)) {
-    const name = JISON_NAMES[t.kind];
-    const before = end;
-    end = t.range.end;
-    if (!name) continue;
-    ranges.push([before, t.range.start]);
-    if (name === LEXICAL_ERROR) {
-      tokens.push([LEXICAL_ERROR, '']);
-      break;
-    }
-    tokens.push([name, t.text]);
-  }
-  return { tokens, ranges };
-}
-
-/** D452's lexing changes, by the gate exclusion they are listed under. */
-type Exclusion = 'unquoted' | 'comment' | 'title';
-
-/**
- * The D452 exclusion that explains the first difference, at token `at`, between v12's stream
- * and v13's, or undefined. `gap` is the source between the token before v13's and v13's.
- */
-function exclusion(
-  v12: readonly JisonToken[],
-  v13: readonly JisonToken[],
-  at: number,
-  gap: string
-): Exclusion | undefined {
-  const [a, b] = [v12[at], v13[at]];
-  if (a?.[0] === 'STR') {
-    // The oracle took v12's appended line break off its last token, so an image with no `)`
-    // or line break ran to the end of the text.
-    const stop = a[1].search(/[)\n]/);
-    const prefix = stop === -1 ? a[1] : a[1].slice(0, stop);
-    // v13's argument stopped at the `)` or line break, or the arguments ended there.
-    if (b?.[0] === 'STR' ? stop !== -1 && b[1] === prefix : /^ *$/.test(prefix)) return 'unquoted';
-  }
-  // v12's last argument ran over the line break it appended, v13's stopped before it.
-  if (a === undefined && b?.[0] === 'NEWLINE' && v12[at - 1]?.[0] === 'STR') return 'unquoted';
-  if (b?.[0] === 'NEWLINE' && a?.[0] !== 'NEWLINE' && gap.includes('%%')) return 'comment';
-  // v12's `title\s` took the line break (and the next line, or failed at a blank line).
-  if (
-    b?.[0] === 'title' &&
-    b[1] === 'title' &&
-    (a?.[0] === LEXICAL_ERROR || (a?.[0] === 'title' && a[1].startsWith('title\n')))
-  ) {
-    return 'title';
-  }
-  return undefined;
-}
 
 describe('c4 lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the corpus, the cases and their variants', async () => {
