@@ -2,6 +2,16 @@
 
 exports[`requirement layout over parser-produced fixtures > records the crossings layered draws 1`] = `
 {
+  "e2e/baseline/handdrawn/default.mmd": 0,
+  "e2e/baseline/handdrawn/neo-dark.mmd": 0,
+  "e2e/baseline/handdrawn/neo.mmd": 0,
+  "e2e/baseline/handdrawn/redux.mmd": 0,
+  "e2e/baseline/relations/all-kinds-lr.mmd": 0,
+  "e2e/baseline/styles/classes-and-title.mmd": 0,
+  "e2e/baseline/themes/default.mmd": 0,
+  "e2e/baseline/themes/neo-dark.mmd": 0,
+  "e2e/baseline/themes/neo.mmd": 0,
+  "e2e/baseline/themes/redux.mmd": 0,
   "e2e/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-neo-dark-theme.mmd": 0,
   "e2e/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-neo-theme.mmd": 0,
   "e2e/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-redux-color-theme.mmd": 0,

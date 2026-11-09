@@ -219,13 +219,10 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
   it.concurrent(
     'exits 1 for a diagram type this build does not have',
     async () => {
-      const r = await cli(
-        ['render', '--format', 'ascii'],
-        'requirementDiagram\n  element E {\n  }\n'
-      );
+      const r = await cli(['render', '--format', 'ascii'], 'eventmodeling\n  tf 01 cmd Start\n');
       expect(r.code).toBe(1);
       expect(r.stdout).toBe('');
-      expect(r.stderr).toContain('"requirement" is not supported');
+      expect(r.stderr).toContain('"eventmodeling" is not supported');
     },
     T
   );

@@ -355,7 +355,17 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.xAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
 | `xyChart.yAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
+| `requirement.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the requirement renderer never did. |  |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `requirement.rect_fill` | ignored | v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435). |  |
+| `requirement.text_color` | ignored | v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435). |  |
+| `requirement.rect_border_size` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435). |  |
+| `requirement.rect_border_color` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435). |  |
+| `requirement.rect_min_width` | ignored | v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436). |  |
+| `requirement.rect_min_height` | ignored | v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436). |  |
+| `requirement.fontSize` | ignored | v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style. |  |
+| `requirement.rect_padding` | ignored | v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436). |  |
+| `requirement.line_height` | ignored | v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436). |  |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -2403,6 +2413,62 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## Requirement diagram
+
+- **Detection:** `requirementDiagram` and v12's bare `requirement` are detected by v12's
+  case-sensitive detector with no word boundary (`/^\s*requirement(Diagram)?/`), between `pie`
+  and `sequence` as in v12. So `requirementsx` is detected and then rejected as a syntax error
+  (`SYNTAX`), and `RequirementDiagram` is not detected (`UNSUPPORTED_DIAGRAM`), as in v12. The
+  language service, CodeMirror and Monaco know it.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture, the v12
+  spec strings and docs examples, and the grammar is in
+  [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
+  with a range at the token (R-PARSE-4).
+- **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
+  v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
+  now accept. The six forms v12 accepted only because a blank swallowed the next line break
+  (`requirement ⏎ a {`, `a - traces ⏎-> b`, …) keep v12's model.
+- **`direction`** (D432) is a statement only at the start of a line, and the rest of the line
+  is read as usual: `a - traces -> b direction LR` is a relation to `b direction LR`, which v12
+  dropped silently. Text after a line-start direction (`direction LR;`,
+  `direction LR a - traces -> b`) is now one syntax error, where v12 dropped the rest of the
+  line.
+- **Order-dependent styling** (D433) is kept: a `style`, `class` or `:::` before its box is
+  defined is lost, `style` stops at its first unknown name and `classDef default` reaches the
+  boxes defined before it only, as in v12. One `REQUIREMENT_STYLE_DROPPED` warning per render
+  lists each lost statement (`related`, `astIds`). Style copies are capped at 1,000,000: past
+  that the render fails with `MermaidError` `code: 'LIMIT'`, `limit: 'maxLayoutWork'`
+  (R-SEC-5).
+- **Unknown ends, duplicates and shared names** (D434): a relation to a name no box has stays
+  in the model and is not drawn, with one `REQUIREMENT_UNKNOWN_NODE` warning; of duplicate
+  definitions the first is kept, with one `REQUIREMENT_DUPLICATE` warning; a requirement and an
+  element of one name are two boxes, relations and styles reaching the requirement first (v12's
+  order), with one `REQUIREMENT_SHARED_NAME` warning. v12 warned about none of them.
+- **Theme variables** (D435): `requirementBackground`, `requirementBorderColor`,
+  `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
+  documented and never read, now take effect, with `relationColor` and `relationLabelColor`
+  added; unset, they draw v12's colours. The redux themes' label chip is white (dark: `#16141f`),
+  as v12 drew it. See [theme-variables.md](./theme-variables.md).
+- **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
+  (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the
+  line above, and a font whose half line passes the 20px padding no longer draws text above
+  the box (its top is clamped). Body lines are left-aligned 10px in under every engine, where
+  v12 with dagre centred them.
+- **Config.** The `requirement` section is honoured: `theme` (default `redux-color`, as v12),
+  `layout` (no requirement default: the top-level `layout`, `layered`) and `useMaxWidth`. v12's
+  renderer read `state.useMaxWidth`, `state.nodeSpacing`, `state.rankSpacing` and
+  `state.titleTopMargin` instead (a v12 bug): v13 reads `requirement.useMaxWidth`, and the
+  spacing (50 by 50) and title margin (25) are fixed, v12's defaults; a `state.*` key no longer
+  changes a requirement diagram. `useWidth`, `rect_fill`, `text_color`, `rect_border_size`,
+  `rect_border_color`, `rect_min_width`, `rect_min_height`, `fontSize`, `rect_padding` and
+  `line_height` are accepted and ignored, as v12.2.0's renderer never read them (see the
+  ignored-keys table); `look` as everywhere (D153).
+- **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
+  layout keeps room for each marker so it no longer overlaps the next box.
+- **Text output** (`format: 'ascii'`) throws `UnsupportedFormatError` for now (D320; D438 is
+  the planned shape). The diagram is sketched under `look: handDrawn` (the box outline and the
+  divider; markers are never sketched, D301).
 
 ## Requirement SVG structure
 

@@ -10,7 +10,7 @@ describe('fixture support', () => {
     expect(isSupported('classDiagram')).toBe(true);
     expect(isSupported('journey')).toBe(true);
     expect(isSupported('gantt')).toBe(true);
-    expect(isSupported('requirement')).toBe(false);
+    expect(isSupported('eventmodeling')).toBe(false);
   });
 
   it('runs every corpus diagram and the Pele flowcharts, sequence and class, and sets the rest aside by type', () => {
@@ -29,11 +29,11 @@ describe('fixture support', () => {
   it('detects through front-matter and directives, and keeps undetectable text as an error', () => {
     const fixture = (id: string, source: string) => ({ ...loadFixtures()[0]!, id, source });
     const { supported, unsupported } = classifyFixtures([
-      fixture('x/front', '---\ntitle: t\n---\nrequirementDiagram\n  element E {\n  }\n'),
+      fixture('x/front', '---\ntitle: t\n---\neventmodeling\n  tf 01 cmd Start\n'),
       fixture('x/init', '%%{init: {"theme": "dark"}}%%\ngraph TD\n  A --> B\n'),
       fixture('x/junk', 'not a diagram\n'),
     ]);
-    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', 'requirement']]);
+    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', 'eventmodeling']]);
     // Text no detector claims still runs, so a broken fixture shows up as a render error.
     expect(supported.map((f) => f.id)).toEqual(['x/init', 'x/junk']);
   });

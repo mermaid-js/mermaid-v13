@@ -126,7 +126,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
   });
 
   it.each([
-    ['a type with no v13 highlighter', 'requirementDiagram\n  element E {\n  }\n'],
+    ['a type with no v13 highlighter', 'swimlane-beta\n  A --> B\n'],
     ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
     ['a header being typed', 'flo'],
   ])('colours nothing for %s, not as flowchart', async (_label, text) => {

@@ -251,10 +251,10 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   page,
 }) => {
   await open(page);
-  await setDoc(page, 'requirementDiagram\n  element E {\n  }\n');
-  // Past the debounce, so semantic tokens (none for requirementDiagram) would have come too.
+  await setDoc(page, 'swimlane-beta\n  A --> B\n');
+  // Past the debounce, so semantic tokens (none for swimlane-beta) would have come too.
   await page.waitForTimeout(500);
-  expect(await headerColour(page, 'requirementDiagram')).not.toBe(KEYWORD);
+  expect(await headerColour(page, 'swimlane-beta')).not.toBe(KEYWORD);
   // Back to a flowchart: re-picked, coloured again.
   await setDoc(page, TYPE_DOCS.flowchart!);
   await expect.poll(() => headerColour(page, 'flowchart')).toBe(KEYWORD);

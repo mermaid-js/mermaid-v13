@@ -19,7 +19,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `gantt` | `@mermaid-js/diagram-gantt` | yes | no |
 | `info` | `@mermaid-js/diagram-info` | yes | yes |
 | `pie` | `@mermaid-js/diagram-pie` | yes | no |
-| `requirement` | not ported | no | no |
+| `requirement` | `@mermaid-js/diagram-requirement` | yes | no |
 | `sequence` | `@mermaid-js/diagram-sequence` | yes | yes |
 | `swimlane` | not ported | no | no |
 | `flowchart-v2` | `@mermaid-js/diagram-flowchart` | yes | yes |

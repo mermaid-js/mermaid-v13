@@ -66,7 +66,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-pie').then((m) => m.pie),
   },
-  { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
+  {
+    type: 'requirement',
+    pattern: /^\s*requirement(Diagram)?/,
+    id: 'requirement',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-requirement').then((m) => m.requirement),
+  },
   {
     type: 'sequence',
     pattern: /^\s*sequenceDiagram/,

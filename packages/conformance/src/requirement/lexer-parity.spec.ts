@@ -213,7 +213,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer, but
     // `visual-check/with-a-title-default.mmd` (v12 rejects its front matter), the upper-case
     // header case and the excluded sources.
-    expect(e2e).toBe(179);
+    expect(e2e).toBe(189);
     expect(specs).toBe(48);
     expect(cases).toBe(203);
     // No e2e fixture, harvested string or syntax-page example depends on either decision, but

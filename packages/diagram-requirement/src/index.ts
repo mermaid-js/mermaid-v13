@@ -1,7 +1,7 @@
 /**
  * `@mermaid-js/diagram-requirement`: the requirement diagram plugin (spec #520). The lexer, the
  * parser, the model and AST, the codes of the warnings it raises, the layout, the renderer and
- * the plugin are here; the manifest and config defaults land with T5 (#587).
+ * the plugin are here. `mermaid` loads the plugin through its generated registry (#587).
  */
 export {
   detectRequirement,

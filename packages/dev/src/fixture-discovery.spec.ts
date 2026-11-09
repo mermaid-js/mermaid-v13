@@ -15,7 +15,7 @@ describe('fixture discovery', () => {
     expect(SUPPORTED_TYPES.has('flowchart-v2')).toBe(true);
     expect(SUPPORTED_TYPES.has('pie')).toBe(true);
     expect(SUPPORTED_TYPES.has('gantt')).toBe(true);
-    expect(SUPPORTED_TYPES.has('requirement')).toBe(false);
+    expect(SUPPORTED_TYPES.has('eventmodeling')).toBe(false);
   });
 
   it('lists the supported folders of the e2e root', () => {
@@ -26,6 +26,6 @@ describe('fixture discovery', () => {
     expect(folders).toContain('flowchart');
     expect(folders).toContain('pie');
     expect(folders).toContain('gantt');
-    expect(folders).not.toContain('requirement');
+    expect(folders).not.toContain('eventmodeling');
   });
 });

@@ -489,21 +489,21 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `requirement` | object |  | pending |  | The object containing configurations specific for req diagrams |
-| `requirement.useWidth` | number |  | pending |  |  |
-| `requirement.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `requirement.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `requirement` | object |  | honoured (13.0.0) |  | The object containing configurations specific for req diagrams |
+| `requirement.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the requirement renderer never did. |  |
+| `requirement.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12's requirement renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `requirement.useMaxWidth`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `requirement.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `requirement.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
-| `requirement.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `requirement.rect_fill` | string | `"#f9f9f9"` | pending |  |  |
-| `requirement.text_color` | string | `"#333"` | pending |  |  |
-| `requirement.rect_border_size` | string | `"0.5px"` | pending |  |  |
-| `requirement.rect_border_color` | string | `"#bbb"` | pending |  |  |
-| `requirement.rect_min_width` | number | `200` | pending |  |  |
-| `requirement.rect_min_height` | number | `200` | pending |  |  |
-| `requirement.fontSize` | number | `14` | pending |  |  |
-| `requirement.rect_padding` | number | `10` | pending |  |  |
-| `requirement.line_height` | number | `20` | pending |  |  |
+| `requirement.layout` | string |  | honoured (13.0.0) | No requirement default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` and `elk.<algorithm>` apply only when an author sets them, and are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D106, D173). | Defines which layout algorithm to use for rendering the diagram. |
+| `requirement.rect_fill` | string | `"#f9f9f9"` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435). |  |
+| `requirement.text_color` | string | `"#333"` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435). |  |
+| `requirement.rect_border_size` | string | `"0.5px"` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435). |  |
+| `requirement.rect_border_color` | string | `"#bbb"` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435). |  |
+| `requirement.rect_min_width` | number | `200` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436). |  |
+| `requirement.rect_min_height` | number | `200` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436). |  |
+| `requirement.fontSize` | number | `14` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style. |  |
+| `requirement.rect_padding` | number | `10` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436). |  |
+| `requirement.line_height` | number | `20` | ignored (13.0.0) | v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436). |  |
 
 ## `architecture`
 
