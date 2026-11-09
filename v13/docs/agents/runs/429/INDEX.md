@@ -41,6 +41,10 @@ xychart #426, sankey #427, treemap #428, venn #429 and wardley #430 run in paral
 - 2026-11-08: `mermaid-v13` 98d3c3ffa (#515 keepWords, #524 sankey core T0, #530 M5b decisions, #531 packet stress timer) merged in ab81ad803, clean.
 - 2026-11-08: `mermaid-v13` 05a786ad8 (#534 xychart core T0: shared chart series palette, D381, D545) merged in 493da7fcd, clean.
 
+## Final review
+
+Whole-branch `/code-review` (standards and spec) at efc8e6f20: no blocking spec gap; 15 findings fixed in 8a2c37cf6 (`tickets/final.md`). `pnpm check` 776 files, 16,806 tests; `pnpm e2e` 2,423 passed; core unchanged (CDN closure 94,132 B gz).
+
 ## Finish rule
 
 The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.
