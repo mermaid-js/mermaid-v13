@@ -1,6 +1,6 @@
 # Run notes, spec #526 (M5b railroad, `@mermaid-js/diagram-railroad`)
 
-Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then ad3648a91). Draft PR: not yet open.
+Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then ad3648a91). Draft PR: #633.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
