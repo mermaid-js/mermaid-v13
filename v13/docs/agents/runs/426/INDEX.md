@@ -10,7 +10,7 @@ Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draf
 | T3 layout | #509 | #508 | merged (ff 58a69c2c6; package entry ~15 KB gz; core +0, `fontFamily` usedBy only) |
 | T4 SVG renderer and theme table | #510 | #509, #506 | merged (c2f0d523f; package entry 17,928 B gz; theme identity 0 diffs) |
 | T6 language facet | #512 | #508 | merged (ff e7da02591; `./language` 12,470 B gz; core +0, type-only `LanguageFacet.writtenName?`) |
-| T5 integration | #513 | #510, #512 | open |
+| T5 integration | #513 | #510, #512 | merged (ff c2b31d376; package entry 18,230 B gz; warm render 16.7× v12) |
 
 No T7 (D320: xychart throws `UnsupportedFormatError` for `ascii`).
 
@@ -35,6 +35,7 @@ AI-Max is shared by five wave-2 ports, so one ticket agent runs at a time: T1 �
 | #508 T2 | — | 0 (no core or registry change) |
 | #509 T3 | 94,088 B | 0 (`fontFamily` usedBy += xychart; dropped from CDN core) |
 | #510 T4 | 94,096 B | +8 (`flatten()` treats a flat `[]` as unset, D545 fix; 112 B spare) |
+| #513 T5 | 94,121 B | +23 (`configSection` seam as #497, registry row, `$ref` key; 87 B spare) |
 
 ## Finish rule
 
