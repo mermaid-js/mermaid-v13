@@ -144,7 +144,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*packet(-beta)?/.test(text),
     load: () => import('@mermaid-js/diagram-packet/language').then((m) => m.language),
   },
-  { type: 'xychart', id: 'xychart', pattern: /^\s*xychart(-beta)?/, detector: (text) => /^\s*xychart(-beta)?/.test(text) },
+  {
+    type: 'xychart',
+    id: 'xychart',
+    section: 'xyChart',
+    pattern: /^\s*xychart(-beta)?/,
+    detector: (text) => /^\s*xychart(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-xychart/language').then((m) => m.language),
+  },
   { type: 'block', id: 'block', pattern: /^\s*block(-beta)?/, detector: (text) => /^\s*block(-beta)?/.test(text) },
   { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
   { type: 'treeView', id: 'treeView', pattern: /^\s*treeView-beta/, detector: (text) => /^\s*treeView-beta/.test(text) },
@@ -157,13 +164,27 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     load: () => import('@mermaid-js/diagram-radar/language').then((m) => m.language),
   },
   { type: 'ishikawa', id: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i, detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text) },
-  { type: 'treemap', id: 'treemap', pattern: /^\s*treemap/, detector: (text) => /^\s*treemap/.test(text) },
+  {
+    type: 'treemap',
+    id: 'treemap',
+    section: 'treemap',
+    pattern: /^\s*treemap/,
+    detector: (text) => /^\s*treemap/.test(text),
+    load: () => import('@mermaid-js/diagram-treemap/language').then((m) => m.language),
+  },
   { type: 'railroad', id: 'railroad', pattern: /^\s*railroad-beta/i, detector: (text) => /^\s*railroad-beta/i.test(text) },
   { type: 'railroadEbnf', id: 'railroadEbnf', pattern: /^\s*railroad-ebnf-beta/i, detector: (text) => /^\s*railroad-ebnf-beta/i.test(text) },
   { type: 'railroadAbnf', id: 'railroadAbnf', pattern: /^\s*railroad-abnf-beta/i, detector: (text) => /^\s*railroad-abnf-beta/i.test(text) },
   { type: 'railroadPeg', id: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i, detector: (text) => /^\s*railroad-peg-beta/i.test(text) },
   { type: 'venn', id: 'venn', pattern: /^\s*venn-beta/, detector: (text) => /^\s*venn-beta/.test(text) },
-  { type: 'wardley', id: 'wardley', pattern: /^\s*wardley-beta/i, detector: (text) => /^\s*wardley-beta/i.test(text) },
+  {
+    type: 'wardley',
+    id: 'wardley',
+    section: 'wardley-beta',
+    pattern: /^\s*wardley-beta/i,
+    detector: (text) => /^\s*wardley-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-wardley/language').then((m) => m.language),
+  },
   {
     type: 'cynefin',
     id: 'cynefin',
@@ -179,4 +200,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'radar' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'radar' | 'treemap' | 'wardley' | 'cynefin';

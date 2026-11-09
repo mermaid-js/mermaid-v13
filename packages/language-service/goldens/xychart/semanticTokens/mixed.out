@@ -1,0 +1,37 @@
+1:1-1:13 "xychart-beta" keyword
+1:14-1:22 "vertical" keyword
+2:3-2:8 "title" keyword
+2:9-2:10 "\"" string
+2:10-2:20 "Sales 2024" string
+2:20-2:21 "\"" string
+2:22-2:29 "%% note" comment
+3:3-3:9 "x-axis" keyword
+3:16-3:17 "[" operator
+3:17-3:20 "jan" variable [declaration, definition]
+3:20-3:21 "," operator
+3:22-3:31 "\"Q1 2024\"" variable [declaration, definition]
+3:31-3:32 "]" operator
+4:3-4:9 "y-axis" keyword
+4:18-4:19 "0" number
+4:20-4:23 "-->" operator
+4:24-4:29 "100.5" number
+5:3-5:6 "bar" keyword
+5:7-5:12 "Sales" variable [declaration, definition]
+5:13-5:14 "[" operator
+5:14-5:16 "10" number
+5:16-5:17 "," operator
+5:18-5:22 "-2.5" number
+5:22-5:23 "]" operator
+6:3-6:7 "line" keyword
+6:8-6:9 "[" operator
+6:9-6:10 "5" number
+6:11-6:12 "\"" string
+6:12-6:16 "peak" string
+6:16-6:17 "\"" string
+6:17-6:18 "," operator
+6:19-6:21 ".5" number
+6:21-6:22 "]" operator
+7:3-7:12 "accTitle:" keyword
+7:13-7:14 "A" string
+8:3-8:12 "accDescr:" keyword
+8:13-8:14 "B" string

@@ -1,0 +1,32 @@
+@ 2:8  anchor |User [0.95, 0.6]
+  2:8-2:12 "User"
+  | **anchor** `User`
+  |
+  | Visibility 95 %, evolution 60 %.
+@ 5:12  component "|notebook" [0.2, 0.3]
+  5:12-5:20 "notebook"
+  | **component** `notebook`
+  |
+  | Visibility 20 %, evolution 30 %.
+@ 6:9  User -> |Tea
+  6:9-6:12 "Tea"
+  | **component** `Tea`
+  |
+  | Visibility 50 %, evolution 70 %.
+@ 7:10  Tea -> Gh|ost
+  7:8-7:13 "Ghost"
+  | **node** `Ghost`
+  |
+  | No anchor or component is named `Ghost`.
+@ 8:12  evolve Kett|le 0.62
+  8:8-8:14 "Kettle"
+  | **component** `Kettle`
+  |
+  | Visibility 43 %, evolution 1.5 %.
+  |
+  | Evolves to 62 %.
+@ 10:17  component Elec|tric [0.8]
+  10:13-10:21 "Electric"
+  | **pipeline component** `Electric`
+  |
+  | Visibility 43 %, evolution 80 %.

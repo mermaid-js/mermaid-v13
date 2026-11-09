@@ -182,6 +182,16 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
+    type: 'treemap',
+    title: 'Treemap syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
+    type: 'wardley',
+    title: 'Wardley map syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {
@@ -244,6 +254,27 @@ export const GRAMMARS: GrammarTarget[] = [
           pattern: '[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]*',
           terminal: 'NON_ESCAPED_TEXT',
         },
+      },
+    },
+  },
+  {
+    type: 'xychart',
+    title: 'XY chart syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+        StringStart: { mode: 'INITIAL', pattern: '"' },
+        StringEnd: { mode: 'string', pattern: '"' },
+        DeadMdRule: {
+          mode: 'INITIAL',
+          pattern:
+            '`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`',
+        },
+        Blanks: { mode: 'INITIAL', pattern: '\\s+' },
       },
     },
   },

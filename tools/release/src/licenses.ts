@@ -1,16 +1,17 @@
 /**
  * License check (R-REL-4, D12): ported code carries its upstreams' attribution, under each
  * upstream's license (MIT unless the upstream says otherwise; d3-sankey, d3-array and d3-shape,
- * which sankey re-implements, are BSD 3-Clause).
+ * which sankey re-implements, are BSD 3-Clause; d3-hierarchy and d3-format, which treemap
+ * re-implements, are ISC).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's, Iconify's and d3-sankey's, d3-array's and d3-shape's repository URLs;
- * Braintree's sanitize-url package name). A file is derived from an upstream when its header
- * has that marker. Then:
+ * block (Pele's, Iconify's and d3's repository URLs; Braintree's sanitize-url package name). A
+ * file is derived from an upstream when its header has that marker. Then:
  * - that header names the upstream's license and copyright holder;
- * - in a published package (`packages/*` without `"private": true`), the package root has a
- *   `THIRD_PARTY_NOTICES` that holds the upstream's license text and copyright line (a license
- *   other than MIT in the upstream's own section), lists the file by its
+ * - in a published package (`packages/*` without `"private": true`), and in a private one that
+ *   holds a file of `REQUIRED_CREDITS` (so making a package private does not drop its credits),
+ *   the package root has a `THIRD_PARTY_NOTICES` that holds the upstream's license text and
+ *   copyright line (an upstream that is not MIT in its own section), lists the file by its
  *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
  * - every path the notices list still exists (notices may also credit a runtime dependency, such
@@ -36,20 +37,25 @@ interface Upstream {
   readonly license?: License;
 }
 
-type License = 'MIT' | 'BSD-3-Clause';
+type License = 'MIT' | 'BSD-3-Clause' | 'ISC';
 
 /** How a file header names each license. */
 const LICENSE_HEADER: Readonly<Record<License, RegExp>> = {
   MIT: /\bMIT\b/,
   'BSD-3-Clause': /\bBSD 3-Clause\b/,
+  ISC: /\bISC\b/,
 };
 
-/** Text a notices file must hold for each license: its name and, for BSD, its grant. */
+/** Text a notices file must hold for each license: its name and, for BSD and ISC, its grant. */
 const LICENSE_TEXT: Readonly<Record<License, readonly string[]>> = {
   MIT: ['MIT License'],
   'BSD-3-Clause': [
     'BSD 3-Clause License',
     'Redistribution and use in source and binary forms, with or without modification,',
+  ],
+  ISC: [
+    'ISC License',
+    'Permission to use, copy, modify, and/or distribute this software for any purpose',
   ],
 };
 
@@ -96,6 +102,20 @@ export const UPSTREAMS: readonly Upstream[] = [
     copyright: 'Copyright 2010-2015 Mike Bostock',
     license: 'BSD-3-Clause',
   },
+  {
+    name: 'd3-hierarchy',
+    marker: 'https://github.com/d3/d3-hierarchy',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2021 Mike Bostock',
+    license: 'ISC',
+  },
+  {
+    name: 'd3-format',
+    marker: 'https://github.com/d3/d3-format',
+    holder: 'Mike Bostock',
+    copyright: 'Copyright 2010-2026 Mike Bostock',
+    license: 'ISC',
+  },
 ];
 
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
@@ -105,15 +125,18 @@ export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
   'packages/diagram-sankey/src/layout/d3-sankey.ts': ['d3-sankey', 'd3-array'],
   'packages/diagram-sankey/src/layout/layout.ts': ['d3-shape'],
+  'packages/diagram-treemap/src/layout/tiles.ts': ['d3-hierarchy'],
+  'packages/diagram-treemap/src/format/d3-format.ts': ['d3-format'],
 };
 
 /**
  * Workspace packages whose build bundles another package's ported code with the legal comments
- * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey), so their own
- * notices carry those upstreams. Pending for the maintainer: core's `@braintree/sanitize-url`.
+ * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey and
+ * diagram-treemap), so their own notices carry those upstreams. Pending for the maintainer:
+ * core's `@braintree/sanitize-url`.
  */
 export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
-  'packages/mermaid': ['d3-sankey', 'd3-array', 'd3-shape'],
+  'packages/mermaid': ['d3-sankey', 'd3-array', 'd3-shape', 'd3-hierarchy', 'd3-format'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -222,12 +245,14 @@ export function checkLicenses(root: string): string[] {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
-    if (manifest.private) continue;
-
     const pkg = relative(root, pkgDir);
+    const noticesPath = join(pkgDir, NOTICES);
+    // A private package is checked when it holds a file that must credit an upstream.
+    const required = Object.keys(REQUIRED_CREDITS).some((f) => f.startsWith(`${pkg}/`));
+    if (manifest.private && !required) continue;
+
     const derived = derivedFiles(root, pkgDir, problems);
     const bundled = UPSTREAMS.filter((u) => BUNDLED_CREDITS[pkg]?.includes(u.name));
-    const noticesPath = join(pkgDir, NOTICES);
     if (!existsSync(noticesPath)) {
       if (derived.length > 0) {
         const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');

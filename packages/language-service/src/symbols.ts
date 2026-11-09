@@ -228,7 +228,10 @@ function applyEdits(text: string, edits: readonly TextEdit[]): string {
  * as many symbols as before, and the symbols named `newName` in the namespace are exactly
  * the renamed occurrences, at their new ranges and with their old kinds. `isValidId` checks a
  * name alone; this catches what the neighbours do to it (`A-->B` to `x--->B`, `B---A` to
- * `B---o`).
+ * `B---o`). An edit that rewrites the whole token around an occurrence (a name inside a
+ * longer one, quoted, `"note_Gas"`) holds its renamed occurrences somewhere in its new text.
+ * `clash`: the new text reads as names already in the namespace (the new name is one, as a
+ * pipeline component's id `Kettle_Gas` is the names `Kettle` and `Gas` in wardley).
  */
 function readsBack(
   ctx: DocumentContext,
@@ -236,34 +239,97 @@ function readsBack(
   o: Occurrence,
   edits: readonly TextEdit[],
   newName: string
-): boolean {
+): 'same' | 'clash' | 'differs' {
   const before = ctx.result?.symbols ?? [];
   const spaceOf = spaces(facet);
+  const after = facet.parse(applyEdits(ctx.text, edits), { keepTokens: true }).symbols;
+  // Each edit's place in the new text: shifted by the length change of the edits before it.
+  const sorted = [...edits].sort((a, b) => a.range.start - b.range.start);
+  let shift = 0;
+  const placed = sorted.map((e) => {
+    const start = e.range.start + shift;
+    const delta = e.newText.length - (e.range.end - e.range.start);
+    shift += delta;
+    return { e, start, end: start + e.newText.length, shift: start - e.range.start, delta };
+  });
+  if (sameSymbols(before, after, placed, facet, o, newName)) return 'same';
+  // Why not: the new text reads as names the namespace already has, that were not there.
+  const names = new Set(before.filter((s) => spaceOf(s) === o.space).map((s) => s.name));
+  const within = (list: readonly SymbolOccurrence[], start: number, end: number) =>
+    list.filter((s) => spaceOf(s) === o.space && start <= s.range.start && s.range.end <= end);
+  for (const p of placed) {
+    const was = new Set(within(before, p.e.range.start, p.e.range.end).map((s) => s.name));
+    const now = within(after, p.start, p.end);
+    if (now.some((s) => s.name !== newName && names.has(s.name) && !was.has(s.name)))
+      return 'clash';
+  }
+  return 'differs';
+}
+
+interface Placed {
+  readonly e: TextEdit;
+  /** The edit's new text in the new text. */
+  readonly start: number;
+  readonly end: number;
+  /** How far the text before the edit moved. */
+  readonly shift: number;
+  /** The edit's own length change. */
+  readonly delta: number;
+}
+
+/**
+ * Whether the symbols after the edits are those before, with `o`'s renamed: as many, and the
+ * ones named `newName` in the namespace exactly the renamed ones, at their new places. An edit
+ * inside an occurrence (its name, between quotes or not) places it exactly, as does every edit
+ * of a facet's `nameSyntax` (which may take the blanks around a field); an edit that
+ * rewrote a token around occurrences holds them somewhere in its new text.
+ */
+function sameSymbols(
+  before: readonly SymbolOccurrence[],
+  after: readonly SymbolOccurrence[],
+  placed: readonly Placed[],
+  facet: LanguageFacet,
+  o: Occurrence,
+  newName: string
+): boolean {
+  if (after.length !== before.length) return false;
+  const spaceOf = spaces(facet);
+  const syntax = facet.nameSyntax !== undefined;
   const byStart = (list: readonly SymbolOccurrence[]) => [
     ...new Map(list.map((s) => [s.range.start, s] as const)).values(),
   ];
-  const renamed = byStart(before.filter((s) => spaceOf(s) === o.space && s.name === o.name));
-  if (renamed.length !== edits.length) return false;
-  const sortedEdits = [...edits].sort((a, b) => a.range.start - b.range.start);
-  const after = facet.parse(applyEdits(ctx.text, edits), { keepTokens: true }).symbols;
-  if (after.length !== before.length) return false;
-  const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName))
-    .map((s) => `${s.range.start}:${s.range.end}:${s.kind}`)
-    .sort();
-  // Where each renamed occurrence lands: over its range and its edit's, shifted by the length
-  // change of the edits before it, its end also by its own. (With no name syntax each edit is
-  // inside its occurrence and changes it by `newName.length - o.name.length`.)
-  const sorted = [...renamed].sort((a, b) => a.range.start - b.range.start);
-  let shift = 0;
-  const want = sorted
-    .map((s, i) => {
-      const e = sortedEdits[i]!;
-      const start = Math.min(s.range.start, e.range.start) + shift;
-      shift += e.newText.length - (e.range.end - e.range.start);
-      return `${start}:${Math.max(s.range.end, e.range.end) + shift}:${s.kind}`;
-    })
-    .sort();
-  return got.length === want.length && got.every((g, i) => g === want[i]);
+  const renamed = byStart(before.filter((s) => spaceOf(s) === o.space && s.name === o.name)).sort(
+    (a, b) => a.range.start - b.range.start
+  );
+  // A name syntax writes one edit per occurrence, over it (and maybe the blanks around it).
+  if (syntax && renamed.length !== placed.length) return false;
+  const exact = new Set<string>();
+  const loose: { start: number; end: number; kind: string }[] = [];
+  let i = 0;
+  for (const s of renamed) {
+    // The edit over this occurrence: the edits are in order, and so are the occurrences.
+    while (i < placed.length && (placed[i]?.e.range.end ?? 0) <= s.range.start) i++;
+    const p = placed[i];
+    if (!p || p.e.range.start >= s.range.end) return false;
+    // Placed exactly: over its range and its edit's, shifted by the length change of the edits
+    // before it, its end also by its own (an edit inside it changes it by `delta` alone).
+    if (syntax || (s.range.start <= p.e.range.start && p.e.range.end <= s.range.end)) {
+      const start = Math.min(s.range.start, p.e.range.start) + p.shift;
+      const end = Math.max(s.range.end, p.e.range.end) + p.shift + p.delta;
+      exact.add(`${start}:${end}:${s.kind}`);
+    } else loose.push({ start: p.start, end: p.end, kind: s.kind });
+  }
+  const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName));
+  if (got.length !== renamed.length) return false;
+  for (const s of got) {
+    if (exact.delete(`${s.range.start}:${s.range.end}:${s.kind}`)) continue;
+    const j = loose.findIndex(
+      (l) => l.kind === s.kind && l.start <= s.range.start && s.range.end <= l.end
+    );
+    if (j < 0) return false;
+    loose.splice(j, 1);
+  }
+  return exact.size === 0 && loose.length === 0;
 }
 
 /** Why `newName` cannot go between the quotes of a quoted occurrence in `all` (#199). */
@@ -278,16 +344,107 @@ function quotedReason(all: readonly Occurrence[], newName: string): string | und
 }
 
 /**
- * The facet's reason against `newName`, when any occurrence is written bare. Between quotes a
- * name takes more (`Client Account`); the read-back check still has the last word.
+ * What a rename writes at the bare occurrences in `all`: `newName`, or the facet's quoted form
+ * of it when `isValidId` refuses it bare and the facet can quote it
+ * ({@link LanguageFacet.quoteId}); else the facet's reason. Between quotes a name takes more
+ * (`Client Account`); the read-back check still has the last word.
  */
-function bareReason(
+function bareText(
   facet: LanguageFacet,
   all: readonly Occurrence[],
   newName: string,
   kind: string
-): string | undefined {
-  return all.some((x) => x.quote === undefined) ? facet.isValidId(newName, kind) : undefined;
+): { text: string } | { refused: string } {
+  if (all.every((x) => x.quote !== undefined)) return { text: newName };
+  const reason = facet.isValidId(newName, kind);
+  if (reason === undefined) return { text: newName };
+  const quoted = facet.quoteId?.(newName, kind);
+  return quoted === undefined ? { refused: reason } : { text: quoted };
+}
+
+/**
+ * How a bare occurrence of each kind writes the new name: `bare` (from {@link bareText}), or,
+ * when that is `newName` itself, the facet's written form of it for the occurrence's kind
+ * ({@link LanguageFacet.writtenName}: xychart quotes `Q1 2024`, D389), asked once per kind.
+ */
+function writtenAs(facet: LanguageFacet, newName: string, bare: string): (kind: string) => string {
+  if (bare !== newName || !facet.writtenName) return () => bare;
+  const byKind = new Map<string, string>();
+  return (kind) => {
+    let w = byKind.get(kind);
+    if (w === undefined) byKind.set(kind, (w = facet.writtenName?.(newName, kind) ?? newName));
+    return w;
+  };
+}
+
+/** The smallest non-empty token of the parse holding `r`. */
+function tokenAround(ctx: DocumentContext, r: Range): Range | undefined {
+  const tokens = ctx.result?.tokens;
+  let best: Range | undefined;
+  for (let j = 0; tokens && j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start > r.start) break;
+    if (end < r.end || end === start) continue;
+    if (!best || end - start < best.end - best.start) best = { start, end };
+  }
+  return best;
+}
+
+/**
+ * The edits renaming `all` to `newName`. Where the name must be quoted (`bareOf` gives the
+ * quoted form for the occurrence's kind) and an occurrence sits inside a longer token, a part of another name (a wardley
+ * pipeline component's id `Kettle_Gas`), quotes cannot go around the part: the whole token is
+ * rewritten and quoted (`"note_Gas"`); inside a token already quoted the name goes in as it is.
+ */
+function renameEdits(
+  ctx: DocumentContext,
+  facet: LanguageFacet,
+  all: readonly Occurrence[],
+  newName: string,
+  bareOf: (kind: string) => string,
+  kind: string
+): TextEdit[] | { refused: string } {
+  const edits: TextEdit[] = [];
+  const parts = new Map<number, { token: Range; inside: Occurrence[] }>();
+  for (const x of all) {
+    const bare = bareOf(x.kind);
+    const token = x.quote === undefined && bare !== newName ? tokenAround(ctx, x.range) : undefined;
+    if (!token || (token.start === x.range.start && token.end === x.range.end)) {
+      edits.push({ range: x.range, newText: x.quote === undefined ? bare : newName });
+      continue;
+    }
+    const group = parts.get(token.start) ?? { token, inside: [] };
+    group.inside.push(x);
+    parts.set(token.start, group);
+  }
+  for (const { token, inside } of parts.values()) {
+    const text = ctx.text.slice(token.start, token.end);
+    const pair = QUOTE_PAIRS.find(
+      ([open, close]) =>
+        text.length >= open.length + close.length && text.startsWith(open) && text.endsWith(close)
+    );
+    if (pair) {
+      const reason = quotedReason([{ ...inside[0]!, quote: pair[0] }], newName);
+      if (reason !== undefined) return { refused: reason };
+      for (const x of inside) edits.push({ range: x.range, newText: newName });
+      continue;
+    }
+    let written = '';
+    let at = token.start;
+    for (const x of inside) {
+      written += ctx.text.slice(at, x.range.start) + newName;
+      at = x.range.end;
+    }
+    written += ctx.text.slice(at, token.end);
+    const quoted = facet.quoteId?.(written, kind);
+    if (quoted === undefined)
+      return {
+        refused: `'${newName}' needs quotes, and \`${text}\`, which holds it, cannot take them.`,
+      };
+    edits.push({ range: token, newText: quoted });
+  }
+  return edits;
 }
 
 export function rename(
@@ -303,18 +460,34 @@ export function rename(
   const refuse = (refused: string): RenameResult => deepFreeze({ refused });
   const all = sameSymbol(list, o);
   const syntax = facet.nameSyntax;
-  // A name syntax escapes what the quotes would not hold, so the facet judges every name.
-  const invalid = syntax
-    ? facet.isValidId(newName, o.kind)
-    : (quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind));
-  if (invalid !== undefined) return refuse(invalid);
-  const edits = all.map((x) =>
-    syntax ? syntax.write(newName, x, ctx.text) : { range: x.range, newText: newName }
-  );
+  let edits: TextEdit[];
+  if (syntax) {
+    // A name syntax escapes what the quotes would not hold, so the facet judges every name.
+    const invalid = facet.isValidId(newName, o.kind);
+    if (invalid !== undefined) return refuse(invalid);
+    edits = all.map((x) => syntax.write(newName, x, ctx.text));
+  } else {
+    const invalid = quotedReason(all, newName);
+    if (invalid !== undefined) return refuse(invalid);
+    const bare = bareText(facet, all, newName, o.kind);
+    if ('refused' in bare) return refuse(bare.refused);
+    const made = renameEdits(
+      ctx,
+      facet,
+      all,
+      newName,
+      writtenAs(facet, newName, bare.text),
+      o.kind
+    );
+    if ('refused' in made) return refuse(made.refused);
+    edits = made;
+  }
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
   if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);
-  if (!readsBack(ctx, facet, o, edits, newName))
+  const read = readsBack(ctx, facet, o, edits, newName);
+  if (read === 'clash') return refuse(`'${newName}' is already ${aNoun(o.kind)} in this diagram.`);
+  if (read === 'differs')
     return refuse(`'${newName}' would not read as the same ${noun(o.kind)} everywhere it is used.`);
   return deepFreeze({ edits });
 }

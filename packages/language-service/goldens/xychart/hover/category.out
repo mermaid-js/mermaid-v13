@@ -1,0 +1,15 @@
+@ 2:11  x-axis [|a, "Q1 2024", a]
+  2:11-2:12 "a"
+  | **category** `a`
+  |
+  | Category 1 of 3 on the x axis · written 2 times: the repeats share one band · a later `x-axis` replaces these categories
+@ 2:18  x-axis [a, "Q1 |2024", a]
+  2:15-2:22 "Q1 2024"
+  | **category** `Q1 2024`
+  |
+  | Category 2 of 3 on the x axis · a later `x-axis` replaces these categories
+@ 4:11  x-axis [|z]
+  4:11-4:12 "z"
+  | **category** `z`
+  |
+  | Category 1 of 1 on the x axis

@@ -1,0 +1,31 @@
+@ 1:11  wardley-be|ta
+  wardley 1:1-1:13 "wardley-beta"
+@ 2:3  ti|tle Tea Shop
+  title 2:1-2:15 "title Tea Shop"
+@ 3:3  si|ze [1100, 800]
+  size 3:1-3:17 "size [1100, 800]"
+@ 4:14  evolution Gen|esis -> Commodity
+  evolution 4:1-4:31 "evolution Genesis -> Commodity"
+@ 5:8  anchor |User [0.95, 0.6]
+  node:User 5:1-5:24 "anchor User [0.95, 0.6]"
+@ 6:23  component Tea [0.5, 0.|7]
+  node:Tea 6:1-6:25 "component Tea [0.5, 0.7]"
+@ 8:7  User -|> Tea
+  link:User->Tea 8:1-8:12 "User -> Tea"
+@ 9:14  evolve Tea 0.|8
+  evolve:Tea 9:1-9:15 "evolve Tea 0.8"
+@ 11:15  component Le|af [0.2]
+  node:Tea_Leaf 11:3-11:23 "component Leaf [0.2]"
+  pipeline:Tea 10:1-12:2 "pipeline Tea {\n  component Leaf [0.2]\n}"
+@ 13:8  note "a|b" [0.3, 0.3]
+  note:1 13:1-13:21 "note \"ab\" [0.3, 0.3]"
+@ 14:16  annotations [0.|1, 0.9]
+  annotations 14:1-14:23 "annotations [0.1, 0.9]"
+@ 15:27  annotation 1, [0.5, 0.5] "|One"
+  annotation:1 15:1-15:31 "annotation 1, [0.5, 0.5] \"One\""
+@ 16:16  accelerator Clo|ud [0.5, 0.8]
+  accelerator:Cloud 16:1-16:29 "accelerator Cloud [0.5, 0.8]"
+@ 17:18  deaccelerator Leg|acy [0.5, 0.3]
+  deaccelerator:Legacy 17:1-17:32 "deaccelerator Legacy [0.5, 0.3]"
+@ 19:8  long |text
+  accDescr 18:1-20:2 "accDescr {\n  long text\n}"

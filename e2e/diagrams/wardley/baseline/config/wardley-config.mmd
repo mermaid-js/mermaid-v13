@@ -1,0 +1,24 @@
+---
+config:
+  wardley-beta:
+    width: 700
+    height: 500
+    padding: 64
+    nodeRadius: 9
+    nodeLabelOffset: 14
+    axisFontSize: 16
+    labelFontSize: 13
+    showGrid: true
+    useMaxWidth: false
+description: >-
+  every wardley-beta config key from front matter, which v12 dropped (D421): a 700 x 500 canvas
+  at its own size, padding 64, larger nodes, offsets and fonts, and the grid
+---
+wardley-beta
+  title Configured map
+  anchor User [0.95, 0.5]
+  component Kettle [0.6, 0.45] (build)
+  component Water [0.3, 0.8]
+  User -> Kettle
+  Kettle -> Water
+  evolve Water 0.9

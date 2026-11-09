@@ -1,0 +1,384 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-wardley",
+  "scopeName": "source.mermaid-wardley",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-wardley"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-wardley"
+    },
+    "rule-0": {
+      "match": "\\[",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-1": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-2": {
+      "match": "\\]",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-3": {
+      "match": "@",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-4": {
+      "match": "\\/",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-5": {
+      "match": "\\(",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-6": {
+      "match": "\\)",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-7": {
+      "match": "-(?!>|->|\\.->|--[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S)))",
+      "name": "keyword.operator.mermaid-wardley"
+    },
+    "rule-8": {
+      "match": "\\{",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-9": {
+      "match": "\\}",
+      "name": "punctuation.definition.mermaid-wardley"
+    },
+    "rule-10": {
+      "match": "[0-9]+\\.[0-9]+",
+      "name": "constant.numeric.mermaid-wardley"
+    },
+    "rule-11": {
+      "match": "->",
+      "name": "keyword.operator.mermaid-wardley"
+    },
+    "rule-12": {
+      "match": "\\+<>|\\+>|\\+<",
+      "name": "keyword.operator.mermaid-wardley"
+    },
+    "rule-13": {
+      "match": "-->|-\\.->|>|\\+'[^']*'<>|\\+'[^']*'<|\\+'[^']*'>",
+      "name": "keyword.operator.mermaid-wardley"
+    },
+    "rule-14": {
+      "match": ";[^\\n\\r]+",
+      "name": "string.quoted.mermaid-wardley"
+    },
+    "rule-15": {
+      "match": "build|buy|outsource|market",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-16": {
+      "match": "wardley-beta",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-17": {
+      "match": "size",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-18": {
+      "match": "evolution",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-19": {
+      "match": "anchor",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-20": {
+      "match": "component",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-21": {
+      "match": "label",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-22": {
+      "match": "inertia",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-23": {
+      "match": "evolve",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-24": {
+      "match": "pipeline",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-25": {
+      "match": "note",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-26": {
+      "match": "annotations",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-27": {
+      "match": "annotation",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-28": {
+      "match": "accelerator",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-29": {
+      "match": "deaccelerator",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-30": {
+      "match": "(?!title\\s|accTitle|accDescr)[A-Za-z](?:[A-Za-z0-9_()&]|-(?!>))*(?:[\\t ]+[A-Za-z(](?:[A-Za-z0-9_()&]|-(?!>))*)*",
+      "name": "variable.other.mermaid-wardley"
+    },
+    "rule-31": {
+      "match": "[\\t ]+"
+    },
+    "rule-32": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-33": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-34": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-35": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-wardley"
+    },
+    "rule-36": {
+      "match": "0|[1-9][0-9]*(?!\\.)",
+      "name": "constant.numeric.mermaid-wardley"
+    },
+    "rule-37": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-wardley"
+    },
+    "rule-38": {
+      "match": "\\w(?:[-\\w]*\\w)?",
+      "name": "variable.other.mermaid-wardley"
+    },
+    "rule-39": {
+      "match": "\\r?\\n"
+    },
+    "rule-40": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-wardley"
+    },
+    "rule-41": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-wardley"
+    },
+    "rule-42": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-wardley"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-wardley"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-wardley"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-wardley"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-wardley"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

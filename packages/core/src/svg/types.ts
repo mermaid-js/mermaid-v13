@@ -116,7 +116,13 @@ export interface AttrTypes {
   'font-weight': SafeValue | ThemeRef | 'normal' | 'bold';
   'font-style': SafeValue | 'normal' | 'italic';
   'text-anchor': 'start' | 'middle' | 'end';
-  'dominant-baseline': 'auto' | 'middle' | 'central' | 'hanging' | 'alphabetic';
+  'dominant-baseline':
+    | 'auto'
+    | 'middle'
+    | 'central'
+    | 'hanging'
+    | 'alphabetic'
+    | 'text-before-edge';
   'text-decoration': SafeValue | 'underline' | 'line-through' | 'none';
   'letter-spacing': Length;
   'xml:space': 'preserve';

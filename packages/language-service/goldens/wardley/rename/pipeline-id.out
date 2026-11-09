@@ -1,0 +1,30 @@
+@ 3:11  component |Kettle [0.43, 0.35]
+  prepare: 3:11-3:17 "Kettle"; rename to "Pot":
+  %% rename-to: Pot
+  wardley-beta
+  component Pot [0.43, 0.35]
+  pipeline Pot {
+    component Gas [0.6]
+  }
+  evolve Pot_Gas 0.8
+  User -> Pot_Gas
+@ 5:13  component |Gas [0.6]
+  prepare: 5:13-5:16 "Gas"; rename to "Pot":
+  %% rename-to: Pot
+  wardley-beta
+  component Kettle [0.43, 0.35]
+  pipeline Kettle {
+    component Pot [0.6]
+  }
+  evolve Kettle_Pot 0.8
+  User -> Kettle_Pot
+@ 8:16  User -> Kettle_|Gas
+  prepare: 8:16-8:19 "Gas"; rename to "Pot":
+  %% rename-to: Pot
+  wardley-beta
+  component Kettle [0.43, 0.35]
+  pipeline Kettle {
+    component Pot [0.6]
+  }
+  evolve Kettle_Pot 0.8
+  User -> Kettle_Pot

@@ -1,0 +1,10 @@
+@ 9:6  "Ho|me"
+  9:3-9:9 "\"Home\""
+  | **section** `Home`
+  |
+  | Value: `1,200`; not shown, since `showValues` is off, the sum of its one leaf.
+@ 10:15  "Rent": 12|00
+  10:13-10:17 "1200"
+  | **value** `1200` of `Rent`
+  |
+  | Value: `1,200`; not shown, since `showValues` is off

@@ -17,6 +17,7 @@ const M4_M5: JisonType[] = [
   'quadrant',
   'kanban',
   'sankey',
+  'xychart',
 ];
 
 describe.each(M4_M5)('%s through the shared jison oracle', (type) => {

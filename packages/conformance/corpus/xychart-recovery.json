@@ -1,0 +1,221 @@
+[
+  {
+    "id": "xychart-recovery/a-title-and-an-axis-with-nothing-after-the-keyword",
+    "name": "a title and an axis with nothing after the keyword",
+    "source": "xychart\ntitle\nx-axis\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/plots-without-values-with-empty-brackets-and-with-a-missing-value",
+    "name": "plots without values, with empty brackets and with a missing value",
+    "source": "xychart\nbar a\nline b []\nbar c [1, , 2]\nline kept [3]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/values-that-are-no-numbers",
+    "name": "values that are no numbers",
+    "source": "xychart\nbar a [1e3]\nbar b [x]\nline c [1, -4aa5]\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/unbalanced-brackets-in-plots-and-categories",
+    "name": "unbalanced brackets in plots and categories",
+    "source": "xychart\nx-axis [a [ b]\nbar a [1 [ 2]\nline b [1] 2]\nx-axis [kept, c]\nbar [1, 2]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/broken-ranges",
+    "name": "broken ranges",
+    "source": "xychart\nx-axis T aaa --> 33\ny-axis 1 -->\ny-axis 1 2\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/ranges-with-no-start",
+    "name": "ranges with no start",
+    "source": "xychart\nx-axis --> 5\ny-axis T --> 5\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/categories-on-the-y-axis-and-digits-in-an-axis-title",
+    "name": "categories on the y axis and digits in an axis title",
+    "source": "xychart\ny-axis T [1, 2]\nx-axis Year2024 [a]\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/a-colon-and-an-empty-slot-in-the-categories",
+    "name": "a colon and an empty slot in the categories",
+    "source": "xychart\nx-axis [a:b]\nx-axis [a, ]\nx-axis [kept]\nbar [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/characters-that-need-quotes",
+    "name": "characters that need quotes",
+    "source": "xychart\ntitle a(b)\nx-axis [a<b, c]\nbar n:m [1]\nbar kept [2]",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/a-second-orientation-a-late-orientation-and-a-late-header",
+    "name": "a second orientation, a late orientation and a late header",
+    "source": "xychart vertical horizontal\nhorizontal\nbar kept [1]\nxychart",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/statements-split-by-two-broken",
+    "name": "statements split by `;`, two broken",
+    "source": "xychart\nbar one [1]; line [; title; bar two [2]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 2]
+    ],
+    "keeps": ["one", "two"]
+  },
+  {
+    "id": "xychart-recovery/a-stray-bracket-and-values-without-a-plot-keyword",
+    "name": "a stray bracket and values without a plot keyword",
+    "source": "xychart\n]\n[1, 2]\nbar kept [3]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/keywords-glued-to-words",
+    "name": "keywords glued to words",
+    "source": "xychart\nbars [1]\nlinear [2]\nx-axisy [a]\nbar kept [3]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/acctitle-and-accdescr-without-a-colon",
+    "name": "accTitle and accDescr without a colon",
+    "source": "xychart\naccTitle T\naccDescr D\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/point-labels-without-a-comma-after-them",
+    "name": "point labels without a comma after them",
+    "source": "xychart\nbar a [1 \"x\" 2]\nline b [1 \"x\" \"y\"]\nline kept [1 \"p\", 2]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/a-glued-comment-takes-the-closing-bracket",
+    "name": "a glued comment takes the closing bracket",
+    "source": "xychart\nbar a [1]%% c\nx-axis [b, c]%% d\nbar kept [2]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/an-unclosed-string-runs-to-the-end-of-the-text",
+    "name": "an unclosed string runs to the end of the text",
+    "source": "xychart\nbar kept [1]\ntitle \"open\nline [2]",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/an-unclosed-point-label",
+    "name": "an unclosed point label",
+    "source": "xychart\nbar kept [1]\nline [1 \"open, 2]\nbar [3]",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/an-unclosed-string-after-a-broken-statement",
+    "name": "an unclosed string after a broken statement",
+    "source": "xychart\nline kept [1]\nx-axis : \"open\nbar [3]",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/a-backtick-and-a-non-ascii-letter-outside-quotes",
+    "name": "a backtick and a non-ASCII letter outside quotes",
+    "source": "xychart\ntitle `md`\nbar é [1]\nbar kept [1]",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["kept"]
+  },
+  {
+    "id": "xychart-recovery/no-plot-at-all",
+    "name": "no plot at all",
+    "source": "xychart\ntitle T\nx-axis [a, b]",
+    "errors": [["XYCHART_NO_PLOT", 1]]
+  },
+  {
+    "id": "xychart-recovery/a-failed-plot-is-not-also-no-plot",
+    "name": "a failed plot is not also no plot",
+    "source": "xychart\nbar [x]",
+    "errors": [["UNEXPECTED", 2]]
+  },
+  {
+    "id": "xychart-recovery/an-unclosed-directive-is-not-also-no-plot",
+    "name": "an unclosed directive is not also no plot",
+    "source": "xychart\n%%{init: {}\nbar [1]",
+    "errors": [["UNCLOSED_DIRECTIVE", 2]]
+  }
+]

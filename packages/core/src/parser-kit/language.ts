@@ -94,10 +94,29 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    */
   isValidId(name: string, kind?: string): string | undefined;
   /**
+   * `name` written so the parser reads it as one name of kind `kind` where {@link isValidId}
+   * refuses it unquoted: a rename writes this at each unquoted occurrence (wardley's
+   * `"notebook"`, D427), and the text between the quotes must be `name` itself (D191). Return
+   * `undefined` when no quoting holds `name` as written. When omitted, such a rename is refused
+   * with the reason `isValidId` gives.
+   */
+  quoteId?(name: string, kind?: string): string | undefined;
+  /**
+   * The written name: how `name`, which {@link isValidId} accepts, is written where a bare
+   * occurrence of symbol kind `kind` stands, which is what a rename puts there; `name` itself
+   * when omitted ({@link quoteId} covers a name `isValidId` refuses unquoted). A facet whose names
+   * may also be written quoted gives the quoted form where bare text cannot hold the name
+   * (xychart, D389: a category renamed to `Q1 2024` is written `"Q1 2024"`). A quoted occurrence
+   * keeps its quotes and takes `name` between them (D191); the read-back check still has the
+   * last word.
+   */
+  writtenName?(name: string, kind: string): string;
+  /**
    * How names are written, when the service's own reading does not fit (sankey's CSV fields,
    * D398). Without it the service takes an occurrence whose range is its name, or its name
    * inside one of the quote pairs it knows with nothing escaped, and a rename writes the new
-   * name as it is. With it, see {@link NameSyntax}.
+   * name as {@link writtenName} and {@link quoteId} give it. With it, see {@link NameSyntax}
+   * (which then writes every rename).
    */
   readonly nameSyntax?: NameSyntax;
   /**

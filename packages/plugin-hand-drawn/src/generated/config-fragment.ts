@@ -123,6 +123,12 @@ export const configFragment: ConfigFragment = {
       "value": true
     },
     {
+      "from": "treemap.look",
+      "when": "handDrawn",
+      "to": "handDrawn",
+      "value": true
+    },
+    {
       "from": "kanban.look",
       "when": "handDrawn",
       "to": "handDrawn",

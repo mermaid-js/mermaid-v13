@@ -1,0 +1,16 @@
+@ 1:9  xychart |horizontal
+  header 1:1-1:19 "xychart horizontal"
+@ 2:3  |title Sales
+  title 2:3-2:14 "title Sales"
+@ 3:14  x-axis [a, |b]
+  x-axis 3:3-3:16 "x-axis [a, b]"
+@ 4:16  y-axis 0 --> |10
+  y-axis 4:3-4:18 "y-axis 0 --> 10"
+@ 5:8  bar [|1, 2]
+  plot:1 5:3-5:13 "bar [1, 2]"
+@ 6:17  line Cost [2, |1]
+  plot:2 6:3-6:19 "line Cost [2, 1]"
+@ 7:13  accTitle: |T
+  accTitle 7:3-7:14 "accTitle: T"
+@ 8:14  accDescr { |D }
+  accDescr 8:3-8:17 "accDescr { D }"

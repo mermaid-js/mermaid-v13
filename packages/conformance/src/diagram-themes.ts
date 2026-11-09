@@ -13,6 +13,8 @@ import {
   type ThemeOptions,
   type ThemeSpec,
   type ThemeVarEntry,
+  formatColor,
+  parseColor,
 } from '@mermaid-js/core/theme';
 import { classDiagram } from '@mermaid-js/diagram-class';
 import { er } from '@mermaid-js/diagram-er';
@@ -26,6 +28,7 @@ import { quadrant } from '@mermaid-js/diagram-quadrant';
 import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
 import { timeline } from '@mermaid-js/diagram-timeline';
+import { xychart } from '@mermaid-js/diagram-xychart';
 
 const table = (plugin: Pick<DiagramPlugin, 'id' | 'theme'>): DiagramThemeTable | undefined =>
   plugin.theme;
@@ -44,7 +47,46 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
   sequence: table(sequence),
   state: table(state),
   timeline: table(timeline),
+  xychart: table(xychart),
 };
+
+/**
+ * v12's value of a variable in its resolved `getThemeVariables()`: the flat name, or else, for a
+ * table with a `section`, the variable's nested key there (D335): `xyChartTitleColor` is v12's
+ * `xyChart.titleColor`.
+ */
+export function v12Value(old: Readonly<Record<string, unknown>>, name: string): unknown {
+  if (Object.hasOwn(old, name)) return old[name];
+  for (const t of Object.values(DIAGRAM_TABLES)) {
+    const nested = t?.vars[name]?.nested;
+    if (t?.section === undefined || nested === undefined) continue;
+    const block = old[t.section];
+    return block && typeof block === 'object'
+      ? (block as Record<string, unknown>)[nested]
+      : undefined;
+  }
+  return undefined;
+}
+
+/** The flat v13 name of a key v12 kept nested (D335): `xyChart` + `titleColor` → `xyChartTitleColor`. */
+export const flatName = (section: string, nested: string): string =>
+  `${section}${nested[0]!.toUpperCase()}${nested.slice(1)}`;
+
+/**
+ * A palette as hex colours joined by `,`, comparable across versions: v12's comma-separated
+ * string (`xyChart.plotColorPalette`) or v13's list (`theme.palette()`).
+ */
+export function paletteColours(v: unknown): string {
+  let items: readonly unknown[] = [];
+  if (typeof v === 'string') items = v.split(',');
+  else if (Array.isArray(v)) items = v as unknown[];
+  return items
+    .map((c) => {
+      const rgba = typeof c === 'string' ? parseColor(c.trim()) : undefined;
+      return rgba ? formatColor(rgba) : String(c);
+    })
+    .join(',');
+}
 
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */
 export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =

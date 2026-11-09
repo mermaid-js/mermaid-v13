@@ -35,7 +35,13 @@ export const LANGIUM_LEXERS = {
   info: { probe: 'info', factory: 'createInfoServices', key: 'Info' },
   gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
   packet: { probe: 'packet\n0: "a"', factory: 'createPacketServices', key: 'Packet' },
+  treemap: { probe: 'treemap\n"a": 1', factory: 'createTreemapServices', key: 'Treemap' },
   cynefin: { probe: 'cynefin-beta\ncomplex', factory: 'createCynefinServices', key: 'Cynefin' },
+  wardley: {
+    probe: 'wardley-beta\ncomponent A [0.5, 0.5]',
+    factory: 'createWardleyServices',
+    key: 'Wardley',
+  },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

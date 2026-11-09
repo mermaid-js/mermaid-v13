@@ -1,0 +1,12 @@
+---
+description: >-
+  Parser source range check (#484): ranges map back to the source through
+  comment lines, an inline comment, a directive and an entity.
+---
+%%{init: {"theme": "forest"}}%%
+treemap
+%% a comment line
+"A #amp; B"
+  %% another
+  "x": 1%% inline
+  "y": 2

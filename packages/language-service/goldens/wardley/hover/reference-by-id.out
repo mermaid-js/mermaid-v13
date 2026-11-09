@@ -1,0 +1,24 @@
+@ 6:9  evolve G|as 0.8
+  6:8-6:11 "Gas"
+  | **node** `Gas`
+  |
+  | No anchor or component is named `Gas`.
+@ 7:16  evolve Kettle_G|as 0.6
+  7:15-7:18 "Gas"
+  | **pipeline component** `Gas`
+  |
+  | Visibility 50 %, evolution 20 %.
+  |
+  | Evolves to 60 %.
+@ 8:11  pipeline G|as {
+  8:10-8:13 "Gas"
+  | **node** `Gas`
+  |
+  | No anchor or component is named `Gas`.
+@ 11:12  Kettle -> G|as
+  11:11-11:14 "Gas"
+  | **pipeline component** `Gas`
+  |
+  | Visibility 50 %, evolution 20 %.
+  |
+  | Evolves to 60 %.

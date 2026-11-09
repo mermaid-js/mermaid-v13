@@ -155,6 +155,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -261,6 +270,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../diagram-xychart
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -276,6 +294,9 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      entities:
+        specifier: 8.1.0
+        version: 8.1.0
       js-yaml:
         specifier: ^4.3.2
         version: 4.3.2
@@ -477,6 +498,24 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-wardley:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-xychart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/language-server:
     dependencies:
       '@mermaid-js/core':
@@ -536,6 +575,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -606,6 +654,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
 
   packages/language-service-codemirror:
     devDependencies:
@@ -832,6 +889,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:*
+        version: link:../diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:*
+        version: link:../diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
     devDependencies:
       esbuild:
         specifier: ^0.25.12
@@ -981,6 +1047,15 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:^
         version: link:../../packages/diagram-timeline
+      '@mermaid-js/diagram-treemap':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-wardley':
+        specifier: workspace:^
+        version: link:../../packages/diagram-wardley
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:^
+        version: link:../../packages/diagram-xychart
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

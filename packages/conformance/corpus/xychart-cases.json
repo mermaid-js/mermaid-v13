@@ -1,0 +1,578 @@
+[
+  {
+    "id": "xychart-cases/header-alone",
+    "source": "xychart"
+  },
+  {
+    "id": "xychart-cases/header-beta",
+    "source": "xychart-beta\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-uppercase-keywords",
+    "source": "xychart\nTITLE a\nX-AXIS [a]\nY-AXIS 0 --> 1\nLINE [1]\nBAR [1]"
+  },
+  {
+    "id": "xychart-cases/header-uppercase-orientation",
+    "source": "xychart HORIZONTAL\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-uppercase-not-detected",
+    "source": "XYCHART\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-glued-word",
+    "source": "xychartx\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-beta-glued-word",
+    "source": "xychart-betax\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-beta-dash-word",
+    "source": "xychart-bet\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-barchart-not-detected",
+    "source": "barchart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-leading-blanks",
+    "source": "   xychart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-statement-same-line",
+    "source": "xychart bar [1]"
+  },
+  {
+    "id": "xychart-cases/header-no-newline-after",
+    "source": "xychart title a"
+  },
+  {
+    "id": "xychart-cases/header-not-first",
+    "source": "title a\nxychart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/header-trailing-blank-lines",
+    "source": "xychart\n\n\n  \n bar [1]\n\n"
+  },
+  {
+    "id": "xychart-cases/orientation-vertical",
+    "source": "xychart vertical\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-horizontal",
+    "source": "xychart horizontal\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-no-word-boundary",
+    "source": "xychart verticalx\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-horizontally",
+    "source": "xychart horizontally\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-mid-text",
+    "source": "xychart\ntitle overtical horizontal\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-unknown-word",
+    "source": "xychart diagonal\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/orientation-twice",
+    "source": "xychart vertical horizontal\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-unquoted-joins",
+    "source": "xychart\ntitle hello world 2024\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-unquoted-punctuation",
+    "source": "xychart\ntitle a+b,c=d*e#f_g.h&i-j:k\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-quoted",
+    "source": "xychart\ntitle \"Sales: 2024 (Q1) {x} <y>\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-word-boundary",
+    "source": "xychart\ntitles a\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-keyword-mid-line",
+    "source": "xychart\nbar [1] title a"
+  },
+  {
+    "id": "xychart-cases/title-empty-string",
+    "source": "xychart\ntitle \"\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-string-over-lines",
+    "source": "xychart\ntitle \"a\nb\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-unterminated-quote",
+    "source": "xychart\ntitle \"open\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-entity-in-string",
+    "source": "xychart\ntitle \"a#quot;b #35;\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-entity-outside-string",
+    "source": "xychart\ntitle a#quot;b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/title-semicolon",
+    "source": "xychart\ntitle a; bar [1]"
+  },
+  {
+    "id": "xychart-cases/md-string-backtick-error",
+    "source": "xychart\ntitle \"`md`\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/md-string-bare-backtick",
+    "source": "xychart\ntitle `md`\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/md-string-dead-rule-text",
+    "source": "xychart\ntitle a`)                                    { this.pushState(md_string); }\n<md_string>(?:(?!`\").)+                  { return MD_STR; }\n<md_string>(?:` b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/md-string-dead-rule-upper",
+    "source": "xychart\nbar [1`)                                    { THIS.PUSHSTATE(MD_STRING); }\n<MD_STRING>(?:(?!`\").)+                  { RETURN MD_STR; }\n<MD_STRING>(?:`]"
+  },
+  {
+    "id": "xychart-cases/comment-glued-bracket",
+    "source": "xychart\nx-axis [a]\nbar [1]%% c\n"
+  },
+  {
+    "id": "xychart-cases/comment-glued-band",
+    "source": "xychart\nx-axis [a, b]%% c\nbar [1, 2]"
+  },
+  {
+    "id": "xychart-cases/comment-glued-word",
+    "source": "xychart\ntitle T%% c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/comment-spaced",
+    "source": "xychart\ntitle T %% c\nbar [1] %% d"
+  },
+  {
+    "id": "xychart-cases/comment-after-brace",
+    "source": "xychart\naccDescr {\nd\n}%% c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/comment-line",
+    "source": "xychart\n%% c\nbar [1]\n  %% d\n"
+  },
+  {
+    "id": "xychart-cases/comment-at-end",
+    "source": "xychart\nbar [1]\n%% c"
+  },
+  {
+    "id": "xychart-cases/comment-empty-directive",
+    "source": "xychart\nabc%%{}\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/comment-in-axis-range",
+    "source": "xychart\ny-axis 0 --> 10%% c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/comment-in-acc-title",
+    "source": "xychart\naccTitle: T %% c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/comment-in-string",
+    "source": "xychart\ntitle \"a %% b\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/directive-before-header",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\nxychart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/directive-mid-line",
+    "source": "xychart\nbar [1, %%{init: {}}%% 2]"
+  },
+  {
+    "id": "xychart-cases/front-matter",
+    "source": "---\nconfig:\n  xyChart:\n    width: 900\n---\nxychart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/number-forms-in-data",
+    "source": "xychart\nbar [.5, +2, 1e3, -1.5, 007, 1., -.25, +-1]"
+  },
+  {
+    "id": "xychart-cases/number-empty-data",
+    "source": "xychart\nbar []"
+  },
+  {
+    "id": "xychart-cases/number-blank-data",
+    "source": "xychart\nbar [ ]\nline [\n]"
+  },
+  {
+    "id": "xychart-cases/number-forms-in-range",
+    "source": "xychart\ny-axis -5 --> +5.5\nx-axis .5 --> 1.25\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/number-in-axis-title",
+    "source": "xychart\nx-axis Year2024 [a]\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/number-in-plot-title",
+    "source": "xychart\nbar Q1 2024 [1]"
+  },
+  {
+    "id": "xychart-cases/number-in-band",
+    "source": "xychart\nx-axis [2023, 2024, -1, a1]\nbar [1, 2, 3, 4]"
+  },
+  {
+    "id": "xychart-cases/number-outside-states",
+    "source": "xychart\ntitle 1.5 -2 +3\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/number-glued-arrow",
+    "source": "xychart\ny-axis 1-->2\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/number-negative-arrow",
+    "source": "xychart\ny-axis -1-->-2\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/arrow-outside-axis",
+    "source": "xychart\ntitle a --> b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/arrow-long",
+    "source": "xychart\ny-axis 0 ---> 1\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/plot-before-axis",
+    "source": "xychart\nbar [1, 2]\nx-axis [a, b]\ny-axis 0 --> 5"
+  },
+  {
+    "id": "xychart-cases/plot-titles",
+    "source": "xychart\nline \"Revenue\" [1, 2]\nbar Costs [3, 4]"
+  },
+  {
+    "id": "xychart-cases/plot-keyword-boundary",
+    "source": "xychart\nbars [1]\nlinear [2]\nbar_x [3]"
+  },
+  {
+    "id": "xychart-cases/plot-keyword-in-title",
+    "source": "xychart\ntitle bar line chart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/plot-point-labels",
+    "source": "xychart\nline [5 \"five\", 6, 7 \"seven\"]"
+  },
+  {
+    "id": "xychart-cases/plot-nested-brackets",
+    "source": "xychart\nbar [[1], 2]"
+  },
+  {
+    "id": "xychart-cases/plot-unclosed",
+    "source": "xychart\nbar [1, 2\nline [3]"
+  },
+  {
+    "id": "xychart-cases/plot-over-lines",
+    "source": "xychart\nbar [1,\n2,\n3]"
+  },
+  {
+    "id": "xychart-cases/plot-newline-pops-data",
+    "source": "xychart\nbar\n[1]"
+  },
+  {
+    "id": "xychart-cases/plot-blank-swallows-newline",
+    "source": "xychart\nbar [1] \nline [2]"
+  },
+  {
+    "id": "xychart-cases/plot-closing-bracket-alone",
+    "source": "xychart\n]\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/plot-semicolons",
+    "source": "xychart\nbar [1] ; line [2];title a;"
+  },
+  {
+    "id": "xychart-cases/plot-no-separator",
+    "source": "xychart\nbar [1] line [2]"
+  },
+  {
+    "id": "xychart-cases/missing-band-values",
+    "source": "xychart\nx-axis [a, b, c]\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/duplicate-categories",
+    "source": "xychart\nx-axis [a, a, b]\nbar [1, 2, 3]"
+  },
+  {
+    "id": "xychart-cases/reversed-range",
+    "source": "xychart\nx-axis 10 --> 1\ny-axis 100 --> 0\nbar [1, 2]"
+  },
+  {
+    "id": "xychart-cases/axis-keyword-boundary",
+    "source": "xychart\nx-axisy [a]\ny-axis_ 0 --> 1\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/axis-title-and-band",
+    "source": "xychart\nx-axis \"Months\" [jan, \"feb x\", mar]\nbar [1, 2, 3]"
+  },
+  {
+    "id": "xychart-cases/axis-band-then-arrow",
+    "source": "xychart\nx-axis [a] --> 1\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/axis-nested-state",
+    "source": "xychart\nbar [1, x-axis 2]\nline [3]"
+  },
+  {
+    "id": "xychart-cases/acc-title-and-descr",
+    "source": "xychart\naccTitle: a ; b #c\naccDescr: d\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-descr-multiline",
+    "source": "xychart\naccDescr {\n  line one\n  line two\n}\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-descr-multiline-inline",
+    "source": "xychart\naccDescr { inline } bar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-descr-multiline-unclosed",
+    "source": "xychart\naccDescr {\nnever closed"
+  },
+  {
+    "id": "xychart-cases/acc-descr-multiline-empty",
+    "source": "xychart\naccDescr {}\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-title-empty",
+    "source": "xychart\naccTitle:\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-title-blanks-then-colon",
+    "source": "xychart\naccTitle   :   T\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-title-no-colon",
+    "source": "xychart\naccTitle T\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-descr-no-colon",
+    "source": "xychart\naccDescr T\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/acc-title-uppercase",
+    "source": "xychart\nACCTITLE: T\nACCDESCR: D\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-lparen",
+    "source": "xychart\ntitle a(b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-rparen",
+    "source": "xychart\ntitle a)b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-lt",
+    "source": "xychart\ntitle a<b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-gt",
+    "source": "xychart\ntitle a>b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-lbrace",
+    "source": "xychart\ntitle a{b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-rbrace",
+    "source": "xychart\ntitle a}b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-at",
+    "source": "xychart\ntitle a@b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-caret",
+    "source": "xychart\ntitle a^b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-tilde",
+    "source": "xychart\ntitle a~b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-pipe",
+    "source": "xychart\ntitle a|b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-bang",
+    "source": "xychart\ntitle a!b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-question",
+    "source": "xychart\ntitle a?b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-apostrophe",
+    "source": "xychart\ntitle a'b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-slash",
+    "source": "xychart\ntitle a/b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-backslash",
+    "source": "xychart\ntitle a\\\\b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-dollar",
+    "source": "xychart\ntitle a$b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-percent",
+    "source": "xychart\ntitle a%b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-non-ascii",
+    "source": "xychart\ntitle aéb\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-emoji",
+    "source": "xychart\ntitle a😀b\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/error-tag-quote",
+    "source": "xychart\ntitle <b class=\"x\">\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-data",
+    "source": "xychart\nbar [1] line [2]"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-title",
+    "source": "xychart\ntitle a b c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-acc",
+    "source": "xychart\naccTitle: a b\naccDescr: c\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-before-comment",
+    "source": "xychart\nbar [1] %% c\nline [2]"
+  },
+  {
+    "id": "xychart-cases/line-separator-after-header",
+    "source": "xychart bar [1]"
+  },
+  {
+    "id": "xychart-cases/nbsp-blank",
+    "source": "xychart\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/crlf",
+    "source": "xychart\r\nx-axis [a]\r\nbar [1]\r\n"
+  },
+  {
+    "id": "xychart-cases/cr-only",
+    "source": "xychart\rx-axis [a]\rbar [1]"
+  },
+  {
+    "id": "xychart-cases/crlf-in-string",
+    "source": "xychart\ntitle \"a\r\nb\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/crlf-in-axis-data",
+    "source": "xychart\ny-axis 0 --> 1\r\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/tabs",
+    "source": "xychart\n\tx-axis\t[a,\tb]\n\tbar\t[1,\t2]"
+  },
+  {
+    "id": "xychart-cases/header-word-barchart",
+    "source": "xychart\nbarchart [1]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-after-range",
+    "source": "xychart\ny-axis 0 --> 1%%{x}\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-in-title",
+    "source": "xychart\ntitle a %%{x}\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-in-data",
+    "source": "xychart\nbar [1] %%{ x }\nline [2]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-own-line",
+    "source": "xychart\nbar [1]\n%%{init: {\nline [2]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-word-argument",
+    "source": "xychart\nbar [1] %%{x y\nline [2]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-colon-word",
+    "source": "xychart\nbar [1] %%{x: y\nline [2]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-line-separator",
+    "source": "xychart\nbar [1] %%{x { line [2]"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-twice",
+    "source": "xychart\nbar [1] %%{x y\nline [2] %%{z}\nbar [3]"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-band",
+    "source": "xychart\nx-axis [a b]\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/paragraph-separator-in-band",
+    "source": "xychart\nx-axis [a b]\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-string",
+    "source": "xychart\ntitle \"a b\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/paragraph-separator-in-string",
+    "source": "xychart\ntitle \"a b\"\nbar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-after-range",
+    "source": "xychart\ny-axis 0 --> 1 bar [1]"
+  },
+  {
+    "id": "xychart-cases/paragraph-separator-after-range",
+    "source": "xychart\ny-axis 0 --> 1 bar [1]"
+  },
+  {
+    "id": "xychart-cases/paragraph-separator-after-header",
+    "source": "xychart bar [1]"
+  },
+  {
+    "id": "xychart-cases/line-separator-then-newline-after-header",
+    "source": "xychart \nbar [1]"
+  },
+  {
+    "id": "xychart-cases/directive-word-argument-then-text",
+    "source": "xychart\nbar [1] %%{x y z}%%\nline [2]"
+  },
+  {
+    "id": "xychart-cases/directive-line-separator-inside",
+    "source": "xychart\nbar [1] %%{init: { }}%%\nline [2]"
+  },
+  {
+    "id": "xychart-cases/directive-name-on-next-line",
+    "source": "xychart\nbar [1] %%{\ninit: {}}%%\nline [2]"
+  },
+  {
+    "id": "xychart-cases/directive-no-name",
+    "source": "xychart\nbar [1] %%{ }\nline [2]"
+  }
+]

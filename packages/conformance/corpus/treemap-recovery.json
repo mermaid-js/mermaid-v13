@@ -1,0 +1,292 @@
+[
+  {
+    "id": "treemap-recovery/an-unquoted-name",
+    "name": "an unquoted name",
+    "source": "treemap\n\"A\"\n  B: 1\n  \"C\": 2",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "treemap-recovery/a-leaf-without-its-value",
+    "name": "a leaf without its value",
+    "source": "treemap\n\"A\"\n  \"x\":\n  \"y\": 2",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "y"]
+  },
+  {
+    "id": "treemap-recovery/a-semicolon-after-a-leaf",
+    "name": "a semicolon after a leaf",
+    "source": "treemap\n\"A\": 1;\n\"B\": 2",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-negative-value",
+    "name": "a negative value",
+    "source": "treemap\n\"A\": -1\n\"B\": 2",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-blank-before-the-class",
+    "name": "a blank before the class",
+    "source": "treemap\n\"A\" :::cls\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-blank-after-the-class-separator",
+    "name": "a blank after the class separator",
+    "source": "treemap\n\"A\"::: cls\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-one-character-class-name",
+    "name": "a one-character class name",
+    "source": "treemap\nclassDef c fill:red\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-blank-at-the-end-of-a-line-before-an-indented-row",
+    "name": "a blank at the end of a line before an indented row",
+    "source": "treemap\n\"A\" \n  \"b\": 1\n\"C\": 3",
+    "errors": [["STRAY_BLANK", 2]],
+    "keeps": ["A", "b", "C"]
+  },
+  {
+    "id": "treemap-recovery/a-blank-before-a-comment-before-an-indented-row",
+    "name": "a blank before a comment before an indented row",
+    "source": "treemap\n\"A\"\n  \"x\": 1 %% note\n  \"y\": 1",
+    "errors": [["STRAY_BLANK", 3]],
+    "keeps": ["A", "x", "y"]
+  },
+  {
+    "id": "treemap-recovery/a-line-of-blanks-before-an-indented-row",
+    "name": "a line of blanks before an indented row",
+    "source": "treemap\n\"A\"\n   \n  \"b\": 1",
+    "errors": [["STRAY_BLANK", 3]],
+    "keeps": ["A", "b"]
+  },
+  {
+    "id": "treemap-recovery/a-blank-at-the-end-of-the-text",
+    "name": "a blank at the end of the text",
+    "source": "treemap\n\"A\"\n  \"b\": 1 ",
+    "errors": [["STRAY_BLANK", 3]],
+    "keeps": ["A", "b"]
+  },
+  {
+    "id": "treemap-recovery/an-unclosed-name",
+    "name": "an unclosed name",
+    "source": "treemap\n\"A\": 1\n\"B\": 2\n\"abc: 1",
+    "errors": [["UNCLOSED_STRING", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/an-accessible-title-without-a-colon",
+    "name": "an accessible title without a colon",
+    "source": "treemap\naccTitle My title\n\"A\": 1",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "treemap-recovery/an-unclosed-accessible-description",
+    "name": "an unclosed accessible description",
+    "source": "treemap\naccDescr {\n\"A\": 1\n\"B\": 2",
+    "errors": [["UNCLOSED_ACC_DESCR", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-second-header",
+    "name": "a second header",
+    "source": "treemap\n\"A\": 1\ntreemap\n\"B\": 2",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/an-exponent-in-a-value",
+    "name": "an exponent in a value",
+    "source": "treemap\n\"A\": 1e3\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-class-statement",
+    "name": "a class statement",
+    "source": "treemap\nclass myNode myClass\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-value-with-no-name",
+    "name": "a value with no name",
+    "source": "treemap\n100\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-classdef-that-goes-on-after-its-semicolon",
+    "name": "a classDef that goes on after its semicolon",
+    "source": "treemap\nclassDef ab fill:red;stroke:blue\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["B"]
+  },
+  {
+    "id": "treemap-recovery/a-unit-after-a-value",
+    "name": "a unit after a value",
+    "source": "treemap\n\"A\": 10 apples\n\"B\": 2",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-separator-with-no-name",
+    "name": "a separator with no name",
+    "source": "treemap\n\"A\": 1\n: 5\n\"B\": 2",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-stray-character",
+    "name": "a stray character",
+    "source": "treemap\n\"A\": 1\n@\n\"B\": 2",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-header-with-a-suffix",
+    "name": "a header with a suffix",
+    "source": "treemapx\n\"A\": 1\n\"B\": 2",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/a-brace-after-a-leaf",
+    "name": "a brace after a leaf",
+    "source": "treemap\n\"A\": 1 {\n\"B\": 2",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "treemap-recovery/three-unquoted-names",
+    "name": "three unquoted names",
+    "source": "treemap\n\"Root\"\n  a: 1\n  \"b\": 2\n  c: 3\n  \"d\": 4\n  e: 5",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Root", "b", "d"]
+  },
+  {
+    "id": "treemap-recovery/two-missing-values",
+    "name": "two missing values",
+    "source": "treemap\n\"Root\"\n  \"a\":\n  \"b\": 2\n  \"c\": \n\"Other\"\n  \"d\": 4",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["Root", "b", "Other", "d"]
+  },
+  {
+    "id": "treemap-recovery/trailing-blanks-before-two-indented-rows",
+    "name": "trailing blanks before two indented rows",
+    "source": "treemap\n\"A\" \n  \"a\": 1\n\"B\"\n  \"b\": 1 \n  \"c\": 1",
+    "errors": [
+      ["STRAY_BLANK", 2],
+      ["STRAY_BLANK", 5]
+    ],
+    "keeps": ["A", "a", "B", "b", "c"]
+  },
+  {
+    "id": "treemap-recovery/a-bad-class-and-a-bad-value",
+    "name": "a bad class and a bad value",
+    "source": "treemap\nclassDef x color:red\n\"A\"\n  \"a\": -1\n  \"b\": 2:::hot",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["A", "b"]
+  },
+  {
+    "id": "treemap-recovery/stray-characters-on-two-lines",
+    "name": "stray characters on two lines",
+    "source": "treemap\n\"A\": 1\n@\n\"B\": 2\n#\n\"C\": 3",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "treemap-recovery/an-accessible-title-and-description-without-colons",
+    "name": "an accessible title and description without colons",
+    "source": "treemap\naccTitle Sizes\naccDescr Sizes of things\n\"A\": 1",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "treemap-recovery/classes-written-with-blanks",
+    "name": "classes written with blanks",
+    "source": "treemap\nclassDef hot fill:red\n\"A\" :::hot\n\"B\": 1 :::hot\n\"C\":::hot",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "treemap-recovery/a-second-header-and-a-value-with-no-name",
+    "name": "a second header and a value with no name",
+    "source": "treemap\n\"A\": 1\ntreemap-beta\n\"B\": 2\n42\n\"C\": 3",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "treemap-recovery/units-after-three-values",
+    "name": "units after three values",
+    "source": "treemap\n\"A\": 10 kg\n\"B\": 20 kg\n\"C\": 30 kg",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "treemap-recovery/semicolons-after-rows",
+    "name": "semicolons after rows",
+    "source": "treemap\n\"A\"\n  \"a\": 1;\n  \"b\": 2;\n  \"c\": 3",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["A", "a", "b", "c"]
+  },
+  {
+    "id": "treemap-recovery/exponents-and-negatives",
+    "name": "exponents and negatives",
+    "source": "treemap\n\"A\": 1e3\n\"B\": -2\n\"C\": 3",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "treemap-recovery/a-line-of-blanks-and-an-unclosed-name",
+    "name": "a line of blanks and an unclosed name",
+    "source": "treemap\n\"A\"\n  \n  \"a\": 1\n\"B': 2",
+    "errors": [
+      ["STRAY_BLANK", 3],
+      ["UNCLOSED_STRING", 5]
+    ],
+    "keeps": ["A", "a"]
+  }
+]

@@ -27,6 +27,7 @@ describe('the diagram theme tables the theme specs pass (spec #414 T0b)', () => 
         'sequence',
         'state',
         'timeline',
+        'xychart',
       ].sort()
     );
     expect(VOCABULARY.mainBkg?.kind).toBe('color');

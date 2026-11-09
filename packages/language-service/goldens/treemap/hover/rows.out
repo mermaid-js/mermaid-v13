@@ -1,0 +1,34 @@
+@ 2:6  "Ho|me"
+  2:3-2:9 "\"Home\""
+  | **section** `Home`
+  |
+  | Value: `1,281.5`, the sum of its 3 leaves.
+@ 3:8  "Re|nt": 1200
+  3:5-3:11 "\"Rent\""
+  | **leaf** `Rent`
+  |
+  | Value: `1,200`
+@ 3:15  "Rent": 12|00
+  3:13-3:17 "1200"
+  | **value** `1200` of `Rent`
+  |
+  | Value: `1,200`
+@ 6:16  "Water": |1_000
+  6:16-6:21 "1_000"
+  | **value** `1_000` of `Water`
+  |
+  | Value: `1`
+  |
+  | Written `1_000`, which is read as `1`.
+@ 8:14  "Pocket": .|
+  8:13-8:14 "."
+  | **value** `.` of `Pocket`
+  |
+  | Value: not a number, so the leaf takes no area and shows no value
+  |
+  | Written `.`, which is read as not a number.
+@ 9:6  "No|thing"
+  9:3-9:12 "\"Nothing\""
+  | **section** `Nothing`
+  |
+  | No leaves under it, so its value is 0.

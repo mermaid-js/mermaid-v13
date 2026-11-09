@@ -1,6 +1,7 @@
 /**
  * `pnpm check:licenses`: fails when ported code (Pele, sanitize-url, Iconify, and the d3 packages
- * sankey re-implements) lacks its upstream's attribution under that upstream's license (R-REL-4).
+ * sankey and treemap re-implement) lacks its upstream's attribution under that upstream's
+ * license (R-REL-4).
  */
 import { join } from 'node:path';
 import { checkLicenses } from './licenses.ts';

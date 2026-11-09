@@ -1,0 +1,2 @@
+3:3-3:16 "x-axis [a, b]" warning XYCHART_PLOT_BEFORE_AXIS: Plots before this `x-axis` keep the x positions they had without it (on categories they are drawn at the start of the axis); put the `x-axis` before the plots.
+4:3-4:11 "accDescr" warning XYCHART_UNCLOSED_DESCRIPTION: Unclosed description: the `accDescr {` at line 4 has no closing `}`, so the chart has no description. Add `}` after the description.

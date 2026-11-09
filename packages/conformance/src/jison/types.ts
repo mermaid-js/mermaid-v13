@@ -2,7 +2,8 @@
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
  * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
- * kanban and sankey (M5). Pie and gitGraph are Langium in v12 and gate on its tokens instead (D213).
+ * kanban, sankey and xychart (M5). Pie and gitGraph are Langium in v12 and gate on its tokens
+ * instead (D213).
  */
 
 /** The part of a v12 jison lexer the oracle drives. */
@@ -200,6 +201,20 @@ export const JISON_TYPES = {
         specs: ['parser/sankey.spec.ts'],
         identity: ['prepareTextForParsing', 'cleanupComments'],
         readsFiles: true,
+      },
+    },
+  },
+  xychart: {
+    probe: 'xychart\n  bar [1]',
+    e2e: ['xychart'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/xychart`,
+      docs: 'xyChart.md',
+      method: {
+        kind: 'run',
+        parsers: ['parser'],
+        // The DB spec calls the DB's setters only, so it adds no source.
+        specs: ['parser/xychart.jison.spec.ts', 'xychartDb.spec.ts'],
       },
     },
   },

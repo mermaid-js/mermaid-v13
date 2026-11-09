@@ -7,7 +7,9 @@
 # section core's schema gives a `look`. v12 read only the drawn type's section; here a section's
 # `look: handDrawn` turns `handDrawn` on whatever type is drawn (aliases are not per type).
 # Other `look` values are not aliased: they still warn `LOOK_REMOVED`. `index.spec.ts` checks that
-# the list covers every core section with a `look`.
+# the list covers every core section with a `look`. A type the plugin does not sketch (sequence,
+# gantt, pie, timeline, journey, quadrant, gitGraph, packet, cynefin, treemap) draws as without it,
+# with no warning (`unsketched.spec.ts`).
 x-mermaid-fragment:
   id: hand-drawn
   aliases:
@@ -29,6 +31,7 @@ x-mermaid-fragment:
     - { from: architecture.look, when: handDrawn, to: handDrawn, value: true }
     - { from: mindmap.look, when: handDrawn, to: handDrawn, value: true }
     - { from: ishikawa.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: treemap.look, when: handDrawn, to: handDrawn, value: true }
     - { from: kanban.look, when: handDrawn, to: handDrawn, value: true }
     - { from: gitGraph.look, when: handDrawn, to: handDrawn, value: true }
     - { from: c4.look, when: handDrawn, to: handDrawn, value: true }
