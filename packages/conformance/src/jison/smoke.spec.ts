@@ -19,7 +19,15 @@ const M4_M5: JisonType[] = [
   'sankey',
   'xychart',
   'venn',
+  'requirement',
 ];
+
+/**
+ * Fixtures v12 rejects before its lexer runs, kept as rejection fixtures: requirement's
+ * `with-a-title` closes its front matter with an indented `  ---` (spec #520). Each must stay
+ * unlexed, so the list cannot go stale.
+ */
+const NOT_LEXED = new Set(['requirement/visual-check/with-a-title-default.mmd']);
 
 describe.each(M4_M5)('%s through the shared jison oracle', (type) => {
   it('lexes the e2e fixtures', async () => {
@@ -30,7 +38,9 @@ describe.each(M4_M5)('%s through the shared jison oracle', (type) => {
       for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir)) {
         fixtures++;
         const tokens = await oracle.tokens(item.source);
-        if (!tokens) problems.push(`${item.id}: not lexed by v12's ${type} lexer`);
+        if (NOT_LEXED.has(item.id)) {
+          if (tokens) problems.push(`${item.id}: lexed by v12, remove it from NOT_LEXED`);
+        } else if (!tokens) problems.push(`${item.id}: not lexed by v12's ${type} lexer`);
         else if (tokens.length === 0) problems.push(`${item.id}: no tokens`);
         else if (tokens.some(([name]) => name === LEXICAL_ERROR || /^\d+$/.test(name)))
           problems.push(`${item.id}: ${JSON.stringify(tokens.slice(-3))}`);

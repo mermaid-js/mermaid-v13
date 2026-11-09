@@ -2,7 +2,7 @@
 /**
  * Per-type descriptors for the shared jison lexer oracle and the harvest CLI (D212). One entry
  * per diagram type that v12 parses with jison: the five M3 types, the five M4 jison types,
- * kanban, sankey, xychart and venn (M5). Pie and gitGraph are Langium in v12 and gate on
+ * kanban, sankey, xychart, venn and requirement (M5). Pie and gitGraph are Langium in v12 and gate on
  * its tokens instead (D213).
  */
 
@@ -263,6 +263,20 @@ export const JISON_TYPES = {
       dir: `${V12_DIAGRAMS}/venn`,
       docs: 'venn.md',
       method: { kind: 'literals', header: startsWith('venn-beta') },
+    },
+  },
+  requirement: {
+    probe: 'requirementDiagram\n',
+    e2e: ['requirement'],
+    harvest: {
+      dir: `${V12_DIAGRAMS}/requirement`,
+      docs: 'requirementDiagram.md',
+      // The spec builds its sources with `[…].join('\n')`; the DB spec calls the DB only.
+      method: {
+        kind: 'run',
+        parsers: ['reqDiagram'],
+        specs: ['parser/requirementDiagram.spec.js'],
+      },
     },
   },
 } as const satisfies Record<string, JisonTypeDescriptor>;

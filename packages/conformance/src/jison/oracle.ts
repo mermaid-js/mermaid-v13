@@ -31,6 +31,23 @@ export interface TokensOptions {
    * stream compared with a lexer of v12's text (not of the source). Default false.
    */
   keepAppendedNewline?: boolean;
+  /**
+   * Rules to run in place of v12's own for this call, by rule number (the index into the
+   * compiled lexer's `rules`), for a gate whose type decided to lex some text differently
+   * (requirement's D431 and D432): v12's lexer with that decision applied. Each is called with
+   * the input not matched yet and the text matched so far, and returns its match at the start
+   * of the input, or null. v12's own rules are back when the call returns.
+   */
+  rules?: Readonly<Record<number, JisonRule>>;
+}
+
+/** A replacement lexer rule (see {@link TokensOptions.rules}). */
+export type JisonRule = (input: string, matched: string) => RegExpMatchArray | null;
+
+/** The parts of jison's lexer a replaced rule reads and writes. */
+interface RuleTable {
+  rules: unknown[];
+  matched: string;
 }
 
 export interface JisonLexerOracle {
@@ -144,6 +161,8 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
       if (input === undefined) return undefined;
       const listeners: ((name: string, image: string) => void)[] = [];
       setInput(input, yy({ db, lexer, onToken: (listener) => listeners.push(listener) }));
+      // The loop catches what the lexer throws, so the rules are always put back.
+      const restore = options.rules ? replaceRules(lexer, options.rules) : undefined;
       const out: JisonToken[] = [];
       let clipped = options.keepAppendedNewline === true;
       let left = input.length;
@@ -168,8 +187,24 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
         out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
         for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
       }
+      restore?.();
       return out;
     },
+  };
+}
+
+/** Put `rules` in place of the lexer's own; the returned function puts them back. */
+function replaceRules(lexer: JisonLexer, rules: Readonly<Record<number, JisonRule>>): () => void {
+  const table = lexer as unknown as RuleTable;
+  const saved = new Map<number, unknown>();
+  for (const [key, rule] of Object.entries(rules)) {
+    const k = Number(key);
+    saved.set(k, table.rules[k]);
+    // jison matches with `input.match(rule)`, which calls `Symbol.match`.
+    table.rules[k] = { [Symbol.match]: (text: string) => rule(text, table.matched) };
+  }
+  return () => {
+    for (const [k, rule] of saved) table.rules[k] = rule;
   };
 }
 

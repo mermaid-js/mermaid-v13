@@ -1,0 +1,658 @@
+[
+  {
+    "id": "requirement-cases/header-alone",
+    "source": "requirementDiagram"
+  },
+  {
+    "id": "requirement-cases/header-newline",
+    "source": "requirementDiagram\n"
+  },
+  {
+    "id": "requirement-cases/header-blank-lines",
+    "source": "requirementDiagram\n\n   \n\t\n"
+  },
+  {
+    "id": "requirement-cases/header-leading-lines",
+    "source": "\n\n  requirementDiagram\n\n\nrequirement a {\n}\n\n"
+  },
+  {
+    "id": "requirement-cases/header-requirement-only",
+    "source": "requirement\n"
+  },
+  {
+    "id": "requirement-cases/header-requirement-body",
+    "source": "requirement\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-upper-case",
+    "source": "RequirementDiagram\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-mixed-case-later",
+    "source": "requirementDiagram\na - satisfies -> b\nRequirementDiagram"
+  },
+  {
+    "id": "requirement-cases/header-word-suffix",
+    "source": "requirementDiagramx\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-same-line",
+    "source": "requirementDiagram requirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-trailing-blank",
+    "source": "requirementDiagram \nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-trailing-tab",
+    "source": "requirementDiagram\t\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-trailing-blanks-then-blank-line",
+    "source": "requirementDiagram  \n\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-front-matter-title",
+    "source": "---\ntitle: T\n---\nrequirementDiagram\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/header-directive",
+    "source": "%%{init: {\"theme\": \"forest\"}}%%\nrequirementDiagram\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-name-test",
+    "source": "requirementDiagram\nelement test {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-name-test-dot",
+    "source": "requirementDiagram\nelement test.x {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-name-test-underscore",
+    "source": "requirementDiagram\nrequirement test_req {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-value-high-quality",
+    "source": "requirementDiagram\nrequirement a {\n  text: high quality\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-value-textbox",
+    "source": "requirementDiagram\nrequirement a {\n  text: textbox\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-target-element",
+    "source": "requirementDiagram\na - traces -> element"
+  },
+  {
+    "id": "requirement-cases/keyword-name-requirementx",
+    "source": "requirementDiagram\nrequirementx a {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-classdefault",
+    "source": "requirementDiagram\nclassDefault x"
+  },
+  {
+    "id": "requirement-cases/keyword-upper-case",
+    "source": "requirementDiagram\nREQUIREMENT A {\n  ID: 1\n  TEXT: t\n  RISK: HIGH\n  VERIFYMETHOD: TEST\n}\nELEMENT E {\n  TYPE: t\n  DOCREF: d\n}\nA - SATISFIES -> E"
+  },
+  {
+    "id": "requirement-cases/keyword-every-kind",
+    "source": "requirementDiagram\nrequirement a {\n}\nfunctionalRequirement b {\n}\ninterfaceRequirement c {\n}\nperformanceRequirement d {\n}\nphysicalRequirement e {\n}\ndesignConstraint f {\n}\nelement g {\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-every-relation",
+    "source": "requirementDiagram\na - contains -> b\nb <- contains - a\na - copies -> b\nb <- copies - a\na - derives -> b\nb <- derives - a\na - satisfies -> b\nb <- satisfies - a\na - verifies -> b\nb <- verifies - a\na - refines -> b\nb <- refines - a\na - traces -> b\nb <- traces - a\n"
+  },
+  {
+    "id": "requirement-cases/keyword-every-risk-and-method",
+    "source": "requirementDiagram\nrequirement r0 {\n  risk: low\n  verifymethod: analysis\n}\nrequirement r1 {\n  risk: medium\n  verifymethod: demonstration\n}\nrequirement r2 {\n  risk: high\n  verifymethod: inspection\n}\nrequirement r3 {\n  risk: Low\n  verifymethod: test\n}\n"
+  },
+  {
+    "id": "requirement-cases/keyword-title",
+    "source": "requirementDiagram\ntitle x"
+  },
+  {
+    "id": "requirement-cases/keyword-title-value",
+    "source": "requirementDiagram\nrequirement a {\n  text: title page\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-title-bare",
+    "source": "requirementDiagram\ntitle\nx"
+  },
+  {
+    "id": "requirement-cases/keyword-title-semicolon",
+    "source": "requirementDiagram\n  title x;y"
+  },
+  {
+    "id": "requirement-cases/keyword-title-hash",
+    "source": "requirementDiagram\ntitle x # y"
+  },
+  {
+    "id": "requirement-cases/keyword-id-prefix",
+    "source": "requirementDiagram\nrequirement idea {\n  id: identity\n}"
+  },
+  {
+    "id": "requirement-cases/keyword-as-value-number",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1, 2\n}"
+  },
+  {
+    "id": "requirement-cases/comment-percent",
+    "source": "requirementDiagram\n% c\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/comment-hash",
+    "source": "requirementDiagram\n# c\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/comment-double-percent-line",
+    "source": "requirementDiagram\n%% c\nrequirement a {\n%% d\n  id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/comment-mid-value-hash",
+    "source": "requirementDiagram\nrequirement a {\n  text: issue #42 here\n}"
+  },
+  {
+    "id": "requirement-cases/comment-mid-value-percent",
+    "source": "requirementDiagram\nrequirement a {\n  text: 50% done\n}"
+  },
+  {
+    "id": "requirement-cases/comment-after-target",
+    "source": "requirementDiagram\na - traces -> b %% c"
+  },
+  {
+    "id": "requirement-cases/comment-after-brace",
+    "source": "requirementDiagram\nrequirement a { # c\n}"
+  },
+  {
+    "id": "requirement-cases/comment-after-close",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n} %% c\n"
+  },
+  {
+    "id": "requirement-cases/comment-after-quoted",
+    "source": "requirementDiagram\nrequirement \"a\" # c\n{\n}"
+  },
+  {
+    "id": "requirement-cases/comment-after-keyword-value",
+    "source": "requirementDiagram\nrequirement a {\n  risk: high # c\n}"
+  },
+  {
+    "id": "requirement-cases/comment-in-body-indented",
+    "source": "requirementDiagram\nrequirement a {\n  # c\n  % d\n  id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/comment-indented-percent-line",
+    "source": "requirementDiagram\n   %% c\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/string-unquoted-stops",
+    "source": "requirementDiagram\na:b,c-d<e>f=g{h"
+  },
+  {
+    "id": "requirement-cases/string-unquoted-trailing-blanks",
+    "source": "requirementDiagram\nrequirement a   {\n  text: x   \n}"
+  },
+  {
+    "id": "requirement-cases/string-unquoted-tab",
+    "source": "requirementDiagram\nrequirement a {\n\ttext: x\t\n}"
+  },
+  {
+    "id": "requirement-cases/string-non-ascii-start",
+    "source": "requirementDiagram\nelement Ärende {\n}"
+  },
+  {
+    "id": "requirement-cases/string-non-ascii-inside",
+    "source": "requirementDiagram\nelement aÄrende {\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-multi-line",
+    "source": "requirementDiagram\nrequirement \"a\nb\" {\n  text: \"x\n  y\"\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-empty",
+    "source": "requirementDiagram\nrequirement \"\" {\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-unterminated",
+    "source": "requirementDiagram\nrequirement \"abc"
+  },
+  {
+    "id": "requirement-cases/string-quoted-unterminated-body",
+    "source": "requirementDiagram\nrequirement a {\n  text: \"x\n}\nelement b {\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-markdown",
+    "source": "requirementDiagram\nrequirement \"__a__\" {\n  text: \"*it* **bold**\"\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-specials",
+    "source": "requirementDiagram\nrequirement \"a:b,c-d<e>f=g{h}\" {\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-tag-attribute",
+    "source": "requirementDiagram\nrequirement a {\n  text: \"<b class=\"x\">t</b>\"\n}"
+  },
+  {
+    "id": "requirement-cases/string-entity",
+    "source": "requirementDiagram\nrequirement a {\n  text: a #amp; b #35; c\n}"
+  },
+  {
+    "id": "requirement-cases/string-entity-quoted",
+    "source": "requirementDiagram\nrequirement \"a #9829; b\" {\n}"
+  },
+  {
+    "id": "requirement-cases/string-entity-at-start",
+    "source": "requirementDiagram\nrequirement a {\n  #amp; x\n}"
+  },
+  {
+    "id": "requirement-cases/string-quote-mid-unquoted",
+    "source": "requirementDiagram\nrequirement a\"b {\n}"
+  },
+  {
+    "id": "requirement-cases/string-quoted-then-unquoted",
+    "source": "requirementDiagram\nrequirement \"a\"b {\n}"
+  },
+  {
+    "id": "requirement-cases/string-relation-quoted-ends",
+    "source": "requirementDiagram\n\"a b\" - satisfies -> \"c d\"\n\"c d\" <- copies - \"a b\""
+  },
+  {
+    "id": "requirement-cases/string-relation-no-blanks",
+    "source": "requirementDiagram\na-satisfies->b\nb<-copies-a"
+  },
+  {
+    "id": "requirement-cases/string-relation-arrow-left-only",
+    "source": "requirementDiagram\n  a<-b"
+  },
+  {
+    "id": "requirement-cases/string-equals-error",
+    "source": "requirementDiagram\nx=y"
+  },
+  {
+    "id": "requirement-cases/body-brace-same-line",
+    "source": "requirementDiagram\nrequirement a { }"
+  },
+  {
+    "id": "requirement-cases/body-brace-close-same-line",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1 }"
+  },
+  {
+    "id": "requirement-cases/body-empty",
+    "source": "requirementDiagram\nrequirement a {\n}\nelement b {\n}"
+  },
+  {
+    "id": "requirement-cases/body-cross-kind-field",
+    "source": "requirementDiagram\nrequirement a {\n  type: t\n}\nelement b {\n  risk: low\n}"
+  },
+  {
+    "id": "requirement-cases/body-repeated-field",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n  id: 2\n}"
+  },
+  {
+    "id": "requirement-cases/body-blank-lines",
+    "source": "requirementDiagram\nrequirement a {\n\n  id: 1\n\n\n  text: t\n\n}"
+  },
+  {
+    "id": "requirement-cases/body-element-fields",
+    "source": "requirementDiagram\nelement e {\n  type: \"x\"\n  docref: y\n}"
+  },
+  {
+    "id": "requirement-cases/body-brace-next-line",
+    "source": "requirementDiagram\nrequirement a\n{\n}"
+  },
+  {
+    "id": "requirement-cases/body-class-shorthand",
+    "source": "requirementDiagram\nrequirement a:::c {\n}\nelement b:::c,d {\n}"
+  },
+  {
+    "id": "requirement-cases/body-unclosed",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n"
+  },
+  {
+    "id": "requirement-cases/body-close-without-open",
+    "source": "requirementDiagram\n}\n"
+  },
+  {
+    "id": "requirement-cases/style-dropped-spaces",
+    "source": "requirementDiagram\nstyle a stroke-dasharray: 5 5;"
+  },
+  {
+    "id": "requirement-cases/style-percent",
+    "source": "requirementDiagram\nstyle a fill:50%"
+  },
+  {
+    "id": "requirement-cases/style-dot",
+    "source": "requirementDiagram\nstyle a fill:a.b"
+  },
+  {
+    "id": "requirement-cases/style-paren",
+    "source": "requirementDiagram\nstyle a fill:rgb(1,2,3)"
+  },
+  {
+    "id": "requirement-cases/style-tab",
+    "source": "requirementDiagram\nstyle a fill:\tred"
+  },
+  {
+    "id": "requirement-cases/style-trailing-semicolon",
+    "source": "requirementDiagram\nstyle a fill:#f00;"
+  },
+  {
+    "id": "requirement-cases/style-two-semicolons",
+    "source": "requirementDiagram\nstyle a fill:#f00;\nstyle a fill:#f00;stroke:#00f;"
+  },
+  {
+    "id": "requirement-cases/style-comma-list",
+    "source": "requirementDiagram\nstyle a,b fill:#f00 , color:red"
+  },
+  {
+    "id": "requirement-cases/style-quoted-id",
+    "source": "requirementDiagram\nstyle \"a b\" fill:red"
+  },
+  {
+    "id": "requirement-cases/style-then-blank-line",
+    "source": "requirementDiagram\nstyle a fill:red\n  \nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/style-then-comment",
+    "source": "requirementDiagram\nstyle a fill:#f00;\n#x\n"
+  },
+  {
+    "id": "requirement-cases/style-classdef-and-class",
+    "source": "requirementDiagram\nclassDef a,b fill:#f00,stroke:#0f0\nclass a,b c\n"
+  },
+  {
+    "id": "requirement-cases/style-class-shorthand-quoted",
+    "source": "requirementDiagram\n\"a\":::b,c"
+  },
+  {
+    "id": "requirement-cases/style-classdef-default",
+    "source": "requirementDiagram\nrequirement a {\n}\nclassDef default fill:#fff\nclassDef c color:blue, font-weight:bold"
+  },
+  {
+    "id": "requirement-cases/style-at-end",
+    "source": "requirementDiagram\nstyle a fill:red"
+  },
+  {
+    "id": "requirement-cases/style-hash-colours",
+    "source": "requirementDiagram\nstyle a fill:#f9f,stroke:#333,stroke-width:4px"
+  },
+  {
+    "id": "requirement-cases/style-line-separator",
+    "source": "requirementDiagram\nstyle a fill:red b"
+  },
+  {
+    "id": "requirement-cases/style-trailing-blank",
+    "source": "requirementDiagram\nstyle a fill:red \nrequirement b {\n}"
+  },
+  {
+    "id": "requirement-cases/style-entity",
+    "source": "requirementDiagram\nstyle a fill:#amp;"
+  },
+  {
+    "id": "requirement-cases/direction-mid-line",
+    "source": "requirementDiagram\na - traces -> b direction LR"
+  },
+  {
+    "id": "requirement-cases/direction-in-value",
+    "source": "requirementDiagram\nrequirement a {\n  text: go direction LR now\n}"
+  },
+  {
+    "id": "requirement-cases/direction-indented",
+    "source": "requirementDiagram\n  direction LR\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/direction-two-on-a-line",
+    "source": "requirementDiagram\ndirection BT x direction TB"
+  },
+  {
+    "id": "requirement-cases/direction-lower-case",
+    "source": "requirementDiagram\ndirection lr\n"
+  },
+  {
+    "id": "requirement-cases/direction-suffix",
+    "source": "requirementDiagram\ndirection TBX\n"
+  },
+  {
+    "id": "requirement-cases/direction-trailing-text",
+    "source": "requirementDiagram\ndirection LR foo bar\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/direction-across-lines",
+    "source": "requirementDiagram\ndirection\nTB foo\nx"
+  },
+  {
+    "id": "requirement-cases/direction-word-before",
+    "source": "requirementDiagram\nfoo direction LR\n"
+  },
+  {
+    "id": "requirement-cases/direction-glued",
+    "source": "requirementDiagram\nxdirection LR\n"
+  },
+  {
+    "id": "requirement-cases/direction-after-relation-line",
+    "source": "requirementDiagram\na - traces -> b\n  direction LR"
+  },
+  {
+    "id": "requirement-cases/direction-after-style",
+    "source": "requirementDiagram\nstyle a fill:red\ndirection LR\n"
+  },
+  {
+    "id": "requirement-cases/direction-unknown",
+    "source": "requirementDiagram\ndirection XY\n"
+  },
+  {
+    "id": "requirement-cases/direction-bare",
+    "source": "requirementDiagram\ndirection\n"
+  },
+  {
+    "id": "requirement-cases/direction-in-title",
+    "source": "requirementDiagram\ntitle direction LR"
+  },
+  {
+    "id": "requirement-cases/direction-acc-title",
+    "source": "requirementDiagram\naccTitle: direction LR\n"
+  },
+  {
+    "id": "requirement-cases/direction-after-quoted-multi-line",
+    "source": "requirementDiagram\nrequirement \"a\nb\" direction LR {\n}"
+  },
+  {
+    "id": "requirement-cases/direction-line-separator",
+    "source": "requirementDiagram\na direction LR\n"
+  },
+  {
+    "id": "requirement-cases/direction-line-separator-start",
+    "source": "requirementDiagram\n direction LR\n"
+  },
+  {
+    "id": "requirement-cases/blank-before-brace-end",
+    "source": "requirementDiagram\nrequirement a { \n}"
+  },
+  {
+    "id": "requirement-cases/blank-after-keyword-value",
+    "source": "requirementDiagram\nrequirement a {\n  risk: high \n  verifymethod: test\t\n}"
+  },
+  {
+    "id": "requirement-cases/blank-after-quoted-value",
+    "source": "requirementDiagram\nrequirement a {\n  text: \"x\" \n}"
+  },
+  {
+    "id": "requirement-cases/blank-after-close",
+    "source": "requirementDiagram\nrequirement a {\n} \nelement b {\n}"
+  },
+  {
+    "id": "requirement-cases/blank-at-end",
+    "source": "requirementDiagram\nrequirement a {\n}  "
+  },
+  {
+    "id": "requirement-cases/blank-nbsp",
+    "source": "requirementDiagram\nrequirement a {\n  risk: \n}"
+  },
+  {
+    "id": "requirement-cases/blank-line-separator",
+    "source": "requirementDiagram\nrequirement a { \n}"
+  },
+  {
+    "id": "requirement-cases/blank-split-name",
+    "source": "requirementDiagram\nrequirement \n a {\n}"
+  },
+  {
+    "id": "requirement-cases/blank-split-relation",
+    "source": "requirementDiagram\na - traces \n-> b\na - \ntraces -> b"
+  },
+  {
+    "id": "requirement-cases/blank-split-value",
+    "source": "requirementDiagram\nrequirement a {\n  risk: \nhigh\n}"
+  },
+  {
+    "id": "requirement-cases/blank-split-quoted-brace",
+    "source": "requirementDiagram\nrequirement \"a\" \n{\n}"
+  },
+  {
+    "id": "requirement-cases/blank-split-quoted-relation",
+    "source": "requirementDiagram\n\"a\" \n- traces -> b"
+  },
+  {
+    "id": "requirement-cases/blank-relation-then-statement",
+    "source": "requirementDiagram\na - traces -> \"b\" \nrequirement c {\n}"
+  },
+  {
+    "id": "requirement-cases/blank-acc-descr-block",
+    "source": "requirementDiagram\naccDescr { x } \nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/blank-class-shorthand",
+    "source": "requirementDiagram\nrequirement a:::c \n{\n}"
+  },
+  {
+    "id": "requirement-cases/blank-lines-with-blanks",
+    "source": "requirementDiagram\nrequirement a { \n  \n\t\n  id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/acc-title",
+    "source": "requirementDiagram\naccTitle: My title\naccDescr: My description\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/acc-descr-block",
+    "source": "requirementDiagram\naccDescr {\n  line 1\n  line 2\n}\nrequirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/acc-title-empty-at-end",
+    "source": "requirementDiagram\naccTitle:"
+  },
+  {
+    "id": "requirement-cases/acc-descr-block-unclosed",
+    "source": "requirementDiagram\naccDescr {\nfoo"
+  },
+  {
+    "id": "requirement-cases/acc-descr-block-empty",
+    "source": "requirementDiagram\naccDescr {}\n"
+  },
+  {
+    "id": "requirement-cases/acc-title-next-line",
+    "source": "requirementDiagram\naccTitle:\n\n  t\n"
+  },
+  {
+    "id": "requirement-cases/acc-title-trailing-blanks",
+    "source": "requirementDiagram\naccTitle: t  \n"
+  },
+  {
+    "id": "requirement-cases/acc-descr-no-colon",
+    "source": "requirementDiagram\naccDescr x\n"
+  },
+  {
+    "id": "requirement-cases/acc-title-hash",
+    "source": "requirementDiagram\naccTitle: a # b ; c\n"
+  },
+  {
+    "id": "requirement-cases/line-separator-in-name",
+    "source": "requirementDiagram\nrequirement a b {\n}"
+  },
+  {
+    "id": "requirement-cases/line-separator-in-quoted",
+    "source": "requirementDiagram\nrequirement \"a b\" {\n}"
+  },
+  {
+    "id": "requirement-cases/line-separator-between-tokens",
+    "source": "requirementDiagram\nrequirement a { \n}"
+  },
+  {
+    "id": "requirement-cases/line-separator-comment",
+    "source": "requirementDiagram\nrequirement a {\n}\n%% c b\n"
+  },
+  {
+    "id": "requirement-cases/line-separator-title",
+    "source": "requirementDiagram\ntitle x\n"
+  },
+  {
+    "id": "requirement-cases/line-separator-acc",
+    "source": "requirementDiagram\naccTitle: t u\n"
+  },
+  {
+    "id": "requirement-cases/line-separator-header",
+    "source": "requirementDiagram requirement a {\n}"
+  },
+  {
+    "id": "requirement-cases/cr-lone",
+    "source": "requirementDiagram\rrequirement a {\r  id: 1\r}\r"
+  },
+  {
+    "id": "requirement-cases/cr-crlf",
+    "source": "requirementDiagram\r\nrequirement a {\r\n  id: 1\r\n}\r\n"
+  },
+  {
+    "id": "requirement-cases/cr-before-comment",
+    "source": "requirementDiagram\nrequirement a {\r%% c\n}\n"
+  },
+  {
+    "id": "requirement-cases/cr-in-quoted",
+    "source": "requirementDiagram\nrequirement \"a\r\nb\" {\n}"
+  },
+  {
+    "id": "requirement-cases/directive-mid-name",
+    "source": "requirementDiagram\nrequirement a%%{init: {}}%%b {\n}"
+  },
+  {
+    "id": "requirement-cases/directive-mid-keyword",
+    "source": "requirementDiagram\nrequire%%{init: {}}%%ment a {\n}"
+  },
+  {
+    "id": "requirement-cases/directive-unclosed",
+    "source": "requirementDiagram\nrequirement a {\n%%{init: {\n}"
+  },
+  {
+    "id": "requirement-cases/error-at-token-start",
+    "source": "requirementDiagram\nrequirement a {\n  @id: 1\n}"
+  },
+  {
+    "id": "requirement-cases/error-astral",
+    "source": "requirementDiagram\nrequirement a {\n}\n😀"
+  },
+  {
+    "id": "requirement-cases/error-lone-less-than",
+    "source": "requirementDiagram\na < b"
+  },
+  {
+    "id": "requirement-cases/relation-self-loop",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\na - contains -> a"
+  },
+  {
+    "id": "requirement-cases/relation-unknown-ends",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\nx - traces -> y"
+  },
+  {
+    "id": "requirement-cases/relation-contains-reverse",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\nelement b {\n}\nb <- contains - a"
+  },
+  {
+    "id": "requirement-cases/duplicate-requirement",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\nrequirement a {\n  id: 2\n}"
+  },
+  {
+    "id": "requirement-cases/shared-name",
+    "source": "requirementDiagram\nrequirement a {\n  id: 1\n}\nelement a {\n}"
+  },
+  {
+    "id": "requirement-cases/style-before-definition",
+    "source": "requirementDiagram\nstyle a fill:red\nclass a c\na:::c\nrequirement a {\n  id: 1\n}\n"
+  }
+]
