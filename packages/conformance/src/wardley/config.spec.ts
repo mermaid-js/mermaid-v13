@@ -8,7 +8,9 @@
  * defaults are v12's renderer defaults (`wardleyRenderer.ts:52-65`). Out-of-range values
  * (`WARDLEY_CONFIG_INVALID`, D424) are gated by `packages/mermaid/src/wardley.spec.ts`.
  */
+import { readFileSync } from 'node:fs';
 import { wardley } from '@mermaid-js/diagram-wardley';
+import { firstPartyFacets } from '@mermaid-js/language-service';
 import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
@@ -73,8 +75,19 @@ async function v13Config(
 }
 
 describe('the wardley-beta config section against v12 12.2.0 (#497, D421)', () => {
-  it('reads v12’s section name', () => {
+  it('names one section in the plugin, the manifest, the facet row and the schema', () => {
+    const at = (path: string) => new URL(`../../../${path}`, import.meta.url);
+    const pkg = JSON.parse(readFileSync(at('diagram-wardley/package.json'), 'utf8')) as {
+      mermaid: { id: string; section: string };
+    };
+    const schema = readFileSync(at('core/schema/config.schema.yaml'), 'utf8');
     expect(wardley.configSection).toBe('wardley-beta');
+    expect(pkg.mermaid).toMatchObject({ id: wardley.id, section: wardley.configSection });
+    expect(firstPartyFacets.find((e) => e.type === 'wardley')?.section).toBe(wardley.configSection);
+    // The schema's top-level section of that name holds the wardley options.
+    expect(schema).toContain(
+      `\n  ${wardley.configSection}:\n    $ref: '#/$defs/WardleyDiagramConfig'\n`
+    );
   });
 
   it('the plugin’s generated defaults are v12’s renderer defaults, key for key', async () => {

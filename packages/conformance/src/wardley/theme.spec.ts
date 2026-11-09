@@ -8,6 +8,12 @@
  * v12's flat variable, which only the classic blocks read; where a theme sets none, its v12 value
  * is the `#dc3545` the trends fell back to. Colours compare as hex.
  *
+ * The three annotation variables are compared as v12 resolved them, not as v12 drew them: v12's
+ * renderer read `annotationStroke`, `annotationTextColor` and `annotationFill` and never used
+ * them, drawing the markers and box with literal `white` and the axis colours in every theme.
+ * What v13 draws there instead (D426) is the "D426 colours" test below; the render spec
+ * (`render.spec.ts`, paints) checks the drawn attributes.
+ *
  * Every value that differs is in `DIFFERENCES` with its decision, and the list must match the
  * differences found exactly:
  * - D333(b), one entry per redux/neo theme: v12 sets no `wardley` block there, so v13 takes the
@@ -118,7 +124,9 @@ async function differing(name: ThemeName, themeVariables?: Vars): Promise<string
 const D333B_LIGHT =
   'D333(b): v12 sets no wardley block here and drew a translucent grey grid; v13 takes the family rule, lightgrey';
 const D333B_DARK =
-  'D333(b): v12 sets no wardley block here and drew black strokes, white fills and #dc3545 trends on the dark page; v13 takes the dark rules (lineColor, mainBkg, #ff6b6b)';
+  'D333(b): v12 sets no wardley block here and drew black strokes, white component fills and #dc3545 trends on the dark page; v13 takes the dark rules (lineColor, mainBkg, #ff6b6b)';
+const D333B_DARK_ANNOTATION =
+  'D333(b), D426: v12’s annotationFill resolved to the page background (#333333), and v12 drew the markers and box white whatever it was; v13 draws them in this variable, the dark rule mainBkg';
 const NEUTRAL_GRID =
   'GAPS #430: wardleyGridColor is gantt’s literal lightgrey in every theme; v12 neutral’s grid was its gridColor, lighten(border1, 30)';
 
@@ -135,7 +143,6 @@ const DARK_DIFFERS = [
   'wardleyLinkStroke',
   'wardleyEvolutionStroke',
   'wardleyAnnotationStroke',
-  'wardleyAnnotationFill',
   'wardleyEvolutionColor',
 ];
 
@@ -145,7 +152,15 @@ const each = (names: readonly string[], why: string): Record<string, string> =>
 /** Theme → variable → the decision that makes v13 draw it otherwise than v12. */
 const DIFFERENCES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   ...Object.fromEntries(LIGHT_UNTHEMED.map((t) => [t, each(['wardleyGridColor'], D333B_LIGHT)])),
-  ...Object.fromEntries(DARK_UNTHEMED.map((t) => [t, each(DARK_DIFFERS, D333B_DARK)])),
+  ...Object.fromEntries(
+    DARK_UNTHEMED.map((t) => [
+      t,
+      {
+        ...each(DARK_DIFFERS, D333B_DARK),
+        ...each(['wardleyAnnotationFill'], D333B_DARK_ANNOTATION),
+      },
+    ])
+  ),
   neutral: each(['wardleyGridColor'], NEUTRAL_GRID),
 };
 

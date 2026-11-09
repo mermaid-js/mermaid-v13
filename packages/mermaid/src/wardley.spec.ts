@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { radar } from '@mermaid-js/diagram-radar';
 import { wardley } from '@mermaid-js/diagram-wardley';
 import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
@@ -207,5 +208,24 @@ describe('wardley theme variables through render() (#497, D335, D540)', () => {
     const flat = (await t.render('w', TEXT)).svg;
     expect(flat).toContain('#654321');
     expect(flat).not.toContain('#123456');
+  });
+});
+
+describe('a plugin without configSection resolves its config by id, unchanged (#497)', () => {
+  it('puts radar’s defaults and an init `config` key under `radar`', async () => {
+    expect((radar as { configSection?: string }).configSection).toBeUndefined();
+    let seen: Readonly<Record<string, unknown>> | undefined;
+    const spy = {
+      ...radar,
+      layout: (...args: Parameters<typeof radar.layout>) => {
+        seen = args[1].config;
+        return radar.layout(...args);
+      },
+    };
+    const m = createMermaid();
+    await m.registerExternalDiagrams([spy], { lazyLoad: false, replace: true });
+    await m.render('r', '%%{init: {"config": {"width": 800}}}%%\nradar-beta\n  axis A, B, C\n');
+    expect(seen?.radar).toMatchObject({ ...radar.configDefaults, width: 800 });
+    expect(seen?.['wardley-beta']).toBeUndefined();
   });
 });
