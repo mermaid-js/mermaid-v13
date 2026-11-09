@@ -15,3 +15,5 @@
 7. Before reporting, merge the base branch again and re-run `pnpm check`.
 8. Write `tickets/<N>.md` (≤ 40 lines): exports, how to use them, test helpers, gz size (and gated core size from `measureCoreSize` in `packages/bench/src/core-size.spec.ts` if core changed), unmet criteria.
 9. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
+
+T4 notes (from base moves): if the renderer reads a core theme row (flowchart shape-geometry rows #589, `actorBkg`/`actorBorder` #620), add `architecture` to that row's `usedBy` in core rather than redeclaring it (D337). For a palette-or-derived colour use `slot(<palette>, <n>, <fallback>)` (D474; CONTRACT.md "DSL additions"). `contrastCss` lives in `core/src/theme/contrast-css.ts`.
