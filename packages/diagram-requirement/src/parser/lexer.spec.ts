@@ -213,30 +213,49 @@ describe('requirementDiagram.jison quirks', () => {
 });
 
 describe('D432: `direction` only as a statement at a line start', () => {
-  it('reads a direction statement as v12 did, its leading blanks and line included', () => {
-    expect(jison(H + '  direction LR\ndirection bt x\n').slice(2)).toEqual([
-      'direction_lr:  direction LR',
+  it('reads `direction`, blanks and a direction at a line start, then `\\b`', () => {
+    expect(jison(H + '  direction LR\ndirection\tbt # c\n').slice(2)).toEqual([
+      'direction_lr:direction LR',
       'NEWLINE:\n',
-      'direction_bt:direction bt x',
+      'direction_bt:direction\tbt',
       'NEWLINE:\n',
       'EOF:',
     ]);
-    // v12's four rules in order over the line: TB is tried first.
-    expect(jison(H + 'direction BT x direction TB').slice(2, 3)).toEqual([
-      'direction_tb:direction BT x direction TB',
-    ]);
-    // `\s+` after `direction` takes line breaks; there is no `\b` after the direction.
-    expect(jison(H + 'direction\nTB foo\nx').slice(2, 4)).toEqual([
-      'direction_tb:direction\nTB foo',
-      'NEWLINE:\n',
-    ]);
-    expect(jison(H + 'direction TBX').slice(2, 3)).toEqual(['direction_tb:direction TBX']);
     expect(jison(H + 'style a fill:red\ndirection LR').slice(-3, -2)).toEqual([
       'direction_lr:direction LR',
     ]);
+    // No `\b`, or a line break before the direction: not a direction (v12 read both as one).
+    expect(jison(H + 'direction TBX').slice(2, 3)).toEqual(['unqString:direction TBX']);
+    expect(jison(H + 'direction\nTB').slice(2, 5)).toEqual([
+      'unqString:direction',
+      'NEWLINE:\n',
+      'unqString:TB',
+    ]);
   });
 
-  it('lexes the rest of other lines as usual (v12 made them direction tokens)', () => {
+  it('lexes the rest of the line as usual (v12 took it into the token)', () => {
+    expect(jison(H + 'direction LR a - traces -> b').slice(2)).toEqual([
+      'direction_lr:direction LR',
+      'unqString:a',
+      'LINE:-',
+      'TRACES:traces',
+      'END_ARROW_R:->',
+      'unqString:b',
+      'NEWLINE:',
+      'EOF:',
+    ]);
+    // v12's rules in order over the line made this a TB.
+    expect(jison(H + 'direction BT x direction TB').slice(2, 4)).toEqual([
+      'direction_bt:direction BT',
+      'unqString:x direction TB',
+    ]);
+    expect(cut(H + 'direction LR;').slice(2)).toEqual([
+      'direction_lr:direction LR',
+      'LEXICAL_ERROR:;',
+    ]);
+  });
+
+  it('lexes other lines as usual (v12 made them direction tokens)', () => {
     expect(jison(H + 'a - traces -> b direction LR').slice(2)).toEqual([
       'unqString:a',
       'LINE:-',

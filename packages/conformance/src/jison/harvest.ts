@@ -76,6 +76,8 @@ export function harvest(type: JisonType): CorpusItem[] {
       const globals: Record<string, unknown> = {};
       for (const name of method.identity ?? []) globals[name] = (s: unknown) => s;
       if (method.readsFiles) Object.assign(globals, gitFiles(posix.dirname(file), show));
+      if (method.constants)
+        globals[method.constants.name] = dbClass(show(`${dir}/${method.constants.file}`));
       runSpec(
         js,
         method.parsers,
@@ -203,6 +205,30 @@ function gitFiles(dir: string, show: (file: string) => string): Record<string, u
     __dirname: dir,
     path: { resolve: (...parts: string[]) => posix.join(...parts) },
     fs: { readFileSync: (file: string) => show(file) },
+  };
+}
+
+/**
+ * A DB class whose instances hold the object-literal fields of v12's DB `source` (a line
+ * `private RiskLevel = \{`, the entries, then `\};`) with their values, and inert values for
+ * every other member.
+ */
+function dbClass(source: string): unknown {
+  const fields: Record<string, unknown> = {};
+  const FIELD = /^[ \t]*(?:private |public |protected |readonly )?(\w+) = (\{[^{}]*\});/gm;
+  for (const m of source.matchAll(FIELD)) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call -- decodes an object literal from v12's DB (trusted repo text)
+      fields[m[1] ?? ''] = new Function('return ' + (m[2] ?? '{}'))();
+    } catch {
+      // Not a plain literal: the member stays inert.
+    }
+  }
+  return function DB(): object {
+    return new Proxy(
+      {},
+      { get: (_, key) => (typeof key === 'string' && key in fields ? fields[key] : inert()) }
+    );
   };
 }
 

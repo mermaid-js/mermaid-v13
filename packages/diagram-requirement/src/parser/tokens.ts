@@ -26,8 +26,8 @@ export const T = {
   /** The `}` closing `accDescr { … }` (jison returns no token for it). */
   AccDescrClose: F + 7,
   /**
-   * A `direction TB|BT|RL|LR` statement at the start of a line (D432), its leading blanks and
-   * the rest of the line included, as v12's `.*direction\s+XX[^\n]*` read it there.
+   * `direction`, blanks and `TB`, `BT`, `RL` or `LR` (then `\b`) at the start of a line (D432),
+   * nothing else of the line (v12's `.*direction\s+XX[^\n]*` took all of it, anywhere).
    */
   DirectionTB: F + 8,
   DirectionBT: F + 9,

@@ -424,6 +424,18 @@
     "source": "requirementDiagram\nfoo direction LR\n"
   },
   {
+    "id": "requirement-cases/direction-then-relation",
+    "source": "requirementDiagram\ndirection LR a - traces -> b\n"
+  },
+  {
+    "id": "requirement-cases/direction-then-semicolon",
+    "source": "requirementDiagram\ndirection LR;\n"
+  },
+  {
+    "id": "requirement-cases/direction-tab",
+    "source": "requirementDiagram\ndirection\tRL # c\n"
+  },
+  {
     "id": "requirement-cases/direction-glued",
     "source": "requirementDiagram\nxdirection LR\n"
   },

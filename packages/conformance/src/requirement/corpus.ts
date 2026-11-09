@@ -120,22 +120,23 @@ export const D431_RULES: Readonly<Record<number, JisonRule>> = {
     input.match(atLineStart(matched) ? /^(?:\s+)/ : /^(?:[^\S\n]+)/),
 };
 
-/** The line starts (after blanks a regex `.` matches) with a `direction` statement. */
-const DIRECTION_STATEMENT = /^(?=[^\S\n\r\u2028\u2029]*direction\s+(?:TB|BT|RL|LR))/i;
+/** The four directions, in the order of v12's rules 8–11. */
+export const DIRECTIONS = ['TB', 'BT', 'RL', 'LR'] as const;
 
 /**
- * D432 (spec #520 Q2): v12's four direction rules, unchanged, but tried only at a line start
- * whose first word is `direction` followed by a direction; elsewhere they never match, so the
- * rest of the line lexes as usual.
+ * D432 (spec #520 Q2): `direction` is read only as a statement at the start of a line, and the
+ * statement is `direction`, blanks (no line break) and a direction, then `\b` (as jison ends
+ * its keyword rules); the rest of the line lexes as usual. v12's rules took anything before
+ * and after on the line, at any token start.
  */
 export const D432_RULES: Readonly<Record<number, JisonRule>> = Object.fromEntries(
   DIRECTION_RULES.map((rule, d) => {
-    const v12 = new RegExp(
-      String.raw`^(?:.*direction\s+${['TB', 'BT', 'RL', 'LR'][d]}[^\n]*)`,
+    const statement = new RegExp(
+      String.raw`^(?:direction[^\S\n\r\u2028\u2029]+${DIRECTIONS[d]}\b)`,
       'i'
     );
     const amended: JisonRule = (input, matched) =>
-      atLineStart(matched) && DIRECTION_STATEMENT.test(input) ? input.match(v12) : null;
+      atLineStart(matched) ? input.match(statement) : null;
     return [rule, amended];
   })
 );

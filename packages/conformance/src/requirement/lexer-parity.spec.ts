@@ -8,6 +8,7 @@ import {
   D431_RULES,
   D432_RULES,
   DECIDED_RULES,
+  DIRECTIONS,
   requirementGateCorpus,
   VARIANTS,
 } from './corpus.ts';
@@ -41,10 +42,11 @@ import {
  * - D432, rules 8–11 `.*direction\s+(TB|BT|RL|LR)[^\n]*`: v12 tried them first at every token
  *   start, so a `direction XX` anywhere on a line made the whole line a direction token
  *   (`a - traces -\> b direction LR` lost its relationship), and a long line lexed in
- *   quadratic time.
- *   Decided: `direction` is read only as a statement at the start of a line. The rules are
- *   v12's, tried only where the line's first word (after blanks) is `direction` and a
- *   direction follows; the rest of other lines lexes as usual.
+ *   quadratic time. Decided: `direction` is read only as a statement at the start of a line:
+ *   `direction`, blanks and a direction, then `\b`. The rest of the line, and every other
+ *   line, lexes as usual (`direction LR a - traces -\> b` is a direction and a relation, which
+ *   the grammar rejects; v12 accepted it and dropped the relation). Its leading blanks are
+ *   skipped, not part of the token;
  * - v13 kinds with no jison name, left out of the v13 stream: the quotes around a string, the
  *   `accDescr {` opener and its `}`, the line break that ends a style statement, comments
  *   (the `%%` lines v12 removed and the `#…`/`%…` comments jison skips) and directives, which
@@ -90,6 +92,9 @@ function v13Tokens(source: string): JisonToken[] {
   return out;
 }
 
+/** Direction images without their leading blanks (v13's direction token starts at `direction`). */
+const trimDirections = (t: JisonToken[] | undefined) =>
+  t?.map(([n, i]): JisonToken => [n, n.startsWith('direction_') ? i.trimStart() : i]);
 const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
 const same = (a: JisonToken[] | undefined, b: JisonToken[] | undefined) =>
   JSON.stringify(a) === JSON.stringify(b);
@@ -141,7 +146,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     expect(rules.length).toBe(71);
     expect(rules[13]?.source).toBe(String.raw`^(?:\s+)`);
     expect([8, 9, 10, 11].map((k) => rules[k]?.source)).toEqual(
-      ['TB', 'BT', 'RL', 'LR'].map((d) => String.raw`^(?:.*direction\s+${d}[^\n]*)`)
+      DIRECTIONS.map((d) => String.raw`^(?:.*direction\s+${d}[^\n]*)`)
     );
     expect(Object.keys(D431_RULES)).toEqual(['13']);
     expect(Object.keys(D432_RULES)).toEqual(['8', '9', '10', '11']);
@@ -159,6 +164,8 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     let specs = 0;
     let cases = 0;
     const excluded: string[] = [];
+    /** Sources whose only D432 change is a direction token without its leading blanks. */
+    let indented = 0;
     for (const item of items) {
       if ([...EXCLUDED.keys()].some((prefix) => item.id.startsWith(prefix))) {
         excluded.push(item.id);
@@ -176,9 +183,14 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('requirement-cases/')) cases++;
         const plain = await oracle.tokens(item.source);
         const only = async (rules: Readonly<Record<number, JisonRule>>) =>
-          !same(plain, await oracle.tokens(item.source, { rules }));
-        if (await only(D431_RULES)) changed.D431.push(item.id);
-        if (await only(D432_RULES)) changed.D432.push(item.id);
+          await oracle.tokens(item.source, { rules });
+        if (!same(plain, await only(D431_RULES))) changed.D431.push(item.id);
+        const d432 = await only(D432_RULES);
+        // A direction line's leading blanks leave its token: an image-only change.
+        if (!same(plain, d432)) {
+          if (same(trimDirections(plain), trimDirections(d432))) indented++;
+          else changed.D432.push(item.id);
+        }
       }
       const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
       const cut = expected.findIndex(([n]) => n === LEXICAL_ERROR);
@@ -192,7 +204,8 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(
       `requirement lexer parity: ${compared} of ${items.length} sources lexed by v12; ` +
-        `D431 changes ${changed.D431.length}, D432 ${changed.D432.length}\n`
+        `D431 changes ${changed.D431.length}, D432 ${changed.D432.length} ` +
+        `(and the leading blanks of ${indented})\n`
     );
     expect(diffs).toEqual([]);
     // The excluded sources: the two above, and their variants.
@@ -201,17 +214,13 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // `visual-check/with-a-title-default.mmd` (v12 rejects its front matter), the upper-case
     // header case and the excluded sources.
     expect(e2e).toBe(179);
-    expect(specs).toBe(37);
-    expect(cases).toBe(162);
-    // No e2e fixture or syntax-page example depends on either decision. The six harvested spec
-    // strings D431 changes end lines in `risk: ` and `verifymethod: `: the harvest stubs v12's
-    // DB, so `${requirementDb.RiskLevel.HIGH_RISK}` is empty there (the v12 test reads `High`).
-    const harvested = [1, 7, 8, 9, 10, 11].map(
-      (k) => `v12-specs/parser/requirementDiagram.spec.js#${k}`
-    );
-    expect(changed.D431.filter((id) => !id.startsWith('requirement-cases/'))).toEqual(harvested);
+    expect(specs).toBe(48);
+    expect(cases).toBe(165);
+    // No e2e fixture, harvested string or syntax-page example depends on either decision, but
+    // for the leading blanks D432 leaves out of an indented direction token.
+    expect(changed.D431.filter((id) => !id.startsWith('requirement-cases/'))).toEqual([]);
     expect(changed.D432.filter((id) => !id.startsWith('requirement-cases/'))).toEqual([]);
-    expect([changed.D431.length, changed.D432.length]).toEqual([25, 5]);
+    expect([changed.D431.length, changed.D432.length]).toEqual([19, 12]);
     // The only sources v12 does not lex: the cases whose header v12 does not detect (and their
     // variants), and commented copies of a body of two lines or fewer, where `%% cut` goes
     // through the middle of the header.

@@ -29,16 +29,15 @@
  *   start of a line (after only blanks since the last line break) is skipped whole, line
  *   breaks included, as in v12.
  * - D432: v12's `.*direction\s+(TB|BT|RL|LR)[^\n]*` matched at any token start, anything
- *   earlier on the line going into the token. Here it applies only at the start of a line
- *   whose first word (after blanks) is `direction` followed by blanks and a direction; there
- *   the kind and the end are v12's (its four rules in order over the whole line). Elsewhere
- *   the line lexes as usual.
+ *   earlier and later on the line going into the token. Here a direction token is only
+ *   `direction`, blanks and `TB`, `BT`, `RL` or `LR` (case-insensitive, then `\b`) at the start
+ *   of a line; the rest of the line, and every other line, lexes as usual.
  *
  * jison throws where no rule matches; that is a one-character `Kind.Error` (a code point) and
  * lexing goes on in the same state. Every scan is linear in the text it consumes (R-PARSE-7):
- * the direction rule reads a line once, only at the start of a direction statement (v12's
- * rescans it at every token, quadratic on a long line), and the scans to the next quote and
- * the next `}` are cached.
+ * the direction rule reads a few characters at a line start only (v12's rescans the rest of
+ * the line at every token, quadratic on a long line), and the scans to the next quote and the
+ * next `}` are cached.
  */
 import {
   codePointEnd,
@@ -102,7 +101,7 @@ const isUnqStop = (c: number) =>
   c === DASH ||
   c === EQUALS;
 
-/** Blanks a regex `.` matches: `\s` less the line terminators. */
+/** Blanks within a line: `\s` less the line terminators. */
 const isLineBlank = (c: number) => isSpace(c) && !isLineEnd(c);
 
 /**
@@ -488,8 +487,8 @@ class RequirementLexer {
     if (lc === 0x74 && this.title()) return;
     // 1, 3, 5: `accTitle\s*:\s*`, `accDescr\s*:\s*`, `accDescr\s*\{\s*`.
     if (lc === 0x61 && this.acc()) return;
-    // 8–11: `direction` statements, at a line start only (D432).
-    if (this.clean && this.direction()) return;
+    // 8–11: `direction XX`, at a line start only (D432).
+    if (this.clean && lc === 0x64 && this.direction()) return;
     // 12: `(\r?\n)+` (CRs are LFs by now).
     if (c === LF) {
       this.emit(Kind.Newline, p, this.newlines(p));
@@ -611,42 +610,20 @@ class RequirementLexer {
   }
 
   /**
-   * A `direction` statement at a line start (D432): blanks, `direction`, `\s+` and one of the
-   * four directions. Its kind and end are v12's: the first of its rules `.*direction\s+XX[^\n]*`
-   * (XX = TB, BT, RL, LR) that matches somewhere on the line, ending at the line break after
-   * the last such `direction` (`.*` is greedy).
+   * A direction at a line start (D432): `direction`, blanks (no line break), one of the four
+   * directions and `\b`, case-insensitive.
    */
   private direction(): boolean {
     const { text, p } = this;
-    let q = p;
-    while (isLineBlank(text.charCodeAt(q))) q++;
-    if (this.directionAt(q) < 0) return false;
-    // `.*` stops at a line terminator: each `direction` starts on this line.
-    let le = q;
-    while (le < this.n && !isLineEnd(text.charCodeAt(le))) le++;
-    const last = [-1, -1, -1, -1];
-    for (let k = q; k + 9 <= le; k++) {
-      const d = lower(text.charCodeAt(k)) === 0x64 ? this.directionAt(k) : -1;
-      if (d >= 0) last[d] = k;
-    }
-    for (let d = 0; d < 4; d++) {
-      const k = last[d] ?? -1;
-      if (k < 0) continue;
-      const e = this.lineEnd(this.spaces(k + 9) + 2);
-      this.emit(DIRECTION_KINDS[d] ?? T.DirectionTB, p, e);
-      return true;
-    }
-    return false;
-  }
-
-  /** The direction of `direction\s+(TB|BT|RL|LR)` at `k` (0–3, in jison's order), or -1. */
-  private directionAt(k: number): number {
-    if (!this.literal('direction', k)) return -1;
-    const w = this.spaces(k + 9);
-    if (w === k + 9) return -1;
-    const { text } = this;
+    if (!this.literal('direction', p)) return false;
+    let w = p + 9;
+    while (isLineBlank(text.charCodeAt(w))) w++;
+    if (w === p + 9 || isWord(text.charCodeAt(w + 2))) return false;
     const pair = String.fromCharCode(lower(text.charCodeAt(w)), lower(text.charCodeAt(w + 1)));
-    return DIRECTIONS.indexOf(pair);
+    const d = DIRECTIONS.indexOf(pair);
+    if (d < 0) return false;
+    this.emit(DIRECTION_KINDS[d] ?? T.DirectionTB, p, w + 2);
+    return true;
   }
 
   /** The keyword rules, each with `\b`, in jison's order. */

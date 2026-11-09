@@ -161,33 +161,36 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
       if (input === undefined) return undefined;
       const listeners: ((name: string, image: string) => void)[] = [];
       setInput(input, yy({ db, lexer, onToken: (listener) => listeners.push(listener) }));
-      // The loop catches what the lexer throws, so the rules are always put back.
       const restore = options.rules ? replaceRules(lexer, options.rules) : undefined;
       const out: JisonToken[] = [];
       let clipped = options.keepAppendedNewline === true;
       let left = input.length;
-      for (let stalled = 0; stalled < MAX_STALLED; ) {
-        let t: number | string;
-        try {
-          t = lexer.lex();
-        } catch {
-          out.push([LEXICAL_ERROR, '']);
-          break;
+      try {
+        for (let stalled = 0; stalled < MAX_STALLED; ) {
+          let t: number | string;
+          try {
+            t = lexer.lex();
+          } catch {
+            out.push([LEXICAL_ERROR, '']);
+            break;
+          }
+          if (t === 1) break; // $end
+          stalled = lexer._input.length < left ? 0 : stalled + 1;
+          left = lexer._input.length;
+          let image = lexer.yytext;
+          // The first token returned once the text is used up: its match took the appended
+          // `\n`, unless a skipped rule did (then it does not end in `\n`, or it is empty).
+          if (!clipped && lexer._input === '') {
+            clipped = true;
+            if (image.endsWith('\n')) image = image.slice(0, -1);
+          }
+          out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
+          for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
         }
-        if (t === 1) break; // $end
-        stalled = lexer._input.length < left ? 0 : stalled + 1;
-        left = lexer._input.length;
-        let image = lexer.yytext;
-        // The first token returned once the text is used up: its match took the appended `\n`,
-        // unless a skipped rule did (then it does not end in `\n`, or it is an empty match).
-        if (!clipped && lexer._input === '') {
-          clipped = true;
-          if (image.endsWith('\n')) image = image.slice(0, -1);
-        }
-        out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
-        for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
+      } finally {
+        // A listener may throw: v12's own rules go back on the cached lexer either way.
+        restore?.();
       }
-      restore?.();
       return out;
     },
   };

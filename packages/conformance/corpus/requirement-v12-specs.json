@@ -1,7 +1,7 @@
 [
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#1",
-    "source": "requirementDiagram\n\nrequirement test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\nrequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#2",
@@ -17,27 +17,71 @@
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#5",
-    "source": "requirementDiagram\n\na -  -> b"
+    "source": "requirementDiagram\n\na - contains -> b"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#7",
-    "source": "requirementDiagram\n\nfunctionalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\nfunctionalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#8",
-    "source": "requirementDiagram\n\ninterfaceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\ninterfaceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#9",
-    "source": "requirementDiagram\n\nperformanceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\nperformanceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#10",
-    "source": "requirementDiagram\n\nphysicalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\nphysicalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#11",
-    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: \nverifymethod: \n}"
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#12",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: Low\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#13",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: Medium\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#16",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Inspection\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#17",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Test\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#18",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Demonstration\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#20",
+    "source": "requirementDiagram\n\na - copies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#21",
+    "source": "requirementDiagram\n\na - derives -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#22",
+    "source": "requirementDiagram\n\na - satisfies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#23",
+    "source": "requirementDiagram\n\na - verifies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#24",
+    "source": "requirementDiagram\n\na - refines -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#25",
+    "source": "requirementDiagram\n\na - traces -> b"
   },
   {
     "id": "v12-specs/parser/requirementDiagram.spec.js#26",
