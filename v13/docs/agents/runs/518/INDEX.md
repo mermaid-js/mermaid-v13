@@ -31,3 +31,7 @@ The integration PR stays a draft until all of these hold; then `gh pr ready <PR>
 3. `mermaid-v13` is merged in; `pnpm check` and `pnpm e2e` pass locally, under the lock, and hosted CI is green.
 4. GAPS.md has nothing unmet, apart from items recorded "For the maintainer".
 5. The PR description carries these results, the gated core size and the issues to close.
+
+## CI log
+
+- `28513490c` (T3 + mermaid-v13): run 42672206856 marked failure with no failing job. Attempt 1 ran only "Check and build" (pass) and attempt 2 only the other four (all pass), so the jobs were not scheduled. Infrastructure, not the branch; the next push gives a clean run.
