@@ -1,3 +1,4 @@
+// cspell:words rulename
 /**
  * Railroad rule names (D513, D517): what `isValidId` accepts as a `rule` name. The facet serves
  * four notations and `isValidId` is not told which one a document is in, so it refuses here

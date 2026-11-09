@@ -1,3 +1,4 @@
+// cspell:words nonterminals nonterminal
 /**
  * Railroad language facet (`@mermaid-js/diagram-railroad/language`, DESIGN §4.5, R-LANG-8, D89):
  * one facet for the four notations (D511). The four manifest types load it alike; each parse
