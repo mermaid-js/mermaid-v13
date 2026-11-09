@@ -36,3 +36,8 @@ export const ARCHITECTURE_ALIGN_SHORT = 'ARCHITECTURE_ALIGN_SHORT';
  * where v12 still moved the end; one warning per render, every further place in `related`.
  */
 export const ARCHITECTURE_GROUP_EDGE_UNGROUPED = 'ARCHITECTURE_GROUP_EDGE_UNGROUPED';
+/**
+ * Warning (#607, pitfall 22): `architecture.iconSize` is not a number above 0, or
+ * `architecture.padding` not one of at least 0; the layout uses v12's default (80, 40).
+ */
+export const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';

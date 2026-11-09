@@ -1,0 +1,225 @@
+/**
+ * ArchitectureModel → LayoutGraph (spec #525 T3, D326, D501): measures every label first with
+ * the injected measurer in the font it is drawn in (pitfall 16), sizes services, junctions and
+ * groups as v12 drew them, and hands `compass` the sides, `{group}` flags and `align` hints.
+ * Every length comes from the metrics table (`metrics.ts`, pitfall 13).
+ *
+ * - A service is its `iconSize` icon with its label beneath, wrapped at `iconSize × 1.5`: as
+ *   wide as the wider of the two, `iconSize` + the label's height high, and its `left`/`right`
+ *   ends meet the icon's centre line (`anchorY`, D501).
+ * - A junction is v12's invisible `iconSize` square, with no label.
+ * - A group has `padding` on every side and a title band as wide as its icon and label.
+ * - An edge names both its sides, its `{group}` ends (`border`) and its label's size; the
+ *   label is measured unwrapped, since v12 wrapped it to the drawn edge (D507: the renderer
+ *   places it).
+ * - Every `align` statement is one `align` hint, in source order.
+ *
+ * The lists are read in the model's order (v12's insertion order), so the graph, and with it
+ * the layout, is the same on every run.
+ */
+import type {
+  LayoutEdge,
+  LayoutGraph,
+  LayoutGroup,
+  LayoutNode,
+  Side,
+  Size,
+} from '@mermaid-js/core/layout';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
+import type { ArchitectureLayoutContext } from './context.ts';
+import { ARCHITECTURE_METRICS, architectureSizes, type ArchitectureSizes } from './metrics.ts';
+
+/** A service or junction as laid out. */
+export interface ArchitectureNodeView {
+  /** The id as written: the layout node's id. */
+  readonly id: string;
+  readonly kind: 'service' | 'junction';
+  /** Index into the model's `services` or `junctions`. */
+  readonly index: number;
+  /** A service's label, wrapped at `labelWidth`; absent for a junction or no label. */
+  readonly label?: MeasuredLabel;
+  /** The layout box: the icon, with the label centred beneath it. */
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface ArchitectureGroupView {
+  readonly id: string;
+  /** Index into the model's `groups`. */
+  readonly index: number;
+  /** The label, unwrapped; absent when none. */
+  readonly label?: MeasuredLabel;
+  /** The title band handed to the engine: the icon, then the label; absent when neither. */
+  readonly title?: Size;
+}
+
+export interface ArchitectureEdgeView {
+  /** The edge's AST id (`edge:a->b`, `@2` on a repeat, D508): the layout edge's id. */
+  readonly id: string;
+  /** Index into the model's `edges`. */
+  readonly index: number;
+  /** The `-[label]-` text, unwrapped; absent for `--`. */
+  readonly label?: MeasuredLabel;
+}
+
+export interface ArchitecturePrepared {
+  readonly graph: LayoutGraph;
+  /** The document's lengths (`iconSize`, `padding` and what v12 drew with them). */
+  readonly sizes: ArchitectureSizes;
+  /** The font every label was measured in. */
+  readonly font: FontKey;
+  /** Services in model order, then junctions in model order. */
+  readonly nodes: readonly ArchitectureNodeView[];
+  readonly groups: readonly ArchitectureGroupView[];
+  readonly edges: readonly ArchitectureEdgeView[];
+}
+
+const SIDE: Readonly<Record<ArchitectureSide, Side>> = {
+  L: 'left',
+  R: 'right',
+  T: 'top',
+  B: 'bottom',
+};
+
+/** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
+const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
+
+/**
+ * A config length (a number, or a whole numeric string, as v12's arithmetic took it) of at least
+ * 0, or above 0 when `positive`; else the default, with a warning when the key is set
+ * (pitfall 22).
+ */
+function lengthOf(
+  ctx: ArchitectureLayoutContext,
+  value: unknown,
+  fallback: number,
+  path: string,
+  positive: boolean
+): number {
+  const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
+  if (typeof n === 'number' && Number.isFinite(n) && (positive ? n > 0 : n >= 0)) return n;
+  if (value !== undefined)
+    ctx.warn({
+      code: ARCHITECTURE_CONFIG_IGNORED,
+      message: `Ignored ${path}: it is not a number ${positive ? 'above' : 'of at least'} 0; using ${fallback}`,
+      path,
+    });
+  return fallback;
+}
+
+/** The document's `iconSize` and `padding`, and the lengths v12 drew with them. */
+export function architectureSizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
+  const conf = ctx.config.architecture ?? {};
+  const M = ARCHITECTURE_METRICS;
+  return architectureSizes(
+    lengthOf(ctx, conf.iconSize, M.iconSize, 'architecture.iconSize', true),
+    lengthOf(ctx, conf.padding, M.padding, 'architecture.padding', false)
+  );
+}
+
+/** Measures the model and builds the graph `compass` (or the engine `layout` names) gets. */
+export function prepareArchitecture(
+  model: ArchitectureModel,
+  ctx: ArchitectureLayoutContext
+): ArchitecturePrepared {
+  const sizes = architectureSizesOf(ctx);
+  const { iconSize, padding } = sizes;
+  // v12 drew every label in the global font (D507: `architecture.fontSize` is ignored).
+  const font: FontKey = {
+    family: ctx.theme.value('fontFamily'),
+    size: ctx.theme.number('fontSize'),
+    weight: ARCHITECTURE_METRICS.fontWeight,
+  };
+  // v12's `createText` reads markdown in every label.
+  const measure = (text: string | undefined, maxWidth: number): MeasuredLabel | undefined =>
+    text === undefined || text.trim() === ''
+      ? undefined
+      : layoutLabel(text, font, maxWidth, ctx.measurer, { markdown: true, inline: ctx.inline });
+
+  const nodes: ArchitectureNodeView[] = [];
+  const layoutNodes: LayoutNode[] = [];
+  model.services.forEach((s, index) => {
+    const label = measure(s.title, sizes.labelWidth);
+    const view: ArchitectureNodeView = {
+      id: s.id,
+      kind: 'service',
+      index,
+      ...(label ? { label } : {}),
+      width: Math.max(iconSize, label?.width ?? 0),
+      height: iconSize + (label?.height ?? 0),
+    };
+    nodes.push(view);
+    layoutNodes.push({
+      id: s.id,
+      width: view.width,
+      height: view.height,
+      anchorY: iconSize / 2,
+      shape: 'service',
+      ...(s.in === undefined ? {} : { parent: s.in }),
+    });
+  });
+  model.junctions.forEach((j, index) => {
+    nodes.push({ id: j.id, kind: 'junction', index, width: iconSize, height: iconSize });
+    layoutNodes.push({
+      id: j.id,
+      width: iconSize,
+      height: iconSize,
+      anchorY: iconSize / 2,
+      shape: 'junction',
+      ...(j.in === undefined ? {} : { parent: j.in }),
+    });
+  });
+
+  const groups: ArchitectureGroupView[] = [];
+  const layoutGroups: LayoutGroup[] = model.groups.map((g, index) => {
+    const label = measure(g.title, Infinity);
+    const icon = g.icon === undefined ? 0 : sizes.groupIcon;
+    const title: Size | undefined =
+      icon === 0 && !label
+        ? undefined
+        : {
+            width: icon + (icon > 0 && label ? sizes.groupLabelGap : 0) + (label?.width ?? 0),
+            height: Math.max(icon, label?.height ?? 0),
+          };
+    groups.push({ id: g.id, index, ...(label ? { label } : {}), ...(title ? { title } : {}) });
+    return {
+      id: g.id,
+      ...(g.in === undefined ? {} : { parent: g.in }),
+      padding: { top: padding, right: padding, bottom: padding, left: padding },
+      ...(title ? { title } : {}),
+    };
+  });
+
+  const edges: ArchitectureEdgeView[] = [];
+  const layoutEdges: LayoutEdge[] = model.edges.map((e, index) => {
+    const label = measure(e.title, Infinity);
+    edges.push({ id: e.astId, index, ...(label ? { label } : {}) });
+    return {
+      id: e.astId,
+      source: e.lhsId,
+      target: e.rhsId,
+      minLen: 1,
+      sides: { source: SIDE[e.lhsDir], target: SIDE[e.rhsDir] },
+      // `lhsGroup`/`rhsGroup` are already false on an end in no group (D504).
+      ...(e.lhsGroup || e.rhsGroup ? { border: { source: e.lhsGroup, target: e.rhsGroup } } : {}),
+      ...(label ? { label: { width: label.width, height: label.height } } : {}),
+    };
+  });
+
+  const align = model.alignments.map((a) => ({ axis: a.direction, members: a.members }));
+  const graph: LayoutGraph = {
+    // Every edge names both sides, so `direction` decides nothing (D327 derives sides from it).
+    direction: 'TB',
+    nodes: layoutNodes,
+    edges: layoutEdges,
+    groups: layoutGroups,
+    // `compass` reads no spacing (its cell gap is its own, GAPS T0); other engines get `padding`.
+    spacing: { node: padding, rank: padding, edge: padding },
+    // v12's margin round the drawing is `padding` (`setupGraphViewbox`).
+    diagramPadding: padding,
+    ...(align.length > 0 ? { align } : {}),
+  };
+  return { graph, sizes, font, nodes, groups, edges };
+}

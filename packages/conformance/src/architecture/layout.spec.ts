@@ -1,0 +1,120 @@
+// DDLT on parser-produced architecture diagrams (spec #525 T3, #607): every source of the
+// e2e corpus, the harvested v12 spec strings and the hand-written cases that parses without an
+// error is measured by `prepareArchitecture` (core's table measurer, the source's config and
+// theme) and laid out by `compass(graph)`. The spec's invariants hold on each: no NaN, no
+// overlaps, containment and contents in the bounding box (`validateLayout`), edges on the sides
+// they name, facing edges between nodes in line straight, `align` members sharing their row or
+// column, and the same bytes on every run. D326's corpus numbers over the 20 v12 fixtures are in
+// `compass/architecture-corpus.spec.ts`.
+import { beforeAll, describe, expect, it } from 'vitest';
+import { validateLayout } from '@mermaid-js/core/layout';
+import { compass } from '@mermaid-js/core/layout/compass';
+import {
+  architectureLayoutProblems,
+  facingInLine,
+  layoutBytes,
+  portLine,
+} from '@mermaid-js/diagram-architecture/testing';
+import { architectureCases, architectureCorpus } from './corpus.ts';
+import { architectureLaidOut, type ArchitectureLaidOut } from './layout.ts';
+
+interface Fixture extends ArchitectureLaidOut {
+  readonly id: string;
+  readonly source: string;
+}
+
+const fixtures: Fixture[] = [];
+
+beforeAll(async () => {
+  for (const item of [...(await architectureCorpus()), ...architectureCases()]) {
+    const laid = await architectureLaidOut(item.source, compass);
+    if (laid) fixtures.push({ id: item.id, source: item.source, ...laid });
+  }
+}, 60_000);
+
+const byId = (suffix: string): Fixture => {
+  const f = fixtures.find((x) => x.id.endsWith(suffix));
+  if (!f) throw new Error(`no fixture ${suffix}`);
+  return f;
+};
+
+describe('architecture layout over parser-produced fixtures (#607)', () => {
+  it('covers the corpus: groups, junctions, labels, {group} ends, align, like-side and self edges', () => {
+    expect(fixtures.length).toBeGreaterThan(100);
+    const models = fixtures.map((f) => f.model);
+    expect(models.filter((m) => m.groups.length > 0).length).toBeGreaterThan(10);
+    expect(models.filter((m) => m.junctions.length > 0).length).toBeGreaterThan(3);
+    const edges = models.flatMap((m) => m.edges);
+    expect(edges.filter((e) => e.title).length).toBeGreaterThan(5);
+    expect(edges.filter((e) => e.lhsGroup || e.rhsGroup).length).toBeGreaterThan(3);
+    expect(edges.filter((e) => e.lhsDir === e.rhsDir).length).toBeGreaterThan(0);
+    expect(edges.filter((e) => e.lhsId === e.rhsId).length).toBeGreaterThan(0);
+    expect(models.filter((m) => m.alignments.length > 0).length).toBeGreaterThan(3);
+  });
+
+  it('keeps every invariant on every fixture, the same bytes on every run', async () => {
+    const problems: string[] = [];
+    for (const f of fixtures) {
+      const graph = f.prepared.graph;
+      const model = compass(graph);
+      for (const p of [
+        ...validateLayout(graph, model),
+        ...architectureLayoutProblems(graph, model),
+      ])
+        problems.push(`${f.id}: ${p}`);
+      const again = await architectureLaidOut(f.source, compass);
+      if (layoutBytes(compass(again!.prepared.graph)) !== layoutBytes(model))
+        problems.push(`${f.id}: differs between runs`);
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('lays out every service and junction, and every group and edge, by its model id', () => {
+    for (const f of fixtures) {
+      const model = compass(f.prepared.graph);
+      const nodes = [...f.model.services, ...f.model.junctions].map((n) => n.id);
+      expect([...model.nodes.keys()].sort(), f.id).toEqual([...nodes].sort());
+      expect([...model.groups.keys()].sort(), f.id).toEqual(f.model.groups.map((g) => g.id).sort());
+      expect([...model.edges.keys()], f.id).toEqual(f.model.edges.map((e) => e.astId));
+    }
+  });
+
+  it('meets every facing edge between nodes in line straight on the corpus', () => {
+    // Not vacuous: most facing edges of the corpus are between nodes in line.
+    let count = 0;
+    for (const f of fixtures)
+      count += facingInLine(f.prepared.graph, compass(f.prepared.graph)).length;
+    expect(count).toBeGreaterThan(100);
+  });
+
+  it('follows bends as written where v12 placed them the wrong way up (research Q5)', () => {
+    // v12 12.2.0 put `b` above the a–c row for `a:R -- T:b` and `e` below the d–f row for
+    // `d:L -- B:e` (architectureTypes.ts:141; GAPS T3).
+    const f = byId('layout-bends-follow-written-sides.mmd');
+    const graph = f.prepared.graph;
+    const model = compass(graph);
+    const at = (id: string) => portLine(graph, model, id);
+    expect(at('c').y).toBe(at('a').y);
+    expect(at('b').y).toBeGreaterThan(at('a').y);
+    expect(at('b').x).toBeGreaterThan(at('a').x);
+    expect(at('f').y).toBe(at('d').y);
+    expect(at('e').y).toBeLessThan(at('d').y);
+    expect(at('e').x).toBeLessThan(at('d').x);
+  });
+
+  it("sizes boxes from the document's iconSize and padding", () => {
+    const f = byId('layout-icon-size-and-padding.mmd');
+    expect(f.warnings).toEqual([]);
+    const { graph, sizes } = f.prepared;
+    expect([sizes.iconSize, sizes.padding, sizes.labelWidth]).toEqual([120, 20, 180]);
+    const hub = graph.nodes.find((n) => n.id === 'hub')!;
+    expect([hub.width, hub.height, hub.anchorY]).toEqual([120, 120, 60]);
+    const web = graph.nodes.find((n) => n.id === 'web')!;
+    expect(web.width).toBeLessThanOrEqual(180);
+    expect(web.height).toBeGreaterThan(120);
+    for (const g of graph.groups)
+      expect(g.padding).toEqual({ top: 20, right: 20, bottom: 20, left: 20 });
+    expect(graph.diagramPadding).toBe(20);
+    expect(validateLayout(graph, compass(graph))).toEqual([]);
+  });
+});

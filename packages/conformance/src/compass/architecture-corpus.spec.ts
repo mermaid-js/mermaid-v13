@@ -1,5 +1,6 @@
-// `compass` T0 acceptance (#590, D326): the 20 `e2e/diagrams/architecture` fixtures, built into
-// LayoutGraphs by the test-only builder and laid out by `compass(graph)`. Every model is valid
+// `compass` T0 acceptance (#590, D326), reproduced through the parser (#607): the 20
+// `e2e/diagrams/architecture` fixtures carried over from v12, parsed and built into LayoutGraphs
+// by architecture's own builder (`prepareArchitecture`) and laid out by `compass(graph)`. Every model is valid
 // (no NaN, no overlaps, containment), byte-identical across runs, at least 79 of the 87 facing
 // edges (R–L, T–B) run straight between ends on the sides they name, and every `align` pair
 // shares its row or column.
@@ -8,9 +9,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { validateLayout, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import { REPO_ROOT, corpusFromDir } from '../index.ts';
-import { architectureGraph } from './architecture-graph.ts';
+import { architectureLaidOut } from '../architecture/layout.ts';
 
-const fixtures: { id: string; source: string }[] = [];
+const fixtures: { id: string; source: string; graph: LayoutGraph }[] = [];
 
 beforeAll(async () => {
   for await (const item of corpusFromDir(
@@ -18,8 +19,11 @@ beforeAll(async () => {
     'architecture'
   )) {
     // D326's metrics are over the 20 fixtures carried over from v12 (all named `should-…`); the
-    // port's own fixtures (T1's `lexer-…` and later) are measured through the parser in T3.
-    if (/(^|\/)should-[^/]*$/.test(item.id)) fixtures.push(item);
+    // port's own fixtures (T1's `lexer-…` and later) are in `architecture/layout.spec.ts`.
+    if (!/(^|\/)should-[^/]*$/.test(item.id)) continue;
+    const laid = await architectureLaidOut(item.source, compass);
+    if (!laid) throw new Error(`${item.id} does not parse`);
+    fixtures.push({ ...item, graph: laid.prepared.graph });
   }
 });
 
@@ -85,12 +89,12 @@ describe('compass over the architecture corpus (D326)', () => {
     expect(fixtures).toHaveLength(20);
   });
 
-  it('lays every fixture out validly, the same on every run', () => {
-    for (const { id, source } of fixtures) {
-      const { graph } = architectureGraph(source);
+  it('lays every fixture out validly, the same on every run', async () => {
+    for (const { id, source, graph } of fixtures) {
       const model = compass(graph);
       expect(validateLayout(graph, model), id).toEqual([]);
-      expect(plain(compass(architectureGraph(source).graph)), id).toBe(plain(model));
+      const again = await architectureLaidOut(source, compass);
+      expect(plain(compass(again!.prepared.graph)), id).toBe(plain(model));
     }
   });
 
@@ -100,8 +104,7 @@ describe('compass over the architecture corpus (D326)', () => {
     let pairs = 0;
     let pairsGood = 0;
     const missed: string[] = [];
-    for (const { id, source } of fixtures) {
-      const { graph } = architectureGraph(source);
+    for (const { id, graph } of fixtures) {
       const model = compass(graph);
       const f = facing(graph, model);
       total += f.total;
