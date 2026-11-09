@@ -13,6 +13,7 @@
  * - `getTitle()` is the model's title, `''` when none.
  */
 import { parseC4 } from '../parser/index.ts';
+import { parentAlias } from '../model.ts';
 import type { C4Boundary, C4Element, C4Extra, C4Model, C4Relation } from '../model.ts';
 
 /** The fields v12 stored as `{ text }`. */
@@ -44,7 +45,7 @@ interface V12Arrays {
 }
 
 function v12Arrays(model: C4Model | undefined): V12Arrays {
-  const parent = (i: number) => (i < 0 ? 'global' : (model?.boundaries[i]?.alias ?? 'global'));
+  const parent = (i: number) => parentAlias(model ?? { boundaries: [] }, i);
   const root: V12Object = {
     alias: 'global',
     label: { text: 'global' },

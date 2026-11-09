@@ -304,6 +304,26 @@
     "source": "C4Context\nPerson(a, \"A\", $tags=\"t1+t2\", $link=\"https://example.com\")"
   },
   {
+    "id": "c4-cases/named-alias",
+    "source": "C4Context\nPerson(a, \"A\", $alias=\"q\")\nPerson(b, \"B\")\nRel(q, b, \"x\")"
+  },
+  {
+    "id": "c4-cases/named-type",
+    "source": "C4Context\nPerson(a, \"A\")\nRel(a, a, \"x\", $type=\"zz\")\nRel(a, a, \"y\")\nUpdateRelStyle(a, a, $type=\"birel\")"
+  },
+  {
+    "id": "c4-cases/named-parent-boundary",
+    "source": "C4Context\nBoundary(b, \"B\") {\nPerson(a, \"A\")\n}\nPerson(c, \"C\")\nUpdateElementStyle(c, $parentBoundary=\"b\")"
+  },
+  {
+    "id": "c4-cases/named-parent-boundary-unknown",
+    "source": "C4Context\nPerson(c, \"C\")\nUpdateElementStyle(c, $parentBoundary=\"nowhere\")"
+  },
+  {
+    "id": "c4-cases/named-boundary-alias",
+    "source": "C4Context\nBoundary(b, \"B\", $alias=\"q\") {\nPerson(a, \"A\")\n}"
+  },
+  {
     "id": "c4-cases/dollar-in-quotes",
     "source": "C4Context\nPerson(a, \"$k=\\\"v\\\"\")"
   },

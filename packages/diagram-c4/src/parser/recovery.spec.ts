@@ -139,12 +139,9 @@ const CASES: Case[] = [
     keeps: ['b'],
   },
   {
-    name: '`$__proto__`, then a relation to an alias nobody defines',
+    name: '`$__proto__` (a warning, as Pele keeps it), then a relation to an alias nobody defines',
     lines: ['C4Context', 'Person(a, "A", $__proto__="x")', 'Rel(a, nobody, "x")', P('c')],
-    errors: [
-      [codes.C4_NAME_RESERVED, 2],
-      [codes.C4_UNKNOWN_END, 3],
-    ],
+    errors: [[codes.C4_UNKNOWN_END, 3]],
     keeps: ['a', 'c'],
   },
   {

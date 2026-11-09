@@ -11,7 +11,10 @@
 export const C4_NAMED_ARGUMENT_MOVED = 'C4_NAMED_ARGUMENT_MOVED';
 /** D452: a line holding `direction TB`, `BT`, `RL` or `LR` (v12 threw `setDirection`). */
 export const C4_DIRECTION = 'C4_DIRECTION';
-/** D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name. */
+/**
+ * D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name, as Pele keeps
+ * it (a warning: Pele accepts it).
+ */
 export const C4_NAME_RESERVED = 'C4_NAME_RESERVED';
 /** D457: an `offsetX` or `offsetY` that is not a number; it counts as 0. */
 export const C4_OFFSET_INVALID = 'C4_OFFSET_INVALID';
@@ -20,3 +23,9 @@ export const C4_OFFSET_INVALID = 'C4_OFFSET_INVALID';
  * diagnostic's message).
  */
 export const C4_UNKNOWN_END = 'C4_UNKNOWN_END';
+/**
+ * A `$name` for the model's structure that v12 would have let break it (`$parentBoundary` naming
+ * no boundary, an unknown `$typeC4Shape` or `$nodeType`, `$wrap`, a boundary renamed with its
+ * statements): the structure is kept (D450, for the maintainer).
+ */
+export const C4_STRUCTURE_KEPT = 'C4_STRUCTURE_KEPT';

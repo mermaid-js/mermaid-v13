@@ -68,6 +68,6 @@ describe('c4 grammar lexer', () => {
     );
     expect(diffs.slice(0, 10)).toEqual([]);
     expect(against.jison).toBeGreaterThan(2000);
-    expect(against).toEqual({ jison: 2232, unquoted: 368, comment: 43, title: 23 });
+    expect(against).toEqual({ jison: 2262, unquoted: 373, comment: 43, title: 23 });
   }, 300_000);
 });

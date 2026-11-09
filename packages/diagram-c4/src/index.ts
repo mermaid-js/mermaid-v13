@@ -6,10 +6,12 @@
 export { C4TokenKind, c4Tokens, detectC4, JISON_NAMES, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';
+export { parentAlias } from './model.ts';
 export {
   C4_DIRECTION,
   C4_NAME_RESERVED,
   C4_NAMED_ARGUMENT_MOVED,
   C4_OFFSET_INVALID,
+  C4_STRUCTURE_KEPT,
   C4_UNKNOWN_END,
 } from './codes.ts';

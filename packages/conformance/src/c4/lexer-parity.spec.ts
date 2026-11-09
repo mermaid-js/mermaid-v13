@@ -55,7 +55,7 @@ import type { Exclusion } from './d452.ts';
 const E2E_FIXTURES = 46;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
-const D452_EXCLUDED: Record<'unquoted' | 'comment' | 'title', string[]> = {
+const D452_EXCLUDED: Record<Exclusion, string[]> = {
   unquoted: [
     'c4-cases/paren-at-end',
     'c4-cases/unquoted-runs-over-close-paren',
@@ -89,7 +89,7 @@ const D452_EXCLUDED: Record<'unquoted' | 'comment' | 'title', string[]> = {
   ],
 };
 /** How many sources, variants included, each D452 exclusion covers: unquoted, comment, title. */
-const D452_COUNTS = [368, 43, 23];
+const D452_COUNTS = [373, 43, 23];
 
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
@@ -160,7 +160,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     // the lexer.
     expect(e2e).toBe(E2E_FIXTURES);
     expect(specs).toBe(160);
-    expect(cases).toBe(173);
+    expect(cases).toBe(178);
     // The only sources v12 does not lex: the commented copies of these bodies of two lines or
     // fewer, where `%% cut` goes through the middle of the header, so v12 detects no C4.
     expect(skipped).toEqual(

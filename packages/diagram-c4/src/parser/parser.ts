@@ -25,6 +25,8 @@
  */
 import {
   cook,
+  formatExpected,
+  inKindSet,
   Kind,
   kindSet,
   LineIndex,
@@ -44,7 +46,6 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
 import type { C4ElementKind, C4Model, C4NodeKind, C4RelationKind, C4Type } from '../model.ts';
 import type {
-  C4Argument,
   C4BoundaryNode,
   C4Document,
   C4RelationNode,
@@ -146,8 +147,6 @@ const DIRECTIONS = kindSet(T.DirectionTB, T.DirectionBT, T.DirectionRL, T.Direct
 /** Where the text ends: jison's `EOF`, or the stream's end (the lexer ended in a value). */
 const ENDS = kindSet(T.Eof, Kind.EOF);
 
-const inSet = (set: Uint8Array, kind: number): boolean => set[kind] === 1;
-
 /** What may follow a statement: a separator, or (after an other statement) a macro. */
 type After = 0 | 1 | 2;
 const DIAGRAM_STATEMENT: After = 0;
@@ -177,8 +176,8 @@ const STOP = new Stop();
 /** An open boundary: its model index (-1 when its statement failed) and AST node. */
 interface Frame {
   boundary: number;
-  /** The boundary current before it opened. */
-  outer: number;
+  /** The boundary its statements are in: its own, else the one around it (-1: none). */
+  current: number;
   node: C4BoundaryNode | undefined;
   /** Where its statements' AST nodes go: its node, else the nearest open boundary's. */
   children: C4StatementNode[];
@@ -187,6 +186,22 @@ interface Frame {
   open: Range;
   /** Statements read inside so far. */
   count: number;
+}
+
+/** A macro statement as read (pitfall 10): its name as written, arguments and range. */
+interface MacroParts {
+  name: string;
+  args: Arg[];
+  at: Range;
+}
+
+/** Where a statement started: what recovery after it needs. */
+interface Start {
+  /** Its first token. */
+  pos: number;
+  start: number;
+  /** How many boundaries were open. */
+  frames: number;
 }
 
 /** An accessible description as v12's `setAccDescription` kept it: line indents dropped. */
@@ -209,15 +224,9 @@ class C4Parser {
   private accTitle = '';
   private accDescr = '';
   private readonly frames: Frame[] = [];
-  /** The statement that failed was a boundary's: a `{` after it still opens it. */
-  private failedBoundary = false;
-  /** Where the statement being read starts. */
-  private statementStart = 0;
   /** The source of each statement that failed: an alias in one is not reported unknown. */
   private readonly failed: Range[] = [];
   private lines: LineIndex | undefined;
-  /** The statement failed at a line break right after its macro name. */
-  private parenLine = false;
 
   constructor(
     private readonly src: string,
@@ -318,7 +327,7 @@ class C4Parser {
   /** What the message says was found at the cursor. */
   private found(): string {
     const { c } = this;
-    if (inSet(ENDS, c.kind)) return 'the end of the text';
+    if (inKindSet(ENDS, c.kind)) return 'the end of the text';
     if (c.kind === Kind.Newline || c.start === c.end) return 'a line break';
     const text = this.src.slice(c.start, c.end).split('\n')[0] ?? '';
     return `\`${text.length > 40 ? `${text.slice(0, 40)}…` : text}\``;
@@ -333,8 +342,9 @@ class C4Parser {
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string): never {
     const { c } = this;
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', c.range, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    const why = hint === undefined ? '' : `; ${hint}`;
+    const message = `Expected ${formatExpected(names)}, got ${this.found()}${why}.`;
+    this.st.diagnostics.error('UNEXPECTED', message, c.range, { expected: names });
     throw STOP;
   }
 
@@ -360,47 +370,62 @@ class C4Parser {
 
   /**
    * Skip to the next line after an error (R-PARSE-4), and past its line break. A `{` skipped over
-   * opens a boundary (its `}` then closes it: one error, one diagnostic), a `}` closes one.
+   * opens a boundary (its `}` then closes it: one error, one diagnostic), a `}` closes one. `from`
+   * is where the failed statement started: a boundary's that opened no frame still opens at a `{`
+   * ending its line or starting the next; a macro name alone on its line takes the next line's
+   * `(…)` with it.
    */
-  private recover(): void {
+  private recover(from: Start): void {
     const { c } = this;
-    const start = this.statementStart;
-    while (!inSet(ENDS, c.kind) && c.kind !== Kind.Newline) {
+    const role = MACROS.get(c.tokens.kind[from.pos] ?? 0)?.role;
+    let boundary = role === 'boundary' && this.frames.length === from.frames;
+    const parenLine = role !== undefined && this.zeroWidthAfter(from.pos);
+    while (!inKindSet(ENDS, c.kind) && c.kind !== Kind.Newline) {
       if (c.kind === T.LBrace) {
         this.openFrame(-1, undefined, c.range);
-        this.failedBoundary = false;
+        boundary = false;
       } else if (c.kind === T.RBrace && this.frames.length > 0) this.closeFrame(c.range);
       c.next();
     }
     // A boundary whose arguments ran into its `{` (`Boundary(b, "B" {`): it opens.
-    if (this.failedBoundary && /\{\s*$/.test(this.src.slice(start, c.start))) {
+    if (boundary && /\{\s*$/.test(this.src.slice(from.start, c.start))) {
       this.openFrame(-1, undefined, { start: c.start, end: c.start });
-      this.failedBoundary = false;
+      boundary = false;
     }
     this.lineBreaks();
-    // A macro name alone on its line, then its arguments on the next: one error, both lines.
-    if (this.parenLine && c.kind === Kind.Error && this.src.charAt(c.start) === '(') {
-      while (!inSet(ENDS, c.kind) && !c.at(Kind.Newline)) c.next();
+    if (parenLine && c.kind === Kind.Error && this.src.charAt(c.start) === '(') {
+      while (!inKindSet(ENDS, c.kind) && !c.at(Kind.Newline)) c.next();
       this.lineBreaks();
     }
-    this.parenLine = false;
     // `Boundary(…)` that failed, then `{` on the next line: it opens.
-    if (this.failedBoundary && c.kind === T.LBrace) {
+    if (boundary && c.kind === T.LBrace) {
       this.openFrame(-1, undefined, c.range);
       c.next();
       this.lineBreaks();
     }
-    this.failedBoundary = false;
+  }
+
+  /** Whether the significant token after token `j` is a zero-width error (a line break). */
+  private zeroWidthAfter(j: number): boolean {
+    const t = this.c.tokens;
+    for (let i = j + 1; i < t.length; i++) {
+      const k = t.kind[i] ?? Kind.EOF;
+      if (inKindSet(SKIPPED, k)) continue;
+      return k === Kind.Error && t.start[i] === t.end[i];
+    }
+    return false;
   }
 
   /** Run one rule; on failure, skip to the next line. Whether it ran through. */
   private guarded(rule: () => void): boolean {
+    const { c } = this;
+    const from: Start = { pos: c.pos, start: c.start, frames: this.frames.length };
     try {
       rule();
       return true;
     } catch (error) {
       if (error !== STOP) throw error;
-      this.recover();
+      this.recover(from);
       return false;
     }
   }
@@ -418,18 +443,18 @@ class C4Parser {
       if (!this.lineBreaks()) this.fail(LINE_BREAK, ONE_LINE_HINT);
       return;
     }
-    if (inSet(DIRECTIONS, k)) this.direction();
+    if (inKindSet(DIRECTIONS, k)) this.direction();
     this.fail(HEADER);
   }
 
   /** The statements after the header, to the end: at least one. */
   private body(): void {
     const { c } = this;
-    if (inSet(ENDS, c.kind) && !this.st.diagnostics.hasErrors) {
+    if (inKindSet(ENDS, c.kind) && !this.st.diagnostics.hasErrors) {
       this.st.diagnostics.unexpected('UNEXPECTED', c.range, STATEMENT, this.found());
     }
-    while (!inSet(ENDS, c.kind)) {
-      const start = (this.statementStart = c.start);
+    while (!inKindSet(ENDS, c.kind)) {
+      const start = c.start;
       if (!this.guarded(() => this.separator(this.statement()))) {
         this.failed.push({ start, end: c.start });
       }
@@ -449,9 +474,9 @@ class C4Parser {
     const { c } = this;
     const k = c.kind;
     if (after === OPENED || this.lineBreaks()) return;
-    if (inSet(ENDS, k) || (k === T.RBrace && this.frames.length > 0)) return;
+    if (inKindSet(ENDS, k) || (k === T.RBrace && this.frames.length > 0)) return;
     if (after === OTHER_STATEMENT && MACROS.has(k)) return;
-    this.fail(LINE_BREAK, MACROS.has(k) || inSet(OTHER, k) ? ONE_LINE_HINT : this.hint());
+    this.fail(LINE_BREAK, MACROS.has(k) || inKindSet(OTHER, k) ? ONE_LINE_HINT : this.hint());
   }
 
   /** One statement; what may come after it. */
@@ -472,7 +497,7 @@ class C4Parser {
       return DIAGRAM_STATEMENT;
     }
     if (frame) frame.count++;
-    if (inSet(OTHER, k)) {
+    if (inKindSet(OTHER, k)) {
       if (frame?.count === 1) {
         this.st.diagnostics.error(
           'UNEXPECTED',
@@ -485,7 +510,7 @@ class C4Parser {
     }
     const macro = MACROS.get(k);
     if (macro) return this.macro(macro);
-    if (inSet(DIRECTIONS, k)) this.direction();
+    if (inKindSet(DIRECTIONS, k)) this.direction();
     if (HEADERS.has(k)) this.fail(STATEMENT, 'the `C4…` header comes once, on the first line');
     if (k === T.LBrace) {
       // A `{` with no boundary before it: open one anyway, so its `}` matches.
@@ -566,23 +591,23 @@ class C4Parser {
     const { c, b } = this;
     const name = this.src.slice(c.start, c.end);
     const start = c.start;
-    if (macro.role === 'boundary') this.failedBoundary = true;
     c.next();
     const args = this.args(name);
     const at = { start, end: this.lastEnd() };
-    const written = this.astArgs(args);
+    const written = [...args];
     switch (macro.role) {
       case 'element': {
-        const { ast, alias } = b.element(macro.kind, macro.techn, args);
+        const { kind, techn } = macro;
+        const { ast, alias } = b.element({ kind, techn, args, parent: this.current() });
         this.place({ id: ast, type: 'Element', range: at, macro: name, alias, args: written });
         this.st.statement('element', at);
         return DIAGRAM_STATEMENT;
       }
       case 'boundary':
-        this.boundary(macro.boundary, name, args, at);
+        this.boundary({ macro: macro.boundary, name, args, at });
         return OPENED;
       case 'relation':
-        this.relation(macro.kind, macro.index === true, name, args, at);
+        this.relation({ kind: macro.kind, index: macro.index === true, name, args, at });
         return DIAGRAM_STATEMENT;
       case 'elementStyle':
       case 'relStyle':
@@ -608,7 +633,7 @@ class C4Parser {
   private lastEnd(): number {
     const t = this.c.tokens;
     for (let i = this.c.pos - 1; i >= 0; i--) {
-      if (!inSet(SKIPPED, t.kind[i] ?? 0)) return t.end[i] ?? 0;
+      if (!inKindSet(SKIPPED, t.kind[i] ?? 0)) return t.end[i] ?? 0;
     }
     return 0;
   }
@@ -623,11 +648,7 @@ class C4Parser {
       out.push({ value: '', range: { start: c.end - 1, end: c.end - 1 } });
       c.next();
     } else if (c.kind === T.ArgsOpen) c.next();
-    else {
-      // A line break after the name (a zero-width error): `(` on the next line is its arguments.
-      this.parenLine = c.kind === Kind.Error && c.start === c.end;
-      this.fail(['`(`'], this.hint() ?? `\`${name}\` takes its arguments in \`( )\``);
-    }
+    else this.fail(['`(`'], this.hint() ?? `\`${name}\` takes its arguments in \`( )\``);
     for (;;) {
       const k = c.kind;
       if (k === T.ArgsClose) {
@@ -643,7 +664,7 @@ class C4Parser {
         c.next();
       } else if (k === T.QuoteOpen) out.push(this.quoted());
       else if (k === T.KeyStart) out.push(this.named());
-      else if (k === Kind.Newline || inSet(ENDS, k)) {
+      else if (k === Kind.Newline || inKindSet(ENDS, k)) {
         this.unclosed('UNCLOSED_ARGUMENTS', `\`${name}(\``, open, ')');
       } else this.fail(['an argument', '`)`'], this.hint());
     }
@@ -689,12 +710,9 @@ class C4Parser {
     return { name, value, range: { start, end } };
   }
 
-  private astArgs(args: readonly Arg[]): C4Argument[] {
-    return args.map((a) =>
-      a.name === undefined
-        ? { value: a.value, range: a.range }
-        : { name: a.name, value: a.value, range: a.range }
-    );
+  /** The boundary statements are in now (-1: the top level). */
+  private current(): number {
+    return this.frames[this.frames.length - 1]?.current ?? -1;
   }
 
   /** Add `node` to the open boundary's children (a failed boundary's go to the one around it). */
@@ -703,20 +721,21 @@ class C4Parser {
   }
 
   /** A boundary's statement and its `{`: `{` NEWLINE, or NEWLINE `{` [NEWLINE]. */
-  private boundary(macro: BoundaryMacro, name: string, args: Arg[], at: Range): void {
+  private boundary(parts: MacroParts & { macro: BoundaryMacro }): void {
     const { c } = this;
-    const { ast, alias, index } = this.b.boundary(macro, args, at.end);
+    const { macro, name, args, at } = parts;
+    const parent = this.current();
+    const { ast, alias, index } = this.b.boundary({ macro, args, end: at.end, parent });
     const node: C4BoundaryNode = {
       id: ast,
       type: 'Boundary',
       range: { ...at },
       macro: name,
       alias,
-      args: this.astArgs(args),
+      args: [...args],
       children: [],
     };
     this.place(node);
-    this.failedBoundary = false;
     if (c.kind === T.LBrace) {
       const brace = c.range;
       c.next();
@@ -749,8 +768,8 @@ class C4Parser {
     const span = this.st.beginStatement('boundary', start);
     const around = this.frames[this.frames.length - 1]?.children ?? this.doc.children;
     const children = node?.children ?? around;
-    this.frames.push({ boundary, outer: this.b.current, node, children, span, open, count: 0 });
-    if (boundary >= 0) this.b.current = boundary;
+    const current = boundary >= 0 ? boundary : this.current();
+    this.frames.push({ boundary, current, node, children, span, open, count: 0 });
   }
 
   private closeFrame(close: Range): void {
@@ -758,19 +777,17 @@ class C4Parser {
     if (!frame) return;
     this.st.endStatement(frame.span, close.end);
     if (frame.node) frame.node.range = { start: frame.node.range.start, end: close.end };
-    this.b.current = frame.outer;
   }
 
   /** A relation statement; `RelIndex` drops its first argument (v12's `splice(0, 1)`). */
-  private relation(
-    kind: C4RelationKind,
-    index: boolean,
-    name: string,
-    args: Arg[],
-    at: Range
-  ): void {
+  private relation(parts: MacroParts & { kind: C4RelationKind; index: boolean }): void {
+    const { name, args, at } = parts;
     this.st.statement('relation', at);
-    const added = this.b.relation(kind, index ? args.slice(1) : args, at);
+    const added = this.b.relation({
+      kind: parts.kind,
+      args: parts.index ? args.slice(1) : args,
+      at,
+    });
     if (!added) return;
     const node: C4RelationNode = {
       id: added.ast,
@@ -779,7 +796,7 @@ class C4Parser {
       macro: name,
       from: added.from,
       to: added.to,
-      args: this.astArgs(args),
+      args: [...args],
     };
     this.place(node);
   }

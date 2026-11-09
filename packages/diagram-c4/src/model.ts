@@ -10,7 +10,13 @@
  *   and every argument it gives replaces the field's value. A repeated `from`, `to` pair merges
  *   the same way into the first relation. Elements and boundaries are separate namespaces;
  * - each argument fills the field of its slot, a `$name="value"` one the field it names (v12's
- *   rule), names v12 has no use for kept in `extra`. A named argument where an alias, a relation
+ *   rule), names v12 has no use for kept in `extra`. A name for the structure is v12's too:
+ *   `$alias` renames the element or boundary, a relation's `$type`, `$from` and `$to` set its kind
+ *   and ends, `UpdateElementStyle`'s `$parentBoundary`, `$typeC4Shape` and `$nodeType` move it or
+ *   change its kind; where that would leave the model broken (no such boundary, no such kind, a
+ *   boundary's statements left outside it) the structure is kept, with one `C4_STRUCTURE_KEPT`
+ *   warning. A name v12 set again after the arguments (`$parentBoundary` in a macro) does
+ *   nothing, as there. A named argument where an alias, a relation
  *   end or a label belongs sets the field it names and leaves the slot empty (D452,
  *   `C4_NAMED_ARGUMENT_MOVED`). An argument a statement leaves out leaves its field as it was:
  *   absent, or empty for `descr` and `techn` (v12's defaults);
@@ -109,7 +115,11 @@ export interface C4Boundary extends C4ElementFields {
 
 export interface C4Relation {
   readonly ast: AstId;
-  readonly kind: C4RelationKind;
+  /**
+   * A {@link C4RelationKind}, or any text a `$type="…"` argument set (v12 took it; an unknown
+   * kind draws as `rel`).
+   */
+  readonly kind: string;
   readonly from: string;
   readonly to: string;
   readonly label: string;
@@ -145,4 +155,12 @@ export interface C4Model {
   /** The last `accDescr`/`accDescription` (`''` when none). */
   readonly accDescr: string;
   readonly warnings: readonly Diagnostic[];
+}
+
+/**
+ * The alias of boundary `index` of `model` (an item's `parent`), or `global` at the top level, as
+ * v12 named the parent of a top-level item.
+ */
+export function parentAlias(model: Pick<C4Model, 'boundaries'>, index: number): string {
+  return index < 0 ? 'global' : (model.boundaries[index]?.alias ?? 'global');
 }

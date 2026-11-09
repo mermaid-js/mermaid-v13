@@ -4,12 +4,13 @@ import { loadDivergences } from '../divergences.ts';
 import { loadJisonLexerOracle } from '../jison/oracle.ts';
 import { loadOracle } from '../oracle.ts';
 import { DIVERGENCES_FILE } from '../registry.ts';
-import { runParity } from '../runner.ts';
+import { diffPaths, runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
-import { c4ParityCorpus, VARIANTS } from './corpus.ts';
+import { c4Cases, c4Corpus, c4ParityCorpus, VARIANTS } from './corpus.ts';
 import { lexingExclusion } from './d452.ts';
 import type { Exclusion } from './d452.ts';
 import { c4V12Snapshot } from './v12.ts';
+import type { C4Snapshot } from './v12.ts';
 import { c4Adapter, c4V13Snapshot, parseC4ForParity } from './v13.ts';
 
 /**
@@ -25,7 +26,9 @@ import { c4Adapter, c4V13Snapshot, parseC4ForParity } from './v13.ts';
  *   mid-line), or a U+2029 after a comma, which makes v12 read a quoted argument as unquoted
  *   (`[ ]*"` fails) and run it over `)` to the next comma;
  * - or the source it was made from is a listed divergence of the same kind (D452's named
- *   arguments in the label slot, D453's titles): the variant differs the same way;
+ *   arguments in the label slot, D453's titles) and differs from v12 where its source does (every
+ *   differing path the same; for an accept v12's same error, for a reject v13's same code): a
+ *   variant may change the text at those paths, but one more difference fails;
  * - or only its title differs, and v12's trimmed is v13's (D453): the U+2028/U+2029 variant
  *   adds blanks around every line's text, which v12 kept in the title.
  * Any other difference fails, and so does a variant that stops differing.
@@ -40,6 +43,31 @@ function baseId(id: string): string {
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
   yield* items;
+}
+
+/**
+ * How v12 and v13 differ on `text`: for a model divergence every path where they differ (blanks
+ * left out, a title v12 kept blanks around, D453, too), for an accept v12's error, for a reject
+ * v13's error code.
+ */
+async function difference(text: string): Promise<string> {
+  const v12 = await (await loadOracle()).parse(text);
+  let v13: C4Snapshot;
+  try {
+    v13 = c4V13Snapshot(parseC4ForParity(text));
+  } catch (error) {
+    return `reject ${(error instanceof Error ? error.message : String(error)).split(':')[0] ?? ''}`;
+  }
+  if (!v12.accepted) return `accept ${v12.error.split('\n')[0] ?? ''}`;
+  const old = c4V12Snapshot(v12.db);
+  // D453's trim is its own reason (below); the variants insert blanks and line breaks only, which
+  // both sides read alike, also into names.
+  const trimmed = old.title.trim() === v13.title;
+  const paths = diffPaths(old, v13, '', 1_000).filter((p) => !(p === 'title' && trimmed));
+  return `model ${paths
+    .map((p) => p.replace(/\s+/g, ''))
+    .sort()
+    .join(', ')}`;
 }
 
 /** Whether `source`'s two models differ only in v12 keeping blanks around the title (D453). */
@@ -62,6 +90,10 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     const report = await runParity({ adapters: [c4Adapter], corpus: each(items), divergences: [] });
     const lexer = await loadJisonLexerOracle('c4');
     const sources = new Map(items.map((i) => [i.id, i.source]));
+    // The sources of the variants, by their main-suite ids.
+    const originals = new Map(
+      [...(await c4Corpus()), ...c4Cases()].map((i) => [baseId(i.id), i.source])
+    );
     const by: Record<Exclusion | 'as-listed' | 'title trimmed', number> = {
       unquoted: 0,
       comment: 0,
@@ -73,8 +105,13 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     for (const d of report.unlisted) {
       const why = await lexingExclusion(lexer, sources.get(d.id) ?? '');
       if (why) by[why]++;
-      else if (listedKind.get(baseId(d.id)) === d.kind) by['as-listed']++;
-      else if (d.kind === 'model' && (await titleTrimmedOnly(sources.get(d.id) ?? ''))) {
+      else if (
+        listedKind.get(baseId(d.id)) === d.kind &&
+        (await difference(sources.get(d.id) ?? '')) ===
+          (await difference(originals.get(baseId(d.id)) ?? ''))
+      ) {
+        by['as-listed']++;
+      } else if (d.kind === 'model' && (await titleTrimmedOnly(sources.get(d.id) ?? ''))) {
         by['title trimmed']++;
       } else unexplained.push(`${d.kind} ${d.id}: ${d.detail}`);
     }
@@ -93,9 +130,9 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
 
 /** How many variants differ, by reason. */
 const DIFFERING = {
-  unquoted: 304,
+  unquoted: 309,
   comment: 21,
   title: 19,
-  'as-listed': 296,
+  'as-listed': 315,
   'title trimmed': 52,
 };

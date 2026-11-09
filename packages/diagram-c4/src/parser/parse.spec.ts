@@ -220,6 +220,54 @@ describe('the model, as v12 built it', () => {
   });
 });
 
+describe('names for the structure, as v12 took them', () => {
+  it('renames an element from a named alias, so later statements find it by the new one', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A", $alias="q")\nPerson(b, "B")\nRel(q, b, "x")\nPerson(q, "Q2")'
+    );
+    expect(m.elements.map((e) => [e.ast, e.alias, e.label])).toEqual([
+      ['element:a', 'q', 'Q2'],
+      ['element:b', 'b', 'B'],
+    ]);
+  });
+
+  it("sets a relation's kind and ends from `$type`, `$from` and `$to`", () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, a, "x", $type="zz")\nRel(a, b, "y", $from="b")\nUpdateRelStyle(b, b, $type="birel")'
+    );
+    expect(m.relations.map((r) => [r.kind, r.from, r.to])).toEqual([
+      ['zz', 'a', 'a'],
+      ['birel', 'b', 'b'],
+    ]);
+  });
+
+  it('moves an element with `UpdateElementStyle`’s `$parentBoundary`, and changes its kind', () => {
+    const m = model(
+      'C4Context\nBoundary(b, "B") {\nPerson(a, "A")\n}\nPerson(c, "C")\nUpdateElementStyle(c, $parentBoundary="b", $typeC4Shape="system_db")'
+    );
+    expect(m.elements[1]).toMatchObject({ parent: 0, kind: 'system_db' });
+    // In a macro v12 set them again after the arguments: nothing changes.
+    const p = model('C4Context\nPerson(a, "A", $parentBoundary="zz", $typeC4Shape="zz")');
+    expect(p.elements[0]).toMatchObject({ parent: -1, kind: 'person', extra: [] });
+  });
+
+  it('keeps the structure where v12 broke it, with one warning each', () => {
+    const r = parse(
+      'C4Context\nPerson(c, "C")\nUpdateElementStyle(c, $parentBoundary="nowhere")\nUpdateElementStyle(c, $typeC4Shape="robot")\nBoundary(b, "B", $alias="q") {\nPerson(a, "A")\n}'
+    );
+    expect(r.model.elements.map((e) => [e.alias, e.kind, e.parent])).toEqual([
+      ['c', 'person', -1],
+      ['a', 'person', 0],
+    ]);
+    expect(r.model.boundaries[0]?.alias).toBe('q');
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
+      ['warning', codes.C4_STRUCTURE_KEPT],
+      ['warning', codes.C4_STRUCTURE_KEPT],
+      ['warning', codes.C4_STRUCTURE_KEPT],
+    ]);
+  });
+});
+
 describe('D452: parse quirks that damaged the model', () => {
   it('stops an unquoted argument at `)` and at the line end', () => {
     expect(
@@ -245,15 +293,18 @@ describe('D452: parse quirks that damaged the model', () => {
     expect(m.elements).toHaveLength(1);
   });
 
-  it('reports `direction` lines and `$__proto__` instead of crashing', () => {
+  it('reports `direction` lines and `$__proto__` instead of crashing (D452)', () => {
     expect(codesOf('C4Context\ndirection TB\nPerson(a, "A")')).toEqual([
       ['error', codes.C4_DIRECTION],
     ]);
     expect(codesOf('C4Context\nPerson(a, "the direction LR is")')).toEqual([
       ['error', codes.C4_DIRECTION],
     ]);
+    // A warning: Pele keeps it as an unknown name, with no error.
     const r = parse('C4Context\nPerson(a, "A", $__proto__="x")');
-    expect(r.diagnostics.map((d) => d.code)).toEqual([codes.C4_NAME_RESERVED]);
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
+      ['warning', codes.C4_NAME_RESERVED],
+    ]);
     expect(r.model.elements[0]?.extra).toEqual([{ name: '__proto__', value: 'x' }]);
     expect(Object.getPrototypeOf(r.model.elements[0])).toBe(Object.prototype);
   });

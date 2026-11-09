@@ -1739,7 +1739,39 @@
     "id": "e2e/diagrams/c4/nightly-check/titles.mmd",
     "inputHash": "sha256:af25dbb972e0e065",
     "kind": "model",
-    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md). The front-matter title, which v12 ignored, is held back from both sides here (D218's fallback has its own specs).",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty, and ignored the front-matter `title`; v13 sets the accessible title only and draws the front-matter title, as the text has none (D453, D218, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-proto",
+    "inputHash": "sha256:feab83dab7981ba3",
+    "kind": "accept",
+    "reason": "v12 threw a TypeError on `$__proto__`; v13 keeps it as an unknown name with a `C4_NAME_RESERVED` warning, as Pele keeps it (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-parent-boundary-unknown",
+    "inputHash": "sha256:864587e18dbc5896",
+    "kind": "model",
+    "reason": "v12's `UpdateElementStyle` moved the element to the boundary its `$parentBoundary` names even when there is none, so it was not drawn; v13 keeps it where it is, with a `C4_STRUCTURE_KEPT` warning (#539; for the maintainer, D450).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-boundary-alias",
+    "inputHash": "sha256:7637a1bc0dfb44ed",
+    "kind": "model",
+    "reason": "v12 renamed the boundary from `$alias` but kept the statements in its braces under the old alias, outside the diagram; v13 keeps them in the renamed boundary, with a `C4_STRUCTURE_KEPT` warning (#539; for the maintainer, D450).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/front-matter",
+    "inputHash": "sha256:864e61b468576a82",
+    "kind": "model",
+    "reason": "v12's C4 DB ignored the front-matter `title` (it has no `setDiagramTitle`); v13 takes it when the text has no `title` (D453, D218, #539, MIGRATION.md).",
     "owner": "#539",
     "since": "2026-11-09"
   }

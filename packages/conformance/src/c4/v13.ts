@@ -4,7 +4,7 @@
  * `extra` names together by name, the parent boundary by alias (`global` at the top level), the
  * row counts with v12's DB defaults (4 and 2) where `UpdateLayoutConfig` gave none.
  */
-import { detectC4, parseC4 } from '@mermaid-js/diagram-c4';
+import { detectC4, parentAlias, parseC4 } from '@mermaid-js/diagram-c4';
 import type { C4Boundary, C4Element, C4Extra, C4Model, C4Relation } from '@mermaid-js/diagram-c4';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';
@@ -55,7 +55,7 @@ function fields(
 }
 
 export function c4V13Snapshot(model: C4Model): C4Snapshot {
-  const parent = (i: number) => (i < 0 ? 'global' : (model.boundaries[i]?.alias ?? 'global'));
+  const parent = (i: number) => parentAlias(model, i);
   return {
     type: model.c4Type ?? '',
     title: model.title ?? '',
@@ -88,13 +88,12 @@ export function c4V13Snapshot(model: C4Model): C4Snapshot {
 
 /**
  * v13 parse for parity: the model, or a throw carrying the first error diagnostic. The
- * front-matter title is held back, as v12 ignored it (its DB has no `setDiagramTitle`); D453's
- * fallback has its own specs in the C4 package.
+ * front-matter title is the model's when the text has none (D453), where v12 ignored it (its DB
+ * has no `setDiagramTitle`): a listed divergence.
  */
 export function parseC4ForParity(text: string): C4Model {
   const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseC4(text, { preprocessed: { ...pre, frontMatter: fm } });
+  const result = parseC4(text, { preprocessed: pre });
   const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
   if (error) throw new Error(`${error.code}: ${error.message}`);
   return result.model;
