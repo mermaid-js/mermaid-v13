@@ -418,8 +418,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   mutedBorder: def('mbd', 'color', ['sequence']),
   linkInkColor: def('lki', 'color', ['sequence']),
   lineTextColor: def('ltx', 'color', ['sequence']),
-  softBorder: def('sfb', 'color', ['sequence']),
+  softBorder: def('sfb', 'color', ['core']),
   frameBorder: def('frb', 'color', ['sequence']),
+  // v12's participant fill and border (sequence), which usecase's role colours fall back to where
+  // a theme carries no palette (D474): a row a second type reads is core's (D331).
+  actorBkg: def('ab', 'color', ['sequence', 'usecase']),
+  actorBorder: def('ar', 'color', ['sequence', 'usecase']),
   // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: a badge, a small label box on the secondary colour set
   // beside an item (gitGraph's commit ids; any id or count badge), and its text; a callout, a
