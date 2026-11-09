@@ -87,7 +87,7 @@ async function api(...extensions: ExtensionPlugin[]) {
   return m;
 }
 
-describe('flowchart, class, state, ER, kanban and venn outline through the hook (D302, #340)', () => {
+describe('the outlining types draw through the hook (D302, #340, #459, #501)', () => {
   for (const [type, { dirs, roles, plain: own = [] }] of Object.entries(TYPES)) {
     it(`${type}: each role reaches the drawer, and no arrowhead, label or text does`, async () => {
       const calls: Call[] = [];

@@ -5206,10 +5206,7 @@ $defs:
             A number, or a numeric string, of at least 1; anything else lays out with the
             default 450, with no warning.
       padding:
-        description: |
-          The margin round the circles, in pixels (D412). The documented default changes from 8
-          to 15, the padding v12 drew its circles with: v12's schema said 8, but only its second
-          solve (text nodes and hand-drawn circles) read it. v13 solves once, at this padding.
+        description: The margin round the circles, in pixels (D412).
         type: number
         minimum: 0
         default: 15

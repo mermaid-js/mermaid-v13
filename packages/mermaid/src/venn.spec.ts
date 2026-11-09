@@ -47,7 +47,7 @@ describe('venn diagrams through the public API (#501)', () => {
     assertInert(result.svg);
   });
 
-  it('renders through mermaid/slim with the plugin passed in, byte for byte as mermaid does', async () => {
+  it('renders through mermaid/slim, byte for byte as mermaid does', async () => {
     const slim = createSlim({ diagrams: [venn] });
     expect((await slim.render('v2', TEXT)).svg).toBe(
       (await createMermaid().render('v2', TEXT)).svg
@@ -72,7 +72,7 @@ describe('venn diagrams through the public API (#501)', () => {
     expect(() => m.detectType('venn\n  set A')).toThrow();
   });
 
-  it('rejects a header the detector takes but the grammar does not, and what v12 rejects', async () => {
+  it('rejects what v12 rejects, detected headers included', async () => {
     const m = createMermaid();
     for (const text of ['venn-betax\n  set A\n', 'venn-beta\n  set A\n  union A\n']) {
       const e = await rejection(m.render('v3', text));
@@ -92,7 +92,7 @@ describe('venn diagrams through the public API (#501)', () => {
     expect((await m.render('v4', TEXT)).svg).toBe(plain.svg);
   });
 
-  it('lets a theme from initialize() or the diagram text win over the venn.theme default', async () => {
+  it('lets initialize() and the text win over the venn.theme default', async () => {
     const m = createMermaid();
     m.initialize({ theme: 'default' });
     const classic = await m.render('v5', TEXT);
@@ -142,7 +142,7 @@ describe('venn diagrams through the public API (#501)', () => {
     expect(look.warnings.map((w) => w.code)).toEqual(['LOOK_REMOVED']);
   });
 
-  it('draws a front-matter title, and the title statement over it (D218), quotes stripped (D416)', async () => {
+  it('draws the front-matter or statement title (D218), unquoted (D416)', async () => {
     const m = createMermaid();
     const fm = '---\ntitle: From front matter\n---\nvenn-beta\n  set A\n';
     expect(title((await m.render('v8', fm)).svg)).toBe('From front matter');

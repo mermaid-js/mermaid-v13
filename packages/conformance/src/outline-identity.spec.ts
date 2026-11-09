@@ -16,9 +16,10 @@ import { REPO_ROOT, corpusFromDir } from './index.ts';
 /**
  * The outline hook (D302) changes no byte of the corpus unless a drawer draws. The base writes
  * every outline as its plain leaf, as flowchart, class, state and ER did before they adopted
- * the hook (#340), kanban before #459 and venn before #501. Against it: the adopted diagrams with no drawer, with
- * T0's fixture drawer registered but inactive (stream and tree backing), and with every leaf of
- * every first-party diagram drawn through `w.outline` and a drawer declining each one.
+ * the hook (#340), kanban before #459 and venn before #501. Against it: the adopted diagrams
+ * with no drawer, with T0's fixture drawer registered but inactive (stream and tree backing),
+ * and with every leaf of every first-party diagram drawn through `w.outline` and a drawer
+ * declining each one.
  */
 
 const DIRS = [

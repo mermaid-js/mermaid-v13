@@ -273,7 +273,9 @@ describe('venn colours against v12 12.2.0 (#495, D415)', () => {
     ]);
   });
 
-  it('draws a venn with no theme in redux-color, v12’s venn.theme default, which a theme from initialize() or the text beats (#501)', async () => {
+  // #501: v12's venn.theme default. v13's global default is redux-color too, so the global
+  // default that would win without venn's own is checked in `gen-config/venn-padding.spec.ts`.
+  it('takes venn.theme (redux-color) when no theme is set; initialize() and the text win', async () => {
     const SOURCE = 'venn-beta\n  set A\n  set B\n';
     const FRONT = (theme: string) => `---\nconfig:\n  theme: ${theme}\n---\n`;
     /**
@@ -299,24 +301,27 @@ describe('venn colours against v12 12.2.0 (#495, D415)', () => {
       }
       return seen;
     };
-    const fill = (svg: string): string | undefined =>
-      /venn-set-0"[^>]*><path [^>]*fill="([^"]*)"/.exec(svg)?.[1];
-    const v13Fill = async (text: string, theme?: string): Promise<string | undefined> => {
-      const m = createMermaid();
-      if (theme) m.initialize({ theme: theme as ThemeName });
-      return fill((await m.render('v', text)).svg);
-    };
-    const cases: [string, string, object, string][] = [
-      ['no theme', SOURCE, {}, 'redux-color'],
-      ['initialize', SOURCE, { theme: 'dark' }, 'dark'],
-      ['front matter', FRONT('forest') + SOURCE, {}, 'forest'],
-      ['front matter over initialize', FRONT('neutral') + SOURCE, { theme: 'dark' }, 'neutral'],
-    ];
-    for (const [name, text, config, expected] of cases) {
-      expect(await v12Theme(text, config), name).toBe(expected);
+    /** The first circle's fill v13 draws for `text` under `initialize(config)`. */
+    const v13Fill = async (text: string, config: object = {}): Promise<string | undefined> => {
       const m = createMermaid();
       m.initialize(config);
-      expect(fill((await m.render('v', text)).svg), name).toBe(await v13Fill(SOURCE, expected));
+      const svg = (await m.render('v', text)).svg;
+      return /venn-set-0"[^>]*><path [^>]*fill="([^"]*)"/.exec(svg)?.[1];
+    };
+    const cases: { name: string; text: string; config: object; expected: ThemeName }[] = [
+      { name: 'no theme', text: SOURCE, config: {}, expected: 'redux-color' },
+      { name: 'initialize', text: SOURCE, config: { theme: 'dark' }, expected: 'dark' },
+      { name: 'front matter', text: FRONT('forest') + SOURCE, config: {}, expected: 'forest' },
+      {
+        name: 'front matter over initialize',
+        text: FRONT('neutral') + SOURCE,
+        config: { theme: 'dark' },
+        expected: 'neutral',
+      },
+    ];
+    for (const { name, text, config, expected } of cases) {
+      expect(await v12Theme(text, config), name).toBe(expected);
+      expect(await v13Fill(text, config), name).toBe(await v13Fill(SOURCE, { theme: expected }));
     }
     expect(await v13Fill(SOURCE)).toBe(hex(v12Vars('redux-color').venn1));
   });

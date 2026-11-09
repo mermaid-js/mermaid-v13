@@ -10,6 +10,7 @@ import { tableMeasurer } from '../../../packages/core/src/text/index.ts';
 import type { Theme } from '../../../packages/core/src/theme/index.ts';
 import {
   layoutVenn,
+  venn,
   VENN_CONFIG_DEFAULTS,
   vennPluginDefaults,
   type VennLayout,
@@ -19,12 +20,12 @@ import { SCHEMA_PATH, sectionDefaults } from './generate.ts';
 
 /**
  * D412's padding through core's real config resolution (spec #429 T3; venn's section is in
- * `SECTION_OWNERS`, and the defaults here are built as `generate()` builds an owner's): the one solve's padding
- * is an author's `venn.padding`, else 15, the padding v12 drew its circles with. The resolved
- * config cannot tell a default from an author's value, so the plugin hands core its section
- * defaults without `padding` (`vennPluginDefaults`, the plugin's `configDefaults`): the solve keeps
- * 15 whatever default the schema generates, 8 (v12's schema) included. The layout's fallbacks
- * are the schema's defaults.
+ * `SECTION_OWNERS`, and the defaults here are built as `generate()` builds an owner's): the one
+ * solve's padding is an author's `venn.padding`, else 15, the padding v12 drew its circles with.
+ * The resolved config cannot tell a default from an author's value, so the plugin hands core its
+ * section defaults without `padding` (`vennPluginDefaults`, the plugin's `configDefaults`): the
+ * solve keeps 15 whatever default the schema generates, 8 (v12's schema) included. The layout's
+ * fallbacks are the schema's defaults.
  */
 const SCHEMA = readFileSync(join(import.meta.dirname, '../../..', SCHEMA_PATH), 'utf8');
 const BODY = 'venn-beta\n  set A\n  set B\n  union A, B\n';
@@ -81,5 +82,42 @@ describe('venn.padding through resolveConfig (D412)', () => {
     const layout = laid(src, vennPluginDefaults(sectionDefaults(v12Schema, 'venn')));
     expect(layout.padding).toBe(8);
     expect(radius(layout)).toBeCloseTo(217, 6);
+  });
+});
+
+describe("the venn plugin's configDefaults (#501)", () => {
+  const generated = sectionDefaults(SCHEMA, 'venn');
+
+  it('are the schema defaults without padding (D412)', () => {
+    const defaults = venn.configDefaults;
+    expect(Object.keys(defaults)).not.toContain('padding');
+    const { padding: _padding, ...rest } = generated;
+    expect(defaults).toEqual(rest);
+    expect(defaults.theme).toBe('redux-color');
+  });
+
+  /** The resolved `theme` of a venn diagram over the global `defaults` theme `global`. */
+  const resolvedTheme = (
+    global: string,
+    initialize?: object,
+    section = venn.configDefaults
+  ): unknown =>
+    resolveConfig(
+      { ...CORE_DEFAULTS, theme: global } as never,
+      initialize as never,
+      undefined,
+      [],
+      { venn: section } as never,
+      { section: 'venn' }
+    ).theme;
+
+  it('rank venn.theme over the global default, under initialize()', () => {
+    // v13's global default is redux-color too, so these use another global default: without
+    // the plugin's section default, venn would draw in it.
+    expect(resolvedTheme('default')).toBe('redux-color');
+    expect(resolvedTheme('neutral')).toBe('redux-color');
+    expect(resolvedTheme('default', undefined, {})).toBe('default');
+    expect(resolvedTheme('default', { theme: 'dark' })).toBe('dark');
+    expect(resolvedTheme('default', { venn: { theme: 'forest' } })).toBe('forest');
   });
 });
