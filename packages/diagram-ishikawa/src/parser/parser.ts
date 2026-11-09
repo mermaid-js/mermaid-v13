@@ -398,7 +398,7 @@ class IshikawaParser {
     }));
     d.warning(
       ISHIKAWA_INDENT_CLAMPED,
-      `${many ? `${clamped.length} causes are` : 'A cause is'} indented less than the first cause (${shown(baseline)}), so ${many ? 'they are' : 'it is'} read as top-level causes: ${list}. Indent ${many ? 'them' : 'it'} at least as deep as the first cause to nest ${many ? 'them' : 'it'}.`,
+      `${many ? `${clamped.length} causes are` : 'A cause is'} indented less than the first cause (${shown(baseline)}), so ${many ? 'they are read as top-level causes' : 'it is read as a top-level cause'}: ${list}. Indent ${many ? 'them' : 'it'} at least as deep as the first cause to nest ${many ? 'them' : 'it'}.`,
       first.range,
       { related }
     );

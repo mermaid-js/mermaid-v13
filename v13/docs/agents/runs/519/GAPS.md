@@ -13,6 +13,13 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 
 ## T2 (#581)
 
+- `sanitizeText`: the oracle's DOMPurify is the identity, so v12's `sanitizeText` changed nothing parity sees. Choice: the model keeps text as written (entities as `&…;`, `<br>` kept) and the writer escapes it, as mindmap, sankey and gitGraph (D263) do.
+- Levels: v12's nodes keep no level, so model parity compares the depth in the tree (`[depth, text]` in pre-order) and the title (v12's is the effect). `IshikawaCause.level` is v12's DB level (`max(1, indent − baseline + 1)`), which can exceed the depth; T3 reads the depth from the tree.
+- Oracle finding: a `stop` takes one `SPACELINE`, so blank and comment lines pair up: a line after an even number of `SPACELINE` tokens (an odd number right after the header, as in `ishikawa-beta⏎⏎P`) is rejected. Blank lines in a row are one token; a `%%` line takes the blank lines before it. The parser reports such a line once and still reads it, so N errors give N diagnostics.
+- AST: flat in source order, `Effect` and `Cause` nodes (`text`, `indent`, a cause's `level`); the grammar's `@Node` is both. Symbols: one `cause` definition per cause; the effect is no symbol (D497 names causes only). Statement spans: `header`, `effect`, and `cause` spans nested by the tree (folding, T6).
+- `ISHIKAWA_EMPTY` only for a parse with no error (as venn's `VENN_EMPTY`), at the header. `ISHIKAWA_INDENT_CLAMPED` at the first clamped cause; `related` holds every clamped cause, the first included; the message lists three.
+- No probe yet (T6), as venn's T2. `detectIshikawa(src)` added for the parity adapter and T5.
+
 ## T3 (#582)
 
 - v12 details the spec words loosely (see `01-v12-ishikawa.md`): when every cause is a leaf both sides stay 250 instead of splitting the 500 pool; sub-cause slots spread over all of a cause's descendants on the cause bone, not per parent bone; cause labels (depth 1) are never wrapped by character count. Follow v12.
