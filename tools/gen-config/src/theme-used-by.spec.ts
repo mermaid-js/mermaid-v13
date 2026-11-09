@@ -69,9 +69,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Usecase until its renderer (#566).
+ * must read none (so it is removed as soon as it reads one). Empty since usecase's layout (#565).
  */
-const NOT_DRAWN_YET = new Set<string>(['usecase']);
+const NOT_DRAWN_YET = new Set<string>([]);
 /**
  * Core rows a type is listed on before its renderer reads them, because the core T0 that moved
  * them lands first: usecase's role colours fall back to `actorBkg` and `actorBorder` (#561, D474)
