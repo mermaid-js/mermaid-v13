@@ -1,0 +1,8 @@
+sankey:keyword
+":string
+Solar, roof:string
+":string
+,:punctuation
+Electricity:variable
+,:punctuation
+40.5:variable

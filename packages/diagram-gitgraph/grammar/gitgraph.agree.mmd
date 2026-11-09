@@ -1,0 +1,13 @@
+gitGraph TB:
+  accTitle: History
+  accDescr {
+    two lines
+  }
+  %% the first commits
+  commit id: "A" tag: "v1.0" type: HIGHLIGHT
+  branch develop order: 2
+  checkout develop
+  commit
+  checkout main
+  merge develop id: "M"
+  cherry-pick id: "A" parent: "M"

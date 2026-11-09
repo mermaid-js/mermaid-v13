@@ -1,8 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { harvest, harvestPath, hasV12History } from './harvest.ts';
-import { JISON_TYPES } from './types.ts';
-import type { JisonType } from './types.ts';
+import { JISON_TYPES } from '../tables.ts';
 
 /**
  * Every committed `corpus/<type>-v12-specs.json` is what `harvest <type>` writes today, so the
@@ -10,7 +9,7 @@ import type { JisonType } from './types.ts';
  * lacks it and skips.
  */
 describe.skipIf(!hasV12History())('harvest', () => {
-  it.each(Object.keys(JISON_TYPES) as JisonType[])(
+  it.each(Object.keys(JISON_TYPES))(
     'writes the committed %s corpus',
     (type) => {
       const path = harvestPath(type);

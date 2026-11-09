@@ -2,31 +2,23 @@
  * Builds the CodeMirror Lezer parsers, one per diagram type (D134, D135), from gen-grammar's
  * generated highlighting grammars (`packages/diagram-<id>/grammar/generated/<id>.grammar`,
  * #21) with lezer-generator. `pnpm --filter @mermaid-js/language-service-codemirror gen`
- * writes the output to `src/generated/`; `src/generated.spec.ts` fails when it is stale.
+ * writes the output to `src/generated/`, and the `LEZER_HIGHLIGHTERS` map at the end of
+ * `src/grammars.ts`, one row per parser; `src/generated.spec.ts` fails when either is stale.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildParserFile } from '@lezer/generator';
-import { LEZER_HIGHLIGHTERS } from '../src/grammars.ts';
+import { highlighted, ROOT, withMap } from './highlighted.ts';
 
-const ROOT = join(import.meta.dirname, '..', '..', '..');
 export const OUT_DIR = join(import.meta.dirname, '..', 'src', 'generated');
-
-/** The diagram ids with a parser: the rows of `LEZER_HIGHLIGHTERS` (src/grammars.ts). */
-export const HIGHLIGHTED_TYPES = Object.keys(LEZER_HIGHLIGHTERS);
+export const GRAMMARS_MODULE = join(import.meta.dirname, '..', 'src', 'grammars.ts');
 
 /**
- * Facet id → gen-grammar type (the package `diagram-<type>` and its `<type>.*` files), where
- * the two differ: the quadrant and gitGraph facets' ids are their diagram types,
- * `quadrantChart` (#317) and `gitGraph` (#374).
+ * The highlighted types (`scripts/highlighted.ts`): each diagram package whose manifest has a
+ * `language` entry. The files here are named after the facet id; the package's grammar files
+ * after its directory (`quadrant` for `quadrantChart`, #317).
  */
-const GRAMMAR_TYPES: Readonly<Record<string, string>> = {
-  quadrantChart: 'quadrant',
-  gitGraph: 'gitgraph',
-};
-
-/** The gen-grammar type of a facet id; the files here are named after the facet id. */
-const grammarType = (id: string): string => GRAMMAR_TYPES[id] ?? id;
+export const HIGHLIGHTED = highlighted();
 
 const grammarDir = (type: string) => join(ROOT, `packages/diagram-${type}/grammar/generated`);
 
@@ -37,8 +29,7 @@ const header = (type: string) =>
 /** File name in `src/generated/` → contents. */
 export function lezerFiles(): Map<string, string> {
   const files = new Map<string, string>();
-  for (const id of HIGHLIGHTED_TYPES) {
-    const type = grammarType(id);
+  for (const { id, type } of HIGHLIGHTED) {
     // The parser and the tokens import each other by the grammar's name; here they are the id's.
     const named = (text: string) =>
       type === id
@@ -59,4 +50,17 @@ export function lezerFiles(): Map<string, string> {
     );
   }
   return files;
+}
+
+const MAP_HEAD =
+  'export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promise<LRParser>>> =';
+
+/** `src/grammars.ts` (`current`) with its `LEZER_HIGHLIGHTERS` map rewritten: a row per type. */
+export function grammarsModule(current: string = readFileSync(GRAMMARS_MODULE, 'utf8')): string {
+  return withMap(
+    current,
+    MAP_HEAD,
+    HIGHLIGHTED,
+    (id) => `() => import('./generated/${id}.parser.js').then((m) => m.parser)`
+  );
 }
