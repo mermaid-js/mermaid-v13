@@ -45,7 +45,8 @@
     "@mermaid-js/diagram-radar": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",
-    "@mermaid-js/diagram-timeline": "workspace:*"
+    "@mermaid-js/diagram-timeline": "workspace:*",
+    "@mermaid-js/diagram-venn": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-class": {
@@ -97,6 +98,9 @@
       "optional": true
     },
     "@mermaid-js/diagram-timeline": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-venn": {
       "optional": true
     }
   },

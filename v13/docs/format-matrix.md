@@ -41,7 +41,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `railroadEbnf` | not ported | no | no |
 | `railroadAbnf` | not ported | no | no |
 | `railroadPeg` | not ported | no | no |
-| `venn` | not ported | no | no |
+| `venn` | `@mermaid-js/diagram-venn` | yes | no |
 | `wardley` | not ported | no | no |
 | `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |
 | `usecase` | not ported | no | no |

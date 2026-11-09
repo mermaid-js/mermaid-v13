@@ -22,7 +22,8 @@ export interface VennLayoutConfig {
 
 /**
  * The `VennDiagramConfig` defaults (`packages/core/schema/config.schema.yaml`), which the layout
- * falls back to until #501 generates them into the plugin's `configDefaults`.
+ * falls back to for a value it cannot use (`tools/gen-config/src/venn-padding.spec.ts` checks
+ * they equal the generated `vennConfigDefaults`).
  */
 export const VENN_CONFIG_DEFAULTS: VennLayoutConfig = {
   width: 800,
@@ -32,9 +33,9 @@ export const VENN_CONFIG_DEFAULTS: VennLayoutConfig = {
 };
 
 /**
- * The section defaults the plugin hands core (#501 passes the generated `vennConfigDefaults`
- * through this): every one but `padding`, so no default, whatever the schema says, reaches the
- * layout as if an author had set it.
+ * The section defaults the plugin hands core (the plugin passes the generated
+ * `vennConfigDefaults` through this): every one but `padding`, so no default, whatever the schema
+ * says, reaches the layout as if an author had set it.
  */
 export function vennPluginDefaults<T extends Readonly<Record<string, unknown>>>(
   defaults: T

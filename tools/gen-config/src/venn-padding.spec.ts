@@ -18,11 +18,11 @@ import { parsedVenn, vennTestTheme } from '../../../packages/diagram-venn/src/te
 import { SCHEMA_PATH, sectionDefaults } from './generate.ts';
 
 /**
- * D412's padding through core's real config resolution (spec #429 T3; venn's section joins
- * `SECTION_OWNERS` in #501, so the defaults here are built as `generate()` builds an owner's): the one solve's padding
+ * D412's padding through core's real config resolution (spec #429 T3; venn's section is in
+ * `SECTION_OWNERS`, and the defaults here are built as `generate()` builds an owner's): the one solve's padding
  * is an author's `venn.padding`, else 15, the padding v12 drew its circles with. The resolved
  * config cannot tell a default from an author's value, so the plugin hands core its section
- * defaults without `padding` (`vennPluginDefaults`, for #501's `configDefaults`): the solve keeps
+ * defaults without `padding` (`vennPluginDefaults`, the plugin's `configDefaults`): the solve keeps
  * 15 whatever default the schema generates, 8 (v12's schema) included. The layout's fallbacks
  * are the schema's defaults.
  */

@@ -145,7 +145,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   { type: 'railroadEbnf', pattern: /^\s*railroad-ebnf-beta/i },
   { type: 'railroadAbnf', pattern: /^\s*railroad-abnf-beta/i },
   { type: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i },
-  { type: 'venn', pattern: /^\s*venn-beta/ },
+  {
+    type: 'venn',
+    pattern: /^\s*venn-beta/,
+    id: 'venn',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-venn').then((m) => m.venn),
+  },
   { type: 'wardley', pattern: /^\s*wardley-beta/i },
   {
     type: 'cynefin',

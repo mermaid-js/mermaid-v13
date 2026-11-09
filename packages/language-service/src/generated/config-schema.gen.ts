@@ -1280,7 +1280,8 @@ export const configSchema: ConfigSchema = {
     "venn": {
       "$ref": "#/$defs/VennDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "wardley-beta": {
@@ -6418,7 +6419,9 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's default: a venn diagram with no theme set draws in `redux-color`. A `theme` from `initialize()` or the diagram text wins over this default; set here, it wins over the top-level `theme` for venn diagrams (a diagram section beats the top level within a config layer)."
           }
         },
         "look": {
@@ -6430,13 +6433,30 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the venn renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "width": {
           "description": "The width of the Venn diagram.",
           "type": "number",
           "minimum": 1,
           "default": 800,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, of at least 1; anything else lays out with the default 800, with no warning."
           }
         },
         "height": {
@@ -6445,7 +6465,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 450,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, of at least 1; anything else lays out with the default 450, with no warning."
           }
         },
         "padding": {
@@ -6454,14 +6476,18 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 15,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12 solved the layout twice: its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at `padding` when given and 15 otherwise, so the default draws v12's circles (D412). A negative or non-numeric value lays out at 15; one that leaves no room lays out at 0, with no warning."
           }
         },
         "useDebugLayout": {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Draws each region's inner circle and text-node cells as dashed shapes; a value that is not a boolean counts as `false`."
           }
         }
       }

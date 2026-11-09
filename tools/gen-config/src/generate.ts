@@ -46,6 +46,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   radar: 'packages/diagram-radar',
   cynefin: 'packages/diagram-cynefin',
   kanban: 'packages/diagram-kanban',
+  venn: 'packages/diagram-venn',
 };
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */

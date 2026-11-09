@@ -1,10 +1,14 @@
 {
   "name": "@mermaid-js/diagram-venn",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "Venn diagram plugin for Mermaid: parser, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-venn"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -40,5 +44,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "venn",
+    "types": [
+      "venn"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "venn",
+    "language": "./dist/language.js"
   }
 }
