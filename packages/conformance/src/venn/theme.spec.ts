@@ -12,6 +12,9 @@
  * match the differences found exactly, so none is unlisted and none is stale: D415's classic
  * light approximation (`base` and `forest`: `venn3` only; `neutral`: all eight slots) and D333(a)'s
  * rounding in `default`'s `venn3`.
+ *
+ * #501: with no theme set, both resolve venn's own default, `venn.theme: redux-color`, and a
+ * theme from `initialize()` or the front matter wins over it.
  */
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
@@ -24,6 +27,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { venn, type VennModel } from '@mermaid-js/diagram-venn';
+import { createMermaid } from 'mermaid';
 import { vennPaints } from '@mermaid-js/diagram-venn/testing';
 import { loadOracle } from '../oracle.ts';
 
@@ -31,11 +35,12 @@ interface V12 {
   mermaidAPI: {
     reset(): void;
     initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
+    getConfig(): { theme?: string; themeVariables: Record<string, unknown> };
   };
+  parse(text: string): Promise<unknown>;
 }
 
-await loadOracle();
+const oracle = await loadOracle();
 const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
 /** khroma, as v12 resolves it (a dependency of `mermaid@12.2.0`, not of conformance). */
 const khroma = createRequire(createRequire(import.meta.url).resolve('mermaid-v12'))('khroma') as {
@@ -266,5 +271,53 @@ describe('venn colours against v12 12.2.0 (#495, D415)', () => {
       '#ff0000',
       '#00ff00',
     ]);
+  });
+
+  it('draws a venn with no theme in redux-color, v12’s venn.theme default, which a theme from initialize() or the text beats (#501)', async () => {
+    const SOURCE = 'venn-beta\n  set A\n  set B\n';
+    const FRONT = (theme: string) => `---\nconfig:\n  theme: ${theme}\n---\n`;
+    /**
+     * The theme v12 resolves for a venn diagram: `parse` scopes the config to the detected
+     * type, as `render` does, and v12's venn DB (one shared object) reads it mid-parse.
+     */
+    const v12Theme = async (text: string, config: object): Promise<string | undefined> => {
+      const first = await oracle.parse(SOURCE);
+      if (!first.accepted) throw new Error(first.error);
+      const db = first.db as Record<string, (...args: unknown[]) => unknown>;
+      const add = db.addSubsetData!;
+      let seen: string | undefined;
+      db.addSubsetData = (...args) => {
+        seen = v12.mermaidAPI.getConfig().theme;
+        return add(...args);
+      };
+      try {
+        v12.mermaidAPI.reset();
+        v12.mermaidAPI.initialize(config);
+        await v12.parse(text);
+      } finally {
+        db.addSubsetData = add;
+      }
+      return seen;
+    };
+    const fill = (svg: string): string | undefined =>
+      /venn-set-0"[^>]*><path [^>]*fill="([^"]*)"/.exec(svg)?.[1];
+    const v13Fill = async (text: string, theme?: string): Promise<string | undefined> => {
+      const m = createMermaid();
+      if (theme) m.initialize({ theme: theme as ThemeName });
+      return fill((await m.render('v', text)).svg);
+    };
+    const cases: [string, string, object, string][] = [
+      ['no theme', SOURCE, {}, 'redux-color'],
+      ['initialize', SOURCE, { theme: 'dark' }, 'dark'],
+      ['front matter', FRONT('forest') + SOURCE, {}, 'forest'],
+      ['front matter over initialize', FRONT('neutral') + SOURCE, { theme: 'dark' }, 'neutral'],
+    ];
+    for (const [name, text, config, expected] of cases) {
+      expect(await v12Theme(text, config), name).toBe(expected);
+      const m = createMermaid();
+      m.initialize(config);
+      expect(fill((await m.render('v', text)).svg), name).toBe(await v13Fill(SOURCE, expected));
+    }
+    expect(await v13Fill(SOURCE)).toBe(hex(v12Vars('redux-color').venn1));
   });
 });

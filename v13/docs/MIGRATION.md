@@ -404,6 +404,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
+| `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -701,8 +702,8 @@ npm install @mermaid-js/plugin-hand-drawn
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
-  mindmap (every node shape, the rule under a plain node, edges) and kanban (columns and cards;
-  the priority bar is kept, D379). v12 did not sketch mindmap's plain node in the classic themes;
+  mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
+  the priority bar is kept, D379) and venn (circles and the overlaps a style fills, D319). v12 did not sketch mindmap's plain node in the classic themes;
   v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
@@ -710,7 +711,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Types v12 sketched that v13 has not ported yet (requirement, block, swimlanes,
-  venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
+  ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
   included (D305).
@@ -2037,3 +2038,70 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo`, `redux`, `redux-color` | No cynefin block: `default`'s literals, so boundaries and arrows `#333333`, text `#333`, labels `#131300`, whatever the theme's own colours, and a `lineColor` override changed nothing | Boundaries and arrows in the theme's `lineColor`, text in its `textColor`, labels in its `primaryTextColor` (`#000000`, `#333333`/`#28253d`, `#333333`/`#28253d`); a `lineColor` override moves them | D333(b), R-THEME-11 |
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
+
+## Venn diagram
+
+The venn parser accepts the v12 language (`venn-beta`; oracle parity over the corpus, grammar
+in [syntax/venn.md](./syntax/venn.md)), and the layout is a port of venn.js 2.0.0, the solver
+v12 drew with (D411): two- and three-set circles equal v12's. What changes (spec #429):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| The layout was solved twice per render: circles with venn.js's padding 15, text nodes and hand-drawn circles with `venn.padding` (8), so text sat on circles of another size (two sets: radius 210 against 217) | One solve, at an author's `venn.padding`, else 15: the circles are v12's, and text nodes and the hand-drawn sketch sit on them. `venn.padding`'s documented default is now 15 | D412 |
+| Four or more sets: venn.js started from `Math.random`, so a diagram could change between renders | A fixed-seed start: the same diagram draws the same way every time. Four or more sets are not laid out as v12 laid them out | D413, R-ARCH-6 |
+| Text nodes were HTML spans in a `foreignObject` that the browser wrapped; set and overlap labels were `tspan` lines measured with `getComputedTextLength()`, as many as venn.js's wrapping made | Both are SVG text laid out by core ([Labels and text](#labels-and-text)): `<br>`, entities, markdown, math and icons work. Labels wrap to the first set's radius and stop at three lines, the rest of the text joined into the third; text nodes wrap to their cell | D414, D225 |
+| Labels that the layout put on top of one another were drawn there | A label that would lie on an earlier area's label moves down below it, in v12's area order. No corpus diagram moves at the default canvas; v12's labels could collide only on very wide, short canvases | D414 |
+| `title "Team overlap"` (the syntax page's own example) drew its quotes | One pair of surrounding quotes is removed, as labels already lost theirs | D416 |
+| `venn-beta` with no sets: the render threw | Draws only the title, with one `VENN_EMPTY` warning | D417 |
+| A negative size was passed to venn.js; a size too large to square drew `NaN` | Laid out as 0, with one `VENN_INVALID_SIZE` warning naming them | D417 |
+| A set of size 0, and the overlaps touching it, were dropped silently | Still dropped, with one `VENN_ZERO_SET` warning | D417 |
+| A `text` or `style` naming an undeclared set or overlap was stored and silently not drawn | The same, with one `VENN_UNKNOWN_TARGET` warning | D417 |
+| A repeated `set` or `union` was kept as a second subset | The same drawing (the last size wins, each copy takes a slot), with one `VENN_DUPLICATE` warning | D417 |
+| A `venn` config value of the wrong type (`width: "wide"`, `padding: -4`) reached venn.js as it was | A number, or a numeric string, in the key's schema range; anything else lays out with the default, with no warning. A padding that leaves no room lays out at 0 | D417 |
+| `venn.theme` (default `redux-color`) chose venn's theme when no other layer set one | The same: honoured with v12's default, and a `theme` from `initialize()` or the diagram text wins over it, as in v12 | P2 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+## Venn SVG structure
+
+What changed in the venn diagram's SVG compared with v12 (spec #429). v12's classes and draw
+order are kept: `text.venn-title`, then a group translated by the title height holding each
+`g.venn-area.venn-circle.venn-set-<n>` (with `data-venn-sets`), each
+`g.venn-area.venn-intersection`, and `g.venn-text-nodes` > `g.venn-text-area` >
+`text.venn-text-node`; each area holds its `path` and `text.label`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="venn"`, a `<style>` scoped by the id that sized the title (`32px`, over its `font-size` attribute) and the text nodes | No root `id`; `class="mermaid mermaid-venn"`, `role="img"`, `aria-roledescription="venn"` (kept), `data-mermaid-version`, and `<title id="<id>-title">` from the title, since venn has no `accTitle`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes, opacities and font sizes are presentation attributes, colours reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-A11Y-1, D133, R-THEME-3 |
+| Paint set inline with `style="fill: …; fill-opacity: …"` on each path and label | Presentation attributes (`fill`, `fill-opacity`, `stroke`, `stroke-width`, `stroke-opacity`, `font-size`) | R-SEC-2 |
+| Text nodes: `foreignObject` > HTML `span` per cell | `text.venn-text-node` per node, inside its `g.venn-text-area`; no `foreignObject` | D414, R-SEC-2 |
+| Title and labels placed by `dominant-baseline` (`middle`) and the title at `x="50%"` | Each placed by its measured box at the same centre, with `text-anchor="middle"` and no `dominant-baseline` | Core's label layout |
+| No source mapping | `data-ast` on each drawn set's and overlap's `g.venn-area` and each `text.venn-text-node`; `data-id` (the area's sets joined with `_`, a text node's id, `title`) on those and on labels, which carry no `data-ast`; `data-venn-sets` kept | R-PARSE-8, pitfall 12 |
+| An area venn.js marked disjoint was drawn off the canvas (a label at y −1000, a `M 0 0` path); an overlap with no label wrote an empty `text` | Neither is written | Nothing invisible is drawn |
+| `style A stroke-width: 4px` reached the CSS as `4 px` (v12 joins value tokens with a blank), which the browser dropped, so the circle kept its default width | The number is read, so the circle is drawn 4 wide | v12's evident intent |
+| The `viewBox` was always `0 0 width height` | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) covers whatever is drawn, so a wide stroke or a long title can grow it | D224 |
+| `look: neo` and the redux and neo themes: the same shapes as the classic themes | The same: venn differs between families by colour only | D227 |
+
+### Venn theme colours
+
+Each set `i` takes the `i mod n`th of the `venn1`…`venn8` slots that are set, else
+`primaryColor`, as in v12, and an author's `venn<k>` wins in every theme. With a palette
+(`borderColorArray`, which `redux-color` and `redux-dark-color` carry, or an author's in any
+theme), an unset slot `k` takes the palette's entry `k − 1`, as those two themes filled theirs in
+v12. `redux`, `redux-dark`, `neo` and `neo-dark` set no slot, so every circle is `primaryColor`,
+as in v12. The title is `vennTitleTextColor` (v12's `titleColor || tertiaryTextColor`), overlap
+labels and text nodes `vennSetTextColor`. What changed
+(`packages/conformance/src/venn/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `base`, `forest` | `venn3` darkened `tertiaryColor` by 30 | By 40, as `default`: one classic light formula, so the third set is 10 % darker than in v12. Set `venn3` to draw v12's | D415 |
+| `neutral` | The eight slots were its `cScale` greys (`#555`, `#F4F4F4`, …) | `default`'s formula on neutral's colours. Set `venn1`…`venn8` to draw v12's | D415 |
+| `default` | `venn3` `#b5ff20`, from the unrounded `tertiaryColor` | `#b9ff20`, from the hex | D333(a) |
+| Every theme | A set label was the circle colour lightened or darkened by 30 in the browser | The same colour, computed when the diagram is drawn: a host's `--mermaid-venn<k>` override, or the dark half of `theme: 'auto'`, does not move it | Labels are a literal colour |
+
+Hand-drawn (`@mermaid-js/plugin-hand-drawn`): v12 sketched each circle at roughness 0.7 with a
+hachure of the circle colour at 0.3 alpha, fill weight 2, gap 8 and angle −41 + 60 per set, and a
+styled overlap cross-hatched (gap 6, angle 60, no stroke). v13 sketches each circle and each
+overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
+hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
+no per-call options (D319, D302).
