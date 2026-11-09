@@ -50,6 +50,7 @@ import type {
   PlacedLabel,
   Segment,
 } from '../layout/index.ts';
+import { ishikawaUseMaxWidth } from '../config.ts';
 import type { IshikawaModel } from '../model.ts';
 
 /** What the ishikawa renderer reads from the render context. */
@@ -261,9 +262,9 @@ function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRende
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  // The section's default is true, v12's runtime value (spec #519 §Integration).
-  const maxWidth =
-    (config.ishikawa as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
+  const maxWidth = ishikawaUseMaxWidth(
+    config.ishikawa as Readonly<Record<string, unknown>> | undefined
+  );
   const title = model.title?.trim() || (layout.head && plainText(layout.head.label));
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();

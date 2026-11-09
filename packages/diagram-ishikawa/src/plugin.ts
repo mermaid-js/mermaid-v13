@@ -14,7 +14,7 @@ import { renderIshikawa } from './render/index.ts';
  * the outline as a lazy `ascii` entry, D498; until then core throws `UnsupportedFormatError` for
  * `format: 'ascii'`). No theme table: it reads only shared variables. The registry loads it from
  * the package's `mermaid` manifest (#585); `configDefaults` are the generated `ishikawa` section
- * defaults (`diagramPadding` 20, `useMaxWidth` true, v12's runtime value).
+ * defaults, the one source of every ishikawa default (`src/config.ts` falls back to them too).
  */
 export const ishikawa = {
   id: 'ishikawa',

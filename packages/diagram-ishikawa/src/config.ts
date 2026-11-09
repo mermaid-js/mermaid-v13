@@ -1,9 +1,11 @@
 /**
- * The `ishikawa` options the layout reads. The config resolver does not check value types (a
- * directive can set `"diagramPadding": "wide"`), and ishikawa has no warning code for config, so
- * a value the layout cannot use falls back to its default without a warning: a number, or a
- * numeric string as its number, at or above the schema's minimum.
+ * The `ishikawa` options the layout and the renderer read. The config resolver does not check
+ * value types (a directive can set `"diagramPadding": "wide"`), and ishikawa has no warning code
+ * for config, so a value that cannot be used falls back to its default without a warning: for
+ * `diagramPadding` a number, or a numeric string as its number, at or above the schema's
+ * minimum; for `useMaxWidth` a boolean.
  */
+import type { IshikawaDiagramConfig } from '@mermaid-js/core/config';
 import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
 
 /** The `ishikawa` options the layout reads, every one set. */
@@ -13,13 +15,14 @@ export interface IshikawaLayoutConfig {
 }
 
 /**
- * The defaults the layout falls back to for a value it cannot use: the section's generated
- * defaults (`packages/core/schema/config.schema.yaml`, `gen:config`), which the plugin also hands
- * core as its `configDefaults`.
+ * The defaults for a value that cannot be used: the section's generated defaults
+ * (`packages/core/schema/config.schema.yaml`, `gen:config`), the one source, which the plugin
+ * also hands core as its `configDefaults`. The schema gives both keys a default (`config.spec.ts`
+ * checks they are set), so the generated object has them although its type leaves them optional.
  */
-const ISHIKAWA_CONFIG_DEFAULTS: IshikawaLayoutConfig = {
-  diagramPadding: ishikawaConfigDefaults.diagramPadding ?? 20,
-};
+export const ISHIKAWA_CONFIG_DEFAULTS = ishikawaConfigDefaults as Required<
+  Pick<IshikawaDiagramConfig, 'diagramPadding' | 'useMaxWidth'>
+>;
 
 /** A finite number, or a string that reads as one; else undefined. */
 function configNumber(value: unknown): number | undefined {
@@ -38,4 +41,12 @@ export function ishikawaLayoutConfig(
     diagramPadding:
       padding !== undefined && padding >= 0 ? padding : ISHIKAWA_CONFIG_DEFAULTS.diagramPadding,
   };
+}
+
+/** Whether the root draws at 100 % width with a `max-width` (`ishikawa.useMaxWidth`). */
+export function ishikawaUseMaxWidth(
+  section: Readonly<Record<string, unknown>> | undefined
+): boolean {
+  const value = section?.useMaxWidth;
+  return typeof value === 'boolean' ? value : ISHIKAWA_CONFIG_DEFAULTS.useMaxWidth;
 }

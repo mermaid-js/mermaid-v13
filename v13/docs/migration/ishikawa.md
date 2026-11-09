@@ -2,20 +2,21 @@
 
 The ishikawa parser accepts the v12 language (`ishikawa` and `ishikawa-beta`, any case; oracle
 parity over the corpus, grammar in [syntax/ishikawa.md](./syntax/ishikawa.md)), and the layout
-is v12's fishbone geometry, ported into the package (D491): with the two overlap fixes below
-off, every compared corpus source lays out as v12 drew it. What changes (spec #519):
+is v12's fishbone geometry, ported into the package (D491). The layout also fixes two v12
+overlaps (below), which await a maintainer decision (D499); with those fixes off, every
+compared corpus source lays out as v12 drew it. What changes (spec #519):
 
 | v12 | v13 | Why |
 | --- | --- | --- |
 | The effect was also stored as the diagram title (`setDiagramTitle`); no title was drawn, and the SVG had no `<title>` | No title is drawn. The SVG `<title>` is the front-matter `title` when one is given, else the effect as drawn, as plain text (entities decoded, a `<br>` or a wrap a space) | D492, D218, R-A11Y-1 |
 | Cause and sub-cause labels were laid out at the config `fontSize` (16) and drawn at the theme's | Measured and drawn at the theme's `fontSize`, one source: classic themes are unchanged; in `neo` and the redux themes (14 px) the bones fit the text they draw | D493 |
-| The effect was drawn at 14 px, weight 600, and wrapped at `floor(110 / (fontSize × 0.6))` characters of the config `fontSize` (11) | The same 14 px 600 in every theme, measured, and wrapped at 110 px scaled by the size it is drawn at, `110 × 14 / 16 = 96.25` px in every theme: the same 11 characters at 0.6 em | D493, D495 |
-| Sub-causes wrapped at 15 characters by word count, `<br>` counted as characters; cause labels never wrapped | Core's label layout (D225): entities, `<br>` forms, math and icons work. Sub-causes wrap at `144 × fontSize / 16` px; cause labels still never wrap, only break at `<br>` | D495 |
+| The effect was drawn at 14 px, weight 600, and wrapped at `max(6, floor(110 / (fontSize × 0.6)))` characters of the config `fontSize` (11) | The same 14 px 600 in every theme (D493), measured, and wrapped at 110 px scaled by the size it is drawn at: `110 × 14 / 16 = 96.25` px in every theme, the same 11 characters at 0.6 em. D495's literal rule, `110 × fontSize / 16`, would give 110 px (13 characters) in the classic themes | Awaits a maintainer decision (D499) |
+| Sub-causes wrapped greedily at 15 characters, breaking between words (a longer word kept whole), `<br>` counted as characters; cause labels never wrapped | Core's label layout (D225): entities, `<br>` forms, math and icons work. Sub-causes wrap at `144 × fontSize / 16` px; cause labels still never wrap, only break at `<br>` | D495 |
 | Labels passed through `sanitizeText` (DOMPurify) | Text is escaped when written, never sanitised: `<b>`, `<T>` and the like are shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1 |
-| The first pair of causes always started 20 px left of the head, so a short leaf cause's label box could sit on the head (`baseline-clamp`, fixture 13) | A pair whose box would reach over the head's back on the head's rows starts further left by the overlap | The layout invariant (no label over the head) |
-| A leaf cause's bone was 20 % of its side's length, so a tall (`<br>`) label on a short bone was drawn across the spine | A cause bone is at least long enough that its label box clears the spine (`(h/2 + 2 − 11) / sin 82°`). With both fixes, 66 of the 481 compared corpus sources move; the rest equal v12 | The layout invariant (no label across the spine) |
+| The first pair of causes always started 20 px left of the head, so a short leaf cause's label box could sit on the head (`baseline-clamp`, fixture 13) | A pair whose box would reach over the head's back on the head's rows starts further left by the overlap | The layout invariant (no label over the head); a visible change no D-id covers, awaiting a maintainer decision (D499) |
+| A leaf cause's bone was 20 % of its side's length, so a tall (`<br>`) label on a short bone was drawn across the spine | A cause bone is at least long enough that its label box clears the spine (`(h/2 + 2 − 11) / sin 82°`). With both fixes, 66 of the 481 compared corpus sources move; the rest equal v12 | The layout invariant (no label across the spine); a visible change no D-id covers, awaiting a maintainer decision (D499) |
 | Causes indented less than the first cause were read as top-level causes, silently | The same reading, with one `ISHIKAWA_INDENT_CLAMPED` warning listing every clamped cause (`related`); the editor reports each one as information | D496 |
-| An empty body (no effect) drew an empty SVG, silently | The same, with one `ISHIKAWA_EMPTY` warning | D496 |
+| An empty body (no effect) drew an empty SVG with no `viewBox`, silently | Still nothing drawn, with one `ISHIKAWA_EMPTY` warning; the root gets a `viewBox` of the padding about the origin ([Ishikawa SVG structure](#ishikawa-svg-structure)) | D496 |
 | The `viewBox` was `getBBox()` of the drawing plus `diagramPadding`, strokes left out | Computed from the layout, half of each stroke included (≤ 1 px larger), plus `diagramPadding` | D224 |
 | `ishikawa.useMaxWidth` was documented with default `false`, but the runtime config gave `true` | Default `true`, the value v12 drew with ([Changed defaults](#changed-defaults)) | P2 |
 | An `ishikawa.diagramPadding` that was not a number reached the renderer as it was | A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning | No `NaN` in the output |
@@ -43,8 +44,9 @@ each with its `line.ishikawa-branch`, `g.ishikawa-label-group` (`rect.ishikawa-l
 
 Hand-drawn (`@mermaid-js/plugin-hand-drawn`): v12 sketched the head and label boxes at roughness
 1.5 with a hachure of `mainBkg` (fill weight 2.5, gap 5, stroke 2), the spine and bones at
-roughness 1.5, and the arrowheads as rough solid triangles. v13 sketches the head and label boxes
-as `node` outlines and the spine and bones as `edge` outlines, at the drawer's defaults for those
-roles (node roughness 0.7, hachure fill weight 1.5, gap 1.5; edge roughness 0.3): the outline
-hook takes no per-call options, and D304 keeps roughness below 1. Arrowheads are drawn plain, as
-without the look (D302). Text is never sketched, as in v12 (D494).
+roughness 1.5, and the arrowheads as rough solid triangles. D494 asks for those parameters; v13
+does **not** reproduce them. It sketches the head and label boxes as `node` outlines and the spine
+and bones as `edge` outlines at the drawer's defaults for those roles (node roughness 0.7,
+hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
+options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
+are drawn plain, as without the look (D302); text is never sketched, as in v12.

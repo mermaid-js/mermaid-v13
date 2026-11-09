@@ -55,7 +55,7 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 - Config beyond the ticket, as the other ported sections: `ishikawa.theme` honoured (core's section theme, tested), `useWidth` ignored (v12 never read it), `unevaluatedProperties: false`. `useMaxWidth`'s v12 runtime `true` checked against 12.2.0's `getConfig()`.
 - The package is public at `13.0.0-alpha.0` with three changesets, as venn's T5: `mermaid` depends on it.
 - Shared prose: MIGRATION.md's hand-written hand-drawn paragraph lists ishikawa among the sketched types (it named it as not ported). No `tools/workspace/*` change: the 22 pre-manifest failures pass with the manifest.
-- R-LANG-4: one hand run at load ~8 gave a 5.2 ms cycle median on a generated 50k document (handoff); still no committed fixture, CLI or budget spec, so it is unmet as a gate, as for kanban and mindmap.
+- R-LANG-4 stays open (the T6 item): one hand run at load ~8 gave a 5.2 ms cycle median on a generated 50k document (handoff), still not a steady machine, and there is no committed fixture, CLI or budget spec.
 
 ## T6 (#584)
 
