@@ -24,6 +24,12 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 
 - v12 details the spec words loosely (see `01-v12-ishikawa.md`): when every cause is a leaf both sides stay 250 instead of splitting the 500 pool; sub-cause slots spread over all of a cause's descendants on the cause bone, not per parent bone; cause labels (depth 1) are never wrapped by character count. Follow v12.
 - `w.label` only centres or left-aligns; v12's sub-cause labels are end-anchored, so the layout computes the centre point itself.
+- Closed: all three v12 details are followed, and checked against v12 itself (`conformance/src/ishikawa/layout-parity.spec.ts`: mermaid\@12.2.0's renderer run under vitest's jsdom with a fixed-size `getBBox`; 415 sources equal within 1e-6). Every label carries its box (`x`, `y`, `width`, `height`) and v12's text point (`anchor`), so T4 centres it with `w.label` without knowing the anchor rules.
+- **Visible change, for the maintainer (D499 if it needs a decision):** two v12 overlaps the spec's invariant forbids are fixed. (1) A pair whose cause box would reach over the head's back on the head's rows starts further left by the overlap (v12 always started the first pair at −20, so a short leaf cause's box sat on the head: `baseline-clamp`, `title-and-acc-lines-as-causes`, fixture 13). (2) A cause bone is at least long enough that its label box clears the spine (`(h/2 + 2 − 11) / sin 82°`; v12 drew a tall `<br>` label on a 15 px leaf bone across the spine). 66 of the parity corpus's 481 compared sources move; the rest equal v12. MIGRATION.md row for T5.
+- Bounds include half of each stroke (spine and cause bones 2, sub-bones 1, head and boxes 2, v12's style sheet), so they cover what is drawn (D224); v12's `getBBox` left strokes out (≤ 1 px). An empty body (no effect) has no head or spine and bounds of the padding about the origin.
+- Arrowheads are triangles in the layout (`bone.arrow`): 12 × 12 on cause bones, 6 × 6 on sub-bones, tip at the start (closes T4's marker-size item for the geometry; T4 draws them).
+- Theme reads: the layout reads `fontSize` and `fontFamily`, so `ishikawa` joins core's `TEXT_USERS` (`vocabulary.ts`, both rows' `usedBy`) and leaves `theme-used-by.spec.ts`'s `NOT_DRAWN_YET` (now empty); `theme-variables.md` regenerated. Core size unchanged (94,352 B gz before and after; `usedBy` is not bundled).
+- `ishikawa.diagramPadding` is read through `src/config.ts` with the schema's default 20, since the section is `pending` and core resolves no default for it until T5.
 
 ## T4 (#583)
 
@@ -33,6 +39,7 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 ## T5 (#585)
 
 - From #581: a MIGRATION.md row in the Ishikawa section, like class's `sanitizeText` row: "Labels passed through `sanitizeText` (DOMPurify) | Text is escaped when written, never sanitised: `<b>`, `<T>` and the like are shown as written, and known HTML tags are read as the label subset | R-SEC-1". Also D492 (effect kept apart from the title) and D496 (the two warnings) rows.
+- From #582: MIGRATION.md rows for the two overlaps the layout fixes (a pair moved left off the head, a bone grown so its box clears the spine) and for the head label measured at 14 px 600 with a 110 px wrap (D493, D495). `configDefaults` should carry `diagramPadding` 20, which `src/config.ts` duplicates until then.
 - The spec's line references are stale: the registry row is at `registry.gen.ts:154`, the schema block at `config.schema.yaml:2320` (`useMaxWidth` :2334). No spec lists ishikawa as unsupported; add the "now renders" spec fresh.
 
 ## T6 (#584)

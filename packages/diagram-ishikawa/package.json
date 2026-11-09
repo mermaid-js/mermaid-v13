@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-ishikawa",
   "version": "0.0.0",
   "private": true,
-  "description": "Ishikawa (fishbone) diagram plugin for Mermaid: parser, model and AST (layout and renderer to follow).",
+  "description": "Ishikawa (fishbone) diagram plugin for Mermaid: parser, model, AST and layout (renderer to follow).",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -11,6 +11,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "mermaid-source": "./src/testing.ts",
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "files": [

@@ -1,7 +1,8 @@
 /**
  * `@mermaid-js/diagram-ishikawa`: the ishikawa (fishbone) diagram plugin (spec #519): the
- * parser, its model and AST, detection, the lexer, and the codes of the warnings it raises. The
- * layout, renderer, plugin export and manifest land with the other tickets of that spec.
+ * parser, its model and AST, detection, the lexer, the codes of the warnings it raises, and the
+ * fishbone layout. The renderer, plugin export and manifest land with the other tickets of that
+ * spec.
  */
 export {
   detectIshikawa,
@@ -13,3 +14,5 @@ export {
 export type * from './parser/index.ts';
 export type * from './model.ts';
 export { ISHIKAWA_EMPTY, ISHIKAWA_INDENT_CLAMPED } from './codes.ts';
+export { layoutIshikawa, ISHIKAWA_METRICS } from './layout/index.ts';
+export type * from './layout/index.ts';
