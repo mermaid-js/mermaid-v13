@@ -45,9 +45,9 @@ import type { ChevrotainPair, UsecaseLex } from './lexer-oracle.ts';
  *   reading, shared by every type (pie's, radar's and wardley's gates list it too), not a
  *   usecase lexer rule. The line-start case's copy CR-cut by a directive leaves v12 the same
  *   text as v13, so it is gated.
- * - {@link NOT_REACHED}: the sources v12 never lexed as usecase: the cases written so
+ * - Not reached: the sources v12 never lexed as usecase, asserted exactly: {@link UNDETECTED}
  *   (`usecase-betax` and `usecase` are not detected) in every variant, and the `commented()`
- *   copies of short sources, whose cut falls inside the header (asserted).
+ *   copies of short sources whose cut splits the header ({@link cutsHeader}).
  */
 const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
 const CLOSED_LATER = "core closes the unclosed %%{ at the added directive's }%%";
@@ -63,40 +63,21 @@ const EXCLUDED: ReadonlyMap<string, string> = new Map([
     .map((id): [string, string] => [id, UNCLOSED]),
   ['usecase-cases/directive-unclosed-in-line (CR cut by a directive)', CLOSED_LATER],
 ]);
-const CUT_HEADER = 'the commented() cut falls inside the header';
-const NOT_REACHED: ReadonlyMap<string, string> = new Map([
+/** The cases v12 does not detect as usecase, in every variant. */
+const UNDETECTED: ReadonlyMap<string, string> = new Map([
   ...every('usecase-cases/keywords-header-glued').map(
     (id) => [id, 'usecase-betax is not detected'] as const
   ),
   ...every('usecase-cases/header-not-usecase').map(
     (id) => [id, 'usecase alone is not detected'] as const
   ),
-  ...[
-    'e2e/pr-check/empty-diagram.mmd',
-    'v12-specs/usecase/usecase.parser.spec.ts#1',
-    'v12-specs/usecase/usecase.parser.spec.ts#5',
-    'v12-specs/usecase/usecase.parser.spec.ts#53',
-    'v12-specs/parser/usecase.parser.spec.ts#18',
-    'v12-specs/parser/usecase.parser.spec.ts#19',
-    'v12-specs/parser/usecase.parser.spec.ts#22',
-    'v12-specs/parser/usecase.parser.spec.ts#28',
-    'v12-specs/parser/usecase.parser.spec.ts#37',
-    'v12-specs/parser/usecase.parser.spec.ts#38',
-    'v12-specs/parser/usecase.parser.spec.ts#39',
-    'v12-specs/parser/usecase.parser.spec.ts#40',
-    'v12-specs/parser/usecase.parser.spec.ts#42',
-    'usecase-cases/header-trailing',
-    'usecase-cases/header-only',
-    'usecase-cases/header-newline',
-    'usecase-cases/header-bom',
-    'usecase-cases/cr-end',
-    'usecase-cases/front-matter',
-    'line separators 0',
-    'line separators 8',
-    'line separators 9',
-    'line separators 12',
-  ].map((id) => [`${id} (commented)`, CUT_HEADER] as const),
 ]);
+/**
+ * A `commented()` copy whose cut splits the header (a one- or two-line body): v12 detects no
+ * usecase there. Decided from the source alone, not from the oracle.
+ */
+const cutsHeader = (item: CorpusItem) =>
+  item.id.endsWith(' (commented)') && !bodyOf(item.source).includes('usecase-beta');
 const ERROR = 'LEXICAL_ERROR';
 /** `src` after its front matter, which may name the header in a description. */
 const bodyOf = (src: string) => src.slice(/^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0].length ?? 0);
@@ -188,7 +169,10 @@ describe('usecase lexer parity with mermaid@12.2.0 (Chevrotain)', () => {
     const diffs: string[] = [];
     const excluded: string[] = [];
     const unreached: string[] = [];
-    const headerKept: string[] = [];
+    const notReached = new Set([
+      ...UNDETECTED.keys(),
+      ...items.filter(cutsHeader).map((i) => i.id),
+    ]);
     const accepted: string[] = [];
     let compared = 0;
     let e2e = 0;
@@ -197,13 +181,6 @@ describe('usecase lexer parity with mermaid@12.2.0 (Chevrotain)', () => {
       const lexed = await oracle.lex(item.source);
       if (!lexed) {
         unreached.push(item.id);
-        // For the reason given: the header no longer appears whole.
-        if (
-          NOT_REACHED.get(item.id) === CUT_HEADER &&
-          bodyOf(item.source).includes('usecase-beta')
-        ) {
-          headerKept.push(item.id);
-        }
         continue;
       }
       compared++;
@@ -224,16 +201,15 @@ describe('usecase lexer parity with mermaid@12.2.0 (Chevrotain)', () => {
       if (tokens) diffs.push(`${item.id} tokens ${tokens}`);
     }
     process.stdout.write(
-      `usecase lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
+      `usecase lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error, ${notReached.size} not reached\n`
     );
     expect(diffs).toEqual([]);
     expect(excluded.sort()).toEqual([...EXCLUDED.keys()].sort());
     expect(accepted).toEqual([]);
-    expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
-    expect(headerKept).toEqual([]);
+    expect(unreached.sort()).toEqual([...notReached].sort());
     // Every e2e fixture reaches the usecase lexer: 22 in `nightly-check/`, 10 in `pr-check/`.
     expect(e2e).toBe(32);
     expect(errors).toBeGreaterThan(20);
-    expect(compared).toBe(items.length - NOT_REACHED.size);
+    expect(compared).toBe(items.length - notReached.size);
   }, 300_000);
 });

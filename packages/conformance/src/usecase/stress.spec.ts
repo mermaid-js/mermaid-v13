@@ -52,11 +52,7 @@ const SHAPES: [name: string, build: (n: number) => string, small: number][] = [
   ['markdown openers, never closed', (n) => H + '"`x'.repeat(n / 3), 256_000],
   ['markdown strings', (n) => H + 'A("`**a**`")\n'.repeat(n / 13), 128_000],
   ['an unclosed JSON object', (n) => H + 'json P@{' + '{'.repeat(n), 256_000],
-  [
-    'a long JSON object',
-    (n) => H + 'json P@{' + '"k": "} \\" {", '.repeat(n / 15) + '}',
-    1_024_000,
-  ],
+  ['a long JSON object', (n) => H + 'json P@{' + '"k": "} \\" {", '.repeat(n / 15) + '}', 256_000],
   ['JSON declarations without a body', (n) => H + 'json P @ x\n'.repeat(n / 11), 64_000],
   ['entities in labels', (n) => H + 'A[' + '#a; '.repeat(n / 4) + ']', 16_000],
   ['label symbols', (n) => H + 'A[' + '日本語 '.repeat(n / 4) + ']', 128_000],

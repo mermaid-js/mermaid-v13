@@ -35,6 +35,8 @@
  */
 // cspell:words accdescr acctitle markerless
 import {
+  AMP,
+  APOSTROPHE,
   AT,
   BACKSLASH,
   BACKTICK,
@@ -45,6 +47,7 @@ import {
   DASH,
   DOT,
   DQUOTE,
+  EQUALS,
   firstHole,
   GT,
   HASH,
@@ -59,16 +62,24 @@ import {
   LBRACKET,
   LF,
   localOffset,
+  LOWER_A,
+  LOWER_O,
+  LOWER_X,
   LPAREN,
   LT,
   PERCENT,
   PIPE,
+  QUESTION,
   QUOTE,
   RBRACE,
   RBRACKET,
   RPAREN,
   SEMI,
+  SLASH,
   SourceOffsets,
+  SPACE,
+  STAR,
+  TAB,
   TILDE,
   TokenWriter,
   UNDERSCORE,
@@ -81,9 +92,12 @@ const SKIP = -1;
 /** A memo not set yet. */
 const UNSET = -2;
 
-const APOSTROPHE = 0x27;
-const LOWER_O = 0x6f;
-const LOWER_X = 0x78;
+const BANG = 0x21;
+const DOLLAR = 0x24;
+const PLUS = 0x2b;
+const LOWER_J = 0x6a;
+/** The bit that makes an ASCII letter lower case. */
+const CASE_BIT = 0x20;
 
 const MODE_DEFAULT = 0;
 const MODE_JSON = 1;
@@ -103,15 +117,15 @@ const SINGLE: ReadonlyMap<number, number> = new Map([
 
 /** `[!#$&*+/=?^_|~]`: `CSS_PUNCTUATION` (its `_` is always an `IDENTIFIER` first). */
 const isCssPunctuation = (c: number) =>
-  c === 0x21 ||
+  c === BANG ||
   c === HASH ||
-  c === 0x24 ||
-  c === 0x26 ||
-  c === 0x2a ||
-  c === 0x2b ||
-  c === 0x2f ||
-  c === 0x3d ||
-  c === 0x3f ||
+  c === DOLLAR ||
+  c === AMP ||
+  c === STAR ||
+  c === PLUS ||
+  c === SLASH ||
+  c === EQUALS ||
+  c === QUESTION ||
   c === CARET ||
   c === UNDERSCORE ||
   c === PIPE ||
@@ -120,9 +134,16 @@ const isCssPunctuation = (c: number) =>
 const isLabelPunctuation = (c: number) =>
   c === SEMI || c === LT || c === GT || c === BACKSLASH || c === BACKTICK;
 /** `[^\t\n\r !-~]`: a `LABEL_SYMBOL` character. */
-const isSymbol = (c: number) => !(c === 9 || c === LF || c === CR || (c >= 0x20 && c <= 0x7e));
+const isSymbol = (c: number) => !(c === TAB || c === LF || c === CR || (c >= SPACE && c <= TILDE));
 
-/** The text v12's lexer received, and where each of its characters is in the source. */
+/**
+ * The text v12's lexer received, and where each of its characters is in the source.
+ *
+ * {@link start} and {@link end} share one forward cursor over the source view's runs when the
+ * text needed no rewrite: a call costs O(runs passed since the previous call). Call them in
+ * non-decreasing `k` (as the lexer and `usecaseTokens` do); jumping back and forth over a text
+ * cut by many comment lines makes the total cost quadratic.
+ */
 export interface LexText {
   /** v12's text: trimmed at its start, CRs as LF, entity placeholders, `\n` appended. */
   readonly text: string;
@@ -233,8 +254,10 @@ class UsecaseLexer {
   private kind = SKIP;
 
   // Memos that keep failed or repeated scans linear.
-  /** A `"` (`[0]`) or `'` (`[1]`) string starting before this fails: no closing quote. */
-  private readonly stringFails = [-1, -1];
+  /** A `"` string starting before this fails: its line has no closing quote. */
+  private doubleFails = -1;
+  /** A `'` string starting before this fails: its line has no closing quote. */
+  private singleFails = -1;
   /** Where the last `}` search started and what it found (-1: none). */
   private braceFrom = -1;
   private braceAt = UNSET;
@@ -343,11 +366,11 @@ class UsecaseLexer {
    */
   private letters(p: number, c: number): number {
     const { text } = this;
-    if (c === 0x61 && text.startsWith('acc', p) && this.lineStart(p)) {
+    if (c === LOWER_A && text.startsWith('acc', p) && this.lineStart(p)) {
       const e = this.accessibility(p);
       if (e >= 0) return e;
     }
-    if (c === 0x6a && text.startsWith('json', p)) {
+    if (c === LOWER_J && text.startsWith('json', p)) {
       const e = this.jsonStart(p + 4);
       if (e >= 0) return this.match(T.JsonDeclarationStart, e);
     }
@@ -367,33 +390,29 @@ class UsecaseLexer {
     if (!anyCase) return text.startsWith(word, p);
     for (let k = 0; k < word.length; k++) {
       const c = text.charCodeAt(p + k);
-      if ((c | 0x20) !== word.charCodeAt(k) || !isLetter(c)) return false;
+      if ((c | CASE_BIT) !== word.charCodeAt(k) || !isLetter(c)) return false;
     }
     return true;
   }
 
   /**
    * `ACC_DESCR_BLOCK` (`accDescr[\t ]*{` to the first `}`), `ACC_TITLE_LINE` and
-   * `ACC_DESCR_LINE` (`acc…[\t ]*:` and the rest of the line). The caller checked the line start.
+   * `ACC_DESCR_LINE` (`acc…[\t ]*:` and the rest of the line), in v12's order; `accTitle` and
+   * `accDescr` exclude each other, so one prefix test and one blank run serve all three. The
+   * caller checked the line start.
    */
   private accessibility(p: number): number {
     const { text } = this;
-    if (text.startsWith('accDescr', p)) {
-      const b = this.blanks(p + 8);
-      if (text.charCodeAt(b) === LBRACE) {
-        const close = this.brace(b + 1);
-        if (close >= 0) return this.match(T.AccDescrBlock, close + 1);
-      }
+    const descr = text.startsWith('accDescr', p);
+    if (!descr && !text.startsWith('accTitle', p)) return -1;
+    const b = this.blanks(p + 8);
+    const c = text.charCodeAt(b);
+    if (descr && c === LBRACE) {
+      const close = this.brace(b + 1);
+      if (close >= 0) return this.match(T.AccDescrBlock, close + 1);
     }
-    if (text.startsWith('accTitle', p)) {
-      const b = this.blanks(p + 8);
-      if (text.charCodeAt(b) === COLON) return this.match(T.AccTitleLine, this.lineEnd(b + 1));
-    }
-    if (text.startsWith('accDescr', p)) {
-      const b = this.blanks(p + 8);
-      if (text.charCodeAt(b) === COLON) return this.match(T.AccDescrLine, this.lineEnd(b + 1));
-    }
-    return -1;
+    if (c !== COLON) return -1;
+    return this.match(descr ? T.AccDescrLine : T.AccTitleLine, this.lineEnd(b + 1));
   }
 
   /** After `json`: `[\t ]+\w+[\t ]*@[\t ]*` before a `{`; its end, or -1. */
@@ -488,8 +507,8 @@ class UsecaseLexer {
 
   /** `"[^\n\r"]*"` or `'[^\n\r']*'` from `p`; -1 when the line has no closing quote. */
   private string(p: number, quote: number): number {
-    const k = quote === DQUOTE ? 0 : 1;
-    if (p < (this.stringFails[k] ?? -1)) return -1;
+    const double = quote === DQUOTE;
+    if (p < (double ? this.doubleFails : this.singleFails)) return -1;
     const { text, n } = this;
     let j = p + 1;
     while (j < n) {
@@ -499,7 +518,8 @@ class UsecaseLexer {
       j++;
     }
     // Every start of this kind before `j` reads to the same line end without a quote.
-    this.stringFails[k] = j;
+    if (double) this.doubleFails = j;
+    else this.singleFails = j;
     return -1;
   }
 
