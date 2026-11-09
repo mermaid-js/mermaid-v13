@@ -1,0 +1,16 @@
+%%{init: {"theme": "dark"}}%%
+wardley-beta
+%% a comment
+title Tea Shop
+accTitle: Tea
+accDescr {
+  multi
+}
+size [1100, 800]
+evolution Genesis@0.2 / First -> Commodity
+anchor User [0.95, 0.6]
+component "Hot Water" [0.4, 0.3] label [-10, 5] (buy) inertia
+User -> "Hot Water"; serves
+User +'pours'> Hot Water
+evolve Hot Water 0.8
+annotation 1, [0.5, 0.5] "One"

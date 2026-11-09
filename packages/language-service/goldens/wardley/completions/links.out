@@ -1,0 +1,52 @@
+@ 5:5  Tea |
+  -> operator (link) 5:5-5:5 "" -> "->"
+  -.-> operator (dashed link) 5:5-5:5 "" -> "-.->"
+  --> operator (link, drawn as `->`) 5:5-5:5 "" -> "-->"
+  > operator (link, drawn as `->`) 5:5-5:5 "" -> ">"
+  +> operator (flow forward) 5:5-5:5 "" -> "+>"
+  +< operator (flow backward) 5:5-5:5 "" -> "+<"
+  +<> operator (flow both ways) 5:5-5:5 "" -> "+<>"
+  +'label'> operator (labelled flow forward) 5:5-5:5 "" -> "+'label'>"
+  +'label'< operator (labelled flow backward) 5:5-5:5 "" -> "+'label'<"
+  +'label'<> operator (labelled flow both ways) 5:5-5:5 "" -> "+'label'<>"
+@ 6:8  Tea -> |
+  User node (anchor) 6:8-6:8 "" -> "User"
+  Tea node (component) 6:8-6:8 "" -> "Tea"
+  notebook node (component) 6:8-6:8 "" -> "\"notebook\""
+@ 7:10  Tea -> no|
+  notebook node (component) 7:8-7:10 "no" -> "\"notebook\""
+@ 8:8  Tea +> |
+  -> operator (link) 8:8-8:8 "" -> "->"
+  -.-> operator (dashed link) 8:8-8:8 "" -> "-.->"
+  --> operator (link, drawn as `->`) 8:8-8:8 "" -> "-->"
+  > operator (link, drawn as `->`) 8:8-8:8 "" -> ">"
+  +'label'> operator (labelled flow forward) 8:8-8:8 "" -> "+'label'>"
+  +'label'< operator (labelled flow backward) 8:8-8:8 "" -> "+'label'<"
+  +'label'<> operator (labelled flow both ways) 8:8-8:8 "" -> "+'label'<>"
+  User node (anchor) 8:8-8:8 "" -> "User"
+  Tea node (component) 8:8-8:8 "" -> "Tea"
+  notebook node (component) 8:8-8:8 "" -> "\"notebook\""
+@ 9:13  Tea -> User |
+  +> operator (flow forward) 9:13-9:13 "" -> "+>"
+  +< operator (flow backward) 9:13-9:13 "" -> "+<"
+  +<> operator (flow both ways) 9:13-9:13 "" -> "+<>"
+@ 10:8  evolve |
+  User node (anchor) 10:8-10:8 "" -> "User"
+  Tea node (component) 10:8-10:8 "" -> "Tea"
+  notebook node (component) 10:8-10:8 "" -> "\"notebook\""
+@ 11:11  pipeline T|
+  Tea node (component) 11:10-11:11 "T" -> "Tea"
+@ 12:13  accelerator |
+  User node (anchor) 12:13-12:13 "" -> "User"
+  Tea node (component) 12:13-12:13 "" -> "Tea"
+  notebook node (component) 12:13-12:13 "" -> "\"notebook\""
+@ 13:15  deaccelerator |
+  User node (anchor) 13:15-13:15 "" -> "User"
+  Tea node (component) 13:15-13:15 "" -> "Tea"
+  notebook node (component) 13:15-13:15 "" -> "\"notebook\""
+@ 14:19  evolution Genesis |
+  -> operator (link) 14:19-14:19 "" -> "->"
+@ 15:22  evolution Genesis -> |
+  none
+@ 16:11  component |
+  none

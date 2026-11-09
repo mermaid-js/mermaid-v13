@@ -33,6 +33,7 @@
     "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/diagram-timeline": "workspace:^",
     "@mermaid-js/diagram-treemap": "workspace:^",
+    "@mermaid-js/diagram-wardley": "workspace:^",
     "vscode-oniguruma": "2.0.1",
     "vscode-textmate": "9.2.0"
   }

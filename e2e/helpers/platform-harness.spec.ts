@@ -89,6 +89,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',
       '@mermaid-js/diagram-treemap',
+      '@mermaid-js/diagram-wardley',
       'mermaid',
     ]);
     expect(list[0]).toBe('@mermaid-js/core');

@@ -1,0 +1,10 @@
+wardley-beta
+component A [0.2, 0.2]
+component P [0.5, 0.5]
+A -> A
+A -> Nowhere
+pipeline P {
+  component c [0.3]
+}
+c -> P
+A -> c

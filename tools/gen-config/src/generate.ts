@@ -47,7 +47,16 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   cynefin: 'packages/diagram-cynefin',
   kanban: 'packages/diagram-kanban',
   treemap: 'packages/diagram-treemap',
+  'wardley-beta': 'packages/diagram-wardley',
 };
+
+/**
+ * The name of a section's generated defaults: `flowchartConfigDefaults`; a section v12 named with
+ * a dash is camel-cased (`wardley-beta` → `wardleyBetaConfigDefaults`).
+ */
+export function defaultsName(section: string): string {
+  return `${section.replace(/-(\w)/g, (_, c: string) => c.toUpperCase())}ConfigDefaults`;
+}
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */
 export const FRAGMENT_SCHEMA = 'schema/config.fragment.yaml';
@@ -687,7 +696,7 @@ export async function generate(
     if (typeName === undefined) {
       throw new Error(`section ${section} must $ref a titled def`);
     }
-    const name = `${section}ConfigDefaults`;
+    const name = defaultsName(section);
     files.set(
       `${pkg}/src/generated/config-defaults.ts`,
       `${BANNER}import type { ${typeName} } from '@mermaid-js/core/config';\n\n` +

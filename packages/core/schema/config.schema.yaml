@@ -1177,7 +1177,7 @@ properties:
     x-mermaid: { status: pending }
   wardley-beta:
     $ref: '#/$defs/WardleyDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   cynefin:
     $ref: '#/$defs/CynefinDiagramConfig'
     x-mermaid: { status: pending }
@@ -5320,53 +5320,62 @@ $defs:
       - labelFontSize
       - axisFontSize
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the Wardley renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       width:
         description: The width of the Wardley diagram canvas.
         type: number
         minimum: 1
         default: 900
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       height:
         description: The height of the Wardley diagram canvas.
         type: number
         minimum: 1
         default: 600
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       padding:
         description: The padding around the Wardley diagram.
         type: number
         minimum: 0
         default: 48
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       nodeRadius:
         description: The radius of component nodes.
         type: number
         minimum: 0
         default: 6
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       nodeLabelOffset:
         description: The offset distance for node labels.
         type: number
         minimum: 0
         default: 8
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       axisFontSize:
         description: The font size for axis labels.
         type: number
         minimum: 0
         default: 12
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelFontSize:
         description: The font size for component labels.
         type: number
         minimum: 0
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showGrid:
         description: Whether to display a background grid.
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   CynefinDiagramConfig:
     title: Cynefin Diagram Config

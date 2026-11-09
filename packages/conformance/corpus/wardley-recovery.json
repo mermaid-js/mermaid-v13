@@ -1,0 +1,333 @@
+[
+  {
+    "id": "wardley-recovery/range-two-statements",
+    "name": "Two range errors in different statements",
+    "source": "wardley-beta\ncomponent Cup [300.0, 0.5]\ncomponent Tea [0.5, 0.5]\nnote \"Hot\" [0.5, 101.0]\nTea -> Cup",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 2],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["Tea", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/range-both-coordinates",
+    "name": "Both coordinates of one component out of range",
+    "source": "wardley-beta\ncomponent Cup [300.0, 101.5]\ncomponent Tea [0.5, 0.5]\nTea -> Cup",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 2],
+      ["WARDLEY_OUT_OF_RANGE", 2]
+    ],
+    "keeps": ["Tea", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/range-and-syntax",
+    "name": "A range error and an integer coordinate",
+    "source": "wardley-beta\nanchor User [1.5, 200.0]\ncomponent Tea [1, 0.5]\ncomponent Cup [0.5, 0.5]\nUser -> Cup",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["User", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/range-every-context",
+    "name": "A range error in every kind of statement",
+    "source": "wardley-beta\nanchor User [0.5, 150.0]\ncomponent Tea [0.5, 150.0]\nnote \"n\" [0.5, 150.0]\npipeline Tea {\n  component Gas [150.0]\n}\nevolve Tea 150.0\nannotations [0.5, 150.0]\nannotation 1, [0.5, 150.0] \"a\"\naccelerator Fast [0.5, 150.0]\ndeaccelerator Slow [0.5, 150.0]",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 2],
+      ["WARDLEY_OUT_OF_RANGE", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4],
+      ["WARDLEY_OUT_OF_RANGE", 6],
+      ["WARDLEY_OUT_OF_RANGE", 8],
+      ["WARDLEY_OUT_OF_RANGE", 9],
+      ["WARDLEY_OUT_OF_RANGE", 10],
+      ["WARDLEY_OUT_OF_RANGE", 11],
+      ["WARDLEY_OUT_OF_RANGE", 12]
+    ],
+    "keeps": ["User", "Tea", "Tea_Gas"]
+  },
+  {
+    "id": "wardley-recovery/range-category-order",
+    "name": "Range errors v12 met in category order, reported in source order",
+    "source": "wardley-beta\naccelerator Cloud [0.5, 102.0]\nnote \"n\" [0.5, 0.5]\nanchor User [103.0, 0.5]\ncomponent Tea [0.5, 0.5]",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 2],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["User", "Tea"]
+  },
+  {
+    "id": "wardley-recovery/keyword-names",
+    "name": "Unquoted names that start with keywords",
+    "source": "wardley-beta\ncomponent notebook [0.5, 0.5]\ncomponent Tea [0.5, 0.5]\nbuyer -> Tea\ncomponent labels [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["Tea"]
+  },
+  {
+    "id": "wardley-recovery/strings-and-numbers",
+    "name": "An unclosed quote and a number with no leading digit",
+    "source": "wardley-beta\ncomponent \"Tea [0.5, 0.5]\ncomponent Cup [0.5, 0.5]\ncomponent Pot [0.5, .5]\nCup -> Cup",
+    "errors": [
+      ["UNCLOSED_STRING", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-two-coordinates",
+    "name": "A pipeline component with two coordinates, then an error after the block",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [0.3, 0.5]\n  component Electric [0.6]\n}\ncomponent Tea [1, 0.5]\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Kettle", "Kettle_Electric", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-brace-next-line",
+    "name": "A pipeline's `{` on the next line, and a range error inside",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle\n{\n  component Gas [150.0]\n  component Electric [0.6]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["WARDLEY_OUT_OF_RANGE", 5]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-empty",
+    "name": "An empty pipeline and a chain of links",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n}\nKettle -> A -> B\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-unclosed",
+    "name": "A pipeline with no `}` before the next statement, and an error after it",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [0.3]\nanchor User [0.9, 0.5]\nsize [1.5, 2]\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNCLOSED_PIPELINE", 3],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["Kettle", "Kettle_Gas", "User", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-unclosed-at-end",
+    "name": "A pipeline still open at the end of the text, after an error inside it",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [0.3] (build)\n  component Electric [0.6]",
+    "errors": [
+      ["UNCLOSED_PIPELINE", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["Kettle", "Kettle_Electric"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-brace-on-line",
+    "name": "A pipeline's `}` on its last component's line, then an integer size",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [0.3] }\nsize [1.5, 2]\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-unknown-parent",
+    "name": "A pipeline naming no component, and a range error elsewhere",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Pot {\n  component Gas [0.3]\n}\ncomponent Cup [0.4, 150.0]",
+    "errors": [
+      ["WARDLEY_UNKNOWN_PARENT", 3],
+      ["WARDLEY_OUT_OF_RANGE", 6]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/evolution-and-evolve",
+    "name": "An evolution with one stage and an evolve with an integer target",
+    "source": "wardley-beta\nevolution Genesis\ncomponent Tea [0.5, 0.5]\nevolve Tea 80\nevolve Tea 0.8",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["Tea"]
+  },
+  {
+    "id": "wardley-recovery/links",
+    "name": "A chain of links, and two unquoted names with no arrow",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.4, 0.4]\nA -> B -> A\nA B\nB -> A",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "wardley-recovery/component-suffixes",
+    "name": "Component suffixes in the wrong order, and an unknown strategy",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] inertia (build)\ncomponent B [0.5, 0.5] (build) label [1, 2]\ncomponent C [0.5, 0.5] (foo)\ncomponent D [0.5, 0.5] label [1, 2] (buy) (inertia)",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["D"]
+  },
+  {
+    "id": "wardley-recovery/accessibility",
+    "name": "An accTitle with no colon, and an unclosed accDescr block at the end",
+    "source": "wardley-beta\naccTitle\ncomponent A [0.5, 0.5]\ncomponent B [0.6, 0.6]\naccDescr {\n  no end",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNCLOSED_ACC_DESCR", 5]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "wardley-recovery/acc-descr-unclosed-then-error",
+    "name": "An unclosed accDescr block whose text is skipped up to the next keyword",
+    "source": "wardley-beta\naccDescr {\n  a description -> with arrows\n  and lines\ncomponent A [1, 0.5]\ncomponent B [0.5, 0.5]",
+    "errors": [
+      ["UNCLOSED_ACC_DESCR", 2],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["B"]
+  },
+  {
+    "id": "wardley-recovery/header-case",
+    "name": "A header in the wrong case, and an error after it",
+    "source": "Wardley-Beta\ncomponent A [0.5, 0.5]\ncomponent B [1, 0.5]\ncomponent C [0.5, 0.5]",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "C"]
+  },
+  {
+    "id": "wardley-recovery/annotations",
+    "name": "Annotation errors: a missing number, a range error, a missing text",
+    "source": "wardley-beta\nannotations [0.5, 0.5]\nannotation x, [0.5, 0.5] \"a\"\nannotation 2, [0.5, 300] \"b\"\nannotation 3, [0.5, 0.5]\nannotation 4, [0.5, 0.5] \"d\"",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4],
+      ["UNEXPECTED", 5]
+    ]
+  },
+  {
+    "id": "wardley-recovery/accelerators",
+    "name": "An accelerator out of range and a deaccelerator with one coordinate",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\naccelerator Cloud [0.5, 102.0]\ndeaccelerator Legacy [0.5]\naccelerator Edge [0.5, 0.5]",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "wardley-recovery/sizes",
+    "name": "A size with decimals and one with no comma",
+    "source": "wardley-beta\nsize [1.5, 2]\nsize [600 800]\ncomponent A [0.5, 0.5]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "wardley-recovery/characters",
+    "name": "Characters no token starts with, on three lines",
+    "source": "wardley-beta\ncomponent A: [0.5, 0.5]\ncomponent B [0.5, 0.5]\nA * B\nA -> B # c\ncomponent C [0.5, 0.5]",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["B", "C"]
+  },
+  {
+    "id": "wardley-recovery/one-line-and-label",
+    "name": "Two statements on one line, and a decimal label offset",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5] component B [0.4, 0.4]\ncomponent C [0.4, 0.4] label [1.5, 2]\ncomponent D [0.3, 0.3]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["D"]
+  },
+  {
+    "id": "wardley-recovery/cut-short",
+    "name": "A statement cut short at its line end (its rest on the next line), then another error",
+    "source": "wardley-beta\ncomponent A [0.5,\n0.5]\ncomponent B [0.4, 0.4]\nevolve B\ncomponent C [0.3, 0.3]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["B", "C"]
+  },
+  {
+    "id": "wardley-recovery/braces",
+    "name": "A stray `}` and `{`",
+    "source": "wardley-beta\ncomponent A [0.5, 0.5]\n}\n{\ncomponent B [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "wardley-recovery/non-ascii",
+    "name": "A non-ASCII letter in an unquoted name, and a no-break space",
+    "source": "wardley-beta\ncomponent \u00fcber [0.5, 0.5]\ncomponent A\u00a0B [0.5, 0.5]\ncomponent \"\u00fcber\" [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["\u00fcber"]
+  },
+  {
+    "id": "wardley-recovery/range-pipeline-and-evolve",
+    "name": "Range errors in a pipeline component and an evolve target",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline Kettle {\n  component Gas [150.0]\n  component Electric [0.6]\n}\nevolve Kettle 120.0\nevolve Pot 0.5",
+    "errors": [
+      ["WARDLEY_OUT_OF_RANGE", 4],
+      ["WARDLEY_OUT_OF_RANGE", 7]
+    ],
+    "keeps": ["Kettle", "Kettle_Gas", "Kettle_Electric"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-name-keyword",
+    "name": "A pipeline named with a keyword: its block still opens, and a component's range error counts",
+    "source": "wardley-beta\ncomponent notebook [0.5, 0.5]\ncomponent Kettle [0.5, 0.5]\npipeline notebook {\n  component Gas [150.0]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4],
+      ["WARDLEY_OUT_OF_RANGE", 5]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-name-digit",
+    "name": "A pipeline named with a leading digit: its block still opens, and a component's range error counts",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline 1A {\n  component Gas [150.0]\n  component Electric [0.6]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  },
+  {
+    "id": "wardley-recovery/pipeline-unknown-parent-range",
+    "name": "A pipeline naming no component, with a range error in its component",
+    "source": "wardley-beta\ncomponent Kettle [0.5, 0.5]\npipeline X {\n  component Y [150.0]\n}\ncomponent Cup [0.4, 0.4]",
+    "errors": [
+      ["WARDLEY_UNKNOWN_PARENT", 3],
+      ["WARDLEY_OUT_OF_RANGE", 4]
+    ],
+    "keeps": ["Kettle", "Cup"]
+  }
+]

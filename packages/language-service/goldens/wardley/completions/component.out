@@ -1,0 +1,31 @@
+@ 2:24  component A [0.5, 0.5] |
+  label keyword 2:24-2:24 "" -> "label "
+  (build) constant 2:24-2:24 "" -> "(build)"
+  (buy) constant 2:24-2:24 "" -> "(buy)"
+  (outsource) constant 2:24-2:24 "" -> "(outsource)"
+  (market) constant 2:24-2:24 "" -> "(market)"
+  inertia keyword 2:24-2:24 "" -> "inertia"
+  (inertia) keyword 2:24-2:24 "" -> "(inertia)"
+@ 3:37  component B [0.5, 0.5] label [1, 2] |
+  (build) constant 3:37-3:37 "" -> "(build)"
+  (buy) constant 3:37-3:37 "" -> "(buy)"
+  (outsource) constant 3:37-3:37 "" -> "(outsource)"
+  (market) constant 3:37-3:37 "" -> "(market)"
+  inertia keyword 3:37-3:37 "" -> "inertia"
+  (inertia) keyword 3:37-3:37 "" -> "(inertia)"
+@ 4:32  component C [0.5, 0.5] (build) |
+  inertia keyword 4:32-4:32 "" -> "inertia"
+  (inertia) keyword 4:32-4:32 "" -> "(inertia)"
+@ 5:25  component D [0.5, 0.5] (|
+  build constant 5:25-5:25 "" -> "build"
+  buy constant 5:25-5:25 "" -> "buy"
+  outsource constant 5:25-5:25 "" -> "outsource"
+  market constant 5:25-5:25 "" -> "market"
+  inertia keyword 5:25-5:25 "" -> "inertia"
+@ 6:27  component E [0.5, 0.5] (bu|
+  build constant 6:25-6:27 "bu" -> "build"
+  buy constant 6:25-6:27 "bu" -> "buy"
+@ 7:33  component F [0.5, 0.5] (build) (|
+  inertia keyword 7:33-7:33 "" -> "inertia"
+@ 8:32  component G [0.5, 0.5] inertia |
+  none

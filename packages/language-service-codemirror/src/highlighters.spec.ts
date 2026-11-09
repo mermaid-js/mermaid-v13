@@ -50,6 +50,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'state',
       'timeline',
       'treemap',
+      'wardley',
     ]);
   });
 
@@ -163,6 +164,34 @@ describe('the per-type first-paint highlighters (D134)', () => {
         '::::operator',
         'hot:variable',
         'classDef hot fill:red:keyword',
+      ]);
+    });
+
+    it('highlights a Wardley map with the wardley grammar', () => {
+      const out = spans(
+        'wardley-beta\n  title Tea\n  anchor Customer [0.95, 0.63]\n  component "Cup of Tea" [0.79, 0.61] (build)\n  Customer -> "Cup of Tea"\n  evolve Customer 0.8\n'
+      );
+      expect(out).toEqual([
+        'wardley-beta:keyword',
+        'title Tea:keyword',
+        'anchor:keyword',
+        'Customer:variable',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        'component:keyword',
+        '"Cup of Tea":string',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+        '(:punctuation',
+        'build:keyword',
+        '):punctuation',
+        'Customer:variable',
+        '->:operator',
+        '"Cup of Tea":string',
+        'evolve:keyword',
+        'Customer:variable',
       ]);
     });
 

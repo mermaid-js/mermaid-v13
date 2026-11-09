@@ -906,20 +906,20 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `wardley-beta` | object |  | pending |  | The object containing configurations specific for Wardley Maps diagrams. |
-| `wardley-beta.useWidth` | number |  | pending |  |  |
-| `wardley-beta.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `wardley-beta` | object |  | honoured (13.0.0) |  | The object containing configurations specific for Wardley Maps diagrams. |
+| `wardley-beta.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the Wardley renderer never did. |  |
+| `wardley-beta.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `wardley-beta.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `wardley-beta.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `wardley-beta.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `wardley-beta.width` | number | `900` | pending |  | The width of the Wardley diagram canvas. |
-| `wardley-beta.height` | number | `600` | pending |  | The height of the Wardley diagram canvas. |
-| `wardley-beta.padding` | number | `48` | pending |  | The padding around the Wardley diagram. |
-| `wardley-beta.nodeRadius` | number | `6` | pending |  | The radius of component nodes. |
-| `wardley-beta.nodeLabelOffset` | number | `8` | pending |  | The offset distance for node labels. |
-| `wardley-beta.axisFontSize` | number | `12` | pending |  | The font size for axis labels. |
-| `wardley-beta.labelFontSize` | number | `10` | pending |  | The font size for component labels. |
-| `wardley-beta.showGrid` | boolean | `false` | pending |  | Whether to display a background grid. |
+| `wardley-beta.width` | number | `900` | honoured (13.0.0) |  | The width of the Wardley diagram canvas. |
+| `wardley-beta.height` | number | `600` | honoured (13.0.0) |  | The height of the Wardley diagram canvas. |
+| `wardley-beta.padding` | number | `48` | honoured (13.0.0) |  | The padding around the Wardley diagram. |
+| `wardley-beta.nodeRadius` | number | `6` | honoured (13.0.0) |  | The radius of component nodes. |
+| `wardley-beta.nodeLabelOffset` | number | `8` | honoured (13.0.0) |  | The offset distance for node labels. |
+| `wardley-beta.axisFontSize` | number | `12` | honoured (13.0.0) |  | The font size for axis labels. |
+| `wardley-beta.labelFontSize` | number | `10` | honoured (13.0.0) |  | The font size for component labels. |
+| `wardley-beta.showGrid` | boolean | `false` | honoured (13.0.0) |  | Whether to display a background grid. |
 
 ## `cynefin`
 

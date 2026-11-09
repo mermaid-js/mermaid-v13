@@ -92,6 +92,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
       'treemap',
+      'wardley',
     ]);
     for (const type of TYPES) {
       if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);

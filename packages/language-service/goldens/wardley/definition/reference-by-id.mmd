@@ -1,0 +1,11 @@
+wardley-beta
+component Kettle [0.5, 0.5]
+pipeline Kettle {
+  component Gas [0.2]
+}
+evolve G|as 0.8
+evolve Kettle_G|as 0.6
+pipeline G|as {
+  component Steam [0.3]
+}
+Kettle -> G|as
