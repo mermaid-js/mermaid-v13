@@ -164,6 +164,56 @@ describe('block parser: D442 fixes', () => {
     expect(tree(model.blocks)).toBe('a{c} b');
     expect(model.edges.map((e) => e.id)).toEqual(['1-a-b']);
   });
+
+  it('a header chain: the AST puts the edge and the block where the model does', () => {
+    const { ast } = parse('block:a --> b\n c\n end');
+    expect(ast.children.map((n) => n.id)).toEqual(['block:a', 'edge:a->b', 'block:b']);
+    const composite = ast.children[0];
+    expect(composite?.type === 'Composite' && composite.children.map((n) => n.id)).toEqual([
+      'block:c',
+    ]);
+  });
+});
+
+/** AST id → the AST id of the composite (or `doc`) it sits in. */
+function astParents(
+  nodes: readonly BlockStatementNode[],
+  parent: string,
+  out = new Map<string, string>()
+) {
+  for (const n of nodes) {
+    out.set(n.id, parent);
+    if (n.type === 'Composite') astParents(n.children, n.id, out);
+  }
+  return out;
+}
+
+/** Each model block's AST id → its parent block's AST id (or `doc`). */
+function modelParents(blocks: readonly Block[], parent: string, out = new Map<string, string>()) {
+  for (const b of blocks) {
+    out.set(b.ast, parent);
+    modelParents(b.children, b.ast, out);
+  }
+  return out;
+}
+
+describe('block parser: AST and model agree', () => {
+  it.each([
+    ['blocks and edges', 'a --> b\n c a'],
+    ['nested composites', 'block:g\n a\n block\n b --> c\n end\n end\n d'],
+    ['a header chain', 'block:a --> b -- "l" --> c\n d\n end\n e'],
+    ['spaces', 'space:2\n block\n space\n end'],
+    ['a leaf opened later as a composite', 'a\n block:a\n b\n end'],
+  ])('%s: each block sits under the composite its AST node sits in', (_name, body) => {
+    const { ast, model } = parse(body);
+    const inAst = astParents(ast.children, 'doc');
+    for (const [id, parent] of modelParents(model.blocks, 'doc')) {
+      expect(inAst.has(id), id).toBe(true);
+      // By block, not by mention: a later `block:a` (`block:a@2`) opens the block `block:a`.
+      expect(inAst.get(id)?.replace(/@\d+$/, ''), id).toBe(parent);
+    }
+    for (const e of model.edges) expect(inAst.has(e.ast), e.ast).toBe(true);
+  });
 });
 
 describe('block parser: D443 style', () => {

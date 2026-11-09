@@ -1,0 +1,9 @@
+---
+description: >-
+  A `space:100001` is cut to 100,000 cells, with one BLOCK_TRUNCATED warning
+  (D445, R-SEC-5). mermaid@12.2.0 kept every cell, and rejected a spacer over
+  16,777,214 cells (`Map maximum size exceeded`).
+---
+block
+  columns 3
+  a space:100001 b

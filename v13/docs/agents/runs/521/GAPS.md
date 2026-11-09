@@ -25,13 +25,14 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 
 ## T2 #554
 
-Choices the D-ids leave open (each a `divergences.json` entry where it changes v12's model); the first two change what is drawn and need a D-id:
+Choices the D-ids leave open (each a `divergences.json` entry where it changes v12's model); the first two change what is drawn and are **pending a D-id (D440)**:
 
-- **A composite opened twice** (`block:g … end` then `block:g … end`) appends the second body to the first, as D442's fix 5 does for a leaf (same v12 mechanism: the children go onto an object it never stored). Needs a D-id.
-- **A chain as a composite header** (`block:a --> b … end`): the composite is `a`, and the edge and `b` stand at the level around it. v12 spread the chain into a composite with no id and lost the edge. Needs a D-id.
+- **A composite opened twice** (pending a D-id, D440) (`block:g … end` then `block:g … end`) appends the second body to the first, as D442's fix 5 does for a leaf (same v12 mechanism: the children go onto an object it never stored).
+- **A chain as a composite header** (pending a D-id, D440) (`block:a --> b … end`): the composite is `a`, and the edge and `b` stand at the level around it, in the model and the AST alike (the grammar marks them `HeaderEdge`/`HeaderBlock`, which the differential projects there). v12 spread the chain into a composite with no id and lost the edge.
 - `space:0` stays zero cells (v12; it neither throws nor draws NaN, so D445's `:0` → `:1` is read as the span only).
 - AST ids: a later mention of a block is `block:a@2`, `@3` (pitfall 9, flowchart's `n:A@2`); `columns` statements are `columns:<n>` (D448 names neither). The composite's AST node is its header block (no separate child).
 - Kept v12 quirks (accept/reject and model unchanged): `a:2 --> b` drops the span; `classDef DEFAULT …` is rejected; a labelled edge's arrowheads come from its closing link (`x-- "l" --> b` has an open start); a later mention may change a composite's type (`block:g … end` then `g["x"]` makes it a square that keeps its children); classes are one string per `class` statement (`class a x y` gives `x y`); `style` splits at `,` without trimming.
+- D445's spacer cap changes accept/reject as well as the model: 12.2.0 accepts `space:n` up to 16,777,214 cells (its block map holds 2^24 entries, the top level and the spacer included) and rejects larger ones with `Map maximum size exceeded`; v13 accepts every one and cuts it to 100,000. The fixture `space-over-the-cap-is-cut.mmd` (100,001 cells) is the model divergence; T3 and T5 lay out and draw 100,000 cells for it.
 - Limits: `parseBlock` takes `maxNodes` (blocks, spaces, composites; a space counts once), `maxEdges` and `maxDepth`, core's defaults; T5 passes `ctx.limits`.
 - Recovery resumes at the first statement start (or `end`) on a later line than the error; line breaks mean nothing to the grammar, so two errors on one line are one diagnostic.
 - No probe mode yet (T6, with the lexer's `modeAt`); no plugin object (the parse seam is `parseBlock`; T5 adds the plugin with `layoutKind: 'custom'`).

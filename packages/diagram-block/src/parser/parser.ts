@@ -2,7 +2,7 @@
 /**
  * Block parser: recursive descent over the {@link lex} tokens (gated against v12's jison lexer,
  * #553), producing a {@link BlockModel}, the typed AST, symbols, statement spans and
- * diagnostics (DESIGN §4.3).
+ * diagnostics (DESIGN §4.3). The model is built by {@link ModelBuilder} (`builder.ts`).
  *
  * The grammar is v12's `block.jison` (LALR), ported rule for rule; `grammar/block.ebnf` is the
  * normative form:
@@ -23,7 +23,8 @@
  *
  * Nesting is an explicit stack of open composites, not recursion, so depth costs nothing but
  * the stack (R-PARSE-7). The model is built in source order as statements are read (v12 walked
- * its tree in the same order); `style` statements apply at the end (D443).
+ * its tree in the same order); `style` statements apply at the end (D443). Every scan is linear
+ * in the text it reads: an id list or a class line is walked once, with a moving offset.
  *
  * Unlike jison the parser does not stop at the first error (R-PARSE-4): it reports it, skips to
  * the next statement that starts on a later line, and carries on. A failed composite header
@@ -56,30 +57,50 @@ import type {
   BlockStatementNode,
   BlockTarget,
 } from './ast.ts';
+import { ModelBuilder } from './builder.ts';
+import type { LinkText, Mention, OpenBlock } from './builder.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
-import { ModelBuilder } from './builder.ts';
 import {
+  A_LINE_BREAK,
+  BLANKS,
   BLOCK,
   CLASS_NAME,
-  CLOSERS,
+  CLASS_STYLES,
+  closerFor,
+  COMPOSITE_ID,
   DEFAULT_HINT,
   DIRECTION,
   DIRECTION_OR_CLOSE,
   EDGE_END,
   EDGE_LABEL,
-  EMPTY_HINT,
+  EMPTY_COMPOSITE_HINT,
+  EMPTY_DIAGRAM_HINT,
+  END_NONE_OPEN_HINT,
+  END_OF_TEXT,
+  END_WORD,
   HEADER,
   HEADER_HINT,
+  hintFor,
   IDS,
   LABEL,
+  limitMessage,
   MARKDOWN_HINT,
+  OPEN_ARROW,
+  OPEN_MD_STRING,
+  OPEN_STRING,
+  openShape,
+  quoted,
   STATEMENT,
   STATEMENT_OR_END,
+  STYLES,
+  unclosedBlockMessage,
+  unclosedMessage,
   UNQUOTED_HINT,
-  hintFor,
+  unfinishedEdgeMessage,
+  withHint,
 } from './messages.ts';
-import type { LinkText, OpenBlock } from './builder.ts';
+import type { Unclosed } from './messages.ts';
 import { esc, shapeType } from './text.ts';
 import { T } from './tokens.ts';
 
@@ -174,7 +195,17 @@ interface Frame {
   statements: number;
 }
 
-/** A block mention as read. */
+/** A shape or block arrow as read. */
+interface Shape {
+  /** The opener and closer (`[]`, `<[]>`). */
+  typeStr: string;
+  label: string;
+  directions?: string[];
+  /** Where it ends. */
+  end: number;
+}
+
+/** A node as read: its id, then its shape. */
 interface NodeParts {
   name: string;
   nameAt: number;
@@ -196,9 +227,27 @@ interface Chain {
   links: [LinkParts, NodeParts][];
 }
 
+/** Token `j`'s source range, and whether the source there reads as its text. */
+interface TokenSource {
+  range: Range;
+  exact: boolean;
+}
+
+/** `prefix:key`, then `prefix:key@2`, `@3`, … (D448, pitfall 9): each mention's AST id. */
+class MentionIds {
+  private readonly seen = new Map<string, number>();
+
+  next(prefix: string, key: string): { id: string; n: number } {
+    const id = `${prefix}:${key}`;
+    const n = (this.seen.get(id) ?? 0) + 1;
+    this.seen.set(id, n);
+    return { id: n === 1 ? id : `${id}@${n}`, n };
+  }
+}
+
 /**
- * One parse. Each grammar rule is a method; a rule that fails records a diagnostic and throws
- * {@link STOP}, and the statement loop recovers.
+ * One parse. Each grammar rule is a method that returns what it read; a rule that fails records
+ * a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
 class BlockParser {
   private readonly pre: PreprocessResult;
@@ -208,17 +257,15 @@ class BlockParser {
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
   private readonly maxDepth: number;
-  private readonly b: ModelBuilder;
+  private readonly builder: ModelBuilder;
   private readonly doc: BlockStatementNode[] = [];
   private readonly frames: Frame[];
-  /** Mentions of each block id, for AST ids. */
-  private readonly mentions = new Map<string, number>();
-  /** Edges between each `start->end` pair, for AST ids. */
-  private readonly edgeMentions = new Map<string, number>();
-  private readonly classDefMentions = new Map<string, number>();
+  private readonly ids = new MentionIds();
   private depthReported = false;
   private sawEof = false;
   private lines: LineIndex | undefined;
+  /** From this token on, the stream holds only what the lexer reads inside a construct. */
+  private insideFrom: number | undefined;
 
   constructor(
     private readonly src: string,
@@ -235,20 +282,20 @@ class BlockParser {
     this.lexed = lex(src, pre.bodyStart, view);
     this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
-    this.b = new ModelBuilder(this.st, {
+    this.builder = new ModelBuilder(this.st, {
       maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
       maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
     });
-    this.frames = [{ block: undefined, into: this.b.top, ast: this.doc, statements: 0 }];
+    this.frames = [{ block: undefined, into: this.builder.top, ast: this.doc, statements: 0 }];
   }
 
   parse(): BlockParseResult {
     this.start();
     this.document();
-    this.b.finish();
+    this.builder.finish();
     const { st, pre, src } = this;
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
-    const model = this.b.model(st.diagnostics.list.filter((d) => d.severity === 'warning'));
+    const model = this.builder.model(st.diagnostics.list.filter((d) => d.severity === 'warning'));
     const ast: BlockDocument = {
       id: 'doc',
       type: 'Document',
@@ -268,6 +315,18 @@ class BlockParser {
   private range(j: number): Range {
     const t = this.c.tokens;
     return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
+  }
+
+  /** Token `j`'s range, and whether the source there is `text` (so offsets into it map 1:1). */
+  private sourceOf(j: number, text: string): TokenSource {
+    const range = this.range(j);
+    return { range, exact: this.src.slice(range.start, range.end) === text };
+  }
+
+  /** The source range of `length` characters at `from` in a token's text, else the token's. */
+  private static rangeIn(s: TokenSource, from: number, length: number): Range {
+    if (!s.exact) return s.range;
+    return { start: s.range.start + from, end: s.range.start + from + length };
   }
 
   /**
@@ -312,13 +371,6 @@ class BlockParser {
     return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
   }
 
-  /** The source range of `text` inside token `j` at `from`, when the source there reads as it. */
-  private inside(j: number, text: string, from: number, length: number): Range {
-    const r = this.range(j);
-    if (this.src.slice(r.start, r.end) !== text) return r;
-    return { start: r.start + from, end: r.start + from + length };
-  }
-
   /** `text` trimmed, and where it starts in `text`. */
   private static trimmed(text: string): [value: string, at: number] {
     const value = text.trim();
@@ -330,14 +382,12 @@ class BlockParser {
   /** How an error message names token `j`. */
   private found(j: number): string {
     const k = this.c.tokens.kind[j] ?? Kind.EOF;
-    if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
+    if (k === Kind.EOF || k === T.Eof) return END_OF_TEXT;
     const r = this.range(j);
-    const t = this.src.slice(r.start, r.end).trim();
-    if (t === '')
-      return /[\n\r\u2028\u2029]/.test(this.src.slice(r.start, r.end)) ? 'a line break' : 'blanks';
-    const line = /^[^\n\r\u2028\u2029]*/.exec(t)?.[0] ?? '';
-    const cut = line.length > 24 ? line.slice(0, 24) : line;
-    return cut.length < t.length ? `\`${cut}…\`` : `\`${t}\``;
+    const text = this.src.slice(r.start, r.end);
+    const t = text.trim();
+    if (t === '') return /[\n\r\u2028\u2029]/.test(text) ? A_LINE_BREAK : BLANKS;
+    return quoted(t);
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */
@@ -345,23 +395,23 @@ class BlockParser {
     const { c } = this;
     if (this.endedInside(c.pos)) this.endsOpen(names);
     const d = this.st.diagnostics.unexpected('UNEXPECTED', c.range, names, this.found(c.pos));
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    if (hint) d.message = withHint(d.message, hint);
     throw STOP;
   }
 
   /**
    * Whether the text ends inside a shape, string, block arrow or edge label from token `j` on:
    * nothing follows but what the lexer read in there (errors, text, directions, quotes), and no
-   * `EOF` (jison's lexer returns none outside INITIAL).
+   * `EOF` (jison's lexer returns none outside INITIAL). The tail is found once.
    */
   private endedInside(j: number): boolean {
-    const t = this.c.tokens;
-    for (let i = j; i < t.length; i++) {
-      const k = t.kind[i] ?? Kind.EOF;
-      if (k === Kind.EOF) return true;
-      if (!INSIDE[k]) return false;
+    if (this.insideFrom === undefined) {
+      const t = this.c.tokens;
+      let i = t.length - 1;
+      while (i > 0 && INSIDE[t.kind[i - 1] ?? 0] === 1) i--;
+      this.insideFrom = i;
     }
-    return true;
+    return j >= this.insideFrom;
   }
 
   /**
@@ -384,38 +434,26 @@ class BlockParser {
           closed--;
           continue;
         }
-        const md = k === T.MdStringStart;
-        return this.unclosed('UNCLOSED_STRING', 'string', md ? '"`' : '"', md ? '`"' : '"', j);
+        return this.unclosed(k === T.MdStringStart ? OPEN_MD_STRING : OPEN_STRING, j);
       }
-      if (k === T.NodeDStart) {
-        const open = this.raw(j);
-        return this.unclosed('UNCLOSED_SHAPE', 'shape', open, CLOSERS[open] ?? ']', j);
-      }
-      if (k === T.BlockArrowStart)
-        return this.unclosed('UNCLOSED_SHAPE', 'block arrow', '<[', ']>(…)', j);
+      if (k === T.NodeDStart) return this.unclosed(openShape(this.raw(j)), j);
+      if (k === T.BlockArrowStart) return this.unclosed(OPEN_ARROW, j);
       if (k === T.StartLink) {
         const at = this.range(j);
-        this.st.diagnostics.error(
-          'UNCLOSED_LABEL',
-          `Unfinished edge: the \`${this.raw(j).trim()}\` at line ${this.lineOf(at.start)} takes a quoted label and a closing link, as in \`a -- "text" --> b\`.`,
-          at
-        );
+        const message = unfinishedEdgeMessage(this.raw(j).trim(), this.lineOf(at.start));
+        this.st.diagnostics.error('UNCLOSED_LABEL', message, at);
         throw STOP;
       }
       if (!INSIDE[k]) break;
     }
     const at = { start: this.src.length, end: this.src.length };
-    this.st.diagnostics.unexpected('UNEXPECTED', at, names, 'the end of the text');
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, END_OF_TEXT);
     throw STOP;
   }
 
-  private unclosed(code: string, what: string, open: string, close: string, j: number): never {
+  private unclosed(what: Unclosed, j: number): never {
     const at = this.range(j);
-    this.st.diagnostics.error(
-      code,
-      `Unclosed ${what}: the \`${open}\` at line ${this.lineOf(at.start)} has no closing \`${close}\`. Add \`${close}\` after its text.`,
-      at
-    );
+    this.st.diagnostics.error(what.code, unclosedMessage(what, this.lineOf(at.start)), at);
     throw STOP;
   }
 
@@ -426,6 +464,7 @@ class BlockParser {
    */
   private recover(from: number): void {
     const { c, src } = this;
+    c.recovering();
     const nl = /[\n\r\u2028\u2029]/g;
     nl.lastIndex = from;
     const lineEnd = nl.exec(src)?.index ?? src.length;
@@ -498,15 +537,12 @@ class BlockParser {
   private atEnd(): void {
     const { c, frames } = this;
     if (frames.length === 1 && frames[0]?.statements === 0)
-      this.guarded(() => this.fail(STATEMENT, 'write at least one block in the diagram'));
+      this.guarded(() => this.fail(STATEMENT, EMPTY_DIAGRAM_HINT));
     while (frames.length > 1) {
       const f = frames.pop() as Frame;
       const opener = f.opener ?? c.range;
-      this.st.diagnostics.error(
-        'UNCLOSED_BLOCK',
-        `Unclosed composite: the \`block\` at line ${this.lineOf(opener.start)} has no \`end\`. Add \`end\` after its last statement.`,
-        opener
-      );
+      const message = unclosedBlockMessage(this.lineOf(opener.start));
+      this.st.diagnostics.error('UNCLOSED_BLOCK', message, opener);
       if (f.span) this.st.endStatement(f.span, c.start);
       if (f.node) f.node.range = { start: f.node.range.start, end: c.start };
     }
@@ -519,13 +555,13 @@ class BlockParser {
     const r = this.range(j);
     const f = this.frame;
     if (frames.length === 1) {
-      const d = this.st.diagnostics.unexpected('UNEXPECTED', r, STATEMENT, '`end`');
-      d.message = `${d.message.slice(0, -1)}; an \`end\` closes a \`block\`, and none is open.`;
+      const d = this.st.diagnostics.unexpected('UNEXPECTED', r, STATEMENT, END_WORD);
+      d.message = withHint(d.message, END_NONE_OPEN_HINT);
       return;
     }
     if (f.statements === 0) {
-      const d = this.st.diagnostics.unexpected('UNEXPECTED', r, STATEMENT, '`end`');
-      d.message = `${d.message.slice(0, -1)}; a composite holds at least one statement: ${EMPTY_HINT}.`;
+      const d = this.st.diagnostics.unexpected('UNEXPECTED', r, STATEMENT, END_WORD);
+      d.message = withHint(d.message, EMPTY_COMPOSITE_HINT);
     }
     frames.pop();
     const end = this.tightEnd(j);
@@ -570,8 +606,9 @@ class BlockParser {
   private nodeStatement(): void {
     const start = this.c.start;
     const frame = this.frame;
-    const chain = this.chain((partial) => this.applyChain(partial, frame));
+    const { chain, failed } = this.chain();
     this.applyChain(chain, frame);
+    if (failed) throw STOP;
     this.st.statement('node', { start, end: this.lastEnd() });
   }
 
@@ -584,32 +621,32 @@ class BlockParser {
   }
 
   /**
-   * `node [ SIZE ] { link node }`, at an id. A failure inside it hands the parts read so far to
-   * `failed` before the statement stops, so the blocks before the error still reach the model.
+   * `node [ SIZE ] { link node }`, at an id: the parts read, and whether it failed (the error is
+   * recorded), so the blocks before an error still reach the model.
    */
-  private chain(failed: (partial: Chain) => void): Chain {
+  private chain(): { chain: Chain; failed: boolean } {
     const { c } = this;
     const chain: Chain = { first: this.nodeId(), span: undefined, links: [] };
     try {
-      this.nodeShape(chain.first);
+      chain.first = this.withShape(chain.first);
       if (c.kind === T.Size) {
         const j = c.next();
         const range = this.range(j);
         chain.span = { value: parseInt(this.raw(j), 10), range };
-        chain.first.range = { start: chain.first.range.start, end: range.end };
+        chain.first = { ...chain.first, range: { start: chain.first.range.start, end: range.end } };
       }
       while (c.kind === T.Link || c.kind === T.StartLink) {
         const link = this.link();
         if (c.kind !== T.NodeId) this.fail(BLOCK);
-        const next = this.nodeId();
-        chain.links.push([link, next]);
-        this.nodeShape(next);
+        const k = chain.links.push([link, this.nodeId()]) - 1;
+        const next = chain.links[k] as [LinkParts, NodeParts];
+        next[1] = this.withShape(next[1]);
       }
     } catch (error) {
-      if (error === STOP) failed(chain);
-      throw error;
+      if (error !== STOP) throw error;
+      return { chain, failed: true };
     }
-    return chain;
+    return { chain, failed: false };
   }
 
   /** The id of a `node`. */
@@ -618,39 +655,45 @@ class BlockParser {
     return { name: this.raw(j), nameAt: j, range: this.range(j) };
   }
 
+  /** `id` with the shape or block arrow after it, if any. */
+  private withShape(id: NodeParts): NodeParts {
+    const shape = this.nodeShape();
+    if (!shape) return id;
+    const { end, ...rest } = shape;
+    return { ...id, ...rest, range: { start: id.range.start, end } };
+  }
+
   /** The rest of a `node`: an optional shape or block arrow. */
-  private nodeShape(parts: NodeParts): void {
+  private nodeShape(): Shape | undefined {
     const { c } = this;
-    if (c.kind === T.NodeDStart) this.shape(parts);
-    else if (c.kind === T.BlockArrowStart) this.blockArrow(parts);
+    if (c.kind === T.NodeDStart) return this.shape();
+    if (c.kind === T.BlockArrowStart) return this.blockArrow();
+    return undefined;
   }
 
   /** `NODE_DSTART STR NODE_DEND`. */
-  private shape(parts: NodeParts): void {
+  private shape(): Shape {
     const { c } = this;
     const open = this.raw(c.next());
     if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
-    parts.label = this.raw(c.next());
-    if (c.kind !== T.NodeDEnd) this.fail([`\`${CLOSERS[open] ?? ']'}\``]);
+    const label = this.raw(c.next());
+    if (c.kind !== T.NodeDEnd) this.fail(closerFor(open));
     const close = c.next();
-    parts.typeStr = open + this.raw(close);
-    parts.range = { start: parts.range.start, end: this.range(close).end };
+    return { typeStr: open + this.raw(close), label, end: this.range(close).end };
   }
 
   /** `BLOCK_ARROW_START STR DIR+ BLOCK_ARROW_END`. */
-  private blockArrow(parts: NodeParts): void {
+  private blockArrow(): Shape {
     const { c } = this;
     c.next();
     if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
-    parts.label = this.raw(c.next());
+    const label = this.raw(c.next());
     if (c.kind !== T.Dir) this.fail(DIRECTION);
     const directions: string[] = [];
     while (c.kind === T.Dir) directions.push(this.raw(c.next()));
     if (c.kind !== T.BlockArrowEnd) this.fail(DIRECTION_OR_CLOSE);
     const close = c.next();
-    parts.typeStr = '<[' + this.raw(close);
-    parts.directions = directions;
-    parts.range = { start: parts.range.start, end: this.tightEnd(close) };
+    return { typeStr: '<[' + this.raw(close), label, directions, end: this.tightEnd(close) };
   }
 
   /** `link`: `LINK`, or `START_LINK LINK_LABEL STR LINK`. */
@@ -674,7 +717,7 @@ class BlockParser {
    * As in v12, a span after the first node only counts when no link follows.
    */
   private applyChain({ first, span, links }: Chain, frame: Frame): void {
-    const width = span === undefined ? undefined : this.b.span(span.value, span.range);
+    const width = span === undefined ? undefined : this.builder.span(span.value, span.range);
     this.mention(first, frame, links.length === 0 ? width : undefined, span?.value);
     this.links(first, links, frame);
   }
@@ -689,14 +732,6 @@ class BlockParser {
     }
   }
 
-  /** The AST id of the next mention of block `name`. */
-  private blockAst(name: string): string {
-    const n = (this.mentions.get(name) ?? 0) + 1;
-    this.mentions.set(name, n);
-    const id = `block:${esc(name)}`;
-    return n === 1 ? id : `${id}@${n}`;
-  }
-
   /** A block mention: its AST node and symbol, and the block it declares or merges into. */
   private mention(
     parts: NodeParts,
@@ -705,23 +740,20 @@ class BlockParser {
     written: number | undefined
   ): void {
     const { name } = parts;
-    this.st.symbol(name, 'block', this.range(parts.nameAt), this.b.has(name) ? 'ref' : 'def');
-    const node: BlockLeafNode = {
-      id: this.blockAst(name),
-      type: 'Block',
-      range: parts.range,
-      name,
-      nameRange: this.range(parts.nameAt),
-    };
+    const nameRange = this.range(parts.nameAt);
+    this.st.symbol(name, 'block', nameRange, this.builder.has(name) ? 'ref' : 'def');
+    const id = this.ids.next('block', esc(name)).id;
+    const node: BlockLeafNode = { id, type: 'Block', range: parts.range, name, nameRange };
     if (parts.typeStr !== undefined) node.shape = parts.typeStr;
     if (parts.label !== undefined) node.label = parts.label;
     if (written !== undefined) node.span = written;
     if (parts.directions) node.directions = parts.directions;
     frame.ast.push(node);
-    this.b.mention(this.asMention(node.id, parts, span), frame.into, parts.range);
+    const place = { into: frame.into, range: parts.range };
+    this.builder.mention(BlockParser.asMention(id, parts, span), place);
   }
 
-  private asMention(ast: string, parts: NodeParts, span: number | undefined) {
+  private static asMention(ast: string, parts: NodeParts, span: number | undefined): Mention {
     return {
       ast,
       id: parts.name,
@@ -732,14 +764,11 @@ class BlockParser {
     };
   }
 
-  /** An edge from `start` to `end`: its AST node and the model's edge. */
+  /** An edge from `start` to `end`: its AST node and the model's edge (one count for both). */
   private edge(start: string, end: string, link: LinkParts, frame: Frame): void {
-    const astKey = `${esc(start)}->${esc(end)}`;
-    const n = (this.edgeMentions.get(astKey) ?? 0) + 1;
-    this.edgeMentions.set(astKey, n);
-    const ast = n === 1 ? `edge:${astKey}` : `edge:${astKey}@${n}`;
+    const { id, n } = this.ids.next('edge', `${esc(start)}->${esc(end)}`);
     const node: BlockEdgeNode = {
-      id: ast,
+      id,
       type: 'Edge',
       range: link.range,
       start,
@@ -748,7 +777,7 @@ class BlockParser {
     };
     if (link.label !== undefined) node.label = link.label;
     frame.ast.push(node);
-    this.b.edge(ast, start, end, link, link.range);
+    this.builder.edge({ ...link, ast: id, count: n, start, end });
   }
 
   /** `COLUMNS`: the level's column count, the last one winning (D445: `columns 0` is auto). */
@@ -764,21 +793,21 @@ class BlockParser {
       range,
       columns: written,
     });
-    this.b.setColumns(written, range, frame.block, this.frames.length === 1);
+    this.builder.setColumns(written, range, frame.block, this.frames.length === 1);
     this.st.statement('columns', range);
   }
 
-  /** `SPACE_BLOCK`: `space` or `space:n`, n cells (D445: at most {@link MAX_SPACE_CELLS}). */
+  /** `SPACE_BLOCK`: `space` or `space:n`, n cells (D445: capped). */
   private spaceStatement(): void {
     const { c } = this;
     const j = c.next();
     const range = this.range(j);
     const written = parseInt(this.raw(j), 10);
-    const id = this.b.nextId();
+    const id = this.builder.nextId();
     const frame = this.frame;
     const ast = `block:${id}`;
     frame.ast.push({ id: ast, type: 'Space', range, cells: written });
-    this.b.space(ast, id, written, frame.into, range);
+    this.builder.space(ast, id, written, { into: frame.into, range });
     this.st.statement('space', range);
   }
 
@@ -793,7 +822,7 @@ class BlockParser {
     const opener = this.range(j);
     const span = this.st.beginStatement('composite', opener.start);
     if (!withId) {
-      const id = this.b.nextId();
+      const id = this.builder.nextId();
       const node: BlockCompositeNode = {
         id: `block:${id}`,
         type: 'Composite',
@@ -801,48 +830,38 @@ class BlockParser {
         children: [],
       };
       parent.ast.push(node);
-      const block = this.b.anonymous(node.id, id, parent.into, opener);
-      this.open({
-        block,
-        into: block.children,
-        ast: node.children,
-        node,
-        span,
-        opener,
-        statements: 0,
-      });
+      const block = this.builder.anonymous(node.id, id, { into: parent.into, range: opener });
+      const body = { block, into: block.children, ast: node.children, node };
+      this.open({ ...body, span, opener, statements: 0 });
       return;
     }
     if (c.kind !== T.NodeId) {
-      this.open({
-        block: undefined,
-        into: parent.into,
-        ast: parent.ast,
-        span,
-        opener,
-        statements: 1,
-      });
-      this.fail(["the composite's id, as in `block:id`"]);
+      const body = { block: undefined, into: parent.into, ast: parent.ast };
+      this.open({ ...body, span, opener, statements: 1 });
+      this.fail(COMPOSITE_ID);
     }
-    const chain = this.chain((partial) => this.header(partial, parent, opener, span));
+    const { chain, failed } = this.chain();
     this.header(chain, parent, opener, span);
+    if (failed) throw STOP;
   }
 
   /**
    * A composite's header: the composite is the header's first block (v12 merged a composite
-   * into the block of its id); the rest of a chain (`block:a --> b`) goes to the level around
-   * it (v12 lost it, GAPS #554).
+   * into the block of its id). The rest of a chain (`block:a --> b`) stands at the level around
+   * it, in the model and in the AST alike (v12 lost it; GAPS #554, pending a D-id).
    */
   private header(parts: Chain, parent: Frame, opener: Range, span: StatementSpan): void {
     const { first, links } = parts;
     const { name } = first;
-    this.st.symbol(name, 'block', this.range(first.nameAt), this.b.has(name) ? 'ref' : 'def');
+    const nameRange = this.range(first.nameAt);
+    const isNew = !this.builder.has(name);
+    this.st.symbol(name, 'block', nameRange, isNew ? 'def' : 'ref');
     const node: BlockCompositeNode = {
-      id: this.blockAst(name),
+      id: this.ids.next('block', esc(name)).id,
       type: 'Composite',
       range: { start: opener.start, end: first.range.end },
       name,
-      nameRange: this.range(first.nameAt),
+      nameRange,
       children: [],
     };
     if (first.typeStr !== undefined) node.shape = first.typeStr;
@@ -850,32 +869,20 @@ class BlockParser {
     if (parts.span) node.span = parts.span.value;
     parent.ast.push(node);
     const width =
-      parts.span && !this.b.has(name) ? this.b.span(parts.span.value, parts.span.range) : undefined;
-    const mention = this.asMention(node.id, first, links.length === 0 ? width : undefined);
-    const block = this.b.composite(mention, parent.into, first.range);
-    // The chain's edges and later blocks are statements of the level around the composite, as
-    // written before its body; their AST nodes are the composite's first children.
-    this.links(first, links, { ...parent, ast: node.children });
-    this.open({
-      block,
-      into: block.children,
-      ast: node.children,
-      node,
-      span,
-      opener,
-      statements: 0,
-    });
+      parts.span && isNew ? this.builder.span(parts.span.value, parts.span.range) : undefined;
+    const mention = BlockParser.asMention(node.id, first, links.length === 0 ? width : undefined);
+    const block = this.builder.composite(mention, { into: parent.into, range: first.range });
+    this.links(first, links, parent);
+    const body = { block, into: block.children, ast: node.children, node };
+    this.open({ ...body, span, opener, statements: 0 });
   }
 
   private open(frame: Frame): void {
     this.frames.push(frame);
     if (this.frames.length - 1 > this.maxDepth && !this.depthReported) {
       this.depthReported = true;
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxDepth,
-        `Composites nest more than ${this.maxDepth} deep, the limit. The limit is set by the page or app that renders the diagram.`,
-        frame.opener ?? this.c.range
-      );
+      const message = limitMessage('depth', this.maxDepth);
+      this.st.diagnostics.error(LIMIT_CODES.maxDepth, message, frame.opener ?? this.c.range);
     }
   }
 
@@ -886,35 +893,33 @@ class BlockParser {
     if (c.kind === T.DefaultClassDefId) this.fail(CLASS_NAME, DEFAULT_HINT);
     if (c.kind !== T.ClassDefId) this.fail(CLASS_NAME);
     const idTok = c.next();
-    const [name, at] = BlockParser.trimmed(this.raw(idTok));
-    if (c.kind !== T.ClassDefStyleOpts) this.fail(["the class's styles"]);
+    const idText = this.raw(idTok);
+    const [name, at] = BlockParser.trimmed(idText);
+    if (c.kind !== T.ClassDefStyleOpts) this.fail(CLASS_STYLES);
     const cssTok = c.next();
     const css = this.raw(cssTok).trim();
-    const nameRange = this.inside(idTok, this.raw(idTok), at, name.length);
-    const n = (this.classDefMentions.get(name) ?? 0) + 1;
-    this.classDefMentions.set(name, n);
+    const nameRange = BlockParser.rangeIn(this.sourceOf(idTok, idText), at, name.length);
+    const { id, n } = this.ids.next('classDef', esc(name));
     this.st.symbol(name, 'class', nameRange, n === 1 ? 'def' : 'ref');
     const range = { start: this.range(start).start, end: this.range(cssTok).end };
-    this.frame.ast.push({
-      id: n === 1 ? `classDef:${esc(name)}` : `classDef:${esc(name)}@${n}`,
-      type: 'ClassDef',
-      range,
-      name,
-      nameRange,
-      css,
-    });
-    this.b.classDef(name, css);
+    this.frame.ast.push({ id, type: 'ClassDef', range, name, nameRange, css });
+    this.builder.classDef(name, css);
     this.st.statement('classDef', range);
   }
 
-  /** The ids of a `class` or `style` line (`a, b`), trimmed (D442), with their ranges. */
+  /**
+   * The ids of a `class` or `style` line (`a, b`), trimmed (D442), with their ranges: one walk
+   * of the list with a moving offset.
+   */
   private targets(j: number): BlockTarget[] {
     const text = this.raw(j);
+    const source = this.sourceOf(j, text);
     const out: BlockTarget[] = [];
     let at = 0;
     for (const part of text.split(',')) {
       const [name, from] = BlockParser.trimmed(part);
-      if (name !== '') out.push({ name, range: this.inside(j, text, at + from, name.length) });
+      if (name !== '')
+        out.push({ name, range: BlockParser.rangeIn(source, at + from, name.length) });
       at += part.length + 1;
     }
     return out;
@@ -932,19 +937,13 @@ class BlockParser {
     const className = text.trim();
     const targets = this.targets(idsTok);
     const range = { start: this.range(start).start, end: this.range(nameTok).end };
-    this.frame.ast.push({
-      id: this.st.ids.statement('class'),
-      type: 'Class',
-      range,
-      targets,
-      className,
-    });
+    const id = this.st.ids.statement('class');
+    this.frame.ast.push({ id, type: 'Class', range, targets, className });
     for (const t of targets) this.st.symbol(t.name, 'block', t.range, 'ref');
-    for (const m of text.matchAll(/\S+/g)) {
-      const at = m.index;
-      this.st.symbol(m[0], 'class', this.inside(nameTok, text, at, m[0].length), 'ref');
-    }
-    this.b.classes(targets, className);
+    const source = this.sourceOf(nameTok, text);
+    for (const m of text.matchAll(/\S+/g))
+      this.st.symbol(m[0], 'class', BlockParser.rangeIn(source, m.index, m[0].length), 'ref');
+    this.builder.classes(targets, className);
     this.st.statement('class', range);
   }
 
@@ -954,20 +953,15 @@ class BlockParser {
     const start = c.next();
     if (c.kind !== T.StyleEntityIds) this.fail(IDS);
     const idsTok = c.next();
-    if (c.kind !== T.StyleDefinitionData) this.fail(['the styles']);
+    if (c.kind !== T.StyleDefinitionData) this.fail(STYLES);
     const dataTok = c.next();
     const styles = this.raw(dataTok).trim();
     const targets = this.targets(idsTok);
     const range = { start: this.range(start).start, end: this.range(dataTok).end };
-    this.frame.ast.push({
-      id: this.st.ids.statement('style'),
-      type: 'Style',
-      range,
-      targets,
-      styles,
-    });
+    const id = this.st.ids.statement('style');
+    this.frame.ast.push({ id, type: 'Style', range, targets, styles });
     for (const t of targets) this.st.symbol(t.name, 'block', t.range, 'ref');
-    this.b.style(targets, styles);
+    this.builder.style(targets, styles);
     this.st.statement('style', range);
   }
 }

@@ -184,13 +184,18 @@ Sized @Block = node [ SIZE ] ;
 Block @Block = node ;
 node = NODE_ID [ shape ] ;
 shape = NODE_DSTART STR NODE_DEND | BLOCK_ARROW_START STR DIR { DIR } BLOCK_ARROW_END ;
-Edge @Edge = LINK | START_LINK LINK_LABEL STR LINK ;
+Edge @Edge = link ;
+link = LINK | START_LINK LINK_LABEL STR LINK ;
 
 Columns @Columns = COLUMNS ;
 Space @Space = SPACE_BLOCK ;
 (** `block:id … end` (the header may take a label, a span and edges) or `block … end`. *)
-Composite @Composite = id-block node [ SIZE ] { Edge Block } statement { statement } end
+Composite @Composite = id-block node [ SIZE ] { HeaderEdge HeaderBlock } statement { statement } end
   | BLOCK_DIAGRAM_KEY statement { statement } end ;
+(* The rest of a header chain, `block:a --> b`: the composite is `a`, and the edge and `b` stand
+at the level around it. *)
+HeaderEdge @HeaderEdge = link ;
+HeaderBlock @HeaderBlock = node ;
 
 ClassDef @ClassDef = classDef CLASSDEF_ID CLASSDEF_STYLEOPTS ;
 Class @Class = class CLASSENTITY_IDS STYLECLASS ;

@@ -97,6 +97,13 @@ const SHAPES: [string, (n: number) => string][] = [
         .map((id) => `classDef ${id} fill:red,color:blue`)
         .join('\n'),
   ],
+  // One statement each, so no n block statements hide the cost of reading its list.
+  ['one long style id list', (n) => B + 'a\nstyle ' + ids(n).join(',') + ' fill:red'],
+  ['one long class id list', (n) => B + 'a\nclass ' + Array<string>(n).fill('a').join(',') + ' c'],
+  ['many class-name words', (n) => B + 'a\nclass a ' + ids(n).join(' ')],
+  ['a self chain', (n) => B + Array<string>(n).fill('a').join(' --> ')],
+  ['empty composites', (n) => B + 'block\nend\n'.repeat(n)],
+  ['a quoted text on every line', (n) => B + '"x"\n'.repeat(n)],
   [
     'zero spans',
     (n) =>

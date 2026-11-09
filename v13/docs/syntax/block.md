@@ -69,8 +69,12 @@ shape = NODE_DSTART STR NODE_DEND
 ```
 
 ```ebnf
-Edge @Edge = LINK
-           | START_LINK LINK_LABEL STR LINK ;
+Edge @Edge = link ;
+```
+
+```ebnf
+link = LINK
+     | START_LINK LINK_LABEL STR LINK ;
 ```
 
 ```ebnf
@@ -84,8 +88,16 @@ Space @Space = SPACE_BLOCK ;
 `block:id … end` (the header may take a label, a span and edges) or `block … end`.
 
 ```ebnf
-Composite @Composite = id-block node [ SIZE ] { Edge Block } statement { statement } end
+Composite @Composite = id-block node [ SIZE ] { HeaderEdge HeaderBlock } statement { statement } end
                      | BLOCK_DIAGRAM_KEY statement { statement } end ;
+```
+
+```ebnf
+HeaderEdge @HeaderEdge = link ;
+```
+
+```ebnf
+HeaderBlock @HeaderBlock = node ;
 ```
 
 ```ebnf

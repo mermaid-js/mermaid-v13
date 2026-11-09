@@ -43,7 +43,8 @@ export interface BlockEdgeNode extends AstNode<'Edge'> {
 
 /**
  * `block:id … end` (with its header's fields) or an anonymous `block … end`. Its children are
- * the rest of a header chain (`block:a --> b`), then the body.
+ * the body. The rest of a header chain (`block:a --> b`) is the edges and blocks right after
+ * the composite at its own level, as in the model (GAPS #554).
  */
 export interface BlockCompositeNode extends AstNode<'Composite'> {
   /** The header id; undefined for an anonymous composite. */

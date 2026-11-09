@@ -8,7 +8,15 @@ import type { Diagnostic, ParseState, Range } from '@mermaid-js/core/parser-kit'
 import * as codes from '../codes.ts';
 import type { Block, BlockEdge, BlockModel, BlockType } from '../model.ts';
 import type { BlockTarget } from './ast.ts';
-import { arrowEnd, arrowStart, classStyles, listOf, pattern, thickness } from './text.ts';
+import {
+  ALSO_HERE,
+  limitMessage,
+  SIZE_INVALID_MESSAGE,
+  styledHere,
+  styleUnknownMessage,
+  truncatedMessage,
+} from './messages.ts';
+import { arrowEnd, arrowStart, classStyles, pattern, thickness } from './text.ts';
 
 /** D445's caps (Pele's limits). */
 export const MAX_SPAN = 1_000;
@@ -21,7 +29,7 @@ export type OpenBlock = { -readonly [K in keyof Block]: Block[K] } & {
   children: OpenBlock[];
 };
 
-/** A block mention as the model reads it. */
+/** A block statement as the model reads it. */
 export interface Mention {
   ast: string;
   id: string;
@@ -34,10 +42,26 @@ export interface Mention {
   directions: string[] | undefined;
 }
 
+/** Where a new block goes: the level's list, and the statement's range (for a limit error). */
+export interface Place {
+  into: OpenBlock[];
+  range: Range;
+}
+
 /** A link as read: its (closing) link text and label. */
 export interface LinkText {
   link: string;
   label?: string;
+}
+
+/** An edge as the model reads it. */
+export interface EdgeParts extends LinkText {
+  ast: string;
+  /** The edge's number among those from `start` to `end` (1, 2, …): v12's id prefix. */
+  count: number;
+  start: string;
+  end: string;
+  range: Range;
 }
 
 /** One `style` statement, applied after every statement (D443). */
@@ -55,8 +79,6 @@ export class ModelBuilder {
   /** The top-level blocks. */
   readonly top: OpenBlock[] = [];
   private readonly byId = new Map<string, OpenBlock>();
-  /** Edges between each `start-end` pair, for v12's ids. */
-  private readonly edgeCount = new Map<string, number>();
   /** Classes named for ids not declared yet (D442). */
   private readonly pendingClasses = new Map<string, string[]>();
   private readonly classDefs = new Map<
@@ -100,24 +122,19 @@ export class ModelBuilder {
     return value;
   }
 
-  /** A block mention: a new block in `into`, or v12's merge into the block of that id. */
-  mention(m: Mention, into: OpenBlock[], range: Range): void {
+  /** A block mention: a new block, or v12's merge into the block of that id. */
+  mention(m: Mention, place: Place): void {
     const label = m.label === undefined || m.label === '' ? m.id : m.label;
     const existing = this.byId.get(m.id);
-    if (existing) {
-      this.merge(existing, m.type, label);
-      return;
-    }
-    const block = this.create(m.ast, m.id, m.type, label, into, range);
-    block.span = m.span ?? 1;
-    if (m.directions) block.directions = m.directions.map((d) => d.trim());
+    if (existing) this.merge(existing, m.type, label);
+    else this.create({ ...m, label }, place);
   }
 
   /**
-   * `block:id`: a new composite in `into`, or (D442) the block of that id made a composite; the
-   * children then go to that block, after the ones it has.
+   * `block:id`: a new composite, or (D442) the block of that id made a composite; the children
+   * then go to that block, after the ones it has.
    */
-  composite(m: Mention, into: OpenBlock[], range: Range): OpenBlock {
+  composite(m: Mention, place: Place): OpenBlock {
     const label = m.label ?? '';
     const existing = this.byId.get(m.id);
     if (existing) {
@@ -125,28 +142,42 @@ export class ModelBuilder {
       existing.colorIndex ??= this.nextColor++;
       return existing;
     }
-    const block = this.create(m.ast, m.id, 'composite', label, into, range);
-    block.colorIndex = this.nextColor++;
-    if (m.span !== undefined) block.span = m.span;
-    if (m.directions) block.directions = m.directions.map((d) => d.trim());
-    return block;
-  }
-
-  /** An anonymous `block … end` with the generated id `id`. */
-  anonymous(ast: string, id: string, into: OpenBlock[], range: Range): OpenBlock {
-    const block = this.create(ast, id, 'composite', '', into, range);
+    const block = this.create({ ...m, type: 'composite', label }, place);
     block.colorIndex = this.nextColor++;
     return block;
   }
 
-  /** `space:n` with the generated id `id` (D445: at most {@link MAX_SPACE_CELLS} cells). */
-  space(ast: string, id: string, written: number, into: OpenBlock[], range: Range): void {
+  /** An anonymous `block … end` with a generated id. */
+  anonymous(ast: string, id: string, place: Place): OpenBlock {
+    const m: Mention = {
+      ast,
+      id,
+      type: 'composite',
+      label: '',
+      span: undefined,
+      directions: undefined,
+    };
+    const block = this.create(m, place);
+    block.colorIndex = this.nextColor++;
+    return block;
+  }
+
+  /** `space:n` with a generated id (D445: at most {@link MAX_SPACE_CELLS} cells). */
+  space(ast: string, id: string, written: number, place: Place): void {
     let cells = written;
     if (cells > MAX_SPACE_CELLS) {
-      this.truncated.push(range);
+      this.truncated.push(place.range);
       cells = MAX_SPACE_CELLS;
     }
-    this.create(ast, id, 'space', '', into, range).cells = cells;
+    const m: Mention = {
+      ast,
+      id,
+      type: 'space',
+      label: '',
+      span: undefined,
+      directions: undefined,
+    };
+    this.create(m, place).cells = cells;
   }
 
   /** v12's merge into an existing block: a type other than `na`, a label other than the id. */
@@ -155,61 +186,50 @@ export class ModelBuilder {
     if (label !== existing.id) existing.label = label;
   }
 
-  /** A new block in `into`, with the classes named for it before (D442). */
-  private create(
-    ast: string,
-    id: string,
-    type: BlockType,
-    label: string,
-    into: OpenBlock[],
-    range: Range
-  ): OpenBlock {
+  /** A new block, with the classes named for it before (D442). */
+  private create(m: Mention, { into, range }: Place): OpenBlock {
     const block: OpenBlock = {
-      ast,
-      id,
-      type,
-      label,
-      span: 1,
-      classes: this.pendingClasses.get(id) ?? [],
+      ast: m.ast,
+      id: m.id,
+      type: m.type,
+      label: m.label ?? '',
+      span: m.span ?? 1,
+      classes: this.pendingClasses.get(m.id) ?? [],
       styles: [],
       children: [],
     };
-    this.pendingClasses.delete(id);
+    if (m.directions) block.directions = m.directions.map((d) => d.trim());
+    this.pendingClasses.delete(m.id);
     into.push(block);
-    this.byId.set(id, block);
-    if (++this.nodes === this.limits.maxNodes + 1) {
+    this.byId.set(m.id, block);
+    if (++this.nodes === this.limits.maxNodes + 1)
       this.st.diagnostics.error(
         LIMIT_CODES.maxNodes,
-        `The diagram has more than ${this.limits.maxNodes} blocks, the limit. The limit is set by the page or app that renders the diagram.`,
+        limitMessage('blocks', this.limits.maxNodes),
         range
       );
-    }
     return block;
   }
 
-  /** An edge from `start` to `end`: v12's id and arrowheads from the (closing) link. */
-  edge(ast: string, start: string, end: string, link: LinkText, range: Range): void {
-    const key = `${start}-${end}`;
-    const count = (this.edgeCount.get(key) ?? 0) + 1;
-    this.edgeCount.set(key, count);
+  /** An edge: v12's id (`<count>-<start>-<end>`) and arrowheads from the (closing) link. */
+  edge(e: EdgeParts): void {
     this.edges.push({
-      ast,
-      id: `${count}-${key}`,
-      start,
-      end,
-      label: link.label ?? '',
-      arrowTypeStart: arrowStart(link.link),
-      arrowTypeEnd: arrowEnd(link.link),
-      thickness: thickness(link.link),
-      pattern: pattern(link.link),
+      ast: e.ast,
+      id: `${e.count}-${e.start}-${e.end}`,
+      start: e.start,
+      end: e.end,
+      label: e.label ?? '',
+      arrowTypeStart: arrowStart(e.link),
+      arrowTypeEnd: arrowEnd(e.link),
+      thickness: thickness(e.link),
+      pattern: pattern(e.link),
     });
-    if (this.edges.length === this.limits.maxEdges + 1) {
+    if (this.edges.length === this.limits.maxEdges + 1)
       this.st.diagnostics.error(
         LIMIT_CODES.maxEdges,
-        `The diagram has more than ${this.limits.maxEdges} edges, the limit. The limit is set by the page or app that renders the diagram.`,
-        range
+        limitMessage('edges', this.limits.maxEdges),
+        e.range
       );
-    }
   }
 
   /**
@@ -272,36 +292,27 @@ export class ModelBuilder {
     }
     const [first, ...rest] = unknown;
     if (first) {
-      const ids = [...named].map((n) => `\`${n}\``);
-      const one = ids.length === 1;
-      const related = rest.map((t) => ({
-        message: `\`${t.name}\` is styled here`,
-        range: t.range,
-      }));
+      const related = rest.map((t) => ({ message: styledHere(t.name), range: t.range }));
       this.st.diagnostics.warning(
         codes.BLOCK_STYLE_UNKNOWN,
-        `\`style\` names ${one ? 'a block' : 'blocks'} the diagram does not have: ${listOf(ids)}. Declare ${one ? 'it' : 'them'}, or check the spelling.`,
+        styleUnknownMessage([...named]),
         first.range,
         related.length > 0 ? { related } : undefined
       );
     }
-    this.once(
-      codes.BLOCK_SIZE_INVALID,
-      this.sizeInvalid,
-      '`columns 0` reads as `columns auto` and a span `:0` as `:1`, as mermaid@12 could not draw them.'
-    );
-    this.once(
+    this.warnOnce(codes.BLOCK_SIZE_INVALID, this.sizeInvalid, SIZE_INVALID_MESSAGE);
+    this.warnOnce(
       codes.BLOCK_TRUNCATED,
       this.truncated,
-      `A span is at most ${MAX_SPAN} columns and a \`space\` at most ${MAX_SPACE_CELLS} cells; larger ones are cut to that.`
+      truncatedMessage(MAX_SPAN, MAX_SPACE_CELLS)
     );
   }
 
   /** One warning of `code` for every range in `at`: the first, the others related. */
-  private once(code: string, at: readonly Range[], message: string): void {
+  private warnOnce(code: string, at: readonly Range[], message: string): void {
     const [first, ...rest] = at;
     if (!first) return;
-    const related = rest.map((range) => ({ message: 'also here', range }));
+    const related = rest.map((range) => ({ message: ALSO_HERE, range }));
     this.st.diagnostics.warning(code, message, first, related.length > 0 ? { related } : undefined);
   }
 

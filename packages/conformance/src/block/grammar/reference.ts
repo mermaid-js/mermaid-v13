@@ -71,11 +71,28 @@ export function referenceVerdict(source: string): Verdict {
     const last = lexed.input.from[to - 1];
     const replaced = to >= 2 && lexed.input.from[to - 2] === last;
     const end = last === undefined || replaced ? r.end : Math.min(r.end, last + 1);
-    const shape: Shape = { type: a.type, range: trim(source, r.start, end) };
-    if (a.children.length > 0) shape.children = a.children.map(toShape);
-    return shape;
+    return { type: a.type, range: trim(source, r.start, end) };
   };
-  return { accepted: true, ast: astOf(tree).map(toShape) };
+  return { accepted: true, ast: project(astOf(tree), toShape) };
+}
+
+/**
+ * The grammar's shapes as the hand-written AST nests them: the rest of a composite's header
+ * chain (`HeaderEdge`, `HeaderBlock`) stands right after the composite, at its level, as an
+ * `Edge` and a `Block` (the model puts them there, GAPS #554).
+ */
+function project(shapes: readonly AstShape[], toShape: (a: AstShape) => Shape): Shape[] {
+  const out: Shape[] = [];
+  for (const a of shapes) {
+    const shape = toShape(a);
+    out.push(shape);
+    const header = a.children.filter((c) => c.type === 'HeaderEdge' || c.type === 'HeaderBlock');
+    const body = a.children.filter((c) => c.type !== 'HeaderEdge' && c.type !== 'HeaderBlock');
+    if (body.length > 0) shape.children = project(body, toShape);
+    for (const h of header)
+      out.push({ ...toShape(h), type: h.type === 'HeaderEdge' ? 'Edge' : 'Block' });
+  }
+  return out;
 }
 
 function handShape(source: string, n: BlockStatementNode): Shape {

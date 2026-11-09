@@ -1099,7 +1099,7 @@
     "id": "e2e/diagrams/block/nightly-check/composite-header-with-an-edge.mmd",
     "inputHash": "sha256:5869071dd30a4201",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1107,7 +1107,7 @@
     "id": "e2e/diagrams/block/nightly-check/composite-opened-twice-keeps-both-bodies.mmd",
     "inputHash": "sha256:a843da5dad7164b4",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1267,7 +1267,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (commented)",
     "inputHash": "sha256:1e35708799d0538b",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1275,7 +1275,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (commented)",
     "inputHash": "sha256:0e433788b9147d8e",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1419,7 +1419,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CR cut)",
     "inputHash": "sha256:a1ab5dd7f6eca9d0",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1427,7 +1427,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CR cut)",
     "inputHash": "sha256:8466531c6bc84d2a",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1579,7 +1579,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CR cut by a directive)",
     "inputHash": "sha256:4d511abe3fc23d54",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1587,7 +1587,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CR cut by a directive)",
     "inputHash": "sha256:1e6bc72d7b0b2d5f",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1739,7 +1739,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CRLF)",
     "inputHash": "sha256:db722d7e76359469",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1747,7 +1747,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CRLF)",
     "inputHash": "sha256:d6244d74f7ccea70",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1899,7 +1899,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (tabs)",
     "inputHash": "sha256:8554e675bb7b94a9",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -1907,7 +1907,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (tabs)",
     "inputHash": "sha256:0b22991fc7cba7c3",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -2059,7 +2059,7 @@
     "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (mid-line directive)",
     "inputHash": "sha256:140359f1ba49b0ee",
     "kind": "model",
-    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, needs a D-id); v12 spread the header chain into a composite with no id and lost the edge.",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -2067,7 +2067,7 @@
     "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (mid-line directive)",
     "inputHash": "sha256:acd6872f003a5ab7",
     "kind": "model",
-    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, needs a D-id); v12 lost the second body's new blocks.",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
     "owner": "#554",
     "since": "2026-11-09"
   },
@@ -2180,6 +2180,62 @@
     "inputHash": "sha256:6d618d9e179e564d",
     "kind": "model",
     "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/space-over-the-cap-is-cut.mmd",
+    "inputHash": "sha256:525d3a7f3a429f64",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (commented)",
+    "inputHash": "sha256:dc7896f47bbebbde",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CR cut)",
+    "inputHash": "sha256:d61f35c6a8025cd0",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CR cut by a directive)",
+    "inputHash": "sha256:86121ec8c3a635b9",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CRLF)",
+    "inputHash": "sha256:634a3a6e72d40d10",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (tabs)",
+    "inputHash": "sha256:693e9c49e78004ed",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (mid-line directive)",
+    "inputHash": "sha256:4f7711bdb912dcca",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
     "owner": "#554",
     "since": "2026-11-09"
   }
