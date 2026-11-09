@@ -25,6 +25,14 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T1 #594
 
+Unmet criteria: none. Choices the spec and D-ids leave open:
+
+- **Quirks, as probed against 2.0.1 and kept** (P1; all gated in `architecture-cases.json`): `Backend` lexes `B` + `ackend` (also `Left`, `Title`); `row`, `in`, `group`, `service`… as ids are keyword tokens, `rows`/`inx`/`services` are ids (keywords yield only to a strictly longer ID); `title` has no boundary, so `service titlex` is `service`, ` title`, `x` (TITLE/ACC_* take their leading blanks: they precede WHITESPACE); `a:r -- l:b` lexes sides as ids; `architecture-beta service a` and `architecture-betax` (an ID) as v12; `<`/`>` are one token either side of `--`. Labels: a quoted form may hold `]`, `[` and line breaks (`["a]b"]`, `["a\nb"]`), `["a"b]` falls back to the run, a run stops at `[`/`]`/CR/LF (`[a [b] c]` is an error at the first `[`), `[]` and `( server )` are errors.
+- **Harvest** header is `architecture(?:-beta)?` (v12's detector takes bare `architecture`, lexed as an ID; one harvested source is the bare describe title). Files beyond the ticket's three, per the spec's Testing Decisions: `architectureSeed.spec.ts`, `svgDraw.spec.ts`, `examples/architecture.ts`, `multi-diagram-id-uniqueness.spec.ts`. 47 sources.
+- **Excluded** from the gate: `unclosed-directive*` (core's shared preprocess, as pie/radar/wardley). **Not reached**: `header-upper`, `header-mixed-case` (v12's detector is case sensitive) and six `commented()` copies whose cut falls in the header.
+- **8 new fixtures** `e2e/diagrams/architecture/nightly-check/lexer-*.mmd` (arrowheads incl. `> -- <`, text icons, quoted/raw/CJK labels, keyword-prefixed and digit ids, header on a statement line, free blanks, labelled `{group}` edge, like-side and self edges); v12 parses all 8. **Conflict with T0**: `conformance/src/compass/architecture-corpus.spec.ts` (#590 branch) reads every `.mmd` under `e2e/diagrams/architecture` and asserts 20 files and 79/87 facing edges; when T0 and T1 meet on the integration branch, restrict it to the 20 v12 fixtures (or update its counts) and check its test-only builder reads `"text"` icons and `> -- <`.
+- Package skeleton is private with no manifest; `theme-used-by.spec.ts` lists `architecture` in `NOT_DRAWN_YET` until T4 (#614) reads a theme variable.
+
 ## T2 #599
 
 ## T3 #607
