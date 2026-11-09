@@ -7,18 +7,25 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Closed: post-tag specs. Every harvested string lexes as 12.2.0 does (`LINK_ID` is 12.2.0's; `shapes.ts` is not the lexer), so no lexer exclusion; `[/…/]` (D462) differs only in the model (#546).
 
 ## #546 T2 parser
-- From the #544 review: D467's test-only parity spec (v12's flowchart `SHARED_SYNTAX` bodies fed to both v13 flowchart and agentflow) is this ticket's.
-- From #544: v12 parsed the comment-free text when `withComments` exceeded `maxTextSize` (with a `log.warn`); `agentflowSourceView(…, maxTextSize)` reproduces it, so pass the site config's value (and decide whether to warn).
-- From #544: `agentflow-beta %% c` is a lexical error in v12 (the `dir` state has no comment rule); a top-level `%% direction LR` lexes as `direction_lr` (the `.*direction` rules run first).
-- From exploration: v13 flowchart's model differs from v12 agentflow in three places to cut: subgraph parent is last-write-wins with no cycle cut (`nesting.ts:32–35`; D461 wants the cycle cut and `CONTAINMENT_VIOLATION`); `inheritDir` also falls back to the top-level `direction` in v12 (`agentflowDb.ts:1218`), though a top-level `direction` does not change the diagram direction; v12 keeps a dangling edge from `connectors --> b` after dropping the vertex.
+- Closed: D467's `SHARED_SYNTAX` parity spec (`packages/conformance/src/agentflow/shared-syntax.spec.ts`: both v13 parsers and both v12 types agree on accept/reject, and on vertices and edges where they accept).
+- Closed: `maxTextSize`. `parseAgentflow(…, { maxTextSize })` passes it to the view (default 50,000; the plugin, #550, passes `ctx.config.maxTextSize`). **Choice:** no warning: through the pipeline core's `maxSourceLength` (also `maxTextSize`) rejects a longer source first, so the fallback only shows on direct calls.
+- Closed: `agentflow-beta %% c` is `HEADER_COMMENT` (one error, its own message); `%% direction LR` is a `direction` statement, as v12 read it (a flow's direction inside a flow, nothing at the top), and a comment past `maxTextSize`.
+- Closed: the three flowchart-model differences. The cycle cut is in the model (`containment.ts`, `CONTAINMENT_VIOLATION` at the inner flow's opener) and gives `parent`/`collapsedInto` on vertices and flows; `inheritDir` reads the header direction, the same as v12 (its fallback to `config.direction` is unreachable: the header always sets one), pinned in `parse.spec.ts`; the edge from `connectors` stays in the model with its dangling end (T3 decides what to draw).
+- Found, core's (not fixed here): core's YAML reader reads U+2028/U+2029 inside a multi-line `@{ … }` as line breaks, js-yaml as text; the gate's separator variants of 13 sources differ there (classified in `agentflow/parity.spec.ts`). Flowchart's `@{ … }` reads the same.
+- Found, flowchart's (not fixed here): flowchart's in-place one-line `@{ … }` read starts at `@` + 1, so a directive between `@` and `{` reaches its YAML (agentflow starts at the opener's `{`).
+- **Choice:** edge AST ids are flowchart's `e:A>B` / `#2` (D468 "follows flowchart's scheme"); `global:<n>` and `s:subGraph<n>` as D468 says.
+- **Choice:** new codes `UNCLOSED_BLOCK` (an unclosed `flow` or `global`; none when its header already failed), `HEADER_COMMENT`; a stray `end` takes the rest of its statement (one error, one diagnostic).
+- **Choice:** `LINK_STYLE_INDEX` keeps v12's message verbatim (D461), `between 0 and -1` included when there are no edges.
 
 ## #547 T3 layout
+- From #546: read `parent` and `collapsedInto` from the model (the cycle is already cut); never derive nesting from `flows[].nodes`. A vertex with a flow's id is not in `vertices` (v12 drew the flow); its styles and classes are the flow's. `edges` can end at `connectors` (v12 kept it; flowchart's `edgeViews` drops it).
 - From exploration: v13 flowchart drops an authored `x --> x` whose `x` is inside a collapsed flow (`prepare.ts:335`); v12 agentflow keeps an authored self-loop.
 
 ## #548 T4 renderer
 - Unblocked: block's shape-geometry T0 (#589) is merged into `mermaid-v13` (ad3648a91) and into this branch (ce62f350c). The `subroutinePadding*`, `leanPadding*` and `crossArrowhead*` rows are core rows (`packages/core/src/theme/vocabulary.ts`, values in `specs/geometry.ts`); add `'agentflow'` to the `usedBy` of each row agentflow's sources read, and nothing else in core.
 
 ## #549 T6 language facet
+- From #546: the parser takes `probe` (flowchart's decision points, `READ_PAST` exported from `parser/tables.ts`), and `gen:grammar` already writes `src/generated/{categories,docs}.ts` and the highlighters from `grammar/agentflow.ebnf` (an `agentflow` row in `tools/gen-grammar` `GRAMMARS`). Symbols: vertices and connectors `node`, flows `subgraph`, classes `class`, edge ids `edge`.
 
 ## #550 T5 integration
 

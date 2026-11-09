@@ -409,7 +409,7 @@
   },
   {
     "id": "agentflow-cases/comment-nbsp",
-    "source": "agentflow-beta\n\u00a0%% c\n a"
+    "source": "agentflow-beta\n %% c\n a"
   },
   {
     "id": "agentflow-cases/comment-bare",
@@ -541,7 +541,7 @@
   },
   {
     "id": "agentflow-cases/brace-blanks-nbsp",
-    "source": "agentflow-beta\n a{b}\u00a0\n c"
+    "source": "agentflow-beta\n a{b} \n c"
   },
   {
     "id": "agentflow-cases/brace-blanks-cr",
@@ -553,7 +553,7 @@
   },
   {
     "id": "agentflow-cases/brace-blanks-separator",
-    "source": "agentflow-beta\n a{b} \u2028\n c"
+    "source": "agentflow-beta\n a{b}  \n c"
   },
   {
     "id": "agentflow-cases/brace-blanks-directive",
@@ -625,35 +625,35 @@
   },
   {
     "id": "agentflow-cases/line-separator-node",
-    "source": "agentflow-beta\n a\u2028b"
+    "source": "agentflow-beta\n a b"
   },
   {
     "id": "agentflow-cases/line-separator-comment",
-    "source": "agentflow-beta\n%% c\u2028a --> b\n c"
+    "source": "agentflow-beta\n%% c a --> b\n c"
   },
   {
     "id": "agentflow-cases/line-separator-label",
-    "source": "agentflow-beta\n a[x\u2028y]"
+    "source": "agentflow-beta\n a[x y]"
   },
   {
     "id": "agentflow-cases/line-separator-before-comment",
-    "source": "agentflow-beta\n\u2028%% c\n a"
+    "source": "agentflow-beta\n %% c\n a"
   },
   {
     "id": "agentflow-cases/line-separator-after-link",
-    "source": "agentflow-beta\n a --> b\u2029%% c\n d"
+    "source": "agentflow-beta\n a --> b %% c\n d"
   },
   {
     "id": "agentflow-cases/line-separator-style",
-    "source": "agentflow-beta\n%% c\u2028style a fill:#f00;\n a"
+    "source": "agentflow-beta\n%% c style a fill:#f00;\n a"
   },
   {
     "id": "agentflow-cases/line-separator-direction",
-    "source": "agentflow-beta\n a\u2028direction LR\n b"
+    "source": "agentflow-beta\n a direction LR\n b"
   },
   {
     "id": "agentflow-cases/line-separator-header",
-    "source": "agentflow-beta\u2028 a"
+    "source": "agentflow-beta  a"
   },
   {
     "id": "agentflow-cases/v12-containerOrder-1",
@@ -722,5 +722,405 @@
   {
     "id": "agentflow-cases/v12-fixture-warning-shape-unsupported",
     "source": "%% A Mermaid-valid shape that's not in agentflow's v0.8.1 catalogue and\n%% not in the removed-shape blacklist emits a SHAPE_UNSUPPORTED warning\n%% from transformData. (Removed shapes like `cylinder`, `doc`, `procs`\n%% emit SHAPE_REMOVED at error tier — see those fixtures.)\nagentflow-beta TB\n  input[\"q\"]\n  input@{ shape: input }\n  x[\"X\"]\n  y[\"Y\"]\n  x@{ shape: \"triangle\" }\n  input --> x --> y\n"
+  },
+  {
+    "id": "agentflow-cases/model-containment-cycle",
+    "source": "agentflow-beta\nflow A\n a1 --> B\nend\nflow B\n b1 --> A\nend"
+  },
+  {
+    "id": "agentflow-cases/model-containment-cycle-collapsed",
+    "source": "agentflow-beta\nflow A@{ view: collapsed }\n a1 --> B\nend\nflow B\n b1 --> A\nend"
+  },
+  {
+    "id": "agentflow-cases/model-containment-triangle",
+    "source": "agentflow-beta\nflow A\n a --> B\nend\nflow B\n b --> C\nend\nflow C\n c --> A\nend"
+  },
+  {
+    "id": "agentflow-cases/model-metadata-before-flow",
+    "source": "agentflow-beta\nf@{ view: collapsed }\nflow f\n a\nend"
+  },
+  {
+    "id": "agentflow-cases/model-metadata-inside-own-flow",
+    "source": "agentflow-beta\nflow f\n f@{ view: collapsed }\n a\nend"
+  },
+  {
+    "id": "agentflow-cases/model-reserved-connectors-id",
+    "source": "agentflow-beta\n connectors --> b\n a --> connectors"
+  },
+  {
+    "id": "agentflow-cases/model-view-on-vertex",
+    "source": "agentflow-beta\n a@{ view: collapsed }\n a --> b"
+  },
+  {
+    "id": "agentflow-cases/model-connector-replaces-vertex",
+    "source": "agentflow-beta\n gh[GitHub] --> b\n connector gh"
+  },
+  {
+    "id": "agentflow-cases/model-connector-then-vertex",
+    "source": "agentflow-beta\n connector gh\n gh[GitHub] --> b"
+  },
+  {
+    "id": "agentflow-cases/model-connector-retitled",
+    "source": "agentflow-beta\nconnector c1\nconnector c1[New title]\nconnector c2@{ protocol: mcp }\n c1 --> c2"
+  },
+  {
+    "id": "agentflow-cases/model-connector-in-flow",
+    "source": "agentflow-beta\nflow f\n connector gh[\"GitHub API\"]@{ protocol: mcp }\n a --> gh\nend"
+  },
+  {
+    "id": "agentflow-cases/model-connector-metadata-view",
+    "source": "agentflow-beta\n connector x\n x@{ view: collapsed }"
+  },
+  {
+    "id": "agentflow-cases/model-trailing-comma-plain",
+    "source": "agentflow-beta\n a@{\n  shape: tool,\n  x: 1\n }"
+  },
+  {
+    "id": "agentflow-cases/model-trailing-comma-quoted",
+    "source": "agentflow-beta\n a@{\n  shape: \"tool\",\n  x: 1,\n }"
+  },
+  {
+    "id": "agentflow-cases/model-flow-reopened",
+    "source": "agentflow-beta\nflow f[One]\n a\nend\nflow f[Two]\n b\nend"
+  },
+  {
+    "id": "agentflow-cases/model-flow-header-metadata",
+    "source": "agentflow-beta\nflow f[T]@{ view: collapsed, owner: me }\n a --> b\nend\n c --> f"
+  },
+  {
+    "id": "agentflow-cases/model-flow-metadata-after",
+    "source": "agentflow-beta\nflow f\n a\nend\nf@{ view: collapsed }\nf@{ owner: x }"
+  },
+  {
+    "id": "agentflow-cases/model-flow-self-member",
+    "source": "agentflow-beta\nflow f\n a --> f\nend"
+  },
+  {
+    "id": "agentflow-cases/model-flows-anonymous",
+    "source": "agentflow-beta\nflow\n a\nend\nflow\n b\nend"
+  },
+  {
+    "id": "agentflow-cases/model-flows-nested-collapsed",
+    "source": "agentflow-beta\nflow outer\n flow inner\n  a\n end\n b\nend\nouter@{ view: collapsed }\ninner@{ view: collapsed }"
+  },
+  {
+    "id": "agentflow-cases/model-global-after-flow",
+    "source": "agentflow-beta\nflow f\n a\nend\nglobal\n a\nend"
+  },
+  {
+    "id": "agentflow-cases/model-global-before-flow",
+    "source": "agentflow-beta\nglobal\n a\nend\nflow f\n a --> b\nend"
+  },
+  {
+    "id": "agentflow-cases/model-removed-shapes-collapsed",
+    "source": "agentflow-beta\nflow f@{ view: collapsed }\n a((x))\n b@{ shape: triangle }\nend\n c((y))"
+  },
+  {
+    "id": "agentflow-cases/model-shapes-canonical",
+    "source": "agentflow-beta\n a@{ shape: hex }\n b@{ shape: lean-r }\n c@{ shape: subproc }\n d@{ shape: rounded }\n e@{ shape: rect }\n f@{ shape: round }"
+  },
+  {
+    "id": "agentflow-cases/model-shapes-aliases",
+    "source": "agentflow-beta\n a@{ shape: input }\n b@{ shape: refdoc }\n c@{ shape: action }\n d@{ shape: task }\n e@{ shape: tool }\n f@{ shape: decision }"
+  },
+  {
+    "id": "agentflow-cases/model-shapes-brackets",
+    "source": "agentflow-beta\n a[x] --> b(y) --> c{z} --> d{{w}} --> e[[v]] --> f[(u)] --> g((t)) --> h([s]) --> i(((r))) --> j>q] --> k[/p/] --> m[/n\\] --> n[\\m/] --> o(-l-) --> p[|f:v|k]"
+  },
+  {
+    "id": "agentflow-cases/model-link-style-bounds",
+    "source": "agentflow-beta\n a --> b\n linkStyle 0 stroke:red\n linkStyle default interpolate basis\n b --> c"
+  },
+  {
+    "id": "agentflow-cases/model-self-loop",
+    "source": "agentflow-beta\n a --> a\n a --> b"
+  },
+  {
+    "id": "agentflow-cases/model-styling",
+    "source": "agentflow-beta\n classDef hot fill:#f96\n a:::hot --> b\n class b hot\n style a fill:red"
+  },
+  {
+    "id": "agentflow-cases/model-edge-id-metadata",
+    "source": "agentflow-beta\n a e1@--> b\n e1@{ animate: true, instruction: go }"
+  },
+  {
+    "id": "agentflow-cases/model-fan-out",
+    "source": "agentflow-beta\n a & b --> c & d"
+  },
+  {
+    "id": "agentflow-cases/model-edge-forms",
+    "source": "agentflow-beta\n a -- yes --> b\n a -- no --x c\n a -.- d\n a ---> e\n a -..- f\n a -->|ok| g"
+  },
+  {
+    "id": "agentflow-cases/model-unicode-ids",
+    "source": "agentflow-beta\n 名前 --> ä"
+  },
+  {
+    "id": "agentflow-cases/model-commented-direction",
+    "source": "agentflow-beta\nflow f\n %% direction LR\n a\nend\n%% direction BT"
+  },
+  {
+    "id": "agentflow-cases/model-direction-in-flow",
+    "source": "agentflow-beta LR\nflow f\n direction TB\n a\nend"
+  },
+  {
+    "id": "agentflow-cases/model-label-metadata",
+    "source": "agentflow-beta\n a@{ label: \"Hi\", shape: decision }\n b@{ label: 5 }\n c@{ labelType: string, label: x }"
+  },
+  {
+    "id": "agentflow-cases/model-click-acc",
+    "source": "agentflow-beta\n click a \"https://x\" \"tip\"\n a --> b\n accTitle: T\n accDescr: D"
+  },
+  {
+    "id": "agentflow-cases/model-markdown-label",
+    "source": "agentflow-beta\n a[\"`**md**`\"] --> b"
+  },
+  {
+    "id": "agentflow-cases/model-empty-metadata",
+    "source": "agentflow-beta\n a@{}\n b@{ }\n c@{\n}"
+  },
+  {
+    "id": "agentflow-cases/model-prototype-keys",
+    "source": "agentflow-beta\n a@{ __proto__: x, constructor: y, y: 1 }"
+  },
+  {
+    "id": "agentflow-cases/model-yaml-anchors",
+    "source": "agentflow-beta\n a@{ x: &k 1, y: *k }"
+  },
+  {
+    "id": "agentflow-cases/model-comments-everywhere",
+    "source": "agentflow-beta\n a --> b %% trailing\n %% own line\n b --> c\nflow f %% c\n d\nend %% e"
+  },
+  {
+    "id": "agentflow-cases/model-flow-style-class",
+    "source": "agentflow-beta\nflow f\n a\nend\nclass f hot\nstyle f fill:red"
+  },
+  {
+    "id": "agentflow-cases/model-flow-titles",
+    "source": "agentflow-beta\nflow my flow\n a\nend\nflow \"quoted id\"[Title]\n b\nend"
+  },
+  {
+    "id": "agentflow-cases/recovery-two-bad-lines",
+    "source": "agentflow-beta\n a --> b\n c ==> d\n e[x\n f --> g",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNCLOSED", 4]
+    ],
+    "keeps": ["a", "b", "c", "f", "g"]
+  },
+  {
+    "id": "agentflow-cases/recovery-bad-header-direction",
+    "source": "agentflow-beta XY\n a --> b\n c",
+    "errors": [["UNKNOWN_DIRECTION", 1]],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-header-comment",
+    "source": "agentflow-beta %% c\n a --> b",
+    "errors": [["HEADER_COMMENT", 1]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-unclosed-flow",
+    "source": "agentflow-beta\n flow f[F]\n  a --> b\n c",
+    "errors": [["UNCLOSED_BLOCK", 2]],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-stray-end",
+    "source": "agentflow-beta\n a --> b\n end\n c --> d\n end --> e\n f",
+    "errors": [
+      ["UNEXPECTED_END", 3],
+      ["UNEXPECTED_END", 5]
+    ],
+    "keeps": ["a", "b", "c", "d", "f"]
+  },
+  {
+    "id": "agentflow-cases/recovery-flow-header-error-then-body",
+    "source": "agentflow-beta\n flow f[F] x\n  a --> b\n end\n c",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-two-flow-header-errors",
+    "source": "agentflow-beta\n flow f[F] x\n  a\n end\n flow g[G\n  b\n end\n c",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNCLOSED", 5]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-flow-header-error-unclosed",
+    "source": "agentflow-beta\n flow --> b\n c --> d",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "agentflow-cases/recovery-global-with-word",
+    "source": "agentflow-beta\n global x\n  a\n end\n b",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-connector-bad",
+    "source": "agentflow-beta\n connector\n connector gh[GitHub] extra\n a --> gh",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["a", "gh"]
+  },
+  {
+    "id": "agentflow-cases/recovery-bad-yaml-and-shape",
+    "source": "agentflow-beta\n a@{ x: [ }\n b@{ shape: Task }\n c@{ shape: nope }\n d",
+    "errors": [
+      ["SHAPE_DATA", 2],
+      ["UNKNOWN_SHAPE", 3],
+      ["UNKNOWN_SHAPE", 4]
+    ],
+    "keeps": ["a", "b", "c", "d"]
+  },
+  {
+    "id": "agentflow-cases/recovery-bad-yaml-then-syntax",
+    "source": "agentflow-beta\n a@{ x: [ } extra\n b",
+    "errors": [
+      ["SHAPE_DATA", 2],
+      ["UNEXPECTED", 2]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-link-style-out-of-range",
+    "source": "agentflow-beta\n a --> b\n linkStyle 3 stroke:red\n linkStyle 9 stroke:blue\n c",
+    "errors": [
+      ["LINK_STYLE_INDEX", 3],
+      ["LINK_STYLE_INDEX", 4]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-removed-links",
+    "source": "agentflow-beta\n a ==> b\n c -.-> d\n e ~~~ f\n g --> h",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "c", "e", "g", "h"]
+  },
+  {
+    "id": "agentflow-cases/recovery-equals-in-id",
+    "source": "agentflow-beta\n a=b --> c\n d --> e=f\n g",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["a", "d", "e", "g"]
+  },
+  {
+    "id": "agentflow-cases/recovery-unclosed-label-swallows",
+    "source": "agentflow-beta\n a[open\n b --> c\n d(open\n e",
+    "errors": [
+      ["UNCLOSED", 2],
+      ["UNCLOSED", 4]
+    ],
+    "keeps": ["b", "c", "e"]
+  },
+  {
+    "id": "agentflow-cases/recovery-unclosed-string",
+    "source": "agentflow-beta\n a --> b\n c[\"never closed]\n",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-edge-text-unclosed",
+    "source": "agentflow-beta\n a --> b\n d -- more\n e",
+    "errors": [["UNCLOSED", 3]],
+    "keeps": ["a", "b", "d", "e"]
+  },
+  {
+    "id": "agentflow-cases/recovery-keyword-ids",
+    "source": "agentflow-beta\n end --> a\n global --> b\n c --> d",
+    "errors": [
+      ["UNEXPECTED_END", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "agentflow-cases/recovery-metadata-then-word",
+    "source": "agentflow-beta\n a@{ x: 1 } b\n c@{ y: 2 } d\n e",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["a", "c", "e"]
+  },
+  {
+    "id": "agentflow-cases/recovery-style-errors",
+    "source": "agentflow-beta\n style\n classDef\n class a\n a --> b",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-nested-unclosed",
+    "source": "agentflow-beta\n flow outer\n  flow inner\n   a\n b",
+    "errors": [
+      ["UNCLOSED_BLOCK", 2],
+      ["UNCLOSED_BLOCK", 3]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "agentflow-cases/recovery-click-errors",
+    "source": "agentflow-beta\n a --> b\n click b \"u\" _nowhere\n click a \"v\" \"tip\" _nope\n c",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "agentflow-cases/recovery-caret-in-data",
+    "source": "agentflow-beta\n a@{ label: a^b }\n b --> c\n d@{ label: x^y }\n e",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "b", "c", "d", "e"]
+  },
+  {
+    "id": "agentflow-cases/recovery-entity-outside-label",
+    "source": "agentflow-beta\n a --> #quot; b\n c --> d",
+    "errors": [["ENTITY_OUTSIDE_LABEL", 2]],
+    "keeps": ["a", "c", "d"]
+  },
+  {
+    "id": "agentflow-cases/recovery-errors-in-a-flow",
+    "source": "agentflow-beta\n flow f[F]\n  a ==> b\n  c[x\n  d@{ shape: Nope }\n end\n e",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNCLOSED", 4],
+      ["UNKNOWN_SHAPE", 5]
+    ],
+    "keeps": ["a", "d", "e"]
+  },
+  {
+    "id": "agentflow-cases/recovery-five-errors",
+    "source": "agentflow-beta\n a ==> b\n c[x\n d@{ shape: Nope }\n end\n e=f\n linkStyle 7 stroke:red\n g",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED", 3],
+      ["UNKNOWN_SHAPE", 4],
+      ["UNEXPECTED_END", 5],
+      ["UNEXPECTED_CHARACTER", 6],
+      ["LINK_STYLE_INDEX", 7]
+    ],
+    "keeps": ["a", "d", "e", "g"]
   }
 ]

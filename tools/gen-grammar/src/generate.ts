@@ -54,6 +54,21 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'agentflow',
+    title: 'Agentflow syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // As flowchart's (D467).
+      unnamed: {
+        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
+        ClickKeyword: { mode: 'INITIAL', pattern: 'click\\s+', docOf: 'CLICK' },
+      },
+      mixed: ['SHAPE_DATA'],
+      documented: ['Click', 'CallbackName'],
+    },
+  },
+  {
     type: 'class',
     title: 'Class diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },

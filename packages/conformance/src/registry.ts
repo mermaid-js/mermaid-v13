@@ -1,3 +1,4 @@
+import { agentflowAdapter } from './agentflow/v13.ts';
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { cynefinAdapter } from './cynefin/v13.ts';
@@ -173,6 +174,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/xychart-recovery.json',
     ],
     corpus: xyChartParityCorpus,
+  },
+  {
+    adapter: agentflowAdapter,
+    corpusDirs: ['e2e/diagrams/agentflow'],
+    // The gate's generated variants run in `agentflow/parity.spec.ts`, with their exclusions.
+    corpusFiles: [
+      'packages/conformance/corpus/agentflow-v12-specs.json',
+      'packages/conformance/corpus/agentflow-cases.json',
+    ],
   },
   {
     adapter: vennAdapter,

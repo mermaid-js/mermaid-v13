@@ -194,6 +194,7 @@ export default tseslint.config(
   {
     // Ported verbatim from v12 by scripts/port-v12-specs.ts, which adds the blanket disable.
     files: [
+      'packages/diagram-agentflow/src/v12-specs/*.spec.ts',
       'packages/diagram-flowchart/src/v12-specs/**',
       'packages/diagram-sequence/src/v12-specs/*.spec.ts',
       'packages/diagram-class/src/v12-specs/**',

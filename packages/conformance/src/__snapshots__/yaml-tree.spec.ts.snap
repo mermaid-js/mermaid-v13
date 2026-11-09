@@ -2,7 +2,7 @@
 
 exports[`YAML default mode over the corpus > reads front matter and shape data exactly as before (digest per diagram folder) 1`] = `
 {
-  "agentflow": "245 751570f9f9bfa045",
+  "agentflow": "265 d31e3db69bd5248a",
   "architecture": "20 deb45f544f4b5b82",
   "block": "58 dd2d503c8c5de6f2",
   "c4": "32 b6fd73cdfd2dd744",
