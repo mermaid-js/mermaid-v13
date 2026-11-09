@@ -14,3 +14,4 @@ Unmet criteria and choices not covered by the spec or a D-id, per ticket. Items 
   - The `directive-unclosed` lexer exclusion hides a real accept/reject divergence: 12.2.0 accepts `usecase-beta\n%%{init\nactor A`, v13 rejects it with core's `UNCLOSED_DIRECTIVE`. T2 lists it as a divergence; T5 adds a MIGRATION row.
   - The `--` quadratic the spec names is v12's labelled-arrow lookahead (`hasLabeledRight`), parser behaviour: the lexer's "runs of --" shape is linear, and T2 repeats that shape (and labelled arrows) on the parser.
   - `LexText.start`/`end` share one forward cursor (no-rewrite path): call them in non-decreasing order, or the total cost turns quadratic on texts cut by many comment lines (documented on the interface).
+- **T4:** remove `usecase` from `NOT_DRAWN_YET` and its `LISTED_AHEAD` entry in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads `actorBkg`/`actorBorder` (through the table's `slot()` rules).

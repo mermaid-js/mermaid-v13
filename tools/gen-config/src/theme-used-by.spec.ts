@@ -72,6 +72,14 @@ const TYPES = readdirSync(PACKAGES)
  * must read none (so it is removed as soon as it reads one). Usecase until its renderer (#566).
  */
 const NOT_DRAWN_YET = new Set<string>(['usecase']);
+/**
+ * Core rows a type is listed on before its renderer reads them, because the core T0 that moved
+ * them lands first: usecase's role colours fall back to `actorBkg` and `actorBorder` (#561, D474)
+ * from its renderer (#566). Exact: each must be unread, so the entry goes when the type reads it.
+ */
+const LISTED_AHEAD: Readonly<Record<string, readonly string[]>> = {
+  usecase: ['actorBkg', 'actorBorder'],
+};
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -112,7 +120,7 @@ describe('theme vocabulary usedBy (#207)', () => {
     const listed = Object.keys(THEME_VARIABLES).filter((name) =>
       THEME_VARIABLES[name]!.usedBy.includes(type)
     );
-    expect(listed.filter((name) => !reads.has(name))).toEqual([]);
+    expect(listed.filter((name) => !reads.has(name))).toEqual(LISTED_AHEAD[type] ?? []);
     expect([...reads].filter((name) => !listed.includes(name)).sort()).toEqual([]);
   });
 });
