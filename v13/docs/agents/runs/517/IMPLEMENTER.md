@@ -30,3 +30,4 @@
 - Every full `pnpm check` and every `pnpm e2e`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 pnpm check`. Run them in the background (they take many minutes).
 - Known flakes, never edit them: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout under load. If one is the only failure, rerun once under the lock.
 - Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
+- Nested ticket worktrees (under the integration worktree's `.claude/worktrees/`) are scanned by the pre-push `knip --no-gitignore`. The orchestrator moves out or removes every nested worktree before any push from `feature/517_usecase` (coordinator rule, 2026-11-09).
