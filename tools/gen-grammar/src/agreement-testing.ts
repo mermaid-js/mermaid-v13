@@ -9,32 +9,42 @@ import { fileURLToPath } from 'node:url';
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { generate, generatedDir } from './generate.ts';
+import { generate, generatedDir, targetPaths } from './generate.ts';
+import type { GrammarTarget } from './generate.ts';
 import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
 let files: Map<string, string> | undefined;
-/** A generated highlighter file of `type`, e.g. `class.monarch.json`. */
-function out(type: string, name: string): string {
+/** A generated highlighter file of package `pkg`, e.g. `class.monarch.json`. */
+function outOf(pkg: string, name: string): string {
   files ??= generate((p) => readFileSync(join(ROOT, p), 'utf8'));
-  return files.get(`${generatedDir(type)}/${name}`) ?? '';
+  const path = `${generatedDir(pkg)}/${name}`;
+  const text = files.get(path);
+  if (text === undefined) throw new Error(`gen:grammar writes no ${path}`);
+  return text;
 }
 
-/** The three generated highlighters of `type`, run in their real engines. */
-export async function highlighters(type: string): Promise<[string, Categorise][]> {
+/**
+ * The three highlighters generated for a diagram type, run in their real engines: `type` names
+ * a package with one grammar; a {@link GrammarTarget} names any grammar (D512).
+ */
+export async function highlighters(of: string | GrammarTarget): Promise<[string, Categorise][]> {
+  const { pkg, grammar: type } =
+    typeof of === 'string' ? { pkg: of, grammar: of } : targetPaths(of);
+  const out = (name: string) => outOf(pkg, name);
   return [
     [
       'TextMate',
-      await textMateCategorise(out(type, `${type}.tmLanguage.json`), `source.mermaid-${type}`),
+      await textMateCategorise(out(`${type}.tmLanguage.json`), `source.mermaid-${type}`),
     ],
-    ['Monarch', monarchCategorise(out(type, `${type}.monarch.json`))],
+    ['Monarch', monarchCategorise(out(`${type}.monarch.json`))],
     [
       'Lezer',
       await lezerCategorise(
-        out(type, `${type}.grammar`),
-        out(type, `${type}.tokens.js`),
+        out(`${type}.grammar`),
+        out(`${type}.tokens.js`),
         type,
         join(ROOT, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
       ),
