@@ -89,6 +89,9 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // where no theme wrote one: the rule below does not count as set.
   softBorder: 'nodeBorder',
   frameBorder: 'softBorder',
+  // v12 theme-base's participant fill and border (sequence; usecase's role colour fallbacks).
+  actorBkg: 'mainBkg',
+  actorBorder: 'inline(softBorder)',
   // Shared inputs (D332), as v12 theme-base derives gitGraph's labels from them (D267): a badge
   // on v12's secondary colour, in its inverse unless the author sets `secondaryTextColor`, and a
   // callout on the primary colour, its text and border. The built-in themes write their own
