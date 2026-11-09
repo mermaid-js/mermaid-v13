@@ -4,8 +4,9 @@
  *
  * It draws from `TreeViewModel`, not from the px layout: a text tree has its own geometry (four
  * cells a level). `rowIndent`, the paddings and `lineThickness` are px geometry and are ignored,
- * with no warning, as are `ascii.padding` and `ascii.maxWidth` (a row is one line; the drawing is
- * never cropped, and `ASCII_TOO_WIDE` is the API's, R-ASCII-8).
+ * with no warning (D347's rule), as is `ascii.maxWidth`: the drawing is never cropped, and
+ * `ASCII_TOO_WIDE` is the API's (R-ASCII-8). `ascii.padding: roomy` (D77) puts a line between
+ * rows.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
 import { asciiOptions } from '@mermaid-js/core/ascii';
@@ -24,8 +25,8 @@ export type TreeViewAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
  * spaces. The layout is not read. Warns once per feature kind it drops (D82).
  */
 export function ascii(model: TreeViewModel, _layout: unknown, ctx: TreeViewAsciiContext): string {
-  const { charset } = asciiOptions(ctx.config);
-  const text = drawTreeView(model, charset);
+  const { charset, padding } = asciiOptions(ctx.config);
+  const text = drawTreeView(model, charset, padding);
   for (const w of asciiWarnings(model, ctx.config.treeView, ctx.ast)) ctx.warn(w);
   return text;
 }

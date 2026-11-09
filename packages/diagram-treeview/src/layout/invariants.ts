@@ -21,8 +21,7 @@
  *   with their thickness) lies inside `bounds`.
  */
 import { TREEVIEW_DEFAULTS } from '../config.ts';
-import type { TreeViewModel, TreeViewNode } from '../model.ts';
-import { highlighted } from './layout.ts';
+import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
 

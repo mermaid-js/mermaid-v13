@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { parseTreeView } from '@mermaid-js/diagram-treeview';
 import type { Mermaid, TextRenderResult } from 'mermaid';
 import { treeViewAsciiApi } from './render-api.ts';
 
@@ -97,6 +98,58 @@ describe('shape (D488)', () => {
     );
     // No gutter when no row is highlighted; another class is not a highlight.
     expect((await draw(tree('  a :::other'))).text).toBe('a');
+  });
+
+  // D488 says both "a highlighted row is marked in a one-cell gutter" and "the unicode output,
+  // without the descriptions, is valid treeView box input". With a highlighted row they
+  // conflict: the gutter's blank before a row at the top is an indent with no box glyph. The
+  // round trip holds once the descriptions and the gutter are removed (GAPS T7, for the
+  // maintainer: D489).
+  it('is box input with a highlighted row only once the gutter is removed', async () => {
+    const src = tree('  a/', '    b :::highlight', '  c');
+    const { text } = await draw(src);
+    expect(text).toBe(lines(' a/', '▶└── b', ' c'));
+    const raw = parseTreeView(`treeView-beta\n${text}`);
+    expect(raw.diagnostics.map((d) => d.code)).toContain('BOX_UNEXPECTED_INDENT');
+    const cut = text.split('\n').map((l) => l.slice(1));
+    const back = parseTreeView(['treeView-beta', ...cut].join('\n'));
+    expect(back.diagnostics).toEqual([]);
+    expect(back.model.nodes.map((n) => [n.depth, n.name])).toEqual([
+      [0, 'a'],
+      [1, 'b'],
+      [0, 'c'],
+    ]);
+  });
+
+  it('puts a line between rows with ascii.padding roomy, carrying the connectors on', async () => {
+    const roomy = await draw(PROJECT, { padding: 'roomy' });
+    expect(roomy.text).toBe(
+      lines(
+        'my-project/',
+        '│',
+        '├── src/',
+        '│   │',
+        '│   ├── components/',
+        '│   │   │',
+        '│   │   └── MyComponent.js',
+        '│   │',
+        '│   └── index.js',
+        '│',
+        '└── package.json',
+        '',
+        'README.md'
+      )
+    );
+    expect(roomy.rows).toBe(13);
+    expect((await draw(PROJECT, { padding: 'roomy', charset: 'ascii' })).text.split('\n')[3]).toBe(
+      '|   |'
+    );
+    // The box pass drops the connector lines as decoration: the same tree reads back.
+    const back = parseTreeView(`treeView-beta\n${roomy.text}`);
+    expect(back.diagnostics).toEqual([]);
+    expect(back.model.nodes.map((n) => [n.depth, n.name])).toEqual(
+      parseTreeView(PROJECT).model.nodes.map((n) => [n.depth, n.name])
+    );
   });
 
   it('writes each glyph of a name in a cell of its own, wide ones in two', async () => {

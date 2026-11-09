@@ -5,45 +5,24 @@
  * ({@link treeViewNameSyntax}): a rename changes that name only, keeps its quotes (switching to
  * the other quote when the new name holds this one), keeps a directory's `/`, and puts a bare
  * name in quotes when it would not read back bare (a blank at either end, an annotation mark,
- * a `%%`, a quote at its start). The parser decides what reads back: a written form is taken
- * only when it parses, as a node of its own with no annotation, to the name.
+ * a `%%`, a quote at its start). The parser decides what reads back (`parser/written.ts`, shared
+ * with the text output): a written form is taken only when it parses, as a node of its own with
+ * no annotation, to the name.
  */
 import type { NameSyntax, Range } from '@mermaid-js/core/parser-kit';
 import { writtenName } from '../parser/convert.ts';
-import { parseTreeView } from '../parser/index.ts';
+import { nameForm } from '../parser/written.ts';
 
 const DQ = '"';
 const SQ = "'";
-const HEAD = 'treeView-beta\n  x\n  ';
 
-/** Whether `written`, as a node's name on a line of its own, reads as `name` (a directory when `directory`). */
-function readsAs(written: string, name: string, directory: boolean): boolean {
-  const r = parseTreeView(`${HEAD}${written}\n  y\n`);
-  if (r.diagnostics.length > 0 || r.model.nodes.length !== 3) return false;
-  const n = r.model.nodes[1];
-  return (
-    n !== undefined &&
-    n.name === name &&
-    n.directory === directory &&
-    n.depth === 0 &&
-    n.icon === undefined &&
-    n.cssClass === undefined &&
-    n.description === undefined
-  );
-}
+/** `name` (a directory's with its `/`) in quote `q`, if that reads back on a line of its own. */
+const quoted = (name: string, directory: boolean, q: '"' | "'"): string | undefined =>
+  nameForm(name, directory, q, 'indented');
 
-/** `name` (a directory's with its `/`) in quote `q`, if that reads back. */
-function quoted(name: string, directory: boolean, q: string): string | undefined {
-  if (name.includes(q)) return undefined;
-  const w = `${q}${writtenName(name, directory)}${q}`;
-  return readsAs(w, name, directory) ? w : undefined;
-}
-
-/** `name` (a directory's with its `/`) written bare, if that reads back. */
-function bare(name: string, directory: boolean): string | undefined {
-  const w = writtenName(name, directory);
-  return readsAs(w, name, directory) ? w : undefined;
-}
+/** `name` (a directory's with its `/`) written bare, if that reads back on a line of its own. */
+const bare = (name: string, directory: boolean): string | undefined =>
+  nameForm(name, directory, '', 'indented');
 
 /** Why `name` cannot be a treeView node name, if it cannot (D487). */
 export function nameReason(name: string): string | undefined {

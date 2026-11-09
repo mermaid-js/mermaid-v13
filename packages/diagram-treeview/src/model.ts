@@ -65,3 +65,11 @@ export interface TreeViewModel {
    */
   readonly glyphIcons?: readonly string[];
 }
+
+/**
+ * Whether a node's row is highlighted: v12 split the class on blanks and looked for
+ * `highlight`; the grammar's class is one name, so it is that name.
+ */
+export function highlighted(node: TreeViewNode | undefined): boolean {
+  return node?.cssClass === 'highlight';
+}

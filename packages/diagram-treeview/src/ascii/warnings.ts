@@ -7,8 +7,7 @@ import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { treeViewLayoutConfig } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
-import { highlighted } from '../layout/layout.ts';
-import type { TreeViewModel } from '../model.ts';
+import { highlighted, type TreeViewModel } from '../model.ts';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'icon' | 'style' | 'accessibility';

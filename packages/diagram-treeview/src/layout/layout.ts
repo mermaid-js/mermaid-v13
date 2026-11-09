@@ -19,7 +19,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import { Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
 import { treeViewLayoutConfig, type TreeViewLayoutConfig } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
-import type { TreeViewModel, TreeViewNode } from '../model.ts';
+import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { lineBox, rowExtents } from './extent.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
@@ -245,14 +245,6 @@ function boundsOf(
   for (const r of rows) for (const e of rowExtents(r)) add(e);
   for (const l of lines) add(lineBox(l, thickness));
   return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
-}
-
-/**
- * Whether a node's row is highlighted: v12 split the class on blanks and looked for
- * `highlight`; the grammar's class is one name, so it is that name.
- */
-export function highlighted(node: TreeViewNode | undefined): boolean {
-  return node?.cssClass === 'highlight';
 }
 
 /**

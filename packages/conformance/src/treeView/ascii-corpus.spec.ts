@@ -41,6 +41,8 @@ interface Case {
   out: Record<Charset, TextRenderResult>;
   again: Record<Charset, string>;
   icons: TextRenderResult;
+  /** Unicode with `ascii.padding: roomy`. */
+  roomy: TextRenderResult;
 }
 
 const cases: Case[] = [];
@@ -64,7 +66,11 @@ beforeAll(async () => {
         again[charset] = (await fresh.render('mermaid-0', item.source, call)).text;
       }
       const withIcons = await icons.render('mermaid-0', item.source, { format: 'ascii' });
-      cases.push({ id: item.id, model: parse.model, out, again, icons: withIcons });
+      const roomy = await api.render('mermaid-0', item.source, {
+        format: 'ascii',
+        config: { ascii: { padding: 'roomy' } },
+      });
+      cases.push({ id: item.id, model: parse.model, out, again, icons: withIcons, roomy });
       if (!parses) failed[item.id] = 'drawn although the parse has errors';
     } catch (e) {
       // Text is rejected only where SVG is too (preprocessing errors included).
@@ -229,6 +235,24 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
     ).toEqual({});
   });
 
+  it('with ascii.padding roomy, puts a line of connectors only between the rows', () => {
+    const found: Record<string, string[]> = {};
+    for (const c of cases) {
+      const compact = textLines(c.out.unicode);
+      const roomy = textLines(c.roomy);
+      const wrong: string[] = [];
+      if (roomy.length !== Math.max(0, 2 * compact.length - 1))
+        wrong.push(`${roomy.length} lines for ${compact.length} rows`);
+      roomy.forEach((l, i) => {
+        if (i % 2 === 0 && l !== compact[i / 2]) wrong.push(`line ${i} is not row ${i / 2}`);
+        if (i % 2 === 1 && !/^[ │]*$/.test(l)) wrong.push(`line ${i}: ${JSON.stringify(l)}`);
+      });
+      if (/ $/m.test(c.roomy.text)) wrong.push('trailing space');
+      if (wrong.length > 0) found[c.id] = wrong.slice(0, 5);
+    }
+    expect(found).toEqual({});
+  });
+
   it('warns once at most per dropped feature, and about the icons whenever one is drawn in SVG', () => {
     expect(
       problems((c, cs) => {
@@ -252,7 +276,9 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
     ).toEqual({});
   });
 
-  // D488: "The unicode output, without the descriptions, is valid treeView box input." A name
+  // D488: "The unicode output, without the descriptions, is valid treeView box input." With a
+  // highlighted row that holds only once the gutter is removed too (its blank before a row at
+  // the top is an indent with no box glyph; GAPS T7, D489), so the gutter is cut here. A name
   // holding a control or a line separator (drawn as a blank), a box-drawing branch glyph (which
   // the box pass reads as a prefix) or an entity (v12's `#35;` is the name `&#35;`, which reads
   // back as `&&#35;`) has no written form that shows it as SVG does, so its diagram is left out.
@@ -271,11 +297,22 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
         const d = blanked(n.description).replace(/ +$/, '');
         return rest.slice(0, rest.length - d.length).replace(/ +$/, '');
       });
-      const back = parseTreeView(['treeView-beta', ...lines].join('\n'));
-      const errors = back.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code);
-      if (errors.length > 0) found[c.id] = errors;
-      else if (JSON.stringify(shape(back.model)) !== JSON.stringify(shape(c.model)))
-        found[c.id] = { drawn: lines, back: shape(back.model) };
+      // `roomy` too: its lines between rows, gutter cut, are decoration the box pass drops.
+      const gutter = c.model.nodes.some(highlighted) ? 1 : 0;
+      const between = textLines(c.roomy)
+        .filter((_, i) => i % 2 === 1)
+        .map((l) => cells(l).slice(gutter).join(''));
+      const roomy = lines.flatMap((l, i) => (i === 0 ? [l] : [between[i - 1]!, l]));
+      for (const [variant, drawn] of [
+        ['compact', lines],
+        ['roomy', roomy],
+      ] as const) {
+        const back = parseTreeView(['treeView-beta', ...drawn].join('\n'));
+        const errors = back.diagnostics.filter((d) => d.severity === 'error').map((d) => d.code);
+        if (errors.length > 0) found[`${c.id} ${variant}`] = errors;
+        else if (JSON.stringify(shape(back.model)) !== JSON.stringify(shape(c.model)))
+          found[`${c.id} ${variant}`] = { drawn, back: shape(back.model) };
+      }
     }
     expect(checked).toBeGreaterThan(700);
     expect(found).toEqual({});
