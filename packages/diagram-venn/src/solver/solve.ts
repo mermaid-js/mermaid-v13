@@ -19,6 +19,7 @@ import {
   type Circle,
   type Point,
 } from './circles.ts';
+import { nullRecord } from '../model.ts';
 import { bisect, conjugateGradient, nelderMead, norm2, zeros, zerosM } from './fmin.ts';
 
 /** A set (one id) or an overlap (two or more) and its size (venn.js's area datum). */
@@ -40,11 +41,8 @@ export interface SolveOptions {
 const MAX_ITERATIONS = 500;
 const SMALL = 1e-10;
 
-/** An empty record with no prototype. */
-export const nullRecord = <V>(): Record<string, V> => Object.create(null) as Record<string, V>;
-
 /** The circles for `areas` (venn.js `venn`), before normalising and scaling. */
-export function venn(areas: readonly Area[], options: SolveOptions): Solution {
+export function fitCircles(areas: readonly Area[], options: SolveOptions): Solution {
   // add in missing pairwise areas as having 0 size
   const all = addMissingAreas(areas);
 

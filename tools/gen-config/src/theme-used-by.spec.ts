@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
+import { slotVar, VENN_SLOTS } from '../../../packages/diagram-venn/src/theme/slots.ts';
 import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts';
 
 /**
@@ -34,7 +35,7 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
   kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
   // `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
-  venn: Array.from({ length: 8 }, (_, i) => `venn${i + 1}`),
+  venn: Array.from({ length: VENN_SLOTS }, (_, i) => slotVar(i)),
 };
 
 function sources(dir: string): string[] {

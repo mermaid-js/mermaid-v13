@@ -11,9 +11,12 @@ import { vennCases, vennCorpus } from './corpus.ts';
  * Render properties and the AST round-trip of venn (spec #429 T4, DESIGN §13.2, §13.4,
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page
  * strings and the cases, each in every theme and `theme: 'auto'` set as `initialize()` would (a
- * source's own front matter still wins). The manifest is #501's, so sources go through the
- * plugin's own seam, parse → layout → render, with core's render context (`renderVennForTest`);
- * sources the parser rejects stay out.
+ * source's own front matter still wins). Sources go through the plugin's own seam, parse →
+ * layout → render, with core's render context (`renderVennForTest`), not `createMermaid()`: the
+ * checks read the layout beside the SVG (each circle's extent for the viewBox, since a circle is
+ * drawn as arcs; which areas and text nodes were drawn, for the round-trip), and the public API
+ * returns no layout. `packages/mermaid/src/venn.spec.ts` renders through the registry row.
+ * Sources the parser rejects stay out.
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, no
  * `foreignObject` and no `<style>` but `theme: 'auto'`'s, no element id but `<id>-title`, every

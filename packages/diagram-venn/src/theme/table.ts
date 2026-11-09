@@ -21,9 +21,8 @@
  * takes no palette slot, so no rule here can fall back from one.
  */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
-import { VENN_SLOTS } from '../layout/metrics.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
-import { slotVar } from './slots.ts';
+import { slotVar, VENN_SLOTS } from './slots.ts';
 
 /** `f(i)` for each slot `i` (0–7), keyed by its variable `venn<i + 1>`. */
 function perSlot(f: (i: number) => string): Record<string, string> {

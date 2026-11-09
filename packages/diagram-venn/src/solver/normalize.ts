@@ -13,7 +13,8 @@
  * parents in a map instead of on the circles.
  */
 import { distance, type Circle } from './circles.ts';
-import { nullRecord, type Solution } from './solve.ts';
+import { nullRecord } from '../model.ts';
+import type { Solution } from './solve.ts';
 
 /** A circle and the set it is for. */
 export interface SetCircle extends Circle {

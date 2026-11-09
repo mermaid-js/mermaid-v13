@@ -16,8 +16,7 @@
  * - the labels of different areas do not overlap (a repeated area's copies share one place);
  * - everything drawn is inside `bounds`.
  */
-import type { VennModel } from '../model.ts';
-import { areaKey } from '../solver/index.ts';
+import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import { circleBox, drawnBoxes, overlaps } from './geometry.ts';
 import { VENN_METRICS } from './metrics.ts';
 import type { Circle, Rect, VennLayout } from './types.ts';
@@ -72,7 +71,10 @@ function circlesProportional(
   out: string[]
 ): void {
   const lastSize = new Map<string, number>();
-  for (const s of model.subsets) if (s.sets.length === 1) lastSize.set(s.sets[0]!, s.size);
+  for (const s of model.subsets) {
+    const id = setIdOf(s);
+    if (id !== undefined) lastSize.set(id, s.size);
+  }
   const chart = { x: 0, y: 0, width: layout.width, height: layout.height - layout.titleHeight };
   let perUnit: number | undefined;
   const seen = new Map<string, Readonly<Circle>>();
@@ -80,10 +82,6 @@ function circlesProportional(
     if (area.kind !== 'set') continue;
     const id = area.sets[0]!;
     const c = area.circle;
-    if (!c) {
-      out.push(`set ${id} has no circle`);
-      continue;
-    }
     const before = seen.get(id);
     if (before && (before.x !== c.x || before.y !== c.y || before.radius !== c.radius)) {
       out.push(`the copies of set ${id} have different circles`);
@@ -147,7 +145,7 @@ function labelsApart(layout: VennLayout, eps: number, out: string[]): void {
   const labelled = layout.areas.filter((a) => a.label);
   labelled.forEach((a, i) => {
     for (const b of labelled.slice(i + 1)) {
-      if (areaKey(a.sets) === areaKey(b.sets)) continue;
+      if (idsKey(a.sets) === idsKey(b.sets)) continue;
       if (overlaps(a.label!, b.label!, eps)) {
         out.push(`labels of ${a.sets.join(' ∩ ')} and ${b.sets.join(' ∩ ')} overlap`);
       }

@@ -26,7 +26,7 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
-import { venn, type VennModel } from '@mermaid-js/diagram-venn';
+import { venn } from '@mermaid-js/diagram-venn';
 import { createMermaid } from 'mermaid';
 import { vennPaints } from '@mermaid-js/diagram-venn/testing';
 import { loadOracle } from '../oracle.ts';
@@ -85,14 +85,6 @@ function v12Drawn(vars: Record<string, unknown>): Record<string, string | undefi
   return out;
 }
 
-/** A model of ten sets, A0…A9, nothing styled. */
-const TEN: VennModel = {
-  subsets: INDEXES.map((i) => ({ ast: `set:A${i}`, sets: [`A${i}`], size: 10 })),
-  textNodes: [],
-  styles: [],
-  warnings: [],
-};
-
 /** What v13 draws, read as v12's above. */
 async function v13Drawn(
   name: string,
@@ -109,14 +101,15 @@ async function v13Drawn(
     idPrefix: 'v',
     version: 'test',
     warn: () => undefined,
-  } as unknown as Parameters<typeof vennPaints>[1];
-  const paints = vennPaints(TEN, ctx);
+  } as unknown as Parameters<typeof vennPaints>[0];
+  const paints = vennPaints(ctx);
   const out: Record<string, string | undefined> = {
     vennTitleTextColor: hex(theme.value('vennTitleTextColor')),
     vennSetTextColor: hex(theme.value('vennSetTextColor')),
   };
   for (const i of INDEXES) {
-    const c = paints.circle([`A${i}`], i);
+    // The drawn set at index `i`, unstyled.
+    const c = paints.circle(undefined, i);
     out[`circle${i}`] = hex(c.fill);
     out[`label${i}`] = hex(c.label);
   }

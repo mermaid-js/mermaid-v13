@@ -1,7 +1,7 @@
 /**
  * Venn's paints (spec #429 §Renderer, v12 `vennRenderer.ts:41-50, :117-229`), read from the theme
- * and the `style` statements before the root is written, so its style declares every alias they
- * use.
+ * and from each area's and text node's merged `style` (the layout carries it), before the root is
+ * written, so its style declares every alias they use.
  *
  * - **Circle**: the base is the style's `fill`, else the set's colour (below), with
  *   `fill-opacity` from the style or 0.1, the stroke from the style or the base, and
@@ -27,11 +27,8 @@ import {
   type SafeColor,
 } from '@mermaid-js/core/svg';
 import { formatColor, parseColor, type Rgba } from '@mermaid-js/core/theme';
-import type { VennModel } from '../model.ts';
-import { vennStyles } from '../layout/index.ts';
-import { areaKey } from '../solver/index.ts';
-import { VENN_SLOTS } from '../layout/metrics.ts';
-import { slotVar } from '../theme/slots.ts';
+import type { VennStyleProperties } from '../layout/index.ts';
+import { slotVar, VENN_SLOTS } from '../theme/slots.ts';
 import { isDark, shiftLightness } from './colour.ts';
 import type { VennRenderContext } from './context.ts';
 
@@ -68,10 +65,10 @@ export interface OverlapPaint {
 }
 
 export interface VennPaints {
-  /** The circle of the drawn set at `index` (0, 1, …) with the style of `sets`. */
-  circle(sets: readonly string[], index: number): CirclePaint;
-  overlap(sets: readonly string[]): OverlapPaint;
-  textNode(id: string): Paint;
+  /** The circle of the drawn set at `index` (0, 1, …) with its merged `style`, if any. */
+  circle(style: VennStyleProperties | undefined, index: number): CirclePaint;
+  overlap(style: VennStyleProperties | undefined): OverlapPaint;
+  textNode(style: VennStyleProperties | undefined): Paint;
   title(): Paint;
 }
 
@@ -91,16 +88,18 @@ interface Styled {
 
 const READ = ['fill', 'fill-opacity', 'stroke', 'color'] as const;
 
-/** The paints of `model` under `ctx`'s theme. */
-export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints {
+const UNSTYLED: VennStyleProperties = {};
+
+/** The paints under `ctx`'s theme. */
+export function vennPaints(ctx: VennRenderContext): VennPaints {
   const { theme } = ctx;
-  const styles = vennStyles(model);
-  const checked = new Map<string, Styled>();
-  const styled = (sets: readonly string[]): Styled => {
-    const key = areaKey(sets);
-    let out = checked.get(key);
+  // One check per merged style: the layout hands every area and text node of one target the same
+  // properties, so a dropped value warns once.
+  const checked = new Map<VennStyleProperties, Styled>();
+  const styled = (style: VennStyleProperties | undefined): Styled => {
+    const props = style ?? UNSTYLED;
+    let out = checked.get(props);
     if (out) return out;
-    const props = styles.get(key) ?? {};
     const decls = READ.flatMap((k) => (props[k] === undefined ? [] : [`${k}:${props[k]}`]));
     const { shape, text } = checkStyle(decls, ctx.warn);
     out = {
@@ -109,7 +108,7 @@ export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints
       ...(shape.stroke !== undefined ? { stroke: shape.stroke as SafeColor } : {}),
       ...(text.fill !== undefined ? { color: text.fill as SafeColor } : {}),
     };
-    checked.set(key, out);
+    checked.set(props, out);
     return out;
   };
 
@@ -149,8 +148,8 @@ export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints
   };
 
   return {
-    circle(sets, index) {
-      const st = styled(sets);
+    circle(style, index) {
+      const st = styled(style);
       const base = st.fill ? { paint: st.fill, rgba: parseColor(st.fill) } : setColour(index);
       return {
         fill: base.paint,
@@ -159,11 +158,11 @@ export function vennPaints(model: VennModel, ctx: VennRenderContext): VennPaints
         label: st.color ?? labelOn(base.rgba),
       };
     },
-    overlap(sets) {
-      const st = styled(sets);
+    overlap(style) {
+      const st = styled(style);
       return { ...(st.fill ? { fill: st.fill } : {}), label: st.color ?? setText() };
     },
-    textNode: (id) => styled([id]).color ?? setText(),
+    textNode: (style) => styled(style).color ?? setText(),
     title: () => theme.color('vennTitleTextColor'),
   };
 }

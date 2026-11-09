@@ -18,7 +18,7 @@ export const circleBox = (c: Readonly<Circle>, grow = 0): Rect => {
 };
 
 /** What a layout draws: everything but the bounds. */
-export type Drawn = Pick<
+export type LayoutDrawing = Pick<
   VennLayout,
   'width' | 'height' | 'offset' | 'areas' | 'textAreas' | 'title' | 'debug'
 >;
@@ -28,7 +28,7 @@ export type Drawn = Pick<
  * with half its stroke, each label, each text node's label, and the debug shapes with half
  * their strokes.
  */
-export function* drawnBoxes(layout: Drawn): Generator<[what: string, box: Rect]> {
+export function* drawnBoxes(layout: LayoutDrawing): Generator<[what: string, box: Rect]> {
   const { offset } = layout;
   const moved = (r: Rect): Rect => ({ ...r, x: r.x + offset.x, y: r.y + offset.y });
   yield ['the canvas', { x: 0, y: 0, width: layout.width, height: layout.height }];
@@ -56,8 +56,8 @@ export function* drawnBoxes(layout: Drawn): Generator<[what: string, box: Rect]>
   }
 }
 
-/** The union of `boxes`. */
-export function union(boxes: Iterable<Rect>): Rect {
+/** The smallest box holding every one of `boxes`. */
+export function boxUnion(boxes: Iterable<Rect>): Rect {
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

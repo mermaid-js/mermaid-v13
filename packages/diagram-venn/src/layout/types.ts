@@ -28,13 +28,11 @@ export interface VennCircle extends Readonly<Circle> {
   readonly strokeWidth: number;
 }
 
-/**
- * One drawn area (v12's `g.venn-area`), in v12's order: the model's sets and overlaps in source
- * order, a repeat drawn again, then the pairs v12 adds for a three-or-more overlap.
- */
-export interface VennAreaLayout {
-  /** `venn-circle` for one set, `venn-intersection` for an overlap. */
-  readonly kind: 'set' | 'overlap';
+/** The merged `style` properties of a target (v12 `buildStyleByKey`), as written. */
+export type VennStyleProperties = Readonly<Record<string, string>>;
+
+/** What a drawn set and a drawn overlap both have. */
+interface VennAreaCommon {
   /** The member ids, sorted (v12's `data-venn-sets` joins them with `_`). */
   readonly sets: readonly string[];
   /** The model's entry; absent for a pair v12 adds (`ensurePairwiseSubsets`). */
@@ -44,12 +42,6 @@ export interface VennAreaLayout {
    * an added pair.
    */
   readonly size: number;
-  /** A set's circle (a repeat shares the last copy's size, as in v12). */
-  readonly circle?: VennCircle;
-  /** A set's place among the drawn sets (0, 1, …), for the palette. */
-  readonly index?: number;
-  /** A set's class slot: `index mod 8` (`venn-set-<slot>`). */
-  readonly slot?: number;
   /** The outline; absent when the circles have no area in common (v12's `M 0 0`). */
   readonly path?: RegionPath;
   /**
@@ -64,7 +56,34 @@ export interface VennAreaLayout {
    * not on the chart.
    */
   readonly label?: PlacedLabel;
+  /** The merged properties of every `style` naming exactly these sets; absent when none does. */
+  readonly style?: VennStyleProperties;
 }
+
+/** A drawn set (`venn-circle`). */
+export interface VennSetLayout extends VennAreaCommon {
+  readonly kind: 'set';
+  /** Its circle (a repeat shares the last copy's size, as in v12). */
+  readonly circle: VennCircle;
+  /** Its place among the drawn sets (0, 1, …), for the palette. */
+  readonly index: number;
+  /** Its class slot: `index mod 8` (`venn-set-<slot>`). */
+  readonly slot: number;
+}
+
+/** A drawn overlap (`venn-intersection`): no circle, index or slot of its own. */
+export interface VennOverlapLayout extends VennAreaCommon {
+  readonly kind: 'overlap';
+  readonly circle?: never;
+  readonly index?: never;
+  readonly slot?: never;
+}
+
+/**
+ * One drawn area (v12's `g.venn-area`), in v12's order: the model's sets and overlaps in source
+ * order, a repeat drawn again, then the pairs v12 adds for a three-or-more overlap.
+ */
+export type VennAreaLayout = VennSetLayout | VennOverlapLayout;
 
 /** One text node in its cell (v12 `renderTextNodes`). */
 export interface VennTextNodeLayout {
@@ -76,6 +95,8 @@ export interface VennTextNodeLayout {
   readonly box: Rect;
   /** The label or id, wrapped to the box width and centred on the cell's centre (D414). */
   readonly label: PlacedLabel;
+  /** The merged properties of every one-id `style` naming its id; absent when none does. */
+  readonly style?: VennStyleProperties;
 }
 
 /** The text nodes of one drawn area, in a grid about its text centre. */

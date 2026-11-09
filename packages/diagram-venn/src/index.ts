@@ -1,7 +1,8 @@
 /**
- * `@mermaid-js/diagram-venn`: the venn diagram plugin (spec #429): the plugin, the parser, its
- * model and AST, detection, the lexer, the layout (T3), the renderer and theme table (T4), and
- * the codes of the diagnostics and warnings it raises. The manifest lands with #501.
+ * `@mermaid-js/diagram-venn`: the venn diagram plugin (spec #429): the plugin with its theme table
+ * and config defaults, the parser, its model and AST, detection, the lexer, the layout, the
+ * renderer, and the codes of the diagnostics and warnings it raises. `mermaid` loads it from the
+ * package's `mermaid` manifest. What only the conformance gates read is at `./testing`.
  */
 export { venn } from './plugin.ts';
 export { renderVenn, type VennRenderContext } from './render/index.ts';
@@ -17,18 +18,6 @@ export {
   VENN_UNKNOWN_TARGET,
   VENN_ZERO_SET,
 } from './codes.ts';
-export {
-  layoutVenn,
-  vennStyles,
-  VENN_METRICS,
-  VENN_SLOTS,
-  type VennLayoutContext,
-} from './layout/index.ts';
+export { layoutVenn, type VennLayoutContext } from './layout/index.ts';
 export type * from './layout/types.ts';
-export { areaKey } from './solver/index.ts';
-export {
-  VENN_CONFIG_DEFAULTS,
-  vennLayoutConfig,
-  vennPluginDefaults,
-  type VennLayoutConfig,
-} from './config.ts';
+export { VENN_CONFIG_DEFAULTS, vennPluginDefaults, type VennLayoutConfig } from './config.ts';

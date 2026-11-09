@@ -31,6 +31,8 @@ import type {
   RegionPath,
   VennAreaLayout,
   VennLayout,
+  VennOverlapLayout,
+  VennSetLayout,
   VennTextArea,
 } from '../layout/index.ts';
 import type { VennModel } from '../model.ts';
@@ -38,20 +40,19 @@ import type { VennRenderContext } from './context.ts';
 import { VENN_PAINT, vennPaints, type CirclePaint, type OverlapPaint } from './paint.ts';
 
 /** An area with an outline: one the solver placed on the chart. */
-type Placed = VennAreaLayout & { readonly path: RegionPath };
+type Outlined<A extends VennAreaLayout = VennAreaLayout> = A & { readonly path: RegionPath };
 
-const placed = (a: VennAreaLayout): a is Placed => a.path !== undefined;
+const outlined = (a: VennAreaLayout): a is Outlined => a.path !== undefined;
 
 /** An area to draw with its paint, read before the root. */
-type Drawn = { readonly area: Placed } & (
-  | { readonly circle: CirclePaint }
-  | { readonly overlap: OverlapPaint }
-);
+type PaintedArea =
+  | { readonly area: Outlined<VennSetLayout>; readonly circle: CirclePaint }
+  | { readonly area: Outlined<VennOverlapLayout>; readonly overlap: OverlapPaint };
 
 interface Scene {
   readonly w: SvgWriter;
   readonly layout: VennLayout;
-  readonly areas: readonly Drawn[];
+  readonly areas: readonly PaintedArea[];
   readonly textNodes: readonly (readonly Paint[])[];
 }
 
@@ -66,15 +67,16 @@ export function renderVenn(
   w: SvgWriter
 ): void {
   // Every theme variable is read before the root, so its style declares them.
-  const paints = vennPaints(model, ctx);
-  const areas: Drawn[] = layout.areas
-    .filter(placed)
-    .map((area) =>
-      area.kind === 'set'
-        ? { area, circle: paints.circle(area.sets, area.index ?? 0) }
-        : { area, overlap: paints.overlap(area.sets) }
+  const paints = vennPaints(ctx);
+  const areas = layout.areas
+    .filter(outlined)
+    .map(
+      (area): PaintedArea =>
+        area.kind === 'set'
+          ? { area, circle: paints.circle(area.style, area.index) }
+          : { area, overlap: paints.overlap(area.style) }
     );
-  const textNodes = layout.textAreas.map((t) => t.nodes.map((n) => paints.textNode(n.id)));
+  const textNodes = layout.textAreas.map((t) => t.nodes.map((n) => paints.textNode(n.style)));
   const titleInk = layout.title && paints.title();
   const scene: Scene = { w, layout, areas, textNodes };
   openRoot(model, scene, ctx);
@@ -100,26 +102,28 @@ function pathData(w: SvgWriter, p: RegionPath): PathData {
 }
 
 /** One `g.venn-area`: the outline, then the label (v12's order). */
-function drawArea({ w, layout }: Scene, d: Drawn): void {
+function drawArea({ w, layout }: Scene, d: PaintedArea): void {
   const { area } = d;
   const id = area.sets.join('_');
-  const set = 'circle' in d;
   w.open('g', {
-    class: set ? `venn-area venn-circle venn-set-${area.slot ?? 0}` : 'venn-area venn-intersection',
+    class:
+      area.kind === 'set'
+        ? `venn-area venn-circle venn-set-${area.slot}`
+        : 'venn-area venn-intersection',
     'data-venn-sets': id,
     'data-id': id,
     'data-ast': area.ast,
   });
   const dPath = pathData(w, area.path);
   let ink: Paint;
-  if (set) {
+  if ('circle' in d) {
     const c = d.circle;
     w.outline('node', 'path', {
       d: dPath,
       fill: c.fill,
       'fill-opacity': c.fillOpacity,
       stroke: c.stroke,
-      'stroke-width': area.circle?.strokeWidth,
+      'stroke-width': d.area.circle.strokeWidth,
       'stroke-opacity': VENN_PAINT.circleStrokeOpacity,
     });
     ink = c.label;

@@ -18,18 +18,19 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
-import type { VennModel, VennSubset } from '../model.ts';
+import { idsKey, pairwiseRule, setIdOf, type VennModel, type VennSubset } from '../model.ts';
+import { idText, listOf } from '../parser/text.ts';
 import { laidOutSize } from '../sizes.ts';
 import {
-  areaKey,
   intersectionAreaPath,
   solveVenn,
   type Area,
   type Solved,
   type TextCentre,
 } from '../solver/index.ts';
-import { drawnBoxes, overlaps, union } from './geometry.ts';
-import { NORMAL_WEIGHT, VENN_METRICS, VENN_SLOTS } from './metrics.ts';
+import { slotOf } from '../theme/slots.ts';
+import { boxUnion, drawnBoxes, overlaps } from './geometry.ts';
+import { NORMAL_WEIGHT, VENN_METRICS } from './metrics.ts';
 import { vennStyles } from './styles.ts';
 import type {
   PlacedLabel,
@@ -37,6 +38,7 @@ import type {
   VennAreaLayout,
   VennDebugShapes,
   VennLayout,
+  VennStyleProperties,
   VennTextArea,
   VennTextNodeLayout,
 } from './types.ts';
@@ -55,30 +57,24 @@ interface Datum extends Area {
 }
 
 /**
- * v12 `ensurePairwiseSubsets`: every pair of an overlap of three or more sets that has no entry
- * of its own, added once at `min(a, b) / 4` (the last `set` size of each), after the model's.
+ * `subsets` and, after them, the pairs v12 adds (`ensurePairwiseSubsets`, `pairwiseRule`), each
+ * at `min(a, b) / 4` (the last `set` size of each).
  */
 function withPairs(subsets: readonly Datum[]): Datum[] {
-  const existing = new Set(subsets.map((s) => areaKey(s.sets)));
   const sizes = new Map<string, number>();
-  for (const s of subsets) if (s.sets.length === 1) sizes.set(s.sets[0]!, s.size);
-  const added: Datum[] = [];
-  for (const subset of subsets) {
-    if (subset.sets.length < 3) continue;
-    const members = [...subset.sets].sort();
-    for (let i = 0; i < members.length - 1; i++) {
-      for (let j = i + 1; j < members.length; j++) {
-        const pair = [members[i]!, members[j]!];
-        const key = areaKey(pair);
-        if (existing.has(key)) continue;
-        existing.add(key);
-        // v12 falls back to the default union size for an undeclared set; the parser rejects one.
-        const a = sizes.get(pair[0]!) ?? 0;
-        const b = sizes.get(pair[1]!) ?? 0;
-        added.push({ sets: pair, size: Math.min(a, b) / 4 });
-      }
-    }
+  for (const s of subsets) {
+    const id = setIdOf(s);
+    if (id !== undefined) sizes.set(id, s.size);
   }
+  // v12 falls back to the default union size for an undeclared set; the parser rejects one.
+  const added = pairwiseRule(subsets)
+    .added()
+    .map(
+      (pair): Datum => ({
+        sets: pair,
+        size: Math.min(sizes.get(pair[0]) ?? 0, sizes.get(pair[1]) ?? 0) / 4,
+      })
+    );
   return [...subsets, ...added];
 }
 
@@ -112,18 +108,24 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
   const labels = placeLabels(drawn, solved, (text, maxWidth) =>
     capped(text, fonts.label, maxWidth, measure)
   );
+  const styles = vennStyles(model);
   const areas = areasOf({
     drawn,
     solved,
     labels,
-    styles: vennStyles(model),
+    styles,
     circleStroke: m.circleStroke * scale,
   });
 
   // Text nodes (v12 `renderTextNodes`), on the areas drawn, keyed as v12 (the last copy).
   const byKey = new Map<string, Datum>();
-  for (const d of drawn) byKey.set(areaKey(d.sets), d);
-  const textAreas = textAreasOf(model, byKey, solved, { scale, font: fonts.text, measure });
+  for (const d of drawn) byKey.set(idsKey(d.sets), d);
+  const textAreas = textAreasOf(model, byKey, solved, {
+    scale,
+    font: fonts.text,
+    measure,
+    styles,
+  });
 
   const debug: VennDebugShapes | undefined = config.useDebugLayout
     ? {
@@ -151,7 +153,7 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
     titleHeight,
     padding,
     fonts,
-    bounds: union([...drawnBoxes(drawing)].map(([, box]) => box)),
+    bounds: boxUnion([...drawnBoxes(drawing)].map(([, box]) => box)),
   };
 }
 
@@ -171,19 +173,26 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
     }))
   );
   const dropped = new Set<string>();
-  for (const d of data) if (d.sets.length === 1 && d.size === 0) dropped.add(d.sets[0]!);
-  const zero = new Set(
-    model.subsets.filter((s) => s.sets.length === 1 && s.size === 0).map((s) => s.sets[0]!)
-  );
+  const declared = new Set<string>();
+  for (const d of data) {
+    const id = setIdOf(d);
+    if (id === undefined) continue;
+    declared.add(id);
+    if (d.size === 0) dropped.add(id);
+  }
+  const zero = new Set<string>();
+  for (const s of model.subsets) {
+    const id = setIdOf(s);
+    if (id !== undefined && s.size === 0) zero.add(id);
+  }
   if (zero.size > 0) {
-    const ids = [...zero].map((id) => `\`${id}\``).join(', ');
+    const ids = listOf([...zero].map((id) => `\`${idText(id)}\``));
     const one = zero.size === 1;
     warn({
       code: VENN_ZERO_SET,
       message: `Not drawn: ${one ? 'set' : 'sets'} ${ids} of size 0, and every overlap with ${one ? 'it' : 'them'}. Give each set a size above 0.`,
     });
   }
-  const declared = new Set(data.filter((d) => d.sets.length === 1).map((d) => d.sets[0]!));
   return data.filter((d) => d.sets.every((id) => declared.has(id) && !dropped.has(id)));
 }
 
@@ -198,14 +207,14 @@ function placeLabels(
   wrap: (text: string, maxWidth: number) => MeasuredLabel
 ): Map<string, PlacedLabel | undefined> {
   const texts = new Map<string, string>();
-  for (const d of drawn) if (d.label) texts.set(areaKey(d.sets), d.label);
+  for (const d of drawn) if (d.label) texts.set(idsKey(d.sets), d.label);
   const placed = new Map<string, PlacedLabel | undefined>();
   const taken: PlacedLabel[] = [];
   for (const d of drawn) {
-    const key = areaKey(d.sets);
+    const key = idsKey(d.sets);
     if (placed.has(key)) continue;
     const at = visible(centres.get(key));
-    const text = texts.get(key) ?? (d.sets.length === 1 ? d.sets[0] : undefined);
+    const text = texts.get(key) ?? setIdOf(d);
     if (!at || text === undefined || text === '') {
       placed.set(key, undefined);
       continue;
@@ -223,7 +232,7 @@ interface AreaParts {
   readonly drawn: readonly Datum[];
   readonly solved: Solved;
   readonly labels: ReadonlyMap<string, PlacedLabel | undefined>;
-  readonly styles: ReadonlyMap<string, Readonly<Record<string, string>>>;
+  readonly styles: ReadonlyMap<string, VennStyleProperties>;
   /** `5s`, for a set no style gives a `stroke-width`. */
   readonly circleStroke: number;
 }
@@ -232,34 +241,31 @@ interface AreaParts {
 function areasOf({ drawn, solved, labels, styles, circleStroke }: AreaParts): VennAreaLayout[] {
   const { circles, centres } = solved;
   let setIndex = 0;
-  return drawn.map((d) => {
-    const key = areaKey(d.sets);
+  return drawn.map((d): VennAreaLayout => {
+    const key = idsKey(d.sets);
     const members = d.sets.map((id) => circles[id]!);
     const path = intersectionAreaPath(members);
     const at = visible(centres.get(key));
     const label = labels.get(key);
+    const style = styles.get(key);
     const common = {
-      kind: d.sets.length === 1 ? ('set' as const) : ('overlap' as const),
       sets: d.sets,
       ...(d.ast !== undefined ? { ast: d.ast } : {}),
       size: d.size,
       ...(path ? { path } : {}),
       ...(at ? { centre: at } : {}),
       ...(label ? { label } : {}),
+      ...(style ? { style } : {}),
     };
-    if (d.sets.length !== 1) return common;
+    if (setIdOf(d) === undefined) return { kind: 'overlap', ...common };
     const { x, y, radius } = members[0]!;
     const index = setIndex++;
     return {
+      kind: 'set',
       ...common,
-      circle: {
-        x,
-        y,
-        radius,
-        strokeWidth: strokeOf(styles.get(key)?.['stroke-width'], circleStroke),
-      },
+      circle: { x, y, radius, strokeWidth: strokeOf(style?.['stroke-width'], circleStroke) },
       index,
-      slot: index % VENN_SLOTS,
+      slot: slotOf(index),
     };
   });
 }
@@ -341,6 +347,7 @@ interface GridParts {
   readonly scale: number;
   readonly font: FontKey;
   readonly measure: Measure;
+  readonly styles: ReadonlyMap<string, VennStyleProperties>;
 }
 
 /** v12 `renderTextNodes`: each area's text nodes in a grid about its text centre. */
@@ -354,7 +361,7 @@ function textAreasOf(
   const { scale } = parts;
   const groups = new Map<string, VennModel['textNodes'][number][]>();
   for (const node of model.textNodes) {
-    const key = areaKey(node.sets);
+    const key = idsKey(node.sets);
     const group = groups.get(key);
     if (group) group.push(node);
     else groups.set(key, [node]);
@@ -397,6 +404,7 @@ function textAreasOf(
       const boxWidth = cellWidth * m.cellFactor;
       const boxHeight = cellHeight * m.cellFactor;
       const text = parts.measure(node.label ?? node.id, parts.font, boxWidth);
+      const style = parts.styles.get(idsKey([node.id]));
       return {
         ast: node.ast,
         id: node.id,
@@ -408,6 +416,7 @@ function textAreasOf(
         },
         box: { x: x - boxWidth / 2, y: y - boxHeight / 2, width: boxWidth, height: boxHeight },
         label: placeCentred(text, x, y),
+        ...(style ? { style } : {}),
       };
     });
     out.push({

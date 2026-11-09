@@ -13,12 +13,12 @@ import type { Circle } from './circles.ts';
 import { normalizeSolution, ORIENTATION, scaleSolution, type SetCircle } from './normalize.ts';
 import { seededRandom } from './random.ts';
 import { computeTextCentres, type TextCentre } from './regions.ts';
-import { nullRecord, venn, type Area } from './solve.ts';
+import { nullRecord } from '../model.ts';
+import { fitCircles, type Area } from './solve.ts';
 
-export { areaKey, intersectionAreaPath } from './regions.ts';
+export { intersectionAreaPath } from './regions.ts';
 export type { RegionArc, RegionPath, TextCentre } from './regions.ts';
 export type { Circle, Point } from './circles.ts';
-export { nullRecord } from './solve.ts';
 export type { Area } from './solve.ts';
 export { seededRandom } from './random.ts';
 
@@ -32,7 +32,7 @@ export interface SolveBox {
 export interface Solved {
   /** One circle per set id, in venn.js's order. */
   readonly circles: Readonly<Record<string, SetCircle>>;
-  /** The label point of each area, by `areaKey(sets)`. */
+  /** The label point of each area, by `idsKey(sets)`. */
   readonly centres: ReadonlyMap<string, TextCentre>;
 }
 
@@ -46,7 +46,7 @@ export function solveVenn(
   random: () => number = seededRandom()
 ): Solved {
   if (areas.length === 0) return { circles: nullRecord<SetCircle>(), centres: new Map() };
-  const solution = normalizeSolution(venn(areas, { random }), ORIENTATION);
+  const solution = normalizeSolution(fitCircles(areas, { random }), ORIENTATION);
   const circles = scaleSolution(
     solution as Record<string, Circle>,
     box.width,

@@ -72,8 +72,5 @@ export const VENN_METRICS: VennMetrics = {
   debugCellStroke: 1,
 };
 
-/** v12 writes `venn-set-0`…`venn-set-7`: set `i` takes slot `i mod 8`. */
-export const VENN_SLOTS = 8;
-
 /** The CSS weight venn text is measured and drawn at: v12 sets none, so normal. */
 export const NORMAL_WEIGHT = 400;

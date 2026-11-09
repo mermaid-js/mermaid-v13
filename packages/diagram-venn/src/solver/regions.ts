@@ -13,7 +13,8 @@
  */
 import { distance, getCenter, intersectionStats, type Circle, type Point } from './circles.ts';
 import { nelderMead } from './fmin.ts';
-import { nullRecord, type Area } from './solve.ts';
+import { idsKey, nullRecord } from '../model.ts';
+import type { Area } from './solve.ts';
 
 /** A label point; `disjoint` when the area is not on the chart (venn.js puts it at y −1000). */
 export interface TextCentre extends Point {
@@ -133,10 +134,7 @@ function getOverlappingCircles(
   return ret;
 }
 
-/** The key of an area's sets in {@link computeTextCentres}' result. */
-export const areaKey = (sets: readonly string[]): string => JSON.stringify(sets);
-
-/** The label point of every area, by {@link areaKey}. */
+/** The label point of every area, by `idsKey` of its sets. */
 export function computeTextCentres(
   circles: Readonly<Record<string, Circle>>,
   areas: readonly Area[]
@@ -161,7 +159,7 @@ export function computeTextCentres(
       if (setid in areaids) interior.push(circles[setid]!);
       else if (!(setid in exclude)) exterior.push(circles[setid]!);
     }
-    ret.set(areaKey(area), computeTextCentre(interior, exterior));
+    ret.set(idsKey(area), computeTextCentre(interior, exterior));
   }
   return ret;
 }

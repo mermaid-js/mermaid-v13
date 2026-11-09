@@ -6,13 +6,19 @@
  */
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import { VENN_DUPLICATE, VENN_EMPTY, VENN_INVALID_SIZE, VENN_UNKNOWN_TARGET } from '../codes.ts';
-import type { VennStyle, VennSubset, VennTextNode } from '../model.ts';
+import {
+  idsKey,
+  pairwiseRule,
+  type VennStyle,
+  type VennSubset,
+  type VennTextNode,
+} from '../model.ts';
 import { invalidSize } from '../sizes.ts';
 import type { VennName } from './ast.ts';
 import { idText, listOf } from './text.ts';
 
 /** A model entry with the statement it came from. */
-export interface Placed<V> {
+export interface Sourced<V> {
   value: V;
   range: Range;
   /** What a warning calls it before the quote, if anything: `the text node`, `the style`. */
@@ -25,9 +31,9 @@ export interface Placed<V> {
 
 /** What the warnings read. */
 export interface WarningInput {
-  subsets: readonly Placed<VennSubset>[];
-  textNodes: readonly Placed<VennTextNode>[];
-  styles: readonly Placed<VennStyle>[];
+  subsets: readonly Sourced<VennSubset>[];
+  textNodes: readonly Sourced<VennTextNode>[];
+  styles: readonly Sourced<VennStyle>[];
   /** Where `VENN_EMPTY` goes: the header, or the start of the body. */
   header: Range;
   /** The 1-based line of an offset. */
@@ -38,12 +44,9 @@ export interface WarningInput {
   perOccurrence?: boolean;
 }
 
-/** A key for a list of ids: they may hold any character but `"`, which separates them. */
-const keyOf = (ids: readonly string[]): string => `${ids.length}"${ids.join('"')}`;
-
 /** Add the D417 warnings of one parse to `d`. */
 export function warnVenn(d: Diagnostics, input: WarningInput): void {
-  const at = (p: Placed<unknown>) => {
+  const at = (p: Sourced<unknown>) => {
     const shown = [p.what, p.quote && input.quote(p.quote)].filter(Boolean).join(' ');
     return `${shown} at line ${input.lineOf(p.range.start)}`;
   };
@@ -59,13 +62,13 @@ export function warnVenn(d: Diagnostics, input: WarningInput): void {
   }
 }
 
-type At = (p: Placed<unknown>) => string;
+type At = (p: Sourced<unknown>) => string;
 
 /** One warning naming every `set` or `union` that repeats an earlier one. */
 function duplicates(d: Diagnostics, { subsets }: WarningInput, at: At): void {
   const seen = new Set<string>();
   const repeats = subsets.filter((p) => {
-    const key = keyOf(p.value.sets);
+    const key = idsKey(p.value.sets);
     if (seen.has(key)) return true;
     seen.add(key);
     return false;
@@ -112,33 +115,16 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
   const keys = new Map<readonly string[], string>();
   const key = (ids: readonly string[]): string => {
     let k = keys.get(ids);
-    if (k === undefined) keys.set(ids, (k = keyOf(ids)));
+    if (k === undefined) keys.set(ids, (k = idsKey(ids)));
     return k;
   };
   const declared = new Set<string>();
-  /** For each id, the three-or-more overlaps it is in (indexes), for the pairs v12 adds. */
-  const wide = new Map<string, Set<number>>();
-  input.subsets.forEach(({ value }, n) => {
-    declared.add(key(value.sets));
-    if (value.sets.length < 3) return;
-    for (const id of value.sets) {
-      let of = wide.get(id);
-      if (!of) wide.set(id, (of = new Set()));
-      of.add(n);
-    }
-  });
-  const drawn = (ids: readonly string[]): boolean => {
-    if (declared.has(key(ids))) return true;
-    if (ids.length !== 2) return false;
-    const a = wide.get(ids[0] ?? '');
-    const b = wide.get(ids[1] ?? '');
-    if (!a || !b) return false;
-    const [few, many] = a.size < b.size ? [a, b] : [b, a];
-    for (const n of few) if (many.has(n)) return true;
-    return false;
-  };
+  for (const { value } of input.subsets) declared.add(key(value.sets));
+  const pairs = pairwiseRule(input.subsets.map((p) => p.value));
+  const drawn = (ids: readonly string[]): boolean =>
+    declared.has(key(ids)) || (ids.length === 2 && pairs.covers(ids[0]!, ids[1]!));
   const textIds = new Set(input.textNodes.map((t) => t.value.id));
-  const named: Placed<unknown>[] = input.textNodes.filter((t) => !drawn(t.value.sets));
+  const named: Sourced<unknown>[] = input.textNodes.filter((t) => !drawn(t.value.sets));
   for (const s of input.styles) {
     const { targets } = s.value;
     const one = targets.length === 1 ? targets[0] : undefined;
@@ -146,7 +132,7 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
   }
   named.sort((a, b) => a.range.start - b.range.start);
   if (input.perOccurrence) {
-    for (const p of named) eachUnknown(d, p, at, (id) => declared.has(keyOf([id])));
+    for (const p of named) eachUnknown(d, p, at, (id) => declared.has(idsKey([id])));
     return;
   }
   const first = named[0];
@@ -160,7 +146,7 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
 }
 
 /** The editor's warnings for one statement `unknownTargets` found (see there). */
-function eachUnknown(d: Diagnostics, p: Placed<unknown>, at: At, isSet: (id: string) => boolean) {
+function eachUnknown(d: Diagnostics, p: Sourced<unknown>, at: At, isSet: (id: string) => boolean) {
   const ids = p.ids ?? [];
   const missing = ids.filter((n) => !isSet(n.name));
   for (const m of missing) {

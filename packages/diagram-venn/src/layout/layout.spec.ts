@@ -6,7 +6,7 @@ import { vennTestContext, vennTestTheme } from '../test-context.ts';
 import { vennLayoutViolations } from './invariants.ts';
 import { layoutVenn } from './layout.ts';
 import { fixture, gridMeasurer } from './mmd.fixtures.ts';
-import type { VennCircle, VennLayout } from './types.ts';
+import type { VennAreaLayout, VennCircle, VennLayout, VennSetLayout } from './types.ts';
 
 let theme: Theme;
 beforeAll(async () => {
@@ -30,6 +30,12 @@ const circleOf = (layout: VennLayout, id: string): VennCircle =>
 
 const textOf = (label: { text: { lines: { text: string }[][] } } | undefined): string[] =>
   label!.text.lines.map((l) => l.map((r) => r.text).join(''));
+
+/** `area`, which a spec knows to be a set. */
+function setArea(area: VennAreaLayout | undefined): VennSetLayout {
+  if (area?.kind !== 'set') throw new Error('not a set');
+  return area;
+}
 
 const LAYOUT = 'nightly-check/layout';
 
@@ -250,9 +256,9 @@ describe('venn layout invariants', () => {
     const { layout: base } = laid(`${LAYOUT}/text-grid-labelled`);
     const broken = (patch: Partial<VennLayout>) =>
       vennLayoutViolations(model, { ...base, ...patch });
-    const [a] = base.areas;
+    const a = setArea(base.areas[0]);
     expect(
-      broken({ areas: [{ ...a!, circle: { ...a!.circle!, radius: a!.circle!.radius * 2 } }] })
+      broken({ areas: [{ ...a, circle: { ...a.circle, radius: a.circle.radius * 2 } }] })
     ).toEqual(expect.arrayContaining([expect.stringContaining('outside the chart')]));
     expect(broken({ scale: Number.NaN })).toEqual(['layout.scale is NaN']);
     expect(broken({ bounds: { x: 0, y: 0, width: 10, height: 10 } })[0]).toMatch(
@@ -274,7 +280,8 @@ describe('venn layout invariants', () => {
     expect(
       vennLayoutViolations(two, { ...pair, areas: [p!, { ...q!, label: p!.label! }, pq!] })
     ).toEqual(expect.arrayContaining([expect.stringContaining('labels of A and B overlap')]));
-    const smaller = { ...q!, circle: { ...q!.circle!, radius: q!.circle!.radius / 2 } };
+    const b = setArea(q);
+    const smaller = { ...b, circle: { ...b.circle, radius: b.circle.radius / 2 } };
     expect(vennLayoutViolations(two, { ...pair, areas: [p!, smaller, pq!] })).toEqual(
       expect.arrayContaining([expect.stringContaining('area per unit of size')])
     );

@@ -10,8 +10,8 @@
  * of its own, which a one-id `style` naming no set refers to. A rename changes every occurrence,
  * keeps quotes, quotes a new name that is not a bare id (`quoteId`), and the service refuses a
  * name the namespace already has. Diagnostics give each id a `text` or `style` names that
- * nothing declares its own `VENN_UNKNOWN_TARGET`, where a render warns once (D417). A `set` or `union` folds with the indented `text` lines under
- * it, from the parser's statement spans.
+ * nothing declares its own `VENN_UNKNOWN_TARGET`, where a render warns once (D417). A `set` or
+ * `union` folds with the indented `text` lines under it, from the parser's statement spans.
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { vennCompletions } from './facet/completions.ts';

@@ -6,7 +6,7 @@
  *   pnpm --filter bench language:venn [--runs 50] [--warmup 10] [--enforce]
  */
 import { createLanguageService } from '@mermaid-js/language-service';
-import { detectVenn, vennLanguage } from '@mermaid-js/diagram-venn/language';
+import { vennLanguage } from '@mermaid-js/diagram-venn/language';
 import { bestOf, LANGUAGE_BUDGET_MS, typing } from '../language.ts';
 import { measureVenn, VENN_FIXTURE } from '../language-venn.ts';
 import { round } from '../stats.ts';
@@ -14,10 +14,8 @@ import { parseArgs } from './args.ts';
 
 const args = parseArgs(process.argv.slice(2));
 const log = (line: string) => process.stdout.write(line + '\n');
-// The facet as an eager row until venn's manifest has its `language` entry (#501).
-const service = createLanguageService({
-  facets: [{ type: 'venn', id: 'venn', detector: (t) => detectVenn(t), facet: vennLanguage }],
-});
+const service = createLanguageService();
+await service.preload({ types: ['venn'] });
 
 const texts = typing(VENN_FIXTURE);
 const r = measureVenn(service, texts, {

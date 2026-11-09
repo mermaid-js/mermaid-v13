@@ -6,7 +6,8 @@
  * that imports one more combination of `svg`, `text`, `layout` or `parser-kit` re-splits core.
  *
  * Each case registers one stub diagram, as a port does: it turns the first placeholder row of
- * the generated registry (a type with no package, so no `load`) into a lazily loaded row. The stubs import different core subpaths.
+ * the generated registry (a type with no package, so no `load`) into a lazily loaded row. The
+ * stubs import different core subpaths.
  *
  * Spec #414 (D331, D322): a diagram's theme table is plain data on its plugin, loaded with its
  * chunk, so a themed stub grows core by its row only too. Its control imports the same table

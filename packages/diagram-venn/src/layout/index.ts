@@ -4,5 +4,5 @@
  */
 export { layoutVenn, type VennLayoutContext } from './layout.ts';
 export { vennStyles } from './styles.ts';
-export { VENN_METRICS, VENN_SLOTS } from './metrics.ts';
+export { VENN_METRICS } from './metrics.ts';
 export type * from './types.ts';

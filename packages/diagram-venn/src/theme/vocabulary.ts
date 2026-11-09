@@ -1,7 +1,16 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
+import { slotVar, VENN_SLOTS } from './slots.ts';
 
 /** `usedBy` of every row: venn reads them all. */
 const VENN: readonly string[] = ['venn'];
+
+/** The slot rows `venn1`–`venn8` (`vn1`–`vn8`), one per slot of `slots.ts`. */
+const SLOT_ROWS: Record<string, DiagramThemeVarDef> = Object.fromEntries(
+  Array.from({ length: VENN_SLOTS }, (_, i): [string, DiagramThemeVarDef] => [
+    slotVar(i),
+    { alias: `vn${i + 1}`, kind: 'color', usedBy: VENN },
+  ])
+);
 
 /**
  * Venn's theme variables (spec #429; spec #414 T0b, D331): v12's ten flat names, the slot
@@ -10,14 +19,7 @@ const VENN: readonly string[] = ['venn'];
  * `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
-  venn1: { alias: 'vn1', kind: 'color', usedBy: VENN },
-  venn2: { alias: 'vn2', kind: 'color', usedBy: VENN },
-  venn3: { alias: 'vn3', kind: 'color', usedBy: VENN },
-  venn4: { alias: 'vn4', kind: 'color', usedBy: VENN },
-  venn5: { alias: 'vn5', kind: 'color', usedBy: VENN },
-  venn6: { alias: 'vn6', kind: 'color', usedBy: VENN },
-  venn7: { alias: 'vn7', kind: 'color', usedBy: VENN },
-  venn8: { alias: 'vn8', kind: 'color', usedBy: VENN },
+  ...SLOT_ROWS,
   vennTitleTextColor: { alias: 'vnt', kind: 'color', usedBy: VENN },
   vennSetTextColor: { alias: 'vns', kind: 'color', usedBy: VENN },
 };

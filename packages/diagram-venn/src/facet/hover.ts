@@ -10,7 +10,7 @@
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
-import type { VennModel } from '../model.ts';
+import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import type { VennDocument } from '../parser/ast.ts';
 import { idText, listOf } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
@@ -28,7 +28,7 @@ const union = (sets: readonly string[]) => code(`union ${sets.map(idText).join('
 const size = (n: number) => String(Number.isInteger(n) ? n : Number(n.toPrecision(4)));
 
 function setHover(model: VennModel, ast: VennDocument, name: string): string {
-  const own = model.subsets.filter((s) => s.sets.length === 1 && s.sets[0] === name);
+  const own = model.subsets.filter((s) => setIdOf(s) === name);
   const last = own[own.length - 1];
   const parts: string[] = [];
   if (!last) {
@@ -46,12 +46,12 @@ function setHover(model: VennModel, ast: VennDocument, name: string): string {
     if (own.length > 1) notes.push(`declared ${own.length} times; the last size counts`);
     parts.push(`Size ${size(last.size)}${notes.length > 0 ? ` (${notes.join('; ')})` : ''}.`);
   }
-  const overlaps = model.subsets.filter((s) => s.sets.length > 1 && s.sets.includes(name));
+  const overlaps = model.subsets.filter((s) => setIdOf(s) === undefined && s.sets.includes(name));
   if (overlaps.length > 0) {
     const seen = new Set<string>();
     const listed: string[] = [];
     for (const s of overlaps) {
-      const key = JSON.stringify(s.sets);
+      const key = idsKey(s.sets);
       if (seen.has(key)) continue;
       seen.add(key);
       listed.push(`${union(s.sets)} (size ${size(s.size)})`);
@@ -65,10 +65,9 @@ function textHover(model: VennModel, name: string): string {
   const head = `**${code(name)}** text node`;
   const first = model.textNodes.find((t) => t.id === name);
   if (!first) return head;
+  const set = setIdOf(first);
   const where =
-    first.sets.length === 1
-      ? `In the set ${code(first.sets[0] ?? '')}`
-      : `In the overlap ${union(first.sets)}`;
+    set === undefined ? `In the overlap ${union(first.sets)}` : `In the set ${code(set)}`;
   const label = first.label === undefined ? '' : `, labelled ${first.label}`;
   return `${head}\n\n${where}${label}.`;
 }

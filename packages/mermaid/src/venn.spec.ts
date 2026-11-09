@@ -161,6 +161,11 @@ describe('venn diagrams through the public API (#501)', () => {
       'VENN_ZERO_SET',
     ]);
     expect(sizes.svg).not.toContain('NaN');
+    // The zero sets are written as every other venn message writes ids (`idText`, `listOf`).
+    const quoted = await m.render('v9', 'venn-beta\n  set "a b": 0\n  set C: 0\n  set D\n');
+    expect(quoted.warnings.map((w) => w.message)).toEqual([
+      'Not drawn: sets `"a b"` and `C` of size 0, and every overlap with them. Give each set a size above 0.',
+    ]);
   });
 
   it('supports svg only: ascii is refused with UnsupportedFormatError (D320)', async () => {

@@ -4,16 +4,13 @@
  * a cycle does its work. The absolute ≤ 15 ms (D156) on the reference runner is
  * `pnpm --filter bench language:venn --enforce`.
  */
-import { describe, expect, it } from 'vitest';
-import { detectVenn, vennLanguage } from '@mermaid-js/diagram-venn/language';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from '@mermaid-js/language-service';
 import { typing } from './language.ts';
 import { measureVenn, VENN_FIXTURE, vennCycle } from './language-venn.ts';
 
-// The facet as an eager row until venn's manifest has its `language` entry (#501).
-const service = createLanguageService({
-  facets: [{ type: 'venn', id: 'venn', detector: (t) => detectVenn(t), facet: vennLanguage }],
-});
+const service = createLanguageService();
+beforeAll(() => service.preload({ types: ['venn'] }));
 
 describe('the venn language-service bench fixture', () => {
   it('is a 50,000-character venn diagram with no diagnostics', () => {

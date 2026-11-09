@@ -71,3 +71,80 @@ export interface VennModel {
   /** Warnings of the parse (also in `ParseResult.diagnostics`, D417). */
   readonly warnings: readonly Diagnostic[];
 }
+
+/**
+ * The one key of an id list (a subset's sets, a text node's area, a style's targets): equal
+ * lists, and only those, have equal keys, whatever the ids hold (`,`, `|`, `"`, `__proto__`).
+ * The parser's warnings, the solver, the layout, its invariants and the facet all key by it.
+ */
+export const idsKey = (ids: readonly string[]): string => JSON.stringify(ids);
+
+/** An empty record with no prototype, so an id such as `__proto__` is a key like any other. */
+export const nullRecord = <V>(): Record<string, V> => Object.create(null) as Record<string, V>;
+
+/** The id of a `set` entry (one id), or undefined for an overlap. */
+export const setIdOf = (entry: { readonly sets: readonly string[] }): string | undefined =>
+  entry.sets.length === 1 ? entry.sets[0] : undefined;
+
+/** The least number of sets of an overlap whose pairs v12 adds. */
+const WIDE = 3;
+
+/**
+ * v12's `ensurePairwiseSubsets` rule (`vennRenderer.ts`): every pair of sets of an overlap of
+ * three or more is drawn, the ones with no entry of their own added once, after the model's.
+ * The layout lays the added pairs out ({@link PairwiseRule.added}); the parser's warnings only
+ * ask whether a pair is drawn ({@link PairwiseRule.covers}), without listing every pair.
+ */
+interface PairwiseRule {
+  /** Whether v12 draws the overlap of `a` and `b`: one overlap of three or more has both. */
+  covers(a: string, b: string): boolean;
+  /**
+   * The pairs v12 adds, in its order: each wide overlap's pairs (its ids sorted, `i < j`) that
+   * no entry and no earlier pair has.
+   */
+  added(): [string, string][];
+}
+
+/** {@link PairwiseRule} over `entries` (subsets in source order). */
+export function pairwiseRule(
+  entries: readonly { readonly sets: readonly string[] }[]
+): PairwiseRule {
+  /** For each id, the wide overlaps it is in (indexes into `entries`). */
+  const wide = new Map<string, Set<number>>();
+  entries.forEach(({ sets }, n) => {
+    if (sets.length < WIDE) return;
+    for (const id of sets) {
+      let of = wide.get(id);
+      if (!of) wide.set(id, (of = new Set()));
+      of.add(n);
+    }
+  });
+  return {
+    covers(a, b) {
+      const x = wide.get(a);
+      const y = wide.get(b);
+      if (!x || !y) return false;
+      const [few, many] = x.size < y.size ? [x, y] : [y, x];
+      for (const n of few) if (many.has(n)) return true;
+      return false;
+    },
+    added() {
+      const existing = new Set(entries.map((e) => idsKey(e.sets)));
+      const out: [string, string][] = [];
+      for (const { sets } of entries) {
+        if (sets.length < WIDE) continue;
+        const members = [...sets].sort();
+        for (let i = 0; i < members.length - 1; i++) {
+          for (let j = i + 1; j < members.length; j++) {
+            const pair: [string, string] = [members[i]!, members[j]!];
+            const key = idsKey(pair);
+            if (existing.has(key)) continue;
+            existing.add(key);
+            out.push(pair);
+          }
+        }
+      }
+      return out;
+    },
+  };
+}

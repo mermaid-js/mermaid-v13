@@ -85,7 +85,7 @@ import type { Lexed } from './lexer.ts';
 import { esc, idText, normalizeText, titleText } from './text.ts';
 import { T } from './tokens.ts';
 import { warnVenn } from './warnings.ts';
-import type { Placed } from './warnings.ts';
+import type { Sourced } from './warnings.ts';
 
 export interface VennParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -232,9 +232,9 @@ class VennParser {
   /** Mentions per id base, for the `@n` suffixes. */
   private readonly mentions = new Map<string, number>();
   private styleCount = 0;
-  private readonly subsets: Placed<VennSubset>[] = [];
-  private readonly textNodes: Placed<VennTextNode>[] = [];
-  private readonly styles: Placed<VennStyle>[] = [];
+  private readonly subsets: Sourced<VennSubset>[] = [];
+  private readonly textNodes: Sourced<VennTextNode>[] = [];
+  private readonly styles: Sourced<VennStyle>[] = [];
   /** v12's `knownSets`: the ids of the `set` statements read so far. */
   private readonly knownSets = new Set<string>();
   /**
