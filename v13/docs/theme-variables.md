@@ -18,8 +18,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
@@ -44,7 +44,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark, neo, neo-dark | core |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
-| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap |
+| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap, agentflow |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline, gitgraph |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
@@ -57,23 +57,23 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
-| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap |
-| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap |
+| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap, agentflow |
+| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap, agentflow |
 | `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
 | `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
-| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap |
-| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
-| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
+| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap, agentflow |
+| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap, agentflow |
+| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap, agentflow |
 | `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
 | `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
 | `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
-| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
-| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
+| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart, agentflow |
+| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart, agentflow |
 | `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart |
 | `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart |
-| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
-| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
+| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart, agentflow |
+| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart, agentflow |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
