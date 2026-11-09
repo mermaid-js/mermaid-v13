@@ -3,11 +3,13 @@
 Unmet acceptance criteria and open choices, filed under the ticket that owns each one. Choices made without the maintainer (not covered by the spec or a D-id) are marked **Choice** and repeated under "For the maintainer" in the integration PR body.
 
 ## #544 T1 lexer and corpus
-- From exploration: v12 agentflow lexes `%%` lines as `COMMENT` tokens and keeps leading blank lines, while core `sourceView` cuts comments out and its `braceNewline` collapses `}\s*\n` where agentflow collapses only `}[^\S\n]*\n` (01 §1, 02 §1). Flowchart's `commented()` variant does not apply as is; decide the gate variant and the view option (prefer a package-local view over a core change).
-- From exploration: `fa796a943` is past 12.2.0 for `shapes.ts` (the `lean_right` alias fix) and flowchart's `LINK_ID`; the harvest reads post-tag specs. Exclude or skip what 12.2.0 rejects, with a reason.
+- Closed: comments and `}` blanks. The package builds its own view (`src/parser/source.ts`, no core change): directives cut, `;` drops read with comments kept, the blanks between a `}` and its line break dropped, core's tag-quote mask. `COMMENT` is a significant `T.Comment` token; a `%%` inside a label is `Kind.Comment` trivia (jison skips it). The gate's `commented()` variant adds comment lines that both sides lex as `COMMENT`; a `brace blanks` variant adds blanks after every `}`.
+- Closed: post-tag specs. Every harvested string lexes as 12.2.0 does (`LINK_ID` is 12.2.0's; `shapes.ts` is not the lexer), so no lexer exclusion; `[/…/]` (D462) differs only in the model (#546).
 
 ## #546 T2 parser
 - From the #544 review: D467's test-only parity spec (v12's flowchart `SHARED_SYNTAX` bodies fed to both v13 flowchart and agentflow) is this ticket's.
+- From #544: v12 parsed the comment-free text when `withComments` exceeded `maxTextSize` (with a `log.warn`); `agentflowSourceView(…, maxTextSize)` reproduces it, so pass the site config's value (and decide whether to warn).
+- From #544: `agentflow-beta %% c` is a lexical error in v12 (the `dir` state has no comment rule); a top-level `%% direction LR` lexes as `direction_lr` (the `.*direction` rules run first).
 - From exploration: v13 flowchart's model differs from v12 agentflow in three places to cut: subgraph parent is last-write-wins with no cycle cut (`nesting.ts:32–35`; D461 wants the cycle cut and `CONTAINMENT_VIOLATION`); `inheritDir` also falls back to the top-level `direction` in v12 (`agentflowDb.ts:1218`), though a top-level `direction` does not change the diagram direction; v12 keeps a dangling edge from `connectors --> b` after dropping the vertex.
 
 ## #547 T3 layout

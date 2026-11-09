@@ -4,7 +4,7 @@ Integration branch `feature/523_agentflow` (from `mermaid-v13` at 521fb76ee). Dr
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate and corpus | #544 | #285 (merged) | open |
+| T1 lexer parity gate and corpus | #544 | #285 (merged) | merged (no-ff, head 047a81af7; main entry 7,778 B gz, core untouched) |
 | T2 grammar, parser, model, AST | #546 | #544 | open |
 | T3 layout | #547 | #546 | open |
 | T4 SVG renderer | #548 | #547, block's shape-geometry T0 (#521) | open |
