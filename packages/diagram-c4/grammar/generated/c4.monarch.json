@@ -1,0 +1,786 @@
+{
+  "tokenPostfix": ".mermaid-c4",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        ".*direction\\s+TB[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        ".*direction\\s+BT[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        ".*direction\\s+RL[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        ".*direction\\s+LR[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "title(?=\\n)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "title\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescription\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accTitle\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_title"
+        }
+      ],
+      [
+        "accDescr\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr"
+        }
+      ],
+      [
+        "accDescr\\s*\\{\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr_multiline"
+        }
+      ],
+      [
+        "%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "\\s*(?:\\n)+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "\\s+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "C4Context\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "C4Container\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "C4Component\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "C4Dynamic\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "C4Deployment\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "Person_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Person\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "SystemQueue_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "SystemDb_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "System_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "SystemQueue\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "SystemDb\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "System\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Boundary\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Enterprise_Boundary\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "System_Boundary\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ContainerQueue_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ContainerDb_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Container_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ContainerQueue\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ContainerDb\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Container\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Container_Boundary\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ComponentQueue_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ComponentDb_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Component_Ext\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ComponentQueue\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "ComponentDb\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Component\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Deployment_Node\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Node\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Node_L\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Node_R\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "BiRel\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_Up\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_U\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_Down\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_D\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_Left\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_L\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_Right\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_R\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "Rel_Back\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "RelIndex\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "UpdateElementStyle\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "UpdateRelStyle\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "UpdateLayoutConfig\\b",
+        {
+          "token": "keyword",
+          "next": "@macro"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter"
+        }
+      ]
+    ],
+    "macro": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\([ ]*,",
+        {
+          "token": "delimiter",
+          "next": "@attribute"
+        }
+      ],
+      [
+        "\\(",
+        {
+          "token": "delimiter",
+          "next": "@attribute"
+        }
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "attribute": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter",
+          "next": "@pop"
+        }
+      ],
+      [
+        ",,",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "[ ]*\"\"",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "[ ]*\"",
+        {
+          "token": "string",
+          "next": "@string"
+        }
+      ],
+      [
+        "[ ]*\\$",
+        {
+          "token": "variable",
+          "next": "@string_kv"
+        }
+      ],
+      [
+        "(?=\\n)",
+        {
+          "token": "",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^,)\\n]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "string": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^\"]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "string_kv": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^=]*",
+        {
+          "token": "variable",
+          "next": "@string_kv_key"
+        }
+      ]
+    ],
+    "string_kv_key": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "=[ ]*\"",
+        {
+          "token": "string",
+          "switchTo": "@string_kv_value"
+        }
+      ]
+    ],
+    "string_kv_value": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\"]+",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_title": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr_multiline": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^\\}]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

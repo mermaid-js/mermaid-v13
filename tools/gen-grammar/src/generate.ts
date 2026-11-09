@@ -307,6 +307,82 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'c4',
+    title: 'C4 diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      unnamed: {
+        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        AccDescrBlockStart: {
+          mode: 'INITIAL',
+          pattern: 'accDescr\\s*\\{\\s*',
+          docOf: 'acc_descr_multiline_value',
+        },
+        AccDescrBlockEnd: {
+          mode: 'acc_descr_multiline',
+          pattern: '\\}',
+          docOf: 'acc_descr_multiline_value',
+        },
+        ArgsOpen: { mode: 'macro', pattern: '\\(' },
+        Comma: { mode: 'attribute', pattern: ',' },
+        QuoteOpen: { mode: 'attribute', pattern: '[ ]*"' },
+        QuoteClose: { mode: 'string', pattern: '"' },
+        KeyStart: { mode: 'attribute', pattern: '[ ]*\\$' },
+        KeyEquals: { mode: 'string_kv_key', pattern: '=[ ]*"' },
+        ValueClose: { mode: 'string_kv_value', pattern: '"' },
+        // Kinds named apart from their jison terminal (`SYSTEM_EXT_QUEUE` is `SystemQueue_Ext`).
+        AccDescrBlockValue: {
+          mode: 'acc_descr_multiline',
+          pattern: '[^\\}]*',
+          terminal: 'acc_descr_multiline_value',
+        },
+        SystemQueueExt: {
+          mode: 'INITIAL',
+          pattern: 'SystemQueue_Ext\\b',
+          terminal: 'SYSTEM_EXT_QUEUE',
+          docOf: 'SYSTEM_EXT_QUEUE',
+        },
+        SystemDbExt: {
+          mode: 'INITIAL',
+          pattern: 'SystemDb_Ext\\b',
+          terminal: 'SYSTEM_EXT_DB',
+          docOf: 'SYSTEM_EXT_DB',
+        },
+        ContainerQueueExt: {
+          mode: 'INITIAL',
+          pattern: 'ContainerQueue_Ext\\b',
+          terminal: 'CONTAINER_EXT_QUEUE',
+          docOf: 'CONTAINER_EXT_QUEUE',
+        },
+        ContainerDbExt: {
+          mode: 'INITIAL',
+          pattern: 'ContainerDb_Ext\\b',
+          terminal: 'CONTAINER_EXT_DB',
+          docOf: 'CONTAINER_EXT_DB',
+        },
+        ComponentQueueExt: {
+          mode: 'INITIAL',
+          pattern: 'ComponentQueue_Ext\\b',
+          terminal: 'COMPONENT_EXT_QUEUE',
+          docOf: 'COMPONENT_EXT_QUEUE',
+        },
+        ComponentDbExt: {
+          mode: 'INITIAL',
+          pattern: 'ComponentDb_Ext\\b',
+          terminal: 'COMPONENT_EXT_DB',
+          docOf: 'COMPONENT_EXT_DB',
+        },
+        UpdateElementStyle: {
+          mode: 'INITIAL',
+          pattern: 'UpdateElementStyle\\b',
+          terminal: 'UPDATE_EL_STYLE',
+          docOf: 'UPDATE_EL_STYLE',
+        },
+      },
+    },
+  },
 ];
 
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */
