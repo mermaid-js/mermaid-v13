@@ -566,5 +566,93 @@
   {
     "id": "architecture-cases/edges-group-no-group",
     "source": "architecture-beta\nservice a\nservice b\na{group}:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/db-service-duplicate",
+    "source": "architecture-beta\nservice a\nservice a"
+  },
+  {
+    "id": "architecture-cases/db-service-self",
+    "source": "architecture-beta\nservice a in a"
+  },
+  {
+    "id": "architecture-cases/db-service-parent-missing",
+    "source": "architecture-beta\nservice a in g"
+  },
+  {
+    "id": "architecture-cases/db-service-parent-node",
+    "source": "architecture-beta\nservice b\nservice a in b"
+  },
+  {
+    "id": "architecture-cases/db-junction-duplicate",
+    "source": "architecture-beta\nservice a\njunction a"
+  },
+  {
+    "id": "architecture-cases/db-junction-self",
+    "source": "architecture-beta\njunction j in j"
+  },
+  {
+    "id": "architecture-cases/db-junction-parent-missing",
+    "source": "architecture-beta\njunction j in g"
+  },
+  {
+    "id": "architecture-cases/db-junction-parent-node",
+    "source": "architecture-beta\nservice b\njunction j in b"
+  },
+  {
+    "id": "architecture-cases/db-group-duplicate",
+    "source": "architecture-beta\ngroup g\ngroup g"
+  },
+  {
+    "id": "architecture-cases/db-group-self",
+    "source": "architecture-beta\ngroup g in g"
+  },
+  {
+    "id": "architecture-cases/db-group-parent-later",
+    "source": "architecture-beta\ngroup a in b\ngroup b"
+  },
+  {
+    "id": "architecture-cases/db-group-parent-service",
+    "source": "architecture-beta\nservice s\ngroup g in s"
+  },
+  {
+    "id": "architecture-cases/db-edge-left-missing",
+    "source": "architecture-beta\nservice b\na:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/db-edge-right-missing",
+    "source": "architecture-beta\nservice a\na:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/db-edge-left-same-group",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice b in g\na{group}:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/db-edge-right-same-group",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice b in g\na:R -- L:b{group}"
+  },
+  {
+    "id": "architecture-cases/db-edge-group-both-groups",
+    "source": "architecture-beta\ngroup g\ngroup h\nservice a in g\nservice b in h\na{group}:R -- L:b{group}"
+  },
+  {
+    "id": "architecture-cases/db-align-member",
+    "source": "architecture-beta\nservice a\nservice b\nalign row a b ghost"
+  },
+  {
+    "id": "architecture-cases/db-align-group-member",
+    "source": "architecture-beta\ngroup g\nservice a\nalign column a g"
+  },
+  {
+    "id": "architecture-cases/db-align-repeat",
+    "source": "architecture-beta\nservice a\nalign row a a"
+  },
+  {
+    "id": "architecture-cases/db-proto-group",
+    "source": "architecture-beta\ngroup __proto__\nservice a in __proto__\nservice b in __proto__\na:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/db-proto-missing",
+    "source": "architecture-beta\ngroup marker\nservice a in __proto__"
   }
 ]

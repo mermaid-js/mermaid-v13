@@ -1,0 +1,127 @@
+(** Architecture diagram syntax (R-PARSE-9, D54): the normative grammar of `architecture-beta`
+diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4). mermaid@12 parsed architecture diagrams with Langium (`architecture.langium`,
+`arch.langium` and `common.langium` in `@mermaid-js/parser`); the rules below are its token
+rules, in its order, and its grammar.
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords and sides are case-sensitive.
+
+A word keyword gives way to a longer id (`services`, `rows` and `inx` are ids), but a side does
+not: `L`, `R`, `T` and `B` are read before an id, so no id can start with one of those capitals
+(`Backend` is the side `B` and the id `ackend`). An id that starts with `title` splits too.
+Each statement ends its line, except that `architecture-beta` may share its line with the
+first one. *)
+
+@lexer
+
+(** `architecture-beta`: starts an architecture diagram. *)
+ARCHITECTURE_BETA         /architecture-beta(?!-*\w)/      :keyword ;
+(** `junction j in g`: a point where edges meet, drawn as nothing, optionally in a group. *)
+JUNCTION                  /junction(?!-*\w)/               :keyword ;
+(** `service db(database)[Database] in g`: a service with an optional icon (or a text icon in
+quotes), an optional label in brackets, and an optional group. *)
+SERVICE                   /service(?!-*\w)/                :keyword ;
+(** `align column a b`: the members share a column. *)
+COLUMN                    /column(?!-*\w)/                 :keyword ;
+(** `group g(cloud)[Cloud] in parent`: a group with an optional icon, label and parent group. *)
+GROUP                     /group(?!-*\w)/                  :keyword ;
+(** `align row a b c`: lines services and junctions up in a row (`row`) or a column (`column`). *)
+ALIGN                     /align(?!-*\w)/                  :keyword ;
+(** `align row a b`: the members share a row. *)
+ROW                       /row(?!-*\w)/                    :keyword ;
+(** A `---` … `---` block inside the body: skipped. It wins over `--` and `-`. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** `--`: an edge without a label, `a:R -- L:b`. *)
+DASH_DASH                 /--/                             :operator ;
+(** `in g`: places a service, junction or group in the group `g`, declared before it when it
+is a group. *)
+IN                        /in(?!-*\w)/                     :keyword ;
+(** `:` between an id and its side: `a:R`, `L:b`. *)
+COLON                     /:/                              :punctuation ;
+(** `-[label]-`: the two dashes around an edge's label. *)
+DASH                      /-/                              :operator ;
+(** `L`, `R`, `T` or `B`: the side of a service or junction an edge meets (left, right, top,
+bottom). *)
+DIRECTION                 /[LRTB]/                         :keyword ;
+(** `{group}` after an edge's id: the edge meets the border of the id's group, not the id. *)
+ARROW_GROUP               /\{group\}/                      :keyword ;
+(** `<` or `>` next to `--`: an arrowhead at that end (`a:R --> L:b`; either character works
+on either end). *)
+ARROW_INTO                /[<>]/                           :operator ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line. *)
+ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `title …`: the diagram's title, the rest of the line (kept, not drawn). *)
+TITLE                     /[\t ]*title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** A text icon: `"…"` or `'…'` after a service's id, drawn as text in place of an icon; `\`
+escapes the next character, and it may span lines. *)
+STRING                    /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/ :string ;
+(** An id: ASCII letters, digits, `_` and `-`, not ending in `-`. Services, junctions and groups
+share one set of ids. *)
+ID                        /\w(?:[-\w]*\w)?/                :variable ;
+NEWLINE                   /\r?\n/ ;
+-                         /[\t ]+/ ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /[\t ]*%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /[\t ]*%%[^\n\r]*/              :comment ;
+(** `(database)`: an icon, a built-in name (`cloud`, `database`, `disk`, `internet`, `server`)
+or a pack's `prefix:name`. *)
+ICON                      /\([-\w:]+\)/                    :string ;
+(** `[Label]` or `["Label"]`: a label. Unquoted, it holds no bracket or line break; quoted, it may
+hold both, and `\"` or `\'` is the quote. *)
+LABEL                     /\[(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[^\[\]\r\n]+)\]/ :string ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `architecture-beta`, then statements, each on a line of its own (the first may
+share the header's line). The `YAML`, `DIRECTIVE` and `COMMENT` tokens of the lexer are skipped
+before parsing. *)
+architecture = { NEWLINE } Header { NEWLINE | statement NEWLINE } [ statement ] EOF ;
+Header @Header = ARCHITECTURE_BETA ;
+statement = Group | Service | Junction | Edge | Alignment | Title | AccTitle | AccDescr ;
+
+(** `group id(icon)[Label] in parent`: a group, drawn as a dashed box around what is in it, with
+an optional icon and label. A parent group is declared before the group. *)
+Group @Group = GROUP ID [ ICON ] [ LABEL ] [ IN ID ] ;
+(** `service id(icon)[Label] in group`: a service, drawn as its icon with the label below; a
+text icon in quotes (`service id "text"[Label]`) draws the text in place of an icon. *)
+Service @Service = SERVICE ID [ STRING | ICON ] [ LABEL ] [ IN ID ] ;
+(** `junction id in group`: a point where edges meet, drawn as nothing, optionally in a
+group. *)
+Junction @Junction = JUNCTION ID [ IN ID ] ;
+(** `a:R --> L:b`: an edge from the right side of `a` to the left side of `b`, with optional
+arrowheads (`<`, `>`), a label (`-[label]-`) and `{group}` after either id. *)
+Edge @Edge = ID [ ARROW_GROUP ] COLON DIRECTION [ ARROW_INTO ] ( DASH_DASH | DASH LABEL DASH )
+             [ ARROW_INTO ] DIRECTION COLON ID [ ARROW_GROUP ] ;
+(** `align row a b` or `align column a b c`: lines up at least two services or junctions in a
+row or a column. *)
+Alignment @Alignment = ALIGN ( ROW | COLUMN ) ID ID { ID } ;
+(** `title Shop`: the title, kept for accessibility tools but not drawn (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

@@ -1,7 +1,8 @@
 /**
  * The architecture corpora (#525): the e2e fixtures and the harvested v12 spec strings, and the
- * lexer gate's set, which adds the hand-written cases of `corpus/architecture-cases.json` (the
- * spec's quirks, line separators) and a CRLF and a commented copy of every source.
+ * gates' set, which adds the hand-written cases of `corpus/architecture-cases.json` (the spec's
+ * quirks, line separators, one case per v12 DB check) and the parser's recovery set
+ * (`corpus/architecture-recovery.json`, #599), and a CRLF and a commented copy of every source.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,9 +22,17 @@ export async function architectureCorpus(): Promise<CorpusItem[]> {
   return [...items, ...readItems('packages/conformance/corpus/architecture-v12-specs.json')];
 }
 
-/** The hand-written cases: the spec's quirks and the rules' other corners. */
+/**
+ * The hand-written cases: the spec's quirks and the rules' other corners, one case per v12 DB
+ * check (`db-*`), and the parser's recovery set (whose expected diagnostics `recovery.spec.ts`
+ * checks).
+ */
 export function architectureCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/architecture-cases.json');
+  const recovery = readItems('packages/conformance/corpus/architecture-recovery.json');
+  return [
+    ...readItems('packages/conformance/corpus/architecture-cases.json'),
+    ...recovery.map(({ id, source }) => ({ id, source })),
+  ];
 }
 
 /** The corpus, the cases, and a CRLF and a commented copy of each. */

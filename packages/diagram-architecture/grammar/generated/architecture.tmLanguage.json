@@ -1,0 +1,272 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-architecture",
+  "scopeName": "source.mermaid-architecture",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-architecture"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-architecture"
+    },
+    "rule-0": {
+      "match": "architecture-beta(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-1": {
+      "match": "junction(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-2": {
+      "match": "service(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-3": {
+      "match": "column(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-4": {
+      "match": "group(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-5": {
+      "match": "align(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-6": {
+      "match": "row(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-7": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-architecture"
+    },
+    "rule-8": {
+      "match": "--",
+      "name": "keyword.operator.mermaid-architecture"
+    },
+    "rule-9": {
+      "match": "in(?!-*\\w)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-10": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-architecture"
+    },
+    "rule-11": {
+      "match": "-",
+      "name": "keyword.operator.mermaid-architecture"
+    },
+    "rule-12": {
+      "match": "[LRTB]",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-13": {
+      "match": "\\{group\\}",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-14": {
+      "match": "[<>]",
+      "name": "keyword.operator.mermaid-architecture"
+    },
+    "rule-15": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-16": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-17": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-18": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-architecture"
+    },
+    "rule-19": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-architecture"
+    },
+    "rule-20": {
+      "match": "\\w(?:[-\\w]*\\w)?",
+      "name": "variable.other.mermaid-architecture"
+    },
+    "rule-21": {
+      "match": "\\r?\\n"
+    },
+    "rule-22": {
+      "match": "[\\t ]+"
+    },
+    "rule-23": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-architecture"
+    },
+    "rule-24": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-architecture"
+    },
+    "rule-25": {
+      "match": "\\([-\\w:]+\\)",
+      "name": "string.quoted.mermaid-architecture"
+    },
+    "rule-26": {
+      "match": "\\[(?:\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'|[^\\[\\]\\r\\n]+)\\]",
+      "name": "string.quoted.mermaid-architecture"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-architecture"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-architecture"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-architecture"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-architecture"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

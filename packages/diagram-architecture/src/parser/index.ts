@@ -1,6 +1,6 @@
 /**
- * The architecture parser's public surface so far: the lexer gated against v12's Langium lexer
- * (#594).
+ * The architecture parser's public surface: the parser (#599), detection, and the lexer gated
+ * against v12's Langium lexer (#594).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -8,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { ARCHITECTURE_TRIVIA, LANGIUM_NAMES, T as ArchitectureTokenKind } from './tokens.ts';
+export { parseArchitecture } from './parser.ts';
+export type { ArchitectureParseOptions, ArchitectureParseResult } from './parser.ts';
+export { detectArchitecture } from './detect.ts';
+export type * from './ast.ts';
 
 export interface ArchitectureToken {
   /** An `ArchitectureTokenKind` or a shared `Kind`. */

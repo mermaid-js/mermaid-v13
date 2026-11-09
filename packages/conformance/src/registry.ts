@@ -1,3 +1,4 @@
+import { architectureAdapter } from './architecture/v13.ts';
 import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { cynefinAdapter } from './cynefin/v13.ts';
@@ -182,6 +183,12 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/venn-cases.json',
     ],
     corpus: vennParityCorpus,
+  },
+  {
+    adapter: architectureAdapter,
+    corpusDirs: ['e2e/diagrams/architecture'],
+    // The cases run in `architecture/parity.spec.ts`, with D504's differences.
+    corpusFiles: ['packages/conformance/corpus/architecture-v12-specs.json'],
   },
 ];
 
