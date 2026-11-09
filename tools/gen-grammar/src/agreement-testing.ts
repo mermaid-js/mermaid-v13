@@ -16,25 +16,32 @@ import type { Categorise } from './highlight-testing.ts';
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
 let files: Map<string, string> | undefined;
-/** A generated highlighter file of `type`, e.g. `class.monarch.json`. */
-function out(type: string, name: string): string {
+/** A generated highlighter file of package `pkg`, e.g. `class.monarch.json`. */
+function outOf(pkg: string, name: string): string {
   files ??= generate((p) => readFileSync(join(ROOT, p), 'utf8'));
-  return files.get(`${generatedDir(type)}/${name}`) ?? '';
+  return files.get(`${generatedDir(pkg)}/${name}`) ?? '';
 }
 
-/** The three generated highlighters of `type`, run in their real engines. */
-export async function highlighters(type: string): Promise<[string, Categorise][]> {
+/**
+ * The three highlighters generated from grammar `type` of package `pkg` (`railroad-ebnf` of
+ * `railroad`, D512), run in their real engines.
+ */
+export async function highlighters(
+  type: string,
+  pkg: string = type
+): Promise<[string, Categorise][]> {
+  const out = (name: string) => outOf(pkg, name);
   return [
     [
       'TextMate',
-      await textMateCategorise(out(type, `${type}.tmLanguage.json`), `source.mermaid-${type}`),
+      await textMateCategorise(out(`${type}.tmLanguage.json`), `source.mermaid-${type}`),
     ],
-    ['Monarch', monarchCategorise(out(type, `${type}.monarch.json`))],
+    ['Monarch', monarchCategorise(out(`${type}.monarch.json`))],
     [
       'Lezer',
       await lezerCategorise(
-        out(type, `${type}.grammar`),
-        out(type, `${type}.tokens.js`),
+        out(`${type}.grammar`),
+        out(`${type}.tokens.js`),
         type,
         join(ROOT, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
       ),

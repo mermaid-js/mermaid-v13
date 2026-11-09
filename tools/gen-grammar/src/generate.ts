@@ -11,8 +11,22 @@ import { lezerGrammar, lezerTokens, monarch, textMate } from './highlight.ts';
 import { syntaxDoc } from './syntax-doc.ts';
 
 export interface GrammarTarget {
-  /** Diagram type, e.g. `flowchart`. */
+  /**
+   * Diagram type, e.g. `flowchart`: names the generated tables (`flowchartCategories`), so it
+   * is an identifier (`railroadEbnf`).
+   */
   type: string;
+  /**
+   * The package, `packages/diagram-<package>`, when it is not `type`: a package whose manifest
+   * declares several types carries one grammar per type (D512).
+   */
+  package?: string;
+  /**
+   * The grammar file's base name, `grammar/<grammar>.ebnf`, when it is not `type`
+   * (`railroad-ebnf`). It also names the highlighters, the syntax doc and, when it is not the
+   * package's name, the category and doc tables (`src/generated/<grammar>.categories.ts`).
+   */
+  grammar?: string;
   /** Page title of the syntax reference. */
   title: string;
   /** The diagram's token kinds, for its kind → category table. */
@@ -295,11 +309,48 @@ export const GRAMMARS: GrammarTarget[] = [
   },
 ];
 
-export const grammarPath = (type: string): string =>
-  `packages/diagram-${type}/grammar/${type}.ebnf`;
+/** The grammar file of `grammar` in `packages/diagram-<pkg>`. */
+export const grammarPath = (grammar: string, pkg: string = grammar): string =>
+  `packages/diagram-${pkg}/grammar/${grammar}.ebnf`;
 export const generatedDir = (type: string): string => `packages/diagram-${type}/grammar/generated`;
 /** The diagram package's source dir. */
 export const sourceDir = (type: string): string => `packages/diagram-${type}/src`;
+
+/** Where one target's grammar file is, and what it generates (repo-relative paths). */
+export interface TargetPaths {
+  /** The package, `packages/diagram-<pkg>`. */
+  pkg: string;
+  /** The grammar file's base name. */
+  grammar: string;
+  /** The grammar file. */
+  file: string;
+  /** The token-kind module. */
+  kinds: string;
+  /** The folder of the highlighters. */
+  highlighters: string;
+  syntaxDoc: string;
+  categories: string;
+  docs: string;
+}
+
+/** Where one target's grammar file is, and what it generates. */
+export function targetPaths(target: GrammarTarget): TargetPaths {
+  const pkg = target.package ?? target.type;
+  const grammar = target.grammar ?? target.type;
+  // The package's own grammar keeps the plain table names; each other one prefixes them.
+  const table = grammar === pkg ? '' : `${grammar}.`;
+  const generated = `${sourceDir(pkg)}/generated`;
+  return {
+    pkg,
+    grammar,
+    file: grammarPath(grammar, pkg),
+    kinds: `${sourceDir(pkg)}/${target.kinds.module}`,
+    highlighters: generatedDir(pkg),
+    syntaxDoc: `v13/docs/syntax/${grammar}.md`,
+    categories: `${generated}/${table}categories.ts`,
+    docs: `${generated}/${table}docs.ts`,
+  };
+}
 
 /** Repo-relative path → content, for one grammar file's text and its token-kind module's. */
 export function generateFor(
@@ -308,42 +359,42 @@ export function generateFor(
   kindsText: string
 ): Map<string, string> {
   const { type } = target;
+  const paths = targetPaths(target);
+  const { grammar } = paths;
   const g = parseGrammar(text);
-  const names = { id: `mermaid-${type}`, extensions: ['mmd', 'mermaid'] };
-  const dir = generatedDir(type);
+  const names = { id: `mermaid-${grammar}`, extensions: ['mmd', 'mermaid'] };
+  const dir = paths.highlighters;
   const json = (v: object) => `${JSON.stringify(v, null, 2)}\n`;
   return new Map([
-    [`${dir}/${type}.tmLanguage.json`, json(textMate(g, names))],
-    [`${dir}/${type}.monarch.json`, json(monarch(g, names))],
-    [`${dir}/${type}.grammar`, lezerGrammar(g, names, `./${type}.tokens.js`)],
-    [`${dir}/${type}.tokens.js`, lezerTokens(g, names, `./${type}.parser.terms.js`)],
-    [`v13/docs/syntax/${type}.md`, syntaxDoc(g, target.title, grammarPath(type))],
+    [`${dir}/${grammar}.tmLanguage.json`, json(textMate(g, names))],
+    [`${dir}/${grammar}.monarch.json`, json(monarch(g, names))],
+    [`${dir}/${grammar}.grammar`, lezerGrammar(g, names, `./${grammar}.tokens.js`)],
+    [`${dir}/${grammar}.tokens.js`, lezerTokens(g, names, `./${grammar}.parser.terms.js`)],
+    [paths.syntaxDoc, syntaxDoc(g, target.title, paths.file)],
+    [paths.categories, categoriesModule(g, type, paths.file, kindsText, target.kinds)],
     [
-      `${sourceDir(type)}/generated/categories.ts`,
-      categoriesModule(g, type, grammarPath(type), kindsText, target.kinds),
-    ],
-    [
-      `${sourceDir(type)}/generated/docs.ts`,
-      docsModule(
-        g,
-        type,
-        grammarPath(type),
-        kindKeys(kindsText, target.kinds.object),
-        target.kinds
-      ),
+      paths.docs,
+      docsModule(g, type, paths.file, kindKeys(kindsText, target.kinds.object), target.kinds),
     ],
   ]);
 }
 
-export function generate(read: (path: string) => string | undefined): Map<string, string> {
+export function generate(
+  read: (path: string) => string | undefined,
+  targets: readonly GrammarTarget[] = GRAMMARS
+): Map<string, string> {
   const files = new Map<string, string>();
-  for (const target of GRAMMARS) {
-    const text = read(grammarPath(target.type));
-    if (text === undefined) throw new Error(`missing ${grammarPath(target.type)}`);
-    const kindsPath = `${sourceDir(target.type)}/${target.kinds.module}`;
+  for (const target of targets) {
+    const paths = targetPaths(target);
+    const text = read(paths.file);
+    if (text === undefined) throw new Error(`missing ${paths.file}`);
+    const kindsPath = paths.kinds;
     const kindsText = read(kindsPath);
     if (kindsText === undefined) throw new Error(`missing ${kindsPath}`);
-    for (const [k, v] of generateFor(target, text, kindsText)) files.set(k, v);
+    for (const [k, v] of generateFor(target, text, kindsText)) {
+      if (files.has(k)) throw new Error(`two grammars generate ${k}`);
+      files.set(k, v);
+    }
   }
   return files;
 }
