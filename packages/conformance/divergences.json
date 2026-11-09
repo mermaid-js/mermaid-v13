@@ -1302,5 +1302,29 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
     "owner": "#602",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-inline-data.mmd",
+    "inputHash": "sha256:3899c686192e9de3",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-namespace-repeated.mmd",
+    "inputHash": "sha256:e6552d2708f3a5f0",
+    "kind": "model",
+    "reason": "One lane per namespace (D522): v12 built each swimlane without its namespace, so every namespaced frame opened a new lane (`cmd Inv.A`, `cmd Inv.C` gave two lanes both labelled `C/RM: Inv`); v13 keeps one lane per band and namespace, as the syntax page promises. Lane indices of later namespace lanes, and an inferred relation that now finds its source in the same lane, follow from it; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-same-lane.mmd",
+    "inputHash": "sha256:034915397f115aa1",
+    "kind": "model",
+    "reason": "One lane per namespace (D522): v12 built each swimlane without its namespace, so every namespaced frame opened a new lane (`cmd Inv.A`, `cmd Inv.C` gave two lanes both labelled `C/RM: Inv`); v13 keeps one lane per band and namespace, as the syntax page promises. Lane indices of later namespace lanes, and an inferred relation that now finds its source in the same lane, follow from it; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
   }
 ]
