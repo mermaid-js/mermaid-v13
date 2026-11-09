@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-kanban",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Kanban diagram plugin for Mermaid: parser, model, layout, SVG renderer, text output and language facet.",
   "type": "module",
   "license": "MIT",
