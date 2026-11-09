@@ -26,6 +26,6 @@
 
 ## Machine-wide locks (seven ports share AI-Max)
 
-- Every full `pnpm check`, `pnpm e2e` and every push (requirement is on lock slot B, Knut 2026-11-09): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check-b.lock …` (with the Node 24.16 `PATH`). A set `PARSE_FIXTURE_PATH` makes the conformance corpus specs read an outside folder and fails `pnpm check`, the pre-push hook included. Ticket agents don't push.
+- Every full `pnpm check`, `pnpm e2e` and every push (requirement is on lock slot A, Knut 2026-11-09): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock …` (with the Node 24.16 `PATH`). A set `PARSE_FIXTURE_PATH` makes the conformance corpus specs read an outside folder and fails `pnpm check`, the pre-push hook included. Ticket agents don't push.
 - A timing test that fails under load is not a regression: rerun it under the lock. Known flakes (don't edit): R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout under load.
 - `generated/` folders are gitignored: every new generated file (grammar highlighters, theme variables, …) must be added with `git add -f`, or CI's clean checkout fails `check:*` while local runs pass. Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.
