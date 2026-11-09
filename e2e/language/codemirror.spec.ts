@@ -6,6 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { highlighted, sampleOf } from '../../packages/language-service-codemirror/scripts/highlighted.ts';
 import { startExample } from './example-server.ts';
 import type { ExampleServer } from './example-server.ts';
 
@@ -191,31 +192,13 @@ test('closes the document in the shared service when the editor goes away', asyn
 
 // --- first paint per diagram type (D134, #190) ------------------------------------------
 
-/** One document per v13 type; the header is the first word. */
-const TYPE_DOCS: Record<string, string> = {
-  flowchart: 'flowchart LR\n  A --> B\n',
-  sequence: 'sequenceDiagram\n  Alice->>Bob: Hi\n',
-  class: 'classDiagram\n  class Animal\n',
-  state: 'stateDiagram-v2\n  [*] --> Idle\n',
-  er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
-  journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
-  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
-  timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
-  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
-  pie: 'pie\n  "Dogs" : 386\n',
-  info: 'info showInfo\n  title Version\n',
-  mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
-  gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
-  packet: 'packet\n  0-15: "Source Port"\n',
-  radar: 'radar-beta\n  axis A, B\n',
-  xychart: 'xychart\n  x-axis [a, b]\n  bar [1, 2]\n',
-  cynefin: 'cynefin-beta\n  complex\n    "Probe"\n',
-  kanban: 'kanban\n  todo[Todo]\n    a[Card]\n',
-  sankey: 'sankey\n"Solar, roof",Electricity,40.5\n',
-  treemap: 'treemap\n  "Root"\n    "Leaf": 12\n',
-  wardley: 'wardley-beta\n  anchor Customer [0.95, 0.63]\n  component Tea [0.79, 0.61]\n',
-  venn: 'venn-beta\n  set A\n  set B\n  union A, B\n',
-};
+/**
+ * One document per highlighted type (`scripts/highlighted.ts`): each diagram package's
+ * `grammar/<type>.sample.mmd`, whose first word is the header.
+ */
+const TYPE_DOCS: Record<string, string> = Object.fromEntries(
+  highlighted().map((h) => [h.id, sampleOf(h, 'sample')])
+);
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */
 const KEYWORD = 'rgb(119, 0, 136)';

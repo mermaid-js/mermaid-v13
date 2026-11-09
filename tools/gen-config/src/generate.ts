@@ -8,6 +8,7 @@
  * `generate()` is pure apart from json-schema-to-typescript: schema text in, files out.
  */
 import { compile, type JSONSchema } from 'json-schema-to-typescript';
+import { diagramPackages } from '../../workspace/diagrams.ts';
 import {
   annotationErrors,
   annotationOf,
@@ -32,26 +33,25 @@ export const SERVICE_SCHEMA = 'packages/language-service/src/generated/config-sc
  * Config sections that belong to a package other than core. Their defaults are written
  * into the owner's package; a section with no package yet gets no defaults at all
  * (its keys are still known, so they are accepted silently, R-CONF-5).
+ *
+ * A diagram package owns its section by `configDefaults: true` in its own `workspace.yaml`
+ * (`tools/workspace/diagrams.ts`); the section is its manifest's `section`, else its `id`. So a
+ * port adds its package and no row here.
  */
-export const SECTION_OWNERS: Readonly<Record<string, string>> = {
-  flowchart: 'packages/diagram-flowchart',
-  class: 'packages/diagram-class',
-  er: 'packages/diagram-er',
-  state: 'packages/diagram-state',
-  journey: 'packages/diagram-journey',
-  mindmap: 'packages/diagram-mindmap',
-  pie: 'packages/diagram-pie',
-  packet: 'packages/diagram-packet',
-  quadrantChart: 'packages/diagram-quadrant',
-  radar: 'packages/diagram-radar',
-  cynefin: 'packages/diagram-cynefin',
-  kanban: 'packages/diagram-kanban',
-  sankey: 'packages/diagram-sankey',
-  treemap: 'packages/diagram-treemap',
-  'wardley-beta': 'packages/diagram-wardley',
-  xyChart: 'packages/diagram-xychart',
-  venn: 'packages/diagram-venn',
-};
+export function sectionOwners(root?: string): Readonly<Record<string, string>> {
+  const owners: Record<string, string> = {};
+  for (const p of diagramPackages(root)) {
+    if (p.wiring.configDefaults !== true) continue;
+    const section = p.manifest.section ?? p.manifest.id;
+    const other = owners[section];
+    if (other !== undefined)
+      throw new Error(`${p.dir}: config section ${section} is also ${other}'s`);
+    owners[section] = p.dir;
+  }
+  return owners;
+}
+
+export const SECTION_OWNERS: Readonly<Record<string, string>> = sectionOwners();
 
 /**
  * The name of a section's generated defaults: `flowchartConfigDefaults`; a section v12 named with
@@ -463,6 +463,37 @@ function findKey(root: RootSchema, path: string): SchemaNode {
   return node;
 }
 
+/**
+ * MIGRATION.md's per-diagram sections, assembled from `v13/docs/migration/*.md` so diagram
+ * ports do not conflict there: everything from the first fragment's heading on is replaced by the fragments in
+ * order, so a port adds its own file and a conflict in MIGRATION.md is resolved by regenerating.
+ * The part above stays as written. A fragment starts with its `## ` heading, and no fragment's
+ * heading may stand in the part above (it would be a second section of that name).
+ */
+export function assembleMigration(
+  existing: string,
+  fragments: readonly { readonly name: string; readonly text: string }[]
+): string {
+  if (fragments.length === 0) return existing;
+  const headings = fragments.map((f) => {
+    const first = f.text.split('\n', 1)[0] ?? '';
+    if (!first.startsWith('## '))
+      throw new Error(`${MIGRATION_DOC} fragment ${f.name} must start with a "## " heading`);
+    return first;
+  });
+  // The sections start at the first fragment's heading (`010-…`, which stays first).
+  const found = existing.indexOf(`\n${headings[0]}\n`);
+  const start = found === -1 ? existing.length : found + 1;
+  const head = start < existing.length ? existing.slice(0, start) : `${existing.trimEnd()}\n\n`;
+  for (const [i, h] of headings.entries())
+    if (head.includes(`\n${h}\n`))
+      throw new Error(
+        `${MIGRATION_DOC}: fragment ${fragments[i]!.name}'s "${h}" is also above them`
+      );
+  // One blank line between sections, one newline at the end, as prettier writes them.
+  return head + fragments.map((f) => `${f.text.trimEnd()}\n`).join('\n');
+}
+
 /** Puts the generated section into MIGRATION.md, keeping everything around the markers. */
 export function spliceMigration(existing: string | undefined, section: string): string {
   if (existing === undefined) {
@@ -666,11 +697,13 @@ export class SchemaError extends Error {
  * @param readExisting - reads a workspace file, `undefined` when it does not exist
  *   (used to splice MIGRATION.md and to name a fragment's package).
  * @param fragmentSources - the plugin config fragments (`findFragments`), in package order.
+ * @param migrationFragments - MIGRATION.md's per-diagram sections (`findMigrationFragments`).
  */
 export async function generate(
   schemaSource: string,
   readExisting: (path: string) => string | undefined,
-  fragmentSources: readonly FragmentSource[] = []
+  fragmentSources: readonly FragmentSource[] = [],
+  migrationFragments: readonly { readonly name: string; readonly text: string }[] = []
 ): Promise<Generated> {
   const root = loadSchema(schemaSource);
   const problems = annotationErrors(root);
@@ -722,6 +755,12 @@ export async function generate(
   for (const f of fragments)
     files.set(`${f.pkg}/src/generated/config-fragment.ts`, fragmentSource(f));
   files.set(REFERENCE_DOC, referenceDoc(root, fragments));
-  files.set(MIGRATION_DOC, spliceMigration(readExisting(MIGRATION_DOC), migrationSection(root)));
+  files.set(
+    MIGRATION_DOC,
+    assembleMigration(
+      spliceMigration(readExisting(MIGRATION_DOC), migrationSection(root)),
+      migrationFragments
+    )
+  );
   return { files };
 }

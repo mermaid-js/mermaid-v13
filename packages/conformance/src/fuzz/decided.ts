@@ -5,7 +5,7 @@ import type { DivergenceKind } from '../types.ts';
 /**
  * Fuzz-only divergences from mermaid@12 that are decided, not bugs (#17, GAPS "fuzz-only
  * preprocess differences"). None of them occurs in the corpus, so they are not in
- * `divergences.json` (which is keyed by corpus item). `decided.spec.ts` runs each example
+ * `divergences/` (which is keyed by corpus item). `decided.spec.ts` runs each example
  * through the oracle and v13, so a decision that stops being true fails. The nightly fuzz
  * run's oracle report groups what it finds by these families.
  */

@@ -6,33 +6,47 @@ import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLE_TABLE, THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
 import { INVENTORY_PATH, TABLE_PATH, themeInventory, themeTable } from './theme-inventory.ts';
 import {
+  coreUsers,
   generatedPath,
+  knownNames,
   packageTable,
   runtimeVars,
   themePackages,
+  themeReads,
   vocabularyCollisions,
   type ThemePackage,
 } from './theme-packages.ts';
 
 const REPO = await themePackages(undefined, { tables: 'vocabulary' });
+const READS = themeReads(REPO, knownNames(THEME_VARIABLES, REPO));
 /** A fixture `packages/` holding `diagram-demo` (a vocabulary and a table) and `diagram-plain`. */
 const FIXTURES = fileURLToPath(new URL('./fixtures/packages', import.meta.url));
 const [demo, plain] = (await themePackages(FIXTURES)) as [ThemePackage, ThemePackage];
 
 describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
-    const doc = await themeInventory();
+    const doc = await themeInventory(REPO);
+    // The users are core, then the diagram packages whose sources read the row, sorted
+    // (`coreUsers`; theme-used-by.spec.ts holds them to the sources), so a port changes no line here.
+    const users = (name: string) => coreUsers(name, THEME_VARIABLES[name]!.usedBy, READS);
+    expect(users('primaryColor')).toEqual(
+      expect.arrayContaining(['core', 'quadrant', 'gitgraph', 'gantt', 'venn'])
+    );
+    expect(users('primaryColor')[0]).toBe('core');
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |'
+      `| \`primaryColor\` | \`--mermaid-primaryColor\` | base | color | | | all | ${users('primaryColor').join(', ')} |`
+    );
+    expect(users('nodeBorder')).toEqual(
+      expect.arrayContaining(['flowchart', 'sequence', 'class', 'state', 'er', 'mindmap', 'kanban'])
     );
     expect(doc).toContain(
-      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |'
+      `| \`nodeBorder\` | \`--mermaid-nodeBorder\` | derived | color | \`primaryBorderColor\` | \`primaryBorderColor\` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | ${users('nodeBorder').join(', ')} |`
     );
     expect(doc).toContain(
-      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |'
+      `| \`primaryBorderColor\` | \`--mermaid-primaryBorderColor\` | derived | color | \`mix(primaryColor, black, 15%)\` | \`mix(primaryColor, white, 20%)\` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | ${users('primaryBorderColor').join(', ')} |`
     );
     expect(doc).toContain(
-      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |'
+      `| \`strokeWidth\` | \`--mermaid-strokeWidth\` | token | length | | | all | ${users('strokeWidth').join(', ')} |`
     );
   });
 
@@ -140,7 +154,13 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     expect(owners).toEqual(
       expect.arrayContaining(['class', 'journey', 'pie', 'quadrant', 'sequence', 'timeline'])
     );
-    const [core, all] = [await themeInventory(), await themeInventory(REPO)];
+    // The core part with every package's reads but no package's own variables.
+    const reads = REPO.map(({ type, dir, dynamicReads }) => ({
+      type,
+      dir,
+      ...(dynamicReads && { dynamicReads }),
+    }));
+    const [core, all] = [await themeInventory(reads), await themeInventory(REPO)];
     expect(all.startsWith(core.trimEnd())).toBe(true);
     expect(all).toContain('| `classText` | | color |');
     expect(all).toContain('| `actorRadius` | | length |');

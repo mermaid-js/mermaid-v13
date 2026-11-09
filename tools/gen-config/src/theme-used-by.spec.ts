@@ -1,119 +1,112 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
-import { slotVar, VENN_SLOTS } from '../../../packages/diagram-venn/src/theme/slots.ts';
-import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts';
+import { diagramPackages } from '../../workspace/diagrams.ts';
+import {
+  PACKAGES,
+  coreListedErrors,
+  coreUsers,
+  knownNames,
+  packageReadErrors,
+  themePackages,
+  themeReads,
+} from './theme-packages.ts';
 
 /**
- * `usedBy` in the theme vocabulary names the diagram types that read each variable (#207).
- * A diagram reads a variable by passing its name as a string literal to a call, either a `Theme`
- * method (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
- * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
- * (D332); a var's `nested:` key is v12's name, not a read. This spec scans each diagram
- * package's sources for these and checks the lists both ways, for core's vocabulary and for every
- * package's own (`src/theme/vocabulary.ts`, spec #414 T0b), whose rows only their own type may
- * read: a row another type reads belongs in core.
+ * `usedBy` names the diagram types that read each theme variable (#207). The types are read from
+ * each diagram package's sources (`themeReads` in theme-packages.ts): a string-literal argument
+ * to a `Theme` method or a local helper over one, a table of names, a table rule's
+ * `inline(name)`, and the names a package builds at run time, which its vocabulary lists as
+ * `theme.dynamicReads` in its `workspace.yaml`. So a port never lists itself in core's vocabulary: the inventory lists it
+ * from its reads (`coreUsers`). Core's own `usedBy` keeps the types listed by hand before that,
+ * each of which must still read the row, plus types listed ahead of their reads. A package's own rows (`src/theme/vocabulary.ts`, spec #414
+ * T0b) may be read by its own type only: a row another type reads belongs in core.
+ *
+ * Everything per type lives in the package's `workspace.yaml` (`theme.dynamicReads`,
+ * `theme.notDrawnYet`, `theme.listedAhead`),
+ * so a port adds its package and edits nothing here.
  */
-const OWNERS = (await themePackages(PACKAGES, { tables: 'vocabulary' })).filter(
-  (p) => p.vocabulary !== undefined
-);
-/** Every name a diagram may read: core's and every package's. */
-const KNOWN = new Set([
-  ...Object.keys(THEME_VARIABLES),
-  ...OWNERS.flatMap((p) => Object.keys(p.vocabulary!)),
-]);
-
-/** Names a diagram builds at run time, which a scan for literals can't see. */
-const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
-  // `padsOf` in render/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
-  flowchart: ['node', 'stadium', 'hexagon', 'subroutine', 'cylinder', 'lean', 'odd'].flatMap(
-    (shape) => [`${shape}PaddingX`, `${shape}PaddingY`]
-  ),
-  // `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
-  pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
-  // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
-  kanban: Array.from({ length: 12 }, (_, n) => `kanbanColumn${n}`),
-  // `paints` in render/paint.ts reads the section strokes `cScalePeer${slot - 1}`.
-  treemap: Array.from({ length: 12 }, (_, n) => `cScalePeer${n}`),
-  // `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
-  venn: Array.from({ length: VENN_SLOTS }, (_, i) => slotVar(i)),
-};
-
-function sources(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-    const path = join(dir, e.name);
-    if (e.isDirectory()) return e.name === 'generated' ? [] : sources(path);
-    // A vocabulary declares names; it reads none.
-    if (path.endsWith(join('src', 'theme', 'vocabulary.ts'))) return [];
-    return e.name.endsWith('.ts') && !e.name.endsWith('.spec.ts') ? [path] : [];
-  });
-}
-
-function readsOf(type: string): Set<string> {
-  const text = sources(join(PACKAGES, `diagram-${type}`, 'src'))
-    .map((f) => readFileSync(f, 'utf8'))
-    .join('\n');
-  const names = [
-    ...[...text.matchAll(/(?:\b\w+\(|\b(?!nested\b)\w+:)\s*'(\w+)'/g)].map((m) => m[1]!),
-    // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
-    // theme wrote it (D332).
-    ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
-  ];
-  return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));
-}
-
-const TYPES = readdirSync(PACKAGES)
-  .filter((d) => d.startsWith('diagram-'))
-  .map((d) => d.slice('diagram-'.length))
-  .sort();
-/**
- * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one). Empty since sankey's (#499) and
- * xychart's (#509) layouts.
- */
-const NOT_DRAWN_YET = new Set<string>([]);
-const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
+const PKGS = await themePackages(PACKAGES, { tables: 'vocabulary' });
+const OWNERS = PKGS.filter((p) => p.vocabulary !== undefined);
+const READS = themeReads(PKGS, knownNames(THEME_VARIABLES, PKGS));
+const TYPES = PKGS.map((p) => p.type);
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
-    expect(TYPES).toEqual([
-      'class',
-      'cynefin',
-      'er',
-      'flowchart',
-      'gantt',
-      'gitgraph',
-      'info',
-      'journey',
-      'kanban',
-      'mindmap',
-      'packet',
-      'pie',
-      'quadrant',
-      'radar',
-      'sankey',
-      'sequence',
-      'state',
-      'timeline',
-      'treemap',
-      'venn',
-      'wardley',
-      'xychart',
-    ]);
-    for (const type of TYPES) {
-      if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);
-      else expect(READS.get(type)!.size, type).toBeGreaterThan(0);
-    }
+    expect(TYPES).toEqual(diagramPackages().map((p) => p.type));
+    expect(TYPES.length).toBeGreaterThan(0);
   });
 
-  it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {
+  // A port whose package has not reached layout yet says so with `theme.notDrawnYet: true` in its
+  // workspace.yaml: it must read nothing then, so the flag goes as soon as it reads one.
+  it.each(PKGS.map((p) => [p.type, p.notDrawnYet === true] as const))(
+    '%s reads theme variables exactly when it is drawn (NOT_DRAWN_YET: %s)',
+    (type, notDrawn) => {
+      if (notDrawn) expect(READS.get(type)!.size, type).toBe(0);
+      else expect(READS.get(type)!.size, type).toBeGreaterThan(0);
+    }
+  );
+
+  it.each(PKGS.filter((p) => p.dynamicReads).map((p) => p.type))(
+    "every DYNAMIC_READS name of %s is a theme variable (a typo can't hide a read)",
+    (type) => {
+      const known = knownNames(THEME_VARIABLES, PKGS);
+      const pkg = PKGS.find((p) => p.type === type)!;
+      expect(pkg.dynamicReads!.filter((n) => !known.has(n))).toEqual([]);
+    }
+  );
+
+  it("names in core's usedBy only readers and types listed ahead of their reads", () => {
+    expect(coreListedErrors(THEME_VARIABLES, PKGS, READS)).toEqual([]);
+  });
+
+  it.each(TYPES)('lists %s for every core variable it reads, and for no other', (type) => {
     const reads = new Set([...READS.get(type)!].filter((n) => n in THEME_VARIABLES));
     const listed = Object.keys(THEME_VARIABLES).filter((name) =>
-      THEME_VARIABLES[name]!.usedBy.includes(type)
+      coreUsers(name, THEME_VARIABLES[name]!.usedBy, READS).includes(type)
     );
-    expect(listed.filter((name) => !reads.has(name))).toEqual([]);
+    const ahead = PKGS.find((p) => p.type === type)!.listedAhead ?? [];
+    expect(listed.filter((name) => !reads.has(name)).sort()).toEqual([...ahead].sort());
     expect([...reads].filter((name) => !listed.includes(name)).sort()).toEqual([]);
+  });
+
+  // packages/conformance/src/neo-theme.spec.ts keeps `border1` because nothing reads it (D152);
+  // core's own `usedBy` no longer lists every reader, so the reads check it here.
+  it('reads border1 nowhere (neo-theme.spec, D152)', () => {
+    expect(coreUsers('border1', THEME_VARIABLES.border1!.usedBy, READS)).toEqual([]);
+  });
+
+  it("lists core's own usedBy as written, then every other reader sorted", () => {
+    const reads = new Map([
+      ['zeta', new Set(['x'])],
+      ['alpha', new Set(['x', 'y'])],
+      ['pending', new Set(['x'])],
+    ]);
+    expect(coreUsers('x', ['core', 'pending'], reads)).toEqual([
+      'core',
+      'pending',
+      'alpha',
+      'zeta',
+    ]);
+    expect(coreUsers('y', [], reads)).toEqual(['alpha']);
+  });
+
+  it('fails on a core row that lists a type that does not read it and is not listed ahead', () => {
+    const core = {
+      a: { usedBy: ['core', 'demo'] },
+      b: { usedBy: ['demo'] },
+      c: { usedBy: ['nopackage'] },
+      d: { usedBy: [] },
+      e: { usedBy: ['demo'] },
+    };
+    const packages = [{ type: 'demo', listedAhead: ['b', 'd', 'e'] }];
+    const reads = new Map([['demo', new Set(['a', 'e'])]]);
+    expect(coreListedErrors(core, packages, reads)).toEqual([
+      "demo: LISTED_AHEAD `d` is not listed on core's row",
+      'demo: LISTED_AHEAD `e` is read now; drop it from LISTED_AHEAD',
+    ]);
+    expect(coreListedErrors({ b: { usedBy: ['demo'] } }, [{ type: 'demo' }], new Map())).toEqual([
+      'core `b`: lists demo, which neither reads it nor lists it ahead',
+    ]);
   });
 });
 
