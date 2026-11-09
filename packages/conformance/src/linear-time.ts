@@ -6,12 +6,12 @@
  *
  * - Times are this thread's CPU time, so time spent waiting for a core does not count.
  * - Every measurement is a window of repeated runs at least {@link minWindowMs} long: 2 ms, or
- *   five steps of the CPU clock where it is coarser. On Linux `threadCpuUsage` only moves when
+ *   three steps of the CPU clock where it is coarser. On Linux `threadCpuUsage` only moves when
  *   the scheduler books the thread's time, in steps of 4 ms on the hosted CI runner, so one
  *   small run of a few ms read 0 or 4 ms; with the old 2 ms floor on a single run that made a
- *   linear lexer read 25.8 against the bar of 24. A window five steps or more long reads within
- *   a step, a fifth, of its length, so a linear 8x reads at most 8 × 1.2 / 0.8 = 12 and a
- *   quadratic 64x at least 64 × 0.8 / 1.2 ≈ 43: the usual bar of 24 still sits between them.
+ *   linear lexer read 25.8 against the bar of 24. A window three steps or more long reads within
+ *   a step, a third, of its length, so a linear 8x reads at most 8 × (4/3) / (2/3) = 16 and a
+ *   quadratic 64x at least 64 × (2/3) / (4/3) = 32: the usual bar of 24 still sits between them.
  * - Five rounds alternate the small and large windows, and each side keeps its best. A window
  *   shorter than the minimum doubles that side's runs and starts its five again, so the
  *   calibration costs no extra windows.
@@ -48,9 +48,9 @@ function clockStepMs(): number {
 }
 
 let minMs: number | undefined;
-/** The shortest window: 2 ms, or five clock steps where the clock is coarser. */
+/** The shortest window: 2 ms, or three clock steps where the clock is coarser. */
 function minWindowMs(): number {
-  return (minMs ??= Math.max(2, 5 * clockStepMs()));
+  return (minMs ??= Math.max(2, 3 * clockStepMs()));
 }
 
 /** One side of a ratio: its runs per window, and its best window over `rounds` long ones. */
