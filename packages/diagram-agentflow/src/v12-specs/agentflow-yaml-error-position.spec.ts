@@ -6,11 +6,11 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: single-line block: maps (block 2:16) — matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)
-// skipped: multi-line block: maps the body line — matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)
-// skipped: multi-line block: error on the @{ line itself — matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)
-// skipped: composes with the blank-line fold fix — matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)
-// skipped: applies the frontmatter line offset on top of the block position — matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)
+// skipped: single-line block: maps (block 2:16) — matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts
+// skipped: multi-line block: maps the body line — matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts
+// skipped: multi-line block: error on the @{ line itself — matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts
+// skipped: composes with the blank-line fold fix — matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts
+// skipped: applies the frontmatter line offset on top of the block position — matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts
 // Regression spec for issue #56 part 2 — YAML errors inside `<id>@{ ... }`
 // blocks must report absolute source coordinates, not block-relative ones.
 //

@@ -331,6 +331,33 @@ describe('agentflow silent drops (D464)', () => {
     });
   });
 
+  it('reads a label that is not text as v12 did, and warns (pitfall 10)', () => {
+    const src = af(
+      ' a@{ label: 5 }',
+      ' b@{ label: [1, 2] }',
+      ' c@{',
+      '  label:',
+      '    x: 1',
+      ' }',
+      ' d@{ label: x, labelType: bogus }',
+      ' e@{ label: x, labelType: string }'
+    );
+    const { model } = parse(src);
+    expect(model.vertices.map((v) => [v.text, v.labelType])).toEqual([
+      ['5', 'markdown'],
+      ['1,2', 'markdown'],
+      ['[object Object]', 'markdown'],
+      ['x', 'markdown'],
+      ['x', 'string'],
+    ]);
+    expect(warnings(src).map(([code, line]) => [code, line])).toEqual([
+      ['NODE_DATA_COERCED', 2],
+      ['NODE_DATA_COERCED', 3],
+      ['NODE_DATA_COERCED', 4],
+      ['NODE_DATA_COERCED', 8],
+    ]);
+  });
+
   it('says nothing when `connectors` is a flow or a connector', () => {
     expect(warnings(af('connector connectors', ' connectors --> b'))).toEqual([]);
   });

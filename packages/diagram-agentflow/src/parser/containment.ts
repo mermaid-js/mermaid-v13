@@ -8,6 +8,18 @@
  */
 import type { AgentflowFlowModel } from './model.ts';
 
+/** The end of `id`'s chain of links, with path compression (every link on it now points there). */
+function rootOf(links: Map<string, string>, id: string): string {
+  let r = id;
+  while (links.has(r)) r = links.get(r) as string;
+  for (let x = id; x !== r; ) {
+    const next = links.get(x) as string;
+    links.set(x, r);
+    x = next;
+  }
+  return r;
+}
+
 /**
  * v12's `collectDescendants`: each collapsed flow not hidden yet, in v12's order, hides what
  * it holds (itself excepted), and maps each to it. A collapse that reaches one made before
@@ -45,20 +57,9 @@ export function collapsedInto(
       }
     }
   }
-  const final = (id: string): string => {
-    let r = id;
-    while (redirect.has(r)) r = redirect.get(r) as string;
-    // Path compression: every collapse on the way now points at the last.
-    for (let x = id; x !== r; ) {
-      const next = redirect.get(x) as string;
-      redirect.set(x, r);
-      x = next;
-    }
-    return r;
-  };
   return (id) => {
     const h = hidden.get(id);
-    return h === undefined ? undefined : final(h);
+    return h === undefined ? undefined : rootOf(redirect, h);
   };
 }
 
@@ -75,21 +76,11 @@ export function containment(
 ): Map<string, string> {
   const parent = new Map<string, string>();
   const up = new Map<string, string>();
-  const root = (id: string): string => {
-    let r = id;
-    while (up.has(r)) r = up.get(r) as string;
-    for (let x = id; x !== r; ) {
-      const next = up.get(x) as string;
-      up.set(x, r);
-      x = next;
-    }
-    return r;
-  };
   for (let i = flows.length - 1; i >= 0; i--) {
     const flow = flows[i] as AgentflowFlowModel;
     if (into(flow.id) !== undefined) continue;
     for (const id of flow.nodes) {
-      const top = root(flow.id);
+      const top = rootOf(up, flow.id);
       if (top === id) {
         onCycle(flow.id, id);
         continue;

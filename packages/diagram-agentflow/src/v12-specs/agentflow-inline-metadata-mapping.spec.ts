@@ -6,7 +6,7 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: every test — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
+// skipped: every test — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
 // Regression spec for issue #60 — inline annotation block mapping.
 //
 // For `id["..."]@{ ... }`, the node's element mapping previously spanned only

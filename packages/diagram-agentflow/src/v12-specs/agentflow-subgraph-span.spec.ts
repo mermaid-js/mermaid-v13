@@ -6,7 +6,8 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: every test — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
+// skipped: issue #59: sibling subgraph span overlap — reads v12's element mappings (D465); the flow spans are checked against the AST's ranges in src/parser/positions.spec.ts
+// skipped: innermost-match ranking — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
 // Regression spec for issue #59 — sibling subgraph span overlap.
 //
 // A flow's mapping `endLine` used to bleed past its own `end` into the next
@@ -24,7 +25,7 @@ const parse = (text: string) => {
 };
 
 describe.skip('issue #59: sibling subgraph span overlap', () => {
-  it.skip('two sibling flows do not overlap on the boundary line', () => {
+  it('two sibling flows do not overlap on the boundary line', () => {
     const db = parse(`agentflow-beta TB
 
   flow f2["F2"]
@@ -42,7 +43,7 @@ describe.skip('issue #59: sibling subgraph span overlap', () => {
     expect(f2!.position.endLine).toBeLessThan(f1!.position.startLine);
   });
 
-  it.skip('a nested inner flow ends at its own `end`, not the parent content', () => {
+  it('a nested inner flow ends at its own `end`, not the parent content', () => {
     const db = parse(`agentflow-beta TB
   flow outer["Outer"]
     flow inner["Inner"]
@@ -57,7 +58,7 @@ describe.skip('issue #59: sibling subgraph span overlap', () => {
     expect(outer?.position).toMatchObject({ startLine: 2, endLine: 7 });
   });
 
-  it.skip('a flow whose `end` is the last line (no trailing newline) still parses and maps', () => {
+  it('a flow whose `end` is the last line (no trailing newline) still parses and maps', () => {
     const db = parse(`agentflow-beta TB
   flow f["F"]
     a --> b
@@ -79,7 +80,7 @@ describe.skip('issue #59: sibling subgraph span overlap', () => {
 // rather than a reproducible one — these tests pin the behaviour the exact
 // comparison guarantees.
 describe.skip('innermost-match ranking', () => {
-  it.skip('prefers the tighter span when a nested container shares the point', () => {
+  it('prefers the tighter span when a nested container shares the point', () => {
     const db = parse(`agentflow-beta TB
   flow outer["Outer"]
     flow inner["Inner"]
@@ -91,7 +92,7 @@ describe.skip('innermost-match ranking', () => {
     expect(db.getElementAtPosition(3, 5)?.id).toBe('inner');
   });
 
-  it.skip('still resolves the innermost element when a label is wider than 1000 columns', () => {
+  it('still resolves the innermost element when a label is wider than 1000 columns', () => {
     const wide = 'W'.repeat(1200);
     const db = parse(`agentflow-beta TB
   flow outer["Outer"]

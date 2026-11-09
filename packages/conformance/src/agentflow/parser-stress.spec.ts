@@ -98,6 +98,30 @@ const SHAPES: [string, (n: number) => string][] = [
   ['many comments between statements', (n) => H + many((i) => `a${i} --> b %% c\n%% d\n`, n)],
 ];
 
+/**
+ * The ranges of tokens whose keyword has no token (`click`, `accDescr {`) map through the
+ * view's runs, one per directive. A fresh offset table per token was quadratic in them, which
+ * shows from about 40,000 characters (8x at 4,000 and 32,000; 32x at 40,000 and 320,000), so
+ * these run at ten times the size.
+ */
+const RUN_SHAPES: [string, (n: number) => string][] = [
+  [
+    'click lines between directives',
+    (n) => H + many((i) => `click a${i} call f(x)\n%%{init: {}}%%\n`, n),
+  ],
+  [
+    'click links between directives',
+    (n) => H + many((i) => `a${i} --> b\nclick a${i} "https://x" _blank\n%%{init: {}}%%\n`, n),
+  ],
+  [
+    'multi-line accDescr between directives',
+    (n) => H + many(() => 'accDescr {\n  x\n}\n%%{init: {}}%%\n', n),
+  ],
+];
+
+/** Shapes with comments, past `maxTextSize`, where v12 parsed the text without them. */
+const COMMENT_FREE = SHAPES.filter(([name]) => name.includes('comment'));
+
 /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
 const cpuMs = (): number => {
   const u =
@@ -111,9 +135,9 @@ const cost = (run: () => unknown): number => {
 };
 
 /** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
-const ratio = (build: (n: number) => string, run: (src: string) => unknown): number => {
-  const small = build(4_000);
-  const large = build(32_000);
+const ratio = (build: (n: number) => string, run: (src: string) => unknown, n = 4_000): number => {
+  const small = build(n);
+  const large = build(8 * n);
   run(small); // warm up
   run(large);
   let tSmall = Infinity;
@@ -136,4 +160,30 @@ const parse = (src: string) =>
 
 describe('stress: the agentflow parser is linear in input size', () => {
   it.each(SHAPES)('%s', (_name, build) => expect(ratio(build, parse)).toBeLessThan(24), 60_000);
+});
+
+const parsePast = (src: string) =>
+  semanticModel(
+    parseAgentflow(src, { maxEdges: 1e9, maxNodes: 1e9, maxDepth: 1e9, maxTextSize: 0 }).model
+  );
+
+describe('stress: the agentflow parser is linear past maxTextSize', () => {
+  it.each(COMMENT_FREE)(
+    '%s',
+    (_name, build) => expect(ratio(build, parsePast)).toBeLessThan(24),
+    60_000
+  );
+});
+
+describe('stress: token ranges are linear in the directives', () => {
+  it.each(RUN_SHAPES)(
+    '%s',
+    (_name, build) => expect(ratio(build, parse, 40_000)).toBeLessThan(24),
+    120_000
+  );
+  it.each(RUN_SHAPES)(
+    '%s, past maxTextSize',
+    (_name, build) => expect(ratio(build, parsePast, 40_000)).toBeLessThan(24),
+    120_000
+  );
 });

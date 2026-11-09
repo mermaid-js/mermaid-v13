@@ -182,7 +182,7 @@ export interface LinkInfo {
 }
 
 /** Item of a block body as v12's grammar collects it. */
-export type DocItem = string | string[] | { stmt: 'dir'; value: string };
+export type DocItem = string | readonly string[] | { stmt: 'dir'; value: string };
 
 export interface BuilderOptions {
   maxEdges: number;
@@ -194,6 +194,13 @@ export interface BuilderOptions {
 
 function labelType(type: unknown): LabelType {
   return type === 'markdown' || type === 'string' || type === 'text' ? type : 'markdown';
+}
+
+/** A YAML value as JavaScript's `toString` writes it, which v12's sanitiser used. */
+function v12Text(value: unknown): string {
+  if (Array.isArray(value)) return value.map((v) => (v === null ? '' : v12Text(v))).join(',');
+  if (typeof value === 'object' && value !== null) return '[object Object]';
+  return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
 function unquote(text: string): string {
@@ -250,6 +257,30 @@ export interface VertexParts {
   props?: Record<string, string>;
   /** The parsed `@{ … }` block; null when it did not parse. */
   data?: YamlMap | null;
+}
+
+/** What one link statement asks for: every start to every end. */
+export interface LinkParts {
+  starts: string[];
+  ends: string[];
+  info: LinkInfo;
+  astFor: (start: string, end: string) => AstId;
+  /** The link, for the edge-limit diagnostic. */
+  at: Range;
+}
+
+/** One closed `flow … end`, as v12's `addSubGraph` received it. */
+export interface FlowParts {
+  /** The id as written; none for an anonymous flow. */
+  id: AgentflowLabel | undefined;
+  /** What v12's grammar collected from the body. */
+  list: DocItem[];
+  /** The bracketed title (an empty text for `flow id`); none for an anonymous flow. */
+  title: AgentflowLabel | undefined;
+  /** The header, for `CONTAINMENT_VIOLATION`. */
+  opener: Range;
+  /** The AST id of this opening (`s:A`, `s:A@2`). */
+  astFor: (id: string) => AstId;
 }
 
 /** Where a vertex's mentions set something the diagnostics point at. */
@@ -389,10 +420,27 @@ export class AgentflowBuilder {
     marks.dataAt.push(at);
     if ('view' in doc) marks.viewAt = at;
     if (doc.shape) this.dataShape(vertex, authored, doc.shape, at);
-    if (doc.label) {
-      vertex.text = typeof doc.label === 'string' ? doc.label : JSON.stringify(doc.label);
-      vertex.labelType = labelType(doc.labelType);
-    }
+    if (doc.label) this.dataLabel(vertex, doc, at);
+  }
+
+  /**
+   * `label` and `labelType` from `@{ … }`, as v12 read them: a label that is not text becomes
+   * its JavaScript text (`5`, `1,2`, `[object Object]`, as v12's sanitiser made it), a
+   * `labelType` other than `text`, `string` or `markdown` becomes `markdown`. Each such value is
+   * kept and reported (`NODE_DATA_COERCED`), as an edge's are (pitfall 10).
+   */
+  private dataLabel(vertex: AgentflowVertex, doc: YamlMap, at: Range): void {
+    const { label, labelType: type } = doc;
+    const warn = (key: string, value: unknown, read: string) =>
+      this.options.warn(
+        'NODE_DATA_COERCED',
+        `Node ${JSON.stringify(vertex.id)}: ${key} ${JSON.stringify(value)} is read as ${read} (as in v12); write it as ${key === 'label' ? 'a quoted string' : '`text`, `string` or `markdown`'}.`,
+        at
+      );
+    vertex.text = v12Text(label);
+    if (typeof label !== 'string') warn('label', label, JSON.stringify(vertex.text));
+    vertex.labelType = labelType(type);
+    if (type !== undefined && type !== vertex.labelType) warn('labelType', type, '`markdown`');
   }
 
   /**
@@ -477,13 +525,15 @@ export class AgentflowBuilder {
     }
   }
 
-  private addSingleLink(
-    start: string,
-    end: string,
-    info: LinkInfo,
-    id: string | undefined,
-    ast: AstId
-  ): void {
+  private addSingleLink(parts: {
+    start: string;
+    end: string;
+    info: LinkInfo;
+    /** The user's id, when this edge takes it. */
+    id: string | undefined;
+    ast: AstId;
+  }): void {
+    const { start, end, info, id, ast } = parts;
     const edge: AgentflowModelEdge = {
       id: '',
       ast,
@@ -516,13 +566,8 @@ export class AgentflowBuilder {
   }
 
   /** v12 `addLink`: every start to every end; the user id goes to the last-start/first-end pair. */
-  addLink(
-    starts: string[],
-    ends: string[],
-    info: LinkInfo,
-    astFor: (start: string, end: string) => AstId,
-    at: Range
-  ): void {
+  addLink(parts: LinkParts): void {
+    const { starts, ends, info, astFor, at } = parts;
     if (this.limitHit.has('edges')) return;
     // Checked before making any: `A & … --> B & …` multiplies, so one short line can ask for
     // millions of edges (v12 checked one edge at a time).
@@ -543,7 +588,7 @@ export class AgentflowBuilder {
     for (const start of starts) {
       for (const end of ends) {
         const own = start === lastStart && end === firstEnd ? id : undefined;
-        this.addSingleLink(start, end, info, own, astFor(start, end));
+        this.addSingleLink({ start, end, info, id: own, ast: astFor(start, end) });
       }
     }
   }
@@ -673,13 +718,8 @@ export class AgentflowBuilder {
    * v12 `addSubGraph` for `flow`: `idText` is the id as written (none for an anonymous flow),
    * `titleText` the bracketed title. Returns the flow id.
    */
-  addFlow(
-    idText: AgentflowLabel | undefined,
-    list: DocItem[],
-    titleText: AgentflowLabel | undefined,
-    opener: Range,
-    astFor: (id: string) => AstId
-  ): string {
+  addFlow(parts: FlowParts): string {
+    const { id: idText, list, title: titleText, opener, astFor } = parts;
     const seen = new Set<string>();
     const nodeList: string[] = [];
     let dir: string | undefined;
@@ -691,8 +731,8 @@ export class AgentflowBuilder {
     };
     for (const entry of list) {
       if (typeof entry === 'string') add(entry);
-      else if (Array.isArray(entry)) entry.forEach(add);
-      else dir = entry.value;
+      else if ('stmt' in entry) dir = entry.value;
+      else entry.forEach(add);
     }
     if (dir === undefined && this.options.inheritDir) dir = this.direction;
 

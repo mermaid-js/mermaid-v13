@@ -71,7 +71,7 @@ export function vertexKind(type: string | undefined): VertexKind {
   if (type !== undefined && TOOLS.has(type)) return 'tool';
   const resolved = resolveShape(type);
   if (resolved === 'hexagon' || resolved === 'hex') return 'action';
-  if (resolved === 'lean-right' || resolved === 'lean_right') return 'input';
+  if (resolved === 'lean-right') return 'input';
   if (resolved === 'lin-doc' || resolved === 'lined-document') return 'refdoc';
   if (resolved === 'diamond') return 'decision';
   return 'task';

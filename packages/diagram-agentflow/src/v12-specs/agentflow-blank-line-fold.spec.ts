@@ -6,11 +6,11 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: a blank line directly after an inline @{ } block — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
-// skipped: the fold accumulates — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
-// skipped: a comment line after an @{ } block — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
-// skipped: an edge after a @{ }+blank block — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
-// skipped: still strips trailing whitespace after } — reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)
+// skipped: a blank line directly after an inline @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: the fold accumulates — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: a comment line after an @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: an edge after a @{ }+blank block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: still strips trailing whitespace after } — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
 // Regression spec for issue #56 — parser error/position drift from a
 // blank-line fold.
 //

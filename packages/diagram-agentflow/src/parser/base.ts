@@ -96,6 +96,8 @@ export abstract class ParserBase {
   protected readonly probe: Probe | undefined;
   /** Source offset {@link tokens} was lexed from (after a restart, mid-document). */
   protected viewFrom: number;
+  /** Text offsets to source offsets, for {@link keywordBefore}; made on first use. */
+  protected offsets: SourceOffsets | undefined;
   /** Directive starts by their end, for ranges over the blanks around them. */
   protected directiveAt: Map<number, number> | undefined;
   /** Line numbers, built for messages only. */
@@ -215,7 +217,10 @@ export abstract class ParserBase {
     }
     const i = b - word.length;
     if (i < 0 || !t.startsWith(word, i)) return undefined;
-    return view.runs ? new SourceOffsets(view.runs).source(i) : i;
+    if (!view.runs) return i;
+    // One cursor per parse: the tokens come in source order, so its walks add up to one pass.
+    this.offsets ??= new SourceOffsets(view.runs);
+    return this.offsets.source(i);
   }
 
   /** The end of the text before the blanks (and directives) that end at `at`. */

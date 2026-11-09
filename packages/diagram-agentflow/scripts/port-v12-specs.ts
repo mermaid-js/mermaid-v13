@@ -26,10 +26,11 @@ export const NOT_PORTED: Record<string, string> = {
   'containerOrder.spec.ts': "reads the colour index v12's getData stamped: T4 (#548)",
   'agentflow-render-positions.spec.ts': "renders through v12's mermaidAPI with jsdom: T5 (#550)",
   'agentflow-max-text-size.spec.ts':
-    "renders through v12's mermaidAPI with jsdom; the comment-free fallback is `parser/source.spec.ts`",
+    "renders through v12's mermaidAPI with jsdom; the comment-free fallback is in `src/parser/parse.spec.ts` and `src/parser/lexer.spec.ts`",
   'conformance/conformance.spec.ts':
-    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd, run by src/conformance.spec.ts',
-  'conformance/runner.spec.ts': "tests v12's fixture runner, replaced by src/conformance.spec.ts",
+    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd, run by packages/conformance/src/agentflow/fixtures.spec.ts',
+  'conformance/runner.spec.ts':
+    "tests v12's fixture runner, replaced by packages/conformance/src/agentflow/fixtures.spec.ts",
   'parser/agentflow-flowchart-parity.spec.ts':
     "imports v12's flowchart parser: its SHARED_SYNTAX parity is conformance's agentflow/shared-syntax.spec.ts (D467)",
 };
@@ -37,7 +38,11 @@ export const NOT_PORTED: Record<string, string> = {
 const DB_API =
   "tests v12's DB methods for tool builders, removed in v13 (D465): positions come from the language service";
 const MAPPINGS =
-  "reads v12's element mappings (getElementMappings, getElementAtPosition), removed in v13 (D465)";
+  "reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)";
+const POSITION =
+  "matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts";
+const SPAN =
+  "reads v12's element mappings (D465); the flow spans are checked against the AST's ranges in src/parser/positions.spec.ts";
 const D461 = 'v12 reported SHAPE_REMOVED as an error; v13 makes it a warning (D461)';
 const MESSAGE = "matches js-yaml's or jison's message text; v13 messages are its own (R-ERR-5)";
 const JISON_DIRECT =
@@ -78,11 +83,15 @@ export const SKIP: Record<string, Record<string, string>> = {
     'does not resolve/validate connectorRef': JISON_DIRECT,
   },
   'parser/agentflow-yaml-error-position.spec.ts': {
-    'single-line block: maps (block 2:16)': MESSAGE,
-    'multi-line block: maps the body line': MESSAGE,
-    'multi-line block: error on the @{ line itself': MESSAGE,
-    'composes with the blank-line fold fix': MESSAGE,
-    'applies the frontmatter line offset on top of the block position': MESSAGE,
+    'single-line block: maps (block 2:16)': POSITION,
+    'multi-line block: maps the body line': POSITION,
+    'multi-line block: error on the @{ line itself': POSITION,
+    'composes with the blank-line fold fix': POSITION,
+    'applies the frontmatter line offset on top of the block position': POSITION,
+  },
+  'parser/agentflow-subgraph-span.spec.ts': {
+    'issue #59: sibling subgraph span overlap': SPAN,
+    'innermost-match ranking': MAPPINGS,
   },
 };
 
@@ -91,7 +100,6 @@ const WHOLE_FILE: Record<string, string> = {
   'parser/agentflow-attachment-mapping.spec.ts': MAPPINGS,
   'parser/agentflow-inline-metadata-mapping.spec.ts': MAPPINGS,
   'parser/agentflow-mappings.spec.ts': MAPPINGS,
-  'parser/agentflow-subgraph-span.spec.ts': MAPPINGS,
 };
 
 const git = (...args: string[]) =>
@@ -102,7 +110,6 @@ const ADAPTER_NAMES = [
   'AgentflowWarning',
   'PARSER_EMITTED_DIAGNOSTICS',
   'RESERVED_DIAGNOSTICS',
-  'getConfig',
   'log',
   'setConfig',
 ];

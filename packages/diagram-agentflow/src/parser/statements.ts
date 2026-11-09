@@ -302,7 +302,13 @@ export abstract class StatementParser extends ParserBase {
       const next = this.node(chain);
       const nextNames = next.map((n) => n.name);
       const before = db.edges.length;
-      db.addLink(names, nextNames, info, (a, b) => ids.edge(a, b), linkRange);
+      db.addLink({
+        starts: names,
+        ends: nextNames,
+        info,
+        astFor: (a, b) => ids.edge(a, b),
+        at: linkRange,
+      });
       const fromOf = byName(stmt);
       const toOf = byName(next);
       for (let k = before; k < db.edges.length; k++) {
@@ -430,25 +436,14 @@ export abstract class StatementParser extends ParserBase {
       const name = this.raw(this.i++);
       this.tested(CALLBACK_ARGS);
       const args = this.kind() === T.CallbackArgs ? this.raw(this.i++) : undefined;
-      const tooltip = this.tooltip();
-      db.setClickEvent(id, name, this.span(at), args);
-      if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return args === undefined
-        ? { targets: id.split(','), name }
-        : { targets: id.split(','), name, args };
+      return this.callback(id, at, name, args);
     }
     let url: string;
     if (k === T.Href) {
       this.i++;
       url = this.expectStr();
     } else if (k === T.Str) url = this.expectStr();
-    else {
-      const [name] = this.alphaNum();
-      const tooltip = this.tooltip();
-      db.setClickEvent(id, name, this.span(at));
-      if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return { targets: id.split(','), name };
-    }
+    else return this.callback(id, at, this.alphaNum()[0]);
     this.tested(SPACE);
     if (this.kind() !== T.Space) {
       db.setLink(id, url, this.span(at));
@@ -467,6 +462,17 @@ export abstract class StatementParser extends ParserBase {
       db.setLink(id, url, this.span(at), target);
     } else db.setLink(id, url, this.span(at));
     db.setTooltip(id, tooltip);
+  }
+
+  /** `click id name(args) "tooltip"`, from the name on: the callback, for the AST. */
+  protected callback(id: string, at: number, name: string, args?: string): AstCallback {
+    const { db } = this;
+    const tooltip = this.tooltip();
+    db.setClickEvent(id, name, this.span(at), args);
+    if (tooltip !== undefined) db.setTooltip(id, tooltip);
+    return args === undefined
+      ? { targets: id.split(','), name }
+      : { targets: id.split(','), name, args };
   }
 
   /** An optional ` "tooltip"` after a callback. */

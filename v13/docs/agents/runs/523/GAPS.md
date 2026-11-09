@@ -14,6 +14,15 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Found, core's (not fixed here): core's YAML reader reads U+2028/U+2029 inside a multi-line `@{ … }` as line breaks, js-yaml as text; the gate's separator variants of 13 sources differ there (classified in `agentflow/parity.spec.ts`). Flowchart's `@{ … }` reads the same.
 - Found, flowchart's (not fixed here): flowchart's in-place one-line `@{ … }` read starts at `@` + 1, so a directive between `@` and `{` reaches its YAML (agentflow starts at the opener's `{`).
 - **Choice:** edge AST ids are flowchart's `e:A>B` / `#2` (D468 "follows flowchart's scheme"); `global:<n>` and `s:subGraph<n>` as D468 says.
+- Closed in the #546 review: v12 read a `label` that is not text through its sanitiser's `toString` (`5`, `1,2`, `[object Object]`) and an unknown `labelType` as `markdown`; v13 keeps that model and warns `NODE_DATA_COERCED` per value (pitfall 10; oracle-checked in `parse.spec.ts`, listed in `agentflow/differences.spec.ts`). Prototype keys (v12 silent, core `YAML_UNSAFE_KEY`), `SHAPE_REMOVED`'s severity (D461) and the D464 warnings are listed there too, as differences in diagnostics only (no `divergences.json` entry: parity sees no divergence).
+- Closed in the #546 review: token ranges map through one offset cursor per parse (a fresh table per `click`/`accDescr {` token was quadratic in the directives; stress shapes at 40,000/320,000 characters, also past `maxTextSize`).
+- Ported in the #546 review: the line/column checks of v12's `agentflow-yaml-error-position` and the spans of `agentflow-subgraph-span` (`src/parser/positions.spec.ts`, against v13's ranges); their message and mapping checks stay skipped with reasons.
+
+**For the maintainer (#546):**
+- D468 says "the edge's model id for edges (`@2` for a reopened id)" but also "flowchart's scheme"; flowchart's scheme is `e:A>B`, `e:A>B#2` (`diagram-flowchart/src/parser/ast.ts:3`). Kept flowchart's; D468's wording needs amending (D460).
+- Edge limit: v12 threw `Edge limit exceeded` at 501 (`maxEdges` 500); v13 uses core's resolved limits (R-SEC-5, `DEFAULT_LIMITS.maxEdges` 5,000) with `EDGE_LIMIT` and flowchart's message, as every v13 type does. #550 passes `ctx.limits`.
+- The 64-restart cap on lexer restarts after an error is flowchart's (`parser.ts:613`), kept.
+- `EDGE_DATA_DROPPED` is copied from flowchart (typed edge `@{}` keys validated, pitfall 10); v12 agentflow had no such check.
 - **Choice:** new codes `UNCLOSED_BLOCK` (an unclosed `flow` or `global`; none when its header already failed), `HEADER_COMMENT`; a stray `end` takes the rest of its statement (one error, one diagnostic).
 - **Choice:** `LINK_STYLE_INDEX` keeps v12's message verbatim (D461), `between 0 and -1` included when there are no edges.
 
@@ -28,5 +37,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - From #546: the parser takes `probe` (flowchart's decision points, `READ_PAST` exported from `parser/tables.ts`), and `gen:grammar` already writes `src/generated/{categories,docs}.ts` and the highlighters from `grammar/agentflow.ebnf` (an `agentflow` row in `tools/gen-grammar` `GRAMMARS`). Symbols: vertices and connectors `node`, flows `subgraph`, classes `class`, edge ids `edge`.
 
 ## #550 T5 integration
+- From #546: MIGRATION.md lists v12's removed DB methods (`getSemanticModel()`, `getDiagnostics()`, `getElementAtPosition()`, `getElementMappings()`, `getMappingStats()`; D465), and the docs list the nine reserved diagnostic codes (D461). The plugin passes `ctx.limits`, `ctx.config.flowchart?.inheritDir` and `ctx.config.maxTextSize` to `parseAgentflow`.
 
 ## #551 T7 ASCII (optional)

@@ -9,7 +9,7 @@ import type { AgentflowLabelNode, AgentflowNodeStmt, AgentflowStatementNode } fr
 import type { DocItem } from './model.ts';
 import { T } from './tokens.ts';
 
-export const ID_KINDS = [
+const ID_KINDS: readonly number[] = [
   T.Num,
   T.NodeString,
   T.Down,
@@ -76,10 +76,9 @@ export const LEXER_MODE = kindSet(
   T.CallbackArgs
 );
 
-export const SHAPES: Record<
-  number,
-  [shape: string, close: number, what: string, closeText: string]
-> = {
+export const SHAPES: Readonly<
+  Record<number, readonly [shape: string, close: number, what: string, closeText: string]>
+> = /* @__PURE__ */ Object.freeze({
   [T.SQS]: ['square', T.SQE, 'node label', '`]`'],
   [T.DoubleCircleStart]: ['doublecircle', T.DoubleCircleEnd, 'node label', '`)))`'],
   [T.EllipseStart]: ['ellipse', T.EllipseEnd, 'node label', '`-)`'],
@@ -87,24 +86,24 @@ export const SHAPES: Record<
   [T.SubroutineStart]: ['subroutine', T.SubroutineEnd, 'node label', '`]]`'],
   [T.CylinderStart]: ['cylinder', T.CylinderEnd, 'node label', '`)]`'],
   [T.TagEnd]: ['odd', T.SQE, 'node label', '`]`'],
-};
-export const DIRECTIONS = ['TB', 'BT', 'RL', 'LR', 'TD'];
+});
+export const DIRECTIONS: readonly string[] = ['TB', 'BT', 'RL', 'LR', 'TD'];
 
 /** jison's `separator`: a line break, `;`, the end, or a comment. */
-export const LINE_END = [Kind.Newline, T.Semi, T.Eof, T.Comment];
+export const LINE_END: readonly number[] = [Kind.Newline, T.Semi, T.Eof, T.Comment];
 export const LINE_END_SET = kindSet(...LINE_END);
 /**
  * What the parser reads past besides spaces: comments inside labels and past `maxTextSize`
  * (a `%%` comment elsewhere is a token), directives, and the `click` keyword (jison has no
  * token for it, so `click` heads no statement: the node id after it does).
  */
-export const READ_PAST_KINDS = [Kind.Comment, Kind.Directive, T.ClickKeyword] as const;
+const READ_PAST_KINDS: readonly number[] = [Kind.Comment, Kind.Directive, T.ClickKeyword];
 export const READ_PAST = kindSet(...READ_PAST_KINDS);
 /** What the parser skips: {@link READ_PAST} and spaces. */
 export const PARSER_TRIVIA = kindSet(...READ_PAST_KINDS, Kind.Space);
 /** Where recovery resumes (R-PARSE-4). */
 export const BOUNDARY = kindSet(Kind.EOF, T.Eof, Kind.Newline, T.Semi, T.Comment);
-export const STATEMENT_START = [
+export const STATEMENT_START: readonly number[] = [
   T.Style,
   T.LinkStyle,
   T.ClassDef,
@@ -120,7 +119,7 @@ export const STATEMENT_START = [
 
 // What the parser would accept at its decision points, for the probe (R-LANG-7, D95). Each
 // list is a constant so a parse without a probe allocates nothing for them.
-export const STATEMENT_KINDS = [
+export const STATEMENT_KINDS: readonly number[] = [
   ...STATEMENT_START,
   T.AccDescrMultilineValue,
   T.DirectionTB,
@@ -129,7 +128,7 @@ export const STATEMENT_KINDS = [
   T.DirectionLR,
   T.DirectionTD,
 ];
-export const DOC_KINDS = [
+export const DOC_KINDS: readonly number[] = [
   ...STATEMENT_KINDS,
   T.Semi,
   Kind.Newline,
@@ -138,13 +137,13 @@ export const DOC_KINDS = [
   T.Comment,
   Kind.EOF,
 ];
-export const BLOCK_DOC_KINDS = [...DOC_KINDS, T.End];
-export const BLANKS = [T.Space, Kind.Newline];
+export const BLOCK_DOC_KINDS: readonly number[] = [...DOC_KINDS, T.End];
+export const BLANKS: readonly number[] = [T.Space, Kind.Newline];
 /** Blanks and comments before the header are optional: where one may stand, so may the header. */
-export const HEADER_START = [...BLANKS, T.Comment, T.Graph];
-export const DIR_KINDS = [T.NoDir, T.Dir];
-export const AFTER_DIR = [T.Space, ...LINE_END];
-export const SHAPE_KINDS = [
+export const HEADER_START: readonly number[] = [...BLANKS, T.Comment, T.Graph];
+export const DIR_KINDS: readonly number[] = [T.NoDir, T.Dir];
+export const AFTER_DIR: readonly number[] = [T.Space, ...LINE_END];
+export const SHAPE_KINDS: readonly number[] = [
   T.SQS,
   T.PS,
   T.DiamondStart,
@@ -158,31 +157,31 @@ export const SHAPE_KINDS = [
   T.TagEnd,
   T.VertexWithPropsStart,
 ];
-export const GRAPH = [T.Graph];
-export const PS_ONLY = [T.PS];
-export const DIAMOND_ONLY = [T.DiamondStart];
-export const TRAP_ENDS = [T.TrapEnd, T.InvTrapEnd];
-export const STYLE_SEPARATOR = [T.StyleSeparator];
-export const SHAPE_DATA = [T.ShapeData];
-export const SHAPE_DATA_PARTS = [T.ShapeData, T.ShapeDataEnd];
-export const SPACE = [T.Space];
-export const AMP = [T.Amp];
-export const LINK_KINDS = [T.Link, T.StartLink, T.LinkId];
-export const LINK_AFTER_ID = [T.Link, T.StartLink];
+export const GRAPH: readonly number[] = [T.Graph];
+export const PS_ONLY: readonly number[] = [T.PS];
+export const DIAMOND_ONLY: readonly number[] = [T.DiamondStart];
+export const TRAP_ENDS: readonly number[] = [T.TrapEnd, T.InvTrapEnd];
+export const STYLE_SEPARATOR: readonly number[] = [T.StyleSeparator];
+export const SHAPE_DATA: readonly number[] = [T.ShapeData];
+export const SHAPE_DATA_PARTS: readonly number[] = [T.ShapeData, T.ShapeDataEnd];
+export const SPACE: readonly number[] = [T.Space];
+export const AMP: readonly number[] = [T.Amp];
+export const LINK_KINDS: readonly number[] = [T.Link, T.StartLink, T.LinkId];
+export const LINK_AFTER_ID: readonly number[] = [T.Link, T.StartLink];
 /** After an edge label: an optional blank, then the node. */
-export const AFTER_EDGE_LABEL = [T.Space, T.NodeString];
-export const PIPE = [T.Pipe];
-export const COMMA = [T.Comma];
-export const STYLE_WANT = [T.NodeString];
-export const LINK_STYLE_INDEX = [T.Default, T.Num];
-export const INTERPOLATE_OR_STYLE = [T.Interpolate, T.NodeString];
-export const CLICK_ACTION = [T.CallbackName, T.Href, T.Str, T.NodeString];
-export const CALLBACK_ARGS = [T.CallbackArgs];
-export const LINK_TARGET_OR_TOOLTIP = [T.LinkTarget, T.Str];
-export const FLOW_HEADER = [T.Space, ...LINE_END];
-export const AFTER_FLOW_ID = [T.SQS, T.ShapeData, ...LINE_END];
-export const AFTER_TITLE = [T.ShapeData, ...LINE_END];
-export const CONNECTOR_SPACE = [T.Space];
+export const AFTER_EDGE_LABEL: readonly number[] = [T.Space, T.NodeString];
+export const PIPE: readonly number[] = [T.Pipe];
+export const COMMA: readonly number[] = [T.Comma];
+export const STYLE_WANT: readonly number[] = [T.NodeString];
+export const LINK_STYLE_INDEX: readonly number[] = [T.Default, T.Num];
+export const INTERPOLATE_OR_STYLE: readonly number[] = [T.Interpolate, T.NodeString];
+export const CLICK_ACTION: readonly number[] = [T.CallbackName, T.Href, T.Str, T.NodeString];
+export const CALLBACK_ARGS: readonly number[] = [T.CallbackArgs];
+export const LINK_TARGET_OR_TOOLTIP: readonly number[] = [T.LinkTarget, T.Str];
+export const FLOW_HEADER: readonly number[] = [T.Space, ...LINE_END];
+export const AFTER_FLOW_ID: readonly number[] = [T.SQS, T.ShapeData, ...LINE_END];
+export const AFTER_TITLE: readonly number[] = [T.ShapeData, ...LINE_END];
+export const CONNECTOR_SPACE: readonly number[] = [T.Space];
 
 /**
  * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
@@ -271,7 +270,7 @@ export const EXPECTED = new ExpectedTable([
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
  * instance, so its stack is captured once.
  */
-export class Stop extends Error {}
+class Stop extends Error {}
 export const STOP = new Stop();
 
 /** An open `flow` or `global` block. */
@@ -297,10 +296,10 @@ export interface Opener {
   closer: string;
 }
 
-export const NO_ITEMS: string[] = [];
+export const NO_ITEMS: readonly string[] = /* @__PURE__ */ Object.freeze([]);
 
 /** How each statement is written, for errors inside it. */
-export const STATEMENT_HINTS: Record<number, string> = {
+export const STATEMENT_HINTS: Readonly<Record<number, string>> = {
   [T.Style]: 'write it as `style <node id> <styles>`, e.g. `style A fill:#f9f,stroke:#333`',
   [T.ClassDef]: 'write it as `classDef <name> <styles>`, e.g. `classDef hot fill:#f96`',
   [T.Class]: 'write it as `class <node ids> <class name>`, e.g. `class A,B hot`',

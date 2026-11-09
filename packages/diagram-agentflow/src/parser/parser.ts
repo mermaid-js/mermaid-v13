@@ -210,13 +210,13 @@ class AgentflowParser extends StatementParser {
       frame.id === undefined
         ? undefined
         : (frame.title ?? { text: '', type: 'text' as const, range: frame.opener });
-    const fid = db.addFlow(
-      frame.id,
-      this.list,
+    const fid = db.addFlow({
+      id: frame.id,
+      list: this.list,
       title,
-      frame.opener,
-      (name) => (opening = ids.subgraph(name))
-    );
+      opener: frame.opener,
+      astFor: (name) => (opening = ids.subgraph(name)),
+    });
     if (frame.id) st.symbol(fid, 'subgraph', this.trimmed(frame.id.range), 'def');
     // v12 applied the header's metadata once the flow existed, at its `end`.
     if (frame.data)
