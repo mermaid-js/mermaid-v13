@@ -1,6 +1,6 @@
 # Run notes, spec #522 (M5b c4, `@mermaid-js/diagram-c4`)
 
-Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR: (after T1 merges).
+Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR: #622.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
