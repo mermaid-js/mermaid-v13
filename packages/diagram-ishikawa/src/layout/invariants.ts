@@ -18,6 +18,8 @@
  * own decision. {@link ishikawaLabelOverlaps} reports them.
  */
 import type { IshikawaModel } from '../model.ts';
+import { corners, ends, grown, inside, overlaps, segmentBox } from './geometry.ts';
+import { sideOf } from './side.ts';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,
@@ -82,7 +84,7 @@ function alternating(model: IshikawaModel, layout: IshikawaLayout, out: string[]
     out.push(`${causes.length} causes laid out for ${model.causes.length}`);
   }
   causes.forEach((c, i) => {
-    const want = i % 2 === 0 ? 'upper' : 'lower';
+    const want = sideOf(i);
     if (c.index !== i || c.ast !== model.causes[i]?.ast) out.push(`cause ${i} is out of order`);
     if (c.side !== want) out.push(`cause ${i} is ${c.side}, not ${want}`);
     const above = c.bone.y2 < layout.spineY;
@@ -113,7 +115,7 @@ const betweenY = (y: number, s: Segment, eps: number): boolean =>
 
 function bonesOnParents(layout: IshikawaLayout, spine: Segment, eps: number, out: string[]): void {
   for (const c of causesOf(layout)) {
-    const start = { x: c.bone.x1, y: c.bone.y1 };
+    const [start] = ends(c.bone);
     if (!onSegment(start, spine, eps))
       out.push(`cause ${c.ast}'s bone does not start on the spine`);
     const bones = new Map<string, IshikawaBone>([[c.ast, c.bone]]);
@@ -124,7 +126,7 @@ function bonesOnParents(layout: IshikawaLayout, spine: Segment, eps: number, out
         out.push(`${s.ast} hangs from ${s.parent}, which is not drawn before it`);
         continue;
       }
-      if (!onSegment({ x: s.bone.x1, y: s.bone.y1 }, parent, eps)) {
+      if (!onSegment(ends(s.bone)[0], parent, eps)) {
         out.push(`${s.ast}'s bone does not start on ${s.parent}'s`);
       }
       if (!betweenY(s.bone.y2, c.bone, eps)) out.push(`${s.ast}'s slot is outside ${c.ast}'s bone`);
@@ -134,13 +136,6 @@ function bonesOnParents(layout: IshikawaLayout, spine: Segment, eps: number, out
     }
   }
 }
-
-/** `a` and `b` overlap by more than `eps` both ways. */
-const overlaps = (a: Rect, b: Rect, eps: number): boolean =>
-  a.x < b.x + b.width - eps &&
-  b.x < a.x + a.width - eps &&
-  a.y < b.y + b.height - eps &&
-  b.y < a.y + a.height - eps;
 
 /**
  * `r` overlaps the head: the region between its back (`x = head.x`) and its quadratic, which is
@@ -160,35 +155,25 @@ function overlapsHead(r: Rect, head: IshikawaHead, eps: number): boolean {
 function boxesClear(
   layout: IshikawaLayout,
   head: IshikawaHead,
-  spine: Segment,
+  spine: Segment & { readonly stroke: number },
   eps: number,
   out: string[]
 ): void {
-  const line: Rect = { x: spine.x1, y: spine.y1, width: spine.x2 - spine.x1, height: 0 };
+  // The spine as drawn; a box only touching its centre line from one side clears it.
+  const band = grown(segmentBox(spine), spine.stroke / 2);
   for (const c of causesOf(layout)) {
-    if (overlapsHead(c.box, head, eps))
+    if (overlapsHead(c.box, head, eps)) {
       out.push(`${c.ast}'s box ${printed(c.box)} overlaps the head`);
-    const crosses = c.box.y < line.y - eps && c.box.y + c.box.height > line.y + eps;
-    if (crosses && overlaps(c.box, { ...line, y: line.y - 1, height: 2 }, eps)) {
+    }
+    const crosses = c.box.y < spine.y1 - eps && c.box.y + c.box.height > spine.y1 + eps;
+    if (crosses && overlaps(c.box, band, eps)) {
       out.push(`${c.ast}'s box ${printed(c.box)} overlaps the spine`);
     }
   }
 }
 
-const inside = (p: Point, r: Rect, eps: number): boolean =>
-  p.x >= r.x - eps && p.y >= r.y - eps && p.x <= r.x + r.width + eps && p.y <= r.y + r.height + eps;
-
-const corners = (r: Rect): Point[] => [
-  { x: r.x, y: r.y },
-  { x: r.x + r.width, y: r.y + r.height },
-];
-
 /** Every point of what is drawn, strokes left out: ends, corners, the head's reach. */
 function* drawnPoints(layout: IshikawaLayout): Generator<[string, Point]> {
-  const ends = (s: Segment): Point[] => [
-    { x: s.x1, y: s.y1 },
-    { x: s.x2, y: s.y2 },
-  ];
   if (layout.spine) for (const p of ends(layout.spine)) yield ['the spine', p];
   const { head } = layout;
   if (head) {

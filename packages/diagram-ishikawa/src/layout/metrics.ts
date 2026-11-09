@@ -50,8 +50,10 @@ export interface IshikawaMetrics {
   readonly labelWeight: number;
   /**
    * The wrap widths at `wrapReferenceSize` (D495): what v12's character counts gave at 16 px
-   * (`floor(110 / (0.6 × 16))` = 11 for the effect, 15 for sub-causes), scaled by
-   * `fontSize / wrapReferenceSize`. Cause labels break only at `<br>`.
+   * (`floor(110 / (0.6 × 16))` = 11 for the effect, 15 for sub-causes). The effect's is scaled
+   * by the size it is drawn at, `headFontSize / wrapReferenceSize`, so its 11 characters hold in
+   * every theme; sub-causes' by `fontSize / wrapReferenceSize` (GAPS #582). Cause labels break
+   * only at `<br>`.
    */
   readonly effectWrap: number;
   readonly subCauseWrap: number;

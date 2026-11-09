@@ -1,8 +1,8 @@
 /**
  * v12's drawn ishikawa geometry (spec #519 T3): mermaid\@12.2.0's own `ishikawaRenderer.ts` run
- * under jsdom, with `getBBox` answering v12's sizes as a fixed measure, every character
- * {@link CHAR} px wide and every line {@link LINE} px high, at any font. A spec that imports this
- * file runs it under jsdom (below).
+ * under jsdom, with `getBBox` answering v12's sizes as a fixed measure: every character
+ * {@link CHAR_EM} em wide (v12's own wrap count assumed as much) at the size v12 drew it, 14 px for
+ * the head label and the config's 16 px for the rest, and every line {@link LINE} px high.
  *
  * The fake box of a `<text>` is what a browser would give for v12's attributes: as wide as its
  * widest `tspan`, as high as its lines, placed by its `text-anchor`, and centred on the point
@@ -15,10 +15,13 @@
  */
 import { builtinEnvironments } from 'vitest/runtime';
 
-/** v12's sizes: `0.6 × 16` px a character, as v12's own wrap count assumed, and 20 px a line. */
-export const CHAR = 9.6;
+/** A character's width in em, at the size it is drawn at, and a line's height in px. */
+export const CHAR_EM = 0.6;
 export const LINE = 20;
-/** v12's `tspan` step at its config `fontSize` of 16: `1.05 × 16`. */
+/** v12's config `fontSize`, and the size its style sheet drew the head label at. */
+const V12_FONT_SIZE = 16;
+const V12_HEAD_SIZE = 14;
+/** v12's `tspan` step at its config `fontSize`: `1.05 × 16`. */
 const V12_LINE_STEP = 16.8;
 
 interface Box {
@@ -31,8 +34,9 @@ interface Box {
 function fakeBBox(this: Element): Box {
   if (this.tagName.toLowerCase() !== 'text') return { x: 0, y: 0, width: 0, height: 0 };
   const lines = [...this.querySelectorAll('tspan')].map((t) => t.textContent);
+  const size = this.classList.contains('ishikawa-head-label') ? V12_HEAD_SIZE : V12_FONT_SIZE;
   let width = 0;
-  for (const l of lines) width = Math.max(width, [...l].length * CHAR);
+  for (const l of lines) width = Math.max(width, [...l].length * CHAR_EM * size);
   const height = lines.length * LINE;
   const x0 = Number(this.getAttribute('x'));
   const anchor = this.getAttribute('text-anchor');

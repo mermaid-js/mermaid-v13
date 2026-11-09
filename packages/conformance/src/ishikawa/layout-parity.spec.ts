@@ -6,27 +6,31 @@ import {
   ishikawaTestConfig,
   ishikawaTestContext,
   ishikawaTestTheme,
+  layoutIshikawaUnfixed,
   parsedIshikawa,
 } from '@mermaid-js/diagram-ishikawa/testing';
 import type { CorpusItem } from '../types.ts';
 import { ishikawaGateCorpus } from './corpus.ts';
-import { CHAR, closeV12, LINE, v12Drawn, type V12Drawn } from './v12-render.ts';
+import { CHAR_EM, closeV12, LINE, v12Drawn, type V12Drawn } from './v12-render.ts';
 
 /**
- * Layout parity with v12 (spec #519 T3, pitfall 29): `layoutIshikawa`'s spine, head, bones,
- * label boxes and sub-cause text points equal what mermaid\@12.2.0's own renderer drew, within
- * 1e-6, at v12's sizes (`v12-render.ts`: v12 run under jsdom, its `getBBox` a fixed measure, and
- * v13 measuring the same), in the classic theme (v12 laid out at the config `fontSize`, 16).
+ * Layout parity with v12 (spec #519 T3, pitfall 29): the spine, head, bones, label boxes and
+ * sub-cause text points equal what mermaid\@12.2.0's own renderer drew, within 1e-6, at v12's
+ * sizes (`v12-render.ts`: v12 run under jsdom, its `getBBox` a fixed measure, and v13 measuring
+ * the same), in the classic theme (v12 laid out at the config `fontSize`, 16).
  *
- * Left out, each a decided or listed change: labels with markup or entities, v12's `#35;` form too (core's label
- * layout, D495: v12 counted `<br>` and `&amp;` as characters when wrapping), `handDrawn` (v12's
- * rough lines are not `line` elements), a `fontSize` or theme set in the source (D493), and the
- * diagrams where v12 drew a cause's label box over the head or the spine: v13 moves those
- * (GAPS #582), and this spec checks that v12's own boxes overlapped there.
+ * - With both overlap fixes off (`layoutIshikawaUnfixed`), every compared source equals v12.
+ * - With them on (`layoutIshikawa`), exactly the sources where v12 drew a cause's label box over
+ *   the head or across the spine differ (GAPS #582).
+ *
+ * Left out, each a decided or listed change: labels with markup or entities, v12's `#35;` form
+ * too (core's label layout, D495: v12 counted `<br>` and `&amp;` as characters when wrapping),
+ * `handDrawn` (v12's rough lines are not `line` elements), and a `fontSize` or theme set in the
+ * source (D493).
  */
 const measurer: Measurer = {
   id: 'ishikawa-v12-sizes',
-  width: (text) => [...text].length * CHAR,
+  width: (text, font) => [...text].length * CHAR_EM * font.size,
   metrics: () => ({ ascent: LINE * 0.8, descent: LINE * 0.2, lineHeight: LINE }),
 };
 
@@ -107,12 +111,13 @@ function v12Overlapped(v12: V12Drawn): boolean {
 const LEFT_OUT = /[<&]|#\w+;|handDrawn|fontSize|theme:|"theme"/;
 
 describe('ishikawa layout parity with v12', () => {
-  it("equals v12's drawing over the corpus, but where v12 drew a box over the head or spine", async ({
+  it("equals v12's drawing with the overlap fixes off, and differs with them only where v12 overlapped", async ({
     annotate,
   }) => {
     const failures: string[] = [];
+    const overlapped: string[] = [];
+    const moved: string[] = [];
     let compared = 0;
-    let moved = 0;
     for (const item of corpus) {
       if (LEFT_OUT.test(item.source)) continue;
       const { model, diagnostics } = parsedIshikawa(item.source);
@@ -122,16 +127,18 @@ describe('ishikawa layout parity with v12', () => {
         failures.push(`${item.id}: v12 rejects what v13 accepts`);
         continue;
       }
-      const layout = layoutIshikawa(model, ishikawaTestContext(classic, {}, [], measurer));
-      const diff = difference(v12, asV12(layout));
-      if (diff === undefined) compared++;
-      else if (v12Overlapped(v12)) moved++;
-      else failures.push(`${item.id}: ${diff}`);
+      compared++;
+      const ctx = ishikawaTestContext(classic, {}, [], measurer);
+      const unfixed = difference(v12, asV12(layoutIshikawaUnfixed(model, ctx)));
+      if (unfixed !== undefined) failures.push(`${item.id}: ${unfixed}`);
+      if (v12Overlapped(v12)) overlapped.push(item.id);
+      if (difference(v12, asV12(layoutIshikawa(model, ctx))) !== undefined) moved.push(item.id);
     }
     expect(failures.slice(0, 10)).toEqual([]);
-    // 415 equal and 66 moved when written.
+    expect(moved).toEqual(overlapped);
+    // 481 compared and 66 moved when written.
     expect(compared).toBeGreaterThan(400);
-    expect(moved).toBeGreaterThan(0);
-    await annotate(`${compared} sources equal to v12, ${moved} moved off the head or spine`);
+    expect(moved.length).toBeGreaterThan(0);
+    await annotate(`${compared} sources equal to v12 unfixed; ${moved.length} moved by the fixes`);
   }, 300_000);
 });

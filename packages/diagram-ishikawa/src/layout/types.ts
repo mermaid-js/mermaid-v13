@@ -57,6 +57,7 @@ export interface IshikawaBone extends Segment {
   readonly depth: number;
   readonly side: IshikawaSide;
   readonly stroke: number;
+  /** At the start, `arrowSize × stroke` long and wide. */
   readonly arrow: IshikawaArrow;
 }
 
@@ -65,7 +66,7 @@ export interface IshikawaHead {
   /** The middle of the head's back, the spine's end: `(0, spineY)`. */
   readonly x: number;
   readonly y: number;
-  /** v12's `w` and `h`: `M x,y−h/2 L x,y+h/2 Q x+2.4w,y x,y−h/2 Z`. */
+  /** v12's `w` and `h`: the path is `M top L bottom Q control top Z`. */
   readonly width: number;
   readonly height: number;
   readonly top: Point;
@@ -95,7 +96,7 @@ export interface IshikawaCauseLayout {
   readonly side: IshikawaSide;
   readonly bone: IshikawaBone;
   readonly label: PlacedLabel;
-  /** The label's box: the text ± 20 in x and ± 2 in y. */
+  /** The label's box: the text grown by the metrics' `boxPadX` and `boxPadY`. */
   readonly box: Rect;
   readonly boxStroke: number;
   /** Every cause below it, in the order v12 drew them (`flattenTree`). */
@@ -104,13 +105,13 @@ export interface IshikawaCauseLayout {
 
 /** Causes `2p` (upper) and `2p + 1` (lower), sharing a start on the spine. */
 export interface IshikawaPairLayout {
-  /** Where both bones start: −20 for the first, else the previous pair's leftmost text x. */
+  /** Where both bones start: `firstPairX` for the first, else the previous pair's leftmost text x. */
   readonly x: number;
   readonly causes: readonly IshikawaCauseLayout[];
 }
 
 export interface IshikawaLayout {
-  /** The spine's y: `max(upper side, 250)`. */
+  /** The spine's y: `max(upper side, spineBase)`. */
   readonly spineY: number;
   /** From the last pair's leftmost text x to the head; absent with no effect. */
   readonly spine?: Segment & { readonly stroke: number };

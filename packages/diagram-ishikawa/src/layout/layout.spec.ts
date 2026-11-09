@@ -190,9 +190,9 @@ describe('ishikawa layout: text (D493, D495)', () => {
     });
   });
 
-  it('wraps the effect at 110 px and sub-causes at 144 px, by fontSize / 16; causes at <br> only', () => {
+  it('wraps the effect at 110 × 14/16 px and sub-causes at 144 × fontSize/16 px; causes at <br> only', () => {
     const { head, pairs } = laid(`${NIGHTLY}/long-labels`);
-    // 110 px: 13 characters of 8 px.
+    // 96.25 px: 12 characters of 8 px.
     expect(linesOf(head!.label)).toEqual([
       'Customer',
       'satisfaction',
@@ -225,11 +225,22 @@ describe('ishikawa layout: text (D493, D495)', () => {
     ]);
   });
 
+  it('wraps the effect by the size it is drawn at, the same in every theme', () => {
+    // "Coffee tastes" is 104 px: past 96.25 (v12's 11 characters at 14 px) in every theme, though
+    // within 110 × 16/16 (classic's fontSize scale).
+    for (const theme of [classic, neo]) {
+      expect(linesOf(laid(`${NIGHTLY}/line-breaks-in-labels`, theme).head!.label)).toEqual([
+        'Coffee',
+        'tastes',
+        'bitter',
+      ]);
+    }
+  });
+
   it('breaks labels at <br> and grows the head by its lines', () => {
     const { head, pairs } = laid(`${NIGHTLY}/line-breaks-in-labels`);
-    expect(linesOf(head!.label)).toEqual(['Coffee tastes', 'bitter']);
-    // h = max(40, 2 × 40 + 40).
-    expect(head!.height).toBe(120);
+    // h = max(40, 2 × 60 + 40).
+    expect(head!.height).toBe(160);
     const beans = pairs[0]!.causes[0]!;
     expect(linesOf(beans.label)).toEqual(['Beans', 'and roast']);
     expect(beans.box.height).toBe(44);

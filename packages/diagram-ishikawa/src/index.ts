@@ -14,5 +14,5 @@ export {
 export type * from './parser/index.ts';
 export type * from './model.ts';
 export { ISHIKAWA_EMPTY, ISHIKAWA_INDENT_CLAMPED } from './codes.ts';
-export { layoutIshikawa, ISHIKAWA_METRICS } from './layout/index.ts';
+export { layoutIshikawa } from './layout/index.ts';
 export type * from './layout/index.ts';

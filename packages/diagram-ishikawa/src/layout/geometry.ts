@@ -22,12 +22,7 @@ export function pointsBox(points: readonly Point[]): Rect {
 /** The smallest rectangle holding every one of `boxes`; a zero box at the origin for none. */
 export function boxUnion(boxes: readonly Rect[]): Rect {
   if (boxes.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  return pointsBox(
-    boxes.flatMap((b) => [
-      { x: b.x, y: b.y },
-      { x: b.x + b.width, y: b.y + b.height },
-    ])
-  );
+  return pointsBox(boxes.flatMap(corners));
 }
 
 /** `box` grown by `d` on every side. */
@@ -39,11 +34,7 @@ export const grown = (box: Rect, d: number): Rect => ({
 });
 
 /** A segment's box. */
-export const segmentBox = (s: Segment): Rect =>
-  pointsBox([
-    { x: s.x1, y: s.y1 },
-    { x: s.x2, y: s.y2 },
-  ]);
+export const segmentBox = (s: Segment): Rect => pointsBox(ends(s));
 
 /** The box of the quadratic from `p0` through control `c` to `p2`, its extremes included. */
 export function quadBox(p0: Point, c: Point, p2: Point): Rect {
@@ -60,3 +51,26 @@ export function quadBox(p0: Point, c: Point, p2: Point): Rect {
   }
   return pointsBox(points);
 }
+
+/** A segment's two ends, start first. */
+export const ends = (s: Segment): [Point, Point] => [
+  { x: s.x1, y: s.y1 },
+  { x: s.x2, y: s.y2 },
+];
+
+/** A rectangle's top-left and bottom-right corners. */
+export const corners = (r: Rect): [Point, Point] => [
+  { x: r.x, y: r.y },
+  { x: r.x + r.width, y: r.y + r.height },
+];
+
+/** `p` is inside `r`, within `eps`. */
+export const inside = (p: Point, r: Rect, eps: number): boolean =>
+  p.x >= r.x - eps && p.y >= r.y - eps && p.x <= r.x + r.width + eps && p.y <= r.y + r.height + eps;
+
+/** `a` and `b` overlap by more than `eps` both ways. */
+export const overlaps = (a: Rect, b: Rect, eps: number): boolean =>
+  a.x < b.x + b.width - eps &&
+  b.x < a.x + a.width - eps &&
+  a.y < b.y + b.height - eps &&
+  b.y < a.y + a.height - eps;
