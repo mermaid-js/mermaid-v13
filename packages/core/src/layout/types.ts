@@ -49,6 +49,12 @@ export interface LayoutNode {
    * the flow. 0 keeps every end at the middle. Defaults to the side's length less 24.
    */
   span?: number;
+  /**
+   * Where on the box, down from its top, the line that `left` and `right` edge ends meet lies
+   * (D501): an architecture service's icon centre, above its label. Defaults to the middle.
+   * Only `compass` reads it.
+   */
+  anchorY?: number;
 }
 
 export interface LayoutEdge {
@@ -77,6 +83,16 @@ export interface LayoutEdge {
   startMarker?: EndMarker;
   /** As `startMarker`, at the target end. */
   endMarker?: EndMarker;
+  /**
+   * The side each end leaves or enters by (D501, architecture's `a:R -- L:b`). Only `compass`
+   * reads it; where an end has none, it takes the side `direction` gives (D327).
+   */
+  sides?: { source?: Side; target?: Side };
+  /**
+   * Ends that meet the border of the group their node sits in rather than the node (D501,
+   * architecture's `{group}`). Only `compass` reads it.
+   */
+  border?: { source?: boolean; target?: boolean };
 }
 
 /** See `LayoutEdge.startMarker`. */
@@ -153,6 +169,11 @@ export interface LayoutGraph {
    * once the sides have grown (D140, the model reports grown sizes).
    */
   grid?: number;
+  /**
+   * Nodes the author asked to share a row or a column, in order (D501, architecture's
+   * `align row|column`). Only `compass` reads it.
+   */
+  align?: readonly { axis: 'row' | 'column'; members: readonly string[] }[];
 }
 
 export interface LayoutModelNode {
