@@ -133,8 +133,8 @@ class EventModelingLexer {
   private readonly blockClosers: Found = { from: -1, at: UNSET };
   private readonly braces: Found = { from: -1, at: UNSET };
   private readonly commentEnds: Found = { from: -1, at: UNSET };
-  /** A YAML block whose body starts at or after this has no closing line. */
-  private yamlFails = Infinity;
+  /** The first `---` line that closes a YAML block (see {@link yaml}). */
+  private readonly yamlClosers: Found = { from: -1, at: UNSET };
   /** A directive whose body starts at or after this has no closing `}%%`. */
   private directiveFails = Infinity;
 
@@ -355,22 +355,21 @@ class EventModelingLexer {
    * the body's start close it.
    */
   private yaml(p: number): number {
-    const { text, n } = this;
+    const { text } = this;
     if (!text.startsWith('---', p)) return -1;
     const b = this.blanks(p + 3);
     const nl = this.newline(b);
     if (nl === 0) return -1;
     const body = b + nl;
-    if (body >= this.yamlFails) return -1;
-    for (let k = body + 1; k < n; k++) {
-      if (!isBreak(text.charCodeAt(k - 1)) || !text.startsWith('---', k)) continue;
-      const e = this.closer(k + 3);
-      if (e >= 0) return this.match(T.Yaml, e);
-    }
+    const k = this.search(this.yamlClosers, body + 1, (from) => {
+      for (let j = text.indexOf('---', from); j !== -1; j = text.indexOf('---', j + 1)) {
+        if (isBreak(text.charCodeAt(j - 1)) && this.closer(j + 3) >= 0) return j;
+      }
+      return -1;
+    });
+    if (k >= 0) return this.match(T.Yaml, this.closer(k + 3));
     const e = text.startsWith('---', body) ? this.closer(body + 3) : -1;
-    if (e >= 0) return this.match(T.Yaml, e);
-    this.yamlFails = body;
-    return -1;
+    return e >= 0 ? this.match(T.Yaml, e) : -1;
   }
 
   /** EM_DIRECTIVE: `%%{[\S\s]*?}%%(?:\r?\n|(?!\S))` (the `[\t ]*` before it is EM_WS's). */

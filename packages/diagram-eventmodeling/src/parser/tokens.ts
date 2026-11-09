@@ -117,7 +117,7 @@ export const KEYWORDS: ReadonlyMap<string, number> = /* @__PURE__ */ new Map([
 ]);
 
 /**
- * Trivia for the event modeling parser: the shared trivia kinds and the hidden YAML and `/* *\/`
+ * Trivia for the event modeling parser: the comment and directive kinds and the hidden YAML and `/* *\/`
  * and `//` comments. In-text `%%` comments are `Kind.Comment` and `%%{…}%%` directives
  * `Kind.Directive`, like the spans v12 removed before lexing. Whitespace (EM_WS, line breaks
  * included) writes no token: v12 skipped it.
@@ -125,7 +125,6 @@ export const KEYWORDS: ReadonlyMap<string, number> = /* @__PURE__ */ new Map([
 export const EVENTMODELING_TRIVIA = /* @__PURE__ */ kindSet(
   Kind.Comment,
   Kind.Directive,
-  Kind.Space,
   T.Yaml,
   T.BlockComment,
   T.LineComment

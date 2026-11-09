@@ -632,6 +632,46 @@
     "source": "eventmodeling\ntf 01 evt A\u2028title B"
   },
   {
+    "id": "eventmodeling-cases/comment-ls-then-percent",
+    "source": "eventmodeling\n%% \u2028%%01--- x"
+  },
+  {
+    "id": "eventmodeling-cases/comment-ps-then-comment-title",
+    "source": "eventmodeling\n %% \u2029  %% c\n title tf01tf"
+  },
+  {
+    "id": "eventmodeling-cases/comment-ls-then-comment-entities",
+    "source": "eventmodeling\n%% \u2028 %% c\n -&gt;&gt;-&gt;&gt;"
+  },
+  {
+    "id": "eventmodeling-cases/comment-percents-in-line",
+    "source": "eventmodeling\n%% a %% b %%%% c %\u2028%% d\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/directive-then-comment",
+    "source": "%%{init: {}}%%\n%% c\neventmodeling\n%% d\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-comment-line",
+    "source": "eventmodeling\n%% a %%{init: {}}%% b\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-group-first",
+    "source": "eventmodeling\n---\n---\ntf 01 evt A\n---\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-closer-followed",
+    "source": "eventmodeling\n---\na: 1\n---x\n---\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-unclosed-repeated",
+    "source": "eventmodeling\n---\n---x\n---y\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/crlf-already",
+    "source": "eventmodeling\r\ntf 01 evt A\r\ndata D {\r\n  a\r\n}\r\n"
+  },
+  {
     "id": "eventmodeling-cases/full",
     "source": "eventmodeling\ntitle ignored\ntf 01 ui CartScreen\ntf 02 cmd AddItem ->> 01 { productId: 7 }\ntf 03 evt ItemAdded ->> 02 [[ItemAddedData]]\nrf 04 rmo Cart.Items ->> 03\n\ndata ItemAddedData {\n  productId: 7\n}\nnote 02 {\n  A note\n}\ngwt 03 given evt ItemAdded when cmd AddItem then evt ItemAdded"
   }

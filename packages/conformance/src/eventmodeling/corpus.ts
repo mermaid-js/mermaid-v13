@@ -32,7 +32,10 @@ export async function eventModelingGateCorpus(): Promise<CorpusItem[]> {
   const all = [...(await eventModelingCorpus()), ...eventModelingCases()];
   return [
     ...all,
-    ...all.map((item) => ({ id: `${item.id} (CRLF)`, source: item.source.replace(/\n/g, '\r\n') })),
+    ...all.map((item) => ({
+      id: `${item.id} (CRLF)`,
+      source: item.source.replace(/\r?\n/g, '\r\n'),
+    })),
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
   ];
 }

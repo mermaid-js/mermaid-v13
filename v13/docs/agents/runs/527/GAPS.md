@@ -10,4 +10,6 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## T1 (#600)
 
-- **Comment lines kept.** v12's event modeling parsed `withComments` (`preserveCommentsWhenParsing`), so `%%` lines are EM_SINGLE_LINE_COMMENT tokens; `eventModelingView` keeps them without a core change. v12 fell back to the stripped text above `maxTextSize`; v13 does not (for the maintainer: a MIGRATION.md row in T5 if wanted).
+- **Comment lines kept.** v12's event modeling parsed `withComments` (`preserveCommentsWhenParsing`), so `%%` lines are EM_SINGLE_LINE_COMMENT tokens; `eventModelingView` keeps them without a core change, by replacing every `%` of each comment span in a same-length copy until core's view finds none.
+- **For #611 (T5), a MIGRATION.md row:** v12 fell back to the comment-stripped text when `withComments` exceeded `maxTextSize` (50,000); v13 always keeps the comment lines.
+- **Follow-up (for the maintainer, out of scope here: no core change in #527):** a `keepComments` option on core's `sourceView` would replace the copy-and-mask workaround in `eventModelingView` (agentflow also set `preserveCommentsWhenParsing` in v12).

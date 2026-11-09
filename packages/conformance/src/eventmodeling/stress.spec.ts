@@ -30,6 +30,7 @@ const SHAPES: [name: string, build: (n: number) => string, scale?: number][] = [
   ['directive openers, never closed', (n) => FRAME + '%%{ !\n'.repeat(n / 6), 16],
   ['directive closers that fail', (n) => FRAME + '%%{' + '}%%x'.repeat(n / 4)],
   ['YAML openers, never closed', (n) => EM + '---\n'.repeat(n / 4), 16],
+  ['YAML closers that fail', (n) => EM + '---\n' + '---x\n'.repeat(n / 5), 16],
   ['a line of { with no }', (n) => FRAME + '{ '.repeat(n / 2)],
   ['a line of { then a } on the next line', (n) => FRAME + '{ '.repeat(n / 2) + '\n}'],
   ['lines of { with no }', (n) => FRAME + '{ x {\n'.repeat(n / 6)],
@@ -39,7 +40,9 @@ const SHAPES: [name: string, build: (n: number) => string, scale?: number][] = [
   ['an unterminated double quote', (n) => FRAME + '"' + 'x'.repeat(n)],
   ['an unterminated single quote', (n) => FRAME + "'" + 'x'.repeat(n)],
   ['lines of unterminated quotes', (n) => EM + 'tf 01 cmd A "x\n'.repeat(n / 15)],
-  ['a quote then line separators', (n) => FRAME + '"' + 'x '.repeat(n / 2) + '"'],
+  // Written as escapes: a raw U+2028 or U+2029 reads as a blank in review.
+  ['quotes split by line separators', (n) => FRAME + '"x\u2028'.repeat(n / 3)],
+  ['braces split by paragraph separators', (n) => FRAME + '{x\u2029'.repeat(n / 3)],
   ['a long data block', (n) => EM + 'data D {\n' + '  a: 1\n'.repeat(n / 7) + '}'],
   ['data block lines of }', (n) => EM + 'data D {\n' + '}}\n'.repeat(n / 3) + '}'],
   ['a long block comment', (n) => EM + '/*' + ' * x\n'.repeat(n / 5) + '*/'],
