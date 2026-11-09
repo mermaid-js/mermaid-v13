@@ -29,10 +29,10 @@
 
 ## Machine-wide locks (seven sessions share this machine)
 
-- Two lock slots (maintainer, "Two lock slots"): treeView is on **slot B**, `/Users/knsv/repos/mermaid-v13/.tmp/m3-check-b.lock` (shared with ishikawa and requirement). Never use slot A's `m3-check.lock`.
+- **One lock again** (maintainer, load reduction): every full check, e2e run and push uses `/Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock`, shared with usecase, ishikawa and requirement; one full check at a time. Do not use `m3-check-b.lock`. A full check that fails only on a timeout in a package you did not touch: rerun once.
 
 - `PARSE_FIXTURE_PATH` may be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and `pnpm check` (and the pre-push hook) fails. Always unset it.
-- Every full `pnpm check` (exception tickets and integration pushes only): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check-b.lock pnpm check`.
-- Every `pnpm e2e` / Playwright run: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check-b.lock <command>`.
+- Every full `pnpm check` (exception tickets and integration pushes only): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
+- Every `pnpm e2e` / Playwright run: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock <command>`.
 - Targeted vitest runs outside the lock are fine with `VITEST_MAX_WORKERS=4`.
 - A timing test that fails under load is not a regression: rerun it under the lock before acting on it. Known flakes: `language-budget*.spec.ts` (R-LANG-4), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, `packages/core/src/preprocess/stress.spec.ts` timeouts.
