@@ -34,5 +34,6 @@ export {
   generatedDir,
   grammarPath,
   sourceDir,
+  targetPaths,
 } from './generate.ts';
-export type { GrammarTarget } from './generate.ts';
+export type { GrammarTarget, TargetPaths } from './generate.ts';
