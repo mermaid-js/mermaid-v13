@@ -25,10 +25,9 @@ const STUB = '../../../packages/bench/src/__fixtures__/stub-diagram/themed.ts';
 const stub = ((await import(STUB)) as { stub: { theme: DiagramThemeTable } }).stub.theme;
 const FIXTURES = new URL('./fixtures/packages', import.meta.url).pathname;
 
+const PACKAGES = [...(await themePackages()), ...(await themePackages(FIXTURES))];
 const TABLES: readonly (readonly [string, DiagramThemeTable])[] = [
-  ...[...(await themePackages()), ...(await themePackages(FIXTURES))].flatMap((p) =>
-    p.table ? [[p.type, p.table] as const] : []
-  ),
+  ...PACKAGES.flatMap((p) => (p.table ? [[p.type, p.table] as const] : [])),
   ['stub', stub],
 ];
 
@@ -96,25 +95,17 @@ function unresolved(
 }
 
 /**
- * Rows no theme sets, only an author: journey's `actor0`–`actor5` (D249), which win over
- * `journey.actorColours` when set; gitGraph's `tagBorder` (D267), v12's other name for
- * `tagLabelBorder`. Unset, they resolve to `currentColor` in every theme.
+ * Rows a package's vocabulary exempts (`src/theme/vocabulary.ts`): `AUTHOR_ONLY`, rows no theme
+ * sets, only an author (journey's `actor0`–`actor5`, D249; gitGraph's `tagBorder`, D267), which
+ * resolve to `currentColor` in every theme while unset; `SOME_THEMES`, rows set only in the
+ * themes v12 sets them in (#374, D331: gitGraph's fallbacks, venn's slot colours, #495).
  */
-const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = {
-  journey: ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'],
-  gitgraph: ['tagBorder'],
-};
-
-/**
- * Rows set only in the themes v12 sets them in (#374, D331): the gitGraph renderer draws v12's
- * fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too; venn's
- * slot colours, which redux and neo leave unset as v12 did (the renderer cycles the slots that
- * are set, else the palette, else `primaryColor`, #495).
- */
-const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
-  gitgraph: ['commitLineColor', 'gitCherryPickInk'],
-  venn: Array.from({ length: 8 }, (_, i) => `venn${i + 1}`),
-};
+const AUTHOR_ONLY: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  PACKAGES.flatMap((p) => (p.authorOnly ? [[p.type, p.authorOnly] as const] : []))
+);
+const SOME_THEMES: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  PACKAGES.flatMap((p) => (p.someThemes ? [[p.type, p.someThemes] as const] : []))
+);
 
 function resolve(
   spec: ThemeSpec,
@@ -136,6 +127,17 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
   it('checks every table, the stub and the fixture among them', () => {
     expect(TABLES.map(([type]) => type)).toEqual(expect.arrayContaining(['demo', 'stub']));
     expect(specs.map((s) => s.name)).toEqual([...THEME_NAMES]);
+  });
+
+  it("exempts only rows of the package's own table (AUTHOR_ONLY, SOME_THEMES)", () => {
+    const tables = new Map(TABLES);
+    const stray = [AUTHOR_ONLY, SOME_THEMES].flatMap((exempt) =>
+      Object.entries(exempt).flatMap(([type, names]) =>
+        names.filter((n) => !(n in (tables.get(type)?.vars ?? {}))).map((n) => `${type}.${n}`)
+      )
+    );
+    expect(stray).toEqual([]);
+    expect(Object.keys(AUTHOR_ONLY).length + Object.keys(SOME_THEMES).length).toBeGreaterThan(0);
   });
 
   it.each(TABLES)('%s: every row resolves in all eleven themes', (type, table) => {

@@ -22,3 +22,12 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   kanbanColumn10: { alias: 'kbc10', kind: 'color', usedBy: KANBAN },
   kanbanColumn11: { alias: 'kbc11', kind: 'color', usedBy: KANBAN },
 };
+
+/**
+ * Names the sources build at run time, which the theme usedBy scan for literals can't see:
+ * `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.
+ */
+export const DYNAMIC_READS: readonly string[] = Array.from(
+  { length: 12 },
+  (_, n) => `kanbanColumn${n}`
+);

@@ -8,7 +8,7 @@
  * `THEME_VARIABLE_TABLE`, which the plugin's `DiagramThemeTable.vars` takes. The table itself
  * (rules and family entries) is the `theme` of the plugin `src/index.ts` exports.
  */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type {
@@ -33,6 +33,32 @@ export interface ThemePackage {
   readonly vocabulary?: Vocabulary;
   /** `src/theme/vocabulary.ts`'s optional `THEME_NOTE`: one line for the inventory doc. */
   readonly note?: string;
+  /**
+   * `src/theme/vocabulary.ts`'s optional `DYNAMIC_READS`: names the package builds at run time
+   * (`pie${slot + 1}`), which {@link themeReads}' scan for literals can't see.
+   */
+  readonly dynamicReads?: readonly string[];
+  /**
+   * `src/theme/vocabulary.ts`'s optional `NOT_DRAWN_YET: true`: the port has not reached layout,
+   * so its sources read no theme variable yet (the usedBy spec holds it to none).
+   */
+  readonly notDrawnYet?: boolean;
+  /**
+   * `src/theme/vocabulary.ts`'s optional `LISTED_AHEAD`: core rows this type is listed on in
+   * core's `usedBy` before its sources read them (a core T0 that moved them landed first). Each
+   * must be unread, so an entry goes as soon as the type reads it.
+   */
+  readonly listedAhead?: readonly string[];
+  /**
+   * `src/theme/vocabulary.ts`'s optional `SOME_THEMES`: table rows set only in the themes v12
+   * sets them in, which the theme-tables spec lets resolve to `currentColor` elsewhere (#374).
+   */
+  readonly someThemes?: readonly string[];
+  /**
+   * `src/theme/vocabulary.ts`'s optional `AUTHOR_ONLY`: table rows only an author sets, which
+   * resolve to `currentColor` in every theme while unset.
+   */
+  readonly authorOnly?: readonly string[];
   /** The `theme` of the plugin `src/index.ts` exports, when it has one. */
   readonly table?: DiagramThemeTable;
 }
@@ -75,6 +101,13 @@ export async function themePackages(
     const vocabularyModule = await load(vocabularyPath(dir));
     const vocabulary = vocabularyModule?.THEME_VARIABLES as Vocabulary | undefined;
     const note = vocabularyModule?.THEME_NOTE as string | undefined;
+    const list = (key: string) => vocabularyModule?.[key] as readonly string[] | undefined;
+    const [dynamicReads, listedAhead, someThemes, authorOnly] = [
+      list('DYNAMIC_READS'),
+      list('LISTED_AHEAD'),
+      list('SOME_THEMES'),
+      list('AUTHOR_ONLY'),
+    ];
     const index =
       tables === 'all' || vocabulary ? await load(join(dir, 'src/index.ts')) : undefined;
     const table = index && pluginTable(index);
@@ -83,9 +116,114 @@ export async function themePackages(
       dir,
       ...(vocabulary && { vocabulary }),
       ...(note !== undefined && { note }),
+      ...(dynamicReads && { dynamicReads }),
+      ...(vocabularyModule?.NOT_DRAWN_YET === true && { notDrawnYet: true }),
+      ...(listedAhead && { listedAhead }),
+      ...(someThemes && { someThemes }),
+      ...(authorOnly && { authorOnly }),
       ...(table && { table }),
     });
   }
+  return out;
+}
+
+// ---------------------------------------------------------------------------- reads
+
+/** A package's sources a read scan looks at: its `.ts` files, without specs and generated ones. */
+function sources(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const path = join(dir, e.name);
+    if (e.isDirectory()) return e.name === 'generated' ? [] : sources(path);
+    // A vocabulary declares names; it reads none.
+    if (path.endsWith(join('src', 'theme', 'vocabulary.ts'))) return [];
+    return e.name.endsWith('.ts') && !e.name.endsWith('.spec.ts') ? [path] : [];
+  });
+}
+
+/**
+ * The theme variables each package's sources read (#207), by type. A diagram reads a variable
+ * by passing its name as a string literal to a call, either a `Theme` method
+ * (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
+ * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
+ * (D332); a var's `nested:` key is v12's name, not a read. Names the package builds at run time
+ * are its vocabulary's `DYNAMIC_READS`. Only names in `known` (core's and every package's
+ * vocabulary) count.
+ */
+export function themeReads(
+  packages: readonly Pick<ThemePackage, 'type' | 'dir' | 'dynamicReads'>[],
+  known: ReadonlySet<string>
+): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const { type, dir, dynamicReads = [] } of packages) {
+    const text = sources(join(dir, 'src'))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n');
+    const names = [
+      ...[...text.matchAll(/(?:\b\w+\(|\b(?!nested\b)\w+:)\s*'(\w+)'/g)].map((m) => m[1]!),
+      // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
+      // theme wrote it (D332).
+      ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
+    ];
+    out.set(type, new Set([...names, ...dynamicReads].filter((n) => known.has(n))));
+  }
+  return out;
+}
+
+/** Every name a diagram may read: core's and every package's vocabulary. */
+export function knownNames(
+  core: Readonly<Record<string, unknown>>,
+  packages: readonly Pick<ThemePackage, 'vocabulary'>[]
+): Set<string> {
+  return new Set([
+    ...Object.keys(core),
+    ...packages.flatMap((p) => Object.keys(p.vocabulary ?? {})),
+  ]);
+}
+
+/**
+ * A core row's users as the inventory lists them: `core` first when core reads it, then every
+ * other name, sorted. A diagram package is listed when its sources read the row (`reads`), so a
+ * port never edits core's vocabulary to list itself; core's own `usedBy` holds only `core` and
+ * types listed ahead of their reads (a type with no package yet, or its `LISTED_AHEAD`).
+ * Sorted, not in the order the types were ported, so the cell does not depend on merge order.
+ */
+export function coreUsers(
+  name: string,
+  listed: readonly string[],
+  reads: ReadonlyMap<string, ReadonlySet<string>>
+): string[] {
+  const types = new Set(listed.filter((u) => u !== 'core'));
+  for (const [type, set] of reads) if (set.has(name)) types.add(type);
+  return [...(listed.includes('core') ? ['core'] : []), ...[...types].sort()];
+}
+
+/**
+ * The used-by rule for core rows: core's `usedBy` names `core` and types listed ahead only. A
+ * diagram package listed there must not read the row yet and must name it in its
+ * `LISTED_AHEAD`, and each `LISTED_AHEAD` row must be listed and unread; a package whose sources
+ * read the row is listed from its reads, so naming it too is an error.
+ */
+export function coreListedErrors(
+  core: Readonly<Record<string, { readonly usedBy: readonly string[] }>>,
+  packages: readonly Pick<ThemePackage, 'type' | 'listedAhead'>[],
+  reads: ReadonlyMap<string, ReadonlySet<string>>
+): string[] {
+  const out: string[] = [];
+  const byType = new Map(packages.map((p) => [p.type, p]));
+  for (const [name, { usedBy }] of Object.entries(core))
+    for (const type of usedBy) {
+      const pkg = byType.get(type);
+      if (pkg === undefined) continue;
+      if (reads.get(type)?.has(name) === true)
+        out.push(`core \`${name}\`: drop ${type} from usedBy, its sources read it`);
+      else if (!(pkg.listedAhead ?? []).includes(name))
+        out.push(`core \`${name}\`: lists ${type}, which neither reads it nor lists it ahead`);
+    }
+  for (const { type, listedAhead = [] } of packages)
+    for (const name of listedAhead)
+      if (!(core[name]?.usedBy ?? []).includes(type))
+        out.push(`${type}: LISTED_AHEAD \`${name}\` is not listed on core's row`);
   return out;
 }
 

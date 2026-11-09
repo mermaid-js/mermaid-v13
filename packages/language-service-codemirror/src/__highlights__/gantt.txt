@@ -1,0 +1,5 @@
+gantt:keyword
+dateFormat YYYY-MM-DD:keyword
+section Build:keyword
+Code:variable
+:crit, a1, 2024-01-01, 3d:string

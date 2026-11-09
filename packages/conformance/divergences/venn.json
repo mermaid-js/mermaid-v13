@@ -1,0 +1,266 @@
+[
+  {
+    "id": "venn-cases/unclosed-directive-line",
+    "inputHash": "sha256:85606c74ded53195",
+    "kind": "reject",
+    "reason": "Unclosed directive: core's preprocess ends an unclosed `%%{` at its line end and reports UNCLOSED_DIRECTIVE, where v12's directive regex removed the rest of the text, so v13 rejects what v12 accepted. Core's directive reading, shared by every type (as quadrant-cases/unclosed-directive and radar-cases/unclosed-directive); the venn lexer gate excludes these cases for the same reason (#486).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-cases/unclosed-directive-mid-line",
+    "inputHash": "sha256:b976f1536fd95eaa",
+    "kind": "reject",
+    "reason": "Unclosed directive: core's preprocess ends an unclosed `%%{` at its line end and reports UNCLOSED_DIRECTIVE, where v12's directive regex removed the rest of the text, so v13 rejects what v12 accepted. Core's directive reading, shared by every type (as quadrant-cases/unclosed-directive and radar-cases/unclosed-directive); the venn lexer gate excludes these cases for the same reason (#486).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "e2e/diagrams/venn/nightly-check/quoted-title.mmd",
+    "inputHash": "sha256:bc572136ca7a0072",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "v12-docs/venn.md#3",
+    "inputHash": "sha256:7e1f629a073676a8",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-cases/title-quoted",
+    "inputHash": "sha256:e017c403c02e47fc",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-cases/union-entity-sort",
+    "inputHash": "sha256:c5f18e7659b720ea",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (commented)",
+    "inputHash": "sha256:b121a1e0146e30d4",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (commented)",
+    "inputHash": "sha256:907a01db819d6891",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (commented)",
+    "inputHash": "sha256:4b1991edb61bb29a",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (CR cut)",
+    "inputHash": "sha256:dec46d53ce533dc6",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (CR cut)",
+    "inputHash": "sha256:d6ba41430a0d9ffc",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (CR cut)",
+    "inputHash": "sha256:63f46420fc1315f9",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (CR cut)",
+    "inputHash": "sha256:05ebe9aca0dc3b42",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (CR cut by a directive)",
+    "inputHash": "sha256:c352a2bc7d7b5a65",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (CR cut by a directive)",
+    "inputHash": "sha256:d28047602fcc3a1f",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (CR cut by a directive)",
+    "inputHash": "sha256:35cf8622f4aaf335",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (CR cut by a directive)",
+    "inputHash": "sha256:2a8c7a55e73e281e",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (CRLF)",
+    "inputHash": "sha256:b63ab870743c4609",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (CRLF)",
+    "inputHash": "sha256:1f11ae6458728d91",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (CRLF)",
+    "inputHash": "sha256:201847ebe4aaa9d9",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (CRLF)",
+    "inputHash": "sha256:c4b92768b3fb5d79",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (tabs)",
+    "inputHash": "sha256:2aace98b2d0ca6f1",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (tabs)",
+    "inputHash": "sha256:6184c81e724a3af0",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (tabs)",
+    "inputHash": "sha256:25c31d14008fd09e",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (tabs)",
+    "inputHash": "sha256:d316530fbcdc2be5",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (dedented)",
+    "inputHash": "sha256:b72fc8077d361686",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (dedented)",
+    "inputHash": "sha256:213951c0a8ca27d7",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (dedented)",
+    "inputHash": "sha256:110ead81da90d9cd",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (dedented)",
+    "inputHash": "sha256:a84811d7892d642a",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/e2e/nightly-check/quoted-title.mmd (mid-line directive)",
+    "inputHash": "sha256:912b20e42bb322ad",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/v12-docs/venn.md#3 (mid-line directive)",
+    "inputHash": "sha256:392cbd3fc941dce4",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/title-quoted (mid-line directive)",
+    "inputHash": "sha256:8811ae6385b3d842",
+    "kind": "model",
+    "reason": "Quoted title (D416): v12 kept one pair of surrounding quotes in `getDiagramTitle()` and drew them (`title \"Team overlap\"`, the syntax page's own example); v13 removes them, as labels already lose theirs. Output changes only for quoted titles (MIGRATION.md row, T5).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "venn-gate/venn-cases/union-entity-sort (mid-line directive)",
+    "inputHash": "sha256:a62aee560d2b1bc7",
+    "kind": "model",
+    "reason": "Member ids holding an entity sort differently: v12 sorted its `encodeEntities` placeholder text (`#35;x` is `ﬂ°°35¶ßx`, after `b`), v13 sorts the text as written (`&#35;x`, before `b`), so `union \"b\",\"#35;x\"` is `[b, &#35;x]` in v12 and `[&#35;x, b]` in v13. Only the order of an overlap's ids (and so its AST id) differs; the sets drawn are the same (#488).",
+    "owner": "#488",
+    "since": "2026-11-08"
+  }
+]

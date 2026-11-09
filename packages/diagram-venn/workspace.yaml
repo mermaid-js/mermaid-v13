@@ -1,0 +1,69 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: venn
+    title: Venn diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        # The `text` after an indent: jison returns no token for it; the lexer keeps one.
+        IndentTextKeyword:
+          mode: indentText
+          pattern: text\b
+          docOf: INDENT_TEXT
+        # Both `BRACKET_LABEL` rules: the lexer keeps a kind per rule.
+        QuotedLabel:
+          mode: quotedLabel
+          pattern: '[^"]*(?="\])'
+          terminal: BRACKET_LABEL
+        Label:
+          mode: label
+          pattern: '[^\]"]*?(?=\s*\])'
+          terminal: BRACKET_LABEL
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - solver/
+    - theme/
+    - plugin.ts
+    - index.ts
+    - labels.ts
+    - config.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The Venn diagram plugin (SVG; `venn-beta`).'
+  install: 'with `mermaid/slim`'
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
+# the upstreams this package's ported files derive from, and the files that must credit them.
+# mermaid's notices carry them too (its CDN build bundles this package): notices/mermaid.txt.
+credits:
+  upstreams:
+    - name: 'venn.js'
+      marker: 'https://github.com/upsetjs/venn.js'
+      holder: ['Ben Frederickson', 'Samuel Gratzl']
+      copyright: ['Copyright (c) 2013 Ben Frederickson', 'Copyright (c) 2021 Samuel Gratzl']
+    # venn.js bundles fmin's optimisers, under fmin's own license.
+    - name: 'fmin'
+      marker: 'https://github.com/benfred/fmin'
+      holder: ['Ben Frederickson']
+      copyright: ['Copyright 2016, Ben Frederickson']
+      license: BSD-3-Clause
+  files:
+    src/solver/circles.ts: ['venn.js']
+    src/solver/fmin.ts: ['fmin', 'venn.js']
+    src/solver/index.ts: ['venn.js']
+    src/solver/normalize.ts: ['venn.js']
+    src/solver/regions.ts: ['venn.js']
+    src/solver/solve.ts: ['venn.js']

@@ -1,6 +1,10 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import { describe, expect, it } from 'vitest';
-import { baselineFixtures, galleryFixtures, M1_THEMES } from './fixtures.ts';
+import { FIXTURE_FOLDER_TYPES } from './fixture-discovery.ts';
+import { baselineFixtures, galleryFixtures, M1_THEMES, REPO_ROOT } from './fixtures.ts';
+import { diagramManifests } from './manifests.ts';
 
 // v12.2's documented `@{ shape }` short names (`shapesDefs` in
 // rendering-util/rendering-elements/shapes.ts at fa796a943).
@@ -105,30 +109,19 @@ describe('visual baseline fixtures (R-TEST-5)', () => {
 describe('gallery fixtures (R-TEST-6, #207)', () => {
   it('take the baseline folder of every diagram type mermaid renders, under its folder name', () => {
     const folders = new Set(galleryFixtures().map((f) => f.path.split('/')[0]));
-    expect([...folders].sort()).toEqual([
-      'class-diagram',
-      'cynefin',
-      'er-diagram',
-      'flowchart',
-      'gantt',
-      'git',
-      'info',
-      'journey',
-      'kanban',
-      'mindmap',
-      'packet',
-      'pie',
-      'quadrant-chart',
-      'radar',
-      'sankey',
-      'sequence',
-      'state-diagram-v2',
-      'timeline',
-      'treemap',
-      'venn',
-      'wardley',
-      'xychart',
-    ]);
+    // From the diagram packages' manifests, not mermaid's registry the gallery reads: every
+    // fixture folder whose types an SVG package renders, when it has a baseline.
+    const svg = new Set(
+      diagramManifests()
+        .filter((m) => m.formats.includes('svg'))
+        .flatMap((m) => m.types)
+    );
+    const expected = Object.keys(FIXTURE_FOLDER_TYPES)
+      .filter((folder) => FIXTURE_FOLDER_TYPES[folder]!.every((type) => svg.has(type)))
+      .filter((folder) => existsSync(join(REPO_ROOT, 'e2e', 'diagrams', folder, 'baseline')))
+      .sort();
+    expect(expected).toContain('flowchart');
+    expect([...folders].sort()).toEqual(expected);
   });
 
   it('leave out the folders of types mermaid does not render yet', () => {

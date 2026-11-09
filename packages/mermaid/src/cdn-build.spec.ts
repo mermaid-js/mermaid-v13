@@ -136,8 +136,9 @@ async function packageThemeNames(): Promise<Map<string, string>> {
   for (const dir of readdirSync(packages).filter((d) => d.startsWith('diagram-'))) {
     const path = join(packages, dir, 'src/theme/vocabulary.ts');
     if (!existsSync(path)) continue;
-    const { THEME_VARIABLES } = (await import(path)) as {
-      THEME_VARIABLES: Readonly<Record<string, unknown>>;
+    // A vocabulary may own no rows (flowchart's lists only the names it builds at run time).
+    const { THEME_VARIABLES = {} } = (await import(path)) as {
+      THEME_VARIABLES?: Readonly<Record<string, unknown>>;
     };
     for (const name of Object.keys(THEME_VARIABLES)) names.set(name, dir);
   }

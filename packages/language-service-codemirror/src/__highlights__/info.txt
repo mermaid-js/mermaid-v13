@@ -1,0 +1,3 @@
+info:keyword
+showInfo:keyword
+title Version:keyword

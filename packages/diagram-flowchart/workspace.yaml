@@ -1,0 +1,41 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: flowchart
+    title: Flowchart syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        ShapeDataEnd:
+          mode: shapeData
+          pattern: \}
+        # jison returns no token for `click`; the lexer does, with the click statement's doc.
+        ClickKeyword:
+          mode: INITIAL
+          pattern: click\s+
+          docOf: CLICK
+      # `@{` and the text between quotes are Meta, the quoted values String.
+      mixed:
+        - SHAPE_DATA
+      # `call <name>`: the keyword is not a token of its own. `click` is offered as a
+      # completion for the node id the parser expects (`Click`).
+      documented:
+        - Click
+        - CallbackName
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - ascii
+    - plugin.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The flowchart plugin (SVG, and text output from `/ascii`).'
+  install: 'with `mermaid/slim`'

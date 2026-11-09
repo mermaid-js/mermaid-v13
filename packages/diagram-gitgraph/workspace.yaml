@@ -1,0 +1,27 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: gitgraph
+    title: Git graph syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # A quoted text and a name follow keywords: completion offers them, with the doc.
+      documented:
+        - String
+        - Reference
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - model.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`).'
+  install: 'with `mermaid/slim`'

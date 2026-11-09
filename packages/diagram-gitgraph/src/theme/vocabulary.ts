@@ -44,3 +44,15 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   gitNodeColors: { alias: 'gnc', kind: 'flag', usedBy: GIT },
   gitPaletteColors: { alias: 'gpc', kind: 'flag', usedBy: GIT },
 };
+
+/**
+ * Rows set only in the themes v12 sets them in (#374, D331): the gitGraph renderer draws v12's
+ * fallback where a theme gives none (`lineColor`, white), so `currentColor` resolves too.
+ */
+export const SOME_THEMES: readonly string[] = ['commitLineColor', 'gitCherryPickInk'];
+
+/**
+ * Rows no theme sets, only an author: `tagBorder` (D267), v12's other name for
+ * `tagLabelBorder`. Unset, it resolves to `currentColor` in every theme.
+ */
+export const AUTHOR_ONLY: readonly string[] = ['tagBorder'];

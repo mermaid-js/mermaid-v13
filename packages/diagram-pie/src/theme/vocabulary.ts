@@ -33,3 +33,9 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   pieOuterStrokeWidth: { alias: 'pow', kind: 'length', usedBy: PIE },
   pieOpacity: { alias: 'pop', kind: 'opacity', usedBy: PIE },
 };
+
+/**
+ * Names the sources build at run time, which the theme usedBy scan for literals can't see:
+ * `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
+ */
+export const DYNAMIC_READS: readonly string[] = Array.from({ length: 12 }, (_, i) => `pie${i + 1}`);
