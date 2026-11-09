@@ -40,11 +40,25 @@ Choices the D-ids leave open (each a `divergences.json` entry where it changes v
 
 ## T3 #555
 
+- **v12's sizing repeats, not kept** (pending a D-id, D440). v12's `setBlockSizes` calls itself on each child twice, so a block at depth d is sized 2^d times, and the repeats are not idempotent: a child spanning s columns grows by `padding · (s − 1) / s` each time its container is re-sized, and a container stretched after its children's last sizing keeps them at the older size. No linear algorithm can give those numbers at every depth (at depth 50 the growth is 2^50 steps). The grid sizes each block twice: once bottom up (v12's first call) and once top down at the point v12 makes its second. That is v12's result exactly while no composite holds a composite (conformance `block/layout-parity.spec.ts`: every corpus source v12's code can run, 4,000 generated trees), and on every corpus fixture, nested ones included; a level deeper, all 1,000 generated trees without spans still agree (v12's strict `<` can flip on float noise, so to 1e-6) and 772 of 1,000 with spans.
+- **v12's span rules kept, so a child can pass its composite.** In a composite inside a composite, a spanning child's one growth step (above), and v12's even stretch (`(siblingWidth − …) / xSize` for every child, spans ignored), can leave a child up to a few px past its composite's edge, as v12 drew it. The invariant holds on every corpus source; `layout-stress.spec.ts` nests without spans. Fixing it changes v12's numbers one level down, so it waits for the D-id above.
+- **Overflow, for the invariant**: a child overflows where v12's grid has no room for it, its columns past v12's `xSize` (`columns` when set and below the total span, else the child count). With `columns` unset or at least the total span, v12 sizes a composite for one column per child even when children span more (its own rule); those children count as overflowing.
+- **D444 band**: a labelled composite is `padding + label height` taller, its grid below that; the label sits `padding` below the top, centred; the composite is at least `label width + 2 · padding` wide (v12: the label width, padding 0). An empty labelled composite is `label + 2 · padding` tall. Parity leaves the one labelled fixture out (asserted).
+- **Drawn box**: the shapes that fill their cell draw at least their natural size (v12's `rect` took `max(natural, cell)`; a spanning child v12's even stretch narrowed below its span keeps its size). Circle, double circle and diamond keep their natural size, centred (spec), where v12's double circle grew with its cell. The block arrow is as wide as its cell only when it spans and the cell is wider, at its natural height (v12); its polygon reaches `padding` past that box on the pointing sides, into the grid gap.
+- **Round** is sized as the square and drawn with `rx` 5 (v12 drew it as `rect`), not as flowchart's rounded rectangle; the other thirteen sizes are flowchart's copy (D446), whose rect is at least 12 px of label wide.
+- **Edges** (D441): `[start, middle, end]`, the middle at the centres' midpoint (v12's label point), or at the clipped ends' midpoint when an end's block holds the other and the centres' midpoint falls outside them; two blocks with one centre are joined straight down from it. The clip is the outermost crossing of the ray from the centre (v12's `intersectPolygon` took the crossing nearest the far point). v12's two-way block arrows (`right, down` …) are triangles with the centre on a side, so an edge from some directions ends at the centre, which is on the outline.
+- **Self-loop** (Pele not on this machine): one cubic Bézier from the outline on the ray 30° right of straight up to the ray 30° above straight right, control points 24 px out along those rays (`BLOCK_METRICS.loopAngle`, `loopReach`); its label at the curve's middle. Its arrowhead points along the ray into the block.
+- **Bounds** cover every outline, label, edge point (a loop's control points bound its curve) and edge label, plus 5 px; not spaces (v12's `getBBox` saw none) and not the origin (v12's `findBounds` started from 0). An empty model is 10 × 10.
+- `block.padding` that is not a finite number of 0 or more lays out at 8, with no warning (T5 marks the key `honoured` and may add one).
+- Labels are measured as written (entities not decoded, T2) with `layoutLabel`, in the theme's font and size plus a class's or `style`'s `font-size`, `font-weight` and `font-style`; `checkStyle` warnings are left to #556, which checks the style again to draw it.
+- The plugin object (`src/plugin.ts`, `block`) has `layoutKind: 'custom'`, `detector`, `parse` (with `ctx.limits`) and `layout`; no `render` (#556) or manifest (#558) yet, so it is typed `Omit<DiagramPlugin, 'render'>`.
+- `block` is in `usedBy` of `fontFamily`, `fontSize` and the nineteen shape-padding rows, and out of `theme-used-by.spec.ts`'s `NOT_DRAWN_YET`.
+
 ## T4 #556
 
 ## T5 #558
 
-- Declare `layoutKind: 'custom'` on the plugin object if T2/T3 have not (T1 has no plugin object).
+- The plugin object exists (`src/plugin.ts`, `layoutKind: 'custom'`, T3); add `render` (T4), `configDefaults` and the manifest.
 
 ## T6 #557
 
