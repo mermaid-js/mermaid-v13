@@ -37,6 +37,7 @@ const LISTED: ReadonlyMap<string, { kind: string; detail: (detail: string) => bo
   ['eventmodeling-cases/directive-in-line-unclosed', { kind: 'reject', detail: reject }],
   ['eventmodeling-cases/inline-', D523],
   ['e2e/nightly-check/parser-inline-data.mmd', D523],
+  ['e2e/nightly-check/layout-data-literal.mmd', D523],
   ['v12-specs/eventmodeling.test.ts#1', D523],
   ['e2e/nightly-check/parser-namespace-repeated.mmd', D522],
   ['e2e/nightly-check/parser-same-lane.mmd', D522],

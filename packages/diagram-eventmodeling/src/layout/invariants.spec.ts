@@ -86,4 +86,30 @@ describe('eventModelLayoutViolations', () => {
       v.join('\n')
     ).toBe(true);
   });
+
+  it('catches a self loop ending where another relation ends (overlapping heads)', () => {
+    const looped = model(frame('evt', 'E'), frame('ui', 'A', { sources: ['01', '02'] }));
+    const l = layoutEventModel(looped, eventModelTestContext(theme, {}, halfEm));
+    expect(eventModelLayoutViolations(looped, l)).toEqual([]);
+    const up = l.relations.find((r) => r.route === 'up');
+    const end = up?.points[1] as EventModelLayout['relations'][number]['points'][number];
+    // A loop brought down onto the end of the relation from E (the bottom ⅓ anchor).
+    const broken = {
+      ...l,
+      relations: l.relations.map((r) =>
+        r.route === 'self'
+          ? {
+              ...r,
+              points: [r.points[0]!, { x: end.x, y: end.y - 5 }, end],
+              head: [r.head[0], end, r.head[2]] as typeof r.head,
+            }
+          : r
+      ),
+    };
+    const v = eventModelLayoutViolations(looped, broken);
+    expect(
+      v.some((x) => x.includes('meets relation:01->02 at an end')),
+      v.join('\n')
+    ).toBe(true);
+  });
 });

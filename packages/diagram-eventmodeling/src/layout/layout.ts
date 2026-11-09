@@ -16,10 +16,11 @@
  *
  * Changed, as decided: each box at `max(stagger, lane.r + 10)`, so boxes never overlap (D521); a
  * relation within a lane from the source's right edge to the target's left edge, at each box's
- * middle (D521); box text is the bold name and the data in mono (D523), wrapped at 430, measured
- * with the theme font; the margin is `eventmodeling.padding` around what is drawn (D224). New: a
- * frame that names itself as its source gets a loop over its box's top (v12 drew a line through
- * the box), and text past the greatest box height is left out and flagged (v12 clipped it).
+ * middle (D521); box text is the bold name and the data in mono, as written (D523), wrapped at
+ * 430, measured with the theme font; the margin is `eventmodeling.padding` around what is drawn
+ * (D224). New: a frame that names itself as its source gets a loop over its box's top right
+ * corner, clear of the other relations' ends (v12 drew a line through the box), and text past the
+ * greatest box height is left out and flagged (v12 clipped it).
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
@@ -29,7 +30,7 @@ import {
   type MeasuredLabel,
   type Run,
 } from '@mermaid-js/core/text';
-import { EVENTMODELING_CONFIG_INVALID } from '../codes.ts';
+import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
 import {
@@ -55,7 +56,6 @@ export type EventModelLayoutContext = Pick<RenderContext, 'config' | 'measurer' 
   Partial<Pick<RenderContext, 'warn'>>;
 
 interface Env {
-  readonly font: FontKey;
   /** `text` through core's label layout in the layout's font, wrapped at `wrap`. */
   label(text: string, wrap: number, style: number): MeasuredLabel;
   /** The width of `text` in mono. */
@@ -74,11 +74,10 @@ export function layoutEventModel(
   };
   const { measurer } = ctx;
   const env: Env = {
-    font,
     label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { style }),
     monoWidth: (text) => measurer.width(text, font, Style.Mono),
   };
-  const padding = paddingOf(ctx);
+  const { padding } = eventModelingConfig(ctx.config.eventmodeling, ctx.warn ?? ignore);
   const structure = eventModelStructure(model);
 
   // Boxes: sized from their text, then placed left to right (D521).
@@ -142,10 +141,10 @@ export function layoutEventModel(
 
   const boxes: EventModelBoxLayout[] = sized.map((b, k) => {
     const top = (lanes[b.lane]?.y ?? 0) + M.lanePadding;
-    return { ...b, y: top, ...placeText(texts[k] as BoxText, b.x, top, b.width, b.height) };
+    return { ...b, y: top, ...placeText(texts[k] as BoxText, { ...b, y: top }) };
   });
 
-  const relations = structure.relations.map((r) => relationOf(r, structure.boxes, boxes, lanes));
+  const relations = structure.relations.map((r) => relationOf(r, boxes, lanes));
   return {
     font,
     radius: M.radius,
@@ -157,22 +156,8 @@ export function layoutEventModel(
   };
 }
 
-/** `eventmodeling.padding`: a number of 0 or more (or a numeric string), else 30 with a warning. */
-function paddingOf(ctx: EventModelLayoutContext): number {
-  const section = (ctx.config as { eventmodeling?: { padding?: unknown } }).eventmodeling;
-  const given = section?.padding;
-  if (given === undefined) return M.padding;
-  let n = Number.NaN;
-  if (typeof given === 'number') n = given;
-  else if (typeof given === 'string' && given.trim() !== '') n = Number(given);
-  if (Number.isFinite(n) && n >= 0) return n;
-  ctx.warn?.({
-    code: EVENTMODELING_CONFIG_INVALID,
-    message: `Ignored eventmodeling.padding: ${JSON.stringify(given)} is not a number of 0 or more; using ${M.padding}`,
-    path: 'eventmodeling.padding',
-  });
-  return M.padding;
-}
+/** For a layout run without a `warn` sink (unit tests, the invariants). */
+const ignore = (): void => undefined;
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
@@ -222,10 +207,25 @@ function boxText(env: Env, name: string, data: string | undefined): BoxText {
   };
 }
 
+/** Zero width space: a break hint core's label layout drops from what it draws. */
+const HIDDEN = '\u200b';
+/** Markup core's label layout reads in plain text: a tag's `<`, an entity's `&`, a `\n` break. */
+const MARKUP = /[<&]|\\(?=n)/g;
+const BLANKS = /[ \t]/g;
+
 /**
- * The data as one left-aligned label in mono: each source line laid out on its own, wrapped at
- * 430 less its indentation, which `indents` keeps (core's label layout collapses leading blanks).
- * A blank line stays a blank line.
+ * `text` as written, through core's label layout (D523): a zero width space after each `<`, `&`
+ * and a `\` before `n` keeps them from reading as a tag, an entity or a line break (and is dropped
+ * from the drawn text), and each blank is a no-break space, so a run of them stays (v12's
+ * `&nbsp;`) while a line can still wrap there. No core change.
+ */
+const literal = (text: string): string =>
+  text.replace(MARKUP, (m) => m + HIDDEN).replace(BLANKS, '\u00a0');
+
+/**
+ * The data as one left-aligned label in mono: each source line laid out on its own, as written
+ * ({@link literal}), wrapped at 430 less its indentation, which `indents` keeps. A blank line
+ * stays a blank line.
  */
 function dataLabel(env: Env, text: string): MeasuredLabel {
   const lines: Run[][] = [];
@@ -237,7 +237,7 @@ function dataLabel(env: Env, text: string): MeasuredLabel {
     const body = source.trimStart();
     const lead = source.slice(0, source.length - body.length);
     const indent = lead === '' ? 0 : Math.min(env.monoWidth(lead), M.textWrap / 2);
-    const label = env.label(body, M.textWrap - indent, Style.Mono);
+    const label = env.label(literal(body), M.textWrap - indent, Style.Mono);
     lineHeight = label.lineHeight;
     baseline = label.baseline;
     if (label.lines.length === 0) {
@@ -252,17 +252,27 @@ function dataLabel(env: Env, text: string): MeasuredLabel {
       widths.push(indent + (label.widths[i] ?? 0));
     }
   }
-  return measured(lines, indents, widths, lineHeight, baseline, true);
+  return measured({ lines, indents, widths, lineHeight, baseline, left: true });
 }
 
-function measured(
-  lines: Run[][],
-  indents: number[],
-  widths: number[],
-  lineHeight: number,
-  baseline: number,
-  left: boolean
-): MeasuredLabel {
+/** The lines of a label and how they are set. */
+interface LabelParts {
+  readonly lines: Run[][];
+  readonly indents: number[];
+  readonly widths: number[];
+  readonly lineHeight: number;
+  readonly baseline: number;
+  readonly left: boolean;
+}
+
+function measured({
+  lines,
+  indents,
+  widths,
+  lineHeight,
+  baseline,
+  left,
+}: LabelParts): MeasuredLabel {
   let width = 0;
   for (const w of widths) width = Math.max(width, w);
   return {
@@ -281,14 +291,14 @@ function measured(
 function upTo(label: MeasuredLabel, room: number): MeasuredLabel {
   if (label.height <= room) return label;
   const n = label.lineHeight > 0 ? Math.max(0, Math.floor(room / label.lineHeight)) : 0;
-  return measured(
-    label.lines.slice(0, n),
-    label.indents.slice(0, n),
-    label.widths.slice(0, n),
-    label.lineHeight,
-    label.baseline,
-    label.left === true
-  );
+  return measured({
+    lines: label.lines.slice(0, n),
+    indents: label.indents.slice(0, n),
+    widths: label.widths.slice(0, n),
+    lineHeight: label.lineHeight,
+    baseline: label.baseline,
+    left: label.left === true,
+  });
 }
 
 /**
@@ -297,10 +307,7 @@ function upTo(label: MeasuredLabel, room: number): MeasuredLabel {
  */
 function placeText(
   text: BoxText,
-  x: number,
-  y: number,
-  width: number,
-  height: number
+  { x, y, width, height }: Rect
 ): Pick<EventModelBoxLayout, 'name' | 'data'> {
   const inset = M.boxPadding + M.boxTextPadding;
   const top = y + (height - text.height) / 2;
@@ -311,20 +318,18 @@ function placeText(
 
 function relationOf(
   r: EventModelRelation,
-  structureBoxes: readonly { readonly lane: number }[],
   boxes: readonly EventModelBoxLayout[],
   lanes: readonly EventModelLaneLayout[]
 ): EventModelRelationLayout {
   const s = boxes[r.source] as EventModelBoxLayout;
   const t = boxes[r.target] as EventModelBoxLayout;
-  const sLane = structureBoxes[r.source]?.lane ?? 0;
-  const tLane = structureBoxes[r.target]?.lane ?? 0;
   let route: EventModelRoute;
   let points: Point[];
   if (r.source === r.target) {
     route = 'self';
-    const from = s.x + share(s.width, SOURCE_ANCHOR);
-    const to = s.x + share(s.width, TARGET_ANCHOR);
+    // Over the top right corner, clear of the anchors of the relations between lanes.
+    const to = s.x + s.width - M.selfLoopInset;
+    const from = to - M.selfLoopWidth;
     const over = s.y - M.selfLoopRise;
     points = [
       { x: from, y: s.y },
@@ -332,14 +337,14 @@ function relationOf(
       { x: to, y: over },
       { x: to, y: s.y },
     ];
-  } else if (sLane === tLane) {
+  } else if (s.lane === t.lane) {
     route = 'along';
     points = [
       { x: s.x + s.width, y: s.y + s.height / 2 },
       { x: t.x, y: t.y + t.height / 2 },
     ];
   } else {
-    const up = (lanes[sLane]?.y ?? 0) > (lanes[tLane]?.y ?? 0);
+    const up = (lanes[s.lane]?.y ?? 0) > (lanes[t.lane]?.y ?? 0);
     route = up ? 'up' : 'down';
     points = [
       { x: s.x + share(s.width, SOURCE_ANCHOR), y: up ? s.y : s.y + s.height },

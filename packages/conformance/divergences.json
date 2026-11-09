@@ -1072,6 +1072,14 @@
     "since": "2026-11-09"
   },
   {
+    "id": "e2e/nightly-check/layout-data-literal.mmd",
+    "inputHash": "sha256:20a339710ec26d05",
+    "kind": "model",
+    "reason": "Data text (D523): v12 drew data as HTML (the `<div>` a tag, `&amp;` an entity, `<br/>` a break); v13 shows the text between the braces as written, in mono. Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#604",
+    "since": "2026-11-09"
+  },
+  {
     "id": "e2e/nightly-check/parser-namespace-repeated.mmd",
     "inputHash": "sha256:e6552d2708f3a5f0",
     "kind": "model",
@@ -1157,6 +1165,14 @@
     "kind": "model",
     "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/nightly-check/layout-data-literal.mmd (CRLF)",
+    "inputHash": "sha256:13e2778c2261a093",
+    "kind": "model",
+    "reason": "Data text (D523): v12 drew data as HTML (the `<div>` a tag, `&amp;` an entity, `<br/>` a break); v13 shows the text between the braces as written, in mono. Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#604",
     "since": "2026-11-09"
   },
   {
@@ -1248,6 +1264,14 @@
     "since": "2026-11-09"
   },
   {
+    "id": "e2e/nightly-check/layout-data-literal.mmd (commented)",
+    "inputHash": "sha256:f33254ce3d506844",
+    "kind": "model",
+    "reason": "Data text (D523): v12 drew data as HTML (the `<div>` a tag, `&amp;` an entity, `<br/>` a break); v13 shows the text between the braces as written, in mono. Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#604",
+    "since": "2026-11-09"
+  },
+  {
     "id": "e2e/nightly-check/parser-namespace-repeated.mmd (commented)",
     "inputHash": "sha256:17106c5c4eb70b68",
     "kind": "model",
@@ -1309,6 +1333,14 @@
     "kind": "model",
     "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/layout-data-literal.mmd",
+    "inputHash": "sha256:20a339710ec26d05",
+    "kind": "model",
+    "reason": "Data text (D523): v12 drew data as HTML (the `<div>` a tag, `&amp;` an entity, `<br/>` a break); v13 shows the text between the braces as written, in mono. Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#604",
     "since": "2026-11-09"
   },
   {

@@ -38,8 +38,14 @@ export interface EventModelMetrics {
   /** The arrowhead (v12's marker `0 0, 10 3.5, 0 7`): length along the line, width across. */
   readonly headLength: number;
   readonly headWidth: number;
-  /** v13: a self relation's loop rises this far above its box's top (into the lane padding). */
+  /**
+   * v13: a self relation's loop over its box's top right corner: it rises this far above the top
+   * (into the lane padding), is this wide, and comes down this far in from the right edge, clear
+   * of the ⅓ and ⅔ anchors of the relations between lanes.
+   */
   readonly selfLoopRise: number;
+  readonly selfLoopWidth: number;
+  readonly selfLoopInset: number;
   /** The margin around the content when `eventmodeling.padding` is unset (v12 `?? 30`). */
   readonly padding: number;
 }
@@ -63,6 +69,8 @@ export const EVENTMODELING_METRICS: EventModelMetrics = {
   headLength: 10,
   headWidth: 7,
   selfLoopRise: 10,
+  selfLoopWidth: 10,
+  selfLoopInset: 10,
   padding: 30,
 };
 
@@ -76,6 +84,12 @@ export const TARGET_ANCHOR: readonly [number, number] = [1, 3];
 
 /** `width` times a fraction, multiplied first as v12 did. */
 export const share = (width: number, [n, d]: readonly [number, number]): number => (width * n) / d;
+
+/**
+ * `eventmodeling.padding` must stay finite times this (D366's headroom test): the bounds add it
+ * on both sides of the content, so no sum overflows to Infinity. A factor, not a length.
+ */
+export const PADDING_HEADROOM = 4;
 
 /** Text is measured at the theme font's normal weight; names add `Style.Bold`, data `Style.Mono`. */
 export const FONT_WEIGHT = 400;

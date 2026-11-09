@@ -7,7 +7,8 @@
  * - no two boxes overlap; each box lies inside its lane;
  * - lanes never overlap and run top to bottom in index order;
  * - boxes' x order follows the frames' order;
- * - each relation starts on its source box's edge and ends on its target's;
+ * - each relation starts on its source box's edge and ends on its target's, and a self loop's
+ *   ends meet no other relation's;
  * - each box's name and data lie inside the box;
  * - everything drawn lies inside `bounds`.
  */
@@ -134,5 +135,21 @@ function relationViolations({ boxes, relations }: EventModelLayout, out: string[
     if (!onEdge(end, t)) out.push(`relation ${r.id} ends off its target's edge`);
     if (r.head[1].x !== end.x || r.head[1].y !== end.y)
       out.push(`relation ${r.id}'s head is not at its end`);
+  }
+  // A self loop's ends meet no other relation's end on its box, so no two heads overlap there.
+  // (Relations between lanes into one box share v12's anchor, as v12 drew them.)
+  const ends = (r: EventModelLayout['relations'][number]): Point[] => [
+    r.points[0] as Point,
+    r.points[r.points.length - 1] as Point,
+  ];
+  const same = (a: Point, b: Point): boolean =>
+    Math.abs(a.x - b.x) <= EPS && Math.abs(a.y - b.y) <= EPS;
+  for (const loop of relations) {
+    if (loop.source !== loop.target) continue;
+    for (const r of relations) {
+      if (r === loop || (r.source !== loop.source && r.target !== loop.source)) continue;
+      if (ends(loop).some((p) => ends(r).some((q) => same(p, q))))
+        out.push(`relation ${loop.id} meets ${r.id} at an end`);
+    }
   }
 }

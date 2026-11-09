@@ -130,23 +130,24 @@ describe('layoutEventModel', () => {
     });
   });
 
-  it('loops a self relation over the top of its box, in the lane padding', () => {
-    const l = lay(model(frame('ui', 'A', { sources: ['01'] })));
-    const [r] = l.relations;
-    expect(r?.route).toBe('self');
-    const a = 250 + 200 / 3;
-    const b = 250 + 100 / 3;
-    expect(r?.points).toEqual([
-      { x: a, y: 15 },
-      { x: a, y: 5 },
-      { x: b, y: 5 },
-      { x: b, y: 15 },
+  it('loops a self relation over the top right corner, clear of the other anchors', () => {
+    const l = lay(model(frame('evt', 'E'), frame('ui', 'A', { sources: ['01', '02'] })));
+    const self = l.relations.find((r) => r.route === 'self');
+    // A is at (280, 15), 100 wide: the loop rises 10 at 360, crosses to 370, comes down there.
+    expect(self?.points).toEqual([
+      { x: 360, y: 15 },
+      { x: 360, y: 5 },
+      { x: 370, y: 5 },
+      { x: 370, y: 15 },
     ]);
-    expect(r?.head).toEqual([
-      { x: b - 3.5, y: 5 },
-      { x: b, y: 15 },
-      { x: b + 3.5, y: 5 },
+    expect(self?.head).toEqual([
+      { x: 366.5, y: 5 },
+      { x: 370, y: 15 },
+      { x: 373.5, y: 5 },
     ]);
+    // The relation up from E ends at ⅓ of A's width on its bottom; nothing else ends at the loop.
+    const up = l.relations.find((r) => r.route === 'up');
+    expect(up?.points[1]).toEqual({ x: 280 + 100 / 3, y: 115 });
   });
 
   it('draws no relation to the first frame or a reset frame', () => {
@@ -177,14 +178,35 @@ describe('layoutEventModel', () => {
     expect(data?.text.left).toBe(true);
     expect(data?.text.indents).toEqual([0, 16, 0, 0]);
     expect(data?.text.widths).toEqual([32, 56, 0, 8]);
+    // Blanks are no-break spaces, so a run of them is kept when drawn.
     expect(data?.text.lines.map((line) => line.map((r) => r.text).join(''))).toEqual([
-      'a: 1',
-      'b: 22',
+      'a:\u00a01',
+      'b:\u00a022',
       '',
       'c',
     ]);
     expect(data?.text.lines[0]?.[0]?.attrs).toEqual({ 'font-family': 'monospace' });
     expect(box?.clipped).toBeUndefined();
+  });
+
+  it('shows data as written: blanks kept, no tags, entities or written line breaks (D523)', () => {
+    const text = '{\n  "id":    42,\n  "html": "<div>&amp;</div>",\n  "esc": "a\\nb <br/>"\n}';
+    const l = lay(model(frame('cmd', 'A', { data: { text } })));
+    const data = l.boxes[0]?.data;
+    const shown = data?.text.lines.map((line) =>
+      line.map((r) => r.text.replace(/\u00a0/g, ' ')).join('')
+    );
+    expect(shown).toEqual([
+      '{',
+      '"id":    42,',
+      '"html": "<div>&amp;</div>",',
+      '"esc": "a\\nb <br/>"',
+      '}',
+    ]);
+    expect(data?.text.indents).toEqual([0, 16, 16, 16, 0]);
+    // Every character is measured: '"id":    42,' is 12 wide in characters.
+    expect(data?.text.widths[1]).toBe(16 + 12 * 8);
+    expect(data?.text.lines.flat().every((r) => !r.text.includes('\u200b'))).toBe(true);
   });
 
   it('wraps names and data at 430, so a box is at most 470 wide', () => {
@@ -218,7 +240,7 @@ describe('layoutEventModel', () => {
     expect(l.lanes[0]?.height).toBe(800);
   });
 
-  it('takes eventmodeling.padding, and warns on one that is not a length', () => {
+  it('takes eventmodeling.padding, and warns on one that is not a finite length', () => {
     expect(lay(model(frame('ui', 'A')), { padding: 0 }).bounds).toEqual({
       x: 0,
       y: 0,
@@ -227,14 +249,15 @@ describe('layoutEventModel', () => {
     });
     expect(lay(model(frame('ui', 'A')), { padding: '12' }).padding).toBe(12);
     const warnings: Warning[] = [];
-    expect(lay(model(frame('ui', 'A')), { padding: -1 }, (w) => warnings.push(w)).padding).toBe(30);
-    expect(lay(model(frame('ui', 'A')), { padding: 'wide' }, (w) => warnings.push(w)).padding).toBe(
-      30
+    for (const padding of [-1, 'wide', 1e308, Infinity, Number.NaN, true]) {
+      const l = lay(model(frame('ui', 'A')), { padding }, (w) => warnings.push(w));
+      expect(l.padding).toBe(30);
+    }
+    expect(warnings.map((w) => [w.code, w.path])).toEqual(
+      Array.from({ length: 6 }, () => [EVENTMODELING_CONFIG_INVALID, 'eventmodeling.padding'])
     );
-    expect(warnings.map((w) => [w.code, w.path])).toEqual([
-      [EVENTMODELING_CONFIG_INVALID, 'eventmodeling.padding'],
-      [EVENTMODELING_CONFIG_INVALID, 'eventmodeling.padding'],
-    ]);
+    // The largest that keeps the bounds finite is taken.
+    expect(lay(model(frame('ui', 'A')), { padding: 1e300 }).padding).toBe(1e300);
   });
 
   it('lays out an empty model as its padding alone', () => {
