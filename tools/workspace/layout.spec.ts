@@ -53,6 +53,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './ascii',
         './config',
         './layout',
+        './layout/swimlane',
         './layout/tree',
         './limits',
         './parser-kit',
