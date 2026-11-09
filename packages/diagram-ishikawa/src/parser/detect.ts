@@ -8,9 +8,13 @@
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
-const HEADER = /ishikawa(?:-beta)?\b/iy;
+/** v12's pattern at the diagram start; no `g` or `y` flag, so it keeps no state between calls. */
+const HEADER = /^ishikawa(?:-beta)?\b/i;
+
+/** `ishikawa-beta` and the character `\b` looks at after it. */
+const HEADER_SPAN = 'ishikawa-beta'.length + 1;
 
 export function detectIshikawa(src: string, pre: PreprocessResult = preprocess(src)): boolean {
-  HEADER.lastIndex = diagramStart(src, pre);
-  return HEADER.test(src);
+  const at = diagramStart(src, pre);
+  return HEADER.test(src.slice(at, at + HEADER_SPAN));
 }

@@ -13,7 +13,7 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 
 ## T2 (#581)
 
-- `sanitizeText`: the oracle's DOMPurify is the identity, so v12's `sanitizeText` changed nothing parity sees. Choice: the model keeps text as written (entities as `&…;`, `<br>` kept) and the writer escapes it, as mindmap, sankey and gitGraph (D263) do.
+- `sanitizeText`: v12's DB ran every label through `sanitizeText` (DOMPurify; under `strict` a browser strips `<script>` and the like). v13 has no HTML sanitizer: output is safe by construction and text is escaped when written (R-SEC-1; MIGRATION.md "v13 has no HTML sanitizer", the `dompurifyConfig` row). Choice: the model keeps text as written (entities as `&…;`, `<br>` kept), as the sankey and mindmap models do; parity is unaffected (the oracle stubs DOMPurify). MIGRATION.md row for T5 (below).
 - Levels: v12's nodes keep no level, so model parity compares the depth in the tree (`[depth, text]` in pre-order) and the title (v12's is the effect). `IshikawaCause.level` is v12's DB level (`max(1, indent − baseline + 1)`), which can exceed the depth; T3 reads the depth from the tree.
 - Oracle finding: a `stop` takes one `SPACELINE`, so blank and comment lines pair up: a line after an even number of `SPACELINE` tokens (an odd number right after the header, as in `ishikawa-beta⏎⏎P`) is rejected. Blank lines in a row are one token; a `%%` line takes the blank lines before it. The parser reports such a line once and still reads it, so N errors give N diagnostics.
 - AST: flat in source order, `Effect` and `Cause` nodes (`text`, `indent`, a cause's `level`); the grammar's `@Node` is both. Symbols: one `cause` definition per cause; the effect is no symbol (D497 names causes only). Statement spans: `header`, `effect`, and `cause` spans nested by the tree (folding, T6).
@@ -32,6 +32,7 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 
 ## T5 (#585)
 
+- From #581: a MIGRATION.md row in the Ishikawa section, like class's `sanitizeText` row: "Labels passed through `sanitizeText` (DOMPurify) | Text is escaped when written, never sanitised: `<b>`, `<T>` and the like are shown as written, and known HTML tags are read as the label subset | R-SEC-1". Also D492 (effect kept apart from the title) and D496 (the two warnings) rows.
 - The spec's line references are stale: the registry row is at `registry.gen.ts:154`, the schema block at `config.schema.yaml:2320` (`useMaxWidth` :2334). No spec lists ishikawa as unsupported; add the "now renders" spec fresh.
 
 ## T6 (#584)

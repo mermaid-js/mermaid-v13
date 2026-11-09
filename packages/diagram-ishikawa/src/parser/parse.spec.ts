@@ -245,6 +245,15 @@ describe('ishikawa parser: errors (R-PARSE-4)', () => {
     expect(e?.message).toMatch(/got `P`; a comment ends at a line separator/);
   });
 
+  it('names the text past a directive cut out between the blanks and the text', () => {
+    // The indent, then a removed directive (trivia), then the text: the message names the text.
+    const src = 'ishikawa-beta %% c\u2028 %%{init: {}}%%P\n  A';
+    const [e, ...rest] = errors(src);
+    expect(rest).toEqual([]);
+    expect(e?.message).toMatch(/got `P`; a comment ends at a line separator/);
+    expect(e?.range).toEqual({ start: src.indexOf('P'), end: src.indexOf('P') + 1 });
+  });
+
   it('reports a missing header once and reads the lines', () => {
     const r = parseIshikawa('Problem\n  A');
     expect(r.diagnostics.map((d) => d.message)).toEqual([

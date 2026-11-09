@@ -8,8 +8,9 @@
  *   indent is the baseline, each cause's level is `max(1, indent − baseline + 1)` (the effect's
  *   indent is ignored), and a cause hangs under the last open cause of a lower level;
  * - text as v12's grammar handed it to its DB (`$2.trim()`): blanks around it dropped,
- *   entities as written (`&amp;`, and v12's `#35;` form as `&#35;`), `<br>` kept; v12 passed it
- *   through `sanitizeText`, v13 writes text escaped instead, so nothing is removed here.
+ *   entities as written (`&amp;`, and v12's `#35;` form as `&#35;`), `<br>` kept. v12 passed it
+ *   through `sanitizeText` (DOMPurify); v13 has no HTML sanitizer and writes text escaped
+ *   (R-SEC-1), so nothing is removed here.
  *
  * AST ids (D497): `effect`, and `cause:<i>.<j>.<k>` for a cause, its 1-based position in the
  * tree. Shared contract of the ishikawa tickets: change it only additively, and say so in

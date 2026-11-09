@@ -34,6 +34,7 @@ import {
   LineIndex,
   ParseState,
   sourceView,
+  syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -63,6 +64,14 @@ export type IshikawaParseResult = ParseResult<IshikawaModel, IshikawaDocument>;
 const STOPS = kindSet(Kind.Newline, T.Eof, T.SpaceLine, T.CommentLine);
 /** A blank or comment line (jison's `SPACELINE`). */
 const BLANK_LINES = kindSet(T.SpaceLine, T.CommentLine);
+/** What an error after an indent names: the text or keyword after it, not the blanks. */
+const AFTER_INDENT = kindSet(T.Text, T.Ishikawa);
+
+/**
+ * What a statement read, for the message of a missing separator after it: a line of text, a
+ * bare indent, a blank line, or a comment line.
+ */
+type Read = 'line' | 'indent' | 'blank' | 'comment';
 
 // What the parser expects, in Mermaid terms (R-ERR-2, R-ERR-5).
 const HEADER = ['`ishikawa`', '`ishikawa-beta`'];
@@ -84,6 +93,10 @@ const SEPARATOR_HINT =
  */
 class Stop extends Error {}
 const STOP = new Stop();
+
+/** Author text as a message quotes it: in backticks, at most 24 characters. */
+const quote = (text: string): string =>
+  text.length > 24 ? `\`${text.slice(0, 24)}…\`` : `\`${text}\``;
 
 /** Parse an ishikawa diagram. Never throws: problems are error diagnostics. */
 export function parseIshikawa(
@@ -134,8 +147,6 @@ class IshikawaParser {
   private readonly clamped: OpenCause[] = [];
   /** The end of the last line of text read, where the open causes' spans end. */
   private lastEnd = 0;
-  /** The kind of the last statement read, for the hints. */
-  private last = 0;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -204,12 +215,23 @@ class IshikawaParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  /** The token an error message names: the current one (the text after it, for blanks). */
-  private named(): number {
+  /** The kind of the token an error message names: the current one, or the one after blanks. */
+  private namedKind(): number {
     const { c } = this;
-    if (c.kind !== T.SpaceList) return c.pos;
-    const next = this.c.tokens.kind[c.pos + 1];
-    return next === T.Text || next === T.Ishikawa ? c.pos + 1 : c.pos;
+    return c.kind === T.SpaceList && AFTER_INDENT[c.peek()] ? c.peek() : c.kind;
+  }
+
+  /**
+   * Where an error is and how its message names it: the current token, or the text or keyword
+   * after blanks (past any trivia between, as the cursor skips it). The cursor stays.
+   */
+  private named(): { range: Range; found: string } {
+    const { c } = this;
+    const at = c.pos;
+    if (c.kind === T.SpaceList && AFTER_INDENT[c.peek()]) c.next();
+    const named = { range: c.range, found: this.found(c.pos) };
+    c.pos = at;
+    return named;
   }
 
   /** How an error message names token `j`. */
@@ -222,15 +244,13 @@ class IshikawaParser {
     if (k === T.CommentLine) return 'a comment';
     if (k === T.SpaceLine) return 'a blank line';
     const text = this.raw(j).trim();
-    if (text === '') return 'blanks';
-    return text.length > 24 ? `\`${text.slice(0, 24)}…\`` : `\`${text}\``;
+    return text === '' ? 'blanks' : quote(text);
   }
 
   /** Report what was found where `names` were expected, with a hint. */
   private report(names: string[], hint?: string): void {
-    const j = this.named();
-    const range = this.range(j);
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', range, names, this.found(j));
+    const { range, found } = this.named();
+    const d = this.st.diagnostics.unexpected('UNEXPECTED', range, names, found);
     if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
   }
 
@@ -242,8 +262,7 @@ class IshikawaParser {
 
   /** Skip to the next statement after an error (R-PARSE-4): the next line break, and past it. */
   private recover(): void {
-    const { c } = this;
-    while (c.kind !== Kind.EOF && !STOPS[c.kind]) c.next();
+    syncTo(this.c, STOPS);
     this.separator();
   }
 
@@ -277,8 +296,7 @@ class IshikawaParser {
     while (first || c.kind !== Kind.EOF) {
       first = false;
       try {
-        this.statement();
-        this.stop();
+        this.stop(this.statement());
       } catch (error) {
         if (error !== STOP) throw error;
         this.recover();
@@ -287,41 +305,43 @@ class IshikawaParser {
   }
 
   /** `statement`: an indent and an optional line of text, a line of text, or a blank line. */
-  private statement(): void {
+  private statement(): Read {
     const { c } = this;
     const k = c.kind;
-    this.last = k;
     if (k === T.SpaceList) {
       const indent = this.raw(c.next()).length;
-      if (c.kind === T.Text) this.line(indent);
-      return;
+      if (c.kind !== T.Text) return 'indent';
+      this.line(indent);
+      return 'line';
     }
     if (k === T.Text) {
       this.line(0);
-      return;
+      return 'line';
     }
     if (BLANK_LINES[k]) {
       c.next();
-      return;
+      return k === T.CommentLine ? 'comment' : 'blank';
     }
     if (k === T.Ishikawa) this.fail(LINE, KEYWORD_HINT);
     this.fail(LINE, this.headerRange ? EMPTY_HEADER_HINT : undefined);
   }
 
-  /** `stop`: a line break, the end, or a blank or comment line; then line breaks. */
-  private stop(): void {
+  /**
+   * `stop` after a statement that read `read`: a line break, the end, or a blank or comment
+   * line; then line breaks.
+   */
+  private stop(read: Read): void {
     const { c } = this;
     if (STOPS[c.kind]) {
       this.separator();
       return;
     }
-    const k = this.c.tokens.kind[this.named()];
-    if (k === T.Ishikawa) this.fail(LINE, KEYWORD_HINT);
-    if (BLANK_LINES[this.last]) {
-      // A line one blank line too early or late: one error, and the line is still read.
-      const between = this.src.slice(this.range(c.pos - 1).end, c.start);
-      const separated = this.last === T.CommentLine && !between.includes('\n');
-      this.report(LINE_BREAK, separated ? SEPARATOR_HINT : PAIRS_HINT);
+    if (this.namedKind() === T.Ishikawa) this.fail(LINE, KEYWORD_HINT);
+    if (read === 'blank' || read === 'comment') {
+      // A line one blank line too early or late: one error, and the line is still read. Only a
+      // line separator ends a comment line without a separator after it (a line break would be
+      // one), so the text after a comment line is on its line.
+      this.report(LINE_BREAK, read === 'comment' ? SEPARATOR_HINT : PAIRS_HINT);
       return;
     }
     this.fail(LINE_BREAK);
@@ -388,19 +408,16 @@ class IshikawaParser {
     const first = clamped[0];
     const baseline = this.causes[0];
     if (!first || !baseline) return;
-    const shown = (c: OpenCause) =>
-      `${c.text.length > 24 ? `\`${c.text.slice(0, 24)}…\`` : `\`${c.text}\``} at line ${this.lineOf(c.range.start)}`;
-    const many = clamped.length > 1;
+    const shown = (c: OpenCause) => `${quote(c.text)} at line ${this.lineOf(c.range.start)}`;
     const list = clamped.slice(0, 3).map(shown).join(', ') + (clamped.length > 3 ? ', …' : '');
+    const message =
+      clamped.length === 1
+        ? `A cause is indented less than the first cause (${shown(baseline)}), so it is read as a top-level cause: ${list}. Indent it at least as deep as the first cause to nest it.`
+        : `${clamped.length} causes are indented less than the first cause (${shown(baseline)}), so they are read as top-level causes: ${list}. Indent them at least as deep as the first cause to nest them.`;
     const related: RelatedInfo[] = clamped.map((c) => ({
       message: `${shown(c)} is indented less than the first cause, so it is a top-level cause.`,
       range: c.range,
     }));
-    d.warning(
-      ISHIKAWA_INDENT_CLAMPED,
-      `${many ? `${clamped.length} causes are` : 'A cause is'} indented less than the first cause (${shown(baseline)}), so ${many ? 'they are read as top-level causes' : 'it is read as a top-level cause'}: ${list}. Indent ${many ? 'them' : 'it'} at least as deep as the first cause to nest ${many ? 'them' : 'it'}.`,
-      first.range,
-      { related }
-    );
+    d.warning(ISHIKAWA_INDENT_CLAMPED, message, first.range, { related });
   }
 }

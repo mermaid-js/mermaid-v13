@@ -51,11 +51,11 @@ export function referenceVerdict(source: string): Verdict {
   // A range that ends where a directive was cut out maps to either side of it.
   const directives = preprocess(source).directives.map((d) => d.range);
   const toShape = (a: AstShape): Shape => {
-    const text = lexed.input.text;
-    let from = lexed.tokens[a.start]?.outerStart ?? 0;
-    let to = lexed.tokens[a.end - 1]?.outerEnd ?? 0;
-    while (from < to && /\s/.test(text[from] ?? '')) from++;
-    while (to > from && /\s/.test(text[to - 1] ?? '')) to--;
+    const [from, to] = trim(
+      lexed.input.text,
+      lexed.tokens[a.start]?.outerStart ?? 0,
+      lexed.tokens[a.end - 1]?.outerEnd ?? 0
+    );
     const r = sourceRange(lexed.input, from, to);
     return { type: a.type, range: trimRemoved(source, r.start, r.end, directives) };
   };
