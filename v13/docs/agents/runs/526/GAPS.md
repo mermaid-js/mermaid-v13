@@ -28,6 +28,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #613 T4 renderer
 
 ## #615 T5 integration
+- #637 wiring (moved on the merge of 18b902dcb): add `e2e/diagrams/railroad/hand-drawn.txt` (`unsketched`, D301) once railroad renders (the unsketched spec renders the folder); add `configDefaults: true`, `release:` (and `languageBundle:` from T6) to `packages/diagram-railroad/workspace.yaml` with the manifest; MIGRATION section goes to `v13/docs/migration/railroad.md`; drop `theme.notDrawnYet` in T4.
 - Exploration: 12.2.0 already fixes neo-dark's `secondBkg` (once the literal `calculated`); tabulate from the oracle, not from older notes.
 
 ## #616 T6 language
