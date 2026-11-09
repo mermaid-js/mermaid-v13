@@ -19,7 +19,7 @@
 1. Confirm the base: `git merge-base --is-ancestor feature/517_usecase HEAD`. If that fails, `git reset --hard feature/517_usecase`.
 2. Use the Skill tool with `tdd` (and `ddlt` for layout). Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, model parity, layout invariants). Before T5's manifest lands, render through the package's own test harness as kanban's T4 did.
 3. Stay within the ticket's scope. Touch shared files minimally and additively.
-4. `pnpm check` must pass, and the `packages/conformance` specs (pitfall 26). Commit. Don't push, open PRs, or comment on or close issues.
+4. **Scoped checks at handoff** (maintainer, 2026-11-09: "Yes, scope ticket checks"), with no lock and `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-usecase`, the usecase conformance and parity specs in `packages/conformance`, `tsc --noEmit -p` for each touched package, and eslint on the changed files. Paste the results into the handoff. **Exception:** a ticket that changes core, shared conformance code (oracle, harvester, registry), `tools/*` or another package still runs the full `pnpm check` under the lock. The full check also runs once per integration-branch push (pre-push hook). Commit. Don't push, open PRs, or comment on or close issues.
 5. Before reporting, `git merge feature/517_usecase` and run the checks again.
 6. Write `v13/docs/agents/runs/517/tickets/<N>.md` (≤ 40 lines) in your own worktree, committed on your branch: exports, how to use them, test helpers, gz size, core size before/after, decisions, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
