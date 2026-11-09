@@ -67,17 +67,22 @@ describe('box-drawing errors', () => {
     const src = '%% c\ntreeView-beta\n├── a\n  b';
     const { box } = treeViewLex(src);
     expect(box.kind).toBe('error');
-    expect(box.kind === 'error' && box.error.message).toBe(
+    expect(box.kind === 'error' && box.errors[0].message).toBe(
       'Line 3: Unexpected indentation without box-drawing characters. In box-drawing format, use ├── or └── prefixes for indented nodes.'
     );
-    expect(box.kind === 'error' && box.error.line).toBe(3);
+    expect(box.kind === 'error' && box.errors[0].line).toBe(3);
   });
 
-  it('lexes the text as written when the pass fails', () => {
-    const src = 'treeView-beta\n├── ';
+  it('lexes the rewrite with the rejected lines dropped when the pass fails', () => {
+    const src = 'treeView-beta\n├── a\n├── \n└── b';
     const { box, tokens } = treeViewLex(src);
-    expect(box.kind === 'error' && box.error.message).toMatch(/^Line 2: Empty node/);
-    expect(tokens.filter((t) => t.kind === T.BareName).map((t) => slice(src, t))).toEqual(['├── ']);
+    expect(box.kind === 'error' && box.errors.map((e) => [e.code, e.line])).toEqual([
+      ['empty-node', 3],
+    ]);
+    expect(tokens.filter((t) => t.kind === T.BareName).map((t) => slice(src, t))).toEqual([
+      'a',
+      'b',
+    ]);
   });
 });
 

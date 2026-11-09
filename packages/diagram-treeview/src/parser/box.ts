@@ -45,6 +45,11 @@ const METADATA_LINE = /^\s*(title[\t ]|accTitle[\t ]*:|accDescr[\t ]*[:{])/;
 
 /** A box-pass error, as v12 threw it. */
 export interface BoxError {
+  /**
+   * Which rule rejected the line: `empty-node` (a branch glyph with no name after its prefix)
+   * or `indent` (leading blanks and no box glyph).
+   */
+  code: 'empty-node' | 'indent';
   /** v12's message, `Line N: …` with v12's line number (line 1 is the header line). */
   message: string;
   /** That line number. */
@@ -52,6 +57,8 @@ export interface BoxError {
   /** The line's range in the text given to {@link boxDrawing}. */
   start: number;
   end: number;
+  /** Where the error points (the same text): the branch glyph, or the start of the line. */
+  at: number;
 }
 
 /** The text v12's lexer read after the pass, and where each of its characters came from. */
@@ -68,13 +75,26 @@ export interface BoxRewrite {
   last: Uint32Array;
 }
 
-/** What the pass did: nothing, a rewrite, or an error (v12 threw; nothing was rewritten). */
+/**
+ * What the pass did: nothing, a rewrite, or errors. v12 threw at the first of `errors` and
+ * lexed nothing; `errors` are every line its rules reject, in order, and `rewrite` is the
+ * rewrite with those lines dropped, which the parser reads to report the errors on the other
+ * lines too (R-PARSE-4).
+ */
 export type BoxPass =
   | { kind: 'none' }
   | { kind: 'rewrite'; rewrite: BoxRewrite }
-  | { kind: 'error'; error: BoxError };
+  | { kind: 'error'; errors: readonly [BoxError, ...BoxError[]]; rewrite: BoxRewrite };
 
 const NONE: BoxPass = { kind: 'none' };
+
+/** v12's messages, after `Line N: `. */
+const MESSAGES: Readonly<Record<BoxError['code'], string>> = {
+  'empty-node': 'Empty node — expected a filename or directory name after the box-drawing prefix',
+  indent:
+    'Unexpected indentation without box-drawing characters. ' +
+    'In box-drawing format, use ├── or └── prefixes for indented nodes.',
+};
 
 /** A line of the text: `[start, end)`, its line break `[end, next)`. */
 interface Line {
@@ -105,10 +125,11 @@ export function boxDrawing(text: string, from: number): BoxPass {
     if (previous) out.lineBreak(previous.end, previous.next);
     previous = l;
   };
-  const fail = (i: number, l: Line, message: string): BoxPass => ({
-    kind: 'error',
-    error: { message: `Line ${i + 1}: ${message}`, line: i + 1, start: l.start, end: l.end },
-  });
+  const errors: BoxError[] = [];
+  const fail = (code: BoxError['code'], i: number, l: Line, point: number): void => {
+    const message = `Line ${i + 1}: ${MESSAGES[code]}`;
+    errors.push({ code, message, line: i + 1, start: l.start, end: l.end, at: point });
+  };
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]!;
     const line = at(l);
@@ -122,11 +143,8 @@ export function boxDrawing(text: string, from: number): BoxPass {
     if (branch) {
       const content = branchContent(line, branch.index, l.start);
       if (!content) {
-        return fail(
-          i,
-          l,
-          'Empty node — expected a filename or directory name after the box-drawing prefix'
-        );
+        fail('empty-node', i, l, l.start + branch.index);
+        continue;
       }
       keep(l);
       const depth = Math.round(branch.col / width) + 1;
@@ -137,16 +155,14 @@ export function boxDrawing(text: string, from: number): BoxPass {
     const kind = glyphs(line);
     if (kind === 'only') continue;
     if (kind === 'none' && isSpace(line.charCodeAt(0))) {
-      return fail(
-        i,
-        l,
-        'Unexpected indentation without box-drawing characters. ' +
-          'In box-drawing format, use ├── or └── prefixes for indented nodes.'
-      );
+      fail('indent', i, l, l.start);
+      continue;
     }
     keep(l);
     out.copy(l.start, l.end);
   }
+  const [first, ...rest] = errors;
+  if (first) return { kind: 'error', errors: [first, ...rest], rewrite: out.finish() };
   return { kind: 'rewrite', rewrite: out.finish() };
 }
 

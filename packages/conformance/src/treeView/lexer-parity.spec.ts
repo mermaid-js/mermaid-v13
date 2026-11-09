@@ -85,6 +85,19 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
       (v) => [`treeView-cases/${v}`, BOX_ERROR] as const
     )
   ),
+  // The box-drawing errors of the recovery set and the box-mode column cases (#572).
+  ...[
+    'an-empty-box-drawing-node',
+    'an-empty-box-drawing-node-and-a-title-after-a-node',
+    'an-empty-box-drawing-node-and-an-unclosed-name',
+    'an-indented-line-in-box-drawing',
+    'an-indented-line-in-box-drawing-and-an-icon-that-does-not-close',
+    'a-stray-blank-an-empty-box-drawing-node-and-a-title-after-a-node',
+    'two-box-drawing-errors',
+  ].flatMap((id) => variants(`treeView-recovery/${id}`).map((v) => [v, BOX_ERROR] as const)),
+  ...['box-columns-error-deep', 'box-columns-error-entity', 'box-columns-error-tab'].flatMap((id) =>
+    variants(`treeView-cases/${id}`).map((v) => [v, BOX_ERROR] as const)
+  ),
   // The commented() cut splits a box line: an empty node.
   ...['box-cr-only', 'box-long-dashes'].map(
     (id) => [`treeView-cases/${id} (commented)`, BOX_ERROR] as const
@@ -161,6 +174,8 @@ const NOT_REACHED: ReadonlyMap<string, string> = new Map([
     'treeView-cases/quoted-then-blank-class',
     'treeView-cases/quoted-then-class',
     'treeView-cases/spec-box-throw-on-empty-content-after-prefix',
+    'treeView-recovery/a-blank-after-the-header',
+    'treeView-recovery/text-after-the-header',
     'v12-specs/boxDrawingPreprocessor.spec.ts#2',
     'v12-specs/treeView.test.ts#16',
     'v12-specs/treeView.test.ts#2',
@@ -286,7 +301,7 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
       if (trace.parsed === undefined) continue;
       const { box } = treeViewLex(item.source);
       const v12Error = trace.lexed === undefined && BOX_MESSAGE.test(trace.error ?? '');
-      const v13Error = box.kind === 'error' ? box.error.message : undefined;
+      const v13Error = box.kind === 'error' ? box.errors[0].message : undefined;
       if (v12Error || v13Error !== undefined) {
         thrown++;
         if (v13Error !== (v12Error ? trace.error : undefined)) {

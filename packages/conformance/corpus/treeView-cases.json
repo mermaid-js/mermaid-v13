@@ -786,5 +786,69 @@
   {
     "id": "treeView-cases/unclosed-directive",
     "source": "treeView-beta\n%%{init: {\n  a"
+  },
+  {
+    "id": "treeView-cases/parser-ast-ids",
+    "source": "treeView-beta\ntitle T\napp/\n  src/\n    index.js\n    index.js\n  src\n  \"a/b%c@d\"\nlib/\n  index.js"
+  },
+  {
+    "id": "treeView-cases/parser-warnings",
+    "source": "treeView-beta\ntitle.txt\n\"q x\" trailing\n\"a\" \nb\nc\n  :::hl\n  \nd"
+  },
+  {
+    "id": "treeView-cases/parser-front-matter-title",
+    "source": "---\ntitle: From front matter\n---\ntreeView-beta\ntitle\n  a\n  b"
+  },
+  {
+    "id": "treeView-cases/parser-text-last-wins",
+    "source": "treeView-beta\ntitle A\ntitle B\naccTitle: x\naccTitle: y\naccDescr {\n  one\n  two\n}\n  a"
+  },
+  {
+    "id": "treeView-cases/parser-box-ranges",
+    "source": "treeView-beta\n├─ src/ :::hl\n│ └─ index.js ## entry\n└─ \"read me\""
+  },
+  {
+    "id": "treeView-cases/parser-symbols",
+    "source": "treeView-beta\n\"my dir/\"\n  index.js\n  \"my file\"\nlib/"
+  },
+  {
+    "id": "treeView-cases/box-columns-tab",
+    "source": "treeView-beta\n├── a\n\t└── \"b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-tab-two",
+    "source": "treeView-beta\n├── a\n\t\t└── b icon(x y)\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-entity",
+    "source": "treeView-beta\n├── a\n#amp;├── \"b\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-entity-number",
+    "source": "treeView-beta\n├── a\n#35;└── b icon(\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-deep-narrow",
+    "source": "treeView-beta\n├─ a\n│ ├─ b\n│ │ ├─ c\n│ │ │ └─ \"d\n└─ e"
+  },
+  {
+    "id": "treeView-cases/box-columns-deep-icon",
+    "source": "treeView-beta\n├─ a\n│ ├─ b\n│ │ └─ c icon(x y)\n└─ e"
+  },
+  {
+    "id": "treeView-cases/box-columns-deep-wide",
+    "source": "treeView-beta\n├────── a\n│       ├────── b\n│       │       └────── \"c\n└────── d"
+  },
+  {
+    "id": "treeView-cases/box-columns-error-tab",
+    "source": "treeView-beta\n├── a\n\t├── \n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-error-entity",
+    "source": "treeView-beta\n├── a\n#amp;├──\n└── c"
+  },
+  {
+    "id": "treeView-cases/box-columns-error-deep",
+    "source": "treeView-beta\n├─ a\n│ ├─ b\n│ │ └─\n└─ c"
   }
 ]

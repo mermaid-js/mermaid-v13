@@ -88,12 +88,18 @@ export interface TreeViewLex {
   text(j: number): string;
   /** The text v12's lexer read before token `j`, as {@link text} gives it. */
   before(j: number): string;
+  /**
+   * The source offset of offset `v` of the text given to the box pass (the view's text): where
+   * a box error's line is in the source.
+   */
+  source(v: number): number;
 }
 
 /**
  * Lex the treeView body `src[from…]`. `view` comes from {@link sourceView} (default options:
- * v12's treeView ran every shared rewrite). When v12's box-drawing pass would have thrown, the
- * text is lexed as it is and {@link TreeViewLex.box} holds the error.
+ * v12's treeView ran every shared rewrite). When v12's box-drawing pass would have thrown,
+ * {@link TreeViewLex.box} holds its errors and the text is lexed as rewritten with the rejected
+ * lines dropped, so the parser still reads the other lines (v12 lexed nothing).
  */
 export function lex(src: string, from: number, view: SourceView): TreeViewLex {
   return new TreeViewLexer(src, from, view).run();
@@ -135,7 +141,8 @@ class TreeViewLexer {
     // v12 trimmed leading blanks (after removing comment lines) before its parser ran.
     while (p < viewText.length && isSpace(viewText.charCodeAt(p))) p++;
     this.box = boxDrawing(viewText, p);
-    this.rewrite = this.box.kind === 'rewrite' ? this.box.rewrite : undefined;
+    // After a box error: the rewrite with the rejected lines dropped (v12 lexed nothing).
+    this.rewrite = this.box.kind === 'none' ? undefined : this.box.rewrite;
     if (this.rewrite) {
       this.text = this.rewrite.text;
       this.len = this.text.length - 1;
@@ -193,6 +200,7 @@ class TreeViewLexer {
         if (rewrite) return fromRewrite(0, Math.max(0, starts[j] ?? 0));
         return cook(src, this.from, tokens.start[j] ?? 0, view).trimStart();
       },
+      source: (v) => (this.offsets ? this.offsets.source(v) : v),
     };
   }
 
