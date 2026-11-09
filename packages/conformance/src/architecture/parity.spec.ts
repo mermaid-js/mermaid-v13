@@ -10,7 +10,7 @@ import {
 import { REPO_ROOT } from '../corpus.ts';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { architectureGateCorpus } from './corpus.ts';
@@ -23,7 +23,7 @@ import { architectureV12Snapshot } from './v12.ts';
  * `corpus/architecture-cases.json` with the recovery set, each also with CRLF line breaks and
  * with comment lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: the
  * DB's groups, services, junctions, edges and layout hints, the title and accessibility) must
- * agree, except the divergences listed in `divergences.json`.
+ * agree, except the divergences listed in `divergences/architecture.json`.
  *
  * Those are {@link LISTED}: core's reading of an unclosed `%%{` (shared by every type: v13
  * rejects with `UNCLOSED_DIRECTIVE` what v12 accepted with the rest removed), and D504's ignored
@@ -162,7 +162,7 @@ const run = async () =>
   runParity({
     adapters: [architectureAdapter],
     corpus: each(await architectureGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 /** A {@link Difference}'s source text. */
