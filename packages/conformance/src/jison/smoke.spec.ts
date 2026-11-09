@@ -19,6 +19,7 @@ const M4_M5: JisonType[] = [
   'sankey',
   'xychart',
   'venn',
+  'ishikawa',
 ];
 
 describe.each(M4_M5)('%s through the shared jison oracle', (type) => {

@@ -5,6 +5,11 @@ Unmet criteria and choices not covered by the spec or a D-id, per owning ticket.
 ## T1 (#580)
 
 - Harvest: the jison harvester (`packages/conformance/src/jison/harvest.ts`) reads only spec files under `dir` and the docs page, so `examples/ishikawa.ts` (2 sources) and `multi-diagram-id-uniqueness.spec.ts:126` (1) are not harvested and there is no `id: 'ishikawa'` literal to drop. Choice: carry those 3 sources as `.mmd` fixtures (accepted ones) or `ishikawa-cases.json` entries, checked against the oracle; do not extend the shared harvester.
+- Closed: the shared harvester is unchanged and `harvest ishikawa` writes 4 sources (3 spec literals, 1 docs fence); there is nothing to drop. The 3 other sources are carried, all oracle-accepted: example 1 (the docs fence after a leading `\n`) as `ishikawa-cases/example-blurry-photo`, example 2 as `e2e/diagrams/ishikawa/nightly-check/example-late-food-delivery.mmd`, the id-uniqueness source as `nightly-check/unindented-effect.mmd`.
+- Oracle finding: no input makes v12's lexer throw (every character matches `[\n]+` or `[^\n]+`), so the gate has no `LEXICAL_ERROR` and v13 no `Kind.Error`. `[\n]+` only ever takes one LF (`[\s]+[\n]` takes longer runs), so `NL` is one line break.
+- Oracle finding: `ishikawa-beta %% c\u2028P` is rejected by v12: the header comment ends at U+2028 (`.`), which is then a `SPACELIST` before `TEXT` on the header line. A whole-line comment after a U+2028 is removed with it (`^` after U+2028, `\s*` takes it).
+- Exclusions: none beyond trivia (comments, directives, a dropped `;`) and the sources v12 does not detect (`ishikawas`, and commented copies of one-line bodies whose header `%% cut` splits).
+- For T2: `SPACELINE` is two kinds, `T.CommentLine` (`\s*%%.*`) and `T.SpaceLine` (a blank run through its last LF); both keywords are `T.Ishikawa` (the text tells them apart). Leading blanks before the header are no token (v12 trimmed them).
 
 ## T2 (#581)
 
