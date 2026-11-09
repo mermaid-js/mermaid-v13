@@ -10,6 +10,7 @@ import { sugiyamaLayout } from './pipeline.ts';
 import { resolveTopLaneOrder } from './phase2.options.ts';
 import { routeEdgesOrthogonal } from './orthogonalRouter/router.ts';
 import { routeSelfLoops } from './selfLoops.ts';
+import { fitLanesToRoutes } from './laneFit.ts';
 
 export type SwimlaneDirection = 'TB' | 'LR' | 'BT' | 'RL';
 
@@ -49,6 +50,8 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   postProcessSwimlaneLayout(data4Layout, direction);
   // v12's router skips self-loops; v13's model routes every edge.
   routeSelfLoops(data4Layout);
+  // v13: lanes hold every route, now that flowchart's groups have 20 padding (`laneFit.ts`).
+  fitLanesToRoutes(data4Layout);
 
   return direction;
 }

@@ -1,0 +1,161 @@
+{
+  "tuning": {},
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "start",
+        "width": 170.025,
+        "height": 40.1,
+        "shape": "stadium",
+        "parent": "Intake",
+        "span": 24.06
+      },
+      {
+        "id": "task",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Intake",
+        "span": 16.1
+      },
+      {
+        "id": "fix",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Intake",
+        "span": 16.1
+      },
+      {
+        "id": "decision",
+        "width": 166.1,
+        "height": 166.1,
+        "shape": "diam",
+        "parent": "Review",
+        "span": 99.66
+      },
+      {
+        "id": "done",
+        "width": 53.131948507989726,
+        "height": 53.131948507989726,
+        "shape": "circle",
+        "parent": "Complete",
+        "span": 31.879169104793835
+      }
+    ],
+    "groups": [
+      {
+        "id": "Intake",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 38.136,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Review",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 45.892,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Complete",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 59.906,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_start_task_0",
+        "source": "start",
+        "target": "task",
+        "minLen": 1
+      },
+      {
+        "id": "L_task_decision_0",
+        "source": "task",
+        "target": "decision",
+        "minLen": 1
+      },
+      {
+        "id": "L_decision_done_0",
+        "source": "decision",
+        "target": "done",
+        "minLen": 1,
+        "label": {
+          "width": 36.122,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_decision_fix_0",
+        "source": "decision",
+        "target": "fix",
+        "minLen": 1,
+        "label": {
+          "width": 29.892,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_fix_task_0",
+        "source": "fix",
+        "target": "task",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

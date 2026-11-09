@@ -1,0 +1,313 @@
+{
+  "tuning": {},
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "A",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Car",
+        "span": 16.1
+      },
+      {
+        "id": "B",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Sales",
+        "span": 16.1
+      },
+      {
+        "id": "C",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      },
+      {
+        "id": "D",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      },
+      {
+        "id": "E",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      },
+      {
+        "id": "F",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Fun",
+        "span": 16.1
+      },
+      {
+        "id": "G",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Fun",
+        "span": 16.1
+      },
+      {
+        "id": "H",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      },
+      {
+        "id": "I",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Legal",
+        "span": 16.1
+      },
+      {
+        "id": "J",
+        "width": 152,
+        "height": 217.20000000000002,
+        "shape": "rect",
+        "parent": "Legal",
+        "span": 193.20000000000002
+      },
+      {
+        "id": "K",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Legal",
+        "span": 16.1
+      },
+      {
+        "id": "L",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      },
+      {
+        "id": "M",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Sales",
+        "span": 16.1
+      },
+      {
+        "id": "N",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Constr",
+        "span": 16.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "Car",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 22.554,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Fun",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 24.122,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Sales",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 35.014,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Constr",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 41.23,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Legal",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 34.244,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_A_B_0",
+        "source": "A",
+        "target": "B",
+        "minLen": 1
+      },
+      {
+        "id": "L_B_C_0",
+        "source": "B",
+        "target": "C",
+        "minLen": 1
+      },
+      {
+        "id": "L_C_D_0",
+        "source": "C",
+        "target": "D",
+        "minLen": 1
+      },
+      {
+        "id": "L_D_E_0",
+        "source": "D",
+        "target": "E",
+        "minLen": 1
+      },
+      {
+        "id": "L_E_F_0",
+        "source": "E",
+        "target": "F",
+        "minLen": 1
+      },
+      {
+        "id": "L_F_G_0",
+        "source": "F",
+        "target": "G",
+        "minLen": 1
+      },
+      {
+        "id": "L_D_H_0",
+        "source": "D",
+        "target": "H",
+        "minLen": 1
+      },
+      {
+        "id": "L_H_I_0",
+        "source": "H",
+        "target": "I",
+        "minLen": 1
+      },
+      {
+        "id": "L_I_J_0",
+        "source": "I",
+        "target": "J",
+        "minLen": 1,
+        "label": {
+          "width": 190.99,
+          "height": 36.2
+        }
+      },
+      {
+        "id": "L_J_E_0",
+        "source": "J",
+        "target": "E",
+        "minLen": 1
+      },
+      {
+        "id": "L_I_K_0",
+        "source": "I",
+        "target": "K",
+        "minLen": 1,
+        "label": {
+          "width": 29.892,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_K_L_0",
+        "source": "K",
+        "target": "L",
+        "minLen": 1
+      },
+      {
+        "id": "L_L_M_0",
+        "source": "L",
+        "target": "M",
+        "minLen": 1
+      },
+      {
+        "id": "L_L_N_0",
+        "source": "L",
+        "target": "N",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}
