@@ -21,6 +21,15 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T0b #591
 
+Unmet criteria: none. Choices the spec and D-ids leave open:
+
+- **Only moved ends are redrawn.** An end already on its named side keeps layered's route (curved S-legs included); a graph whose sides match layered's ports is byte-identical. A moved end's stub is square to the side; it joins the route's first middle point (dropping a stepped route's old stub point unless it holds the label) by the right-angle path that crosses neither end box, turns least, then is shortest.
+- **Re-spreading a side.** When a side gains a moved end, all ends on it (sided or not) are spread again, `portPitch` apart within `corner`, ordered by where each heads, so a kept end can shift along its side. Not done for sides that gain none.
+- **`anchorY` is read for moved `left`/`right` ends** (D501 said only `compass` reads it): architecture under `layered` then meets services at the icon centre, as under `compass`. Doc comment updated.
+- **The drawing grows** (everything shifts) when a stub or redrawn loop passes the diagram padding; otherwise sizes are layered's.
+- **Not handled:** the grid (ASCII), where sides are ignored (D140 cells would need their own spreading); edges between a group and its own member (layered's inside route kept); redrawn routes may cross other nodes or edges (no global avoidance, as D503 is a hint).
+- **Size: +2,704 B gz to gated core** (97,116 of 98,304). `layered` is synchronous and in core, so the code cannot be lazy without an engine-side hook. If the remaining 1,188 B headroom matters more than D503 in `layered`, a smaller variant (no re-spread, no loop label) or a lazily registered hook **needs a D-id**.
+
 ## T0c #592
 
 ## T1 #594
@@ -34,6 +43,22 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 - Package skeleton is private with no manifest; `theme-used-by.spec.ts` lists `architecture` in `NOT_DRAWN_YET` until T4 (#614) reads a theme variable.
 
 ## T2 #599
+
+Unmet criteria: none. Choices the spec and D-ids leave open:
+
+- **What the model keeps after a DB error** (v12 stopped at the first, so a rejected document has no v12 model to match): a second declaration of an id is dropped and the first kept; a service, junction or group whose parent is itself, unknown or not a group is kept **without a parent**; an edge or alignment that fails a check is dropped. An id whose declaration had a syntax error raises no "does not exist" / "parent does not exist" / align error where it is used, but the other edge end and the other align members are still checked (the edge or alignment is left out). A service kept without its failed parent raises no `{group}` warning either. So one planted error gives one diagnostic (recovery set).
+- **One diagnostic per statement**, the first check that fails in v12's order (an edge with two unknown ends reports the left one, as v12). Placed on the id the check is about: the parent after `in`, the edge end, the align member; a duplicate on the declared id.
+- **Codes**: `ARCHITECTURE_DUPLICATE_ID`, `_SELF_PARENT`, `_UNKNOWN_PARENT`, `_PARENT_NOT_GROUP`, `_UNKNOWN_ID`, `_GROUP_EDGE_END` (D504, Pele's message), `_GROUP_EDGE_SAME_GROUP`, `_ALIGN_MEMBER`, `_ALIGN_REPEAT`, `_ALIGN_SHORT` (DB API only; the grammar asks for two), warning `_GROUP_EDGE_UNGROUPED`. Syntax errors use the shared `UNEXPECTED`, `UNEXPECTED_CHARACTER`, `UNCLOSED_STRING`, `UNCLOSED_LABEL`, `UNCLOSED_ACC_DESCR`. v12's "The group [g]'s parent is not a group" is unreachable (v12 adds groups before any node); the message exists, no corpus case can throw it.
+- **D504 `{group}` on an ungrouped end**: the model flag is `false` (T3 reads it as is), so the oracle sees a model divergence, listed in `divergences.json` (`edges-group-no-group` ×3 variants). One warning per parse at the first place, the others in `related`, with `astIds` (as wardley's D425 warnings).
+- **D504 in the oracle**: `parity.spec.ts` `DIFFERENCES` has the four cases, each checked against 12.2.0. The duplicate pair's render throw is not observable through the oracle (parse and DB only): its entry checks that both accept with equal models and v13 ids `edge:a->b`, `edge:a->b@2`. Self and like-side: `nightly-check/lexer-like-side-and-self-edges.mmd` (the `edges-self` case declares no service, so both reject it).
+- **Entities**: labels and text icons keep `&name;` for v12's `#name;` (radar, flowchart), not wardley's decoded display text (GAPS #493); the v12 snapshot decodes placeholders to `&name;`. T4 decodes when drawing.
+- **Symbols** (D508): kind and `def` come from the declaration that **registered** the id in v12's order (groups first), so `service x` after `group x` is a `group` `ref`; a name nothing registered has no symbol. Rename refusal is T6's.
+- **Grammar file**: YAML is listed before `--` and `-` (Chevrotain's longer alternative, as a first-match rule); the rest is Chevrotain's order. The grammar-lexer spec matches 2.0.1 on the gate corpus.
+- **Only kept statements** get an AST id (and so a `@n`), symbol references, a statement span or set `title`/`accTitle`/`accDescr`; a statement with a syntax error leaves none. `align:n` comes from core's `AstIds.statement`; the named ids keep a local counter, since `AstIds` has no `<kind>:<name>@n` form.
+- **Probe hooks** are in the parser now (as wardley's T2); T6 owns the probe spec. An accessibility value starts after its `:` (or a block's `{`).
+- **Detection** cuts a directive out of the header as v12 did (`archi%%{init: {}}%%tecture-beta` is detected and parsed; the `architect` case is listed as not reached in T1's lexer gate).
+- **Ported specs**: `architecture.spec.ts` skips the cytoscape, `randomize` and fcose-config describes and the `getDataStructures` proto test (D328; `__proto__` ids are in `parse.spec.ts`); `architectureSeed.spec.ts` is skipped whole (D328). `svgDraw.spec.ts` (element ids) is T4's.
+- **Corpus**: 22 `db-*` cases added to `architecture-cases.json` (one per v12 DB check, plus `__proto__`), and `architecture-recovery.json` joins the gate corpus; T1's lexer gate still passes on both.
 
 ## T3 #607
 
