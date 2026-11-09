@@ -10,8 +10,6 @@ import { sequence } from '../plugin.ts';
 
 const { theme: table }: Pick<DiagramPlugin, 'id' | 'theme'> = sequence;
 const OWN = [
-  'actorBkg',
-  'actorBorder',
   'actorTextColor',
   'actorLineColor',
   'signalColor',
@@ -36,6 +34,15 @@ describe('the sequence theme table (#414 T2)', () => {
   it('owns its variables; core no longer names them', () => {
     expect(Object.keys(table.vars).sort()).toEqual([...OWN, ...GEOMETRY].sort());
     for (const name of [...OWN, ...GEOMETRY]) expect(THEME_VARIABLES[name], name).toBeUndefined();
+  });
+
+  it('reads the participant fill and border from core, which usecase reads too (#561, D474)', async () => {
+    for (const name of ['actorBkg', 'actorBorder'])
+      expect(THEME_VARIABLES[name]?.usedBy, name).toEqual(['sequence', 'usecase']);
+    const t = createTheme(await loadTheme('default'), { cssVariables: false, diagram: table });
+    expect(t.value('actorBkg')).toBe(t.value('mainBkg'));
+    expect(t.value('labelBoxBkgColor')).toBe(t.value('actorBkg'));
+    expect(t.value('actorLineColor')).toBe(t.value('actorBorder'));
   });
 
   it('takes v12 neo geometry in the redux and neo families, classic elsewhere', async () => {

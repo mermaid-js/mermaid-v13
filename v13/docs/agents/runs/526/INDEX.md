@@ -29,3 +29,4 @@ architecture, railroad, eventmodeling and swimlane run in parallel with wave 3 o
 | --- | --- | --- |
 | base `mermaid-v13` @ 521fb76 | 93,891 | — |
 | base `mermaid-v13` @ ad3648a (#589) | 94,217 | +326 (not ours) |
+| base `mermaid-v13` @ ade398e (#620) | 94,352 | +135 (not ours) |
