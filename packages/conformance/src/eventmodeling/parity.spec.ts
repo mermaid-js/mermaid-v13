@@ -5,7 +5,7 @@ import { LineIndex } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { eventModelingGateCorpus } from './corpus.ts';
@@ -17,7 +17,7 @@ import { eventModelingAdapter } from './v13.ts';
  * `corpus/eventmodeling-cases.json` with the recovery set, each also with CRLF line breaks and
  * with comment lines added. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: v12's
  * `getState()` lanes, boxes and relations, its AST's lists, the title and accessibility) must
- * agree, except the divergences listed in `divergences.json`.
+ * agree, except the divergences listed in `divergences/eventmodeling.json`.
  *
  * The second test checks they differ only where {@link LISTED} says: the maintainer's fixes
  * D522 (one lane per namespace: lanes, the boxes in them, and an inferred relation that now
@@ -51,7 +51,7 @@ const run = async () =>
   runParity({
     adapters: [eventModelingAdapter],
     corpus: each(await eventModelingGateCorpus()),
-    divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+    divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
 /** v12's syntax errors (Langium) and detection failures, which carry no DB message. */

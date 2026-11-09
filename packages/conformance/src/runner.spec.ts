@@ -1,6 +1,9 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pieFixtureAdapter } from './fixtures/pie-plugin.ts';
-import { inputHash, parseDivergences, runParity } from './index.ts';
+import { inputHash, loadDivergences, parseDivergences, runParity } from './index.ts';
 import type { Divergence } from './index.ts';
 
 const agreeing = [
@@ -34,7 +37,7 @@ describe('runParity with a fixture diagram plugin', () => {
 });
 
 describe('divergences', () => {
-  it('fails on a divergence divergences.json does not list', async () => {
+  it('fails on a divergence the list does not have', async () => {
     const report = await runParity({ adapters: [pieFixtureAdapter], corpus: [negative] });
     expect(report.ok).toBe(false);
     expect(report.unlisted).toEqual([
@@ -127,7 +130,7 @@ describe('divergences', () => {
   });
 });
 
-describe('divergences.json validation', () => {
+describe('divergence list validation', () => {
   it('rejects entries without a reason or owner, unknown kinds and duplicates', () => {
     const ok = entry({});
     expect(parseDivergences([ok])).toEqual([ok]);
@@ -137,5 +140,23 @@ describe('divergences.json validation', () => {
     expect(() => parseDivergences([{ ...ok, owner: undefined }])).toThrow('"owner"');
     expect(() => parseDivergences([{ ...ok, kind: 'render' }])).toThrow('unknown kind');
     expect(() => parseDivergences([ok, ok])).toThrow('duplicate entry');
+  });
+
+  it('reads a folder of per-type files in name order, and refuses an entry in two of them', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'divergences-'));
+    try {
+      const a = entry({ id: 'a-cases/one' });
+      const b = entry({ id: 'b-cases/two' });
+      writeFileSync(join(dir, 'b.json'), JSON.stringify([b]));
+      writeFileSync(join(dir, 'a.json'), JSON.stringify([a]));
+      writeFileSync(join(dir, 'notes.txt'), 'not a list');
+      expect(loadDivergences(dir)).toEqual([a, b]);
+      writeFileSync(join(dir, 'c.json'), JSON.stringify([a]));
+      expect(() => loadDivergences(dir)).toThrow(
+        'duplicate entry for a-cases/one (accept), also in a.json'
+      );
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
   });
 });

@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from '../corpus.ts';
+import { loadDivergences } from '../divergences.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 
 /**
  * Each test skipped in `diagram-sankey/src/v12-specs/` names the parity divergence that is its
@@ -16,11 +19,7 @@ describe('sankey v12-spec skips', () => {
       string,
       Record<string, { divergence: string }>
     >;
-    const listed = new Set(
-      (JSON.parse(read('packages/conformance/divergences.json')) as { id: string }[]).map(
-        (d) => d.id
-      )
-    );
+    const listed = new Set(loadDivergences(fileURLToPath(DIVERGENCES_DIR)).map((d) => d.id));
     const entries = Object.entries(skips).flatMap(([file, tests]) =>
       Object.entries(tests).map(([title, { divergence }]) => ({ file, title, divergence }))
     );

@@ -4,8 +4,9 @@
  * runs that lexer, from the same package version `mermaid@12.2.0` resolves (the
  * `mermaid-parser-v12` alias), on exactly the text v12's parser received for a source.
  *
- * One oracle serves every Langium type: a type is a {@link LangiumLexerDescriptor} in
- * {@link LANGIUM_LEXERS}. gitGraph's T1 adds its row there (D262); nothing else changes.
+ * One oracle serves every Langium type: a type is a {@link LangiumLexerDescriptor}, a row of
+ * `LANGIUM_LEXERS` that the type's own `src/<type>/tables.ts` exports as `langium` (gitGraph's
+ * T1 added its row, D262); nothing else changes.
  *
  * The text is captured by wrapping the `parse` of v12's registered parser for the type while
  * the main oracle parses the source, so every v12 rewrite (CRLF, front matter, directives,
@@ -17,6 +18,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadOracle } from './oracle.ts';
+import { LANGIUM_LEXERS, rowOf } from './tables.ts';
 
 /** How to reach one type's Langium lexer. */
 export interface LangiumLexerDescriptor {
@@ -28,28 +30,13 @@ export interface LangiumLexerDescriptor {
   key: string;
 }
 
-/** The Langium types, by v13 diagram id. */
-export const LANGIUM_LEXERS = {
-  radar: { probe: 'radar-beta\naxis A', factory: 'createRadarServices', key: 'Radar' },
-  pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
-  info: { probe: 'info', factory: 'createInfoServices', key: 'Info' },
-  gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
-  packet: { probe: 'packet\n0: "a"', factory: 'createPacketServices', key: 'Packet' },
-  treemap: { probe: 'treemap\n"a": 1', factory: 'createTreemapServices', key: 'Treemap' },
-  cynefin: { probe: 'cynefin-beta\ncomplex', factory: 'createCynefinServices', key: 'Cynefin' },
-  wardley: {
-    probe: 'wardley-beta\ncomponent A [0.5, 0.5]',
-    factory: 'createWardleyServices',
-    key: 'Wardley',
-  },
-  eventmodeling: {
-    probe: 'eventmodeling\ntf 01 evt A',
-    factory: 'createEventModelingServices',
-    key: 'EventModel',
-  },
-} as const satisfies Record<string, LangiumLexerDescriptor>;
+export { LANGIUM_LEXERS } from './tables.ts';
 
-export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;
+/**
+ * A Langium type's name: its key in `LANGIUM_LEXERS` (`src/tables.ts`), the union of each
+ * type's `src/<type>/tables.ts` `langium` rows.
+ */
+export type LangiumLexerType = string;
 
 /** A Chevrotain token as the gate compares it: its token type's name and its image. */
 export type LangiumToken = [name: string, image: string];
@@ -149,7 +136,7 @@ const loading = new Map<LangiumLexerType, Promise<LangiumLexerOracle>>();
 export function loadLangiumLexerOracle(type: LangiumLexerType): Promise<LangiumLexerOracle> {
   let oracle = loading.get(type);
   if (!oracle) {
-    oracle = load(LANGIUM_LEXERS[type]);
+    oracle = load(rowOf(LANGIUM_LEXERS, type, 'LANGIUM_LEXERS'));
     loading.set(type, oracle);
   }
   return oracle;

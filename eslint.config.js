@@ -192,31 +192,10 @@ export default tseslint.config(
     },
   },
   {
-    // Ported verbatim from v12 by scripts/port-v12-specs.ts, which adds the blanket disable.
-    files: [
-      'packages/diagram-flowchart/src/v12-specs/**',
-      'packages/diagram-sequence/src/v12-specs/*.spec.ts',
-      'packages/diagram-class/src/v12-specs/**',
-      'packages/diagram-er/src/v12-specs/**',
-      'packages/diagram-state/src/v12-specs/**',
-      'packages/diagram-journey/src/v12-specs/*.spec.ts',
-      'packages/diagram-quadrant/src/v12-specs/**',
-      'packages/diagram-xychart/src/v12-specs/**',
-      'packages/diagram-timeline/src/v12-specs/**',
-      'packages/diagram-mindmap/src/v12-specs/*.spec.ts',
-      'packages/diagram-gantt/src/v12-specs/*.spec.ts',
-      'packages/diagram-pie/src/v12-specs/*.spec.ts',
-      'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
-      'packages/diagram-kanban/src/v12-specs/*.spec.ts',
-      'packages/diagram-sankey/src/v12-specs/*.spec.ts',
-      'packages/diagram-packet/src/v12-specs/*.spec.ts',
-      'packages/diagram-radar/src/v12-specs/*.spec.ts',
-      'packages/diagram-treemap/src/v12-specs/*.spec.ts',
-      'packages/diagram-cynefin/src/v12-specs/*.spec.ts',
-      'packages/diagram-wardley/src/v12-specs/*.spec.ts',
-      'packages/diagram-venn/src/v12-specs/*.spec.ts',
-      'packages/diagram-eventmodeling/src/v12-specs/*.spec.ts',
-    ],
+    // Ported verbatim from v12 by each package's scripts/port-v12-specs.ts, which adds the
+    // blanket disable. info's v12 spec was written by hand, with no disable to exempt.
+    files: ['packages/diagram-*/src/v12-specs/*.spec.ts'],
+    ignores: ['packages/diagram-info/**'],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',
       '@eslint-community/eslint-comments/no-unlimited-disable': 'off',

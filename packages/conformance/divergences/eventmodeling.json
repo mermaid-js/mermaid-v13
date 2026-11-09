@@ -1,0 +1,202 @@
+[
+  {
+    "id": "v12-specs/eventmodeling.test.ts#1",
+    "inputHash": "sha256:a2005e915d162e82",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote",
+    "inputHash": "sha256:8bc1b707e740328c",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-squote",
+    "inputHash": "sha256:f2b67137e519fffd",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote-greedy",
+    "inputHash": "sha256:49cb63c439c30b40",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-quote-run",
+    "inputHash": "sha256:711011e616e95cb6",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed-all",
+    "inputHash": "sha256:c6191e238e8c0ce6",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-line-unclosed",
+    "inputHash": "sha256:437589311dd14a30",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/unclosed-directive",
+    "inputHash": "sha256:9b213685a0f6408b",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#1 (CRLF)",
+    "inputHash": "sha256:b6521f982d8fb898",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote (CRLF)",
+    "inputHash": "sha256:44694295af509d81",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-squote (CRLF)",
+    "inputHash": "sha256:aefe80440b9162f8",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote-greedy (CRLF)",
+    "inputHash": "sha256:bc5558bd51272582",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-quote-run (CRLF)",
+    "inputHash": "sha256:d850889f186d2b28",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed-all (CRLF)",
+    "inputHash": "sha256:0a17fb71c9fbd5bd",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-line-unclosed (CRLF)",
+    "inputHash": "sha256:4ebc428952ed4ebd",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:0e2a24e05156a275",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#1 (commented)",
+    "inputHash": "sha256:e1d5ef89b6d342b2",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-quote-run (commented)",
+    "inputHash": "sha256:607eb615b55b010a",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed-all (commented)",
+    "inputHash": "sha256:30ac7d6fff26b3c2",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-line-unclosed (commented)",
+    "inputHash": "sha256:21035de0270920a2",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "eventmodeling-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:d13da5ec8ecac63b",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the model is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; GAPS #300, #301).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-inline-data.mmd",
+    "inputHash": "sha256:3899c686192e9de3",
+    "kind": "model",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/layout-data-literal.mmd",
+    "inputHash": "sha256:20a339710ec26d05",
+    "kind": "model",
+    "reason": "Data text (D523): v12 drew data as HTML (the `<div>` a tag, `&amp;` an entity, `<br/>` a break); v13 shows the text between the braces as written, in mono. Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "owner": "#604",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-namespace-repeated.mmd",
+    "inputHash": "sha256:e6552d2708f3a5f0",
+    "kind": "model",
+    "reason": "One lane per namespace (D522): v12 built each swimlane without its namespace, so every namespaced frame opened a new lane (`cmd Inv.A`, `cmd Inv.C` gave two lanes both labelled `C/RM: Inv`); v13 keeps one lane per band and namespace, as the syntax page promises. Lane indices of later namespace lanes, and an inferred relation that now finds its source in the same lane, follow from it; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/eventmodeling/nightly-check/parser-same-lane.mmd",
+    "inputHash": "sha256:034915397f115aa1",
+    "kind": "model",
+    "reason": "One lane per namespace (D522): v12 built each swimlane without its namespace, so every namespaced frame opened a new lane (`cmd Inv.A`, `cmd Inv.C` gave two lanes both labelled `C/RM: Inv`); v13 keeps one lane per band and namespace, as the syntax page promises. Lane indices of later namespace lanes, and an inferred relation that now finds its source in the same lane, follow from it; listed in `DIFFERENCES` (T5).",
+    "owner": "#602",
+    "since": "2026-11-09"
+  }
+]

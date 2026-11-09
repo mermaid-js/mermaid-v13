@@ -1,0 +1,20 @@
+## Packet SVG structure
+
+What changed in the packet diagram's SVG compared with v12 (spec #421, DESIGN §7.2). v12's
+structure and class names are kept: one `<g>` per row holding, per piece of a field,
+`rect.packetBlock`, `text.packetLabel` and the `text.packetByte start` / `packetByte end` bit
+numbers, then `text.packetTitle`, so selectors that use them keep working. Every position is
+v12's.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="packet"`, a `<style>` scoped by the id that coloured and sized `.packetBlock`, `.packetLabel`, `.packetByte` and `.packetTitle` | No root `id`; `class="mermaid mermaid-packet"`, `role="img"`, `aria-roledescription="packet"`, `data-mermaid-version`. Paints are presentation attributes, colours reading `var(--_x)` aliases on the root `style`, which a host can re-theme with `--mermaid-packetLabelColor` and the other nine. What every piece shares is written once on the root and inherited: `font-family`, the labels' `fill`, the bit numbers' `font-size` and the blocks' `stroke-width`; each `rect` carries its `fill` and `stroke`, each bit number its `fill`, each label its `font-size`, the title its `fill` and `font-size`. No `<style>`, except under `theme: 'auto'`: core's light/dark sheet, scoped by `data-p` on the root, as for every type | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3); one copy of what every piece shares keeps large packets small |
+| No source mapping | Each field's first `rect.packetBlock` carries `data-ast="field:<start>-<end>"`; every piece's rect carries `data-id="<start>-<end>"` of its field, so the pieces of a field split across rows share one `data-id`. The row `<g>`s carry nothing | One `data-ast` element per AST node (R-PARSE-8, D345, pitfall 12) |
+| `text.packetTitle` always written, empty when the diagram has no title | Written only when there is a title | Nothing invisible is drawn |
+| Labels and the title set with d3 `.text()` and `dominant-baseline="middle"`: `<br>` and tags printed as written, `&amp;` printed literally | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line into `<tspan>`s, `<b>`/`<i>` render, entities decode; the text is placed by its baseline, centred where v12 centred it. A title of several lines keeps its first line where v12 drew its one line and grows down; a title taller than a row sits below the last row instead of over it. An empty label draws no `<text>` | D343 |
+| A label wider than its field ran over its neighbours | It shrinks to fit (its own `font-size`), down to the bit-number size (10 px), then overflows as in v12; each piece of a split field fits its own label | D343 |
+| Bit numbers with `dominant-baseline="auto"` | The same baseline, without the attribute (it is the default) | |
+| `viewBox="0 0 <bitWidth × bitsPerRow + 2> <height>"`: a title or label running past it was clipped | The same unless something runs past it: the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn, half the stroke included, and may start below 0 | D344 |
+| A `paddingX` wider than a piece drew a negative `width` | `width="0"` | D342 |
+| The 10,000-row cap dropped the fields past it silently and drew the rest | The same drawing, with one `PACKET_TRUNCATED` warning (D342). A diagram that reaches the cap draws about 430 characters a row, about 4.3 MB, past the default `maxOutputLength` (4,000,000), so at the default limits it fails with a `LIMIT` error; an integrator who raises `limits.maxOutputLength` gets it drawn | D342, R-SEC-5 |
+| `neo` and the redux themes: the same packet as the classic themes | The same: packet differs between families by colour and font only, with no gradient and no shadow | D227 |

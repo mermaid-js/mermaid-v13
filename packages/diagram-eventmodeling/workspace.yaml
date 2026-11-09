@@ -1,0 +1,10 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: eventmodeling
+    title: Event modeling syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
