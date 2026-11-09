@@ -74,3 +74,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Note: the theme oracles (`diagram-themes.spec.ts`, `neo-theme.spec.ts`, `neo-dark-theme.spec.ts`, the package's `theme/table.spec.ts`), `theme-direction.spec.ts` (D331) and `theme-tables.spec.ts` pass unchanged: T4 had put the table in `DIAGRAM_TABLES` with its `DIFFERENCES`.
 
 ## #588 T7 ASCII
+
+## Final merge of `mermaid-v13`
+- When `fix/pre-manifest-language` has merged into `mermaid-v13`: take theirs for `tools/workspace/sync.spec.ts` (this branch's one-line `workspaceDiagrams()` fix is a stopgap; the shared file has one owner), then `pnpm regen`.
