@@ -10,9 +10,12 @@
  *   colours reach the SVG through the theme table (D335, D545), written as literals;
  * - text is measured as v12 measured it headless (`length × fontSize` by `fontSize`), or by the
  *   spec's `TextDimensionCalculator`;
- * - v12's drawables are read back from the rendered SVG: one per run of leaves of one kind in
- *   one group (`groupTexts` = the classes of the `<g>`s under `g.main`), rects, paths (in v12's
- *   `M x,y L x,y` form) and texts (`translate(x, y) rotate(r)`, anchor, baseline).
+ * - v12's drawables are read back from the rendered SVG (`render/read-svg.ts`): one per run of
+ *   leaves of one kind in one group (`groupTexts` = the classes of the `<g>`s under `g.main`),
+ *   rects, paths (in v12's `M x,y L x,y` form) and texts (`translate(x, y) rotate(r)`, anchor,
+ *   baseline, through `render.ts`'s `DOMINANT_BASELINE` inverted);
+ * - `ChartLegend` is the layout's own legend component (`./testing`), placed where the spec says
+ *   and drawn within the chart `layoutXyChart` lays out, of which only the legend is read back.
  */
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { AstId } from '@mermaid-js/core/parser-kit';
@@ -21,12 +24,14 @@ import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { xyChartOptions } from '../config.ts';
 import { layoutXyChart } from '../layout/index.ts';
-import { Legend } from '../layout/layout.ts';
 import { NORMAL_WEIGHT } from '../layout/metrics.ts';
 import { textMeasure } from '../layout/text.ts';
-import type { XyAxisLayout, XyChartLayout } from '../layout/types.ts';
+import type { XyBaseline, XyChartLayout, XyTextAnchor } from '../layout/types.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { renderXyChart } from '../render/index.ts';
+import { DOMINANT_BASELINE } from '../render/render.ts';
+import { svgTokens } from '../render/read-svg.ts';
+import { XyChartLegend } from '../testing.ts';
 import { theme as table } from '../theme/table.ts';
 
 interface V12Plot {
@@ -135,45 +140,38 @@ function themeOf(data: V12Data, config: V12Theme): Theme {
 }
 
 /** Renders `layout` and reads v12's drawables back from the SVG. */
-function drawn(
-  model: XyChartModel,
-  layout: XyChartLayout,
-  config: V12Config,
-  theme: Theme
-): Drawable[] {
+function drawn(model: XyChartModel, layout: XyChartLayout, theme: Theme): Drawable[] {
   const w = streamWriter();
-  const ctx = {
-    config: { xyChart: config } as unknown as ResolvedConfig,
-    theme,
-    idPrefix: 'm',
-    version: '0',
-  };
-  renderXyChart(model, layout, ctx, w);
+  renderXyChart(model, layout, { theme, idPrefix: 'm', version: '0' }, w);
   return drawables(w.finish());
 }
 
-const ENTITIES: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
+/** v12's `horizontalPos` for each `text-anchor` (`getTextAnchor`, inverted). */
+const POSITION: Readonly<Record<XyTextAnchor, string>> = {
+  start: 'left',
+  middle: 'center',
+  end: 'right',
 };
-const decode = (s: string): string =>
-  s.replace(/&(#\d+|\w+);/g, (m, e: string) =>
-    e.startsWith('#') ? String.fromCodePoint(Number(e.slice(1))) : (ENTITIES[e] ?? m)
-  );
 
-const POSITION = { start: 'left', middle: 'center', end: 'right' } as const;
-const BASELINE = {
-  'text-before-edge': 'top',
+/** v12's `verticalPos` for each of the layout's baselines (`getDominantBaseLine`, inverted). */
+const V12_POSITION: Readonly<Record<XyBaseline, string>> = {
+  top: 'top',
   hanging: 'top',
   middle: 'middle',
-  auto: 'bottom',
-} as const;
+  alphabetic: 'bottom',
+};
+
+/** The layout baseline the renderer wrote each `dominant-baseline` for: `render.ts`'s map inverted. */
+const BASELINE: Readonly<Record<string, XyBaseline>> = Object.fromEntries(
+  Object.entries(DOMINANT_BASELINE).map(([b, attr]) => [attr, b as XyBaseline])
+);
 
 /** One leaf's v12 drawable data. */
-function datum(tag: string, a: Record<string, string>, text: string): Record<string, unknown> {
+function datum(
+  tag: string,
+  a: Readonly<Record<string, string>>,
+  text: string
+): Record<string, unknown> {
   const n = (k: string): number => Number(a[k]);
   if (tag === 'rect')
     return {
@@ -196,14 +194,14 @@ function datum(tag: string, a: Record<string, string>, text: string): Record<str
     };
   const t = /translate\(([-\d.e]+),([-\d.e]+)\) rotate\(([-\d.e]+)\)/.exec(a.transform ?? '')!;
   return {
-    text: decode(text),
+    text,
     x: Number(t[1]),
     y: Number(t[2]),
     fill: a.fill,
     fontSize: n('font-size'),
     rotation: Number(t[3]),
-    verticalPos: BASELINE[(a['dominant-baseline'] ?? 'middle') as keyof typeof BASELINE],
-    horizontalPos: POSITION[(a['text-anchor'] ?? 'middle') as keyof typeof POSITION],
+    verticalPos: V12_POSITION[BASELINE[a['dominant-baseline'] ?? 'middle'] ?? 'middle'],
+    horizontalPos: POSITION[(a['text-anchor'] ?? 'middle') as XyTextAnchor],
   };
 }
 
@@ -211,32 +209,23 @@ function datum(tag: string, a: Record<string, string>, text: string): Record<str
 function drawables(svg: string): Drawable[] {
   const out: Drawable[] = [];
   const groups: string[] = [];
-  let text: { a: Record<string, string>; body: string } | undefined;
-  for (const [token] of svg.matchAll(/<[^>]*>|[^<]+/g)) {
-    if (!token.startsWith('<')) {
-      if (text) text.body += token;
+  let text: { a: Readonly<Record<string, string>>; body: string } | undefined;
+  for (const t of svgTokens(svg)) {
+    if (t.kind === 'text') {
+      if (text) text.body += t.text;
       continue;
     }
-    const closing = token.startsWith('</');
-    const selfClosing = token.endsWith('/>');
-    const tag = /^<\/?([\w:]+)/.exec(token)![1];
-    const a: Record<string, string> = {};
-    for (const p of token.matchAll(/([\w:-]+)="([^"]*)"/g)) a[p[1]!] = p[2]!;
+    const { tag, attrs: a, closing } = t;
     if (tag === 'g') {
       if (closing) groups.pop();
-      else if (!selfClosing) groups.push(a.class ?? '');
-      continue;
-    }
-    if (tag === 'tspan') continue;
-    if (tag === 'text') {
+      else if (!t.empty) groups.push(a.class ?? '');
+    } else if (tag === 'text') {
       if (!closing) text = { a, body: '' };
       else if (text) {
         push(out, groups, 'text', datum('text', text.a, text.body));
         text = undefined;
       }
-      continue;
-    }
-    if ((tag === 'rect' || tag === 'path') && groups.length > 0 && a.class !== 'background')
+    } else if ((tag === 'rect' || tag === 'path') && groups.length > 0 && a.class !== 'background')
       push(out, groups, tag, datum(tag, a, ''));
   }
   return out;
@@ -265,24 +254,17 @@ export const XYChartBuilder = {
       measurer: measurer(),
       theme,
     });
-    return drawn(model, layout, config, theme);
+    return drawn(model, layout, theme);
   },
 };
 
-const NO_AXIS: XyAxisLayout = {
-  kind: 'band',
-  position: 'bottom',
-  box: { x: 0, y: 0, width: 0, height: 0 },
-  range: [0, 0],
-  outerPadding: 0,
-  ticks: [],
-  tickWidth: 0,
-  lineWidth: 0,
-};
-
-/** v12 `ChartLegend`: the v13 layout's legend, drawn by the v13 renderer alone. */
+/**
+ * v12 `ChartLegend`: the v13 legend component (`./testing`'s `XyChartLegend`), placed where the
+ * spec puts it, drawn by the v13 renderer as part of the whole chart's layout, and read back as
+ * the legend's drawables only.
+ */
 export class ChartLegend {
-  private readonly legend: Legend;
+  private readonly legend: InstanceType<typeof XyChartLegend>;
   private readonly model: XyChartModel;
   private readonly theme: Theme;
   constructor(
@@ -299,7 +281,12 @@ export class ChartLegend {
       size: options.legendFontSize,
       weight: NORMAL_WEIGHT,
     };
-    this.legend = new Legend(this.model, options, font, textMeasure(measurer(calc), undefined));
+    this.legend = new XyChartLegend(
+      this.model,
+      options,
+      font,
+      textMeasure(measurer(calc), undefined)
+    );
   }
 
   calculateSpace(available: { width: number; height: number }): { width: number; height: number } {
@@ -313,19 +300,13 @@ export class ChartLegend {
   getDrawableElements(): Drawable[] {
     const legend = this.legend.result()?.legend;
     if (!legend) return [];
-    const options = xyChartOptions(this.config);
-    const layout: XyChartLayout = {
-      orientation: 'vertical',
-      width: options.width,
-      height: options.height,
-      plot: { x: 0, y: 0, width: 0, height: 0 },
-      xAxis: NO_AXIS,
-      yAxis: { ...NO_AXIS, kind: 'linear', position: 'left' },
-      plots: [],
-      legend,
-      bounds: { x: 0, y: 0, width: options.width, height: options.height },
-    };
-    return drawn(this.model, layout, this.config, this.theme);
+    const chart = layoutXyChart(this.model, {
+      config: { xyChart: this.config } as unknown as ResolvedConfig,
+      measurer: measurer(),
+      theme: this.theme,
+    });
+    const layout: XyChartLayout = { ...chart, legend };
+    return drawn(this.model, layout, this.theme).filter((d) => d.groupTexts[0] === 'legend');
   }
 }
 

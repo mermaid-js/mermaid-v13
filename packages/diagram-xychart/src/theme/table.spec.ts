@@ -72,6 +72,12 @@ describe('xychart theme table', () => {
       xyChart: { plotColorPalette: '#111111' },
     });
     expect(flat.palette('xyChartPlotColorPalette')).toEqual(['#333333']);
+    // An empty flat list is unset, so the nested key applies (D545).
+    const under = await resolve('neo', {
+      xyChartPlotColorPalette: [],
+      xyChart: { plotColorPalette: ['#555555'] },
+    });
+    expect(under.palette('xyChartPlotColorPalette')).toEqual(['#555555']);
     const empty = await resolve('neo', { xyChart: { plotColorPalette: [] } });
     expect(empty.palette('xyChartPlotColorPalette')).toEqual(empty.palette('plotColorArray'));
     const shared = await resolve('neo', { plotColorArray: '#444444' });

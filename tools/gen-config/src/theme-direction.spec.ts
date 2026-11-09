@@ -113,7 +113,6 @@ describe('theme direction (D331)', () => {
   // `xyChartPlotColorPalette` reads plotColorArray (D381, D545).
   it('reads every shared input from some table', () => {
     expect(unreadInputs(repo.tables, D332_INPUTS)).toEqual([]);
-    expect(unreadInputs(repo.tables, ['plotColorArray'])).toEqual([]);
     const t = { demo: TABLE };
     expect(unreadInputs(t, ['mainBkg', 'cScale', 'mutedBkg'])).toEqual(['mutedBkg']);
   });

@@ -32,10 +32,11 @@ export interface Segment {
 
 export type XyTextAnchor = 'start' | 'middle' | 'end';
 /**
- * Where the anchor is on the text: its top (v12 `text-before-edge`, and `hanging` for data
- * labels), its middle, or its alphabetic baseline (v12 `auto`, a data label outside its bar).
+ * Where the anchor is on the text: its top (v12 `text-before-edge`), its hanging baseline (v12
+ * `hanging`, a data label inside a vertical bar; placed as `top`), its middle, or its alphabetic
+ * baseline (v12 `auto`, a data label outside its bar).
  */
-export type XyBaseline = 'top' | 'middle' | 'alphabetic';
+export type XyBaseline = 'top' | 'hanging' | 'middle' | 'alphabetic';
 
 export interface XyText extends Point {
   /** The text as written: a tick number, a category, a title, a name, a value. */
@@ -152,6 +153,8 @@ export interface XyLegendLayout {
 
 export interface XyChartLayout {
   readonly orientation: XyChartOrientation;
+  /** `xyChart.useMaxWidth`: the chart scales to its container (D387). */
+  readonly useMaxWidth: boolean;
   /** v12's canvas: `xyChart.width` × `xyChart.height`. */
   readonly width: number;
   readonly height: number;

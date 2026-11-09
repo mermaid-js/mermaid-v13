@@ -28,7 +28,6 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import { xyChartOptions } from '../config.ts';
 import type {
   Segment,
   XyAxisLayout,
@@ -42,7 +41,7 @@ import type { XyChartModel } from '../model.ts';
 import { paints, type AxisPaints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
-export type XyChartRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
+export type XyChartRenderContext = Pick<RenderContext, 'theme' | 'idPrefix' | 'version'>;
 
 /** Writes the whole `<svg>` document for a laid-out XY chart. */
 export function renderXyChart(
@@ -74,14 +73,12 @@ export function renderXyChart(
 }
 
 /** v12's `dominant-baseline` for a text's baseline (`getDominantBaseLine`, the data labels'). */
-type DominantBaseline = NonNullable<Attrs['dominant-baseline']>;
-
-// Core's attribute type lists no `text-before-edge`, which v12 wrote for a top baseline; the
-// allow-list takes any value.
-const BEFORE_EDGE = 'text-before-edge' as DominantBaseline;
-
-const BASELINE: Readonly<Record<XyText['baseline'], DominantBaseline>> = {
-  top: BEFORE_EDGE,
+/** v12's `dominant-baseline` for each of the layout's baselines (`getDominantBaseLine`, the data labels'). */
+export const DOMINANT_BASELINE: Readonly<
+  Record<XyText['baseline'], NonNullable<Attrs['dominant-baseline']>>
+> = {
+  top: 'text-before-edge',
+  hanging: 'hanging',
   middle: 'middle',
   alphabetic: 'auto',
 };
@@ -109,42 +106,36 @@ function plainText(label: MeasuredLabel): string | undefined {
 
 /**
  * `t` at its anchor, as v12 placed a `TextElem`: `translate(x, y) rotate(r)`, its anchor and its
- * baseline (`dominantBaseline` overrides the mapping, for v12's data labels' `hanging`). A
- * label of several lines, or with styled runs or inline boxes, goes through core's label writer
- * with its box where the layout measured it, in the same rotated frame.
+ * baseline. A label of several lines, or with styled runs or inline boxes, goes through core's
+ * label writer with its box where the layout measured it, in the same rotated frame.
  */
-function drawText(
-  w: SvgWriter,
-  t: XyText,
-  attrs: Attrs,
-  dominantBaseline?: DominantBaseline
-): void {
+function drawText(w: SvgWriter, t: XyText, attrs: Attrs): void {
   const transform = transforms(translate(t.x, t.y), rotate(t.rotation));
-  const text = t.label ? plainText(t.label) : t.text;
   const size = t.font.size;
+  const label = t.label;
+  const text = label ? plainText(label) : t.text;
   if (text !== undefined) {
     w.open('text', {
       x: 0,
       y: 0,
       ...attrs,
       'font-size': size,
-      'dominant-baseline': dominantBaseline ?? BASELINE[t.baseline],
+      'dominant-baseline': DOMINANT_BASELINE[t.baseline],
       'text-anchor': t.anchor,
       transform,
     });
     w.text(text);
     w.close();
-    return;
+  } else if (label) {
+    const { box } = t;
+    const cx = box.x - t.x + box.width / 2;
+    const cy = box.y - t.y + box.height / 2;
+    w.label(t.anchor === 'start' ? { ...label, left: true } : label, cx, cy, {
+      ...attrs,
+      'font-size': size,
+      transform,
+    });
   }
-  const label = t.label!;
-  const { box } = t;
-  const cx = box.x - t.x + box.width / 2;
-  const cy = box.y - t.y + box.height / 2;
-  w.label(t.anchor === 'start' ? { ...label, left: true } : label, cx, cy, {
-    ...attrs,
-    'font-size': size,
-    transform,
-  });
 }
 
 /** `M x1,y1 L x2,y2`. */
@@ -182,13 +173,7 @@ function drawBars(plot: XyBarPlotLayout, paint: Paints, w: SvgWriter): void {
       'data-id': id,
     });
   // v12 hangs a label inside a vertical bar from its top (`hanging`).
-  for (const t of plot.dataLabels)
-    drawText(
-      w,
-      t,
-      { fill: paint.dataLabel, 'data-id': id },
-      t.baseline === 'top' ? 'hanging' : undefined
-    );
+  for (const t of plot.dataLabels) drawText(w, t, { fill: paint.dataLabel, 'data-id': id });
   w.close();
 }
 
@@ -199,7 +184,7 @@ function drawLine(plot: XyLinePlotLayout, paint: Paints, w: SvgWriter): void {
   w.open('g', { class: `line-plot-${plot.index}`, 'data-ast': id });
   if (plot.path !== '')
     w.leaf('path', {
-      // d3 `line()`'s path from the layout, numbers only (`layout/scale.ts` `linePath`).
+      // The layout's d3 `line()` path: it writes numbers only (`layout/scale.ts` `linePath`).
       d: plot.path as PathData,
       fill: 'none',
       stroke,
@@ -291,13 +276,13 @@ function openRoot(
   ctx: XyChartRenderContext,
   w: SvgWriter
 ): void {
-  const { theme, config } = ctx;
+  const { theme } = ctx;
   const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
   // D387: `useMaxWidth` is honoured (v12 always scaled to the container).
-  const maxWidth = xyChartOptions(config.xyChart as Readonly<Record<string, unknown>>).useMaxWidth;
+  const maxWidth = layout.useMaxWidth;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.

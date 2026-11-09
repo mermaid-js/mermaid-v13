@@ -5,32 +5,7 @@
 // `conformance/src/xychart/render.spec.ts`.
 import { describe, expect, it } from 'vitest';
 import { renderXyChartForTest } from './harness.ts';
-
-/** Every `<tag>` start tag's attributes, in document order. */
-function elements(svg: string, tag: string): Record<string, string>[] {
-  const out: Record<string, string>[] = [];
-  for (const m of svg.matchAll(new RegExp(`<(?:${tag})\\b([^>]*?)/?>`, 'g'))) {
-    const attrs: Record<string, string> = { tag: /<([\w:]+)/.exec(m[0])![1]! };
-    for (const a of m[1]!.matchAll(/([\w:-]+)="([^"]*)"/g)) attrs[a[1]!] = a[2]!;
-    out.push(attrs);
-  }
-  return out;
-}
-
-/** The inner markup of the first `<g class="cls" …>` (groups nest, so it counts them). */
-function group(svg: string, cls: string): string {
-  const open = new RegExp(`<g class="${cls}"[^>]*>`).exec(svg);
-  if (!open) throw new Error(`no g.${cls}`);
-  let depth = 1;
-  const re = /<g\b[^>]*?(\/?)>|<\/g>/g;
-  re.lastIndex = open.index + open[0].length;
-  for (let m = re.exec(svg); m; m = re.exec(svg)) {
-    if (m[0] === '</g>') depth--;
-    else if (m[1] !== '/') depth++;
-    if (depth === 0) return svg.slice(open.index + open[0].length, m.index);
-  }
-  throw new Error(`g.${cls} not closed`);
-}
+import { elements, group } from './read-svg.ts';
 
 /** The classes of the `<g>`s, in document order. */
 const groupClasses = (svg: string): string[] => elements(svg, 'g').map((g) => g.class ?? '');
