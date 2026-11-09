@@ -91,6 +91,6 @@ export async function lexingExclusion(
   while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
   const [from, to] = ranges[at] ?? [0, 0];
   const why = exclusion(expected, actual, at, source.slice(from, to));
-  if (!why) throw new Error(`c4 lexer parity: unexcluded difference at token ${at}`);
+  if (!why) throw new Error(`c4 lexer parity: difference no exclusion explains at token ${at}`);
   return why;
 }

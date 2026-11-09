@@ -10,11 +10,14 @@ Unmet acceptance criteria and choices not covered by the spec or a D-id, per own
 
 ## T2 (#539)
 
-- **D452 lexing changes land here, in the lexer** (coordinator choice, T1 review): T1's lexer is exactly v12's. T2 changes it so an unquoted argument stops at `)` and at a line end, and a trailing `%%` comment keeps its newline, and lists each as a gate exclusion in `packages/conformance/src/c4/lexer-parity.spec.ts`. The other D452 items are parser/model changes. Q2–Q7 fixtures (D452–D457) belong to T2–T4.
-- **Spec correction (oracle wins, pitfall 29):** the spec says named arguments "fill the slot they land in, not the slot they name". v12's `assignAttributes` (`c4Db.ts:31–51`) sets the field the name gives (`bag[key]`) everywhere except the alias/label slots (raw object stored, D452 changes that) and `UpdateLayoutConfig` (by position). `UpdateRelStyle`'s `parseInt` still reads by slot (`$textColor` in slot 5 → `NaN`, `$offsetX` in slot 3 stays `"5"`). A named argument leaves its own slot's field missing; the parity adapter compares that. Implement the oracle's behaviour.
-- `accDescr` leak survives `mermaidAPI.reset()`: the parity adapter resets it per case.
-- `Deployment_Node`/`Node` drop whatever lands in the sprite slot, named arguments included (`c4Db.ts:476`). Parity follows.
-- Block's T0 is #552, PR #589, merged at ad3648a91.
+- **Closed (#539):** D452's lexing changes are in the lexer, each a classified exclusion of `conformance/src/c4/lexer-parity.spec.ts` (`c4/d452.ts`, shared with the variant parity and the grammar specs). The lone `title` needed the lexer too (`title` right before a line break), not the parser alone: a third exclusion.
+- **Closed (#539), oracle wins:** a named argument sets the field it names, except in the alias, relation-end and label slots (D452: moved there, `C4_NAMED_ARGUMENT_MOVED`) and `UpdateLayoutConfig` (by position); offset slots `parseInt` whatever lands there (`$textColor` there reads `"NaN"`). A named argument leaves its slot's field absent; the adapter compares field presence.
+- **Closed (#539):** the `accDescr` leak is cleared per parse in the oracle wrapper (`c4/oracle-env.ts`), which also rejects an unknown relation end with v12's render message (D457), as xychart's wrapper does for "No Plot".
+- **Closed (#539):** `Deployment_Node`/`Node` drop the sprite slot, a named argument there included; a named `$sprite` in another slot is kept.
+- Choice: `$__proto__` is an error (`C4_NAME_RESERVED`; v12 rejected), kept as an `extra` name. Structural names (`$alias`, `$from`, `$parentBoundary`, a relation's `$type`) go to `extra`, where v12 overwrote the structure (not in the corpus).
+- Choice: model parity over the lexer gate's variants runs in `c4/parity.spec.ts` (packet's precedent) instead of the main suite: a variant may differ only by a D452 lexing exclusion, as its listed source, or by D453's title trim; 85 divergences are listed, not ~780.
+- Choice: after a lexer error, a line break in the macro or `$name=` state is a zero-width error that leaves those states (ungated: jison stopped at the error), so recovery resumes at the next line.
+- For T5: MIGRATION.md rows for D452/D453; the registry row (D451) and `detectC4`. For T6: hover on the five headers shows the `diagram` rule's doc (gen:grammar's tie-break); `C4Argument` ranges are there for slot hover.
 
 ## T3 (#540)
 
