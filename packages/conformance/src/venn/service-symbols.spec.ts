@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detectVenn } from '@mermaid-js/diagram-venn';
 import type { VennStatementNode } from '@mermaid-js/diagram-venn';
-import { parseVenn, vennLanguage } from '@mermaid-js/diagram-venn/language';
+import { parseVenn } from '@mermaid-js/diagram-venn/language';
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -30,12 +29,11 @@ import { parseVennForParity, vennV13Snapshot } from './v13.ts';
  *
  * The empty id `set ""` is left out: an occurrence with no text has nothing to point at.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until venn's
- * manifest has its `language` entry (#501); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (venn's manifest `language`
+ * entry, #501).
  */
-const service = createLanguageService({
-  facets: [{ type: 'venn', id: 'venn', detector: (t) => detectVenn(t), facet: vennLanguage }],
-});
+const service = createLanguageService();
+await service.preload({ types: ['venn'] });
 
 const FRESH = 'renamedZq7';
 const FRESH_QUOTED = 'renamed Zq7';
@@ -264,7 +262,8 @@ describe('venn symbols, folding and rename through the service match v12', () =>
     process.stdout.write(`venn service symbols: ${JSON.stringify({ ...n, renamed: r })}\n`);
   }, 600_000);
 
-  it('the facet is not in the generated registry yet (#501: drop the eager row then)', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'venn')?.load).toBeUndefined();
+  it('loads the facet from the generated registry (#501)', () => {
+    expect(firstPartyFacets.find((e) => e.type === 'venn')?.load).toBeTypeOf('function');
+    expect(service.update('x:///v', 'venn-beta\n  set A\n').facet?.id).toBe('venn');
   });
 });

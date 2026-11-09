@@ -1,0 +1,13 @@
+---
+config:
+  theme: default
+description: every style key v12 reads on a set (fill, fill-opacity, stroke, stroke-width with a unit, color), an overlap's fill and color, and a text node's color, with hex and rgb() values
+---
+venn-beta
+  set A["Styled set"]
+  set B["Plain set"]
+  union A, B["Styled overlap"]
+    text note
+  style A fill:#ff6b6b, fill-opacity:0.4, stroke:rgb(120, 20, 20), stroke-width:4px, color:#5a0000
+  style A,B fill:#ffe66d, color:#333333
+  style note color:#0b5394

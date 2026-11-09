@@ -277,6 +277,19 @@ const DOCS: Readonly<Record<string, string>> = {
     '    }',
     '',
   ].join('\n'),
+  venn: [
+    'venn-beta',
+    '  title Team skills',
+    '  %% the sets',
+    '  set A["Frontend"]: 12',
+    '    text React',
+    '  set "B b"',
+    '  union A, "B b"["Both"]: 2.5',
+    '    text "shared"',
+    '  text A note[Note]',
+    '  style A fill:#ff6b6b, stroke:rgb(1, 2, 3), stroke-width:4px',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

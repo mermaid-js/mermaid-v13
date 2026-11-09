@@ -275,25 +275,18 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
-  it('passes on the venn package as it will be published', () => {
-    // diagram-venn is private until its integration ticket (#501), which the check skips: run
-    // it on a copy without `"private": true`.
+  it('checks the published venn package, whose solver credits venn.js and fmin', () => {
+    // diagram-venn is public since its integration ticket (#501), so the check covers it in
+    // this repository; on a copy, a ported file without its credit is caught.
     const repo = join(import.meta.dirname, '..', '..', '..');
     const root = mkdtempSync(join(tmpdir(), 'licenses-venn-'));
     const pkg = join(repo, 'packages', 'diagram-venn');
-    cpSync(join(pkg, 'src'), join(root, 'packages', 'diagram-venn', 'src'), { recursive: true });
-    cpSync(
-      join(pkg, 'THIRD_PARTY_NOTICES'),
-      join(root, 'packages', 'diagram-venn', 'THIRD_PARTY_NOTICES')
-    );
+    for (const entry of ['src', 'THIRD_PARTY_NOTICES', 'package.json'])
+      cpSync(join(pkg, entry), join(root, 'packages', 'diagram-venn', entry), { recursive: true });
     const published = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')) as {
       private?: boolean;
     };
-    delete published.private;
-    writeFileSync(
-      join(root, 'packages', 'diagram-venn', 'package.json'),
-      JSON.stringify(published)
-    );
+    expect(published.private).toBeUndefined();
     expect(checkLicenses(root)).toEqual([]);
     // It checks the solver: a ported file without its credit is caught.
     writeFileSync(

@@ -61,6 +61,7 @@ describe('completion', () => {
       'quadrantChart',
       'packet',
       'radar-beta',
+      'venn-beta',
       'cynefin-beta',
     ]);
     expect(labels('qua|')).toEqual(['quadrantChart']);
@@ -70,6 +71,7 @@ describe('completion', () => {
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);
     expect(labels('cyn|')).toEqual(['cynefin-beta']);
+    expect(labels('ven|')).toEqual(['venn-beta']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),

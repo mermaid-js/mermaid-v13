@@ -1,0 +1,18 @@
+---
+config:
+  theme: neutral
+description: one representative venn diagram in the neutral theme, with three sized and labelled sets, every overlap, a labelled triple overlap, text nodes in sets and an overlap, and a title
+---
+venn-beta
+  title Team skills
+  set Frontend["Frontend"]: 12
+    text React
+    text "CSS grid"
+  set Backend["Backend"]: 10
+    text Go
+  set Ops["Operations"]: 8
+  union Frontend, Backend["Full stack"]: 4
+  union Backend, Ops: 3
+    text Terraform
+  union Frontend, Ops: 2
+  union Frontend, Backend, Ops["Everything"]: 1

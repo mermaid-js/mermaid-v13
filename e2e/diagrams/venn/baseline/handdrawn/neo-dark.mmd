@@ -1,0 +1,21 @@
+---
+config:
+  theme: neo-dark
+  look: handDrawn
+  handDrawnSeed: 1
+description: one representative venn diagram, hand-drawn in the neo-dark theme (D319), circles and the filled overlap sketched through w.outline, the unstyled overlaps, labels and text nodes plain
+---
+venn-beta
+  title Team skills
+  set Frontend["Frontend"]: 12
+    text React
+    text "CSS grid"
+  set Backend["Backend"]: 10
+    text Go
+  set Ops["Operations"]: 8
+  union Frontend, Backend["Full stack"]: 4
+  union Backend, Ops: 3
+    text Terraform
+  union Frontend, Ops: 2
+  union Frontend, Backend, Ops["Everything"]: 1
+  style Frontend,Backend fill:#ffe66d

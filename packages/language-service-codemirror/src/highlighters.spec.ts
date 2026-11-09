@@ -49,6 +49,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'venn',
     ]);
   });
 
@@ -166,6 +167,14 @@ describe('the per-type first-paint highlighters (D134)', () => {
       const out = spans('kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n');
       expect(out[0]).toBe('kanban:keyword');
       expect(out.length).toBeGreaterThan(1);
+    });
+
+    it('highlights a venn diagram with the venn grammar', () => {
+      const out = spans('venn-beta\n  set A["Alpha"]: 10\n  union A, B\n    text "x"\n');
+      expect(out[0]).toBe('venn-beta:keyword');
+      expect(out).toContain('set:keyword');
+      expect(out).toContain('union:keyword');
+      expect(out).toContain('"x":string');
     });
 
     it('finds the type after front matter, directives and comments', () => {
