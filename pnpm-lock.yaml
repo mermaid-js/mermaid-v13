@@ -228,6 +228,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:^
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -412,6 +415,12 @@ importers:
         version: link:../core
 
   packages/diagram-er:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-eventmodeling:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^

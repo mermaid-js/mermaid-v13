@@ -42,6 +42,11 @@ export const LANGIUM_LEXERS = {
     factory: 'createWardleyServices',
     key: 'Wardley',
   },
+  eventmodeling: {
+    probe: 'eventmodeling\ntf 01 evt A',
+    factory: 'createEventModelingServices',
+    key: 'EventModel',
+  },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

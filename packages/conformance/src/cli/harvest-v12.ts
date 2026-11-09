@@ -102,6 +102,17 @@ export const HARVESTS = {
     ],
     docs: 'packages/mermaid/src/docs/syntax/wardley.md',
   },
+  eventmodeling: {
+    header: 'eventmodeling',
+    files: [
+      'packages/mermaid/src/diagrams/eventmodeling/eventmodeling.spec.ts',
+      'packages/mermaid/src/diagrams/eventmodeling/parser.ts',
+      'packages/parser/tests/eventmodeling.test.ts',
+      'packages/examples/src/examples/eventmodeling.ts',
+      'packages/mermaid/src/rendering-util/multi-diagram-id-uniqueness.spec.ts',
+    ],
+    docs: 'packages/mermaid/src/docs/syntax/eventmodeling.md',
+  },
 } as const satisfies Record<string, Harvest>;
 
 export type HarvestType = keyof typeof HARVESTS;
