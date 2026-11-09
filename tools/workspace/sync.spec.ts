@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { diagramPackages, ROOT, WIRING_FILE } from './diagrams.ts';
+import { ROOT, WIRING_FILE, workspaceDiagrams } from './diagrams.ts';
 import { DEPENDENCY_RULES, RELEASING, staleFiles, syncedFiles } from './sync.ts';
 
 /**
@@ -32,7 +32,8 @@ describe('pnpm regen: the workspace files a port used to edit by hand', () => {
       cpSync(join(ROOT, path), join(scratch, path));
     };
     for (const rule of DEPENDENCY_RULES) copy(`${rule.pkg}/package.json`);
-    for (const d of diagramPackages()) {
+    // Every diagram package, a port's before its manifest too (its wiring is an input).
+    for (const d of workspaceDiagrams()) {
       copy(`${d.dir}/package.json`);
       if (existsSync(join(ROOT, d.dir, WIRING_FILE))) copy(`${d.dir}/${WIRING_FILE}`);
     }
