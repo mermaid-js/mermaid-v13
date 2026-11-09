@@ -28,7 +28,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **For the maintainer:** the four shared-variable overrides that differ from 12.2.0 (base `background` and `darkMode`, dark `primaryColor`, default `background`/`wardleyEvolutionColor`), each a `theme.spec.ts` `OVERRIDES` entry and a MIGRATION.md row.
 - Sizes (D217): core 93,682 → 93,713 B gz (budget 94,208); wardley load path 119,868 B gz, its own 26,155 B; warm render v12/v13 geomean 19.1× over 54 fixtures (not measured on a steady machine).
 - Review (#497) fixed: MIGRATION.md redux-dark row (v12 drew the annotation box and markers `white` in every theme) and its own `theme.spec.ts` reason; the spec header says the annotation variables compare as v12 resolved them; one spec pins the section in plugin, manifest, facet row and schema; a plugin without `configSection` resolves by id; `defaultsName()` exported once; `config/init-section.mmd` baseline (the `"wardley-beta"` init form); the unsketched spec header.
-- Checks: `pnpm check` green under the lock (16,837 tests); `pnpm e2e` (Playwright image, copy outside the worktree, lock) 2,408 passed.
+- Checks after the review fixes: `pnpm check` green under the lock (16,840 tests); `pnpm e2e` (Playwright image, copy outside the worktree, lock) 2,409 passed.
 
 ## T6 (#500, merged)
 
