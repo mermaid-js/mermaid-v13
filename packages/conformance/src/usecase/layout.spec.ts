@@ -80,7 +80,7 @@ function laidOut(f: Fixture, engine: LayoutEngine) {
 
 describe('usecase layout over parser-produced graphs', () => {
   it('reads a corpus with every kind of node, boundaries of both types and notes', () => {
-    expect(fixtures.length).toBeGreaterThan(150);
+    expect(fixtures.length).toBeGreaterThan(190);
     const models = fixtures.map((f) => f.model);
     expect(models.some((m) => m.boundaries.some((b) => b.type === 'package'))).toBe(true);
     expect(models.some((m) => m.boundaries.some((b) => b.type === 'rect'))).toBe(true);
