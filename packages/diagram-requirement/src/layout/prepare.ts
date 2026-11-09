@@ -134,7 +134,7 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 
 /** `<<text>>`, as v12 wrote it (entities, decoded by the label layout). */
-const guillemets = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
+const angled = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
 
 /** v12's head and body lines, in order: an empty field draws nothing. */
 function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
@@ -159,7 +159,7 @@ function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
   const body = fields
     .filter(([, , v]) => v !== '')
     .map(([part, key, v]): [LinePart, string] => [part, `${key}: ${v}`]);
-  return { kind: guillemets(kind), body };
+  return { kind: angled(kind), body };
 }
 
 /** What every box view is measured with. */
@@ -265,7 +265,7 @@ export function prepareRequirement(
       relation: r,
       source: r.from,
       target: r.to,
-      label: measure(guillemets(r.kind), font, 0),
+      label: measure(angled(r.kind), font, 0),
       marker: contains ? 'contains' : 'arrow',
       markerAt: contains ? 'source' : 'target',
       dashed: !contains,
