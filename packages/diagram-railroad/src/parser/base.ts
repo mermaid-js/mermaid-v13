@@ -80,6 +80,24 @@ const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 /** What ends an alternative: found where an element should start, the alternative is empty. */
 const EMPTY_ENDS = [T.Pipe, T.Slash, T.Semi, T.RParen, T.RBracket, T.RBrace];
 
+/** What a token before a missing element needs, where it is not an alternative's start. */
+const OPERAND: Readonly<Record<number, string>> = {
+  [T.Minus]: '`-` needs an element after it',
+  [T.Comma]: '`,` needs an element after it',
+  [T.Repeat]: 'a repeat needs an element after it',
+  [T.ExactRepeat]: 'a repeat needs an element after it',
+  [T.Amp]: '`&` needs an element after it',
+  [T.Bang]: '`!` needs an element after it',
+};
+
+/**
+ * Groups and calls the parser reads inside one another before it stops: a guard for the stack,
+ * apart from `maxDepth`, since a group that draws nothing (`((a))`) adds no level to the model.
+ * Node's default stack holds about 1,500 PEG groups (the deepest recursion of the four), so
+ * this leaves room for smaller stacks (workers, browsers).
+ */
+const NESTING_GUARD = 500;
+
 /**
  * Not a token: what the parser expects where a rule starts (a name, then `=`), for the
  * expected tables, which name it apart from a name inside an expression.
@@ -172,8 +190,7 @@ export abstract class RailroadParser {
   /** Header statements per kind so far, for their ids' `@n`. */
   private readonly texts = new Map<string, number>();
   private readonly maxDepth: number;
-  private tooDeep = false;
-  /** Groups and calls open around the current token, for the depth limit. */
+  /** Groups and calls open around the current token, for {@link NESTING_GUARD}. */
   private nest = 0;
   /** The last value of each (Langium's assignments: the last one wins, an empty one too). */
   private title = '';
@@ -285,35 +302,57 @@ export abstract class RailroadParser {
     return this.i++;
   }
 
-  /** `d`, unless it nests deeper than the limit: then the limit's error (once), and stop. */
+  /**
+   * `d`, unless its tree is deeper than `maxDepth` levels: then the limit's error, and stop the
+   * rule (so each rule that is too deep has its own error).
+   */
   protected deep(d: Draft): Draft {
-    return d.height <= this.maxDepth ? d : this.tooDeepAt(d.height, d.range);
+    if (d.height <= this.maxDepth) return d;
+    this.st.diagnostics.error(
+      LIMIT_CODES.maxDepth,
+      `Expressions are nested ${d.height} deep here, over the limit of ${this.maxDepth}. The limit is set by the page or app that renders the diagram.`,
+      d.range
+    );
+    throw STOP;
   }
 
   /**
-   * Read a nested expression with `read` (a group's or a call's contents); the nesting counts
-   * towards the depth limit before it is read, so deep nesting never exhausts the stack.
+   * Read a nested expression with `read` (a group's or a call's contents). Only the levels the
+   * model draws count towards `maxDepth` ({@link deep}); the groups open are counted against a
+   * stack guard (the larger of `maxDepth` and {@link NESTING_GUARD}) before reading, so deep
+   * nesting never exhausts the stack.
    */
   protected nested<R>(at: Range, read: () => R): R {
     this.nest++;
     try {
-      if (this.nest > this.maxDepth) this.tooDeepAt(this.nest, at);
+      const guard = Math.max(this.maxDepth, NESTING_GUARD);
+      if (this.nest > guard) {
+        this.st.diagnostics.error(
+          LIMIT_CODES.maxDepth,
+          `Groups are nested more than ${guard} deep here, more than the parser reads.`,
+          at
+        );
+        throw STOP;
+      }
       return read();
     } finally {
       this.nest--;
     }
   }
 
-  private tooDeepAt(depth: number, range: Range): never {
-    if (!this.tooDeep) {
-      this.tooDeep = true;
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxDepth,
-        `Expressions are nested ${depth} deep here, over the limit of ${this.maxDepth}. The limit is set by the page or app that renders the diagram.`,
-        range
-      );
-    }
-    throw STOP;
+  /**
+   * Where an element should start: the current token, unless it starts the next rule, which
+   * cut this one short. Then report the missing element where it goes, after the last token.
+   */
+  protected startElement(want: readonly number[]): void {
+    this.tested(want);
+    if (this.startsRule() || this.kind() === Kind.EOF) this.fail(want, undefined, this.gap());
+  }
+
+  /** Zero-width, right after the last token read. */
+  private gap(): Range {
+    const at = this.range(this.i - 1).end;
+    return { start: at, end: at };
   }
 
   /** A nonterminal's name: a reference to the rule of that name (D517). */
@@ -335,10 +374,12 @@ export abstract class RailroadParser {
     return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
   }
 
-  /** Report what was found where one of `want` was expected, then stop the rule. */
-  protected fail(want: readonly number[], hint?: string): never {
-    const where = this.range();
-    if (this.kind() === Kind.Error) this.badCharacters(where);
+  /**
+   * Report what was found where one of `want` was expected, then stop the rule. `where` is the
+   * current token, or the gap after the last one where the rule was cut short.
+   */
+  protected fail(want: readonly number[], hint?: string, where: Range = this.range()): never {
+    if (this.kind() === Kind.Error) this.badCharacters(this.range());
     const d = this.st.diagnostics.unexpected(
       'UNEXPECTED',
       where,
@@ -346,23 +387,6 @@ export abstract class RailroadParser {
       this.found()
     );
     const why = hint ?? this.explain(want);
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
-    throw STOP;
-  }
-
-  /**
-   * The rule ends (the next rule starts, or the text) without its `;`: reported where the `;`
-   * goes, right after the rule's last token.
-   */
-  private missingSemi(): never {
-    const at = this.range(this.i - 1).end;
-    const d = this.st.diagnostics.unexpected(
-      'UNEXPECTED',
-      { start: at, end: at },
-      this.expected.names([T.Semi]),
-      this.found()
-    );
-    const why = this.explain([T.Semi]);
     if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
     throw STOP;
   }
@@ -383,8 +407,13 @@ export abstract class RailroadParser {
       return `a name that starts with \`title\` reads as a \`title\` line, so \`${this.raw()}${this.raw(this.i + 1)}\` cannot be a name; rename it`;
     }
     // Where EBNF, ABNF and PEG expect an element (IR expects a keyword there).
-    if (want.includes(T.String) && want.includes(T.Id) && EMPTY_ENDS.includes(k)) {
-      return 'an alternative cannot be empty';
+    if (want.includes(T.String) && want.includes(T.Id)) {
+      const before = this.kind(this.i - 1);
+      const operand = OPERAND[before];
+      if (operand) return operand;
+      if (this.defines.includes(before))
+        return `a rule needs a definition after \`${this.raw(this.i - 1)}\``;
+      if (EMPTY_ENDS.includes(k) || this.startsRule()) return 'an alternative cannot be empty';
     }
     if (TEXT.includes(k)) {
       return `\`${VALUE_WORDS[k] ?? 'title'}\` goes on its own line after \`${this.headerWord}\`, before the rules`;
@@ -480,8 +509,9 @@ export abstract class RailroadParser {
       // A header in another case, or glued to more text (`railroad-betax`): skip it.
       if (k !== Kind.EOF) this.i++;
       let why = `put a blank or a line break after \`${word}\``;
-      if (text.toLowerCase() === word) why = 'the keyword is written in lower case';
-      else if (k === Kind.EOF) why = `a diagram starts with \`${word}\``;
+      if (text !== word && text.toLowerCase() === word) {
+        why = 'the keyword is written in lower case';
+      } else if (k === Kind.EOF) why = `a diagram starts with \`${word}\``;
       this.st.diagnostics.error(
         'UNEXPECTED',
         `Expected \`${word}\`, got ${found}; ${why}.`,
@@ -491,8 +521,8 @@ export abstract class RailroadParser {
       return;
     }
     // No header: report it, skip what stands in its place (another notation's header), and
-    // read the rest as rules.
-    if (!this.startsRule()) this.i++;
+    // read the rest as header statements and rules.
+    if (!this.startsRule() && !TEXT.includes(k)) this.i++;
     this.st.diagnostics.error(
       'UNEXPECTED',
       `Expected \`${word}\`, got ${found}; a diagram starts with \`${word}\`.`,
@@ -520,7 +550,7 @@ export abstract class RailroadParser {
     let text: string;
     if (type === 'Title') text = this.title = titleValue(this.notation, image);
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image).replace(/\n\s+/g, '\n');
+    else text = this.accDescr = accDescrValue(image);
     const word = VALUE_WORDS[k] ?? 'title';
     const n = (this.texts.get(word) ?? 0) + 1;
     this.texts.set(word, n);
@@ -545,8 +575,21 @@ export abstract class RailroadParser {
     }
   }
 
-  /** `NAME <define> <definition> ';'`. */
+  /**
+   * `NAME <define> <definition> ';'`. A rule that fails leaves no trace but its diagnostic: no
+   * model rule, no AST node and no symbols (its name and references are dropped).
+   */
   private rule(): void {
+    const symbols = this.st.symbols.length;
+    try {
+      this.ruleBody();
+    } catch (error) {
+      this.st.symbols.length = symbols;
+      throw error;
+    }
+  }
+
+  private ruleBody(): void {
     const n = this.i++;
     const name = this.raw(n);
     const nameRange = this.range(n);
@@ -557,7 +600,8 @@ export abstract class RailroadParser {
     const draft = this.definition();
     this.tested([T.Semi]);
     if (this.kind() !== T.Semi && (this.startsRule() || this.kind() === Kind.EOF)) {
-      this.missingSemi();
+      // The rule ends (the next rule starts, or the text) without its `;`: where it goes.
+      this.fail([T.Semi], undefined, this.gap());
     }
     const semi = this.expect(T.Semi);
     const range = this.span(n, semi);

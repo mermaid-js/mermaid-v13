@@ -25,6 +25,7 @@ import type { Draft } from '../tree.ts';
 const PRIMARY = [T.String, T.Id, T.LParen, T.Dot];
 const PREDICATES = [T.Amp, T.Bang];
 const PREFIX = [...PREDICATES, ...PRIMARY];
+const AFTER_PREFIX = [...PREFIX, T.Slash];
 const SUFFIX = [T.Question, T.Star, T.Plus];
 
 const EXPECTED = new ExpectedTable([
@@ -74,7 +75,7 @@ export class PegParser extends RailroadParser {
   private sequence(): Draft {
     const items = [this.prefix()];
     for (;;) {
-      this.tested([...PREFIX, T.Slash]);
+      this.tested(AFTER_PREFIX);
       if (!PREFIX.includes(this.kind()) || this.startsRule()) break;
       items.push(this.prefix());
     }
@@ -83,7 +84,7 @@ export class PegParser extends RailroadParser {
 
   /** `('&' | '!')? Suffix`: a predicate drops its operand for a labelled special. */
   private prefix(): Draft {
-    this.tested(PREFIX);
+    this.startElement(PREFIX);
     const k = this.kind();
     if (!PREDICATES.includes(k)) return this.suffix();
     const op = this.range(this.i++);
@@ -106,7 +107,7 @@ export class PegParser extends RailroadParser {
 
   /** `STRING | ID | '(' OrderedChoice ')' | '.'` */
   private primary(): Draft {
-    this.tested(PRIMARY);
+    this.startElement(PRIMARY);
     const k = this.kind();
     const j = this.i;
     const range = this.range();

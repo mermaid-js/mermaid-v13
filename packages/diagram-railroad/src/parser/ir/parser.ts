@@ -72,7 +72,7 @@ export class IrParser extends RailroadParser {
 
   /** `RailroadExpression`: one keyword call. */
   private expression(): Draft {
-    this.tested(EXPRESSION);
+    this.startElement(EXPRESSION);
     const k = this.kind();
     if (!EXPRESSION.includes(k)) this.fail(EXPRESSION);
     const kw = this.i++;

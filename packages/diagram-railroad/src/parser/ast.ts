@@ -37,7 +37,7 @@ export interface RailroadExpressionNode extends AstNode<RailroadNodeKind> {
 export interface RailroadRuleNode extends AstNode<'Rule'> {
   name: string;
   nameRange: Range;
-  /** The definition, unless the rule failed to parse. */
+  /** The definition. A rule that fails to parse has no node (and no symbols). */
   children: RailroadExpressionNode[];
 }
 

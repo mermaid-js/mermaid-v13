@@ -27,6 +27,7 @@ import type { Draft } from '../tree.ts';
 const REPEATS = [T.Repeat, T.ExactRepeat];
 const PRIMARY = [T.String, T.NumVal, T.Id, T.LParen, T.LBracket];
 const ELEMENT = [...REPEATS, ...PRIMARY];
+const AFTER_ELEMENT = [...ELEMENT, T.Slash];
 
 const EXPECTED = new ExpectedTable([
   ['`railroad-abnf-beta`', [T.Header]],
@@ -71,7 +72,7 @@ export class AbnfParser extends RailroadParser {
   private concatenation(): Draft {
     const items = [this.element()];
     for (;;) {
-      this.tested([...ELEMENT, T.Slash]);
+      this.tested(AFTER_ELEMENT);
       if (!ELEMENT.includes(this.kind()) || this.startsRule()) break;
       items.push(this.element());
     }
@@ -80,7 +81,7 @@ export class AbnfParser extends RailroadParser {
 
   /** `(REPEAT | EXACT_REPEAT)? Primary` */
   private element(): Draft {
-    this.tested(ELEMENT);
+    this.startElement(ELEMENT);
     if (!REPEATS.includes(this.kind())) return this.primary();
     const r = this.i++;
     const inner = this.primary();
@@ -92,7 +93,7 @@ export class AbnfParser extends RailroadParser {
 
   /** `STRING | NUMVAL | NAME | '(' Alternation ')' | '[' Alternation ']'` */
   private primary(): Draft {
-    this.tested(PRIMARY);
+    this.startElement(PRIMARY);
     const k = this.kind();
     const j = this.i;
     const range = this.range();

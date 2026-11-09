@@ -173,3 +173,60 @@ describe('railroad depth limit (R-SEC-5)', () => {
     expect(r.diagnostics.map((d) => d.code)).toEqual(['DEPTH_LIMIT']);
   });
 });
+
+describe('railroad review fixes (#610)', () => {
+  const messages = (src: string) => parseRailroad(src).diagnostics.map((d) => d.message);
+
+  it('reports every rule nested past the limit, not only the first', () => {
+    const deep = `${'optional('.repeat(4)}terminal("y")${')'.repeat(4)}`;
+    const r = parseRailroad(`railroad-beta\na = ${deep} ;\nb = ${deep} ;`, { maxDepth: 3 });
+    expect(r.diagnostics.map((d) => d.code)).toEqual(['DEPTH_LIMIT', 'DEPTH_LIMIT']);
+  });
+
+  it('says the keyword is in the wrong case only when it is', () => {
+    expect(messages('railroad-beta;\na = terminal("x") ;')[0]).toMatch(/blank or a line break/);
+    expect(messages('railroad-peg-beta# c\nA <- "x" ;')[0]).toMatch(/blank or a line break/);
+    expect(messages('Railroad-Beta\na = terminal("x") ;')[0]).toMatch(/lower case/);
+  });
+
+  it.each([
+    ['railroad-ebnf-beta\na = "x" - ;', '`-` needs an element after it'],
+    ['railroad-ebnf-beta\na = "x" , ;', '`,` needs an element after it'],
+    ['railroad-abnf-beta\na = 2* ;', 'a repeat needs an element after it'],
+    ['railroad-peg-beta\nA <- & ;', '`&` needs an element after it'],
+    ['railroad-peg-beta\nA <- "x" ! ;', '`!` needs an element after it'],
+    ['railroad-ebnf-beta\na = "x" | ;', 'an alternative cannot be empty'],
+  ])('names what lacks its operand in %j', (src, hint) => {
+    const [m] = messages(src);
+    expect(m).toContain(hint);
+    if (!hint.startsWith('an alternative')) expect(m).not.toContain('alternative cannot be empty');
+  });
+
+  it('does not count parentheses that draw nothing toward the depth limit', () => {
+    const n = 150;
+    for (const src of [
+      `railroad-ebnf-beta\na = ${'( '.repeat(n)}b${' )'.repeat(n)} ;`,
+      `railroad-abnf-beta\na = ${'( '.repeat(n)}b${' )'.repeat(n)} ;`,
+      `railroad-peg-beta\nA <- ${'( '.repeat(n)}b${' )'.repeat(n)} ;`,
+      `railroad-beta\na = ${'sequence('.repeat(n)}terminal("b")${')'.repeat(n)} ;`,
+    ]) {
+      expect(parseRailroad(src).diagnostics).toEqual([]);
+    }
+  });
+
+  it('records a rule name as defined only when the rule parses', () => {
+    const r = parseRailroad('railroad-ebnf-beta\na = b | ;\nc = d ;');
+    expect(r.symbols.map((s) => [s.name, s.role])).toEqual([
+      ['c', 'def'],
+      ['d', 'ref'],
+    ]);
+    expect(r.ast.children.map((c) => c.id)).toEqual(['railroad', 'rule:c']);
+  });
+
+  it('keeps a header statement that stands where the header should be', () => {
+    const r = parseRailroad('title T\na = terminal("x") ;', { notation: 'railroad' });
+    expect(r.model.title).toBe('T');
+    expect(r.model.rules.map((x) => x.name)).toEqual(['a']);
+    expect(r.diagnostics.map((d) => d.code)).toEqual(['UNEXPECTED']);
+  });
+});

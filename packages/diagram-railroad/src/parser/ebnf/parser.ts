@@ -114,7 +114,7 @@ export class EbnfParser extends RailroadParser {
 
   /** `STRING | ID | SPECIAL | '(' Choice ')' | '[' Choice ']' | '\{' Choice '\}'` */
   private primary(): Draft {
-    this.tested(PRIMARY);
+    this.startElement(PRIMARY);
     const k = this.kind();
     const j = this.i;
     const range = this.range();
