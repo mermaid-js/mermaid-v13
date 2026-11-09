@@ -1,6 +1,7 @@
 // Engine-agnostic checks on a LayoutModel, for DDLT-style tests of any layout engine: every
 // coordinate finite, everything placed inside the drawing, no boxes overlapping, groups holding
-// their members, and edges starting and ending at their own boxes. `countCrossings` gives a
+// their members, and edges starting and ending at their own boxes (or, for a `border` end on a
+// node, on the border of the node's group). `countCrossings` gives a
 // quality number to record per fixture.
 import type { LayoutGraph, LayoutModel, Point } from './types.ts';
 
@@ -38,6 +39,11 @@ function contains(outer: Rect, inner: Rect): boolean {
 
 function near(r: Rect, p: Point): boolean {
   return p.x >= r.x0 - SLACK && p.x <= r.x1 + SLACK && p.y >= r.y0 - SLACK && p.y <= r.y1 + SLACK;
+}
+
+function onBorder(r: Rect, p: Point): boolean {
+  const at = (a: number, b: number): boolean => Math.abs(a - b) <= SLACK;
+  return near(r, p) && (at(p.x, r.x0) || at(p.x, r.x1) || at(p.y, r.y0) || at(p.y, r.y1));
 }
 
 /** Returns one message per problem; an empty list means the model is valid for the graph. */
@@ -135,13 +141,19 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
         break;
       }
     }
-    const from = boxes.get(e.source);
-    const to = boxes.get(e.target);
-    if (from && !near(from, placed.points[0]!))
+    // An end meets its own box. A `border` end on a node (D501) meets the border of the group
+    // the node sits in instead: on that box's boundary, not anywhere inside it.
+    const meets = (id: string, border: boolean | undefined, p: Point): boolean => {
+      const up = border && !groupIds.has(id) ? parent.get(id) : undefined;
+      const group = up !== undefined && groupIds.has(up) ? boxes.get(up) : undefined;
+      if (group) return onBorder(group, p);
+      const own = boxes.get(id);
+      return !own || near(own, p);
+    };
+    if (!meets(e.source, e.border?.source, placed.points[0]!))
       problems.push(`edge '${e.id}' does not start at its source`);
-    if (to && !near(to, placed.points[placed.points.length - 1]!)) {
+    if (!meets(e.target, e.border?.target, placed.points[placed.points.length - 1]!))
       problems.push(`edge '${e.id}' does not end at its target`);
-    }
     // The middle label, then the end labels (D102), which also keep clear of the edge's others.
     const labels: [string, Rect][] = [];
     for (const [name, size, at] of [

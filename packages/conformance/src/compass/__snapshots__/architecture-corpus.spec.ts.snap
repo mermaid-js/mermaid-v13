@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compass over the architecture corpus (D326) > keeps at least 79 of 87 facing edges straight and on their sides, and every align pair 1`] = `
+[
+  "architecture/nightly-check/should-align-siblings-in-a-row-when-their-edges-feed-a-common-downstream-node.mmd: src1-proc@0",
+  "architecture/nightly-check/should-align-siblings-in-a-row-when-their-edges-feed-a-common-downstream-node.mmd: src3-proc@2",
+  "architecture/nightly-check/should-stack-three-same-port-databases-in-a-column-without-overlap.mmd: db1-mcp@0",
+  "architecture/nightly-check/should-stack-three-same-port-databases-in-a-column-without-overlap.mmd: db3-mcp@2",
+  "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd: web-pe2@6",
+  "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd: pe2-bus@7",
+  "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd: web-pe2@6",
+  "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd: pe2-bus@7",
+]
+`;
