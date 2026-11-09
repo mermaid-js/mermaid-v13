@@ -533,6 +533,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -826,6 +829,9 @@ importers:
       '@mermaid-js/diagram-timeline':
         specifier: workspace:*
         version: link:../diagram-timeline
+      '@mermaid-js/diagram-xychart':
+        specifier: workspace:*
+        version: link:../diagram-xychart
     devDependencies:
       esbuild:
         specifier: ^0.25.12

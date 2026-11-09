@@ -60,12 +60,14 @@ describe('completion', () => {
       'journey',
       'quadrantChart',
       'packet',
+      'xychart',
       'radar-beta',
       'cynefin-beta',
     ]);
     expect(labels('qua|')).toEqual(['quadrantChart']);
     expect(labels('pac|')).toEqual(['packet']);
     expect(labels('rad|')).toEqual(['radar-beta']);
+    expect(labels('xy|')).toEqual(['xychart']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('kan|')).toEqual(['kanban']);

@@ -1,7 +1,6 @@
 {
   "name": "@mermaid-js/diagram-xychart",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "XY chart plugin for Mermaid: parser, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
@@ -44,5 +43,18 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "xychart",
+    "types": [
+      "xychart"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "xychart",
+    "language": "./dist/language.js",
+    "section": "xyChart"
   }
 }

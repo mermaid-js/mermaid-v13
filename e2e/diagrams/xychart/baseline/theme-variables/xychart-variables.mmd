@@ -1,0 +1,33 @@
+---
+config:
+  theme: neo
+  xyChart:
+    showDataLabel: true
+  themeVariables:
+    xyChart:
+      backgroundColor: '#fdf6e3'
+      titleColor: '#b58900'
+      dataLabelColor: '#ffffff'
+      legendTextColor: '#6c71c4'
+      xAxisTitleColor: '#cb4b16'
+      xAxisLabelColor: '#dc322f'
+      xAxisTickColor: '#d33682'
+      xAxisLineColor: '#6c71c4'
+      yAxisTitleColor: '#268bd2'
+      yAxisLabelColor: '#2aa198'
+      yAxisTickColor: '#859900'
+      yAxisLineColor: '#b58900'
+      plotColorPalette: '#268bd2, #d33682, #859900'
+    xyChartTitleColor: '#073642'
+description: >-
+  the thirteen XY chart theme variables through the nested themeVariables.xyChart object
+  (D335), the palette as a comma-separated string, and the flat xyChartTitleColor winning
+  over the nested titleColor (D540)
+---
+xychart
+  title "Nested chart variables"
+  x-axis Team [red, green, blue]
+  y-axis Score 0 --> 10
+  bar Alpha [5, 8, 3]
+  bar Beta [6, 4, 7]
+  line Gamma [4, 6, 5]

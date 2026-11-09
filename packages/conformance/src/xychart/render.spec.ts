@@ -7,18 +7,23 @@ import {
   XYCHART_PARSE_ERROR,
   type RenderedXyChart,
 } from '@mermaid-js/diagram-xychart/testing';
+import { detectXyChart } from '@mermaid-js/diagram-xychart';
+import { MermaidError } from 'mermaid';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
 import { xyChartCases, xyChartCorpus } from './corpus.ts';
+import { xyChartApi } from './render-api.ts';
 
 /**
  * Render properties and the AST round-trip of the XY chart (spec #426 T4, DESIGN §13.2, §13.4,
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page
  * strings and the parser cases and recovery set, each in every theme and `theme: 'auto'` set as
- * `initialize()` would (a source's own front matter and directives still win). The manifest is
- * T5's (#513), so sources go through the plugin's own seam, parse → layout → render, with core's
- * render context (`renderXyChartForTest`); sources the parser rejects stay out.
+ * `initialize()` would (a source's own front matter and directives still win). Sources go through
+ * the plugin's own seam, parse → layout → render, with core's render context
+ * (`renderXyChartForTest`), which also hands back the model and layout the properties read;
+ * sources the parser rejects stay out. The public `render()` through the registry row (#513)
+ * writes the same bytes for every case, and rejects exactly the sources the parser rejects.
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, no
  * `foreignObject`, ids only `<prefix>-title`/`-desc`, every drawn coordinate (rects, paths, text
@@ -33,11 +38,12 @@ const WARNINGS = new Set([
   'XYCHART_MISSING_VALUE',
   'XYCHART_EMPTY_RANGE',
   'XYCHART_LABEL_TOO_SMALL',
+  'XYCHART_CONFIG_INVALID',
 ]);
 
 interface Case {
   readonly id: string;
-  readonly theme: string;
+  readonly theme: (typeof THEMES)[number];
   readonly source: string;
   readonly r: RenderedXyChart;
   readonly tree: SvgView;
@@ -93,7 +99,7 @@ function points(tree: SvgView): { x: number; y: number }[] {
 
 describe('xychart render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with bars, lines, legends and data labels', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(48);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(59);
     // Every e2e fixture renders; the cases file holds the rejections.
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(rejected.size).toBeLessThan(corpus.length / 2);
@@ -180,6 +186,37 @@ describe('xychart render properties over the parsed corpus', () => {
       expect(new Set(codes).size, c.id).toBe(codes.length);
     }
   });
+});
+
+describe('xychart through the public API (#513)', () => {
+  const version = (svg: string) => svg.replace(/ data-mermaid-version="[^"]*"/, '');
+
+  it('renders each case byte for byte as the plugin seam does, and rejects the same sources', async () => {
+    const apis = new Map(THEMES.map((theme) => [theme, xyChartApi({ theme })]));
+    // The seam leaves a directive core's preprocessing reports to the parser; the API rejects
+    // an unclosed one before it parses (UNCLOSED_DIRECTIVE, the T2 choice, `divergences.json`).
+    const unclosed: string[] = [];
+    let rendered = 0;
+    for (const c of cases.filter((_, i) => i % 2 === 0)) {
+      let svg: string;
+      try {
+        ({ svg } = await apis.get(c.theme)!.render(PREFIX, c.source));
+      } catch (e) {
+        if (!(e instanceof MermaidError)) throw e;
+        // The seam parses a source v12's detector does not take (`XYCHART`); the API does not.
+        if (e.code === 'UNSUPPORTED_DIAGRAM' && !detectXyChart(c.source)) continue;
+        if (!e.message.includes('directive is never closed')) throw e;
+        unclosed.push(c.id);
+        continue;
+      }
+      rendered++;
+      expect(version(svg), c.id).toBe(version(c.r.svg));
+    }
+    expect(rendered).toBeGreaterThan(unclosed.length * 10);
+    const api = apis.get('default')!;
+    for (const item of corpus.filter((i) => rejected.has(i.id)))
+      await expect(api.render(PREFIX, item.source), item.id).rejects.toBeInstanceOf(MermaidError);
+  }, 300_000);
 });
 
 describe('xychart AST round-trip over the parsed corpus (R-PARSE-8)', () => {

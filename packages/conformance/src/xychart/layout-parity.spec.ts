@@ -442,17 +442,21 @@ const VARIANTS: readonly Record<string, unknown>[] = [
 
 describe('xychart layout parity with v12', () => {
   it('equals v12 on the e2e corpus, to 0.01 px', async () => {
-    expect(corpus.length).toBe(48);
+    expect(corpus.length).toBe(59);
     const { problems, listed, compared } = await compare(corpus, {});
     expect(problems.slice(0, 30)).toEqual([]);
-    expect([...listed]).toEqual([]);
-    expect(compared).toBe(48);
+    // The text baseline's `<br>` labels (D385) are not compared.
+    expect([...listed]).toEqual([
+      ['D385 line break', ['e2e/diagrams/xychart/baseline/text/labels.mmd']],
+    ]);
+    expect(compared).toBe(58);
   });
 
   it.each(VARIANTS)('equals v12 on the e2e corpus under %o', async (extra) => {
     const { problems, listed } = await compare(corpus, extra);
     expect(problems.slice(0, 30)).toEqual([]);
     const allowed = [
+      'D385 line break',
       'D383 label too small',
       'v12: a negative titlePadding overlaps the title and the plot',
     ];

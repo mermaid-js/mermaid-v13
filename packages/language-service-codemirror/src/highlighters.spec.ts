@@ -49,6 +49,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'xychart',
     ]);
   });
 
@@ -150,6 +151,36 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('axis:keyword');
       expect(out).toContain('curve:keyword');
       expect(out).toContain('"Speed":string');
+    });
+
+    it('highlights an XY chart with the xychart grammar', () => {
+      const out = spans(
+        'xychart\n  title "Sales"\n  x-axis [jan, "feb"]\n  y-axis "Revenue" 0 --> 100\n  bar [10, 20]\n'
+      );
+      // A string's quotes and its text are three tokens (jison's string state, D212).
+      expect(out).toEqual([
+        'xychart:keyword',
+        'title:keyword',
+        '":string',
+        'Sales:string',
+        '":string',
+        'x-axis:keyword',
+        '[:punctuation',
+        ',:punctuation',
+        '":string',
+        'feb:string',
+        '":string',
+        ']:punctuation',
+        'y-axis:keyword',
+        '":string',
+        'Revenue:string',
+        '":string',
+        '-->:operator',
+        'bar:keyword',
+        '[:punctuation',
+        ',:punctuation',
+        ']:punctuation',
+      ]);
     });
 
     it('highlights a cynefin diagram with the cynefin grammar', () => {

@@ -25,6 +25,7 @@ const UNSKETCHED: Readonly<Record<string, string>> = {
   gitGraph: 'git',
   packet: 'packet',
   cynefin: 'cynefin',
+  xychart: 'xychart',
 };
 
 const HAND_DRAWN = /look["']?\s*:\s*["']?handDrawn/;

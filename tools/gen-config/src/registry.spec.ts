@@ -142,6 +142,13 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
   });
 
+  it("takes the manifest's section where it is not the id (wardley-beta, D421)", () => {
+    const manifest = { ...flowchart.manifest, section: 'flowchart-beta' };
+    const out = generateFacets([{ ...flowchart, manifest }]);
+    expect(out).toContain("    section: 'flowchart-beta',");
+    expect(out).toContain("    id: 'flowchart',");
+  });
+
   it('names the ids that have a facet in one union type', () => {
     expect(generateFacets([flowchart])).toContain("export type FirstPartyFacetId = 'flowchart';");
     const { language: _, ...manifest } = flowchart.manifest;

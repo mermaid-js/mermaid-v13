@@ -348,7 +348,10 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `quadrantChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did. |  |
 | `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `xyChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the XY chart renderer never did. |  |
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `xyChart.xAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
+| `xyChart.yAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
@@ -2036,3 +2039,67 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
 | `neo`, `redux`, `redux-color` | No cynefin block: `default`'s literals, so boundaries and arrows `#333333`, text `#333`, labels `#131300`, whatever the theme's own colours, and a `lineColor` override changed nothing | Boundaries and arrows in the theme's `lineColor`, text in its `textColor`, labels in its `primaryTextColor` (`#000000`, `#333333`/`#28253d`, `#333333`/`#28253d`); a `lineColor` override moves them | D333(b), R-THEME-11 |
 | `neo-dark`, `redux-dark`, `redux-dark-color` | `default`'s light literals: pale backgrounds (`#E8F5E9` …), cliff `#8B0000`, dark inks on a dark page | `dark`'s entry: backgrounds `#1B5E20` `#0D47A1` `#BF360C` `#F57F17` `#4A148C`, cliff `#FF6B6B`, and the theme's own line, text and label colours (`#cccccc`, `#cccccc`, `#e0dfdf`) | D333(b), R-THEME-11 |
 | `forest` | Its own backgrounds `#C8E6C9` `#DCEDC8` `#FFE0B2` `#FFF9C4` `#D7CCC8` and cliff `#8B4513` | `default`'s backgrounds and cliff `#8B0000` (forest's own lines and inks are kept). Set `themeVariables.cynefin` to draw v12 forest's | D541 |
+
+## XY chart
+
+The XY chart parser accepts the v12 language for `xychart` and `xychart-beta` (oracle parity over
+every e2e fixture, the v12 spec strings and the syntax page; grammar in
+[syntax/xychart.md](./syntax/xychart.md)), and the layout is v12's orchestrator, checked against
+v12's chart builder to 0.01 px. What changes in config and drawing (spec #426):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `xyChart.useMaxWidth: false` was ignored: the chart always scaled to its container | Honoured: `false` writes the canvas's `width` and `height`; the default (`true`) is unchanged | D387 |
+| A `%%{init: {"config": …}}` key went under the detected type, `xychart`, which nothing read | It goes to the `xyChart` section, as `initialize()`, front matter and `%%{init: {"xyChart": …}}` do (the plugin's `configSection`) | #513 |
+| A config value of the wrong type (`width: "wide"`, `showLegend: "maybe"`, `chartOrientation: diagonal`) was used as it was (`NaN` sizes, a truthy string) | A number, or a numeric string as its number, for a number key, and a boolean for a boolean key; anything else draws with the default and one `XYCHART_CONFIG_INVALID` warning per key. Numbers outside the schema's range are still taken, as v12 took them (`plotReservedSpacePercent: 20`, a negative padding) | D383, D226 |
+| 12.2.0's default config holds a `$ref` key in `xyChart.xAxis` and `yAxis` | Accepted and ignored, with no warning, so a copy of that config still works | #513 |
+| With `showDataLabel`, every bar plot was labelled with the values of the first plot, so a second bar plot (or a bar plot after a line) showed another plot's numbers; legend swatches got labels too | Each bar plot is labelled with its own values; legend swatches get none | D382 |
+| A band axis with more categories than values wrote `NaN` bars and points | Those bars and points are not drawn, with one `XYCHART_MISSING_VALUE` warning | D383 |
+| A range with `min = max` (given or inferred) mapped values to the middle of the axis | The same, with one `XYCHART_EMPTY_RANGE` warning | D383 |
+| Data labels with no room in any bar wrote `font-size="Infinitypx"` | None are drawn, with one `XYCHART_LABEL_TOO_SMALL` warning | D383 |
+| A plot written before its `x-axis` kept the x values of the axis it saw, silently | The same, with one `XYCHART_PLOT_BEFORE_AXIS` warning naming the plots | D386 |
+| An unclosed `accDescr {` ended in an empty description, silently | The same, with one `XYCHART_UNCLOSED_DESCRIPTION` warning | #508 |
+| A bar whose value is below the range minimum drew with a negative height, one above the maximum past the plot | The bar is held inside the plot box, its end at the box edge | #509 |
+| The title, axis titles, categories and legend names were set with d3 `.text()`: `<br>` and tags printed as written | Core's label layout: `<br>` breaks the line (a legend name of several lines takes as many rows), math and icons work, entities decode; tick numbers and data labels stay plain text | D385 |
+| Line point labels in the line's colour | The same (near-white on the redux and base palettes, as in v12) | D384 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+### XY chart theme colours
+
+v12 read `themeVariables.xyChart` (`backgroundColor` … `plotColorPalette`), merged over
+theme-default's block. v13 keeps that nested object and adds a flat name for each key
+(`xyChartBackgroundColor` … `xyChartPlotColorPalette`, CSS `--mermaid-xyChartTitleColor`, …); the
+flat name wins when both are set (D335, D540). `plotColorPalette` takes a comma-separated string, as
+in v12, or an array; each theme's ten colours are v12's (D381). Every other value is v12's in all
+eleven themes, but (`packages/conformance/src/xychart/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `redux` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#28253d` | D333(b) |
+| `redux-color` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#28253d` | D333(b) |
+| `redux-dark` | No `dataLabelColor`: theme-default's `#131300`, barely visible on the `#333333` background | The theme's `primaryTextColor`, `#e0dfdf` | D333(b) |
+| `redux-dark-color` | No `dataLabelColor`: theme-default's `#131300` on `#333333` | The theme's `primaryTextColor`, `#e0dfdf` | D333(b) |
+| `neo` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#333333` | D333(b) |
+| `neo-dark` | No `dataLabelColor`: theme-default's `#131300` on `#333333` | The theme's `primaryTextColor`, `#e0dfdf` | D333(b) |
+| `default` with an author `primaryTextColor` or `background` | Ignored: `default` built its `xyChart` block before the author's values were applied | The text, axis and label colours follow `primaryTextColor`, the background follows `background`, as in the other themes; an explicit `xyChart.*` value still wins | D388 |
+
+## XY chart SVG structure
+
+What changed in the XY chart's SVG compared with v12 (spec #426, #510). v12's class names are kept
+(`main`, `background`, `plot`, `bar-plot-<n>`, `line-plot-<n>`, `chart-title`, `legend`,
+`bottom-axis`/`left-axis`/`top-axis` with `axis-line`, `ticks`, `label`, `title`), and so is v12's
+draw order.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"` and a `g.mermaid-tmp-group` used to measure text | No root `id` and no measuring group; `class="mermaid mermaid-xychart"`, `role="img"`, `aria-roledescription="xychart"`, `data-mermaid-version` and the theme's `font-family` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1) |
+| `<title>` and `<desc>` | Written only from `accTitle` and `accDescr`, with the ids `<id>-title` and `<id>-desc` | D133 |
+| A fixed `viewBox` (the 700 × 500 canvas) | v12's positions; the `viewBox` grows to cover everything drawn (the axis strokes make the default 701 wide). The background `rect` is still v12's canvas | D224 |
+| `width="100%"` and `max-width` always | The same by default; `width` and `height` with `xyChart.useMaxWidth: false` | D387 |
+| Colours as fills and strokes from the `xyChart` block | Presentation attributes reading `var(--_x)` aliases on the root `style` (literal with `output.cssVariables: false`); the plot colours are always literal. Under `theme: 'auto'` the root has `data-p` and a theme `<style>` | R-THEME-3, R-THEME-8 |
+| No source mapping | `data-ast` on the in-text title's `g.chart-title`, each plot's `g.bar-plot-<n>`/`g.line-plot-<n>` and each drawn axis's `g.<position>-axis`; `data-id` (the plot's AST id) on bars, lines, point labels, data labels and legend rows. The legend has no `data-ast` | R-PARSE-8, pitfall 12 |
+| Paths as d3 wrote them | `M…L…` with two decimals (axis lines, ticks, legend strokes); a line plot's `d` keeps d3 `line()`'s three decimals | Core's path writer |
+| Data labels' `font-size="<n>px"` | `font-size="<n>"` | Presentation attributes |
+| A label with `<br>` printed as one `<text>` | A `<text>` of `<tspan>`s, one per line (core's label writer); one-line text is v12's `<text>` at `translate(x,y) rotate(r)` | D385 |
+| A plot whose values are all missing threw | The plot's group is written, with nothing drawn in it; a hidden axis part writes no group, an axis with every part hidden none at all | D383 |
+| `look: neo` and the redux themes: the same chart as the classic themes | The same: the XY chart differs between families by colour only | D227 |

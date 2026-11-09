@@ -73,7 +73,10 @@ interface Size {
 
 /** Lays out an XY chart in px. */
 export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): XyChartLayout {
-  const options = xyChartOptions(ctx.config.xyChart as Readonly<Record<string, unknown>>);
+  const options = xyChartOptions(
+    ctx.config.xyChart as Readonly<Record<string, unknown>>,
+    ctx.warn ?? ignoreWarning
+  );
   const warn = once(ctx.warn ?? ignoreWarning);
   const family = ctx.theme.value('fontFamily');
   const texts = textMeasure(ctx.measurer, ctx.inline);

@@ -16,7 +16,7 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
+import { D332_INPUTS, VOCABULARY, everyTable, v12Value } from './diagram-themes.ts';
 import { loadOracle } from './oracle.ts';
 
 interface V12 {
@@ -67,6 +67,8 @@ const LOOK_GEOMETRY_WHY =
 
 /** Each difference from v12 neo, with the decision that makes it. */
 const DIFFERENCES: Readonly<Record<string, string>> = {
+  xyChartDataLabelColor:
+    'D333(b): v12 neo sets no xyChart.dataLabelColor (its DB drew theme-default’s); v13 takes primaryTextColor',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
   // Journey (#327): v12 sets neither; `.face` falls back to #FFF8DC and dots to actorColours.
   faceColor: 'D245: v12 sets no faceColor; v13 gives its `.face` fallback #FFF8DC as the value',
@@ -119,10 +121,19 @@ function v13Value(t: Theme, name: string): string | number {
 }
 
 function same(name: string): boolean {
-  const old = OLD[name];
+  const old = v12Value(OLD, name);
   if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
-  const now = v13Value(neo, name);
   const kind = VOCABULARY[name]?.kind;
+  // A diagram's palette variable (xychart's plotColorPalette): v12's comma-separated list.
+  if (kind === 'palette')
+    return (
+      JSON.stringify(
+        String(old)
+          .split(',')
+          .map((c) => hex(c.trim()))
+      ) === JSON.stringify(neo.palette(name).map(hex))
+    );
+  const now = v13Value(neo, name);
   if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
   if (kind === 'length') return Number.parseFloat(String(old)) === now;
   return String(old).trim() === String(now).trim();

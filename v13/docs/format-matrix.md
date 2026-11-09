@@ -30,7 +30,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |
 | `sankey` | not ported | no | no |
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
-| `xychart` | not ported | no | no |
+| `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | not ported | no | no |
 | `eventmodeling` | not ported | no | no |
 | `treeView` | not ported | no | no |

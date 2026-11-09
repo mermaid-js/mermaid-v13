@@ -44,6 +44,7 @@ const DOCS = {
   gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
   packet: 'packet\n  0-15: "Source Port"\n  +16: "Length"\n',
   radar: 'radar-beta\n  axis A, B\n',
+  xychart: 'xychart\n  x-axis [a, b]\n  bar [1, 2]\n',
   cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
   kanban: 'kanban\n  todo[Todo]\n    a["Card"]@{ priority: High }\n',
 };
@@ -68,6 +69,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'sequence',
       'state',
       'timeline',
+      'xychart',
     ]);
   });
 

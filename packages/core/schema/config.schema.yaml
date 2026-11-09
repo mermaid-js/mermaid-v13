@@ -136,7 +136,12 @@ properties:
         theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`;
         fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take
         5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the
-        other text fills `primaryTextColor`; both borders `primaryBorderColor`. "padding" is `flowchart.padding`. Plain `redux` and
+        other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13
+        (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`,
+        `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and
+        `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in
+        both families: the background `background`, the other colours `primaryTextColor`, the
+        palette `plotColorArray` (each theme's own ten, D381). "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`,
         `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and
         `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner
@@ -1126,7 +1131,7 @@ properties:
     x-mermaid: { status: honoured, since: 13.0.0 }
   xyChart:
     $ref: '#/$defs/XYChartConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   requirement:
     $ref: '#/$defs/RequirementDiagramConfig'
     x-mermaid: { status: pending }
@@ -2630,75 +2635,84 @@ $defs:
       - axisLineWidth
       - labelRotation
     properties:
+      $ref:
+        description: |
+          12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its
+          schema's `default` for the axis objects), so a copy of that config carries it.
+        type: string
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Not an option; 12.2.0's default config leaked it (a schema reference).
       showLabel:
         description: Should show the axis labels (tick text)
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelFontSize:
         description: font size of the axis labels (tick text)
         type: number
         default: 14
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelPadding:
         description: top and bottom space from axis label (tick text)
         type: number
         default: 5
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showTitle:
         description: Should show the axis title
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleFontSize:
         description: font size of the axis title
         type: number
         default: 16
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titlePadding:
         description: top and bottom space from axis title
         type: number
         default: 5
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showTick:
         description: Should show the axis tick lines
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       tickLength:
         description: length of the axis tick lines
         type: number
         default: 5
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       tickWidth:
         description: width of the axis tick lines
         type: number
         default: 2
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showAxisLine:
         description: Show line across the axis
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       axisLineWidth:
         description: Width of the axis line
         type: number
         default: 2
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelRotation:
         description: Label rotation in degrees
         type: number
         default: 0
         minimum: -90
         maximum: 90
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   XYChartConfig:
     title: XYChart Config
@@ -2717,81 +2731,90 @@ $defs:
       - chartOrientation
       - plotReservedSpacePercent
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the XY chart renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       width:
         description: width of the chart
         type: number
         default: 700
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       height:
         description: height of the chart
         type: number
         default: 500
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleFontSize:
         description: Font size of the chart title
         type: number
         default: 20
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titlePadding:
         description: Top and bottom space from the chart title
         type: number
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showDataLabel:
         description: Should show the value corresponding to the bar within the bar
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showDataLabelOutsideBar:
         description: If showing data label then show it outside the bar
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showTitle:
         description: Should show the chart title
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showLegend:
         description: Should show a legend for named plots
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       legendFontSize:
         description: Font size of the legend text
         type: number
         default: 14
         minimum: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       legendPadding:
         description: Padding around the legend
         type: number
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
+      # 12.2.0's default config holds a literal `"$ref"` key here (its schema's `default`); v13
+      # gives no such default, so the axis keys' own defaults apply, and accepts the key (ignored).
       xAxis:
         $ref: '#/$defs/XYChartAxisConfig'
-        default: { '$ref': '#/$defs/XYChartAxisConfig' }
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       yAxis:
         $ref: '#/$defs/XYChartAxisConfig'
-        default: { '$ref': '#/$defs/XYChartAxisConfig' }
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       chartOrientation:
         description: How to plot will be drawn horizontal or vertical
         tsType: '"vertical" | "horizontal"'
         default: 'vertical'
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       plotReservedSpacePercent:
         description: Minimum percent of space plots of the chart will take
         type: number
         default: 50
         minimum: 30
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   ErDiagramConfig:
     title: Er Diagram Config

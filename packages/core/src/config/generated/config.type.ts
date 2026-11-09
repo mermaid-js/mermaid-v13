@@ -1332,6 +1332,14 @@ quadrantExternalBorderStrokeWidth?: number
  * via the `definition` "XYChartConfig".
  */
 export interface XYChartConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * width of the chart
  */
@@ -1390,6 +1398,12 @@ plotReservedSpacePercent?: number
  * via the `definition` "XYChartAxisConfig".
  */
 export interface XYChartAxisConfig {
+/**
+ * 12.2.0's default config leaks this key into `xyChart.xAxis` and `xyChart.yAxis` (its
+ * schema's `default` for the axis objects), so a copy of that config carries it.
+ * 
+ */
+$ref?: string
 /**
  * Should show the axis labels (tick text)
  */

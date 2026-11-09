@@ -393,7 +393,7 @@ export function createMermaid(
   let textBackend: TextBackend | undefined;
 
   function sectionOf(detected: Detected, plugin?: AnyPlugin): string | undefined {
-    return plugin?.id ?? detected.id;
+    return plugin?.configSection ?? plugin?.id ?? detected.id;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).

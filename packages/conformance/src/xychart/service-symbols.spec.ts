@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detectXyChart, parseXyChart } from '@mermaid-js/diagram-xychart';
+import { parseXyChart } from '@mermaid-js/diagram-xychart';
 import type { XyChartAxisNode } from '@mermaid-js/diagram-xychart';
-import { xyChartLanguage } from '@mermaid-js/diagram-xychart/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot, TextEdit } from '@mermaid-js/language-service';
@@ -25,14 +24,11 @@ import type { XyChartSnapshot } from './v12.ts';
  *   that plot's name in v12's DB;
  * - folding: a multi-line v12 `accDescr` is an `accDescr` fold.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until xychart's
- * manifest has its `language` entry (#513); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (xychart's manifest
+ * `language` entry, #513).
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'xychart', id: 'xychart', detector: (t) => detectXyChart(t), facet: xyChartLanguage },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['xychart'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const NEW_NAME = 'Renamed Zq7';
 
@@ -158,8 +154,10 @@ describe('xychart symbols and folding through the service match v12', () => {
     expect(folds).toBeGreaterThan(5);
   }, 600_000);
 
-  it('gets the facet from the eager row until the manifest has `language` (#513)', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'xychart')?.load).toBeUndefined();
+  it('loads the facet from the generated registry, with the xyChart section (#513)', () => {
+    const row = firstPartyFacets.find((e) => e.type === 'xychart');
+    expect(row?.load).toBeTypeOf('function');
+    expect(row?.section).toBe('xyChart');
     expect(service.update('x:///c', 'xychart\n  bar [1]').facet?.id).toBe('xychart');
   });
 });
