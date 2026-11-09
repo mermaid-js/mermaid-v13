@@ -10,7 +10,7 @@ Integration branch `feature/517_usecase` (from `mermaid-v13` at 521fb76ee). Draf
 | T3 layout | #565 | #563 | merged (81b4ac949; `.` 22.5 KB gz, no core change) |
 | T4 SVG renderer and theme table | #566 | #565, #561 | merged (ff 3444cda86; `.` 30.4 KB gz, core usedBy only) |
 | T5 integration | #567 | #561, #566 | open |
-| T6 language facet | #568 | #563 | open |
+| T6 language facet | #568 | #563 | merged (ff 4e7b9c1ea; `./language` 25.1 KB gz; registry wiring in T5) |
 | T7 ASCII (Should) | #569 | #565, #567 | open |
 
 - `01-v12-usecase.md`: pointer notes on v12 lexer, parser, model builder, DB, renderer, shapes, specs, corpus.
@@ -35,6 +35,8 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | #566 T4 | 94,412 → 94,412 | 0 (core `usedBy` lists only, dropped from the bundle) |
 
 ## Merge log
+
+- 2026-11-10: `feature/568_usecase-language` fast-forwarded (4e7b9c1ea, after review: no hidden facet import, one keyword table, lexer slow path as slices). The language-service goldens fail until T5's manifest; the branch is not pushed between T6 and T5.
 
 - 2026-11-09: `mermaid-v13` 1a78e25d7 (#637 conflict-free ports, #638 pre-manifest packages) merged in, with the move: parity suite and harvest row to `conformance/src/usecase/{suite,tables}.ts`, divergences to `divergences/usecase.json`, grammar target to `diagram-usecase/workspace.yaml` (no `theme:` keys: the scan finds 17 core reads, `actorBkg`/`actorBorder` through `slot()`), MIGRATION section to `migration/usecase.md`; core `usedBy` back to `mermaid-v13`'s (readers come from the scan). Shared code merged: T4's `slot()` read in `themeReads`, the harvest folder-in-name change, and `sync.spec.ts` copying pre-manifest packages.
 
