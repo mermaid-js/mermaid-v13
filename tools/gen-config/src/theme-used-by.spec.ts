@@ -30,6 +30,11 @@ const DYNAMIC_READS: Readonly<Record<string, readonly string[]>> = {
   flowchart: ['node', 'stadium', 'hexagon', 'subroutine', 'cylinder', 'lean', 'odd'].flatMap(
     (shape) => [`${shape}PaddingX`, `${shape}PaddingY`]
   ),
+  // `padsOf` in layout/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
+  agentflow: ['node', 'hexagon', 'subroutine', 'lean'].flatMap((shape) => [
+    `${shape}PaddingX`,
+    `${shape}PaddingY`,
+  ]),
   // `paints` in render/paint.ts reads the slot colours `pie${slot + 1}`.
   pie: Array.from({ length: 12 }, (_, i) => `pie${i + 1}`),
   // `paints` in render/paint.ts reads the column colours `columnVar(n)`, `kanbanColumn${n}`.

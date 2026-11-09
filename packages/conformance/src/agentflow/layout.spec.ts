@@ -18,10 +18,13 @@ import {
 } from '@mermaid-js/diagram-agentflow';
 import { agentflowLayoutProblems } from '@mermaid-js/diagram-agentflow/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
+import { decodeEntities } from '../flowchart/v12.ts';
+import { loadOracle } from '../oracle.ts';
 import { agentflowCases, agentflowCorpus } from './corpus.ts';
 
 interface Fixture {
   readonly id: string;
+  readonly source: string;
   readonly model: AgentflowModel;
   readonly config: ReturnType<typeof resolveConfig>;
   readonly theme: ThemeName;
@@ -47,7 +50,7 @@ beforeAll(async () => {
     // Agentflow's own default theme (`agentflow.theme`, v12 `redux-color`) unless one is named.
     const named = config.theme;
     const theme = typeof named === 'string' && isThemeName(named) ? named : 'redux-color';
-    fixtures.push({ id: item.id, model: parse.model, config, theme });
+    fixtures.push({ id: item.id, source: item.source, model: parse.model, config, theme });
   }
 }, 60_000);
 
@@ -103,6 +106,41 @@ describe('agentflow layout over parser-produced fixtures', () => {
     },
     300_000
   );
+
+  // The edges drawn, against mermaid@12.2.0's own `getData()` over the same source: each edge's
+  // ends after the collapse (redirected, a fold into one card dropped, an authored loop kept).
+  it('draws the edges v12 getData() drew, between the same ends', async () => {
+    const oracle = await loadOracle();
+    const differences: string[] = [];
+    let compared = 0;
+    for (const f of fixtures) {
+      const v12 = await oracle.parse(f.source);
+      if (!v12.accepted) continue;
+      const data = (
+        v12.db as {
+          getData(): { nodes: { id: string }[]; edges: { start: string; end: string }[] };
+        }
+      ).getData();
+      const drawn = new Set(data.nodes.map((n) => decodeEntities(n.id)));
+      const old = data.edges.map((e) => [decodeEntities(e.start), decodeEntities(e.end)] as const);
+      const { layout } = await laidOut(f, layered);
+      const now = layout.agentflow.edges.map((e) => `${e.source}>${e.target}`);
+      // The one difference (GAPS #547): v12 kept an edge whose end it drew no node for (the
+      // reserved `connectors` id); v13 leaves it out.
+      const kept = old
+        .filter(([a, b]) => drawn.has(a) && drawn.has(b))
+        .map(([a, b]) => `${a}>${b}`);
+      for (const [a, b] of old) {
+        if (drawn.has(a) && drawn.has(b)) continue;
+        expect([a, b], f.id).toContain('connectors');
+        differences.push(f.id);
+      }
+      expect(now, f.id).toEqual(kept);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(300);
+    expect(differences.length).toBeGreaterThan(0);
+  }, 300_000);
 
   it.each(ENGINES)(
     '%s: the same layout twice',

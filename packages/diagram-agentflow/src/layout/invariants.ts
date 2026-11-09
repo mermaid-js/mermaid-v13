@@ -2,14 +2,16 @@
  * Checks on an agentflow layout beyond core's `validateLayout` (DDLT), shared by the package's
  * specs and the parser-produced corpus spec in conformance (`@mermaid-js/diagram-agentflow/testing`):
  * what v12's `getData` drew (every visible vertex, connector and flow, nothing a collapsed flow
- * hides), the nesting the model resolved, the edges kept, redirected and dropped by v12's rules,
- * each edge end on a node on that node's outline, and the graph carrying the views' sizes.
+ * hides), the nesting the model resolved, each edge end on the outline of the node or on the
+ * border of the frame it meets, and the graph carrying the views' sizes. Which edges are drawn
+ * between which ends is checked against v12's own `getData()` in conformance.
  * `validateLayout` covers the rest: no NaN, no overlaps (sibling flows included), flows holding
  * their members and child flows, edges at their boxes, everything inside the drawing (D224).
  */
 import type { AgentflowModel } from '../parser/index.ts';
-import { outlineDistance } from './ends.ts';
-import { outlineOf, type AgentflowLayout } from './layout.ts';
+import { frameOutline, outlineDistance } from './ends.ts';
+import type { AgentflowLayout } from './layout.ts';
+import { shapeOutline } from './shapes.ts';
 
 /** One message per problem; an empty list means the layout draws the model as v12 did. */
 export function agentflowLayoutProblems(model: AgentflowModel, layout: AgentflowLayout): string[] {
@@ -18,12 +20,7 @@ export function agentflowLayoutProblems(model: AgentflowModel, layout: Agentflow
     nodes: new Set(graph.nodes.map((n) => n.id)),
     groups: new Set(graph.groups.map((g) => g.id)),
   };
-  return [
-    ...visibility(model, drawn),
-    ...nesting(model, layout, drawn),
-    ...edgeFates(model, layout, drawn),
-    ...sizesAndEnds(layout),
-  ];
+  return [...visibility(model, drawn), ...nesting(model, layout, drawn), ...sizesAndEnds(layout)];
 }
 
 interface Drawn {
@@ -72,40 +69,14 @@ function nesting(model: AgentflowModel, layout: AgentflowLayout, drawn: Drawn): 
 }
 
 /**
- * v12's edge rules: an end hidden in a collapsed flow goes to its card, an edge whose distinct
- * ends fold into one card goes, an authored loop stays, and an end drawn nowhere leaves it out.
+ * The graph carries the views' sizes, every end on a node lies on the node's outline, and every
+ * end on a flow on the frame's border.
  */
-function edgeFates(model: AgentflowModel, layout: AgentflowLayout, drawn: Drawn): string[] {
-  const out: string[] = [];
-  const into = new Map<string, string>();
-  for (const v of model.vertices)
-    if (v.collapsedInto !== undefined) into.set(v.id, v.collapsedInto);
-  for (const f of model.flows) if (f.collapsedInto !== undefined) into.set(f.id, f.collapsedInto);
-  const shown = (id: string) => drawn.nodes.has(id) || drawn.groups.has(id);
-  const views = layout.agentflow.edges;
-  let k = 0;
-  for (const e of model.edges) {
-    const source = into.get(e.start) ?? e.start;
-    const target = into.get(e.end) ?? e.end;
-    const kept = shown(source) && shown(target) && !(source === target && e.start !== e.end);
-    const view = views[k]?.edge === e ? views[k++] : undefined;
-    if (kept !== (view !== undefined)) {
-      out.push(`edge '${e.id}' (${e.start} → ${e.end}) is ${view ? 'drawn' : 'dropped'}`);
-    } else if (view && (view.source !== source || view.target !== target)) {
-      out.push(
-        `edge '${e.id}' is drawn ${view.source} → ${view.target}, not ${source} → ${target}`
-      );
-    }
-  }
-  return out;
-}
-
-/** The graph carries the views' sizes, and every end on a node lies on the node's outline. */
 function sizesAndEnds(layout: AgentflowLayout): string[] {
   const out: string[] = [];
   const prepared = layout.agentflow;
   // How far an end may lie off its outline: as far as it may lie off a side.
-  const slack = prepared.metrics.onSide;
+  const slack = prepared.geometry.metrics.onSide;
   for (const n of prepared.graph.nodes) {
     const view = prepared.views.get(n.id);
     if (view?.w !== n.width || view.h !== n.height)
@@ -120,10 +91,20 @@ function sizesAndEnds(layout: AgentflowLayout): string[] {
     ] as const;
     for (const [id, p] of ends) {
       const view = prepared.views.get(id);
-      const box = layout.nodes.get(id);
-      if (!view || !box) continue;
-      const d = outlineDistance({ x: p.x - box.x, y: p.y - box.y }, outlineOf(prepared, view));
-      if (!(d <= slack)) out.push(`edge '${e.id}' ends ${d.toFixed(2)} off the outline of '${id}'`);
+      const node = layout.nodes.get(id);
+      const frame = layout.groups.get(id);
+      const box = view && node ? node : frame;
+      if (!box) {
+        out.push(`edge '${e.id}' ends at '${id}', which is not drawn`);
+        continue;
+      }
+      const outline =
+        view && node
+          ? shapeOutline(view.shape, view.w, view.h, prepared.geometry)
+          : frameOutline(box.width, box.height);
+      const d = outlineDistance({ x: p.x - box.x, y: p.y - box.y }, outline);
+      const what = view && node ? 'the outline' : 'the frame';
+      if (!(d <= slack)) out.push(`edge '${e.id}' ends ${d.toFixed(2)} off ${what} of '${id}'`);
     }
   }
   return out;

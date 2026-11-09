@@ -8,7 +8,14 @@
  * before layout (DESIGN §6.1), each length from the unit profile, the theme, config or the
  * metrics table (pitfall 13). Written from a copy of v13 flowchart's builder (D446).
  */
-import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
+import type {
+  Dir,
+  EdgeRouting,
+  LayoutGraph,
+  LayoutGroup,
+  LayoutNode,
+  UnitProfile,
+} from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
@@ -27,13 +34,20 @@ import type {
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import {
-  agentflowMetrics,
   AGENTFLOW_LENGTH_DEFAULTS,
+  AGENTFLOW_METRICS,
   FLOWCHART_LENGTH_DEFAULTS,
+  MIN_SLANT,
   TITLE_MARGIN_DEFAULTS,
-  type AgentflowMetrics,
 } from './metrics.ts';
-import { shapeSize, shapeSpan, type LayoutShape, type Pads } from './shapes.ts';
+import {
+  shapeSize,
+  shapeSpan,
+  type LayoutShape,
+  type Pads,
+  type PadXY,
+  type ShapeGeometry,
+} from './shapes.ts';
 
 /** A vertex or a collapsed flow, drawn as a node. */
 export interface AgentflowNodeView {
@@ -77,12 +91,18 @@ export interface AgentflowEdgeView {
   target: string;
   label: MeasuredLabel;
   style: CheckedStyle;
-  /** Arrowheads: `none`, `arrow_point` or `arrow_cross`. */
-  start: string;
-  end: string;
+  /** Arrowheads (v12 `destructEdgeType`). */
+  start: Arrowhead;
+  end: Arrowhead;
   /** `linkStyle … interpolate`, the default's, or `flowchart.curve` (v12's order). */
-  curve: string | undefined;
+  curve: CurveKind;
 }
+
+/** The arrowheads an agentflow edge has: `-->`, `--x` or none (`-.-`). */
+export type Arrowhead = 'none' | 'arrow_point' | 'arrow_cross';
+
+/** How an edge is drawn between its route points (flowchart's kinds; v12's d3 curves are `curved`). */
+export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
 
 export interface AgentflowPrepared {
   graph: LayoutGraph;
@@ -92,8 +112,8 @@ export interface AgentflowPrepared {
   edges: AgentflowEdgeView[];
   /** Every node view by id. */
   views: ReadonlyMap<string, AgentflowNodeView>;
-  pads: Pads;
-  metrics: AgentflowMetrics;
+  /** The theme's padding and the metrics table the shapes were sized with. */
+  geometry: ShapeGeometry;
   /** `flowchart.subGraphTitleMargin` (D466): room above and below each flow title. */
   titleMargin: { readonly top: number; readonly bottom: number };
 }
@@ -102,19 +122,28 @@ const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 
 const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** v12's routing for the diagram's default curve (`linear` straight, the d3 curves curved). */
-function routingOf(curve: string | undefined): 'straight' | 'curved' | 'stepped' {
-  if (curve === 'linear') return 'straight';
-  return curve === 'step' || curve === 'stepBefore' || curve === 'stepAfter' || curve === 'rounded'
-    ? 'stepped'
+/** A curve name as flowchart reads it: any other name (v12's d3 curves) is `curved`. */
+function curveKind(curve: string | undefined): CurveKind {
+  return curve === 'linear' ||
+    curve === 'step' ||
+    curve === 'stepBefore' ||
+    curve === 'stepAfter' ||
+    curve === 'rounded'
+    ? curve
     : 'curved';
 }
 
+/** How the engine routes for the diagram's default curve (flowchart's table); else stepped. */
+const ROUTING: Readonly<Partial<Record<CurveKind, EdgeRouting>>> = {
+  linear: 'straight',
+  curved: 'curved',
+};
+
 /** v12 `destructEdgeType`: an open link has no head; a cross or point head at the end. */
-const arrowsOf = (type: string): [string, string] =>
+const arrowsOf = (type: string): [Arrowhead, Arrowhead] =>
   type === 'arrow_open'
     ? ['none', 'none']
-    : ['none', type === 'arrow_cross' ? type : 'arrow_point'];
+    : ['none', type === 'arrow_cross' ? 'arrow_cross' : 'arrow_point'];
 
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
@@ -128,9 +157,11 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
 /** Everything the views and the graph are measured with. */
 interface Measure {
   readonly ctx: AgentflowLayoutContext;
+  readonly units: UnitProfile;
+  /** `agentflow.*` lengths. */
+  readonly agentflowLength: ConfigLength;
   readonly font: FontKey;
-  readonly pads: Pads;
-  readonly metrics: AgentflowMetrics;
+  readonly geometry: ShapeGeometry;
   readonly wrap: number;
   readonly minWidth: number;
   readonly edgeWrap: number;
@@ -152,10 +183,15 @@ export function prepareAgentflow(
   const { theme, measurer, inline } = ctx;
   const units = ctx.units ?? pxProfile;
   const warn = (w: { code: string; message: string; path: string }) => ctx.warn(w);
-  const own = configLengths(ctx.config.agentflow, AGENTFLOW_LENGTH_DEFAULTS, 'agentflow', warn);
+  const agentflowLength = configLengths(
+    ctx.config.agentflow,
+    AGENTFLOW_LENGTH_DEFAULTS,
+    'agentflow',
+    warn
+  );
   const flowchart = ctx.config.flowchart;
-  const shared = configLengths(flowchart, FLOWCHART_LENGTH_DEFAULTS, 'flowchart', warn);
-  const margin = configLengths(
+  const flowchartLength = configLengths(flowchart, FLOWCHART_LENGTH_DEFAULTS, 'flowchart', warn);
+  const titleMarginLength = configLengths(
     flowchart?.subGraphTitleMargin,
     TITLE_MARGIN_DEFAULTS,
     'flowchart.subGraphTitleMargin',
@@ -166,15 +202,14 @@ export function prepareAgentflow(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const pad = shared('padding');
-  const metrics = agentflowMetrics(units);
   const m: Measure = {
     ctx,
+    units,
+    agentflowLength,
     font,
-    pads: padsOf(theme, pad),
-    metrics,
-    wrap: fromPx(units, own('wrappingWidth'), 'x') || units.builder.wrapWidth,
-    minWidth: fromPx(units, own('minNodeWidth'), 'x'),
+    geometry: { pads: padsOf(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
+    wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
+    minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
     label: (text, markdown, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
@@ -183,24 +218,25 @@ export function prepareAgentflow(
   const rootDir = dirOf(model.direction) ?? 'TB';
   const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);
   const edges = edgeViews(model, views, groups, m);
-  const titleMargin = { top: margin('top'), bottom: margin('bottom') };
-  const graph = layoutGraph(model, rootDir, { groups, nodes, edges, flowDir, titleMargin }, m, own);
-  return { graph, groups, nodes, edges, views, pads: m.pads, metrics, titleMargin };
+  const titleMargin = { top: titleMarginLength('top'), bottom: titleMarginLength('bottom') };
+  const graph = layoutGraph(model, rootDir, { groups, nodes, edges, flowDir, titleMargin }, m);
+  return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin };
 }
 
 function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
+  const padOf = (name: string) => theme.padding(name, pad);
+  const xy = (shape: string): PadXY => ({
+    x: padOf(`${shape}PaddingX`),
+    y: padOf(`${shape}PaddingY`),
+  });
   return {
-    node: { x: theme.padding('nodePaddingX', pad), y: theme.padding('nodePaddingY', pad) },
+    node: xy('node'),
     r: theme.number('radius'),
     pad,
-    hexagon: { x: theme.padding('hexagonPaddingX', pad), y: theme.padding('hexagonPaddingY', pad) },
-    // A slant of 0 would put an action's points at infinity: at least as deep as it is tall.
-    hexagonSlant: Math.max(theme.number('hexagonSlant'), 1),
-    subroutine: {
-      x: theme.padding('subroutinePaddingX', pad),
-      y: theme.padding('subroutinePaddingY', pad),
-    },
-    lean: { x: theme.padding('leanPaddingX', pad), y: theme.padding('leanPaddingY', pad) },
+    hexagon: xy('hexagon'),
+    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
+    subroutine: xy('subroutine'),
+    lean: xy('lean'),
   };
 }
 
@@ -342,8 +378,7 @@ function measureNode(view: AgentflowNodeView, m: Measure): void {
     view.shape,
     lw > 0 && !keep ? Math.max(lw, m.minWidth) : lw,
     view.label.height,
-    m.pads,
-    m.metrics
+    m.geometry
   );
   view.w = s.w;
   view.h = s.h;
@@ -389,7 +424,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: e.interpolate ?? model.defaultInterpolate ?? flowchart?.curve,
+      curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flowchart?.curve),
     });
   }
   return edges;
@@ -406,15 +441,14 @@ function layoutGraph(
     flowDir,
     titleMargin,
   }: Pick<AgentflowPrepared, 'groups' | 'nodes' | 'edges' | 'titleMargin'> & Pick<Views, 'flowDir'>,
-  m: Measure,
-  own: ConfigLength
+  m: Measure
 ): LayoutGraph {
-  const units = m.ctx.units ?? pxProfile;
+  const { units, agentflowLength } = m;
   const b = units.builder;
   // Node spacing runs across the flow and rank spacing along it (px config, v12 `|| 50`).
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromPx(units, own('nodeSpacing'), node, b.minSpacing.node),
-    rank: fromPx(units, own('rankSpacing'), rank, b.minSpacing.rank),
+    node: fromPx(units, agentflowLength('nodeSpacing'), node, b.minSpacing.node),
+    rank: fromPx(units, agentflowLength('rankSpacing'), rank, b.minSpacing.rank),
     edge: b.spacing.edge,
   });
   const along = sideways(rootDir) ? 'x' : 'y';
@@ -428,7 +462,7 @@ function layoutGraph(
     nodes: nodes.map((n): LayoutNode => {
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
-      node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.metrics);
+      node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.geometry);
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
@@ -467,10 +501,11 @@ function layoutGraph(
     })),
     spacing,
     ...(turned ? { turnedSpacing: down } : {}),
-    diagramPadding: fromPx(units, own('diagramPadding'), 'x', 0),
+    diagramPadding: fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
     routing:
       units.grid === undefined
-        ? routingOf(model.defaultInterpolate ?? m.ctx.config.flowchart?.curve)
+        ? (ROUTING[curveKind(model.defaultInterpolate ?? m.ctx.config.flowchart?.curve)] ??
+          'stepped')
         : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,

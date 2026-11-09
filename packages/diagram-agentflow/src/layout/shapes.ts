@@ -35,6 +35,12 @@ export interface Pads {
 /** Every shape the layout sizes: the vertex shapes and v12's collapsed-flow card. */
 export type LayoutShape = AgentflowShape | 'collapsedGroup';
 
+/** What every shape is measured and outlined with: the theme's padding and the metrics table. */
+export interface ShapeGeometry {
+  readonly pads: Pads;
+  readonly metrics: AgentflowMetrics;
+}
+
 export interface ShapeSize {
   w: number;
   h: number;
@@ -43,10 +49,10 @@ export interface ShapeSize {
 }
 
 interface ShapeDef {
-  size(tw: number, th: number, p: Pads, m: AgentflowMetrics): ShapeSize;
+  size(tw: number, th: number, g: ShapeGeometry): ShapeSize;
   /** How much of a side edges may spread along (top/bottom, or left/right when sideways). */
-  span(W: number, H: number, sideways: boolean, m: AgentflowMetrics): number;
-  outline(W: number, H: number, p: Pads, m: AgentflowMetrics): Point[];
+  span(W: number, H: number, sideways: boolean, g: ShapeGeometry): number;
+  outline(W: number, H: number, g: ShapeGeometry): Point[];
 }
 
 /** A `W` × `H` box with corners of radius `r`, clockwise from the top left corner's arc. */
@@ -78,18 +84,23 @@ function roundedBox(W: number, H: number, r: number, steps: number): Point[] {
   return out;
 }
 
-const flat: ShapeDef['span'] = (W, H, s, m) => (s ? H : W) - 2 * m.corner;
+const flat: ShapeDef['span'] = (W, H, s, { metrics: m }) => (s ? H : W) - 2 * m.corner;
 
-const S: Readonly<Record<LayoutShape, ShapeDef>> = {
+const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   // v12 roundedRect (task, connector, and every removed or unsupported shape): `padding` a side.
   rounded: {
-    size: (tw, th, p, m) => ({ w: Math.max(tw, m.minLabel) + 2 * p.pad, h: th + 2 * p.pad, dy: 0 }),
+    size: (tw, th, { pads: p, metrics: m }) => ({
+      w: Math.max(tw, m.minLabel) + 2 * p.pad,
+      h: th + 2 * p.pad,
+      dy: 0,
+    }),
     span: flat,
-    outline: (W, H, p, m) => roundedBox(W, H, Math.min(p.r, W / 2, H / 2), m.curveSteps),
+    outline: (W, H, { pads: p, metrics: m }) =>
+      roundedBox(W, H, Math.min(p.r, W / 2, H / 2), m.curveSteps),
   },
   // v12 subroutine (tool): the theme's padding inside the two side frames.
   'fr-rect': {
-    size: (tw, th, p, m) => ({
+    size: (tw, th, { pads: p, metrics: m }) => ({
       w: tw + p.subroutine.x + 2 * m.frame,
       h: th + p.subroutine.y,
       dy: 0,
@@ -99,12 +110,12 @@ const S: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 lean-right (input): the top left and bottom right corners cut in.
   'lean-r': {
-    size: (tw, th, p, m) => {
+    size: (tw, th, { pads: p, metrics: m }) => {
       const h = th + p.lean.y;
       return { w: tw + p.lean.x + m.leanGrow * h, h, dy: 0 };
     },
-    span: (W, H, s, m) => (s ? 0 : W - 2 * m.leanCut * H - 2 * m.corner),
-    outline: (W, H, _p, m) => {
+    span: (W, H, s, { metrics: m }) => (s ? 0 : W - 2 * m.leanCut * H - 2 * m.corner),
+    outline: (W, H, { metrics: m }) => {
       const c = m.leanCut * H;
       return [
         { x: -W / 2 + c, y: -H / 2 },
@@ -116,11 +127,11 @@ const S: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 question (decision): a square rhombus, side = label width + height + 2 × padding.
   diam: {
-    size: (tw, th, p) => {
+    size: (tw, th, { pads: p }) => {
       const s = tw + th + 2 * p.pad;
       return { w: s, h: s, dy: 0 };
     },
-    span: (W, H, s, m) => (s ? H : W) * m.roundSpan,
+    span: (W, H, s, { metrics: m }) => (s ? H : W) * m.roundSpan,
     outline: (W, H) => [
       { x: 0, y: -H / 2 },
       { x: W / 2, y: 0 },
@@ -130,14 +141,14 @@ const S: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 lined document (refdoc): a box whose bottom is a wave, and a rule down its left side.
   'lin-doc': {
-    size: (tw, th, p, m) => ({
+    size: (tw, th, { pads: p, metrics: m }) => ({
       w: tw + 2 * p.node.x + m.docRule,
       h: th + 2 * p.node.y + m.wave.depth,
       dy: -m.wave.depth / 2,
     }),
     // Edges meet the middle of each side: the wave has no flat stretch to spread along.
     span: () => 0,
-    outline: (W, H, _p, m) => {
+    outline: (W, H, { metrics: m }) => {
       const x = W / 2;
       const base = H / 2 - m.wave.depth;
       const k = 2 * m.wave.control;
@@ -161,12 +172,12 @@ const S: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 hexagon (action), with the padding axes corrected (D151).
   hex: {
-    size: (tw, th, p) => {
+    size: (tw, th, { pads: p }) => {
       const h = th + p.hexagon.y;
       return { w: tw + 2 * (h / p.hexagonSlant) + p.hexagon.x, h, dy: 0 };
     },
-    span: (W, H, s, m) => (s ? H * m.hexSpan : W - H / 2 - m.corner),
-    outline: (W, H, p) => {
+    span: (W, H, s, { metrics: m }) => (s ? H * m.hexSpan : W - H / 2 - m.corner),
+    outline: (W, H, { pads: p }) => {
       const c = H / p.hexagonSlant;
       const x = W / 2;
       const y = H / 2;
@@ -182,13 +193,14 @@ const S: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 collapsedGroup: a rounded card, the label above an indicator row, v12's fixed padding.
   collapsedGroup: {
-    size: (tw, th, _p, m) => ({
+    size: (tw, th, { metrics: m }) => ({
       w: Math.max(tw + 2 * m.card.pad, m.card.minWidth),
       h: th + m.card.gap + m.card.row + 2 * m.card.pad,
       dy: -(m.card.gap + m.card.row) / 2,
     }),
     span: flat,
-    outline: (W, H, p, m) => roundedBox(W, H, Math.min(p.r, W / 2, H / 2), m.curveSteps),
+    outline: (W, H, { pads: p, metrics: m }) =>
+      roundedBox(W, H, Math.min(p.r, W / 2, H / 2), m.curveSteps),
   },
 };
 
@@ -196,23 +208,17 @@ export const shapeSize = (
   shape: LayoutShape,
   tw: number,
   th: number,
-  p: Pads,
-  m: AgentflowMetrics
-): ShapeSize => S[shape].size(tw, th, p, m);
+  g: ShapeGeometry
+): ShapeSize => SHAPES[shape].size(tw, th, g);
 
 export const shapeSpan = (
   shape: LayoutShape,
   W: number,
   H: number,
   sideways: boolean,
-  m: AgentflowMetrics
-): number => Math.max(0, S[shape].span(W, H, sideways, m));
+  g: ShapeGeometry
+): number => Math.max(0, SHAPES[shape].span(W, H, sideways, g));
 
 /** The shape's outline in its own frame: a closed polygon, centre at 0, y down. */
-export const shapeOutline = (
-  shape: LayoutShape,
-  W: number,
-  H: number,
-  p: Pads,
-  m: AgentflowMetrics
-): Point[] => S[shape].outline(W, H, p, m);
+export const shapeOutline = (shape: LayoutShape, W: number, H: number, g: ShapeGeometry): Point[] =>
+  SHAPES[shape].outline(W, H, g);

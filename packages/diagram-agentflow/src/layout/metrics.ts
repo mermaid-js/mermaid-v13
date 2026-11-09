@@ -8,8 +8,6 @@
  * flowchart shapes agentflow draws) as v13 flowchart's builder took them (D446: a local copy,
  * never an import).
  */
-import type { UnitProfile } from '@mermaid-js/core/layout';
-
 /**
  * Config length defaults, as the schema writes them (`AgentflowDiagramConfig`). The resolved
  * config carries no `agentflow` defaults until the section joins `SECTION_OWNERS` with the
@@ -36,6 +34,12 @@ export const TITLE_MARGIN_DEFAULTS: Readonly<Record<string, number>> = Object.fr
 
 /** Config lengths at or above this are not taken (the cap flowchart's builder has). */
 export const MAX_CONFIG_LENGTH = 1e4;
+
+/**
+ * The smallest `hexagonSlant` drawn (a ratio, not a length): each pointed end of an action as
+ * deep as it is tall. A slant of 0 would put the points at infinity.
+ */
+export const MIN_SLANT = 1;
 
 export interface AgentflowMetrics {
   /** The least label width a rounded box is sized for (v12 `Math.max(w, 12)`). */
@@ -69,7 +73,11 @@ export interface AgentflowMetrics {
   readonly onSide: number;
 }
 
-const PX: AgentflowMetrics = Object.freeze({
+/**
+ * The px metrics, the only set drawn today; text output (D320, #551) adds a cell set chosen by
+ * the unit profile.
+ */
+export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   minLabel: 12,
   frame: 8,
   docRule: 8,
@@ -83,11 +91,3 @@ const PX: AgentflowMetrics = Object.freeze({
   curveSteps: 8,
   onSide: 0.5,
 });
-
-/**
- * The metrics for a unit profile. Only px is drawn today; text output (D320, #551) adds its
- * cell set here.
- */
-export function agentflowMetrics(_units: UnitProfile): AgentflowMetrics {
-  return PX;
-}

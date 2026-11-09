@@ -1,13 +1,13 @@
 /**
  * Config lengths, read as flowchart's builder reads its own (a copy, D446): a number, or a whole
- * numeric string as its number (`"20"`, `" 2.5 "`, as v12 took them), from 0 up to 10000. Unset
+ * numeric string as its number (`"20"`, `" 2.5 "`, as v12 took them), from 0 up to `MAX_CONFIG_LENGTH`. Unset
  * reads as the schema default. Anything else that is set (`"20px"`, `-5`, `true`) reads as the
- * default too, with one `AGENTFLOW_CONFIG_IGNORED` warning per key, however often it is read.
+ * default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often it is read.
  */
 import { MAX_CONFIG_LENGTH } from './metrics.ts';
 
 /** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
-export const AGENTFLOW_CONFIG_IGNORED = 'AGENTFLOW_CONFIG_IGNORED';
+export const AGENTFLOW_CONFIG_INVALID = 'AGENTFLOW_CONFIG_INVALID';
 
 /** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
 const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
@@ -46,8 +46,8 @@ export function configLengths(
     if (taken === undefined && value !== undefined) {
       const at = `${path}.${key}`;
       warn({
-        code: AGENTFLOW_CONFIG_IGNORED,
-        message: `Ignored ${at}: it is not a number from 0 up to 10000; using ${px}`,
+        code: AGENTFLOW_CONFIG_INVALID,
+        message: `Ignored ${at}: it is not a number from 0 up to ${MAX_CONFIG_LENGTH}; using ${px}`,
         path: at,
       });
     }

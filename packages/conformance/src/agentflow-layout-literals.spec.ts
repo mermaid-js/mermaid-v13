@@ -9,7 +9,7 @@ import { REPO_ROOT } from './index.ts';
 // multipliers and non-length caps.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'empty sizes, comparisons, the least spacing, the first index',
-  '1': 'the default edge length in ranks; the least hexagon slant (a ratio); a next index',
+  '1': 'the default edge length in ranks; a unit direction; a next or last index, a depth step',
   '2': 'both sides of a box; halving; the second duplicate edge id',
   '400': 'the normal font weight',
   '600': 'the least bold font weight',

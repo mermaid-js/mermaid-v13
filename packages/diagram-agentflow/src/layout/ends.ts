@@ -57,17 +57,30 @@ export function outlineDistance(p: Point, poly: readonly Point[]): number {
   return Math.hypot(q.x - p.x, q.y - p.y);
 }
 
+/** A box an edge ends on, as the engine placed it, and its outline in its own frame. */
+export interface EndBox {
+  readonly box: LayoutModelNode;
+  readonly outline: readonly Point[];
+}
+
+/** A `w` × `h` rectangle's outline in its own frame: a flow's frame. */
+export const frameOutline = (w: number, h: number): Point[] => [
+  { x: -w / 2, y: -h / 2 },
+  { x: w / 2, y: -h / 2 },
+  { x: w / 2, y: h / 2 },
+  { x: -w / 2, y: h / 2 },
+];
+
 /**
- * `p` (a route end on `box`, `next` the route's next point other than `p`, if any) moved onto `outline` (in the shape's
- * own frame, centred on the box): from a side (within `onSide`) straight in; from inside the
- * box (an engine routes an edge to a frame around its own end from the end's centre) along the
- * route to where it leaves the outline. Any other point is left where it is.
+ * `p` (a route end on `end.box`, `next` the route's next point other than `p`, if any) moved
+ * onto `end.outline` (in the shape's own frame, centred on the box): from a side (within
+ * `onSide`) straight in; from inside the box along the route to where it leaves the outline.
+ * Any other point is left where it is.
  */
 export function endOnOutline(
   p: RoutePoint,
   next: Point | undefined,
-  box: LayoutModelNode,
-  outline: readonly Point[],
+  { box, outline }: EndBox,
   onSide: number
 ): RoutePoint {
   const local = { x: p.x - box.x, y: p.y - box.y };
@@ -84,11 +97,50 @@ export function endOnOutline(
   } else if (Math.abs(local.x) < hw && Math.abs(local.y) < hh) {
     const d = next ? { x: next.x - p.x, y: next.y - p.y } : { x: 0, y: 0 };
     const len = Math.hypot(d.x, d.y);
-    // A route that does not move (to a frame centred on its end) leaves by the nearest side.
+    // A route that does not move leaves by the nearest side.
     if (len > 0) at = firstHit(local, { x: d.x / len, y: d.y / len }, outline);
   } else {
     return p;
   }
   at ??= nearestOnOutline(local, outline);
   return { ...p, x: at.x + box.x, y: at.y + box.y };
+}
+
+/** Whether box `inner` lies within box `outer`. */
+export function within(inner: LayoutModelNode, outer: LayoutModelNode): boolean {
+  return (
+    Math.abs(inner.x - outer.x) + inner.width / 2 <= outer.width / 2 &&
+    Math.abs(inner.y - outer.y) + inner.height / 2 <= outer.height / 2
+  );
+}
+
+/**
+ * The route of an edge between `member` and the frame `frame` that holds it (an engine routes it
+ * from centre to centre, inside the frame): straight out of the member through the side nearest
+ * the frame's border, to that border. From the member to the frame; the caller turns it for an
+ * edge the other way.
+ */
+export function memberToFrame(
+  member: EndBox,
+  frame: LayoutModelNode,
+  onSide: number
+): RoutePoint[] {
+  const m = member.box;
+  const gaps: [number, Point][] = [
+    [m.y - m.height / 2 - (frame.y - frame.height / 2), { x: 0, y: -1 }],
+    [frame.x + frame.width / 2 - (m.x + m.width / 2), { x: 1, y: 0 }],
+    [frame.y + frame.height / 2 - (m.y + m.height / 2), { x: 0, y: 1 }],
+    [m.x - m.width / 2 - (frame.x - frame.width / 2), { x: -1, y: 0 }],
+  ];
+  let [gap, d] = gaps[0]!;
+  for (const [g, dir] of gaps) if (g < gap) [gap, d] = [g, dir];
+  const axis = d.x === 0 ? 'v' : 'h';
+  const side = { x: m.x + (d.x * m.width) / 2, y: m.y + (d.y * m.height) / 2, axis } as const;
+  const start = endOnOutline(side, undefined, member, onSide);
+  const end = {
+    x: d.x === 0 ? start.x : frame.x + (d.x * frame.width) / 2,
+    y: d.y === 0 ? start.y : frame.y + (d.y * frame.height) / 2,
+    axis,
+  } as const;
+  return [{ ...start, axis }, end];
 }

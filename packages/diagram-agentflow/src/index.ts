@@ -21,7 +21,7 @@ export type {
   SemanticVertex,
 } from './semantic.ts';
 export {
-  AGENTFLOW_CONFIG_IGNORED,
+  AGENTFLOW_CONFIG_INVALID,
   layoutAgentflow,
   prepareAgentflow,
   shapeOutline,
@@ -30,6 +30,9 @@ export type {
   AgentflowEdgeView,
   AgentflowGroupView,
   AgentflowLayout,
+  Arrowhead,
+  CurveKind,
+  ShapeGeometry,
   AgentflowLayoutContext,
   AgentflowNodeView,
   AgentflowPrepared,
