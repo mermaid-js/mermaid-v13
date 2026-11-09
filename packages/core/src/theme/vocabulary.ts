@@ -62,12 +62,20 @@ export const BASE_VARIABLES = [
 export type BaseVariable = (typeof BASE_VARIABLES)[number];
 
 /**
- * Arrowhead geometry (D152): the size and gap of the point arrowhead, which flowchart and state
- * both read, as numbers at render time (`Theme.number`), so overriding their CSS variables has
- * no effect. Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
- * Flowchart's circle and cross arrowheads are in its own table (spec #414 T4).
+ * Arrowhead geometry (D152): sizes and gaps of the point, circle and cross arrowheads, read
+ * as numbers at render time (`Theme.number`), so overriding their CSS variables has no effect.
+ * Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
  */
-export const ARROWHEAD_VARIABLES = ['arrowheadGap', 'arrowheadLength', 'arrowheadWidth'] as const;
+export const ARROWHEAD_VARIABLES = [
+  'arrowheadGap',
+  'arrowheadLength',
+  'arrowheadWidth',
+  'circleArrowheadSize',
+  'circleArrowheadGap',
+  'crossArrowheadSize',
+  'crossArrowheadGap',
+  'crossArrowheadStrokeWidth',
+] as const;
 
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
 
@@ -94,13 +102,27 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
   ARROWHEAD_VARIABLES,
   [
     // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
-    // The shapes flowchart and mindmap share; flowchart's other shapes are in its own table.
+    // Flowchart's shapes, shared with mindmap, block, C4 and agentflow (#552).
     'nodePaddingX',
     'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
     'hexagonPaddingX',
     'hexagonPaddingY',
     'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
     'circlePadding',
+    'circleMinDiameter',
+    // Shapes with their own v12 padding (#89), totals added to the label box.
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -343,14 +365,31 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   arrowheadGap: def('ag', 'length', ['flowchart', 'state']),
   arrowheadLength: def('al', 'length', ['flowchart', 'state']),
   arrowheadWidth: def('aw', 'length', ['flowchart', 'state']),
+  circleArrowheadSize: def('ocs', 'length', ['flowchart']),
+  circleArrowheadGap: def('ocg', 'length', ['flowchart']),
+  crossArrowheadSize: def('xs', 'length', ['flowchart']),
+  crossArrowheadGap: def('xg', 'length', ['flowchart']),
+  crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  // Flowchart's own shapes and its circle and cross arrowheads are in its table (#414 T4).
   nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
   nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
+  stadiumPaddingX: def('spx', 'padding', ['flowchart']),
+  stadiumPaddingY: def('spy', 'padding', ['flowchart']),
   hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
   hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
   hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
+  doubleCircleGap: def('dcg', 'length', ['flowchart']),
+  doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
   circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
+  circleMinDiameter: def('cmd', 'length', ['flowchart']),
+  subroutinePaddingX: def('srx', 'padding', ['flowchart']),
+  subroutinePaddingY: def('sry', 'padding', ['flowchart']),
+  cylinderPaddingX: def('cyx', 'padding', ['flowchart']),
+  cylinderPaddingY: def('cyy', 'padding', ['flowchart']),
+  leanPaddingX: def('lnx', 'padding', ['flowchart']),
+  leanPaddingY: def('lny', 'padding', ['flowchart']),
+  oddPaddingX: def('odx', 'padding', ['flowchart']),
+  oddPaddingY: def('ody', 'padding', ['flowchart']),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', [
