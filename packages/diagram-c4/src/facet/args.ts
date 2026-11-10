@@ -1,13 +1,15 @@
 /**
  * The macro call around an offset, read from the token stream (completion runs on text being
- * typed, where the statement may not parse yet, so the AST may have no node for it). The
- * arguments are grouped as `parser.ts` groups them: a bare text, a quoted one, a
- * `$name="value"` or an empty one each make one argument, and commas carry nothing.
+ * typed, and hover falls back to it, where the statement may not parse yet, so the AST may have
+ * no node for it). The arguments are grouped as `parser.ts` groups them: a bare text, a quoted
+ * one, a `$name="value"` or an empty one each make one argument, and commas carry nothing. The
+ * parser's own grouping is not reused: it reads from its cursor, records diagnostics and stops
+ * at the first error, where this one reads any token run and keeps the half-written argument.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-import { SLOTS } from './tables.ts';
+import { SLOT_TABLES } from '../parser/slots.ts';
 
 /** One argument as written: where it is, and its parts. */
 export interface WrittenArg {
@@ -140,7 +142,7 @@ export function callAt(tokens: TokenStream, text: string, at: number): CallAt | 
   while (j >= 0 && IN_ARGS.has(tokens.kind[j] ?? Kind.EOF)) j--;
   if (j < 0) return undefined;
   const kind = tokens.kind[j] ?? Kind.EOF;
-  if (!SLOTS.has(kind)) return undefined;
+  if (!SLOT_TABLES.has(kind)) return undefined;
   const { args, open } = readArgs(tokens, text, j);
   if (open < 0 || at < open) return undefined;
   // A `)` before the offset closes the call.

@@ -62,6 +62,8 @@ import type {
 import { C4Builder } from './build.ts';
 import type { Arg, BoundaryMacro } from './build.ts';
 import { lex } from './lexer.ts';
+import { ELEMENT, TECHN_ELEMENT } from './slots.ts';
+import type { SlotTable } from './slots.ts';
 import { HEADERS, T } from './tokens.ts';
 
 export interface C4ParseOptions extends ParseOptions {
@@ -93,13 +95,17 @@ const SKIPPED = kindSet(
 // ---- macros -----------------------------------------------------------------------------
 
 type Macro =
-  | { role: 'element'; kind: C4ElementKind; techn: boolean }
+  | { role: 'element'; kind: C4ElementKind; table: SlotTable }
   | { role: 'boundary'; boundary: BoundaryMacro }
   | { role: 'relation'; kind: C4RelationKind; index?: boolean }
   | { role: 'elementStyle' | 'relStyle' | 'layout' };
 
-const person = (kind: C4ElementKind): Macro => ({ role: 'element', kind, techn: false });
-const container = (kind: C4ElementKind): Macro => ({ role: 'element', kind, techn: true });
+const person = (kind: C4ElementKind): Macro => ({ role: 'element', kind, table: ELEMENT });
+const container = (kind: C4ElementKind): Macro => ({
+  role: 'element',
+  kind,
+  table: TECHN_ELEMENT,
+});
 const rel = (kind: C4RelationKind): Macro => ({ role: 'relation', kind });
 const deployment = (nodeKind: C4NodeKind): Macro => ({
   role: 'boundary',
@@ -661,8 +667,8 @@ class C4Parser {
     const written = [...args];
     switch (macro.role) {
       case 'element': {
-        const { kind, techn } = macro;
-        const { ast, alias } = b.element({ kind, techn, args, parent: this.current() });
+        const { kind, table } = macro;
+        const { ast, alias } = b.element({ kind, table, args, parent: this.current() });
         this.place({ id: ast, type: 'Element', range: at, macro: name, alias, args: written });
         this.st.statement('element', at);
         return DIAGRAM_STATEMENT;

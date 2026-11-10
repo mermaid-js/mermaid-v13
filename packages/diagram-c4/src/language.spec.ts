@@ -79,8 +79,8 @@ describe('the c4 facet', () => {
     expect(symbols(text)).toEqual([
       'boundary def b = b',
       'element def p = p',
-      'element def a = a',
-      'element ref q = q',
+      // D458: the `$alias` that renames the new element defines it; `a` names nothing now.
+      'element def q = q',
       'boundary ref b = b',
       'element ref q = q',
       'element ref p = p',

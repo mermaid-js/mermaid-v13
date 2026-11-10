@@ -81,19 +81,15 @@ const S = {
   ACC_DESCR_MULTILINE: 9,
 } as const;
 
-/** Start condition names by number (jison's), for the probe's lexer mode (R-LANG-7). */
-const S_NAMES: readonly string[] = [
-  'INITIAL',
-  'macro',
-  'attribute',
-  'string',
-  'string_kv',
-  'string_kv_key',
-  'string_kv_value',
-  'acc_title',
-  'acc_descr',
-  'acc_descr_multiline',
-];
+/**
+ * Start condition names by number, for the probe's lexer mode (R-LANG-7): jison's names are
+ * the keys of {@link S}, lower-cased but `INITIAL`.
+ */
+const S_NAMES: readonly string[] = (() => {
+  const out: string[] = [];
+  for (const [key, n] of Object.entries(S)) out[n] = key === 'INITIAL' ? key : key.toLowerCase();
+  return out;
+})();
 
 /** What a regex `.` does not match, once CRs are LFs. */
 // LF, U+2028 (line separator) and U+2029 (paragraph separator).

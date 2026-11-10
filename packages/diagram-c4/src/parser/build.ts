@@ -17,6 +17,25 @@ import type {
   C4Relation,
 } from '../model.ts';
 import type { C4Argument } from './ast.ts';
+import {
+  BOUNDARY,
+  ELEMENT_FIELDS,
+  ELEMENT_STYLE,
+  NO_NAMES,
+  NODE,
+  OFFSETS,
+  REL,
+  REL_STYLE,
+  RELATION_FIELDS,
+  STRUCTURAL,
+} from './slots.ts';
+import type { SlotTable } from './slots.ts';
+
+/**
+ * Where an alias a named argument gives belongs: an element's or a boundary's own, or a
+ * relation end (an element first, else a boundary, resolved at the end as v12 looks it up).
+ */
+type AliasKind = 'element' | 'boundary' | 'end';
 
 /** A parsed argument: positional (no name) or `$name="value"`, as the AST keeps it. */
 export type Arg = C4Argument;
@@ -31,35 +50,6 @@ export interface BoundaryMacro {
   nodeKind?: C4NodeKind;
 }
 
-/** The fields a named argument sets on an element or a boundary; any other name is `extra`. */
-export const ELEMENT_FIELDS: ReadonlySet<string> = new Set([
-  'label',
-  'descr',
-  'techn',
-  'type',
-  'sprite',
-  'tags',
-  'link',
-  'bgColor',
-  'fontColor',
-  'borderColor',
-  'shadowing',
-  'shape',
-  'legendText',
-  'legendSprite',
-]);
-/** The text fields a named argument sets on a relation (`offsetX`/`offsetY` are numbers). */
-export const RELATION_FIELDS: ReadonlySet<string> = new Set([
-  'label',
-  'descr',
-  'techn',
-  'sprite',
-  'tags',
-  'link',
-  'textColor',
-  'lineColor',
-]);
-export const OFFSETS: ReadonlySet<string> = new Set(['offsetX', 'offsetY']);
 const ELEMENT_KINDS: ReadonlySet<string> = new Set<C4ElementKind>([
   'person',
   'external_person',
@@ -83,30 +73,6 @@ const ELEMENT_KINDS: ReadonlySet<string> = new Set<C4ElementKind>([
   'external_component_queue',
 ]);
 const NODE_KINDS: ReadonlySet<string> = new Set<C4NodeKind>(['node', 'nodeL', 'nodeR']);
-/** `UpdateElementStyle`'s slots after the target. */
-const ELEMENT_STYLE_SLOTS = [
-  'bgColor',
-  'fontColor',
-  'borderColor',
-  'shadowing',
-  'shape',
-  'sprite',
-  'techn',
-  'legendText',
-  'legendSprite',
-] as const;
-
-/**
- * The structural names each macro's DB call set after its arguments, so a named argument with
- * one did nothing (`addPersonOrSystem` sets `typeC4Shape`, `parentBoundary` and `wrap` last).
- */
-const ELEMENT_LAST: ReadonlySet<string> = new Set(['typeC4Shape', 'parentBoundary', 'wrap']);
-const BOUNDARY_LAST: ReadonlySet<string> = new Set(['parentBoundary', 'wrap']);
-const NODE_LAST: ReadonlySet<string> = new Set(['parentBoundary', 'wrap', 'nodeType']);
-const RELATION_LAST: ReadonlySet<string> = new Set(['wrap']);
-/** `Update…Style` set its names last (`old[key] = value`). */
-const NONE: ReadonlySet<string> = new Set();
-
 type Open<T> = { -readonly [K in keyof T]: T[K] };
 type OpenElement = Open<C4Element>;
 type OpenBoundary = Open<C4Boundary>;
@@ -178,8 +144,8 @@ export interface Added {
 /** An element statement (pitfall 10). */
 export interface ElementParts {
   kind: C4ElementKind;
-  /** Containers and components take `techn` before `descr`. */
-  techn: boolean;
+  /** Its slots (containers and components take `techn` before `descr`). */
+  table: SlotTable;
   args: readonly Arg[];
   /** The boundary it is in: an index into the boundaries, -1 at the top level. */
   parent: number;
@@ -261,14 +227,7 @@ export class C4Builder {
    */
   private structure(s: Setting): boolean {
     const { item, name, value } = s;
-    const structural =
-      name === 'wrap' ||
-      (item.type === 'relation'
-        ? name === 'type' || name === 'from' || name === 'to'
-        : name === 'alias' ||
-          name === 'parentBoundary' ||
-          name === (item.type === 'element' ? 'typeC4Shape' : 'nodeType'));
-    if (!structural) return false;
+    if (!STRUCTURAL[item.type].has(name)) return false;
     // v12 set it again after the arguments: no effect.
     if (s.last.has(name)) return true;
     if (name === 'wrap') {
@@ -276,7 +235,7 @@ export class C4Builder {
     } else if (item.type === 'relation') {
       if (name === 'type') item.bag.kind = value;
       else {
-        this.namedRef(s, undefined);
+        this.namedRef(s, 'end');
         this.relationEnds(
           item.index,
           name === 'from' ? value : item.bag.from,
@@ -284,7 +243,10 @@ export class C4Builder {
         );
       }
     } else if (name === 'alias') {
-      this.namedRef(s, item.type);
+      // D458: the macro that gives the alias defines it, unless an item already has it.
+      const index = item.type === 'element' ? this.elementIndex : this.boundaryIndex;
+      const owner = index.get(value);
+      this.namedRef(s, item.type, owner === undefined ? 'def' : 'ref');
       this.rename(item, value, s);
     } else if (name === 'parentBoundary') {
       if (value !== 'global') this.namedRef(s, 'boundary');
@@ -323,8 +285,8 @@ export class C4Builder {
     if (other === undefined || other > item.index) index.set(alias, item.index);
     item.bag.alias = alias;
     // v12 kept the boundary's statements under its old alias, outside the diagram: those it
-    // holds, and in a macro (`s.last` is not `NONE`) those in its braces.
-    if (item.type === 'boundary' && (s.last !== NONE || (this.held[item.index] ?? 0) > 0)) {
+    // holds, and in a macro (`s.last` is not `NO_NAMES`) those in its braces.
+    if (item.type === 'boundary' && (s.last !== NO_NAMES || (this.held[item.index] ?? 0) > 0)) {
       this.kept(
         s,
         'renames the boundary, and its statements stay in it',
@@ -456,12 +418,31 @@ export class C4Builder {
     return this.src.slice(from, to) === arg.value ? { start: from, end: to } : arg.range;
   }
 
-  /** An alias a named argument gives: an occurrence at its value (a reference). */
-  private namedRef(s: Setting, kind: string | undefined): void {
+  /** An alias a named argument gives: an occurrence at its value. */
+  private namedRef(s: Setting, kind: AliasKind, role: 'def' | 'ref' = 'ref'): void {
     if (s.value === '' || s.arg === undefined) return;
     const range = this.valueRange(s.arg);
-    if (kind === undefined) this.refs.push({ name: s.value, range });
-    else this.st.symbol(s.value, kind, range, 'ref');
+    if (kind === 'end') this.refs.push({ name: s.value, range });
+    else this.st.symbol(s.value, kind, range, role);
+  }
+
+  /** Whether the statement's `$alias` renames its item (to another alias). */
+  private renames(args: readonly Arg[], alias: string): boolean {
+    return args.some((a) => a.name === 'alias' && a.value !== alias);
+  }
+
+  /**
+   * Slots `from` to `to` of `table` (to its end when omitted), each read into its field:
+   * `blank` ones keep v12's empty default, `dropped` ones are read and ignored.
+   */
+  private rest(item: Item, table: SlotTable, args: readonly Arg[], from: number, to?: number) {
+    const { slots, setAfter } = table;
+    for (let k = from; k < (to ?? slots.length); k++) {
+      const s = slots[k];
+      if (!s || s.dropped) continue;
+      if (s.blank) this.text(item, s.name as 'descr' | 'techn', args[k], setAfter);
+      else this.slot(item, s.name, args[k], setAfter);
+    }
   }
 
   // ---- statements ---------------------------------------------------------------------
@@ -481,15 +462,12 @@ export class C4Builder {
     const item: Item = { type: 'element', bag: this.elements[i] as OpenElement, index: i };
     const ast = this.ids.element(alias);
     if (first) item.bag.ast = ast;
-    if (written === undefined && args[0]) this.named(item, args[0], ELEMENT_LAST);
-    this.definition(alias, args[0], 'element', first);
-    this.label(item, args[1], ELEMENT_LAST);
-    let next = 2;
-    if (parts.techn) this.text(item, 'techn', args[next++], ELEMENT_LAST);
-    this.text(item, 'descr', args[next++], ELEMENT_LAST);
-    this.slot(item, 'sprite', args[next++], ELEMENT_LAST);
-    this.slot(item, 'tags', args[next++], ELEMENT_LAST);
-    this.slot(item, 'link', args[next], ELEMENT_LAST);
+    const { table } = parts;
+    if (written === undefined && args[0]) this.named(item, args[0], table.setAfter);
+    // A `$alias` that renames the new item defines the alias it gives instead (D458).
+    if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'element', first);
+    this.label(item, args[1], table.setAfter);
+    this.rest(item, table, args, 2);
     item.bag.kind = kind;
     this.setParent(item.bag, parts.parent);
     return { ast, alias };
@@ -508,7 +486,9 @@ export class C4Builder {
     if (macro.splice !== undefined) {
       args.splice(2, 0, { value: macro.splice, range: { start: parts.end, end: parts.end } });
     }
-    const last = macro.nodeKind === undefined ? BOUNDARY_LAST : NODE_LAST;
+    // Read as written after the splice: a named boundary's type is the third argument.
+    const table = macro.nodeKind === undefined ? BOUNDARY : NODE;
+    const last = table.setAfter;
     const name = this.alias(args[0], 'alias');
     const alias = name ?? '';
     let i = name === undefined ? undefined : this.boundaryIndex.get(alias);
@@ -522,20 +502,12 @@ export class C4Builder {
     const ast = this.ids.boundary(alias);
     if (first) item.bag.ast = ast;
     if (name === undefined && args[0]) this.named(item, args[0], last);
-    this.definition(alias, args[0], 'boundary', first);
+    if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'boundary', first);
     this.label(item, args[1], last);
     if (args[2] === undefined) item.bag.type = macro.type;
-    else this.slot(item, 'type', args[2], last);
-    if (macro.nodeKind !== undefined) {
-      this.text(item, 'descr', args[3], last);
-      // args[4], the sprite: v12's `addDeploymentNode` never assigns it (a named one included).
-      this.slot(item, 'tags', args[5], last);
-      this.slot(item, 'link', args[6], last);
-      item.bag.nodeKind = macro.nodeKind;
-    } else {
-      this.slot(item, 'tags', args[3], last);
-      this.slot(item, 'link', args[4], last);
-    }
+    // A node's sprite: v12's `addDeploymentNode` never assigns it (a named one included).
+    this.rest(item, table, args, 2);
+    if (macro.nodeKind !== undefined) item.bag.nodeKind = macro.nodeKind;
     this.setParent(item.bag, parts.parent);
     return { ast, alias: item.bag.alias, index: i };
   }
@@ -568,16 +540,12 @@ export class C4Builder {
     const ast = this.ids.relation(from, to);
     if (first) item.bag.ast = ast;
     item.bag.kind = parts.kind;
-    if (fromWritten === undefined) this.named(item, args[0], RELATION_LAST);
-    if (toWritten === undefined) this.named(item, args[1], RELATION_LAST);
+    if (fromWritten === undefined) this.named(item, args[0], REL.setAfter);
+    if (toWritten === undefined) this.named(item, args[1], REL.setAfter);
     this.ref(from, args[0]);
     this.ref(to, args[1]);
-    this.label(item, args[2], RELATION_LAST);
-    this.text(item, 'techn', args[3], RELATION_LAST);
-    this.text(item, 'descr', args[4], RELATION_LAST);
-    this.slot(item, 'sprite', args[5], RELATION_LAST);
-    this.slot(item, 'tags', args[6], RELATION_LAST);
-    this.slot(item, 'link', args[7], RELATION_LAST);
+    this.label(item, args[2], REL.setAfter);
+    this.rest(item, REL, args, 3);
     return { ast, alias: from, from, to };
   }
 
@@ -598,9 +566,7 @@ export class C4Builder {
       item = { type: 'boundary', bag: this.boundaries[j] as OpenBoundary, index: j };
     }
     if (!item) return;
-    for (let k = 0; k < ELEMENT_STYLE_SLOTS.length; k++) {
-      this.slot(item, ELEMENT_STYLE_SLOTS[k] ?? '', args[k + 1], NONE);
-    }
+    this.rest(item, ELEMENT_STYLE, args, 1);
   }
 
   /**
@@ -616,16 +582,14 @@ export class C4Builder {
     const i = this.relationIndex.get(from.value)?.get(to.value);
     if (i === undefined) return;
     const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
-    this.slot(item, 'textColor', args[2], NONE);
-    this.slot(item, 'lineColor', args[3], NONE);
-    const offsets = ['offsetX', 'offsetY'];
-    for (let k = 0; k < 2; k++) {
-      const arg = args[k + 4];
+    this.rest(item, REL_STYLE, args, 2, 4);
+    for (let k = 4; k < REL_STYLE.slots.length; k++) {
+      const arg = args[k];
       if (arg === undefined) continue;
-      const name = arg.name ?? offsets[k] ?? '';
+      const name = arg.name ?? REL_STYLE.slots[k]?.name ?? '';
       if (OFFSETS.has(name)) this.offset(item.bag, name, arg.value, arg.range);
       // Another name in an offset slot: v12 stored `parseInt` of the value under it.
-      else this.set({ item, name, value: String(toInt(arg.value)), at: arg.range, last: NONE });
+      else this.set({ item, name, value: String(toInt(arg.value)), at: arg.range, last: NO_NAMES });
     }
   }
 

@@ -1,22 +1,46 @@
 /**
  * C4 hover (DESIGN §4.5, D93): a keyword (a header, a macro, `title`, `accDescr`, …) its
  * one-line doc from the grammar file (`generated/docs.ts`); an argument the slot it fills,
- * positional or `$name`, with what that slot does (`tables.ts`); an alias or a relation end,
- * also the element or boundary it names (an element first, as v12 looks them up). Never a
- * preview.
+ * positional or `$name`, with what that slot does (`tables.ts`) and, for a `$name`, whether the
+ * statement reads it; an alias or a relation end, also the element or boundary it names (an
+ * element first, as v12 looks them up). A statement still being written (no `)` yet) has no AST
+ * node: its argument is read from the tokens, as completion reads it. Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { c4Docs } from '../generated/docs.ts';
 import type { C4Boundary, C4Element, C4Model } from '../model.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
-import { ELEMENT_FIELDS, OFFSETS, RELATION_FIELDS } from '../parser/build.ts';
+import {
+  ELEMENT_FIELDS,
+  OFFSETS,
+  RELATION_FIELDS,
+  SLOT_TABLES,
+  STRUCTURAL,
+} from '../parser/slots.ts';
+import type { SlotTable } from '../parser/slots.ts';
 import { KEYWORDS } from '../parser/tokens.ts';
-import { code, RELATION_TYPE_DOC, SLOT_DOCS, SLOTS, span } from './tables.ts';
-import type { Slot } from './tables.ts';
+import { callAt } from './args.ts';
+import { code, span } from './markdown.ts';
+import { RELATION_TYPE_DOC, SLOT_DOCS } from './tables.ts';
 
 const IGNORED = 'This one is ignored.';
+const SET_AFTER =
+  'Changes nothing here: mermaid@12 set it again after the arguments (it applies in `UpdateElementStyle`).';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** One argument under the cursor, from the AST or the tokens. */
+interface ArgAt {
+  macro: string;
+  table: SlotTable;
+  /** Its index among the arguments as written. */
+  k: number;
+  name?: string;
+  value: string;
+  range: Range;
+  /** The statement's first argument, when positional: the alias `UpdateElementStyle` styles. */
+  first?: string;
+}
 
 /** The macro statement whose arguments hold `at`, at any depth. */
 function statementAt(list: readonly C4StatementNode[], at: number): C4StatementNode | undefined {
@@ -34,6 +58,54 @@ function statementAt(list: readonly C4StatementNode[], at: number): C4StatementN
     }
   }
   return undefined;
+}
+
+/** The argument at `at` in a parsed statement. */
+function fromAst(doc: DocumentView<C4Document>, at: number): ArgAt | undefined {
+  const node = statementAt(doc.result.ast.children, at);
+  if (!node) return undefined;
+  const k = node.args.findIndex((a) => a.range.start <= at && at <= a.range.end);
+  const arg = node.args[k];
+  const kind = KEYWORDS.get(node.macro);
+  const table = kind === undefined ? undefined : SLOT_TABLES.get(kind);
+  if (!arg || !table) return undefined;
+  const first = node.args[0];
+  return {
+    ...(first?.name === undefined && first && { first: first.value }),
+    macro: node.macro,
+    table,
+    k,
+    ...(arg.name !== undefined && { name: arg.name }),
+    value: arg.value,
+    range: arg.range,
+  };
+}
+
+/** The argument at `at` in a statement still being written, read from the tokens. */
+function fromTokens(doc: DocumentView<C4Document>, at: number): ArgAt | undefined {
+  const { text, result } = doc;
+  const call = result.tokens && callAt(result.tokens, text, at);
+  const arg = call?.at;
+  const table = call && SLOT_TABLES.get(call.kind);
+  if (!call || !arg || !table) return undefined;
+  // An argument still open runs to the end of its line here.
+  const lineEnd = text.slice(arg.range.start).search(/[\n\r]|$/) + arg.range.start;
+  let start = arg.range.start;
+  while (start < lineEnd && /[\t ]/.test(text.charAt(start))) start++;
+  const range = span(start, Math.min(arg.range.end, lineEnd));
+  const name = arg.name && /^[^\s=]*/.exec(text.slice(arg.name.start, arg.name.end))?.[0];
+  const value = arg.value ? text.slice(arg.value.start, arg.value.end).trim() : '';
+  const head = call.args[0];
+  const first = head?.value && !head.name && text.slice(head.value.start, head.value.end).trim();
+  return {
+    ...(first && { first }),
+    macro: text.slice(call.keyword.start, call.keyword.end),
+    table,
+    k: call.index,
+    ...(name !== undefined && { name }),
+    value,
+    range,
+  };
 }
 
 /** One line, cut at 40 characters. */
@@ -74,24 +146,26 @@ function aliasFacts(model: C4Model, alias: string, boundary: boolean): string {
   return `No element or boundary has the alias ${code(alias)}.`;
 }
 
-/** The structural names each statement takes besides its fields (`parser/build.ts`). */
-const RELATION_NAMES = new Set(['type', 'from', 'to', 'wrap']);
-const ELEMENT_NAMES = new Set(['alias', 'parentBoundary', 'typeC4Shape', 'nodeType', 'wrap']);
-
-/** Whether `node` reads a `$name`: sets a field or the structure with it. */
-function reads(node: C4StatementNode, name: string): boolean {
-  const relation =
-    node.type === 'Relation' || (node.type === 'Style' && node.macro === 'UpdateRelStyle');
-  if (relation) return RELATION_FIELDS.has(name) || OFFSETS.has(name) || RELATION_NAMES.has(name);
-  return ELEMENT_FIELDS.has(name) || ELEMENT_NAMES.has(name);
-}
-
-/** The doc of the `$name` in argument `k` of `node`. */
-function nameDoc(node: C4StatementNode, name: string, k: number, slots: readonly Slot[]): string {
+/**
+ * The doc of the `$name` in argument `arg.k`: what it sets on the statement's item, as
+ * `parser/build.ts` reads it (`parser/slots.ts`).
+ */
+function nameDoc(model: C4Model, arg: ArgAt, name: string): string {
+  const { table } = arg;
   // By position: the name changes nothing.
-  if (node.macro === 'UpdateLayoutConfig') return SLOT_DOCS[slots[k]?.name ?? ''] ?? IGNORED;
-  if (!reads(node, name)) return `Not a name ${code(node.macro)} reads: kept, not drawn.`;
-  if (node.type === 'Relation' && name === 'type') return RELATION_TYPE_DOC;
+  if (table.names === 'none') return SLOT_DOCS[table.slots[arg.k]?.name ?? ''] ?? IGNORED;
+  // `UpdateElementStyle` styles the element with the alias, else the boundary.
+  const styledBoundary =
+    !model.elements.some((e) => e.alias === arg.first) &&
+    model.boundaries.some((b) => b.alias === arg.first);
+  let item: 'element' | 'boundary' | 'relation' = styledBoundary ? 'boundary' : 'element';
+  if (table.names !== 'styled') item = table.names;
+  const structural = STRUCTURAL[item].has(name);
+  const field =
+    item === 'relation' ? RELATION_FIELDS.has(name) || OFFSETS.has(name) : ELEMENT_FIELDS.has(name);
+  if (!structural && !field) return `Not a name ${code(arg.macro)} reads: kept, not drawn.`;
+  if (structural && table.setAfter.has(name) && name !== 'wrap') return SET_AFTER;
+  if (item === 'relation' && name === 'type') return RELATION_TYPE_DOC;
   return SLOT_DOCS[name] ?? '';
 }
 
@@ -105,29 +179,25 @@ export function c4Hover(at: HoverTarget, doc: DocumentView<C4Document>): Hover |
     const range = span(t.range.start, t.range.start + word.length);
     return { range, contents: `**${code(word)}**\n\n${keywordDoc}` };
   }
-  const node = statementAt(doc.result.ast.children, at.offset);
-  if (!node) return undefined;
-  const k = node.args.findIndex((a) => a.range.start <= at.offset && at.offset <= a.range.end);
-  const arg = node.args[k];
-  const kind = KEYWORDS.get(node.macro);
-  const slots = kind === undefined ? undefined : SLOTS.get(kind);
-  if (!arg || !slots) return undefined;
+  const arg = fromAst(doc, at.offset) ?? fromTokens(doc, at.offset);
+  if (!arg) return undefined;
   const model = doc.result.model as C4Model;
-  const where = `Argument ${k + 1} of ${code(node.macro)}`;
-  const range = span(arg.range.start, arg.range.end);
+  const { table, k, range } = arg;
+  const where = `Argument ${k + 1} of ${code(arg.macro)}`;
   if (arg.name !== undefined) {
-    const what = nameDoc(node, arg.name, k, slots);
+    const what = nameDoc(model, arg, arg.name);
     return { range, contents: `**${code(`$${arg.name}`)}**\n\n${where}. ${what}`.trim() };
   }
-  const slot = slots[k];
+  const slot = table.slots[k];
   if (!slot) {
-    const takes = plural(slots.length, 'argument');
+    const takes = plural(table.slots.length, 'argument');
     return { range, contents: `${where}: it takes ${takes}. ${IGNORED}` };
   }
-  const lines = [`**${code(slot.name)}**`, `${where}. ${SLOT_DOCS[slot.name] ?? ''}`.trim()];
+  const what = slot.dropped ? `Dropped (as mermaid@12).` : (SLOT_DOCS[slot.name] ?? '');
+  const lines = [`**${code(slot.name)}**`, `${where}. ${what}`.trim()];
   if (slot.role !== 'text' && arg.value !== '') {
     // A boundary's own alias names the boundary; a reference looks for an element first.
-    lines.push(aliasFacts(model, arg.value, slot.role === 'alias' && node.type === 'Boundary'));
+    lines.push(aliasFacts(model, arg.value, slot.role === 'alias' && table.names === 'boundary'));
   }
   return { range, contents: lines.join('\n\n') };
 }

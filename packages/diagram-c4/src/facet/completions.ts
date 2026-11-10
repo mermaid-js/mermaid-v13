@@ -25,7 +25,9 @@ import type { C4Document, C4StatementNode } from '../parser/ast.ts';
 import { HEADERS, KEYWORDS, T } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import type { CallAt, WrittenArg } from './args.ts';
-import { lineBefore, requiredSlots, signature, SLOTS, span } from './tables.ts';
+import { SLOT_TABLES } from '../parser/slots.ts';
+import { lineBefore, span } from './markdown.ts';
+import { signature } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;
 const LINE_BREAK = /[\n\r]/;
@@ -51,13 +53,13 @@ function keywordItems(probe: ProbeResult, text: string, headers: boolean): Compl
   for (const [name, kind] of headers ? HEADER_NAMES : MACRO_NAMES) {
     if (!matches(name, typed)) continue;
     const documentation = c4Docs[kind];
-    const slots = SLOTS.get(kind);
+    const table = SLOT_TABLES.get(kind);
     out.push({
       label: name,
       kind: 'keyword',
       insertText: headers || paren ? name : `${name}(`,
       range,
-      ...(slots === undefined ? {} : { detail: signature(name, slots, requiredSlots(kind)) }),
+      ...(table === undefined ? {} : { detail: signature(name, table) }),
       ...(documentation === undefined ? {} : { documentation }),
     });
   }
@@ -72,7 +74,7 @@ function nameItems(call: CallAt, arg: WrittenArg, name: Range, text: string, at:
   const rest = /^\w*/.exec(text.slice(at))?.[0] ?? '';
   const range = span(name.start, at + rest.length);
   const equals = /^[ ]*=/.test(text.slice(range.end));
-  const slots = SLOTS.get(call.kind) ?? [];
+  const slots = SLOT_TABLES.get(call.kind)?.slots ?? [];
   const given = new Set<string>();
   call.args.forEach((a, k) => {
     if (a === arg) return;
@@ -132,7 +134,7 @@ function aliasPlace(arg: WrittenArg | undefined, text: string, at: number) {
 
 /** The aliases for a relation end or a style target at the cursor. */
 function aliasItems(call: CallAt, doc: DocumentView<C4Document>, at: number): CompletionItem[] {
-  const slot = SLOTS.get(call.kind)?.[call.index];
+  const slot = SLOT_TABLES.get(call.kind)?.slots[call.index];
   if (slot?.role !== 'reference' || call.at?.name !== undefined) return [];
   const place = aliasPlace(call.at, doc.text, at);
   if (!place) return [];
