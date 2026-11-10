@@ -848,6 +848,25 @@ export const configSchema: ConfigSchema = {
         "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
       }
     },
+    "lineHops": {
+      "description": "Draws edge crossings as small arcs (\"hops\") or breaks in the line, so it\nis clear which line passes over which where two edges meet. Every\ndiagram that draws edges reads it.\n\nOf a horizontal and a vertical run, the horizontal one gives way;\notherwise the later edge does. Only straight runs carry hops: curves\nand rounded corners are left as drawn, and a crossing too close to a\nbend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the\nline. Off by default.\n\nA layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;\n`elk.lineHops`, default `true`) applies when that engine lays the\ndiagram out, so those layouts hop by default. Precedence: the engine\nkey when set explicitly, then this key when set explicitly, then the\nengine's default. Setting this key to `false` turns hops off\neverywhere, engine keys included.\n",
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "enum": [
+        false,
+        true,
+        "arc",
+        "gap"
+      ],
+      "default": false,
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
+      }
+    },
     "maxTextSize": {
       "description": "The maximum allowed size of the users text diagram",
       "type": "number",
@@ -5615,7 +5634,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "lineHops": {
-          "description": "Renders edge crossings as small arcs (\"hops\") or visible gaps so that\noverlapping edges are easier to read. Set to `false` to disable. Edges\nrendered as curves are skipped to avoid corrupting the geometry.\n",
+          "description": "Renders edge crossings as small arcs (\"hops\") or visible gaps so that\noverlapping edges are easier to read. Set to `false` to disable. Edges\nrendered as curves are skipped to avoid corrupting the geometry.\nApplies whenever the `swimlane` layout lays the diagram out, over the\nshared top-level `lineHops` unless that is `false` (D537).\n",
           "oneOf": [
             {
               "type": "boolean"
@@ -5630,7 +5649,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "arc",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "ignoreCrossLaneEdges": {
