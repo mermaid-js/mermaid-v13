@@ -10,7 +10,7 @@ Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then
 | T3 layout | #612 | #610 | merged (ff 8ec205a7e; layout 2,830 B gz, runtime entry 13,535 B gz; core 94,412 unchanged) |
 | T4 renderer and theme table | #613 | #612 | merged (ff b12716ef9; runtime entry ~16 KB gz; core 94,412 unchanged; theme matches 12.2.0 in all eleven themes) |
 | T6 language facet | #616 | #610 | merged (ff bb971c3a7; `./language` 15,569 B gz; core 94,412 unchanged; goldens run from conformance until T5) |
-| T5 integration | #615 | #613, #616 | open |
+| T5 integration | #615 | #613, #616 | merged (ff 267645d1e; core 94,435 B gz (+23); load path 114,769 B gz, railroad 20,334; warm render 20.3× vs 12.2.0 under load) |
 | T7 ascii (optional, D518) | #617 | #615 | open |
 
 - `01-v12-railroad.md`: pointer notes on v12's four Langium grammars, DB, renderer, styles, specs, docs, corpus and the oracle.
@@ -32,3 +32,4 @@ architecture, railroad, eventmodeling and swimlane run in parallel with wave 3 o
 | base `mermaid-v13` @ ade398e (#620) | 94,352 | +135 (not ours) |
 | base `mermaid-v13` @ e540d3e (#628) | 94,385 | +33 (not ours) |
 | base `mermaid-v13` @ e1e953a (#630) | 94,412 | +27 (not ours) |
+| T5 #615 (four registry/detector/facet rows) | 94,435 | +23 |
