@@ -106,6 +106,22 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T5 #618
 
+Choices the spec and D-ids leave open:
+
+- **Layout default stays `plugin.layoutEngine: { default: 'compass' }`** (D284), as below; the manifest has no `layout` field and gets none.
+- **No `language` in the manifest and no `languageBundle:`.** There is no `./language` export yet; the manifest rule is that `language` names a real subpath (`gen:registry` makes it a lazy facet load). T6 (#619) adds both, which also puts the package in `language-service`'s optional peers and `language-server`'s dependencies.
+- **No `section` in the manifest.** The section is `architecture`, the id, so the manifest rule says leave it out (the facet row gets `section: 'architecture'` from the id).
+- **No `credits:`.** The Pele grid placement is core's `compass` (D326), credited there; this package ports v12 (same project) only.
+- **Unsketched, so the outlines are plain leaves (renderer change).** T4 drew the group border, the edge and the no-icon outline through `w.outline` (`group`, `edge`, `node`), which the hand-drawn plugin sketches. v12 never sketched architecture (D301), and `unsketched.spec.ts` requires the same bytes with the plugin on, so they are `w.leaf` now: same bytes without the plugin; the harness's `outline` option went with them (no test used it). Opting in later is a three-line change plus `sketched` and a four-family hand-drawn baseline. The MIGRATION row that said they go through the hook is gone.
+- **Config statuses.** `padding`/`iconSize` honoured with a shared reason (the 0 to under 10,000 check and `ARCHITECTURE_CONFIG_IGNORED`, and the fixed 60 px cell gap); the six fcose keys `ignored` with replacement `none`; `fontSize` `ignored` with replacement `themeVariables.fontSize`. `configDefaults` are the generated section defaults whole (fcose keys and `fontSize` included; nothing reads them). MIGRATION rows: the generated config table plus hand rows in `migration/architecture.md` (one row for the six fcose keys, `useWidth`, the length check; the D507 `fontSize` row now says `ignored`).
+- **Theme oracle spec.** All five variables match 12.2.0 in ten themes; `base`'s three colours are the only `DIFFERENCES` (D541). An author's `lineColor` reaches the edges in every theme; v12's `dark` reset it first (and `base` pinned `#777`): pinned in the spec, MIGRATION row added. An author's `primaryBorderColor` now recolours borders (T4's row), pinned too.
+- **Baselines:** `themes/{default,redux,neo,neo-dark}` (one representative diagram: nested groups, every built-in icon, a text icon, a junction, plain, labelled, one- and two-headed and group edges), `config/icon-size-and-padding` (`useMaxWidth: false`), `edges/routes-and-labels` (labels on all three axes, like-side and detour routes). All render with no warning. Not the other seven themes: the ticket asks for four families.
+- **`architecture` (bare) and `architecture-betax`** are detected and rejected with `SYNTAX`, as in v12; pinned in `packages/mermaid/src/architecture.spec.ts`.
+
+Carried from T4/T3 (not closed here): the fixed 60 px cell gap at large `iconSize` (needs a D-id); the group border reads gitGraph's D332 input `calloutBorder` (check with the spec owner).
+
+Notes from T4 for T5, as written:
+
 - `DiagramManifest` (`tools/gen-config/src/registry.ts:67-85`) has no `layout` field, against the spec's manifest bullet. Choice: the default goes in `plugin.layoutEngine: { default: 'compass' }` (D284), as mindmap does; the manifest gets no new field. No rendering effect.
 - `useWidth`/`useMaxWidth` have no architecture rows of their own; add them as venn does (`config.schema.yaml`).
 - No existing spec asserts `UNSUPPORTED_DIAGRAM` for architecture; add `packages/mermaid/src/architecture.spec.ts` as venn did.
@@ -121,4 +137,5 @@ Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` 
 - **Waiting on #638**: `tools/workspace/sync.spec.ts` ("take a new diagram package from its own folder alone") copied only `diagramPackages()` into its scratch root, so it dropped architecture, a real pre-manifest package, from conformance's devDependencies and failed. 8e7d0f7b6 copies the fix proposed on #638 (the one railroad carries in #633: copy `workspaceDiagrams()`). Drop that commit on re-merge once #638 lands with it.
 - **Deferred to T5 #618**: `configDefaults: true`, `release:` and `languageBundle:` in `workspace.yaml` all need the manifest (and the `./language` facet); add them with it. Remove `theme.notDrawnYet` at T4 #614 once the renderer reads a theme variable.
 
-- `tools/workspace/sync.spec.ts` one-line copy: on the re-merge after #640 (`fix/pre-manifest-language`) lands, take theirs, drop the copy, run `pnpm regen`. #640 also counts a pre-manifest `./language` export, which T6 (#619) needs if it lands before T5.
+- `tools/workspace/sync.spec.ts` one-line copy: **closed** at 0adf04817. `mermaid-v13` (eb57fdadb) already carries the same `workspaceDiagrams()` fix, so the merge took theirs and the copy is gone. #640 is still open; T6 only needs it if it lands before T5's manifest.
+- **Closed at T5 #618:** `configDefaults: true` and `release:` are in `workspace.yaml`; `languageBundle:` waits for T6's `./language` (above). `theme.notDrawnYet` was already gone (T3). The `sync.spec.ts` copy is unchanged here: still the re-merge item above.

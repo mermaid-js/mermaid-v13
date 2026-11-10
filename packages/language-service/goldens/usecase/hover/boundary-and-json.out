@@ -1,0 +1,14 @@
+@ 2:18  systemBoundary |Shop["The shop"]@{ type: package }
+  2:18-2:22 "Shop"
+  | **system boundary** `Shop`
+  |
+  | Title: `The shop` · A package
+  |
+  | 2 members: `A`, `B`
+@ 6:8  json |Order@{ "total": 10, "items": [1, 2] }
+  6:8-6:13 "Order"
+  | **JSON table** `Order`
+  |
+  | Keys: `total`, `items`
+  |
+  | 3 rows · 1 relation

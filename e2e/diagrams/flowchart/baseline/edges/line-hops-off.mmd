@@ -1,0 +1,14 @@
+---
+description: crossing edges with `lineHops` off (the default, D537), so crossings stay plain
+config:
+  lineHops: false
+  flowchart:
+    curve: linear
+---
+flowchart TD
+  A --> D
+  A --> E
+  B --> D
+  B --> F
+  C --> E
+  C --> F

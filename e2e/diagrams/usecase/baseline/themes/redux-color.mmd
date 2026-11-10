@@ -1,0 +1,30 @@
+---
+config:
+  theme: redux-color
+description: one representative usecase diagram in the redux-color theme, whose palette gives each boundary its own slot, actor kinds, a rect and a package boundary, ellipse, rect and business use cases, stereotypes, association, include, extend and generalization, a note and a JSON table
+---
+usecase-beta
+  direction LR
+  actor Customer <<Human>>
+  actor Clerk@{ business: true }
+  actor Gateway@{ type: hollow }
+  systemBoundary "Web shop"
+    Browse("Browse catalogue")
+    Checkout("Check out") <<Core>>
+    Pay[Pay by card]
+    Coupon("Apply coupon")
+  end
+  "Web shop"@{ type: package }
+  systemBoundary "Back office"
+    Refund("Refund order")@{ business: true }
+  end
+  Customer --> Browse
+  Customer --> Checkout
+  Checkout ..> : include Pay
+  Coupon ..> : extend Checkout
+  Clerk --> Refund
+  Pay --- Gateway
+  Clerk --|> Customer
+  note for Clerk "Works in the back office"
+  json Order@{ "id": 42, "items": ["book", "pen"] }
+  Refund --> Order

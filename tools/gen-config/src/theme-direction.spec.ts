@@ -145,6 +145,26 @@ describe('theme direction (D331)', () => {
     ]);
   });
 
+  it('lets slot() name a shared palette only, and reads its fallback (D474)', () => {
+    const table: DiagramThemeTable = {
+      vars: { demoFill: { alias: 'dmf', kind: 'color' } },
+      rules: { light: { demoFill: 'slot(borderColorArray, 5, mainBkg)' } },
+      families: {
+        neo: { rules: { demoFill: 'slot(nopeArray, 1, nopeFill)' } },
+        redux: { rules: { demoFill: 'slot(mainBkg, 1, lineColor)' } },
+      },
+    };
+    // A slot of something that is no palette, shared or not, is caught here, not at run time.
+    expect(checkThemeDirection(planted({ tables: { demo: table } }))).toEqual([
+      { rule: 'table-slot-not-palette', where: 'demo rules', name: 'nopeArray' },
+      { rule: 'table-slot-not-palette', where: 'demo rules', name: 'mainBkg' },
+      { rule: 'table-reads-foreign', where: 'demo rules', name: 'nopeFill' },
+    ]);
+    expect(unreadInputs({ demo: table }, ['borderColorArray', 'mainBkg', 'cScale'])).toEqual([
+      'cScale',
+    ]);
+  });
+
   it('fails when a diagram names a theme', () => {
     const v = checkThemeDirection(
       planted({

@@ -1,6 +1,7 @@
 // E4 #242: what the package's own hooks do (`elkExtension`, registered with the loaders), through
-// `createMermaid().render()` and `renderSync()`: `lineHops` (D174) and the warnings for what the
-// engine could not do as asked (`elk.radial` on a graph that is not a tree; `@{ algorithm }`).
+// `createMermaid().render()` and `renderSync()`: the warnings for what the engine could not do as
+// asked (`elk.radial` on a graph that is not a tree; `@{ algorithm }`). And `elk.lineHops` (D174),
+// which core's shared edge-path step draws since D537: no hook of the package's draws it.
 import { describe, expect, it, vi } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid } from 'mermaid';
@@ -23,7 +24,7 @@ function api() {
 const lines = (svg: string): string[] =>
   [...svg.matchAll(/<g class="edge[^"]*"[^>]*><path d="([^"]+)"/g)].map((m) => m[1]!);
 
-describe('elk.lineHops (a postRender edit, D174)', () => {
+describe('elk.lineHops (drawn by core, D174, D537)', () => {
   it('draws an arc where one edge crosses another, by default', async () => {
     const plain = lines((await api().render('d', doc(CROSSING, hops('false')))).svg);
     const hopped = lines((await api().render('d', doc(CROSSING))).svg);
@@ -56,23 +57,43 @@ describe('elk.lineHops (a postRender edit, D174)', () => {
     );
   });
 
-  it('runs its hooks only on renders laid out with ELK', async () => {
+  it('runs its hooks only on renders laid out with ELK, and none edits the tree', async () => {
+    expect(elkExtension.postRender).toBeUndefined();
     const postLayout = vi.spyOn(elkExtension, 'postLayout');
-    const postRender = vi.spyOn(elkExtension, 'postRender');
     try {
       const m = api();
       await m.render('d', CROSSING);
       await m.render('d', doc(CROSSING, '', 'layered'));
       await m.render('d', 'sequenceDiagram\n  A->>B: hi\n');
       expect(postLayout).not.toHaveBeenCalled();
-      expect(postRender).not.toHaveBeenCalled();
       await m.render('d', doc(CROSSING));
       expect(postLayout).toHaveBeenCalledTimes(1);
-      expect(postRender).toHaveBeenCalledTimes(1);
     } finally {
       postLayout.mockRestore();
-      postRender.mockRestore();
     }
+  });
+
+  it('gives way to the shared key: explicit engine key, then shared key, then its default', async () => {
+    const top = (v: string) => `  lineHops: ${v}\n`;
+    const byDefault = (await api().render('d', doc(CROSSING))).svg;
+    const plain = (await api().render('d', doc(CROSSING, hops('false')))).svg;
+    const gap = (await api().render('d', doc(CROSSING, hops('gap')))).svg;
+    expect(byDefault).not.toBe(plain);
+    // A shared `false` set explicitly turns hops off, engine key or not.
+    expect((await api().render('d', doc(CROSSING, top('false')))).svg).toBe(plain);
+    expect((await api().render('d', doc(CROSSING, top('false') + hops('true')))).svg).toBe(plain);
+    // The shared key set explicitly beats the engine's default…
+    expect((await api().render('d', doc(CROSSING, top('gap')))).svg).toBe(gap);
+    // …but not the engine's key set explicitly.
+    expect((await api().render('d', doc(CROSSING, top('gap') + hops('true')))).svg).toBe(byDefault);
+    expect((await api().render('d', doc(CROSSING, top('true') + hops('false')))).svg).toBe(plain);
+  });
+
+  it('reads elk.lineHops only under an ELK layout', async () => {
+    const layered = doc(CROSSING, hops('true'), 'layered');
+    expect((await api().render('d', layered)).svg).toBe(
+      (await createMermaid().render('d', doc(CROSSING, '', 'layered'))).svg
+    );
   });
 
   it('never touches a drawing that is not laid out with ELK', async () => {

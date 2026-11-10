@@ -1,0 +1,12 @@
+1:1-1:14 "treeView-beta" keyword
+2:3-2:14 "title Files" keyword
+3:3-3:18 "accTitle: Files" keyword
+4:3-4:15 "%% a comment" comment
+5:3-5:6 "src" node [declaration, definition]
+5:6-5:7 "/" variable
+5:8-5:20 ":::highlight" operator
+6:5-6:15 "\"index.js\"" node [declaration, definition]
+6:16-6:38 "icon(logos:javascript)" function
+6:39-6:47 "## entry" comment
+7:5-7:11 "'b.js'" node [declaration, definition]
+8:3-8:12 "README.md" node [declaration, definition]

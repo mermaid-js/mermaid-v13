@@ -1,0 +1,18 @@
+@ 4:3  |Cost
+  prepare: 4:3-4:7 "Cost"; rename to "Higher cost":
+  %% rename-to: Higher cost
+  ishikawa
+  Over budget
+    Higher cost
+      Materials
+    Time
+      Cost
+@ 7:5  |Cost
+  prepare: 7:5-7:9 "Cost"; rename to "Higher cost":
+  %% rename-to: Higher cost
+  ishikawa
+  Over budget
+    Cost
+      Materials
+    Time
+      Higher cost

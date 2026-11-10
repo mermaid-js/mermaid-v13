@@ -23,9 +23,10 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import { markerRect, type Rect } from './end-markers.ts';
+import { hits, markerRect, rectOf, type Rect } from './end-markers.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
+import { honourSides, OUTWARD } from './sides.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -110,6 +111,9 @@ function check(graph: LayoutGraph): void {
     finite(n.width, `width of node '${n.id}'`);
     finite(n.height, `height of node '${n.id}'`);
     if (n.span !== undefined) finite(n.span, `span of node '${n.id}'`);
+    if (n.anchorY !== undefined) finite(n.anchorY, `anchorY of node '${n.id}'`);
+    if (n.anchorY! > n.height)
+      throw new RangeError(`layout: anchorY of node '${n.id}' lies below its box`);
   }
   for (const g of graph.groups) {
     add(g.id, 'group');
@@ -615,7 +619,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     edges.set(e.id, model);
   });
 
-  return {
+  const laid: LayoutModel = {
     width: total.width + 2 * margin,
     height: total.height + 2 * margin,
     nodes,
@@ -623,15 +627,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     groups,
     direction: rootDir,
   };
+  return grid ? laid : honourSides(graph, laid, M, index, margin); // sides are hints (D503)
 }
-
-// The axis a side faces along, and which way is out of the box.
-const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
-  top: { axis: 'y', sign: -1 },
-  bottom: { axis: 'y', sign: 1 },
-  left: { axis: 'x', sign: -1 },
-  right: { axis: 'x', sign: 1 },
-};
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
 // leaves its end's side, `endLabelAlong` out from the side (the target's also past the
@@ -687,21 +684,6 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
     }
   }
   return model;
-}
-
-function rectOf(c: Point, s: { width: number; height: number }): Rect {
-  return {
-    x0: c.x - s.width / 2,
-    y0: c.y - s.height / 2,
-    x1: c.x + s.width / 2,
-    y1: c.y + s.height / 2,
-  };
-}
-
-// Overlap by more than float noise; boxes that share an edge are clear.
-function hits(a: Rect, b: Rect): boolean {
-  const e = 1e-6;
-  return a.x0 < b.x1 - e && b.x0 < a.x1 - e && a.y0 < b.y1 - e && b.y0 < a.y1 - e;
 }
 
 // The centre of a label of `size` at the end `points[0]`, whose route leaves through `side`,
