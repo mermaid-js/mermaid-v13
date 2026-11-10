@@ -1,0 +1,12 @@
+@ 2:3  |columns 2
+  prepare: refused: There is no id or class name here to rename.
+@ 3:6  a["|label"] --> b
+  prepare: refused: There is no id or class name here to rename.
+@ 3:16  a["label"] --|> b
+  prepare: refused: There is no id or class name here to rename.
+@ 4:3  |space:2
+  prepare: refused: There is no id or class name here to rename.
+@ 5:16  classDef hot |fill:#f96
+  prepare: refused: There is no id or class name here to rename.
+@ 6:3  |end
+  prepare: refused: There is no id or class name here to rename.

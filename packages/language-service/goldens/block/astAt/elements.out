@@ -1,0 +1,24 @@
+@ 2:3  |columns 2
+  columns:1 2:3-2:12 "columns 2"
+@ 3:3  |a["A"]:2 --> b
+  block:a 3:3-3:11 "a[\"A\"]:2"
+@ 3:13  a["A"]:2 -|-> b
+  edge:a->b 3:12-3:15 "-->"
+@ 3:16  a["A"]:2 --> |b
+  block:b 3:16-3:17 "b"
+@ 4:9  block:|g
+  block:g 4:3-7:6 "block:g\n    space:2\n    c\n  end"
+@ 5:5  |space:2
+  block:id-1 5:5-5:12 "space:2"
+  block:g 4:3-7:6 "block:g\n    space:2\n    c\n  end"
+@ 6:5  |c
+  block:c 6:5-6:6 "c"
+  block:g 4:3-7:6 "block:g\n    space:2\n    c\n  end"
+@ 8:12  classDef |hot fill:#f96
+  classDef:hot 8:3-8:25 "classDef hot fill:#f96"
+@ 9:3  |class a hot
+  class:1 9:3-9:14 "class a hot"
+@ 10:3  |style b fill:#9f6
+  style:1 10:3-10:20 "style b fill:#9f6"
+@ 11:3  |a --> b
+  block:a@2 11:3-11:4 "a"

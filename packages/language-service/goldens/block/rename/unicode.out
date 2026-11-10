@@ -1,0 +1,5 @@
+@ 3:3  |a --> b
+  prepare: 3:3-3:4 "a"; rename to "Ärlig.v2":
+  %% rename-to: Ärlig.v2
+  block
+    Ärlig.v2 --> b

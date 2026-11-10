@@ -1,0 +1,9 @@
+@ 2:16  a -- "label" |
+  --> operator (line with an arrow head) 2:16-2:16 "" -> "-->"
+  --- operator (line with no head) 2:16-2:16 "" -> "---"
+  --x operator (line with a cross head) 2:16-2:16 "" -> "--x"
+  --o operator (line with a circle head) 2:16-2:16 "" -> "--o"
+  ==> operator (thick line with an arrow head) 2:16-2:16 "" -> "==>"
+  === operator (thick line with no head) 2:16-2:16 "" -> "==="
+  -.-> operator (dotted line with an arrow head) 2:16-2:16 "" -> "-.->"
+  -.- operator (dotted line with no head) 2:16-2:16 "" -> "-.-"

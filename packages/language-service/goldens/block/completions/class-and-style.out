@@ -1,0 +1,16 @@
+@ 5:9  class |a hot
+  a node 5:9-5:10 "a" -> "a"
+  b node 5:9-5:10 "a" -> "b"
+@ 6:12  class a, |b hot
+  a node 6:12-6:13 "b" -> "a"
+  b node 6:12-6:13 "b" -> "b"
+@ 7:11  class a |hot
+  hot class 7:11-7:14 "hot" -> "hot"
+  cold class 7:11-7:14 "hot" -> "cold"
+@ 8:12  class a h|ot
+  hot class 8:11-8:14 "hot" -> "hot"
+@ 9:9  style |b fill:#9f6
+  a node 9:9-9:10 "b" -> "a"
+  b node 9:9-9:10 "b" -> "b"
+@ 10:16  style b fill:|#9f6
+  none
