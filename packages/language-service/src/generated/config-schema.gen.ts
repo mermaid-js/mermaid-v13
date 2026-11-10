@@ -1213,7 +1213,8 @@ export const configSchema: ConfigSchema = {
     "ishikawa": {
       "$ref": "#/$defs/IshikawaDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "treemap": {
@@ -3111,21 +3112,42 @@ export const configSchema: ConfigSchema = {
       ],
       "description": "The object containing configurations specific for ishikawa diagrams",
       "type": "object",
+      "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for ishikawa diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the ishikawa renderer never did."
+          }
+        },
         "diagramPadding": {
           "description": "The amount of padding around the diagram as a whole so that embedded\ndiagrams have margins, expressed in pixels.\n",
           "type": "integer",
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning."
           }
         },
         "useMaxWidth": {
-          "type": "boolean",
-          "default": false,
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width=\"100%\"` and a `max-width`; false draws the diagram's own `width` and `height`."
           }
         }
       }

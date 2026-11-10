@@ -1,0 +1,12 @@
+@ 3:5  |First
+  3:5-3:10 "First"
+  | **cause** `First`
+  |
+  | Depth 1, a top-level cause, above the spine · no sub-causes
+@ 4:3  |Shallow
+  4:3-4:10 "Shallow"
+  | **cause** `Shallow`
+  |
+  | Depth 1, a top-level cause, below the spine · no sub-causes
+  |
+  | Indented less than the first cause, so read as a top-level cause (mermaid@12 does the same).

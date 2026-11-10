@@ -91,7 +91,20 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of asciiTypes())
+    const types = asciiTypes();
+    // The discovery may find more, never fewer than the types that have a text entry today.
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'flowchart',
+        'er',
+        'sequence',
+        'packet',
+        'info',
+        'kanban',
+        'ishikawa',
+      ])
+    );
+    for (const type of types)
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -99,10 +112,6 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    // The six of 13.0's first wave at least, and every manifest that names an ascii entry.
-    expect(asciiTypes()).toEqual(
-      expect.arrayContaining(['er', 'flowchart', 'info', 'kanban', 'packet', 'sequence'])
-    );
     expect(paths.map((p) => p.diagram)).toEqual(asciiTypes());
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
@@ -120,7 +129,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // depend on the working directory, or the gate measures nothing.
   it('finds the ascii chunks when built from the bench package directory', () => {
     const probe = [
-      "import { mkdtempSync, readFileSync } from 'node:fs';",
+      "import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';",
       "import { tmpdir } from 'node:os';",
       "import { join } from 'node:path';",
       "import { bundle } from './src/build.ts';",

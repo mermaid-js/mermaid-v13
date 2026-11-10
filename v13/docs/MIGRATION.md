@@ -370,6 +370,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
+| `ishikawa.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the ishikawa renderer never did. |  |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treemap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treemap renderer never did. |  |
 | `treemap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -427,6 +428,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
+| `ishikawa.useMaxWidth` | `true` | The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
@@ -726,16 +728,18 @@ npm install @mermaid-js/plugin-hand-drawn
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
-  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and
-  requirement (boxes, dividers, relation lines; the markers stay plain, as in v12). v12
-  did not sketch mindmap's plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
+  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319),
+  requirement (boxes, dividers, relation lines; the markers stay plain, as in v12) and
+  ishikawa (the head, label boxes, spine and bones, D494). v12 did not sketch mindmap's plain
+  node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are
+  never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
   (flowchart's `text` and brace hit boxes, state's region frame) stays the plain element.
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (block, swimlanes, ishikawa, usecase, agentflow) are
+  v13 has not ported yet (block, swimlanes, usecase, agentflow) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -2413,6 +2417,59 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## Ishikawa diagram
+
+The ishikawa parser accepts the v12 language (`ishikawa` and `ishikawa-beta`, any case; oracle
+parity over the corpus, grammar in [syntax/ishikawa.md](./syntax/ishikawa.md)), and the layout
+is v12's fishbone geometry, ported into the package (D491). The layout also fixes two v12
+overlaps (below), which await a maintainer decision (D499); with those fixes off, every
+compared corpus source lays out as v12 drew it. What changes (spec #519):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| The effect was also stored as the diagram title (`setDiagramTitle`); no title was drawn, and the SVG had no `<title>` | No title is drawn. The SVG `<title>` is the front-matter `title` when one is given, else the effect as drawn, as plain text (entities decoded, a `<br>` or a wrap a space) | D492, D218, R-A11Y-1 |
+| Cause and sub-cause labels were laid out at the config `fontSize` (16) and drawn at the theme's | Measured and drawn at the theme's `fontSize`, one source: classic themes are unchanged; in `neo` and the redux themes (14 px) the bones fit the text they draw | D493 |
+| The effect was drawn at 14 px, weight 600, and wrapped at `max(6, floor(110 / (fontSize × 0.6)))` characters of the config `fontSize` (11) | The same 14 px 600 in every theme (D493), measured, and wrapped at 110 px scaled by the size it is drawn at: `110 × 14 / 16 = 96.25` px in every theme, the same 11 characters at 0.6 em. D495's literal rule, `110 × fontSize / 16`, would give 110 px (13 characters) in the classic themes | Awaits a maintainer decision (D499) |
+| Sub-causes wrapped greedily at 15 characters, breaking between words (a longer word kept whole), `<br>` counted as characters; cause labels never wrapped | Core's label layout (D225): entities, `<br>` forms, math and icons work. Sub-causes wrap at `144 × fontSize / 16` px; cause labels still never wrap, only break at `<br>` | D495 |
+| Labels passed through `sanitizeText` (DOMPurify) | Text is escaped when written, never sanitised. Labels take the label subset ([Labels and text](#labels-and-text)): `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic and `<br>` breaks the line; other HTML element tags, `<script>` and `<img>` among them, are dropped and their text kept; text that only looks like a tag, such as `<T>`, is shown as written | R-SEC-1 |
+| The first pair of causes always started 20 px left of the head, so a short leaf cause's label box could sit on the head (`baseline-clamp`, fixture 13) | A pair whose box would reach over the head's back on the head's rows starts further left by the overlap | The layout invariant (no label over the head); a visible change no D-id covers, awaiting a maintainer decision (D499) |
+| A leaf cause's bone was 20 % of its side's length, so a tall (`<br>`) label on a short bone was drawn across the spine | A cause bone is at least long enough that its label box clears the spine (`(h/2 + 2 − 11) / sin 82°`). With both fixes, 66 of the 481 compared corpus sources move; the rest equal v12 | The layout invariant (no label across the spine); a visible change no D-id covers, awaiting a maintainer decision (D499) |
+| Causes indented less than the first cause were read as top-level causes, silently | The same reading, with one `ISHIKAWA_INDENT_CLAMPED` warning; its message names every clamped cause and its line (the first ten, then how many more) and the diagnostic's `related` lists them all; the editor reports each one as information | D496 |
+| An empty body (no effect) drew an empty SVG with no `viewBox`, silently | Still nothing drawn, with one `ISHIKAWA_EMPTY` warning; the root gets a `viewBox` of the padding about the origin ([Ishikawa SVG structure](#ishikawa-svg-structure)) | D496 |
+| The `viewBox` was `getBBox()` of the drawing plus `diagramPadding`, strokes left out | Computed from the layout, half of each stroke included (≤ 1 px larger), plus `diagramPadding` | D224 |
+| `ishikawa.useMaxWidth` was documented with default `false`, but the runtime config gave `true` | Default `true`, the value v12 drew with ([Changed defaults](#changed-defaults)) | P2 |
+| An `ishikawa.diagramPadding` that was not a number reached the renderer as it was | A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning | No `NaN` in the output |
+| No text output | `format: 'ascii'` draws an outline, not the fishbone: the effect in a box, the causes below it as a `tree(1)`-style tree in source order (`├── `, `└── `, `│   `; `\|-- `, `` `-- ``, `\|   ` in the `ascii` charset), labels as plain text (entities decoded, a `<br>` a space), the front-matter `title` centred on the first line (an empty body draws the title alone); bold and italic are dropped with one `ASCII_DROPPED` warning, and math and icons are shown as written with one `ASCII_DROPPED` warning each | D498, D320, D82 |
+
+## Ishikawa SVG structure
+
+What changed in the ishikawa diagram's SVG compared with v12 (spec #519). v12's classes and draw
+order are kept: `g.ishikawa` holds `line.ishikawa-spine`, `g.ishikawa-head-group`
+(`path.ishikawa-head`, `text.ishikawa-head-label`) and a `g.ishikawa-pair` per pair of causes,
+each with its `line.ishikawa-branch`, `g.ishikawa-label-group` (`rect.ishikawa-label-box`,
+`text.ishikawa-label.cause`) and a `g.ishikawa-sub-group` per sub-cause
+(`line.ishikawa-sub-branch`, `text.ishikawa-label` with `align`, `up` or `down`).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="ishikawa"`, a `<style>` scoped by the id for strokes, fills and fonts | No root `id`; `class="mermaid mermaid-ishikawa"`, `role="img"`, `aria-roledescription="ishikawa"` (kept), `data-mermaid-version`, and `<title id="<id>-title">` (D492). No `<style>` (except `theme: 'auto'`'s variables-only sheet): `stroke`, `fill`, `stroke-width`, `font-size` and `font-weight` are attributes on each element, colours reading `var(--_x)` aliases (`lineColor`, `mainBkg`, `textColor`) on the root `style`, and `font-family` on the root | R-SEC-2, R-A11Y-1, D133, R-THEME-3 |
+| Arrowheads: `marker#ishikawa-arrow-<id>` in `g.ishikawa > defs`, `marker-start` on every branch and sub-branch, scaled by the stroke width (12 px and 6 px) | No `<marker>` and no `<defs>`: a filled `path.ishikawa-arrow` after each branch and sub-branch, the same 12 px and 6 px triangle with its tip at the bone's start | R-SEC-2 (no ids but `-title`), D302 |
+| The head group was translated to the spine (`transform="translate(0, spineY)"`), its label by a `translate` from `getBBox()` | Every element at absolute coordinates: no `transform` anywhere | Layout before render |
+| Sub-cause labels: `text-anchor: end` at the bone's end, `tspan` lines | `text-anchor="start"` at measured per-line indents, so each line ends at the bone's end (right-aligned, as v12's); head and cause labels centred, as v12's style sheet | `w.label` has no end anchor |
+| The spine was drawn first and its length set after the pairs (hand-drawn: drawn last) | The spine first in both looks: its length is known before drawing | Layout before render |
+| No source mapping | `data-ast` on the head group, each cause's label group and each sub-cause's sub-group; `data-id` (the AST id: `effect`, `cause:<i>.<j>…`) on bones, arrowheads and text, the spine carrying `effect` | D497, R-PARSE-8 |
+| An empty body: an `<svg>` with no `viewBox` and nothing in it | The root only (with a `<title>` when the front matter has a `title`), no `g.ishikawa`, and a `viewBox` of the padding about the origin | D496 |
+| `look: neo` and the redux and neo themes: the same shapes as the classic themes | The same: ishikawa differs between families by colour and font size only | D227 |
+
+Hand-drawn (`@mermaid-js/plugin-hand-drawn`): v12 sketched the head and label boxes at roughness
+1.5 with a hachure of `mainBkg` (fill weight 2.5, gap 5, stroke 2), the spine and bones at
+roughness 1.5, and the arrowheads as rough solid triangles. D494 asks for those parameters; v13
+does **not** reproduce them. It sketches the head and label boxes as `node` outlines and the spine
+and bones as `edge` outlines at the drawer's defaults for those roles (node roughness 0.7,
+hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
+options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
+are drawn plain, as without the look (D302); text is never sketched, as in v12.
 
 ## Requirement diagram
 
