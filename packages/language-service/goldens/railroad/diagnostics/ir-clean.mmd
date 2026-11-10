@@ -1,0 +1,8 @@
+railroad-beta
+title JSON value
+accTitle: A JSON value
+value = choice(nonterminal("object"), nonterminal("number")) ;
+object = sequence(terminal("{"), zeroOrMore(nonterminal("member")), terminal("}")) ;
+member = sequence(nonterminal("string"), terminal(":"), nonterminal("value")) ;
+number = oneOrMore(special("digit")) ;
+string = sequence(terminal("\""), optional(special("chars")), terminal("\"")) ;

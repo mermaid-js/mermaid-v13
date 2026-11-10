@@ -1,0 +1,8 @@
+---
+description: PEG in the base theme.
+config:
+  theme: base
+---
+railroad-peg-beta
+List <- Item ("," Item)* ;
+Item <- Letter+ ;

@@ -1,0 +1,929 @@
+[
+  {
+    "id": "railroad-recovery/ir-missing-semicolon",
+    "name": "ir: missing semicolon",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(\"x\")\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-unclosed-call",
+    "name": "ir: unclosed call",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = sequence(terminal(\"x\"), terminal(\"y\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-keyword-as-name",
+    "name": "ir: keyword as name",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nchoice = terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-bare-identifier",
+    "name": "ir: bare identifier",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = foo ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-trailing-comma",
+    "name": "ir: trailing comma",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = choice(terminal(\"x\"), ) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-unclosed-string",
+    "name": "ir: unclosed string",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\nb = terminal('x) ;",
+    "errors": [["UNCLOSED_STRING", 4]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-missing-equals",
+    "name": "ir: missing equals",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-stray-character",
+    "name": "ir: stray character",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(\"x\") @ ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-title-among-rules",
+    "name": "ir: title among rules",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\ntitle Late\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-two-arguments",
+    "name": "ir: two arguments",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = optional(terminal(\"x\"), terminal(\"y\")) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-leaf-without-string",
+    "name": "ir: leaf without string",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(x) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-two-expressions",
+    "name": "ir: two expressions",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(\"x\") terminal(\"y\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-keyword-in-upper-case",
+    "name": "ir: keyword in upper case",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = Terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-call-without-parentheses",
+    "name": "ir: call without parentheses",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal \"x\" ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-empty-definition",
+    "name": "ir: empty definition",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-rule-without-name",
+    "name": "ir: rule without name",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\n= terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-second-header",
+    "name": "ir: second header",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nrailroad-beta\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-acc-title-among-rules",
+    "name": "ir: acc title among rules",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\naccTitle: late\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-empty-call",
+    "name": "ir: empty call",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = sequence(choice(terminal(\"x\"), terminal(\"y\")), optional()) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-unclosed-leaf",
+    "name": "ir: unclosed leaf",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = nonterminal(\"a\" ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-double-semicolon",
+    "name": "ir: double semicolon",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = zeroOrMore(terminal(\"x\")) ;;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-double-equals",
+    "name": "ir: double equals",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb == terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-definition-cut-by-next-rule",
+    "name": "ir: definition cut by next rule",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb =\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-call-cut-by-next-rule",
+    "name": "ir: call cut by next rule",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = sequence(terminal(\"x\"),\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ir-several-missing-semicolon-and-unclosed-call-and-keyword-as-name",
+    "name": "ir: several missing semicolon and unclosed call and keyword as name",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(\"x\")\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\nb = sequence(terminal(\"x\"), terminal(\"y\") ;\nok3 = choice(terminal(\"c\"), optional(terminal(\"d\"))) ;\nchoice = terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ir-several-bare-identifier-and-trailing-comma-and-missing-equals",
+    "name": "ir: several bare identifier and trailing comma and missing equals",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = foo ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\nb = choice(terminal(\"x\"), ) ;\nok3 = choice(terminal(\"c\"), optional(terminal(\"d\"))) ;\nb terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ir-several-stray-character-and-title-among-rules-and-two-arguments",
+    "name": "ir: several stray character and title among rules and two arguments",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(\"x\") @ ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\ntitle Late\nok3 = choice(terminal(\"c\"), optional(terminal(\"d\"))) ;\nb = optional(terminal(\"x\"), terminal(\"y\")) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ir-several-leaf-without-string-and-two-expressions-and-keyword-in-upper-case",
+    "name": "ir: several leaf without string and two expressions and keyword in upper case",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal(x) ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\nb = terminal(\"x\") terminal(\"y\") ;\nok3 = choice(terminal(\"c\"), optional(terminal(\"d\"))) ;\nb = Terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ir-several-call-without-parentheses-and-empty-definition-and-rule-without-name",
+    "name": "ir: several call without parentheses and empty definition and rule without name",
+    "source": "railroad-beta\nok1 = terminal(\"a\") ;\nb = terminal \"x\" ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;\nb = ;\nok3 = choice(terminal(\"c\"), optional(terminal(\"d\"))) ;\n= terminal(\"x\") ;\nok2 = sequence(terminal(\"b\"), nonterminal(\"ok1\")) ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-missing-semicolon",
+    "name": "ebnf: missing semicolon",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\"\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-empty-alternative",
+    "name": "ebnf: empty alternative",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" | ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-unclosed-group",
+    "name": "ebnf: unclosed group",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = ( \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-unclosed-optional",
+    "name": "ebnf: unclosed optional",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = [ \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-unclosed-repetition",
+    "name": "ebnf: unclosed repetition",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = { \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-stray-closer",
+    "name": "ebnf: stray closer",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" ) ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-missing-equals",
+    "name": "ebnf: missing equals",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-colon-equals",
+    "name": "ebnf: colon equals",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb := \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-hash-comment",
+    "name": "ebnf: hash comment",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" # c ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-unclosed-string",
+    "name": "ebnf: unclosed string",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb = 'x ;",
+    "errors": [["UNCLOSED_STRING", 4]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-title-among-rules",
+    "name": "ebnf: title among rules",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\ntitle Late\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-postfix-first",
+    "name": "ebnf: postfix first",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = * \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-exception-without-operand",
+    "name": "ebnf: exception without operand",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" - ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-comma-at-end",
+    "name": "ebnf: comma at end",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" , ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-two-commas",
+    "name": "ebnf: two commas",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" ,, \"y\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-empty-optional",
+    "name": "ebnf: empty optional",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = [ ] ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-empty-group",
+    "name": "ebnf: empty group",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = ( ) ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-rule-without-name",
+    "name": "ebnf: rule without name",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\n= \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-two-pipes",
+    "name": "ebnf: two pipes",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" | | \"y\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-stray-bracket",
+    "name": "ebnf: stray bracket",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" ] ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-mismatched-closer",
+    "name": "ebnf: mismatched closer",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = { \"x\" ] ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-double-semicolon",
+    "name": "ebnf: double semicolon",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" ;;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-double-define",
+    "name": "ebnf: double define",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb ::= ::= \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-alternative-cut-by-next-rule",
+    "name": "ebnf: alternative cut by next rule",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" |\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-comma-cut-by-next-rule",
+    "name": "ebnf: comma cut by next rule",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" ,\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-exception-cut-by-next-rule",
+    "name": "ebnf: exception cut by next rule",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" -\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-definition-cut-by-next-rule",
+    "name": "ebnf: definition cut by next rule",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb =\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-several-missing-semicolon-and-empty-alternative-and-unclosed-group",
+    "name": "ebnf: several missing semicolon and empty alternative and unclosed group",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\"\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb = \"x\" | ;\nok3 = { \"d\" }+ - \"e\" ;\nb = ( \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-several-unclosed-optional-and-unclosed-repetition-and-stray-closer",
+    "name": "ebnf: several unclosed optional and unclosed repetition and stray closer",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = [ \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb = { \"x\" ;\nok3 = { \"d\" }+ - \"e\" ;\nb = \"x\" ) ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-several-missing-equals-and-colon-equals-and-hash-comment",
+    "name": "ebnf: several missing equals and colon equals and hash comment",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb \"x\" ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb := \"x\" ;\nok3 = { \"d\" }+ - \"e\" ;\nb = \"x\" # c ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED_CHARACTER", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-several-title-among-rules-and-postfix-first-and-exception-without-operand",
+    "name": "ebnf: several title among rules and postfix first and exception without operand",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\ntitle Late\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb = * \"x\" ;\nok3 = { \"d\" }+ - \"e\" ;\nb = \"x\" - ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/ebnf-several-comma-at-end-and-two-commas-and-empty-optional",
+    "name": "ebnf: several comma at end and two commas and empty optional",
+    "source": "railroad-ebnf-beta\nok1 = \"a\" ;\nb = \"x\" , ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;\nb = \"x\" ,, \"y\" ;\nok3 = { \"d\" }+ - \"e\" ;\nb = [ ] ;\nok2 ::= \"b\" , ok1 | [ \"c\" ] ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/abnf-missing-semicolon",
+    "name": "abnf: missing semicolon",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\"\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-empty-alternative",
+    "name": "abnf: empty alternative",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" / ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-unclosed-group",
+    "name": "abnf: unclosed group",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = ( \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-unclosed-optional",
+    "name": "abnf: unclosed optional",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = [ \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-stray-closer",
+    "name": "abnf: stray closer",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" ) ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-missing-equals",
+    "name": "abnf: missing equals",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-underscore-in-name",
+    "name": "abnf: underscore in name",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = my_rule ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-prose-value",
+    "name": "abnf: prose value",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = <x> ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-single-quotes",
+    "name": "abnf: single quotes",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = 'x' ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-repeat-without-element",
+    "name": "abnf: repeat without element",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = 2* ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-bad-number-base",
+    "name": "abnf: bad number base",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = %y41 ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-title-among-rules",
+    "name": "abnf: title among rules",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\ntitle Late\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-two-slashes",
+    "name": "abnf: two slashes",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" / / \"y\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-rule-without-name",
+    "name": "abnf: rule without name",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\n= \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-empty-optional",
+    "name": "abnf: empty optional",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = [ ] ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-empty-group",
+    "name": "abnf: empty group",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = ( ) ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-stray-bracket",
+    "name": "abnf: stray bracket",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" ] ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-double-equals",
+    "name": "abnf: double equals",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb == \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-incremental-alternative",
+    "name": "abnf: incremental alternative",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = =/ \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-exact-repeat-alone",
+    "name": "abnf: exact repeat alone",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = 3 ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-star-alone",
+    "name": "abnf: star alone",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = * ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-two-repeats",
+    "name": "abnf: two repeats",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = 1*2*3x ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-alternative-cut-by-next-rule",
+    "name": "abnf: alternative cut by next rule",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" /\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-repeat-cut-by-next-rule",
+    "name": "abnf: repeat cut by next rule",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" 2*\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-definition-cut-by-next-rule",
+    "name": "abnf: definition cut by next rule",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb =\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["ok1", "ok2"]
+  },
+  {
+    "id": "railroad-recovery/abnf-several-missing-semicolon-and-empty-alternative-and-unclosed-group",
+    "name": "abnf: several missing semicolon and empty alternative and unclosed group",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\"\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;\nb = \"x\" / ;\nok3 = *( \"c\" / 2\"d\" ) ;\nb = ( \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/abnf-several-unclosed-optional-and-stray-closer-and-missing-equals",
+    "name": "abnf: several unclosed optional and stray closer and missing equals",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = [ \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;\nb = \"x\" ) ;\nok3 = *( \"c\" / 2\"d\" ) ;\nb \"x\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/abnf-several-underscore-in-name-and-prose-value-and-single-quotes",
+    "name": "abnf: several underscore in name and prose value and single quotes",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = my_rule ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;\nb = <x> ;\nok3 = *( \"c\" / 2\"d\" ) ;\nb = 'x' ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED_CHARACTER", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/abnf-several-repeat-without-element-and-bad-number-base-and-title-among-rules",
+    "name": "abnf: several repeat without element and bad number base and title among rules",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = 2* ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;\nb = %y41 ;\nok3 = *( \"c\" / 2\"d\" ) ;\ntitle Late\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/abnf-several-two-slashes-and-rule-without-name-and-empty-optional",
+    "name": "abnf: several two slashes and rule without name and empty optional",
+    "source": "railroad-abnf-beta\nok1 = \"a\" ;\nb = \"x\" / / \"y\" ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;\n= \"x\" ;\nok3 = *( \"c\" / 2\"d\" ) ;\nb = [ ] ;\nok2 = 1*ok1 [ \"b\" ] / %x41-5A ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["ok1", "ok2", "ok3"]
+  },
+  {
+    "id": "railroad-recovery/peg-missing-semicolon",
+    "name": "peg: missing semicolon",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\"\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-empty-alternative",
+    "name": "peg: empty alternative",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" / ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-unclosed-group",
+    "name": "peg: unclosed group",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- ( \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-stray-closer",
+    "name": "peg: stray closer",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" ) ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-missing-arrow",
+    "name": "peg: missing arrow",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-equals-for-arrow",
+    "name": "peg: equals for arrow",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB = \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-character-class",
+    "name": "peg: character class",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- [a-z] ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-two-predicates",
+    "name": "peg: two predicates",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- !!\"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-two-suffixes",
+    "name": "peg: two suffixes",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\"?* ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-unclosed-string",
+    "name": "peg: unclosed string",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB <- 'x ;",
+    "errors": [["UNCLOSED_STRING", 4]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-title-among-rules",
+    "name": "peg: title among rules",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\ntitle Late\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-two-slashes",
+    "name": "peg: two slashes",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" / / \"y\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-rule-without-name",
+    "name": "peg: rule without name",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\n<- \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-empty-group",
+    "name": "peg: empty group",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- ( ) ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-predicate-alone",
+    "name": "peg: predicate alone",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- & ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-double-semicolon",
+    "name": "peg: double semicolon",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" ;;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-double-arrow",
+    "name": "peg: double arrow",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- <- \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-suffix-first",
+    "name": "peg: suffix first",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- ? ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-predicate-at-end",
+    "name": "peg: predicate at end",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" & ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-stray-paren-after-dots",
+    "name": "peg: stray paren after dots",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- . . ) ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-comma",
+    "name": "peg: comma",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" , \"y\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-pipe",
+    "name": "peg: pipe",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" | \"y\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-alternative-cut-by-next-rule",
+    "name": "peg: alternative cut by next rule",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" /\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-predicate-cut-by-next-rule",
+    "name": "peg: predicate cut by next rule",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" !\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-definition-cut-by-next-rule",
+    "name": "peg: definition cut by next rule",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <-\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["Ok1", "Ok2"]
+  },
+  {
+    "id": "railroad-recovery/peg-several-missing-semicolon-and-empty-alternative-and-unclosed-group",
+    "name": "peg: several missing semicolon and empty alternative and unclosed group",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\"\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB <- \"x\" / ;\nOk3 <- ( \"d\" / Ok2 )+ ;\nB <- ( \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Ok1", "Ok2", "Ok3"]
+  },
+  {
+    "id": "railroad-recovery/peg-several-stray-closer-and-missing-arrow-and-equals-for-arrow",
+    "name": "peg: several stray closer and missing arrow and equals for arrow",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- \"x\" ) ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB \"x\" ;\nOk3 <- ( \"d\" / Ok2 )+ ;\nB = \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED_CHARACTER", 7]
+    ],
+    "keeps": ["Ok1", "Ok2", "Ok3"]
+  },
+  {
+    "id": "railroad-recovery/peg-several-character-class-and-two-predicates-and-two-suffixes",
+    "name": "peg: several character class and two predicates and two suffixes",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- [a-z] ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB <- !!\"x\" ;\nOk3 <- ( \"d\" / Ok2 )+ ;\nB <- \"x\"?* ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Ok1", "Ok2", "Ok3"]
+  },
+  {
+    "id": "railroad-recovery/peg-several-title-among-rules-and-two-slashes-and-rule-without-name",
+    "name": "peg: several title among rules and two slashes and rule without name",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\ntitle Late\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB <- \"x\" / / \"y\" ;\nOk3 <- ( \"d\" / Ok2 )+ ;\n<- \"x\" ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Ok1", "Ok2", "Ok3"]
+  },
+  {
+    "id": "railroad-recovery/peg-several-empty-group-and-predicate-alone-and-double-semicolon",
+    "name": "peg: several empty group and predicate alone and double semicolon",
+    "source": "railroad-peg-beta\nOk1 <- \"a\" ;\nB <- ( ) ;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;\nB <- & ;\nOk3 <- ( \"d\" / Ok2 )+ ;\nB <- \"x\" ;;\nOk2 <- &Ok1 \"b\"* / !\"c\" . ;",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["Ok1", "Ok2", "Ok3"]
+  }
+]

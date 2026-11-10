@@ -1,0 +1,10 @@
+@ 2:12  expr ::= te|rm { "+" term } ;
+  -> 3:1-3:5 "term"
+@ 3:25  term = factor , [ "*" fa|ctor ] ;
+  -> 4:1-4:7 "factor"
+@ 4:16  factor = "(" ex|pr ")" | number ;
+  -> 2:1-2:5 "expr"
+@ 4:28  factor = "(" expr ")" | num|ber ;
+  -> none
+@ 5:4  fac|tor = "again" ;
+  -> 4:1-4:7 "factor"

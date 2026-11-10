@@ -1,0 +1,11 @@
+---
+description: >-
+  One representative railroad diagram in the neo family's `neo` theme. ABNF (`railroad-abnf-beta`): a five-way `/` alternation, an optional, `*( )` and `1*` repetition and a numeric range.
+config:
+  theme: neo
+---
+railroad-abnf-beta
+value = object / array / number / "true" / "null" ;
+object = "{" [ member *( "," member ) ] "}" ;
+number = [ "-" ] 1*DIGIT ;
+DIGIT = %x30-39 ;

@@ -1,0 +1,7 @@
+@ 3:12  expr ::= te|rm { "+" term } ;
+  prepare: 3:10-3:14 "term"; rename to "my_term":
+  %% rename-to: my_term
+  railroad-ebnf-beta
+  expr ::= my_term { "+" my_term } ;
+  my_term = "1" | "(" expr ")" ;
+  my_term = "again" ;

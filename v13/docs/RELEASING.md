@@ -30,6 +30,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-pie` | The pie chart plugin (SVG; `pie`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-radar` | The radar chart plugin (SVG; `radar-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-railroad` | The railroad diagram plugin (SVG, and text output from `/ascii`; `railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-requirement` | The requirement diagram plugin (SVG; `requirement`, `requirementDiagram`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-sankey` | The sankey diagram plugin (SVG; `sankey`, `sankey-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |

@@ -1,0 +1,5 @@
+railroad-beta
+expr = sequence(nonterminal("te|rm"), zeroOrMore(sequence(terminal("+"), nonterminal("term")))) ;
+te|rm = choice(nonterminal("number"), nonterminal("ex|pr")) ;
+number = oneOrMore(special("digit")) ;
+undefined = nonterminal("nowh|ere") ;

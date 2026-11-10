@@ -1,0 +1,4 @@
+%% rename-to: summand
+railroad-beta
+expr = sequence(nonterminal("te|rm"), zeroOrMore(sequence(terminal("+"), nonterminal("term")))) ;
+te|rm = terminal("1") ;
