@@ -12,7 +12,9 @@
  * and lexing restarts on the following line.
  *
  * Flowchart's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: the block rules are
+ * agentflow's (`flow`, `global`, the header), as above; vertex and statement rules moved to
+ * `statements.ts`, the token helpers to `base.ts`.
  * cspell:ignore kepano
  */
 import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';

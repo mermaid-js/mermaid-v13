@@ -11,13 +11,13 @@
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import { layered, pxProfile, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
+import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
 import { inlineSpans, tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
 import type { AgentflowLayout } from '../layout/index.ts';
-import type { AgentflowDocument, AgentflowModel } from '../parser/index.ts';
+import type { AgentflowDocument, AgentflowModel, AgentflowParseResult } from '../parser/index.ts';
 import { agentflow } from '../plugin.ts';
 
 /** An extension's inline provider (`ExtensionPlugin.inline`), as `inlineSpans` takes it. */
@@ -58,11 +58,38 @@ export interface RenderedAgentflow {
 
 export const TEST_VERSION = '13.0.0-alpha.0';
 
-/** Renders `source`, parsed with its front matter and directives. Throws on a parse error. */
-export async function renderAgentflowForTest(
+export interface ParseAgentflowOptions {
+  /** Integrator config, as `initialize()` would get it. */
+  readonly config?: Readonly<Record<string, unknown>>;
+  readonly idPrefix?: string;
+  /** Features extensions claim (`callbacks` with the interactions plugin). */
+  readonly claims?: readonly string[];
+}
+
+/** One source through the plugin's `parse`, with the config, limits and theme it renders with. */
+export interface ParsedAgentflow {
+  /** Core's preprocess of the source: its diagnostics are not the parse's. */
+  readonly preprocessed: PreprocessResult;
+  readonly parse: AgentflowParseResult;
+  readonly config: ReturnType<typeof resolveConfig>;
+  readonly limits: Readonly<Limits>;
+  /** The source's theme (agentflow's own, v12 `redux-color`, unless one is named), with the table. */
+  readonly theme: Theme;
+  /** The config's warnings, the parse's, then the theme's. */
+  readonly warnings: Warning[];
+}
+
+/**
+ * The plugin's parse path as the pipeline runs it: core's config defaults under the
+ * integrator's config and the source's front matter and directives (the `agentflow` section's
+ * scoped keys), the limits that config implies, `agentflow.parse`, and the theme with the
+ * plugin's table, its `themeVariables` and its dark half for `theme: 'auto'`. Never throws on
+ * a parse error: `parse.diagnostics` has it.
+ */
+export async function parseAgentflowForTest(
   source: string,
-  options: RenderAgentflowOptions = {}
-): Promise<RenderedAgentflow> {
+  options: ParseAgentflowOptions = {}
+): Promise<ParsedAgentflow> {
   const warnings: Warning[] = [];
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = preprocess(source);
@@ -84,8 +111,6 @@ export async function renderAgentflowForTest(
     limits,
     ...(options.claims ? { claims: options.claims } : {}),
   });
-  const error = parse.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`agentflow parse error: ${error.message}`);
   for (const d of parse.diagnostics) warn({ code: d.code, message: d.message });
   const idPrefix = options.idPrefix ?? 'mermaid-0';
   const choice = resolveThemeName(config.theme, warn);
@@ -96,6 +121,19 @@ export async function renderAgentflowForTest(
     warn,
     idPrefix: () => idPrefix,
   });
+  return { preprocessed: pre, parse, config, limits, theme, warnings };
+}
+
+/** Renders `source`, parsed with its front matter and directives. Throws on a parse error. */
+export async function renderAgentflowForTest(
+  source: string,
+  options: RenderAgentflowOptions = {}
+): Promise<RenderedAgentflow> {
+  const { parse, config, limits, theme, warnings } = await parseAgentflowForTest(source, options);
+  const error = parse.diagnostics.find((d) => d.severity === 'error');
+  if (error) throw new Error(`agentflow parse error: ${error.message}`);
+  const warn = (w: Warning): void => void warnings.push(w);
+  const idPrefix = options.idPrefix ?? 'mermaid-0';
   const ctx: RenderContext = {
     config,
     measurer: options.measurer ?? tableMeasurer,

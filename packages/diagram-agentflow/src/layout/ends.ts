@@ -37,7 +37,7 @@ function nearestOnSegment(p: Point, a: Point, b: Point): Point {
 }
 
 /** The point of the closed polygon `poly`'s boundary nearest to `p`. */
-export function nearestOnOutline(p: Point, poly: readonly Point[]): Point {
+function nearestOnOutline(p: Point, poly: readonly Point[]): Point {
   let best = p;
   let dist = Infinity;
   for (let i = 0; i < poly.length; i++) {

@@ -9,6 +9,7 @@ import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
+import { emphasisBits, numericValue, TITLE_MARGIN_DEFAULTS } from '../layout/index.ts';
 import type { AgentflowPrepared, AgentflowWarning } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 
@@ -61,16 +62,11 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
 /** `agentflow` keys only the SVG reads: text has no least width, margins or SVG width. */
 const UNDRAWN = ['useMaxWidth', 'diagramPadding', 'minNodeWidth', 'titleTopMargin'] as const;
 
-/** A whole decimal number, as the layout's config lengths read one (`"20"` is 20). */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
-const asNumber = (v: unknown): unknown =>
-  typeof v === 'string' && NUMERIC.test(v) ? Number(v) : v;
-
 /**
  * The config keys set off their default that text output cannot honour, as paths: the
  * `agentflow` keys in {@link UNDRAWN} (the resolved section carries the defaults, so a value
- * equal to its default is not set), and `flowchart.padding` and a non-zero
- * `flowchart.subGraphTitleMargin` (D466: read for the SVG, which has no section default).
+ * equal to its default is not set), and `flowchart.padding` and a `flowchart.subGraphTitleMargin`
+ * off its default (D466: read for the SVG; agentflow has no section default for them).
  */
 export function undrawnConfig(config: ResolvedConfig): string[] {
   const out: string[] = [];
@@ -78,13 +74,15 @@ export function undrawnConfig(config: ResolvedConfig): string[] {
   const defaults = agentflowConfigDefaults as Readonly<Record<string, unknown>>;
   for (const key of UNDRAWN) {
     const value = section[key];
-    if (value !== undefined && asNumber(value) !== defaults[key]) out.push(`agentflow.${key}`);
+    if (value !== undefined && numericValue(value) !== defaults[key]) out.push(`agentflow.${key}`);
   }
   const flowchart = (config.flowchart ?? {}) as Readonly<Record<string, unknown>>;
   if (flowchart.padding !== undefined) out.push('flowchart.padding');
   const margin = flowchart.subGraphTitleMargin as Readonly<Record<string, unknown>> | undefined;
-  if (margin && [margin.top, margin.bottom].some((v) => v !== undefined && asNumber(v) !== 0))
-    out.push('flowchart.subGraphTitleMargin');
+  const sides = ['top', 'bottom'] as const;
+  const moved = (side: (typeof sides)[number]) =>
+    margin?.[side] !== undefined && numericValue(margin[side]) !== TITLE_MARGIN_DEFAULTS[side];
+  if (sides.some(moved)) out.push('flowchart.subGraphTitleMargin');
   return out;
 }
 
@@ -93,11 +91,7 @@ const styled = (s: CheckedStyle): boolean =>
 
 // Bold or italic the label has beyond what its style asked for.
 function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
-  const weight = style.text['font-weight'];
-  const base =
-    (weight === 'bold' || weight === 'bolder' || Number(weight) >= 600 ? Style.Bold : 0) |
-    (style.text['font-style'] === 'italic' ? Style.Italic : 0);
-  const mask = (Style.Bold | Style.Italic) & ~base;
+  const mask = (Style.Bold | Style.Italic) & ~emphasisBits(style);
   return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
 }
 

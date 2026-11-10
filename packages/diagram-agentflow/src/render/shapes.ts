@@ -8,11 +8,17 @@
  * (`render.ts`).
  *
  * Flowchart's drawers are ported from Pele's `src/svg/shapes.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: cut to agentflow's seven
+ * shapes and the collapsed-flow card, drawn on the layout's outline.
  * cspell:ignore kepano
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import { cornerRadius, type LayoutShape, type ShapeGeometry } from '../layout/index.ts';
+import {
+  cornerRadius,
+  shapeOutline,
+  type LayoutShape,
+  type ShapeGeometry,
+} from '../layout/index.ts';
 
 /** v12's card trimmings' paint (`collapsedGroup.ts`, `styles.ts`); their geometry is the layout's. */
 const CARD_PAINT = {
@@ -35,8 +41,14 @@ type Drawer = (
   geometry: ShapeGeometry
 ) => void;
 
-const poly = (w: SvgWriter, points: number[], a: Attrs): void =>
-  w.outline('node', 'polygon', { points, ...a });
+/** A straight-sided shape as a polygon of the layout's outline (`layout/shapes.ts`). */
+const polygon =
+  (shape: LayoutShape): Drawer =>
+  (w, W, H, outline, _line, g) =>
+    w.outline('node', 'polygon', {
+      points: shapeOutline(shape, W, H, g).flatMap((p) => [p.x, p.y]),
+      ...outline,
+    });
 
 /** Line segments [x0, y0, x1, y1, …] as one path, each pair of points a separate stroke. */
 function lines(w: SvgWriter, coords: number[], a: Attrs): void {
@@ -64,11 +76,8 @@ const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
     const x = W / 2 - g.metrics.frame;
     lines(w, [-x, -H / 2, -x, H / 2, x, -H / 2, x, H / 2], line);
   },
-  'lean-r': (w, W, H, outline, _line, g) => {
-    const c = g.metrics.leanCut * H;
-    poly(w, [-W / 2 + c, -H / 2, W / 2, -H / 2, W / 2 - c, H / 2, -W / 2, H / 2], outline);
-  },
-  diam: (w, W, H, outline) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], outline),
+  'lean-r': polygon('lean-r'),
+  diam: polygon('diam'),
   // The wave is the outline's two quadratic halves: control points `control` off the base.
   'lin-doc': (w, W, H, outline, line, g) => {
     const x = W / 2;
@@ -89,12 +98,7 @@ const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
     const t = x > 0 ? Math.max(0, x - g.metrics.docRule) / x : 0;
     lines(w, [rx, -H / 2, rx, base + 2 * k * t * (1 - t)], line);
   },
-  hex: (w, W, H, outline, _line, g) => {
-    const c = H / g.pads.hexagonSlant;
-    const x = W / 2;
-    const y = H / 2;
-    poly(w, [-x + c, -y, x - c, -y, x, 0, x - c, y, -x + c, y, -x, 0], outline);
-  },
+  hex: polygon('hex'),
   // v12 collapsedGroup's `flow` style: a rounded card (its trimmings: `drawCardTrim`).
   collapsedGroup: (w, W, H, outline, _line, g) =>
     w.outline('node', 'rect', {

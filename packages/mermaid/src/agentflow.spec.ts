@@ -281,6 +281,22 @@ describe('agentflow diagrams through the public API (#550)', () => {
     expect((raised as MermaidError).message).toMatch(/Edge limit exceeded/);
   });
 
+  it('reads the text without comments past maxTextSize, as v12 did (default 50,000)', async () => {
+    // v12 read a commented-out `direction` in a flow as the flow's direction, unless the text
+    // was longer than maxTextSize: then it parsed the text without its comments.
+    const text = 'agentflow-beta TB\n  flow f\n    %% direction LR\n    a --> b\n  end\n';
+    const plain = 'agentflow-beta TB\n  flow f\n    a --> b\n  end\n';
+    const lr = 'agentflow-beta TB\n  flow f\n    direction LR\n    a --> b\n  end\n';
+    const m = createMermaid();
+    const within = await m.render('a17', text);
+    expect(box(within.svg)).toBe(box((await m.render('a17', lr)).svg));
+    expect(box(within.svg)).not.toBe(box((await m.render('a17', plain)).svg));
+    // `maxTextSize` is also the source limit (`resolveLimits`): lift that to see the parse.
+    m.initialize({ maxTextSize: 20, limits: { maxSourceLength: Infinity } });
+    const past = await m.render('a17', text);
+    expect(box(past.svg)).toBe(box((await m.render('a17', plain)).svg));
+  });
+
   it('lists the labels it draws for extensions', () => {
     const { model } = parseAgentflow(
       'agentflow-beta\n  flow f["F $$x$$"]\n    a["A"] -- "to b" --> b\n  end\n'

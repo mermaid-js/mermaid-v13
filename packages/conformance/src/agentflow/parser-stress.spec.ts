@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { parseAgentflow, semanticModel } from '@mermaid-js/diagram-agentflow';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfalls 5 and 11: the agentflow parser and model are linear in input size,
  * `semanticModel()` included, over what the lexer's stress spec (`stress.spec.ts`) leaves out:
  * fan-out, long chains, many and deeply nested flows (collapsed or not), containment chains,
  * `global` blocks after many flows, reopened flows, connectors that replace nodes, metadata
- * dropped before its flow, styling and errors. Pie's ratio pattern: n and 8n units, best of
- * five CPU times; linear is ~8x, quadratic ~64x, and the bar is 24x.
+ * dropped before its flow, styling and errors. n and 8n units, timed with `linearRatio`
+ * (`../linear-time.ts`); linear is ~8x, quadratic ~64x, and the bar is 24x.
  */
 const H = 'agentflow-beta TB\n';
 /** `unit(i)` for i = 0, 1, … to about `n` characters. */
@@ -122,37 +123,14 @@ const RUN_SHAPES: [string, (n: number) => string][] = [
 /** Shapes with comments, past `maxTextSize`, where v12 parsed the text without them. */
 const COMMENT_FREE = SHAPES.filter(([name]) => name.includes('comment'));
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
-/** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
+/** The CPU-time ratio of `run` on 8n units of `build` over n (`linearRatio`, pitfall 5). */
 const ratio = (build: (n: number) => string, run: (src: string) => unknown, n = 4_000): number => {
   const small = build(n);
   const large = build(8 * n);
-  run(small); // warm up
-  run(large);
-  let tSmall = Infinity;
-  let tLarge = Infinity;
-  for (let round = 0; round < 5; round++) {
-    tSmall = Math.min(
-      tSmall,
-      cost(() => run(small))
-    );
-    tLarge = Math.min(
-      tLarge,
-      cost(() => run(large))
-    );
-  }
-  return tLarge / Math.max(tSmall, 2);
+  return linearRatio(
+    () => run(small),
+    () => run(large)
+  );
 };
 
 const parse = (src: string) =>

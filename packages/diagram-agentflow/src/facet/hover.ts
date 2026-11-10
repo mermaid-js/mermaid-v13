@@ -24,7 +24,7 @@ import type {
 import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-import { code, describeLink, DIRECTIONS, shapeText, span, tokenBefore } from './tables.ts';
+import { code, describeLink, DIRECTION_DOCS, shapeText, span, tokenBefore } from './tables.ts';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 
@@ -283,7 +283,7 @@ export function agentflowHover(
     };
   }
   if (t.kind === T.Dir) {
-    const meaning = DIRECTIONS.find(([d]) => d === model.direction)?.[1] ?? model.direction;
+    const meaning = DIRECTION_DOCS.find(([d]) => d === model.direction)?.[1] ?? model.direction;
     const as = word === model.direction ? '' : ` (${code(model.direction)})`;
     return { range, contents: `**${code(word)}** direction: ${meaning}${as}` };
   }

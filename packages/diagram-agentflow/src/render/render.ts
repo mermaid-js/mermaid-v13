@@ -36,8 +36,8 @@ import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.t
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
 
-/** v12's frame (`clusters.js` `flowGroup`): corner radius and stroke width. */
-const FRAME = { radius: 10, width: 0.75 } as const;
+/** v12's frame (`clusters.js` `flowGroup`) stroke width; its corner radius is the metrics'. */
+const FRAME_WIDTH = 0.75;
 /** v12's `.agentflowTitleText`: 18 px. */
 const TITLE_SIZE = 18;
 const DOTTED = '2' as SafeValue;
@@ -214,10 +214,10 @@ function drawFrames(scene: Scene, frame: FramePaint): void {
       y: top,
       width: box.width,
       height: box.height,
-      rx: FRAME.radius,
+      rx: prepared.geometry.metrics.flowRadius,
       fill: slot?.fill ?? 'none',
       stroke: slot?.stroke ?? frame.stroke,
-      'stroke-width': FRAME.width,
+      'stroke-width': FRAME_WIDTH,
       filter: paint.node.shadow,
       ...g.style.shape,
     });

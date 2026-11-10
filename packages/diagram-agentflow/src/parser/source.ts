@@ -32,21 +32,21 @@ import {
   sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range, SourceView } from '@mermaid-js/core/parser-kit';
-
-/** v12's default `maxTextSize`. */
-export const MAX_TEXT_SIZE = 50_000;
+import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
 
 const NO_DIRECTIVES: readonly Range[] = [];
 
 /**
  * The agentflow source view of `src[from…]` (the text after the front matter); `directives`
- * are the `%%{…}%%` ranges from core's preprocess, sorted. `maxTextSize` is the site config's.
+ * are the `%%{…}%%` ranges from core's preprocess, sorted. `maxTextSize` is the site config's;
+ * its default, v12's 50,000, is core's `maxSourceLength` default, the limit `maxTextSize` sets
+ * (`resolveLimits`). This is the one place the default is applied.
  */
 export function agentflowSourceView(
   src: string,
   from: number,
   directives: readonly Range[],
-  maxTextSize = MAX_TEXT_SIZE
+  maxTextSize: number = DEFAULT_LIMITS.maxSourceLength
 ): SourceView {
   if (withCommentsLength(src, from, directives) > maxTextSize) {
     // v12's `cleaned`: core's view (comments, directives and the `;` drops it read without

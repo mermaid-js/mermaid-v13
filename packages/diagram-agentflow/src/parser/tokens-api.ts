@@ -2,7 +2,7 @@ import { cook, Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
-import { agentflowSourceView, MAX_TEXT_SIZE } from './source.ts';
+import { agentflowSourceView } from './source.ts';
 
 export interface AgentflowToken {
   /** A `T` kind or a shared `Kind`. */
@@ -17,7 +17,7 @@ export interface AgentflowToken {
  * out; a `Comment` outside labels is significant), for editors and for the lexer-parity gate.
  * Past `maxTextSize` v12 lexed the comment-free text, so comments are trivia there.
  */
-export function agentflowTokens(src: string, maxTextSize = MAX_TEXT_SIZE): AgentflowToken[] {
+export function agentflowTokens(src: string, maxTextSize?: number): AgentflowToken[] {
   const pre = preprocess(src);
   const view = agentflowSourceView(
     src,

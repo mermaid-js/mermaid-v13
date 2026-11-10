@@ -26,9 +26,9 @@ export const NOT_PORTED: Record<string, string> = {
   'containerOrder.spec.ts': "reads the colour index v12's getData stamped: T4 (#548)",
   'agentflow-render-positions.spec.ts': "renders through v12's mermaidAPI with jsdom: T5 (#550)",
   'agentflow-max-text-size.spec.ts':
-    "renders through v12's mermaidAPI with jsdom; the comment-free fallback is in `src/parser/parse.spec.ts` and `src/parser/lexer.spec.ts`",
+    "renders through v12's mermaidAPI with jsdom; the comment-free fallback is in `src/parser/parse.spec.ts`, `src/parser/lexer.spec.ts` and, through `createMermaid().render()`, `packages/mermaid/src/agentflow.spec.ts`",
   'conformance/conformance.spec.ts':
-    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd and, the parse error, packages/conformance/src/agentflow/fixtures/, run by packages/conformance/src/agentflow/fixtures.spec.ts',
+    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd and, the parse error, the case v12-fixture-parse-error-unterminated-container in packages/conformance/corpus/agentflow-cases.json, run by packages/conformance/src/agentflow/fixtures.spec.ts',
   'conformance/runner.spec.ts':
     "tests v12's fixture runner, replaced by packages/conformance/src/agentflow/fixtures.spec.ts",
   'parser/agentflow-flowchart-parity.spec.ts':

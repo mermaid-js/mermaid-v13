@@ -2,6 +2,7 @@
  * The agentflow parser's tables (`parser.ts`): the token kinds each rule takes, what the probe
  * and the error messages name, and the shapes of the state it keeps. Built once at module scope.
  */
+import type { Dir } from '@mermaid-js/core/layout';
 import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import type { ParseState, Range } from '@mermaid-js/core/parser-kit';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
@@ -88,6 +89,21 @@ export const SHAPES: Readonly<
   [T.TagEnd]: ['odd', T.SQE, 'node label', '`]`'],
 });
 export const DIRECTIONS: readonly string[] = ['TB', 'BT', 'RL', 'LR', 'TD'];
+
+const LAYOUT_DIRS: Readonly<Record<string, Dir>> = {
+  TB: 'TB',
+  TD: 'TB',
+  BT: 'BT',
+  LR: 'LR',
+  RL: 'RL',
+};
+
+/**
+ * The direction a model direction (the diagram's or a flow's, as v12 kept it) is drawn in: `TD`
+ * is `TB`; v12's `BR` is none (the diagram draws `TB`, a flow its parent's). The one reading.
+ */
+export const layoutDir = (dir: string | undefined): Dir | undefined =>
+  dir !== undefined && Object.hasOwn(LAYOUT_DIRS, dir) ? LAYOUT_DIRS[dir] : undefined;
 
 /** jison's `separator`: a line break, `;`, the end, or a comment. */
 export const LINE_END: readonly number[] = [Kind.Newline, T.Semi, T.Eof, T.Comment];

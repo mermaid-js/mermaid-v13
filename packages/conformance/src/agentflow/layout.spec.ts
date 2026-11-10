@@ -5,18 +5,16 @@
 // `layoutAgentflow`, the entry point the plugin calls, through `layered` (the default), ELK
 // (`@mermaid-js/layout-elk`, D171) and `compass` (D327).
 import { beforeAll, describe, expect, it } from 'vitest';
-import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import { layered, pxProfile, validateLayout, type LayoutEngine } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
+import { layoutAgentflow, type AgentflowModel } from '@mermaid-js/diagram-agentflow';
 import {
-  layoutAgentflow,
-  parseAgentflow,
-  type AgentflowModel,
-} from '@mermaid-js/diagram-agentflow';
-import { agentflowLayoutProblems } from '@mermaid-js/diagram-agentflow/testing';
+  agentflowLayoutProblems,
+  parseAgentflowForTest,
+  type ParsedAgentflow,
+} from '@mermaid-js/diagram-agentflow/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadOracle } from '../oracle.ts';
@@ -26,8 +24,8 @@ interface Fixture {
   readonly id: string;
   readonly source: string;
   readonly model: AgentflowModel;
-  readonly config: ReturnType<typeof resolveConfig>;
-  readonly theme: ThemeName;
+  readonly config: ParsedAgentflow['config'];
+  readonly theme: Theme;
 }
 
 const fixtures: Fixture[] = [];
@@ -36,20 +34,10 @@ let elk: LayoutEngine;
 beforeAll(async () => {
   elk = await elkLayouts.find((l) => l.name === 'elk')!.loader();
   for (const item of [...(await agentflowCorpus()), ...agentflowCases()]) {
-    const pre = preprocess(item.source);
-    if (pre.diagnostics.some((d) => d.severity === 'error')) continue;
-    const directives = pre.directives.flatMap((d) =>
-      d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-    );
-    const config = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, directives);
-    const parse = parseAgentflow(item.source, {
-      preprocessed: pre,
-      inheritDir: config.flowchart?.inheritDir === true,
-    });
-    if (parse.diagnostics.some((d) => d.severity === 'error')) continue;
-    // Agentflow's own default theme (`agentflow.theme`, v12 `redux-color`) unless one is named.
-    const named = config.theme;
-    const theme = typeof named === 'string' && isThemeName(named) ? named : 'redux-color';
+    // The plugin's parse path: config, limits, `agentflow.parse` and the source's theme.
+    const { preprocessed, parse, config, theme } = await parseAgentflowForTest(item.source);
+    const diagnostics = [...preprocessed.diagnostics, ...parse.diagnostics];
+    if (diagnostics.some((d) => d.severity === 'error')) continue;
     fixtures.push({ id: item.id, source: item.source, model: parse.model, config, theme });
   }
 }, 60_000);
@@ -66,7 +54,7 @@ async function laidOut(f: Fixture, engine: LayoutEngine) {
     config: f.config,
     measurer: tableMeasurer,
     units: pxProfile,
-    theme: createTheme(await loadTheme(f.theme)),
+    theme: f.theme,
     layout: (graph) => engine(graph, { config: f.config }),
     warn: (w) => warnings.push(w.code),
   });

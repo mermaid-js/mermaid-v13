@@ -477,6 +477,11 @@ automaticLaneOrdering?: boolean
  * spacing and padding knobs a flowchart does. They live in their own block so
  * that agentflow can be tuned without moving every flowchart on the page.
  * 
+ * A length here (`titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`,
+ * `wrappingWidth`, `minNodeWidth`) that is not a number from 0 up to 10,000 (a whole
+ * numeric string such as `"20"` is taken, as v12 took it) draws with its default, with
+ * one `AGENTFLOW_CONFIG_INVALID` warning.
+ * 
  * 
  * This interface was referenced by `MermaidConfig`'s JSON-Schema
  * via the `definition` "AgentflowDiagramConfig".

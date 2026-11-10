@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { agentflowTokens } from '@mermaid-js/diagram-agentflow';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the agentflow lexer is linear in input size, in every state and over
  * each of v12's rewrites (kept comments, removed directives, dropped `;`, the blanks after a
  * `}`, entities, tag quotes). Long single lines exercise the `.*direction` rules, which jison
  * retries from every position to the line end (quadratic in v12), and long `@{…}` blocks the
- * shape-data states. Shape copied from `../sankey/stress.spec.ts` (pie's ratio pattern): n and
- * 8n units; linear is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU
- * time, best of five, and small and large runs alternate.
+ * shape-data states. Shape copied from `../sankey/stress.spec.ts`: n and 8n units; linear is ~8x, quadratic ~64x, and the bar is 24x, timed with `linearRatio`
+ * (`../linear-time.ts`).
  */
 const H = 'agentflow-beta TB\n';
 /** `unit` repeated to about `n` characters. */
@@ -93,37 +93,14 @@ const SHAPES: [string, (n: number) => string][] = [
   ['line separators', (n) => H + times('a\u2028%% c\u2029', n)],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
-/** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
+/** The CPU-time ratio of `run` on 8n units of `build` over n (`linearRatio`, pitfall 5). */
 const ratio = (build: (n: number) => string, run: (src: string) => unknown): number => {
   const small = build(4_000);
   const large = build(32_000);
-  run(small); // warm up
-  run(large);
-  let tSmall = Infinity;
-  let tLarge = Infinity;
-  for (let round = 0; round < 5; round++) {
-    tSmall = Math.min(
-      tSmall,
-      cost(() => run(small))
-    );
-    tLarge = Math.min(
-      tLarge,
-      cost(() => run(large))
-    );
-  }
-  return tLarge / Math.max(tSmall, 2);
+  return linearRatio(
+    () => run(small),
+    () => run(large)
+  );
 };
 
 describe('stress: the agentflow lexer is linear in input size', () => {

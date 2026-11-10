@@ -34,7 +34,7 @@ import {
   ARROWS,
   CLOSERS,
   CURVES,
-  DIRECTIONS,
+  DIRECTION_DOCS,
   describeLink,
   EDGE_DATA,
   FLOW_DATA,
@@ -494,7 +494,7 @@ export function agentflowCompletions(
     onHeaderLine(text, tokens, range.start) ||
     afterDirection(text, range.start)
   ) {
-    for (const [dir, meaning] of DIRECTIONS) items.add(dir, 'constant', { detail: meaning });
+    for (const [dir, meaning] of DIRECTION_DOCS) items.add(dir, 'constant', { detail: meaning });
     return items.list;
   }
   const flows = new Set(model.flows.map((f) => f.id));

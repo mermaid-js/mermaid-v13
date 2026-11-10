@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
+import type { ConfigInput } from '@mermaid-js/core/config';
 import {
   layered,
   pxProfile,
@@ -10,39 +10,43 @@ import {
   type LayoutGraph,
   type LayoutModel,
 } from '@mermaid-js/core/layout';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { layoutAgentflow, shapeOutline, type AgentflowLayout } from '@mermaid-js/diagram-agentflow';
 import {
-  layoutAgentflow,
-  parseAgentflow,
-  shapeOutline,
-  type AgentflowLayout,
-} from '@mermaid-js/diagram-agentflow';
-import { agentflowLayoutProblems } from '@mermaid-js/diagram-agentflow/testing';
+  agentflowLayoutProblems,
+  parseAgentflowForTest,
+} from '@mermaid-js/diagram-agentflow/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
 import { REPO_ROOT } from '../index.ts';
 
-// The agentflow graph builder (spec #523 T3) at its seam: the `.mmd` fixtures under
-// `e2e/diagrams/agentflow/baseline/layout/` (gallery fixtures) and, for the two whose rule is a
-// warning, `nightly-check/layout/` (the gallery draws without warnings, #550), parsed by the v13
-// parser → LayoutGraph → LayoutModel, with v12's `getData` rules pinned one by one, under
-// `layered` and ELK. The context records the graph the builder hands the engine.
+// The agentflow graph builder (spec #523 T3) at its seam: `.mmd` fixtures under
+// `e2e/diagrams/agentflow/baseline/` (gallery fixtures) and `nightly-check/` (those whose rule
+// is a warning: the gallery draws without warnings, #550), found by name, parsed through the
+// plugin's parse path → LayoutGraph → LayoutModel, with v12's `getData` rules pinned one by
+// one, under `layered` and ELK. The context records the graph the builder hands the engine.
 
-const WARNS = new Set(['edge-from-reserved-connectors-id', 'mutual-containment-cut']);
-const fixture = (name: string): string =>
-  readFileSync(
-    join(
-      REPO_ROOT,
-      `e2e/diagrams/agentflow/${WARNS.has(name) ? 'nightly-check' : 'baseline'}/layout/${name}.mmd`
-    ),
-    'utf8'
-  );
+const FOLDERS = ['baseline', 'nightly-check'];
+let byName: Map<string, string[]> | undefined;
+/** The fixture `<name>.mmd`, wherever it is under {@link FOLDERS}; the one of that name. */
+function fixture(name: string): string {
+  if (!byName) {
+    byName = new Map();
+    for (const folder of FOLDERS) {
+      const root = join(REPO_ROOT, 'e2e/diagrams/agentflow', folder);
+      for (const file of readdirSync(root, { recursive: true, encoding: 'utf8' })) {
+        if (!file.endsWith('.mmd')) continue;
+        const key = basename(file, '.mmd');
+        byName.set(key, [...(byName.get(key) ?? []), join(root, file)]);
+      }
+    }
+  }
+  const paths = byName.get(name) ?? [];
+  if (paths.length !== 1) throw new Error(`${paths.length} agentflow fixtures named ${name}`);
+  return readFileSync(paths[0]!, 'utf8');
+}
 
-let spec: ThemeSpec;
 const engines: Record<string, LayoutEngine> = { layered };
 beforeAll(async () => {
-  spec = await loadTheme('redux-color');
   engines.elk = await elkLayouts.find((l) => l.name === 'elk')!.loader();
 });
 
@@ -56,13 +60,13 @@ interface Run {
 
 // Every rule under each engine: the rules are the builder's, the ends the layout's.
 describe.each(['layered', 'elk'])('%s', (engine) => {
-  function run(name: string, site: ConfigInput = {}): Run {
-    const src = fixture(name);
-    const pre = preprocess(src);
-    const config = resolveConfig(CORE_DEFAULTS, site, pre.frontMatter?.config);
-    const parsed = parseAgentflow(src, {
-      preprocessed: pre,
-      inheritDir: config.flowchart?.inheritDir === true,
+  async function run(name: string, site: ConfigInput = {}): Promise<Run> {
+    const {
+      parse: parsed,
+      config,
+      theme,
+    } = await parseAgentflowForTest(fixture(name), {
+      config: site,
     });
     expect(parsed.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     let graph: LayoutGraph | undefined;
@@ -72,7 +76,7 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       config,
       measurer: tableMeasurer,
       units: pxProfile,
-      theme: createTheme(spec),
+      theme,
       warn: (w) => warnings.push({ code: w.code, ...(w.path ? { path: w.path } : {}) }),
       layout: (g) => {
         graph = g;
@@ -111,8 +115,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
   const group = (g: LayoutGraph, id: string) => g.groups.find((n) => n.id === id);
 
   describe('collapsed flows (v12 getData)', () => {
-    it('keeps an authored self-loop on the card, drops a fold, redirects edges across it', () => {
-      const r = run('collapsed-flow-keeps-authored-self-loop');
+    it('keeps an authored self-loop on the card, drops a fold, redirects edges across it', async () => {
+      const r = await run('collapsed-flow-keeps-authored-self-loop');
       expect(r.problems).toEqual([]);
       expect(r.graph.nodes.map((n) => [n.id, n.shape])).toEqual(
         expect.arrayContaining([
@@ -129,8 +133,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(ends(r.graph)).toEqual(['worker>worker', 'start>worker', 'worker>done']);
     });
 
-    it('folds nested collapsed flows into the outermost one, inside an open flow', () => {
-      const r = run('nested-collapsed-flows');
+    it('folds nested collapsed flows into the outermost one, inside an open flow', async () => {
+      const r = await run('nested-collapsed-flows');
       expect(r.problems).toEqual([]);
       expect(r.graph.groups.map((g) => [g.id, g.parent])).toEqual([
         ['team', undefined],
@@ -149,8 +153,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
   });
 
   describe('edges', () => {
-    it('drops an edge from a member to the collapsed flow that holds it (v12)', () => {
-      const r = run('edge-into-own-collapsed-flow');
+    it('drops an edge from a member to the collapsed flow that holds it (v12)', async () => {
+      const r = await run('edge-into-own-collapsed-flow');
       expect(r.problems).toEqual([]);
       expect(r.graph.nodes.map((n) => [n.id, n.shape])).toEqual([
         ['f', 'collapsedGroup'],
@@ -159,15 +163,15 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(ends(r.graph)).toEqual(['c>f']);
     });
 
-    it('leaves out an edge from the reserved `connectors` id', () => {
-      const r = run('edge-from-reserved-connectors-id');
+    it('leaves out an edge from the reserved `connectors` id', async () => {
+      const r = await run('edge-from-reserved-connectors-id');
       expect(r.problems).toEqual([]);
       expect(r.graph.nodes.map((n) => n.id)).toEqual(['b', 'a']);
       expect(ends(r.graph)).toEqual(['a>b']);
     });
 
-    it('ends edges to a flow on its frame, and cuts mutual containment (D461)', () => {
-      const r = run('mutual-containment-cut');
+    it('ends edges to a flow on its frame, and cuts mutual containment (D461)', async () => {
+      const r = await run('mutual-containment-cut');
       expect(r.problems).toEqual([]);
       // `a1 --> B` from inside B and `b1 --> A`: every frame end on the frame's border.
       const off = offFrames(r);
@@ -180,9 +184,9 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(ends(r.graph)).toEqual(['a1>B', 'b1>A']);
     });
 
-    it('puts every end on a node on that node outline, for every shape', () => {
+    it('puts every end on a node on that node outline, for every shape', async () => {
       for (const name of ['every-shape-many-ends-tb', 'every-shape-many-ends-lr']) {
-        const r = run(name);
+        const r = await run(name);
         expect(r.problems, name).toEqual([]);
         // The decision's ends left its layout box: a diamond meets few box sides.
         const d = r.layout.nodes.get('d')!;
@@ -200,8 +204,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
   });
 
   describe('flows as groups', () => {
-    it('gives each flow its own direction, and passes `algorithm` for ELK (D174)', () => {
-      const r = run('flow-directions-and-algorithm');
+    it('gives each flow its own direction, and passes `algorithm` for ELK (D174)', async () => {
+      const r = await run('flow-directions-and-algorithm');
       expect(r.problems).toEqual([]);
       expect(r.graph.direction).toBe('LR');
       expect(group(r.graph, 'pipeline')).toMatchObject({ direction: 'TB' });
@@ -215,9 +219,9 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(ends(r.graph)).toContain('input>pipeline');
     });
 
-    it('reads `flowchart.inheritDir` through the parser (D466)', () => {
-      expect(group(run('inherited-flow-direction').graph, 'steps')?.direction).toBe('LR');
-      const own = run('inherited-flow-direction', { flowchart: { inheritDir: false } });
+    it('reads `flowchart.inheritDir` through the parser (D466)', async () => {
+      expect(group((await run('inherited-flow-direction')).graph, 'steps')?.direction).toBe('LR');
+      const own = await run('inherited-flow-direction', { flowchart: { inheritDir: false } });
       // Front matter wins over site config: still inherited.
       expect(group(own.graph, 'steps')?.direction).toBe('LR');
       expect(group(own.graph, 'other')?.direction).toBe('TB');
@@ -225,8 +229,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
   });
 
   describe('config lengths', () => {
-    it('reads spacing, wrap and least width from `agentflow`, padding from `flowchart`', () => {
-      const r = run('config-lengths');
+    it('reads spacing, wrap and least width from `agentflow`, padding from `flowchart`', async () => {
+      const r = await run('config-lengths');
       expect(r.problems).toEqual([]);
       expect(r.warnings).toEqual([]);
       expect(r.graph.spacing).toMatchObject({ node: 90, rank: 30 });
@@ -243,8 +247,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(f.padding.top).toBe(pxProfile.builder.titlePad + 10);
     });
 
-    it('defaults to v12: spacing 50, wrap and least width 120, padding 15', () => {
-      const r = run('edge-from-reserved-connectors-id');
+    it('defaults to v12: spacing 50, wrap and least width 120, padding 15', async () => {
+      const r = await run('edge-from-reserved-connectors-id');
       expect(r.graph.spacing).toMatchObject({ node: 50, rank: 50 });
       expect(r.graph.diagramPadding).toBe(8);
       const b = r.layout.agentflow.views.get('b')!;
@@ -252,8 +256,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
       expect(b.h).toBe(b.label.height + 2 * 15);
     });
 
-    it('warns once per length it cannot honour and draws with the default', () => {
-      const r = run('edge-from-reserved-connectors-id', {
+    it('warns once per length it cannot honour and draws with the default', async () => {
+      const r = await run('edge-from-reserved-connectors-id', {
         agentflow: { nodeSpacing: '20px' as unknown as number, wrappingWidth: -5 },
         flowchart: { padding: true as unknown as number },
       });
@@ -268,8 +272,8 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
   });
 
   describe('shape outlines', () => {
-    it('closes each outline inside its box', () => {
-      const { geometry } = run('edge-from-reserved-connectors-id').layout.agentflow;
+    it('closes each outline inside its box', async () => {
+      const { geometry } = (await run('edge-from-reserved-connectors-id')).layout.agentflow;
       for (const shape of [
         'rounded',
         'fr-rect',

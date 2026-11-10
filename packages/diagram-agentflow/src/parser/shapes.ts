@@ -52,29 +52,31 @@ export const ALLOWED: ReadonlyMap<string, AgentflowShape> = /* @__PURE__ */ new 
 /** A vertex's kind (v12 `VertexKind`); a connector is its own kind. */
 export type VertexKind = 'task' | 'tool' | 'input' | 'decision' | 'refdoc' | 'action' | 'connector';
 
-/** The names v12 resolved to a tool (`SUBROUTINE_ALIASES`). */
-const TOOLS: ReadonlySet<string> = /* @__PURE__ */ new Set([
-  'subroutine',
-  'subprocess',
-  'subproc',
-  'framed-rectangle',
-  'tool',
-]);
+/**
+ * The kind of each drawn shape: v12's `deriveVertexKind` read the kind off the same allowed
+ * names (its `SUBROUTINE_ALIASES` are {@link ALLOWED}'s `fr-rect` rows, with `tool`).
+ */
+const KIND: Readonly<Record<AgentflowShape, Exclude<VertexKind, 'connector'>>> = {
+  rounded: 'task',
+  'fr-rect': 'tool',
+  'lean-r': 'input',
+  diam: 'decision',
+  'lin-doc': 'refdoc',
+  hex: 'action',
+};
 
 /** `shape` resolved through {@link SHAPE_ALIASES}. */
 export function resolveShape(shape: string | undefined): string | undefined {
   return shape === undefined ? undefined : (SHAPE_ALIASES.get(shape) ?? shape);
 }
 
-/** v12 `deriveVertexKind`: a vertex's kind from its type, never from the drawn shape. */
+/**
+ * v12 `deriveVertexKind`: a vertex's kind from its type, resolved through {@link ALLOWED}; a
+ * type agentflow does not allow (removed, unsupported, or the `rect` default) is a task.
+ */
 export function vertexKind(type: string | undefined): VertexKind {
-  if (type !== undefined && TOOLS.has(type)) return 'tool';
   const resolved = resolveShape(type);
-  if (resolved === 'hexagon' || resolved === 'hex') return 'action';
-  if (resolved === 'lean-right') return 'input';
-  if (resolved === 'lin-doc' || resolved === 'lined-document') return 'refdoc';
-  if (resolved === 'diamond') return 'decision';
-  return 'task';
+  return KIND[(resolved !== undefined ? ALLOWED.get(resolved) : undefined) ?? 'rounded'];
 }
 
 /** How a vertex of a type is drawn, and why it is not drawn as written. */

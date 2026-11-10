@@ -50,7 +50,7 @@ export const KEYWORDS: readonly KeywordItem[] = [
 ];
 
 /** Header directions and what they mean (v12 reads `TD` as `TB`). */
-export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = [
+export const DIRECTION_DOCS: readonly (readonly [dir: string, meaning: string])[] = [
   ['TB', 'top to bottom'],
   ['TD', 'top down (same as TB)'],
   ['BT', 'bottom to top'],
@@ -70,7 +70,7 @@ export const CLOSERS: Readonly<Record<string, readonly string[]>> = {
 };
 
 /** What each edge semantic means (v12 `computeEdgeSemantic`, D465). */
-export const SEMANTICS: Readonly<Record<EdgeSemantic, string>> = {
+const SEMANTICS: Readonly<Record<EdgeSemantic, string>> = {
   sequence: 'the target runs after the source',
   failure: 'the target runs when the source fails',
   reference: 'the source refers to the target; no step follows',
@@ -127,7 +127,7 @@ export function shapeText(name: string): string {
 }
 
 /** `view:` values a flow reads (`collapsed` draws it as a card). */
-export const VIEWS: readonly string[] = ['collapsed'];
+const VIEWS: readonly string[] = ['collapsed'];
 
 /** A `flowchart.curve` value: the generated config type, from the config schema's enum. */
 type Curve = NonNullable<FlowchartDiagramConfig['curve']>;

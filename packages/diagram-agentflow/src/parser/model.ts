@@ -15,7 +15,8 @@
  * errors are diagnostics instead of exceptions.
  *
  * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/db.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: agentflow's records
+ * (flows, connectors, `global`, kinds from shapes) and the D461 and D464 diagnostics, as above.
  * cspell:ignore kepano
  */
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
@@ -108,6 +109,7 @@ export interface AgentflowFlowModel {
   nodes: string[];
   classes: string[];
   styles: string[];
+  /** `direction …` in the flow, as v12 kept it (`TD` too): `layoutDir` (`tables.ts`) reads it. */
   dir?: string;
   metadata?: YamlMap;
   /** `view: collapsed` in its metadata. */
@@ -145,7 +147,10 @@ export interface AgentflowFinding {
 }
 
 export interface AgentflowModel {
-  /** `TB`, `BT`, `LR` or `RL` (v12 maps `TD`, `v`, `<`, `>`, `^`). */
+  /**
+   * `TB`, `BT`, `LR` or `RL` (v12 maps `TD`, `v`, `<`, `>`, `^`), or v12's unmapped `BR`; kept
+   * as v12's model has it (parity, D465): `layoutDir` (`tables.ts`) reads it.
+   */
   direction: string;
   /** Vertices and connectors in v12's order (a connector keeps a replaced vertex's place). */
   vertices: AgentflowVertex[];

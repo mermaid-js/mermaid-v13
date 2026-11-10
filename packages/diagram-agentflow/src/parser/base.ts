@@ -4,7 +4,9 @@
  *
  * Split from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from
  * Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano).
+ * (c) 2026 kepano). Changed: split out of the parser class; agentflow's token kinds, error hints
+ * and recovery points, the `maxTextSize` source view (`source.ts`) and v12's `@{ … }` reading
+ * (its trailing commas, D464).
  * cspell:ignore kepano
  */
 import {
@@ -57,7 +59,7 @@ import type { AgentflowDocument, AgentflowLabelNode, AgentflowStatementNode } fr
 import { lex } from './lexer.ts';
 import { AgentflowBuilder } from './model.ts';
 import type { AgentflowModel, DocItem, LabelType } from './model.ts';
-import { agentflowSourceView, MAX_TEXT_SIZE } from './source.ts';
+import { agentflowSourceView } from './source.ts';
 import { stripLineTrailingCommas } from './trailing-commas.ts';
 import { T } from './tokens.ts';
 
@@ -134,7 +136,7 @@ export abstract class ParserBase {
       src,
       pre.bodyStart,
       pre.directives.map((d) => d.range),
-      options.maxTextSize ?? MAX_TEXT_SIZE
+      options.maxTextSize
     );
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.ids = this.st.ids;

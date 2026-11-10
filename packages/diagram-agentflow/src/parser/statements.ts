@@ -2,7 +2,9 @@
  * The agentflow parser's rules for vertices, links, chains and the one-line statements. Split
  * from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from Pele's
  * `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano).
+ * (c) 2026 kepano). Changed: agentflow's three links and `connector` statement, no `subgraph`
+ * or thick and invisible links, AST ids for every mention (D468), and the reserved
+ * `connectors` id (D464).
  * cspell:ignore kepano
  */
 import { inKindSet, nodeId } from '@mermaid-js/core/parser-kit';

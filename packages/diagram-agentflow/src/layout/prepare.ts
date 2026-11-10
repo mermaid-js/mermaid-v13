@@ -9,7 +9,8 @@
  * metrics table (pitfall 13). Written from a copy of v13 flowchart's builder (D446).
  *
  * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/graph.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: flows and collapsed
+ * cards instead of subgraphs, agentflow's config section and shapes, as above.
  * cspell:ignore kepano
  */
 import type {
@@ -21,6 +22,7 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
@@ -35,6 +37,7 @@ import type {
   AgentflowModelEdge,
   AgentflowVertex,
 } from '../parser/index.ts';
+import { layoutDir } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
@@ -124,8 +127,6 @@ export interface AgentflowPrepared {
   titleTopMargin: number;
 }
 
-const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
-const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 /** A curve name as flowchart reads it: any other name (v12's d3 curves) is `curved`. */
@@ -151,12 +152,17 @@ const arrowsOf = (type: string): [Arrowhead, Arrowhead] =>
     ? ['none', 'none']
     : ['none', type === 'arrow_cross' ? 'arrow_cross' : 'arrow_point'];
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
+/** The bold and italic `Style` bits a checked style's text declarations ask for. */
+export function emphasisBits(style: CheckedStyle): number {
   const t = style.text;
   const weight = t['font-weight'];
   const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
+  return (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
+}
+
+function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
+  const bits = emphasisBits(style);
+  const size = fontSizePx(style.text['font-size'], font.size);
   return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
@@ -165,11 +171,13 @@ interface Measure {
   readonly ctx: AgentflowLayoutContext;
   readonly units: UnitProfile;
   /** `agentflow.*` lengths. */
-  readonly agentflowLength: ConfigLength;
+  readonly agentflowLength: ConfigLength<keyof AgentflowDiagramConfig>;
   /** Character cells (text output, #551): every node is a text-form box (DESIGN §6.3). */
   readonly cells: boolean;
   readonly font: FontKey;
   readonly geometry: ShapeGeometry;
+  /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`. */
+  readonly curve: CurveKind;
   readonly wrap: number;
   readonly minWidth: number;
   readonly edgeWrap: number;
@@ -218,6 +226,7 @@ export function prepareAgentflow(
     cells: units.id === 'cell',
     font,
     geometry: { pads: padsOf(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
+    curve: curveKind(model.defaultInterpolate ?? flowchart?.curve),
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
@@ -225,7 +234,7 @@ export function prepareAgentflow(
       layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
     styleOf: styleCache(model, ctx),
   };
-  const rootDir = dirOf(model.direction) ?? 'TB';
+  const rootDir = layoutDir(model.direction) ?? 'TB';
   const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);
   const edges = edgeViews(model, views, groups, m);
   const titleMargin = { top: titleMarginLength('top'), bottom: titleMarginLength('bottom') };
@@ -233,7 +242,7 @@ export function prepareAgentflow(
   // Read only for a title, so an unused bad value raises no warning.
   const titleTopMargin = model.title?.trim()
     ? agentflowLength('titleTopMargin')
-    : agentflowConfigDefaults.titleTopMargin!;
+    : agentflowLength.fallback('titleTopMargin');
   return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin, titleTopMargin };
 }
 
@@ -366,7 +375,7 @@ function nodeViews(model: AgentflowModel, rootDir: Dir, m: Measure): Views {
       return value;
     };
   };
-  const flowDir = upward<Dir>(rootDir, (g, above) => dirOf(g.flow.dir) ?? above);
+  const flowDir = upward<Dir>(rootDir, (g, above) => layoutDir(g.flow.dir) ?? above);
   // Depth of the frame itself: 1 for a top-level flow.
   const depthOf = upward<number>(0, (_g, above) => above + 1);
   for (const view of nodes) measureNode(view, m);
@@ -425,7 +434,6 @@ function edgeViews(
     if (v.collapsedInto !== undefined) into.set(v.id, v.collapsedInto);
   for (const f of model.flows) if (f.collapsedInto !== undefined) into.set(f.id, f.collapsedInto);
   const drawn = new Set<string>([...views.keys(), ...groups.map((g) => g.id)]);
-  const flowchart = m.ctx.config.flowchart;
   const edges: AgentflowEdgeView[] = [];
   const ids = new Set<string>();
   for (const e of model.edges) {
@@ -448,7 +456,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flowchart?.curve),
+      curve: e.interpolate !== undefined ? curveKind(e.interpolate) : m.curve,
     });
   }
   return edges;
@@ -505,7 +513,7 @@ function layoutGraph(
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
-      const d = dirOf(g.flow.dir);
+      const d = layoutDir(g.flow.dir);
       if (d) group.direction = d;
       // `@{ algorithm }` is for an ELK engine to read; `mermaid` warns ELK_ALGORITHM_IGNORED (D174).
       const algorithm = g.flow.metadata?.algorithm;
@@ -533,11 +541,7 @@ function layoutGraph(
     diagramPadding: m.cells
       ? b.diagramPadding
       : fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
-    routing:
-      units.grid === undefined
-        ? (ROUTING[curveKind(model.defaultInterpolate ?? m.ctx.config.flowchart?.curve)] ??
-          'stepped')
-        : 'stepped',
+    routing: units.grid === undefined ? (ROUTING[m.curve] ?? 'stepped') : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };

@@ -5732,7 +5732,7 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig"
         }
       ],
-      "description": "The object containing configurations specific for the agentflow diagram type.\n\nAgentflow renders through the shared unified renderer, so it owns the same\nspacing and padding knobs a flowchart does. They live in their own block so\nthat agentflow can be tuned without moving every flowchart on the page.\n",
+      "description": "The object containing configurations specific for the agentflow diagram type.\n\nAgentflow renders through the shared unified renderer, so it owns the same\nspacing and padding knobs a flowchart does. They live in their own block so\nthat agentflow can be tuned without moving every flowchart on the page.\n\nA length here (`titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`,\n`wrappingWidth`, `minNodeWidth`) that is not a number from 0 up to 10,000 (a whole\nnumeric string such as `\"20\"` is taken, as v12 took it) draws with its default, with\none `AGENTFLOW_CONFIG_INVALID` warning.\n",
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
@@ -5786,7 +5786,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The front-matter title's baseline sits this far above the drawing (D218). A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "The front-matter title's baseline sits this far above the drawing (D218). An invalid length warns as the section says."
           }
         },
         "diagramPadding": {
@@ -5797,7 +5797,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Padding around the drawing, as v12. A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "Padding around the drawing, as v12. An invalid length warns as the section says."
           }
         },
         "nodeSpacing": {
@@ -5808,7 +5808,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Passed to the layout engine, as v12 (flowchart's `nodeSpacing` does not apply). A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "Passed to the layout engine, as v12 (flowchart's `nodeSpacing` does not apply). An invalid length warns as the section says."
           }
         },
         "rankSpacing": {
@@ -5819,7 +5819,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Passed to the layout engine, as v12 (flowchart's `rankSpacing` does not apply). A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "Passed to the layout engine, as v12 (flowchart's `rankSpacing` does not apply). An invalid length warns as the section says."
           }
         },
         "wrappingWidth": {
@@ -5829,7 +5829,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Labels wrap at this width, as v12. A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "Labels wrap at this width, as v12. An invalid length warns as the section says."
           }
         },
         "minNodeWidth": {
@@ -5839,7 +5839,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Labels narrower than this are widened to it (not a collapsed flow's card), as v12. A value that is not a number from 0 up to 10,000 (a whole numeric string such as `\"20\"` is taken, as v12 took it) draws with the default, with one `AGENTFLOW_CONFIG_INVALID` warning."
+            "reason": "Labels narrower than this are widened to it (not a collapsed flow's card), as v12. An invalid length warns as the section says."
           }
         }
       }

@@ -6,12 +6,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DiagramParseContext } from '@mermaid-js/core';
 import { validateLayout } from '@mermaid-js/core/layout';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import {
+  agentflow,
   layoutAgentflow,
-  parseAgentflow,
   type AgentflowLayout,
   type AgentflowLayoutContext,
   type AgentflowModel,
@@ -35,11 +34,8 @@ function api() {
     formats: ['svg'] as const,
     layoutKind: 'graph' as const,
     detector: (text: string) => /^\s*agentflow-beta\b/.test(text),
-    parse: (text: string, ctx: DiagramParseContext) =>
-      parseAgentflow(text, {
-        preprocessed: ctx.preprocessed,
-        inheritDir: ctx.config.flowchart?.inheritDir === true,
-      }),
+    // The plugin's own parse (config keys, limits, claims), not a copy of it.
+    parse: agentflow.parse,
     layout: (model: AgentflowModel, ctx: AgentflowLayoutContext): AgentflowLayout => {
       const layout = layoutAgentflow(model, ctx);
       laid.push({ model, layout });

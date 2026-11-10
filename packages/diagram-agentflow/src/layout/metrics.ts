@@ -10,12 +10,12 @@
  * never an import).
  */
 /** The `flowchart` length agentflow reads (D466), with v12's schema default. */
-export const FLOWCHART_LENGTH_DEFAULTS: Readonly<Record<string, number>> = Object.freeze({
+export const FLOWCHART_LENGTH_DEFAULTS: Readonly<Record<'padding', number>> = Object.freeze({
   padding: 15,
 });
 
 /** `flowchart.subGraphTitleMargin`'s sides (D466), with v12's schema default. */
-export const TITLE_MARGIN_DEFAULTS: Readonly<Record<string, number>> = Object.freeze({
+export const TITLE_MARGIN_DEFAULTS: Readonly<Record<'top' | 'bottom', number>> = Object.freeze({
   top: 0,
   bottom: 0,
 });
@@ -49,16 +49,19 @@ export interface AgentflowMetrics {
   /** Kept clear at each end of a flat side when edges spread along it. */
   readonly corner: number;
   /**
+   * v12's flow corner radius (`clusters.js` `flowGroup`): the expanded frame's, and the
+   * collapsed card's (its `flow` style).
+   */
+  readonly flowRadius: number;
+  /**
    * v12's collapsed-flow card (`collapsedGroup.ts`): fixed padding, label-to-row gap, indicator
-   * row, least width, corner radius (its `flow` style: 10, as the expanded frame's), how far in
-   * the separator starts, and the three dots' radius and spacing.
+   * row, least width, how far in the separator starts, and the three dots' radius and spacing.
    */
   readonly card: {
     readonly pad: number;
     readonly gap: number;
     readonly row: number;
     readonly minWidth: number;
-    readonly radius: number;
     readonly inset: number;
     readonly dot: number;
     readonly dotGap: number;
@@ -83,12 +86,12 @@ export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   roundSpan: 0.6,
   hexSpan: 0.5,
   corner: 12,
+  flowRadius: 10,
   card: Object.freeze({
     pad: 8,
     gap: 8,
     row: 20,
     minWidth: 80,
-    radius: 10,
     inset: 8,
     dot: 2.5,
     dotGap: 10,

@@ -6,7 +6,8 @@
  * closed polygon in the shape's own frame (centre at 0, y down), curves sampled.
  *
  * Flowchart's shape code is ported from Pele's `src/svg/shapes.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: cut to agentflow's seven
+ * shapes, with the outline as the one geometry layout and renderer share.
  * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
@@ -205,7 +206,7 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
       dy: -(m.card.gap + m.card.row) / 2,
     }),
     span: flat,
-    radius: (W, H, { metrics: m }) => Math.min(m.card.radius, W / 2, H / 2),
+    radius: (W, H, { metrics: m }) => Math.min(m.flowRadius, W / 2, H / 2),
     outline: (W, H, g) =>
       roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), g.metrics.curveSteps),
   },

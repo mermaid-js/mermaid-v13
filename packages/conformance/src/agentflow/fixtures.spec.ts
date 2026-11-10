@@ -5,11 +5,14 @@ import { parseAgentflow, semanticModel } from '@mermaid-js/diagram-agentflow';
 import type { AgentflowSemanticModel } from '@mermaid-js/diagram-agentflow';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import { REPO_ROOT } from '../corpus.ts';
+import { agentflowCases } from './corpus.ts';
 
 /**
  * v12's eight in-tree conformance fixtures (`agentflow/conformance/fixtures/`, `fa796a943`), as
  * `.mmd` files with their `.expected.json` in `e2e/diagrams/agentflow/conformance/` (the parse
- * error in `./fixtures/`: an e2e fixture must render, #550), run as
+ * error is the case `v12-fixture-parse-error-unterminated-container` in
+ * `corpus/agentflow-cases.json`, with its expectation here: an e2e fixture must render, #550),
+ * run as
  * v12's `runner.ts` ran them: the outcome (`parse-error` on an error diagnostic, else `warning`
  * or `valid` by the semantic model's diagnostics), every listed diagnostic present and none
  * other (by id, node and line), and the listed parts of the semantic model (a subset match).
@@ -19,10 +22,8 @@ import { REPO_ROOT } from '../corpus.ts';
  * (`Unclosed flow`, R-ERR-5) where v12's was jison's (`Parse error`); and the shape diagnostics name the
  * line of the block that sets the shape, where v12 had no line for them.
  */
-const DIRS = [
-  join(REPO_ROOT, 'e2e/diagrams/agentflow/conformance'),
-  join(REPO_ROOT, 'packages/conformance/src/agentflow/fixtures'),
-];
+const DIR = join(REPO_ROOT, 'e2e/diagrams/agentflow/conformance');
+const PARSE_ERROR = 'parse-error-unterminated-container';
 
 interface Expected {
   outcome: 'valid' | 'warning' | 'error' | 'parse-error';
@@ -67,24 +68,36 @@ const matches = (d: Found, e: { id: string; nodeId?: string; line?: number }) =>
   (e.nodeId === undefined || d.nodeId === e.nodeId) &&
   (e.line === undefined || d.line === e.line);
 
-const cases = DIRS.flatMap((dir) =>
-  readdirSync(dir)
+const parseError = agentflowCases().find(
+  (c) => c.id === `agentflow-cases/v12-fixture-${PARSE_ERROR}`
+);
+const cases = [
+  ...readdirSync(DIR)
     .filter((f) => f.endsWith('.mmd'))
-    .map((f) => [f.slice(0, -'.mmd'.length), dir] as const)
-)
-  .sort(([a], [b]) => Number(a > b) - Number(a < b))
-  .map(([name, dir]) => ({ name, dir }));
+    .map((f) => {
+      const name = f.slice(0, -'.mmd'.length);
+      const expected = JSON.parse(
+        readFileSync(join(DIR, `${name}.expected.json`), 'utf8')
+      ) as Expected;
+      return { name, source: readFileSync(join(DIR, f), 'utf8'), expected };
+    }),
+  ...(parseError
+    ? [
+        {
+          name: PARSE_ERROR,
+          source: parseError.source,
+          expected: { outcome: 'parse-error', parseErrorContains: 'Unclosed flow' } as Expected,
+        },
+      ]
+    : []),
+].sort((a, b) => Number(a.name > b.name) - Number(a.name < b.name));
 
 describe('agentflow conformance fixtures (v12 conformance/fixtures)', () => {
   it('has the eight fixtures', () => {
     expect(cases).toHaveLength(8);
   });
 
-  it.each(cases)('$name', ({ name, dir }) => {
-    const source = readFileSync(join(dir, `${name}.mmd`), 'utf8');
-    const expected = JSON.parse(
-      readFileSync(join(dir, `${name}.expected.json`), 'utf8')
-    ) as Expected;
+  it.each(cases)('$name', ({ source, expected }) => {
     const got = run(source);
     expect(got.outcome, got.error).toBe(expected.outcome);
     if (expected.parseErrorContains !== undefined) {

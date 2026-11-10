@@ -12,14 +12,13 @@ import {
   renderAgentflowForTest,
   type RenderedAgentflow,
 } from '@mermaid-js/diagram-agentflow/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * Pitfall 19: the agentflow renderer is linear in what it draws (no per-node lookups of other
  * nodes, one walk for the palette order). Each shape is laid out once at n and 8n units; only
  * `renderAgentflow` is timed, so the engine's own cost stays out. Linear is ~8x, quadratic ~64x,
- * and the bar is 24x. Times are this thread's CPU time (#531's pattern), best of five, small
- * and large renders alternating; the small render repeats until it takes at least
- * {@link MIN_MS}, the large one an eighth as often. Not measured on a steady machine.
+ * and the bar is 24x, timed with `linearRatio` (`../linear-time.ts`).
  */
 const H = 'agentflow-beta TB\n';
 const SHAPES: [string, (n: number) => string][] = [
@@ -73,34 +72,6 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = createTheme(await loadTheme('redux-color'), { diagram: agentflow.theme });
@@ -132,17 +103,7 @@ describe('stress: the agentflow renderer is linear in what it draws', () => {
       const large = drawer(
         await renderAgentflowForTest(build(2000), { config: { theme: 'redux-color' } })
       );
-      large(); // warm up
-      const reps = repeatsFor(small);
-      const repsLarge = Math.max(1, reps / 8);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(tSmall, cost(small, reps));
-        tLarge = Math.min(tLarge, cost(large, repsLarge));
-      }
-      expect(tSmall, `${reps} small runs read 0 ms (MIN_MS ${MIN_MS})`).toBeGreaterThan(0);
-      expect(tLarge / repsLarge / (tSmall / reps)).toBeLessThan(24);
+      expect(linearRatio(small, large)).toBeLessThan(24);
     },
     120_000
   );
