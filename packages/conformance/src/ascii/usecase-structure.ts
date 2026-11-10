@@ -5,11 +5,7 @@
 import { graphemes, repairRoutes } from '@mermaid-js/core/ascii';
 import type { Point } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type {
-  UsecaseEdgeView,
-  UsecaseNodeView,
-  UsecaseRelationship,
-} from '@mermaid-js/diagram-usecase';
+import type { MarkerType, UsecaseEdgeView, UsecaseNodeView } from '@mermaid-js/diagram-usecase';
 import type { Charset } from './structure.ts';
 import type { UsecaseCellLayout } from './usecase-render.ts';
 
@@ -97,29 +93,7 @@ const STEP: Record<Way, Point> = {
 /** The direction from an end cell into its node, by the side the end is on. */
 const INTO: Record<string, Way> = { top: 'down', bottom: 'up', left: 'right', right: 'left' };
 
-type Marker = 'none' | 'point' | 'circle' | 'cross' | 'extension';
-
-/** The markers of a relationship (v12 `ARROW_TYPE`; generalization's hollow triangle). */
-function markers(r: UsecaseRelationship): [Marker, Marker] {
-  if (r.type === 'generalization') return ['none', 'extension'];
-  if (r.type !== 'association') return ['none', 'point'];
-  switch (r.arrowType) {
-    case 'point':
-      return ['none', 'point'];
-    case 'reversedPoint':
-      return ['point', 'none'];
-    case 'circle':
-      return ['none', 'circle'];
-    case 'cross':
-      return ['none', 'cross'];
-    case 'reversedCircle':
-      return ['circle', 'none'];
-    case 'reversedCross':
-      return ['cross', 'none'];
-    case 'line':
-      return ['none', 'none'];
-  }
-}
+type Marker = MarkerType;
 
 export interface ReadBack {
   /** Every fault found, as text. */
@@ -346,9 +320,8 @@ function tipOf(c: Ctx, cell: Point, into: Way, node: string): Point {
 function checkEnd(c: Ctx, e: UsecaseEdgeView, cells: Point[], first: boolean, tips: Set<string>) {
   const ports = c.layout.edges.get(e.id)!.ports;
   const i = first ? 0 : cells.length - 1;
-  const [mStart, mEnd]: [Marker, Marker] =
-    e.kind === 'relation' ? markers(e.relationship) : ['none', 'none'];
-  const marker = first ? mStart : mEnd;
+  // The markers the layout gave the line (v12 `ARROW_TYPE`; a generalization's triangle).
+  const marker = first ? e.markers.start : e.markers.end;
   const node = first ? e.source : e.target;
   const into = INTO[first ? ports.source : ports.target]!;
   const tip = tipOf(c, cells[i]!, into, node);

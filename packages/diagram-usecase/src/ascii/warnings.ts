@@ -7,7 +7,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
-import { USECASE_CONFIG_DEFAULTS } from '../config.ts';
+import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
 
@@ -35,7 +35,8 @@ export interface AsciiRouteWarning extends Warning {
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiRouteWarning;
 
-const WHAT: Record<AsciiDroppedFeature, string> = {
+/** What each feature kind is, as the warning names it. */
+const FEATURE_TEXT: Record<AsciiDroppedFeature, string> = {
   style: 'colours and styles (style, classDef, class)',
   emphasis: 'bold and italic text',
   glyph: 'business marks, icons and the hollow and awesome actor figures',
@@ -51,7 +52,7 @@ const STATEMENTS: Partial<Record<AsciiDroppedFeature, readonly string[]>> = {
 };
 
 /** `usecase` keys with no text form: drawn the same whatever they are set to. */
-const UNDRAWN = [
+const UNDRAWN: readonly UsecaseConfigKey[] = [
   'actorFontSize',
   'actorFontWeight',
   'actorFontFamily',
@@ -61,7 +62,7 @@ const UNDRAWN = [
   'colorScheme',
   'useMaxWidth',
   'diagramPadding',
-] as const;
+];
 
 const styled = (s: CheckedStyle): boolean =>
   Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
@@ -80,14 +81,11 @@ function statements(ast: AstNode | undefined, out: Map<string, string[]>): void 
 }
 
 /**
- * The `usecase` keys set to something other than their default that text output draws the
- * same either way. The resolved section carries the defaults, so a value equal to one counts
- * as not set (as ER's sizes, D124); the families have no default (D132), so any one counts.
+ * The `usecase` keys the author set (`UsecaseLayoutConfig.set`: taken, and off their default)
+ * that text output draws the same either way.
  */
-export function undrawnConfig(section: Readonly<Record<string, unknown>> | undefined): string[] {
-  const given = section ?? {};
-  const defaults: Readonly<Record<string, unknown>> = USECASE_CONFIG_DEFAULTS;
-  return UNDRAWN.filter((key) => given[key] !== undefined && given[key] !== defaults[key]);
+export function undrawnConfig(config: UsecaseLayoutConfig): UsecaseConfigKey[] {
+  return UNDRAWN.filter((key) => config.set.has(key));
 }
 
 type Add = (feature: AsciiDroppedFeature, id?: string) => void;
@@ -115,14 +113,13 @@ function nodeFeatures(prepared: UsecasePrepared, add: Add): void {
 
 /**
  * The warnings for one drawing: the features without a text form, one per kind (D82). `ast`
- * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …); `section` is the
- * resolved `usecase` config.
+ * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …); the config is the one
+ * the layout resolved (`prepared.config`), whose rejected values already warned.
  */
 export function asciiWarnings(
   model: UsecaseModel,
   prepared: UsecasePrepared,
-  ast?: AstNode,
-  section?: Readonly<Record<string, unknown>>
+  ast?: AstNode
 ): AsciiWarning[] {
   const found: Partial<Record<AsciiDroppedFeature, Set<string>>> = {};
   const add: Add = (feature, id) => {
@@ -140,23 +137,24 @@ export function asciiWarnings(
     if (emphasised(e.label)) add('emphasis', e.id);
     if (e.relationship.animate || e.relationship.animation) add('animation', e.id);
   }
-  if (undrawnConfig(section).length > 0) add('config');
+  const undrawn = undrawnConfig(prepared.config);
+  if (undrawn.length > 0) add('config');
   if (model.accTitle || model.accDescr) add('accessibility');
   const stmts = new Map<string, string[]>();
   statements(ast, stmts);
   const out: AsciiWarning[] = [];
-  for (const feature of Object.keys(WHAT) as AsciiDroppedFeature[]) {
+  for (const feature of Object.keys(FEATURE_TEXT) as AsciiDroppedFeature[]) {
     // A statement alone is enough: a `classDef` nothing uses still has no text form.
     for (const kind of STATEMENTS[feature] ?? [])
       for (const id of stmts.get(kind) ?? []) add(feature, id);
     const ids = found[feature];
     if (!ids) continue;
-    const keys = feature === 'config' ? ` (${undrawnConfig(section).join(', ')})` : '';
+    const keys = feature === 'config' ? ` (${undrawn.join(', ')})` : '';
     out.push({
       code: 'ASCII_DROPPED',
       feature,
       astIds: [...ids],
-      message: `Text output has no ${WHAT[feature]}${keys}; dropped.`,
+      message: `Text output has no ${FEATURE_TEXT[feature]}${keys}; dropped.`,
     });
   }
   return out;

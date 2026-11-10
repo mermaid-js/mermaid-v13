@@ -1,11 +1,8 @@
 /**
  * The `usecase` options the layout and the renderer read, from the resolved config's `usecase`
- * section, resolved once per render (`UsecasePrepared.config`). The
- * defaults are v12's schema defaults (`UsecaseDiagramConfig` in `config.schema.yaml` at
- * fa796a943, the same in `packages/core/schema/config.schema.yaml`). The plugin's
- * `configDefaults` (`generated/config-defaults.ts`, #567) fill the section with them; this file
- * keeps them as the value a key the layout cannot use falls back to (`config-defaults.spec.ts`
- * holds the two equal).
+ * section, resolved once per render (`UsecasePrepared.config`). The fallbacks are the plugin's
+ * `configDefaults` (`generated/config-defaults.ts`, v12's schema defaults at fa796a943, #567),
+ * which fill the section in a render; a key the layout cannot use falls back to them too.
  *
  * The config resolver checks no value types, so a directive can set any of these to anything. A
  * length is a number, or a numeric string as its number, from the schema's minimum up to 10000;
@@ -19,6 +16,7 @@
  */
 import { checkStyle } from '@mermaid-js/core/svg';
 import { USECASE_CONFIG_IGNORED } from './codes.ts';
+import { usecaseConfigDefaults } from './generated/config-defaults.ts';
 
 /** The CSS weights a font key takes, as numbers. */
 export const FONT_WEIGHT = Object.freeze({ normal: 400, bold: 700 });
@@ -29,6 +27,16 @@ export interface ConfigFont {
   readonly size: number;
   readonly weight: number;
 }
+
+/** The `usecase` keys the layout reads. */
+export type UsecaseConfigKey =
+  | LengthKey
+  | 'actorFontFamily'
+  | 'actorFontWeight'
+  | 'usecaseFontFamily'
+  | 'usecaseFontWeight'
+  | 'colorScheme'
+  | 'useMaxWidth';
 
 /** The `usecase` options the layout reads, every one set (but the families). */
 export interface UsecaseLayoutConfig {
@@ -45,22 +53,18 @@ export interface UsecaseLayoutConfig {
   readonly colorScheme: 'role' | 'rotate';
   /** The root's width is `100%` with a `max-width` (the renderer's). */
   readonly useMaxWidth: boolean;
+  /**
+   * The keys set by the author: taken, and off their default (a family whenever taken). The
+   * resolved section carries the defaults, so a value equal to its default counts as not set
+   * (as ER's sizes, D124); a value not taken is not set either: the default is drawn.
+   */
+  readonly set: ReadonlySet<UsecaseConfigKey>;
 }
 
-/** v12's schema defaults for the keys the layout reads. */
-export const USECASE_CONFIG_DEFAULTS = Object.freeze({
-  wrappingWidth: 120,
-  minNodeWidth: 120,
-  actorFontSize: 14,
-  actorFontWeight: 'normal',
-  usecaseFontSize: 12,
-  usecaseFontWeight: 'normal',
-  nodeSpacing: 50,
-  rankSpacing: 50,
-  diagramPadding: 20,
-  colorScheme: 'role',
-  useMaxWidth: true,
-});
+/** The section defaults of the keys the layout reads (`configDefaults`, every one given). */
+const DEFAULTS = usecaseConfigDefaults as Required<
+  Pick<typeof usecaseConfigDefaults, Exclude<UsecaseConfigKey, `${string}FontFamily`>>
+>;
 
 type LengthKey =
   | 'wrappingWidth'
@@ -110,58 +114,63 @@ export function fontWeight(value: unknown): number | undefined {
   return Number.isInteger(n) && n > 0 ? n : undefined;
 }
 
-/** v12's `colorScheme`: `role` or `rotate`; anything else is `role`, with a warning. */
-function colorScheme(
-  value: unknown,
-  ignored: (key: string, using: string) => void
-): UsecaseLayoutConfig['colorScheme'] {
-  if (value === undefined || value === 'role' || value === 'rotate') return value ?? 'role';
-  ignored('colorScheme', 'role');
-  return 'role';
-}
-
 /** The layout's options from the resolved `usecase` section, warning once per key not taken. */
 export function usecaseLayoutConfig(
   section: Readonly<Record<string, unknown>> | undefined,
   warn?: (warning: ConfigWarning) => void
 ): UsecaseLayoutConfig {
   const given = section ?? {};
-  const ignored = (key: string, using: string): void =>
+  const set = new Set<UsecaseConfigKey>();
+  const ignored = (key: UsecaseConfigKey, using: string): void =>
     warn?.({
       code: USECASE_CONFIG_IGNORED,
       message: `Ignored usecase.${key}: it is not a value the usecase layout can use; using ${using}`,
       path: `usecase.${key}`,
     });
-  const length = (key: LengthKey): number => {
+  /** The value `read` takes from the key, else the default (with a warning if one was given). */
+  const take = <T>(
+    key: UsecaseConfigKey,
+    fallback: T,
+    using: string,
+    read: (v: unknown) => T | undefined
+  ): T => {
     const value = given[key];
-    const fallback = USECASE_CONFIG_DEFAULTS[key];
     if (value === undefined) return fallback;
-    const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
-    if (typeof n === 'number' && Number.isFinite(n) && n >= MINIMUM[key] && n < MAX_LENGTH)
-      return n;
-    ignored(key, String(fallback));
-    return fallback;
+    const taken = read(value);
+    if (taken === undefined) {
+      ignored(key, using);
+      return fallback;
+    }
+    if (taken !== fallback) set.add(key);
+    return taken;
   };
+  const length = (key: LengthKey): number =>
+    take(key, DEFAULTS[key], String(DEFAULTS[key]), (value) => {
+      const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
+      return typeof n === 'number' && Number.isFinite(n) && n >= MINIMUM[key] && n < MAX_LENGTH
+        ? n
+        : undefined;
+    });
   const font = (prefix: 'actor' | 'usecase'): ConfigFont => {
-    const familyKey = `${prefix}FontFamily`;
+    const family = take<string | undefined>(
+      `${prefix}FontFamily`,
+      undefined,
+      "the theme's fontFamily",
+      (f) => {
+        if (typeof f !== 'string' || f.trim() === '') return undefined;
+        const safe = checkStyle([`font-family:${f}`]).text['font-family'];
+        return typeof safe === 'string' ? safe : undefined;
+      }
+    );
     const weightKey = `${prefix}FontWeight` as const;
-    const f = given[familyKey];
-    let family: string | undefined;
-    if (f !== undefined) {
-      const safe =
-        typeof f === 'string' && f.trim() !== ''
-          ? checkStyle([`font-family:${f}`]).text['font-family']
-          : undefined;
-      if (typeof safe === 'string') family = safe;
-      else ignored(familyKey, "the theme's fontFamily");
-    }
-    const w = given[weightKey];
-    let weight = fontWeight(USECASE_CONFIG_DEFAULTS[weightKey]) ?? FONT_WEIGHT.normal;
-    if (w !== undefined) {
+    const normal = fontWeight(DEFAULTS[weightKey]) ?? FONT_WEIGHT.normal;
+    // A schema weight with no number (`inherit`, …) keeps the default, unwarned.
+    const weight = take(weightKey, normal, DEFAULTS[weightKey], (w) => {
       const text = typeof w === 'number' ? String(w) : w;
-      if (typeof text === 'string' && WEIGHT.test(text)) weight = fontWeight(text) ?? weight;
-      else ignored(weightKey, USECASE_CONFIG_DEFAULTS[weightKey]);
-    }
+      return typeof text === 'string' && WEIGHT.test(text)
+        ? (fontWeight(text) ?? normal)
+        : undefined;
+    });
     return {
       ...(family !== undefined ? { family } : {}),
       size: length(`${prefix}FontSize`),
@@ -176,7 +185,16 @@ export function usecaseLayoutConfig(
     diagramPadding: length('diagramPadding'),
     actorFont: font('actor'),
     usecaseFont: font('usecase'),
-    colorScheme: colorScheme(given.colorScheme, ignored),
-    useMaxWidth: given.useMaxWidth !== false,
+    // v12's `colorScheme`: `role` or `rotate`; anything else is `role`, with a warning.
+    colorScheme: take<UsecaseLayoutConfig['colorScheme']>(
+      'colorScheme',
+      DEFAULTS.colorScheme,
+      DEFAULTS.colorScheme,
+      (v) => (v === 'role' || v === 'rotate' ? v : undefined)
+    ),
+    useMaxWidth: take('useMaxWidth', DEFAULTS.useMaxWidth, String(DEFAULTS.useMaxWidth), (v) =>
+      v === false ? false : true
+    ),
+    set,
   };
 }

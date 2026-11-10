@@ -5,10 +5,8 @@
  * hollow triangle for a generalization (`metrics.ts` `MARKER`).
  */
 import type { Attrs, OutlinePaint, Paint, SvgWriter } from '@mermaid-js/core/svg';
-import type { UsecaseArrowType, UsecaseRelationship } from '../model.ts';
+import type { MarkerType } from '../layout/prepare.ts';
 import { MARKER } from './metrics.ts';
-
-export type MarkerType = 'none' | 'point' | 'circle' | 'cross' | 'extension';
 
 /** Where a line meets a node outline, and the unit direction it travels there. */
 export interface LineEnd {
@@ -17,23 +15,6 @@ export interface LineEnd {
   readonly dx: number;
   readonly dy: number;
 }
-
-/** The markers at each end of a relationship (v12 `associationMarkers`, `relationshipVisuals`). */
-export function markersOf(r: UsecaseRelationship): { start: MarkerType; end: MarkerType } {
-  if (r.type === 'generalization') return { start: 'none', end: 'extension' };
-  if (r.type !== 'association') return { start: 'none', end: 'point' };
-  return ASSOCIATION[r.arrowType];
-}
-
-const ASSOCIATION: Readonly<Record<UsecaseArrowType, { start: MarkerType; end: MarkerType }>> = {
-  point: { start: 'none', end: 'point' },
-  reversedPoint: { start: 'point', end: 'none' },
-  line: { start: 'none', end: 'none' },
-  circle: { start: 'none', end: 'circle' },
-  cross: { start: 'none', end: 'cross' },
-  reversedCircle: { start: 'circle', end: 'none' },
-  reversedCross: { start: 'cross', end: 'none' },
-};
 
 /**
  * How far the line stops short of the node outline: under the point's back, to the circle's and

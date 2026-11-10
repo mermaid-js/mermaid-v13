@@ -18,20 +18,20 @@ export type * from './model.ts';
 export * from './codes.ts';
 export { layoutUsecase } from './layout/layout.ts';
 export type { UsecaseLayout, UsecaseLayoutContext } from './layout/layout.ts';
-export { isOval, prepareUsecase, relationText } from './layout/prepare.ts';
+export { prepareUsecase } from './layout/prepare.ts';
 export type {
   ActorView,
   BoundaryView,
+  EndMarkers,
   JsonRowView,
   JsonTableView,
+  MarkerType,
   NoteEdgeView,
   NoteView,
   RelationEdgeView,
-  UsecaseEdgeKind,
   UsecaseEdgeView,
   UsecaseNodeView,
   UsecasePrepared,
   UseCaseView,
 } from './layout/prepare.ts';
-export { fontWeight, USECASE_CONFIG_DEFAULTS, usecaseLayoutConfig } from './config.ts';
-export type { ConfigFont, UsecaseLayoutConfig } from './config.ts';
+export type { ConfigFont, UsecaseConfigKey, UsecaseLayoutConfig } from './config.ts';

@@ -61,14 +61,18 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   });
 
   // #569: usecase's text entry is its own lazily imported chunk; its SVG render (core and the
-  // plugin chunk) loads none of it, though the plugin's layout lays out in cells too.
+  // plugin chunk) loads none of it, though the plugin's layout lays out in cells too: the cell
+  // sizing is the text entry's (`ascii/sizing.ts`), handed to the layout (#517 final review).
   it('a usecase SVG render loads the usecase plugin, and no ascii module', () => {
     const plugin = chunkOf(prod, 'packages/diagram-usecase/src/index.ts');
     expect(plugin).toBeDefined();
     const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
     const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs).toContain('packages/diagram-usecase/src/plugin.ts');
+    expect(inputs).toContain('packages/diagram-usecase/src/layout/sizing.ts');
     expect(inputs.filter(isAsciiModule)).toEqual([]);
+    const text = splitByFormat(prod).ascii.flatMap((f) => prod.graph[f]!.inputs);
+    expect(text).toContain('packages/diagram-usecase/src/ascii/sizing.ts');
   });
 
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {

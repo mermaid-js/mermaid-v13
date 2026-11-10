@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { draw, text } from './ascii/usecase.fixtures.ts';
 import { undrawnConfig } from './ascii/warnings.ts';
+import { usecaseLayoutConfig } from './config.ts';
 
 // The usecase `ascii` hook (spec #517 T7, D320, D478, R-ASCII-5, R-ASCII-6), called through the
 // `./ascii` entry as the pipeline does (parse → layout in cells → hook), with the generated
@@ -266,11 +267,11 @@ describe('warnings (D82, D478, pitfall 22)', () => {
   });
 
   it('warns for the usecase options text output cannot honour, only when set off their default', async () => {
-    expect(undrawnConfig({ actorFontSize: 14, useMaxWidth: true, colorScheme: 'role' })).toEqual(
-      []
-    );
+    const undrawn = (section: Record<string, unknown>) =>
+      undrawnConfig(usecaseLayoutConfig(section));
+    expect(undrawn({ actorFontSize: 14, useMaxWidth: true, colorScheme: 'role' })).toEqual([]);
     expect(
-      undrawnConfig({ actorFontSize: 20, usecaseFontFamily: 'serif', colorScheme: 'rotate' })
+      undrawn({ actorFontSize: 20, usecaseFontFamily: 'serif', colorScheme: 'rotate' })
     ).toEqual(['actorFontSize', 'usecaseFontFamily', 'colorScheme']);
     const { warnings } = await draw(H + 'A', {
       config: { usecase: { useMaxWidth: false, diagramPadding: 4 } },
@@ -278,5 +279,20 @@ describe('warnings (D82, D478, pitfall 22)', () => {
     expect(dropped(warnings)).toEqual([['ASCII_DROPPED', 'config']]);
     expect(warnings[0]!.message).toContain('useMaxWidth, diagramPadding');
     expect((await draw(H + 'A')).warnings).toEqual([]);
+  });
+
+  it('reads a numeric string as its number: diagramPadding "20" is the default, not dropped', async () => {
+    const { warnings } = await draw(H + 'A', { config: { usecase: { diagramPadding: '20' } } });
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns once for a value the layout does not take: USECASE_CONFIG_IGNORED, no ASCII_DROPPED', async () => {
+    const { warnings } = await draw(H + 'A', {
+      config: { usecase: { diagramPadding: 'wide', actorFontWeight: 'heavy' } },
+    });
+    expect(dropped(warnings)).toEqual([
+      ['USECASE_CONFIG_IGNORED', undefined],
+      ['USECASE_CONFIG_IGNORED', undefined],
+    ]);
   });
 });

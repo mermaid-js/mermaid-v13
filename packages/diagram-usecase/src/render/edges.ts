@@ -7,16 +7,14 @@
  * in the flowchart: the keyframes would need a `<style>` (out of scope, spec #517).
  */
 import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
-import type { RelationEdgeView, UsecaseEdgeView } from '../layout/prepare.ts';
+import { noteEdgeId, type RelationEdgeView, type UsecaseEdgeView } from '../layout/prepare.ts';
 import type { UsecaseRelationship } from '../model.ts';
-import { marker, markersOf, markerTrim } from './markers.ts';
+import { marker, markerTrim } from './markers.ts';
 import { DRAW } from './metrics.ts';
-import { relationName } from './names.ts';
+import { relationName } from './accessible-names.ts';
 import { need } from './paint.ts';
 import { routePath } from './route.ts';
 import { cls, type Scene } from './scene.ts';
-
-const NONE = { start: 'none', end: 'none' } as const;
 
 export function drawEdges(scene: Scene): void {
   const { w, p, paint } = scene;
@@ -68,12 +66,12 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
   w.open('g', {
     class: edgeClass(e),
     // v12's ids: the relationship's, `<note id>-edge` for a note's connector.
-    'data-id': e.kind === 'relation' ? e.relationship.id : `${e.note.id}-edge`,
+    'data-id': e.kind === 'relation' ? e.relationship.id : noteEdgeId(e.note.id),
     // A note's AST node is drawn by its box; a relationship's by its line.
     'data-ast': e.kind === 'relation' ? e.relationship.astId : undefined,
   });
   if (route && route.points.length > 1) {
-    const ends = e.kind === 'relation' ? markersOf(e.relationship) : NONE;
+    const ends = e.markers;
     const path = routePath(
       w,
       route.points,

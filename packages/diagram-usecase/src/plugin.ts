@@ -1,7 +1,7 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { usecaseConfigDefaults } from './generated/config-defaults.ts';
-import { usecaseIcons, usecaseLabels } from './labels.ts';
+import { pluginLabels, usecaseIcons } from './labels.ts';
 import { layoutUsecase, type UsecaseLayout } from './layout/layout.ts';
 import type { UsecaseModel } from './model.ts';
 import { detectUsecase, parseUsecase, type UsecaseParseResult } from './parser/index.ts';
@@ -26,7 +26,7 @@ export const usecase = {
   detector: (text: string): boolean => detectUsecase(text),
   parse: (text: string, ctx: DiagramParseContext): UsecaseParseResult =>
     parseUsecase(text, { preprocessed: ctx.preprocessed }),
-  labels: usecaseLabels,
+  labels: pluginLabels,
   icons: usecaseIcons,
   layout: (model: UsecaseModel, ctx: RenderContext): UsecaseLayout => layoutUsecase(model, ctx),
   render: (model: UsecaseModel, layout: UsecaseLayout, ctx: RenderContext, w: SvgWriter): void =>

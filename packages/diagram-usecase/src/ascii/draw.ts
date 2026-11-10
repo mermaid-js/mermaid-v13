@@ -21,7 +21,6 @@ import {
   opposite,
   RIGHT,
   sideOf,
-  unicode,
   UP,
   type CellRect,
   type Dir,
@@ -33,12 +32,12 @@ import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ActorView,
   JsonTableView,
+  MarkerType,
   UsecaseEdgeView,
   UsecaseNodeView,
   UsecasePrepared,
   UseCaseView,
 } from '../layout/prepare.ts';
-import { markersOf, type MarkerType } from '../render/markers.ts';
 
 interface Centred {
   x: number;
@@ -48,7 +47,7 @@ interface Centred {
 }
 
 /** The cells of a box from its centre and size (the grid model's convention, `LayoutGraph.grid`). */
-export function cellRect(b: Centred): CellRect {
+function cellRect(b: Centred): CellRect {
   const x = Math.round(b.x - b.width / 2 + 0.5);
   const y = Math.round(b.y - b.height / 2 + 0.5);
   return {
@@ -80,8 +79,23 @@ function cellsOf(points: readonly Point[]): Point[] {
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;
 
-/** A generalization's hollow triangle, by the direction it points (D478). */
-const TRIANGLE: Sides = { up: '△', down: '▽', left: '◁', right: '▷' };
+/** What usecase draws differently in each charset (D478), beside core's glyph set. */
+interface UsecaseGlyphs {
+  /**
+   * A generalization's head, by the direction it points: the hollow triangle, or core's
+   * arrowhead with a bar before it, across the line (`|>`), in the stroke the line runs in.
+   */
+  readonly triangle?: Sides;
+  /** A Markdown list's bullet as written; undefined keeps the label's own. */
+  readonly bullet?: string;
+  /** Where a line leaves a box, the tee merges into a border junction already drawn there. */
+  readonly mergeTees: boolean;
+}
+
+const USECASE_GLYPHS: Readonly<Record<GlyphSet['name'], UsecaseGlyphs>> = {
+  unicode: { triangle: { up: '△', down: '▽', left: '◁', right: '▷' }, mergeTees: true },
+  ascii: { bullet: '-', mergeTees: false },
+};
 
 /**
  * Writes a label's lines centred in a `width`-cell-wide block from (x, y); a Markdown list keeps
@@ -95,9 +109,10 @@ function writeLabel(
   width: number,
   glyphs: GlyphSet
 ): void {
+  const { bullet } = USECASE_GLYPHS[glyphs.name];
   label.lines.forEach((runs, i) => {
     let text = runs.map((r) => r.text).join('');
-    if (glyphs.name === 'ascii' && label.left) text = text.replace(/^(\s*)[•◦]/, '$1-');
+    if (bullet !== undefined && label.left) text = text.replace(/^(\s*)[•◦]/, `$1${bullet}`);
     const left = x + Math.floor((width - label.width) / 2) + (label.indents[i] ?? 0);
     const centred = x + Math.floor((width - (label.widths[i] ?? 0)) / 2);
     drawText(canvas, label.left ? left : centred, y + i, text);
@@ -106,7 +121,7 @@ function writeLabel(
 
 interface End {
   /** The layout node the line ends at. */
-  at: string;
+  node: string;
   /** The end cell, next to the node. */
   cell: Point;
   /** The cell before it on the line, unless that is the other end's. */
@@ -142,15 +157,14 @@ function drawLine(
     if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = dotted.v;
     if (glyph) canvas.draw(c.x, c.y, glyph);
   });
-  const markers = e.kind === 'relation' ? markersOf(e.relationship) : undefined;
   // The cell before the end, where a two-cell head (`|>`) puts its bar: not the other end's.
-  const end = (i: number, step: number, d: Dir, at: string, marker: MarkerType): End => {
+  const end = (i: number, step: number, d: Dir, node: string, marker: MarkerType): End => {
     const b = cells[i + 2 * step] ? cells[i + step] : undefined;
     const cell = cells[i]!;
-    return { at, cell, into: d, marker, dotted: e.dotted, ...(b ? { before: b } : {}) };
+    return { node, cell, into: d, marker, dotted: e.dotted, ...(b ? { before: b } : {}) };
   };
-  ends.push(end(0, 1, into.source, e.source, markers?.start ?? 'none'));
-  ends.push(end(last, -1, into.target, e.target, markers?.end ?? 'none'));
+  ends.push(end(0, 1, into.source, e.source, e.markers.start));
+  ends.push(end(last, -1, into.target, e.target, e.markers.end));
 }
 
 /** The glyph an end's marker puts in its cell, if any. */
@@ -163,7 +177,7 @@ function markerGlyph(glyphs: GlyphSet, end: End): string | undefined {
     case 'cross':
       return glyphs.cross;
     case 'extension':
-      return glyphs.name === 'unicode' ? sideOf(TRIANGLE, end.into) : sideOf(glyphs.head, end.into);
+      return sideOf(USECASE_GLYPHS[glyphs.name].triangle ?? glyphs.head, end.into);
     case 'none':
       return undefined;
   }
@@ -179,9 +193,10 @@ function drawMarker(canvas: Canvas, glyphs: GlyphSet, end: End): void {
   if (!head) return;
   canvas.set(end.cell.x, end.cell.y, head);
   const b = end.before;
-  if (end.marker !== 'extension' || glyphs.name !== 'ascii' || !b) return;
+  if (end.marker !== 'extension' || USECASE_GLYPHS[glyphs.name].triangle || !b) return;
   if (b.x + DX[end.into] !== end.cell.x || b.y + DY[end.into] !== end.cell.y) return;
-  canvas.set(b.x, b.y, end.into === LEFT || end.into === RIGHT ? '|' : '-');
+  // Across the line: a bar of the stroke that runs the other way.
+  canvas.set(b.x, b.y, end.into === LEFT || end.into === RIGHT ? glyphs.solid.v : glyphs.solid.h);
 }
 
 /**
@@ -195,8 +210,8 @@ function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
   if ('()[]'.includes(was)) return;
   const out = opposite(end.into);
   const fallback = sideOf(glyphs.tee, out);
-  if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
-  const stub = glyphFor(armOf(out, 1), unicode)!;
+  if (!USECASE_GLYPHS[glyphs.name].mergeTees) return void canvas.set(x, y, fallback);
+  const stub = glyphFor(armOf(out, 1), glyphs)!;
   const merged = junction(was, stub);
   canvas.set(x, y, merged === stub ? fallback : merged);
 }
@@ -206,7 +221,7 @@ function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
  * label, so the line runs on through the blank cells of its row up to the figure or the label it
  * meets, and the end (its marker) moves there. A row with nothing drawn in the box keeps the end.
  */
-function reach(canvas: Canvas, glyphs: GlyphSet, end: End, r: CellRect): End {
+function runOnToActor(canvas: Canvas, glyphs: GlyphSet, end: End, r: CellRect): End {
   if (end.into !== LEFT && end.into !== RIGHT) return end;
   const { y } = end.cell;
   let blank = true;
@@ -345,7 +360,7 @@ class Shifted extends Canvas {
 }
 
 /** How far the drawing reaches left of and above cell 0: frames, nodes, lines and labels. */
-function reachBack(
+function overhang(
   prepared: UsecasePrepared,
   layout: LayoutModel,
   routes: ReadonlyMap<string, readonly Point[]>
@@ -387,8 +402,8 @@ export function drawUsecase(
   glyphs: GlyphSet,
   options: DrawOptions
 ): string {
-  const back = reachBack(prepared, layout, routes);
-  const canvas = new Shifted(back.x, back.y);
+  const shift = overhang(prepared, layout, routes);
+  const canvas = new Shifted(shift.x, shift.y);
 
   // A space either side of a title, where the border is still plain (`┌─ one ───┐`).
   const gaps: Point[] = [];
@@ -433,9 +448,9 @@ export function drawUsecase(
 
   // An actor has no border for a line to leave through; the other nodes have one.
   for (const placed of ends) {
-    const box = layout.nodes.get(placed.at);
-    const actor = prepared.nodes.get(placed.at)?.kind === 'actor';
-    const end = actor && box ? reach(canvas, glyphs, placed, cellRect(box)) : placed;
+    const box = layout.nodes.get(placed.node);
+    const actor = prepared.nodes.get(placed.node)?.kind === 'actor';
+    const end = actor && box ? runOnToActor(canvas, glyphs, placed, cellRect(box)) : placed;
     if (end.marker !== 'none') drawMarker(canvas, glyphs, end);
     else if (!actor) tee(canvas, glyphs, end);
   }

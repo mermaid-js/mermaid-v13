@@ -7,7 +7,7 @@
 import type { Attrs } from '@mermaid-js/core/svg';
 import type { BoundaryView } from '../layout/prepare.ts';
 import { DRAW } from './metrics.ts';
-import { boundaryName } from './names.ts';
+import { boundaryName } from './accessible-names.ts';
 import { need } from './paint.ts';
 import { cls, type Scene } from './scene.ts';
 

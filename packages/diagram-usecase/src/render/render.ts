@@ -20,7 +20,7 @@ import type { UsecaseModel } from '../model.ts';
 import { drawBoundaries } from './boundaries.ts';
 import type { UsecaseRenderContext } from './context.ts';
 import { drawEdgeLabels, drawEdges } from './edges.ts';
-import { spoken } from './names.ts';
+import { spoken } from './accessible-names.ts';
 import { drawNodes } from './nodes.ts';
 import { paints } from './paint.ts';
 import { fontAttrs, type Scene } from './scene.ts';

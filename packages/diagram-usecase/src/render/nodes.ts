@@ -22,7 +22,7 @@ import {
   STICK_FIGURE,
 } from './glyphs.ts';
 import { DRAW } from './metrics.ts';
-import { actorName, jsonName, noteName, useCaseName } from './names.ts';
+import { actorName, jsonName, noteName, useCaseName } from './accessible-names.ts';
 import { need, type Fill, type Tint } from './paint.ts';
 import { cls, type Scene } from './scene.ts';
 import { PX } from '../layout/metrics.ts';
