@@ -39,6 +39,14 @@ Wave 3 runs block #521, c4 #522 and agentflow #523 on AI-Max. Block's T0 (shape-
 | #541 T4 | 94,412 B | 0 (no core change) |
 | #543 T6 | 94,412 B | 0 (no core change) |
 | #542 T5 | 94,434 B | +22 (registry row) |
+| #545 T7 | +12 | the `loadAscii` row |
+| final (e1709e6e6, after `mermaid-v13` 8b336e2b0) | 96,020 B | c4's own share +34 B; the rest is other ports in `mermaid-v13`; 2,284 B under the 98,304 gate |
+
+## Final state (2026-11-10)
+
+- Final whole-branch review (standards and spec) fixed on `feature/522_c4-final-review` (ff ddd3d2505); see `tickets/final-review.md`.
+- `mermaid-v13` 8b336e2b0 (block #623, requirement #629, usecase, treeView, ishikawa) merged in e1709e6e6: generated files taken from theirs and regenerated, `v13/docs/ascii.md` merged by hand (both the C4 and block sections).
+- Scoped checks at e1709e6e6: 45 files, 1,545 tests passed, 44 skipped; `tsc` clean on diagram-c4, conformance, mermaid, bench, language-service; eslint clean on every changed file; `check:config`, `check:grammar`, `check:licenses`, `check:deps` pass. Pushed with `--no-verify` per the maintainer's 2026-11-10 rule; hosted CI is the full gate.
 
 ## Finish rule
 
