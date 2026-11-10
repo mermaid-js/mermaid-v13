@@ -8,7 +8,7 @@ Integration branch `feature/523_agentflow` (from `mermaid-v13` at 521fb76ee). Dr
 | T2 grammar, parser, model, AST | #546 | #544 | merged (ff 5b739cebe; main entry 23,846 B gz before review fixes, core untouched) |
 | T3 layout | #547 | #546 | merged (no-ff, head 609401fd9; main entry 28,512 B gz before review fixes; core usedBy rows dropped in the #637 move) |
 | T4 SVG renderer | #548 | #547, block's shape-geometry T0 (#521) | merged (ff 4c7cabae9; main entry 34,786 B gz, core untouched) |
-| T6 language facet | #549 | #546 | open |
+| T6 language facet | #549 | #546 | merged (ff 619d40c16; `./language` 30,041 B gz; carries #640's commit d6d83c2 until it merges) |
 | T5 integration | #550 | #548, #549 | open |
 | T7 ASCII renderer (optional, D320) | #551 | #550 | open |
 
