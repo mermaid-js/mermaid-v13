@@ -5,7 +5,7 @@ import type { FirstPartyEntry } from '../registry.ts';
 export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'], layout: 'elk' },
   { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
-  { type: 'architecture', pattern: /^\s*architecture/ },
+  { type: 'architecture', pattern: /^\s*architecture/, id: 'architecture', formats: ['svg'] },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/, id: 'agentflow', formats: ['svg', 'ascii'] },
   { type: 'c4', pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/, id: 'c4', formats: ['svg', 'ascii'] },
   { type: 'kanban', pattern: /^\s*kanban/, id: 'kanban', formats: ['svg', 'ascii'] },

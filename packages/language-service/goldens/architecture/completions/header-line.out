@@ -1,0 +1,9 @@
+@ 1:19  architecture-beta |
+  service keyword 1:19-1:19 "" -> "service "
+  group keyword 1:19-1:19 "" -> "group "
+  junction keyword 1:19-1:19 "" -> "junction "
+  align keyword 1:19-1:19 "" -> "align "
+  title keyword 1:19-1:19 "" -> "title "
+  accTitle keyword 1:19-1:19 "" -> "accTitle: "
+  accDescr: keyword 1:19-1:19 "" -> "accDescr: "
+  accDescr { keyword 1:19-1:19 "" -> "accDescr { }"

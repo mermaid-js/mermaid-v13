@@ -1,0 +1,92 @@
+/**
+ * The architecture metrics table (spec #525 "Package and contract", pitfall 13): every length
+ * v12 drew an architecture diagram with, in px, as its `svgDraw.ts` and schema wrote them. It is
+ * the only file in `layout/` that holds a length literal; the builder and the renderer take
+ * their lengths from {@link architectureSizes}, which scales them by the document's
+ * `architecture.iconSize` and `architecture.padding` as v12 did. Architecture has no text output
+ * (D320), so there is one set, in px.
+ */
+
+import { architectureConfigDefaults } from '../generated/config-defaults.ts';
+
+/** v12's constants: two schema defaults, and the ratios and offsets `svgDraw.ts` applies to them. */
+export const ARCHITECTURE_METRICS = {
+  /** Schema default of `architecture.iconSize` (generated): a service's icon and a junction's box are this square. */
+  iconSize: architectureConfigDefaults.iconSize!,
+  /** Schema default of `architecture.padding` (generated): room inside a group's border, and round the drawing. */
+  padding: architectureConfigDefaults.padding!,
+  /** An arrowhead is `iconSize / arrowDivisor` (`svgDraw.ts:34`). */
+  arrowDivisor: 6,
+  /** A service label wraps at `iconSize × labelWidthRatio` (`svgDraw.ts:294`). */
+  labelWidthRatio: 1.5,
+  /** A group's icon is `padding × groupIconRatio` square (`svgDraw.ts:200`). */
+  groupIconRatio: 0.75,
+  /** A group's label starts this far after its icon, or after its corner (`svgDraw.ts:263`). */
+  groupLabelGap: 4,
+  /** A group border's `stroke-dasharray` (`architectureStyles.ts`). */
+  groupDash: 8,
+  /** The weight labels are measured and drawn at (v12's `createText`, no bold but markdown's). */
+  fontWeight: 400,
+  /** How far an arrowhead's tip runs past the edge's end, into the node (`ArchitectureDirectionArrowShift`). */
+  arrowTip: 2,
+  /** The corner radius of a service drawn with neither icon nor text (`svgDraw.ts:347`). */
+  serviceCorner: 5,
+  /** A text icon's margin inside its square (`.node-icon-text > div { margin: 1px }`). */
+  iconTextMargin: 1,
+  /** A label beside a vertical edge wraps at the edge's length over this (`svgDraw.ts:135`). */
+  verticalLabelWrap: 1.5,
+  /** A label beside a vertical edge is turned this many degrees (`svgDraw.ts:162`). */
+  verticalLabelTurn: -90,
+  /** A label in a bend is turned this many degrees, signed by the bend (`svgDraw.ts:171`). */
+  bendLabelTurn: 45,
+} as const;
+
+/** v12's lengths for one document's `iconSize` and `padding`, px. */
+export interface ArchitectureSizes {
+  /** A service's icon and a junction's box: `iconSize` square. */
+  readonly iconSize: number;
+  /** Room inside a group's border on every side, and round the drawing. */
+  readonly padding: number;
+  /** An arrowhead's size, `iconSize / 6`. */
+  readonly arrow: number;
+  /** The width a service label wraps at, `iconSize × 1.5`. */
+  readonly labelWidth: number;
+  /** The line `left`/`right` ends meet a service or junction on, down from its top: `iconSize / 2`. */
+  readonly anchorY: number;
+  /** Where a service label's top centre sits from the icon's corner: `(iconSize / 2, iconSize)`. */
+  readonly labelAt: { readonly x: number; readonly y: number };
+  /** A group's icon: `padding × 0.75` square. */
+  readonly groupIcon: number;
+  /** Between a group's icon (or its corner) and its label. */
+  readonly groupLabelGap: number;
+  /** A group border's dash. */
+  readonly groupDash: number;
+  /** How far an arrowhead's tip runs past the edge's end. */
+  readonly arrowTip: number;
+  /** A service outline's corner radius (no icon, no text), at most half the icon. */
+  readonly serviceCorner: number;
+  /** A text icon's margin inside its square. */
+  readonly iconTextMargin: number;
+}
+
+/** The lengths v12 drew with for `iconSize` and `padding` (px). */
+export function architectureSizes(
+  iconSize: number = ARCHITECTURE_METRICS.iconSize,
+  padding: number = ARCHITECTURE_METRICS.padding
+): ArchitectureSizes {
+  const M = ARCHITECTURE_METRICS;
+  return {
+    iconSize,
+    padding,
+    arrow: iconSize / M.arrowDivisor,
+    labelWidth: iconSize * M.labelWidthRatio,
+    anchorY: iconSize / 2,
+    labelAt: { x: iconSize / 2, y: iconSize },
+    groupIcon: padding * M.groupIconRatio,
+    groupLabelGap: M.groupLabelGap,
+    groupDash: M.groupDash,
+    arrowTip: M.arrowTip,
+    serviceCorner: Math.min(M.serviceCorner, iconSize / 2),
+    iconTextMargin: M.iconTextMargin,
+  };
+}

@@ -104,6 +104,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:^
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:^
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
@@ -252,6 +255,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:^
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:^
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
@@ -462,6 +468,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-architecture:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-block:
     devDependencies:
       '@mermaid-js/core':
@@ -650,6 +662,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:*
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -759,6 +774,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:*
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -1024,6 +1042,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:*
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block

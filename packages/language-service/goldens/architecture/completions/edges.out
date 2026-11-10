@@ -1,0 +1,55 @@
+@ 6:6  db:|
+  L constant (left) 6:6-6:6 "" -> "L"
+  R constant (right) 6:6-6:6 "" -> "R"
+  T constant (top) 6:6-6:6 "" -> "T"
+  B constant (bottom) 6:6-6:6 "" -> "B"
+@ 7:6  db |
+  {group} keyword 7:6-7:6 "" -> "{group}"
+@ 8:8  db:R |
+  -- operator (edge) 8:8-8:8 "" -> "--"
+  --> operator (edge, arrowhead on the right) 8:8-8:8 "" -> "-->"
+  <-- operator (edge, arrowhead on the left) 8:8-8:8 "" -> "<--"
+  <--> operator (edge, arrowheads on both ends) 8:8-8:8 "" -> "<-->"
+  -[label]- operator (labelled edge) 8:8-8:8 "" -> "-[label]-"
+@ 9:11  db:R -- |
+  L constant (left) 9:11-9:11 "" -> "L"
+  R constant (right) 9:11-9:11 "" -> "R"
+  T constant (top) 9:11-9:11 "" -> "T"
+  B constant (bottom) 9:11-9:11 "" -> "B"
+  > operator (arrowhead on the right) 9:11-9:11 "" -> ">"
+@ 10:13  db:R -- L:|
+  db node (service) 10:13-10:13 "" -> "db"
+  web node (service) 10:13-10:13 "" -> "web"
+  hub node (junction) 10:13-10:13 "" -> "hub"
+@ 11:14  db:R -- L:w|
+  web node (service) 11:13-11:14 "w" -> "web"
+@ 12:19  web:R --> L:hub |
+  {group} keyword 12:19-12:19 "" -> "{group}"
+@ 13:19  web:R --> L:web |
+  none
+@ 14:7  web |
+  none
+@ 15:7  hub{|
+  {group} keyword 15:6-15:7 "{" -> "{group}"
+@ 16:19  db:R -- L:hub{gr|
+  {group} keyword 16:16-16:19 "{gr" -> "{group}"
+@ 17:7  web{|
+  none
+@ 18:11  db:R -- |
+  L constant (left) 18:11-18:11 "" -> "L"
+  R constant (right) 18:11-18:11 "" -> "R"
+  T constant (top) 18:11-18:11 "" -> "T"
+  B constant (bottom) 18:11-18:11 "" -> "B"
+  > operator (arrowhead on the right) 18:11-18:11 "" -> ">"
+@ 19:14  db:R -[x]- |
+  L constant (left) 19:14-19:14 "" -> "L"
+  R constant (right) 19:14-19:14 "" -> "R"
+  T constant (top) 19:14-19:14 "" -> "T"
+  B constant (bottom) 19:14-19:14 "" -> "B"
+  > operator (arrowhead on the right) 19:14-19:14 "" -> ">"
+@ 20:12  db:R <-- |
+  L constant (left) 20:12-20:12 "" -> "L"
+  R constant (right) 20:12-20:12 "" -> "R"
+  T constant (top) 20:12-20:12 "" -> "T"
+  B constant (bottom) 20:12-20:12 "" -> "B"
+  > operator (arrowhead on the right) 20:12-20:12 "" -> ">"

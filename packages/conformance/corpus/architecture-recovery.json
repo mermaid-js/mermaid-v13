@@ -1,0 +1,250 @@
+[
+  {
+    "id": "architecture-recovery/duplicate-and-unknown-end",
+    "name": "A second declaration of an id and an edge to an unknown id",
+    "source": "architecture-beta\nservice a\nservice a\nservice b\na:R -- L:c\nb:L -- R:a",
+    "errors": [
+      ["ARCHITECTURE_DUPLICATE_ID", 3],
+      ["ARCHITECTURE_UNKNOWN_ID", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/parents",
+    "name": "A missing parent, a parent that is a service and a group in itself",
+    "source": "architecture-beta\ngroup g\nservice a in nope\njunction j in a\ngroup h in h\nservice b in g",
+    "errors": [
+      ["ARCHITECTURE_UNKNOWN_PARENT", 3],
+      ["ARCHITECTURE_PARENT_NOT_GROUP", 4],
+      ["ARCHITECTURE_SELF_PARENT", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/group-end-and-capital-id",
+    "name": "An edge to a group id (D504) and an id starting with a side",
+    "source": "architecture-beta\ngroup g\nservice a in g\na:R -- L:g\nservice Backend\nservice b\nb:L -- R:a",
+    "errors": [
+      ["ARCHITECTURE_GROUP_EDGE_END", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/same-group-and-align",
+    "name": "A `{group}` edge inside one group, and two bad alignments",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice b in g\na{group}:R -- L:b\nalign row a ghost\nalign column a b a",
+    "errors": [
+      ["ARCHITECTURE_GROUP_EDGE_SAME_GROUP", 5],
+      ["ARCHITECTURE_ALIGN_MEMBER", 6],
+      ["ARCHITECTURE_ALIGN_REPEAT", 7]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/keyword-id-and-sides",
+    "name": "A keyword as an id, a lower-case side and a missing `:`",
+    "source": "architecture-beta\nservice row\nservice a\nservice b\na:r -- L:b\na R -- L:b\nb:B -- T:a",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/unclosed-label-and-text-icon",
+    "name": "An unclosed label and an unclosed text icon",
+    "source": "architecture-beta\nservice a[Unclosed\nservice b \"open\nservice c",
+    "errors": [
+      ["UNCLOSED_LABEL", 2],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "architecture-recovery/empty-label-and-blank-icon",
+    "name": "An empty label and an icon with blanks",
+    "source": "architecture-beta\nservice a[]\nservice b( server )\nservice c(server)",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "architecture-recovery/header-twice",
+    "name": "A second header",
+    "source": "architecture-beta\nservice a\narchitecture-beta\nservice b",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/arrow-forms",
+    "name": "`->` and a label with one dash",
+    "source": "architecture-beta\nservice a\nservice b\na:R -> L:b\na:R -[x] L:b\na:R --> L:b",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/unknown-ends",
+    "name": "Edges with unknown ends: only the left one is reported when both are",
+    "source": "architecture-beta\nservice a\nx:R -- L:y\na:R -- L:z",
+    "errors": [
+      ["ARCHITECTURE_UNKNOWN_ID", 3],
+      ["ARCHITECTURE_UNKNOWN_ID", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "architecture-recovery/group-order",
+    "name": "A parent group declared after its child, and a service in a service",
+    "source": "architecture-beta\ngroup inner in outer\ngroup outer\nservice a in inner\nservice b in a",
+    "errors": [
+      ["ARCHITECTURE_UNKNOWN_PARENT", 2],
+      ["ARCHITECTURE_PARENT_NOT_GROUP", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/broken-declaration",
+    "name": "A declaration with a syntax error raises no error where it is used",
+    "source": "architecture-beta\nservice a(server)[A] in\nservice b\na:R -- L:b\nalign row a b\nb:R -- L:c",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["ARCHITECTURE_UNKNOWN_ID", 6]
+    ],
+    "keeps": ["b"]
+  },
+  {
+    "id": "architecture-recovery/accessibility",
+    "name": "`accTitle` without `:` and an unclosed `accDescr {`",
+    "source": "architecture-beta\naccTitle missing colon\nservice a\naccDescr {\nservice b",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNCLOSED_ACC_DESCR", 4]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/junction-label-group-text-icon",
+    "name": "A label on a junction and a text icon on a group",
+    "source": "architecture-beta\njunction j[J]\ngroup g \"text\"\ngroup h(cloud)",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 3]
+    ]
+  },
+  {
+    "id": "architecture-recovery/service-part-order",
+    "name": "A label before the icon, and `in` before the label",
+    "source": "architecture-beta\ngroup g\nservice a[A](server)\nservice b(server) in g [B]\nservice c(server)[C] in g",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["c"]
+  },
+  {
+    "id": "architecture-recovery/align-forms",
+    "name": "`align` with one member and with an unknown direction",
+    "source": "architecture-beta\nservice a\nservice b\nalign row a\nalign diagonal a b\nalign column a b",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/ids-across-kinds",
+    "name": "Ids are shared by groups, services and junctions",
+    "source": "architecture-beta\ngroup x\nservice x\njunction x\nservice y",
+    "errors": [
+      ["ARCHITECTURE_DUPLICATE_ID", 3],
+      ["ARCHITECTURE_DUPLICATE_ID", 4]
+    ],
+    "keeps": ["y"]
+  },
+  {
+    "id": "architecture-recovery/characters",
+    "name": "A non-ASCII id and a `;`",
+    "source": "architecture-beta\nservice café\nservice a;\nservice b",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["b"]
+  },
+  {
+    "id": "architecture-recovery/right-hand-checks",
+    "name": "A right-hand `{group}` inside one group and an edge to a group",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice b in g\na:R -- L:b{group}\nb:R -- L:g",
+    "errors": [
+      ["ARCHITECTURE_GROUP_EDGE_SAME_GROUP", 5],
+      ["ARCHITECTURE_GROUP_EDGE_END", 6]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "architecture-recovery/end-of-text",
+    "name": "An edge cut short at the end of the text",
+    "source": "architecture-beta\nservice a\na:R --",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "architecture-recovery/trailing-words",
+    "name": "A word after `in g`, and one after an edge",
+    "source": "architecture-beta\ngroup g\nservice a in g h\nservice b in g\nb:L -- R:a extra",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["b"]
+  },
+  {
+    "id": "architecture-recovery/ungrouped-is-a-warning",
+    "name": "`{group}` on ends in no group is a warning, a duplicate an error",
+    "source": "architecture-beta\nservice a\nservice b\na{group}:R -- L:b{group}\nservice a",
+    "errors": [["ARCHITECTURE_DUPLICATE_ID", 5]],
+    "keeps": ["a", "b"],
+    "warnings": [["ARCHITECTURE_GROUP_EDGE_UNGROUPED", 4]]
+  },
+  {
+    "id": "architecture-recovery/statement-not-edge",
+    "name": "A line that is an id alone, and one with an unknown keyword",
+    "source": "architecture-beta\nservice a\na\nservices b\nservice c",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "architecture-recovery/db-and-syntax-mixed",
+    "name": "DB errors and syntax errors interleaved",
+    "source": "architecture-beta\ngroup g\nservice a in g\nservice a in g\nservice b(server) [B\na:L -- R:missing\njunction j in j\nalign row a a",
+    "errors": [
+      ["ARCHITECTURE_DUPLICATE_ID", 4],
+      ["UNCLOSED_LABEL", 5],
+      ["ARCHITECTURE_UNKNOWN_ID", 6],
+      ["ARCHITECTURE_SELF_PARENT", 7],
+      ["ARCHITECTURE_ALIGN_REPEAT", 8]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "architecture-recovery/broken-end-and-unknown-end",
+    "name": "A broken declaration at one edge end does not hide an unknown id at the other",
+    "source": "architecture-beta\nservice a\nservice q extra\nq:R -- L:zz\nalign row q a ghost",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["ARCHITECTURE_UNKNOWN_ID", 4],
+      ["ARCHITECTURE_ALIGN_MEMBER", 5]
+    ],
+    "keeps": ["a"]
+  }
+]

@@ -1,0 +1,6 @@
+architecture-beta
+    service api "API"[Gateway]
+    service queue 'Q'[Queue]
+    service db(database)[Database]
+    api:R -- L:queue
+    queue:R -- L:db

@@ -1,0 +1,12 @@
+@ 2:11  title Sh|op
+  none
+@ 3:15  accTitle: Sh|op
+  none
+@ 5:9  the |shop
+  none
+@ 7:18  service db[Data|base]
+  none
+@ 8:17  service web "W|WW"
+  none
+@ 9:12  db:R -[re|ads]- L:web
+  none

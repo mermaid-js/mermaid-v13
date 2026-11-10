@@ -1,0 +1,11 @@
+architecture-beta
+    group api(cloud)["API"]
+    service db(database)["John's Database"] in api
+    service web(internet)['The "Main" site'] in api
+    service disk(disk)["Disk [primary]"] in api
+    service cache(server)[<b>Cache</b> & store] in api
+    group g1(server)[你好世界]
+    service s1(server)[Ünïcode] in g1
+    db:L -- R:web
+    db:R -- L:disk
+    disk:B -- T:cache

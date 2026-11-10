@@ -1,0 +1,19 @@
+architecture-beta
+  title Shop
+  accTitle: Shop services
+  accDescr {
+    the shop's services
+    and their database
+  }
+  %% the groups
+  group cloud(cloud)[Cloud]
+  group api(server)[API] in cloud
+  service db(database)[Database] in api
+  service disk1(disk)[Storage] in api
+  service web "WWW"[Web] in cloud
+  junction hub in cloud
+  db:L -- R:disk1
+  disk1:T --> B:hub
+  hub:R <-[reads]-> L:web
+  web{group}:B -- T:db{group}
+  align row db disk1

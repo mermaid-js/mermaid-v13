@@ -1,0 +1,23 @@
+@ 4:17  service db in |
+  cloud subgraph (group) 4:17-4:17 "" -> "cloud"
+  api subgraph (group) 4:17-4:17 "" -> "api"
+  late subgraph (group) 4:17-4:17 "" -> "late"
+@ 5:20  junction hub in a|
+  api subgraph (group) 5:19-5:20 "a" -> "api"
+@ 6:18  group inner in |
+  cloud subgraph (group) 6:18-6:18 "" -> "cloud"
+  api subgraph (group) 6:18-6:18 "" -> "api"
+@ 7:19  group cloud2 in |
+  cloud subgraph (group) 7:19-7:19 "" -> "cloud"
+  api subgraph (group) 7:19-7:19 "" -> "api"
+@ 9:15  service web |
+  in keyword 9:15-9:15 "" -> "in "
+  (database) constant (built-in icon) 9:15-9:15 "" -> "(database)"
+  (server) constant (built-in icon) 9:15-9:15 "" -> "(server)"
+  (disk) constant (built-in icon) 9:15-9:15 "" -> "(disk)"
+  (internet) constant (built-in icon) 9:15-9:15 "" -> "(internet)"
+  (cloud) constant (built-in icon) 9:15-9:15 "" -> "(cloud)"
+  (unknown) constant (built-in icon) 9:15-9:15 "" -> "(unknown)"
+  (blank) constant (built-in icon) 9:15-9:15 "" -> "(blank)"
+@ 10:28  service web(server)[Web] |
+  in keyword 10:28-10:28 "" -> "in "

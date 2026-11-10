@@ -1,0 +1,1 @@
+5:4-5:11 "{group}" warning ARCHITECTURE_GROUP_EDGE_UNGROUPED: `{group}` after `b` is ignored: `b` is in no group, so the edge has no group border to meet. Put `b` in a group with `in`, or drop the `{group}`.

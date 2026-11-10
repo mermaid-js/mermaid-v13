@@ -1544,52 +1544,67 @@ line_height?: number
  * via the `definition` "ArchitectureDiagramConfig".
  */
 export interface ArchitectureDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * The space inside a group's border, and round the diagram, in pixels.
+ */
 padding?: number
+/**
+ * The width and height of a service's icon, in pixels.
+ */
 iconSize?: number
 fontSize?: number
 /**
- * Whether to randomize initial node positions before running the layout algorithm.
- * When false (default), nodes start at deterministic seed positions. When true, nodes
- * start at random positions, which may produce varied but potentially better-spaced
- * layouts. Note: `randomize: false` alone does NOT guarantee identical renders, because
- * the underlying fcose layout still uses `Math.random()` internally during its
- * constraint solver — use the `seed` option for full determinism.
+ * Ignored in v13 (D328). In v12 it randomized the fcose layout's starting positions; v13 lays
+ * architecture out with `compass`, which is deterministic and has no starting positions.
  * 
  */
 randomize?: boolean
 /**
- * Minimum separation (in pixels) between sibling nodes in the same group, passed through to the
- * underlying fcose layout. Increase to spread overlapping siblings apart when many edges share the
- * same port direction.
+ * Ignored in v13 (D328). In v12 it set fcose's minimum separation between sibling nodes;
+ * `compass` places nodes on a grid with a fixed cell gap.
  * 
  */
 nodeSeparation?: number
 /**
- * Multiplier applied to `iconSize` to compute the ideal length of edges between nodes within the
- * same group. Increase to add breathing room; decrease to pack the diagram tighter. Edges crossing
- * group boundaries are unaffected and use a fixed shorter length.
+ * Ignored in v13 (D328). In v12 it scaled fcose's ideal edge length within a group;
+ * `compass` places nodes on a grid with a fixed cell gap.
  * 
  */
 idealEdgeLengthMultiplier?: number
 /**
- * Spring elasticity (0–1) applied to edges between nodes within the same group, passed through to
- * fcose. Higher values pull connected nodes closer together; lower values let the layout spread them
- * out. Edges crossing group boundaries are unaffected.
+ * Ignored in v13 (D328). In v12 it set fcose's spring elasticity within a group; `compass`
+ * has no springs.
  * 
  */
 edgeElasticity?: number
 /**
- * Maximum number of iterations the fcose layout algorithm runs before stopping. Increase for higher
- * quality on large or densely-connected diagrams at the cost of render time.
+ * Ignored in v13 (D328). In v12 it capped fcose's iterations; `compass` places nodes in one
+ * pass.
  * 
  */
 numIter?: number
 /**
- * Deterministic seed for the fcose layout. Defaults to 1, which makes every render of the
- * same diagram produce the same layout — required for visual regression tests to be stable.
- * Set to 0 to opt out and use the unstubbed Math.random (the layout will still differ
- * slightly between renders, matching pre-fix behavior). Any other number selects a
- * different reproducible layout variant.
+ * Ignored in v13 (D328). In v12 it seeded fcose's random number generator; `compass` is
+ * deterministic, so every render of the same diagram has the same layout.
  * 
  */
 seed?: number
