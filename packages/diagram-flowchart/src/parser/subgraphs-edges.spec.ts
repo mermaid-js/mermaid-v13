@@ -88,3 +88,33 @@ describe('node properties', () => {
     expect(Object.getPrototypeOf(props)).toBeNull();
   });
 });
+
+describe('droppedMembers (v12 droppedSubGraphMembers, swimlane D536)', () => {
+  const dropped = (body: string) =>
+    parseFlowchart(`flowchart TD\n${body.split(';').join('\n')}`).model.droppedMembers;
+
+  it('records a member a later subgraph lists but an earlier one keeps', () => {
+    expect(dropped('subgraph A;a;end;subgraph B;a;end')).toEqual([
+      { node: 'a', keptBy: 'A', droppedFrom: 'B' },
+    ]);
+    // A subgraph listed in two others is a member too.
+    expect(dropped('subgraph S;x;end;subgraph A;S;end;subgraph B;S;end')).toEqual([
+      { node: 'S', keptBy: 'A', droppedFrom: 'B' },
+    ]);
+  });
+
+  it('records one listed again under a subgraph nested in another', () => {
+    expect(dropped('subgraph A;a;end;subgraph B;subgraph C;a;end;end')).toEqual([
+      { node: 'a', keptBy: 'A', droppedFrom: 'C' },
+    ]);
+  });
+
+  it('is absent when the keeper sits inside the subgraph that lists the member again', () => {
+    expect(dropped('subgraph P;subgraph C;a;end;a;end')).toBeUndefined();
+    expect(dropped('subgraph A;a;end;subgraph A;a;end')).toBeUndefined();
+  });
+
+  it('is absent for a redeclared subgraph whose first declaration nested the keeper', () => {
+    expect(dropped('subgraph P;subgraph C;a;end;end;subgraph P;a;end')).toBeUndefined();
+  });
+});

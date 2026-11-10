@@ -1,18 +1,21 @@
 // Swimlane lanes (spec #528, D535, D536): when the `swimlane` engine lays a flowchart out, each
-// top-level subgraph is a lane, drawn as v12's swimlane cluster (`clusters/swimlane.js` at
+// top-level subgraph is a lane (`LayoutModel.lanes`), drawn as v12's swimlane cluster (`clusters/swimlane.js` at
 // upstream c9b12739f): a title band filled `clusterBkg` and an unfilled body, both stroked
-// `clusterBorder`. Loose nodes sit in the engine's default lane, which flowchart's model does
+// `clusterBorder`. Loose nodes sit in a lane the engine makes, which flowchart's model does
 // not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';
 import type { FlowModel } from '../parser/index.ts';
-import type { FlowRenderContext, FlowWarning } from './context.ts';
+import type { FlowWarning } from './context.ts';
 import type { Prepared } from './prepare.ts';
 
-/** The engine's lane for nodes outside every subgraph (`swimlane` `DEFAULT_SWIMLANE_ID`). */
-export const DEFAULT_LANE = '__swimlane_default__';
-
-/** Whether the render is laid out by the `swimlane` engine (`swimlane-beta`, or `layout: swimlane`). */
-export const bySwimlane = (ctx: FlowRenderContext): boolean => ctx.config.layout === 'swimlane';
+/**
+ * The lanes of a layout, when its engine laid groups out as lanes (`LayoutModel.lanes`, set by
+ * `swimlane` only: `swimlane-beta`, or any flowchart with `layout: swimlane`, D535). Read from
+ * the model, so a stand-in engine (a placeholder render) or an alias never draws lanes wrongly.
+ * The one "is a lane" test: `lanes.has(id)`.
+ */
+export const lanesOf = (layout: LayoutModel): ReadonlySet<string> | undefined =>
+  layout.lanes ? new Set(layout.lanes) : undefined;
 
 interface Rect {
   readonly x: number;
@@ -60,41 +63,41 @@ const astOf = (flow: Prepared, id: string): string[] => {
 };
 
 /**
- * v12's swimlane warnings (D536), raised only when the swimlane engine lays the render out:
- * `SWIMLANE_SHARED_NODE` for a node listed in two lanes (kept in the first; both lanes in
- * `astIds`), `SWIMLANE_NESTED_LANE` for a subgraph inside a lane (drawn as a box).
+ * v12's swimlane warnings (D536), raised at layout, only when the engine laid out lanes:
+ * `SWIMLANE_SHARED_NODE` for a node (or subgraph) listed in two lanes, directly or through a
+ * subgraph nested in one (kept in the first; both lanes in `astIds`), and
+ * `SWIMLANE_NESTED_LANE` for each subgraph inside a lane (drawn as a box).
  */
 export function laneWarnings(
   model: FlowModel,
   flow: Prepared,
+  lanes: ReadonlySet<string>,
   warn: (warning: FlowWarning) => void
 ): void {
+  /** The lane `id` sits in (or is), following the drawn nesting. */
   const laneOf = (id: string): string | undefined => {
     const seen = new Set<string>();
-    let lane: string | undefined;
     for (let c: string | undefined = id; c !== undefined && !seen.has(c); ) {
+      if (lanes.has(c)) return c;
       seen.add(c);
-      const view = flow.views.get(c);
-      if (view?.group && view.parent === undefined) lane = c;
-      c = view?.parent;
+      c = flow.views.get(c)?.parent;
     }
-    return lane;
+    return undefined;
   };
-  const isLane = (id: string): boolean => {
-    const view = flow.views.get(id);
-    return view !== undefined && view.group && view.parent === undefined;
-  };
+  const subgraphs = new Set(model.subgraphs.map((sg) => sg.id));
   for (const { node, keptBy, droppedFrom } of model.droppedMembers ?? []) {
     const kept = laneOf(keptBy);
-    if (kept === undefined || kept === droppedFrom || !isLane(droppedFrom)) continue;
+    const dropped = laneOf(droppedFrom);
+    if (kept === undefined || dropped === undefined || kept === dropped) continue;
+    const what = subgraphs.has(node) ? 'subgraph' : 'node';
     warn({
       code: 'SWIMLANE_SHARED_NODE',
-      message: `Swimlane node "${node}" is listed in lanes "${kept}" and "${droppedFrom}"; it is drawn in "${kept}" only.`,
-      astIds: [...astOf(flow, kept), ...astOf(flow, droppedFrom)],
+      message: `Swimlane ${what} "${node}" is listed in lanes "${kept}" and "${dropped}"; it is drawn in "${kept}" only.`,
+      astIds: [...astOf(flow, kept), ...astOf(flow, dropped)],
     });
   }
   for (const g of flow.groups) {
-    if (g.parent === undefined) continue;
+    if (lanes.has(g.id) || g.parent === undefined) continue;
     warn({
       code: 'SWIMLANE_NESTED_LANE',
       message: `Swimlane subgraph "${g.id}" is nested in "${g.parent}"; only top-level subgraphs are lanes, so it is drawn as a plain box.`,

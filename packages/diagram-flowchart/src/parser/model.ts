@@ -646,7 +646,7 @@ export class FlowBuilder {
     if (dir !== undefined) subgraph.dir = dir;
     for (const nodeId of nodeList) {
       const keptBy = members.get(nodeId);
-      if (keptBy !== undefined && keptBy !== id && !this.nestedIn(keptBy, seen)) {
+      if (keptBy !== undefined && keptBy !== id && !this.nestedIn(keptBy, id, seen)) {
         this.dropped.push({ node: nodeId, keptBy, droppedFrom: id });
       }
     }
@@ -658,11 +658,16 @@ export class FlowBuilder {
     return id;
   }
 
-  /** Whether subgraph `id` sits, at any depth, under the subgraph listing `listed`. */
-  private nestedIn(id: string, listed: ReadonlySet<string>): boolean {
+  /**
+   * Whether subgraph `id` sits, at any depth, under subgraph `under`, which is closing now and
+   * lists `listed`. Its own children are not linked to it yet (that happens below, as it closes),
+   * so reaching one of `listed` counts; a redeclared `under` already holds children of its first
+   * declaration, so reaching `under` itself counts too.
+   */
+  private nestedIn(id: string, under: string, listed: ReadonlySet<string>): boolean {
     const seen = new Set<string>();
     for (let c: string | undefined = id; c !== undefined && !seen.has(c); c = this.members.get(c)) {
-      if (listed.has(c)) return true;
+      if (c === under || listed.has(c)) return true;
       seen.add(c);
     }
     return false;

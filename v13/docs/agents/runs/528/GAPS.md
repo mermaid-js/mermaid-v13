@@ -35,7 +35,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Closed: T0a's long lane title (`laneFit.ts` `fitLanesToTitles`).
 - **Choice:** a lane emptied by a shared node stays, drawn empty (v12 removed it), so every subgraph keeps its `data-ast`.
 - **Choice:** `SWIMLANE_SHARED_NODE` lists both lanes in `astIds` (D536 says `related`; render warnings have none).
-- **Choice:** lanes are drawn when `config.layout` is `swimlane`; a placeholder stand-in render draws them too.
+- **Choice:** lanes come from a new optional `LayoutModel.lanes` (set by `swimlane` only), so the renderer follows the engine that laid out; D536 said "no core type change" (types only, 0 B in core).
 
 ## #601 T3 integration
 - From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.

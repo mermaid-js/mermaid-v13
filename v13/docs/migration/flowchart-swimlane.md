@@ -41,8 +41,9 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   No new theme variables. With the hand-drawn plugin both halves are sketched (D301).
 - **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
   lane across the flow to the title plus 20px each side.
-- **Warnings** (D226, D536), only when the `swimlane` engine lays the diagram out, where v12
-  only logged: `SWIMLANE_SHARED_NODE` for a node listed in two lanes (it stays in the first;
+- **Warnings** (D226, D536), raised at layout and only when the `swimlane` engine lays the
+  diagram out, where v12 only logged: `SWIMLANE_SHARED_NODE` for a node (or subgraph) listed in two lanes, directly or in a
+  subgraph nested in one (it stays in the first;
   `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
   (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
   it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.

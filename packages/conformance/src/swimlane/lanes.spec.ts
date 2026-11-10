@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { swimlane } from '@mermaid-js/core/layout/swimlane';
 import { createMermaid, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -185,7 +186,53 @@ describe('nested groups', () => {
   });
 });
 
+describe('lanes follow the engine that laid out, not the layout name', () => {
+  const text = fixture('subgraph-in-lane-tb');
+
+  it('draws no lanes and warns nothing swimlane on a placeholder render (layered stands in)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    await m.preload({ types: ['flowchart'] });
+    const r = m.renderSync(text, { placeholders: true });
+    expect(r.warnings.map((w) => w.code)).toEqual(['PLACEHOLDER']);
+    expect(lanesOf(parseSvg(r.svg))).toEqual([]);
+  });
+
+  it('draws lanes for an engine registered under another name', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    m.registerLayoutLoaders([{ name: 'lanes', loader: () => Promise.resolve(swimlane) }]);
+    const body = text.replace(/^---[\s\S]*?---\n/, '');
+    const r = await m.render('s', `---\nconfig:\n  layout: lanes\n---\n${body}`);
+    expect(r.warnings.map((w) => w.code)).toEqual(['SWIMLANE_NESTED_LANE']);
+    expect(lanesOf(parseSvg(r.svg)).map((l) => l.id)).toEqual(['L1', 'L2']);
+  });
+});
+
 describe('warnings (D226, D536)', () => {
+  it('SWIMLANE_SHARED_NODE for a node listed again in a group nested in another lane', async () => {
+    const text =
+      'swimlane-beta TB\n  subgraph A\n    a\n  end\n  subgraph B\n    subgraph C\n      a\n    end\n  end';
+    const { warnings } = await draw(text);
+    expect(warnings).toEqual([
+      {
+        code: 'SWIMLANE_SHARED_NODE',
+        message: 'Swimlane node "a" is listed in lanes "A" and "B"; it is drawn in "A" only.',
+        astIds: ['s:A', 's:B'],
+      },
+      expect.objectContaining({ code: 'SWIMLANE_NESTED_LANE', astIds: ['s:C'] }),
+    ]);
+  });
+
+  it('names a subgraph listed in two lanes as a subgraph', async () => {
+    const text =
+      'swimlane-beta TB\n  subgraph A\n    subgraph S\n      x\n    end\n  end\n  subgraph B\n    S\n  end';
+    const { warnings } = await draw(text);
+    expect(warnings.find((w) => w.code === 'SWIMLANE_SHARED_NODE')?.message).toBe(
+      'Swimlane subgraph "S" is listed in lanes "A" and "B"; it is drawn in "A" only.'
+    );
+  });
+
   it('SWIMLANE_SHARED_NODE: a node in two lanes stays in the first, both lanes in astIds', async () => {
     const { warnings, tree } = await draw(fixture('shared-node-in-two-lanes'));
     expect(warnings).toEqual([

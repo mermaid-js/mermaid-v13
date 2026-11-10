@@ -27,7 +27,7 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
-import { bySwimlane, DEFAULT_LANE, laneBox, laneWarnings } from './lanes.ts';
+import { laneBox, lanesOf, laneWarnings } from './lanes.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -41,6 +41,9 @@ export interface FlowLayout extends LayoutModel {
 export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
   const prepared = prepare(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
+  // At layout, as prepare's own warnings: once per layout, also for a host that only lays out.
+  const lanes = lanesOf(laid);
+  if (lanes) laneWarnings(model, prepared, lanes, (w) => ctx.warn(w));
   return { ...laid, flow: prepared };
 }
 
@@ -203,8 +206,8 @@ interface Scene {
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
   readonly warn: (warning: FlowWarning) => void;
-  /** Laid out by the swimlane engine: top-level subgraphs draw as lanes (D536). */
-  readonly lanes: boolean;
+  /** The lanes, when the engine laid groups out as lanes (`LayoutModel.lanes`, D536). */
+  readonly lanes: ReadonlySet<string> | undefined;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -215,17 +218,16 @@ export function renderFlowchart(
   w: SvgWriter
 ): void {
   const flow = layout.flow ?? prepare(model, ctx);
-  const lanes = bySwimlane(ctx);
+  const lanes = lanesOf(layout);
   const scene: Scene = {
     w,
     layout,
     flow,
     ctx,
-    paint: paints(ctx.theme, flow, lanes),
+    paint: paints(ctx.theme, flow, lanes !== undefined),
     warn: (warning) => ctx.warn(warning),
     lanes,
   };
-  if (lanes) laneWarnings(model, flow, scene.warn);
   openRoot(scene, model);
   if (scene.paint.cluster) drawClusters(scene, model);
   w.open('g', {
@@ -289,14 +291,18 @@ function drawClusters(scene: Scene, model: FlowModel): void {
   const { w, layout, flow, ctx, paint } = scene;
   const cluster = paint.cluster!;
   w.open('g', { class: 'clusters' });
-  const loose = scene.lanes ? layout.groups.get(DEFAULT_LANE) : undefined;
-  // v12 gives the default lane the slot after every subgraph's, so it never takes the first one.
-  if (loose) drawLane(scene, loose, undefined, model.subgraphs.length);
+  // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
+  // default lane the slot after every subgraph's, so it never takes the first one.
+  let made = model.subgraphs.length;
+  for (const id of scene.lanes ?? []) {
+    const box = flow.views.has(id) ? undefined : layout.groups.get(id);
+    if (box) drawLane(scene, id, box, undefined, made++);
+  }
   for (const g of flow.groups) {
     const box = layout.groups.get(g.id);
     if (!box) continue;
-    if (scene.lanes && g.parent === undefined) {
-      drawLane(scene, box, g, g.order);
+    if (scene.lanes?.has(g.id)) {
+      drawLane(scene, g.id, box, g, g.order);
       continue;
     }
     const fill = g.style.shape.fill;
@@ -335,10 +341,11 @@ function drawClusters(scene: Scene, model: FlowModel): void {
  * turned −90° when the band is on the left. In the colour themes both rects take the palette
  * slot, fill included, as v12's `[data-color-id]` lane rules did. The author's `style` and
  * `classDef` still win (spread after). No drop shadow: v12's swimlane styles turned it off.
- * `view` is undefined for the default lane, which has no subgraph and no label.
+ * `view` is undefined for a lane the engine made (the default lane): no subgraph, no label.
  */
 function drawLane(
   { w, layout, ctx, paint }: Scene,
+  id: string,
   box: LayoutModelGroup,
   view: NodeView | undefined,
   order: number | undefined
@@ -349,7 +356,7 @@ function drawLane(
   const own = view?.style.shape;
   w.open('g', {
     class: 'cluster swimlane' + cls(view?.classes ?? []),
-    'data-id': view?.id ?? DEFAULT_LANE,
+    'data-id': id,
     'data-ast': view?.ast,
     'data-color-id': slot?.id,
   });
