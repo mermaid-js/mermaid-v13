@@ -7,11 +7,9 @@ import type { Range } from '@mermaid-js/core/parser-kit';
 import { lex, requirementView } from './lexer.ts';
 
 export { JISON_NAMES, T as RequirementTokenKind } from './tokens.ts';
-export { requirementView } from './lexer.ts';
 export { parseRequirement } from './parser.ts';
 export type { RequirementParseOptions, RequirementParseResult } from './parser.ts';
 export { detectRequirement } from './detect.ts';
-export { RequirementBuilder } from './builder.ts';
 export type {
   At,
   BuilderOptions,

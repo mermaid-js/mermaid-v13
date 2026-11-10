@@ -18,18 +18,20 @@ import {
   type Theme,
 } from '@mermaid-js/core/theme';
 import {
+  parseRequirement,
+  requirement,
+  type RequirementLayout,
+  type RequirementModel,
+} from '@mermaid-js/diagram-requirement';
+import {
   CLASSIC_MARKERS,
   layoutRequirement,
   markerGeometry,
   markerRoom,
-  parseRequirement,
-  requirement,
   REQUIREMENT_METRICS,
   type MarkerExtent,
   type MarkerGeometry,
-  type RequirementLayout,
-  type RequirementModel,
-} from '@mermaid-js/diagram-requirement';
+} from '@mermaid-js/diagram-requirement/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
 import { requirementCases, requirementCorpus } from './corpus.ts';
 

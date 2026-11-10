@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { JISON_NAMES, requirementTokens, requirementView } from './index.ts';
-import { lex } from './lexer.ts';
+import { JISON_NAMES, requirementTokens } from './index.ts';
+import { lex, requirementView } from './lexer.ts';
 import { T } from './tokens.ts';
 
 const stream = (src: string) => {
