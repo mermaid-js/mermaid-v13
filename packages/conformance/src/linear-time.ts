@@ -33,18 +33,25 @@ function cost(run: () => unknown, reps: number): number {
 }
 
 /**
- * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * about 4 ms for `threadCpuUsage` on the hosted CI runner.
+ * The step of {@link cpuMs}: the largest change seen while spinning for 50 ms of CPU time. About
+ * 1 µs on macOS; 4 ms for `threadCpuUsage` on the hosted CI runner, where the scheduler books a
+ * running thread's time once a tick. A spinning thread's clock never jumps by more than a tick,
+ * but it also moves in small steps whenever the thread is switched out and in, and on a busy
+ * runner those can be most of the changes: the median of 20 changes once read 0.07 ms there,
+ * which left 518 of 936 shapes timing windows of one or two ticks. The largest change is the
+ * tick. It is capped at 20 ms (a 100 Hz kernel's tick is 10 ms) so that one odd reading cannot
+ * make every window long.
  */
 function clockStepMs(): number {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
+  const start = cpuMs();
+  let last = start;
+  let largest = 0;
+  while (last - start < 50) {
     const now = cpuMs();
-    if (now !== last) steps.push(now - last);
+    if (now !== last) largest = Math.max(largest, now - last);
     last = now;
   }
-  return steps.sort((a, b) => a - b)[10]!;
+  return Math.min(largest, 20);
 }
 
 let minMs: number | undefined;
