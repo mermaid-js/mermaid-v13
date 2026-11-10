@@ -396,7 +396,12 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gitGraph.nodeLabel.x` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.nodeLabel.y` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `c4.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the C4 renderer never did. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `c4.layout` | ignored | C4 lays out with its own grid and relation router (`layoutKind: 'custom'`, D454, D455), as v12 had its own packer; neither the top-level nor a C4-scoped `layout` changes it. |  |
+| `c4.height` | ignored | v12's C4 renderer never read it: an element is as tall as its text (D454). |  |
+| `c4.boxMargin` | ignored | v12's C4 renderer never read it (D454). |  |
+| `c4.wrapPadding` | ignored | v12's C4 renderer never read it (D454). |  |
 | `sankey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
@@ -404,7 +409,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `block.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the block renderer never did. |  |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `block.layout` | ignored | Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it. |  |
+| `eventmodeling.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the event modeling renderer never did. |  |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `eventmodeling.rowHeight` | ignored | v12's event modeling renderer never read it: each lane is as tall as its tallest box, as in v12. |  |
 | `treeView.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treeView renderer never did. |  |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `radar.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
@@ -442,6 +449,28 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 | `ishikawa.useMaxWidth` | `true` | The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. |
+| `c4.personFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_personFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.systemFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_systemFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.system_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_system_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.system_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_system_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.boundaryFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.containerFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_containerFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.container_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_container_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.container_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_container_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.componentFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_componentFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.component_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_component_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.component_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_component_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
 | `usecase.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
 | `usecase.usecaseFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
@@ -2680,6 +2709,128 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | The `viewBox` from the browser's `getBBox()` plus 5, and a height one "magic factor" taller | The layout's bounds (every outline, label and edge, plus v12's 5 px) | D224 |
 | No text output | `format: 'ascii'` (both charsets): boxes on a character grid, one width per column at the widest label, composites as frames with the label on the top border, spaces blank, labels cut with `…`, block arrows as boxes with an arrowhead per pointing side, edges as stepped lines with arrowheads; `block.padding` ignored with no warning | D449, D320 |
 | Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12 | D301, D302, D447 |
+
+## C4 diagram
+
+The C4 parser accepts the v12 language (`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`,
+`C4Deployment`; oracle parity over the corpus, grammar in [syntax/c4.md](./syntax/c4.md)). The
+layout is a port of Pele's C4 grid and relation router, sized with v12's `c4` lengths (D454,
+D455). What changes (spec #522):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| The detector matched `C4Context` where the diagram starts but `C4Container`, `C4Component`, `C4Dynamic` and `C4Deployment` anywhere in the text, so a flowchart or sequence diagram that named one was taken for C4 and failed | All five headers only where the diagram starts, as a whole word (`/^\s*C4(Context\|Container\|Component\|Dynamic\|Deployment)\b/`), still fifth in v12's detector order | D451 |
+| An unquoted argument ran on past `)` and across the line end; a trailing `%%` comment took its line break, joining the next statement to it; a lone `title` took the next line as the title | An unquoted argument stops at `)` and at the line end; a comment keeps its line break; a lone `title` is an empty title | D452 |
+| A `direction TB` line (even inside a quoted label), and a `$__proto__` argument, crashed the parse | `direction` is a syntax error with a `C4_DIRECTION` diagnostic saying C4 has no `direction`; `$__proto__` sets nothing, with one `C4_NAME_RESERVED` warning | D452 |
+| A `$name="value"` in the alias, label or relation-end slot was stored there as written (`Person($label="x", u)` aliased `$label="x"`) | It sets the field it names and leaves the slot empty, with one `C4_NAMED_ARGUMENT_MOVED` warning; elsewhere v12's slot rule, `UpdateLayoutConfig`'s by-position reading and the empty argument of `"A" ,` are kept | D452 |
+| A structural `$name` could break the model: `$parentBoundary` naming no boundary dropped the element from the drawing, a boundary renamed by `$alias` left the statements in its braces outside the diagram, and an unknown `$typeC4Shape` or `$nodeType`, or `$wrap`, were stored as given | The structure is kept, with one `C4_STRUCTURE_KEPT` warning; v12's other structural names (`$alias` renames, a relation's `$type`/`$from`/`$to`, `UpdateElementStyle`'s `$parentBoundary`/`$typeC4Shape`/`$nodeType`) apply as in v12 | D450, for the maintainer |
+| `accTitle:` set the visible title too; the in-text `title` kept its trailing blanks; a front-matter `title` was not drawn; `accDescr` leaked into every later render | `accTitle` sets the accessible name only; the in-text `title` is trimmed; a front-matter `title` is drawn where the in-text one is when the text has none (D218); `accDescr` belongs to its own render | D453 |
+| A relation to an alias nothing defines failed at render with `C4 rel "a" -> "b" references an unknown shape or boundary` | The same message, now a parse diagnostic (`C4_UNKNOWN_END`) at the statement | D457 |
+| A non-numeric `$offsetX`/`$offsetY` was read as `NaN` | It counts as 0, with one `C4_OFFSET_INVALID` warning | D457 |
+| v12's packer placed elements in rows by statement order with fixed widths, wrapping at `screen.availWidth`; boundaries in rows below their parent's header, each `c4BoundaryInRow` a fixed share of the parent | Pele's grid: the same rows by statement order, each boundary sized bottom-up from its contents, with v12's lengths as gaps and margins (`c4ShapeMargin`, `diagramMarginX`/`Y`, `nextLinePaddingX`); the layout no longer depends on the screen | D454 |
+| `c4ShapeInRow` and `c4BoundaryInRow` were never read from the config: the DB hard-coded 4 and 2, which only `UpdateLayoutConfig` changed | Read from the `c4` section as defaults that `UpdateLayoutConfig` overrides | D454 |
+| The `c4` section's `height`, `boxMargin` and `wrapPadding` were never read | Ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | D454 |
+| `Boundary(global, …)` merged into the top level, which then drew nothing; a boundary reopened inside itself (a parent cycle) was left undrawn | `global` is an ordinary alias; a boundary in a cycle is drawn at the top level, with one `C4_BOUNDARY_CYCLE` warning | D454 |
+| `Rel_U`, `Rel_D`, `Rel_L` and `Rel_R` were plain relations | The same: the router picks the route | D455 |
+| Relation labels never wrapped: v12 measured each against its own width | With both `c4.wrap` and the top-level `wrap`, a relation label wraps at the room the router leaves (88 px across a column gap, 64 beside a self-loop, else 160); a boundary header wraps at its contents' width or `c4.width`, whichever is wider (v12's limit came from `screen.availWidth`) | D455, for the maintainer |
+| Each relation one fixed curve, with no work to limit | The router and label placement count their comparisons against `min(2,000,000, limits.maxLayoutWork)` (1,500,000 by default, R-SEC-5); once spent, the remaining relations are drawn straight with their labels at the middle, never an error | D455, for the maintainer |
+| Every `*FontFamily` defaulted to `"Open Sans", sans-serif` | Unset, the theme's `fontFamily` ([Changed defaults](#changed-defaults)); a set family the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning | Sequence's precedent |
+| `format: 'ascii'`: no text output | Text output (`@mermaid-js/diagram-c4/ascii`, loaded only for text): the SVG's grid on a character grid, laid out with every text measured in cells of 8 × 16 px. Elements are boxes with the name, `[Kind]` and description (rounded corners, a cylinder's caps, `fr-rect`'s double sides; a line wider than its box cut with `…`, `...` in the ascii charset); boundaries dashed frames, deployment nodes solid ones, with the label in the top border; relations stepped lines routed on the grid round elements and header text, following the routed points, with the label at or beside the middle (with both `wrap` flags set, wrapped narrower where the gap is small; else on one line, cut with `…` where it does not fit) and arrowheads. Config colours and fonts are ignored without a warning; `UpdateElementStyle`/`UpdateRelStyle` colours and offsets, a relation's description and `accTitle`/`accDescr` give one `ASCII_DROPPED` each; a `c4ShapePadding` under 16 or a `c4ShapeMargin` under 32 is raised with `C4_CONFIG_IGNORED`; `ascii.padding: roomy` adds a row round each element's text. Never cropped and never reflowed (the grid is the SVG's): `ASCII_TOO_WIDE` past `ascii.maxWidth`; see [ASCII output](./ascii.md#c4-diagrams) | D459, D320, R-ASCII-5 |
+
+## C4 SVG structure
+
+What changed in the C4 diagram's SVG compared with v12 (spec #522). v12's element classes are
+kept: each element is a `g.node.c4-shape.c4-<kind>` (`c4-external` on an external kind) holding
+its outline (`label-container`) and its text, `c4-name`, `c4-type` and `c4-descr`. The rest is
+new, as v12 wrote no classes there: the title `text.c4-title`; `g.c4-boundaries` > each
+`g.c4-boundary` (`c4-deployment-node` on a deployment node) with its `rect` and
+`text.c4-boundary-label`, `-type` and `-descr`; `g.c4-elements`; `g.c4-relations` > each
+`g.c4-relation` with its `title` (the `descr`), `path.c4-rel.c4-rel-<kind>`, its arrowheads
+`path.marker`, the label box `rect.c4-rel-label-box` and `text.c4-rel-label` and
+`text.c4-rel-techn`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="c4"`, a `<style>` scoped by the id (per-kind font rules, `.c4-shape` text and stroke rules, a `.person` rule that matched nothing) | No root `id`; `class="mermaid mermaid-c4"`, `role="img"`, `aria-roledescription="c4"` (kept), `data-mermaid-version`, `<title id="<id>-title">` and `<desc id="<id>-desc">` from `accTitle` and `accDescr`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes, widths and fonts are presentation attributes, theme colours reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-A11Y-1, R-THEME-3 |
+| `<defs>` with unused `<symbol>` icons (database, computer, clock) and four `<marker>`s, of which `arrowhead` and `arrowend` were used | No `<defs>`, `<symbol>` or `<marker>`: each arrowhead is drawn inline after its line as `path.marker` | DESIGN §7.1 |
+| Arrowheads in the page's text colour (the marker took the root's `fill`), whatever `$lineColor` said, the tip 1 px past the outline (`refX 9` of a 10 px head) | The same colour (`textColor`), the tip on the outline | v12; the line stops at the outline |
+| Element ids `<render id>-<alias>` | No ids: `data-id` (the alias) and `data-ast` on each element's `g.node` and each boundary's `g`; a relation's `path` carries `data-ast` and `data-id` (`<from>-><to>`); text carries `data-id` only | R-ARCH-6, R-PARSE-8, D458, pitfall 12 |
+| Boundaries drawn after their contents, so a boundary's `$bgColor` painted over its shapes | Boundaries first (parents before children), then elements, then relations | Spec #522 |
+| The first relation a `<line>`, the others a quadratic curve through a fixed control point; labels to the right of the midpoint by half their width, no background | Each relation one `path` along the routed line (straight, bent round shapes, or a self-loop), its label and italic `[techn]` placed along the line where they cover least; where the line has no room (a label wider than the gap between neighbours), beside it, a label's depth further out at each step, never over its own arrowheads, an element or a boundary header | D455 |
+| Relation labels had no background: they sat beside the curve | Labels and `[techn]` on a `rect.c4-rel-label-box` of the page's `background`, as Pele draws them, since they sit on the line | D455 (needs a D-id) |
+| A relation's `descr` was never drawn | The relation group's SVG `<title>` | D455 |
+| The title a `<text>` at `x = boxWidth/2 − 4·diagramMarginX`, in a row above the diagram reached by a negative-y viewBox | `text.c4-title` centred over the diagram in a 60 px row at the top of a `0 0 width height` viewBox | D224 |
+| `$link`, `$sprite`, `$tags` (but shape words), `$shadowing` and `$legend*` parsed and not drawn | The same: no `<a>`, no icon, no 48 px sprite gap on a boundary | D457 |
+| `$bgColor`, `$fontColor`, `$borderColor`, `$textColor`, `$lineColor` and the 40 config colours written raw | Each through core's colour check: a value it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each | R-SEC-2 |
+| A boundary's `$fontColor` was set and never drawn (its text was always `#444444`) | The same: its text is `c4BoundaryColor` (`#444444` in light themes) | v12 |
+| Relations and boundaries `#444444` literals, the title the page's text colour, in every theme: dark on dark in the dark themes | Theme variables `c4RelationColor`, `c4BoundaryColor`, `c4TitleColor`: v12's colours in light themes; `lineColor` and `nodeBorder` for relations and boundaries under a dark theme or `darkMode` | D456, D333(b) |
+| `look: neo`: the cylinder, the queue and `fr-rect` padded with v12 neo's 24, 12 and 28 × 12 | Read from the theme's `cylinderPadding*` (the queue half of it) and `subroutinePadding*`: neo's values in the redux and neo themes, `2 · c4ShapePadding` in the classic ones. No gradient or shadow in any family, as v12 | D152, D227 |
+| Text by `<text>` per line with `dominant-baseline: middle` and CSS font sizes (`0.75em` type line, `0.82em` description) | Core's label layout: `text`/`tspan` placed by their measured boxes, each in the font it was measured in (`font-size` in px, `font-family` where a `c4.<kind>FontFamily` sets one) | Pitfall 16 |
+| The `viewBox` from the packer's bounds, which depended on `screen.availWidth` | The layout's canvas: everything drawn, the config margins round it and the title row | D224, D454 |
+| Hand-drawn: elements sketched by roughjs | Elements through the outline hook (`node`, and `divider` for the cylinder's and the queue's rim and `fr-rect`'s frame lines); boundaries and relations plain, as v12 | D301, D302 |
+
+## Event modeling
+
+The event modeling parser accepts the v12 language, `eventmodeling` (oracle parity over every e2e
+fixture, the v12 spec strings and the syntax page; grammar in
+[syntax/eventmodeling.md](./syntax/eventmodeling.md)). Lanes, relations, box order and v12's
+placement constants are kept (spec #527). What changes:
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Syntax errors: Langium's first message, naming tokens; a duplicate frame id threw | Every error, in words, with hints for the usual slips (a keyword as a name, `title` at a line start, upper-case keywords, parts out of order, a four-digit id, block data written inline). A duplicate frame id is the error `EVENTMODELING_DUPLICATE_FRAME`, with v12's message, at the second id | R-PARSE-1 |
+| A source of the wrong kind, a `->>` to a later or undefined frame, an undefined `[[data]]` and a `note` or `gwt` on an undefined frame were dropped silently (the first was reported only by the unused validator) | The same output, with one warning per render for each kind: `EVENTMODELING_INVALID_SOURCE` (v12's validator message), `EVENTMODELING_UNKNOWN_SOURCE`, `EVENTMODELING_UNKNOWN_DATA`, `EVENTMODELING_UNKNOWN_FRAME`, every case in `related` | D525, D226 |
+| `%%` comment lines were kept for parsing (`preserveCommentsWhenParsing`), except in a text over `maxTextSize` (50,000), which v12 parsed with the comments stripped | Comment lines are always kept, whatever the text's length | Spec #527 T1 |
+| A new lane for every namespaced frame, so two frames of one namespace in one band could draw two lanes of the same name | One lane per band and namespace, as the syntax page says | D522 |
+| Data drawn as HTML through `foreignObject`, sliced off by one: empty quoted data, a lost last character, `&nbsp;` spaces; tags, entities and `<br/>` read as markup; a referenced data block drew a trailing blank line | The text between the braces or quotes, dedented and trimmed, in mono, as written: indentation and blank runs kept (a tab to the next 4-column tab stop, before dedenting), empty data drawn as no data, `<tags>`, `&entities;` and `<br/>` shown as text, no trailing blank line. `dataType` is still ignored | D523 |
+| `title`, `accTitle` and `accDescr` values kept their keyword, `:` and blanks | The keyword, `:` and surrounding blanks are stripped, as for every other type; `accTitle` and `accDescr` become the SVG's `<title>` and `<desc>`. The `title` is not drawn, as in v12 | D524, D218 |
+| Box sizes from 16 px bold trebuchet markup strings, a box with data at a third of its width | Boxes sized from the name and data measured in the theme's font (each `clamp(text + 20, 80, 450) + 20` wide, `clamp(text + 20, 80, 750) + 20` high, v12's bounds), so boxes and every later x differ | D521 |
+| A box could overlap or touch (less than 10 px from) its lane's previous box | It moves right to 10 px past it; later boxes follow | D521 |
+| A relation within a lane ran from one box's middle through both boxes; a frame named as its own source drew a line through its box | A relation within a lane runs from the source's right edge to the target's left edge; a self relation loops over the box's top right corner | D521 |
+| Text past the greatest box height (750 px) was clipped by the `foreignObject`, mid-line | Lines past it are left out, data lines first, then name lines | Spec #527 T3 |
+| Lanes reached 15 px past the rightmost box, unless an earlier box ended right of the last one | Lanes reach 25 px past the rightmost box | Spec #527 T3 |
+| Notes, `gwt` blocks and entities were parsed and not drawn | The same: in the model and the language service, not drawn | D526 |
+| An `eventmodeling.padding` that was not a number was used as given | A number of 0 or more, or a numeric string as its number; anything else (or a value so large the drawing would not stay finite) draws with 30 and one `EVENTMODELING_CONFIG_INVALID` warning. A `useMaxWidth` that is not `true` or `false` draws as `true`, with the same warning | D226 |
+| `eventmodeling.rowHeight` (default 32) and `eventmodeling.useWidth` were never read | Accepted and ignored, with no warning ([Config](#config)) | |
+| `look: handDrawn` (top level or `eventmodeling.look`): v12 never sketched an event model | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the event model draws exactly as without it: not sketched | D301, D303 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320, R-ASCII-5 |
+
+### Event modeling theme colours
+
+Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `emUiStroke`,
+`emProcessorFill`, `emProcessorStroke`, `emReadModelFill`, `emReadModelStroke`, `emCommandFill`,
+`emCommandStroke`, `emEventFill`, `emEventStroke`, `emSwimlaneBackgroundOdd`,
+`emSwimlaneBackgroundStroke`, `emRelationStroke`, `emArrowhead`), and one new one, `emTextColor`
+(core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
+theme of every family draws v12 `default`'s values, relations and arrowheads in `lineColor`; the
+dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+author's `darkMode` alone keeps the light values, as in v12. What changed
+(`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `neo-dark` | No `em*` variables: the renderer's light fallbacks (`default`'s pastels, `rgb(250,250,250)` lanes) and `#000` relations and arrowheads | `dark`'s values (`#2d2d2d` UI boxes, the darker kind colours, lanes 5% and 12% lighter than the background) and `lineColor` relations | D527, D333 |
+| `redux-dark` | The same light fallbacks and `#000` relations | `dark`'s values and `lineColor` | D527, D333 |
+| `redux-dark-color` | The same light fallbacks and `#000` relations | `dark`'s values and `lineColor` | D527, D333 |
+| Every theme | Box and lane text in the page's colour (black on a dark lane in `dark`) | `emTextColor`, core's `textColor` | D527 |
+
+## Event modeling SVG structure
+
+What changed in the event model's SVG compared with v12 (spec #527, DESIGN §7.2). v12's class
+names (`em-swimlane`, `em-box`, `em-relation`) and its draw order (lanes, then boxes, then
+relations) are kept.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"` and v12's `role` | No root `id`; `class="mermaid mermaid-eventmodeling"`, `role="img"`, `aria-roledescription="eventmodeling"`, `data-mermaid-version`, `font-family` from the theme; the `viewBox` is what is drawn plus `padding`; `useMaxWidth` as v12 (`width="100%"`, `max-width`) | R-SEC-2, R-A11Y-1 |
+| `<defs>` with `<marker id="em-arrowhead-<id>">` and `marker-end` on every relation | No `<defs>`, `<marker>` or `marker-end`: each `path.em-relation` is followed by its own `<polygon>` head (v12's `0 0, 10 3.5, 0 7`, filled `emArrowhead`). The only ids are `<id>-title` and `<id>-desc`, from `accTitle` and `accDescr` | R-SEC-2, D133 |
+| Box text in a `foreignObject` holding XHTML `div`s and `span`s | SVG `<text>` and `<tspan>` through core label layout: the bold name centred, the data in mono, left-aligned, its indentation kept; data is text, never HTML | R-SEC-2, D523 |
+| Lane labels as HTML-less `<text>` at (30, `y + 30`) in the page's colour | `<text>` start-anchored at the same point, bold, filled `emTextColor` | D527 |
+| Text at v12's 16 px | Text in `emTextColor` at the theme's `fontSize` | D527 |
+| A self relation drew a straight line through its box | A 4-point path over the box's top right corner; every other relation is `M…L…`, as v12, ending at its head's tip | D521 |
+| No source mapping | `data-id` on every element; `data-ast` on each `g.em-box` (`frame:<id>`) and each `path.em-relation` drawn for a `->>` (`relation:<source>-><target>`, the first `->>` of that source). A source repeated in one frame (`->> 01 ->> 01`) draws one path; the AST nodes of its repeats (`relation:01->02@2`, …) are not drawn. Lanes (`lane:<index>`) and inferred relations carry `data-id` only | R-PARSE-8, D528 |
+| `rgb(250,250,250)`, `rgb(240,240,240)` and `white` paints | The same colours as hex | |
+| `look: neo` and the redux themes: the same model as the classic themes | The same: event modeling differs between families by colour only | D227 |
 
 ## Ishikawa diagram
 

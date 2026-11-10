@@ -1,0 +1,25 @@
+@ 4:21  tf 03 evt Added ->> |
+  01 value (ui Screen) 4:21-4:21 "" -> "01"
+  02 value (cmd Add) 4:21-4:21 "" -> "02"
+  03 value (this frame) 4:21-4:21 "" -> "03"
+@ 5:21  tf 04 rmo View ->> 0|
+  01 value (ui Screen) 5:20-5:21 "0" -> "01"
+  02 value (cmd Add) 5:20-5:21 "0" -> "02"
+  04 value (this frame) 5:20-5:21 "0" -> "04"
+@ 6:6  note |
+  01 value (ui Screen) 6:6-6:6 "" -> "01"
+  02 value (cmd Add) 6:6-6:6 "" -> "02"
+  04 value (rmo View) 6:6-6:6 "" -> "04"
+  06 value (evt Done) 6:6-6:6 "" -> "06"
+  07 value (evt End) 6:6-6:6 "" -> "07"
+@ 7:26  tf 05 ui Next ->> 01 ->> |
+  01 value (ui Screen) 7:26-7:26 "" -> "01"
+  02 value (cmd Add) 7:26-7:26 "" -> "02"
+  04 value (rmo View) 7:26-7:26 "" -> "04"
+  05 value (this frame) 7:26-7:26 "" -> "05"
+@ 9:5  gwt |
+  01 value (ui Screen) 9:5-9:5 "" -> "01"
+  02 value (cmd Add) 9:5-9:5 "" -> "02"
+  04 value (rmo View) 9:5-9:5 "" -> "04"
+  06 value (evt Done) 9:5-9:5 "" -> "06"
+  07 value (evt End) 9:5-9:5 "" -> "07"

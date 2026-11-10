@@ -35,7 +35,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*agentflow-beta\b/.test(text),
     load: () => import('@mermaid-js/diagram-agentflow/language').then((m) => m.language),
   },
-  { type: 'c4', id: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/, detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
+  {
+    type: 'c4',
+    id: 'c4',
+    section: 'c4',
+    pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/,
+    detector: (text) => /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/.test(text),
+    load: () => import('@mermaid-js/diagram-c4/language').then((m) => m.language),
+  },
   {
     type: 'kanban',
     id: 'kanban',
@@ -181,7 +188,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*block(-beta)?/.test(text),
     load: () => import('@mermaid-js/diagram-block/language').then((m) => m.language),
   },
-  { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
+  {
+    type: 'eventmodeling',
+    id: 'eventmodeling',
+    section: 'eventmodeling',
+    pattern: /^\s*eventmodeling/,
+    detector: (text) => /^\s*eventmodeling/.test(text),
+    load: () => import('@mermaid-js/diagram-eventmodeling/language').then((m) => m.language),
+  },
   {
     type: 'treeView',
     id: 'treeView',
@@ -256,4 +270,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

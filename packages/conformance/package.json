@@ -20,7 +20,8 @@
     "harvest:info": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts info",
     "harvest:radar": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts radar",
     "harvest:treemap": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts treemap",
-    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley"
+    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley",
+    "capture:swimlane": "tsx --conditions=mermaid-source src/cli/capture-swimlane.ts"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",
@@ -29,9 +30,11 @@
     "@mermaid-js/diagram-agentflow": "workspace:^",
     "@mermaid-js/diagram-architecture": "workspace:^",
     "@mermaid-js/diagram-block": "workspace:^",
+    "@mermaid-js/diagram-c4": "workspace:^",
     "@mermaid-js/diagram-class": "workspace:^",
     "@mermaid-js/diagram-cynefin": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
+    "@mermaid-js/diagram-eventmodeling": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/diagram-gantt": "workspace:^",
     "@mermaid-js/diagram-gitgraph": "workspace:^",

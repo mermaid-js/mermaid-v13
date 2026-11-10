@@ -1,0 +1,8 @@
+@ 3:9  Person("|a", "A")
+  prepare: 3:9-3:10 "a"; rename to "renamed":
+  %% rename-to: renamed
+  C4Context
+  Person("renamed", "A")
+  Person(b, "B")
+  Rel(renamed, "b", "Uses")
+  Rel("renamed", b, "Again")

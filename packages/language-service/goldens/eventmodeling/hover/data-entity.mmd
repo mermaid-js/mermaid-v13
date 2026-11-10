@@ -1,0 +1,14 @@
+eventmodeling
+tf 01 ui Screen [[|Payload]]
+tf 02 cmd Add [[Missin|g]]
+data |Payload `json` {
+  "a": 1
+}
+data Payload {
+  "b": 2
+}
+data |Unused {
+  c
+}
+entity |Item
+gwt 01 given evt Item then evt |Other

@@ -1,0 +1,4 @@
+3:21-3:23 "01" warning EVENTMODELING_INVALID_SOURCE: A event can only receive input from a command, not from 'evt'.
+2:23-2:25 "09" warning EVENTMODELING_UNKNOWN_SOURCE: Frame 01 names the source frame 09, which no frame has, so no relation is drawn from it.
+4:25-4:32 "Missing" warning EVENTMODELING_UNKNOWN_DATA: Frame 03 refers to the data `Missing`, which no `data` block defines, so it shows no data from it.
+6:6-6:8 "07" warning EVENTMODELING_UNKNOWN_FRAME: This note is on frame 07, which no frame has.

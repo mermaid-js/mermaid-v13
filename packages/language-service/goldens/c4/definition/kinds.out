@@ -1,0 +1,28 @@
+@ 2:8  Person(|customerA, "Customer A")
+  -> 2:8-2:17 "customerA"
+@ 3:17  System_Boundary(|b1, "Banking") {
+  -> 3:17-3:19 "b1"
+@ 4:10  System(|sys, "System")
+  -> 4:10-4:13 "sys"
+@ 6:8  Person(|customerA, "Merged into the first")
+  -> 2:8-2:17 "customerA"
+@ 7:5  Rel(|customerA, sys, "Uses")
+  -> 2:8-2:17 "customerA"
+@ 7:16  Rel(customerA, |sys, "Uses")
+  -> 4:10-4:13 "sys"
+@ 8:16  Rel(customerA, |b1, "Uses the boundary")
+  -> 3:17-3:19 "b1"
+@ 9:20  UpdateElementStyle(|sys, $bgColor="grey")
+  -> 4:10-4:13 "sys"
+@ 10:16  UpdateRelStyle(|customerA, sys, $textColor="red")
+  -> 2:8-2:17 "customerA"
+@ 10:27  UpdateRelStyle(customerA, |sys, $textColor="red")
+  -> 4:10-4:13 "sys"
+@ 11:9  Person("|quoted", "Quoted alias")
+  -> 11:9-11:15 "quoted"
+@ 12:5  Rel(|quoted, "sys", "Quoted end")
+  -> 11:9-11:15 "quoted"
+@ 12:14  Rel(quoted, "|sys", "Quoted end")
+  -> 4:10-4:13 "sys"
+@ 13:16  Rel(customerA, |nobody, "Unknown end")
+  -> none

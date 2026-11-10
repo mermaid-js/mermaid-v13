@@ -1,0 +1,714 @@
+[
+  {
+    "id": "e2e/diagrams/c4/nightly-check/accessibility.mmd",
+    "inputHash": "sha256:b28d72e12edf2373",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
+    "inputHash": "sha256:a36ef92fe3052d0f",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Boundary.spec.ts#5",
+    "inputHash": "sha256:b3599bdb69215b24",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Boundary.spec.ts#6",
+    "inputHash": "sha256:bee7a277f0ba7550",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#2",
+    "inputHash": "sha256:a8988ac294529dab",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#4",
+    "inputHash": "sha256:ebbe1176e5b3fa8a",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#6",
+    "inputHash": "sha256:f06e3225a2e02db1",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#8",
+    "inputHash": "sha256:469fb648190bdb33",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#10",
+    "inputHash": "sha256:d1298236e4363fe8",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Component.spec.ts#12",
+    "inputHash": "sha256:0da5aed206e73808",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#6",
+    "inputHash": "sha256:227cee1faab82bdf",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#7",
+    "inputHash": "sha256:cc23077ff8cf93dd",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#8",
+    "inputHash": "sha256:69e27135d50405ee",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#14",
+    "inputHash": "sha256:71f1f40adb8b360e",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#15",
+    "inputHash": "sha256:525a49b6e2aa97f1",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#16",
+    "inputHash": "sha256:7ff21db3829f33ef",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#22",
+    "inputHash": "sha256:f61118ef77f93e8c",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#23",
+    "inputHash": "sha256:6f47ed69f31cd400",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#24",
+    "inputHash": "sha256:a4898ac9e6f071c0",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#30",
+    "inputHash": "sha256:23198f5cab0b6e83",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#31",
+    "inputHash": "sha256:4d212df1d8bc092b",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#32",
+    "inputHash": "sha256:cfc9805a8f0ce12a",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#38",
+    "inputHash": "sha256:9fafe60acc26fa32",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#39",
+    "inputHash": "sha256:709d6da25f717f9e",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#40",
+    "inputHash": "sha256:a8bcc8bb24ee544d",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#46",
+    "inputHash": "sha256:f76371df8487cd30",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#47",
+    "inputHash": "sha256:7b219cb5b1afc8b2",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Container.spec.ts#48",
+    "inputHash": "sha256:73efb750427608df",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Diagram.spec.ts#1",
+    "inputHash": "sha256:a95fd4b0700b55be",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Person.spec.ts#5",
+    "inputHash": "sha256:7ddb8a152490908b",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Person.spec.ts#6",
+    "inputHash": "sha256:fb9d843852771bf5",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4Person.spec.ts#7",
+    "inputHash": "sha256:7cbb425f9e263595",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4PersonExt.spec.ts#5",
+    "inputHash": "sha256:dea72a2aa6af26f1",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4PersonExt.spec.ts#6",
+    "inputHash": "sha256:8bf8e3f17a81c4e8",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4PersonExt.spec.ts#7",
+    "inputHash": "sha256:428d87101a25d08b",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#5",
+    "inputHash": "sha256:5c2436b923594b9c",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#6",
+    "inputHash": "sha256:7af0386b39b0ccb9",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#7",
+    "inputHash": "sha256:eb1891a80ad1d365",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#12",
+    "inputHash": "sha256:2554a22f1387cf48",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#13",
+    "inputHash": "sha256:c4992129b33f5269",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#14",
+    "inputHash": "sha256:059c79a3ebba4d7f",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#19",
+    "inputHash": "sha256:87ba24804d637b5c",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#20",
+    "inputHash": "sha256:ee47b0a8204595fe",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#21",
+    "inputHash": "sha256:2eea5541f46c4bf5",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#26",
+    "inputHash": "sha256:4e007e49bb6bed57",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#27",
+    "inputHash": "sha256:d386f240dfbd99bd",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#28",
+    "inputHash": "sha256:fecdbb6e748d127d",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#33",
+    "inputHash": "sha256:94276e422b005c26",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#34",
+    "inputHash": "sha256:d179118ac01f6212",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#35",
+    "inputHash": "sha256:a59e3342fa06b2e9",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#40",
+    "inputHash": "sha256:3650d0936657ad6a",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#41",
+    "inputHash": "sha256:cdbd60ee0574d297",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/c4System.spec.ts#42",
+    "inputHash": "sha256:3287508c7b928cc3",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/unquoted-runs-over-close-paren",
+    "inputHash": "sha256:d3584fe5a8d08c11",
+    "kind": "model",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/unquoted-descr-runs-over-lines",
+    "inputHash": "sha256:de698112e9399400",
+    "kind": "model",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/unquoted-at-end",
+    "inputHash": "sha256:30949ee23cdc43d0",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/unquoted-keeps-leading-blank",
+    "inputHash": "sha256:a94c52b78716ebe3",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/blank-after-quote-before-paren",
+    "inputHash": "sha256:a6e6eeb2a549f1d6",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/tab-after-comma",
+    "inputHash": "sha256:ecc3fc3cdb8a1663",
+    "kind": "model",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/no-escapes",
+    "inputHash": "sha256:d02a8155e757f9fa",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/unclosed-quote-runs-to-end",
+    "inputHash": "sha256:848913f613f5416a",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/single-quotes",
+    "inputHash": "sha256:2417a5c7edfee0c9",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/quote-inside-unquoted",
+    "inputHash": "sha256:d087a7c5bc7075f6",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-argument-in-label-slot",
+    "inputHash": "sha256:4749a2878a615a7b",
+    "kind": "model",
+    "reason": "v12 stored a `$name=\"value\"` written in the label slot as the label itself (`label.text` an object) and left the field it names unset; v13 sets the field it names and leaves the label empty, with one `C4_NAMED_ARGUMENT_MOVED` warning (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/dollar-in-quotes",
+    "inputHash": "sha256:2ebc2346be04d4f2",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/title-keeps-blanks",
+    "inputHash": "sha256:3adee0ebd2233f6f",
+    "kind": "model",
+    "reason": "v12 kept the blanks around an in-text `title` (`setTitle($1.substring(6))`); v13 trims it (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/title-line-break-blank",
+    "inputHash": "sha256:c299e460278b3cd4",
+    "kind": "model",
+    "reason": "v12's `title\\s` took a line break, so a lone `title` took the next line as its text (or failed at a blank one); v13 reads a lone `title` as an empty title (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/title-alone",
+    "inputHash": "sha256:f5e498e4723b763b",
+    "kind": "accept",
+    "reason": "v12's `title\\s` took a line break, so a lone `title` took the next line as its text (or failed at a blank one); v13 reads a lone `title` as an empty title (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/title-alone-then-statement",
+    "inputHash": "sha256:56fa48d0860275cc",
+    "kind": "accept",
+    "reason": "v12's `title\\s` took a line break, so a lone `title` took the next line as its text (or failed at a blank one); v13 reads a lone `title` as an empty title (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/acc-title",
+    "inputHash": "sha256:ee9099bacdd64c87",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/acc-title-blank-before-colon",
+    "inputHash": "sha256:f5765965b1a0dbaa",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/acc-title-value-next-line",
+    "inputHash": "sha256:1b288323edf34cb9",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/acc-title-semicolon-hash",
+    "inputHash": "sha256:e7f6653b9ebbd913",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/title-after-acc-title",
+    "inputHash": "sha256:fefc9c956f886610",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/acc-in-arguments",
+    "inputHash": "sha256:dd820d06f5b5e925",
+    "kind": "accept",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/comment-mid-line-eats-newline",
+    "inputHash": "sha256:473c19c21aa47333",
+    "kind": "accept",
+    "reason": "v12's trailing `%%` comment ate the line break after it, so the next statement joined its line; v13 keeps the line break (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/comment-mid-line-eats-newlines",
+    "inputHash": "sha256:340ebb8eff15165a",
+    "kind": "accept",
+    "reason": "v12's trailing `%%` comment ate the line break after it, so the next statement joined its line; v13 keeps the line break (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/comment-in-unquoted",
+    "inputHash": "sha256:c36f8fec728846e9",
+    "kind": "model",
+    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/comment-after-brace",
+    "inputHash": "sha256:4052326ac284b02b",
+    "kind": "accept",
+    "reason": "v12's trailing `%%` comment ate the line break after it, so the next statement joined its line; v13 keeps the line break (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/ls-after-acc-title",
+    "inputHash": "sha256:bd89fa0b6bee4e4b",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/ls-in-acc-title-value",
+    "inputHash": "sha256:b0865255a990a61b",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty; v13 sets the accessible title only (D453, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/ls-in-comment",
+    "inputHash": "sha256:c8dbed32b52da7ec",
+    "kind": "accept",
+    "reason": "v12's trailing `%%` comment ate the line break after it, so the next statement joined its line; v13 keeps the line break (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/boundary-global",
+    "inputHash": "sha256:50e4c525c599e5a2",
+    "kind": "model",
+    "reason": "v12 merged `Boundary(global, …)` into its root boundary, so nothing was drawn; v13 treats `global` as an ordinary alias (D454, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/nightly-check/parse-fixes.mmd",
+    "inputHash": "sha256:696b17495e8e7930",
+    "kind": "accept",
+    "reason": "Written for D452's parse fixes (an unquoted argument stopping at `)` and at the line end, a trailing `%%` comment keeping its line break, a lone `title`); v12's unquoted argument ran over `)` and line breaks to the end, and v12 rejected it (D452, #539; a lexer-parity exclusion).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/nightly-check/titles.mmd",
+    "inputHash": "sha256:af25dbb972e0e065",
+    "kind": "model",
+    "reason": "v12 set the visible title from `accTitle:` and left the accessible one empty, and ignored the front-matter `title`; v13 sets the accessible title only and draws the front-matter title, as the text has none (D453, D218, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-proto",
+    "inputHash": "sha256:feab83dab7981ba3",
+    "kind": "accept",
+    "reason": "v12 threw a TypeError on `$__proto__`; v13 keeps it as an unknown name with a `C4_NAME_RESERVED` warning, as Pele keeps it (D452, #539).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-parent-boundary-unknown",
+    "inputHash": "sha256:864587e18dbc5896",
+    "kind": "model",
+    "reason": "v12's `UpdateElementStyle` moved the element to the boundary its `$parentBoundary` names even when there is none, so it was not drawn; v13 keeps it where it is, with a `C4_STRUCTURE_KEPT` warning (#539; for the maintainer, D450).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/named-boundary-alias",
+    "inputHash": "sha256:7637a1bc0dfb44ed",
+    "kind": "model",
+    "reason": "v12 renamed the boundary from `$alias` but kept the statements in its braces under the old alias, outside the diagram; v13 keeps them in the renamed boundary, with a `C4_STRUCTURE_KEPT` warning (#539; for the maintainer, D450).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "c4-cases/front-matter",
+    "inputHash": "sha256:864e61b468576a82",
+    "kind": "model",
+    "reason": "v12's C4 DB ignored the front-matter `title` (it has no `setDiagramTitle`); v13 takes it when the text has no `title` (D453, D218, #539, MIGRATION.md).",
+    "owner": "#539",
+    "since": "2026-11-09"
+  }
+]

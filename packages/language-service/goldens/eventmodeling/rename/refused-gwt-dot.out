@@ -1,0 +1,3 @@
+@ 4:8  entity |Item
+  prepare: 4:8-4:12 "Item"; rename to "Shop.Item":
+  refused: 'Shop.Item' would not read as the same entity id everywhere it is used.

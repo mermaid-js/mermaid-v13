@@ -1,0 +1,258 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "sales_process",
+        "width": 150,
+        "height": 62.2,
+        "shape": "rounded",
+        "parent": "customer",
+        "span": 38.2
+      },
+      {
+        "id": "places_order",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "customer",
+        "span": 16.1
+      },
+      {
+        "id": "receives_order",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "customer",
+        "span": 16.1
+      },
+      {
+        "id": "order_complete",
+        "width": 226.68571428571428,
+        "height": 64.2,
+        "shape": "hex",
+        "parent": "sales",
+        "span": 32.1
+      },
+      {
+        "id": "details",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "sales",
+        "span": 16.1
+      },
+      {
+        "id": "roadmap",
+        "width": 226.68571428571428,
+        "height": 64.2,
+        "shape": "hex",
+        "parent": "warehouse",
+        "span": 32.1
+      },
+      {
+        "id": "collect",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "warehouse",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "ship",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "warehouse",
+        "span": 16.1
+      },
+      {
+        "id": "purchase",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "purchasing",
+        "span": 32.2
+      },
+      {
+        "id": "received",
+        "width": 226.68571428571428,
+        "height": 64.2,
+        "shape": "hex",
+        "parent": "purchasing",
+        "span": 32.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "customer",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 57.568,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "sales",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 32.676,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "warehouse",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 68.474,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "purchasing",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 68.474,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_sales_process_places_order_0",
+        "source": "sales_process",
+        "target": "places_order",
+        "minLen": 1
+      },
+      {
+        "id": "L_places_order_order_complete_0",
+        "source": "places_order",
+        "target": "order_complete",
+        "minLen": 1
+      },
+      {
+        "id": "L_order_complete_details_0",
+        "source": "order_complete",
+        "target": "details",
+        "minLen": 1,
+        "label": {
+          "width": 27.567999999999998,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_details_order_complete_0",
+        "source": "details",
+        "target": "order_complete",
+        "minLen": 1
+      },
+      {
+        "id": "L_order_complete_roadmap_0",
+        "source": "order_complete",
+        "target": "roadmap",
+        "minLen": 1,
+        "label": {
+          "width": 33.784,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_roadmap_collect_0",
+        "source": "roadmap",
+        "target": "collect",
+        "minLen": 1
+      },
+      {
+        "id": "L_collect_ship_0",
+        "source": "collect",
+        "target": "ship",
+        "minLen": 1
+      },
+      {
+        "id": "L_ship_receives_order_0",
+        "source": "ship",
+        "target": "receives_order",
+        "minLen": 1
+      },
+      {
+        "id": "L_roadmap_purchase_0",
+        "source": "roadmap",
+        "target": "purchase",
+        "minLen": 1,
+        "label": {
+          "width": 27.567999999999998,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_purchase_received_0",
+        "source": "purchase",
+        "target": "received",
+        "minLen": 1
+      },
+      {
+        "id": "L_received_collect_0",
+        "source": "received",
+        "target": "collect",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

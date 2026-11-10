@@ -1,0 +1,55 @@
+@ 5:17  Person(a, "A", $|parentBoundary="b", $typeC4Shape="system", $wrap="true")
+  5:16-5:35 "$parentBoundary=\"b\""
+  | **`$parentBoundary`**
+  |
+  | Argument 3 of `Person`. Changes nothing here: mermaid@12 set it again after the arguments (it applies in `UpdateElementStyle`).
+@ 5:38  Person(a, "A", $parentBoundary="b", $|typeC4Shape="system", $wrap="true")
+  5:37-5:58 "$typeC4Shape=\"system\""
+  | **`$typeC4Shape`**
+  |
+  | Argument 4 of `Person`. Changes nothing here: mermaid@12 set it again after the arguments (it applies in `UpdateElementStyle`).
+@ 5:61  Person(a, "A", $parentBoundary="b", $typeC4Shape="system", $|wrap="true")
+  5:60-5:72 "$wrap=\"true\""
+  | **`$wrap`**
+  |
+  | Argument 5 of `Person`. Changes nothing: wrapping follows the `c4.wrap` config.
+@ 6:26  Deployment_Node(n, "N", $|nodeType="nodeL")
+  6:25-6:42 "$nodeType=\"nodeL\""
+  | **`$nodeType`**
+  |
+  | Argument 3 of `Deployment_Node`. Changes nothing here: mermaid@12 set it again after the arguments (it applies in `UpdateElementStyle`).
+@ 7:24  UpdateElementStyle(a, $|parentBoundary="b", $typeC4Shape="system", $wrap="true")
+  7:23-7:42 "$parentBoundary=\"b\""
+  | **`$parentBoundary`**
+  |
+  | Argument 2 of `UpdateElementStyle`. Moves it into the boundary with that alias (`global`: the top level).
+@ 7:45  UpdateElementStyle(a, $parentBoundary="b", $|typeC4Shape="system", $wrap="true")
+  7:44-7:65 "$typeC4Shape=\"system\""
+  | **`$typeC4Shape`**
+  |
+  | Argument 3 of `UpdateElementStyle`. Changes the element’s kind (`person`, `system_db`, `external_container`, …).
+@ 7:68  UpdateElementStyle(a, $parentBoundary="b", $typeC4Shape="system", $|wrap="true")
+  7:67-7:79 "$wrap=\"true\""
+  | **`$wrap`**
+  |
+  | Argument 4 of `UpdateElementStyle`. Changes nothing: wrapping follows the `c4.wrap` config.
+@ 8:24  UpdateElementStyle(n, $|nodeType="nodeR", $typeC4Shape="system")
+  8:23-8:40 "$nodeType=\"nodeR\""
+  | **`$nodeType`**
+  |
+  | Argument 2 of `UpdateElementStyle`. Changes a deployment node’s kind (`node`, `nodeL`, `nodeR`).
+@ 8:43  UpdateElementStyle(n, $nodeType="nodeR", $|typeC4Shape="system")
+  8:42-8:63 "$typeC4Shape=\"system\""
+  | **`$typeC4Shape`**
+  |
+  | Argument 3 of `UpdateElementStyle`. Not a name `UpdateElementStyle` reads: kept, not drawn.
+@ 9:20  Rel(a, p, "Uses", $|type="birel", $wrap="x")
+  9:19-9:32 "$type=\"birel\""
+  | **`$type`**
+  |
+  | Argument 4 of `Rel`. The relation’s kind (`rel`, `birel`, `rel_u`, `rel_b`, …).
+@ 9:35  Rel(a, p, "Uses", $type="birel", $|wrap="x")
+  9:34-9:43 "$wrap=\"x\""
+  | **`$wrap`**
+  |
+  | Argument 5 of `Rel`. Changes nothing: wrapping follows the `c4.wrap` config.

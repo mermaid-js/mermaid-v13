@@ -1,6 +1,7 @@
-// Stand-in routes until the orthogonal router lands (T0b, #595): each edge is one right-angled
-// elbow from its source box to its target box, in final coordinates. They start and end on the
-// boxes, so `validateLayout` passes, and make no attempt to avoid nodes or each other.
+// T0a's stand-in routes, kept as the fallback for edges the router cannot route (#595): each is
+// one right-angled elbow from its source box to its target box, in final coordinates. They start
+// and end on the boxes, so `validateLayout` passes, and make no attempt to avoid nodes or each
+// other.
 import type { RoutePoint, Side } from '../types.ts';
 
 export interface PlacedBox {

@@ -1,0 +1,33 @@
+@ 2:17  Person(a, "A", $|link="x")
+  descr property 2:17-2:21 "link" -> "descr"
+  sprite property 2:17-2:21 "link" -> "sprite"
+  tags property 2:17-2:21 "link" -> "tags"
+  link property 2:17-2:21 "link" -> "link"
+@ 3:28  Container(c, "C", "Java", $|="x")
+  descr property 3:28-3:28 "" -> "descr"
+  sprite property 3:28-3:28 "" -> "sprite"
+  tags property 3:28-3:28 "" -> "tags"
+  link property 3:28-3:28 "" -> "link"
+@ 4:22  Rel(a, c, "Uses", $te|="x")
+  techn property 4:20-4:22 "te" -> "techn"
+@ 5:19  Boundary(b, "B", $|tags="x") {
+  type property 5:19-5:23 "tags" -> "type"
+  tags property 5:19-5:23 "tags" -> "tags"
+  link property 5:19-5:23 "tags" -> "link"
+@ 8:20  Node(n, "Node", $de|scr="x")
+  descr property 8:18-8:23 "descr" -> "descr"
+@ 9:41  UpdateElementStyle(a, $bgColor="grey", $|="x")
+  fontColor property 9:41-9:41 "" -> "fontColor"
+  borderColor property 9:41-9:41 "" -> "borderColor"
+  shadowing property 9:41-9:41 "" -> "shadowing"
+  shape property 9:41-9:41 "" -> "shape"
+  sprite property 9:41-9:41 "" -> "sprite"
+  techn property 9:41-9:41 "" -> "techn"
+  legendText property 9:41-9:41 "" -> "legendText"
+  legendSprite property 9:41-9:41 "" -> "legendSprite"
+@ 10:23  UpdateRelStyle(a, c, $|="x", "blue")
+  textColor property 10:23-10:23 "" -> "textColor"
+  offsetX property 10:23-10:23 "" -> "offsetX"
+  offsetY property 10:23-10:23 "" -> "offsetY"
+@ 11:27  Person(e, "E", "descr", $l|
+  link property 11:26-11:27 "l" -> "link=\""

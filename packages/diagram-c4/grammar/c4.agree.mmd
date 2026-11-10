@@ -1,0 +1,13 @@
+C4Container
+title Container diagram for the Internet Banking System
+%% a comment line
+Person(customer, "Customer", "A customer of the bank")
+System_Boundary(banking, "Internet Banking") {
+  Container(web, "Web Application", "Java, Spring MVC", "Delivers the content")
+  ContainerDb(db, "Database", "SQL Database", "Stores user data")
+}
+System_Ext(mail, "E-mail system", $tags="external")
+Rel(customer, web, "Uses", "HTTPS")
+BiRel(web, db, "Reads from and writes to", "JDBC")
+UpdateRelStyle(customer, web, $textColor="blue", $offsetY="-10")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

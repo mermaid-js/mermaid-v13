@@ -1,0 +1,17 @@
+@ 8:19  tf 01 ui Screen [[|]]
+  Payload value (data) 8:19-8:19 "" -> "Payload"
+  Other value (data) 8:19-8:19 "" -> "Other"
+@ 9:18  tf 02 cmd Add [[P|]]
+  Payload value (data) 9:17-9:18 "P" -> "Payload"
+@ 10:18  tf 03 evt Added `|` { a: 1 }
+  json constant (data type) 10:18-10:18 "" -> "json"
+  jsobj constant (data type) 10:18-10:18 "" -> "jsobj"
+  figma constant (data type) 10:18-10:18 "" -> "figma"
+  salt constant (data type) 10:18-10:18 "" -> "salt"
+  uri constant (data type) 10:18-10:18 "" -> "uri"
+  md constant (data type) 10:18-10:18 "" -> "md"
+  html constant (data type) 10:18-10:18 "" -> "html"
+  text constant (data type) 10:18-10:18 "" -> "text"
+@ 11:19  tf 04 evt More `js|` { a: 1 }
+  json constant (data type) 11:17-11:19 "js" -> "json"
+  jsobj constant (data type) 11:17-11:19 "js" -> "jsobj"

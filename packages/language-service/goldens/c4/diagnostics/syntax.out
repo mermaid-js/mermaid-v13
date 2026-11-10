@@ -1,0 +1,5 @@
+2:7-2:8 " " error UNEXPECTED: Expected `(`, got ` `; write the `(` right after the macro name, with no blank.
+3:7-3:8 "(" error UNCLOSED_ARGUMENTS: Unclosed `Person(`: the one at line 3 has no closing `)`. Add `)` after it.
+4:7-4:8 "(" error UNCLOSED_ARGUMENTS: Unclosed `System(`: the one at line 4 has no closing `)`. Add `)` after it.
+5:18-5:19 ")" error UNEXPECTED: Expected a line break, got `)`.
+8:2-8:3 "}" error UNEXPECTED: Expected a line break, got `}`.

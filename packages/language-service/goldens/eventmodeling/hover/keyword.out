@@ -1,0 +1,45 @@
+@ 1:9  eventmod|eling accTitle: Cart
+  1:1-1:14 "eventmodeling"
+  | **`eventmodeling`**
+  |
+  | An event model is `eventmodeling`, then statements: frames, `entity`, `data`, `note`, `gwt`, `title`, `accTitle` and `accDescr`. The `YAML`, `DIRECTIVE` and comment tokens of the lexer are skipped before parsing.
+@ 1:18  eventmodeling acc|Title: Cart
+  1:15-1:23 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 2:2  t|f 01 evt Added
+  2:1-2:3 "tf"
+  | **`tf`**
+  |
+  | `tf 01 evt Name` (or `timeframe`; `rf` or `resetframe` for a reset frame, to which no relation is inferred), then its sources (`->> 01`), a `[[data]]` reference and inline data, in that order, each optional.
+@ 2:8  tf 01 e|vt Added
+  2:7-2:10 "evt"
+  | **`evt`**
+  |
+  | A frame's kind, which picks its lane: `ui` and `pcr` (`processor`) the UI/Automation lane, `cmd` (`command`) and `rmo` (`readmodel`) the Command/Read Model lane, `evt` (`event`) the Events lane.
+@ 3:2  r|f 02 cmd Add ->> 01 `json` { a: 1 }
+  3:1-3:3 "rf"
+  | **`rf`**
+  |
+  | `tf 01 evt Name` (or `timeframe`; `rf` or `resetframe` for a reset frame, to which no relation is inferred), then its sources (`->> 01`), a `[[data]]` reference and inline data, in that order, each optional.
+@ 3:16  rf 02 cmd Add -|>> 01 `json` { a: 1 }
+  3:15-3:18 "->>"
+  | **`->>`**
+  |
+  | `->> 01`: the frame this one takes its input from; a frame may name several. Without one, the frame is joined to the nearest earlier frame in another lane.
+@ 3:25  rf 02 cmd Add ->> 01 `js|on` { a: 1 }
+  3:23-3:27 "json"
+  | **`json`**
+  |
+  | `` `json` ``: data written as JSON (the type is not used in drawing).
+@ 4:3  gw|t 01 given evt Added then evt Added
+  4:1-4:4 "gwt"
+  | **`gwt`**
+  |
+  | `gwt 01 given <kind> <Name> … [when …] then …`: each part lists one or more steps.
+@ 4:10  gwt 01 gi|ven evt Added then evt Added
+  4:8-4:13 "given"
+  | **`given`**
+  |
+  | `given`: the steps a `gwt` starts from.

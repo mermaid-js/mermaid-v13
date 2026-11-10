@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -119,6 +122,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:^
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -252,6 +258,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -261,6 +270,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:^
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -462,6 +474,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-c4:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-class:
     devDependencies:
       '@mermaid-js/core':
@@ -475,6 +493,12 @@ importers:
         version: link:../core
 
   packages/diagram-er:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-eventmodeling:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -632,6 +656,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -641,6 +668,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:*
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -735,6 +765,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -744,6 +777,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:*
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -994,6 +1030,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -1003,6 +1042,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:*
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -1176,6 +1218,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../../packages/diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../../packages/diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class
@@ -1185,6 +1230,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../../packages/diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:^
+        version: link:../../packages/diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart

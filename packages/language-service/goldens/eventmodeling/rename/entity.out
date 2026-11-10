@@ -1,0 +1,7 @@
+@ 4:8  entity |Item
+  prepare: 4:8-4:12 "Item"; rename to "Order":
+  %% rename-to: Order
+  eventmodeling
+  tf 01 ui Screen
+  entity Order
+  gwt 01 given evt Order then evt Order

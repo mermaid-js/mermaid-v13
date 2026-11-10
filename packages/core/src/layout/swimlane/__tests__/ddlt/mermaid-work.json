@@ -1,0 +1,275 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": false,
+    "optimizeRanksByCrossings": false,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "A1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L1",
+        "span": 16.1
+      },
+      {
+        "id": "A2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L1",
+        "span": 16.1
+      },
+      {
+        "id": "G1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L2",
+        "span": 16.1
+      },
+      {
+        "id": "G2",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "L2",
+        "span": 32.2
+      },
+      {
+        "id": "G3",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "L2",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "C1",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "L3",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "C2",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "L3",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "C3",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "L3",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "C4",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L3",
+        "span": 16.1
+      },
+      {
+        "id": "S1",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "L4",
+        "span": 48.30000000000001
+      },
+      {
+        "id": "R1",
+        "width": 152,
+        "height": 88.4,
+        "shape": "rect",
+        "parent": "L5",
+        "span": 64.4
+      },
+      {
+        "id": "R2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L5",
+        "span": 16.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "L1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 119.014,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "L2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 158.718,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "L3",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 184.086,
+          "height": 32.2
+        }
+      },
+      {
+        "id": "L4",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 203.028,
+          "height": 32.2
+        }
+      },
+      {
+        "id": "L5",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 198.422,
+          "height": 32.2
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_A1_G1_0",
+        "source": "A1",
+        "target": "G1",
+        "minLen": 1
+      },
+      {
+        "id": "L_G1_G3_0",
+        "source": "G1",
+        "target": "G3",
+        "minLen": 1
+      },
+      {
+        "id": "L_A2_G2_0",
+        "source": "A2",
+        "target": "G2",
+        "minLen": 1
+      },
+      {
+        "id": "L_G2_G3_0",
+        "source": "G2",
+        "target": "G3",
+        "minLen": 1
+      },
+      {
+        "id": "L_G3_C1_0",
+        "source": "G3",
+        "target": "C1",
+        "minLen": 1
+      },
+      {
+        "id": "L_C1_C3_0",
+        "source": "C1",
+        "target": "C3",
+        "minLen": 1
+      },
+      {
+        "id": "L_C3_G2_0",
+        "source": "C3",
+        "target": "G2",
+        "minLen": 1
+      },
+      {
+        "id": "L_G3_C2_0",
+        "source": "G3",
+        "target": "C2",
+        "minLen": 1
+      },
+      {
+        "id": "L_C2_C3_0",
+        "source": "C2",
+        "target": "C3",
+        "minLen": 1
+      },
+      {
+        "id": "L_R1_R2_0",
+        "source": "R1",
+        "target": "R2",
+        "minLen": 1
+      },
+      {
+        "id": "L_R2_G3_0",
+        "source": "R2",
+        "target": "G3",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

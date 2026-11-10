@@ -1,0 +1,17 @@
+---
+description: >-
+  Accessibility statements: accTitle and a multi-line accDescr block
+  before the elements, and a title after them.
+---
+C4Context
+accTitle: Shop context
+accDescr {
+  A customer uses the shop,
+  which sends e-mail.
+}
+title Shop context
+Person(c, "Customer")
+System(s, "Shop")
+System_Ext(m, "Mail")
+Rel(c, s, "Buys")
+Rel(s, m, "Sends e-mail")

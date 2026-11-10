@@ -1,0 +1,6 @@
+@ 3:8  Person(|a, "A")
+  prepare: 3:8-3:9 "a"; rename to "b":
+  refused: 'b' is already an element id in this diagram.
+@ 5:10  Boundary(|c, "C") {
+  prepare: 5:10-5:11 "c"; rename to "b":
+  refused: 'b' would not read as the same boundary id everywhere it is used.

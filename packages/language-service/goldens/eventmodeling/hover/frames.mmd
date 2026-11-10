@@ -1,0 +1,7 @@
+eventmodeling
+tf |01 ui Screen
+tf |02 cmd Add
+tf |03 evt Shop.Added ->> |02 ->> 0|5 ->> |09
+tf |04 rmo View ->> 03 ->> 01
+rf |06 evt Reset
+tf 05 evt Late ->> |05

@@ -12,7 +12,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
 | `architecture` | `@mermaid-js/diagram-architecture` | yes | no |
 | `agentflow` | `@mermaid-js/diagram-agentflow` | yes | yes |
-| `c4` | not ported | no | no |
+| `c4` | `@mermaid-js/diagram-c4` | yes | yes |
 | `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
@@ -32,7 +32,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | `@mermaid-js/diagram-block` | yes | yes |
-| `eventmodeling` | not ported | no | no |
+| `eventmodeling` | `@mermaid-js/diagram-eventmodeling` | yes | no |
 | `treeView` | `@mermaid-js/diagram-treeview` | yes | yes |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | `@mermaid-js/diagram-ishikawa` | yes | yes |
