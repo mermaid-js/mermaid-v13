@@ -18,3 +18,9 @@ export {
   OPPOSITE_SIDE,
   portLines,
 } from './layout/invariants.ts';
+export {
+  renderArchitectureForTest,
+  TEST_VERSION,
+  type RenderArchitectureOptions,
+  type RenderedArchitecture,
+} from './render/harness.ts';

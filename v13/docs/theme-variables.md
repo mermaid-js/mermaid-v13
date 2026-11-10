@@ -17,7 +17,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, architecture |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, architecture |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, architecture |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
@@ -25,7 +25,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, architecture |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
@@ -92,7 +92,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `badgeTextColor` | `--mermaid-badgeTextColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `calloutBkg` | `--mermaid-calloutBkg` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
 | `calloutTextColor` | `--mermaid-calloutTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
-| `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph, architecture |
 | `rowBkg` | `--mermaid-rowBkg` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | default, dark, neutral | er |
 | `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
 | `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
@@ -131,6 +131,16 @@ resolves in each theme: a table is keyed by the theme's family and dark traits, 
 name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name
 wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from
 flags and opacities, which are read literally.
+
+### architecture
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `archEdgeColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `archEdgeArrowColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `archEdgeWidth` | | length | `3` | `3` | `3` | `3` | `3` | `3` | `3` | `3` | `3` | `3` | `3` |
+| `archGroupBorderColor` | | color | `#171717` | `#171717` | `#cccccc` | `#cccccc` | `#c7c7f1` | `#cccccc` | `#abb594` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `archGroupBorderWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
 
 ### class
 

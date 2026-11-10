@@ -4,7 +4,7 @@
  * `@mermaid-js/parser`'s Langium parse for the parser package's spec, and the seed spec, skipped
  * whole (D328). The spec bodies are copied unchanged from the last v12 commit; only imports are
  * rewritten, and tests listed in `SKIP` (with a reason) are turned into `it.skip` /
- * `describe.skip`. `svgDraw.spec.ts` (v12's element ids) is the renderer's (#614).
+ * `describe.skip`. `svgDraw.spec.ts` (v12's element ids) is carried over by hand in `src/render/render.spec.ts` (#614), as `data-id`.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-architecture port:v12-specs` (also runs prettier).
  */

@@ -10,5 +10,5 @@ grammars:
     kinds:
       module: parser/tokens.ts
       object: T
-# theme: none. The layout (#607) reads the core font rows (`fontFamily`, `fontSize`); the
-# renderer (#614) adds its own table.
+# theme: none. The layout (#607) reads the core font rows (`fontFamily`, `fontSize`), the renderer
+# (#614) `textColor` and its own table (`src/theme/vocabulary.ts`, the five `arch*` variables).
