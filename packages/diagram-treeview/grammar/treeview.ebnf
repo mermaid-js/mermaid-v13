@@ -1,0 +1,91 @@
+(** TreeView syntax (R-PARSE-9, D54): the normative grammar of `treeView-beta` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4). mermaid@12 parsed treeView with Langium (`treeView.langium` in
+`@mermaid-js/parser`, which does not import `common.langium`); the rules below are its token
+rules, in its order, and its grammar.
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; `#name;` / `#123;` entities
+read as opaque text; a line break appended; and then, when a line is exactly `treeView-beta`
+(blanks around it aside) and a later line draws a tree with `├──`, `└──` and `│` (or `┣━━`,
+`┗━━`, `┃`), each such line rewritten to four spaces per level and its name (tabs read as four
+spaces, `│`-only lines dropped). Keywords are case-sensitive.
+
+**Line breaks are skipped.** Nothing ends a node: two nodes may share a line (`"a" b`), an
+annotation may sit on the next line, and a node's indent is the run of blanks right before its
+name, wherever it is, so a blank at the end of a line indents the node on the next line, and a
+second blank run before an indented node is an error. The first rule that matches wins, except
+that `treeView-beta` gives way to a longer name. *)
+
+@lexer
+
+(** `treeView-beta`: starts a tree view. Nothing may follow it on its line. *)
+TREEVIEW_BETA             /treeView-beta(?=[\n\r]|$|[\t ]+(?::::[\t ]*[A-Z_a-z]|icon\(|##))/ :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram, before the first node. mermaid@12's one rule, as two tried in
+order; the block's `[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read
+the block as one span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line, before the first
+node. *)
+ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `title …`: the title of the diagram (kept, not drawn), the rest of the line, before the
+first node. `title` alone is an empty title, so a first node `title.txt` is read as `title` and
+a node `.txt`: write it in quotes. *)
+TITLE                     /[\t ]*title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** ` :::name`: the class of the node before it (`highlight` draws a highlighted row). The last
+one written wins. *)
+CLASS_ANNOTATION          /[\t ]+:::[\t ]*[A-Z_a-z][\w-]*/ :operator ;
+(** ` icon(name)` or ` icon(pack:name)`: the icon of the node before it; `icon(none)` and
+`icon()` draw none. The last one written wins. *)
+ICON_ANNOTATION           /[\t ]+icon\([\w-]*(?::[\w-]+)?\)/ :function ;
+(** ` ## text`: the description of the node before it, the rest of the line. The last one
+written wins. *)
+DESC_ANNOTATION           /[\t ]+##[^\n\r]*/ :comment ;
+(** A run of blanks: the indent of the node whose name follows it; a tab counts 1. *)
+INDENTATION               /[\t ]+/ ;
+(** `"…"` or `'…'`: a name with no escapes; it may span lines. A trailing `/` makes a
+directory. *)
+QUOTED_NAME               /"[^"]*"|'[^']*'/ :string ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /%%[^\n]*/ :comment ;
+-                         /\n/ ;
+(** A name: anything to the end of the line or to a blank run before ` :::`, ` icon(` or ` ##`;
+its trailing blanks are cut and inner runs kept (`My Documents/`). A trailing `/` makes a
+directory. It cannot start with a blank, a quote, `:::`, `icon(` or `##`. *)
+BARE_NAME                 /(?!:::|icon\(|##)[^\t\n\r "'](?:(?![\t ]+:::[\t ]*[A-Z_a-z]|[\t ]+icon\(|[\t ]+##)[^\n\r])*/ :variable ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(* A tree view is `treeView-beta`, then the title and accessibility statements, then the nodes.
+The `COMMENT` tokens of the lexer are skipped before parsing. *)
+treeView = Header { text } { Node } EOF ;
+(** `treeView-beta`: starts a tree view. *)
+Header @Header = TREEVIEW_BETA ;
+text = Title | AccTitle | AccDescr ;
+
+(** A node: its indent, its name, then its annotations in any order. Nodes nest by indent: a
+node goes under the nearest node before it with a smaller indent, or at the top. *)
+Node @Node = [ INDENTATION ] ( QUOTED_NAME | BARE_NAME )
+             { CLASS_ANNOTATION | ICON_ANNOTATION | DESC_ANNOTATION } ;
+(** `title Files`: the title of the diagram (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

@@ -1,0 +1,41 @@
+@ 2:8  a.js |
+  :::highlight class (a highlighted row) 2:8-2:8 "" -> ":::highlight"
+  icon(file) constant (the built-in file glyph) 2:8-2:8 "" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 2:8-2:8 "" -> "icon(folder)"
+  icon(none) constant (no icon) 2:8-2:8 "" -> "icon(none)"
+  ## operator (then a description) 2:8-2:8 "" -> "## "
+  icon(logos: constant (an icon of the logos pack) 2:8-2:8 "" -> "icon(logos:"
+@ 3:11  b.js :::|
+  :::highlight class (a highlighted row) 3:8-3:11 ":::" -> ":::highlight"
+@ 4:13  c.js :::hi|
+  :::highlight class (a highlighted row) 4:8-4:13 ":::hi" -> ":::highlight"
+@ 5:13  d.js icon(|
+  icon(file) constant (the built-in file glyph) 5:8-5:13 "icon(" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 5:8-5:13 "icon(" -> "icon(folder)"
+  icon(none) constant (no icon) 5:8-5:13 "icon(" -> "icon(none)"
+  icon(logos: constant (an icon of the logos pack) 5:8-5:13 "icon(" -> "icon(logos:"
+@ 6:15  e.js icon(lo|
+  icon(logos: constant (an icon of the logos pack) 6:8-6:15 "icon(lo" -> "icon(logos:"
+@ 7:13  f.js icon(|)
+  icon(file) constant (the built-in file glyph) 7:8-7:14 "icon()" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 7:8-7:14 "icon()" -> "icon(folder)"
+  icon(none) constant (no icon) 7:8-7:14 "icon()" -> "icon(none)"
+  icon(logos: constant (an icon of the logos pack) 7:8-7:14 "icon()" -> "icon(logos:"
+@ 8:9  g.js #|
+  ## operator (then a description) 8:8-8:9 "#" -> "## "
+@ 9:9  "h i" |
+  :::highlight class (a highlighted row) 9:9-9:9 "" -> ":::highlight"
+  icon(file) constant (the built-in file glyph) 9:9-9:9 "" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 9:9-9:9 "" -> "icon(folder)"
+  icon(none) constant (no icon) 9:9-9:9 "" -> "icon(none)"
+  ## operator (then a description) 9:9-9:9 "" -> "## "
+  icon(logos: constant (an icon of the logos pack) 9:9-9:9 "" -> "icon(logos:"
+@ 10:7  j.js|
+  none
+@ 11:26  k.js icon(logos:react) |
+  :::highlight class (a highlighted row) 11:26-11:26 "" -> ":::highlight"
+  icon(file) constant (the built-in file glyph) 11:26-11:26 "" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 11:26-11:26 "" -> "icon(folder)"
+  icon(none) constant (no icon) 11:26-11:26 "" -> "icon(none)"
+  ## operator (then a description) 11:26-11:26 "" -> "## "
+  icon(logos: constant (an icon of the logos pack) 11:26-11:26 "" -> "icon(logos:"
