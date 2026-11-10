@@ -8,7 +8,8 @@ import { REPO_ROOT } from '../corpus.ts';
 
 /**
  * v12's eight in-tree conformance fixtures (`agentflow/conformance/fixtures/`, `fa796a943`), as
- * `.mmd` files with their `.expected.json` in `e2e/diagrams/agentflow/conformance/`, run as
+ * `.mmd` files with their `.expected.json` in `e2e/diagrams/agentflow/conformance/` (the parse
+ * error in `./fixtures/`: an e2e fixture must render, #550), run as
  * v12's `runner.ts` ran them: the outcome (`parse-error` on an error diagnostic, else `warning`
  * or `valid` by the semantic model's diagnostics), every listed diagnostic present and none
  * other (by id, node and line), and the listed parts of the semantic model (a subset match).
@@ -18,7 +19,10 @@ import { REPO_ROOT } from '../corpus.ts';
  * (`Unclosed flow`, R-ERR-5) where v12's was jison's (`Parse error`); and the shape diagnostics name the
  * line of the block that sets the shape, where v12 had no line for them.
  */
-const DIR = join(REPO_ROOT, 'e2e/diagrams/agentflow/conformance');
+const DIRS = [
+  join(REPO_ROOT, 'e2e/diagrams/agentflow/conformance'),
+  join(REPO_ROOT, 'packages/conformance/src/agentflow/fixtures'),
+];
 
 interface Expected {
   outcome: 'valid' | 'warning' | 'error' | 'parse-error';
@@ -63,20 +67,23 @@ const matches = (d: Found, e: { id: string; nodeId?: string; line?: number }) =>
   (e.nodeId === undefined || d.nodeId === e.nodeId) &&
   (e.line === undefined || d.line === e.line);
 
-const cases = readdirSync(DIR)
-  .filter((f) => f.endsWith('.mmd'))
-  .sort()
-  .map((f) => f.slice(0, -'.mmd'.length));
+const cases = DIRS.flatMap((dir) =>
+  readdirSync(dir)
+    .filter((f) => f.endsWith('.mmd'))
+    .map((f) => [f.slice(0, -'.mmd'.length), dir] as const)
+)
+  .sort(([a], [b]) => Number(a > b) - Number(a < b))
+  .map(([name, dir]) => ({ name, dir }));
 
 describe('agentflow conformance fixtures (v12 conformance/fixtures)', () => {
   it('has the eight fixtures', () => {
     expect(cases).toHaveLength(8);
   });
 
-  it.each(cases)('%s', (name) => {
-    const source = readFileSync(join(DIR, `${name}.mmd`), 'utf8');
+  it.each(cases)('$name', ({ name, dir }) => {
+    const source = readFileSync(join(dir, `${name}.mmd`), 'utf8');
     const expected = JSON.parse(
-      readFileSync(join(DIR, `${name}.expected.json`), 'utf8')
+      readFileSync(join(dir, `${name}.expected.json`), 'utf8')
     ) as Expected;
     const got = run(source);
     expect(got.outcome, got.error).toBe(expected.outcome);

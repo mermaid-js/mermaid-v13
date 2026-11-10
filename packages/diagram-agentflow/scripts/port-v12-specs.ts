@@ -28,7 +28,7 @@ export const NOT_PORTED: Record<string, string> = {
   'agentflow-max-text-size.spec.ts':
     "renders through v12's mermaidAPI with jsdom; the comment-free fallback is in `src/parser/parse.spec.ts` and `src/parser/lexer.spec.ts`",
   'conformance/conformance.spec.ts':
-    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd, run by packages/conformance/src/agentflow/fixtures.spec.ts',
+    'its 8 fixtures are e2e/diagrams/agentflow/conformance/*.mmd and, the parse error, packages/conformance/src/agentflow/fixtures/, run by packages/conformance/src/agentflow/fixtures.spec.ts',
   'conformance/runner.spec.ts':
     "tests v12's fixture runner, replaced by packages/conformance/src/agentflow/fixtures.spec.ts",
   'parser/agentflow-flowchart-parity.spec.ts':
