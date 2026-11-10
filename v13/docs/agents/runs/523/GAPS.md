@@ -27,6 +27,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** `LINK_STYLE_INDEX` keeps v12's message verbatim (D461), `between 0 and -1` included when there are no edges.
 
 ## #547 T3 layout
+- Full `pnpm check` on the integration head after T3 and the #637 move (44b5fd63a): lint, typecheck, deps, licences, config and grammar checks green; tests 19,310 passed, 1 failed: `tools/workspace/sync.spec.ts` "take a new diagram package from its own folder alone", the pre-manifest gap #640 fixes (it expects conformance's devDependencies without the pre-manifest `diagram-agentflow`). Push waits for T5's manifest or #640.
 - Closed: nesting from the model's `parent`/`collapsedInto` only (a parent that is no frame is dropped; the invariants flag it). A flow-id vertex styles the flow (`styleOf(flow.classes, flow.styles)`).
 - Closed: v12's self-loop rule. An authored `x --> x` inside a collapsed flow stays as a loop on the card; flowchart v13 drops it (`prepare.ts:335`), agentflow does not (`baseline/layout/collapsed-flow-keeps-authored-self-loop.mmd`). An edge from a member to its own collapsed flow is dropped, as v12 (`edge-into-own-collapsed-flow.mmd`).
 - Closed in the #547 review: the drawn edges (ends after the collapse, drops) are checked against mermaid\@12.2.0's own `getData()` over the corpus (`conformance/src/agentflow/layout.spec.ts`); the only difference is the `connectors` edge below. The rule fixtures run under `layered` and ELK.
