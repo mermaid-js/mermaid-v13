@@ -1,0 +1,18 @@
+---
+description: >-
+  edge labels on every axis v12 placed them (along a level line, turned beside
+  a vertical one, at 45 degrees in a bend) and the routes compass draws past
+  one bend: two ends on one side and a detour, with square corners (D507)
+---
+architecture-beta
+  service a(server)[A]
+  service b(server)[B]
+  service c(database)[C]
+  service d(disk)[D]
+  service e(internet)[E]
+  a:R -[level]- L:b
+  a:B -[calls]- T:c
+  b:B -[bend]- R:c
+  c:R -- R:d
+  b:R --> T:e
+  d:B -- B:e

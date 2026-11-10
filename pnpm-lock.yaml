@@ -101,6 +101,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:^
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -868,6 +871,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class

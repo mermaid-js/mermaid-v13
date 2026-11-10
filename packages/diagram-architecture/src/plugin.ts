@@ -1,5 +1,6 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { architectureConfigDefaults } from './generated/config-defaults.ts';
 import { architectureIcons, architectureLabels } from './icons.ts';
 import { layoutArchitecture, type ArchitectureLayout } from './layout/layout.ts';
 import type { ArchitectureModel } from './model.ts';
@@ -17,14 +18,16 @@ import { theme } from './theme/table.ts';
  * the whole source; `layout` measures and calls `ctx.layout()` only, so no engine is bundled
  * here; `render` writes the whole `<svg>` document. SVG only (D320). `icons` lists the pack icons
  * an icons extension should load (D505); `labels` every text label layout sees. `theme` is the
- * package's table over v12's five `arch*` variables (D331). The manifest that registers it is
- * T5's (#618).
+ * package's table over v12's five `arch*` variables (D331). The registry loads it from the
+ * package's `mermaid` manifest (#618); `configDefaults` are the `architecture` section's generated
+ * defaults (the six fcose keys and `fontSize` among them, which nothing reads: D328, D507).
  */
 export const architecture = {
   id: 'architecture',
   formats: ['svg'] as const,
   layoutKind: 'graph' as const,
   layoutEngine: { default: 'compass' },
+  configDefaults: architectureConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectArchitecture(text),
   parse: (text: string, ctx: DiagramParseContext): ArchitectureParseResult =>
     parseArchitecture(text, { preprocessed: ctx.preprocessed }),

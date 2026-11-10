@@ -1,0 +1,30 @@
+---
+config:
+  theme: neo-dark
+description: >-
+  one representative architecture diagram in the neo-dark theme (neo family, dark): nested groups with
+  icons and titles, the built-in icons, a text icon, a junction, plain,
+  labelled, one- and two-headed edges and a group-to-group edge, laid out by
+  compass; edges and arrowheads in lineColor, group borders dashed
+---
+architecture-beta
+  title Order platform
+  group cloud(cloud)[Cloud]
+  group api(server)[API] in cloud
+  group data(database)[Data] in cloud
+
+  service gateway(internet)[Gateway]
+  service web(server)[Web server] in api
+  service worker(server)[Worker] in api
+  service db(database)[Orders DB] in data
+  service disk1(disk)[Backups] in data
+  service ops "Ops console"
+  junction hub in cloud
+
+  gateway:R --> L:web
+  web:B -[enqueue]- T:worker
+  web:R -- L:hub
+  hub:B -- T:db
+  db:R <--> L:disk1
+  worker{group}:R -[reads]-> L:db{group}
+  ops:T -- B:gateway

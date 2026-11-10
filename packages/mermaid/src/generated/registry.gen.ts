@@ -18,7 +18,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-mindmap').then((m) => m.mindmap),
   },
-  { type: 'architecture', pattern: /^\s*architecture/ },
+  {
+    type: 'architecture',
+    pattern: /^\s*architecture/,
+    id: 'architecture',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-architecture').then((m) => m.architecture),
+  },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   {

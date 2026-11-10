@@ -10,7 +10,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | --- | --- | --- | --- |
 | `flowchart-elk` | `@mermaid-js/diagram-flowchart` | yes | yes |
 | `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
-| `architecture` | not ported | no | no |
+| `architecture` | `@mermaid-js/diagram-architecture` | yes | no |
 | `agentflow` | not ported | no | no |
 | `c4` | not ported | no | no |
 | `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |

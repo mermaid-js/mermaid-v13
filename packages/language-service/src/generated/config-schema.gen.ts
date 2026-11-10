@@ -1199,7 +1199,8 @@ export const configSchema: ConfigSchema = {
     "architecture": {
       "$ref": "#/$defs/ArchitectureDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "mindmap": {
@@ -2893,25 +2894,49 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the architecture renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "padding": {
+          "description": "The space inside a group's border, and round the diagram, in pixels.",
           "type": "number",
           "default": 40,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from 0 to under 10,000; anything else lays out with the default and warns `ARCHITECTURE_CONFIG_IGNORED`. The gap between grid cells stays v12's default 60 px whatever `padding` and `iconSize` are (#525)."
           }
         },
         "iconSize": {
+          "description": "The width and height of a service's icon, in pixels.",
           "type": "number",
           "default": 80,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a numeric string, from 0 to under 10,000; anything else lays out with the default and warns `ARCHITECTURE_CONFIG_IGNORED`. The gap between grid cells stays v12's default 60 px whatever `padding` and `iconSize` are (#525)."
           }
         },
         "fontSize": {
           "type": "number",
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "In v12 it sized only cytoscape's own label style and moved a group's title by half of it; the text was drawn in the global font size. v13 draws every architecture label in the theme's `fontSize`, as v12 drew the text (D507).",
+            "replacement": "`themeVariables.fontSize`"
           }
         },
         "randomize": {
@@ -2919,7 +2944,10 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         },
         "nodeSeparation": {
@@ -2927,7 +2955,10 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 75,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         },
         "idealEdgeLengthMultiplier": {
@@ -2935,7 +2966,10 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 1.5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         },
         "edgeElasticity": {
@@ -2943,7 +2977,10 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 0.45,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         },
         "numIter": {
@@ -2951,7 +2988,10 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 2500,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         },
         "seed": {
@@ -2959,7 +2999,10 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "replacement": "none"
           }
         }
       }

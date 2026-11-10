@@ -1490,7 +1490,21 @@ line_height?: number
  * via the `definition` "ArchitectureDiagramConfig".
  */
 export interface ArchitectureDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * The space inside a group's border, and round the diagram, in pixels.
+ */
 padding?: number
+/**
+ * The width and height of a service's icon, in pixels.
+ */
 iconSize?: number
 fontSize?: number
 /**

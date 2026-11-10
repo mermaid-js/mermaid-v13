@@ -5,8 +5,7 @@
  * (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`): core's config defaults under
  * the integrator's config and the source's front matter and directives, the theme with its
  * `themeVariables` and its dark half for `theme: 'auto'`, the package's theme table, the table
- * measurer, `compass` (or the engine given) and the stream writer with the theme's gradient and
- * an optional outline drawer.
+ * measurer, `compass` (or the engine given) and the stream writer with the theme's gradient.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
@@ -14,7 +13,7 @@ import { pxProfile, type LayoutEngine } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import { resolveLimits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
+import { streamWriter } from '@mermaid-js/core/svg';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
 import { layoutArchitecture, type ArchitectureLayout } from '../layout/layout.ts';
@@ -30,8 +29,6 @@ export interface RenderArchitectureOptions {
   readonly idPrefix?: string;
   /** The layout engine; `compass` by default. */
   readonly engine?: LayoutEngine;
-  /** An outline drawer (D302) installed on the writer, as an active extension's would be. */
-  readonly outline?: OutlineDraw;
   readonly measurer?: Measurer;
   /** The extensions' glyphs (`RenderContext.icon`, D293), as an icons extension would give them. */
   readonly icon?: RenderContext['icon'];
@@ -102,7 +99,7 @@ export async function renderArchitectureForTest(
   };
   const layout = layoutArchitecture(parse.model, ctx);
   const gradient = theme.gradient();
-  const w = streamWriter({ gradient, outline: options.outline });
+  const w = streamWriter({ gradient });
   renderArchitecture(parse.model, layout, ctx, w);
   return {
     svg: w.finish(),
