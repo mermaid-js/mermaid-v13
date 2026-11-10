@@ -32,7 +32,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## #598 T2 lane drawing
 - Unlisted timing failures in T2's full `pnpm check` (2026-11-10, under the lock, head 373234444; the load at that run was not recorded): `conformance/src/gantt/stress.spec.ts` "click then blanks" and "a long task text", `conformance/src/treemap/stress.spec.ts` "equal values". Alone at 2 workers, no lock, load average 8.2–10.7: both files pass (3 files, 200 tests). Reported to the wave coordinator for Knut.
-- Open: since #589 (block T0) flowchart has no theme table (`packages/diagram-flowchart/src/theme/` is gone; its shape rows are core rows). Lanes need no new variables per the spec (they read `clusterBkg`/`clusterBorder` and flowchart's existing per-subgraph palette). If T2 finds it needs a lane-only row, where it lives (flowchart's own table, recreated, versus core) is a choice the spec doesn't settle: record it here as **Choice** and follow `theming.md` as it stands after #589. D474's `slot(<palette>, <n>, <fallback>)` rule form (usecase T0 #620; `CONTRACT.md` "DSL additions") may fit the per-lane palette.
+- Closed: no lane-only theme row was needed (lanes read `clusterBkg`, `clusterBorder`, `titleColor` and flowchart's `borderColorArray`/`bkgColorArray` palette), so the #589 table question does not arise.
+- Closed: T0a's long lane title (`laneFit.ts` `fitLanesToTitles`).
+- **Choice:** a lane emptied by a shared node stays, drawn empty (v12 removed it), so every subgraph keeps its `data-ast`.
+- **Choice:** `SWIMLANE_SHARED_NODE` lists both lanes in `astIds` (D536 says `related`; render warnings have none).
+- **For the maintainer (amends D536's "no core type change"):** lanes come from a new optional `LayoutModel.lanes` (set by `swimlane` only), so the renderer follows the engine that laid out; D536 said "no core type change" (types only, 0 B in core).
 
 ## #601 T3 integration
 - From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.

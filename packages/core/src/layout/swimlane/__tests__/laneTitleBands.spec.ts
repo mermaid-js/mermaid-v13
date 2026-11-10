@@ -4,6 +4,8 @@
 // right and BT's at the bottom).
 import { describe, expect, it } from 'vitest';
 import type { Dir, LayoutModelGroup } from '../../types.ts';
+import { layered } from '../../layered/index.ts';
+import { DEFAULT_SWIMLANE_ID } from '../helpers.ts';
 import { swimlaneLayout } from '../swimlane.ts';
 import { layoutGraph } from './graphs.ts';
 
@@ -53,5 +55,24 @@ describe.each(['LR', 'RL'] as const)('%s: lane title bands', (direction) => {
     expect(lane.title.y).toBeCloseTo(lane.y, 6);
     expect(lane.title.x).toBeCloseTo(b.left + 36 / 2, 6);
     for (const [, n] of model.nodes) expect(n.x - n.width / 2).toBeGreaterThanOrEqual(b.left + 36);
+  });
+});
+
+describe('LayoutModel.lanes (D536): what a renderer draws as lanes', () => {
+  it('lists the lanes across the flow, the engine-made default lane included', () => {
+    expect(swimlaneLayout(graphOf('TB')).lanes).toEqual(['HoE', 'StatusSeeker', 'TechLead']);
+    const loose = layoutGraph({
+      direction: 'LR',
+      lanes: { Sales: ['A'], Ops: ['B'] },
+      nodes: ['L'],
+      edges: [['L', 'A']],
+    });
+    const lanes = swimlaneLayout(loose).lanes!;
+    expect([...lanes].sort()).toEqual([DEFAULT_SWIMLANE_ID, 'Ops', 'Sales'].sort());
+    expect(lanes.filter((id) => id !== DEFAULT_SWIMLANE_ID)).toEqual(['Sales', 'Ops']);
+  });
+
+  it('is absent from the other engines', () => {
+    expect(layered(graphOf('TB')).lanes).toBeUndefined();
   });
 });

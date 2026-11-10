@@ -127,6 +127,19 @@ export interface FlowModel {
   accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   warnings: Diagnostic[];
+  /**
+   * Members a subgraph listed but lost to an earlier one (v12 `droppedSubGraphMembers`), in
+   * the order they were dropped; absent when there are none. A subgraph nested in the one that
+   * lists the member is no conflict. Swimlane reads it for `SWIMLANE_SHARED_NODE` (D536).
+   */
+  droppedMembers?: FlowDroppedMember[];
+}
+
+/** A member `droppedFrom` listed that `keptBy`, closed earlier, holds. */
+export interface FlowDroppedMember {
+  node: string;
+  keptBy: string;
+  droppedFrom: string;
 }
 
 export interface LinkInfo {
@@ -260,7 +273,9 @@ export class FlowBuilder {
   private readonly edgeById = new Map<string, FlowModelEdge>();
   /** Edges so far per start, then per end. */
   private readonly pairCount = new Map<string, Map<string, number>>();
-  private readonly members = new Set<string>();
+  /** Each subgraph member (node or subgraph id) and the subgraph that holds it. */
+  private readonly members = new Map<string, string>();
+  private readonly dropped: FlowDroppedMember[] = [];
   private subCount = 0;
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
   private readonly limitHit = new Set<'edges' | 'nodes'>();
@@ -629,12 +644,33 @@ export class FlowBuilder {
       classes: [],
     };
     if (dir !== undefined) subgraph.dir = dir;
-    for (const nodeId of subgraph.nodes) members.add(nodeId);
+    for (const nodeId of nodeList) {
+      const keptBy = members.get(nodeId);
+      if (keptBy !== undefined && keptBy !== id && !this.nestedIn(keptBy, id, seen)) {
+        this.dropped.push({ node: nodeId, keptBy, droppedFrom: id });
+      }
+    }
+    for (const nodeId of subgraph.nodes) members.set(nodeId, id);
     const existing = this.subgraphById.get(id);
     if (existing) existing.nodes.push(...subgraph.nodes);
     else this.subgraphs.push(subgraph);
     this.subgraphById.set(id, existing ?? subgraph);
     return id;
+  }
+
+  /**
+   * Whether subgraph `id` sits, at any depth, under subgraph `under`, which is closing now and
+   * lists `listed`. Its own children are not linked to it yet (that happens below, as it closes),
+   * so reaching one of `listed` counts; a redeclared `under` already holds children of its first
+   * declaration, so reaching `under` itself counts too.
+   */
+  private nestedIn(id: string, under: string, listed: ReadonlySet<string>): boolean {
+    const seen = new Set<string>();
+    for (let c: string | undefined = id; c !== undefined && !seen.has(c); c = this.members.get(c)) {
+      if (c === under || listed.has(c)) return true;
+      seen.add(c);
+    }
+    return false;
   }
 
   /** The subgraph with this id (a map lookup: a scan made many subgraphs quadratic). */
@@ -670,6 +706,7 @@ export class FlowBuilder {
     };
     if (this.defaultInterpolate !== undefined) model.defaultInterpolate = this.defaultInterpolate;
     if (this.defaultStyle !== undefined) model.defaultStyle = this.defaultStyle;
+    if (this.dropped.length > 0) model.droppedMembers = this.dropped;
     return model;
   }
 }

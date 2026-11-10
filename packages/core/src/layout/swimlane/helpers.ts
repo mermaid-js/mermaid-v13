@@ -60,7 +60,8 @@ export function topLaneTitleBandHeight(lane: Node): number {
   return Math.max(TOP_LANE_TITLE_BAND_HEIGHT, lane.titleSize?.height ?? 0);
 }
 
-function topLaneHorizontalPadding(lane: Node): number {
+/** The room beside a lane's content (and its title) across the flow: `max(padding, 20)`. */
+export function topLaneHorizontalPadding(lane: Node): number {
   return Math.max(lane.padding ?? MIN_TOP_LANE_HORIZONTAL_PADDING, MIN_TOP_LANE_HORIZONTAL_PADDING);
 }
 

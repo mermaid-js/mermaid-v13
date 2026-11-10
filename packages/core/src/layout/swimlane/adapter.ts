@@ -10,7 +10,8 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
-import { topLaneTitleBandHeight } from './helpers.ts';
+import { topLaneHorizontalPadding, topLaneTitleBandHeight } from './helpers.ts';
+import { isPlaced, shiftBeyond } from './laneFit.ts';
 import type { LayoutData, Node, SwimlaneTuning } from './layoutData.ts';
 import { buildLaneModel } from './lanes.ts';
 import { leftTitleBandWidth } from './direction/lrTransform.ts';
@@ -107,23 +108,7 @@ export function toLayoutData(graph: LayoutGraph, tuning: SwimlaneTuning = {}): L
   };
 }
 
-const isPlaced = (n: Node): boolean => (n.width ?? 0) > 0 && (n.height ?? 0) > 0;
-
 type Axis = 'x' | 'y';
-
-/** Moves everything at or beyond `at` along `axis` on by `by`: boxes by centre, and routes. */
-function shiftBeyond(data: LayoutData, axis: Axis, at: number, by: number): void {
-  for (const n of data.nodes) {
-    const v = n[axis];
-    // An empty lane not placed yet has no size to move.
-    if (v === undefined || v < at || (n.isGroup && !isPlaced(n))) continue;
-    n[axis] = v + by;
-    const r = n.groupTitleRect;
-    if (r && axis === 'x') n.groupTitleRect = { ...r, left: r.left + by, right: r.right + by };
-    if (r && axis === 'y') n.groupTitleRect = { ...r, top: r.top + by, bottom: r.bottom + by };
-  }
-  for (const e of data.edges) for (const p of e.points ?? []) if (p[axis] >= at) p[axis] += by;
-}
 
 /** The far side of a placed box along `axis`, or its near side. */
 const edgeOf = (n: Node, axis: Axis, far: boolean): number => {
@@ -154,7 +139,7 @@ function placeEmptyLanes(data: LayoutData, laneOrder: readonly string[]): void {
       at = edgeOf(lane, cross, true);
       continue;
     }
-    const pad = Math.max(lane.padding ?? 20, 20);
+    const pad = topLaneHorizontalPadding(lane);
     const size = Math.max(2 * pad, (lane.titleSize?.width ?? 0) + 2 * pad);
     shiftBeyond(data, cross, at, size);
     lane[cross] = at + size / 2;
@@ -286,6 +271,15 @@ function extent(graph: LayoutGraph, model: LayoutModel): [number, number, number
   return x0 === Infinity ? [0, 0, 0, 0] : [x0, y0, x1, y1];
 }
 
+/** The lanes across the flow: the phases' `laneOrder`, then any lane it left out. */
+function laneIds(data: LayoutData, isLane: (id: string) => boolean): string[] {
+  const all = data.nodes.filter((n) => n.isGroup && isLane(n.id)).map((n) => n.id);
+  const known = new Set(all);
+  const ordered = (data.laneOrder ?? []).filter((id) => known.has(id));
+  const seen = new Set(ordered);
+  return [...ordered, ...all.filter((id) => !seen.has(id))];
+}
+
 /**
  * The `LayoutModel`: every graph node and group, plus the default lane when the engine made one
  * (`__swimlane_default__`), with end labels placed, moved so the drawing starts at
@@ -306,6 +300,7 @@ export function toLayoutModel(graph: LayoutGraph, data: LayoutData): LayoutModel
         .map((g) => [g.id, { ...boxOf(g), title: titleOf(g, laneModel.isLane(g.id)) }])
     ),
     direction: graph.direction,
+    lanes: laneIds(data, laneModel.isLane),
   };
   placeEndLabels(graph, model);
   const [x0, y0, x1, y1] = extent(graph, model);
