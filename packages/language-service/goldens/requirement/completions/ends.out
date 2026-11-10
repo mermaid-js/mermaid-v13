@@ -1,0 +1,5 @@
+@ 6:23  r1 <- traces - "the |sim"
+  none
+@ 7:28  "the sim" - satisfies -> |
+  r1 node (Requirement) 7:28-7:28 "" -> "r1"
+  the sim node (Element) 7:28-7:28 "" -> "\"the sim\""

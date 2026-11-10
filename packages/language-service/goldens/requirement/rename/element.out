@@ -1,0 +1,9 @@
+@ 7:3  |sim - satisfies -> r1
+  prepare: 7:3-7:6 "sim"; rename to "sim2":
+  %% rename-to: sim2
+  requirementDiagram
+    requirement r1 {
+    }
+    element sim2 {
+    }
+    sim2 - satisfies -> r1

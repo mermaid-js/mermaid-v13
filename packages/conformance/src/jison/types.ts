@@ -50,6 +50,13 @@ export type HarvestMethod =
        * `fs`, `path` and `__dirname` read them from git at the v12 commit.
        */
       readsFiles?: boolean;
+      /**
+       * The DB class the specs construct (`new <name>()`) and build sources from its constant
+       * tables (`${db.RiskLevel.HIGH_RISK}`): its object-literal fields are read from v12's
+       * `file` (relative to `dir`, at the v12 commit) and hold their real values; every other
+       * member stays inert.
+       */
+      constants?: { name: string; file: string };
     };
 
 /** What a descriptor's `yy` builder is handed for one run of the lexer. */
