@@ -398,7 +398,11 @@ export function createMermaid(
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
   let textBackend: TextBackend | undefined;
 
+  // `swimlane-beta` is flowchart's with its own section on top (D534): `swimlane.layout` and
+  // `swimlane.theme` scope it and `%%{init: {config}}` goes there, as in v12; `flowchart.*`
+  // keys still reach the plugin, whose defaults stay in its own section.
   function sectionOf(detected: Detected, plugin?: AnyPlugin): string | undefined {
+    if (detected.type === 'swimlane') return 'swimlane';
     return plugin?.configSection ?? plugin?.id ?? detected.id;
   }
 

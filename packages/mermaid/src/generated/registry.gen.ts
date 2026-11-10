@@ -75,7 +75,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-sequence').then((m) => m.sequence),
     loadAscii: () => import('@mermaid-js/diagram-sequence/ascii').then((m) => m.ascii),
   },
-  { type: 'swimlane', pattern: /^\s*swimlane-beta\b/ },
+  {
+    type: 'swimlane',
+    pattern: /^\s*swimlane-beta\b/,
+    id: 'flowchart',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-flowchart').then((m) => m.flowchart),
+    loadAscii: () => import('@mermaid-js/diagram-flowchart/ascii').then((m) => m.ascii),
+  },
   {
     type: 'flowchart-v2',
     pattern: /^\s*(graph|flowchart)/,

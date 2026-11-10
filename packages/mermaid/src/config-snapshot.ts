@@ -264,11 +264,14 @@ export class SiteConfigs {
     let hit = byType.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
-      if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
-      // The plugin's engine (D284), and v12's flowchart-elk detector's `layout: 'elk'`, sit
-      // below the user's config.
+      // The plugin's defaults go to its own section, even when a type reads another (D534).
+      const own = plugin.configSection ?? plugin.id;
+      if (plugin.configDefaults) pluginDefaults[own] = plugin.configDefaults;
+      // The plugin's engine (D284), and v12's flowchart-elk detector's `layout: 'elk'` and
+      // swimlane's `layout: 'swimlane'` (D534), sit below the user's config.
       if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;
       if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
+      if (detected.type === 'swimlane') pluginDefaults.layout = 'swimlane';
       const recorded: Warning[] = [];
       const site = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
         warn: (w) => void recorded.push(w),

@@ -55,7 +55,8 @@
     "id": "flowchart",
     "types": [
       "flowchart-elk",
-      "flowchart-v2"
+      "flowchart-v2",
+      "swimlane"
     ],
     "formats": [
       "svg",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Kind, LineIndex } from '@mermaid-js/core/parser-kit';
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
-import { flowchart, parseFlowchart } from '../index.ts';
+import { detectFlowchart, flowchart, parseFlowchart } from '../index.ts';
 import type { FlowNodeStmt, FlowParseOptions } from '../index.ts';
 
 const parse = (src: string, options?: FlowParseOptions) => parseFlowchart(src, options);
@@ -109,6 +109,16 @@ describe('flowchart parse', () => {
     );
     expect(flowchart.detector('flowchart-elk TD\nA')).toBe(true);
     expect(flowchart.detector('sequenceDiagram\nA->>B: hi')).toBe(false);
+  });
+
+  it('claims swimlane-beta as the swimlane type, as v12 detected it (D534)', () => {
+    expect(detectFlowchart('swimlane-beta LR\nA-->B')).toBe('swimlane');
+    expect(detectFlowchart('---\ntitle: t\n---\n%% c\n  swimlane-beta')).toBe('swimlane');
+    expect(detectFlowchart('flowchart-elk TD\nA')).toBe('flowchart-elk');
+    expect(detectFlowchart('graph TD\nA')).toBe('flowchart-v2');
+    // v12's pattern ends at a word boundary.
+    expect(detectFlowchart('swimlane-betas\nA')).toBeUndefined();
+    expect(detectFlowchart('swimlane LR\nA')).toBeUndefined();
   });
 
   it('keeps every range in the original source: front matter, CRLF, comments, directives', () => {

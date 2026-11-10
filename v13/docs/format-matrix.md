@@ -21,7 +21,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `pie` | `@mermaid-js/diagram-pie` | yes | no |
 | `requirement` | not ported | no | no |
 | `sequence` | `@mermaid-js/diagram-sequence` | yes | yes |
-| `swimlane` | not ported | no | no |
+| `swimlane` | `@mermaid-js/diagram-flowchart` | yes | yes |
 | `flowchart-v2` | `@mermaid-js/diagram-flowchart` | yes | yes |
 | `timeline` | `@mermaid-js/diagram-timeline` | yes | no |
 | `gitGraph` | `@mermaid-js/diagram-gitgraph` | yes | no |
