@@ -4,7 +4,7 @@
  * quirks, line separators, one case per v12 DB check) and the parser's recovery set
  * (`corpus/architecture-recovery.json`, #599), and a CRLF and a commented copy of every source.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
@@ -12,6 +12,16 @@ import type { CorpusItem } from '../types.ts';
 
 const readItems = (file: string) =>
   JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
+
+/**
+ * The number of `.mmd` fixtures under `e2e/diagrams/architecture/`, every tier and the
+ * baselines: the specs that check each reaches the gates count against this, so a new fixture
+ * needs no count edited.
+ */
+export const E2E_FIXTURES = readdirSync(join(REPO_ROOT, 'e2e/diagrams/architecture'), {
+  recursive: true,
+  encoding: 'utf8',
+}).filter((f) => f.endsWith('.mmd')).length;
 
 /** The architecture corpus: the e2e fixtures and the harvested v12 spec strings. */
 export async function architectureCorpus(): Promise<CorpusItem[]> {

@@ -8,10 +8,12 @@ import { validateLayout, type LayoutGraph, type LayoutModel } from '@mermaid-js/
 import { compass } from '@mermaid-js/core/layout/compass';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import { architectureConfigDefaults } from '../generated/config-defaults.ts';
+import { ART_SIZE } from '../render/builtins.ts';
 import { contextFor, gridMeasurer, modelOf, themeNamed } from './fixtures.ts';
 import { architectureLayoutProblems, layoutBytes } from './invariants.ts';
 import { layoutArchitecture } from './layout.ts';
-import { architectureSizes } from './metrics.ts';
+import { ARCHITECTURE_METRICS, architectureSizes } from './metrics.ts';
 import { prepareArchitecture } from './prepare.ts';
 
 async function prepared(source: string, config = {}, measurer?: Measurer) {
@@ -337,5 +339,13 @@ describe('the invariant checks', () => {
       "facing edge 'edge:a->b' between nodes in line is not straight",
       "align column: 'a' and 'c' do not share it in order",
     ]);
+  });
+});
+
+describe('one source of truth for the length defaults (#618)', () => {
+  it('takes iconSize and padding from the generated section defaults; the icon art stays 80', () => {
+    expect(ARCHITECTURE_METRICS.iconSize).toBe(architectureConfigDefaults.iconSize);
+    expect(ARCHITECTURE_METRICS.padding).toBe(architectureConfigDefaults.padding);
+    expect(ART_SIZE).toBe(80);
   });
 });

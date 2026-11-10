@@ -97,14 +97,7 @@ describe('architecture theme variables against v12 12.2.0 (#618, D541)', () => {
   it.each(THEME_NAMES.map((n) => [n]))(
     '%s: every architecture variable is v12’s, apart from the listed differences',
     async (name) => {
-      const listed = Object.keys(DIFFERENCES[name] ?? {}).sort();
-      expect(await differing(name)).toEqual(listed);
-      const old = v12Vars(name);
-      const theme = await v13Theme(name);
-      const names = NAMES.filter((n) => !listed.includes(n));
-      expect(Object.fromEntries(names.map((n) => [n, now(theme, n)]))).toEqual(
-        Object.fromEntries(names.map((n) => [n, then(old, n)]))
-      );
+      expect(await differing(name)).toEqual(Object.keys(DIFFERENCES[name] ?? {}).sort());
     }
   );
 

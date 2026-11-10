@@ -26,6 +26,7 @@ import type {
   Size,
 } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import { configLengths } from './config-length.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
@@ -85,17 +86,17 @@ const SIDE: Readonly<Record<ArchitectureSide, Side>> = {
 
 /**
  * The document's `iconSize` and `padding` (0 up to 10000, as the other ports read lengths; else
- * v12's default with one `ARCHITECTURE_CONFIG_IGNORED` per key), and the lengths v12 drew with
- * them. Read once per layout: renderers take `ArchitecturePrepared.sizes`.
+ * the section's generated default, v12's, with one `ARCHITECTURE_CONFIG_IGNORED` per key), and
+ * the lengths v12 drew with them. Read once per layout: renderers take `ArchitecturePrepared.sizes`.
  */
 function sizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
-  const M = ARCHITECTURE_METRICS;
+  const D = architectureConfigDefaults;
   const length = configLengths(
     (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>,
-    { iconSize: M.iconSize, padding: M.padding },
+    D,
     ctx.warn
   );
-  return architectureSizes(length('iconSize') ?? M.iconSize, length('padding') ?? M.padding);
+  return architectureSizes(length('iconSize') ?? D.iconSize!, length('padding') ?? D.padding!);
 }
 
 /**

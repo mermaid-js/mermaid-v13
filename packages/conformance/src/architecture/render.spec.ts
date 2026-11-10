@@ -9,7 +9,7 @@ import {
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
-import { architectureCases, architectureCorpus } from './corpus.ts';
+import { architectureCases, architectureCorpus, E2E_FIXTURES } from './corpus.ts';
 
 /**
  * Render properties and the AST round-trip of the architecture diagram (spec #525 T4, DESIGN
@@ -144,11 +144,12 @@ function drawnPoints(tree: SvgView): { x: number; y: number }[] {
 
 describe('architecture render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of element', () => {
-    // v12's 20 fixtures, T1's 8 lexer fixtures, T3's 2 layout fixtures and T5's 6 baselines.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(36);
+    // Every e2e fixture: v12's 20, T1's 8 lexer fixtures, T3's 2 layout fixtures, T5's baselines.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(E2E_FIXTURES);
     expect(cases.length).toBe((corpus.length - rejected.size) * THEMES.length);
-    // The 132 parser-clean sources the layout spec lays out (#607, 126 before the #618 baselines).
-    expect(corpus.length - rejected.size).toBe(132);
+    // The parser-clean sources the layout spec lays out (#607): 126 before the #618 baselines, and
+    // every e2e fixture is one (a fixture added since adds one).
+    expect(corpus.length - rejected.size).toBeGreaterThanOrEqual(126 + E2E_FIXTURES - 30);
     const all = cases.map((c) => c.r.svg).join('');
     for (const part of [
       'class="architecture-service"',

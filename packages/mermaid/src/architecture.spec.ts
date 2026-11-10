@@ -68,6 +68,23 @@ describe('architecture diagrams through the public API (#618)', () => {
     expect(named.warnings).toEqual([]);
   });
 
+  it('honours architecture.layout and architecture.theme over the top level', async () => {
+    const m = createMermaid();
+    const plain = await m.render('a9', TEXT);
+    const layered = await m.render('a9', withInit({ layout: 'layered' }));
+    expect(layered.svg).not.toBe(plain.svg);
+    const scopedLayout = await m.render('a9', withInit({ architecture: { layout: 'layered' } }));
+    expect(scopedLayout.svg).toBe(layered.svg);
+    const beatsTop = withInit({ layout: 'compass', architecture: { layout: 'layered' } });
+    expect((await m.render('a9', beatsTop)).svg).toBe(layered.svg);
+    const dark = await m.render('a9', withInit({ theme: 'dark' }));
+    expect(dark.svg).not.toBe(plain.svg);
+    const scopedTheme = await m.render('a9', withInit({ architecture: { theme: 'dark' } }));
+    expect(scopedTheme.svg).toBe(dark.svg);
+    const themeBeatsTop = withInit({ theme: 'forest', architecture: { theme: 'dark' } });
+    expect((await m.render('a9', themeBeatsTop)).svg).toBe(dark.svg);
+  });
+
   it('keeps v12’s detector pattern and place, after mindmap and before agentflow', () => {
     const types = DETECTORS.map((d) => d.type);
     expect(types.indexOf('architecture')).toBe(types.indexOf('mindmap') + 1);

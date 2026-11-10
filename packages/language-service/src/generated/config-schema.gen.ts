@@ -2930,6 +2930,22 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0"
           }
         },
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for architecture diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `layout` for architecture diagrams. Unset in both, they lay out with `compass`, the grid engine from edge sides (D284, D326); `layered`, `dagre` and an installed `elk.*` are honoured, and an unknown or uninstalled name draws with `compass` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`."
+          }
+        },
         "padding": {
           "description": "The space inside a group's border, and round the diagram, in pixels.",
           "type": "number",
@@ -2961,7 +2977,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "randomize": {
-          "description": "Whether to randomize initial node positions before running the layout algorithm.\nWhen false (default), nodes start at deterministic seed positions. When true, nodes\nstart at random positions, which may produce varied but potentially better-spaced\nlayouts. Note: `randomize: false` alone does NOT guarantee identical renders, because\nthe underlying fcose layout still uses `Math.random()` internally during its\nconstraint solver — use the `seed` option for full determinism.\n",
+          "description": "Ignored in v13 (D328). In v12 it randomized the fcose layout's starting positions; v13 lays\narchitecture out with `compass`, which is deterministic and has no starting positions.\n",
           "type": "boolean",
           "default": false,
           "x-mermaid": {
@@ -2972,7 +2988,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "nodeSeparation": {
-          "description": "Minimum separation (in pixels) between sibling nodes in the same group, passed through to the\nunderlying fcose layout. Increase to spread overlapping siblings apart when many edges share the\nsame port direction.\n",
+          "description": "Ignored in v13 (D328). In v12 it set fcose's minimum separation between sibling nodes;\n`compass` places nodes on a grid with a fixed cell gap.\n",
           "type": "number",
           "default": 75,
           "x-mermaid": {
@@ -2983,7 +2999,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "idealEdgeLengthMultiplier": {
-          "description": "Multiplier applied to `iconSize` to compute the ideal length of edges between nodes within the\nsame group. Increase to add breathing room; decrease to pack the diagram tighter. Edges crossing\ngroup boundaries are unaffected and use a fixed shorter length.\n",
+          "description": "Ignored in v13 (D328). In v12 it scaled fcose's ideal edge length within a group;\n`compass` places nodes on a grid with a fixed cell gap.\n",
           "type": "number",
           "default": 1.5,
           "x-mermaid": {
@@ -2994,7 +3010,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "edgeElasticity": {
-          "description": "Spring elasticity (0–1) applied to edges between nodes within the same group, passed through to\nfcose. Higher values pull connected nodes closer together; lower values let the layout spread them\nout. Edges crossing group boundaries are unaffected.\n",
+          "description": "Ignored in v13 (D328). In v12 it set fcose's spring elasticity within a group; `compass`\nhas no springs.\n",
           "type": "number",
           "default": 0.45,
           "x-mermaid": {
@@ -3005,7 +3021,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "numIter": {
-          "description": "Maximum number of iterations the fcose layout algorithm runs before stopping. Increase for higher\nquality on large or densely-connected diagrams at the cost of render time.\n",
+          "description": "Ignored in v13 (D328). In v12 it capped fcose's iterations; `compass` places nodes in one\npass.\n",
           "type": "number",
           "default": 2500,
           "x-mermaid": {
@@ -3016,7 +3032,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "seed": {
-          "description": "Deterministic seed for the fcose layout. Defaults to 1, which makes every render of the\nsame diagram produce the same layout — required for visual regression tests to be stable.\nSet to 0 to opt out and use the unstubbed Math.random (the layout will still differ\nslightly between renders, matching pre-fix behavior). Any other number selects a\ndifferent reproducible layout variant.\n",
+          "description": "Ignored in v13 (D328). In v12 it seeded fcose's random number generator; `compass` is\ndeterministic, so every render of the same diagram has the same layout.\n",
           "type": "number",
           "default": 1,
           "x-mermaid": {
