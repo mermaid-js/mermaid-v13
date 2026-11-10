@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
-import { diagramPackages } from '../../workspace/diagrams.ts';
+import { workspaceDiagrams } from '../../workspace/diagrams.ts';
 import {
   PACKAGES,
   coreListedErrors,
@@ -32,7 +32,8 @@ const TYPES = PKGS.map((p) => p.type);
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
-    expect(TYPES).toEqual(diagramPackages().map((p) => p.type));
+    // Every diagram package, a pre-manifest one too: it reads theme variables from its T4 on.
+    expect(TYPES).toEqual(workspaceDiagrams().map((p) => p.type));
     expect(TYPES.length).toBeGreaterThan(0);
   });
 
