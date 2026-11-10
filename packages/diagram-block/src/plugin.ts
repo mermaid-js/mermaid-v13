@@ -7,6 +7,8 @@ import type { BlockModel } from './model.ts';
 import { parseBlock, type BlockParseResult } from './parser/index.ts';
 import { renderBlock } from './render/index.ts';
 
+const ignore = (): undefined => undefined;
+
 /** v12's detector (`blockDetector.ts`), on the text v12 gave it: case-sensitive, no boundary. */
 const DETECTOR = /^\s*block(-beta)?/;
 
@@ -15,11 +17,12 @@ const DETECTOR = /^\s*block(-beta)?/;
  * `parse` takes the whole source and the limits; `layout` measures every label and lays the grid
  * out; `render` writes the whole `<svg>` document (#556). Block has no theme table (spec #521):
  * it reads core's shared rows. The registry loads it from the package's `mermaid` manifest
- * (#558); `configDefaults` are the `block` section's generated defaults. SVG only until #559.
+ * (#558); `configDefaults` are the `block` section's generated defaults. Text output is
+ * the lazily loaded `./ascii` entry (manifest key `ascii`, #559).
  */
 export const block = {
   id: 'block',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: blockConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => DETECTOR.test(text),
@@ -35,7 +38,10 @@ export const block = {
         : {}),
     }),
   labels: blockLabels,
-  layout: (model: BlockModel, ctx: RenderContext): BlockLayout => layoutBlock(model, ctx),
+  // Text draws its own grid and ignores `block.padding` with no warning (D449): laid out in
+  // cells, the px layout (which `postLayout` hooks still see) does not warn about it.
+  layout: (model: BlockModel, ctx: RenderContext): BlockLayout =>
+    layoutBlock(model, ctx.units.id === 'cell' ? { ...ctx, warn: ignore } : ctx),
   render: (model: BlockModel, layout: BlockLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderBlock(model, layout, ctx, w),
 } satisfies DiagramPlugin<BlockModel, BlockLayout>;

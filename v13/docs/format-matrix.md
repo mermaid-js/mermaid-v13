@@ -31,7 +31,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `sankey` | `@mermaid-js/diagram-sankey` | yes | no |
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
-| `block` | `@mermaid-js/diagram-block` | yes | no |
+| `block` | `@mermaid-js/diagram-block` | yes | yes |
 | `eventmodeling` | not ported | no | no |
 | `treeView` | not ported | no | no |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |

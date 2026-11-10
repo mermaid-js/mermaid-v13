@@ -2453,8 +2453,10 @@ no per-call options (D319, D302).
   renderer never read them (block lays out its own grid). `look` is removed (D153): ignored with one
   `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
   paddings.
-- **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until block's ASCII
-  renderer lands (R-ASCII-5, #559).
+- **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
+  loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
+  frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See
+  [ASCII output](../ascii.md#block-diagrams).
 
 ## Block SVG structure
 
@@ -2484,4 +2486,5 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | Edge line ends: the SVG default butt caps | Round caps on solid edges, butt on dotted ones (round caps would close a 2 px dash's gaps); widths as v12 (`strokeWidth`, thick 3.5, dotted dashed `2`) | As flowchart v13 |
 | `classDef` text styles applied by CSS (`color` rewritten to `fill`) | A class's or `style`'s `color` is the label's `fill`; a styled `fill` gives the label the matching ink | As flowchart v13 |
 | The `viewBox` from the browser's `getBBox()` plus 5, and a height one "magic factor" taller | The layout's bounds (every outline, label and edge, plus v12's 5 px) | D224 |
+| No text output | `format: 'ascii'` (both charsets): boxes on a character grid, one width per column at the widest label, composites as frames with the label on the top border, spaces blank, labels cut with `…`, block arrows as boxes with an arrowhead per pointing side, edges as stepped lines with arrowheads; `block.padding` ignored with no warning | D449, D320 |
 | Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12 | D301, D302, D447 |

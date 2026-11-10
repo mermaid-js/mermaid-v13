@@ -1,7 +1,7 @@
 {
   "name": "@mermaid-js/diagram-block",
   "version": "13.0.0-alpha.0",
-  "description": "Block diagram plugin for Mermaid: lexer, parser, model, AST, layout, SVG renderer and language facet.",
+  "description": "Block diagram plugin for Mermaid: lexer, parser, model, AST, layout, SVG renderer, text output and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -15,6 +15,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./ascii": {
+      "mermaid-source": "./src/ascii.ts",
+      "types": "./dist/ascii.d.ts",
+      "default": "./dist/ascii.js"
     },
     "./language": {
       "mermaid-source": "./src/language.ts",
@@ -52,9 +57,11 @@
       "block"
     ],
     "formats": [
-      "svg"
+      "svg",
+      "ascii"
     ],
     "export": "block",
+    "ascii": "./dist/ascii.js",
     "language": "./dist/language.js"
   }
 }

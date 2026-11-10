@@ -52,10 +52,12 @@ languageBundle:
     - index.ts
     - testing.ts
     - test-context.ts
+    - ascii/
+    - ascii.ts
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:
-  summary: 'The block diagram plugin (SVG; `block`, `block-beta`).'
+  summary: 'The block diagram plugin (SVG, and text output from `/ascii`; `block`, `block-beta`).'
   install: 'with `mermaid/slim`'
 
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):

@@ -60,6 +60,18 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     ).toEqual([]);
   });
 
+  // #559: block's text entry is its own lazily imported chunk, apart from its plugin.
+  it('a block SVG render loads the block plugin, and no ascii module', () => {
+    const plugin = chunkOf(prod, 'packages/diagram-block/src/index.ts');
+    expect(plugin).toBeDefined();
+    const { svg } = splitByFormat(prod);
+    expect(svg).toContain(plugin);
+    const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+    const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+    expect(inputs).toContain('packages/diagram-block/src/plugin.ts');
+    expect(inputs.filter(isAsciiModule)).toEqual([]);
+  });
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -70,7 +82,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
+    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban', 'block'])
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -79,6 +91,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
     expect(paths.map((p) => p.diagram)).toEqual([
+      'block',
       'er',
       'flowchart',
       'info',

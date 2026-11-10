@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { block, parseBlock } from '@mermaid-js/diagram-block';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -199,12 +199,47 @@ describe('block diagrams through the public API (#558)', () => {
     assertInert(r.svg);
   }, 60_000);
 
-  it('supports svg only until #559: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {
+  it('draws ascii from the lazily loaded ./ascii entry (#559, D449)', async () => {
     const m = createMermaid();
+    m.initialize({ deterministic: true });
     expect(m.supportsFormat('block', 'svg')).toBe(true);
-    expect(m.supportsFormat('block', 'ascii')).toBe(false);
-    const e = await rejection(m.render('b8', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('block');
+    expect(m.supportsFormat('block', 'ascii')).toBe(true);
+    const src = 'block\n  columns 2\n  a["A"] b["Bee"]\n  a --> b';
+    const result = await m.render('b8', src, { format: 'ascii' });
+    expect(result).toMatchObject({ format: 'ascii', diagramType: 'block' });
+    expect(result.text).toBe(
+      ['┌─────┐    ┌─────┐', '│  A  ├───►│ Bee │', '└─────┘    └─────┘'].join('\n')
+    );
+    expect(result.columns).toBe(18);
+    expect(result.rows).toBe(3);
+    expect(
+      m.renderSync(src, { format: 'ascii', config: { ascii: { charset: 'ascii' } } }).text
+    ).toBe(['+-----+    +-----+', '|  A  +--->| Bee |', '+-----+    +-----+'].join('\n'));
+  });
+
+  it('never crops: a drawing wider than ascii.maxWidth warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const src = 'block\n  columns 6\n  a b c d e f';
+    const wide = await m.render('b9', src, {
+      format: 'ascii',
+      config: { ascii: { maxWidth: 10 } },
+    });
+    expect(wide.text.split('\n')[0]!.length).toBeGreaterThan(10);
+    expect(wide.warnings.map((w) => w.code)).toContain('ASCII_TOO_WIDE');
+    expect(wide.text.split('\n').every((l) => !l.includes('…'))).toBe(true);
+  });
+
+  it('ignores block.padding in text, an invalid one included, with no warning (D449)', async () => {
+    const m = createMermaid();
+    const src = 'block\n  a b';
+    const plain = await m.render('b10', src, { format: 'ascii' });
+    for (const padding of [40, -1, 'x']) {
+      const r = await m.render('b10', src, {
+        format: 'ascii',
+        config: { block: { padding } } as never,
+      });
+      expect(r.text).toBe(plain.text);
+      expect(r.warnings).toEqual([]);
+    }
   });
 });
