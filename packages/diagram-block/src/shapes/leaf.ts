@@ -3,7 +3,7 @@
  * (`diagram-flowchart/src/render/shapes.ts`: sizes from the label box and the theme's padding,
  * and the outline), as class, state and mindmap keep theirs. Only the geometry half is here:
  * the size, whether the shape fills its grid cell, and the outline edges are clipped at. The
- * drawing is #556's.
+ * drawing is `draw.ts`'s.
  * Which block type is which shape is `../layout/kinds.ts`'s table.
  */
 import type { Theme } from '@mermaid-js/core/theme';
@@ -48,6 +48,8 @@ const MIN_SLANT = 1;
 const MIN_LABEL_WIDTH = 12;
 /** The subroutine's two frames, 8 px each. */
 const FRAMES_WIDTH = 16;
+/** How far in from each side the subroutine's frame lines are drawn: one frame's width. */
+export const FRAME_INSET = FRAMES_WIDTH / 2;
 /** The cylinder: at least this wide; its caps `W / CAP_RY_DIVISOR` deep, within the bounds. */
 const CYLINDER_MIN_WIDTH = 56;
 const CAP_RY_MIN = 6;

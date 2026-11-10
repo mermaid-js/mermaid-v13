@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-block",
   "version": "0.0.0",
   "private": true,
-  "description": "Block diagram plugin for Mermaid: lexer, parser, model, AST and layout (renderer to follow).",
+  "description": "Block diagram plugin for Mermaid: lexer, parser, model, AST, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,

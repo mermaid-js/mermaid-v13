@@ -25,22 +25,42 @@ import { parseBlock } from './parser/index.ts';
 /** The `data-mermaid-version` the test renders write. */
 export const TEST_VERSION = '13.0.0-alpha.0';
 
-/** The config a render of `pre` resolves: core's defaults, then the front matter and directives. */
-export function blockTestConfig(pre?: PreprocessResult): ResolvedConfig {
+/**
+ * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`
+ * would get it, then the front matter and directives.
+ */
+export function blockTestConfig(
+  pre?: PreprocessResult,
+  integrator?: Readonly<Record<string, unknown>>,
+  warn?: (w: Warning) => void
+): ResolvedConfig {
   const directives = (pre?.directives ?? []).flatMap((d) =>
     d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
   );
-  return resolveConfig(CORE_DEFAULTS, undefined, pre?.frontMatter?.config, directives, undefined, {
+  return resolveConfig(CORE_DEFAULTS, integrator, pre?.frontMatter?.config, directives, undefined, {
+    ...(warn ? { warn } : {}),
     section: 'block',
   });
 }
 
+/** What {@link blockTestTheme} takes besides the config. */
+export interface BlockThemeOptions {
+  /** The render's id prefix, which scopes the gradient's id (D182); `mermaid` by default. */
+  readonly idPrefix?: string;
+  readonly warn?: (w: Warning) => void;
+}
+
 /** The theme `config` names (with no config, core's default), its variables and dark half. */
-export async function blockTestTheme(config: ResolvedConfig = blockTestConfig()): Promise<Theme> {
-  const choice = resolveThemeName(config.theme);
+export async function blockTestTheme(
+  config: ResolvedConfig = blockTestConfig(),
+  { idPrefix, warn }: BlockThemeOptions = {}
+): Promise<Theme> {
+  const choice = resolveThemeName(config.theme, warn);
   return createTheme(await loadTheme(choice.name), {
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
+    ...(warn ? { warn } : {}),
+    ...(idPrefix !== undefined ? { idPrefix: () => idPrefix } : {}),
   });
 }
 

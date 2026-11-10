@@ -16,3 +16,8 @@ export {
   TEST_VERSION,
   type ParsedBlock,
 } from './test-context.ts';
+export {
+  renderBlockForTest,
+  type RenderBlockOptions,
+  type RenderedBlock,
+} from './render/harness.ts';

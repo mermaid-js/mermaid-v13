@@ -1,16 +1,18 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutBlock, type BlockLayout } from './layout/index.ts';
 import type { BlockModel } from './model.ts';
 import { parseBlock, type BlockParseResult } from './parser/index.ts';
+import { renderBlock } from './render/index.ts';
 
 /** v12's detector (`blockDetector.ts`), on the text v12 gave it: case-sensitive, no boundary. */
 const DETECTOR = /^\s*block(-beta)?/;
 
 /**
- * The block plugin so far (DESIGN §12.1, spec #521): `layoutKind: 'custom'` with its own
- * `BlockLayout`. `parse` takes the whole source and the limits; `layout` measures every label and
- * lays the grid out. The renderer is #556 and the manifest #558, so this is not yet a
- * `DiagramPlugin`: it has every member but `render`.
+ * The block plugin (DESIGN §12.1, spec #521): `layoutKind: 'custom'` with its own `BlockLayout`.
+ * `parse` takes the whole source and the limits; `layout` measures every label and lays the grid
+ * out; `render` writes the whole `<svg>` document (#556). Block has no theme table (spec #521):
+ * it reads core's shared rows. The manifest, `configDefaults` and the registry row are #558.
  */
 export const block = {
   id: 'block',
@@ -29,4 +31,6 @@ export const block = {
         : {}),
     }),
   layout: (model: BlockModel, ctx: RenderContext): BlockLayout => layoutBlock(model, ctx),
-} satisfies Omit<DiagramPlugin<BlockModel, BlockLayout>, 'render'>;
+  render: (model: BlockModel, layout: BlockLayout, ctx: RenderContext, w: SvgWriter): void =>
+    renderBlock(model, layout, ctx, w),
+} satisfies DiagramPlugin<BlockModel, BlockLayout>;

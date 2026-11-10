@@ -24,7 +24,7 @@ const FILES: Record<string, string> = {
 };
 
 const RENDER =
-  "the stylesheet is render-side (v12 `styles.ts`): v13 draws composites' palette slots without CSS (#556)";
+  'v13 writes no stylesheet (v12 `styles.ts`): the slot is drawn on the composite itself, its `data-color-id`, stroke and fill; `src/render/render.spec.ts` "the composite palette" checks the same case on the SVG';
 
 /** `file: { test title (or its unique start): reason }`. Reasons are written into the file. */
 const SKIP: Record<string, Record<string, string>> = {

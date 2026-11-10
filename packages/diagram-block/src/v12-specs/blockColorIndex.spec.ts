@@ -6,10 +6,10 @@
 // cspell:disable
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { block, configApi, db, diagramAPI, log } from './adapter.ts';
-// skipped: emits one composite rule per palette entry under a colour theme — the stylesheet is render-side (v12 `styles.ts`): v13 draws composites' palette slots without CSS (#556)
-// skipped: leaves the simple shapes to the flat theme colour — the stylesheet is render-side (v12 `styles.ts`): v13 draws composites' palette slots without CSS (#556)
-// skipped: emits nothing for a theme that carries no palette — the stylesheet is render-side (v12 `styles.ts`): v13 draws composites' palette slots without CSS (#556)
-// skipped: rejects a look that would break out of the selector — the stylesheet is render-side (v12 `styles.ts`): v13 draws composites' palette slots without CSS (#556)
+// skipped: emits one composite rule per palette entry under a colour theme — v13 writes no stylesheet (v12 `styles.ts`): the slot is drawn on the composite itself, its `data-color-id`, stroke and fill; `src/render/render.spec.ts` "the composite palette" checks the same case on the SVG
+// skipped: leaves the simple shapes to the flat theme colour — v13 writes no stylesheet (v12 `styles.ts`): the slot is drawn on the composite itself, its `data-color-id`, stroke and fill; `src/render/render.spec.ts` "the composite palette" checks the same case on the SVG
+// skipped: emits nothing for a theme that carries no palette — v13 writes no stylesheet (v12 `styles.ts`): the slot is drawn on the composite itself, its `data-color-id`, stroke and fill; `src/render/render.spec.ts` "the composite palette" checks the same case on the SVG
+// skipped: rejects a look that would break out of the selector — v13 writes no stylesheet (v12 `styles.ts`): the slot is drawn on the composite itself, its `data-color-id`, stroke and fill; `src/render/render.spec.ts` "the composite palette" checks the same case on the SVG
 
 /**
  * Palette slots for composites, the same mechanism the flowchart uses for its subgraphs:
