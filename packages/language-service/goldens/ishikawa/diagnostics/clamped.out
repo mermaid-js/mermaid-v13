@@ -1,0 +1,2 @@
+5:3-5:9 "Driver" info ISHIKAWA_INDENT_CLAMPED: Indented less than the first cause (`Kitchen` at line 3), so read as a top-level cause. Indent it at least as deep as the first cause to nest it.
+6:3-6:10 "Traffic" info ISHIKAWA_INDENT_CLAMPED: Indented less than the first cause (`Kitchen` at line 3), so read as a top-level cause. Indent it at least as deep as the first cause to nest it.

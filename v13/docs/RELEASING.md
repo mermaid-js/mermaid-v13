@@ -20,6 +20,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-info` | The info diagram plugin (SVG and text; `info`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-ishikawa` | The Ishikawa (fishbone) diagram plugin (SVG and text; `ishikawa`, `ishikawa-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-kanban` | The kanban board plugin (SVG; `kanban`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-mindmap` | The mindmap plugin (SVG; `mindmap`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-packet` | The packet diagram plugin (SVG, and text output from `/ascii`; `packet`, `packet-beta`). | with `mermaid/slim` |
