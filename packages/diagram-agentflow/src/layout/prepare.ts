@@ -32,8 +32,11 @@ import {
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import {
   checkStyle,
+  classStyles,
   curveKind,
   curveRouting,
+  emphasisBits,
+  textStyle,
   type CheckedStyle,
   type CurveKind,
 } from '@mermaid-js/core/svg';
@@ -147,19 +150,7 @@ const arrowsOf = (type: string): [Arrowhead, Arrowhead] =>
     ? ['none', 'none']
     : ['none', type === 'arrow_cross' ? 'arrow_cross' : 'arrow_point'];
 
-/** The bold and italic `Style` bits a checked style's text declarations ask for. */
-export function emphasisBits(style: CheckedStyle): number {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  return (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-}
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const bits = emphasisBits(style);
-  const size = fontSizePx(style.text['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
 
 /** Everything the views and the graph are measured with. */
 interface Measure {
@@ -260,20 +251,9 @@ function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
 
 /** The checked style of class names plus own declarations, one per distinct list. */
 function styleCache(model: AgentflowModel, ctx: AgentflowLayoutContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
+  const classDefs = new Map<string, readonly string[]>();
   for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
+  return classStyles(classDefs, (w) => ctx.warn(w));
 }
 
 interface Views {

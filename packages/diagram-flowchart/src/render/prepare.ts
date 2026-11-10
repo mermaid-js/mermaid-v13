@@ -12,7 +12,12 @@ import {
   pxProfile,
   sideways,
 } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  classStyles,
+  textStyle,
+  type CheckedStyle,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -104,14 +109,6 @@ function arrows(type: string, stroke: string): [string, string] {
   return ['none', type === 'arrow_circle' || type === 'arrow_cross' ? type : 'arrow_point'];
 }
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
 
 /** Everything the views and the graph are measured with. */
 interface Measure {
@@ -196,20 +193,9 @@ function padsOf(theme: FlowRenderContext['theme'], pad: number): Pads {
 
 /** The checked style of class names plus own declarations, one per distinct list. */
 function styleCache(model: FlowModel, ctx: FlowRenderContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
+  const classDefs = new Map<string, readonly string[]>();
   for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, ctx.warn)));
-    return style;
-  };
+  return classStyles(classDefs, ctx.warn);
 }
 
 /** One view per drawn subgraph and vertex, measured; clusters sorted outermost first. */

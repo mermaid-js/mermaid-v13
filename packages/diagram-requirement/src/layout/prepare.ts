@@ -14,6 +14,7 @@ import {
   checkStyle,
   curveKind,
   curveRouting,
+  textStyle,
   type CheckedStyle,
   type CurveKind,
 } from '@mermaid-js/core/svg';
@@ -128,14 +129,6 @@ export const requirementCurve = curveKind;
 /** The least bold font weight. */
 const BOLD = 600;
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= BOLD;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < M.maxFontSize ? { ...font, size } : font, bits];
-}
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 

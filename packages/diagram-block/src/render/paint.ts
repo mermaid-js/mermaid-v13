@@ -8,7 +8,13 @@
  * (leaves, block arrows and composites), not on edges or labels (D227).
  */
 import type { Warning } from '@mermaid-js/core';
-import { checkStyle, type CheckedStyle, type OutlinePaint, type Paint } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  classStyles,
+  type CheckedStyle,
+  type OutlinePaint,
+  type Paint,
+} from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Block, BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from '@mermaid-js/core/svg';
@@ -99,17 +105,8 @@ function styleCache(model: BlockModel, warn: (w: Warning) => void): Paints['styl
   // `styles` only: v12's `textStyles` rewrote `color` as `fill` for its CSS, and `checkStyle`
   // already sends `color` to the label.
   for (const c of model.classDefs) classDefs.set(c.id, c.styles);
-  const checked = new Map<string, CheckedStyle>();
-  return (block) => {
-    const decls: string[] = [];
-    for (const name of block.classes)
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    for (const s of block.styles) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = checked.get(key);
-    if (!style) checked.set(key, (style = checkStyle(decls, warn)));
-    return style;
-  };
+  const styleOf = classStyles(classDefs, warn);
+  return (block) => styleOf(block.classes, block.styles);
 }
 
 /** Reads every paint a render uses from `theme`. */

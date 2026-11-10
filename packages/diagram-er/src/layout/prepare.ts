@@ -17,7 +17,12 @@ import {
   pxProfile,
 } from '@mermaid-js/core/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  classStyles,
+  textStyle,
+  type CheckedStyle,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -115,14 +120,6 @@ export interface ErPrepared {
 }
 
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
 
 /**
  * v12 `parseGenericTypes`: `~T~` pairs read outside in become `<T>`; a comma splits the text
@@ -273,18 +270,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
 function styleCache(model: ErModel, ctx: ErRenderContext): Measure['styleOf'] {
   const classDefs = new Map<string, readonly string[]>();
   for (const c of model.classes) classDefs.set(c.name, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
+  return classStyles(classDefs, (w) => ctx.warn(w));
 }
 
 interface Nesting {

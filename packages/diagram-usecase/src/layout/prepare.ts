@@ -12,7 +12,11 @@ import {
   type LayoutGroup,
   type LayoutNode,
 } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  classStyles,
+  type CheckedStyle,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -414,18 +418,8 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
 function styleCache(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure['styleOf'] {
   const classDefs = new Map<string, readonly string[]>();
   for (const c of model.classDefs) classDefs.set(c.id, c.styles);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of ['default', ...classes]) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
+  const styleOf = classStyles(classDefs, (w) => ctx.warn(w));
+  return (classes, own) => styleOf(['default', ...classes], own);
 }
 
 function withParent<T extends object>(view: T, parent: string | undefined): T {
