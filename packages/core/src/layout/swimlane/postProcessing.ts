@@ -1,5 +1,5 @@
 // Ported from v12 `swimlanes/postProcessing.ts` at upstream `c9b12739f` (D532). Changed: typed
-// against the engine's `layoutData.ts` (no casts).
+// against the engine's `layoutData.ts` (no casts); `liftRailsOffForeignEdgeLabels` (#634).
 // cspell:ignore raykov Wybrow
 import type { Edge, LayoutData, Node } from './layoutData.ts';
 import {
@@ -13,6 +13,7 @@ import { collapseShortTerminalStub } from './direction/terminalStub.ts';
 import {
   collapseRedundantRectangularDoglegs,
   liftObstacleHuggingSameSideRails,
+  liftRailsOffForeignEdgeLabels,
   liftTopLaneTitleBandsAboveRails,
   reassignCrossingExternalRailChannels,
   resolveRenderedOrthogonalCrossings,
@@ -132,6 +133,8 @@ export function postProcessSwimlaneLayout(layout: LayoutData, direction?: string
     anchorLabelsToPolyline(edges, nodeByIdMap);
     prepareEdgeEndpointsForRenderer(edges, nodeByIdMap);
     liftObstacleHuggingSameSideRails(edges, nodeByIdMap);
+    // v13 (#634): labels are anchored by now; move rails that run along another edge's label.
+    liftRailsOffForeignEdgeLabels(edges, nodeByIdMap);
     anchorLabelsToPolyline(edges, nodeByIdMap);
     prepareEdgeEndpointsForRenderer(edges, nodeByIdMap);
   };

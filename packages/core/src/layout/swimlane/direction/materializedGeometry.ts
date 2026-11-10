@@ -1,7 +1,7 @@
 // Ported from v12 `swimlanes/direction/materializedGeometry.ts` at upstream `c9b12739f` (D532).
 // Changed: the title-band passes follow D536 (BT lifts a top band, RL shifts a left band); types
 // tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types;
-// the tail swap keeps legs off the destination's box (#636).
+// the tail swap keeps legs off the destination's box (#636); `liftRailsOffForeignEdgeLabels` (#634).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, sonarjs/no-identical-functions -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore Wybrow sonarjs
 
@@ -718,6 +718,135 @@ export function liftObstacleHuggingSameSideRails(
       }
     }
 
+    if (!fixed) {
+      return;
+    }
+  }
+}
+
+/**
+ * v13 (#634): moves an interior rail that runs through or along another edge's label clear of
+ * it. The router leaves labels out (they are anchored after routing), so a rail placed beside a
+ * node can run along a label wider than that node. The rail moves to the label's nearer side,
+ * `ROUTE_TOUCH_TOLERANCE` out (the least gap a reader sees between two strokes), only where that
+ * hits no node or label, shares no track and adds no crossing.
+ */
+export function liftRailsOffForeignEdgeLabels(
+  edges: MaterializedEdge[],
+  nodeByIdMap: Map<string, MaterializedNode>
+): void {
+  const BUFFER = 2;
+  const CLEARANCE = EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE;
+  const MAX_ITERATIONS = 8;
+
+  const { realNodeRects, labelNodeRects } = collectNodeRectEntries(nodeByIdMap.values());
+  if (labelNodeRects.length === 0) {
+    return;
+  }
+  const visibleEdges = edges.filter((edge) => !edge.isLayoutOnly);
+  const pointsFor = (edge: MaterializedEdge): PointLite[] =>
+    dedupeConsecutivePoints(edge.points ?? []);
+
+  const crossingsOf = (edge: MaterializedEdge, points: PointLite[]): number => {
+    let count = 0;
+    const own = segmentsFor(points);
+    for (const other of visibleEdges) {
+      if (other === edge) {
+        continue;
+      }
+      for (const a of own) {
+        for (const b of segmentsFor(pointsFor(other))) {
+          if (orthogonalSegmentsStrictlyCross(a.a, a.b, b.a, b.b, EPS_LOCAL)) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  };
+
+  const railHugsRect = (rail: SegmentLite, rect: RectLite): boolean =>
+    rail.horizontal
+      ? overlapLength(rail.a.x, rail.b.x, rect.left, rect.right) >= MIN_SHARED &&
+        rail.a.y >= rect.top - BUFFER &&
+        rail.a.y <= rect.bottom + BUFFER
+      : overlapLength(rail.a.y, rail.b.y, rect.top, rect.bottom) >= MIN_SHARED &&
+        rail.a.x >= rect.left - BUFFER &&
+        rail.a.x <= rect.right + BUFFER;
+
+  const candidateIsSafe = (edge: MaterializedEdge, candidate: PointLite[]): boolean => {
+    const endpointIds = [edge.start, edge.end].filter((id): id is string => Boolean(id));
+    const ownLabel = edge.labelNodeId ? [edge.labelNodeId] : [];
+    const candidateSegments = segmentsFor(candidate);
+    if (candidateSegments.length !== candidate.length - 1) {
+      return false;
+    }
+    for (const segment of candidateSegments) {
+      if (
+        segmentHitsAnyRect(segment.a, segment.b, realNodeRects, endpointIds, -BUFFER) ||
+        segmentHitsAnyRect(segment.a, segment.b, labelNodeRects, ownLabel, -BUFFER)
+      ) {
+        return false;
+      }
+    }
+    for (const other of visibleEdges) {
+      if (other === edge) {
+        continue;
+      }
+      for (const a of candidateSegments) {
+        for (const b of segmentsFor(pointsFor(other))) {
+          if (sameAxisSegmentOverlapLength(a, b, 0.5) >= MIN_SHARED) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
+  for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+    let fixed = false;
+    for (const edge of visibleEdges) {
+      const points = pointsFor(edge);
+      const segments = segmentsFor(points);
+      if (segments.length !== points.length - 1 || segments.length < 3) {
+        continue;
+      }
+      for (const rail of segments.slice(1, -1)) {
+        const label = labelNodeRects.find(
+          (entry) => entry.id !== edge.labelNodeId && railHugsRect(rail, entry.rect)
+        );
+        if (!label) {
+          continue;
+        }
+        const coord = rail.horizontal ? rail.a.y : rail.a.x;
+        const [low, high] = rail.horizontal
+          ? [label.rect.top, label.rect.bottom]
+          : [label.rect.left, label.rect.right];
+        const coords = [low - CLEARANCE, high + CLEARANCE].sort(
+          (a, b) => Math.abs(a - coord) - Math.abs(b - coord)
+        );
+        const crossings = crossingsOf(edge, points);
+        for (const next of coords) {
+          const moved = points.map((point) => ({ ...point }));
+          for (const i of [rail.index, rail.index + 1]) {
+            moved[i] = rail.horizontal ? { ...moved[i]!, y: next } : { ...moved[i]!, x: next };
+          }
+          const candidate = simplifyPolyline(dedupeConsecutivePoints(moved));
+          if (candidateIsSafe(edge, candidate) && crossingsOf(edge, candidate) <= crossings) {
+            edge.points = candidate;
+            fixed = true;
+            break;
+          }
+        }
+        if (fixed) {
+          break;
+        }
+      }
+      if (fixed) {
+        break;
+      }
+    }
     if (!fixed) {
       return;
     }
