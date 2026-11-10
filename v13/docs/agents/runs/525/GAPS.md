@@ -42,19 +42,28 @@ Known limits:
 
 ## T0c #592
 
-Unmet criteria: none of the ticket's. Core unchanged (gated 96,072 B gz, as at base); the ELK adapter chunk grows +389 B gz.
+Unmet criteria: none of the ticket's. Core is unchanged: gated size 96,072 B gz, the same as base. The ELK adapter chunk grows by 893 B gz after the review fixes (389 B before them).
 
 Choices:
-- **One port per named end**, id `<edge id>\u0000source|target`, 0×0, `elk.port.side` NORTH/SOUTH/WEST/EAST. The node (or group) gets `elk.portConstraints: FIXED_SIDE`; an end with no side still attaches to the node, and ELK picks its side, even on a node that has ports.
-- **`anchorY` → `FIXED_POS`** on a node that sets `anchorY` and takes a named `left` or `right` end. FIXED_POS needs a position for every port on the node, so `left`/`right` ports sit at `anchorY` and `top`/`bottom` ports at the side's middle, as `compass` puts them. Several ends on one side of such a node meet at one point (as in `compass`; FIXED_SIDE nodes spread them). A node with `anchorY` and only `top`/`bottom` ends keeps FIXED_SIDE. `anchorY` outside 0…height is a `RangeError`, checked only where a port uses it.
-- **ELK layered only.** stress, force, mrtree, box, rectpacking, sporeOverlap and radial ignore ports (probed stress, force, mrtree and box: they route between the boxes or not at all), so they get no ports, and their `ports` stay read off the route. Under layered, `ports` reports the named side wherever ELK routed the edge, and reads the others off the route as before.
+- **One port per named end.** Each port has the id `<edge id>\u0000source|target`, is 0×0, and has `elk.port.side` set to NORTH, SOUTH, WEST or EAST. Its node (or group) gets `elk.portConstraints: FIXED_SIDE`. An end with no side attaches to the node, and ELK picks its side.
+- **`anchorY` gives `FIXED_POS`.** This applies to a node that sets `anchorY` and takes a named `left` or `right` end. FIXED_POS needs a position for every port, so on such a node every end gets one (review 1):
+  - A free end takes the flow's side: out downstream, in upstream, by the direction of the node's container.
+  - `left`/`right` ports spread `spacing.edge` apart about `anchorY`, with one alone exactly on it.
+  - `top`/`bottom` ports spread evenly across the side.
+  - All ports stay 12 off the corners where the box allows (review 4).
+  - The order along a side is edge order, so ELK can't reorder these ports to cut crossings, as it can under FIXED_SIDE.
+  - A node with `anchorY` and only `top`/`bottom` ends keeps FIXED_SIDE.
+- **Groups narrower than their title** (review 2). When a group has ports and ELK lays it out narrower than its title needs, the engine lays the graph out a second time, with half the shortfall added to the group's left and right padding. This way its ports move with its sides instead of being left behind by `widenForTitles`. Graphs without such a group are laid out once.
+- **`anchorY` checks** (review 3). The engine refuses `anchorY` exactly as `layered`'s `check()` does, with the same messages, on every node and under every algorithm: non-finite or negative values, and values below the box. **Core disagreement, not changed:** `compass` refuses non-finite and negative values but clamps a value below the box (`Math.min(n.height, anchorY)`), where `layered` refuses it. A follow-up should pick one.
+- **ELK layered only.** stress, force, mrtree, box, rectpacking, sporeOverlap and radial ignore ports, so they get none, and their `ports` are still read off the route. I probed stress, force, mrtree and box: they route between the boxes or not at all. Under layered, `ports` reports the named side wherever ELK routed the edge and reads the other ends off the route.
 - Reversed edges (`orientFeedbackEdges`) keep each port on its real end.
 
 Known limits:
-- **`border` (`{group}`) is not read**, as in `layered`: the end sits on the node's named side, not the group's border, and `validateLayout` reports it (`does not start at its source`). Mapping it would attach the end to a port on the parent group; it touches the hierarchy handling and common-ancestor code, so it was left out.
-- `initialize({ layout: 'elk' })` did not reach architecture in the scratch run; front matter `config: layout: elk` did. Seen, not investigated (T5/T6 may want to check that the site-level `layout` applies to architecture).
+- **An edge between a group and its own member gets no ports** (review 6), as `layered` keeps its own route there. ELK's route and the sides read off it stand, even if the edge names sides.
+- **`border` (`{group}`) is not read**, as in `layered`. The end sits on the node's named side, not on the group's border, and `validateLayout` reports it (`does not start at its source`). Mapping it would mean attaching the end to a port on the parent group, which touches the hierarchy-handling and common-ancestor code, so I left it out.
+- **Site-level `layout` not tested:** `initialize({ layout: 'elk' })` didn't reach architecture in the scratch run, though front matter `config: layout: elk` did. I didn't investigate; T5/T6 may want to check that the site-level `layout` applies to architecture.
 
-Identity: every `.mmd` under `e2e/diagrams` (3,199 files) rendered as written, with `layout: elk` and with `layout: elk.stress` (9,597 renders, 3,027 ELK calls): base and branch give identical graphs, models and SVG. The only difference is gantt's `today` line in `should-render-when-compact-is-true.mmd`, which follows the clock.
+Identity: re-run after the review fixes, with the same result. Every `.mmd` under `e2e/diagrams` (3,199 files) was rendered three ways: as written, with `layout: elk` and with `layout: elk.stress` (9,597 renders, 3,027 ELK calls). Base and branch give identical graphs, models and SVG. The only difference is gantt's `today` line in `should-render-when-compact-is-true.mmd`, which follows the clock.
 
 ## T1 #594
 
