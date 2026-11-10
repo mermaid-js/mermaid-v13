@@ -164,6 +164,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -291,6 +297,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -540,6 +552,18 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treeview:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-usecase:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-venn:
     devDependencies:
       '@mermaid-js/core':
@@ -626,6 +650,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -714,6 +744,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -958,6 +994,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -1125,6 +1167,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../../packages/diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../../packages/diagram-venn

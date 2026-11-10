@@ -1,0 +1,25 @@
+@ 2:16  actor User@{ | }
+  type property (actor) 2:16-2:16 "" -> "type: "
+  icon property (actor) 2:16-2:16 "" -> "icon: "
+  business property (actor, use case) 2:16-2:16 "" -> "business: "
+@ 3:23  actor Admin@{ type: | }
+  normal value (a stick figure (the default)) 3:23-3:23 "" -> "normal"
+  hollow value (a hollow figure) 3:23-3:23 "" -> "hollow"
+  awesome value (a Font Awesome user icon) 3:23-3:23 "" -> "awesome"
+@ 4:31  systemBoundary Shop@{ type: | }
+  rect value (a rectangle (the default)) 4:31-4:31 "" -> "rect"
+  package value (a package with a tab) 4:31-4:31 "" -> "package"
+@ 7:8  e1@{ |
+  animate property (relation) 7:8-7:8 "" -> "animate: "
+  animation property (relation) 7:8-7:8 "" -> "animation: "
+@ 8:27  Login@{ business: true, | }
+  none
+@ 11:5  |
+  icon property (actor) 11:5-11:5 "" -> "icon: "
+  business property (actor, use case) 11:5-11:5 "" -> "business: "
+@ 13:11  Ghost@{ | }
+  type property (actor) 13:11-13:11 "" -> "type: "
+  icon property (actor) 13:11-13:11 "" -> "icon: "
+  business property (actor, use case) 13:11-13:11 "" -> "business: "
+  animate property (relation) 13:11-13:11 "" -> "animate: "
+  animation property (relation) 13:11-13:11 "" -> "animation: "

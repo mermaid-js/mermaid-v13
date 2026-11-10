@@ -1,0 +1,16 @@
+@ 2:9  title: x|
+  none
+@ 5:11  title Fi|les
+  none
+@ 6:15  accTitle: Fi|les
+  none
+@ 7:16  accDescr { lo|ng }
+  none
+@ 8:9  "my fi|le"
+  none
+@ 9:8  "open|
+  none
+@ 10:14  a.js ## not|es
+  none
+@ 11:11  %% a com|ment
+  none

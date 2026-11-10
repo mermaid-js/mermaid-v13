@@ -1,0 +1,32 @@
+---
+config:
+  theme: neo
+  look: handDrawn
+  handDrawnSeed: 1
+description: one representative usecase diagram, hand-drawn in the neo theme (D301, D319), actor glyphs, ovals, rects, the note and JSON frame (node), JSON cells (part), boundary frames and tab (group) and lines (edge) sketched through w.outline; business marks, arrowheads and text plain
+---
+usecase-beta
+  direction LR
+  actor Customer <<Human>>
+  actor Clerk@{ business: true }
+  actor Gateway@{ type: hollow }
+  systemBoundary "Web shop"
+    Browse("Browse catalogue")
+    Checkout("Check out") <<Core>>
+    Pay[Pay by card]
+    Coupon("Apply coupon")
+  end
+  "Web shop"@{ type: package }
+  systemBoundary "Back office"
+    Refund("Refund order")@{ business: true }
+  end
+  Customer --> Browse
+  Customer --> Checkout
+  Checkout ..> : include Pay
+  Coupon ..> : extend Checkout
+  Clerk --> Refund
+  Pay --- Gateway
+  Clerk --|> Customer
+  note for Clerk "Works in the back office"
+  json Order@{ "id": 42, "items": ["book", "pen"] }
+  Refund --> Order

@@ -116,6 +116,38 @@ const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
       warnings: m.warnings.map((w) => w.code),
     };
   },
+  // Not ordered but derived from the names: a quoted usecase element's id is its label with
+  // every non-word character as `_` (`"Reset password"` is `Reset_password`, D191), so the
+  // name written back is the label, not the id. Ids (and the ends, members and parents that
+  // name them) are compared as ids again, and the `astId`s made of them are dropped.
+  usecase: (model) => {
+    const ID_KEYS = new Set(['id', 'source', 'target', 'parentId', 'members']);
+    const generated = (label: string) => label.replace(/\W/g, '_');
+    // The labels of quoted elements written back as ids: the element's id is the label itself
+    // (renamed back from the fresh name), and its id would be the label's generated id.
+    const m = model as Record<
+      'actors' | 'useCases' | 'boundaries',
+      { id: string; label: string }[]
+    >;
+    const back = new Map<string, string>();
+    for (const e of [...m.actors, ...m.useCases, ...m.boundaries]) {
+      if (e.id === e.label && generated(e.label) !== e.label) back.set(e.label, generated(e.label));
+    }
+    const asId = (v: unknown): unknown => {
+      if (typeof v === 'string') return back.get(v) ?? v;
+      return Array.isArray(v) ? v.map(asId) : v;
+    };
+    const walk = (v: unknown): unknown => {
+      if (Array.isArray(v)) return v.map(walk);
+      if (typeof v !== 'object' || v === null) return v;
+      return Object.fromEntries(
+        Object.entries(v as Record<string, unknown>)
+          .filter(([k]) => k !== 'astId')
+          .map(([k, x]) => [k, ID_KEYS.has(k) ? asId(x) : walk(x)])
+      );
+    };
+    return walk(model);
+  },
 };
 
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */

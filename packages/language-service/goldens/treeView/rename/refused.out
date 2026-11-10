@@ -1,0 +1,8 @@
+@ 3:4  a|.js
+  prepare: 3:3-3:7 "a.js"; rename to "lib/":
+  refused: `lib/` ends with `/`, which would make the node a directory: write the name without it (a directory keeps its own `/`).
+@ 4:5  sr|c/
+  prepare: 4:3-4:6 "src"; rename to "lib/":
+  refused: `lib/` ends with `/`, which would make the node a directory: write the name without it (a directory keeps its own `/`).
+@ 5:4  "|"
+  prepare: refused: There is no id or class name here to rename.
