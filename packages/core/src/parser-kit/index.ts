@@ -60,3 +60,5 @@ export type {
 } from './language.ts';
 export { dropAt, isBreak, RuleLexer, SKIP, tagQuotes, UNSET } from './rule-lexer.ts';
 export type { RuleLexerOptions } from './rule-lexer.ts';
+export { lowerCode, StateLexer } from './state-lexer.ts';
+export type { StateLexerOptions } from './state-lexer.ts';
