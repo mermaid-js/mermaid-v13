@@ -12,14 +12,7 @@
 //
 // Each node's `g` carries `data-ast` (and `data-id`); its parts and its connectors `data-id`
 // only (pitfall 12, D487). The root row is not an AST node: it carries neither.
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  type Attrs,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { openSvgRoot, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import { Style } from '@mermaid-js/core/text';
 import { treeViewUseMaxWidth } from '../config.ts';
 import {
@@ -142,36 +135,18 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y, width, height } = layout.bounds;
   const maxWidth = treeViewUseMaxWidth(config.treeView);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-treeView',
+  openSvgRoot(w, ctx, {
+    name: 'treeView',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'treeView',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', content: string, id: string): void {
-  w.open(tag, { id });
-  w.text(content);
-  w.close();
 }

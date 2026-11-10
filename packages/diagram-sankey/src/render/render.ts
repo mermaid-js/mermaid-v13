@@ -9,10 +9,8 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  px,
-  styleScope,
+  openSvgRoot,
   styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -59,7 +57,6 @@ export function renderSankey(
  */
 function openRoot(model: SankeyModel, { w, layout }: Scene, ctx: SankeyRenderContext): void {
   const { theme } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
@@ -67,27 +64,13 @@ function openRoot(model: SankeyModel, { w, layout }: Scene, ctx: SankeyRenderCon
   const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-sankey',
+  openSvgRoot(w, ctx, {
+    name: 'sankey',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'sankey',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) {
-    w.open('title', { id: `${prefix}-title` });
-    w.text(title);
-    w.close();
-  }
 }
 
 /** v12 L154–172: one `g.node` per node at its corner, holding its rect. */

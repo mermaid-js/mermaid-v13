@@ -11,10 +11,9 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  cls,
+  openSvgRoot,
+  textElement,
   translate,
   type Attrs,
   type SafeUrl,
@@ -44,15 +43,6 @@ const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
 const LABEL_PAD = 4;
 const LABEL_RADIUS = 3;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
 interface Title {
@@ -148,38 +138,22 @@ function viewBox(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const box = viewBox(layout, title);
   const maxWidth = config.agentflow?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const acc = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-agentflow',
+  openSvgRoot(w, ctx, {
+    name: 'agentflow',
     viewBox: box,
-    width: maxWidth ? '100%' : box[2],
-    height: maxWidth ? undefined : box[3],
-    role: 'img',
-    'aria-roledescription': 'agentflow',
-    'aria-labelledby': acc ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(box[2]) } : {}, theme.rootStyleText()),
-    'font-family': paint.node.font,
-    'font-size': paint.node.fontSize,
+    maxWidth,
+    title: acc,
+    desc,
+    attrs: {
+      'font-family': paint.node.font,
+      'font-size': paint.node.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (acc) textElement(w, 'title', acc, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 /** A flow's tint, or a collapsed card's (its flow's), under a palette. */

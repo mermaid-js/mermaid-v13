@@ -23,7 +23,7 @@ import type {
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -232,7 +232,10 @@ export function prepareAgentflow(
     edgeWrap: units.builder.edgeWrap,
     label: (text, markdown, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(
+      new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
+      (w) => ctx.warn(w)
+    ),
   };
   const rootDir = layoutDir(model.direction) ?? 'TB';
   const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);
@@ -260,24 +263,6 @@ function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
     hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
     subroutine: xy('subroutine'),
     lean: xy('lean'),
-  };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: AgentflowModel, ctx: AgentflowLayoutContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
-  for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
   };
 }
 

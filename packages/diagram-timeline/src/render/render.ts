@@ -6,14 +6,7 @@
 // labels and connectors `data-id` only. v12's class names stay where they still apply
 // (`timeline-node`, `section-<n>`, `taskWrapper`, `eventWrapper`, `lineWrapper`).
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { openSvgRoot, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { fontSizePx } from '@mermaid-js/core/text';
 import { TIMELINE_METRICS } from '../layout/metrics.ts';
 import type {
@@ -64,42 +57,26 @@ export function renderTimeline(
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
   const maxWidth = config.timeline?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-timeline',
+  openSvgRoot(w, ctx, {
+    name: 'timeline',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'timeline',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** v12's class for slot `slot`: `section-<slot mod 12 − 1>`, so slot 0 is `section--1`. */

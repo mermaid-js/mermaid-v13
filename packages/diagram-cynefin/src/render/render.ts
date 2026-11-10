@@ -9,8 +9,7 @@
 // rect or ellipse, each item's `g` and each transition's line. Labels, subtitles, arrowheads and
 // arrow labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import { px, styleScope, styleText, themeStyleSheet, translate } from '@mermaid-js/core/svg';
-import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot, translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import type { CynefinBadge, CynefinFont, CynefinLayout, PlacedLabel } from '../layout/index.ts';
 import { FONTS } from '../layout/metrics.ts';
 import type { CynefinModel } from '../model.ts';
@@ -230,7 +229,6 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.viewBox;
   const width = Math.max(1, Math.ceil(layout.viewBox.width));
   const height = Math.max(1, Math.ceil(layout.viewBox.height));
@@ -239,29 +237,12 @@ function openRoot(
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-cynefin',
+  openSvgRoot(w, ctx, {
+    name: 'cynefin',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'cynefin',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

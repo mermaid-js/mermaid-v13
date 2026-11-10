@@ -15,11 +15,8 @@
  * chart (venn.js's `disjoint`) is not drawn.
  */
 import {
-  checkColor,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  fixedPaint,
+  openSvgRoot,
   translate,
   type Attrs,
   type Paint,
@@ -55,9 +52,6 @@ interface Scene {
   readonly areas: readonly PaintedArea[];
   readonly textNodes: readonly (readonly Paint[])[];
 }
-
-/** A fixed colour of v12's (the debug shapes), checked as a paint. */
-const fixed = (c: string): Paint => checkColor(c) as Paint;
 
 /** Writes the whole `<svg>` document for a laid-out venn diagram. */
 export function renderVenn(
@@ -162,7 +156,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
         cy: t.inner.y,
         r: t.inner.radius,
         fill: 'none',
-        stroke: fixed(VENN_PAINT.debugCircle),
+        stroke: fixedPaint(VENN_PAINT.debugCircle),
         'stroke-width': debug.circleStroke,
         'stroke-dasharray': dash(VENN_PAINT.debugCircleDash) as Attrs['stroke-dasharray'],
       });
@@ -175,7 +169,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
           width: n.cell.width,
           height: n.cell.height,
           fill: 'none',
-          stroke: fixed(VENN_PAINT.debugCell),
+          stroke: fixedPaint(VENN_PAINT.debugCell),
           'stroke-width': debug.cellStroke,
           'stroke-dasharray': dash(VENN_PAINT.debugCellDash) as Attrs['stroke-dasharray'],
         });
@@ -199,7 +193,6 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs): void {
 /** The `<svg>` root with its title (R-A11Y-1, D133). */
 function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
@@ -207,25 +200,11 @@ function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext
   const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-venn',
+  openSvgRoot(w, ctx, {
+    name: 'venn',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'venn',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) {
-    w.open('title', { id: `${prefix}-title` });
-    w.text(title);
-    w.close();
-  }
 }

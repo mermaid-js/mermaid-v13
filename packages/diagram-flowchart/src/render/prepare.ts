@@ -5,7 +5,7 @@
 // cspell:ignore kepano
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -158,7 +158,10 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     cells: units.id === 'cell',
     label: (text, markdown, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(
+      new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
+      ctx.warn
+    ),
   };
   const rootDir = dirOf(model.direction) ?? 'TB';
   const nest = nesting(model, rootDir);
@@ -190,24 +193,6 @@ function padsOf(theme: FlowRenderContext['theme'], pad: number): Pads {
     ringPad: padOf('doubleCirclePadding'),
     circlePad: padOf('circlePadding'),
     circleMin: theme.number('circleMinDiameter'),
-  };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: FlowModel, ctx: FlowRenderContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
-  for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, ctx.warn)));
-    return style;
   };
 }
 

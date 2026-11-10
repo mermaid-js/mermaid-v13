@@ -6,9 +6,15 @@
 // `<g>`, each drawn curve and the in-text title carry `data-ast`; legend rows and swatches
 // carry `data-id` only (pitfall 12). A skipped curve draws nothing, as pie's dropped slices.
 import type { RenderContext } from '@mermaid-js/core';
-import { px, styleScope, styleText, themeStyleSheet, type PathBuilder } from '@mermaid-js/core/svg';
-import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
-import type { CubicSegment, PlacedLabel, Point, RadarLayout } from '../layout/index.ts';
+import {
+  centreX,
+  centreY,
+  openSvgRoot,
+  type PathBuilder,
+  type PathData,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
+import type { CubicSegment, Point, RadarLayout } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
 import { radarUseMaxWidth } from '../config.ts';
 import { paints, type Paints } from './paint.ts';
@@ -42,8 +48,6 @@ export function renderRadar(
   w.close();
 }
 
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 const flat = (points: readonly Point[]): number[] => points.flatMap((p) => [p.x, p.y]);
 
 /** v12 `drawGraticule`: a circle or a polygon per ring, filled at `radarGraticuleOpacity`. */
@@ -150,7 +154,6 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
@@ -159,29 +162,12 @@ function openRoot(
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-radar',
+  openSvgRoot(w, ctx, {
+    name: 'radar',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'radar',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

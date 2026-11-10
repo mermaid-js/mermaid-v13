@@ -6,10 +6,10 @@ import { layered } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -41,15 +41,6 @@ const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
 const LABEL_PAD = 4;
 
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
-
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
   p: RoutePoint,
@@ -77,26 +68,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-subgraph palette colour (#86, v12 flowchart `genColor`). On only when the theme carries
- * a non-empty `borderColorArray`, never by theme name (D152). The slot is the subgraph's source
- * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
- * empty, so `redux-dark-color` colours borders only.
- */
-function paletteSlots(theme: FlowRenderContext['theme']): (view: NodeView) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (view) => {
-    if (view.order === undefined || border.length === 0) return undefined;
-    const slot = view.order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[view.order % bkg.length] : undefined,
-    };
-  };
 }
 
 type ThemeOf = FlowRenderContext['theme'];
@@ -173,7 +144,9 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
   const collapsedLine = flow.nodes.some((v) => v.shape === 'collapsedGroup')
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
-  const slotOf = paletteSlots(theme);
+  const slot = paletteSlots(theme);
+  const slotOf = (view: NodeView): Tint | undefined =>
+    view.order === undefined ? undefined : slot(view.order);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
@@ -229,40 +202,23 @@ export function renderFlowchart(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
-  const { theme, config } = ctx;
-  // The id prefix hashes the text and config, and most diagrams never write an id.
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
   const maxWidth = config.flowchart?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-flowchart',
+  openSvgRoot(w, ctx, {
+    name: 'flowchart',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'flowchart',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.node.font,
-    'font-size': paint.node.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.node.font,
+      'font-size': paint.node.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
