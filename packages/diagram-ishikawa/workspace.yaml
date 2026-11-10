@@ -1,0 +1,41 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: ishikawa
+    title: Ishikawa diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        # Both `SPACELINE` rules: the lexer keeps a kind per rule (a comment, a blank run).
+        CommentLine:
+          mode: INITIAL
+          pattern: '\s*%%.*'
+          terminal: SPACELINE
+        SpaceLine:
+          mode: INITIAL
+          pattern: '[\s]+[\n]'
+          terminal: SPACELINE
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - ascii/
+    - ascii.ts
+    - plugin.ts
+    - index.ts
+    - labels.ts
+    - config.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The Ishikawa (fishbone) diagram plugin (SVG and text; `ishikawa`, `ishikawa-beta`).'
+  install: 'with `mermaid/slim`'

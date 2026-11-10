@@ -1,0 +1,2 @@
+3:3-3:11 "ishikawa" error UNEXPECTED: Expected a line of text: the effect or a cause, got `ishikawa`; a line may not start with the keyword: `ishikawa` starts the diagram and comes only once; reword the line, as in `The ishikawa way`.
+8:3-8:12 "Too early" error UNEXPECTED: Expected a line break, got `Too early`; remove a blank or comment line above it, or add one: mermaid@12 reads the blank and comment lines between two lines in pairs (blank lines in a row count as one), and rejects a line here.
