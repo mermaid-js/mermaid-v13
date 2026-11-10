@@ -4,8 +4,8 @@ import { c4Language, language } from './language.ts';
 /**
  * The C4 language facet (#543) at its own seam: the parse the service reads, completions at a
  * probe parse, hover and `isValidId`, as the language service calls them. The service-level
- * behaviour (definition, references, rename, folding, semantic tokens) is in the goldens
- * (`packages/conformance/src/c4/goldens/c4` until T5 moves them to the language service's).
+ * behaviour (definition, references, rename, folding, semantic tokens) is in the language
+ * service's goldens (`packages/language-service/goldens/c4`).
  */
 const CURSOR = '¦';
 

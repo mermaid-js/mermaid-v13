@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4 } from '@mermaid-js/diagram-c4';
 import type { C4BoundaryNode, C4StatementNode } from '@mermaid-js/diagram-c4';
-import { c4Language, detectC4 } from '@mermaid-js/diagram-c4/language';
+import { detectC4 } from '@mermaid-js/diagram-c4/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
@@ -26,13 +26,10 @@ import { c4V13Snapshot } from './v13.ts';
  * Sources whose items v12 reads otherwise than v13 are left out: those are the listed parity
  * divergences (D452's lexing: an unquoted argument v12 ran over `)` and line breaks).
  *
- * The service gets the facet as an eager row, as a host bundling it would, until c4's manifest
- * has its `language` entry (T5, #542); then the generated registry row loads it.
+ * The service loads the facet from the generated registry row (#542), as kanban's does.
  */
-const service = createLanguageService({
-  facets: [{ type: 'c4', id: 'c4', detector: (t) => detectC4(t), facet: c4Language }],
-});
-await service.preload();
+const service = createLanguageService();
+await service.preload({ types: ['c4'] });
 
 const key = (r: Range) => `${r.start}:${r.end}`;
 const FRESH = 'renamedZq7';
