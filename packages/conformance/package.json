@@ -20,7 +20,8 @@
     "harvest:info": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts info",
     "harvest:radar": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts radar",
     "harvest:treemap": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts treemap",
-    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley"
+    "harvest:wardley": "tsx --conditions=mermaid-source src/cli/harvest-v12.ts wardley",
+    "capture:swimlane": "tsx --conditions=mermaid-source src/cli/capture-swimlane.ts"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",
