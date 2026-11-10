@@ -1,0 +1,21 @@
+@ 2:12  classDef |hot fill:#f96,stroke:#333
+  2:12-2:15 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96,stroke:#333`
+  |
+  | Used by 1 box
+@ 5:13  class r1 h|ot
+  5:12-5:15 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96,stroke:#333`
+  |
+  | Used by 1 box
+@ 6:11  r1:::col|d
+  6:8-6:12 "cold"
+  | **class** `cold`
+  |
+  | No `classDef` defines it.
+  |
+  | Used by 1 box

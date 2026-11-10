@@ -1,0 +1,25 @@
+---
+config:
+  theme: redux-color
+description: >-
+  a style statement beats the composite palette: transform takes the style's fill and
+  stroke, the nested composite the style's fill with its palette border, and ingest and
+  store keep their palette slots
+---
+block-beta
+  columns 3
+  block:ingest["Ingest"]
+    a["Fetch"] b["Validate"]
+  end
+  block:transform["Transform"]
+    columns 1
+    c["Normalise"]
+    block:inner
+      d["Enrich"]
+    end
+  end
+  block:store["Store"]
+    e[("Warehouse")]
+  end
+  style transform fill:#ffe66d,stroke:#333
+  style inner fill:#a8e6cf

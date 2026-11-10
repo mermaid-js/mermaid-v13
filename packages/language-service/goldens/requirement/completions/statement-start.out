@@ -1,0 +1,23 @@
+@ 6:3  |
+  requirement keyword 6:3-6:3 "" -> "requirement"
+  functionalRequirement keyword 6:3-6:3 "" -> "functionalRequirement"
+  interfaceRequirement keyword 6:3-6:3 "" -> "interfaceRequirement"
+  performanceRequirement keyword 6:3-6:3 "" -> "performanceRequirement"
+  physicalRequirement keyword 6:3-6:3 "" -> "physicalRequirement"
+  designConstraint keyword 6:3-6:3 "" -> "designConstraint"
+  element keyword 6:3-6:3 "" -> "element"
+  style keyword 6:3-6:3 "" -> "style"
+  classDef keyword 6:3-6:3 "" -> "classDef"
+  class keyword 6:3-6:3 "" -> "class"
+  direction TB keyword 6:3-6:3 "" -> "direction TB"
+  direction BT keyword 6:3-6:3 "" -> "direction BT"
+  direction RL keyword 6:3-6:3 "" -> "direction RL"
+  direction LR keyword 6:3-6:3 "" -> "direction LR"
+  accTitle keyword 6:3-6:3 "" -> "accTitle: "
+  accDescr keyword 6:3-6:3 "" -> "accDescr: "
+  r1 node (Requirement) 6:3-6:3 "" -> "r1"
+  the sim node (Element) 6:3-6:3 "" -> "\"the sim\""
+@ 7:5  el|
+  element keyword 7:3-7:5 "el" -> "element"
+@ 8:6  sty|
+  style keyword 8:3-8:6 "sty" -> "style"

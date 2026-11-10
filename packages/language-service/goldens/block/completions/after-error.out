@@ -1,0 +1,13 @@
+@ 3:3  |
+  columns keyword 3:3-3:3 "" -> "columns "
+  space keyword 3:3-3:3 "" -> "space"
+  block: keyword 3:3-3:3 "" -> "block:"
+  block keyword 3:3-3:3 "" -> "block"
+  classDef keyword 3:3-3:3 "" -> "classDef "
+  class keyword 3:3-3:3 "" -> "class "
+  style keyword 3:3-3:3 "" -> "style "
+  a node 3:3-3:3 "" -> "a"
+  c node 3:3-3:3 "" -> "c"
+@ 4:9  c --> |
+  a node 4:9-4:9 "" -> "a"
+  c node 4:9-4:9 "" -> "c"

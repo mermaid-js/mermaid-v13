@@ -1,0 +1,16 @@
+@ 3:3  |a["A"] --> b
+  prepare: 3:3-3:4 "a"; rename to "start":
+  %% rename-to: start
+  block
+    start["A"] --> b
+    b --> start
+    class start hot
+    style start fill:#f96
+@ 4:9  b --> |a
+  prepare: 4:9-4:10 "a"; rename to "start":
+  %% rename-to: start
+  block
+    start["A"] --> b
+    b --> start
+    class start hot
+    style start fill:#f96

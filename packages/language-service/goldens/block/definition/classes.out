@@ -1,0 +1,8 @@
+@ 3:12  classDef |hot fill:#f96
+  -> 3:12-3:15 "hot"
+@ 4:12  classDef |hot stroke:#333
+  -> 3:12-3:15 "hot"
+@ 5:11  class a |hot
+  -> 3:12-3:15 "hot"
+@ 6:11  class b |cold
+  -> 6:11-6:15 "cold"

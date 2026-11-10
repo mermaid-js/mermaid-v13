@@ -1,0 +1,22 @@
+---
+config:
+  theme: redux
+description: >-
+  the composite palette off: the same body as palette/on.mmd in redux, which sets no
+  borderColorArray, so every composite draws mainBkg and nodeBorder
+---
+block-beta
+  columns 3
+  block:ingest["Ingest"]
+    a["Fetch"] b["Validate"]
+  end
+  block:transform["Transform"]
+    columns 1
+    c["Normalise"]
+    block:inner
+      d["Enrich"]
+    end
+  end
+  block:store["Store"]
+    e[("Warehouse")]
+  end

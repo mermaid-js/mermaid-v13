@@ -1,0 +1,10 @@
+@ 1:14  %%{init: {"th|eme": "dark"}}%%
+  none
+@ 3:12  %% a comm|ent
+  none
+@ 4:18  accTitle: My ti|tle
+  none
+@ 5:18  requirement "a |req" {
+  none
+@ 6:18  text: some te|xt
+  none
