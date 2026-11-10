@@ -154,9 +154,9 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `swimlane.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `swimlane.layout` | string | `"swimlane"` | honoured (13.0.0) |  | Defines which layout algorithm to use for rendering the diagram. |
 | `swimlane.lineHops` | any | `"arc"` | honoured (13.0.0) |  | Renders edge crossings as small arcs ("hops") or visible gaps so that overlapping edges are easier to read. Set to `false` to disable. Edges rendered as curves are skipped to avoid corrupting the geometry. Applies whenever the `swimlane` layout lays the diagram out, over the shared top-level `lineHops` unless that is `false` (D537). |
-| `swimlane.ignoreCrossLaneEdges` | boolean | `true` | pending |  | Ignores edges that cross swimlane boundaries during swimlane layer assignment. This can improve rank quality for diagrams with many cross-lane links. |
-| `swimlane.optimizeRanksByCrossings` | boolean | `true` | pending |  | Enables a crossing-aware rank optimization pass for swimlane layouts. |
-| `swimlane.automaticLaneOrdering` | boolean | `false` | pending |  | Automatically reorders top-level swimlanes with a deterministic weighted-linear-arrangement heuristic. Disabled by default because source swimlane order can carry semantic meaning. |
+| `swimlane.ignoreCrossLaneEdges` | boolean | `true` | honoured (13.0.0) |  | Ignores edges that cross swimlane boundaries during swimlane layer assignment. This can improve rank quality for diagrams with many cross-lane links. |
+| `swimlane.optimizeRanksByCrossings` | boolean | `true` | honoured (13.0.0) |  | Enables a crossing-aware rank optimization pass for swimlane layouts. It acts only when `ignoreCrossLaneEdges` is `false`, as in v12. |
+| `swimlane.automaticLaneOrdering` | boolean | `false` | honoured (13.0.0) |  | Automatically reorders top-level swimlanes with a deterministic weighted-linear-arrangement heuristic. Disabled by default because source swimlane order can carry semantic meaning. |
 
 ## `agentflow`
 

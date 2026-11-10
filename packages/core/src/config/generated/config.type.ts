@@ -459,6 +459,7 @@ lineHops?: (boolean | ("arc" | "gap"))
 ignoreCrossLaneEdges?: boolean
 /**
  * Enables a crossing-aware rank optimization pass for swimlane layouts.
+ * It acts only when `ignoreCrossLaneEdges` is `false`, as in v12.
  * 
  */
 optimizeRanksByCrossings?: boolean

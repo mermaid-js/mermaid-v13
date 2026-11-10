@@ -17,11 +17,15 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
   `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
   unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
-  (`useMaxWidth`) resolves the same way in both. An `%%{init: {"config": …}}%%` key goes to
-  `swimlane` when that section has it, else to `flowchart` (v12 sent all of it to `swimlane`).
-  The engine reads `swimlane.ignoreCrossLaneEdges`,
-  `optimizeRanksByCrossings`, `automaticLaneOrdering` and `lineHops`; `flowchart.*` keys
-  (spacing, curve, labels, padding) apply as in v12.
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`) resolves the same way in both. An
+  `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's own keys
+  (`theme`, `layout`, `useMaxWidth`, `lineHops` and the three below), else to `flowchart` (v12
+  sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
+  in v12. `swimlane.look` is ignored, as `look` is everywhere (D153).
+- **Engine keys**, all honoured as in v12: `swimlane.ignoreCrossLaneEdges` (default `true`:
+  each lane is ranked on its own edges), `optimizeRanksByCrossings` (default `true`; as in v12
+  it acts only when `ignoreCrossLaneEdges` is `false`) and `automaticLaneOrdering` (default
+  `false`: lanes keep their source order; `true` reorders them so busy lanes sit together).
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
   when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
   or `linkStyle default interpolate` wins.
@@ -47,6 +51,33 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
   (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
   it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.
+- **Line hops** (D537). Crossing edges hop by default under the swimlane engine
+  (`swimlane.lineHops`, default `arc`; `gap` cuts the run that gives way instead, `false` draws
+  it unbroken), as in v12. The shared top-level `lineHops` is new: `lineHops: false` turns hops
+  off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
+  key under this engine. Crossings are found on straight runs only, as in v12: a rounded corner
+  or a smoothed curve is never hopped, and unlike v12 the corners of an edge that hops keep
+  their rounding.
+- **Layout differences from v12's engine** (D532: the engine is v12's, ported; these are the
+  places it differs):
+  - An empty lane, or one a shared node left empty, gets a band of its own (its title's width
+    plus padding across, the other lanes' length along); v12 shrank it to nothing.
+  - A subgraph inside a lane grows by its own padding on each side; v12 split one padding
+    between the two sides, so nested boxes are a little larger.
+  - Lanes grow so that routes and edge labels stay 10px inside them; with flowchart's 20px
+    subgraph padding, v12's outer routes ran along the lane border.
+  - `LR` and `RL` route on the drawn (turned) sizes; v12 routed `RL` with `TB` widths, so its
+    detours could miss boxes or cut through them.
+  - Labelled self-loops are routed through their label, and unlabelled ones take a free side;
+    v12's router skipped self-loops. A route end v12 left off its box is put back on it.
+  - A labelled edge to or from a subgraph puts its label in the row of its ranked end, beside
+    that lane's nodes; v12 put it on top of the other end.
+- **Integrators.** Lane drawing is flowchart's own lazily loaded chunk, loaded with the
+  `swimlane` engine (`preload({ layouts: ['swimlane'] })`, or any `render()`), so a plain
+  flowchart loads none of it. A host that registers the engine itself under its own loader
+  passes it through `withLanes` from `@mermaid-js/diagram-flowchart/lanes`, or gets
+  engine and drawing together from that module's `engine()`; without it the groups draw as
+  plain subgraphs.
 - **`format: 'ascii'`** (new; v12 had no text output) draws the flowchart with `layered`, lanes
   as plain subgraph frames with no title band or default lane, in both charsets, with one
   `ASCII_DROPPED` warning (`feature: 'layout'`) and no `SWIMLANE_*` warning, as for any engine

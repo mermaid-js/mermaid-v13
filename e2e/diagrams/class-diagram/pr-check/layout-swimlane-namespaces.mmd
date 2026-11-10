@@ -1,0 +1,27 @@
+---
+description: >-
+  `layout: swimlane` on a class diagram (D535: any graph diagram may select
+  the swimlane engine). Each top-level namespace is a lane, laid side by
+  side across the flow and stretched to the same length; the classes keep
+  their own drawing. Lanes are flowchart's drawing, so the namespaces stay
+  class's plain boxes.
+config:
+  layout: swimlane
+---
+classDiagram
+  namespace Domain {
+    class Order {
+      +id: string
+      +total() number
+    }
+    class Line
+  }
+  namespace Infra {
+    class Repo {
+      +save(order) void
+    }
+    class Db
+  }
+  Order *-- Line
+  Repo ..> Order
+  Repo --> Db

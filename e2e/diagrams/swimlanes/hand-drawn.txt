@@ -1,0 +1,7 @@
+sketched
+
+v12 sketched swimlanes with `look: handDrawn` (its swimlane cluster drew through rough.js like
+flowchart's). With the hand-drawn plugin on, this folder's whole corpus renders through it in
+packages/plugin-hand-drawn/src/corpus.spec.ts, and its gallery baseline has the four-family
+hand-drawn set (packages/dev/src/adapter.spec.ts, D307). The first line is read: `sketched` or
+`unsketched`.

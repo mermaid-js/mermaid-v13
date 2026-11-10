@@ -4685,13 +4685,14 @@ $defs:
           cross-lane links.
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       optimizeRanksByCrossings:
         description: |
           Enables a crossing-aware rank optimization pass for swimlane layouts.
+          It acts only when `ignoreCrossLaneEdges` is `false`, as in v12.
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       automaticLaneOrdering:
         description: |
           Automatically reorders top-level swimlanes with a deterministic
@@ -4699,7 +4700,7 @@ $defs:
           source swimlane order can carry semantic meaning.
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   AgentflowDiagramConfig:
     title: Agentflow Diagram Config
