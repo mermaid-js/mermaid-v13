@@ -26,10 +26,19 @@ two invalid attempts were archived and excluded. Docker’s VM/backend was off d
 and P27 limits stayed unchanged. The exact round-1 Pelé reference from batch 1 was reused.
 See [BATCH-2.md](runs/1/BATCH-2.md) and [the review](runs/1/batch-2/REVIEW.md).
 
-Six hypotheses have now been measured; none qualifies for integration. No runner is active.
-The remaining hypotheses need the next batch selection. These two batches do not constitute
-two empty rounds under P2. Browser validation and e2e remain pending/unverified. Results are
-published in [PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
+**Round 1’s third batch is complete.** [The report](runs/1/batch-3/REPORT.md) records
+3b, 4a and 5a as unfit: observed gains of 2.312%, 1.503% and 2.504% remain below 7.402%.
+All named counter conditions pass and all 5,000 SVGs are byte-identical. Nine accepted jobs
+completed; two invalid jobs were archived and excluded. Source review found and fixed a
+cached-error diagnostic regression in 3b and a warning-callback palette-order regression in
+4a before fresh acceptance and formal measurement. See [BATCH-3.md](runs/1/BATCH-3.md) and
+[the review](runs/1/batch-3/REVIEW.md).
+
+Nine hypotheses have now been measured; none qualifies for integration. No runner is active,
+and the measurement window is closed. Remaining hypotheses await the next batch selection.
+Three completed batches are still part of round 1, not three completed empty rounds under P2.
+Browser validation and e2e remain pending/unverified. Results are published in
+[PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
 preparation/base branch; no renderer optimization is included.
 
 The exact freeze prerequisite was `.tmp/perf-validation-p27-20261110-02/acceptance.json`:
