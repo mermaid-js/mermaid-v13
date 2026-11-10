@@ -34,6 +34,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
@@ -122,13 +123,6 @@ const ENTITY = /^#\w+;/;
 const TITLE_WORD = /^(?:title|acctitle|accdescr)\b/i;
 /** The sankey header keyword, as a field. */
 const KEYWORD = /^sankey(?:-beta)?$/i;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at row level. One instance,
- * so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a sankey diagram. Never throws: problems are error diagnostics. */
 export function parseSankey(src: string, options: SankeyParseOptions = {}): SankeyParseResult {
@@ -295,14 +289,11 @@ class SankeyParser {
     const { c } = this;
     const here =
       c.kind === Kind.EOF || c.kind === T.Eof ? { start: c.start, end: c.start } : c.range;
-    const d = this.st.diagnostics.unexpected(
+    this.st.diagnostics.unexpected(
       'UNEXPECTED',
       at?.range ?? here,
       names,
-      at?.found ?? this.found()
-    );
-    const h = this.hint(hint);
-    if (h) d.message = `${d.message.slice(0, -1)}; ${h}.`;
+      at?.found ?? this.found(), undefined, this.hint(hint));
     throw STOP;
   }
 

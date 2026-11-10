@@ -101,9 +101,7 @@ export abstract class TokenRules {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = this.explain() ?? hint;
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, this.explain() ?? hint);
     throw STOP;
   }
 

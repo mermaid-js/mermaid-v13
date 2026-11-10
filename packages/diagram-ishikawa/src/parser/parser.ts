@@ -42,6 +42,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -112,13 +113,6 @@ const PAIRS_HINT =
   'remove a blank or comment line above it, or add one: mermaid@12 reads the blank and comment lines between two lines in pairs (blank lines in a row count as one), and rejects a line here';
 const SEPARATOR_HINT =
   'a comment ends at a line separator (U+2028 or U+2029), and the text after it may not follow on that line; start it on a line of its own';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** How many clamped causes the render's one `ISHIKAWA_INDENT_CLAMPED` names; `related` has all. */
 const CLAMP_NAMED = 10;
@@ -290,8 +284,7 @@ class IshikawaParser {
   /** Report what was found where `names` were expected, with a hint. */
   private report(names: string[], hint?: string): void {
     const { range, found } = this.named();
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', range, names, found);
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', range, names, found, undefined, hint);
   }
 
   /** Report, then stop the statement. */

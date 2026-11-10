@@ -22,6 +22,7 @@
 import {
   cook,
   CR,
+  idEscaper,
   Kind,
   kindSet,
   LF,
@@ -31,6 +32,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -215,13 +217,6 @@ const DIRECTIVE_HINT = 'a directive is written `%%{init: {…}}%%`';
 const CLICK_HINT = 'write `click <ids> href "<url>"` or `click <ids> call <function>()`';
 const LINK_HINT = 'a link is written `href "<url>"` after `click <ids>`';
 const CALL_HINT = 'a callback is written `call <function>()` after `click <ids>`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a gantt diagram. Never throws: problems are error diagnostics. */
 export function parseGantt(src: string, options: GanttParseOptions = {}): GanttParseResult {
@@ -422,8 +417,7 @@ class GanttParser {
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string, at: Range = this.range()): never {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     // At the end of the text: the error the end would give is this one.
     if (this.kind() === Kind.EOF || at.start >= this.src.length) this.endReported = true;
     throw STOP;
@@ -948,8 +942,8 @@ class GanttParser {
     this.endReported = true;
     const word = k === T.AccTitle ? 'accTitle' : 'accDescr';
     const at = this.lineEndIn(keyword);
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, ['text'], 'the end of the text');
-    d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
+    const hint = `write it as \`${word}: <text>\``;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, ['text'], 'the end of the text', undefined, hint);
   }
 }
 
@@ -1013,8 +1007,4 @@ function splitData(data: string): SplitData | undefined {
 }
 
 /** `%`, `>`, `@` and `#` in an id, percent-encoded as core's AST ids are. */
-function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper();

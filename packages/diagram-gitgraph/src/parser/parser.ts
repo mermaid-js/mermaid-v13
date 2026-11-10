@@ -24,26 +24,23 @@
  */
 import {
   APOSTROPHE,
-  cook,
   DQUOTE,
   ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
   Kind,
   kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  skipTo,
-  sourceView,
+  RuleParser,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
+  RuleGrammar,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -90,8 +87,6 @@ const MERGE_OPTIONS = [T.Id, T.Tag, T.Type];
 const PICK_OPTIONS = [T.Id, T.Tag, T.Parent];
 const AFTER_BRANCH = [T.Order, ...LINE_END];
 
-/** Where recovery resumes (R-PARSE-4). */
-const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 /**
  * Kinds a probe's cursor follows rather than extends: the `…:` keywords and `:`, and a string,
  * which its closing quote ends (right after `id:"a"` the parser expects the next option).
@@ -186,35 +181,13 @@ const OPTIONS_OF: Record<number, string> = {
 };
 
 /**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
-
-/**
  * `%`, `>`, `@` and `#` percent-encoded, as in every AST id (DESIGN §4.2), and so are the
  * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
  * U+FFFF), which a name can carry through `\0`, `\b`, `\f`, `\v` or the source: the SVG writer
  * drops them, so `data-ast` would not be the id. Two hex digits up to U+007F, four above, so
  * the encoding stays one-to-one.
  */
-const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
-const TWO_DIGITS = 0x80;
-function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
 
 /** Parse a git graph. Never throws: problems are error diagnostics. */
 export function parseGitGraph(
@@ -224,23 +197,20 @@ export function parseGitGraph(
   return new GitGraphParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: GITGRAPH_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class GitGraphParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class GitGraphParser extends RuleParser<PreprocessResult> {
   private readonly git: GitBuilder;
   private readonly children: GitStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** `@n` mentions per id base (`c:A`, `b:dev`). */
-  private readonly mentions = new Map<string, number>();
   /** `#k` ordinals per id base (`c`, `m:dev`, `cp:A`, `co:dev`, `st`). */
   private readonly ordinals = new Map<string, number>();
   private direction: GitDirection = 'LR';
@@ -250,31 +220,17 @@ class GitGraphParser {
   private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: GitGraphParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, GITGRAPH_TRIVIA);
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
     this.git = new GitBuilder(
       this.st.diagnostics,
       options.mainBranchName ?? MAIN_BRANCH,
       options.mainBranchOrder ?? MAIN_ORDER,
       this.writtenIds()
     );
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
   }
 
   parse(): GitGraphParseResult {
@@ -331,36 +287,6 @@ class GitGraphParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
   /** `base@2`, `base@3`, … for the second and later mentions of `base`. */
   private mention(base: string): AstId {
     const n = (this.mentions.get(base) ?? 0) + 1;
@@ -384,30 +310,14 @@ class GitGraphParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     // `title` and the accessibility tokens take the blanks before them.
     while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 
@@ -459,22 +369,6 @@ class GitGraphParser {
     const glued = KEYWORDS.find((w) => word.startsWith(w));
     if (glued) return `put a blank after \`${glued}\``;
     return undefined;
-  }
-
-  /** Skip to the next line break after an error (R-PARSE-4). */
-  private recover(): void {
-    this.probe?.freeze();
-    this.i = skipTo(this.t, this.i, BOUNDARY);
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
   }
 
   // ---- rules --------------------------------------------------------------------------

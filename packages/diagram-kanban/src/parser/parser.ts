@@ -41,6 +41,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -156,13 +157,6 @@ const AFTER_BLANK_HINT =
 const ENTITY = /&(#?)(\w+);/g;
 const PLACEHOLDER = /ﬂ°°|ﬂ°|¶ß/g;
 const PLACEHOLDER_TEXT: Readonly<Record<string, string>> = { 'ﬂ°°': '&#', 'ﬂ°': '&', '¶ß': ';' };
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a kanban diagram. Never throws: problems are error diagnostics. */
 export function parseKanban(src: string, options: KanbanParseOptions = {}): KanbanParseResult {
@@ -523,13 +517,11 @@ class KanbanParser {
    */
   private report(names: string[], hint?: string, at?: Range): void {
     const j = this.namedToken();
-    const d = this.st.diagnostics.unexpected(
+    this.st.diagnostics.unexpected(
       'UNEXPECTED',
       at ?? this.namedRange(j),
       names,
-      this.found(j)
-    );
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+      this.found(j), undefined, hint);
   }
 
   /** Skip to the next separator after an error (R-PARSE-4), and past it. */

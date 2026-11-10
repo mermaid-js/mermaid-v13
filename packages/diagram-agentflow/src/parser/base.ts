@@ -398,9 +398,7 @@ export abstract class ParserBase {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain(want, open !== undefined);
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain(want, open !== undefined));
     throw STOP;
   }
 

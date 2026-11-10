@@ -19,6 +19,7 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
+  STOP,
   syncTo,
   TokenCursor,
   TRIVIA,
@@ -173,13 +174,6 @@ const NAME = ['a name'];
 const KEY_COMMA = ['`,` between keys, e.g. `PK, FK`'];
 const LABEL = ['a label such as `places` or `"places order"`'];
 const STYLE_NAMES = ['a style such as `fill:#f9f`'];
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 interface Frame {
   node: ErSubgraphNode;
@@ -363,9 +357,7 @@ class ErParser {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, names, this.found());
-    const why = this.hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, names, this.found(), undefined, this.hint ?? this.explain());
     throw STOP;
   }
 

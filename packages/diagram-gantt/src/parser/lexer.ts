@@ -33,18 +33,17 @@ import {
   CR,
   DASH,
   DQUOTE,
-  firstHole,
   HASH,
   isSpace,
   Kind,
   LBRACE,
   LF,
-  localOffset,
   LOWER_A,
   LOWER_C,
   LOWER_G,
   LOWER_H,
   LOWER_S,
+  lowerCode,
   LPAREN,
   PERCENT,
   QUOTE,
@@ -52,9 +51,14 @@ import {
   RPAREN,
   SEMI,
   SourceOffsets,
-  TokenWriter,
+  StateLexer,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type {
+  Probe,
+  SourceView,
+  StateLexerOptions,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of gantt.jison.
@@ -80,9 +84,6 @@ const S_NAMES = [
   'callbackname',
   'callbackargs',
 ];
-
-/** ASCII lower case of `c`, for case-insensitive literals. */
-const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
 
 /** A JS regex word character (`\w`, ASCII only): what jison's appended `\b` tests. */
 const isAsciiWord = (c: number) =>
@@ -158,59 +159,30 @@ function lexerText(view: SourceView): string {
   return out;
 }
 
+/** How v12's lexer read its text (see `StateLexerOptions`). */
+const OPTIONS: StateLexerOptions = { charsPerToken: 8, crlf: 'keep', dropSpace: true };
+
 /**
  * Lex the gantt body `src[from…]`. `view` comes from {@link sourceView}. With a `probe`, the
  * start condition at the probe's offset is recorded as its mode.
  */
 export function lex(src: string, from: number, view: SourceView, probe?: Probe): TokenStream {
-  return new GanttLexer(src, from, view).run(probe);
+  return new GanttLexer(src, from, view, OPTIONS).run(probe);
 }
 
 /**
  * One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source.
  * Each start condition is a method named after it.
  */
-class GanttLexer {
-  /** The text v12 lexed, plus the line break v12 appended (clamped in the output). */
-  private readonly text: string;
-  /** The view's text: CRs as written (see {@link lexerText}). */
-  private readonly raw: string;
-  /** Length of v12's text without the appended line break. */
-  private readonly len: number;
-  private readonly n: number;
-  private readonly offsets: SourceOffsets | undefined;
-  private readonly holes: readonly Hole[];
-  /** The next removed span to write as trivia. */
-  private hole: number;
-  /** The end of the last token's source range (dropped `;` before it belong to a token). */
-  private covered = 0;
-  private readonly w: TokenWriter;
-  private readonly stack: number[] = [];
-  private state: number = S.INITIAL;
-  private p: number;
+class GanttLexer extends StateLexer {
 
-  constructor(
-    private readonly src: string,
-    from: number,
-    view: SourceView
-  ) {
-    const lexText = lexerText(view);
-    this.text = lexText + '\n';
-    this.len = lexText.length;
-    this.raw = view.text;
-    this.n = this.text.length;
-    this.offsets = view.runs && new SourceOffsets(view.runs);
-    this.holes = view.holes;
-    this.hole = firstHole(view, from);
-    this.p = localOffset(view, from);
-    // About one token per eight characters of gantt text.
-    this.w = new TokenWriter(((this.len - this.p) >> 3) + 8);
+  protected override prepare(text: string, view: SourceView): string {
+    return lexerText(view);
   }
 
   run(probe?: Probe): TokenStream {
     const { text, n } = this;
-    // v12 trimmed leading blanks (after removing comments) before lexing.
-    while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
+    this.trim();
     // Two loops, so a plain lex does no probe work per step.
     if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
     else {
@@ -256,83 +228,12 @@ class GanttLexer {
     }
   }
 
-  // --- Offsets and output -------------------------------------------------------------------
-
-  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
-  private source(i: number): number {
-    if (i >= this.len) return this.src.length;
-    return this.offsets ? this.offsets.source(i) : i;
-  }
-
-  /**
-   * Write the removed spans that start before `at` (a source offset) as trivia. A dropped `;`
-   * that no token's range took (one after skipped blanks) is a `Space` token of its own.
-   */
-  private trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind === 'comment') this.w.push(Kind.Comment, h.start, h.end);
-      else if (h.kind === 'directive') this.w.push(Kind.Directive, h.start, h.end);
-      else if (h.start >= this.covered) this.w.push(Kind.Space, h.start, h.end);
-    }
-  }
-
-  /**
-   * Write the token `text[s, end)` with its source range, and move to `next` (default `end`):
-   * the `accDescr {` opener ends before the blanks it consumed.
-   */
-  private emit(kind: number, s: number, end: number, next: number = end): void {
-    let a = this.source(s);
-    const last = Math.min(end, this.len);
-    let b = last > s ? this.source(last - 1) + 1 : a;
-    // A line break starts at the CR of its CRLF.
-    if (b > a && this.src.charCodeAt(a) === LF && this.src.charCodeAt(a - 1) === CR) a--;
-    if (this.holes.length > 0) {
-      this.trivia(a);
-      if (b > a) b = this.dropAt(b);
-    }
-    this.w.push(kind, a, b);
-    if (b > this.covered) this.covered = b;
-    this.p = next;
-  }
-
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
-  }
-
-  private push(s: number): void {
-    this.stack.push(this.state);
-    this.state = s;
-  }
-
-  private pop(): void {
-    this.state = this.stack.pop() ?? S.INITIAL;
-  }
-
   // --- Scans --------------------------------------------------------------------------------
-
-  /** The first LF at or after `q` (jison `[^\n]*` ends there), else the end. */
-  private lineEnd(q: number): number {
-    const e = this.text.indexOf('\n', q);
-    return e === -1 ? this.n : e;
-  }
 
   /** The first `c` at or after `q` (`[^c]*` ends there), else the end. */
   private until(c: string, q: number): number {
     const e = this.text.indexOf(c, q);
     return e === -1 ? this.n : e;
-  }
-
-  /** The end of the run of `\s` from `q`. */
-  private blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
   }
 
   /** The end of the run of `[^#\n;]` (`[^\n;]` with `hash`) from `q`. */
@@ -360,15 +261,6 @@ class GanttLexer {
     return isSpace(this.text.charCodeAt(q)) ? this.charEnd(q) : -1;
   }
 
-  /** Whether the case-insensitive literal `word` (lower case) is at `q`. */
-  private literal(word: string, q: number): boolean {
-    if (q + word.length > this.n) return false;
-    for (let k = 0; k < word.length; k++) {
-      if (lower(this.text.charCodeAt(q + k)) !== word.charCodeAt(k)) return false;
-    }
-    return true;
-  }
-
   /** Whether `word` is at `q`, followed by jison's `\b` (no word character after it). */
   private keyword(word: string, q: number): boolean {
     return this.literal(word, q) && !isAsciiWord(this.text.charCodeAt(q + word.length));
@@ -376,7 +268,7 @@ class GanttLexer {
 
   // --- States -------------------------------------------------------------------------------
 
-  private step(c: number): void {
+  protected step(c: number): void {
     switch (this.state) {
       case S.INITIAL:
         this.initial(c);
@@ -405,7 +297,7 @@ class GanttLexer {
   /** INITIAL: the rules in `gantt.jison`'s order, split where the skipped ones end. */
   private initial(c: number): void {
     if (this.skipped(c)) return;
-    if (this.keywords(c, lower(c))) return;
+    if (this.keywords(c, lowerCode(c))) return;
     const { text, p } = this;
     if (c === COLON) {
       // `:[^#\n;]+` and `:`.
@@ -435,7 +327,7 @@ class GanttLexer {
       this.emit(Kind.Error, p + 3, this.lineEnd(p + 3));
       return true;
     }
-    if (lower(c) === LOWER_A && this.acc()) return true;
+    if (lowerCode(c) === LOWER_A && this.acc()) return true;
     // `%%(?!\{)*[^\n]*`, `[^\}]%%*[^\n]*` and `%%*[^\n]*[\n]*` (the last also takes the line
     // breaks after the line).
     if (c === PERCENT) {
@@ -457,7 +349,7 @@ class GanttLexer {
       return true;
     }
     if (!isSpace(c)) return false;
-    this.p = this.blanks(p);
+    this.p = this.spaces(p);
     return true;
   }
 
@@ -488,10 +380,10 @@ class GanttLexer {
   private hrefKeyword(): boolean {
     const { p } = this;
     if (!this.literal('href', p)) return false;
-    const j = this.blanks(p + 4);
+    const j = this.spaces(p + 4);
     if (j === p + 4 || this.text.charCodeAt(j) !== DQUOTE) return false;
     this.emit(T.HrefKeyword, p, j + 1);
-    this.push(S.href);
+    this.pushState(S.href);
     return true;
   }
 
@@ -499,10 +391,10 @@ class GanttLexer {
   private opener(word: string, kind: number, state: number): boolean {
     const { p } = this;
     if (!this.literal(word, p)) return false;
-    const j = this.blanks(p + word.length);
+    const j = this.spaces(p + word.length);
     if (j === p + word.length) return false;
     this.emit(kind, p, j);
-    this.push(state);
+    this.pushState(state);
     return true;
   }
 
@@ -537,7 +429,7 @@ class GanttLexer {
     const { p } = this;
     const weekday = this.literal('weekday', p);
     if (!weekday && !this.literal('weekend', p)) return false;
-    const j = this.blanks(p + 7);
+    const j = this.spaces(p + 7);
     if (j === p + 7) return false;
     for (const [day, kind] of weekday ? WEEKDAYS : WEEKENDS) {
       if (!this.keyword(day, j)) continue;
@@ -587,23 +479,23 @@ class GanttLexer {
     const { text, p } = this;
     const title = this.literal('acctitle', p);
     if (!title && !this.literal('accdescr', p)) return false;
-    const j = this.blanks(p + 8);
+    const j = this.spaces(p + 8);
     const d = text.charCodeAt(j);
     if (d === COLON) {
-      this.emit(title ? T.AccTitle : T.AccDescr, p, this.blanks(j + 1));
-      this.push(title ? S.acc_title : S.acc_descr);
+      this.emit(title ? T.AccTitle : T.AccDescr, p, this.spaces(j + 1));
+      this.pushState(title ? S.acc_title : S.acc_descr);
       return true;
     }
     if (title || d !== LBRACE) return false;
-    this.emit(T.AccDescrMultiline, p, j + 1, this.blanks(j + 1));
-    this.push(S.acc_descr_multiline);
+    this.emit(T.AccDescrMultiline, p, j + 1, this.spaces(j + 1));
+    this.pushState(S.acc_descr_multiline);
     return true;
   }
 
   /** `(?!\n|;|#)*[^\n]*`: the lookahead is optional, so `[^\n]*` (title or one-line description). */
   private accValue(): void {
     const kind = this.state === S.acc_title ? T.AccTitleValue : T.AccDescrValue;
-    this.pop();
+    this.popState();
     this.emit(kind, this.p, this.lineEnd(this.p));
   }
 
@@ -611,7 +503,7 @@ class GanttLexer {
   private accDescrMultiline(c: number): void {
     const { p } = this;
     if (c === RBRACE) {
-      this.pop();
+      this.popState();
       this.emit(T.AccDescrMultilineEnd, p, p + 1);
       return;
     }
@@ -622,7 +514,7 @@ class GanttLexer {
   private click(c: number): void {
     const { p } = this;
     if (isSpace(c)) {
-      this.pop();
+      this.popState();
       this.emit(T.ClickEnd, p, this.charEnd(p));
       return;
     }
@@ -635,7 +527,7 @@ class GanttLexer {
   private href(c: number): void {
     const { p } = this;
     if (c === DQUOTE) {
-      this.pop();
+      this.popState();
       this.emit(T.HrefEnd, p, p + 1);
       return;
     }
@@ -646,13 +538,13 @@ class GanttLexer {
   private callbackName(c: number): void {
     const { p } = this;
     if (c === LPAREN) {
-      const j = this.blanks(p + 1);
-      this.pop();
+      const j = this.spaces(p + 1);
+      this.popState();
       if (this.text.charCodeAt(j) === RPAREN) {
         this.emit(T.CallbackEmptyArgs, p, j + 1);
         return;
       }
-      this.push(S.callbackargs);
+      this.pushState(S.callbackargs);
       this.emit(T.CallbackArgsOpen, p, p + 1);
       return;
     }
@@ -663,7 +555,7 @@ class GanttLexer {
   private callbackArgs(c: number): void {
     const { p } = this;
     if (c === RPAREN) {
-      this.pop();
+      this.popState();
       this.emit(T.CallbackArgsClose, p, p + 1);
       return;
     }

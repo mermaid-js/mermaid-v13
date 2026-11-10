@@ -13,7 +13,7 @@
  * `<<fork>>`-style markers, `end note`, …) only widen the ranges of the terminals around them.
  */
 // cspell:words LALR
-import { Kind, LineIndex, ParseState, Probe, skipTo } from '@mermaid-js/core/parser-kit';
+import { Kind, LineIndex, ParseState, Probe, skipTo, STOP } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -88,10 +88,6 @@ export type StateParseResult = ParseResult<StateModel, StateDocument>;
 export function parseState(src: string, options: StateParseOptions = {}): StateParseResult {
   return new StateParser(src, options).parse();
 }
-
-/** Thrown after a diagnostic is recorded; caught at statement level. One instance. */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** What v12 kept of a statement whose action returned a string: nothing, but it counts. */
 const NOOP: Item = Object.freeze({ stmt: 'noop' });

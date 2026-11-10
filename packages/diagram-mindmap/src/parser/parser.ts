@@ -45,6 +45,7 @@ import {
   ProbeCursor,
   sourceView,
   SPACE,
+  STOP,
   TAB,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -144,13 +145,6 @@ const ONE_NODE_HINT = 'each node goes on a line of its own';
 const BARE_CLASS_HINT = 'a bare `:::` takes the line break after it';
 const AFTER_BLANK_HINT =
   'remove a blank or comment line above it: a line may not follow two of them in a row, or one right after `mindmap`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a mindmap diagram. Never throws: problems are error diagnostics. */
 export function parseMindmap(src: string, options: MindmapParseOptions = {}): MindmapParseResult {
@@ -459,8 +453,7 @@ class MindmapParser {
 
   /** Report what was found where `names` were expected, and go on. */
   private report(names: string[], hint?: string, at: Range = this.c.range): void {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
   }
 
   /** Skip to the next separator after an error (R-PARSE-4), and past it. */

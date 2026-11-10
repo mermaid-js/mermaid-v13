@@ -15,16 +15,17 @@ import {
   ExpectedTable,
   inKindSet,
   isSpace,
-  LBRACE,
-  RBRACE,
   Kind,
   kindSet,
+  LBRACE,
   LineIndex,
   nodeId,
   ParseState,
   Probe,
+  RBRACE,
   significantTokens,
   skipTo,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstCallback,
@@ -325,13 +326,6 @@ const EXPECTED = new ExpectedTable([
   ['`}`', [T.ShapeDataEnd]],
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 interface Frame {
   id: FlowLabelNode | undefined;
@@ -689,9 +683,7 @@ class FlowParser {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain(want, open !== undefined);
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain(want, open !== undefined));
     throw STOP;
   }
 

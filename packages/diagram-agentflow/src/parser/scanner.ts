@@ -16,7 +16,6 @@ import {
   isBlank,
   isSpace,
   isWord,
-  Kind,
   LBRACE,
   LBRACKET,
   LF,
@@ -24,15 +23,12 @@ import {
   LPAREN,
   PERCENT,
   PIPE,
+  QUOTE,
   SEMI,
   SLASH,
-  TokenWriter,
-  firstHole,
-  localOffset,
-  QUOTE,
-  SourceOffsets,
+  StateLexer,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView } from '@mermaid-js/core/parser-kit';
+import type { SourceView, StateLexerOptions } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 const RE_ENTITY = /#\w+;/y;
@@ -89,25 +85,15 @@ export const S = {
   shapeData: 14,
   shapeDataStr: 15,
 } as const;
+/** How v12's lexer read its text: as written (CRs kept), about three characters a token. */
+const OPTIONS: StateLexerOptions = { charsPerToken: 3, crlf: 'raw', dropSpace: false };
+
 /**
  * One lex's text, offsets and output. Offsets are into {@link text}, v12's text;
  * {@link emit} maps them to the source.
  */
-export class Scanner {
-  /** The text v12 lexed, plus the line break v12 appended (clamped in the output). */
-  protected readonly text: string;
-  /** Length of v12's text without the appended line break. */
-  protected readonly len: number;
-  protected readonly n: number;
-  protected readonly offsets: SourceOffsets | undefined;
+export abstract class Scanner extends StateLexer {
   protected readonly mask: Uint8Array | undefined;
-  protected readonly holes: readonly Hole[];
-  /** The next removed span to write as trivia. */
-  protected hole: number;
-  protected readonly w: TokenWriter;
-  protected readonly stack: number[] = [];
-  protected state: number = S.INITIAL;
-  protected p: number;
   protected firstGraph: boolean;
   // Memos that keep the scans below linear.
   protected dirNext: number;
@@ -126,77 +112,20 @@ export class Scanner {
   protected dashFrom = -1;
   protected dashTo = -1;
 
-  constructor(
-    protected readonly src: string,
-    from: number,
-    view: SourceView,
-    graphKeyword: boolean
-  ) {
-    this.text = view.text + '\n';
-    this.len = view.text.length;
-    this.n = this.text.length;
-    this.offsets = view.runs && new SourceOffsets(view.runs);
+  constructor(src: string, from: number, view: SourceView, graphKeyword: boolean) {
+    super(src, from, view, OPTIONS);
     this.mask = view.mask;
-    this.holes = view.holes;
-    this.hole = firstHole(view, from);
-    this.p = localOffset(view, from);
     this.firstGraph = graphKeyword;
-    // About one token per three characters of agentflow text (blanks are one a token).
-    this.w = new TokenWriter((((this.len - this.p) / 3) | 0) + 8);
     this.dirNext = this.text.indexOf('direction', this.p);
     this.atNext = this.text.indexOf('@', this.p);
   }
 
   // --- Offsets and output -------------------------------------------------------------------
 
-  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
-  protected source(i: number): number {
-    if (i >= this.len) return this.src.length;
-    return this.offsets ? this.offsets.source(i) : i;
-  }
-
-  /** Write the removed spans that start before `at` (a source offset) as trivia. */
-  protected trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind === 'drop') continue;
-      // Comments are holes only in the comment-free view (`source.ts`).
-      this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
-    }
-  }
-
-  /** Write the token `text[s, e)` with its source range, and move past it. */
-  protected emit(kind: number, s: number, e: number): void {
-    const a = this.source(s);
-    const last = Math.min(e, this.len);
-    let b = last > s ? this.source(last - 1) + 1 : a;
-    if (this.holes.length > 0) {
-      this.trivia(a);
-      if (b > a) b = this.dropAt(b);
-    }
-    this.w.push(kind, a, b);
-    this.p = e;
-  }
-
-  /**
-   * The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`.
-   * The blanks v12 dropped after a `}` belong to no token.
-   */
-  protected dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' && this.src.charCodeAt(b) === SEMI ? h.end : b;
-  }
-
-  protected push(s: number): void {
-    this.stack.push(this.state);
-    this.state = s;
-  }
-
-  protected pop(): void {
-    this.state = this.stack.pop() ?? S.INITIAL;
+  /** As core's, for a dropped `;` only. */
+  protected override dropAt(b: number): number {
+    const e = super.dropAt(b);
+    return e !== b && this.src.charCodeAt(b) === SEMI ? e : b;
   }
 
   // --- Character tests and scans ------------------------------------------------------------
@@ -233,7 +162,7 @@ export class Scanner {
   }
 
   /** End of the sticky `re` matched at `q`, or -1. */
-  protected at(re: RegExp, q: number): number {
+  protected reAt(re: RegExp, q: number): number {
     re.lastIndex = q;
     return re.test(this.text) ? re.lastIndex : -1;
   }
@@ -257,7 +186,7 @@ export class Scanner {
   }
 
   protected entityAt(q: number): boolean {
-    return this.at(RE_ENTITY, q) >= 0;
+    return this.reAt(RE_ENTITY, q) >= 0;
   }
 
   protected kw(word: string): boolean {
@@ -342,10 +271,10 @@ export class Scanner {
 
   protected quote(): void {
     if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
-      this.push(S.md_string);
+      this.pushState(S.md_string);
       this.p += 2;
     } else {
-      this.push(S.string);
+      this.pushState(S.string);
       this.p++;
     }
   }
@@ -374,7 +303,7 @@ export class Scanner {
   }
 
   protected open(state: number, kind: number, length: number): true {
-    this.push(state);
+    this.pushState(state);
     return this.token(kind, length);
   }
 

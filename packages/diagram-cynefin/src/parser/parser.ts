@@ -30,26 +30,25 @@
  */
 import {
   APOSTROPHE,
-  cook,
   DQUOTE,
   ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
   Kind,
   kindSet,
-  LineIndex,
-  ParseState,
   Probe,
-  significantTokens,
+  RuleParser,
   skipTo,
-  sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
+  RuleGrammar,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -170,13 +169,6 @@ const ID_OF: Record<CynefinTextNode['type'], string> = {
 const ONE_PER_LINE = 'put each transition, title and accessibility statement on a line of its own';
 const QUOTE_LABEL = 'a transition label is quoted, as in `complex --> clear : "Pattern found"`';
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
-
 /** Items after a failed line that no block owns (see `CynefinParser.open`). */
 const STRAY = 'stray';
 
@@ -186,44 +178,26 @@ const STRAY = 'stray';
  * U+FFFF), which a label can carry through `\0`, `\b`, `\f`, `\v` or the source. Two hex digits
  * up to U+007F, four above, so the encoding stays one-to-one.
  */
-const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
-const TWO_DIGITS = 0x80;
-function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
 
 /** Parse a cynefin diagram. Never throws: problems are error diagnostics. */
 export function parseCynefin(src: string, options: CynefinParseOptions = {}): CynefinParseResult {
   return new CynefinParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: CYNEFIN_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class CynefinParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly state = new ParseState();
-  private readonly probe: Probe | undefined;
+class CynefinParser extends RuleParser<PreprocessResult> {
   private readonly children: CynefinStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`d:complex`, `i:complex/a`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   /** Every block of each domain, by name, in the order of each name's first block. */
   private readonly blocks = new Map<CynefinDomainName, CynefinDomainNode[]>();
   private readonly transitions: CynefinTransition[] = [];
@@ -240,29 +214,16 @@ class CynefinParser {
   private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: CynefinParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.state.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, CYNEFIN_TRIVIA);
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
   }
 
   parse(): CynefinParseResult {
-    const { state, src } = this;
+    const { src } = this;
+    const state = this.st;
     this.statement(() => this.header());
     this.document();
     this.warnDuplicates();
@@ -298,36 +259,6 @@ class CynefinParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests token `j` for `kinds` (a constant list), or would accept them
-   * there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[], j = this.i): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
   /** The domain name token `j` holds; the lexer matches only the five. */
   private domain(j: number): CynefinDomainName {
     const text = this.raw(j);
@@ -344,40 +275,17 @@ class CynefinParser {
     return n === 1 ? base : `${base}#${n}`;
   }
 
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
-    const { state } = this;
+  protected fail(want: readonly number[], hint?: string): never {
+    const state = this.st;
     const where = this.range();
     if (this.kind() === Kind.Error) {
       this.badCharacters(this.i, hint);
       throw STOP;
     }
-    const d = state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 
@@ -386,7 +294,7 @@ class CynefinParser {
    * or stray characters.
    */
   private badCharacters(j: number, hint?: string): void {
-    const { state } = this;
+    const state = this.st;
     const where = this.range(j);
     const text = this.raw(j);
     const line = this.lineOf(where.start);
@@ -461,21 +369,11 @@ class CynefinParser {
    * Skip to the next line break after an error (R-PARSE-4), reporting each lexer error in the
    * skipped text: the token that failed is reported already.
    */
-  private recover(): void {
+  protected override recover(): void {
     this.probe?.freeze();
     const end = skipTo(this.t, this.i, BOUNDARY);
     for (let j = this.i + 1; j < end; j++) if (this.kind(j) === Kind.Error) this.badCharacters(j);
     this.i = end;
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -490,7 +388,7 @@ class CynefinParser {
     const k = this.kind();
     if (!HEADER.includes(k)) this.fail(HEADER);
     const range = this.range(this.i++);
-    this.state.statement('header', range);
+    this.st.statement('header', range);
     this.children.push({ id: 'header', type: 'Header', range, colon: k === T.HeaderColon });
   }
 
@@ -558,11 +456,11 @@ class CynefinParser {
     if (nodes) nodes.push(node);
     else this.blocks.set(name, [node]);
     // D367: the first block defines the domain, later blocks refer to it.
-    this.state.symbol(name, 'domain', nameRange, nodes ? 'ref' : 'def');
+    this.st.symbol(name, 'domain', nameRange, nodes ? 'ref' : 'def');
     this.children.push(node);
-    const span = this.state.beginStatement('domain', nameRange.start);
+    const span = this.st.beginStatement('domain', nameRange.start);
     this.items(node);
-    this.state.endStatement(span, node.range.end);
+    this.st.endStatement(span, node.range.end);
     this.open = node;
   }
 
@@ -579,7 +477,7 @@ class CynefinParser {
       const id = this.id(`i:${node.name}/${esc(label)}`);
       node.children.push({ id, type: 'Item', range, label });
       node.range.end = range.end;
-      this.state.statement('item', range);
+      this.st.statement('item', range);
     }
   }
 
@@ -614,9 +512,9 @@ class CynefinParser {
       ...(labelRange ? { label, labelRange } : {}),
     };
     this.children.push(node);
-    this.state.statement('transition', range);
-    this.state.symbol(from, 'domain', fromRange, 'ref');
-    this.state.symbol(to, 'domain', toRange, 'ref');
+    this.st.statement('transition', range);
+    this.st.symbol(from, 'domain', fromRange, 'ref');
+    this.st.symbol(to, 'domain', toRange, 'ref');
     if (from === to) this.selfLoops.push(node);
     else {
       // v12's `t.label || undefined`: an empty label is none.
@@ -640,7 +538,7 @@ class CynefinParser {
     else text = this.accDescr = accDescrValue(image);
     const kind = ID_OF[type];
     this.children.push({ id: this.id(kind), type, range, text });
-    this.state.statement(kind, range);
+    this.st.statement(kind, range);
     this.eol();
   }
 
@@ -657,7 +555,7 @@ class CynefinParser {
       (n) => `the \`${n.name}\` block at line ${this.lineOf(n.range.start)}`
     );
     const verb = replaced.length === 1 ? 'is' : 'are';
-    this.state.diagnostics.warning(
+    this.st.diagnostics.warning(
       'CYNEFIN_DUPLICATE_DOMAIN',
       `Only the last block of a domain is drawn: ${listOf(named)} ${verb} replaced by a later block, and ${replaced.length === 1 ? 'its' : 'their'} items are not drawn. Put all the items of a domain in one block.`,
       first.nameRange
@@ -671,7 +569,7 @@ class CynefinParser {
     const named = this.selfLoops.map(
       (n) => `\`${n.from} --> ${n.to}\` at line ${this.lineOf(n.range.start)}`
     );
-    this.state.diagnostics.warning(
+    this.st.diagnostics.warning(
       'CYNEFIN_SELF_LOOP',
       `A transition from a domain to itself is not drawn: ${listOf(named)}. A transition goes from one domain to another.`,
       first.range

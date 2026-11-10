@@ -29,12 +29,13 @@
 // cspell:words accdescr acctitle
 import {
   APOSTROPHE,
-  COLON,
-  CR,
   codePointEnd,
+  COLON,
   cook,
+  CR,
   DASH,
   DQUOTE,
+  dropAt,
   firstHole,
   HASH,
   isBlank,
@@ -43,16 +44,16 @@ import {
   isWord,
   Kind,
   LBRACE,
-  lineEnd,
   LF,
+  lineEnd,
   localOffset,
   newlineAt,
   PERCENT,
-  QUOTE,
   RBRACE,
   RPAREN,
   scanWhile,
   SourceOffsets,
+  tagQuotes,
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
@@ -415,7 +416,7 @@ class TreeViewLexer {
     if (b < a) b = a;
     if (this.holes.length > 0) {
       this.trivia(a);
-      if (b > a) b = this.dropAt(b);
+      if (b > a) b = dropAt(this.holes, this.hole, b);
     }
     this.push(kind, a, b, s, e);
   }
@@ -434,28 +435,4 @@ class TreeViewLexer {
     this.ends[this.count] = e;
     this.count++;
   }
-
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
-  }
-}
-
-/** The view's text with the tag-attribute quotes v12 turned into `'` turned so too. */
-function tagQuotes(view: SourceView): string {
-  const { text, mask, runs } = view;
-  if (!mask) return text;
-  const at = runs ? new SourceOffsets(runs) : undefined;
-  let out = '';
-  let from = 0;
-  for (let i = text.indexOf('"'); i !== -1; i = text.indexOf('"', i + 1)) {
-    if (((mask[at ? at.source(i) : i] ?? 0) & QUOTE) === 0) continue;
-    out += text.slice(from, i) + "'";
-    from = i + 1;
-  }
-  return out + text.slice(from);
 }

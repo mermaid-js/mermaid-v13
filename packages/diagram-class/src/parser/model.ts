@@ -9,6 +9,7 @@
  * where v12 threw on a statement (an annotation for a class that does not exist, a method it
  * could not read) the builder reports an error instead.
  */
+import { idEscaper } from '@mermaid-js/core/parser-kit';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
@@ -219,8 +220,7 @@ export function callbackArgs(args: string | undefined, id: string): string[] {
   });
 }
 
-const escMember = (cls: string): string =>
-  cls.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+const escMember = /* @__PURE__ */ idEscaper();
 
 /**
  * v12's `ClassDB`, driven by the parser. Method names follow ClassDB's; arguments are what

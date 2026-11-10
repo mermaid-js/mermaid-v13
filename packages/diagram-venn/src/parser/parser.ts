@@ -56,6 +56,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -185,13 +186,6 @@ const QUOTE_HINT =
 
 /** U+007F: ids are ASCII. */
 const LAST_ASCII = 0x7f;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** The optional `[label]` and `: size` after the ids of a `set` or `union`, and where they end. */
 interface Tail {
@@ -388,8 +382,7 @@ class VennParser {
       this.badCharacters();
       throw STOP;
     }
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', this.range(), [...names], this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', this.range(), [...names], this.found(), undefined, hint);
     throw STOP;
   }
 

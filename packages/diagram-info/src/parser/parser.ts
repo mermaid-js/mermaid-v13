@@ -14,26 +14,13 @@
  * so it accepts and rejects what v12's parser does. Unlike v12 it does not stop at the first
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4).
  */
-import {
-  ExpectedTable,
-  Kind,
-  kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  cook,
-  significantTokens,
-  skipTo,
-  sourceView,
-} from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, RuleParser, STOP } from '@mermaid-js/core/parser-kit';
 import type {
-  AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
+  RuleGrammar,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -55,9 +42,6 @@ const DOC = [...TEXT, Kind.Newline, Kind.EOF];
 const AFTER_INFO = [T.ShowInfo, ...DOC];
 const LINE_END = [Kind.Newline, Kind.EOF];
 const HEAD = [T.Info, Kind.Newline];
-
-/** Where recovery resumes (R-PARSE-4). */
-const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 
 /** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
 const VALUE_WORDS: Readonly<Record<number, string>> = {
@@ -112,34 +96,23 @@ const ONE_PER_LINE = 'put each statement on a line of its own';
 const ONLY =
   'an info diagram holds `info`, an optional `showInfo`, and `title`, `accTitle:` or `accDescr` statements';
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
-
 /** Parse an info diagram. Never throws: problems are error diagnostics. */
 export function parseInfo(src: string, options: InfoParseOptions = {}): InfoParseResult {
   return new InfoParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: INFO_TRIVIA,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class InfoParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class InfoParser extends RuleParser<PreprocessResult> {
   private readonly children: InfoStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   private showInfo = false;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private title = '';
@@ -147,25 +120,11 @@ class InfoParser {
   private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: InfoParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, INFO_TRIVIA);
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
   }
 
   parse(): InfoParseResult {
@@ -191,69 +150,14 @@ class InfoParser {
     return st.result(model, ast, this.full, this.options, this.probe);
   }
 
-  // ---- tokens -------------------------------------------------------------------------
-
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind]);
-    return this.i++;
-  }
-
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 
@@ -292,22 +196,6 @@ class InfoParser {
     if (k === T.Info) return 'a diagram has one `info`, at its start';
     if (TEXT.includes(k)) return ONE_PER_LINE;
     return undefined;
-  }
-
-  /** Skip to the next line break after an error (R-PARSE-4). */
-  private recover(): void {
-    this.probe?.freeze();
-    this.i = skipTo(this.t, this.i, BOUNDARY);
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
   }
 
   // ---- rules --------------------------------------------------------------------------
