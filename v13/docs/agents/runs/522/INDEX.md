@@ -9,7 +9,7 @@ Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR:
 | T3 layout (grid and relation router) | #540 | #539 | merged (ff ed053f58b; package entry 21,446 B gz; core unchanged) |
 | T4 SVG renderer | #541 | #540; block's T0 (#521, PR #589) merged into `mermaid-v13` | merged (ff 5f5344bfe; package entry 25,234 B gz; core unchanged) |
 | T5 integration | #542 | #541, #543 | open |
-| T6 language facet | #543 | #539 | open |
+| T6 language facet | #543 | #539 | merged (ff bc3c97782; package entry 26,244 B gz, `./language` 18,312 B gz core external; core unchanged) |
 | T7 ascii (Should) | #545 | #542 | open |
 
 - `01-v12-c4.md`: pointer notes on v12 grammar, DB, renderer, shapes, specs, config, corpus, Pele.
@@ -37,6 +37,7 @@ Wave 3 runs block #521, c4 #522 and agentflow #523 on AI-Max. Block's T0 (shape-
 | `mermaid-v13` 58ddf094e (#637 move) | 94,412 B | +521 (mermaid-v13's own growth) |
 | #540 T3 | 94,412 B | 0 (no core change) |
 | #541 T4 | 94,412 B | 0 (no core change) |
+| #543 T6 | 94,412 B | 0 (no core change) |
 
 ## Finish rule
 
