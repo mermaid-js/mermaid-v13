@@ -351,10 +351,10 @@ const centre = (r: CellRect): Point => ({
 });
 
 /** The port nearest `p`, for a forced route. */
-function nearest(board: Board, cands: Map<number, Dir>, p: Point): [number, Dir] | undefined {
+function nearest(board: Board, candidates: Map<number, Dir>, p: Point): [number, Dir] | undefined {
   let best: [number, Dir] | undefined;
   let bestD = Infinity;
-  for (const [i, d] of cands) {
+  for (const [i, d] of candidates) {
     const x = i % board.width;
     const y = (i - x) / board.width;
     const dist = Math.abs(x - p.x) + Math.abs(y - p.y);
