@@ -27,6 +27,9 @@ export interface StateLexerOptions {
   readonly dropSpace: boolean;
 }
 
+/** The line ends a regex `.` stops at, once CRs are LFs. */
+const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
+
 /** ASCII lower case of a character code. */
 export const lowerCode = (c: number): number => (c >= 65 && c <= 90 ? c + 32 : c);
 
@@ -56,6 +59,8 @@ export abstract class StateLexer {
   protected state = 0;
   protected p: number;
   private readonly crStart: boolean;
+  /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
+  private readonly nextEnd = [-2, -2, -2];
   private readonly dropSpace: boolean;
 
   constructor(
@@ -246,6 +251,21 @@ export abstract class StateLexer {
   protected lineEnd(q: number): number {
     const e = this.text.indexOf('\n', q);
     return e === -1 ? this.n : e;
+  }
+
+  /**
+   * The first line end a regex `.` stops at (LF, U+2028, U+2029; CRs are LFs by now) at or
+   * after `q`, else the end. Found with `indexOf`, keeping the next of each; `q` never
+   * decreases between calls, so all calls cost one pass over the text.
+   */
+  protected dotEnd(q: number): number {
+    let min = this.n;
+    for (let k = 0; k < 3; k++) {
+      let e = this.nextEnd[k] ?? -1;
+      if (e !== -1 && e < q) this.nextEnd[k] = e = this.text.indexOf(DOT_ENDS[k] ?? '', q);
+      if (e !== -1 && e < min) min = e;
+    }
+    return min;
   }
 
   /** The end of the run of `[\t ]` from `q`. */

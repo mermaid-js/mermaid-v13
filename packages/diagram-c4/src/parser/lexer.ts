@@ -94,10 +94,6 @@ const S_NAMES: readonly string[] = (() => {
   return out;
 })();
 
-/** What a regex `.` does not match, once CRs are LFs. */
-// LF, U+2028 (line separator) and U+2029 (paragraph separator).
-const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
-
 /** The four `direction` rules, in order: the two letters after the blanks, and the kind. */
 const DIRECTIONS: readonly (readonly [string, number])[] = [
   ['TB', T.DirectionTB],
@@ -175,8 +171,6 @@ function rewritten(view: SourceView, offsets: SourceOffsets | undefined): string
  * Each start condition is a method named after it.
  */
 class C4Lexer extends StateLexer {
-  /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
-  private readonly nextEnd = [-2, -2, -2];
   /** The next `direction` at or after the last lookup (-2: not looked up, -1: none). */
   private nextDirection = -2;
   /** The line end the `direction` matches below are for (-1: none yet). */
@@ -212,21 +206,6 @@ class C4Lexer extends StateLexer {
   }
 
   // --- Scans --------------------------------------------------------------------------------
-
-  /**
-   * The first line end a regex `.` stops at (LF, U+2028, U+2029; CRs are LFs by now) at or
-   * after `q`, else the end. Found with `indexOf`, keeping the next of each; `q` never
-   * decreases between calls, so all calls cost one pass over the text.
-   */
-  private dotEnd(q: number): number {
-    let min = this.n;
-    for (let k = 0; k < DOT_ENDS.length; k++) {
-      let e = this.nextEnd[k] ?? -1;
-      if (e !== -1 && e < q) this.nextEnd[k] = e = this.text.indexOf(DOT_ENDS[k] ?? '', q);
-      if (e !== -1 && e < min) min = e;
-    }
-    return min;
-  }
 
   /** The end of the run of U+0020 (`[ ]*`) from `q`. */
   private spaceRun(q: number): number {

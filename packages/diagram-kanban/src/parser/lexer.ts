@@ -76,9 +76,6 @@ const S_NAMES: readonly string[] = Object.entries(S)
   .sort((a, b) => a[1] - b[1])
   .map(([name]) => name);
 
-/** What a regex `.` does not match, once CRs are LFs. */
-const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
-
 /** A lex: the token stream, and the text of each token as v12's parser read it. */
 export interface Lexed {
   /** Ends in `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it. */
@@ -122,8 +119,6 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class KanbanLexer extends StateLexer {
-  /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
-  private readonly nextEnd = [-2, -2, -2];
   /** The source start of a quoted run of shape data that ran to the end of the text, or -1. */
   openRun = -1;
 
@@ -138,21 +133,6 @@ class KanbanLexer extends StateLexer {
   }
 
   // --- Scans --------------------------------------------------------------------------------
-
-  /**
-   * The first line end a regex `.` stops at (LF, U+2028, U+2029; CRs are LFs by now) at or
-   * after `q`, else the end. Found with `indexOf`, keeping the next of each; `q` never
-   * decreases between calls, so all calls cost one pass over the text.
-   */
-  private dotEnd(q: number): number {
-    let min = this.n;
-    for (let k = 0; k < 3; k++) {
-      let e = this.nextEnd[k] ?? -1;
-      if (e !== -1 && e < q) this.nextEnd[k] = e = this.text.indexOf(DOT_ENDS[k] ?? '', q);
-      if (e !== -1 && e < min) min = e;
-    }
-    return min;
-  }
 
   /** The two characters at `q` are `a` then `b`. */
   private pair(q: number, a: number, b: number): boolean {

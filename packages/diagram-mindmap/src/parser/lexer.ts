@@ -61,9 +61,6 @@ const S = {
 /** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
 const S_NAMES = ['INITIAL', 'NODE', 'NSTR', 'NSTR2', 'ICON', 'CLASS'];
 
-/** What a regex `.` does not match, once CRs are LFs. */
-const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
-
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 6, crlf: 'fold', dropSpace: true };
 
@@ -81,8 +78,6 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class MindmapLexer extends StateLexer {
-  /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
-  private readonly nextEnd = [-2, -2, -2];
 
   run(probe?: Probe): TokenStream {
     this.trim();
@@ -95,21 +90,6 @@ class MindmapLexer extends StateLexer {
   }
 
   // --- Scans --------------------------------------------------------------------------------
-
-  /**
-   * The first line end a regex `.` stops at (LF, U+2028, U+2029; CRs are LFs by now) at or
-   * after `q`, else the end. Found with `indexOf`, keeping the next of each; `q` never
-   * decreases between calls, so all calls cost one pass over the text.
-   */
-  private dotEnd(q: number): number {
-    let min = this.n;
-    for (let k = 0; k < 3; k++) {
-      let e = this.nextEnd[k] ?? -1;
-      if (e !== -1 && e < q) this.nextEnd[k] = e = this.text.indexOf(DOT_ENDS[k] ?? '', q);
-      if (e !== -1 && e < min) min = e;
-    }
-    return min;
-  }
 
   /** The two characters at `q` are `a` then `b`. */
   private pair(q: number, a: number, b: number): boolean {
