@@ -5,6 +5,7 @@
  * wrote was escaped and shows as written. The parser keeps v12's text (ids are made from it,
  * conflicts compare it) and the model shows it with {@link shown}.
  */
+import { idEscaper } from '@mermaid-js/core/parser-kit';
 import { entityAt } from '@mermaid-js/core/text';
 
 const OPEN = 'ﬂ°';
@@ -43,8 +44,4 @@ export function generatedId(label: string): string {
 }
 
 /** `%`, `>`, `@` and `#` in a name, percent-encoded (core's AST id rule). */
-export function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
-}
+export const esc = /* @__PURE__ */ idEscaper();

@@ -16,7 +16,7 @@
  * `%`, `>`, `@` and `#` inside names are percent-encoded (`%25`, `%3E`, `%40`, `%23`).
  * Renderers write the id as `data-ast`.
  */
-import { AT, GT, HASH, PERCENT } from './char-codes.ts';
+import { idEscaper } from './parser-support.ts';
 import type { Range } from './positions.ts';
 
 /** Semantic AST id, e.g. `n:A`, `e:A>B#2`, `st:3`. */
@@ -75,15 +75,7 @@ export interface AstMenu {
   details?: string;
 }
 
-function esc(name: string): string {
-  for (let i = 0; i < name.length; i++) {
-    const c = name.charCodeAt(i);
-    if (c === PERCENT || c === GT || c === AT || c === HASH) {
-      return name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
-    }
-  }
-  return name;
-}
+const esc = /* @__PURE__ */ idEscaper();
 
 function bump<K>(seen: Map<K, number>, key: K): number {
   const n = (seen.get(key) ?? 0) + 1;

@@ -27,6 +27,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -81,13 +82,6 @@ const STATEMENT = [
   'a task such as `Make tea: 5: Me`',
 ];
 const TASK_DATA = ['`:` and a score, e.g. `Make tea: 5`'];
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a user journey. Never throws: problems are error diagnostics. */
 export function parseJourney(src: string, options: JourneyParseOptions = {}): JourneyParseResult {
@@ -210,8 +204,7 @@ class JourneyParser {
     const k = c.kind;
     const empty = k === Kind.Newline || k === T.Eof || k === Kind.EOF;
     const where = empty ? { start: c.start, end: c.start } : this.span(c.pos);
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', where, names, this.found());
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', where, names, this.found(), undefined, why);
     throw STOP;
   }
 

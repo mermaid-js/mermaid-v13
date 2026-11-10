@@ -38,6 +38,7 @@ import {
   Probe,
   significantTokens,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -165,13 +166,6 @@ const EXPECTED = new ExpectedTable([
   ['a line break', [Kind.Newline]],
   ['the end of the text', [Kind.EOF]],
 ]);
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a radar chart. Never throws: problems are error diagnostics. */
 export function parseRadar(src: string, options: RadarParseOptions = {}): RadarParseResult {

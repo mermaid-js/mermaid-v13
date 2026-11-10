@@ -27,6 +27,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -111,13 +112,6 @@ const BARE_SECTION = '; a bare `section` takes the next line as its name';
 const TITLE_PREFIX = 'title '.length;
 const SECTION_PREFIX = 'section '.length;
 const EVENT_PREFIX = ': '.length;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a timeline diagram. Never throws: problems are error diagnostics. */
 export function parseTimeline(
@@ -248,8 +242,7 @@ class TimelineParser {
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string, at: Range = this.c.range): never {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     throw STOP;
   }
 
@@ -359,8 +352,8 @@ class TimelineParser {
     let p = keyword.start;
     while (p < keyword.end && !this.breaksIn(p, p + 1)) p++;
     const at = { start: p, end: p };
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, TEXT, 'the end of the text');
-    d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
+    const hint = `write it as \`${word}: <text>\``;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, TEXT, 'the end of the text', undefined, hint);
   }
 
   /** `accDescr {` with no `}` after it: the description runs to the end of the text. */

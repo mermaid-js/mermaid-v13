@@ -3,7 +3,7 @@
  * and the error messages name, and the shapes of the state it keeps. Built once at module scope.
  */
 import type { Dir } from '@mermaid-js/core/layout';
-import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
 import type { ParseState, Range } from '@mermaid-js/core/parser-kit';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
 import type { AgentflowLabelNode, AgentflowNodeStmt, AgentflowStatementNode } from './ast.ts';
@@ -282,12 +282,7 @@ export const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-export const STOP = new Stop();
+export { STOP };
 
 /** An open `flow` or `global` block. */
 export interface Frame {

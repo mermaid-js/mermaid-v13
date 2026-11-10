@@ -38,6 +38,7 @@ import {
   Probe,
   significantTokens,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -123,13 +124,6 @@ export interface WardleyParseOptions extends ParseOptions {
 }
 
 export type WardleyParseResult = ParseResult<WardleyModel, WardleyDocument>;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a Wardley map. Never throws: problems are error diagnostics. */
 export function parseWardley(src: string, options: WardleyParseOptions = {}): WardleyParseResult {

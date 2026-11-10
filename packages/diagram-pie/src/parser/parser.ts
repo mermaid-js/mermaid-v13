@@ -21,6 +21,9 @@ import {
   cook,
   DQUOTE,
   ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
   Kind,
   kindSet,
   LineIndex,
@@ -29,6 +32,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -129,35 +133,13 @@ const ID_OF: Record<PieTextNode['type'], string> = {
 const ONE_PER_LINE = 'put each section and statement on a line of its own';
 
 /**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
-
-/**
  * `%`, `>`, `@` and `#` percent-encoded, as in every AST id (DESIGN §4.2), and so are the
  * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
  * U+FFFF), which a label can carry through `\0`, `\b`, `\f`, `\v` or the source: the SVG
  * writer drops them, so `data-ast` would not be the id (#306). Two hex digits up to U+007F,
  * four above, so the encoding stays one-to-one.
  */
-const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
-const TWO_DIGITS = 0x80;
-function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
 
 /** Parse a pie chart. Never throws: problems are error diagnostics. */
 export function parsePie(src: string, options: PieParseOptions = {}): PieParseResult {
@@ -300,9 +282,7 @@ class PieParser {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 

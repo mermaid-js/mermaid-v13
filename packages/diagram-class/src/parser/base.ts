@@ -320,9 +320,7 @@ export abstract class ParserBase {
       );
       return;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found());
-    const why = hint ?? this.hint;
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found(), undefined, hint ?? this.hint);
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */

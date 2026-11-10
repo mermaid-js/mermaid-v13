@@ -31,6 +31,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -162,13 +163,6 @@ const ID_OF: Record<PacketTextNode['type'], string> = {
 };
 const ONE_PER_LINE = 'put each field and statement on a line of its own';
 const FIELD_FORM = 'write a field as `0-15: "label"`, `16: "label"` or `+8: "label"`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** A field's bits as written: `start-end`, `start` or `+bits`, and where. */
 interface WrittenBits {
@@ -332,9 +326,7 @@ class PacketParser {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where, want);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 

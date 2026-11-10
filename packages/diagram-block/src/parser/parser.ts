@@ -42,6 +42,7 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
+  STOP,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -174,10 +175,6 @@ const INSIDE = kindSet(
   T.ArrowDirStart,
   T.LinkLabel
 );
-
-/** Thrown inside the parser after a diagnostic is recorded; caught at statement level. */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a block diagram. Never throws: problems are error diagnostics. */
 export function parseBlock(src: string, options: BlockParseOptions = {}): BlockParseResult {

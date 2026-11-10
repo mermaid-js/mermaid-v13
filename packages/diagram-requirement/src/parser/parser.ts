@@ -33,6 +33,7 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
+  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -127,13 +128,6 @@ export type RequirementParseResult = ParseResult<RequirementModel, RequirementDo
 
 /** The first line of a text, for messages. */
 const FIRST_LINE = /^[^\n]*/;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a requirement diagram. Never throws: problems are error diagnostics. */
 export function parseRequirement(
@@ -395,8 +389,7 @@ class RequirementParser {
         { expected: names }
       );
     } else {
-      const d = st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-      if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+      st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     }
     const tokens = c.tokens;
     for (let j = this.mark; j < c.pos; j++) {

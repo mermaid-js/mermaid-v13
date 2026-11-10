@@ -33,6 +33,9 @@ import {
   cook,
   DQUOTE,
   ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
   Kind,
   kindSet,
   LineIndex,
@@ -41,6 +44,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -170,13 +174,6 @@ const ID_OF: Record<CynefinTextNode['type'], string> = {
 const ONE_PER_LINE = 'put each transition, title and accessibility statement on a line of its own';
 const QUOTE_LABEL = 'a transition label is quoted, as in `complex --> clear : "Pattern found"`';
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
-
 /** Items after a failed line that no block owns (see `CynefinParser.open`). */
 const STRAY = 'stray';
 
@@ -186,22 +183,7 @@ const STRAY = 'stray';
  * U+FFFF), which a label can carry through `\0`, `\b`, `\f`, `\v` or the source. Two hex digits
  * up to U+007F, four above, so the encoding stays one-to-one.
  */
-const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
-const TWO_DIGITS = 0x80;
-function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
 
 /** Parse a cynefin diagram. Never throws: problems are error diagnostics. */
 export function parseCynefin(src: string, options: CynefinParseOptions = {}): CynefinParseResult {
@@ -375,9 +357,7 @@ class CynefinParser {
       this.badCharacters(this.i, hint);
       throw STOP;
     }
-    const d = state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
     throw STOP;
   }
 
