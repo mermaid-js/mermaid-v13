@@ -82,7 +82,10 @@ export const C4_METRICS = {
   // Label placement (Pele `render.ts`).
   /** A label may cover this much of a shape's edge, where there is no text. */
   labelEdge: 8,
-  /** The room an arrowhead takes, kept free of labels. */
+  /**
+   * v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide, the one size the
+   * renderer draws (`C4_RENDER_METRICS`); labels keep off a square of this half side round its tip.
+   */
   arrow: 10,
   /** The farthest an `UpdateRelStyle` offset moves a label. */
   maxOffset: 2000,

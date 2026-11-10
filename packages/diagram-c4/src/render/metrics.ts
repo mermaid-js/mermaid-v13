@@ -1,4 +1,5 @@
 import type { SafeValue } from '@mermaid-js/core/svg';
+import { C4_METRICS } from '../layout/metrics.ts';
 
 /**
  * The C4 renderer's px lengths (pitfall 13): what the drawing adds to the layout. Every other
@@ -12,7 +13,7 @@ export const C4_RENDER_METRICS = {
   relationStroke: 1,
   /** v12 `svgDraw.ts`: a boundary's dash (a deployment node's frame is solid). */
   boundaryDash: '7 7' as SafeValue,
-  /** v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide. */
-  arrowLength: 10,
-  arrowWidth: 10,
+  /** v12's arrowhead marker: the layout's size (`C4_METRICS.arrow`), the room labels keep off. */
+  arrowLength: C4_METRICS.arrow,
+  arrowWidth: C4_METRICS.arrow,
 } as const;
