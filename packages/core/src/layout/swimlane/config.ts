@@ -1,4 +1,5 @@
-// Ported from v12 `swimlanes/config.ts` at upstream `c9b12739f` (D532), unchanged.
+// Ported from v12 `swimlanes/config.ts` at upstream `c9b12739f` (D532). Added: the shape
+// classification the router and passes share (v13, #636).
 /**
  * Configuration constants for the Swimlanes layout algorithm.
  * Centralizes all magic numbers and default values for maintainability.
@@ -77,3 +78,19 @@ export const COORDINATES = {
    */
   EDGE_LABEL_CLEARANCE: 16,
 } as const;
+
+/**
+ * v13 (#636): every name the shape registry accepts for a diamond (a node keeps the one its
+ * author wrote; flowchart v13 sends `diam`), and the other shapes whose side faces end in a
+ * single vertex. One classification for the router and the passes.
+ */
+const DIAMOND_SHAPES: ReadonlySet<string> = new Set(['question', 'diamond', 'diam', 'decision']);
+const HEXAGON_SHAPES: ReadonlySet<string> = new Set(['hexagon', 'hex', 'notch-pent']);
+
+export const isDiamondShape = (shape = ''): boolean => DIAMOND_SHAPES.has(shape);
+
+export const isHexagonShape = (shape = ''): boolean => HEXAGON_SHAPES.has(shape);
+
+/** Faces that end in a vertex, where a line beside the face's centre misses the node. */
+export const hasVertexFaces = (shape?: string): boolean =>
+  isDiamondShape(shape) || isHexagonShape(shape);

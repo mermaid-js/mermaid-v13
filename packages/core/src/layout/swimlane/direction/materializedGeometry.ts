@@ -729,7 +729,9 @@ export function liftObstacleHuggingSameSideRails(
  * it. The router leaves labels out (they are anchored after routing), so a rail placed beside a
  * node can run along a label wider than that node. The rail moves to the label's nearer side,
  * `ROUTE_TOUCH_TOLERANCE` out (the least gap a reader sees between two strokes), only where that
- * hits no node or label, shares no track and adds no crossing.
+ * hits no node or label, shares no track and adds no crossing. Moving a rail next to a short
+ * terminal stub must not turn that stub back into its own box: each terminal leg keeps its
+ * direction, and an end box is exempt only for its own terminal leg (as the tail swap, #636).
  */
 export function liftRailsOffForeignEdgeLabels(
   edges: MaterializedEdge[],
@@ -737,7 +739,6 @@ export function liftRailsOffForeignEdgeLabels(
 ): void {
   const BUFFER = 2;
   const CLEARANCE = EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE;
-  const MAX_ITERATIONS = 8;
 
   const { realNodeRects, labelNodeRects } = collectNodeRectEntries(nodeByIdMap.values());
   if (labelNodeRects.length === 0) {
@@ -746,16 +747,16 @@ export function liftRailsOffForeignEdgeLabels(
   const visibleEdges = edges.filter((edge) => !edge.isLayoutOnly);
   const pointsFor = (edge: MaterializedEdge): PointLite[] =>
     dedupeConsecutivePoints(edge.points ?? []);
+  // One segment list per edge, replaced only for the edge that moves.
+  const segmentsByEdge = new Map(visibleEdges.map((edge) => [edge, segmentsFor(pointsFor(edge))]));
+  const othersOf = (edge: MaterializedEdge): SegmentLite[][] =>
+    visibleEdges.filter((other) => other !== edge).map((other) => segmentsByEdge.get(other)!);
 
-  const crossingsOf = (edge: MaterializedEdge, points: PointLite[]): number => {
+  const crossingsOf = (own: SegmentLite[], others: SegmentLite[][]): number => {
     let count = 0;
-    const own = segmentsFor(points);
-    for (const other of visibleEdges) {
-      if (other === edge) {
-        continue;
-      }
+    for (const segments of others) {
       for (const a of own) {
-        for (const b of segmentsFor(pointsFor(other))) {
+        for (const b of segments) {
           if (orthogonalSegmentsStrictlyCross(a.a, a.b, b.a, b.b, EPS_LOCAL)) {
             count++;
           }
@@ -774,27 +775,37 @@ export function liftRailsOffForeignEdgeLabels(
         rail.a.x >= rect.left - BUFFER &&
         rail.a.x <= rect.right + BUFFER;
 
-  const candidateIsSafe = (edge: MaterializedEdge, candidate: PointLite[]): boolean => {
-    const endpointIds = [edge.start, edge.end].filter((id): id is string => Boolean(id));
+  const step = (from: PointLite, to: PointLite): string => {
+    const sign = (d: number): number => (Math.abs(d) < EPS_LOCAL ? 0 : Math.sign(d));
+    return `${sign(to.x - from.x)},${sign(to.y - from.y)}`;
+  };
+  /** Whether the first and last legs of `candidate` still leave and enter as `points` do. */
+  const keepsTerminalLegs = (points: PointLite[], candidate: PointLite[]): boolean =>
+    step(points[0]!, points[1]!) === step(candidate[0]!, candidate[1]!) &&
+    step(points.at(-2)!, points.at(-1)!) === step(candidate.at(-2)!, candidate.at(-1)!);
+
+  const candidateIsSafe = (
+    edge: MaterializedEdge,
+    candidateSegments: SegmentLite[],
+    others: SegmentLite[][]
+  ): boolean => {
     const ownLabel = edge.labelNodeId ? [edge.labelNodeId] : [];
-    const candidateSegments = segmentsFor(candidate);
-    if (candidateSegments.length !== candidate.length - 1) {
-      return false;
-    }
-    for (const segment of candidateSegments) {
+    const last = candidateSegments.length - 1;
+    for (const [i, segment] of candidateSegments.entries()) {
+      // An end box is exempt only for the leg that reaches it.
+      const ends = [i === 0 && edge.start, i === last && edge.end].filter((id): id is string =>
+        Boolean(id)
+      );
       if (
-        segmentHitsAnyRect(segment.a, segment.b, realNodeRects, endpointIds, -BUFFER) ||
+        segmentHitsAnyRect(segment.a, segment.b, realNodeRects, ends, -BUFFER) ||
         segmentHitsAnyRect(segment.a, segment.b, labelNodeRects, ownLabel, -BUFFER)
       ) {
         return false;
       }
     }
-    for (const other of visibleEdges) {
-      if (other === edge) {
-        continue;
-      }
+    for (const segments of others) {
       for (const a of candidateSegments) {
-        for (const b of segmentsFor(pointsFor(other))) {
+        for (const b of segments) {
           if (sameAxisSegmentOverlapLength(a, b, 0.5) >= MIN_SHARED) {
             return false;
           }
@@ -804,11 +815,17 @@ export function liftRailsOffForeignEdgeLabels(
     return true;
   };
 
-  for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+  // A fix leaves the edge clear of every foreign label, so each edge is fixed at most once; the
+  // bound is the number of interior rails, which is at least that.
+  let rails = 1;
+  for (const segments of segmentsByEdge.values()) {
+    rails += Math.max(0, segments.length - 2);
+  }
+  for (let iteration = 0; iteration < rails; iteration++) {
     let fixed = false;
     for (const edge of visibleEdges) {
       const points = pointsFor(edge);
-      const segments = segmentsFor(points);
+      const segments = segmentsByEdge.get(edge)!;
       if (segments.length !== points.length - 1 || segments.length < 3) {
         continue;
       }
@@ -826,15 +843,23 @@ export function liftRailsOffForeignEdgeLabels(
         const coords = [low - CLEARANCE, high + CLEARANCE].sort(
           (a, b) => Math.abs(a - coord) - Math.abs(b - coord)
         );
-        const crossings = crossingsOf(edge, points);
+        const others = othersOf(edge);
+        const crossings = crossingsOf(segments, others);
         for (const next of coords) {
           const moved = points.map((point) => ({ ...point }));
           for (const i of [rail.index, rail.index + 1]) {
             moved[i] = rail.horizontal ? { ...moved[i]!, y: next } : { ...moved[i]!, x: next };
           }
           const candidate = simplifyPolyline(dedupeConsecutivePoints(moved));
-          if (candidateIsSafe(edge, candidate) && crossingsOf(edge, candidate) <= crossings) {
+          const candidateSegments = segmentsFor(candidate);
+          if (
+            candidateSegments.length === candidate.length - 1 &&
+            keepsTerminalLegs(points, candidate) &&
+            candidateIsSafe(edge, candidateSegments, others) &&
+            crossingsOf(candidateSegments, others) <= crossings
+          ) {
             edge.points = candidate;
+            segmentsByEdge.set(edge, candidateSegments);
             fixed = true;
             break;
           }

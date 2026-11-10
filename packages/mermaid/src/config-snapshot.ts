@@ -222,7 +222,8 @@ export type Sections = string | readonly string[] | undefined;
 export function directiveConfig(pre: PreprocessResult, section: Sections): ConfigInput[] {
   const out: ConfigInput[] = [];
   const [first, last] = [section ?? []].flat();
-  const own = (KEY_TREE as Plain)[first!];
+  // A chain's first section is a schema section (gen-config checks the manifest's `section`).
+  const own = (KEY_TREE as Record<string, Plain>)[first!]!;
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {
@@ -232,7 +233,7 @@ export function directiveConfig(pre: PreprocessResult, section: Sections): Confi
       if (value !== undefined && first) {
         delete args.config;
         const parts: [string, unknown][] =
-          last && isPlain(value) && isPlain(own)
+          last && isPlain(value)
             ? Object.entries(value).map(([k, v]) => [k in own ? first : last, { [k]: v }])
             : [[first, value]];
         for (const [s, v] of parts)

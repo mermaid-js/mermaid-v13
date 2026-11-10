@@ -209,8 +209,9 @@ export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 export const LINE_HOPS = 'lineHops';
 
 /**
- * Lazy chunks loaded under a layout name that are no engine: core's line-hop step and the
- * parts plugins' `layoutParts` name. Never a `layout` (`find`), and no loader replaces them
+ * Lazy chunks loaded under a layout name that are no engine: core's line-hop step and
+ * flowchart's lane part, the one part `layoutParts` may name (`layoutPart`, first-party only,
+ * #651). Never a `layout` (`find`), and no loader replaces them
  * (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
  */
 const NOT_ENGINES: ReadonlySet<string> = new Set([LINE_HOPS, 'flowchartLanes']);
@@ -976,11 +977,13 @@ export class Registry {
   /**
    * The part of `plugin`'s drawing that layout `name` brings (`layoutParts`, flowchart's
    * swimlane lanes, #601): its name, and the part once loaded. A render hands the part on only
-   * when `name` itself laid it out (ready, no stand-in).
+   * when `name` itself laid it out (ready, no stand-in). First-party only (#651): the part is
+   * mermaid's own `flowchartLanes` (never an engine, nor any other name), and only with
+   * mermaid's own engine `name`, not a loader registered under it.
    */
   layoutPart(plugin: AnyPlugin, name: string): [name?: string, part?: unknown] {
-    const part = plugin.layoutParts?.get(name);
-    return [part, part && this.layouts.get(part)];
+    const part = this.layoutLoaders.has(name) || plugin.layoutParts?.get(name);
+    return part === 'flowchartLanes' ? [part, this.layouts.get(part)] : [];
   }
 
   /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */

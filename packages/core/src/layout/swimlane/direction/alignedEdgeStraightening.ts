@@ -2,7 +2,7 @@
 // Changed: types tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's
 // `layoutData.ts` types; `straightenOpposedPair` (#636).
 import type { Edge, Node } from '../layoutData.ts';
-import { EDGE_ROUTING } from '../config.ts';
+import { EDGE_ROUTING, hasVertexFaces } from '../config.ts';
 import { collectNodeRectEntries, dedupeConsecutivePoints, rectOfNodeBounds } from './geometry.ts';
 import type { Point, RectBounds, RectSide } from './geometry.ts';
 import { EPS, clearOfNodes, clearOfOtherEdges, faceIsOwn } from './terminalGeometry.ts';
@@ -129,17 +129,6 @@ function straighten(
   return true;
 }
 
-/** Shapes whose faces end in a vertex, where a line beside the face's centre misses the node. */
-const VERTEX_FACE_SHAPES = new Set<string>([
-  'question',
-  'diamond',
-  'diam',
-  'decision',
-  'hexagon',
-  'hex',
-  'notch-pent',
-]);
-
 /**
  * v13 (#636): two edges joining the same two aligned nodes in opposite directions, the only
  * edges through the faces those nodes turn to each other. `straighten` keeps both routes (each
@@ -166,7 +155,7 @@ function straightenOpposedPair(
     !line ||
     current.length < 3 ||
     twinCurrent.length < 2 ||
-    [line.from, line.to].some((f) => VERTEX_FACE_SHAPES.has(f.node.shape ?? ''))
+    [line.from, line.to].some((f) => hasVertexFaces(f.node.shape))
   ) {
     return false;
   }

@@ -328,7 +328,7 @@ function resolveAppearance(
     return isPlainObject(value) ? value : undefined;
   };
   for (const key of keys) {
-    const top = key === 'theme' || key === 'layout';
+    const top = APPEARANCE_KEYS.includes(key);
     const value = layers
       .flatMap((layer) => [
         ...sections.map((s) => scopedOf(layer, s)?.[key]),

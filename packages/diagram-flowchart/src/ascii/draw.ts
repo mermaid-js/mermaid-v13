@@ -170,6 +170,22 @@ function drawMarkers(
   }
 }
 
+/**
+ * The two border cells beside a group title's first line as written (on the border), not the
+ * whole block: a wider line below it would otherwise leave a gap beside a corner, cut off from
+ * the border (#603). A left-aligned block starts where `writeLabel` puts it, the line at its
+ * own indent.
+ */
+function titleGaps(label: MeasuredLabel, at: { x: number; y: number; width: number }): Point[] {
+  const first = label.widths[0] ?? at.width;
+  const block = at.x + Math.floor((at.width - (label.left ? label.width : first)) / 2);
+  const x = label.left ? block + (label.indents[0] ?? 0) : block;
+  return [
+    { x: x - 1, y: at.y },
+    { x: block + first, y: at.y },
+  ];
+}
+
 export interface DrawOptions {
   /** The front-matter title, printed centred on the first lines. */
   readonly title?: string;
@@ -205,11 +221,7 @@ export function drawFlowchart(
       height: Math.max(g.label.height, 1),
     });
     writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs);
-    // Around the first line as written (on the border), not the whole block: a wider line
-    // below it would otherwise leave a gap beside a corner, cut off from the border (#603).
-    const first = g.label.left ? g.label.width : (g.label.widths[0] ?? at.width);
-    const x = at.x + Math.floor((at.width - first) / 2);
-    gaps.push({ x: x - 1, y: at.y }, { x: x + first, y: at.y });
+    gaps.push(...titleGaps(g.label, at));
   }
 
   const ends: End[] = [];

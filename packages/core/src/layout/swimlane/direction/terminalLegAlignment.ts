@@ -2,6 +2,7 @@
 // Changed: types tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's
 // `layoutData.ts` types.
 import type { Edge, Node } from '../layoutData.ts';
+import { isDiamondShape } from '../config.ts';
 import { CORNER_CLEARANCE } from './endpointClip.ts';
 import {
   collectNodeRectEntries,
@@ -27,10 +28,8 @@ interface Terminal extends NodeFace {
   route: Point[];
 }
 
-/** Every name the shape registry accepts for a diamond: a node keeps the one its author wrote. */
-const DIAMOND_SHAPES = new Set<string>(['question', 'diamond', 'diam', 'decision']);
-
-export const isDiamond = (node: Node): boolean => DIAMOND_SHAPES.has(node.shape ?? '');
+// v13 (#636): the shared classification (`config.ts`).
+export const isDiamond = (node: Node): boolean => isDiamondShape(node.shape);
 
 const near = (a: number, b: number): boolean => Math.abs(a - b) < EPS;
 

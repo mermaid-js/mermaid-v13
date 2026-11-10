@@ -926,8 +926,9 @@ export function createMermaid(
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
           // The plugin's own default engine (D284), or the type's (D534), comes with it.
           const layout = registry.layoutOf(t) ?? p.layoutEngine?.default;
-          const parts = [layout, layout && p.layoutParts?.get(layout)];
-          return Promise.all(parts.map((n) => n && registry.loadLayout(n)));
+          return Promise.all(
+            [layout, registry.layoutPart(p, layout!)[0]].map((n) => n && registry.loadLayout(n))
+          );
         })
       );
       if (ascii)

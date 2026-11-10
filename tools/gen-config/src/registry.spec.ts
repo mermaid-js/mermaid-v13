@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  lazyEngines,
   DETECTORS_PATH,
   FACETS_PATH,
   generateDetectors,
@@ -178,8 +179,37 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     expect(bad({ swimlane: { section: 'lanes' } })).toThrow(/"lanes" is not a config section/);
     expect(bad({ swimlane: { layout: 'lineHops' } })).toThrow(/"lineHops" is not a known layout/);
     expect(bad({ swimlane: { layout: 'nope' } })).toThrow(/not a known layout/);
+    // A drawing part loads under a layout name but is no engine (#651).
+    expect(bad({ swimlane: { layout: 'flowchartLanes' } })).toThrow(
+      /"flowchartLanes" is not a known layout/
+    );
     for (const layout of ['layered', 'dagre', 'tree', 'compass', 'swimlane', 'elk', 'elk.stress'])
       expect(bad({ swimlane: { layout } })).not.toThrow();
+  });
+
+  it("reads mermaid's lazy engines from LAZY_LAYOUTS, parts and line hops left out (#651)", () => {
+    const source = readFileSync(
+      new URL('../../../packages/mermaid/src/registry.ts', import.meta.url),
+      'utf8'
+    );
+    expect([...lazyEngines(source)].sort()).toEqual(['compass', 'swimlane', 'tree']);
+    // Layout whitespace, quotes and comments do not matter.
+    const reformatted = `
+      const NOT_ENGINES: ReadonlySet<string> = new Set([
+        LINE_HOPS,
+        "part",
+      ]);
+      const LAZY_LAYOUTS = new Map<string, Loader>([
+        // ['commented', () => import('x')],
+        [
+          "tree",
+          () => import('t').then((m) => m.tree),
+        ],
+        ['part', () => import('p')],
+        [LINE_HOPS, () => import('h')],
+      ]);`;
+    expect([...lazyEngines(reformatted)]).toEqual(['tree']);
+    expect(() => lazyEngines('const LAZY_LAYOUTS = new Map([]);')).toThrow(/NOT_ENGINES/);
   });
 
   it('names the ids that have a facet in one union type', () => {

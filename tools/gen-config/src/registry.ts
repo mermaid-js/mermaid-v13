@@ -159,17 +159,42 @@ function schemaSections(): ReadonlySet<string> {
 }
 
 /**
+ * The lazy first-party engines in mermaid's `registry.ts` source: its `LAZY_LAYOUTS` rows keyed
+ * by a string literal, less the chunks that are no engine (`NOT_ENGINES`: the line-hop step and
+ * drawing parts such as `flowchartLanes`). Comments and layout whitespace do not matter; a
+ * source it cannot read throws rather than accept nothing.
+ */
+export function lazyEngines(source: string): ReadonlySet<string> {
+  const code = source.replaceAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+  const block = (name: string, ctor: string): string => {
+    const found = new RegExp(String.raw`\bconst\s+${name}\b[^=]*=\s*new\s+${ctor}\b`).exec(code);
+    if (!found) throw new Error(`registry.ts: no ${name} table`);
+    // The table's literal: from the constructor's `(` to its matching `)`.
+    let depth = 0;
+    const start = code.indexOf('(', found.index + found[0].length);
+    for (let i = start; i < code.length; i++) {
+      if (code[i] === '(') depth++;
+      else if (code[i] === ')' && --depth === 0) return code.slice(start, i + 1);
+    }
+    throw new Error(`registry.ts: unterminated ${name} table`);
+  };
+  const strings = (text: string, re: RegExp) => [...text.matchAll(re)].map((m) => m[2]!);
+  const notEngines = new Set(strings(block('NOT_ENGINES', 'Set'), /(['"])([\w.-]+)\1/g));
+  const rows = strings(block('LAZY_LAYOUTS', 'Map'), /\[\s*(['"])([\w.-]+)\1\s*,/g);
+  const engines = new Set(rows.filter((name) => !notEngines.has(name)));
+  if (engines.size === 0) throw new Error('registry.ts: no lazy engine in LAZY_LAYOUTS');
+  return engines;
+}
+
+let engines: ReadonlySet<string> | undefined;
+/**
  * A layout name a type may default to: `layered` and v12's `dagre`, a lazy first-party engine
- * (mermaid's `LAZY_LAYOUTS` rows but `lineHops`), or the ELK family (`elk`, `elk.*`).
+ * (`lazyEngines`, read once), or the ELK family (`elk`, `elk.*`).
  */
 function knownLayout(name: string): boolean {
   if (name === 'layered' || name === 'dagre' || /^elk(\.[\w-]+)?$/.test(name)) return true;
-  const source = readFileSync(join(ROOT, 'packages/mermaid/src/registry.ts'), 'utf8');
-  const lazy = source.slice(
-    source.indexOf('const LAZY_LAYOUTS'),
-    source.indexOf(']);', source.indexOf('const LAZY_LAYOUTS'))
-  );
-  return [...lazy.matchAll(/^ {2}\['([\w.-]+)', \(\) => import\(/gm)].some((m) => m[1] === name);
+  engines ??= lazyEngines(readFileSync(join(ROOT, 'packages/mermaid/src/registry.ts'), 'utf8'));
+  return engines.has(name);
 }
 
 /** The manifest serving each v12 type; throws on a type v12 does not have. */

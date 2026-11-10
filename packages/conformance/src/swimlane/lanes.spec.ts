@@ -228,6 +228,56 @@ describe('lanes follow the engine that laid out, not the layout name', () => {
     expect(lanesOf(parseSvg((await m.render('s', as('lanes'))).svg))).toEqual([]);
   });
 
+  // A `postLayout` hook may move group boxes: lanes and the boxes nested in them follow it, as a
+  // plain flowchart's subgraphs do.
+  it('draws lanes and nested boxes where a postLayout hook put them', async () => {
+    const DX = 37;
+    const shifted = createMermaid();
+    shifted.initialize({ deterministic: true });
+    await shifted.registerExternalDiagrams([
+      {
+        id: 'shift-groups',
+        postLayout(l) {
+          if (l.kind !== 'graph') return l;
+          const groups = new Map(
+            [...l.layout.groups].map(([id, g]) => [
+              id,
+              { ...g, x: g.x + DX, title: { ...g.title, x: g.title.x + DX } },
+            ])
+          );
+          return { ...l, layout: { ...l.layout, groups } };
+        },
+      },
+    ]);
+    const plain = await draw(text);
+    const moved = parseSvg((await shifted.render('s', text)).svg);
+    const xs = (tree: SvgView) => lanesOf(tree).map((l) => [l.body.x, l.title.x]);
+    expect(xs(moved)).toEqual(xs(plain.tree).map(([b, t]) => [b! + DX, t! + DX]));
+    const nested = (tree: SvgView) =>
+      tree
+        .find(
+          (n, t) => classesOf(t, n).includes('cluster') && !classesOf(t, n).includes('swimlane')
+        )
+        .map((g) =>
+          Number(tree.getAttr(tree.children(g).find((k) => tree.tag(k) === 'rect')!, 'x'))
+        );
+    expect(nested(plain.tree).length).toBeGreaterThan(0);
+    expect(nested(moved)).toEqual(nested(plain.tree).map((x) => x + DX));
+  });
+
+  // Lanes come with mermaid's own swimlane engine only: a loader registered under its name
+  // replaces the engine, and its renders get no lane part (#651).
+  it('draws no lanes for a loader registered under `swimlane`, and loads no lane part', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    m.registerLayoutLoaders([{ name: 'swimlane', loader: () => Promise.resolve(swimlane) }]);
+    const r = await m.render('s', text);
+    expect(r.warnings).toEqual([]);
+    expect(lanesOf(parseSvg(r.svg))).toEqual([]);
+    // Nothing missing once the engine is in: the part is not asked for.
+    expect(m.renderSync(text).svg).toBe(r.svg);
+  });
+
   // The part loads under a layout name but is no engine (as `lineHops`): never a `layout`, and
   // a loader registered under its name replaces nothing.
   it('takes no `layout: flowchartLanes`, and no loader replaces the part', async () => {
@@ -259,6 +309,15 @@ describe('warnings (D226, D536)', () => {
         astIds: ['s:A', 's:B'],
       },
       expect.objectContaining({ code: 'SWIMLANE_NESTED_LANE', astIds: ['s:C'] }),
+    ]);
+  });
+
+  it('warns once per shared member, however often its lister is redeclared', async () => {
+    const text =
+      'swimlane-beta TB\n  subgraph A\n    x\n  end\n  subgraph B\n    x\n  end\n  subgraph B\n    x\n  end';
+    const { warnings } = await draw(text);
+    expect(warnings.map((w) => [w.code, w.astIds])).toEqual([
+      ['SWIMLANE_SHARED_NODE', ['s:A', 's:B']],
     ]);
   });
 

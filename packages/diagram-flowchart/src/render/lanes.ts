@@ -92,7 +92,8 @@ function laneWarnings(
   // the lister itself) is no conflict.
   for (const sg of model.subgraphs) {
     const own = new Set(sg.nodes);
-    for (const node of sg.listed ?? []) {
+    // A redeclaration lists its members again: one warning each.
+    for (const node of new Set(sg.listed)) {
       if (node === sg.id || own.has(node)) continue;
       const kept = laneOf(flow.views.get(node)?.parent ?? '');
       const dropped = laneOf(sg.id);
@@ -172,15 +173,17 @@ export const makeLanes: LaneDrawerFactory = (cls, model, flow, layout, warn): La
   const lanes = lanesOf(layout, flow);
   if (warn) laneWarnings(model, flow, lanes, warn);
   return (scene, plain) => {
+    // Boxes from the scene's layout: a `postLayout` hook may have moved them since.
+    const { groups } = scene.layout;
     // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
     // default lane the slot after every subgraph's, so it never takes the first one.
     let made = model.subgraphs.length;
     for (const id of lanes) {
-      const box = flow.views.has(id) ? undefined : layout.groups.get(id);
+      const box = flow.views.has(id) ? undefined : groups.get(id);
       if (box) drawLane(cls, scene, id, box, undefined, made++);
     }
     for (const g of flow.groups) {
-      const box = layout.groups.get(g.id);
+      const box = groups.get(g.id);
       if (!box) continue;
       if (lanes.has(g.id)) drawLane(cls, scene, g.id, box, g, g.order);
       else plain(g, box);

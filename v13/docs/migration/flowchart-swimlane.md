@@ -77,9 +77,11 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   flowcharts only, so a plain flowchart, or a class diagram with `layout: swimlane`, loads none
   of it. `render()`, `prepare()` and `preload({ types: ['swimlane'] })` load both; for a
   `flowchart` with `layout: swimlane`, `preload({ layouts: ['swimlane', 'flowchartLanes'] })`.
-  Lanes are drawn only on a render the `swimlane` layout laid out: an engine registered under
-  another name draws the groups as plain subgraphs, and a placeholder render that lacks the
-  part says so in its `PLACEHOLDER` warning.
+  Lanes are drawn only on a render mermaid's own `swimlane` engine laid out: an engine
+  registered under another name, or a loader registered under `swimlane` itself, draws the
+  groups as plain subgraphs, and a placeholder render that lacks the part says so in its
+  `PLACEHOLDER` warning. A plugin's `layoutParts` is first-party only: any other entry is
+  ignored.
 - **`format: 'ascii'`** (new; v12 had no text output) draws the flowchart with `layered`, lanes
   as plain subgraph frames with no title band or default lane, in both charsets, with one
   `ASCII_DROPPED` warning (`feature: 'layout'`) and no `SWIMLANE_*` warning, as for any engine

@@ -102,6 +102,13 @@ describe('subgraphs', () => {
     expect(second).toContain('│ a much wider line │');
   });
 
+  it('blanks the border beside the first line of a left-aligned (list) title', async () => {
+    const src = 'flowchart TB\nsubgraph s ["`- Two\n- a much wider line`"]\n a\nend';
+    const [top, second] = (await text(src)).split('\n');
+    expect(top).toMatch(/^┌ • Two ─+┐$/u);
+    expect(second).toBe('│ • a much wider line │');
+  });
+
   it('draws nested subgraphs inside each other, each with its own direction', async () => {
     const src = [
       'flowchart LR',

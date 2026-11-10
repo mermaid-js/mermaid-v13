@@ -180,9 +180,11 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
     readonly aliases?: Readonly<Record<string, string>>;
   };
   /**
-   * Parts of its drawing loaded only with a layout (spec #528: flowchart's swimlane lanes),
-   * layout name → the lazily loaded part's name. A graph render with that layout needs the part
-   * as a `layout` resource; the drawing gets it as `RenderContext.layoutPart`.
+   * First-party only (#651): parts of its drawing loaded only with a layout (spec #528:
+   * flowchart's swimlane lanes), layout name → the lazily loaded part's name. Only `mermaid`'s
+   * own part chunks and its own engines count: any other entry is ignored. A graph render with
+   * that layout needs the part as a `layout` resource; the drawing gets it as
+   * `RenderContext.layoutPart`.
    */
   readonly layoutParts?: ReadonlyMap<string, string>;
   /** Its config section's defaults. */
