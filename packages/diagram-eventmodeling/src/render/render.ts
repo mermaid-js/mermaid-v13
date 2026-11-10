@@ -63,7 +63,8 @@ function drawLane(
 ): void {
   const id = lane.id;
   w.open('g', { class: 'em-swimlane', 'data-id': id });
-  w.leaf('rect', {
+  // A group's frame (D302): sketched under `look: handDrawn`.
+  w.outline('group', 'rect', {
     'data-id': id,
     x: lane.x,
     y: lane.y,
@@ -99,7 +100,8 @@ function drawBox(
   const id = box.ast;
   const kind = paint.kind[box.kind];
   w.open('g', { class: 'em-box', 'data-id': id, 'data-ast': id });
-  w.leaf('rect', {
+  // A node's shape (D302): sketched under `look: handDrawn`.
+  w.outline('node', 'rect', {
     'data-id': id,
     x: box.x,
     y: box.y,
@@ -125,7 +127,9 @@ function drawRelation(r: EventModelRelationLayout, paint: Paints, w: SvgWriter):
     if (i === 0) d.moveTo(p.x, p.y);
     else d.lineTo(p.x, p.y);
   }
-  w.leaf('path', {
+  // The shared edge-path step (D302, D537): sketched under `look: handDrawn`, and where line
+  // hops find the relation when `lineHops` is on. The head stays a plain polygon.
+  w.outline('edge', 'path', {
     class: 'em-relation',
     'data-id': r.id,
     'data-ast': r.astId,
