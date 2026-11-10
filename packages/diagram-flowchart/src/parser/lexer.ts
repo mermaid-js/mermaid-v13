@@ -58,22 +58,25 @@ import {
   LT,
   PIPE,
   QUESTION,
+  QUOTE,
   RBRACE,
   RBRACKET,
   RPAREN,
   SEMI,
   SLASH,
-  STAR,
-  TILDE,
-  TokenWriter,
-  UNDERSCORE,
-  firstHole,
-  localOffset,
-  QUOTE,
-  SourceOffsets,
   sourceView,
+  STAR,
+  StateLexer,
+  TILDE,
+  UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type {
+  Probe,
+  Range,
+  SourceView,
+  StateLexerOptions,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 /**
@@ -181,6 +184,9 @@ const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
 const isNl = (c: number) => c === LF || c === CR;
 
+/** How v12's lexer read its text: as written (CRs kept), about four characters a token. */
+const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'raw', dropSpace: false };
+
 /**
  * Lex the flowchart body `src[from…]`. `view` comes from {@link sourceView}. With
  * `graphKeyword` false, a `graph` keyword no longer opens the direction state (used when
@@ -201,21 +207,8 @@ export function lex(
  * One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source.
  * Each start condition is a method named after it.
  */
-class FlowLexer {
-  /** The text v12 lexed, plus the line break v12 appended (clamped in the output). */
-  private readonly text: string;
-  /** Length of v12's text without the appended line break. */
-  private readonly len: number;
-  private readonly n: number;
-  private readonly offsets: SourceOffsets | undefined;
+class FlowLexer extends StateLexer {
   private readonly mask: Uint8Array | undefined;
-  private readonly holes: readonly Hole[];
-  /** The next removed span to write as trivia. */
-  private hole: number;
-  private readonly w: TokenWriter;
-  private readonly stack: number[] = [];
-  private state: number = S.INITIAL;
-  private p: number;
   private readonly from: number;
   private firstGraph: boolean;
   // Memos that keep the scans below linear.
@@ -228,23 +221,11 @@ class FlowLexer {
   private wsFrom = -1;
   private wsTo = -1;
 
-  constructor(
-    private readonly src: string,
-    from: number,
-    view: SourceView,
-    graphKeyword: boolean
-  ) {
-    this.text = view.text + '\n';
-    this.len = view.text.length;
-    this.n = this.text.length;
-    this.offsets = view.runs && new SourceOffsets(view.runs);
+  constructor(src: string, from: number, view: SourceView, graphKeyword: boolean) {
+    super(src, from, view, OPTIONS);
     this.mask = view.mask;
-    this.holes = view.holes;
-    this.hole = firstHole(view, from);
-    this.from = this.p = localOffset(view, from);
+    this.from = this.p;
     this.firstGraph = graphKeyword;
-    // About one token per four characters of flowchart text.
-    this.w = new TokenWriter(((this.len - this.p) >> 2) + 8);
     this.dirNext = this.text.indexOf('direction', this.p);
     this.atNext = this.text.indexOf('@', this.p);
   }
@@ -290,55 +271,6 @@ class FlowLexer {
     this.state = S.INITIAL;
   }
 
-  // --- Offsets and output -------------------------------------------------------------------
-
-  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
-  private source(i: number): number {
-    if (i >= this.len) return this.src.length;
-    return this.offsets ? this.offsets.source(i) : i;
-  }
-
-  /** Write the removed spans that start before `at` (a source offset) as trivia. */
-  private trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind !== 'drop') {
-        this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
-      }
-    }
-  }
-
-  /** Write the token `text[s, e)` with its source range, and move past it. */
-  private emit(kind: number, s: number, e: number): void {
-    const a = this.source(s);
-    const last = Math.min(e, this.len);
-    let b = last > s ? this.source(last - 1) + 1 : a;
-    if (this.holes.length > 0) {
-      this.trivia(a);
-      if (b > a) b = this.dropAt(b);
-    }
-    this.w.push(kind, a, b);
-    this.p = e;
-  }
-
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
-  }
-
-  private push(s: number): void {
-    this.stack.push(this.state);
-    this.state = s;
-  }
-
-  private pop(): void {
-    this.state = this.stack.pop() ?? S.INITIAL;
-  }
-
   // --- Character tests and scans ------------------------------------------------------------
 
   /** A `"` that v12 had not turned into `'`. */
@@ -366,7 +298,7 @@ class FlowLexer {
   }
 
   /** End of the sticky `re` matched at `q`, or -1. */
-  private at(re: RegExp, q: number): number {
+  private reAt(re: RegExp, q: number): number {
     re.lastIndex = q;
     return re.test(this.text) ? re.lastIndex : -1;
   }
@@ -390,7 +322,7 @@ class FlowLexer {
   }
 
   private entityAt(q: number): boolean {
-    return this.at(RE_ENTITY, q) >= 0;
+    return this.reAt(RE_ENTITY, q) >= 0;
   }
 
   private kw(word: string): boolean {
@@ -426,17 +358,17 @@ class FlowLexer {
 
   private quote(): void {
     if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
-      this.push(S.md_string);
+      this.pushState(S.md_string);
       this.p += 2;
     } else {
-      this.push(S.string);
+      this.pushState(S.string);
       this.p++;
     }
   }
 
   private invisLink(): boolean {
     if (!this.invisAhead(this.p)) return false;
-    const e = this.at(RE_INVIS_LINK, this.p);
+    const e = this.reAt(RE_INVIS_LINK, this.p);
     if (e < 0) return false;
     this.emit(T.Link, this.p, e);
     return true;
@@ -466,14 +398,14 @@ class FlowLexer {
   }
 
   private open(state: number, kind: number, length: number): true {
-    this.push(state);
+    this.pushState(state);
     return this.token(kind, length);
   }
 
   private graph(length: number): void {
     if (this.firstGraph) {
       this.firstGraph = false;
-      this.push(S.dir);
+      this.pushState(S.dir);
     }
     this.emit(T.Graph, this.p, this.p + length);
   }
@@ -505,14 +437,14 @@ class FlowLexer {
     const d = this.linkChar(p);
     let e: number;
     if (d === DASH) {
-      if ((e = this.at(RE_LINK, p)) >= 0) return this.linkToken(p, e);
-      if ((e = this.at(RE_START_LINK, p)) >= 0) return this.startLink(S.edgeText, p, e);
-      if ((e = this.at(RE_DOTTED_LINK, p)) >= 0) return this.linkToken(p, e);
-      if ((e = this.at(RE_DOTTED_START, p)) >= 0) return this.startLink(S.dottedEdgeText, p, e);
+      if ((e = this.reAt(RE_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.reAt(RE_START_LINK, p)) >= 0) return this.startLink(S.edgeText, p, e);
+      if ((e = this.reAt(RE_DOTTED_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.reAt(RE_DOTTED_START, p)) >= 0) return this.startLink(S.dottedEdgeText, p, e);
     } else if (d === EQUALS) {
-      if ((e = this.at(RE_THICK_LINK, p)) >= 0) return this.linkToken(p, e);
-      if ((e = this.at(RE_THICK_START, p)) >= 0) return this.startLink(S.thickEdgeText, p, e);
-    } else if (d === DOT && (e = this.at(RE_DOTTED_LINK, p)) >= 0) {
+      if ((e = this.reAt(RE_THICK_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.reAt(RE_THICK_START, p)) >= 0) return this.startLink(S.thickEdgeText, p, e);
+    } else if (d === DOT && (e = this.reAt(RE_DOTTED_LINK, p)) >= 0) {
       return this.linkToken(p, e);
     }
     return c !== DASH && c !== EQUALS && c !== DOT && this.invisLink();
@@ -524,7 +456,7 @@ class FlowLexer {
   }
 
   private startLink(state: number, s: number, e: number): true {
-    this.push(state);
+    this.pushState(state);
     this.emit(T.StartLink, s, e);
     return true;
   }
@@ -536,7 +468,7 @@ class FlowLexer {
 
   // --- States -------------------------------------------------------------------------------
 
-  private step(c: number): boolean {
+  protected step(c: number): boolean {
     switch (this.state) {
       case S.INITIAL:
         return this.initial(c);
@@ -583,7 +515,7 @@ class FlowLexer {
       this.direction() ||
       this.linkId(c) ||
       this.punctuation(c) ||
-      this.blanks(c) ||
+      this.blankRule(c) ||
       this.word(c)
     );
   }
@@ -595,18 +527,18 @@ class FlowLexer {
     switch (c) {
       case LOWER_A:
         if (this.text.startsWith('acc', p)) {
-          if ((e = this.at(RE_ACC_TITLE, p)) >= 0) {
-            this.push(S.acc_title);
+          if ((e = this.reAt(RE_ACC_TITLE, p)) >= 0) {
+            this.pushState(S.acc_title);
             this.emit(T.AccTitle, p, e);
             return true;
           }
-          if ((e = this.at(RE_ACC_DESCR, p)) >= 0) {
-            this.push(S.acc_descr);
+          if ((e = this.reAt(RE_ACC_DESCR, p)) >= 0) {
+            this.pushState(S.acc_descr);
             this.emit(T.AccDescr, p, e);
             return true;
           }
-          if ((e = this.at(RE_ACC_DESCR_ML, p)) >= 0) {
-            this.push(S.acc_descr_multiline);
+          if ((e = this.reAt(RE_ACC_DESCR_ML, p)) >= 0) {
+            this.pushState(S.acc_descr_multiline);
             this.p = e;
             return true;
           }
@@ -614,19 +546,19 @@ class FlowLexer {
         return false;
       case AT:
         if (this.text.charCodeAt(p + 1) !== LBRACE) return false;
-        this.push(S.shapeData);
+        this.pushState(S.shapeData);
         this.emit(T.ShapeData, p, p + 2);
         return true;
       case LOWER_C:
-        if ((e = this.at(RE_CALL, p)) >= 0) {
-          this.push(S.callbackname);
+        if ((e = this.reAt(RE_CALL, p)) >= 0) {
+          this.pushState(S.callbackname);
           this.p = e;
           return true;
         }
         if (this.kw('classDef')) return this.token(T.ClassDef, 8);
         if (this.kw('class')) return this.token(T.Class, 5);
-        if ((e = this.at(RE_CLICK, p)) >= 0) {
-          this.push(S.click);
+        if ((e = this.reAt(RE_CLICK, p)) >= 0) {
+          this.pushState(S.click);
           // The keyword alone; the blanks after it belong to no token, as in jison.
           this.emit(T.ClickKeyword, p, p + 5);
           this.p = e;
@@ -664,7 +596,7 @@ class FlowLexer {
         return this.kw('graph') && this.graphWord(5);
       case LOWER_E:
         if (!this.kw('end')) return false;
-        this.emit(T.End, p, Math.max(p + 3, this.at(RE_END, p)));
+        this.emit(T.End, p, Math.max(p + 3, this.reAt(RE_END, p)));
         return true;
       case UNDERSCORE:
         for (const target of LINK_TARGETS) {
@@ -701,7 +633,7 @@ class FlowLexer {
     if (this.dirNext >= this.lineEndAt) return false;
     for (let i = 0; i < RE_DIRECTION.length; i++) {
       const re = RE_DIRECTION[i];
-      const e = re ? this.at(re, p) : -1;
+      const e = re ? this.reAt(re, p) : -1;
       if (e >= 0) {
         this.emit(T.DirectionTB + i, p, e);
         return true;
@@ -787,7 +719,7 @@ class FlowLexer {
       case LBRACE:
         return this.opener(c);
       case GT:
-        this.push(S.text);
+        this.pushState(S.text);
         return this.token(T.TagEnd, 1);
       case CARET:
         return this.token(T.Up, 1);
@@ -802,7 +734,7 @@ class FlowLexer {
   }
 
   /** Blanks: a link that opens with them, line breaks, or a space token. */
-  private blanks(c: number): boolean {
+  private blankRule(c: number): boolean {
     if (!isSpace(c)) return false;
     // v12 rewrote `}\s*\n` to `}\n` before lexing.
     if (this.text.charCodeAt(this.p - 1) === RBRACE && this.p > this.from) {
@@ -822,7 +754,7 @@ class FlowLexer {
       this.emit(Kind.Newline, this.p, e);
       return true;
     }
-    if ((e = this.at(RE_SPACE, this.p)) >= 0) {
+    if ((e = this.reAt(RE_SPACE, this.p)) >= 0) {
       this.emit(T.Space, this.p, e);
       return true;
     }
@@ -838,10 +770,10 @@ class FlowLexer {
   private string(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
       if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
-        this.push(S.md_string);
+        this.pushState(S.md_string);
         this.p += 2;
       } else {
-        this.pop();
+        this.popState();
         this.p++;
       }
     } else this.emit(T.Str, this.p, this.nextQuote(this.p));
@@ -851,7 +783,7 @@ class FlowLexer {
   private mdString(c: number): boolean {
     if (c === BACKTICK) {
       if (!this.isQuote(this.p + 1)) return false;
-      this.pop();
+      this.popState();
       this.p += 2;
       return true;
     }
@@ -873,14 +805,14 @@ class FlowLexer {
     let e = this.p;
     while (e < this.n && !isNl(this.text.charCodeAt(e))) e++;
     const kind = this.state === S.acc_title ? T.AccTitleValue : T.AccDescrValue;
-    this.pop();
+    this.popState();
     this.emit(kind, this.p, e);
     return true;
   }
 
   private accDescrMultiline(c: number): boolean {
     if (c === RBRACE) {
-      this.pop();
+      this.popState();
       this.p++;
     } else this.emit(T.AccDescrMultilineValue, this.p, this.find('}', this.p));
     return true;
@@ -892,14 +824,14 @@ class FlowLexer {
     if (c === DQUOTE && this.isQuote(p)) {
       this.quote();
     } else if ((e = this.noDirEnd(p)) >= 0) {
-      this.pop();
+      this.popState();
       this.emit(T.NoDir, p, e);
     } else if (
-      (e = this.at(RE_DIR, p)) >= 0 ||
-      (e = this.at(RE_DIR_SYM, p)) >= 0 ||
-      (e = this.at(RE_DIR_V, p)) >= 0
+      (e = this.reAt(RE_DIR, p)) >= 0 ||
+      (e = this.reAt(RE_DIR_SYM, p)) >= 0 ||
+      (e = this.reAt(RE_DIR_V, p)) >= 0
     ) {
-      this.pop();
+      this.popState();
       this.emit(T.Dir, p, e);
     } else {
       return this.invisLink() || this.opener(c);
@@ -916,21 +848,21 @@ class FlowLexer {
       case LBRACE:
         return this.opener(c);
       case RBRACKET:
-        this.pop();
+        this.popState();
         if (d === RPAREN) return this.token(T.StadiumEnd, 2);
         if (d === RBRACKET) return this.token(T.SubroutineEnd, 2);
         return this.token(T.SQE, 1);
       case RPAREN:
-        this.pop();
+        this.popState();
         if (d === RBRACKET) return this.token(T.CylinderEnd, 2);
         if (d === RPAREN && this.text.charCodeAt(p + 2) === RPAREN)
           return this.token(T.DoubleCircleEnd, 3);
         return this.token(T.PE, 1);
       case PIPE:
-        this.pop();
+        this.popState();
         return this.token(T.Pipe, 1);
       case RBRACE:
-        this.pop();
+        this.popState();
         return this.token(T.DiamondStop, 1);
     }
     if (c === DQUOTE && this.isQuote(p)) {
@@ -957,7 +889,7 @@ class FlowLexer {
     }
     if ((c === TILDE || isSpace(c)) && this.invisLink()) return true;
     if ((c === DASH || c === SLASH || c === RPAREN) && d === RPAREN) {
-      this.pop();
+      this.popState();
       return this.token(T.EllipseEnd, 2);
     }
     if (c === LPAREN || c === LBRACKET || c === LBRACE) return this.opener(c);
@@ -967,7 +899,7 @@ class FlowLexer {
       const ch = this.text.charCodeAt(q);
       if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === DQUOTE && this.isQuote(q))) break;
       if ((ch === DASH || ch === SLASH) && this.text.charCodeAt(q + 1) === RPAREN) break;
-      if ((ch === TILDE || isSpace(ch)) && this.invisAhead(q) && this.at(RE_INVIS_LINK, q) >= 0)
+      if ((ch === TILDE || isSpace(ch)) && this.invisAhead(q) && this.reAt(RE_INVIS_LINK, q) >= 0)
         break;
       // As in edgeText: `\s*~~~` fails alike from every blank of the run.
       if (isSpace(ch)) q = this.blankRunEnd(q);
@@ -989,29 +921,29 @@ class FlowLexer {
     switch (c) {
       case LPAREN:
         if (!end) return this.opener(c);
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case LBRACKET:
       case LBRACE:
         return this.opener(c);
       case BACKSLASH:
         if (!end) return this.token(T.Text, 1);
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case SLASH:
         if (!end) return this.token(T.Text, 1);
-        this.pop();
+        this.popState();
         return this.token(T.InvTrapEnd, 2);
       case RBRACKET:
       case RPAREN:
         if (!end) return false;
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case RBRACE:
         return false;
     }
     if ((c === QUESTION || c === EQUALS) && end) {
-      this.pop();
+      this.popState();
       return this.token(T.TrapEnd, 2);
     }
     let q = p + 1;
@@ -1029,9 +961,9 @@ class FlowLexer {
     }
     const d = this.linkChar(p);
     if (d === a || d === b) {
-      const e = this.at(linkRe, p);
+      const e = this.reAt(linkRe, p);
       if (e >= 0) {
-        this.pop();
+        this.popState();
         return this.linkToken(p, e);
       }
     }
@@ -1044,7 +976,7 @@ class FlowLexer {
         if (a !== DASH || this.text.charCodeAt(q + 1) === DASH) break;
       } else if (ch === LOWER_X || ch === LOWER_O || ch === LT || ch === b || isSpace(ch)) {
         const dd = this.linkChar(q);
-        if ((dd === a || dd === b) && this.at(linkRe, q) >= 0) break;
+        if ((dd === a || dd === b) && this.reAt(linkRe, q) >= 0) break;
         // The link pattern opens with `\s*`: from any later blank of this run it reaches the
         // same character and fails the same way, so the run is skipped (linear, R-PARSE-7).
         if (isSpace(ch)) q = this.blankRunEnd(q);
@@ -1059,7 +991,7 @@ class FlowLexer {
     if (c === DQUOTE && this.isQuote(this.p)) {
       this.quote();
     } else if (isSpace(c)) {
-      this.pop();
+      this.popState();
       this.p += c === CR && this.text.charCodeAt(this.p + 1) === LF ? 2 : 1;
     } else {
       let q = this.p + 1;
@@ -1071,11 +1003,11 @@ class FlowLexer {
 
   private callbackName(c: number): boolean {
     if (c === LPAREN) {
-      const e = this.at(RE_EMPTY_CALL, this.p);
-      this.pop();
+      const e = this.reAt(RE_EMPTY_CALL, this.p);
+      this.popState();
       if (e >= 0) this.p = e;
       else {
-        this.push(S.callbackargs);
+        this.pushState(S.callbackargs);
         this.p++;
       }
     } else this.emit(T.CallbackName, this.p, this.find('(', this.p));
@@ -1084,7 +1016,7 @@ class FlowLexer {
 
   private callbackArgs(c: number): boolean {
     if (c === RPAREN) {
-      this.pop();
+      this.popState();
       this.p++;
     } else this.emit(T.CallbackArgs, this.p, this.find(')', this.p));
     return true;
@@ -1092,11 +1024,11 @@ class FlowLexer {
 
   private shapeData(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
-      this.push(S.shapeDataStr);
+      this.pushState(S.shapeDataStr);
       return this.token(T.ShapeData, 1);
     }
     if (c === RBRACE) {
-      this.pop();
+      this.popState();
       return this.token(T.ShapeDataEnd, 1);
     }
     if (c === CARET) return false;
@@ -1112,7 +1044,7 @@ class FlowLexer {
 
   private shapeDataStr(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
-      this.pop();
+      this.popState();
       return this.token(T.ShapeData, 1);
     }
     this.emit(T.ShapeData, this.p, this.nextQuote(this.p));

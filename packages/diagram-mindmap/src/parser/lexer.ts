@@ -65,7 +65,7 @@ const S_NAMES = ['INITIAL', 'NODE', 'NSTR', 'NSTR2', 'ICON', 'CLASS'];
 const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
-const OPTIONS: StateLexerOptions = { charsPerToken: 6, foldCrlf: true, dropSpace: true };
+const OPTIONS: StateLexerOptions = { charsPerToken: 6, crlf: 'fold', dropSpace: true };
 
 /**
  * Lex the mindmap body `src[from…]`. `view` comes from {@link sourceView}. The stream ends in

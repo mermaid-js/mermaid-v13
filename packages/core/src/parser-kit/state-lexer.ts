@@ -17,12 +17,12 @@ export interface StateLexerOptions {
   /** About how many characters of text one token takes (sizes the token arrays). */
   readonly charsPerToken: number;
   /**
-   * True: a CRLF is one LF in the lexed text, which is then shorter than the view's (offsets
-   * go through a map). False: the lexed text has the view's length (the lexer's
+   * `fold`: a CRLF is one LF in the lexed text, which is then shorter than the view's (offsets
+   * go through a map). `keep`: the lexed text has the view's length (the lexer's
    * {@link StateLexer.prepare} turns CRs into LFs one for one), and a line break token starts
-   * at the CR of its CRLF.
+   * at the CR of its CRLF. `raw`: the view's text as it is, CRs included.
    */
-  readonly foldCrlf: boolean;
+  readonly crlf: 'fold' | 'keep' | 'raw';
   /** A dropped `;` that no token's range took is a `Space` token of its own (else no token). */
   readonly dropSpace: boolean;
 }
@@ -55,7 +55,7 @@ export abstract class StateLexer {
   /** The start condition; 0 is INITIAL. */
   protected state = 0;
   protected p: number;
-  private readonly foldCrlf: boolean;
+  private readonly crStart: boolean;
   private readonly dropSpace: boolean;
 
   constructor(
@@ -64,7 +64,7 @@ export abstract class StateLexer {
     view: SourceView,
     options: StateLexerOptions
   ) {
-    this.foldCrlf = options.foldCrlf;
+    this.crStart = options.crlf === 'keep';
     this.dropSpace = options.dropSpace;
     this.offsets = view.runs && new SourceOffsets(view.runs);
     this.holes = view.holes;
@@ -72,7 +72,7 @@ export abstract class StateLexer {
     const start = localOffset(view, from);
     this.raw = view.text;
     let text = this.viewText(view);
-    if (this.foldCrlf && text.includes('\r', start)) {
+    if (options.crlf === 'fold' && text.includes('\r', start)) {
       const at = new Uint32Array(text.length + 1);
       text = this.fold(text, start, at);
       this.at = at.subarray(0, text.length + 1);
@@ -198,17 +198,22 @@ export abstract class StateLexer {
     const last = Math.min(end, this.len);
     let b = last > s ? this.sourceEnd(last - 1) : a;
     // A line break starts at the CR of its CRLF.
-    if (!this.foldCrlf && b > a) {
+    if (this.crStart && b > a) {
       const { src } = this;
       if (src.charCodeAt(a) === LF && src.charCodeAt(a - 1) === CR) a--;
     }
     if (this.holes.length > 0) {
       this.trivia(a);
-      if (b > a) b = dropAt(this.holes, this.hole, b);
+      if (b > a) b = this.dropAt(b);
     }
     this.w.push(kind, a, b);
     if (b > this.covered) this.covered = b;
     this.p = next;
+  }
+
+  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
+  protected dropAt(b: number): number {
+    return dropAt(this.holes, this.hole, b);
   }
 
   /** Enter `state` (jison `pushState`). */

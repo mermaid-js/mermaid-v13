@@ -140,7 +140,7 @@ const ENTITY = '\ufb02';
 const ENTITY_END = '\u00b6';
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
-const OPTIONS: StateLexerOptions = { charsPerToken: 5, foldCrlf: true, dropSpace: true };
+const OPTIONS: StateLexerOptions = { charsPerToken: 5, crlf: 'fold', dropSpace: true };
 
 /**
  * Lex the C4 body `src[from…]`. `view` comes from {@link sourceView} with default options

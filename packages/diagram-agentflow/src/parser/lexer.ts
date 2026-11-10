@@ -201,7 +201,7 @@ class AgentflowLexer extends Scanner {
   private graph(length: number): void {
     if (this.firstGraph) {
       this.firstGraph = false;
-      this.push(S.dir);
+      this.pushState(S.dir);
     }
     this.emit(T.Graph, this.p, this.p + length);
   }
@@ -234,7 +234,7 @@ class AgentflowLexer extends Scanner {
     const { link, startLink, dotted } = this.links(p);
     if (link >= 0) return this.token(T.Link, link - p);
     if (startLink >= 0) {
-      this.push(S.edgeText);
+      this.pushState(S.edgeText);
       return this.token(T.StartLink, startLink - p);
     }
     return dotted >= 0 && this.token(T.Link, dotted - p);
@@ -262,7 +262,7 @@ class AgentflowLexer extends Scanner {
 
   // --- States -------------------------------------------------------------------------------
 
-  private step(c: number): boolean {
+  protected step(c: number): boolean {
     switch (this.state) {
       case S.INITIAL:
         return this.initial(c);
@@ -305,7 +305,7 @@ class AgentflowLexer extends Scanner {
       this.direction() ||
       this.linkId(c) ||
       this.punctuation(c) ||
-      this.blanks(c) ||
+      this.blankRule(c) ||
       (c === PERCENT && this.comment()) ||
       this.word(c)
     );
@@ -319,7 +319,7 @@ class AgentflowLexer extends Scanner {
         return this.accOrHeader();
       case AT:
         if (this.text.charCodeAt(p + 1) !== LBRACE) return false;
-        this.push(S.shapeData);
+        this.pushState(S.shapeData);
         this.emit(T.ShapeData, p, p + 2);
         return true;
       case LOWER_C:
@@ -356,18 +356,18 @@ class AgentflowLexer extends Scanner {
     const p = this.p;
     let e: number;
     if (this.text.startsWith('acc', p)) {
-      if ((e = this.at(RE_ACC_TITLE, p)) >= 0) {
-        this.push(S.acc_title);
+      if ((e = this.reAt(RE_ACC_TITLE, p)) >= 0) {
+        this.pushState(S.acc_title);
         this.emit(T.AccTitle, p, e);
         return true;
       }
-      if ((e = this.at(RE_ACC_DESCR, p)) >= 0) {
-        this.push(S.acc_descr);
+      if ((e = this.reAt(RE_ACC_DESCR, p)) >= 0) {
+        this.pushState(S.acc_descr);
         this.emit(T.AccDescr, p, e);
         return true;
       }
-      if ((e = this.at(RE_ACC_DESCR_ML, p)) >= 0) {
-        this.push(S.acc_descr_multiline);
+      if ((e = this.reAt(RE_ACC_DESCR_ML, p)) >= 0) {
+        this.pushState(S.acc_descr_multiline);
         this.p = e;
         return true;
       }
@@ -381,15 +381,15 @@ class AgentflowLexer extends Scanner {
   private cKeyword(): boolean {
     const p = this.p;
     let e: number;
-    if ((e = this.at(RE_CALL, p)) >= 0) {
-      this.push(S.callbackname);
+    if ((e = this.reAt(RE_CALL, p)) >= 0) {
+      this.pushState(S.callbackname);
       this.p = e;
       return true;
     }
     if (this.kw('classDef')) return this.token(T.ClassDef, 8);
     if (this.kw('class')) return this.token(T.Class, 5);
-    if ((e = this.at(RE_CLICK, p)) >= 0) {
-      this.push(S.click);
+    if ((e = this.reAt(RE_CLICK, p)) >= 0) {
+      this.pushState(S.click);
       // The keyword alone; the blanks after it belong to no token, as in jison.
       this.emit(T.ClickKeyword, p, p + 5);
       this.p = e;
@@ -421,7 +421,7 @@ class AgentflowLexer extends Scanner {
     if (this.dirNext >= this.lineEndAt) return false;
     for (let i = 0; i < RE_DIRECTION.length; i++) {
       const re = RE_DIRECTION[i];
-      const e = re ? this.at(re, p) : -1;
+      const e = re ? this.reAt(re, p) : -1;
       if (e >= 0) {
         this.emit(T.DirectionTB + i, p, e);
         return true;
@@ -507,7 +507,7 @@ class AgentflowLexer extends Scanner {
       case LBRACE:
         return this.opener(c);
       case GT:
-        this.push(S.text);
+        this.pushState(S.text);
         return this.token(T.TagEnd, 1);
       case BACKSLASH:
         if (this.text.charCodeAt(p + 1) === PIPE) return this.token(T.Sep, 2);
@@ -522,7 +522,7 @@ class AgentflowLexer extends Scanner {
   }
 
   /** Blanks: a link that opens with them, a comment, line breaks, or one blank. */
-  private blanks(c: number): boolean {
+  private blankRule(c: number): boolean {
     if (!isSpace(c)) return false;
     if (this.link()) return true;
     if (isBlank(c) && this.comment()) return true;
@@ -543,10 +543,10 @@ class AgentflowLexer extends Scanner {
   private string(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
       if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
-        this.push(S.md_string);
+        this.pushState(S.md_string);
         this.p += 2;
       } else {
-        this.pop();
+        this.popState();
         this.p++;
       }
     } else this.emit(T.Str, this.p, this.nextQuote(this.p));
@@ -556,7 +556,7 @@ class AgentflowLexer extends Scanner {
   private mdString(c: number): boolean {
     if (c === BACKTICK) {
       if (!this.isQuote(this.p + 1)) return false;
-      this.pop();
+      this.popState();
       this.p += 2;
       return true;
     }
@@ -578,14 +578,14 @@ class AgentflowLexer extends Scanner {
     let e = this.p;
     while (e < this.n && !isNl(this.text.charCodeAt(e))) e++;
     const kind = this.state === S.acc_title ? T.AccTitleValue : T.AccDescrValue;
-    this.pop();
+    this.popState();
     this.emit(kind, this.p, e);
     return true;
   }
 
   private accDescrMultiline(c: number): boolean {
     if (c === RBRACE) {
-      this.pop();
+      this.popState();
       this.p++;
     } else this.emit(T.AccDescrMultilineValue, this.p, this.find('}', this.p));
     return true;
@@ -597,14 +597,14 @@ class AgentflowLexer extends Scanner {
     if (c === DQUOTE && this.isQuote(p)) {
       this.quote();
     } else if ((e = this.noDirEnd(p)) >= 0) {
-      this.pop();
+      this.popState();
       this.emit(T.NoDir, p, e);
     } else if (
-      (e = this.at(RE_DIR, p)) >= 0 ||
-      (e = this.at(RE_DIR_SYM, p)) >= 0 ||
-      (e = this.at(RE_DIR_V, p)) >= 0
+      (e = this.reAt(RE_DIR, p)) >= 0 ||
+      (e = this.reAt(RE_DIR_SYM, p)) >= 0 ||
+      (e = this.reAt(RE_DIR_V, p)) >= 0
     ) {
-      this.pop();
+      this.popState();
       this.emit(T.Dir, p, e);
     } else {
       return this.opener(c);
@@ -626,21 +626,21 @@ class AgentflowLexer extends Scanner {
       case LBRACE:
         return this.opener(c);
       case RBRACKET:
-        this.pop();
+        this.popState();
         if (d === RPAREN) return this.token(T.StadiumEnd, 2);
         if (d === RBRACKET) return this.token(T.SubroutineEnd, 2);
         return this.token(T.SQE, 1);
       case RPAREN:
-        this.pop();
+        this.popState();
         if (d === RBRACKET) return this.token(T.CylinderEnd, 2);
         if (d === RPAREN && this.text.charCodeAt(p + 2) === RPAREN)
           return this.token(T.DoubleCircleEnd, 3);
         return this.token(T.PE, 1);
       case PIPE:
-        this.pop();
+        this.popState();
         return this.token(T.Pipe, 1);
       case RBRACE:
-        this.pop();
+        this.popState();
         return this.token(T.DiamondStop, 1);
     }
     if (c === DQUOTE && this.isQuote(p)) {
@@ -668,7 +668,7 @@ class AgentflowLexer extends Scanner {
     }
     if (this.labelComment()) return true;
     if ((c === DASH || c === SLASH || c === RPAREN) && d === RPAREN) {
-      this.pop();
+      this.popState();
       return this.token(T.EllipseEnd, 2);
     }
     if (c === LPAREN || c === LBRACKET || c === LBRACE) return this.opener(c);
@@ -696,23 +696,23 @@ class AgentflowLexer extends Scanner {
     switch (c) {
       case LPAREN:
         if (!end) return this.opener(c);
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case LBRACKET:
       case LBRACE:
         return this.opener(c);
       case BACKSLASH:
         if (!end) return this.token(T.Text, 1);
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case SLASH:
         if (!end) return this.token(T.Text, 1);
-        this.pop();
+        this.popState();
         return this.token(T.InvTrapEnd, 2);
       case RBRACKET:
       case RPAREN:
         if (!end) return false;
-        this.pop();
+        this.popState();
         return this.token(T.TrapEnd, 2);
       case RBRACE:
         return false;
@@ -720,7 +720,7 @@ class AgentflowLexer extends Scanner {
         if (this.percentEnds(p)) return this.labelComment();
     }
     if ((c === QUESTION || c === EQUALS) && end) {
-      this.pop();
+      this.popState();
       return this.token(T.TrapEnd, 2);
     }
     let q = p + 1;
@@ -742,7 +742,7 @@ class AgentflowLexer extends Scanner {
     }
     const { link } = this.links(p);
     if (link >= 0) {
-      this.pop();
+      this.popState();
       return this.token(T.Link, link - p);
     }
     if (c === DASH && this.text.charCodeAt(p + 1) === DASH) return false;
@@ -768,7 +768,7 @@ class AgentflowLexer extends Scanner {
     if (c === DQUOTE && this.isQuote(this.p)) {
       this.quote();
     } else if (isSpace(c)) {
-      this.pop();
+      this.popState();
       this.p += c === CR && this.text.charCodeAt(this.p + 1) === LF ? 2 : 1;
     } else {
       let q = this.p + 1;
@@ -780,11 +780,11 @@ class AgentflowLexer extends Scanner {
 
   private callbackName(c: number): boolean {
     if (c === LPAREN) {
-      const e = this.at(RE_EMPTY_CALL, this.p);
-      this.pop();
+      const e = this.reAt(RE_EMPTY_CALL, this.p);
+      this.popState();
       if (e >= 0) this.p = e;
       else {
-        this.push(S.callbackargs);
+        this.pushState(S.callbackargs);
         this.p++;
       }
     } else this.emit(T.CallbackName, this.p, this.find('(', this.p));
@@ -793,7 +793,7 @@ class AgentflowLexer extends Scanner {
 
   private callbackArgs(c: number): boolean {
     if (c === RPAREN) {
-      this.pop();
+      this.popState();
       this.p++;
     } else this.emit(T.CallbackArgs, this.p, this.find(')', this.p));
     return true;
@@ -801,11 +801,11 @@ class AgentflowLexer extends Scanner {
 
   private shapeData(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
-      this.push(S.shapeDataStr);
+      this.pushState(S.shapeDataStr);
       return this.token(T.ShapeData, 1);
     }
     if (c === RBRACE) {
-      this.pop();
+      this.popState();
       return this.token(T.ShapeDataEnd, 1);
     }
     if (c === CARET) return false;
@@ -821,7 +821,7 @@ class AgentflowLexer extends Scanner {
 
   private shapeDataStr(c: number): boolean {
     if (c === DQUOTE && this.isQuote(this.p)) {
-      this.pop();
+      this.popState();
       return this.token(T.ShapeData, 1);
     }
     this.emit(T.ShapeData, this.p, this.nextQuote(this.p));

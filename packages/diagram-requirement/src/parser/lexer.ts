@@ -165,7 +165,7 @@ export function requirementView(
 }
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
-const OPTIONS: StateLexerOptions = { charsPerToken: 4, foldCrlf: true, dropSpace: true };
+const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'fold', dropSpace: true };
 
 /**
  * Lex the requirement body `src[from…]`. `from` and `view` come from {@link requirementView}.

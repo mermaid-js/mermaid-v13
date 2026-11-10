@@ -71,7 +71,7 @@ function lexerText(text: string): string {
 }
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
-const OPTIONS: StateLexerOptions = { charsPerToken: 8, foldCrlf: false, dropSpace: true };
+const OPTIONS: StateLexerOptions = { charsPerToken: 8, crlf: 'keep', dropSpace: true };
 
 /**
  * Lex the timeline body `src[from…]`. `view` comes from {@link sourceView}. With a `probe`, the
