@@ -1,0 +1,1 @@
+1:1-1:19 "RAILROAD-EBNF-BETA" error UNEXPECTED: Expected `railroad-ebnf-beta`, got `RAILROAD-EBNF-BETA`; mermaid@12 detects the diagram whatever the case, then its parser reads the keyword in lower case only: write `railroad-ebnf-beta`.

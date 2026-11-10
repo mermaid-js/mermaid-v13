@@ -1,0 +1,112 @@
+(** Railroad diagram syntax, ABNF notation (R-PARSE-9, D54, D512): the normative grammar of
+`railroad-abnf-beta` diagrams.
+
+The hand-written parser in `src/parser/abnf/` implements it; `tools/gen-grammar` builds a
+reference parser, a sentence generator, highlighters and the syntax reference page from it.
+mermaid@12 decides what is valid, this file is fixed to match, and the parser must match this
+file (DESIGN §4.4). mermaid@12 parsed the ABNF notation with Langium (`railroad-abnf.langium` in
+`@mermaid-js/parser`, which does not import `common.langium`); the rules below are its token
+rules, in its order, and its grammar. The other notations have grammars of their own
+(`railroad.ebnf`, `railroad-ebnf.ebnf`, `railroad-peg.ebnf`).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive.
+
+`;` ends a rule only at the end of its line: followed by anything else on its line, a blank
+too, it starts a comment to the line end, as in mermaid@12 (D513). A name is letters, digits
+and `-` (no `_`), and a string has no escapes. A name that starts with `title` reads as a
+`title` line. Line breaks are blanks. *)
+
+@lexer
+
+(** `railroad-abnf-beta`: starts a railroad diagram in the ABNF notation, followed by a blank,
+a line break or `%%`. *)
+HEADER                    /railroad-abnf-beta(?:(?=%%)|(?!\S))/ :keyword ;
+(** `=` between a rule's name and its definition. *)
+EQUALS                    /=/                              :operator ;
+(** `;` and the rest of its line, when the line goes on: a comment. mermaid@12 tries it as the
+longer alternative of `;`, so it is listed first. *)
+SEMI_COMMENT              /;[^\n\r]+/                     :comment ;
+(** `;` at the end of a line: the end of a rule. *)
+SEMI                      /;/                              :punctuation ;
+(** `a / b`: one of the alternatives. *)
+SLASH                     /\//                             :operator ;
+(** `( … )`: a group, drawn as its contents. *)
+LPAREN                    /\(/                             :punctuation ;
+RPAREN                    /\)/                             :punctuation ;
+(** `[ … ]`: optional contents: a bypass above. *)
+LBRACKET                  /\[/                             :punctuation ;
+RBRACKET                  /\]/                             :punctuation ;
+(** `title …`: the diagram's title, the rest of the line (quotes around it are dropped). It is
+not drawn. *)
+TITLE                     /title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line. *)
+ACC_TITLE                 /accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /accDescr\s*\{[\s\S]*?\}/        :keyword ;
+(** A rule's name: a letter, then letters, digits and `-`. A name in an expression is a
+reference to that rule, drawn in a square box. *)
+ID                        /[A-Za-z][A-Za-z0-9-]*/          :variable ;
+(** `"…"`: literal text, drawn in a rounded box as written (no escapes). *)
+STRING                    /"[^"]*"/                        :string ;
+(** `%x41`, `%d65-90`, `%b1.0.1`: a value in hexadecimal, decimal or binary, with a range or a
+list, drawn as written. *)
+NUM_VAL                   /%[xXdDbB][0-9A-Fa-f]+(?:[-.][0-9A-Fa-f]+)*/ :number ;
+(** `n*m` before an element: `n` to `m` times (`*` alone: any number, `1*`: once or more,
+`*1`: at most once). Only whether `n` is 0 shows in the drawing. *)
+REPEAT                    /[0-9]*\*[0-9]*/                  :number ;
+(** `n` before an element: exactly `n` times. *)
+EXACT_REPEAT              /[0-9]+/                         :number ;
+-                         /[\t \r\n]+/ ;
+(** A `---` … `---` block inside the body: skipped. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /%%[^\n\r]*/                    :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `railroad-abnf-beta`, then `title`, `accTitle` and `accDescr` lines, then rules.
+The `YAML`, `DIRECTIVE`, `COMMENT` and `SEMI_COMMENT` tokens of the lexer are skipped before
+parsing. *)
+abnf = Header { text } { Rule } EOF ;
+Header @Header = HEADER ;
+text = Title | AccTitle | AccDescr ;
+
+(** `name = … ;`: a rule, drawn as a track from its name. A name defined twice is drawn
+twice. *)
+Rule @Rule = ID EQUALS alternation SEMI ;
+
+(** Alternatives, one of which is taken; one alternative is itself. *)
+alternation = concatenation { SLASH concatenation } ;
+(** Elements one after another; one element is itself. *)
+concatenation = element { element } ;
+(** An element and how often it repeats: `0*1` and `*1` make it optional. *)
+element = [ REPEAT | EXACT_REPEAT ] primary ;
+primary = STRING | NUM_VAL | ID
+        | LPAREN alternation RPAREN
+        | LBRACKET alternation RBRACKET ;
+
+(** `title Grammar`: the title (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

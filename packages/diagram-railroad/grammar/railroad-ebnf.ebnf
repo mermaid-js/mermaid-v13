@@ -1,0 +1,130 @@
+(** Railroad diagram syntax, EBNF notation (R-PARSE-9, D54, D512): the normative grammar of
+`railroad-ebnf-beta` diagrams.
+
+The hand-written parser in `src/parser/ebnf/` implements it; `tools/gen-grammar` builds a
+reference parser, a sentence generator, highlighters and the syntax reference page from it.
+mermaid@12 decides what is valid, this file is fixed to match, and the parser must match this
+file (DESIGN §4.4). mermaid@12 parsed the EBNF notation with Langium (`railroad-ebnf.langium` in
+`@mermaid-js/parser`, which does not import `common.langium`); the rules below are its token
+rules, in its order, and its grammar. The other notations have grammars of their own
+(`railroad.ebnf`, `railroad-abnf.ebnf`, `railroad-peg.ebnf`).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive.
+
+Three punctuation characters give way to a longer token that starts with them, as in
+mermaid@12: `(` and `*` open a comment, `? … ?` (no `;` or `?` inside, and something other than
+blanks) is a special sequence, and a `---` line block is skipped. Elsewhere `?` is the
+optional postfix and `-` the exception. A name that starts with `title` reads as a `title`
+line. Line breaks are blanks: a rule may span lines, and ends at its `;`. *)
+
+@lexer
+
+(** `railroad-ebnf-beta`: starts a railroad diagram in the EBNF notation, followed by a blank,
+a line break or `%%`. *)
+HEADER                    /railroad-ebnf-beta(?:(?=%%)|(?!\S))/ :keyword ;
+(** `::=` between a rule's name and its definition, as `=`. *)
+DEFINE                    /::=/                            :operator ;
+(** `=` between a rule's name and its definition. *)
+EQUALS                    /=/                              :operator ;
+(** `;` at the end of a rule. *)
+SEMI                      /;/                              :punctuation ;
+(** `a | b`: one of the alternatives. *)
+PIPE                      /\|/                             :operator ;
+(** `a , b`: one after the other, as `a b`. *)
+COMMA                     /,/                              :punctuation ;
+(** An ISO 14977 comment, over lines: from `(` and `*` to the next `*` and `)`. mermaid@12
+tries it as the longer alternative of `(`, so it is listed first. *)
+ISO_COMMENT               /\(\*[\s\S]*?\*\)/               :comment ;
+(** `( … )`: a group, drawn as its contents. *)
+LPAREN                    /\(/                             :punctuation ;
+RPAREN                    /\)/                             :punctuation ;
+(** `[ … ]`: optional contents: a bypass above. *)
+LBRACKET                  /\[/                             :punctuation ;
+RBRACKET                  /\]/                             :punctuation ;
+(** `{ … }`: the contents any number of times, or not at all. *)
+LBRACE                    /\{/                             :punctuation ;
+RBRACE                    /\}/                             :punctuation ;
+(** `? … ?`: a special sequence, its text trimmed, drawn in a dashed box. No `;` or `?` inside,
+and something other than blanks; it may span lines. mermaid@12 tries it as the longer
+alternative of `?`, so it is listed first. *)
+SPECIAL                   /\?\s*[^?\s;][^?;]*\?/           :string ;
+(** `e?`: `e` or nothing. *)
+QUESTION                  /\?/                             :operator ;
+(** `e*`: `e` any number of times, or not at all. Postfixes stack: `e?*`. *)
+STAR                      /\*/                             :operator ;
+(** `e+`: `e` once or more. *)
+PLUS                      /\+/                             :operator ;
+(** A `---` … `---` block inside the body: skipped. mermaid@12 tries it as the longer
+alternative of `-`, so it is listed first. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** `a - b`: `a` except `b`, drawn as `a`, a `-` box and `b`. *)
+MINUS                     /-/                              :operator ;
+(** `title …`: the diagram's title, the rest of the line (quotes around it are dropped). It is
+not drawn. *)
+TITLE                     /title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** `accTitle: …`: the accessible title of the diagram, the rest of the line. *)
+ACC_TITLE                 /accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the diagram. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /accDescr\s*\{[\s\S]*?\}/        :keyword ;
+(** A rule's name: a letter or `_`, then letters, digits, `_` and `-`. A name in an expression
+is a reference to that rule, drawn in a square box. *)
+ID                        /[A-Z_a-z][\w-]*/                :variable ;
+(** `"…"` or `'…'`: `\n`, `\r` and `\t` are a line feed, a carriage return and a tab, and `\`
+before any other character is that character. A string may span lines. *)
+STRING                    /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/ :string ;
+-                         /[\t \r\n]+/ ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /%%[^\n\r]*/                    :comment ;
+(** `/* … */`: a comment, over lines. *)
+BLOCK_COMMENT             /\/\*[\s\S]*?\*\//               :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A diagram is `railroad-ebnf-beta`, then `title`, `accTitle` and `accDescr` lines, then rules.
+The `YAML`, `DIRECTIVE`, `COMMENT`, `BLOCK_COMMENT` and `ISO_COMMENT` tokens of the lexer are
+skipped before parsing. *)
+ebnf = Header { text } { Rule } EOF ;
+Header @Header = HEADER ;
+text = Title | AccTitle | AccDescr ;
+
+(** `name = … ;` or `name ::= … ;`: a rule, drawn as a track from its name. A name defined twice
+is drawn twice. *)
+Rule @Rule = ID ( EQUALS | DEFINE ) choice SEMI ;
+
+(** Alternatives, one of which is taken; one alternative is itself. *)
+choice = sequence { PIPE sequence } ;
+(** Terms one after another, with or without `,` between; one term is itself. *)
+sequence = term { [ COMMA ] term } ;
+(** A primary and its postfixes, each applying to what is before it. *)
+term = primary { postfix } ;
+postfix = QUESTION | STAR | PLUS | MINUS primary ;
+primary = STRING | ID | SPECIAL
+        | LPAREN choice RPAREN
+        | LBRACKET choice RBRACKET
+        | LBRACE choice RBRACE ;
+
+(** `title Grammar`: the title (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

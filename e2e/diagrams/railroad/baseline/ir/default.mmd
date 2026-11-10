@@ -1,0 +1,10 @@
+---
+description: >-
+  One representative railroad diagram in the classic family's `default` theme. IR (`railroad-beta`): a five-way choice, an optional, zeroOrMore and oneOrMore loops, nested sequences, terminals, nonterminals and a special.
+config:
+  theme: default
+---
+railroad-beta
+value = choice(nonterminal("object"), nonterminal("array"), nonterminal("number"), terminal("true"), terminal("null")) ;
+object = sequence(terminal("{"), optional(sequence(nonterminal("member"), zeroOrMore(sequence(terminal(","), nonterminal("member"))))), terminal("}")) ;
+number = sequence(optional(terminal("-")), oneOrMore(special("digit"))) ;

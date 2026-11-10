@@ -1,0 +1,12 @@
+---
+description: IR with a title, an accessible title and a multi-line accessible description; v12 stores the title and never draws it.
+---
+railroad-beta
+title Signed numbers
+accTitle:   A signed integer
+accDescr {
+  An optional sign,
+     then one or more digits.
+}
+number = sequence(optional(choice(terminal("+"), terminal("-"))), oneOrMore(nonterminal("digit"))) ;
+digit = choice(terminal("0"), terminal("1"), terminal("2")) ;

@@ -1,0 +1,16 @@
+@ 2:1  |Expr <- Sum !Expr . / ("+" Sum)* ;
+  rule:Expr 2:1-2:35 "Expr <- Sum !Expr . / (\"+\" Sum)* ;"
+@ 2:11  Expr <- Su|m !Expr . / ("+" Sum)* ;
+  rule:Expr/0/0/0 2:9-2:12 "Sum"
+  rule:Expr/0/0 2:9-2:20 "Sum !Expr ."
+  rule:Expr/0 2:9-2:33 "Sum !Expr . / (\"+\" Sum)*"
+  rule:Expr 2:1-2:35 "Expr <- Sum !Expr . / (\"+\" Sum)* ;"
+@ 2:16  Expr <- Sum !Ex|pr . / ("+" Sum)* ;
+  rule:Expr/0/0/1 2:13-2:18 "!Expr"
+  rule:Expr/0/0 2:9-2:20 "Sum !Expr ."
+  rule:Expr/0 2:9-2:33 "Sum !Expr . / (\"+\" Sum)*"
+  rule:Expr 2:1-2:35 "Expr <- Sum !Expr . / (\"+\" Sum)* ;"
+@ 2:32  Expr <- Sum !Expr . / ("+" Sum)|* ;
+  rule:Expr/0/1 2:23-2:33 "(\"+\" Sum)*"
+  rule:Expr/0 2:9-2:33 "Sum !Expr . / (\"+\" Sum)*"
+  rule:Expr 2:1-2:35 "Expr <- Sum !Expr . / (\"+\" Sum)* ;"

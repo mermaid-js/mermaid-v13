@@ -1,0 +1,289 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-railroad-ebnf",
+  "scopeName": "source.mermaid-railroad-ebnf",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-railroad-ebnf"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-railroad-ebnf"
+    },
+    "rule-0": {
+      "match": "railroad-ebnf-beta(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-railroad-ebnf"
+    },
+    "rule-1": {
+      "match": "::=",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-2": {
+      "match": "=",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-3": {
+      "match": ";",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-4": {
+      "match": "\\|",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-5": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-6": {
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "name": "comment.line.mermaid-railroad-ebnf"
+    },
+    "rule-7": {
+      "match": "\\(",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-8": {
+      "match": "\\)",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-9": {
+      "match": "\\[",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-10": {
+      "match": "\\]",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-11": {
+      "match": "\\{",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-12": {
+      "match": "\\}",
+      "name": "punctuation.definition.mermaid-railroad-ebnf"
+    },
+    "rule-13": {
+      "match": "\\?\\s*[^?\\s;][^?;]*\\?",
+      "name": "string.quoted.mermaid-railroad-ebnf"
+    },
+    "rule-14": {
+      "match": "\\?",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-15": {
+      "match": "\\*",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-16": {
+      "match": "\\+",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-17": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-railroad-ebnf"
+    },
+    "rule-18": {
+      "match": "-",
+      "name": "keyword.operator.mermaid-railroad-ebnf"
+    },
+    "rule-19": {
+      "match": "title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-railroad-ebnf"
+    },
+    "rule-20": {
+      "match": "accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-railroad-ebnf"
+    },
+    "rule-21": {
+      "match": "accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-railroad-ebnf"
+    },
+    "rule-22": {
+      "begin": "accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-railroad-ebnf"
+    },
+    "rule-23": {
+      "match": "[A-Z_a-z][\\w-]*",
+      "name": "variable.other.mermaid-railroad-ebnf"
+    },
+    "rule-24": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-railroad-ebnf"
+    },
+    "rule-25": {
+      "match": "[\\t \\r\\n]+"
+    },
+    "rule-26": {
+      "match": "%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-railroad-ebnf"
+    },
+    "rule-27": {
+      "match": "%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-railroad-ebnf"
+    },
+    "rule-28": {
+      "begin": "\\/\\*",
+      "end": "\\*\\/",
+      "name": "comment.line.mermaid-railroad-ebnf"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-railroad-ebnf"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-railroad-ebnf"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-railroad-ebnf"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-railroad-ebnf"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

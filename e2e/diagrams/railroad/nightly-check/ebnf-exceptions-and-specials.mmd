@@ -1,0 +1,9 @@
+---
+description: EBNF exceptions (A - B), special sequences, one spanning two lines, and a group.
+---
+railroad-ebnf-beta
+character = ? any Unicode character ? ;
+letter = character - digit - "_" ;
+comment = "(*" , { character - ( "*" | ")" ) } , "*)" ;
+blank = ? a space,
+  a tab ? ;

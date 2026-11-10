@@ -1,0 +1,235 @@
+{
+  "tokenPostfix": ".mermaid-railroad-abnf",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "spanRule12": [
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\})[\\s\\S])+",
+        {
+          "token": "keyword"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "railroad-abnf-beta(?:(?=%%)|(?!\\S))",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "=",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ";[^\\n\\r]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        ";",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\/",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "\\(",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\[",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\]",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescr\\s*\\{",
+        {
+          "token": "keyword",
+          "next": "@spanRule12"
+        }
+      ],
+      [
+        "[A-Za-z][A-Za-z0-9-]*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"[^\"]*\"",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "%[xXdDbB][0-9A-Fa-f]+(?:[-.][0-9A-Fa-f]+)*",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "[0-9]*\\*[0-9]*",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "[0-9]+",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "[\\t \\r\\n]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "%%[^\\n\\r]*",
+        {
+          "token": "comment"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

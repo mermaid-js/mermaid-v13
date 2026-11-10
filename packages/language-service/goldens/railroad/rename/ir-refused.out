@@ -1,0 +1,5 @@
+@ 3:3  ex|pr = nonterminal("term") ;
+  prepare: 3:1-3:5 "expr"; rename to "titled":
+  refused: `titled` starts with `title`, which every notation reads as a `title` line, so it cannot name a rule.
+@ 5:8  x = ter|minal("2") ;
+  prepare: refused: There is no id or class name here to rename.
