@@ -61,13 +61,12 @@ describe('the C4 layout on the cell profile (#545)', () => {
 });
 
 describe('the C4 ascii hook (#545)', () => {
-  it('lays a px layout out again for the grid, as the API does', () => {
+  it('draws a px layout as it is, at 8 × 16 px a cell', () => {
     const { parsed, ctx } = context(SRC);
     const px = layoutC4(parsed.model, ctx);
-    const cells = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
-    const tctx = { ...ctx, warn: () => undefined };
-    expect(ascii(parsed.model, px, tctx)).toBe(ascii(parsed.model, cells, tctx));
-    expect(ascii(parsed.model, px, tctx)).toContain('─── Pays ───►');
+    expect(px.cell).toBeUndefined();
+    const text = ascii(parsed.model, px, { config: ctx.config, warn: () => undefined });
+    for (const part of ['Alice', '[Person]', 'Billing', 'Pays', '►']) expect(text).toContain(part);
   });
 
   it('cuts a line wider than its box with …', () => {
