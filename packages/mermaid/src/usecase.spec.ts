@@ -126,16 +126,33 @@ describe('usecase diagrams through the public API (#567)', () => {
       expect(codes(r), JSON.stringify(section)).toEqual([]);
       return r.svg;
     };
-    for (const section of [
-      { wrappingWidth: 30 },
-      { minNodeWidth: 200 },
-      { nodeSpacing: 120 },
-      { rankSpacing: 150 },
-      { diagramPadding: 60 },
-      { actorFontSize: 22 },
-      { usecaseFontSize: 20 },
-    ])
-      expect(await set(section), JSON.stringify(section)).not.toBe(plain);
+    const size = (svg: string): number[] => box(svg)!.split(' ').slice(2).map(Number);
+    const [width, height] = size(plain);
+    // The flow runs LR in three ranks (User; Login over Pay; Auth), the defaults 120/50/50/20.
+    // Each oval is its block plus 20 a side: at 200 the two ranks of use cases are 80 wider each.
+    expect(size(await set({ minNodeWidth: 200 }))).toEqual([width! + 160, height]);
+    // Two rank gaps 100 longer each; one gap between Login and Pay 70 longer.
+    expect(size(await set({ rankSpacing: 150 }))).toEqual([width! + 200, height]);
+    expect(size(await set({ nodeSpacing: 120 }))).toEqual([width, height! + 70]);
+    expect(size(await set({ diagramPadding: 60 }))).toEqual([width! + 80, height! + 80]);
+    // Pay's label in lines of at most 30px: one word (or part of one) a line.
+    const lines = (svg: string): string[] =>
+      [
+        ...(/data-id="Pay"[^>]*>(.*?)<\/text>/.exec(svg)?.[1] ?? '').matchAll(
+          /<tspan[^>]*>([^<]*)</g
+        ),
+      ].map((t) => t[1]!);
+    expect(lines(plain)).toEqual(['Pay for the whole', 'order with a saved', 'card']);
+    expect(lines(await set({ wrappingWidth: 30 })).slice(0, 4)).toEqual([
+      'Pay',
+      'for',
+      'the',
+      'whol',
+    ]);
+    expect(textOf(await set({ actorFontSize: 22 }), 'usecase-actor-label')).toContain(
+      'font-size="22"'
+    );
+    expect(textOf(await set({ usecaseFontSize: 20 }), 'usecase-label')).toContain('font-size="20"');
     expect(textOf(await set({ actorFontWeight: 'bold' }), 'usecase-actor-label')).toContain(
       'font-weight="700"'
     );
@@ -177,7 +194,18 @@ describe('usecase diagrams through the public API (#567)', () => {
       '%%{init: {"usecase": {"colorScheme": "rotate"}}}%%\n' + TEXT
     );
     expect(rotate.warnings).toEqual([]);
-    expect(rotate.svg).not.toBe(plain);
+    // redux-color: by role every oval takes the usecase pair; rotated, each its own slot (the
+    // actor slot 0, the use cases after it).
+    const ovals = (svg: string): string[] =>
+      [...svg.matchAll(/<ellipse [^>]*fill="([^"]+)" stroke="([^"]+)"/g)].map(
+        (o) => `${o[1]} ${o[2]}`
+      );
+    expect(ovals(plain)).toEqual(Array(3).fill('var(--_ucb) var(--_ucr)'));
+    expect(ovals(rotate.svg)).toEqual(['#f0fdfa #2dd4bf', '#fff7ed #fb923c', '#ecfeff #22d3ee']);
+    expect(rotate.svg).toContain('class="usecase-actor-stick"');
+    expect(/class="usecase-actor-stick"[^>]*fill="#fdf4ff" stroke="#e879f9"/.test(rotate.svg)).toBe(
+      true
+    );
     const unknown = await m.render('u8', '%%{init: {"usecase": {"colorScheme": "x"}}}%%\n' + TEXT);
     expect(codes(unknown)).toEqual(['USECASE_CONFIG_IGNORED']);
     expect(unknown.svg).toBe(plain);

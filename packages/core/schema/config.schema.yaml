@@ -5237,12 +5237,12 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: >-
-            Defaults to `layered`, not v12's `elk` (R-LAYOUT-7: ELK is never the default; v12
-            laid usecase out with the top-level `layout`, `elk` in 12.2.0). Set here, it wins over
-            the top-level `layout` for usecase diagrams. `dagre` draws with `layered`; `compass`
-            takes its sides from `direction` (D327); `elk` and `elk.<algorithm>` are drawn by
-            `@mermaid-js/layout-elk` once it is registered, and without it draw with `layered`
-            and add one `ELK_NOT_INSTALLED` warning (D173).
+            No usecase default: the top-level `layout` applies, `layered` (R-LAYOUT-7: ELK is
+            never the default; 12.2.0 laid usecase out with `elk`). New in v13: v12 read only the
+            top-level `layout`; set here, it wins over it for usecase diagrams. `dagre` draws with
+            `layered`; `compass` takes its sides from `direction` (D327); `elk` and
+            `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered, and
+            without it draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173).
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
         x-mermaid:
@@ -5255,32 +5255,22 @@ $defs:
       wrappingWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/wrappingWidth'
         default: 120
-        x-mermaid:
+        x-mermaid: &usecaseLength
           status: honoured
           since: 13.0.0
           reason: >-
             A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 120 and adds one `USECASE_CONFIG_IGNORED` warning.
+            the default and adds one `USECASE_CONFIG_IGNORED` warning.
       minNodeWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/minNodeWidth'
         default: 120
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 120 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       actorFontSize:
         description: Font size for actor labels
         type: number
         minimum: 1
         default: 14
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 14 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       actorFontFamily:
         description: |
           Font family for actor labels.
@@ -5320,12 +5310,7 @@ $defs:
         type: number
         minimum: 1
         default: 12
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 12 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       usecaseFontFamily:
         description: |
           Font family for usecase labels.
@@ -5361,34 +5346,19 @@ $defs:
         type: number
         minimum: 0
         default: 50
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 50 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       rankSpacing:
         description: Spacing between nodes on different levels
         type: number
         minimum: 0
         default: 50
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 50 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       diagramPadding:
         description: Padding around the entire diagram
         type: number
         minimum: 0
         default: 20
-        x-mermaid:
-          status: honoured
-          since: 13.0.0
-          reason: >-
-            A number, or a numeric string, from the minimum below 10000; anything else draws with
-            the default 20 and adds one `USECASE_CONFIG_IGNORED` warning.
+        x-mermaid: *usecaseLength
       colorScheme:
         description: |
           How a use case diagram takes its colours from the active theme.

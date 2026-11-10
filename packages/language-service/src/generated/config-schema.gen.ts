@@ -6515,7 +6515,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Defaults to `layered`, not v12's `elk` (R-LAYOUT-7: ELK is never the default; v12 laid usecase out with the top-level `layout`, `elk` in 12.2.0). Set here, it wins over the top-level `layout` for usecase diagrams. `dagre` draws with `layered`; `compass` takes its sides from `direction` (D327); `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered, and without it draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173)."
+            "reason": "No usecase default: the top-level `layout` applies, `layered` (R-LAYOUT-7: ELK is never the default; 12.2.0 laid usecase out with `elk`). New in v13: v12 read only the top-level `layout`; set here, it wins over it for usecase diagrams. `dagre` draws with `layered`; `compass` takes its sides from `direction` (D327); `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered, and without it draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173)."
           }
         },
         "look": {
@@ -6533,7 +6533,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 120 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "minNodeWidth": {
@@ -6542,7 +6542,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 120 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "actorFontSize": {
@@ -6553,7 +6553,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 14 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "actorFontFamily": {
@@ -6585,7 +6585,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 12 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "usecaseFontFamily": {
@@ -6617,7 +6617,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 50 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "rankSpacing": {
@@ -6628,7 +6628,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 50 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "diagramPadding": {
@@ -6639,7 +6639,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default 20 and adds one `USECASE_CONFIG_IGNORED` warning."
+            "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
         "colorScheme": {
