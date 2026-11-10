@@ -54,6 +54,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
   treemap: { load: () => import('./generated/treemap.monarch.js').then((m) => m.default) },
   treeView: { load: () => import('./generated/treeView.monarch.js').then((m) => m.default) },
+  usecase: { load: () => import('./generated/usecase.monarch.js').then((m) => m.default) },
   venn: { load: () => import('./generated/venn.monarch.js').then((m) => m.default) },
   wardley: { load: () => import('./generated/wardley.monarch.js').then((m) => m.default) },
   xychart: { load: () => import('./generated/xychart.monarch.js').then((m) => m.default) },

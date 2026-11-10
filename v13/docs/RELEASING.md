@@ -32,6 +32,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-timeline` | The timeline plugin (SVG; `timeline`, `LR` and `TD`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-treemap` | The treemap plugin (SVG; `treemap`, `treemap-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-treeview` | The tree view plugin (SVG, and text output from `/ascii`; `treeView-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-usecase` | The usecase diagram plugin (SVG; `usecase-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-venn` | The Venn diagram plugin (SVG; `venn-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |

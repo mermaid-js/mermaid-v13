@@ -1,0 +1,20 @@
+@ 3:18  systemBoundary |Shop
+  prepare: 3:18-3:22 "Shop"; rename to "Store":
+  %% rename-to: Store
+  usecase-beta
+    systemBoundary Store
+      Login
+    end
+    class Store hot
+    json Data@{ "a": 1 }
+    Login --> Data
+@ 7:8  json |Data@{ "a": 1 }
+  prepare: 7:8-7:12 "Data"; rename to "Store":
+  %% rename-to: Store
+  usecase-beta
+    systemBoundary Shop
+      Login
+    end
+    class Shop hot
+    json Store@{ "a": 1 }
+    Login --> Store

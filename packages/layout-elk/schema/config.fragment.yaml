@@ -104,6 +104,11 @@ properties:
           and rounded corners are left as drawn, and a crossing too close to a
           bend gets no hop. `true` and `arc` draw an arc, `gap` breaks the line.
           Set to `false` to draw plain crossings.
+
+          ELK's override of the shared top-level `lineHops` (D537), which core
+          draws for every diagram: it applies when an ELK layout lays the
+          diagram out, set explicitly it wins over the top-level key, and a
+          top-level `lineHops: false` turns it off.
         oneOf:
           - type: boolean
           - type: string

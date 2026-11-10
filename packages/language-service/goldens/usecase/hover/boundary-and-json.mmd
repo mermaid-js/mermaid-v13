@@ -1,0 +1,7 @@
+usecase-beta
+  systemBoundary |Shop["The shop"]@{ type: package }
+    A
+    actor B
+  end
+  json |Order@{ "total": 10, "items": [1, 2] }
+  A --> Order

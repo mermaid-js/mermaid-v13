@@ -1,0 +1,47 @@
+@ 2:8  User |e1@--> Login
+  2:8-2:10 "e1"
+  | **relation** `e1`
+  |
+  | Association from `User` to `Login`, a point at the target · animated (fast)
+@ 4:10  User --|-> Logout
+  4:8-4:12 "--->"
+  | **`--->`**
+  |
+  | Association from `User` to `Logout`, a point at the target · 2 ranks long
+  |
+  | `-->` (and more dashes): an association with a point at the end.
+@ 5:19  User -- "pays" -|-o Pay
+  5:18-5:21 "--o"
+  | **`--o`**
+  |
+  | Association from `User` to `Pay`, a circle at the target · label `pays`
+  |
+  | `--o`: an association with a circle at the end.
+@ 6:10  Login .|.> : include Check
+  6:9-6:12 "..>"
+  | **`..>`**
+  |
+  | Include: `Login` includes `Check`
+  |
+  | `..>`: include or extend, `..> : include`.
+@ 7:18  Login ..> : ext|end Help
+  7:15-7:21 "extend"
+  | **`extend`**
+  |
+  | Extend: `Login` extends `Help`
+  |
+  | `extend` (any case): in `A ..> : extend B`, a use case extends another.
+@ 8:12  Admin --||> User
+  8:9-8:13 "--|>"
+  | **`--|>`**
+  |
+  | Generalization: `Admin` is a kind of `User`
+  |
+  | `--|>`: generalization, between two actors or two use cases.
+@ 9:10  User <-|-- Notify
+  9:8-9:12 "<---"
+  | **`<---`**
+  |
+  | Association from `User` to `Notify`, a point at the source · 2 ranks long
+  |
+  | `<---` and more dashes: a longer association with a point at the start.

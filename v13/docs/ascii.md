@@ -8,8 +8,10 @@ Only diagram types that declare `ascii` in their manifest support it. In 13.0 th
 flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
 relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
 sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
-[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa diagram (`ishikawa`,
-[below](#ishikawa-diagrams)), the block diagram (`block`, [below](#block-diagrams)) and `info`. See
+[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa
+diagram (`ishikawa`, [below](#ishikawa-diagrams)), the usecase
+diagram (`usecase-beta`, [below](#usecase-diagrams)), the block diagram (`block`,
+[below](#block-diagrams)) and `info`. See
 [the format matrix](format-matrix.md) for every type.
 
 ```
@@ -118,7 +120,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board, the Ishikawa diagram and the block diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram and the block diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -390,6 +392,45 @@ block
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`) and
   `emphasis` (bold and italic text).
 
+## Usecase diagrams
+
+The usecase diagram's text entry (`@mermaid-js/diagram-usecase/ascii`, #569, D320, D478) draws
+the same graph as SVG, laid out in cells with `layered` (any other `layout` warns
+`ASCII_DROPPED` `layout`, as for every graph type).
+
+```
+             ┌───── Shop ────┐
+             │               │
+             │   ╭───────╮   │                    ╭──────╮
+      ┌──────┼──►( Login )┄┄┄┼┄┄┄┄┄┄┄ «include» ┄►( Auth )
+  O   │      │   ╰───────╯   │                    ╰──────╯
+ /|\──┘      │               │
+ / \         └───────────────┘
+User──┐
+      │
+      │ ╭─────────────────────────╮
+      └►( Pay for the whole order )
+        (    with a saved card    )
+        ╰─────────────────────────╯
+```
+
+- Actors are a three-line figure (` O `, `/|\`, `/ \`) with the stereotype and the name under
+  it; a line across runs up to the figure or the name.
+- Use cases are boxes, rounded for an oval, whose label rows read `( label )` (`[ label ]` for a
+  rect); a stereotype is a line over the label. The top and bottom rows give a line from the side
+  a cell of its own off the corners.
+- Boundaries (`package` ones too) are frames with the title in the top border; notes are boxes
+  on a dotted line; JSON tables are key/value boxes, a divider between the columns.
+- Include and extend are dotted, labelled `«include»` and `«extend»` (`<<include>>`,
+  `<<extend>>` in the `ascii` charset, as stereotypes); generalization ends in `▷` (`|>`, or `-`
+  over `v` across a vertical line); association ends are `►`, `●` and `✕` (`>`, `o`, `x`).
+- `usecase.*` px lengths convert to cells only when set (8 × 16 px a cell; `nodeSpacing`,
+  `rankSpacing`, `wrappingWidth`, `minNodeWidth`); the defaults give the cell profile's own.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`),
+  `emphasis`, `glyph` (business marks, icons and the hollow and awesome figures, drawn as the
+  plain figure and boxes), `animation`, `config` (the `usecase` fonts, `colorScheme`,
+  `useMaxWidth` and `diagramPadding` set off their defaults) and `accessibility`.
+
 ## Packet diagrams
 
 The packet diagram's text entry (`@mermaid-js/diagram-packet/ascii`, D347) draws from the bit
@@ -519,7 +560,7 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's, the block diagram's or info's)
+packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's or info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

@@ -1,0 +1,23 @@
+---
+title: Fonts and spacing
+config:
+  usecase:
+    actorFontSize: 18
+    actorFontWeight: bold
+    actorFontFamily: Georgia, serif
+    usecaseFontSize: 15
+    usecaseFontWeight: bold
+    wrappingWidth: 90
+    minNodeWidth: 60
+    nodeSpacing: 80
+    rankSpacing: 100
+    diagramPadding: 40
+    useMaxWidth: false
+description: every usecase length, font and width key set, the front-matter title drawn above (D472); the use case family is unset, so it is the theme's fontFamily (D132)
+---
+usecase-beta
+  direction TB
+  actor Customer
+  Customer --> Browse("Browse the whole catalogue by category")
+  Customer --> Pay
+  Pay ..> : include Verify("Verify the card")

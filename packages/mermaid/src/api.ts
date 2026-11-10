@@ -68,6 +68,7 @@ import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
   isElkName,
+  LINE_HOPS,
   Registry,
   type AnyPlugin,
   layoutName,
@@ -229,6 +230,8 @@ interface Analysis {
   readonly prepared: Prepared;
   /** The front-matter title, for text output (D82). */
   readonly title?: string;
+  /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
+  readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
 }
 
 /** What `detect` found, for a type with a plugin package. */
@@ -288,6 +291,9 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
     const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
   }
+  // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
+  // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
+  if (!text && !registry.hops && config.lineHops) missing.push({ kind: 'layout', name: LINE_HOPS });
   // Text output draws no colours, so it needs no theme (D82).
   for (const name of text ? [] : themeNames(config)) {
     if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
@@ -431,6 +437,7 @@ export function createMermaid(
       plugin,
       prepared: { diagramType: detected.type, config, parse, warnings },
       ...(title !== undefined ? { title } : {}),
+      sources: [hit.site.site, front, ...directives],
     };
   }
 
@@ -788,13 +795,16 @@ export function createMermaid(
       units: pxProfile,
       width: options?.availableWidth,
     });
+    // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
+    const edges = registry.hops?.(analysis);
     const renderHooks = hooksFor(analysis);
     if (renderHooks.size === 0) {
-      const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
+      const drawn = drawDiagram(plugin, prepared.parse.model, ctx, undefined, edges);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
     }
     const run = renderHooks.start(ctx, plugin.id);
-    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
+    const hooked = { run, ast: prepared.parse.ast };
+    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, hooked, edges);
     const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
     if (run.mounts) result.bindFunctions = (element) => run.afterMount(element, result);

@@ -141,7 +141,16 @@ properties:
         `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and
         `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in
         both families: the background `background`, the other colours `primaryTextColor`, the
-        palette `plotColorArray` (each theme's own ten, D381). "padding" is `flowchart.padding`. Plain `redux` and
+        palette `plotColorArray` (each theme's own ten, D381). The usecase diagram's eight
+        (`usecaseActorBkg`, `usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`,
+        `usecaseBoundaryBkg`, `usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`)
+        are the same rules in both families, keyed by the palette, not the family (D474): where
+        the theme or the author carries a palette, `borderColorArray` slots 5, 1, 10 and 2 for the
+        actor and use case borders and the include and extend lines and `bkgColorArray` slots 5
+        and 1 for the two fills (an empty `bkgColorArray`, as `redux-dark-color`'s, keeps the
+        fallback); else `actorBkg`, `actorBorder`, `mainBkg`, `nodeBorder` and `lineColor`; the
+        boundaries `clusterBkg` and `clusterBorder` (redux-color's own boundary grey `#FAFAFC` is
+        not kept, D541). "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`,
         `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and
         `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner
@@ -827,6 +836,31 @@ properties:
       status: honoured
       since: 13.0.0
       reason: "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
+  lineHops:
+    description: |
+      Draws edge crossings as small arcs ("hops") or breaks in the line, so it
+      is clear which line passes over which where two edges meet. Every
+      diagram that draws edges reads it.
+
+      Of a horizontal and a vertical run, the horizontal one gives way;
+      otherwise the later edge does. Only straight runs carry hops: curves
+      and rounded corners are left as drawn, and a crossing too close to a
+      bend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the
+      line. Off by default.
+
+      A layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;
+      `elk.lineHops`, default `true`) applies when that engine lays the
+      diagram out, so those layouts hop by default. Precedence: the engine
+      key when set explicitly, then this key when set explicitly, then the
+      engine's default. Setting this key to `false` turns hops off
+      everywhere, engine keys included.
+    type: [boolean, string]
+    enum: [false, true, 'arc', 'gap']
+    default: false
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
   maxTextSize:
     description: The maximum allowed size of the users text diagram
     type: number
@@ -1176,7 +1210,7 @@ properties:
     x-mermaid: { status: honoured, since: 13.0.0 }
   usecase:
     $ref: '#/$defs/UsecaseDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   venn:
     $ref: '#/$defs/VennDiagramConfig'
     x-mermaid: { status: honoured, since: 13.0.0 }
@@ -4474,12 +4508,14 @@ $defs:
           Renders edge crossings as small arcs ("hops") or visible gaps so that
           overlapping edges are easier to read. Set to `false` to disable. Edges
           rendered as curves are skipped to avoid corrupting the geometry.
+          Applies whenever the `swimlane` layout lays the diagram out, over the
+          shared top-level `lineHops` unless that is `false` (D537).
         oneOf:
           - type: boolean
           - type: string
             enum: ['arc', 'gap']
         default: 'arc'
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       ignoreCrossLaneEdges:
         description: |
           Ignores edges that cross swimlane boundaries during swimlane layer
@@ -5317,7 +5353,40 @@ $defs:
       theme:
         $ref: '#/$defs/BaseDiagramConfig/properties/theme'
         default: 'redux-color'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12's default: a usecase diagram with no theme set draws in `redux-color`. A `theme`
+            from `initialize()` or the diagram text wins over this default; set here, it wins
+            over the top-level `theme` for usecase diagrams (a diagram section beats the top
+            level within a config layer).
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the usecase renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `false` gives the root its drawn width and height; any other value keeps
+            `width="100%"` and a `max-width`.
+      layout:
+        $ref: '#/$defs/BaseDiagramConfig/properties/layout'
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            No usecase default: the top-level `layout` applies, `layered` (R-LAYOUT-7: ELK is
+            never the default; 12.2.0 laid usecase out with `elk`). New in v13: v12 read only the
+            top-level `layout`; set here, it wins over it for usecase diagrams. `dagre` draws with
+            `layered`; `compass` takes its sides from `direction` (D327); `elk` and
+            `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered, and
+            without it draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173).
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
         x-mermaid:
@@ -5330,17 +5399,22 @@ $defs:
       wrappingWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/wrappingWidth'
         default: 120
-        x-mermaid: { status: pending }
+        x-mermaid: &usecaseLength
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            A number, or a numeric string, from the minimum below 10000; anything else draws with
+            the default and adds one `USECASE_CONFIG_IGNORED` warning.
       minNodeWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/minNodeWidth'
         default: 120
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       actorFontSize:
         description: Font size for actor labels
         type: number
         minimum: 1
         default: 14
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       actorFontFamily:
         description: |
           Font family for actor labels.
@@ -5351,8 +5425,14 @@ $defs:
           `"Open Sans", sans-serif`.
         type: string
         pattern: &cssFontFamilyPattern '^[^;<>(){}\\]*$'
-        default: '"Open Sans", sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontFamily`, as for every diagram
+            type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the
+            style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED`
+            warning.
       actorFontWeight:
         description: |
           Font weight for actor labels.
@@ -5362,13 +5442,19 @@ $defs:
         type: string
         pattern: &cssFontWeightPattern '^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$'
         default: 'normal'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `bold` and `bolder` measure and draw bold, `normal` and `lighter` regular, a number
+            as given; a value outside the pattern draws `normal` and adds one
+            `USECASE_CONFIG_IGNORED` warning.
       usecaseFontSize:
         description: Font size for usecase labels
         type: number
         minimum: 1
         default: 12
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       usecaseFontFamily:
         description: |
           Font family for usecase labels.
@@ -5376,8 +5462,14 @@ $defs:
           Constrained the same way as `actorFontFamily`.
         type: string
         pattern: *cssFontFamilyPattern
-        default: '"Open Sans", sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontFamily`, as for every diagram
+            type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the
+            style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED`
+            warning.
       usecaseFontWeight:
         description: |
           Font weight for usecase labels.
@@ -5386,25 +5478,31 @@ $defs:
         type: string
         pattern: *cssFontWeightPattern
         default: 'normal'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `bold` and `bolder` measure and draw bold, `normal` and `lighter` regular, a number
+            as given; a value outside the pattern draws `normal` and adds one
+            `USECASE_CONFIG_IGNORED` warning.
       nodeSpacing:
         description: Spacing between nodes on the same level
         type: number
         minimum: 0
         default: 50
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       rankSpacing:
         description: Spacing between nodes on different levels
         type: number
         minimum: 0
         default: 50
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       diagramPadding:
         description: Padding around the entire diagram
         type: number
         minimum: 0
         default: 20
-        x-mermaid: { status: pending }
+        x-mermaid: *usecaseLength
       colorScheme:
         description: |
           How a use case diagram takes its colours from the active theme.
@@ -5435,7 +5533,13 @@ $defs:
           - role
           - rotate
         default: role
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            As in v12, also when an author's `borderColorArray` gives a theme without one a
+            palette (D474). Any other value colours by role and adds one
+            `USECASE_CONFIG_IGNORED` warning.
   VennDiagramConfig:
     title: Venn Diagram Config
     allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
