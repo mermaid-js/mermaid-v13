@@ -39,6 +39,8 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 
 ## Merge log
 
+- 2026-11-10: final whole-branch review (two axes) fixed on `feature/517_usecase-final-fixes`, fast-forwarded (c332fd7ab): note placement on boundary members, config read once, cell sizing behind `./ascii`, markers on edge views, dead exports. Full check 19,450 tests, e2e 2,691. `mermaid-v13` 58ddf094e (CI timeout 40 min) merged in, clean.
+
 - 2026-11-10: `feature/569_usecase-ascii` fast-forwarded (892119ee6): lazily loaded `./ascii`, D478 shapes, both charsets. Full check 19,441 tests. Hosted CI on adb9a2b7d green after one rerun of a `packages/dev/src/watch.spec.ts` 5 s timeout.
 
 - 2026-11-10: `feature/567_usecase-integration` fast-forwarded (79e171be6): manifest, regen, config honoured, baselines, migration notes. Full check 19,411 tests, e2e 2,690 passed, warm render 49.2× geomean vs 12.2.0.
