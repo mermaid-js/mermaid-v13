@@ -5,7 +5,7 @@ import { architectureTokens, LANGIUM_NAMES } from '@mermaid-js/diagram-architect
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
-import { architectureGateCorpus } from './corpus.ts';
+import { architectureGateCorpus, E2E_FIXTURES } from './corpus.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, D213, D220, spec #525 T1): the v13 architecture lexer
@@ -172,11 +172,12 @@ describe('architecture lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)',
     expect(accepted).toEqual([]);
     expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
     expect(headerKept).toEqual([]);
-    // Every e2e fixture reaches the architecture lexer: the 20 v12 ones and the 8 `lexer-*` ones
-    // of `nightly-check/` (#594: arrowheads, text icons, quoted labels, names, the header's line,
-    // blanks, a labelled `{group}` edge, like-side and self edges), and the 2 `layout-*` ones
-    // (#607: bends as written, `iconSize` and `padding`).
-    expect(e2e).toBe(30);
+    // Every e2e fixture reaches the architecture lexer: the 20 v12 ones, the 8 `lexer-*` ones of
+    // `nightly-check/` (#594: arrowheads, text icons, quoted labels, names, the header's line,
+    // blanks, a labelled `{group}` edge, like-side and self edges), the 2 `layout-*` ones (#607:
+    // bends as written, `iconSize` and `padding`), the baselines (#618) and any added since.
+    expect(E2E_FIXTURES).toBeGreaterThanOrEqual(37);
+    expect(e2e).toBe(E2E_FIXTURES);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

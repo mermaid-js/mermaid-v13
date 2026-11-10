@@ -7,12 +7,14 @@
  * (D320), so there is one set, in px.
  */
 
+import { architectureConfigDefaults } from '../generated/config-defaults.ts';
+
 /** v12's constants: two schema defaults, and the ratios and offsets `svgDraw.ts` applies to them. */
 export const ARCHITECTURE_METRICS = {
-  /** Schema default of `architecture.iconSize`: a service's icon and a junction's box are this square. */
-  iconSize: 80,
-  /** Schema default of `architecture.padding`: room inside a group's border, and round the drawing. */
-  padding: 40,
+  /** Schema default of `architecture.iconSize` (generated): a service's icon and a junction's box are this square. */
+  iconSize: architectureConfigDefaults.iconSize!,
+  /** Schema default of `architecture.padding` (generated): room inside a group's border, and round the drawing. */
+  padding: architectureConfigDefaults.padding!,
   /** An arrowhead is `iconSize / arrowDivisor` (`svgDraw.ts:34`). */
   arrowDivisor: 6,
   /** A service label wraps at `iconSize × labelWidthRatio` (`svgDraw.ts:294`). */

@@ -3,20 +3,20 @@
  * (`#087ebf` squares with white strokes, the same in every theme, D152) and its `unknownIcon`
  * (`rendering-util/icons.ts`), each element as v12 wrote it, its `style` written as presentation
  * attributes and its `id`/`data-name` dropped (they would repeat on a page). They are drawn in
- * v12's default icon square (`ARCHITECTURE_METRICS.iconSize`) and scaled to the document's.
+ * v12's 80 px icon square (`ART_SIZE`, the art's own, whatever the schema default) and scaled to
+ * the document's `iconSize`.
  *
  * Icon art, not layout: the literal gate (`conformance/src/architecture/layout-literals.spec.ts`)
  * exempts this file, as it does the metrics table.
  */
 import { checkStyle, type Attrs, type PathData, type SafeColor } from '@mermaid-js/core/svg';
 import type { SvgFragment } from '@mermaid-js/core/text';
-import { ARCHITECTURE_METRICS } from '../layout/metrics.ts';
 
 /** v12's pack, whose names a name without one resolves in (`fallbackPrefix`). */
 export const BUILTIN_PACK = 'mermaid-architecture';
 
-/** The square v12's icons are drawn in. */
-export const ART_SIZE = ARCHITECTURE_METRICS.iconSize;
+/** The square v12's icons are drawn in (`architectureIcons.ts`: every body is 80 × 80). */
+export const ART_SIZE = 80;
 const SIDE = ART_SIZE;
 /** v12's icon square and its white strokes; text icons are white too (D506). */
 const BLUE = '#087ebf' as SafeColor;

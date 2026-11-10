@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { architectureTokens } from '@mermaid-js/diagram-architecture/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the architecture lexer is linear in input size, in every rule (spec #525
@@ -7,9 +8,9 @@ import { architectureTokens } from '@mermaid-js/diagram-architecture/testing';
  * lines of unclosed `accDescr {` (each rescans to the end for a `}`) and on lines that open a
  * quoted label or string and never close it (each rescans to the end for a quote). Shape copied
  * from `../wardley/stress.spec.ts` (pie's pattern): n and 8n units; linear is ~8x, quadratic
- * ~64x, and the bar is 24x. Each shape's `n` is picked so its small lex costs a few ms here:
- * above the 2 ms floor of `Math.max(tSmall, 2)` with margin, so a mildly quadratic scan fails
- * the bar. Times are this thread's CPU time, best of five, and small and large lexes alternate.
+ * ~64x, and the bar is 24x. Each shape's `n` is picked so its small lex costs a few ms here,
+ * so a mildly quadratic scan fails the bar. Timed by `linearRatio` (`../linear-time.ts`: this
+ * thread's CPU time over windows of repeated runs, best of five, small and large alternating).
  * Not measured on a steady machine: the bar is a ratio.
  */
 const H = 'architecture-beta\n';
@@ -60,39 +61,18 @@ const SHAPES: [name: string, build: (n: number) => string, small: number][] = [
   ['entities in labels', (n) => H + 'service a[' + '#a;'.repeat(n / 3) + ']', 64_000],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the architecture lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build, n) => {
       const small = build(n);
       const large = build(8 * n);
-      architectureTokens(small); // warm up
-      architectureTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => architectureTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => architectureTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => architectureTokens(small),
+          () => architectureTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

@@ -10,7 +10,9 @@
  * carry `data-id` only, or nothing (R-PARSE-8). No element has an id but the accessible title and
  * description (`${idPrefix}-title`, `-desc`); the model's `title` is not drawn (v12 never drew
  * it). Services and junctions are translated to their corner, as v12's were; everything else
- * has absolute coordinates.
+ * has absolute coordinates. v12 never sketched architecture (D301), so its outlines are plain
+ * leaves, not `w.outline`: the hand-drawn look leaves it as it is
+ * (`e2e/diagrams/architecture/hand-drawn.txt`).
  */
 import {
   px,
@@ -225,7 +227,7 @@ function drawEdges(scene: Scene): void {
     }
     const d = w.path();
     e.points.forEach((p, k) => (k === 0 ? d.moveTo(p.x, p.y) : d.lineTo(p.x, p.y)));
-    w.outline('edge', 'path', {
+    w.leaf('path', {
       class: 'edge',
       'data-id': ast,
       'data-ast': ast,
@@ -287,7 +289,7 @@ function drawService(scene: Scene, v: ArchitectureNodeView): void {
       .lineTo(size, size)
       .close()
       .done();
-    w.outline('node', 'path', {
+    w.leaf('path', {
       class: 'node-bkg',
       d,
       fill: 'none',
@@ -327,7 +329,7 @@ function drawGroups(scene: Scene): void {
     if (!box) continue;
     const group = model.groups[v.index]!;
     w.open('g', { class: 'architecture-group', 'data-id': group.astId, 'data-ast': group.astId });
-    w.outline('group', 'rect', {
+    w.leaf('rect', {
       class: 'node-bkg',
       x: box.x - box.width / 2,
       y: box.y - box.height / 2,

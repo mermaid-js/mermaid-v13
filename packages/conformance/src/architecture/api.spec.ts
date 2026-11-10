@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
-import { architecture } from '@mermaid-js/diagram-architecture';
 import { renderArchitectureForTest } from '@mermaid-js/diagram-architecture/testing';
 import { createMermaid } from 'mermaid';
 
 /**
- * The plugin through the public API (#614): registered explicitly, since the manifest that puts
- * it in the registry is T5's (#618); `replace: true`, as the registry already reserves the id for
- * v12's detector row (an `UNSUPPORTED_DIAGRAM` until then). Its default engine is `compass` (D284), loaded lazily as any
- * other first-party engine, and the API's render is the package's render entry's, byte for byte.
+ * The plugin through the public API (#614), from the generated registry since its manifest
+ * landed (#618). Its default engine is `compass` (D284), loaded lazily as any other first-party
+ * engine, and the API's render is the package's render entry's, byte for byte.
  */
 const SOURCE = `architecture-beta
   accTitle: Shop
@@ -20,10 +18,9 @@ const SOURCE = `architecture-beta
   server:B -- T:j
 `;
 
-describe('architecture through createMermaid().render() (plugin registered explicitly)', () => {
+describe('architecture through createMermaid().render()', () => {
   it('renders with compass, as the package renders it', async () => {
     const m = createMermaid();
-    await m.registerExternalDiagrams([architecture], { replace: true });
     expect(m.detectType(SOURCE)).toBe('architecture');
     const r = await m.render('arch', SOURCE);
     expect(r.diagramType).toBe('architecture');
@@ -40,7 +37,6 @@ describe('architecture through createMermaid().render() (plugin registered expli
 
   it('renders synchronously once prepared', async () => {
     const m = createMermaid();
-    await m.registerExternalDiagrams([architecture], { replace: true });
     await m.prepare(SOURCE);
     expect(m.renderSync(SOURCE).diagramType).toBe('architecture');
   });

@@ -21,15 +21,36 @@ const budget = JSON.parse(
 ) as { core: { gzipBytes: number } };
 const ids = [...new Set(DETECTORS.flatMap((d) => (d.id ? [d.id] : [])))];
 /** Plugin id → the package directory chunks are named after (`quadrantChart` → `diagram-quadrant`). */
-const packageDir = new Map(
-  readdirSync(new URL('../../', import.meta.url)).flatMap((dir) => {
-    if (!dir.startsWith('diagram-')) return [];
-    const pkg = JSON.parse(
-      readFileSync(new URL(`../../${dir}/package.json`, import.meta.url), 'utf8')
-    ) as { mermaid?: { id?: string } };
-    return pkg.mermaid?.id ? [[pkg.mermaid.id, dir] as const] : [];
-  })
+const packageDir = new Map<string, string>();
+/** mermaid's own dependencies: the build bundles a `./language` entry of these only. */
+const dependencies = new Set(
+  Object.keys(
+    (
+      JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+        dependencies: Record<string, string>;
+      }
+    ).dependencies
+  )
 );
+/**
+ * The plugin ids whose package has a `./language` source entry, as `languageEntries()` in
+ * `scripts/cdn-build.ts` finds them (a port adds the export with its facet).
+ */
+const withLanguage = new Set<string>();
+for (const dir of readdirSync(new URL('../../', import.meta.url))) {
+  if (!dir.startsWith('diagram-')) continue;
+  const pkg = JSON.parse(
+    readFileSync(new URL(`../../${dir}/package.json`, import.meta.url), 'utf8')
+  ) as {
+    name: string;
+    mermaid?: { id?: string };
+    exports?: Record<string, Record<string, string> | undefined>;
+  };
+  if (!pkg.mermaid?.id) continue;
+  packageDir.set(pkg.mermaid.id, dir);
+  if (dependencies.has(pkg.name) && pkg.exports?.['./language']?.['mermaid-source'])
+    withLanguage.add(pkg.mermaid.id);
+}
 const chunk = (id: string) => `chunks/${packageDir.get(id) ?? `diagram-${id}`}`;
 let out: CdnBuild;
 
@@ -55,10 +76,10 @@ function staticClosure(): Set<string> {
 }
 
 describe('the CDN build (D162)', () => {
-  it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
+  it('gives every first-party diagram, its ascii and language entries a stable chunk (language: when its package exports one)', () => {
     for (const id of ids) {
       expect(file(`${chunk(id)}.mjs`), id).toBeDefined();
-      expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
+      expect(file(`${chunk(id)}-language.mjs`) !== undefined, id).toBe(withLanguage.has(id));
     }
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
       expect(file(`${chunk(id!)}-ascii.mjs`), id).toBeDefined();

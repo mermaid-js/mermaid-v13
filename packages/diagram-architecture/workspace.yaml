@@ -1,6 +1,6 @@
 # How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
-# A pre-manifest package until T5 (#618) adds the `mermaid` manifest: `configDefaults`, `release`
-# and `languageBundle` wait for it (v13/docs/agents/port-diagram/shared-files.md).
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
 
 # grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
 # type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
@@ -10,5 +10,16 @@ grammars:
     kinds:
       module: parser/tokens.ts
       object: T
+
+# languageBundle: none yet. The `./language` facet (and with it the manifest's `language` entry)
+# is T6's (#619), which adds this key with it.
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The architecture diagram plugin (SVG; `architecture-beta`), laid out by `compass`.'
+  install: 'with `mermaid/slim`'
+# credits: none. The ported Pele grid placement is core's `compass` engine (D326), which carries
+# its credit; this package ports only v12's own code.
+
 # theme: none. The layout (#607) reads the core font rows (`fontFamily`, `fontSize`), the renderer
 # (#614) `textColor` and its own table (`src/theme/vocabulary.ts`, the five `arch*` variables).
