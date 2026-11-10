@@ -1,6 +1,8 @@
-unsketched
+sketched
 
-v12 never sketched this diagram type. With the hand-drawn plugin registered and `handDrawn` on,
-this folder's whole corpus must draw the same bytes as without it, with no added warning
-(packages/plugin-hand-drawn/src/unsketched.spec.ts, D301, D305). The first line is read:
-`sketched` or `unsketched`.
+v12 never sketched an event model; v13 opts it in (option A, decided by the maintainer on
+2026-11-10, with D537's line hops): lanes, boxes and relations draw through `w.outline`. With
+the hand-drawn plugin on, this folder's whole corpus renders through it in
+packages/plugin-hand-drawn/src/corpus.spec.ts, and a gallery baseline here needs its four-family
+hand-drawn set (packages/dev/src/adapter.spec.ts, D307). The first line is read: `sketched` or
+`unsketched`.
