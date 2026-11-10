@@ -66,8 +66,17 @@ function keywordItems(probe: ProbeResult, text: string, headers: boolean): Compl
   return out;
 }
 
+/** A `$name` being written: its call, its argument, the name's range, the text and the cursor. */
+interface NameAt {
+  readonly call: CallAt;
+  readonly arg: WrittenArg;
+  readonly name: Range;
+  readonly text: string;
+  readonly at: number;
+}
+
 /** The `$name`s the macro takes and the call has not given, for the name at the cursor. */
-function nameItems(call: CallAt, arg: WrittenArg, name: Range, text: string, at: number) {
+function nameItems({ call, arg, name, text, at }: NameAt) {
   if (at < name.start) return [];
   const typed = text.slice(name.start, at);
   if (!/^\w*$/.test(typed)) return [];
@@ -165,7 +174,7 @@ export function c4Completions(probe: ProbeResult, doc: DocumentView<C4Document>)
   if (call) {
     const arg = call.at;
     const items = arg?.name
-      ? nameItems(call, arg, arg.name, text, offset)
+      ? nameItems({ call, arg, name: arg.name, text, at: offset })
       : aliasItems(call, doc, offset);
     // Each item replaces text on the cursor's line (an argument in quotes may span lines).
     return items.filter((i) => !LINE_BREAK.test(text.slice(i.range.start, i.range.end)));

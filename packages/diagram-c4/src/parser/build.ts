@@ -86,6 +86,13 @@ type Item =
   | { type: 'relation'; bag: OpenRelation; index: number };
 
 /** One named value for an item (pitfall 10). */
+/** Slots `from` to `to` of `table` (to its end when `to` is omitted). */
+interface SlotRange {
+  readonly table: SlotTable;
+  readonly from: number;
+  readonly to?: number;
+}
+
 interface Setting {
   item: Item;
   name: string;
@@ -435,7 +442,7 @@ export class C4Builder {
    * Slots `from` to `to` of `table` (to its end when omitted), each read into its field:
    * `blank` ones keep v12's empty default, `dropped` ones are read and ignored.
    */
-  private rest(item: Item, table: SlotTable, args: readonly Arg[], from: number, to?: number) {
+  private rest(item: Item, args: readonly Arg[], { table, from, to }: SlotRange) {
     const { slots, setAfter } = table;
     for (let k = from; k < (to ?? slots.length); k++) {
       const s = slots[k];
@@ -467,7 +474,7 @@ export class C4Builder {
     // A `$alias` that renames the new item defines the alias it gives instead (D458).
     if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'element', first);
     this.label(item, args[1], table.setAfter);
-    this.rest(item, table, args, 2);
+    this.rest(item, args, { table, from: 2 });
     item.bag.kind = kind;
     this.setParent(item.bag, parts.parent);
     return { ast, alias };
@@ -506,7 +513,7 @@ export class C4Builder {
     this.label(item, args[1], last);
     if (args[2] === undefined) item.bag.type = macro.type;
     // A node's sprite: v12's `addDeploymentNode` never assigns it (a named one included).
-    this.rest(item, table, args, 2);
+    this.rest(item, args, { table, from: 2 });
     if (macro.nodeKind !== undefined) item.bag.nodeKind = macro.nodeKind;
     this.setParent(item.bag, parts.parent);
     return { ast, alias: item.bag.alias, index: i };
@@ -545,7 +552,7 @@ export class C4Builder {
     this.ref(from, args[0]);
     this.ref(to, args[1]);
     this.label(item, args[2], REL.setAfter);
-    this.rest(item, REL, args, 3);
+    this.rest(item, args, { table: REL, from: 3 });
     return { ast, alias: from, from, to };
   }
 
@@ -566,7 +573,7 @@ export class C4Builder {
       item = { type: 'boundary', bag: this.boundaries[j] as OpenBoundary, index: j };
     }
     if (!item) return;
-    this.rest(item, ELEMENT_STYLE, args, 1);
+    this.rest(item, args, { table: ELEMENT_STYLE, from: 1 });
   }
 
   /**
@@ -582,7 +589,7 @@ export class C4Builder {
     const i = this.relationIndex.get(from.value)?.get(to.value);
     if (i === undefined) return;
     const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
-    this.rest(item, REL_STYLE, args, 2, 4);
+    this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
     for (let k = 4; k < REL_STYLE.slots.length; k++) {
       const arg = args[k];
       if (arg === undefined) continue;
