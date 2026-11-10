@@ -189,16 +189,6 @@ function checkRelations(model: C4Model, layout: C4Layout, out: string[]): void {
   }
 }
 
-/** A relation's label box as the renderer draws it: label and `[techn]`, `labelPad` wider. */
-export function c4LabelBox(r: C4RelationLayout): Rect | undefined {
-  const parts = [r.label, r.techn].filter((l) => l !== undefined);
-  if (parts.length === 0) return undefined;
-  const width = Math.max(...parts.map((l) => l.width)) + M.labelPad;
-  const cx = parts[0]!.x + parts[0]!.width / 2;
-  const last = parts[parts.length - 1]!;
-  return { x: cx - width / 2, y: parts[0]!.y, width, height: last.y + last.height - parts[0]!.y };
-}
-
 /**
  * In a careful layout, no label box covers its own arrowheads or any element, unless the layout
  * marks it `crowded` (no spot cleared them).
@@ -211,7 +201,7 @@ function checkLabels(layout: C4Layout, out: string[]): void {
     height: 2 * M.arrow,
   });
   for (const r of layout.relations) {
-    const box = c4LabelBox(r);
+    const box = r.labelBox;
     if (!box || r.crowded) continue;
     const name = `relation ${r.from} -> ${r.to}`;
     if (

@@ -116,6 +116,11 @@ export interface C4RelationLayout {
   readonly label?: PlacedLabel;
   readonly techn?: PlacedLabel;
   /**
+   * The label's box, under the label and `[techn]`: both stacked, `labelPad` wider than the
+   * wider. The renderer draws it and the invariants check it; set when either is.
+   */
+  readonly labelBox?: Rect;
+  /**
    * No spot kept the label off its own arrowheads, the elements and the boundary headers (a
    * diagram with no room between its shapes): it sits beside the line where it covers least.
    */

@@ -748,6 +748,7 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const label = r.label && placed(r.label, cx - r.label.text.width / 2, top);
   const technTop = top + (r.label?.text.height ?? 0);
   const techn = r.techn && placed(r.techn, cx - r.techn.text.width / 2, technTop);
+  const [lw, lh] = labelSize(r);
   return {
     ast: r.rel.ast,
     index: r.index,
@@ -763,6 +764,7 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
     endArrow: r.endArrow,
     ...(label ? { label } : {}),
     ...(techn ? { techn } : {}),
+    ...(label || techn ? { labelBox: { x: cx - lw / 2, y: top, width: lw, height: lh } } : {}),
     ...(r.crowded ? { crowded: true as const } : {}),
   };
 }

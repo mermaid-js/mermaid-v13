@@ -8,7 +8,6 @@
  * `<title>`. Relations are not sketched (D301).
  */
 import type { Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
-import { C4_METRICS as M } from '../layout/metrics.ts';
 import { c4RelationPath } from '../layout/path.ts';
 import type { C4RelationEnd, C4RelationLayout } from '../layout/types.ts';
 import type { C4RelationKind } from '../model.ts';
@@ -94,20 +93,16 @@ function arrowhead(w: SvgWriter, end: C4RelationEnd, fill: Paint): void {
   w.leaf('path', { class: 'marker', d, fill, stroke: 'none' });
 }
 
-/** The label's box: the label and `[techn]` stacked, `labelPad` wider than the wider (the layout's). */
+/** The label's box, as the layout placed it (`labelBox`). */
 function labelBox(w: SvgWriter, rel: C4RelationLayout, fill: Paint): void {
-  const parts = [rel.label, rel.techn].filter((l) => l !== undefined);
-  if (parts.length === 0) return;
-  const cx = parts[0]!.x + parts[0]!.width / 2;
-  const width = Math.max(...parts.map((l) => l.width)) + M.labelPad;
-  const top = parts[0]!.y;
-  const last = parts[parts.length - 1]!;
+  const box = rel.labelBox;
+  if (!box) return;
   w.leaf('rect', {
     class: 'c4-rel-label-box',
-    x: cx - width / 2,
-    y: top,
-    width,
-    height: last.y + last.height - top,
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    height: box.height,
     fill,
     stroke: 'none',
   });
