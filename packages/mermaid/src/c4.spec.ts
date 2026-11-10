@@ -88,6 +88,8 @@ describe('C4 diagrams through the public API (#542)', () => {
     // v12 matched the last four anywhere in the text; now only where the diagram starts.
     expect(m.detectType('flowchart LR\n  A[C4Container] --> B')).toBe('flowchart-v2');
     expect(m.detectType('sequenceDiagram\n  A->>C4Dynamic: hi')).toBe('sequence');
+    expect(m.detectType('sequenceDiagram\n  A->>C4Container: hi')).toBe('sequence');
+    expect(m.detectType('sequenceDiagram\n  participant C4Context')).toBe('sequence');
     expect(() => m.detectType('C4ContextX\n  Person(a, "A")')).toThrow();
     expect(() => m.detectType('c4context\n  Person(a, "A")')).toThrow();
   });

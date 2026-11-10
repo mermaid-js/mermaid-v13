@@ -36,16 +36,6 @@ describe('sequence through the public API (#145)', () => {
     expect((e as MermaidError).code).toBe('SYNTAX');
   });
 
-  // v12's c4 detector sits ahead of sequence and matched `C4Container` (and `C4Component`,
-  // `C4Dynamic`, `C4Deployment`) anywhere in the text; only `C4Context` was anchored. D451
-  // anchors all five headers, so a sequence diagram naming one is a sequence diagram (#542).
-  it('keeps a sequence diagram naming C4Container a sequence diagram (D451)', async () => {
-    const named = await render('seq-c4', 'sequenceDiagram\n  A->>C4Container: hi\n');
-    expect(named.diagramType).toBe('sequence');
-    const kept = await render('seq-c4b', 'sequenceDiagram\n  participant C4Context\n');
-    expect(kept.diagramType).toBe('sequence');
-  });
-
   it('supports svg and ascii (#150)', () => {
     expect(supportsFormat('sequence', 'svg')).toBe(true);
     expect(supportsFormat('sequence', 'ascii')).toBe(true);

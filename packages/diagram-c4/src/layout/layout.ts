@@ -562,12 +562,12 @@ function placeLabel({
 }
 
 /**
- * Where along the line, and how far off it, a `lw` × `lh` label goes: as `[t, dx, dy, crowded]`. First on
- * the line (the author's offsets, then none), slid to the spot that covers least of `taken`
- * (Pele `render.ts`); when that spot still covers something, also beside the line on either side,
- * a label's depth further out at each step. A spot that covers `forbidden` is never taken while
- * another does not; when none clears it, the one that covers least of it is, and the label is
- * crowded.
+ * Where along the line, and how far off it, a `lw` × `lh` label goes, as `[t, dx, dy, crowded]`.
+ * First on the line (the author's offsets, then none), slid to the spot that covers least of
+ * `taken` (Pele `render.ts`); when that spot still covers something, also beside the line on
+ * either side, a label's depth further out at each step. A spot that covers `forbidden` is never
+ * taken while another does not; when none clears it, the one that covers least of it is, and the
+ * label is crowded.
  */
 function clearest(
   r: Route,

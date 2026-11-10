@@ -13,8 +13,10 @@
  * root `wrap` is set too, as v12.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import type { C4DiagramConfig } from '@mermaid-js/core/config';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
+import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import type { C4ElementKind } from './model.ts';
 
@@ -60,24 +62,36 @@ export interface C4LayoutConfig {
   readonly wrapAll: boolean;
 }
 
+/**
+ * The `c4` section's default for `key`: the generated section defaults (`gen:config`, from the
+ * schema's `C4DiagramConfig`), the one place a default lives. A key the schema gives no default
+ * throws.
+ */
+export function c4Default<K extends keyof C4DiagramConfig>(
+  key: K
+): NonNullable<C4DiagramConfig[K]> {
+  const value = c4ConfigDefaults[key];
+  if (value === undefined) throw new Error(`The c4 config section has no default for ${key}`);
+  return value as NonNullable<C4DiagramConfig[K]>;
+}
+
 /** The `C4DiagramConfig` defaults the layout falls back to. */
 export const C4_CONFIG_DEFAULTS: Omit<C4LayoutConfig, 'wrapAll'> = {
-  diagramMarginX: 50,
-  diagramMarginY: 10,
-  c4ShapeMargin: 50,
-  c4ShapePadding: 20,
-  width: 216,
-  nextLinePaddingX: 0,
-  c4ShapeInRow: 4,
-  c4BoundaryInRow: 2,
-  wrap: true,
+  diagramMarginX: c4Default('diagramMarginX'),
+  diagramMarginY: c4Default('diagramMarginY'),
+  c4ShapeMargin: c4Default('c4ShapeMargin'),
+  c4ShapePadding: c4Default('c4ShapePadding'),
+  width: c4Default('width'),
+  nextLinePaddingX: c4Default('nextLinePaddingX'),
+  c4ShapeInRow: c4Default('c4ShapeInRow'),
+  c4BoundaryInRow: c4Default('c4BoundaryInRow'),
+  wrap: c4Default('wrap'),
 };
 
-/** v12's font size for every element kind and boundaries, and for relations (`message`). */
-export const C4_FONT_SIZE = 14;
-export const C4_MESSAGE_FONT_SIZE = 12;
-
-/** The lengths' least values (the schema's `minimum`; `nextLinePaddingX` has none). */
+/**
+ * The lengths a value below `LENGTH_MIN` falls back for: the schema's `minimum` for each, checked
+ * against it in `conformance/src/c4-layout-literals.spec.ts` (`nextLinePaddingX` has none).
+ */
 const LENGTHS = [
   'diagramMarginX',
   'diagramMarginY',
@@ -85,6 +99,7 @@ const LENGTHS = [
   'c4ShapePadding',
   'width',
 ] as const;
+const LENGTH_MIN = 0;
 
 /** A finite number, or a string that reads as one; else undefined. */
 function configNumber(value: unknown): number | undefined {
@@ -108,7 +123,7 @@ export function c4LayoutConfig(config: RenderContext['config']): C4LayoutConfig 
   const out: Record<string, number | boolean> = { ...C4_CONFIG_DEFAULTS };
   for (const key of LENGTHS) {
     const n = configNumber(given[key]);
-    if (n !== undefined && n >= 0) out[key] = n;
+    if (n !== undefined && n >= LENGTH_MIN) out[key] = n;
   }
   const nextLine = configNumber(given.nextLinePaddingX);
   if (nextLine !== undefined) out.nextLinePaddingX = nextLine;
@@ -148,7 +163,9 @@ export function c4Fonts(
   warn: (w: Warning) => void
 ): C4Fonts {
   const c4 = c4Section(config);
-  const font = (prefix: string, size: number): FontKey => {
+  const font = (prefix: string): FontKey => {
+    // A size that is not one falls back to the key's own default (14; 12 for `message`).
+    const size = Number(c4Default(`${prefix}FontSize` as keyof C4DiagramConfig));
     const key = `${prefix}FontFamily`;
     const f = c4[key];
     let safe: string | undefined;
@@ -168,10 +185,10 @@ export function c4Fonts(
       weight: weightOf(c4[`${prefix}FontWeight`]),
     };
   };
-  const elements = new Map(C4_ELEMENT_KINDS.map((k) => [k, font(k, C4_FONT_SIZE)]));
+  const elements = new Map(C4_ELEMENT_KINDS.map((k) => [k, font(k)]));
   return {
     element: (kind) => elements.get(kind) ?? elements.get('person')!,
-    boundary: font('boundary', C4_FONT_SIZE),
-    message: font('message', C4_MESSAGE_FONT_SIZE),
+    boundary: font('boundary'),
+    message: font('message'),
   };
 }

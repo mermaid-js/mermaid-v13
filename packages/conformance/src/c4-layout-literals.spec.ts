@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { c4, C4_ELEMENT_KINDS } from '@mermaid-js/diagram-c4';
+import { checkColor } from '@mermaid-js/core/svg';
+import { c4, C4_CONFIG_DEFAULTS, C4_ELEMENT_KINDS } from '@mermaid-js/diagram-c4';
 import { REPO_ROOT } from './index.ts';
 
 // The C4 custom layout takes every length from its metrics table or the `c4` config (spec #522,
@@ -43,11 +44,12 @@ const SOURCES = readdirSync(DIR).filter(
 const CONFIG = join(REPO_ROOT, 'packages/diagram-c4/src/config.ts');
 const SCHEMA = join(REPO_ROOT, 'packages/core/schema/config.schema.yaml');
 
-/** The config reader's text less its schema defaults: `C4_CONFIG_DEFAULTS` and the two font sizes. */
-function configCode(source: string): string {
-  return source
-    .replace(/export const C4_CONFIG_DEFAULTS[\s\S]*?\n};/, '')
-    .replace(/export const C4_(?:MESSAGE_)?FONT_SIZE = \d+;/g, '');
+/** A `C4DiagramConfig` key's schema `minimum`, as written. */
+function schemaMinimum(schema: string, key: string): string | undefined {
+  const section = schema.slice(schema.indexOf('  C4DiagramConfig:'));
+  return new RegExp(`\\n      ${key}:\\n(?:        .*\\n)*?        minimum: (\\S+)`).exec(
+    section
+  )?.[1];
 }
 
 /** A `C4DiagramConfig` key's schema default, as written. */
@@ -87,46 +89,41 @@ describe('c4 layout', () => {
     expect(stray).toEqual([]);
   });
 
-  it('the config reader holds no length literal outside its schema defaults', () => {
-    const stray = numericLiterals(configCode(readFileSync(CONFIG, 'utf8'))).filter(
-      (n) => !(n in ALLOWED)
-    );
+  it('the config reader holds no length literal: its defaults are the generated ones', () => {
+    const stray = numericLiterals(readFileSync(CONFIG, 'utf8')).filter((n) => !(n in ALLOWED));
     expect(stray).toEqual([]);
   });
 
-  it('the config reader’s defaults are the schema’s', () => {
-    const source = readFileSync(CONFIG, 'utf8');
+  it('the config reader’s defaults are the schema’s, read from the generated section defaults', () => {
     const schema = readFileSync(SCHEMA, 'utf8');
-    const defaults = /export const C4_CONFIG_DEFAULTS[\s\S]*?\n};/.exec(source)![0];
-    const pairs = [...defaults.matchAll(/^\s+(\w+): (\w+),$/gm)].map((m): [string, string] => [
-      m[1]!,
-      m[2]!,
-    ]);
-    expect(pairs.map(([k]) => k)).toEqual([
-      'diagramMarginX',
-      'diagramMarginY',
-      'c4ShapeMargin',
-      'c4ShapePadding',
-      'width',
-      'nextLinePaddingX',
-      'c4ShapeInRow',
-      'c4BoundaryInRow',
-      'wrap',
-    ]);
-    for (const [key, value] of pairs) expect(schemaDefault(schema, key), key).toBe(value);
-    expect(/C4_FONT_SIZE = (\d+);/.exec(source)![1]).toBe(schemaDefault(schema, 'personFontSize'));
-    expect(/C4_MESSAGE_FONT_SIZE = (\d+);/.exec(source)![1]).toBe(
-      schemaDefault(schema, 'messageFontSize')
-    );
+    for (const [key, value] of Object.entries(C4_CONFIG_DEFAULTS))
+      expect(String(value), key).toBe(schemaDefault(schema, key));
+    // Each font falls back to its own key's default size.
+    for (const prefix of [...C4_ELEMENT_KINDS, 'boundary', 'message'])
+      expect(String(c4.configDefaults[`${prefix}FontSize`]), prefix).toBe(
+        schemaDefault(schema, `${prefix}FontSize`)
+      );
   });
 
-  it('the element palette’s defaults are the schema’s, from the plugin’s configDefaults (#542)', () => {
+  it('the lengths a value below 0 falls back for are those whose schema minimum is 0', () => {
+    const source = readFileSync(CONFIG, 'utf8');
+    const schema = readFileSync(SCHEMA, 'utf8');
+    expect(/const LENGTH_MIN = (\d+);/.exec(source)![1]).toBe('0');
+    const lengths = /const LENGTHS = \[([^\]]*)\]/.exec(source)![1]!.match(/\w+/g)!;
+    expect(lengths).toHaveLength(5);
+    for (const key of lengths) expect(schemaMinimum(schema, key), key).toBe('0');
+    expect(schemaMinimum(schema, 'nextLinePaddingX')).toBeUndefined();
+  });
+
+  it('the element palette’s defaults are the schema’s colours, from the plugin’s configDefaults (#542)', () => {
     const schema = readFileSync(SCHEMA, 'utf8');
     const defaults = c4.configDefaults;
     for (const kind of C4_ELEMENT_KINDS) {
       for (const part of ['bg', 'border']) {
         const key = `${kind}_${part}_color`;
         expect(`'${String(defaults[key])}'`, key).toBe(schemaDefault(schema, key));
+        // paint.ts draws it when a configured colour is refused: it must pass the check.
+        expect(checkColor(String(defaults[key])), key).toBeDefined();
       }
     }
   });

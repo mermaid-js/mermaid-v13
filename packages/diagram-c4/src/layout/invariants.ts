@@ -5,8 +5,9 @@
  * that overlap, stand outside their boundary's frame (below its header) or overlap a frame they
  * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
  * outside its frame; a relation whose ends are not on its shapes' outlines; in a careful layout,
- * a label box not marked `crowded` over its own arrowheads or over any element (#542); anything drawn outside the
- * bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the relations that cross an element other than their
+ * a label box not marked `crowded` over its own arrowheads or over any element (#542); anything
+ * drawn outside the bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the
+ * relations that cross an element other than their
  * own ends, which the corpus specs pin (the spec allows listed exceptions). Exported from
  * `@mermaid-js/diagram-c4/testing`.
  */

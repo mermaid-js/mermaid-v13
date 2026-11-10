@@ -2,8 +2,8 @@
  * The C4 tests' context builder, which the layout specs (the package's and the conformance
  * layout corpus) share. It builds what the pipeline builds (`mermaid/src/api.ts`,
  * `core/src/pipeline/draw.ts`): the config core resolves from its defaults, the plugin's section
- * defaults, the source's front matter and directives; and a layout context with a theme and a measurer (the table measurer by
- * default), the warnings collected.
+ * defaults, the source's front matter and directives; and a layout context with a theme and a
+ * measurer (the table measurer by default), the warnings collected.
  */
 import type { Warning } from '@mermaid-js/core';
 import {
