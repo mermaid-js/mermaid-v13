@@ -55,18 +55,58 @@ export interface OutputNode {
   inputs: string[];
 }
 
-/** Totals over a set of sized files. */
+/**
+ * Totals over a set of sized files. The compressed totals are summed when first read, so a
+ * caller that reads only gzip compresses nothing with brotli (see {@link sizeOf}).
+ */
 export function summarise(files: SizedFile[], source: SizeSummary['source']): SizeSummary {
   const total = (k: 'raw' | 'gzip' | 'brotli') => files.reduce((a, f) => a + f[k], 0);
-  return { raw: total('raw'), gzip: total('gzip'), brotli: total('brotli'), source, files };
+  let gzip: number | undefined;
+  let brotli: number | undefined;
+  return {
+    raw: total('raw'),
+    get gzip() {
+      return (gzip ??= total('gzip'));
+    },
+    set gzip(value) {
+      gzip = value;
+    },
+    get brotli() {
+      return (brotli ??= total('brotli'));
+    },
+    set brotli(value) {
+      brotli = value;
+    },
+    source,
+    files,
+  };
 }
 
+/**
+ * A file's raw, gzip-9 and brotli-11 sizes. Each compressed size is worked out when first read
+ * and then kept: brotli-11 is slow, and most specs read the gzip size of a few files only. The
+ * properties are enumerable, so reports and `toEqual` see plain numbers.
+ */
 export function sizeOf(path: string, bytes: Buffer): SizedFile {
+  let gzip: number | undefined;
+  let brotli: number | undefined;
   return {
     path,
     raw: bytes.length,
-    gzip: gzipSync(bytes, { level: 9 }).length,
-    brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length,
+    get gzip() {
+      return (gzip ??= gzipSync(bytes, { level: 9 }).length);
+    },
+    set gzip(value) {
+      gzip = value;
+    },
+    get brotli() {
+      return (brotli ??= brotliCompressSync(bytes, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+      }).length);
+    },
+    set brotli(value) {
+      brotli = value;
+    },
   };
 }
 

@@ -56,7 +56,7 @@ describe('completion', () => {
       expect(labels(`${typed}|`), typed).toEqual(headers.filter((h) => h.startsWith(typed)));
     }
     expect(labels('qua|')).toEqual(['quadrantChart']);
-    expect(labels('tree|')).toEqual(['treemap', 'treemap-beta']);
+    expect(labels('treem|')).toEqual(['treemap', 'treemap-beta']);
     expect(labels('xy|')).toEqual(['xychart']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([

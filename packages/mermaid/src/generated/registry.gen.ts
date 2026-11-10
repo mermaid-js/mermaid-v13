@@ -153,7 +153,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   },
   { type: 'block', pattern: /^\s*block(-beta)?/ },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
-  { type: 'treeView', pattern: /^\s*treeView-beta/ },
+  {
+    type: 'treeView',
+    pattern: /^\s*treeView-beta/,
+    id: 'treeView',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-treeview').then((m) => m.treeView),
+    loadAscii: () => import('@mermaid-js/diagram-treeview/ascii').then((m) => m.ascii),
+  },
   {
     type: 'radar',
     pattern: /^\s*radar-beta/,

@@ -33,7 +33,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | not ported | no | no |
 | `eventmodeling` | not ported | no | no |
-| `treeView` | not ported | no | no |
+| `treeView` | `@mermaid-js/diagram-treeview` | yes | yes |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | `@mermaid-js/diagram-ishikawa` | yes | yes |
 | `treemap` | `@mermaid-js/diagram-treemap` | yes | no |

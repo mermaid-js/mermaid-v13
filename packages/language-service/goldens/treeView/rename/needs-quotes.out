@@ -1,0 +1,12 @@
+@ 3:4  a|.js
+  prepare: 3:3-3:7 "a.js"; rename to "notes :::x":
+  %% rename-to: notes :::x
+  treeView-beta
+    "notes :::x"
+    dir/
+@ 4:4  d|ir/
+  prepare: 4:3-4:6 "dir"; rename to "notes :::x":
+  %% rename-to: notes :::x
+  treeView-beta
+    a.js
+    "notes :::x/"
