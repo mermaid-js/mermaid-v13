@@ -46,3 +46,5 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.
 
 ## #603 T4 ascii
+- Closed: `swimlane-beta` ascii draws with `layered`, lanes as plain frames, one `ASCII_DROPPED` (`feature: 'layout'`), no `SWIMLANE_*`; no ascii code needed. `conformance/src/ascii/swimlane-corpus.spec.ts` runs the corpus in both charsets.
+- **For the maintainer (visible change for existing documents):** flowchart ascii now blanks the frame border beside a subgroup's *first* title line, not the widest line, so a multi-line subgraph title no longer leaves a gap cut off from the corner (`ascii/draw.ts`). v13-only fix; no snapshot changed.
