@@ -545,13 +545,13 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `ishikawa` | object |  | pending |  | The object containing configurations specific for ishikawa diagrams |
-| `ishikawa.useWidth` | number |  | pending |  |  |
-| `ishikawa.useMaxWidth` | boolean | `false` | pending |  |  |
-| `ishikawa.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `ishikawa` | object |  | honoured (13.0.0) |  | The object containing configurations specific for ishikawa diagrams |
+| `ishikawa.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the ishikawa renderer never did. |  |
+| `ishikawa.useMaxWidth` | boolean | `true` | honoured (13.0.0) | The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `ishikawa.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | honoured (13.0.0) | Set here, it wins over the top-level `theme` for ishikawa diagrams (a diagram section beats the top level within a config layer). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `ishikawa.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `ishikawa.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `ishikawa.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
+| `ishikawa.diagramPadding` | integer | `20` | honoured (13.0.0) | A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning. | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
 
 ## `treemap`
 
