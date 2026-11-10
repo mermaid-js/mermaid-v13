@@ -6,6 +6,7 @@ import {
   ishikawaTestContext,
   ishikawaTestTheme,
 } from '@mermaid-js/diagram-ishikawa/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * The ishikawa layout is linear in the causes it lays out (spec #519, pitfalls 5 and 19), and
@@ -29,18 +30,6 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = await ishikawaTestTheme();
@@ -55,21 +44,12 @@ describe('stress: the ishikawa layout is linear in causes', () => {
     (_name, build) => {
       const small = model(build(500));
       const large = model(build(4_000));
-      lay(small); // warm up
-      lay(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => lay(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => lay(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => lay(small),
+          () => lay(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );
