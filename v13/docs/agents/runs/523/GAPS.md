@@ -69,10 +69,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Closed: MIGRATION `## Agentflow` (`migration/agentflow.md`, before the SVG section): D127, D152/D153, D461 (the nine reserved codes listed), D462-D465, D466, limits, links, hand-drawn, ascii. Agentflow joins the sketched list in the hand-written top.
 - **Choice:** making the package public meant `check:licenses` reads it: `render/edges.ts` already credited Pele. The other local copies of flowchart's Pele-derived files (`parser/{lexer,parser,base,statements,model}.ts`, `layout/{prepare,shapes}.ts`, `render/shapes.ts`) now credit Pele in their headers too, listed in `credits.files`, `THIRD_PARTY_NOTICES` and `notices/mermaid.txt` (block's T5 did the same for its copies).
 - **Choice:** `baseline/layout/edge-from-reserved-connectors-id.mmd` and `mutual-containment-cut.mmd` moved to `nightly-check/layout/`: their rule is a warning (`AGENTFLOW_RESERVED_ID`, `CONTAINMENT_VIOLATION`), and every gallery fixture renders without warnings (`packages/dev/src/adapter.spec.ts`). `layout-rules.spec.ts` reads them there.
+- **Choice:** v12's parse-error conformance fixture (`parse-error-unterminated-container`) moved from `e2e/diagrams/agentflow/conformance/` to `packages/conformance/src/agentflow/fixtures/`: `pnpm e2e` renders every e2e fixture and fails on an error diagram; `fixtures.spec.ts` reads both folders (the source is also the case `v12-fixture-parse-error-unterminated-container`).
 - **Choice:** `agentflow.layout` has no default of its own (class's and ER's wording): the top-level `layered` applies, so v12's ELK default is gone without a section default.
 
 **For the maintainer (#550):**
 - R-LANG-4 (`cli/language-agentflow.ts`, 50,021 characters, load 5-12, not the reference runner): cycle median 28.1 ms (best 25.1), bare parse 6.1 ms; over the 15 ms budget here, as #549 measured (about 1.3x flowchart's 50k fixture, each node carrying a YAML `@{ … }`).
+- Warm render vs 12.2.0 (D217, one-off bench script, 68 e2e files, load 21-31): geomean 57.8×, median 62.9× (23.7-85.5×); 12.2.0 throws on the reserved-`connectors` fixture.
 - Load path for one agentflow render (CDN build): 133,173 B gz, over the 131,072 B `loaded` figure that only flowchart's load path is gated on (R-PERF-1); flowchart's own is 129,749 B on this build.
 
 ## #551 T7 ASCII (optional)
