@@ -1,0 +1,35 @@
+# Run notes, spec #526 (M5b railroad, `@mermaid-js/diagram-railroad`)
+
+Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then ad3648a91). Draft PR: #633.
+
+| Ticket | Issue | Blocked by | State |
+| --- | --- | --- | --- |
+| T0 `gen:grammar` for several grammars | #605 | — | merged into `mermaid-v13` (#621, c66d9ab1a) |
+| T1 lexer parity gates | #608 | #605 | merged (ff ed0e4aa7c; `./testing` 4,674 B gz, runtime entry 20 B; no core change) |
+| T2 grammars, parsers, model, AST | #610 | #608 | merged (ff 35d9a65f9; runtime entry 10,668 B gz, `./testing` 5,332 B gz; no core change) |
+| T3 layout | #612 | #610 | merged (ff 8ec205a7e; layout 2,830 B gz, runtime entry 13,535 B gz; core 94,412 unchanged) |
+| T4 renderer and theme table | #613 | #612 | merged (ff b12716ef9; runtime entry ~16 KB gz; core 94,412 unchanged; theme matches 12.2.0 in all eleven themes) |
+| T6 language facet | #616 | #610 | merged (ff bb971c3a7; `./language` 15,569 B gz; core 94,412 unchanged; goldens run from conformance until T5) |
+| T5 integration | #615 | #613, #616 | merged (ff 267645d1e; core 94,435 B gz (+23); load path 114,769 B gz, railroad 20,334; warm render 20.3× vs 12.2.0 under load) |
+| T7 ascii (optional, D518) | #617 | #615 | merged (ff 7f4b57aa3; `./ascii` 8,152 B gz; runtime entry 16,678 B gz) |
+
+- `01-v12-railroad.md`: pointer notes on v12's four Langium grammars, DB, renderer, styles, specs, docs, corpus and the oracle.
+- `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams.
+- `IMPLEMENTER.md`: the brief every ticket agent reads.
+- `GAPS.md`: unmet criteria and choices per ticket.
+- `tickets/<n>.md`: handoffs.
+
+## Wave 4
+
+architecture, railroad, eventmodeling and swimlane run in parallel with wave 3 on shared machines: at most one ticket agent at a time here. Shared lists conflict (registry, detectors, `SECTION_OWNERS`, `HARVESTS`, `LANGIUM_LEXERS`, knip, theme vocabulary lists, adapter regex, `empty.out`, licence tables, MIGRATION.md, RELEASING.md): when `mermaid-v13` moves, merge it, keep every side's rows, regenerate generated files, the lockfile and goldens.
+
+## Core size (R-PERF-8, D546 limit 98,304 B gz, `measureCoreSize`)
+
+| After | Core gz | Δ |
+| --- | --- | --- |
+| base `mermaid-v13` @ 521fb76 | 93,891 | — |
+| base `mermaid-v13` @ ad3648a (#589) | 94,217 | +326 (not ours) |
+| base `mermaid-v13` @ ade398e (#620) | 94,352 | +135 (not ours) |
+| base `mermaid-v13` @ e540d3e (#628) | 94,385 | +33 (not ours) |
+| base `mermaid-v13` @ e1e953a (#630) | 94,412 | +27 (not ours) |
+| T5 #615 (four registry/detector/facet rows) | 94,435 | +23 |

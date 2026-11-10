@@ -1,0 +1,4 @@
+railroad-peg-beta
+Expr <- Sum !Ex|pr ;
+Su|m <- Value ("+" Value)* ;
+Value <- "x" / &Sum Expr ;

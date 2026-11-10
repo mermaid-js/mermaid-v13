@@ -1,0 +1,5 @@
+railroad-beta
+expr = sequence(nonterminal("term"), zeroOrMore(sequence(terminal("+"), nonterminal("te|rm")))) ;
+te|rm = choice(terminal("1"), nonterminal("expr")) ;
+other = nonterminal("nowh|ere") ;
+again = nonterminal("nowhere") ;

@@ -1,0 +1,5 @@
+railroad-ebnf-beta
+expr ::= te|rm { "+" term } ;
+term = factor , [ "*" factor ] ;
+fac|tor = "(" expr ")" \| "1" ;
+factor = "again" ;

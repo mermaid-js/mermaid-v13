@@ -49,6 +49,7 @@
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",
     "@mermaid-js/diagram-radar": "workspace:*",
+    "@mermaid-js/diagram-railroad": "workspace:*",
     "@mermaid-js/diagram-requirement": "workspace:*",
     "@mermaid-js/diagram-sankey": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
@@ -122,6 +123,9 @@
     "@mermaid-js/diagram-radar": {
       "optional": true
     },
+    "@mermaid-js/diagram-railroad": {
+      "optional": true
+    },
     "@mermaid-js/diagram-requirement": {
       "optional": true
     },
@@ -178,6 +182,7 @@
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",
     "@mermaid-js/diagram-radar": "workspace:*",
+    "@mermaid-js/diagram-railroad": "workspace:*",
     "@mermaid-js/diagram-requirement": "workspace:*",
     "@mermaid-js/diagram-sankey": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",

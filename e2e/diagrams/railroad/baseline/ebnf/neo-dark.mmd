@@ -1,0 +1,11 @@
+---
+description: >-
+  One representative railroad diagram in the neo family's dark theme, `neo-dark`. EBNF (`railroad-ebnf-beta`): a five-way choice, `[ ]` optionals, `{ }` repetition, a special sequence and an exception.
+config:
+  theme: neo-dark
+---
+railroad-ebnf-beta
+value = object | array | number | "true" | "null" ;
+object = "{" , [ member , { "," , member } ] , "}" ;
+number = [ "-" ] , digit , { digit } ;
+digit = ? any decimal digit ? - "0" | "0" ;

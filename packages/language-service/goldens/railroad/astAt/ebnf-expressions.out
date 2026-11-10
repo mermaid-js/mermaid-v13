@@ -1,0 +1,23 @@
+@ 2:1  |expr ::= term { "+" | term }* , [ ? special ? ] , a - b ;
+  rule:expr 2:1-2:58 "expr ::= term { \"+\" | term }* , [ ? special ? ] , a - b ;"
+@ 2:12  expr ::= te|rm { "+" | term }* , [ ? special ? ] , a - b ;
+  rule:expr/0/0 2:10-2:14 "term"
+  rule:expr/0 2:10-2:56 "term { \"+\" | term }* , [ ? special ? ] , a - b"
+  rule:expr 2:1-2:58 "expr ::= term { \"+\" | term }* , [ ? special ? ] , a - b ;"
+@ 2:23  expr ::= term { "+" | |term }* , [ ? special ? ] , a - b ;
+  rule:expr/0/1/0/0/1 2:23-2:27 "term"
+  rule:expr/0/1/0/0 2:17-2:27 "\"+\" | term"
+  rule:expr/0/1/0 2:15-2:29 "{ \"+\" | term }"
+  rule:expr/0/1 2:15-2:30 "{ \"+\" | term }*"
+  rule:expr/0 2:10-2:56 "term { \"+\" | term }* , [ ? special ? ] , a - b"
+  rule:expr 2:1-2:58 "expr ::= term { \"+\" | term }* , [ ? special ? ] , a - b ;"
+@ 2:39  expr ::= term { "+" | term }* , [ ? sp|ecial ? ] , a - b ;
+  rule:expr/0/2/0 2:35-2:46 "? special ?"
+  rule:expr/0/2 2:33-2:48 "[ ? special ? ]"
+  rule:expr/0 2:10-2:56 "term { \"+\" | term }* , [ ? special ? ] , a - b"
+  rule:expr 2:1-2:58 "expr ::= term { \"+\" | term }* , [ ? special ? ] , a - b ;"
+@ 2:55  expr ::= term { "+" | term }* , [ ? special ? ] , a - |b ;
+  rule:expr/0/3/2 2:55-2:56 "b"
+  rule:expr/0/3 2:51-2:56 "a - b"
+  rule:expr/0 2:10-2:56 "term { \"+\" | term }* , [ ? special ? ] , a - b"
+  rule:expr 2:1-2:58 "expr ::= term { \"+\" | term }* , [ ? special ? ] , a - b ;"

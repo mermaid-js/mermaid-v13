@@ -1,0 +1,11 @@
+---
+description: PEG with # comments, a title and accessibility text.
+---
+railroad-peg-beta
+title Additive expressions
+accTitle: Sums
+accDescr { One or more products joined by plus or minus. }
+# A line comment.
+Sum <- Product (("+" / "-") Product)* ; # trailing comment
+Product <- Value ("*" Value)? ;
+Value <- Digit+ ;

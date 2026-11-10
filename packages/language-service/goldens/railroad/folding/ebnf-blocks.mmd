@@ -1,0 +1,7 @@
+railroad-ebnf-beta
+(* an ISO comment
+   over lines *)
+expr ::= term
+       { "+" term } ;
+term = ? any digit,
+         written out ? ;

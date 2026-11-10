@@ -1,0 +1,3 @@
+@ 3:18  a = nonterminal("|c") ;
+  prepare: 3:18-3:19 "c"; rename to "atom":
+  refused: 'atom' would not read as the same rule id everywhere it is used.

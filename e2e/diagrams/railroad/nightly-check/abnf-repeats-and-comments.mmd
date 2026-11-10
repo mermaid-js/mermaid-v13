@@ -1,0 +1,13 @@
+---
+description: ABNF bounded, open and exact repeats, optional groups, and ; comments on their own lines.
+---
+railroad-abnf-beta
+; A comment line: in ABNF, ; followed by text is a comment.
+year = 4DIGIT
+;
+name = 1*ALPHA *("-" 1*ALPHA)
+;
+code = 2*3DIGIT [ "x" ] *1"y" 0*1"z"
+;
+DIGIT = %x30-39
+;
