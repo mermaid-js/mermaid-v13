@@ -4,7 +4,7 @@ import { cellMeasurer, unicode } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { ascii } from './ascii.ts';
-import { drawC4 } from './ascii/draw.ts';
+import { c4CellRect, drawC4 } from './ascii/draw.ts';
 import { layoutC4, type C4Layout } from './layout/index.ts';
 import { c4TestContext, parsedC4 } from './test-context.ts';
 
@@ -61,12 +61,38 @@ describe('the C4 layout on the cell profile (#545)', () => {
 });
 
 describe('the C4 ascii hook (#545)', () => {
-  it('draws a px layout as it is, at 8 × 16 px a cell', () => {
+  it('draws the cell layout the API hands it, and refuses a px one', () => {
     const { parsed, ctx } = context(SRC);
-    const px = layoutC4(parsed.model, ctx);
-    expect(px.cell).toBeUndefined();
-    const text = ascii(parsed.model, px, { config: ctx.config, warn: () => undefined });
+    const cells = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    const text = ascii(parsed.model, cells, { config: ctx.config, warn: () => undefined });
     for (const part of ['Alice', '[Person]', 'Billing', 'Pays', '►']) expect(text).toContain(part);
+    const px = layoutC4(parsed.model, ctx);
+    expect(() => ascii(parsed.model, px, { config: ctx.config, warn: () => undefined })).toThrow(
+      /cell profile/
+    );
+  });
+
+  it('routes a relation round an element in its way, never under it', () => {
+    const src = [
+      'C4Context',
+      'System(a, "A")',
+      'System(b, "B")',
+      'System(c, "C")',
+      'Rel(a, c, "Skips")',
+    ].join('\n');
+    const { parsed, ctx } = context(src);
+    const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    const drawing = drawC4(laid, unicode);
+    const b = c4CellRect(laid, laid.elements[1]!.box);
+    const inB = drawing.lines[0]!.cells.filter(
+      (p) =>
+        p.x + drawing.left >= b.x &&
+        p.x + drawing.left < b.x + b.width &&
+        p.y + drawing.top >= b.y &&
+        p.y + drawing.top < b.y + b.height
+    );
+    expect(inB).toEqual([]);
+    expect(drawing.text).toContain('Skips');
   });
 
   it('cuts a line wider than its box with …', () => {

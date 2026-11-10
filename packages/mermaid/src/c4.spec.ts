@@ -263,9 +263,9 @@ describe('C4 text output (#545, D459)', () => {
       [
         '╭─────────────────────────╮             ╭─────────────────────────╮',
         '│                         │             │  Billing system with a  │',
-        '│                         │             │        long name        ├───┐',
+        '│                         │             │        long name        ├─┐',
         '│          Alice          ├─── Pays ───►│    [Software System]    │ Retries',
-        '│        [Person]         │             │     Takes the money     │◄──┘',
+        '│        [Person]         │             │     Takes the money     │◄┘',
         '╰─────────────────────────╯             │                         │',
         '                                        ╰─────────────────────────╯',
       ].join('\n')
@@ -279,8 +279,9 @@ describe('C4 text output (#545, D459)', () => {
     const unicode = await m.render('a2', BOUNDARY, { format: 'ascii' });
     const lines = unicode.text.split('\n');
     expect(lines[0]).toBe('                Payments');
-    expect(lines).toContain('┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐');
-    expect(lines).toContain('┆               [SYSTEM]               ┆');
+    // The line steps round the frame's label and its `[type]`, never under them.
+    expect(lines).toContain('┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐');
+    expect(lines).toContain('┆        Pays   [SYSTEM]               ┆');
     expect(lines).toContain('┆      ╒═════════════════════════╕     ┆');
     expect(unicode.text).toContain('Pays');
     expect(unicode.text).toContain('[HTTPS]');
@@ -298,12 +299,12 @@ describe('C4 text output (#545, D459)', () => {
         '+----------------+--------+',
         '                 |',
         '                 |',
-        '                 |',
-        '+................ Bank ................+',
-        ':               [SYSTEM]               :',
-        ':              Pays                    :',
-        ':             [HTTPS]                  :',
-        ':                |                     :',
+        '               +-+',
+        '+..............+. Bank ................+',
+        ':        Pays   [SYSTEM]               :',
+        ':       [HTTPS]                        :',
+        ':              |                       :',
+        ':              +-+                     :',
         ':                v                     :',
         ':      +=========================+     :',
         ':      |                         |     :',

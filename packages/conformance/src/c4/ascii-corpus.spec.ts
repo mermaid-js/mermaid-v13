@@ -13,8 +13,10 @@ import { c4Cases, c4Corpus } from './corpus.ts';
 // puts it and every boundary a whole frame, no two boxes on one cell and every element inside
 // its frame, every label line present (an element's inside its box, a boundary's label in its
 // top border, a relation's somewhere), an arrowhead outside the side of every end that has one,
-// nothing but line glyphs and its own label on a frame (pitfall 20), `rows` lines none wider
-// than `columns` and one exactly that wide, no trailing spaces, no Unicode glyph in ASCII.
+// nothing but line glyphs and its own label on a frame (pitfall 20), no relation through an
+// element or under header text, every label at or within 2 cells of its own line, `rows` lines
+// none wider than `columns` and one exactly that wide, no trailing spaces, no Unicode glyph in
+// ASCII.
 
 const CHARSETS: C4Charset[] = ['unicode', 'ascii'];
 
@@ -154,15 +156,21 @@ describe('c4 ascii corpus properties (#545, D459, R-ASCII-9)', () => {
         const { text, layout } = c.out[cs];
         const g = gridOf(text, layout, cs);
         const found: string[] = [];
-        const check = (r: CellRect, name: string, label?: string): void => {
+        const crowded = c4AsciiDrawing(layout, cs === 'ascii' ? ascii : unicode).labels.filter(
+          (l) => l.crowded
+        );
+        // A frame cell under a `crowded` label (no clear place near its line) is the label's.
+        const underCrowded = (x: number, y: number): boolean =>
+          crowded.some((l) => x >= l.x && y >= l.y && x < l.x + l.width && y < l.y + l.height);
+        const check = (r: CellRect, name: string, label?: string, frame = false): void => {
           const { corners, sides } = borderOf(r);
           for (const [x, y] of corners)
-            if (!BORDER[cs].corner.includes(g.cell(x, y)))
+            if (!(frame && underCrowded(x, y)) && !BORDER[cs].corner.includes(g.cell(x, y)))
               found.push(`${name}: ${JSON.stringify(g.cell(x, y))} at a corner (${x}, ${y})`);
           const top = g.rows[r.y]?.slice(r.x, r.x + r.width).join('') ?? '';
           for (const [x, y] of sides) {
             // A frame's own label (a space either side) sits in its top border.
-            if (label && y === r.y) continue;
+            if ((label && y === r.y) || (frame && underCrowded(x, y))) continue;
             if (!BORDER[cs].side.includes(g.cell(x, y)))
               found.push(`${name}: ${JSON.stringify(g.cell(x, y))} on a side (${x}, ${y})`);
           }
@@ -176,7 +184,8 @@ describe('c4 ascii corpus properties (#545, D459, R-ASCII-9)', () => {
           check(
             r,
             `boundary ${b.ast}`,
-            label === '' || cellWidth(label) > r.width - 4 ? undefined : label
+            label === '' || cellWidth(label) > r.width - 4 ? undefined : label,
+            true
           );
         }
         return found;
@@ -220,10 +229,24 @@ describe('c4 ascii corpus properties (#545, D459, R-ASCII-9)', () => {
             if (!rows.some((row) => row.includes(line.trim())))
               found.push(`${e.ast}: ${JSON.stringify(line)} not in its box`);
         }
-        for (const r of layout.relations)
-          for (const line of [r.label, r.techn].flatMap(linesOf))
-            if (!text.includes(line.trim()))
-              found.push(`${r.ast}: label ${JSON.stringify(line)} missing`);
+        // A relation's label may be wrapped narrower to stay by its line: its words are there,
+        // whole unless it was cut.
+        const cut = new Set(
+          c4AsciiDrawing(layout, cs === 'ascii' ? ascii : unicode)
+            .labels.filter((l) =>
+              /…|\.\.\./.test(
+                g.rows
+                  .slice(l.y, l.y + l.height)
+                  .map((row) => row.slice(Math.max(0, l.x), l.x + l.width).join(''))
+                  .join(' ')
+              )
+            )
+            .map((l) => l.ast)
+        );
+        for (const r of layout.relations.filter((rel) => !cut.has(rel.ast)))
+          for (const word of [r.label, r.techn].flatMap(linesOf).join(' ').split(/\s+/))
+            if (word !== '' && !text.includes(word))
+              found.push(`${r.ast}: label word ${JSON.stringify(word)} missing`);
         return found;
       })
     ).toEqual({});
@@ -282,15 +305,86 @@ describe('c4 ascii corpus properties (#545, D459, R-ASCII-9)', () => {
           const label = linesOf(b.label).join(' ').trim();
           const top = (g.rows[r.y] ?? []).slice(r.x, r.x + r.width).join('');
           const at = label === '' ? -1 : top.indexOf(` ${label.slice(0, 1)}`);
+          const drawing = c4AsciiDrawing(layout, cs === 'ascii' ? ascii : unicode);
+          // A label with no clear place near its line (`crowded`) may cover a frame.
+          const crowded = (x: number, y: number): boolean =>
+            drawing.labels.some(
+              (l) => l.crowded && x >= l.x && y >= l.y && x < l.x + l.width && y < l.y + l.height
+            );
           for (const [x, y] of [...corners, ...sides]) {
             const ch = g.cell(x, y);
-            if (LINE.test(ch)) continue;
+            if (LINE.test(ch) || crowded(x, y)) continue;
             // The label's own span in the top border: from its leading space to its trailing one.
             if (y === r.y && at >= 0 && x - r.x >= at && x - r.x <= at + cellWidth(label) + 1)
               continue;
             if (y === r.y && (ch === ' ' || ch === '…' || ch === '.')) continue;
             found.push(`${b.ast}: ${JSON.stringify(ch)} on its frame (${x}, ${y})`);
           }
+        }
+        return found;
+      })
+    ).toEqual({});
+  });
+
+  it('routes no relation through an element or under header text, and draws each where it says', () => {
+    expect(
+      perCharset((c, cs) => {
+        const { text, layout } = c.out[cs];
+        const g = gridOf(text, layout, cs);
+        const drawing = c4AsciiDrawing(layout, cs === 'ascii' ? ascii : unicode);
+        const shapes = layout.elements.map((e) => g.rect(e.box));
+        const within = (r: CellRect, x: number, y: number): boolean =>
+          x >= r.x && y >= r.y && x < r.x + r.width && y < r.y + r.height;
+        const heads = Object.values(cs === 'ascii' ? ascii.head : unicode.head);
+        const found: string[] = [];
+        for (const line of drawing.lines)
+          for (const { x, y } of line.cells) {
+            if (shapes.some((r) => within(r, x, y)))
+              found.push(`${line.ast}: (${x}, ${y}) inside an element`);
+            if (drawing.headers.some((r) => within(r, x, y)))
+              found.push(`${line.ast}: (${x}, ${y}) under header text`);
+            const shown = g.cell(x, y);
+            const labelled = drawing.labels.some((r) => within(r, x, y));
+            if (!labelled && !LINE.test(shown) && !heads.includes(shown))
+              found.push(`${line.ast}: ${JSON.stringify(shown)} at (${x}, ${y}), not its line`);
+          }
+        return found;
+      })
+    ).toEqual({});
+  });
+
+  it('puts every relation label at or within 2 cells of its own line, where it is written', () => {
+    expect(
+      perCharset((c, cs) => {
+        const { text, layout } = c.out[cs];
+        const g = gridOf(text, layout, cs);
+        const drawing = c4AsciiDrawing(layout, cs === 'ascii' ? ascii : unicode);
+        const found: string[] = [];
+        for (const label of drawing.labels) {
+          const cells = drawing.lines.find((l) => l.ast === label.ast)?.cells ?? [];
+          const gap = Math.min(
+            ...cells.map((p) =>
+              Math.max(
+                Math.max(label.x - p.x, p.x - (label.x + label.width - 1), 0),
+                Math.max(label.y - p.y, p.y - (label.y + label.height - 1), 0)
+              )
+            )
+          );
+          if (gap > 2) found.push(`${label.ast}: label ${gap} cells from its line`);
+          const rel = layout.relations.find((r) => r.ast === label.ast)!;
+          const fold = (t: string): string => t.replace(/\s+/g, ' ').trim();
+          const want = fold([...linesOf(rel.label), ...linesOf(rel.techn)].join(' '));
+          const got = fold(
+            g.rows
+              .slice(label.y, label.y + label.height)
+              .map((row) => row.slice(Math.max(0, label.x), label.x + label.width).join(''))
+              .join(' ')
+          );
+          // Wrapped narrower, or a word cut where it is wider still.
+          if (got !== want && !/…|\.\.\./.test(got))
+            found.push(
+              `${label.ast}: ${JSON.stringify(got)} at its place, not ${JSON.stringify(want)}`
+            );
         }
         return found;
       })

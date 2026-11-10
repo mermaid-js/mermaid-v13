@@ -1,19 +1,18 @@
-// Draws a C4 layout laid out for the grid (`C4Layout.cell`, #545, D459) onto the text grid: the
-// px layout divided by the cell size, every edge rounded to the nearest cell. In order:
+// Draws a C4 layout laid out on the cell profile (`C4Layout.cell`, #545, D459) onto the text
+// grid: the px layout divided by the cell size, every edge rounded to the nearest cell. In order:
 //
 // 1. boundaries: dashed frames, deployment nodes solid ones (as the SVG draws them);
-// 2. relations: stepped lines from the cell outside one end's side to the cell outside the
-//    other's, through the routed corners; each leg leaves and reaches its side square on;
-// 3. elements: boxes over the lines (a line under a box is hidden, never cut through it), in the
-//    flowchart's text form of their shape: rounded corners for `rounded` and `person`, caps for
-//    the cylinder, double sides for `fr-rect`, square for the queue;
+// 2. relations: each a stepped line from the cell outside its start's side to the cell outside
+//    its end's, routed on the grid round elements, boundary header text and the title, guided by
+//    the layout's routed points (`./route.ts`);
+// 3. elements: boxes in the flowchart's text form of their shape: rounded corners for `rounded`
+//    and `person`, caps for the cylinder, double sides for `fr-rect`, square for the queue;
 // 4. arrowheads on the cell outside the side they point into, and a tee on the side where a
 //    line without one leaves;
 // 5. text: a boundary's label in its top border (`┌╌ Label ╌┐`), its `[type]` and description
 //    on the rows below; an element's name, `[Kind]` and description centred inside; the title;
-// 6. each relation's label and `[techn]`, a space either side, at the middle of its line: the
-//    path cell nearest the middle where it covers no box, frame, arrowhead, line end or turn,
-//    header or other label (pitfall 20), else the nearest free place about it.
+// 6. each relation's label and `[techn]`, a space either side, at or beside the middle of its
+//    line, wrapped narrower where it does not fit there (`placeLabel`).
 //
 // A line wider than its room is cut with `…` (`...` in the ascii charset). Glyphs come from core
 // (`armOf`, `glyphFor`, `sideOf`, pitfall 21). The empty margin round the drawing is trimmed.
@@ -21,18 +20,14 @@ import {
   armOf,
   Canvas,
   cellWidth,
-  DOWN,
   DX,
   DY,
   drawBox,
   drawText,
   glyphFor,
   graphemes,
-  LEFT,
   opposite,
-  RIGHT,
   sideOf,
-  UP,
   type BoxOptions,
   type CellRect,
   type Dir,
@@ -48,22 +43,24 @@ import type {
   PlacedLabel,
   Rect,
 } from '../layout/index.ts';
+import { CellSet, clamp, Grid, type Cell } from './grid.ts';
+import { routeLine, RouteBudget, type RouteField, type RouteRequest } from './route.ts';
 
-/** The cell size a layout without `cell` is read at: the cell profile's. */
-const CELL = { x: 8, y: 16 } as const;
+/** The search steps the relations of one drawing may take together (R-SEC-5). */
+const ROUTE_BUDGET = 1_000_000;
 
-/** A self-loop's reach past its side, in cells, at the least. */
-const LOOP_REACH = 2;
+/** How far the router may go round the drawing, in cells. */
+const ROUTE_MARGIN = 3;
 
-/** How far about a label's middle a free place is looked for, in cells. */
-const SEARCH = 24;
+/** A label's places: this many cells along its line either side of the middle, and this far beside. */
+const LABEL_ALONG = 12;
+const LABEL_BESIDE = 2;
 
-/**
- * The most places tried, nearest the middle first: for a straight line's middle leg, and for a
- * label along its line. Bounds the work on a large diagram (R-SEC-5).
- */
-const STEP_TRIES = 48;
-const LABEL_TRIES = 256;
+/** The narrowest a label is wrapped to, in cells. */
+const LABEL_LEAST = 6;
+
+/** The four ways, clockwise from up (core's `Dir` order). */
+const DIRS: readonly Dir[] = [0, 1, 2, 3];
 
 /** Each shape's box options (flowchart's text forms; the queue has none, a square box). */
 const FORMS: Readonly<Record<C4ShapeId, BoxOptions>> = {
@@ -74,102 +71,19 @@ const FORMS: Readonly<Record<C4ShapeId, BoxOptions>> = {
   'fr-rect': { form: 'double-side' },
 };
 
-interface Cell {
-  readonly x: number;
-  readonly y: number;
-}
-
-/** The layout's px on the cell grid. */
-class Grid {
-  constructor(
-    private readonly sx: number,
-    private readonly sy: number
-  ) {}
-
-  col(x: number): number {
-    return Math.round(x / this.sx);
-  }
-
-  row(y: number): number {
-    return Math.round(y / this.sy);
-  }
-
-  /** A px point in cells, unrounded. */
-  at(x: number, y: number): Cell {
-    return { x: x / this.sx, y: y / this.sy };
-  }
-
-  /** A box's cells, its border included; each edge on its nearest cell boundary. */
-  rect(r: Rect): CellRect {
-    const x = this.col(r.x);
-    const y = this.row(r.y);
-    return {
-      x,
-      y,
-      width: Math.max(2, this.col(r.x + r.width) - x),
-      height: Math.max(2, this.row(r.y + r.height) - y),
-    };
-  }
-}
-
-/** The cells nothing else may be drawn over: boxes, frames, arrowheads, headers and labels. */
-class Taken {
-  private readonly cells = new Set<number>();
-
-  private static key(x: number, y: number): number {
-    return y * 0x100000 + x;
-  }
-
-  add(x: number, y: number): void {
-    this.cells.add(Taken.key(x, y));
-  }
-
-  rect(r: CellRect): void {
-    for (let j = r.y; j < r.y + r.height; j++)
-      for (let i = r.x; i < r.x + r.width; i++) this.add(i, j);
-  }
-
-  border(r: CellRect): void {
-    const right = r.x + r.width - 1;
-    const bottom = r.y + r.height - 1;
-    for (let i = r.x; i <= right; i++) {
-      this.add(i, r.y);
-      this.add(i, bottom);
-    }
-    for (let j = r.y; j <= bottom; j++) {
-      this.add(r.x, j);
-      this.add(right, j);
-    }
-  }
-
-  has(x: number, y: number): boolean {
-    return this.cells.has(Taken.key(x, y));
-  }
-
-  /** Whether the `w` × `h` cells from (x, y) are on the canvas and free. */
-  free(x: number, y: number, w: number, h: number): boolean {
-    if (x < 0 || y < 0) return false;
-    for (let j = y; j < y + h; j++)
-      for (let i = x; i < x + w; i++) if (this.cells.has(Taken.key(i, j))) return false;
-    return true;
-  }
-}
-
-const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
-
 /** A label's lines as written text. */
 const linesOf = (label: PlacedLabel | undefined): string[] =>
   label ? label.text.lines.map((runs) => runs.map((r) => r.text).join('')) : [];
 
 /**
- * `text` in at most `width` cells: cut with `ell` when it is wider, or when `force` (the last of
- * the lines that fit, more following).
+ * `text` in at most `width` cells: cut with `ellipsis` when it is wider, or when `force` (the
+ * last of the lines that fit, more following).
  */
-function cut(text: string, width: number, ell: string, force = false): string {
+function cut(text: string, width: number, ellipsis: string, force = false): string {
   if (width <= 0) return '';
   if (!force && cellWidth(text) <= width) return text;
-  const ellW = cellWidth(ell);
-  const room = ellW <= width ? width - ellW : width;
+  const ellipsisWidth = cellWidth(ellipsis);
+  const room = ellipsisWidth <= width ? width - ellipsisWidth : width;
   let out = '';
   let w = 0;
   for (const g of graphemes(text)) {
@@ -177,7 +91,30 @@ function cut(text: string, width: number, ell: string, force = false): string {
     out += g.text;
     w += g.width;
   }
-  return ellW <= width ? out.trimEnd() + ell : out;
+  return ellipsisWidth <= width ? out.trimEnd() + ellipsis : out;
+}
+
+/** `lines` cut to `rows`, the last one shown with `ellipsis` when some are left out. */
+function fit(lines: readonly string[], rows: number, width: number, ellipsis: string): string[] {
+  if (lines.length <= rows) return [...lines];
+  const kept = lines.slice(0, Math.max(0, rows));
+  if (kept.length > 0) kept[kept.length - 1] = cut(kept[kept.length - 1]!, width, ellipsis, true);
+  return kept;
+}
+
+/** A text written from a cell, one row. */
+interface Written {
+  readonly x: number;
+  readonly y: number;
+  readonly text: string;
+}
+
+/** A relation on the grid: its cells from start to end, and the way each end goes into its shape. */
+interface Line {
+  readonly rel: C4RelationLayout;
+  readonly cells: readonly Cell[];
+  readonly startInto: Dir;
+  readonly endInto: Dir;
 }
 
 /** What drawing reads. */
@@ -185,10 +122,11 @@ interface Pen {
   readonly canvas: Canvas;
   readonly glyphs: GlyphSet;
   readonly grid: Grid;
-  readonly taken: Taken;
-  readonly ell: string;
-  /** What a stepped line should keep off: the elements' cells, the frames', the lines drawn. */
-  readonly avoid: { readonly shapes: Taken; readonly frames: Taken; readonly lines: Taken };
+  readonly ellipsis: string;
+  /** Cells no label covers: boxes, arrowheads, header text, the title, labels. */
+  readonly labelBlocks: CellSet;
+  /** Frames' border cells: a label covers them only when no place near its line is clear. */
+  readonly frameCells: CellSet;
 }
 
 /** A frame: dashed rules for a boundary, solid for a deployment node. */
@@ -209,50 +147,40 @@ function drawFrame(pen: Pen, r: CellRect, dashed: boolean): void {
   canvas.draw(right, r.y, s.tr);
   canvas.draw(r.x, bottom, s.bl);
   canvas.draw(right, bottom, s.br);
-  pen.taken.border(r);
 }
 
-/** Writes `lines` centred across `r` from row `top`, each cut to the room inside its border. */
-function centred(pen: Pen, r: CellRect, lines: readonly string[], top: number): void {
-  lines.forEach((line, k) => {
-    const text = cut(line, r.width - 4, pen.ell);
-    drawText(pen.canvas, r.x + Math.floor((r.width - cellWidth(text)) / 2), top + k, text);
+/** `lines` centred across `r` from row `top`, each cut to the room inside its border. */
+function centred(pen: Pen, r: CellRect, lines: readonly string[], top: number): Written[] {
+  return lines.map((line, k) => {
+    const text = cut(line, r.width - 4, pen.ellipsis);
+    return { x: r.x + Math.floor((r.width - cellWidth(text)) / 2), y: top + k, text };
   });
 }
 
-/** `lines` cut to `rows`, the last one shown with `ell` when some are left out. */
-function fit(lines: readonly string[], rows: number, width: number, ell: string): string[] {
-  if (lines.length <= rows) return [...lines];
-  const kept = lines.slice(0, Math.max(0, rows));
-  if (kept.length > 0) kept[kept.length - 1] = cut(kept[kept.length - 1]!, width, ell, true);
-  return kept;
-}
-
-/** A boundary's text: its label in its top border, `[type]` and the description below it. */
-function boundaryText(pen: Pen, b: C4BoundaryLayout): void {
+/**
+ * A boundary's header text: its label in its top border, a space either side, and `[type]` and
+ * the description on the rows below the border, above its contents (the layout's `head`).
+ */
+function headerText(pen: Pen, b: C4BoundaryLayout): Written[] {
   const r = pen.grid.rect(b.box);
+  const out: Written[] = [];
   const label = linesOf(b.label).join(' ').trim();
   if (label !== '' && r.width >= 5) {
-    const text = cut(label, r.width - 4, pen.ell);
+    const text = cut(label, r.width - 4, pen.ellipsis);
     const w = cellWidth(text) + 2;
-    const x = r.x + 1 + Math.floor((r.width - 2 - w) / 2);
-    pen.canvas.set(x, r.y, ' ');
-    drawText(pen.canvas, x + 1, r.y, text);
-    pen.canvas.set(x + w - 1, r.y, ' ');
+    out.push({ x: r.x + 1 + Math.floor((r.width - 2 - w) / 2), y: r.y, text: ` ${text} ` });
   }
-  // The header's rows: below the border, above the contents (the layout's `head`).
   const last = Math.min(pen.grid.row(b.box.y + b.head), r.y + r.height - 2);
-  const lines = fit([...linesOf(b.type), ...linesOf(b.descr)], last - r.y, r.width - 4, pen.ell);
-  centred(pen, r, lines, r.y + 1);
-  for (let k = 0; k < lines.length; k++)
-    for (let i = r.x; i < r.x + r.width; i++) pen.taken.add(i, r.y + 1 + k);
+  const rest = [...linesOf(b.type), ...linesOf(b.descr)];
+  out.push(...centred(pen, r, fit(rest, last - r.y, r.width - 4, pen.ellipsis), r.y + 1));
+  return out;
 }
 
 /** An element's text, centred where the layout centres it, inside its border. */
-function elementText(pen: Pen, e: C4ElementLayout): void {
+function elementText(pen: Pen, e: C4ElementLayout): Written[] {
   const r = pen.grid.rect(e.box);
   const parts = [e.name, e.type, e.descr].filter((l): l is PlacedLabel => l !== undefined);
-  const lines = fit(parts.flatMap(linesOf), r.height - 2, r.width - 4, pen.ell);
+  const lines = fit(parts.flatMap(linesOf), r.height - 2, r.width - 4, pen.ellipsis);
   const first = parts[0]!;
   const end = parts[parts.length - 1]!;
   const middle = (pen.grid.row(first.y) + pen.grid.row(end.y + end.height)) / 2;
@@ -261,181 +189,66 @@ function elementText(pen: Pen, e: C4ElementLayout): void {
     r.y + 1,
     r.y + r.height - 1 - lines.length
   );
-  centred(pen, r, lines, top);
+  return centred(pen, r, lines, top);
+}
+
+/** The title's lines, centred where the layout centres it. */
+function titleText(pen: Pen, title: PlacedLabel | undefined): Written[] {
+  if (!title) return [];
+  const row = pen.grid.row(title.y);
+  const centre = pen.grid.col(title.x + title.width / 2);
+  return linesOf(title).map((text, k) => ({
+    x: Math.max(0, centre - Math.floor(cellWidth(text) / 2)),
+    y: row + k,
+    text,
+  }));
+}
+
+/** Marks every cell a text covers. */
+function cover(set: CellSet, texts: readonly Written[]): void {
+  for (const t of texts) for (let i = 0; i < cellWidth(t.text); i++) set.add(t.x + i, t.y);
 }
 
 /** The way from `a` to the neighbouring cell `b`. */
 function dirOf(a: Cell, b: Cell): Dir {
-  if (b.x > a.x) return RIGHT;
-  if (b.x < a.x) return LEFT;
-  return b.y > a.y ? DOWN : UP;
+  return DIRS.find((d) => a.x + DX[d] === b.x && a.y + DY[d] === b.y) ?? 0;
 }
-
-const across = (d: Dir): boolean => d === LEFT || d === RIGHT;
 
 /**
  * The way a line goes into its shape at `end`: square into the side of `box` the end is nearest
  * (the outline meets the box there, or comes nearest it on a curve); on a tie, the way the end
- * points (the larger part of its unit vector).
+ * points (the larger part of its unit vector). A line going `d` meets the side facing `-d`.
  */
 function into(end: C4RelationEnd, box: Rect): Dir {
-  const gaps: [number, Dir][] = [
-    [Math.abs(end.x - box.x), RIGHT],
-    [Math.abs(box.x + box.width - end.x), LEFT],
-    [Math.abs(end.y - box.y), DOWN],
-    [Math.abs(box.y + box.height - end.y), UP],
-  ];
-  const least = Math.min(...gaps.map(([g]) => g));
-  const sideways: Dir = end.dx > 0 ? RIGHT : LEFT;
-  const down: Dir = end.dy > 0 ? DOWN : UP;
-  const pointed = Math.abs(end.dx) >= Math.abs(end.dy) ? sideways : down;
-  const near = gaps.filter(([g]) => g - least < 1e-6).map(([, d]) => d);
-  return near.includes(pointed) ? pointed : near[0]!;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const gap = (d: Dir): number =>
+    DX[d] !== 0
+      ? Math.abs(end.x - (cx - (DX[d] * box.width) / 2))
+      : Math.abs(end.y - (cy - (DY[d] * box.height) / 2));
+  const least = Math.min(...DIRS.map(gap));
+  const near = DIRS.filter((d) => gap(d) - least < 1e-6);
+  const level = Math.abs(end.dx) >= Math.abs(end.dy);
+  const pointed = DIRS.find((d) =>
+    level ? DX[d] === Math.sign(end.dx) && DX[d] !== 0 : DY[d] === Math.sign(end.dy) && DY[d] !== 0
+  );
+  return pointed !== undefined && near.includes(pointed) ? pointed : near[0]!;
 }
 
-/** The cell outside `r` on the side a line going `d` meets, level with `p` (inside the side). */
+/**
+ * The cell outside `r` on the side a line going `d` meets (the side facing `-d`), level with `p`
+ * along that side and inside its ends.
+ */
 function outside(r: CellRect, d: Dir, p: Cell): Cell {
   const x = clamp(Math.round(p.x), r.x + 1, r.x + r.width - 2);
   const y = clamp(Math.round(p.y), r.y + 1, r.y + r.height - 2);
-  if (d === RIGHT) return { x: r.x - 1, y };
-  if (d === LEFT) return { x: r.x + r.width, y };
-  if (d === DOWN) return { x, y: r.y - 1 };
-  return { x, y: r.y + r.height };
-}
-
-/** `m` moved no nearer the shape than `s`, along the way `d` leads into it. */
-function behind(m: Cell, s: Cell, d: Dir): Cell {
-  if (d === RIGHT) return { x: Math.min(m.x, s.x), y: m.y };
-  if (d === LEFT) return { x: Math.max(m.x, s.x), y: m.y };
-  if (d === DOWN) return { x: m.x, y: Math.min(m.y, s.y) };
-  return { x: m.x, y: Math.max(m.y, s.y) };
-}
-
-const same = (a: Cell, b: Cell): boolean => a.x === b.x && a.y === b.y;
-
-function deduped(points: readonly Cell[]): Cell[] {
-  const out: Cell[] = [];
-  for (const p of points) if (out.length === 0 || !same(out[out.length - 1]!, p)) out.push(p);
-  return out;
-}
-
-/**
- * The corners from `s` to `e` through `mids`, every leg level or upright: the first leg leaves
- * square to the start's side (`sIn` points into that shape), the last reaches the end's square.
- */
-function corners(
-  s: Cell,
-  sIn: Dir,
-  mids: readonly Cell[],
-  e: Cell,
-  eIn: Dir,
-  cost: (points: readonly Cell[]) => number
-): Cell[] {
-  const inner = mids.map((m) => ({ x: Math.round(m.x), y: Math.round(m.y) }));
-  if (inner.length > 0) {
-    inner[0] = behind(inner[0]!, s, opposite(sIn));
-    inner[inner.length - 1] = behind(inner[inner.length - 1]!, e, eIn);
-  }
-  const pts = deduped([s, ...inner, e]);
-  const out: Cell[] = [pts[0]!];
-  for (let i = 0; i + 1 < pts.length; i++) {
-    const a = pts[i]!;
-    const b = pts[i + 1]!;
-    if (a.x !== b.x && a.y !== b.y) {
-      const first = i === 0;
-      const last = i + 2 === pts.length;
-      if (first && last) out.push(...stepped(a, sIn, b, eIn, cost));
-      else if (first) out.push(across(sIn) ? { x: b.x, y: a.y } : { x: a.x, y: b.y });
-      else if (last) out.push(across(eIn) ? { x: a.x, y: b.y } : { x: b.x, y: a.y });
-      else out.push({ x: b.x, y: a.y });
-    }
-    out.push(b);
-  }
-  return deduped(out);
-}
-
-/**
- * The inner corners of a straight relation stepped from `a` to `b`, each end square to its side:
- * a Z (both ends level, or both upright) with its middle leg where the steps cost least
- * (nearest the middle on a tie), or the one L that fits a level and an upright end. Diagonal
- * lines run clear of the shapes in px, so a step through a shape is the step's fault: the cost
- * counts the shapes', frames' and other lines' cells it covers (`lineCost`).
- */
-function stepped(
-  a: Cell,
-  sIn: Dir,
-  b: Cell,
-  eIn: Dir,
-  cost: (points: readonly Cell[]) => number
-): Cell[] {
-  if (across(sIn) !== across(eIn)) return [across(sIn) ? { x: b.x, y: a.y } : { x: a.x, y: b.y }];
-  const level = across(sIn);
-  const [lo, hi] = level ? [a.x, b.x] : [a.y, b.y];
-  const middle = (lo + hi) / 2;
-  const leg = (m: number): Cell[] =>
-    level
-      ? [
-          { x: m, y: a.y },
-          { x: m, y: b.y },
-        ]
-      : [
-          { x: a.x, y: m },
-          { x: b.x, y: m },
-        ];
-  const centre = Math.round(middle);
-  let best = leg(centre);
-  let bestCost = cost([a, ...best, b]);
-  // The middle leg strictly between the ends (so each end's leg leaves its side), nearest the
-  // middle first: the first that costs least wins.
-  const [min, max] = [Math.min(lo, hi) + 1, Math.max(lo, hi) - 1];
-  for (let k = 1, tried = 0; bestCost > 0 && tried < STEP_TRIES && k <= max - min + 1; k++)
-    for (const m of [centre - k, centre + k]) {
-      if (m < min || m > max || bestCost === 0) continue;
-      tried++;
-      const c = cost([a, ...leg(m), b]);
-      if (c < bestCost) {
-        best = leg(m);
-        bestCost = c;
-      }
-    }
-  return best;
-}
-
-/** Every cell along `points`, in order. */
-function cellsAlong(points: readonly Cell[]): Cell[] {
-  const out: Cell[] = [points[0]!];
-  for (let i = 0; i + 1 < points.length; i++) {
-    const b = points[i + 1]!;
-    let c = out[out.length - 1]!;
-    while (!same(c, b)) {
-      const d = dirOf(c, b);
-      c = { x: c.x + DX[d], y: c.y + DY[d] };
-      out.push(c);
-    }
-  }
-  return out;
-}
-
-/** A relation on the grid: its cells from start to end, and the way each end points into its shape. */
-interface Line {
-  readonly rel: C4RelationLayout;
-  readonly cells: readonly Cell[];
-  readonly sIn: Dir;
-  readonly eIn: Dir;
-}
-
-/** What `points` stepped through cost: shapes' cells most, then other lines', then frames'. */
-function lineCost(pen: Pen, points: readonly Cell[]): number {
-  const { shapes, frames, lines } = pen.avoid;
-  const cells = cellsAlong(points);
-  let cost = 0;
-  for (let k = 1; k + 1 < cells.length; k++) {
-    const { x, y } = cells[k]!;
-    if (shapes.has(x, y)) cost += 100;
-    else if (lines.has(x, y)) cost += 2;
-    else if (frames.has(x, y)) cost += 1;
-  }
-  return cost;
+  // `r.x - 1` going right, `r.x + width` going left; the same down the rows.
+  const across = (from: number, size: number, step: number): number =>
+    from + (size - 1 - step * (size + 1)) / 2;
+  return {
+    x: DX[d] === 0 ? x : across(r.x, r.width, DX[d]),
+    y: DY[d] === 0 ? y : across(r.y, r.height, DY[d]),
+  };
 }
 
 /** A relation's end: its shape's px box, and its cells. */
@@ -444,44 +257,38 @@ interface EndBox {
   readonly cells: CellRect;
 }
 
-/** The relation's cells: outside its start's side, through its routed corners, to outside its end's. */
-function lineOf(pen: Pen, rel: C4RelationLayout, fromBox: EndBox, toBox: EndBox): Line {
+/** A relation's route request: its end cells, the ways into its shapes, its routed points. */
+function requestOf(pen: Pen, rel: C4RelationLayout, from: EndBox, to: EndBox): RouteRequest {
   const { grid } = pen;
-  const from = fromBox.cells;
-  const to = toBox.cells;
-  const pts = rel.points.map((p) => grid.at(p.x, p.y));
-  const sIn = into(rel.start, fromBox.px);
-  const eIn = into(rel.end, toBox.px);
-  const s = outside(from, sIn, pts[0]!);
-  let e = outside(to, eIn, pts[pts.length - 1]!);
-  let mids = pts.slice(1, -1);
-  if (rel.route === 'loop') {
-    // Out from the side and back, a row apart at the least.
-    if (e.y === s.y) e = { x: e.x, y: s.y + 1 < to.y + to.height - 1 ? s.y + 1 : s.y - 1 };
-    const control = Math.max(...(rel.controls ?? []).map((c) => grid.col(c.x)), s.x);
-    const reach = Math.max(control, s.x + LOOP_REACH);
-    mids = [
-      { x: reach, y: s.y },
-      { x: reach, y: e.y },
-    ];
+  const points = rel.points.map((p) => grid.at(p.x, p.y));
+  const startInto = into(rel.start, from.px);
+  const endInto = into(rel.end, to.px);
+  const start = outside(from.cells, startInto, points[0]!);
+  let end = outside(to.cells, endInto, points[points.length - 1]!);
+  // A self-loop's ends a row apart at the least, its controls in the guide.
+  if (rel.route === 'loop' && end.x === start.x && end.y === start.y) {
+    const below = start.y + 1 < to.cells.y + to.cells.height - 1;
+    end = { x: end.x, y: below ? start.y + 1 : start.y - 1 };
   }
-  const cost = (points: readonly Cell[]): number => lineCost(pen, points);
-  const cells = cellsAlong(corners(s, sIn, mids, e, eIn, cost));
-  for (const c of cells) pen.avoid.lines.add(c.x, c.y);
-  return { rel, cells, sIn, eIn };
+  const controls = (rel.controls ?? []).map((c) => grid.at(c.x, c.y));
+  const guide =
+    controls.length === 2
+      ? [points[0]!, controls[0]!, controls[1]!, points[points.length - 1]!]
+      : points;
+  return { start, startInto, end, endInto, guide };
 }
 
 /** Draws a line's glyphs (not its heads), merging with what is drawn: frames, other lines. */
 function drawLine(pen: Pen, line: Line): void {
   const { canvas, glyphs } = pen;
-  const { cells, rel, sIn, eIn } = line;
+  const { cells, rel, startInto, endInto } = line;
   cells.forEach((c, k) => {
     let arms = 0;
     if (k > 0) arms |= armOf(dirOf(c, cells[k - 1]!), 1);
     if (k + 1 < cells.length) arms |= armOf(dirOf(c, cells[k + 1]!), 1);
     // An end without an arrowhead reaches into its side, which then shows a tee.
-    if (k === 0 && !rel.startArrow) arms |= armOf(sIn, 1);
-    if (k + 1 === cells.length && !rel.endArrow) arms |= armOf(eIn, 1);
+    if (k === 0 && !rel.startArrow) arms |= armOf(startInto, 1);
+    if (k + 1 === cells.length && !rel.endArrow) arms |= armOf(endInto, 1);
     const glyph = glyphFor(arms, glyphs);
     if (glyph) canvas.draw(c.x, c.y, glyph);
   });
@@ -489,15 +296,15 @@ function drawLine(pen: Pen, line: Line): void {
 
 /** A line's ends: arrowheads on their cells, a tee on the side where an end has none. */
 function drawEnds(pen: Pen, line: Line): void {
-  const { canvas, glyphs, taken } = pen;
+  const { canvas, glyphs, labelBlocks } = pen;
   const ends = [
-    { c: line.cells[0]!, d: line.sIn, arrow: line.rel.startArrow },
-    { c: line.cells[line.cells.length - 1]!, d: line.eIn, arrow: line.rel.endArrow },
+    { c: line.cells[0]!, d: line.startInto, arrow: line.rel.startArrow },
+    { c: line.cells[line.cells.length - 1]!, d: line.endInto, arrow: line.rel.endArrow },
   ];
   for (const { c, d, arrow } of ends) {
     if (arrow) {
       canvas.set(c.x, c.y, sideOf(glyphs.head, d));
-      taken.add(c.x, c.y);
+      labelBlocks.add(c.x, c.y);
     } else {
       const tee = glyphFor(armOf(opposite(d), 1), glyphs);
       if (tee) canvas.draw(c.x + DX[d], c.y + DY[d], tee);
@@ -505,158 +312,323 @@ function drawEnds(pen: Pen, line: Line): void {
   }
 }
 
-/** Keeps labels off a line's ends and corners, so each line still reads where it turns. */
-function keepTurns(pen: Pen, { cells }: Line): void {
-  cells.forEach((c, k) => {
-    const turn =
-      k === 0 || k + 1 === cells.length || dirOf(cells[k - 1]!, c) !== dirOf(c, cells[k + 1]!);
-    if (turn) pen.taken.add(c.x, c.y);
-  });
+/** A placed relation label: its relation and its cells. */
+export interface PlacedText extends CellRect {
+  readonly ast: string;
+  /** No place near its line was clear of frames: it covers some. */
+  readonly crowded?: boolean;
 }
 
-/** The label block's top-left corner when it sits at `c` on its line. */
-const anchor = (c: Cell, w: number, h: number): Cell => ({
-  x: c.x - Math.floor(w / 2),
-  y: c.y - Math.floor((h - 1) / 2),
-});
+/** Where a line's own label may go over it: every cell but its ends and turns. */
+function straightCells(cells: readonly Cell[]): CellSet {
+  const out = new CellSet();
+  cells.forEach((c, k) => {
+    if (k === 0 || k + 1 === cells.length) return;
+    if (dirOf(cells[k - 1]!, c) === dirOf(c, cells[k + 1]!)) out.add(c.x, c.y);
+  });
+  return out;
+}
 
-/** Where a `w` × `h` label goes: on its line nearest the middle, else about it, else below all. */
-function labelSpot(
-  pen: Pen,
-  cells: readonly Cell[],
+/** The places for a `w` × `h` block `gap` cells from `c` (over it at 0), the centred ones first. */
+function blocksAt(c: Cell, w: number, h: number, gap: number): Cell[] {
+  const out: Cell[] = [];
+  for (let y = c.y - h + 1 - gap; y <= c.y + gap; y++)
+    for (let x = c.x - w + 1 - gap; x <= c.x + gap; x++) {
+      const dx = Math.max(x - c.x, c.x - (x + w - 1), 0);
+      const dy = Math.max(y - c.y, c.y - (y + h - 1), 0);
+      if (Math.max(dx, dy) === gap) out.push({ x, y });
+    }
+  const centre = { x: c.x - Math.floor(w / 2), y: c.y - Math.floor((h - 1) / 2) };
+  const off = (p: Cell): number => Math.abs(p.x - centre.x) + Math.abs(p.y - centre.y);
+  return out.sort((a, b) => off(a) - off(b) || a.y - b.y || a.x - b.x);
+}
+
+/** `lines` wrapped at `width` cells at word breaks; a word wider is cut with `ellipsis`. */
+function wrapped(lines: readonly string[], width: number, ellipsis: string): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    let row = '';
+    for (const word of line.split(/\s+/).filter((w) => w !== '')) {
+      const next = row === '' ? word : `${row} ${word}`;
+      if (cellWidth(next) <= width) row = next;
+      else {
+        if (row !== '') out.push(row);
+        row = cut(word, width, ellipsis);
+      }
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+/** A label's widths to try: its own, then narrower, each about a sixth less, down to `least`. */
+function labelWidths(natural: number, least: number): number[] {
+  const out = [natural];
+  for (let w = natural; w > least; ) {
+    w = Math.max(least, Math.min(w - 1, Math.floor((w * 5) / 6)));
+    out.push(w);
+  }
+  return out;
+}
+
+/** The first place for a `w` × `h` block over or beside a cell of `near` that `fits`, nearer first. */
+function firstPlace(
+  near: readonly Cell[],
   w: number,
   h: number,
-  below: (h: number) => number
-): Cell {
-  const { taken } = pen;
-  const mid = Math.floor((cells.length - 1) / 2);
-  const order = cells
-    .map((_, k) => k)
-    .sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid) || a - b)
-    .slice(0, LABEL_TRIES);
-  for (const k of order) {
-    const at = anchor(cells[k]!, w, h);
-    if (taken.free(at.x, at.y, w, h)) return at;
-  }
-  const centre = anchor(cells[mid]!, w, h);
-  for (let r = 1; r <= SEARCH; r++)
-    for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        if (taken.free(centre.x + dx, centre.y + dy, w, h))
-          return { x: centre.x + dx, y: centre.y + dy };
-      }
-  return { x: Math.max(0, centre.x), y: below(h) };
-}
-
-/** A relation's label and `[techn]`, a space either side, where `labelSpot` finds room. */
-function relationLabel(pen: Pen, line: Line, below: (h: number) => number): void {
-  const lines = [...linesOf(line.rel.label), ...linesOf(line.rel.techn)];
-  if (lines.length === 0) return;
-  const w = Math.max(...lines.map(cellWidth)) + 2;
-  const h = lines.length;
-  const at = labelSpot(pen, line.cells, w, h, below);
-  const { canvas, taken } = pen;
-  for (let j = 0; j < h; j++)
-    for (let i = 0; i < w; i++) {
-      canvas.set(at.x + i, at.y + j, ' ');
-      taken.add(at.x + i, at.y + j);
+  fits: (at: Cell) => boolean
+): Cell | undefined {
+  for (let gap = 0; gap <= LABEL_BESIDE; gap++)
+    for (const c of near) {
+      const at = blocksAt(c, w, h, gap).find(fits);
+      if (at) return at;
     }
-  lines.forEach((text, k) =>
-    drawText(canvas, at.x + 1 + Math.floor((w - 2 - cellWidth(text)) / 2), at.y + k, text)
-  );
+  return undefined;
 }
 
-/** A drawing: its text, and the cell of the layout's grid its first row and column were. */
+/**
+ * Where a relation's label goes (pitfall 20), with the lines it is drawn as: over or beside (up
+ * to `LABEL_BESIDE` cells off) a cell of its line within `LABEL_ALONG` cells of the middle, nearer
+ * first, covering no label block (boxes, arrowheads, header text, labels), no frame and no other
+ * line, only its own straight cells; else the same over other lines; else wrapped narrower (a
+ * label wider than the gap between two shapes stays by its line), each width tried both ways,
+ * its words whole first, then its longest cut. With no such place it is `crowded`: the same
+ * places over frames too, else over the middle cell, whatever is there.
+ */
+function placeLabel(
+  pen: Pen,
+  line: Line,
+  others: CellSet,
+  text: readonly string[]
+): { at: Cell; lines: string[]; crowded: boolean } {
+  const { cells } = line;
+  const own = straightCells(cells);
+  const mid = Math.floor((cells.length - 1) / 2);
+  const near: Cell[] = [];
+  for (let k = 0; k <= LABEL_ALONG; k++)
+    for (const i of k === 0 ? [mid] : [mid - k, mid + k])
+      if (i >= 0 && i < cells.length) near.push(cells[i]!);
+  /** 0: clear of frames and other lines; 1: of frames; 2: of label blocks only. */
+  const fits = (at: Cell, w: number, h: number, tier: number): boolean => {
+    if (!pen.labelBlocks.free(at.x, at.y, w, h)) return false;
+    if (tier === 2) return true;
+    if (!pen.frameCells.free(at.x, at.y, w, h)) return false;
+    if (tier === 1) return true;
+    for (let j = at.y; j < at.y + h; j++)
+      for (let i = at.x; i < at.x + w; i++) if (others.has(i, j) && !own.has(i, j)) return false;
+    return true;
+  };
+  const natural = Math.max(...text.map(cellWidth));
+  const word = Math.max(...text.flatMap((t) => t.split(/\s+/)).map(cellWidth));
+  const whole = labelWidths(natural, Math.max(LABEL_LEAST, word));
+  // Narrower than its longest word: that word cut, as a last way to stay clear by the line.
+  const cutWords = word > LABEL_LEAST ? labelWidths(word - 1, LABEL_LEAST) : [];
+  const phases: [readonly number[], readonly number[]][] = [
+    [whole, [0, 1]],
+    [cutWords, [0, 1]],
+    [[...whole, ...cutWords], [2]],
+  ];
+  for (const [widths, tiers] of phases)
+    for (const width of widths) {
+      const lines = width === natural ? [...text] : wrapped(text, width, pen.ellipsis);
+      const w = Math.max(...lines.map(cellWidth)) + 2;
+      const h = lines.length;
+      for (const tier of tiers) {
+        const at = firstPlace(near, w, h, (p) => fits(p, w, h, tier));
+        if (at) return { at, lines, crowded: tier === 2 };
+      }
+    }
+  const m = cells[mid]!;
+  const at = {
+    x: Math.max(0, m.x - Math.floor((natural + 2) / 2)),
+    y: Math.max(0, m.y - Math.floor((text.length - 1) / 2)),
+  };
+  return { at, lines: [...text], crowded: true };
+}
+
+/** A relation's label and `[techn]`, a space either side, where `placeLabel` puts it. */
+function relationLabel(pen: Pen, line: Line, lineCells: CellSet): PlacedText | undefined {
+  const text = [...linesOf(line.rel.label), ...linesOf(line.rel.techn)];
+  if (text.length === 0) return undefined;
+  const { at, lines, crowded } = placeLabel(pen, line, lineCells, text);
+  const width = Math.max(...lines.map(cellWidth)) + 2;
+  const height = lines.length;
+  const { canvas, labelBlocks } = pen;
+  for (let j = 0; j < height; j++)
+    for (let i = 0; i < width; i++) {
+      canvas.set(at.x + i, at.y + j, ' ');
+      labelBlocks.add(at.x + i, at.y + j);
+    }
+  lines.forEach((t, k) =>
+    drawText(canvas, at.x + 1 + Math.floor((width - 2 - cellWidth(t)) / 2), at.y + k, t)
+  );
+  return { ast: line.rel.ast, x: at.x, y: at.y, width, height, ...(crowded ? { crowded } : {}) };
+}
+
+/** A drawing: its text, where its first row and column were on the grid, and what it drew there. */
 export interface C4Drawing {
   readonly text: string;
   readonly left: number;
   readonly top: number;
+  /** Each relation's cells, from start to end, in the text's cells. */
+  readonly lines: readonly { readonly ast: string; readonly cells: readonly Cell[] }[];
+  /** Each relation label's cells, in the text's cells. */
+  readonly labels: readonly PlacedText[];
+  /** The boundaries' header text and the title, in the text's cells. */
+  readonly headers: readonly CellRect[];
 }
 
 /** A px box of `layout` in the cells `drawC4` draws it on, before the margin is trimmed. */
 export function c4CellRect(layout: C4Layout, r: Rect): CellRect {
-  const cell = layout.cell ?? CELL;
-  return new Grid(cell.x, cell.y).rect(r);
+  return new Grid(layout).rect(r);
+}
+
+/** The cells the router may use: everything drawn and its ends, `ROUTE_MARGIN` round. */
+function routeBounds(rects: readonly CellRect[], cells: readonly Cell[]): CellRect {
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const r of rects) {
+    x0 = Math.min(x0, r.x);
+    y0 = Math.min(y0, r.y);
+    x1 = Math.max(x1, r.x + r.width);
+    y1 = Math.max(y1, r.y + r.height);
+  }
+  for (const c of cells) {
+    x0 = Math.min(x0, c.x);
+    y0 = Math.min(y0, c.y);
+    x1 = Math.max(x1, c.x + 1);
+    y1 = Math.max(y1, c.y + 1);
+  }
+  const x = Math.max(0, x0 - ROUTE_MARGIN);
+  const y = Math.max(0, y0 - ROUTE_MARGIN);
+  return { x, y, width: x1 + ROUTE_MARGIN - x, height: y1 + ROUTE_MARGIN - y };
 }
 
 /**
- * Draws a layout laid out for the grid: `\n` line ends, no trailing spaces, the empty margin
- * round the drawing trimmed. An empty diagram is the empty string.
+ * Draws a layout laid out on the cell profile: `\n` line ends, no trailing spaces, the empty
+ * margin round the drawing trimmed. An empty diagram is the empty string.
  */
 export function drawC4(layout: C4Layout, glyphs: GlyphSet): C4Drawing {
-  const cell = layout.cell ?? CELL;
+  const grid = new Grid(layout);
   const pen: Pen = {
     canvas: new Canvas(),
     glyphs,
-    grid: new Grid(cell.x, cell.y),
-    taken: new Taken(),
-    ell: glyphs.name === 'ascii' ? '...' : '…',
-    avoid: { shapes: new Taken(), frames: new Taken(), lines: new Taken() },
+    grid,
+    ellipsis: glyphs.name === 'ascii' ? '...' : '…',
+    labelBlocks: new CellSet(),
+    frameCells: new CellSet(),
   };
-  const { canvas, grid, taken } = pen;
-  for (const b of layout.boundaries) {
-    const r = grid.rect(b.box);
+  const { canvas, labelBlocks } = pen;
+  const field: RouteField = {
+    blocked: new CellSet(),
+    ends: new CellSet(),
+    frameLevel: new CellSet(),
+    frameUpright: new CellSet(),
+    level: new CellSet(),
+    upright: new CellSet(),
+    bounds: { x: 0, y: 0, width: 0, height: 0 },
+  };
+
+  const frames = layout.boundaries.map((b) => grid.rect(b.box));
+  layout.boundaries.forEach((b, k) => {
+    const r = frames[k]!;
     drawFrame(pen, r, b.nodeKind === undefined);
-    pen.avoid.frames.border(r);
-  }
-  for (const e of layout.elements) pen.avoid.shapes.rect(grid.rect(e.box));
+    pen.frameCells.border(r);
+    const right = r.x + r.width - 1;
+    const bottom = r.y + r.height - 1;
+    for (let i = r.x + 1; i < right; i++) {
+      field.frameLevel.add(i, r.y);
+      field.frameLevel.add(i, bottom);
+    }
+    for (let j = r.y + 1; j < bottom; j++) {
+      field.frameUpright.add(r.x, j);
+      field.frameUpright.add(right, j);
+    }
+    for (const [x, y] of [
+      [r.x, r.y],
+      [right, r.y],
+      [r.x, bottom],
+      [right, bottom],
+    ] as const)
+      field.blocked.add(x, y);
+  });
+  const shapes = layout.elements.map((e) => grid.rect(e.box));
+  for (const r of shapes) field.blocked.rect(r);
+  const headers = [
+    ...layout.boundaries.flatMap((b) => headerText(pen, b)),
+    ...titleText(pen, layout.title),
+  ];
+  cover(field.blocked, headers);
+  cover(labelBlocks, headers);
 
   // v12 `getC4Shape`: a relation's end is an element first, then a boundary.
   const endBox = (box: Rect): EndBox => ({ px: box, cells: grid.rect(box) });
-  const boxes = new Map<string, EndBox>();
-  for (const b of layout.boundaries) if (!boxes.has(b.alias)) boxes.set(b.alias, endBox(b.box));
+  const boundaryBoxes = new Map<string, EndBox>();
+  for (const b of layout.boundaries)
+    if (!boundaryBoxes.has(b.alias)) boundaryBoxes.set(b.alias, endBox(b.box));
   const elementBoxes = new Map<string, EndBox>();
   for (const e of layout.elements)
     if (!elementBoxes.has(e.alias)) elementBoxes.set(e.alias, endBox(e.box));
-  const boxOf = (alias: string): EndBox | undefined => elementBoxes.get(alias) ?? boxes.get(alias);
-  const lines: Line[] = [];
+  const boxOf = (alias: string): EndBox | undefined =>
+    elementBoxes.get(alias) ?? boundaryBoxes.get(alias);
+  const requests: { rel: C4RelationLayout; req: RouteRequest }[] = [];
   for (const rel of layout.relations) {
     const from = boxOf(rel.from);
     const to = boxOf(rel.to);
-    if (from && to) lines.push(lineOf(pen, rel, from, to));
+    if (from && to) requests.push({ rel, req: requestOf(pen, rel, from, to) });
   }
+  for (const { req } of requests) {
+    field.ends.add(req.start.x, req.start.y);
+    field.ends.add(req.end.x, req.end.y);
+  }
+  const bounds = routeBounds(
+    [...frames, ...shapes],
+    requests.flatMap(({ req }) => [
+      req.start,
+      req.end,
+      ...req.guide.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })),
+    ])
+  );
+  const routing: RouteField = { ...field, bounds };
+  const budget = new RouteBudget(ROUTE_BUDGET);
+  const lineCells = new CellSet();
+  const lines: Line[] = requests.map(({ rel, req }) => {
+    const cells = routeLine(req, routing, budget);
+    cells.forEach((c, k) => {
+      const prev = cells[k - 1];
+      const next = cells[k + 1];
+      for (const n of [prev, next])
+        if (n) (n.y === c.y ? field.level : field.upright).add(c.x, c.y);
+      lineCells.add(c.x, c.y);
+    });
+    return { rel, cells, startInto: req.startInto, endInto: req.endInto };
+  });
   for (const line of lines) drawLine(pen, line);
 
-  for (const e of layout.elements) {
-    const r = grid.rect(e.box);
+  for (const r of shapes) {
     for (let j = r.y; j < r.y + r.height; j++)
       for (let i = r.x; i < r.x + r.width; i++) canvas.set(i, j, ' ');
-    drawBox(canvas, glyphs, r, FORMS[e.shape]);
-    taken.rect(r);
+    labelBlocks.rect(r);
   }
-  for (const line of lines) {
-    drawEnds(pen, line);
-    keepTurns(pen, line);
-  }
+  layout.elements.forEach((e, k) => drawBox(canvas, glyphs, shapes[k]!, FORMS[e.shape]));
+  for (const line of lines) drawEnds(pen, line);
+  for (const t of [...headers, ...layout.elements.flatMap((e) => elementText(pen, e))])
+    drawText(canvas, t.x, t.y, t.text);
 
-  for (const b of layout.boundaries) boundaryText(pen, b);
-  for (const e of layout.elements) elementText(pen, e);
-  if (layout.title) {
-    const t = layout.title;
-    const row = grid.row(t.y);
-    const centre = grid.col(t.x + t.width / 2);
-    linesOf(t).forEach((text, k) => {
-      const w = cellWidth(text);
-      const x = Math.max(0, centre - Math.floor(w / 2));
-      drawText(canvas, x, row + k, text);
-      for (let i = x; i < x + w; i++) taken.add(i, row + k);
-    });
-  }
-
-  // A label with no room near its line goes below everything, each on its own rows.
-  let next = canvas.rows + 1;
-  const below = (h: number): number => {
-    const top = next;
-    next += h + 1;
-    return top;
+  const labels = lines.flatMap((line) => relationLabel(pen, line, lineCells) ?? []);
+  const { text, left, top } = trimmed(canvas);
+  const shift = <T extends Cell>(c: T): T => ({ ...c, x: c.x - left, y: c.y - top });
+  return {
+    text,
+    left,
+    top,
+    lines: lines.map((l) => ({ ast: l.rel.ast, cells: l.cells.map(shift) })),
+    labels: labels.map(shift),
+    headers: headers.map((h) => shift({ x: h.x, y: h.y, width: cellWidth(h.text), height: 1 })),
   };
-  for (const line of lines) relationLabel(pen, line, below);
-  return trimmed(canvas);
 }
 
 /** The canvas as text without its empty margin, and where that text starts. */
-function trimmed(canvas: Canvas): C4Drawing {
+function trimmed(canvas: Canvas): { text: string; left: number; top: number } {
   let lines = canvas.toString().split('\n');
   let top = 0;
   while (lines.length > 0 && lines[0] === '') {
