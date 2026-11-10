@@ -1,4 +1,4 @@
-import type { EndMarker, RoutePoint } from '../types.ts';
+import type { EndMarker, Point, RoutePoint } from '../types.ts';
 
 /** A box: left, top, right, bottom. */
 export interface Rect {
@@ -31,4 +31,20 @@ export function markerRect(
   const xs = [a.x - dy * h, a.x + dy * h, a.x + dx * r - dy * h, a.x + dx * r + dy * h];
   const ys = [a.y + dx * h, a.y - dx * h, a.y + dy * r + dx * h, a.y + dy * r - dx * h];
   return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+}
+
+/** The box of size `s` centred on `c`. */
+export function rectOf(c: Point, s: { width: number; height: number }): Rect {
+  return {
+    x0: c.x - s.width / 2,
+    y0: c.y - s.height / 2,
+    x1: c.x + s.width / 2,
+    y1: c.y + s.height / 2,
+  };
+}
+
+/** Overlap by more than float noise; boxes that share an edge are clear. */
+export function hits(a: Rect, b: Rect): boolean {
+  const e = 1e-6;
+  return a.x0 < b.x1 - e && b.x0 < a.x1 - e && a.y0 < b.y1 - e && b.y0 < a.y1 - e;
 }
