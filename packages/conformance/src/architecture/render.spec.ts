@@ -144,11 +144,11 @@ function drawnPoints(tree: SvgView): { x: number; y: number }[] {
 
 describe('architecture render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of element', () => {
-    // v12's 20 fixtures, T1's 8 lexer fixtures and T3's 2 layout fixtures.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(30);
+    // v12's 20 fixtures, T1's 8 lexer fixtures, T3's 2 layout fixtures and T5's 6 baselines.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(36);
     expect(cases.length).toBe((corpus.length - rejected.size) * THEMES.length);
-    // The 126 parser-clean sources the layout spec lays out (#607); the cases are mostly errors.
-    expect(corpus.length - rejected.size).toBe(126);
+    // The 132 parser-clean sources the layout spec lays out (#607, 126 before the #618 baselines).
+    expect(corpus.length - rejected.size).toBe(132);
     const all = cases.map((c) => c.r.svg).join('');
     for (const part of [
       'class="architecture-service"',
