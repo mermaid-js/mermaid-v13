@@ -1,0 +1,230 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "Dep1.Proc1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "Dep1.Proc2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "Dep1.Proc3",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "Dep2.Proc1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      },
+      {
+        "id": "Dep2.Proc2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      },
+      {
+        "id": "Dep2.Proc3",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "Dep1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 33.46,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Dep2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 33.46,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_Dep1.Proc1_Dep2.Proc1_0",
+        "source": "Dep1.Proc1",
+        "target": "Dep2.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc1_Dep2.Proc2_0",
+        "source": "Dep1.Proc1",
+        "target": "Dep2.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc1_Dep2.Proc3_0",
+        "source": "Dep1.Proc1",
+        "target": "Dep2.Proc3",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc2_Dep2.Proc1_0",
+        "source": "Dep1.Proc2",
+        "target": "Dep2.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc2_Dep2.Proc2_0",
+        "source": "Dep1.Proc2",
+        "target": "Dep2.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc2_Dep2.Proc3_0",
+        "source": "Dep1.Proc2",
+        "target": "Dep2.Proc3",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc3_Dep2.Proc1_0",
+        "source": "Dep1.Proc3",
+        "target": "Dep2.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc3_Dep2.Proc2_0",
+        "source": "Dep1.Proc3",
+        "target": "Dep2.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc3_Dep2.Proc3_0",
+        "source": "Dep1.Proc3",
+        "target": "Dep2.Proc3",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc1_Dep1.Proc1_0",
+        "source": "Dep2.Proc1",
+        "target": "Dep1.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc1_Dep1.Proc2_0",
+        "source": "Dep1.Proc1",
+        "target": "Dep1.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep1.Proc1_Dep1.Proc3_0",
+        "source": "Dep1.Proc1",
+        "target": "Dep1.Proc3",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc2_Dep1.Proc1_0",
+        "source": "Dep2.Proc2",
+        "target": "Dep1.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc2_Dep1.Proc2_0",
+        "source": "Dep2.Proc2",
+        "target": "Dep1.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc2_Dep1.Proc3_0",
+        "source": "Dep2.Proc2",
+        "target": "Dep1.Proc3",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc3_Dep1.Proc1_0",
+        "source": "Dep2.Proc3",
+        "target": "Dep1.Proc1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc3_Dep1.Proc2_0",
+        "source": "Dep2.Proc3",
+        "target": "Dep1.Proc2",
+        "minLen": 1
+      },
+      {
+        "id": "L_Dep2.Proc3_Dep1.Proc3_0",
+        "source": "Dep2.Proc3",
+        "target": "Dep1.Proc3",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

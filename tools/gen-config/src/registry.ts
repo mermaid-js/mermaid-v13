@@ -2,9 +2,10 @@
  * The first-party diagram registry (DESIGN §12.4): `packages/mermaid/src/generated/registry.gen.ts`,
  * written by `pnpm gen:registry` from the v12 detector table below and the `mermaid` manifests
  * in `packages/diagram-*\/package.json`. Detection order is part of "syntax is sacred", so the
- * table keeps v12's registration order and v12's regexes byte for byte, quirks included
- * (`c4` matches `C4Container` anywhere in the text). Types without a v13 package stay in the
- * table so they are recognised and rejected with `UNSUPPORTED_DIAGRAM` (R-COMPAT-7).
+ * table keeps v12's registration order and v12's regexes byte for byte, quirks included, except
+ * where a decision changes one (c4's five headers are anchored, D451; v12 matched `C4Container`
+ * anywhere in the text). Types without a v13 package stay in the table so they are recognised
+ * and rejected with `UNSUPPORTED_DIAGRAM` (R-COMPAT-7).
  *
  * `detectors.gen.ts` is the same table without the loaders, for `mermaid/slim`: it imports no
  * diagram package, so a bundle of it holds only the diagrams the integrator passes in.
@@ -29,7 +30,8 @@ export const V12_DETECTORS: readonly (readonly [string, string, string])[] = [
   ['mindmap', '^\\s*mindmap', ''],
   ['architecture', '^\\s*architecture', ''],
   ['agentflow', '^\\s*agentflow-beta\\b', ''],
-  ['c4', '^\\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment', ''],
+  // D451: all five headers anchored and word-bounded (v12 anchored only `C4Context`).
+  ['c4', '^\\s*C4(Context|Container|Component|Dynamic|Deployment)\\b', ''],
   ['kanban', '^\\s*kanban', ''],
   ['classDiagram', '^\\s*classDiagram', ''],
   ['er', '^\\s*erDiagram', ''],

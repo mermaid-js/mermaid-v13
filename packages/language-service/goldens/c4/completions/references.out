@@ -1,0 +1,21 @@
+@ 7:5  Rel(|
+  customerA node (Person) 7:5-7:5 "" -> "customerA"
+  bank subgraph (System_Boundary) 7:5-7:5 "" -> "bank"
+  sys node (System) 7:5-7:5 "" -> "sys"
+  x node (Container) 7:5-7:5 "" -> "x"
+@ 8:7  Rel(cu|,
+  customerA node (Person) 8:5-8:7 "cu" -> "customerA"
+@ 9:16  Rel(customerA, |
+  customerA node (Person) 9:16-9:16 "" -> "customerA"
+  bank subgraph (System_Boundary) 9:16-9:16 "" -> "bank"
+  sys node (System) 9:16-9:16 "" -> "sys"
+  x node (Container) 9:16-9:16 "" -> "x"
+@ 10:18  Rel(customerA, "s|")
+  sys node (System) 10:17-10:18 "s" -> "sys"
+@ 12:20  UpdateElementStyle(|
+  customerA node (Person) 12:20-12:20 "" -> "customerA"
+  bank subgraph (System_Boundary) 12:20-12:20 "" -> "bank"
+  sys node (System) 12:20-12:20 "" -> "sys"
+  x node (Container) 12:20-12:20 "" -> "x"
+@ 13:28  UpdateRelStyle(customerA, s|
+  sys node (System) 13:27-13:28 "s" -> "sys"

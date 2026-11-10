@@ -1,0 +1,27 @@
+---
+config:
+  theme: neo
+description: >-
+  one representative C4 container diagram in the neo theme (neo family, light; D215, D227, D456): a
+  person, an external system, a container boundary holding containers, a database (cylinder), a
+  queue and a container drawn as a component frame (fr-rect), and relations (Rel with technology,
+  BiRel, Rel_Back)
+---
+C4Container
+title Internet banking system
+Person(customer, "Customer", "A customer of the bank")
+System_Ext(mail, "E-mail system", "Microsoft Exchange")
+Container_Boundary(bank, "Internet banking") {
+  Container(web, "Web application", "Java, Spring MVC", "Delivers the static content")
+  Container(api, "API application", "Java, Docker", "Provides banking over JSON/HTTPS")
+  ContainerDb(db, "Database", "Oracle", "Stores accounts and logs")
+  ContainerQueue(events, "Events", "Kafka", "Account events")
+  Container(spa, "Single-page app", "Angular", "Runs in the browser", $sprite="component")
+}
+Rel(customer, web, "Visits", "HTTPS")
+Rel(web, spa, "Delivers")
+Rel(spa, api, "Calls", "JSON/HTTPS")
+BiRel(api, db, "Reads and writes", "JDBC")
+Rel(api, events, "Publishes")
+Rel_Back(customer, mail, "Sends e-mails to")
+Rel(api, mail, "Sends e-mail using", "SMTP")

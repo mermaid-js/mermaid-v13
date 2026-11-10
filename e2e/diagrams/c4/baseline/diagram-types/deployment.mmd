@@ -1,0 +1,24 @@
+---
+config:
+  theme: redux
+description: >-
+  C4Deployment: nested deployment nodes (solid frames, c4-deployment-node) holding containers and a
+  database, a container drawn as a queue through $sprite, and relations between nodes' contents
+---
+C4Deployment
+title Deployment, live
+Deployment_Node(dc, "Data centre", "Big Bank plc") {
+  Deployment_Node(web, "Web server", "Ubuntu 22.04") {
+    Container(app, "Web application", "Java")
+  }
+  Deployment_Node(dbs, "Database server", "Ubuntu 22.04") {
+    ContainerDb(db, "Database", "Oracle 19c")
+  }
+  Container(bus, "Message bus", "Kafka", $sprite="queue")
+}
+Deployment_Node(phone, "Phone", "iOS or Android") {
+  Container(mobile, "Mobile app", "Swift, Kotlin")
+}
+Rel(mobile, app, "Calls", "HTTPS")
+Rel(app, db, "Reads", "JDBC")
+Rel(app, bus, "Publishes")

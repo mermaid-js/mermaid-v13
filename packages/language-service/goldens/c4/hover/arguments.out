@@ -1,0 +1,120 @@
+@ 2:8  Person(|customerA, "Customer A", "A customer", "sprite", "tags", "link", "extra")
+  2:8-2:17 "customerA"
+  | **`alias`**
+  |
+  | Argument 1 of `Person`. The name other statements use for it: relation ends and `Update…Style` targets.
+  |
+  | **person** `customerA`
+  |
+  | Label: `Customer A`
+@ 2:20  Person(customerA, "|Customer A", "A customer", "sprite", "tags", "link", "extra")
+  2:19-2:31 "\"Customer A\""
+  | **`label`**
+  |
+  | Argument 2 of `Person`. The text drawn for it (in bold on an element or a boundary).
+@ 2:34  Person(customerA, "Customer A", "|A customer", "sprite", "tags", "link", "extra")
+  2:33-2:45 "\"A customer\""
+  | **`descr`**
+  |
+  | Argument 3 of `Person`. The description, drawn under the label.
+@ 2:74  Person(customerA, "Customer A", "A customer", "sprite", "tags", "link", "|extra")
+  2:73-2:80 "\"extra\""
+  | Argument 7 of `Person`: it takes 6 arguments. This one is ignored.
+@ 3:20  Container(c, "C", "|Java", "Descr", $link="http://x", $colour="red")
+  3:19-3:25 "\"Java\""
+  | **`techn`**
+  |
+  | Argument 3 of `Container`. The technology, drawn in brackets under the label (`[Container: …]` on an element).
+@ 3:37  Container(c, "C", "Java", "Descr", $|link="http://x", $colour="red")
+  3:36-3:52 "$link=\"http://x\""
+  | **`$link`**
+  |
+  | Argument 5 of `Container`. A link. Kept, not drawn (as mermaid@12).
+@ 3:55  Container(c, "C", "Java", "Descr", $link="http://x", $|colour="red")
+  3:54-3:67 "$colour=\"red\""
+  | **`$colour`**
+  |
+  | Argument 6 of `Container`. Not a name `Container` reads: kept, not drawn.
+@ 4:17  System_Boundary(|bank, "Bank") {
+  4:17-4:21 "bank"
+  | **`alias`**
+  |
+  | Argument 1 of `System_Boundary`. The name other statements use for it: relation ends and `Update…Style` targets.
+  |
+  | **boundary** `bank`
+  |
+  | Label: `Bank`
+  |
+  | Type: `SYSTEM`
+  |
+  | Holds 1 shape or boundary
+@ 7:5  Rel(|customerA, bank, "Uses", $type="birel")
+  7:5-7:14 "customerA"
+  | **`from`**
+  |
+  | Argument 1 of `Rel`. The alias of the element or boundary the relation starts at (an element first).
+  |
+  | **person** `customerA`
+  |
+  | Label: `Customer A`
+@ 7:16  Rel(customerA, |bank, "Uses", $type="birel")
+  7:16-7:20 "bank"
+  | **`to`**
+  |
+  | Argument 2 of `Rel`. The alias of the element or boundary the relation ends at (an element first).
+  |
+  | **boundary** `bank`
+  |
+  | Label: `Bank`
+  |
+  | Type: `SYSTEM`
+  |
+  | Holds 1 shape or boundary
+@ 7:23  Rel(customerA, bank, "|Uses", $type="birel")
+  7:22-7:28 "\"Uses\""
+  | **`label`**
+  |
+  | Argument 3 of `Rel`. The text drawn for it (in bold on an element or a boundary).
+@ 7:31  Rel(customerA, bank, "Uses", $|type="birel")
+  7:30-7:43 "$type=\"birel\""
+  | **`$type`**
+  |
+  | Argument 4 of `Rel`. The relation’s kind (`rel`, `birel`, `rel_u`, `rel_b`, …).
+@ 8:16  Rel(customerA, |nobody, "Unknown")
+  8:16-8:22 "nobody"
+  | **`to`**
+  |
+  | Argument 2 of `Rel`. The alias of the element or boundary the relation ends at (an element first).
+  |
+  | No element or boundary has the alias `nobody`.
+@ 9:20  UpdateElementStyle(|sys, $bgColor="grey", "red")
+  9:20-9:23 "sys"
+  | **`elementName`**
+  |
+  | Argument 1 of `UpdateElementStyle`. The alias of the element to style, else of the boundary.
+  |
+  | **system** `sys`
+  |
+  | Label: `System`
+  |
+  | In `bank`
+@ 9:26  UpdateElementStyle(sys, $|bgColor="grey", "red")
+  9:25-9:40 "$bgColor=\"grey\""
+  | **`$bgColor`**
+  |
+  | Argument 2 of `UpdateElementStyle`. The fill colour.
+@ 9:43  UpdateElementStyle(sys, $bgColor="grey", "|red")
+  9:42-9:47 "\"red\""
+  | **`fontColor`**
+  |
+  | Argument 3 of `UpdateElementStyle`. The text colour (an element’s; a boundary keeps its own).
+@ 10:21  UpdateLayoutConfig("|3", $c4BoundaryInRow="1")
+  10:20-10:23 "\"3\""
+  | **`c4ShapeInRow`**
+  |
+  | Argument 1 of `UpdateLayoutConfig`. How many shapes go in a row (by position: the first argument).
+@ 10:26  UpdateLayoutConfig("3", $|c4BoundaryInRow="1")
+  10:25-10:45 "$c4BoundaryInRow=\"1\""
+  | **`$c4BoundaryInRow`**
+  |
+  | Argument 2 of `UpdateLayoutConfig`. How many boundaries go in a row (by position: the second argument).
