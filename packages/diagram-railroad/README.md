@@ -1,6 +1,6 @@
 # @mermaid-js/diagram-railroad (v13 alpha)
 
-The railroad diagram plugin for Mermaid v13: parsers for v12's four notations (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`) onto one model, v12's railroad layout and an SVG renderer, plus the language facet at `@mermaid-js/diagram-railroad/language`. There is no text output (`format: 'ascii'`) for railroad diagrams yet.
+The railroad diagram plugin for Mermaid v13: parsers for v12's four notations (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`) onto one model, v12's railroad layout and an SVG renderer, plus the language facet at `@mermaid-js/diagram-railroad/language`. Text output (`format: 'ascii'`) comes from the lazily loaded `@mermaid-js/diagram-railroad/ascii` entry, which an SVG render never loads.
 
 `mermaid` already includes it. Install it yourself only when you use `mermaid/slim`. `@mermaid-js/diagram-railroad@v13-alpha` is the version the newest `mermaid@v13-alpha` depends on:
 

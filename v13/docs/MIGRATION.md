@@ -2440,7 +2440,7 @@ the layout is v12's (D514). One package draws all four, with one `railroad` conf
 | The `railroad` keys `compactMode`, `showMarkers`, `commentFill`, `commentStroke` and `commentTextColor` were read and drew nothing different | Ignored (listed under [Config](#config)) | D515 |
 | `themeVariables.railroad.<key>` reached v12's style sheet; the terminal fill was `secondBkg ?? secondaryColor` | Railroad's own theme variables (`railroadTerminalFill` … `railroadRuleNameColor`), each also read as `themeVariables.railroad.<v12 key>`; every theme draws 12.2.0's colours (see [Railroad SVG structure](#railroad-svg-structure)) | D516 |
 | A rule defined twice: both drawn, with a `log.warn` | Both drawn, with one `RAILROAD_DUPLICATE_RULE` warning | D517 |
-| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+| `format: 'ascii'`: no text output | Text output from the lazily loaded `@mermaid-js/diagram-railroad/ascii` entry: the SVG geometry at cell scale (`─` track, `╭╮╰╯` corners, `┬┴├┤` where branches leave and join, rounded terminals, square nonterminals, dotted specials, `●` markers; `/` `\` terminal corners, `+` and `o` in the `ascii` charset), choices centred, the bypass above and the loop below, no repeat count and no title, as in SVG. A diagram wider than `ascii.maxWidth` is drawn whole with `ASCII_TOO_WIDE`. The `railroad` colours, font and px lengths are not read: one `ASCII_DROPPED` each for the colours and font, and for the lengths, set; one for `accTitle`/`accDescr` | D320, D518 |
 
 ## Railroad SVG structure
 

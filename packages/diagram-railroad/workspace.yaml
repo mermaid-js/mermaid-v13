@@ -44,5 +44,5 @@ languageBundle:
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:
-  summary: 'The railroad diagram plugin (SVG; `railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`).'
+  summary: 'The railroad diagram plugin (SVG, and text output from `/ascii`; `railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`).'
   install: 'with `mermaid/slim`'

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { railroad } from '@mermaid-js/diagram-railroad';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -218,13 +218,34 @@ describe('railroad diagrams through the public API (#615)', () => {
     }
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError (D320)', async () => {
+  it('draws ascii in all four notations from the lazily loaded ./ascii entry (#617, D518)', async () => {
     const m = createMermaid();
     for (const [type, text] of NOTATIONS) {
       expect(m.supportsFormat(type, 'svg')).toBe(true);
-      expect(m.supportsFormat(type, 'ascii')).toBe(false);
-      const e = await rejection(m.render('r9', text, { format: 'ascii' }));
-      expect(e).toBeInstanceOf(UnsupportedFormatError);
+      expect(m.supportsFormat(type, 'ascii')).toBe(true);
+      const result = await m.render('r9', text, { format: 'ascii' });
+      expect(result).toMatchObject({ format: 'ascii', diagramType: type, warnings: [] });
+      expect(result.text).toMatch(/^expr = ●─┤ term ├─/m);
+      expect(m.renderSync(text, { format: 'ascii' }).text).toBe(result.text);
     }
+    const result = await m.render('r9', TEXT, { format: 'ascii' });
+    expect(result.text).toBe(
+      ['         ┌──────┐ ╭───╮', 'expr = ●─┤ term ├─┤ + ├─●', '         └──────┘ ╰───╯'].join('\n')
+    );
+    expect(result).toMatchObject({ columns: 25, rows: 3 });
+    expect(
+      m.renderSync(TEXT, { format: 'ascii', config: { ascii: { charset: 'ascii' } } }).text
+    ).toContain('expr = o-+ term +-+ + +-o');
+  });
+
+  it('never crops: a drawing wider than ascii.maxWidth warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const wide = await m.render('r10', TEXT, {
+      format: 'ascii',
+      config: { ascii: { maxWidth: 10 } },
+    });
+    expect(wide.columns).toBe(25);
+    expect(wide.text).toBe((await m.render('r10', TEXT, { format: 'ascii' })).text);
+    expect(wide.warnings.map((w) => w.code)).toEqual(['ASCII_TOO_WIDE']);
   });
 });

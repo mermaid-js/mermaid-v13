@@ -30,7 +30,7 @@
 import type { Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
 import type { RailroadModel, RailroadNode } from '../model.ts';
-import { BOLD_WEIGHT, RAILROAD_METRICS as m } from './metrics.ts';
+import { BOLD_WEIGHT, type RailroadMetrics } from './metrics.ts';
 import type {
   Point,
   RailroadExpressionLayout,
@@ -289,7 +289,7 @@ function expressionViolations(
 }
 
 /** The checks on one rule's markers and lead lines, in its coordinates. */
-function ruleViolations(rule: RailroadRuleLayout, out: string[]): void {
+function ruleViolations(rule: RailroadRuleLayout, m: RailroadMetrics, out: string[]): void {
   const { start, end, leadIn, leadOut, definition: d, baseline } = rule;
   const at = rule.ast;
   if (rule.label.text !== `${rule.name} =`) out.push(`${at}: the label is not \`name =\``);
@@ -468,7 +468,7 @@ export function railroadLayoutViolations(
       return;
     }
     expressionViolations(rule.definition, mr.definition, o, out);
-    ruleViolations(rule, out);
+    ruleViolations(rule, layout.metrics, out);
     if (measurer) measuredViolations(rule, layout, measurer, out);
     // v12 ends the lead-out at the end marker's left edge, behind its start under a marker
     // wider than the gap: only the pieces are checked.

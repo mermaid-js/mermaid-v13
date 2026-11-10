@@ -14,16 +14,16 @@ import { theme } from './theme/table.ts';
  * flowchart's (`diagram-flowchart/src/plugin.ts`), all four reading the one `railroad` config
  * section. `layoutKind: 'custom'` with its own `RailroadLayout`. `parse` reads the notation its
  * header names; `layout` measures and places everything as v12 did; `render` writes the whole
- * `<svg>` document, SVG only for now (T7 may add a lazy `ascii` entry, D518; until then core
- * throws `UnsupportedFormatError` for `format: 'ascii'`). The registry loads it from the
- * package's `mermaid` manifest (#615); `configDefaults` are the generated `railroad` section
- * defaults (the lengths and `useMaxWidth`; D515: the colours and fonts have none, so the theme's
- * are drawn).
+ * `<svg>` document. Text output is the lazily loaded `./ascii` entry (manifest key `ascii`,
+ * #617, D518), drawing what `layout` makes in cells under the cell profile. The registry loads
+ * it from the package's `mermaid` manifest (#615); `configDefaults` are the generated `railroad`
+ * section defaults (the lengths and `useMaxWidth`; D515: the colours and fonts have none, so the
+ * theme's are drawn).
  */
 export const railroad = {
   id: 'railroad',
   aliases: ['railroadEbnf', 'railroadAbnf', 'railroadPeg'] as readonly string[],
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: railroadConfigDefaults as Readonly<Record<string, unknown>>,
   theme,

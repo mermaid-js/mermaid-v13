@@ -29,7 +29,8 @@ import {
 } from '../config.ts';
 import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
 import { Box, shifted, Track, visitRule } from './geometry.ts';
-import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS as m } from './metrics.ts';
+import { cellBoxMeasurer, cellLengths, inCells, metricsFor } from './cells.ts';
+import { BOLD_WEIGHT, NORMAL_WEIGHT, type RailroadMetrics } from './metrics.ts';
 import type {
   PlacedText,
   RailroadExpressionLayout,
@@ -40,17 +41,26 @@ import type {
 
 /**
  * What the layout reads from the render context; `warn` takes the one `RAILROAD_CONFIG_INVALID`
- * of an unusable colour or font (D515), where the section is checked.
+ * of an unusable colour or font (D515), where the section is checked. With the cell profile
+ * (`units.id` `cell`, the text output) it lays out in cells (`cells.ts`).
  */
 export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'units'>>;
 
-/** Lays out a railroad diagram in px. */
+/**
+ * Lays out a railroad diagram in px, or in cells with the cell profile: the same algorithm on
+ * the cell tables, the `railroad` lengths unread (the text entry warns about them instead of
+ * `RAILROAD_CONFIG_INVALID`, as text draws none of them).
+ */
 export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext): RailroadLayout {
   const config = railroadConfig(railroadSection(ctx));
-  const invalid = railroadConfigWarning(config);
+  const cells = inCells(ctx);
+  const invalid = cells ? undefined : railroadConfigWarning(config);
   if (invalid) ctx.warn?.(invalid);
-  const options = config.lengths;
+  const options = cells ? cellLengths(ctx.config) : config.lengths;
+  const m = metricsFor(cells);
+  const measurer = cells ? cellBoxMeasurer(ctx.measurer) : ctx.measurer;
+  const units = cells ? 'cell' : 'px';
   const font = config.font;
   const text: FontKey = {
     family: font.family ?? ctx.theme.value('fontFamily'),
@@ -62,10 +72,10 @@ export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext)
 
   if (model.rules.length === 0) {
     const canvas = { x: 0, y: 0, width: m.emptyWidth, height: m.emptyHeight };
-    return { ...canvas, options, config, fonts, rules: [], bounds: canvas };
+    return { ...canvas, units, metrics: m, options, config, fonts, rules: [], bounds: canvas };
   }
 
-  const place = new Placer(options, ctx.measurer, text, ruleName);
+  const place = new Placer(options, m, measurer, text, ruleName);
   const rules: RailroadRuleLayout[] = [];
   let y = options.padding;
   let widest = 0;
@@ -83,7 +93,7 @@ export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext)
   for (const r of rules) {
     visitRule(r, (d) => void box.add(d.stroked ? shifted(d.rect, 0, 0, half) : d.rect));
   }
-  return { width, height, options, config, fonts, rules, bounds: box.rect() };
+  return { width, height, units, metrics: m, options, config, fonts, rules, bounds: box.rect() };
 }
 
 /** The size of a laid-out expression, before its parent places it. */
@@ -107,6 +117,7 @@ class Placer {
 
   constructor(
     private readonly o: RailroadLayoutConfig,
+    private readonly m: RailroadMetrics,
     private readonly measurer: Measurer,
     private readonly font: FontKey,
     private readonly ruleFont: FontKey
@@ -129,13 +140,13 @@ class Placer {
     const { padding, markerRadius: mR } = this.o;
     const name = `${rule.name} =`;
     const nameWidth = this.measurer.width(name, this.ruleFont, 0);
-    const markerX = nameWidth + m.nameGap;
-    const defX = markerX + m.definitionGap;
+    const markerX = nameWidth + this.m.nameGap;
+    const defX = markerX + this.m.definitionGap;
     const def = this.expression(rule.definition);
-    const baseline = Math.max(m.minBaseline, def.up);
+    const baseline = Math.max(this.m.minBaseline, def.up);
     const defY = baseline - def.up;
     const defEnd = defX + def.width;
-    const endX = defEnd + m.endGap;
+    const endX = defEnd + this.m.endGap;
     const { ascent, descent } = this.measurer.metrics(this.ruleFont);
     const label: PlacedText = {
       text: name,
@@ -161,7 +172,7 @@ class Placer {
         .lineTo(endX - mR, baseline)
         .done(),
       width: endX + mR,
-      height: Math.max(m.minRuleHeight, defY + height(def) + 2 * padding),
+      height: Math.max(this.m.minRuleHeight, defY + height(def) + 2 * padding),
     };
   }
 
@@ -169,11 +180,11 @@ class Placer {
   expression(node: RailroadNode): Sized {
     switch (node.type) {
       case 'terminal':
-        return this.leaf(node, node.value, m.terminalCornerRadius);
+        return this.leaf(node, node.value, this.m.terminalCornerRadius);
       case 'nonterminal':
         return this.leaf(node, node.name, 0);
       case 'special':
-        return this.leaf(node, `? ${node.text} ?`, 0, m.specialDash);
+        return this.leaf(node, `? ${node.text} ?`, 0, this.m.specialDash);
       case 'sequence':
         return this.sequence(
           node,

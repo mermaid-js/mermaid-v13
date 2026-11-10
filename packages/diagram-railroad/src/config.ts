@@ -60,7 +60,7 @@ const MAX_LENGTH = 1e4;
  * A length or font size as v12 read it (a number, or a string through `parseFloat`), finite,
  * from 0 up to `MAX_LENGTH`; else undefined.
  */
-function configLength(value: unknown): number | undefined {
+export function configLength(value: unknown): number | undefined {
   let n = Number.NaN;
   if (typeof value === 'number') n = value;
   else if (typeof value === 'string') n = Number.parseFloat(value);

@@ -1,7 +1,8 @@
 /**
  * RailroadLayout: the plain-data result of the railroad custom layout (`layoutKind: 'custom'`,
- * spec #526 §Layout). Every length is in px (D216). v12 nests a `g` per expression, each
- * translated inside its parent, and writes each track `path` in its group's coordinates; the
+ * spec #526 §Layout). Every length is in px (D216), or in cells for the text output (`units`).
+ * v12 nests a `g` per expression, each translated inside its parent, and writes each track
+ * `path` in its group's coordinates; the
  * layout keeps that shape so the renderer (T4, #613) writes v12's transforms and path data as
  * they are: an expression's `x`/`y` are its offset in its parent (v12's `translate`), its paths,
  * box and text are in its own coordinates, and a rule's parts are in the rule's coordinates,
@@ -11,6 +12,7 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
 import type { RailroadConfig, RailroadLayoutConfig } from '../config.ts';
 import type { RailroadNodeKind } from '../model.ts';
+import type { RailroadMetrics } from './metrics.ts';
 
 export interface Point {
   readonly x: number;
@@ -144,7 +146,17 @@ export interface RailroadLayout {
   /** v12's canvas (its viewBox): widest rule plus twice `padding`, or 200 × 100 with no rules. */
   readonly width: number;
   readonly height: number;
-  /** The checked `railroad` lengths the layout used (`config.lengths`). */
+  /**
+   * `px` for SVG; `cell` with the cell profile (the text output, #617), where every length is in
+   * cells and a point is a cell's centre.
+   */
+  readonly units: 'px' | 'cell';
+  /** The fixed lengths the layout used: `RAILROAD_METRICS`, or the cell table in cells. */
+  readonly metrics: RailroadMetrics;
+  /**
+   * The lengths the layout used: the checked `railroad` lengths (`config.lengths`) in px, the
+   * `ascii.padding` preset's in cells.
+   */
   readonly options: RailroadLayoutConfig;
   /**
    * The `railroad` section, checked once (D515): lengths, the font and colours it sets that are
