@@ -1,6 +1,7 @@
 // Ported from v12 `swimlanes/direction/materializedGeometry.ts` at upstream `c9b12739f` (D532).
 // Changed: the title-band passes follow D536 (BT lifts a top band, RL shifts a left band); types
-// tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types.
+// tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types;
+// the tail swap keeps legs off the destination's box (#636).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, sonarjs/no-identical-functions -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore Wybrow sonarjs
 
@@ -1100,8 +1101,20 @@ export function swapDestinationTerminalTailsToReduceCrossings(
     const endpointIds = [(edge as { start?: string }).start, (edge as { end?: string }).end].filter(
       (id): id is string => Boolean(id)
     );
-    for (const segment of segmentsFor(path)) {
+    const segments = segmentsFor(path);
+    // v13 (#636): the destination is exempt only on the swapped-in last leg; every other leg
+    // must keep off its box too, or the swap can lay a rail through or along it.
+    const destination = realNodeRects.filter(
+      (entry) => entry.id === (edge as { end?: string }).end
+    );
+    for (const [index, segment] of segments.entries()) {
       if (segmentHitsAnyRect(segment.a, segment.b, realNodeRects, endpointIds, -BUFFER)) {
+        return true;
+      }
+      if (
+        index < segments.length - 1 &&
+        segmentHitsAnyRect(segment.a, segment.b, destination, [], -BUFFER)
+      ) {
         return true;
       }
     }

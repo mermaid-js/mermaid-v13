@@ -54,5 +54,8 @@ describe('swimlane DDLT regressions', () => {
     // Only the last leg reaches the target; every other leg stays more than 2px off it.
     for (let i = 0; i < points.length - 2; i++)
       expect(gap(points[i]!, points[i + 1]!, target)).toBeGreaterThan(2);
+    // With the swap refused, the edge and its forward twin run straight, side by side.
+    expect(points).toHaveLength(2);
+    expect(model.edges.get('L_Dep1.Proc2_Dep2.Proc2_0')!.points).toHaveLength(2);
   });
 });
