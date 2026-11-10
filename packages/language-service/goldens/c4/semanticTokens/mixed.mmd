@@ -1,0 +1,13 @@
+---
+title: Front matter
+---
+C4Container
+title Containers
+accTitle: Accessible title
+%% a comment
+Person(user, "User", $sprite="person")
+Container_Boundary(c1, "App") {
+  ContainerDb(db, "Database", "SQL", "Stores data")
+}
+Rel(user, db, "", "JDBC")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

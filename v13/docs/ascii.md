@@ -8,7 +8,8 @@ Only diagram types that declare `ascii` in their manifest support it. In 13.0 th
 flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
 relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
 sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
-[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa
+[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the C4
+diagram (`C4Context` and the other four headers, [below](#c4-diagrams)), the Ishikawa
 diagram (`ishikawa`, [below](#ishikawa-diagrams)), the usecase
 diagram (`usecase-beta`, [below](#usecase-diagrams)), the block diagram (`block`,
 [below](#block-diagrams)), the agentflow (`agentflow-beta`,
@@ -121,7 +122,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram, the block diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the C4 diagram, the Ishikawa diagram, the usecase diagram, the block diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -321,6 +322,73 @@ is 25 columns).
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`:::` classes), `emphasis` (bold and
   italic text) and `link` (ticket links from `kanban.ticketBaseUrl`). Column colours come from
   the theme and are dropped silently; icons are drawn by neither output.
+
+## C4 diagrams
+
+The C4 diagram's text entry (`@mermaid-js/diagram-c4/ascii`, #545, D459, D320) draws the SVG's
+grid on a character grid: the same layout, with every text measured in cells of 8 × 16 px, divided
+by the cell size.
+
+```
+╭─────────────────────────╮
+│                         │
+│                         │
+│        Customer         │
+│        [Person]         │
+╰────────────────┬────────╯
+                 │
+                 │
+               Uses
+              [HTTPS]
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆                │                [CONTAINER]                                 ┆
+┆                │                                                            ┆
+┆                │                                                            ┆
+┆                │                                                            ┆
+┆                ▼                                                            ┆
+┆      ╭─────────────────────────╮            ╒═════════════════════════╕     ┆
+┆      │         Web app         │            │                         │     ┆
+┆      │    [Container: Java]    ├── Reads ──►│        Database         │     ┆
+┆      ╰─────────────────────────╯            │    [Container: SQL]     │     ┆
+┆                                             │                         │     ┆
+┆                                             ╘═════════════════════════╛     ┆
+┆                                                                             ┆
+┆                                                                             ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
+```
+
+from
+
+```mermaid
+C4Container
+Person(user, "Customer")
+Container_Boundary(bank, "Bank") {
+  Container(web, "Web app", "Java")
+  ContainerDb(db, "Database", "SQL")
+}
+Rel(user, web, "Uses", "HTTPS")
+Rel(web, db, "Reads")
+```
+
+- Elements are boxes with their name, `[Kind]` and description centred, in the flowchart's text
+  forms: rounded corners for systems, containers and people, caps for databases, double sides for
+  a component frame (`$shape`), a square box for queues. A line wider than its box is cut with
+  `…` (`...` in the `ascii` charset).
+- Boundaries are dashed frames, deployment nodes solid ones, with the label in the top border and
+  `[type]` and the description on the rows below.
+- Relations are stepped lines routed on the grid round elements and header text, following the
+  SVG's routed points where the grid allows; arrowheads at the ends that have them, a tee where
+  one has none. The label and `[techn]` sit at or beside the middle of the line. With the root
+  `wrap` and `c4.wrap` both set, as for the SVG, a label is wrapped narrower when the gap between
+  two shapes is smaller than it; otherwise it stays on one line, cut with `…` where it still does
+  not fit.
+- The layout is the SVG's: a diagram wider than `ascii.maxWidth` is not folded, only warned about
+  with `ASCII_TOO_WIDE`. `ascii.padding: roomy` adds a row round each element's text. A
+  `c4ShapePadding` under 16 or a `c4ShapeMargin` under 32 leaves no room on the grid: it is raised,
+  with `C4_CONFIG_IGNORED`.
+- Config colours and fonts are ignored without a warning. Dropped, one `ASCII_DROPPED` warning per
+  kind: `style` (`UpdateElementStyle` and `UpdateRelStyle` colours), `offset` (`$offsetX`,
+  `$offsetY`), `tooltip` (a relation's description) and `accessibility` (`accTitle`, `accDescr`).
 
 ## Block diagrams
 
@@ -681,8 +749,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's, the agentflow's or
-info's)
+packet diagram's, the kanban board's, the C4 diagram's, the Ishikawa diagram's, the usecase
+diagram's, the block diagram's, the agentflow's or info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

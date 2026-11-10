@@ -1,0 +1,36 @@
+C4Context:keyword
+title System Context:keyword
+Person:keyword
+(:punctuation
+customer:string
+,:punctuation
+":string
+Customer:string
+":string
+,:punctuation
+":string
+A customer of the bank:string
+":string
+):punctuation
+System:keyword
+(:punctuation
+bank:string
+,:punctuation
+":string
+Banking System:string
+":string
+):punctuation
+Rel:keyword
+(:punctuation
+customer:string
+,:punctuation
+bank:string
+,:punctuation
+":string
+Uses:string
+":string
+,:punctuation
+":string
+HTTPS:string
+":string
+):punctuation

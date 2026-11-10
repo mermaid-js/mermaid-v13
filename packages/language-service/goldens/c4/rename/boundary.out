@@ -1,0 +1,9 @@
+@ 3:21  Enterprise_Boundary(|b0, "Bank") {
+  prepare: 3:21-3:23 "b0"; rename to "bank":
+  %% rename-to: bank
+  C4Context
+  Enterprise_Boundary(bank, "Bank") {
+    Person(p, "P")
+  }
+  Rel(p, bank, "Inside")
+  UpdateElementStyle(bank, $bgColor="lightgrey")

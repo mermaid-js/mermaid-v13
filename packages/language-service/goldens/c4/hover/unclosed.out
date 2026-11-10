@@ -1,0 +1,29 @@
+@ 3:8  Rel(a, |a, "Label", $techn="x"
+  3:8-3:9 "a"
+  | **`to`**
+  |
+  | Argument 2 of `Rel`. The alias of the element or boundary the relation ends at (an element first).
+  |
+  | **person** `a`
+  |
+  | Label: `A`
+@ 3:14  Rel(a, a, "La|bel", $techn="x"
+  3:11-3:18 "\"Label\""
+  | **`label`**
+  |
+  | Argument 3 of `Rel`. The text drawn for it (in bold on an element or a boundary).
+@ 3:23  Rel(a, a, "Label", $te|chn="x"
+  3:20-3:30 "$techn=\"x\""
+  | **`$techn`**
+  |
+  | Argument 4 of `Rel`. The technology, drawn in brackets under the label (`[Container: …]` on an element).
+@ 4:5  Cont|ainer(c, "C", "Java"
+  4:1-4:10 "Container"
+  | **`Container`**
+  |
+  | `Person(alias, "Label", "Description")` and the other elements: `alias, label, descr?, sprite?, tags?, link?`; containers and components take `techn?` after the label. A later statement with the same alias merges into the first.
+@ 4:22  Container(c, "C", "Ja|va"
+  4:19-4:25 "\"Java\""
+  | **`techn`**
+  |
+  | Argument 3 of `Container`. The technology, drawn in brackets under the label (`[Container: …]` on an element).

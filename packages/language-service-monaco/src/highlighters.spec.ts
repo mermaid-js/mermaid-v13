@@ -182,7 +182,8 @@ describe('the per-type Monarch highlighters (D134)', () => {
       const body = text.slice(start);
       const id = firstPartyFacets.find((e) => e.detector(body))?.id;
       // The one thing a line-based tokenizer cannot follow: a detector that matches past the
-      // first line (c4's `C4Container|…` alternatives, found anywhere in the text in v12).
+      // first line. None does since D451 anchored c4's headers (v12 found `C4Container|…`
+      // anywhere in the text).
       const onFirstLine = firstPartyFacets.find((e) => e.detector(body.split('\n')[0]!))?.id;
       if (id !== onFirstLine) {
         pastFirstLine.add(id ?? 'none');
@@ -199,6 +200,6 @@ describe('the per-type Monarch highlighters (D134)', () => {
       if (got !== want) wrong.push(`${JSON.stringify(body.slice(0, 40))}: ${want} != ${got}`);
     }
     expect(wrong).toEqual([]);
-    expect([...pastFirstLine]).toEqual(['c4']);
+    expect([...pastFirstLine]).toEqual([]);
   }, 60_000);
 });

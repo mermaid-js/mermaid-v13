@@ -1,0 +1,8 @@
+@ 3:4  Per|son(a, "Label", $descr="text")
+  prepare: refused: There is no id or class name here to rename.
+@ 3:14  Person(a, "La|bel", $descr="text")
+  prepare: refused: There is no id or class name here to rename.
+@ 3:23  Person(a, "Label", $de|scr="text")
+  prepare: refused: There is no id or class name here to rename.
+@ 4:22  Rel(a, a, "Self", "te|chn")
+  prepare: refused: There is no id or class name here to rename.

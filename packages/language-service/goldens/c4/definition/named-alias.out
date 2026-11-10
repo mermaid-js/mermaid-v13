@@ -1,0 +1,10 @@
+@ 2:8  Person(|a, "A", $alias="b")
+  -> none
+@ 2:24  Person(a, "A", $alias="|b")
+  -> 2:24-2:25 "b"
+@ 4:5  Rel(|b, s, "Uses")
+  -> 2:24-2:25 "b"
+@ 5:20  UpdateElementStyle(|b, $bgColor="red")
+  -> 2:24-2:25 "b"
+@ 6:8  Person(|b, "Merged into b")
+  -> 2:24-2:25 "b"

@@ -1,0 +1,9 @@
+C4Context
+Boundary(b, "B") {
+  Person(p, "P")
+}
+Person(a, "A", $|parentBoundary="b", $|typeC4Shape="system", $|wrap="true")
+Deployment_Node(n, "N", $|nodeType="nodeL")
+UpdateElementStyle(a, $|parentBoundary="b", $|typeC4Shape="system", $|wrap="true")
+UpdateElementStyle(n, $|nodeType="nodeR", $|typeC4Shape="system")
+Rel(a, p, "Uses", $|type="birel", $|wrap="x")

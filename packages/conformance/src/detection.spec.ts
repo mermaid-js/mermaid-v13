@@ -133,8 +133,6 @@ const DIRECTIVE_SPLITS: [name: string, text: string][] = [
 
 /** Case name → why v13 detects otherwise than v12. */
 const DIVERGENCES: Readonly<Record<string, string>> = {
-  'order: C4 name in a comment line after a flowchart header':
-    'raw body first: the earlier c4 row (`C4Container` anywhere) matches the comment, which v12 had cut',
   ...Object.fromEntries(DIRECTIVE_SPLITS.map(([n]) => [`directive: ${n}`, DIRECTIVE_CUT])),
 };
 
@@ -270,9 +268,6 @@ describe('first-party detection against v12 detectType (#469)', () => {
       if (old !== now) found[name] = `v12 ${old}, v13 ${now}`;
     }
     expect(Object.keys(found).sort()).toEqual(Object.keys(DIVERGENCES).sort());
-    expect(found['order: C4 name in a comment line after a flowchart header']).toBe(
-      'v12 flowchart-v2, v13 c4'
-    );
     for (const [n] of DIRECTIVE_SPLITS)
       expect(found[`directive: ${n}`], n).toMatch(/^v12 rejected, v13 /);
   });

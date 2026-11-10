@@ -7,7 +7,7 @@ T0a, T0b and T0c land as their own PRs into `mermaid-v13` (spec: reviewed apart 
 | Ticket | Issue | Branch | Blocked by | State |
 | --- | --- | --- | --- | --- |
 | T0a engine skeleton, lane rules, phases through coordinates | #593 | `feature/593_swimlane-engine` (own PR #628) | — | PR #628 merged into `mermaid-v13` (e540d3eb7); merged here. Core 94,352 → 94,385 B gz, chunk 15,316 B gz |
-| T0b orthogonal router, post-processing, DDLT gates | #595 | `feature/595_swimlane-router` (own PR #639) | #593 | PR #639 ready (b1a443289; core 94,412 B gz unchanged; chunk ~43 KB gz). #634 and #636 need a D-id |
+| T0b orthogonal router, post-processing, DDLT gates | #595 | `feature/595_swimlane-router` (own PR #639) | #593 | PR #639 merged into `mermaid-v13` (76f2e0ad1); #634 and #636 pinned, no D-id yet |
 | T0c shared line hops, lazy core chunk (closes #78) | #596 | `feature/596_line-hops` (own PR) | — | PR #646 ready (ddd32b7a2; core 94,412 → 94,541 B gz, hops +103, swimlane section defaults +26) |
 | T1 flowchart registration and config section | #597 | `feature/597_swimlane-registration` | #593, #595 | merged (ff f6928a06b; core 95,929 → 96,254 B gz, +325: section layering and directive routing) |
 | T2 lane drawing, palette, warnings | #598 | `feature/598_swimlane-lanes` | #597 | merged (f3157a61d; core 96,317 B gz with `mermaid-v13` at 8b336e2b0, T2 itself a few bytes) |

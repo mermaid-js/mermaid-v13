@@ -28,7 +28,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-agentflow').then((m) => m.agentflow),
     loadAscii: () => import('@mermaid-js/diagram-agentflow/ascii').then((m) => m.ascii),
   },
-  { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
+  {
+    type: 'c4',
+    pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/,
+    id: 'c4',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-c4').then((m) => m.c4),
+    loadAscii: () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii),
+  },
   {
     type: 'kanban',
     pattern: /^\s*kanban/,

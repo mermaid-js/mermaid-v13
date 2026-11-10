@@ -1,0 +1,29 @@
+---
+config:
+  theme: redux
+  c4:
+    c4ShapeInRow: 2
+    c4BoundaryInRow: 1
+    width: 180
+    useMaxWidth: false
+description: >-
+  c4.c4ShapeInRow 2 and c4BoundaryInRow 1 as config defaults with no UpdateLayoutConfig (D454;
+  v12 hard-coded 4 and 2), so the four systems sit two to a row and the boundaries one under the
+  other; c4.width 180 as each element's least width; useMaxWidth false (the SVG at its own width
+  and height, no max-width)
+---
+C4Context
+title Rows from the config
+Enterprise_Boundary(e, "Enterprise") {
+  System(a, "Billing")
+  System(b, "Accounts")
+  System(c, "Reports")
+  System(d, "Archive")
+}
+System_Boundary(s, "Partners") {
+  System_Ext(p, "Payments")
+  System_Ext(q, "Shipping")
+}
+Rel(a, b, "Posts to")
+Rel(c, d, "Moves to")
+Rel(b, p, "Pays through")
