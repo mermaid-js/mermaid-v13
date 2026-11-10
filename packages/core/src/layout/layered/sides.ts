@@ -1,10 +1,21 @@
 // `LayoutEdge.sides` as hints (D327, D503): once `layered` has placed everything, an edge with an
-// end that its named side does not already hold is drawn again from its ends: each on its side
-// (the middle, or `anchorY` down a `left`/`right` side; an end layered already put there stays),
-// a stub straight out, and right angles from stub to stub through the label. Ranks, order, boxes
-// and labels stay; the drawing grows where a stub reaches past it. Limits: #525 GAPS (T0b).
-import type { LayoutEdge, LayoutGraph, LayoutModel, RoutePoint, Side } from '../types.ts';
+// end its named side moves is drawn again from its ends. Each end goes onto its side: the middle
+// where layered took another side, `anchorY` down any named `left`/`right` side (architecture's
+// icon line, so those edges are always drawn again), else where layered put it. A stub runs
+// straight out, then right angles from stub to stub through the label, round the nodes. Ranks,
+// order, boxes and labels stay; the drawing grows where a stub reaches past it. An edge between a
+// node and its own group keeps layered's route. Limits: #525 GAPS (T0b).
+import type {
+  LayoutEdge,
+  LayoutGraph,
+  LayoutModel,
+  LayoutModelEdge,
+  Point,
+  RoutePoint,
+  Side,
+} from '../types.ts';
 import type { LayoutMetrics } from '../units.ts';
+import { hits, rectOf, type Rect } from './end-markers.ts';
 
 /** The axis a side faces along, and which way is out of the box. */
 export const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
@@ -14,83 +25,144 @@ export const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> 
   right: { axis: 'x', sign: 1 },
 };
 
-// Points and boxes as tuples, so both axes go through one loop: [x, y], and a box's
-// [x, y, half width, half height].
-type P = [number, number];
-type End = [P, Side, number[]];
+type Box = Point & { width: number; height: number };
+type End = [Point, Side, Box];
 
-const axisOf = (side: Side): number => +(OUTWARD[side].axis === 'y');
+const segment = (p: Point, q: Point): Rect => ({
+  x0: Math.min(p.x, q.x),
+  y0: Math.min(p.y, q.y),
+  x1: Math.max(p.x, q.x),
+  y1: Math.max(p.y, q.y),
+});
 
-// `p` with its coordinate on axis `k` set to `v`.
-function put(p: readonly number[], k: number, v: number): P {
-  const q: P = [p[0]!, p[1]!];
-  q[k] = v;
-  return q;
-}
-
-// How bad a path is: a box it runs through or a leg straight back over the one before costs 9,
-// a turn 1.
-function cost(path: readonly P[], boxes: readonly number[][]): number {
+// How bad a path is: a node it runs through or a leg straight back over the one before costs 9,
+// a turn 1, and length a little.
+function cost(path: readonly Point[], walls: readonly Rect[]): number {
   let n = 0;
   let d: number[] = [];
   for (let i = 1; i < path.length; i++) {
     const [p, q] = [path[i - 1]!, path[i]!];
-    const e = [Math.sign(q[0] - p[0]), Math.sign(q[1] - p[1])];
-    if (e[0] || e[1]) {
-      if (d.length) n += e[0] === -d[0]! && e[1] === -d[1]! ? 9 : +(e[0] !== d[0] || e[1] !== d[1]);
-      d = e;
-      for (const b of boxes)
-        if (
-          [0, 1].every(
-            (j) => Math.abs(p[j]! + q[j]! - 2 * b[j]!) < Math.abs(p[j]! - q[j]!) + 2 * b[j + 2]! - 1
-          )
-        )
-          n += 9;
-    }
+    const e = [Math.sign(q.x - p.x), Math.sign(q.y - p.y)];
+    if (!e[0] && !e[1]) continue;
+    if (d.length) n += e[0] === -d[0]! && e[1] === -d[1]! ? 9 : +(e[0] !== d[0] || e[1] !== d[1]);
+    d = e;
+    n += Math.abs(q.x - p.x + q.y - p.y) * 1e-6;
+    for (const w of walls) if (hits(segment(p, q), w)) n += 9;
   }
   return n;
 }
 
 // The corners from the last point of `seq` to `to` (then on to `after`): two, on a line through
-// either point, midway, or `gap` past a box's edge, whichever path `cost`s least.
-function link(seq: readonly P[], to: P, after: P[], boxes: readonly number[][], gap: number): P[] {
+// either point, midway, or `gap` past a box, whichever path `cost`s least. The boxes are the
+// ends', then, if the best path still runs through a wall, those walls' too.
+function link(
+  seq: readonly Point[],
+  to: Point,
+  after: Point[],
+  walls: readonly Rect[],
+  boxes: readonly Rect[],
+  gap: number
+): Point[] {
   const a = seq.at(-1)!;
-  let best: P[] = [];
+  let best: Point[] = [];
   let low = Infinity;
-  for (const k of [0, 1]) {
-    const lines = [to[k]!, a[k]!, (a[k]! + to[k]!) / 2];
-    for (const b of boxes) lines.push(b[k]! - b[k + 2]! - gap, b[k]! + b[k + 2]! + gap);
-    for (const v of lines) {
-      const c = [put(a, k, v), put(to, k, v)];
-      const n = cost([...seq.slice(-2), ...c, to, ...after], boxes);
-      if (n < low) [low, best] = [n, c];
+  let lanes = boxes;
+  for (let pass = 0; pass < 2 && low >= 9; pass++) {
+    for (const k of ['x', 'y'] as const) {
+      const lines = [to[k], a[k], (a[k] + to[k]) / 2];
+      for (const b of lanes) lines.push(b[`${k}0`] - gap, b[`${k}1`] + gap);
+      for (const v of lines) {
+        const c = [
+          { ...a, [k]: v },
+          { ...to, [k]: v },
+        ];
+        const n = cost([...seq.slice(-2), ...c, to, ...after], walls);
+        if (n < low) [low, best] = [n, c];
+      }
     }
+    const path = [a, ...best, to];
+    lanes = walls.filter((w) => path.some((q, i) => i > 0 && hits(segment(path[i - 1]!, q), w)));
   }
   // A corner on `to` itself would hide the way the route reaches it from the next link.
-  return best.filter((c) => c[0] !== to[0] || c[1] !== to[1]);
+  return best.filter((c) => c.x !== to.x || c.y !== to.y);
 }
 
-// Where an end of `e` goes, and whether that moves it: onto its named side, at the side's middle
-// where layered took another, and at `anchorY` down a named `left`/`right` side.
+// Where an end of `e` goes, and whether that moves it.
 function place(e: LayoutEdge, which: 'source' | 'target', model: LayoutModel, anchor?: number) {
   const placed = model.edges.get(e.id)!;
   const r = which === 'source' ? placed.points[0]! : placed.points.at(-1)!;
   const named = e.sides?.[which];
   const side = named ?? placed.ports[which];
-  const o = (model.nodes.get(e[which]) ?? model.groups.get(e[which]))!;
-  const b = [o.x, o.y, o.width / 2, o.height / 2];
-  const k = axisOf(side);
-  let p: P = [r.x, r.y];
-  if (side !== placed.ports[which]) p = put(b, k, b[k]! + OUTWARD[side].sign * b[k + 2]!);
-  if (named && !k && anchor !== undefined) p[1] = b[1]! - b[3]! + anchor;
-  return [[p, side, b] as End, p[0] !== r.x || p[1] !== r.y] as const;
+  const b = (model.nodes.get(e[which]) ?? model.groups.get(e[which]))!;
+  const { axis, sign } = OUTWARD[side];
+  const p = { x: r.x, y: r.y };
+  if (side !== placed.ports[which]) {
+    p.x = b.x;
+    p.y = b.y;
+    p[axis] += (sign * (axis === 'x' ? b.width : b.height)) / 2;
+  }
+  if (named && axis === 'x' && anchor !== undefined) p.y = b.y - b.height / 2 + anchor;
+  return [[p, side, b] as End, p.x !== r.x || p.y !== r.y] as const;
+}
+
+// `e` drawn again between its ends `s` and `t`, clear of the `nodes`.
+function route(
+  e: LayoutEdge,
+  [[ps, sSide, sb], [pt, tSide, tb]]: [End, End],
+  model: LayoutModel,
+  nodes: readonly Rect[],
+  M: LayoutMetrics,
+  head: number
+): LayoutModelEdge {
+  const stub = (p: Point, side: Side, length: number): Point => {
+    const { axis, sign } = OUTWARD[side];
+    return { ...p, [axis]: p[axis] + sign * (M.corner + length) };
+  };
+  const qs = stub(ps, sSide, e.startMarker?.length ?? 0);
+  const qt = stub(pt, tSide, head + (e.endMarker?.length ?? 0));
+  const placed = model.edges.get(e.id)!;
+  const seq: Point[] = [ps, qs];
+  const label = placed.label;
+  const ends = [rectOf(sb, sb), rectOf(tb, tb)];
+  const walls = [...nodes, ...ends];
+  const go = (to: Point, after: Point[]) => link(seq, to, after, walls, ends, M.corner);
+  if (label) seq.push(...go(label, []), label);
+  seq.push(...go(qt, [pt]), qt, pt);
+  // Repeats go, and so does a point the route runs straight on through.
+  const points: RoutePoint[] = [];
+  for (const p of seq) {
+    const [q, r] = [points.at(-1), points.at(-2)];
+    if (q?.x === p.x && q.y === p.y) continue;
+    if (r && q && ((r.x === q.x && q.x === p.x) || (r.y === q.y && q.y === p.y))) points.pop();
+    const flat = points.length ? points.at(-1)!.y === p.y : OUTWARD[sSide].axis === 'x';
+    points.push({ x: p.x, y: p.y, axis: flat ? 'h' : 'v' });
+  }
+  return { ...placed, points, ports: { source: sSide, target: tSide } };
+}
+
+// Grows the drawing where the `drawn` points reach into its `margin`, moving everything over.
+function grow(model: LayoutModel, drawn: readonly Point[], margin: number): LayoutModel {
+  const [dx, dy] = (['x', 'y'] as const).map((k) =>
+    Math.max(0, margin - Math.min(...drawn.map((p) => p[k])))
+  ) as [number, number];
+  model.width = Math.max(model.width, Math.max(...drawn.map((p) => p.x)) + margin) + dx;
+  model.height = Math.max(model.height, Math.max(...drawn.map((p) => p.y)) + margin) + dy;
+  if (!dx && !dy) return model;
+  const mv = (p: Point): void => {
+    p.x += dx;
+    p.y += dy;
+  };
+  for (const n of model.nodes.values()) mv(n);
+  for (const g of model.groups.values()) [g, g.title].forEach(mv);
+  for (const p of model.edges.values()) [...p.points, ...(p.label ? [p.label] : [])].forEach(mv);
+  return model;
 }
 
 /**
- * Draws the edges of `model` whose named sides (D503) it does not already hold again, in place:
- * a stub out of each side (`corner`, plus the start marker at the source and the arrowhead's room
- * and end marker at the target), then right angles from stub to stub through the label. Grows the
- * drawing where they reach into its margin. `index` maps ids to node indices.
+ * Draws the edges of `model` whose named sides (D503) move an end again, in place: a stub out
+ * of each side (`corner`, plus the start marker at the source and the arrowhead's room and end
+ * marker at the target), then right angles from stub to stub through the label. Grows the drawing
+ * where they reach into its margin. `index` maps ids to node and group indices.
  */
 export function honourSides(
   graph: LayoutGraph,
@@ -99,46 +171,25 @@ export function honourSides(
   index: ReadonlyMap<string, number>,
   margin: number
 ): LayoutModel {
-  const drawn: P[] = [];
-  for (const e of graph.edges) {
-    if (!e.sides) continue;
-    const anchor = (id: string) => graph.nodes[index.get(id)!]?.anchorY;
-    const [[ps, sSide, sb], sMoved] = place(e, 'source', model, anchor(e.source));
-    const [[pt, tSide, tb], tMoved] = place(e, 'target', model, anchor(e.target));
-    // A loop with both ends on one side keeps layered's loop.
-    if ((!sMoved && !tMoved) || (e.source === e.target && sSide === tSide)) continue;
-    const stub = (p: P, side: Side, length: number): P => {
-      const k = axisOf(side);
-      return put(p, k, p[k]! + OUTWARD[side].sign * (M.corner + length));
-    };
-    const qs = stub(ps, sSide, e.startMarker?.length ?? 0);
-    const qt = stub(pt, tSide, (graph.headRoom ?? 0) + (e.endMarker?.length ?? 0));
-    const placed = model.edges.get(e.id)!;
-    const seq: P[] = [ps, qs];
-    const at = placed.label;
-    if (at) seq.push(...link(seq, [at.x, at.y], [], [sb, tb], M.corner), [at.x, at.y]);
-    seq.push(...link(seq, qt, [pt], [sb, tb], M.corner), qt, pt);
-    const points: RoutePoint[] = [];
-    let prev: P | undefined;
-    for (const p of seq) {
-      if (prev?.[0] === p[0] && prev[1] === p[1]) continue;
-      const flat = prev ? prev[1] === p[1] : !axisOf(sSide);
-      points.push({ x: p[0], y: p[1], axis: flat ? 'h' : 'v' });
-      drawn.push((prev = p));
-    }
-    model.edges.set(e.id, { ...placed, points, ports: { source: sSide, target: tSide } });
-  }
-  if (drawn.length === 0) return model;
-  // Grow where a redrawn route reaches into the margin, moving everything over.
-  const [dx, dy] = [0, 1].map((k) => Math.max(0, margin - Math.min(...drawn.map((p) => p[k]!))));
-  model.width = Math.max(model.width, Math.max(...drawn.map((p) => p[0])) + margin) + dx!;
-  model.height = Math.max(model.height, Math.max(...drawn.map((p) => p[1])) + margin) + dy!;
-  const mv = (p: { x: number; y: number }): void => {
-    p.x += dx!;
-    p.y += dy!;
+  const at = (id: string) => index.get(id)!;
+  const parent = (id: string) =>
+    (graph.nodes[at(id)] ?? graph.groups[at(id) - graph.nodes.length])?.parent;
+  const within = (inner: string, outer: string): boolean => {
+    let p = parent(inner);
+    for (let n = 0; p !== undefined && p !== outer && n < graph.groups.length; n++) p = parent(p);
+    return p === outer;
   };
-  for (const n of model.nodes.values()) mv(n);
-  for (const g of model.groups.values()) [g, g.title].forEach(mv);
-  for (const p of model.edges.values()) [...p.points, ...(p.label ? [p.label] : [])].forEach(mv);
-  return model;
+  const nodes = [...model.nodes.values()].map((b) => rectOf(b, b));
+  const drawn: Point[] = [];
+  for (const e of graph.edges) {
+    if (!e.sides || within(e.source, e.target) || within(e.target, e.source)) continue;
+    const [s, sMoved] = place(e, 'source', model, graph.nodes[at(e.source)]?.anchorY);
+    const [t, tMoved] = place(e, 'target', model, graph.nodes[at(e.target)]?.anchorY);
+    // A loop with both ends on one side keeps layered's loop.
+    if ((!sMoved && !tMoved) || (e.source === e.target && s[1] === t[1])) continue;
+    const redrawn = route(e, [s, t], model, nodes, M, graph.headRoom ?? 0);
+    model.edges.set(e.id, redrawn);
+    drawn.push(...redrawn.points);
+  }
+  return drawn.length ? grow(model, drawn, margin) : model;
 }

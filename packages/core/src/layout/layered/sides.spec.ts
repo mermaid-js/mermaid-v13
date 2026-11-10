@@ -83,8 +83,9 @@ function leaves(box: LayoutModelNode, side: Side, p: Point, q: Point, square: bo
   }
 }
 
-// A redrawn route (review findings 1, 2): every leg square and of some length, no leg running
-// straight back over the one before, and each point's `axis` that of the leg into it.
+// A redrawn route (review findings 1, 2; second review 8): every leg square and of some length,
+// a turn at every middle point (no leg straight back over the one before, none straight on from
+// it), and each point's `axis` that of the leg into it.
 function expectClean(points: readonly RoutePoint[], what: string): void {
   for (let i = 1; i < points.length; i++) {
     const [p, q] = [points[i - 1]!, points[i]!];
@@ -96,7 +97,7 @@ function expectClean(points: readonly RoutePoint[], what: string): void {
     const r = points[i - 2];
     if (r) {
       const back = Math.sign(p.x - r.x) * Math.sign(dx) + Math.sign(p.y - r.y) * Math.sign(dy);
-      expect(back, `${what} leg ${i} doubles back`).toBeGreaterThanOrEqual(0);
+      expect(back === 0, `${what} turns at point ${i - 1}`).toBe(true);
     }
   }
 }
@@ -542,5 +543,56 @@ describe('layered side hints: review findings (T0b)', () => {
     const pts = layered(g).edges.get('ab')!.points;
     expect(legLength(pts[0]!, pts[1]!)).toBeLessThan(30);
     expect(legLength(pts.at(-1)!, pts.at(-2)!)).toBeGreaterThanOrEqual(30);
+  });
+});
+
+describe('layered side hints: second review (T0b)', () => {
+  // TB, a group g holding y and z, and x outside it.
+  const grouped = (edge: LayoutEdge): LayoutGraph => ({
+    ...graph([edge, { id: 'yz', source: 'y', target: 'z', minLen: 1 }]),
+    nodes: [
+      { id: 'x', width: 60, height: 30 },
+      { id: 'y', width: 60, height: 30, parent: 'g' },
+      { id: 'z', width: 60, height: 30, parent: 'g' },
+    ],
+    groups: [{ id: 'g', padding: { top: 10, right: 10, bottom: 10, left: 10 } }],
+  });
+
+  it.each([
+    ['top', 'top'],
+    ['right', 'left'],
+  ] as const)("keeps layered's route between a node and its own group (%s, %s) (1, 2)", (s, t) => {
+    const edge: LayoutEdge = { id: 'yg', source: 'y', target: 'g', minLen: 1 };
+    const free = layered(grouped(edge)).edges.get('yg');
+    const m = layered(grouped({ ...edge, sides: { source: s, target: t } }));
+    expect(m.edges.get('yg')).toEqual(free);
+  });
+
+  it('keeps detour lanes off every node, not only the ends (3)', () => {
+    const edges = chain({ source: 'top', target: 'top' }, 'ac');
+    for (const dir of DIRS) {
+      const g = graph(edges, dir);
+      const m = layered(g);
+      expect(validateLayout(g, m), dir).toEqual([]);
+      const pts = m.edges.get('ac')!.points;
+      const b = m.nodes.get('b')!;
+      const through = pts.some((q, i) => {
+        const p = pts[i - 1];
+        return (
+          !!p &&
+          Math.max(p.x, q.x) > b.x - b.width / 2 + 0.5 &&
+          Math.min(p.x, q.x) < b.x + b.width / 2 - 0.5 &&
+          Math.max(p.y, q.y) > b.y - b.height / 2 + 0.5 &&
+          Math.min(p.y, q.y) < b.y + b.height / 2 - 0.5
+        );
+      });
+      expect(through, dir).toBe(false);
+    }
+  });
+
+  it.each([Number.NaN, -1, 41, Infinity])('refuses anchorY %s, as compass does (5)', (anchorY) => {
+    const g = graph(chain({ source: 'right', target: 'left' }));
+    g.nodes[0] = { ...g.nodes[0]!, anchorY };
+    expect(() => layered(g)).toThrow(RangeError);
   });
 });
