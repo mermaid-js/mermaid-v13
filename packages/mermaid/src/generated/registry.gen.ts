@@ -19,7 +19,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-mindmap').then((m) => m.mindmap),
   },
   { type: 'architecture', pattern: /^\s*architecture/ },
-  { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
+  {
+    type: 'agentflow',
+    pattern: /^\s*agentflow-beta\b/,
+    id: 'agentflow',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-agentflow').then((m) => m.agentflow),
+  },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   {
     type: 'kanban',

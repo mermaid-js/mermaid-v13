@@ -1,7 +1,7 @@
 /**
  * Config lengths, read as flowchart's builder reads its own (a copy, D446): a number, or a whole
  * numeric string as its number (`"20"`, `" 2.5 "`, as v12 took them), from 0 up to `MAX_CONFIG_LENGTH`. Unset
- * reads as the schema default. Anything else that is set (`"20px"`, `-5`, `true`) reads as the
+ * reads as the default. Anything else that is set (`"20px"`, `-5`, `true`) reads as the
  * default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often it is read.
  */
 import { MAX_CONFIG_LENGTH } from './metrics.ts';
@@ -23,11 +23,12 @@ export type ConfigLength = (key: string) => number;
 
 /**
  * Reads lengths from one config object (`path` names it in warnings, e.g. `agentflow`), with
- * `defaults` for the keys it may read.
+ * `defaults` for the keys it may read (a section's generated defaults, whose other keys are not
+ * lengths, or a table of lengths): a key whose default is no number defaults to 0.
  */
 export function configLengths(
   section: unknown,
-  defaults: Readonly<Record<string, number>>,
+  defaults: object,
   path: string,
   warn: (warning: ConfigLengthWarning) => void
 ): ConfigLength {
@@ -41,7 +42,8 @@ export function configLengths(
     // Any other string stays a string, and so is not taken.
     const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
     const taken = typeof n === 'number' && n >= 0 && n < MAX_CONFIG_LENGTH ? n : undefined;
-    const px = taken ?? defaults[key] ?? 0;
+    const fallback = (defaults as Readonly<Record<string, unknown>>)[key];
+    const px = taken ?? (typeof fallback === 'number' ? fallback : 0);
     read.set(key, px);
     if (taken === undefined && value !== undefined) {
       const at = `${path}.${key}`;

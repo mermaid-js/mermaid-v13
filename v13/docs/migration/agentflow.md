@@ -1,3 +1,74 @@
+## Agentflow
+
+- **Detection** is v12's: `agentflow-beta` (`/^\s*agentflow-beta\b/`, case-sensitive), fourth
+  in detection order, after `architecture` and before `c4`. `agentflow` alone and
+  `agentflow-betas` are not agentflow diagrams.
+- **Syntax** is v12's (the grammar is in [syntax/agentflow.md](./syntax/agentflow.md)), and
+  every error is reported, not only the first (R-PARSE-4). Two inputs read differently: the
+  short input form `a[/x/]` is a parallelogram of kind `input` (D462), as v12 drew it after
+  12.2.0 (12.2.0 drew a rounded box and warned `SHAPE_UNSUPPORTED`); and a lone `%` in a label
+  (`a[50% done]`) is label text (D463), where 12.2.0 rejected the diagram; `%%` is still a
+  comment.
+- **Metadata** in `@{ … }` is read by v13's YAML reader instead of js-yaml, as flowchart's is:
+  anchors, aliases and tags (`&`, `*`, `!`) are a syntax error, and a prototype key
+  (`__proto__`, `constructor`, `prototype`) is dropped with one `YAML_UNSAFE_KEY` warning (v12
+  dropped it silently). The trailing-comma retry (`shape: tool,`) is kept.
+- **Layout** (D127): agentflow lays out with `layered`, core's engine, where v12 defaulted to
+  ELK. Set `layout: elk` (or `agentflow.layout`) and register `@mermaid-js/layout-elk` to keep
+  ELK; without the plugin `elk` draws with `layered` and warns `ELK_NOT_INSTALLED`. A flow's own
+  `@{ algorithm: … }` is read but not applied, with one `ELK_ALGORITHM_IGNORED` warning (D174).
+- **Geometry and the neo default** (D152, D153): v12 defaulted `agentflow.look` to `neo`, so
+  every theme drew neo's gradient and shadow on agentflow. `look` is removed (ignored, one
+  `LOOK_REMOVED` warning), and the geometry comes with the theme's family: under the default
+  `redux-color` (agentflow's default theme in v12 too) nothing changes, and the classic themes
+  (`default`, `dark`, `forest`, `neutral`, `base`) now draw classic geometry: no shadow, and no
+  gradient in the four that drew one (`dark`, `forest`, `neutral`, `base`). Use a redux or `neo`
+  theme to keep the neo look.
+- **Diagnostics** (D461): v12's three diagnostics are reported at parse, with ranges and v12's
+  messages: `SHAPE_REMOVED` and `SHAPE_UNSUPPORTED` at the bracket or `@{ … }` block, and
+  `CONTAINMENT_VIOLATION` at the inner `flow` opener. `SHAPE_REMOVED` is a warning (v12 called
+  it an error but still drew the diagram), so the diagram renders as it did. An unknown shape
+  (`@{ shape: nope }`) is still an error, and `No such shape: tool,.` names the trailing comma.
+  A `linkStyle` index out of range is a `LINK_STYLE_INDEX` error with v12's bounds message,
+  where v12 threw a `TypeError`. The nine codes v12 reserved for a semantics module and never
+  raised are not raised in v13 either: `EDGE_OPERATOR_UNSUPPORTED`,
+  `REFERENCE_EDGE_LABEL_REJECTED`, `CONNECTOR_REF_UNRESOLVED`, `CONNECTOR_REF_NOT_A_CONNECTOR`,
+  `METADATA_KEY_MISAPPLIED`, `DUPLICATE_ID_NODE`, `RESERVED_SYNTHETIC_ID`,
+  `EDGE_SEMANTIC_CONTRADICTION` and `FLOW_NO_INPUT`.
+- **Silent drops** (D464) are kept, each now with one warning per kind per render (positions of
+  the other places in `related`): metadata written before its `flow` is lost
+  (`AGENTFLOW_METADATA_DROPPED`), the reserved `connectors` id is left out with its edges
+  (`AGENTFLOW_RESERVED_ID`), `view` on a node is ignored (`AGENTFLOW_VIEW_IGNORED`), and a
+  `connector` declared after a node of the same id replaces it
+  (`AGENTFLOW_CONNECTOR_REPLACED`). A `label` that is not text and an unknown `labelType` are
+  read as v12 read them, with one `NODE_DATA_COERCED` warning each.
+- **Tool-builder API** (D465): there is no DB object. v12's `getSemanticModel()`,
+  `getDiagnostics()`, `getElementAtPosition()`, `getElementMappings()` and `getMappingStats()`
+  are removed. `semanticModel(model)` from `@mermaid-js/diagram-agentflow` gives
+  `getSemanticModel()`'s shape (skipped metadata keys included) from `parseAgentflow(text).model`;
+  the parse's diagnostics carry ranges; positions and element spans come from the language
+  service (`@mermaid-js/language-service`: symbols, `definition`, `astAt`, `rangeOf`, folding
+  ranges), which loads the agentflow facet (`@mermaid-js/diagram-agentflow/language`).
+- **Config** (the `agentflow` section): `theme` (a scoped theme wins over the top level, as in
+  12.2.0), `titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`, `wrappingWidth`,
+  `minNodeWidth` and `useMaxWidth` are honoured, with v12's defaults. A length that is not a
+  number from 0 up to 10,000 draws with its default and warns `AGENTFLOW_CONFIG_INVALID` once
+  (v12 drew it as given). `useWidth` is ignored, as v12's renderer never read it. Agentflow
+  still reads three `flowchart` keys (D466): `flowchart.padding` (node padding),
+  `flowchart.inheritDir` (a flow without its own `direction` takes the diagram's) and
+  `flowchart.subGraphTitleMargin` (room around a flow's title); its edges follow
+  `flowchart.curve`.
+- **Limits**: the edge limit is v13's (`maxEdges`, 5,000 by default and set only by the
+  integrator, R-SEC-5), with the message `Edge limit exceeded…`; v12 threw at 501 edges. A source
+  longer than `maxTextSize` is rejected before it is parsed, as for every diagram.
+- **Links and tooltips**: `click a "url" "tooltip"` draws an `<a href>` (only URLs that pass
+  `securityLevel` and `linkSchemes`) and an SVG `<title>`, as flowchart does; `click a callback`
+  needs `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
+- **Hand-drawn**: with `@mermaid-js/plugin-hand-drawn`, vertices, flow frames, collapsed cards
+  and edges are sketched, as in v12 ([Hand-drawn look](#hand-drawn-look)).
+- **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until agentflow's ASCII
+  renderer lands (R-ASCII-5, #551).
+
 ## Agentflow SVG structure
 
 What changed in the agentflow's SVG compared with v12 (spec #523, #548). v12's classes are kept

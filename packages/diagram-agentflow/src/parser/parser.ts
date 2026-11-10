@@ -10,6 +10,10 @@
  * first error: it reports it, skips to the next statement boundary and carries on (R-PARSE-4).
  * An unclosed label or string, which swallows the rest of the text, is reported at its opener
  * and lexing restarts on the following line.
+ *
+ * Flowchart's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
 import type { AstId, Range } from '@mermaid-js/core/parser-kit';

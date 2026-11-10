@@ -170,7 +170,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     ).toEqual([]);
     // Every e2e fixture, every harvested spec and syntax-page string and every case but one
     // reaches the lexer.
-    expect({ e2e, specs, cases }).toEqual({ e2e: 57, specs: 179, cases: 253 });
+    expect({ e2e, specs, cases }).toEqual({ e2e: 69, specs: 179, cases: 253 });
     // D463: the cases with a lone `%` in a text or trapezoid label, in each variant that keeps
     // it; a lone `%` elsewhere (ellipse and edge text, ids, strings, shape data) and `%%` in a
     // label lex as in v12.

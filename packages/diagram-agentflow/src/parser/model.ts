@@ -13,6 +13,10 @@
  * Differences from v12's DB: text is kept as written (no sanitising: that happens when SVG is
  * written), links keep the URL as written, callbacks are recorded instead of bound, and
  * errors are diagnostics instead of exceptions.
+ *
+ * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/db.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';

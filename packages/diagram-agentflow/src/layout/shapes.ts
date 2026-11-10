@@ -4,6 +4,10 @@
  * for these seven shapes, never an import; v12 `fa796a943` names in brackets). The outline is
  * the one geometry the layout ends edges on (`ends.ts`) and the renderer (#548) draws, as a
  * closed polygon in the shape's own frame (centre at 0, y down), curves sampled.
+ *
+ * Flowchart's shape code is ported from Pele's `src/svg/shapes.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
 import type { AgentflowShape } from '../parser/index.ts';

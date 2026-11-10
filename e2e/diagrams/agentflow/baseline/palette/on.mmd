@@ -1,0 +1,31 @@
+---
+config:
+  theme: redux-color
+description: >-
+  the palette on (redux-color sets borderColorArray and bkgColorArray): each kind its fixed slot
+  (tool 0, task 1, decision 2, input 3, refdoc 4, connector 5, action 6), the flows 7, 8, 9 and
+  the collapsed card 10 in v12's container order (data-color-id on frames and the card)
+---
+agentflow-beta LR
+  connector api["API"]
+  flow plan["Plan"]
+    goal["goal"]@{ shape: input }
+    think["think"]@{ shape: task }
+    pick["pick?"]@{ shape: decision }
+    goal --> think --> pick
+  end
+  flow act["Act"]
+    flow tools["Tools"]
+      search["search"]@{ shape: tool }
+      notes["notes"]@{ shape: refdoc }
+      search -.- notes
+    end
+    run["run"]@{ shape: action }
+    search --> run
+  end
+  flow done["Done"]
+    log["log"]@{ shape: task }
+  end
+  done@{ view: "collapsed" }
+  pick --> search
+  run --x done

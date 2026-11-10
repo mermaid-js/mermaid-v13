@@ -24,12 +24,20 @@ import elkLayouts from '@mermaid-js/layout-elk';
 import { REPO_ROOT } from '../index.ts';
 
 // The agentflow graph builder (spec #523 T3) at its seam: the `.mmd` fixtures under
-// `e2e/diagrams/agentflow/baseline/layout/`, parsed by the v13 parser → LayoutGraph →
-// LayoutModel, with v12's `getData` rules pinned one by one, under `layered` and ELK. The
-// context records the graph the builder hands the engine.
+// `e2e/diagrams/agentflow/baseline/layout/` (gallery fixtures) and, for the two whose rule is a
+// warning, `nightly-check/layout/` (the gallery draws without warnings, #550), parsed by the v13
+// parser → LayoutGraph → LayoutModel, with v12's `getData` rules pinned one by one, under
+// `layered` and ELK. The context records the graph the builder hands the engine.
 
+const WARNS = new Set(['edge-from-reserved-connectors-id', 'mutual-containment-cut']);
 const fixture = (name: string): string =>
-  readFileSync(join(REPO_ROOT, `e2e/diagrams/agentflow/baseline/layout/${name}.mmd`), 'utf8');
+  readFileSync(
+    join(
+      REPO_ROOT,
+      `e2e/diagrams/agentflow/${WARNS.has(name) ? 'nightly-check' : 'baseline'}/layout/${name}.mmd`
+    ),
+    'utf8'
+  );
 
 let spec: ThemeSpec;
 const engines: Record<string, LayoutEngine> = { layered };

@@ -6,6 +6,10 @@
  * is on the drawn one. Every element goes through `w.outline` (D301, D302): the outline as
  * `node`, inner lines as `divider`, the card's dots as `mark`; a flow's frame as `group`
  * (`render.ts`).
+ *
+ * Flowchart's drawers are ported from Pele's `src/svg/shapes.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import { cornerRadius, type LayoutShape, type ShapeGeometry } from '../layout/index.ts';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { agentflowLanguage } from '@mermaid-js/diagram-agentflow/language';
 import type { AgentflowFlow } from '@mermaid-js/diagram-agentflow/language';
 import type { AstNode, Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
@@ -6,7 +6,6 @@ import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-se
 import type { DocumentSnapshot, TextEdit } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { agentflowCases, agentflowCorpus } from './corpus.ts';
-import { AGENTFLOW_FACET_ROW } from './service.ts';
 import { agentflowV12Snapshot, sortDiagnostics, type AgentflowSnapshot } from './v12.ts';
 
 /**
@@ -22,10 +21,11 @@ import { agentflowV12Snapshot, sortDiagnostics, type AgentflowSnapshot } from '.
  * - folding: each multi-line v12 flow body is a `flow` fold range from its `flow` keyword, and
  *   each member has a reference inside one of its bodies.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until agentflow's
- * manifest has its `language` entry (#550); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (agentflow's manifest
+ * `language` entry, #550).
  */
-const service = createLanguageService({ facets: [AGENTFLOW_FACET_ROW] });
+const service = createLanguageService();
+beforeAll(() => service.preload({ types: ['agentflow'] }));
 
 const FRESH = 'renamedZq7';
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
@@ -199,7 +199,8 @@ describe('agentflow definition, references, rename and folding through the servi
     expect(folds).toBeGreaterThan(200);
   }, 600_000);
 
-  it('runs on an eager row while the registry row has no `load` (#550: then drop the row)', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'agentflow')?.load).toBeUndefined();
+  it('loads the facet from the generated registry (#550)', () => {
+    expect(firstPartyFacets.find((e) => e.type === 'agentflow')?.load).toBeTypeOf('function');
+    expect(service.update('x:///a', 'agentflow-beta\n  a --> b\n').facet?.id).toBe('agentflow');
   });
 });

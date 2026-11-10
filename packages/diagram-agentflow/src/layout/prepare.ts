@@ -7,6 +7,10 @@
  * applied by the parser, D466) and `algorithm` for the engine (D174). Every label is measured
  * before layout (DESIGN §6.1), each length from the unit profile, the theme, config or the
  * metrics table (pitfall 13). Written from a copy of v13 flowchart's builder (D446).
+ *
+ * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/graph.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import type {
   Dir,
@@ -33,8 +37,8 @@ import type {
 } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
+import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
 import {
-  AGENTFLOW_LENGTH_DEFAULTS,
   AGENTFLOW_METRICS,
   FLOWCHART_LENGTH_DEFAULTS,
   MIN_SLANT,
@@ -187,7 +191,7 @@ export function prepareAgentflow(
   const warn = (w: { code: string; message: string; path: string }) => ctx.warn(w);
   const agentflowLength = configLengths(
     ctx.config.agentflow,
-    AGENTFLOW_LENGTH_DEFAULTS,
+    agentflowConfigDefaults,
     'agentflow',
     warn
   );
@@ -225,7 +229,7 @@ export function prepareAgentflow(
   // Read only for a title, so an unused bad value raises no warning.
   const titleTopMargin = model.title?.trim()
     ? agentflowLength('titleTopMargin')
-    : AGENTFLOW_LENGTH_DEFAULTS.titleTopMargin!;
+    : agentflowConfigDefaults.titleTopMargin!;
   return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin, titleTopMargin };
 }
 

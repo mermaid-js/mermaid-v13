@@ -1,8 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
-import { AGENTFLOW_FACET_ROW } from './service.ts';
 
 /**
  * v12's element-mapping specs (`agentflow-mappings`, `agentflow-attachment-mapping`,
@@ -13,10 +12,10 @@ import { AGENTFLOW_FACET_ROW } from './service.ts';
  * its `definition`, and a container's span is its fold. Lines and columns are v12's: lines
  * from 1, columns from 0.
  *
- * The service gets the facet as an eager row until agentflow's manifest has its `language`
- * entry (#550).
+ * The service loads the facet through the generated registry row (agentflow's manifest, #550).
  */
-const service = createLanguageService({ facets: [AGENTFLOW_FACET_ROW] });
+const service = createLanguageService();
+beforeAll(() => service.preload({ types: ['agentflow'] }));
 
 let n = 0;
 const open = (text: string): DocumentSnapshot => service.update(`test:///${n++}.mmd`, text);

@@ -1,6 +1,7 @@
 import type { DiagramParseContext, DiagramPlugin } from '@mermaid-js/core';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { agentflowConfigDefaults } from './generated/config-defaults.ts';
 import { agentflowLabels } from './labels.ts';
 import { layoutAgentflow, type AgentflowLayout } from './layout/index.ts';
 import { detectAgentflow } from './parser/detect.ts';
@@ -20,13 +21,15 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
  * (R-SEC-5) to parse options; `claims` silences `CALLBACK_IGNORED` when the interactions plugin
  * binds `click … callback` (D105). `labels` hands every label to core's label layout, which
  * typesets math with the math plugin and warns `MATH_NOT_RENDERED` without it (D176). `render`
- * writes the whole `<svg>` document; `theme` is the diagram's own table (D331). The manifest,
- * registry row and `configDefaults` are #550's (T5).
+ * writes the whole `<svg>` document; `theme` is the diagram's own table (D331). `configDefaults`
+ * are the `agentflow` section's generated defaults; the manifest in package.json gives the
+ * registry row (#550). SVG only: `format: 'ascii'` throws `UnsupportedFormatError` until #551.
  */
 export const agentflow = {
   id: 'agentflow',
   formats: ['svg'] as const,
   layoutKind: 'graph' as const,
+  configDefaults: agentflowConfigDefaults as Readonly<Record<string, unknown>>,
   theme,
   detector: detectAgentflow,
   parse: (text: string, ctx: DiagramParseContext): AgentflowParseResult => {

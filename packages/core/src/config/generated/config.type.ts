@@ -473,6 +473,19 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
  */
 look?: ("classic" | "handDrawn" | "neo")
 /**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+useWidth?: number
+/**
  * Margin top for the text over the diagram
  */
 titleTopMargin?: number

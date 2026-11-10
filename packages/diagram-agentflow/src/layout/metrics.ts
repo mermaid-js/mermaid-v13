@@ -2,27 +2,13 @@
  * Agentflow's own lengths and shape ratios (pitfall 13): the one table the layout reads, so no
  * other file under `layout/` writes a length. The builder's shared lengths (group padding, title
  * room, edge label wrap, spacing floors) come from the unit profile, the shapes' theme padding
- * from the theme (D152), and node padding from `flowchart.padding` (D466).
+ * from the theme (D152), and node padding from `flowchart.padding` (D466). The `agentflow`
+ * section's length defaults are the generated `config-defaults.ts` (the plugin's `configDefaults`).
  *
  * The px values are v12's (`fa796a943`: `agentflowDb.getData`, `collapsedGroup.ts`, the
  * flowchart shapes agentflow draws) as v13 flowchart's builder took them (D446: a local copy,
  * never an import).
  */
-/**
- * Config length defaults, as the schema writes them (`AgentflowDiagramConfig`). The resolved
- * config carries no `agentflow` defaults until the section joins `SECTION_OWNERS` with the
- * plugin (#550); then the generated `config-defaults.ts` takes over from this table.
- */
-export const AGENTFLOW_LENGTH_DEFAULTS: Readonly<Record<string, number>> = Object.freeze({
-  nodeSpacing: 50,
-  rankSpacing: 50,
-  wrappingWidth: 120,
-  minNodeWidth: 120,
-  diagramPadding: 8,
-  /** The front-matter title's baseline this far above the drawing (D218). */
-  titleTopMargin: 25,
-});
-
 /** The `flowchart` length agentflow reads (D466), with v12's schema default. */
 export const FLOWCHART_LENGTH_DEFAULTS: Readonly<Record<string, number>> = Object.freeze({
   padding: 15,

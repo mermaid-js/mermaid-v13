@@ -18,6 +18,9 @@
  * lexing carries on (for recovery).
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
+ *
+ * Flowchart's lexer is ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
  */
 // cspell:words kepano
 import {

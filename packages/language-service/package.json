@@ -29,6 +29,7 @@
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-agentflow": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
@@ -53,6 +54,9 @@
     "@mermaid-js/diagram-xychart": "workspace:*"
   },
   "peerDependenciesMeta": {
+    "@mermaid-js/diagram-agentflow": {
+      "optional": true
+    },
     "@mermaid-js/diagram-class": {
       "optional": true
     },

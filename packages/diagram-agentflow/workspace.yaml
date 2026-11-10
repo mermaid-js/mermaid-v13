@@ -1,6 +1,6 @@
 # How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
-# Pre-manifest until #550 (T5) adds the `mermaid` manifest: configDefaults and release
-# come then (v13/docs/agents/port-diagram/shared-files.md, "Before T5").
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
 
 # grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
 # type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
@@ -41,8 +41,7 @@ theme:
       'leanPaddingY',
     ]
 
-# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench). The
-# bench checks it once the manifest has `language` (#550).
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
 languageBundle:
   renderer:
     - render/
@@ -50,3 +49,25 @@ languageBundle:
     - theme/
     - plugin.ts
     - labels.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The agentflow diagram plugin (SVG; `agentflow-beta`).'
+  install: 'with `mermaid/slim`'
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
+# the files that must credit an upstream. Pele is a shared upstream (`SHARED_UPSTREAMS`): these
+# files are local copies of flowchart's Pele-derived lexer, parser, builder, shapes and edges
+# (D446, D467). mermaid's notices carry them too (its CDN build bundles this package):
+# notices/mermaid.txt.
+credits:
+  files:
+    src/parser/lexer.ts: ['Pele']
+    src/parser/parser.ts: ['Pele']
+    src/parser/base.ts: ['Pele']
+    src/parser/statements.ts: ['Pele']
+    src/parser/model.ts: ['Pele']
+    src/layout/prepare.ts: ['Pele']
+    src/layout/shapes.ts: ['Pele']
+    src/render/shapes.ts: ['Pele']
+    src/render/edges.ts: ['Pele']

@@ -1,6 +1,11 @@
 /**
  * The agentflow parser's base (`parser.ts`): the parse state, the token helpers, error reporting
  * and recovery (R-PARSE-4), the token rules and `@{ … }` metadata.
+ *
+ * Split from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from
+ * Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
+ * (c) 2026 kepano).
+ * cspell:ignore kepano
  */
 import {
   cook,

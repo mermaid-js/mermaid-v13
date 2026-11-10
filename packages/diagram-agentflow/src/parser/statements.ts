@@ -1,4 +1,10 @@
-/** The agentflow parser's rules for vertices, links, chains and the one-line statements. */
+/**
+ * The agentflow parser's rules for vertices, links, chains and the one-line statements. Split
+ * from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from Pele's
+ * `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
+ * (c) 2026 kepano).
+ * cspell:ignore kepano
+ */
 import { inKindSet, nodeId } from '@mermaid-js/core/parser-kit';
 import type { AstCallback, AstId, Range } from '@mermaid-js/core/parser-kit';
 import {

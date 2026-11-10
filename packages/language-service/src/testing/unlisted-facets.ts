@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #523: the manifest comes with T5 (#550).
-  {
-    type: 'agentflow',
-    id: 'agentflow',
-    section: 'agentflow',
-    pattern: /^\s*agentflow-beta\b/,
-    detector: (text) => /^\s*agentflow-beta\b/.test(text),
-    load: () => import('@mermaid-js/diagram-agentflow/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];
