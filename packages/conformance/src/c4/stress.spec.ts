@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { c4Tokens } from '@mermaid-js/diagram-c4';
+import { cost, MIN_MS, repeatsFor } from './timing.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the C4 lexer is linear in input size, in every free-text state, for
@@ -93,42 +94,6 @@ const SHAPES: [string, (n: number) => string, number?][] = [
   ],
   ['tag quotes', (n) => C + 'Person(a, "' + '<b c="x">'.repeat(n / 10) + '")'],
 ];
-
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-/** CPU ms of `reps` runs of `run`. */
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-/**
- * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
- * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
- */
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
 
 describe('stress: the C4 lexer is linear in input size', () => {
   it.each(SHAPES)(

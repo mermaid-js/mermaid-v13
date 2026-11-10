@@ -7,6 +7,7 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { c4, layoutC4, type C4Layout, type C4Model } from '@mermaid-js/diagram-c4';
 import { c4TestContext, parsedC4 } from '@mermaid-js/diagram-c4/testing';
+import { cost, MIN_MS, repeatsFor } from './timing.ts';
 
 /**
  * The C4 renderer is linear in the diagram's size (spec #522 T4, pitfall 19): it paints what
@@ -48,42 +49,6 @@ const SHAPES: [string, (n: number) => string, number][] = [
     1_000,
   ],
 ];
-
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-/** CPU ms of `reps` runs of `run`. */
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-/**
- * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
- * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
- */
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
 
 let theme: Theme;
 beforeAll(async () => {

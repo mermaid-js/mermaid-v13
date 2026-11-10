@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4 } from '@mermaid-js/diagram-c4';
+import { cost, MIN_MS, repeatsFor } from './timing.ts';
 
 /**
  * R-PARSE-7 (#539): the C4 parser, model building included, is linear in the number of
@@ -80,38 +81,6 @@ const SHAPES: [string, (n: number) => string][] = [
   ['named arguments moved on every line', (n) => C + lines(n, (k) => `Person($descr="d${k}")`)],
   ['statements split by comment lines', (n) => C + lines(n, (k) => `Person(p${k}, "P")\n%% c`)],
 ];
-
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-/** CPU ms of `reps` runs of `run`. */
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-/** The step of {@link cpuMs}: the median of 20 changes seen while spinning. */
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
 
 describe('stress: the C4 parser is linear in the number of statements', () => {
   it.each(SHAPES)(
