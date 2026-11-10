@@ -38,13 +38,16 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Theme reads (D152): `fontFamily`, `fontSize`, `radius`, `nodePadding*`, `hexagonPadding*`, `hexagonSlant`, `subroutinePadding*`, `leanPadding*`; `agentflow` is in their core `usedBy` now (`theme-used-by.spec.ts` no longer lists it as not drawn; `padsOf` builds the padding names as flowchart's does, listed in its `DYNAMIC_READS`). Core size unchanged (`usedBy` is not in the closure).
 
 ## #548 T4 renderer
+- From the #637 move: add `e2e/diagrams/agentflow/hand-drawn.txt` (`sketched`: v12 sketches shapes, frames and cards) once agentflow renders; theme rows' users are scanned from sources now (no core `usedBy` edit), and `theme.notDrawnYet` is not set since the layout reads rows.
 - Unblocked: block's shape-geometry T0 (#589) is merged into `mermaid-v13` (ad3648a91) and into this branch (ce62f350c). The `subroutinePadding*`, `leanPadding*` and `crossArrowhead*` rows are core rows (`packages/core/src/theme/vocabulary.ts`, values in `specs/geometry.ts`); add `'agentflow'` to the `usedBy` of each row agentflow's sources read, and nothing else in core. (#547 added it for the padding rows, `radius`, `fontFamily` and `fontSize`; the renderer adds the colour and arrowhead rows it reads.)
 - From #547: draw each shape from `shapeOutline(shape, w, h, pads, metrics)` (or a path that matches it: rounded `rx = min(radius, w/2, h/2)`, the refdoc's two quadratic halves) so edge ends stay on the drawn outline; the layout's edge ends are already there. Palette order (v12 `containerOrder`) is not in the views yet.
 
 ## #549 T6 language facet
+- From the #637 move: editor samples go in `grammar/agentflow.sample.mmd` / `agentflow.agree.mmd` (then `vitest run packages/language-service-codemirror -u`); `languageBundle:` in `workspace.yaml`.
 - From #546: the parser takes `probe` (flowchart's decision points, `READ_PAST` exported from `parser/tables.ts`), and `gen:grammar` already writes `src/generated/{categories,docs}.ts` and the highlighters from `grammar/agentflow.ebnf` (an `agentflow` row in `tools/gen-grammar` `GRAMMARS`). Symbols: vertices and connectors `node`, flows `subgraph`, classes `class`, edge ids `edge`.
 
 ## #550 T5 integration
+- From the #637 move: `configDefaults: true` and `release:` in `workspace.yaml`, MIGRATION sections in `v13/docs/migration/agentflow.md`; push the integration branch only after the manifest lands (or #640 merges; then take theirs for `tools/workspace/sync.spec.ts`).
 - From #546: MIGRATION.md lists v12's removed DB methods (`getSemanticModel()`, `getDiagnostics()`, `getElementAtPosition()`, `getElementMappings()`, `getMappingStats()`; D465), and the docs list the nine reserved diagnostic codes (D461). The plugin passes `ctx.limits`, `ctx.config.flowchart?.inheritDir` and `ctx.config.maxTextSize` to `parseAgentflow`.
 
 ## #551 T7 ASCII (optional)

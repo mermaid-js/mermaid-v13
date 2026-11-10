@@ -1,0 +1,9 @@
+mindmap:keyword
+root:variable
+((:punctuation
+Root:string
+)):punctuation
+A:variable
+[:punctuation
+Square:string
+]:punctuation

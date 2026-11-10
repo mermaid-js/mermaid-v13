@@ -7,7 +7,7 @@ import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-se
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { wardleyGateCorpus } from './corpus.ts';
 import { wardleyV12Snapshot } from './v12.ts';
 
@@ -27,7 +27,7 @@ import { wardleyV12Snapshot } from './v12.ts';
  * - a multi-line v12 `accDescr` is an `accDescr` fold, and a pipeline written over lines is a
  *   `pipeline` fold.
  *
- * Sources with a listed model divergence (`divergences.json`: an entity name core's table
+ * Sources with a listed model divergence (`divergences/`: an entity name core's table
  * lacks) are left out: their labels differ from v12's by design.
  *
  * The service loads the facet through the generated registry row (wardley's manifest
@@ -37,7 +37,7 @@ const service = createLanguageService();
 await service.preload({ types: ['wardley'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const DIVERGENT = new Set(
-  loadDivergences(fileURLToPath(DIVERGENCES_FILE))
+  loadDivergences(fileURLToPath(DIVERGENCES_DIR))
     .filter((d) => d.kind === 'model')
     .map((d) => d.id)
 );

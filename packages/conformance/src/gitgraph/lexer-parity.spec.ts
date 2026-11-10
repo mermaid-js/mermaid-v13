@@ -8,6 +8,7 @@ import {
 } from '@mermaid-js/diagram-gitgraph/testing';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LANGIUM_LEXERS, loadLangiumLexerOracle } from '../langium-lexer.ts';
+import { rowOf } from '../tables.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
 import { gitGraphGateCorpus } from './corpus.ts';
 
@@ -95,7 +96,7 @@ function firstDiff(a: LangiumToken[], b: LangiumToken[]): string | undefined {
 
 /** v12's token types for gitGraph, in Chevrotain's match order. */
 async function v12Vocabulary(): Promise<string[]> {
-  const { factory, key } = LANGIUM_LEXERS.gitGraph;
+  const { factory, key } = rowOf(LANGIUM_LEXERS, 'gitGraph', 'LANGIUM_LEXERS');
   const parser = (await import('mermaid-parser-v12')) as unknown as Record<
     string,
     () => Record<string, { parser: { Lexer: { definition: Record<string, { name: string }> } } }>

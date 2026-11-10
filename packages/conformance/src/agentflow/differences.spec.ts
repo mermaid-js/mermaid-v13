@@ -9,7 +9,7 @@ import { agentflowV13Snapshot } from './v13.ts';
  * v12's and only a diagnostic differs: v13 warns where v12 was silent, or warns where v12
  * reported an error (spec #523). Each source is accepted by both, has v12's semantic model, and
  * gives the listed v13 diagnostics. The differences in accept/reject or in the model are in
- * `divergences.json` (D462, D463, YAML anchors) and `parity.spec.ts`.
+ * `divergences/agentflow.json` (D462, D463, YAML anchors) and `parity.spec.ts`.
  */
 const DIFFERENCES: { id: string; source: string; codes: string[]; reason: string }[] = [
   {

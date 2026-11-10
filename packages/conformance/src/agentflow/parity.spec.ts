@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadDivergences } from '../divergences.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem, ObservedDivergence } from '../types.ts';
 import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
@@ -10,7 +10,7 @@ import { agentflowAdapter } from './v13.ts';
 /**
  * Oracle parity for agentflow (R-COMPAT-2…4, #546) over the lexer gate's whole set: the e2e
  * fixtures, the v12 spec strings and the cases (also in the main parity run, where their
- * divergences are listed in `divergences.json`), each in every generated variant that changes
+ * divergences are listed in `divergences/agentflow.json`), each in every generated variant that changes
  * it. Accept/reject and the normalised model (`v12.ts`, `v13.ts`: v12's `getSemanticModel()`,
  * the direction and the styling) must agree, except where a variant of a listed source
  * diverges as the source does, or core's YAML reader reads a line separator:
@@ -22,7 +22,7 @@ import { agentflowAdapter } from './v13.ts';
  *   U+2029 as line breaks inside a block over several lines; js-yaml reads them as text, which
  *   makes the block fail or a scalar of it hold them. GAPS #546 gives it to core;
  * - core's YAML reader rejects anchors and aliases, which js-yaml resolved (listed for the
- *   source in `divergences.json`, spec #523).
+ *   source in `divergences/agentflow.json`, spec #523).
  */
 const VARIANT = new RegExp(` \\((${VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
@@ -96,7 +96,7 @@ describe('agentflow oracle parity with mermaid@12 over the gate corpus', () => {
     const report = await runParity({
       adapters: [agentflowAdapter],
       corpus: each(items),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+      divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
     });
     const agree = report.results.filter((r) => r.status === 'agree').length;
     const counts: Record<string, number> = {};
