@@ -115,6 +115,11 @@ export interface C4RelationLayout {
   /** The label (with C4Dynamic's `"<n>: "`), and `[techn]` in italic below it. */
   readonly label?: PlacedLabel;
   readonly techn?: PlacedLabel;
+  /**
+   * No spot kept the label off its own arrowheads, the elements and the boundary headers (a
+   * diagram with no room between its shapes): it sits beside the line where it covers least.
+   */
+  readonly crowded?: true;
 }
 
 export interface C4Layout {

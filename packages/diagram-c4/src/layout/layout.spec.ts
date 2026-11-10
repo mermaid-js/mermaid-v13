@@ -83,6 +83,11 @@ describe('c4 layout invariants on the e2e fixtures', () => {
     for (const measurer of [undefined, grid]) {
       const layout = layoutC4(model, c4TestContext(config, theme, [], measurer));
       expect(c4LayoutViolations(model, layout)).toEqual([]);
+      // Every label found a spot off its own arrowheads, the elements and the headers (#542),
+      // so the label invariant held for each, none excused as crowded.
+      expect(layout.relations.filter((r) => r.crowded).map((r) => `${r.from} -> ${r.to}`)).toEqual(
+        []
+      );
     }
   });
 

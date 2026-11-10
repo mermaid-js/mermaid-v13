@@ -4,12 +4,14 @@
  * the layout is sound; each entry names a broken rule: a number that is not finite; elements
  * that overlap, stand outside their boundary's frame (below its header) or overlap a frame they
  * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
- * outside its frame; a relation whose ends are not on its shapes' outlines; anything drawn
- * outside the bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the relations that cross an element other than their
+ * outside its frame; a relation whose ends are not on its shapes' outlines; in a careful layout,
+ * a label box not marked `crowded` over its own arrowheads or over any element (#542); anything drawn outside the
+ * bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the relations that cross an element other than their
  * own ends, which the corpus specs pin (the spec allows listed exceptions). Exported from
  * `@mermaid-js/diagram-c4/testing`.
  */
 import type { C4Model } from '../model.ts';
+import { C4_METRICS as M } from './metrics.ts';
 import { crosses } from './route.ts';
 import { onOutline, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
@@ -85,6 +87,7 @@ export function c4LayoutViolations(model: C4Model, layout: C4Layout): string[] {
   checkElements(model, layout, out);
   checkBoundaries(model, layout, out);
   checkRelations(model, layout, out);
+  if (layout.careful) checkLabels(layout, out);
   checkBounds(layout, out);
   return out;
 }
@@ -182,6 +185,41 @@ function checkRelations(model: C4Model, layout: C4Layout, out: string[]): void {
         if (Math.abs(p.x - q.x) > EPS && Math.abs(p.y - q.y) > EPS)
           out.push(`${name}: a bent stretch is slanted`);
       }
+  }
+}
+
+/** A relation's label box as the renderer draws it: label and `[techn]`, `labelPad` wider. */
+export function c4LabelBox(r: C4RelationLayout): Rect | undefined {
+  const parts = [r.label, r.techn].filter((l) => l !== undefined);
+  if (parts.length === 0) return undefined;
+  const width = Math.max(...parts.map((l) => l.width)) + M.labelPad;
+  const cx = parts[0]!.x + parts[0]!.width / 2;
+  const last = parts[parts.length - 1]!;
+  return { x: cx - width / 2, y: parts[0]!.y, width, height: last.y + last.height - parts[0]!.y };
+}
+
+/**
+ * In a careful layout, no label box covers its own arrowheads or any element, unless the layout
+ * marks it `crowded` (no spot cleared them).
+ */
+function checkLabels(layout: C4Layout, out: string[]): void {
+  const square = (p: Point): Rect => ({
+    x: p.x - M.arrow,
+    y: p.y - M.arrow,
+    width: 2 * M.arrow,
+    height: 2 * M.arrow,
+  });
+  for (const r of layout.relations) {
+    const box = c4LabelBox(r);
+    if (!box || r.crowded) continue;
+    const name = `relation ${r.from} -> ${r.to}`;
+    if (
+      (r.startArrow && overlap(box, square(r.start))) ||
+      (r.endArrow && overlap(box, square(r.end)))
+    )
+      out.push(`${name}: its label covers its own arrowhead`);
+    for (const e of layout.elements)
+      if (overlap(box, e.box)) out.push(`${name}: its label covers element ${e.alias}`);
   }
 }
 

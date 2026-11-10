@@ -92,6 +92,8 @@ export const C4_METRICS = {
   besideGap: 2,
   /** A leaning label moves out by its half height less this. */
   leanSlack: 14,
+  /** How far out beside its line a label is tried, in label depths, when the line has no room. */
+  besideSteps: 8,
 
   /**
    * R-SEC-5, D455: the box and stretch comparisons the router and label placement may make (also

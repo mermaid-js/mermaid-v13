@@ -364,6 +364,8 @@ interface Routed {
   /** The label box's centre and top. */
   readonly cx: number;
   readonly top: number;
+  /** No spot kept the label off its arrowheads, the shapes and the headers. */
+  readonly crowded?: true;
 }
 
 interface RoutedAll {
@@ -434,6 +436,9 @@ function routeAll(input: RouteInput): RoutedAll {
   const work = new Work(input.budget);
   let careful = true;
   const taken = new Taken(work);
+  // What a label must never cover: every shape's whole box and every boundary header.
+  const blocked = new Taken(work);
+  for (const s of shapes) blocked.add(s.x, s.y, s.x + s.width, s.y + s.height);
   for (const s of shapes)
     taken.add(
       s.x + M.labelEdge,
@@ -456,19 +461,24 @@ function routeAll(input: RouteInput): RoutedAll {
     const endArrow = rel.kind !== 'rel_b';
     const p = r.points;
     const n = p.length;
-    if (startArrow) taken.around(p[0]!, p[1]!, M.arrow);
-    if (endArrow) taken.around(p[n - 2]!, p[n - 1]!, M.arrow);
-    return { r, startArrow, endArrow };
+    const heads: number[] = [];
+    if (startArrow) heads.push(p[0]!, p[1]!);
+    if (endArrow) heads.push(p[n - 2]!, p[n - 1]!);
+    for (let i = 0; i < heads.length; i += 2) taken.around(heads[i]!, heads[i + 1]!, M.arrow);
+    return { r, startArrow, endArrow, heads };
   });
   for (const g of order) {
     const box = headerBox(g);
-    if (box) taken.add(box.x, box.y, box.x + box.width, box.y + box.height);
+    if (!box) continue;
+    taken.add(box.x, box.y, box.x + box.width, box.y + box.height);
+    blocked.add(box.x, box.y, box.x + box.width, box.y + box.height);
   }
 
   const list = drawn.map(({ rel, index }, k): Routed => {
-    const { r, startArrow, endArrow } = routes[k]!;
+    const { r, startArrow, endArrow, heads } = routes[k]!;
     if (work.done) careful = false;
-    const placedLabel = placeLabel({ rel, index, r, input, taken: work.done ? undefined : taken });
+    const keep = work.done ? undefined : { taken, blocked, heads, work };
+    const placedLabel = placeLabel({ rel, index, r, input, keep });
     return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
   });
   return { list, careful };
@@ -483,8 +493,32 @@ interface LabelInput {
   readonly index: number;
   readonly r: Route;
   readonly input: RouteInput;
-  /** What the label should not cover; undefined once the budget is spent. */
-  readonly taken: Taken | undefined;
+  /** What the label should keep off; undefined once the budget is spent. */
+  readonly keep: Keep | undefined;
+}
+
+/** What a label keeps off while it is placed. */
+interface Keep {
+  /** What it should cover least of: shapes but their edges, arrowheads, headers, labels. */
+  readonly taken: Taken;
+  /** What it must not cover at all: whole shapes and boundary headers. */
+  readonly blocked: Taken;
+  /** Its own arrowheads' tips, as x, y pairs: it must not cover their squares either. */
+  readonly heads: readonly number[];
+  readonly work: Work;
+}
+
+/** How much of the box x0, y0, x1, y1 a label must not cover: `blocked`, and its own heads. */
+function forbidden(keep: Keep, x0: number, y0: number, x1: number, y1: number): number {
+  let area = keep.blocked.covered(x0, y0, x1, y1);
+  const h = keep.heads;
+  keep.work.charge(h.length / 2);
+  for (let i = 0; i < h.length; i += 2) {
+    const w = Math.min(x1, h[i]! + M.arrow) - Math.max(x0, h[i]! - M.arrow);
+    const t = Math.min(y1, h[i + 1]! + M.arrow) - Math.max(y0, h[i + 1]! - M.arrow);
+    if (w > 0 && t > 0) area += w * t;
+  }
+  return area;
 }
 
 /**
@@ -498,8 +532,8 @@ function placeLabel({
   index,
   r,
   input,
-  taken,
-}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top'> {
+  keep,
+}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'crowded'> {
   const { model, config, fonts, measure } = input;
   const room = config.wrapAll ? r.room : Infinity;
   const label = measure(relationLabelText(model, rel, index), fonts.message, room);
@@ -512,32 +546,70 @@ function placeLabel({
   let dx = r.nx * aside + offset(rel.offsetX);
   let dy = r.ny * aside + offset(rel.offsetY);
   let at = M.slide[0]!;
-  if (taken) {
-    // Slide along the line to the spot that covers least. Offsets from the diagram are kept
-    // unless a spot on the line itself covers less than any they lead to.
-    let least = Infinity;
-    const moved = dx !== r.nx * aside || dy !== r.ny * aside;
-    const tries: [number, number][] = moved
-      ? [
-          [dx, dy],
-          [r.nx * aside, r.ny * aside],
-        ]
-      : [[dx, dy]];
-    for (const [px, py] of tries) {
-      if (least === 0) break;
-      for (const t of M.slide) {
-        const x = r.x0 + (r.x1 - r.x0) * t + px;
-        const y = r.y0 + (r.y1 - r.y0) * t + py;
-        const area = taken.covered(x - lw / 2, y - lh / 2, x + lw / 2, y + lh / 2);
-        if (area < least) [least, at, dx, dy] = [area, t, px, py];
-        if (area === 0) break;
-      }
-    }
-  }
+  let crowded = false;
+  if (keep)
+    [at, dx, dy, crowded] = clearest(r, lw, lh, [dx, dy], [r.nx * aside, r.ny * aside], keep);
   const cx = r.x0 + (r.x1 - r.x0) * at + dx;
   const top = r.y0 + (r.y1 - r.y0) * at + dy - lh / 2;
-  taken?.add(cx - lw / 2, top, cx + lw / 2, top + lh);
-  return { ...(label ? { label } : {}), ...(techn ? { techn } : {}), cx, top };
+  keep?.taken.add(cx - lw / 2, top, cx + lw / 2, top + lh);
+  return {
+    ...(label ? { label } : {}),
+    ...(techn ? { techn } : {}),
+    cx,
+    top,
+    ...(crowded ? { crowded: true as const } : {}),
+  };
+}
+
+/**
+ * Where along the line, and how far off it, a `lw` × `lh` label goes: as `[t, dx, dy, crowded]`. First on
+ * the line (the author's offsets, then none), slid to the spot that covers least of `taken`
+ * (Pele `render.ts`); when that spot still covers something, also beside the line on either side,
+ * a label's depth further out at each step. A spot that covers `forbidden` is never taken while
+ * another does not; when none clears it, the one that covers least of it is, and the label is
+ * crowded.
+ */
+function clearest(
+  r: Route,
+  lw: number,
+  lh: number,
+  given: readonly [number, number],
+  online: readonly [number, number],
+  keep: Keep
+): [number, number, number, boolean] {
+  let best: [number, number, number] = [M.slide[0]!, given[0], given[1]];
+  let least = Infinity;
+  let worst = Infinity;
+  const tryAt = (px: number, py: number): boolean => {
+    for (const t of M.slide) {
+      const x = r.x0 + (r.x1 - r.x0) * t + px;
+      const y = r.y0 + (r.y1 - r.y0) * t + py;
+      const [x0, y0, x1, y1] = [x - lw / 2, y - lh / 2, x + lw / 2, y + lh / 2];
+      const bad = forbidden(keep, x0, y0, x1, y1);
+      if (bad > worst || (bad === worst && bad > 0)) continue;
+      const area = bad > 0 ? Infinity : keep.taken.covered(x0, y0, x1, y1);
+      if (bad < worst || area < least) [worst, least, best] = [bad, area, [t, px, py]];
+      if (bad === 0 && area === 0) return true;
+    }
+    return false;
+  };
+  // Offsets from the diagram are kept unless a spot on the line itself covers less.
+  const moved = given[0] !== online[0] || given[1] !== online[1];
+  for (const [px, py] of moved ? [given, online] : [given])
+    if (tryAt(px, py)) return [...best, false];
+  // Beside the line, on either side, one label depth further out at each step: across the
+  // stretch the label sits on (a self-loop's has no length: then up and down).
+  const len = Math.hypot(r.x1 - r.x0, r.y1 - r.y0);
+  const [nx, ny] = len > 0 ? [-(r.y1 - r.y0) / len, (r.x1 - r.x0) / len] : [0, 1];
+  const half = Math.abs(nx) * (lw / 2) + Math.abs(ny) * (lh / 2) + M.besideGap;
+  const depth = Math.abs(nx) * lw + Math.abs(ny) * lh;
+  const [ax, ay] = [given[0] - online[0], given[1] - online[1]];
+  for (let k = 0; k < M.besideSteps; k++)
+    for (const side of [1, -1]) {
+      const d = side * (half + k * depth);
+      if (tryAt(ax + nx * d, ay + ny * d)) return [...best, false];
+    }
+  return [...best, worst > 0];
 }
 
 /** A boundary's header box, centred under the frame's top edge; none at the top level. */
@@ -679,6 +751,7 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
     endArrow: r.endArrow,
     ...(label ? { label } : {}),
     ...(techn ? { techn } : {}),
+    ...(r.crowded ? { crowded: true as const } : {}),
   };
 }
 
