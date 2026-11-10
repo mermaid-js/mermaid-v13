@@ -6,7 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { facetlessType } from '../../packages/language-service/src/testing/facetless.ts';
+import { noFacetType } from '../../packages/language-service/src/testing/no-facet.ts';
 import { highlighted, sampleOf } from '../../packages/language-service-codemirror/scripts/highlighted.ts';
 import { startExample } from './example-server.ts';
 import type { ExampleServer } from './example-server.ts';
@@ -253,7 +253,7 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
 }) => {
   await open(page);
   // The first generated row with no package, so no facet and no highlighter.
-  const { header, source } = facetlessType();
+  const { header, source } = noFacetType();
   await setDoc(page, source);
   // Past the debounce, so semantic tokens (none for a facet-less type) would have come too.
   await page.waitForTimeout(500);

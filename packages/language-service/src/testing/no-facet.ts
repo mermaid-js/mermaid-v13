@@ -3,7 +3,7 @@
  * facet yet, read from the generated `firstPartyFacets`, so the specs that need "a type the
  * service knows but cannot read" (and the adapters' "a type with no highlighter") follow the
  * ports as they land instead of naming one. When the last facet lands there is none, and
- * `facetlessType()` throws: replace those specs then.
+ * `noFacetType()` throws: replace those specs then.
  */
 import { firstPartyFacets } from '../generated/facets.gen.ts';
 
@@ -25,7 +25,7 @@ function exampleOf(pattern: RegExp): string {
 }
 
 /** The first generated facet row with no `load`: its type, header word and a source of it. */
-export function facetlessType(): { type: string; header: string; source: string } {
+export function noFacetType(): { type: string; header: string; source: string } {
   const row = firstPartyFacets.find((r) => r.load === undefined && r.pattern !== undefined);
   if (!row)
     throw new Error(

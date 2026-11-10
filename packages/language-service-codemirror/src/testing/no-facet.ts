@@ -1,9 +1,9 @@
 /**
  * Test-only (not exported, not built; a copy of the language service's
- * `src/testing/facetless.ts`, as packages may not import each other's sources): a v12 diagram
+ * `src/testing/no-facet.ts`, as packages may not import each other's sources): a v12 diagram
  * type with no language facet, and so no highlighter, read from `firstPartyFacets`, so "a type
  * with no highlighter" follows the ports as they land instead of naming one. When the last facet lands there is none, and
- * `facetlessType()` throws: replace those specs then.
+ * `noFacetType()` throws: replace those specs then.
  */
 import { firstPartyFacets } from '@mermaid-js/language-service';
 
@@ -25,7 +25,7 @@ function exampleOf(pattern: RegExp): string {
 }
 
 /** The first generated facet row with no `load`: its type, header word and a source of it. */
-export function facetlessType(): { type: string; header: string; source: string } {
+export function noFacetType(): { type: string; header: string; source: string } {
   const row = firstPartyFacets.find((r) => r.load === undefined && r.pattern !== undefined);
   if (!row)
     throw new Error(
