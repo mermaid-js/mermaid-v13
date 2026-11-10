@@ -64,3 +64,5 @@ export { lowerCode, StateLexer } from './state-lexer.ts';
 export type { StateLexerOptions } from './state-lexer.ts';
 export { foundText, ID_CONTROL, ID_RESERVED, idEscaper, STOP, Stop } from './parser-support.ts';
 export { accDescrValue, accTitleValue, stringValue, titleValue } from './common-values.ts';
+export { RuleParser } from './rule-parser.ts';
+export type { RuleGrammar, RuleParserPre } from './rule-parser.ts';

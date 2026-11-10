@@ -18,7 +18,6 @@
  */
 import {
   APOSTROPHE,
-  cook,
   DQUOTE,
   ExpectedTable,
   ID_CONTROL,
@@ -26,22 +25,15 @@ import {
   idEscaper,
   Kind,
   kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  skipTo,
-  sourceView,
+  RuleParser,
   STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
-  AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
+  RuleGrammar,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -65,8 +57,6 @@ const AFTER_PIE = [T.ShowData, ...DOC];
 const LINE_END = [Kind.Newline, Kind.EOF];
 const HEAD = [T.Pie, Kind.Newline];
 
-/** Where recovery resumes (R-PARSE-4). */
-const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 /**
  * Kinds a probe's cursor follows rather than extends: `:`, and a label, which its closing quote
  * ends (right after `"Dogs"` the parser expects `:`).
@@ -146,22 +136,19 @@ export function parsePie(src: string, options: PieParseOptions = {}): PieParseRe
   return new PieParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: PIE_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class PieParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class PieParser extends RuleParser<PreprocessResult> {
   private readonly children: PieStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`slice:Dogs`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   /** The model's sections by label: the first non-negative occurrence (D226). */
   private readonly byLabel = new Map<string, PieSection>();
   private readonly sections: PieSection[] = [];
@@ -172,25 +159,11 @@ class PieParser {
   private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: PieParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, PIE_TRIVIA);
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
   }
 
   parse(): PieParseResult {
@@ -219,43 +192,6 @@ class PieParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   /** Whether {@link id} handed out more than one id for `base`. */
   private repeated(base: string): boolean {
     return (this.mentions.get(base) ?? 0) > 1;
@@ -263,22 +199,8 @@ class PieParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
@@ -336,22 +258,6 @@ class PieParser {
     if (k === T.Pie) return 'a chart has one `pie`, at its start';
     if (STATEMENT.includes(k)) return ONE_PER_LINE;
     return undefined;
-  }
-
-  /** Skip to the next line break after an error (R-PARSE-4). */
-  private recover(): void {
-    this.probe?.freeze();
-    this.i = skipTo(this.t, this.i, BOUNDARY);
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
   }
 
   // ---- rules --------------------------------------------------------------------------
