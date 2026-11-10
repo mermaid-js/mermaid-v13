@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   validateLayout,
   type Dir,
+  type LayoutContext,
   type LayoutGraph,
   type LayoutModel,
   type Point,
   type Side,
 } from '@mermaid-js/core/layout';
+import type { DiagramPlugin } from '@mermaid-js/core';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import { createMermaid } from 'mermaid';
 import { elkEngine, toElkGraph } from './adapter.ts';
+import elkLayouts from './index.ts';
 
 // T0c #592 (D503): ELK layered gives each edge end that names a side a port on that side.
 
@@ -197,5 +202,82 @@ describe('ELK layered: named sides become FIXED_SIDE ports (D503)', () => {
         expect(n.layoutOptions?.['elk.portConstraints']).toBeUndefined();
       }
     expect(stress.edges.get('e')).toMatchObject({ sources: ['A'], targets: ['B'] });
+  });
+});
+
+/**
+ * A graph diagram `sided` whose lines read `a:R -- L:b` (architecture's form; no first-party
+ * diagram on this base gives sides yet).
+ */
+const SIDE_OF: Record<string, Side> = { L: 'left', R: 'right', T: 'top', B: 'bottom' };
+const sided: DiagramPlugin<string[], LayoutModel> = {
+  id: 'sided',
+  layoutKind: 'graph',
+  detector: (text) => /^\s*sided/.test(text),
+  parse: (text) => ({
+    model: text.split('\n').filter((l) => l.includes(' -- ')),
+    ast: { id: 'sided', type: 'Sided', range: { start: 0, end: text.length } },
+    diagnostics: [],
+    symbols: [],
+    statements: [],
+  }),
+  layout: (lines, ctx) => {
+    const edges = lines.map((l, i) => {
+      const [, a, s, t, b] = /(\w+):(\w) -- (\w):(\w+)/.exec(l)!;
+      const sides = { source: SIDE_OF[s!]!, target: SIDE_OF[t!]! };
+      return { id: `e${i}`, source: a!, target: b!, minLen: 1, sides };
+    });
+    const ids = [...new Set(edges.flatMap((e) => [e.source, e.target]))];
+    return ctx.layout({
+      direction: 'TB',
+      spacing,
+      nodes: ids.map((id) => ({ id, width: 80, height: 100, anchorY: 40 })),
+      edges,
+      groups: [],
+    });
+  },
+  render: (_model, _layout, _ctx, w: SvgWriter) => {
+    w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, 10, 10] });
+    w.close();
+  },
+};
+
+describe('through createMermaid().render() with the ELK package registered', () => {
+  it('meets each node on the side its edge names, left and right at anchorY', async () => {
+    const laid: { name: string; model: LayoutModel }[] = [];
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    m.registerLayoutLoaders(
+      elkLayouts.map((l) => ({
+        ...l,
+        loader: async () => {
+          const engine = await l.loader();
+          return (g: LayoutGraph, ctx?: LayoutContext) => {
+            const model = engine(g, ctx);
+            laid.push({ name: l.name, model });
+            return model;
+          };
+        },
+      }))
+    );
+    await m.registerExternalDiagrams([sided]);
+    const text = '---\nconfig:\n  layout: elk\n---\nsided\na:R -- L:b\nb:B -- T:c\nc:L -- R:a\n';
+    const { svg } = await m.render('d', text);
+    expect(svg).toContain('<svg');
+    expect(laid.map((l) => l.name)).toEqual(['elk']);
+    const { model } = laid[0]!;
+    const want: [string, string, string, Side, Side][] = [
+      ['e0', 'a', 'b', 'right', 'left'],
+      ['e1', 'b', 'c', 'bottom', 'top'],
+      ['e2', 'c', 'a', 'left', 'right'],
+    ];
+    for (const [id, a, b, source, target] of want) {
+      const e = model.edges.get(id)!;
+      expect(e.ports, id).toEqual({ source, target });
+      expect(onSide(model, a, source, e.points[0]!), id).toBe(true);
+      expect(onSide(model, b, target, e.points.at(-1)!), id).toBe(true);
+    }
+    const a = model.nodes.get('a')!;
+    expect(model.edges.get('e0')!.points[0]!.y).toBeCloseTo(a.y - a.height / 2 + 40);
   });
 });
