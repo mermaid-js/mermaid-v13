@@ -10,7 +10,14 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  curveKind,
+  curveRouting,
+  textStyle,
+  type CheckedStyle,
+  type CurveKind,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -98,13 +105,7 @@ export interface RelationView {
 }
 
 /** How relation lines are drawn: v12 drew them with `flowchart.curve` (class's precedent). */
-export type RequirementCurve =
-  | 'curved'
-  | 'linear'
-  | 'step'
-  | 'stepBefore'
-  | 'stepAfter'
-  | 'rounded';
+export type RequirementCurve = CurveKind;
 
 export interface RequirementPrepared {
   readonly graph: LayoutGraph;
@@ -123,34 +124,11 @@ export interface RequirementPrepared {
   readonly title?: MeasuredLabel;
 }
 
-/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
-export function requirementCurve(curve: string | undefined): RequirementCurve {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
-
-/** How the engine routes each curve (flowchart's table): the rest are right angles. */
-const ROUTING: Readonly<Partial<Record<RequirementCurve, EdgeRouting>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
+export const requirementCurve = curveKind;
 
 /** The least bold font weight. */
 const BOLD = 600;
 
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= BOLD;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < M.maxFontSize ? { ...font, size } : font, bits];
-}
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 
@@ -351,7 +329,7 @@ function pxGraph(
     groups: [],
     spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
     diagramPadding: M.viewBoxPadding,
-    routing: ROUTING[curve] ?? 'stepped',
+    routing: curveRouting(curve),
     headRoom: room.length,
     metrics: requirementMetrics(room),
   };

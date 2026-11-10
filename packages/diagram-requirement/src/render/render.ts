@@ -9,6 +9,8 @@ import {
   cls,
   openSvgRoot,
   paletteSlots,
+  px,
+  routePath,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -27,7 +29,6 @@ import {
 } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
-import { routePath } from './route.ts';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;

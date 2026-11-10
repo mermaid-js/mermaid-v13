@@ -7,12 +7,18 @@
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
 import {
+  arrowheads,
   checkLinkTarget,
   checkUrl,
   cls,
+  edgeLabel,
+  marker,
+  markerTrim,
   openSvgRoot,
+  routePath,
   textElement,
   translate,
+  type Arrowheads,
   type Attrs,
   type OutlinePaint,
   type Paint,
@@ -32,7 +38,6 @@ import type {
 import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
-import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -40,8 +45,6 @@ import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 const NOTE_DASH = '5' as SafeValue;
 const DIVIDER_DASH = '10 10' as SafeValue;
 // Room either side of a transition label on its background.
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
 
 type ThemeOf = StateRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -55,7 +58,7 @@ interface Tint {
 
 /** Every theme variable the body uses, looked up before the root is written (rootStyle). */
 interface Paints {
-  readonly head: Arrowhead;
+  readonly head: Arrowheads;
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly strokeWidth: Length;
@@ -120,7 +123,7 @@ function paletteSlots(theme: ThemeOf, model: StateModel, s: StatePrepared): Map<
 
 function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const node = {
-    head: arrowhead(theme),
+    head: arrowheads(theme),
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     strokeWidth: theme.length('strokeWidth'),
@@ -369,7 +372,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       w,
       route.points,
       e.source === e.target ? 'rounded' : 'curved',
-      e.note ? 0 : arrowTrim(paint.head)
+      0,
+      e.note ? 0 : markerTrim('arrow_point', paint.head)
     );
     // Paint comes from the `edgePaths` group (stroke, width, no fill).
     w.outline('edge', 'path', {
@@ -377,7 +381,10 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       'stroke-dasharray': e.note ? NOTE_DASH : undefined,
       'stroke-linecap': e.note ? 'butt' : undefined,
     });
-    if (!e.note) drawArrowhead(w, path, { fill: paint.arrow }, paint.head);
+    if (!e.note) {
+      const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+      marker(w, 'arrow_point', end, { fill: paint.arrow }, paint.head);
+    }
   }
   w.close();
 }
@@ -385,18 +392,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  edgeLabel(w, e.label, at, e.id, fill, { fill: text }, 3);
 }
 
 function nodeClass(view: StateNodeView): string {

@@ -12,7 +12,12 @@ import {
   checkLinkTarget,
   checkUrl,
   cls,
+  edgeLabel,
+  marker,
+  markerTrim,
   openSvgRoot,
+  px,
+  routePath,
   textElement,
   translate,
   type Attrs,
@@ -30,7 +35,6 @@ import type {
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from './edges.ts';
 import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
@@ -41,8 +45,6 @@ const FRAME_WIDTH = 0.75;
 const TITLE_SIZE = 18;
 const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
 interface Title {
@@ -255,25 +257,15 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     'fill-opacity': e.style.shape['stroke-opacity'],
   };
   const start = { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy };
-  marker(w, e.start, start, headPaint, paint.heads);
-  marker(w, e.end, { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy }, headPaint, paint.heads);
+  marker(w, e.start, start, headPaint, paint.heads, true);
+  const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+  marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
-    fill: paint.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.text, ...e.style.text });
-  w.close();
+  edgeLabel(w, e.label, at, e.edge.id, paint.fill, { fill: paint.text, ...e.style.text }, 3);
 }
 
 /** A vertex's kind tint or a card's flow tint, under a palette. */

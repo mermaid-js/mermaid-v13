@@ -7,6 +7,7 @@ import {
   checkLinkTarget,
   checkUrl,
   cls,
+  edgeLabel,
   openSvgRoot,
   paletteSlots,
   textElement,
@@ -20,7 +21,7 @@ import {
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
+import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from '@mermaid-js/core/svg';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -39,7 +40,6 @@ export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowL
 
 const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
-const LABEL_PAD = 4;
 
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
@@ -324,18 +324,8 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: 3,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text, ...e.style.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  edgeLabel(w, e.label, at, e.edge.id, fill, { fill: text, ...e.style.text }, 3);
 }
 
 function drawNode(

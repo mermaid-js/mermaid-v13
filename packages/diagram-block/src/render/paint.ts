@@ -9,6 +9,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import {
+  checkStyle,
   paletteSlots,
   styleCache,
   type CheckedStyle,
@@ -17,7 +18,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Block, BlockModel } from '../model.ts';
-import { arrowheads, type Arrowheads } from './arrowheads.ts';
+import { arrowheads, type Arrowheads } from '@mermaid-js/core/svg';
 import { BLOCK_RENDER } from './metrics.ts';
 
 type Length = ReturnType<Theme['length']>;

@@ -6,14 +6,13 @@
  * `style` on a relationship wins, and its markers take its stroke. Animation is a class only, as
  * in the flowchart: the keyframes would need a `<style>` (out of scope, spec #517).
  */
-import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
+import { routePath, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
 import { noteEdgeId, type RelationEdgeView, type UsecaseEdgeView } from '../layout/prepare.ts';
 import type { UsecaseRelationship } from '../model.ts';
 import { marker, markerTrim } from './markers.ts';
 import { DRAW } from './metrics.ts';
 import { relationName } from './accessible-names.ts';
 import { need } from './paint.ts';
-import { routePath } from './route.ts';
 import { cls, type Scene } from './scene.ts';
 
 export function drawEdges(scene: Scene): void {

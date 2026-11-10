@@ -4,15 +4,16 @@
 // joined to its state by an edge. Every length comes from the unit profile (ADR-13, D77): the
 // shared builder metrics, plus state's own shape table (D108, `metrics.ts`).
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
-  fontSizePx,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+  fromPx,
+  graphSpacing,
+  labelledEdge,
+  pxProfile,
+  sideways,
+  type UnitProfile,
+} from '@mermaid-js/core/layout';
+import { styleCache, textStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
 import type { StateRenderContext } from './context.ts';
@@ -88,17 +89,6 @@ export interface StatePrepared {
   regions: ReadonlyMap<string, readonly string[]>;
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
-
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
-
 /** The text a state is labelled with: its one description, else its id. */
 const labelText = (s: StateNode): string =>
   s.descriptions.length === 1 ? s.descriptions[0]! : s.id;
@@ -125,7 +115,9 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const units = ctx.units ?? pxProfile;
   const b = units.builder;
   const cfg = ctx.config.state ?? {};
-  const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) => ctx.warn(w));
+  const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) =>
+    ctx.warn(w)
+  );
   const m: Measure = {
     units,
     sm: stateMetrics(units),
@@ -392,20 +384,7 @@ function layoutGraph(
 ): LayoutGraph {
   const { units } = m;
   const b = units.builder;
-  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = length(key);
-    return px === undefined ? fallback : fromPx(units, px, axis, min);
-  };
-  const along = sideways(model.direction) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, model.direction, length);
   // Composites a reopening left holding plain children beside its regions (model `group()`).
   const mixed = new Set<string>();
   for (const x of [...nodes, ...groups.filter((g) => !g.region)])
@@ -427,22 +406,8 @@ function layoutGraph(
       if (d) group.direction = d;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    ...spacing,
     diagramPadding: b.diagramPadding,
     // On the grid routes are always square (D78).
     routing: units.grid === undefined ? 'curved' : 'stepped',

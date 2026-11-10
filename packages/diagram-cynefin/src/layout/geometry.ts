@@ -4,6 +4,7 @@
  * only where something is drawn), and a box that unions them.
  */
 import type { CubicCurve, Point, Rect } from './types.ts';
+import { RectUnion } from '@mermaid-js/core/layout';
 
 /** The [min, max] of one coordinate of a cubic Bézier with these four values. */
 function cubicRange(p0: number, p1: number, p2: number, p3: number): [number, number] {
@@ -93,18 +94,4 @@ export function pointsBox(points: readonly Point[]): Rect {
 }
 
 /** The union of rectangles. */
-export class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  add(r: Rect): void {
-    this.x0 = Math.min(this.x0, r.x);
-    this.y0 = Math.min(this.y0, r.y);
-    this.x1 = Math.max(this.x1, r.x + r.width);
-    this.y1 = Math.max(this.y1, r.y + r.height);
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
-  }
-}
+export class Box extends RectUnion {}
