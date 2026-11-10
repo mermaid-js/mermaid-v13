@@ -1,0 +1,7 @@
+---
+description: IR with a rule defined twice (v12 draws both) and a reference to a rule that is never defined.
+---
+railroad-beta
+value = choice(nonterminal("object"), nonterminal("array")) ;
+value = terminal("null") ;
+object = sequence(terminal("{"), nonterminal("members"), terminal("}")) ;

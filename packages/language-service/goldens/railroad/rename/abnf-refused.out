@@ -1,0 +1,3 @@
+@ 3:14  number = 1*DI|GIT ;
+  prepare: 3:12-3:17 "DIGIT"; rename to "digit_char":
+  refused: 'digit_char' would not read as the same rule id everywhere it is used.

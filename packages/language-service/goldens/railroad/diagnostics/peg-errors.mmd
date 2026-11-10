@@ -1,0 +1,6 @@
+railroad-peg-beta
+title <- "x" ;
+Expr <- Sum !!Bad ;
+Sum <- Product ("+" Product)* ;
+Value <- [0-9]+ ;
+Other = "y" ;

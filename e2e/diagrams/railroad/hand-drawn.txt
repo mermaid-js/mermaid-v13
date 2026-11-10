@@ -1,0 +1,6 @@
+unsketched
+
+v12 never sketched railroad diagrams (spec #526, D301). With the hand-drawn plugin registered and
+`handDrawn` on, this folder's whole corpus must draw the same bytes as without it, with no added
+warning (packages/plugin-hand-drawn/src/unsketched.spec.ts, D301, D305). The first line is read:
+`sketched` or `unsketched`.

@@ -1336,7 +1336,8 @@ export const configSchema: ConfigSchema = {
     "railroad": {
       "$ref": "#/$defs/RailroadDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "dompurifyConfig": {
@@ -7413,7 +7414,7 @@ export const configSchema: ConfigSchema = {
     },
     "RailroadDiagramConfig": {
       "title": "Railroad Diagram Config",
-      "description": "Configuration for Railroad (Syntax) Diagrams",
+      "description": "Configuration for railroad (syntax) diagrams: one section for the four notations\n(`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`, D511).\n",
       "allOf": [
         {
           "$ref": "#/$defs/BaseDiagramConfig"
@@ -7422,12 +7423,38 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for railroad diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the railroad renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "True draws `width=\"100%\"` and a `max-width`; false draws the diagram's own `width` and `height`."
+          }
+        },
         "compactMode": {
           "description": "Use compact layout mode",
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 read it and drew nothing different (D515)."
           }
         },
         "padding": {
@@ -7436,7 +7463,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "verticalSeparation": {
@@ -7445,7 +7474,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "horizontalSeparation": {
@@ -7454,7 +7485,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "arcRadius": {
@@ -7463,80 +7496,91 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "fontSize": {
           "description": "Font size for text",
           "type": "number",
           "minimum": 0,
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number, or a string read with `parseFloat`, from 0 up to 10000; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently (and drew 10000 or more)."
           }
         },
         "fontFamily": {
           "description": "Font family for text",
           "type": "string",
-          "default": "monospace",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `monospace` to none (D515): unset, the theme's `fontFamily` is used, as v12 drew (its runtime config reset `monospace`), so fonts stay uniform across diagrams. A value that fails core's style check is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "terminalFill": {
           "description": "Fill color for terminal elements",
           "type": "string",
-          "default": "#FFFFC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#FFFFC0` to none (D515): unset, the theme's `railroadTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "terminalStroke": {
           "description": "Stroke color for terminal elements",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "terminalTextColor": {
           "description": "Text color for terminal elements",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "nonTerminalFill": {
           "description": "Fill color for non-terminal elements",
           "type": "string",
-          "default": "#FFFFFF",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#FFFFFF` to none (D515): unset, the theme's `railroadNonTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "nonTerminalStroke": {
           "description": "Stroke color for non-terminal elements",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "nonTerminalTextColor": {
           "description": "Text color for non-terminal elements",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "lineColor": {
           "description": "Color for connection lines",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadLineColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "strokeWidth": {
@@ -7545,63 +7589,72 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 2,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "markerFill": {
           "description": "Fill color for start/end markers",
           "type": "string",
-          "default": "#000000",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000000` to none (D515): unset, the theme's `railroadMarkerFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "commentFill": {
           "description": "Fill color for comments",
           "type": "string",
-          "default": "#E8E8E8",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515)."
           }
         },
         "commentStroke": {
           "description": "Stroke color for comments",
           "type": "string",
-          "default": "#888888",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515)."
           }
         },
         "commentTextColor": {
           "description": "Text color for comments",
           "type": "string",
-          "default": "#666666",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515)."
           }
         },
         "specialFill": {
           "description": "Fill color for special sequences",
           "type": "string",
-          "default": "#F0E0FF",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "specialStroke": {
           "description": "Stroke color for special sequences",
           "type": "string",
-          "default": "#8800CC",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "ruleNameColor": {
           "description": "Color for rule names",
           "type": "string",
-          "default": "#000066",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
           }
         },
         "showMarkers": {
@@ -7609,7 +7662,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12 read it and drew the start and end markers either way (D515)."
           }
         },
         "markerRadius": {
@@ -7618,7 +7673,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         }
       }

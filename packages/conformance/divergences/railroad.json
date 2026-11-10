@@ -1,0 +1,18 @@
+[
+  {
+    "id": "railroad-cases/header-empty-front-matter",
+    "inputHash": "sha256:a60039e8016e0862",
+    "kind": "accept",
+    "reason": "An empty front matter block (`---` then `---`) before the header: v12's front-matter check rejected the text before any railroad parser ran (\"Diagrams beginning with --- are not valid\"); core's preprocess reads it as front matter with nothing in it, and v13 parses the diagram after it. Core preprocess behaviour shared by every type, not the railroad parser's (spec #526 T1 #608, GAPS.md).",
+    "owner": "#610",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "railroad-cases/header-empty-front-matter (CRLF)",
+    "inputHash": "sha256:efd04aef81af8aaf",
+    "kind": "accept",
+    "reason": "An empty front matter block (`---` then `---`) before the header: v12's front-matter check rejected the text before any railroad parser ran (\"Diagrams beginning with --- are not valid\"); core's preprocess reads it as front matter with nothing in it, and v13 parses the diagram after it. Core preprocess behaviour shared by every type, not the railroad parser's (spec #526 T1 #608, GAPS.md).",
+    "owner": "#610",
+    "since": "2026-11-09"
+  }
+]

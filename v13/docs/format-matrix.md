@@ -37,10 +37,10 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | `@mermaid-js/diagram-ishikawa` | yes | yes |
 | `treemap` | `@mermaid-js/diagram-treemap` | yes | no |
-| `railroad` | not ported | no | no |
-| `railroadEbnf` | not ported | no | no |
-| `railroadAbnf` | not ported | no | no |
-| `railroadPeg` | not ported | no | no |
+| `railroad` | `@mermaid-js/diagram-railroad` | yes | yes |
+| `railroadEbnf` | `@mermaid-js/diagram-railroad` | yes | yes |
+| `railroadAbnf` | `@mermaid-js/diagram-railroad` | yes | yes |
+| `railroadPeg` | `@mermaid-js/diagram-railroad` | yes | yes |
 | `venn` | `@mermaid-js/diagram-venn` | yes | no |
 | `wardley` | `@mermaid-js/diagram-wardley` | yes | no |
 | `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |

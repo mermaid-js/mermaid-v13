@@ -1,0 +1,7 @@
+@ 2:18  a = nonterminal("|b") ;
+  2:18-2:19 "b"
+  | **rule** `b`
+  |
+  | ```
+  | b = terminal("x") ;
+  | ```

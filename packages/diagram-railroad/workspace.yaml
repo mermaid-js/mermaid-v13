@@ -1,0 +1,48 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+# One grammar per v12 notation in one package (D511, D512).
+grammars:
+  - type: railroad
+    title: Railroad diagram syntax (IR)
+    kinds:
+      module: parser/tokens.ts
+      object: IrKind
+  - type: railroadEbnf
+    grammar: railroad-ebnf
+    title: Railroad diagram syntax (EBNF)
+    kinds:
+      module: parser/tokens.ts
+      object: EbnfKind
+  - type: railroadAbnf
+    grammar: railroad-abnf
+    title: Railroad diagram syntax (ABNF)
+    kinds:
+      module: parser/tokens.ts
+      object: AbnfKind
+  - type: railroadPeg
+    grammar: railroad-peg
+    title: Railroad diagram syntax (PEG)
+    kinds:
+      module: parser/tokens.ts
+      object: PegKind
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - plugin.ts
+    - config.ts
+    - test-context.ts
+    - index.ts
+    - testing.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The railroad diagram plugin (SVG, and text output from `/ascii`; `railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`).'
+  install: 'with `mermaid/slim`'

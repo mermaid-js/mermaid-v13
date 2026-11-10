@@ -1,0 +1,12 @@
+@ 3:32  expr = sequence(nonterminal("te|rm"), zeroOrMore(sequence(terminal("+"), nonterminal("term")))) ;
+  prepare: 3:30-3:34 "term"; rename to "summand":
+  %% rename-to: summand
+  railroad-beta
+  expr = sequence(nonterminal("summand"), zeroOrMore(sequence(terminal("+"), nonterminal("summand")))) ;
+  summand = terminal("1") ;
+@ 4:3  te|rm = terminal("1") ;
+  prepare: 4:1-4:5 "term"; rename to "summand":
+  %% rename-to: summand
+  railroad-beta
+  expr = sequence(nonterminal("summand"), zeroOrMore(sequence(terminal("+"), nonterminal("summand")))) ;
+  summand = terminal("1") ;

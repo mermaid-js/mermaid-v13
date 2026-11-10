@@ -1,0 +1,4 @@
+3:11-3:11 "" error UNEXPECTED: Expected `;` at the end of the rule, got `next`; in ABNF a `;` followed by more text on its line starts a comment, so end each rule with `;` at the end of its line.
+3:12-3:13 ";" info RAILROAD_SEMI_COMMENT: In ABNF, as in v12, a `;` with more text after it on its line starts a comment that runs to the line end, so it does not end the rule. End the rule with `;` at the end of its line.
+5:3-5:4 "_" error UNEXPECTED_CHARACTER: Unexpected character `_`; an ABNF rule name has letters, digits and `-` only.
+6:1-6:6 "title" error UNEXPECTED: Expected a rule such as `name = "a" ;` or the end of the text, got `title`; `title` goes on its own line after `railroad-abnf-beta`, before the rules.

@@ -1,0 +1,8 @@
+---
+description: EBNF with ::= and =, square-bracket options, the postfix ? * + (stacked), and optional commas.
+---
+railroad-ebnf-beta
+call ::= name , "(" [ args ] ")" ;
+args = expr { "," expr } ;
+expr = term ( "+" | "-" ) ? term* ;
+term = digit+ * digit digit? ;

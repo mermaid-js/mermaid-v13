@@ -1,0 +1,6 @@
+@ 3:11  Expr <- Su|m !Expr ;
+  prepare: 3:9-3:12 "Sum"; rename to "Term":
+  %% rename-to: Term
+  railroad-peg-beta
+  Expr <- Term !Expr ;
+  Term <- "x" / &Term "y" ;

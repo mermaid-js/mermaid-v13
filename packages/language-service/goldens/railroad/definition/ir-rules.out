@@ -1,0 +1,8 @@
+@ 2:32  expr = sequence(nonterminal("te|rm"), zeroOrMore(sequence(terminal("+"), nonterminal("term")))) ;
+  -> 3:1-3:5 "term"
+@ 3:3  te|rm = choice(nonterminal("number"), nonterminal("expr")) ;
+  -> 3:1-3:5 "term"
+@ 3:53  term = choice(nonterminal("number"), nonterminal("ex|pr")) ;
+  -> 2:1-2:5 "expr"
+@ 5:30  undefined = nonterminal("nowh|ere") ;
+  -> none

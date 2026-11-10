@@ -1,0 +1,14 @@
+railroad-beta
+title Arithmetic
+accTitle: Arithmetic expressions
+accDescr {
+  Sums of products
+}
+%% the rules
+/* an expression
+   is a sum */
+expr = sequence(
+  nonterminal("term"),
+  zeroOrMore(sequence(terminal("+"), nonterminal("term")))
+) ;
+term = choice(terminal("1"), optional(special("digit"))) ;

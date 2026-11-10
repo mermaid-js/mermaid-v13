@@ -1,0 +1,3 @@
+@ 3:12  expr ::= te|rm { "+" term } ;
+  prepare: 3:10-3:14 "term"; rename to "expr":
+  refused: 'expr' is already a rule id in this diagram.
