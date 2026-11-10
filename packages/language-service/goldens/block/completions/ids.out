@@ -1,0 +1,3 @@
+@ 3:11  mid --> |
+  start node (Start) 3:11-3:11 "" -> "start"
+  mid node 3:11-3:11 "" -> "mid"

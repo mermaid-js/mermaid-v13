@@ -1,0 +1,2 @@
+2:3-2:9 "block:" error UNCLOSED_BLOCK: Unclosed composite: the `block` at line 2 has no `end`. Add `end` after its last statement.
+4:3-4:8 "block" error UNCLOSED_BLOCK: Unclosed composite: the `block` at line 4 has no `end`. Add `end` after its last statement.

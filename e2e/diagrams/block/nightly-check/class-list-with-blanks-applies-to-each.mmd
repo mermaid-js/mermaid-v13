@@ -1,0 +1,9 @@
+---
+description: >-
+  `class a, b hot` gives both blocks the class: the ids are trimmed (D442).
+  mermaid@12 looked up ` b` and drew `b` without it.
+---
+block
+  classDef hot fill:#f96
+  a b c
+  class a, b hot
