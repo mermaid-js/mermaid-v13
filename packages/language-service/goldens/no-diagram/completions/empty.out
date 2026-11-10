@@ -25,6 +25,7 @@
   sankey keyword 1:1-1:1 "" -> "sankey"
   packet keyword 1:1-1:1 "" -> "packet"
   xychart keyword 1:1-1:1 "" -> "xychart"
+  treeView-beta keyword 1:1-1:1 "" -> "treeView-beta"
   radar-beta keyword 1:1-1:1 "" -> "radar-beta"
   ishikawa keyword 1:1-1:1 "" -> "ishikawa"
   ishikawa-beta keyword 1:1-1:1 "" -> "ishikawa-beta"
@@ -37,3 +38,4 @@
   venn-beta keyword 1:1-1:1 "" -> "venn-beta"
   wardley-beta keyword 1:1-1:1 "" -> "wardley-beta"
   cynefin-beta keyword 1:1-1:1 "" -> "cynefin-beta"
+  usecase-beta keyword 1:1-1:1 "" -> "usecase-beta"

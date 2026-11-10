@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseWardley } from '@mermaid-js/diagram-wardley';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5 and 11: the wardley parser, value conversion and model population
@@ -79,41 +80,19 @@ const SHAPES: [string, (n: number) => string, number][] = [
   ],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the wardley parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build, n) => {
       const small = build(n);
       const large = build(8 * n);
-      parseWardley(small); // warm up
-      parseWardley(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseWardley(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseWardley(large))
-        );
-      }
-      if (process.env.WARDLEY_STRESS_LOG) {
-        process.stdout.write(`${_name}: ${tSmall.toFixed(1)} ms, ${tLarge.toFixed(1)} ms\n`);
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseWardley(small),
+          () => parseWardley(large),
+          process.env.WARDLEY_STRESS_LOG ? _name : undefined
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

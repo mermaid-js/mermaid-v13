@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseJourney } from '@mermaid-js/diagram-journey';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the journey parser, value conversion and actor ranges included, is
@@ -22,38 +23,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['an unclosed description', (n) => `journey\naccDescr {${'a\n'.repeat(n / 2)}`],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the journey parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseJourney(small); // warm up
-      parseJourney(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseJourney(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseJourney(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseJourney(small),
+          () => parseJourney(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

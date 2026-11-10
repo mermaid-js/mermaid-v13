@@ -1,0 +1,3 @@
+@ 6:18  r1 <- traces - |
+  r1 node (Requirement) 6:18-6:18 "" -> "r1"
+  the sim node (Element) 6:18-6:18 "" -> "\"the sim\""

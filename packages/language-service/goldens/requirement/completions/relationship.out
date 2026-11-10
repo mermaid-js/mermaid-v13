@@ -1,0 +1,12 @@
+@ 6:18  "the sim" - sat|
+  satisfies keyword (the source satisfies the target) 6:15-6:18 "sat" -> "satisfies"
+@ 7:12  r1 <- con|tains - "the sim"
+  contains keyword (the source contains the target) 7:9-7:17 "contains" -> "contains"
+@ 8:15  "the sim" - |
+  contains keyword (the source contains the target) 8:15-8:15 "" -> "contains"
+  copies keyword (the source copies the target) 8:15-8:15 "" -> "copies"
+  derives keyword (the source derives from the target) 8:15-8:15 "" -> "derives"
+  satisfies keyword (the source satisfies the target) 8:15-8:15 "" -> "satisfies"
+  verifies keyword (the source verifies the target) 8:15-8:15 "" -> "verifies"
+  refines keyword (the source refines the target) 8:15-8:15 "" -> "refines"
+  traces keyword (the source traces to the target) 8:15-8:15 "" -> "traces"

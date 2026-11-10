@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { parseRailroad } from '@mermaid-js/diagram-railroad';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfalls 5 and 11: the four railroad parsers, value conversion, duplicate checks,
  * AST ids and recovery included, are linear in input size. v12's accDescr converter
  * (`/\s+$/gm`) is quadratic on a long blank run inside a line. Same frame as
- * `../packet/parser-stress.spec.ts`: n and 8n units, bar 24x (linear ~8x, quadratic ~64x), this
- * thread's CPU time, best of five, the small input run until it takes at least {@link MIN_MS}
- * and the large one an eighth as often, compared per run. Not measured on a steady machine: the
+ * `../packet/parser-stress.spec.ts`: n and 8n units, bar 24x (linear ~8x, quadratic ~64x), timed
+ * with the shared {@link linearRatio} (#643, pitfall 5). Not measured on a steady machine: the
  * bar is a ratio.
  */
 const IR = 'railroad-beta\n';
@@ -48,67 +48,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['title lines among the rules', (n) => P + 'A <- "x" ;\ntitle t\n'.repeat(n / 19)],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-/** CPU ms of `reps` runs of `run`. */
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-/**
- * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
- * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
- */
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
-
 describe('stress: the railroad parsers are linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseRailroad(large); // warm up
-      const reps = repeatsFor(() => parseRailroad(small));
-      // The large input is 8 times the small one: an eighth of the runs keeps its window as long.
-      const repsLarge = Math.max(1, reps / 8);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseRailroad(small), reps)
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseRailroad(large), repsLarge)
-        );
-      }
-      // A reading of 0 means the clock did not move: a broken measurement, not a fast parse.
-      expect(tSmall, `${reps} small runs read 0 ms (MIN_MS ${MIN_MS})`).toBeGreaterThan(0);
-      expect(tLarge / repsLarge / (tSmall / reps)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseRailroad(small),
+          () => parseRailroad(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );

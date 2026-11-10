@@ -1,0 +1,9 @@
+@ 2:9  actor |User
+  2:9-2:13 "User"
+  3:3-3:7 "User"
+  6:9-6:13 "User"
+  7:9-7:13 "User"
+  8:3-8:7 "User"
+@ 9:18  systemBoundary |Shop
+  9:18-9:22 "Shop"
+  11:9-11:13 "Shop"

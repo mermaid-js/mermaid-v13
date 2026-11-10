@@ -8,7 +8,12 @@ import { asLimitError, checkOutput } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import { inertProblem } from '../svg/inert.ts';
 import { styleScope } from '../svg/style.ts';
-import { streamWriter, treeWriter } from '../svg/writer.ts';
+import {
+  streamWriter,
+  treeWriter,
+  type StreamSvgWriter,
+  type TreeSvgWriter,
+} from '../svg/writer.ts';
 import { stageEnd, stageStart } from '../timing/index.ts';
 import { MermaidError } from './errors.ts';
 import type { HookRun, LaidOut } from './extensions.ts';
@@ -30,6 +35,13 @@ export interface DrawHooks {
 // The root's viewBox is `0 0 W H` (DESIGN §7.2).
 const VIEW_BOX = /^<svg\b[^>]*?\sviewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/;
 
+/**
+ * The draw step's writer wrapper for D537's line hops: the same kind of writer, whose `finish`
+ * returns the markup with the edge lines hopped. `mermaid` passes one from the lazily loaded
+ * `@mermaid-js/core/layout/hops` only for a render that hops.
+ */
+export type EdgeStep = <W extends StreamSvgWriter | TreeSvgWriter>(w: W) => W;
+
 /** Layout, then the `postLayout` hooks with the profile's units (D86). */
 function laidOut<M, L>(
   plugin: DiagramPlugin<M, L>,
@@ -48,7 +60,8 @@ export function drawDiagram<M, L>(
   plugin: DiagramPlugin<M, L>,
   model: M,
   ctx: RenderContext,
-  hooks?: DrawHooks
+  hooks?: DrawHooks,
+  edges: EdgeStep = (w) => w
 ): Drawn {
   let svg: string;
   try {
@@ -69,12 +82,12 @@ export function drawDiagram<M, L>(
       ? { gradient, idPrefix, outline: outline.draw }
       : { gradient, idPrefix };
     if (run?.editsTree) {
-      const w = treeWriter(options);
+      const w = edges(treeWriter(options));
       plugin.render(model, layout, ctx, w);
       run.postRender(w.tree);
       svg = w.finish();
     } else {
-      const w = streamWriter(options);
+      const w = edges(streamWriter(options));
       plugin.render(model, layout, ctx, w);
       svg = w.finish();
     }

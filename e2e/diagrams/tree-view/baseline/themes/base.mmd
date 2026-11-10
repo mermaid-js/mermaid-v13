@@ -1,0 +1,19 @@
+---
+config:
+  theme: base
+  treeView:
+    showIcons: true
+description: >-
+  one representative tree view in the base theme: directories (bold) and files with the built-in
+  folder and file icons, descriptions in their column, a highlighted row and v12's root row, so
+  every treeView colour and size shows
+---
+treeView-beta
+  my-project/
+    src/
+      components/
+        Button.tsx ## a button
+        Header.tsx :::highlight
+      index.ts ## entry point
+    package.json ## the manifest
+    README.md

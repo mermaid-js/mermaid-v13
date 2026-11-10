@@ -1,0 +1,14 @@
+@ 2:8  title: |x
+  none
+@ 5:7  %% a|ctor
+  none
+@ 6:15  accTitle: Sh|op
+  none
+@ 7:12  actor "Us|er"
+  none
+@ 8:15  actor A <<Hu|man>>
+  none
+@ 9:17  json Data@{ "a|": 1 }
+  none
+@ 11:9  Cust|omers
+  none

@@ -1,0 +1,11 @@
+usecase-beta
+  actor |User
+  User --> Login
+  Login --> Logout
+  note for Login "x"
+  style User fill:red
+  class User hot
+  User@{ business: true }
+  systemBoundary |Shop
+  end
+  class Shop hot

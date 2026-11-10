@@ -149,6 +149,9 @@ importers:
       '@mermaid-js/diagram-railroad':
         specifier: workspace:^
         version: link:../diagram-railroad
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -164,6 +167,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -276,6 +285,9 @@ importers:
       '@mermaid-js/diagram-railroad':
         specifier: workspace:^
         version: link:../diagram-railroad
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -291,6 +303,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../diagram-venn
@@ -510,6 +528,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-requirement:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
@@ -535,6 +559,18 @@ importers:
         version: link:../core
 
   packages/diagram-treemap:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-treeview:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-usecase:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -611,6 +647,9 @@ importers:
       '@mermaid-js/diagram-railroad':
         specifier: workspace:*
         version: link:../diagram-railroad
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -626,6 +665,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -699,6 +744,9 @@ importers:
       '@mermaid-js/diagram-railroad':
         specifier: workspace:*
         version: link:../diagram-railroad
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -714,6 +762,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -943,6 +997,9 @@ importers:
       '@mermaid-js/diagram-railroad':
         specifier: workspace:*
         version: link:../diagram-railroad
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -958,6 +1015,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:*
+        version: link:../diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:*
         version: link:../diagram-venn
@@ -1125,6 +1188,12 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treeview
+      '@mermaid-js/diagram-usecase':
+        specifier: workspace:^
+        version: link:../../packages/diagram-usecase
       '@mermaid-js/diagram-venn':
         specifier: workspace:^
         version: link:../../packages/diagram-venn

@@ -144,9 +144,9 @@ function sources(dir: string): string[] {
  * by passing its name as a string literal to a call, either a `Theme` method
  * (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
  * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
- * (D332); a var's `nested:` key is v12's name, not a read. Names the package builds at run time
- * are its `workspace.yaml` `theme.dynamicReads`. Only names in `known` (core's and every package's
- * vocabulary) count.
+ * (D332) or `slot(palette, n, name)` (D474), which reads both; a var's `nested:` key is v12's
+ * name, not a read. Names the package builds at run time are its `workspace.yaml`
+ * `theme.dynamicReads`. Only names in `known` (core's and every package's vocabulary) count.
  */
 export function themeReads(
   packages: readonly Pick<ThemePackage, 'type' | 'dir' | 'dynamicReads'>[],
@@ -162,6 +162,9 @@ export function themeReads(
       // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
       // theme wrote it (D332).
       ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
+      // A table rule's `slot(palette, n, fallback)`: the palette's slot where the palette is
+      // non-empty, else the fallback (D474), so both are read.
+      ...[...text.matchAll(/\bslot\((\w+),\s*\d+,\s*(\w+)\)/g)].flatMap((m) => [m[1]!, m[2]!]),
     ];
     out.set(type, new Set([...names, ...dynamicReads].filter((n) => known.has(n))));
   }
