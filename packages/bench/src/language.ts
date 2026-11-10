@@ -168,17 +168,39 @@ const WARMUP_ROUNDS = 10;
  * whatever the call before it left in the young generation, a different amount every round.
  * A major GC is not used: on the hosted runner the calls after one cost about three times as
  * much as the others.
+ *
+ * Last, every sample spans about as much CPU time as the dearest function's call: a cheaper
+ * function is called that many times in a row and its sample is the mean of those calls (each
+ * timed on its own, after its minor GC). On a loaded machine a core's speed changes from moment
+ * to moment (other tenants, frequency, core types), and the best of many short calls lands in a
+ * fast moment far more often than the best of as many long ones does. With samples of one call
+ * each, the best bare parse of 60 read about 8% under the best window of four parses in a row
+ * on a loaded machine, and packet's cycle read up to 4.9 parses on busy CI runners against best
+ * runs of 4.0–4.1 on quiet ones. Taking each side's best over windows of the same length
+ * compares like with like.
  */
 export function bestOfEach(runs: number, ...fns: readonly ((run: number) => unknown)[]): number[] {
-  for (let i = 0; i < WARMUP_ROUNDS; i++) for (const fn of fns) fn(i);
+  let run = 0;
   const gc = minorGc();
+  /** CPU ms of one call of `fn`, after a minor GC. */
+  const timed = (fn: (run: number) => unknown): number => {
+    gc?.({ type: 'minor' });
+    const t = cpuMs();
+    fn(run++);
+    return cpuMs() - t;
+  };
+  // The warm-up rounds also give each function's cost, which sets its calls per sample.
+  const warm = fns.map(() => Infinity);
+  for (let i = 0; i < WARMUP_ROUNDS; i++)
+    for (const [k, fn] of fns.entries()) warm[k] = Math.min(warm[k]!, timed(fn));
+  const longest = Math.max(...warm);
+  const calls = warm.map((ms) => Math.max(1, Math.round(longest / Math.max(ms, 1e-3))));
   const best = fns.map(() => Infinity);
   for (let i = 0; i < runs; i++) {
     for (const [k, fn] of fns.entries()) {
-      gc?.({ type: 'minor' });
-      const t = cpuMs();
-      fn(WARMUP_ROUNDS + i);
-      best[k] = Math.min(best[k]!, cpuMs() - t);
+      let sum = 0;
+      for (let c = 0; c < calls[k]!; c++) sum += timed(fn);
+      best[k] = Math.min(best[k]!, sum / calls[k]!);
     }
   }
   return best;
