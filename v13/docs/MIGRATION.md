@@ -2467,8 +2467,9 @@ no per-call options (D319, D302).
 - **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
   layout keeps room for each marker so it no longer overlaps the next box.
 - **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
-  [ASCII output](../ascii.md#requirement-diagrams). The diagram is sketched under `look: handDrawn` (the box outline and the
-  divider; markers are never sketched, D301).
+  [ASCII output](../ascii.md#requirement-diagrams).
+- **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
+  and the relation lines (markers are never sketched, D301).
 
 ## Requirement SVG structure
 
