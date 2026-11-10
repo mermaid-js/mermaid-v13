@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
+import { withLanes } from '@mermaid-js/diagram-flowchart/lanes';
 import { createMermaid, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -198,10 +199,14 @@ describe('lanes follow the engine that laid out, not the layout name', () => {
     expect(lanesOf(parseSvg(r.svg))).toEqual([]);
   });
 
+  // Lane drawing is flowchart's own lazy chunk (R-PERF-1): a host that registers the engine
+  // itself passes it through `withLanes`, as `mermaid`'s `swimlane` loader does.
   it('draws lanes for an engine registered under another name', async () => {
     const m = createMermaid();
     m.initialize({ deterministic: true });
-    m.registerLayoutLoaders([{ name: 'lanes', loader: () => Promise.resolve(swimlane) }]);
+    m.registerLayoutLoaders([
+      { name: 'lanes', loader: () => Promise.resolve(withLanes(swimlane)) },
+    ]);
     const body = text.replace(/^---[\s\S]*?---\n/, '');
     const r = await m.render('s', `---\nconfig:\n  layout: lanes\n---\n${body}`);
     expect(r.warnings.map((w) => w.code)).toEqual(['SWIMLANE_NESTED_LANE']);

@@ -3,19 +3,17 @@
 // upstream c9b12739f): a title band filled `clusterBkg` and an unfilled body, both stroked
 // `clusterBorder`. Loose nodes sit in a lane the engine makes, which flowchart's model does
 // not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
+// A chunk of its own, loaded with the engine (`../lanes.ts`, R-PERF-1): `render.ts` holds only
+// the slot it installs into.
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';
+import { rotate, type Attrs } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from './context.ts';
-import type { Prepared } from './prepare.ts';
+import type { NodeView, Prepared } from './prepare.ts';
+import { cls, useLanes, type Scene } from './render.ts';
 
-/**
- * The lanes of a layout, when its engine laid groups out as lanes (`LayoutModel.lanes`, set by
- * `swimlane` only: `swimlane-beta`, or any flowchart with `layout: swimlane`, D535). Read from
- * the model, so a stand-in engine (a placeholder render) or an alias never draws lanes wrongly.
- * The one "is a lane" test: `lanes.has(id)`.
- */
-export const lanesOf = (layout: LayoutModel): ReadonlySet<string> | undefined =>
-  layout.lanes ? new Set(layout.lanes) : undefined;
+/** The lanes of a layout the swimlane engine laid out (`LayoutModel.lanes`): `lanes.has(id)`. */
+const lanesOf = (layout: LayoutModel): ReadonlySet<string> => new Set(layout.lanes);
 
 interface Rect {
   readonly x: number;
@@ -71,9 +69,10 @@ const astOf = (flow: Prepared, id: string): string[] => {
 export function laneWarnings(
   model: FlowModel,
   flow: Prepared,
-  lanes: ReadonlySet<string>,
+  layout: LayoutModel,
   warn: (warning: FlowWarning) => void
 ): void {
+  const lanes = lanesOf(layout);
   /** The lane `id` sits in (or is), following the drawn nesting. */
   const laneOf = (id: string): string | undefined => {
     const seen = new Set<string>();
@@ -104,4 +103,73 @@ export function laneWarnings(
       astIds: [g.ast],
     });
   }
+}
+
+/**
+ * A lane as v12's swimlane cluster: `rect.swimlane-body` (unfilled), `rect.swimlane-title`
+ * (filled `clusterBkg`), both stroked `clusterBorder`, then the label, centred in the band and
+ * turned −90° when the band is on the left. In the colour themes both rects take the palette
+ * slot, fill included, as v12's `[data-color-id]` lane rules did. The author's `style` and
+ * `classDef` still win (spread after). No drop shadow: v12's swimlane styles turned it off.
+ * `view` is undefined for a lane the engine made (the default lane): no subgraph, no label.
+ */
+function drawLane(
+  { w, layout, ctx, paint }: Scene,
+  id: string,
+  box: LayoutModelGroup,
+  view: NodeView | undefined,
+  order: number | undefined
+): void {
+  const cluster = paint.cluster!;
+  const slot = paint.slotOf({ order });
+  const parts = laneBox(box, layout.direction);
+  const own = view?.style.shape;
+  w.open('g', {
+    class: 'cluster swimlane' + cls(view?.classes ?? []),
+    'data-id': id,
+    'data-ast': view?.ast,
+    'data-color-id': slot?.id,
+  });
+  const paintOf = (fill: Attrs['fill']): Attrs => ({
+    fill: slot?.fill ?? fill,
+    stroke: slot?.stroke ?? paint.laneStroke,
+    'stroke-width': cluster.strokeWidth,
+    ...own,
+  });
+  w.outline('group', 'rect', { class: 'swimlane-body', ...parts.body, ...paintOf('none') });
+  w.outline('group', 'rect', { class: 'swimlane-title', ...parts.title, ...paintOf(cluster.fill) });
+  if (view) {
+    const { x, y } = box.title;
+    const fill = own?.fill;
+    w.label(view.label, x, y, {
+      class: 'cluster-label swimlane-label',
+      transform: parts.turned ? rotate(-90, x, y) : undefined,
+      fill: (fill && ctx.theme.ink(fill)) || cluster.text,
+      ...view.style.text,
+    });
+  }
+  w.close();
+}
+
+/**
+ * Installs lane drawing into flowchart's renderer (idempotent) and returns `engine` as is:
+ * `mermaid`'s `swimlane` loader passes the engine's module through it.
+ */
+export function withLanes<T>(engine: T): T {
+  useLanes({
+    warn: laneWarnings,
+    open(scene, model) {
+      const lanes = lanesOf(scene.layout);
+      // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
+      // default lane the slot after every subgraph's, so it never takes the first one.
+      let made = model.subgraphs.length;
+      for (const id of lanes) {
+        const box = scene.flow.views.has(id) ? undefined : scene.layout.groups.get(id);
+        if (box) drawLane(scene, id, box, undefined, made++);
+      }
+      return lanes;
+    },
+    draw: (scene, view, box) => drawLane(scene, view.id, box, view, view.order),
+  });
+  return engine;
 }

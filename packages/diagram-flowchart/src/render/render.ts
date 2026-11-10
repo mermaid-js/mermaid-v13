@@ -12,7 +12,6 @@ import {
   checkLinkTarget,
   checkUrl,
   px,
-  rotate,
   styleScope,
   styleText,
   themeStyleSheet,
@@ -27,7 +26,6 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
-import { laneBox, lanesOf, laneWarnings } from './lanes.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -37,13 +35,36 @@ export interface FlowLayout extends LayoutModel {
   readonly flow?: Prepared;
 }
 
+/**
+ * Swimlane lane drawing and warnings (spec #528, D536): a chunk of its own (`../lanes.ts`),
+ * loaded with the `swimlane` engine, so a plain flowchart loads none of it (R-PERF-1). It acts
+ * only on a layout whose engine laid groups out as lanes (`LayoutModel.lanes`); until it is
+ * installed, those groups draw as plain clusters.
+ */
+export interface LaneDrawer {
+  /** v12's swimlane warnings, at layout. */
+  warn(model: FlowModel, flow: Prepared, layout: LayoutModel, warn: Warn): void;
+  /** Draws the lanes the engine made (no subgraph) and returns every lane's id. */
+  open(scene: Scene, model: FlowModel): ReadonlySet<string>;
+  /** Draws the lane of subgraph `view`. */
+  draw(scene: Scene, view: NodeView, box: LayoutModelGroup): void;
+}
+
+type Warn = (warning: FlowWarning) => void;
+
+let laneDrawer: LaneDrawer | undefined;
+
+/** Installs the lane drawer (`../lanes.ts` does, as it loads). */
+export const useLanes = (drawer: LaneDrawer): void => {
+  laneDrawer = drawer;
+};
+
 /** Measures the model and lays it out with `ctx.layout` (default `layered`). */
 export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
   const prepared = prepare(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
   // At layout, as prepare's own warnings: once per layout, also for a host that only lays out.
-  const lanes = lanesOf(laid);
-  if (lanes) laneWarnings(model, prepared, lanes, (w) => ctx.warn(w));
+  if (laid.lanes) laneDrawer?.warn(model, prepared, laid, (w) => ctx.warn(w));
   return { ...laid, flow: prepared };
 }
 
@@ -51,7 +72,7 @@ const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
 const LABEL_PAD = 4;
 
-const cls = (names: readonly string[]): string => {
+export const cls = (names: readonly string[]): string => {
   let out = '';
   for (const n of names) {
     const c = n.replace(/[^\w-]/g, '');
@@ -83,7 +104,7 @@ function inset(
   return p;
 }
 
-interface Tint {
+export interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
@@ -114,7 +135,7 @@ type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
 /** Node paint: every vertex, and the edges' lines and heads. */
-interface NodePaint {
+export interface NodePaint {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly fill: Color;
@@ -139,7 +160,7 @@ interface NodePaint {
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
 }
 
-interface Paints {
+export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
@@ -199,15 +220,15 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
 }
 
 /** What every section of one render draws from. */
-interface Scene {
+export interface Scene {
   readonly w: SvgWriter;
   readonly layout: FlowLayout;
   readonly flow: Prepared;
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
-  readonly warn: (warning: FlowWarning) => void;
-  /** The lanes, when the engine laid groups out as lanes (`LayoutModel.lanes`, D536). */
-  readonly lanes: ReadonlySet<string> | undefined;
+  readonly warn: Warn;
+  /** The lane drawer, when the engine laid groups out as lanes (`LayoutModel.lanes`, D536). */
+  readonly lanes: LaneDrawer | undefined;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -218,13 +239,13 @@ export function renderFlowchart(
   w: SvgWriter
 ): void {
   const flow = layout.flow ?? prepare(model, ctx);
-  const lanes = lanesOf(layout);
+  const lanes = layout.lanes && laneDrawer;
   const scene: Scene = {
     w,
     layout,
     flow,
     ctx,
-    paint: paints(ctx.theme, flow, lanes !== undefined),
+    paint: paints(ctx.theme, flow, !!lanes),
     warn: (warning) => ctx.warn(warning),
     lanes,
   };
@@ -291,18 +312,12 @@ function drawClusters(scene: Scene, model: FlowModel): void {
   const { w, layout, flow, ctx, paint } = scene;
   const cluster = paint.cluster!;
   w.open('g', { class: 'clusters' });
-  // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
-  // default lane the slot after every subgraph's, so it never takes the first one.
-  let made = model.subgraphs.length;
-  for (const id of scene.lanes ?? []) {
-    const box = flow.views.has(id) ? undefined : layout.groups.get(id);
-    if (box) drawLane(scene, id, box, undefined, made++);
-  }
+  const lanes = scene.lanes?.open(scene, model);
   for (const g of flow.groups) {
     const box = layout.groups.get(g.id);
     if (!box) continue;
-    if (scene.lanes?.has(g.id)) {
-      drawLane(scene, g.id, box, g, g.order);
+    if (lanes?.has(g.id)) {
+      scene.lanes!.draw(scene, g, box);
       continue;
     }
     const fill = g.style.shape.fill;
@@ -331,52 +346,6 @@ function drawClusters(scene: Scene, model: FlowModel): void {
       ...g.style.text,
     });
     w.close();
-  }
-  w.close();
-}
-
-/**
- * A lane as v12's swimlane cluster: `rect.swimlane-body` (unfilled), `rect.swimlane-title`
- * (filled `clusterBkg`), both stroked `clusterBorder`, then the label, centred in the band and
- * turned −90° when the band is on the left. In the colour themes both rects take the palette
- * slot, fill included, as v12's `[data-color-id]` lane rules did. The author's `style` and
- * `classDef` still win (spread after). No drop shadow: v12's swimlane styles turned it off.
- * `view` is undefined for a lane the engine made (the default lane): no subgraph, no label.
- */
-function drawLane(
-  { w, layout, ctx, paint }: Scene,
-  id: string,
-  box: LayoutModelGroup,
-  view: NodeView | undefined,
-  order: number | undefined
-): void {
-  const cluster = paint.cluster!;
-  const slot = paint.slotOf({ order });
-  const parts = laneBox(box, layout.direction);
-  const own = view?.style.shape;
-  w.open('g', {
-    class: 'cluster swimlane' + cls(view?.classes ?? []),
-    'data-id': id,
-    'data-ast': view?.ast,
-    'data-color-id': slot?.id,
-  });
-  const paintOf = (fill: Attrs['fill']): Attrs => ({
-    fill: slot?.fill ?? fill,
-    stroke: slot?.stroke ?? paint.laneStroke,
-    'stroke-width': cluster.strokeWidth,
-    ...own,
-  });
-  w.outline('group', 'rect', { class: 'swimlane-body', ...parts.body, ...paintOf('none') });
-  w.outline('group', 'rect', { class: 'swimlane-title', ...parts.title, ...paintOf(cluster.fill) });
-  if (view) {
-    const { x, y } = box.title;
-    const fill = own?.fill;
-    w.label(view.label, x, y, {
-      class: 'cluster-label swimlane-label',
-      transform: parts.turned ? rotate(-90, x, y) : undefined,
-      fill: (fill && ctx.theme.ink(fill)) || cluster.text,
-      ...view.style.text,
-    });
   }
   w.close();
 }

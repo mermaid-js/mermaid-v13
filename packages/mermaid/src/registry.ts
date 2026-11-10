@@ -221,7 +221,8 @@ export const LINE_HOPS = 'lineHops';
 const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
   ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
-  ['swimlane', () => import('@mermaid-js/core/layout/swimlane')],
+  // Through flowchart's lane drawing (spec #528, R-PERF-1), which a plain flowchart never loads.
+  ['swimlane', () => import('@mermaid-js/diagram-flowchart/lanes').then((l) => l.engine())],
   // Not an engine: core's line-hop step (D537), loaded the same way. D285's gate keeps it from
   // laying a diagram out; `registerLayouts` and discovery refuse the name.
   [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
@@ -547,10 +548,9 @@ export class Registry {
    */
   layoutOf(type: string): string | undefined {
     const e = this.entries.find((x) => x.type === type);
-    const section = (CORE_DEFAULTS as Record<string, { layout?: string } | undefined>)[
-      e?.section ?? ''
-    ];
-    return e?.layout ?? section?.layout;
+    return (
+      e?.layout ?? (CORE_DEFAULTS as Record<string, { layout?: string }>)[e?.section ?? '']?.layout
+    );
   }
 
   /** The loaded plugin for a detected type, if any. */

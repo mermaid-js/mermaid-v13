@@ -5,7 +5,6 @@
  */
 import {
   CORE_DEFAULTS,
-  KEY_TREE,
   resolveSite,
   type ConfigFragment,
   type ConfigInput,
@@ -213,15 +212,16 @@ export class Overlays {
 /**
  * Init directive config in source order (v12's `config` key moved into the section). With a
  * chain of sections (`['swimlane', 'flowchart']`, D534), each `config` key goes to the first
- * section when that section's schema has it, else to the last.
+ * section when that section has a default for it, else to the last (keys both sections have
+ * resolve into both, `resolveAppearance`).
  */
 export function directiveConfig(
   pre: PreprocessResult,
   section: string | readonly string[] | undefined
 ): ConfigInput[] {
   const out: ConfigInput[] = [];
-  const [first, last] = section === undefined ? [] : [section].flat();
-  const own = (KEY_TREE as Plain)[first ?? ''];
+  const [first, last] = [section ?? []].flat();
+  const own = (CORE_DEFAULTS as Plain)[first!];
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {
@@ -277,12 +277,11 @@ export class SiteConfigs {
     let hit = byType.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
-      // The plugin's defaults go to its own section; a type's own section (D534) sits over
-      // them, so its defaults outrank the plugin's.
+      // The plugin's defaults go to its own section. A type's own section (D534) has its
+      // defaults in core's; where both sections have a key (`theme`, `useMaxWidth`) the defaults
+      // agree, so which one wins does not matter (`swimlanesDiagram.spec.ts` checks).
       if (plugin.configDefaults)
         pluginDefaults[plugin.configSection ?? plugin.id] = plugin.configDefaults;
-      const typed = detected.section && (CORE_DEFAULTS as Plain)[detected.section];
-      if (typed) pluginDefaults[detected.section] = typed;
       // The plugin's engine (D284), and the type's default layout (v12's flowchart-elk detector's
       // `elk`, swimlane's `swimlane`), sit below the user's config.
       if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;

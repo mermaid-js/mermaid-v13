@@ -8,7 +8,9 @@
  * lane drawing and warnings, T2 (#598, D536).
  */
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
+import { CORE_DEFAULTS } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
+import { flowchartConfigDefaults } from '@mermaid-js/diagram-flowchart';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, detectType, type MermaidConfig } from './index.ts';
 
@@ -132,6 +134,16 @@ describe('swimlane-beta registration (D534, D535)', () => {
     const both = await m.prepare(keyed);
     expect(both.config.flowchart?.nodeSpacing).toBe(120);
     expect(both.config.swimlane?.automaticLaneOrdering).toBe(true);
+  });
+
+  // config-snapshot.ts puts no swimlane defaults over flowchart's plugin defaults (R-PERF-1): on
+  // the keys both sections resolve together the two defaults must agree, or the order would show.
+  it("agrees with flowchart's defaults on every key both sections resolve", () => {
+    const own = CORE_DEFAULTS.swimlane as Record<string, unknown>;
+    const flow = flowchartConfigDefaults as Record<string, unknown>;
+    for (const key of ['theme', 'layout', 'useMaxWidth', 'useWidth'])
+      if (key in own && key in flow) expect(own[key], key).toEqual(flow[key]);
+    expect(own.theme).toBe(flow.theme);
   });
 
   describe('section layering: flowchart defaults < swimlane defaults < flowchart.* < swimlane.*', () => {
