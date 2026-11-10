@@ -130,6 +130,9 @@ const EMPTY_REQUIREMENT: RequirementFields = {
 };
 const EMPTY_ELEMENT: ElementFields = { type: '', docRef: '' };
 
+/** The lost names a D433 message names; the rest are counted (`and 35 more`). */
+const LOST_NAMES_SHOWN = 5;
+
 /** `"a"`, `"a" and "b"`, `"a", "b" and "c"`. */
 function quotedList(names: readonly string[]): string {
   const q = names.map((n) => `"${n}"`);
@@ -387,21 +390,26 @@ export class RequirementBuilder {
   }
 
   private lostMessage(l: Lost, line: (offset: number) => number): string {
-    const why = l.names
-      .filter((n, k, all) => all.indexOf(n) === k)
-      .map((n) => {
-        const box = this.firstOf.get(n);
-        return box
-          ? `"${n}" is defined only later, at line ${line(box.start)}`
-          : `no requirement or element is named "${n}"`;
-      });
+    // A Set, not an indexOf filter: `class n0,…,nN c` may lose any number of names (R-PARSE-7).
+    const distinct = [...new Set(l.names)];
+    const shown = distinct.slice(0, LOST_NAMES_SHOWN);
+    const more = distinct.length - shown.length;
+    const why = shown.map((n) => {
+      const box = this.firstOf.get(n);
+      return box
+        ? `"${n}" is defined only later, at line ${line(box.start)}`
+        : `no requirement or element is named "${n}"`;
+    });
+    const names =
+      more > 0 ? `${shown.map((n) => `"${n}"`).join(', ')} and ${more} more` : quotedList(shown);
+    const rest = more > 0 ? `; and ${more} more` : '';
     const after =
       l.rest === 0
         ? ''
         : ` The ${l.rest === 1 ? 'name' : `${l.rest} names`} after it ${l.rest === 1 ? 'gets' : 'get'} no style either.`;
-    const later = l.names.some((n) => this.firstOf.has(n));
+    const later = distinct.some((n) => this.firstOf.has(n));
     const fix = later ? ' Move the statement after the definition.' : '';
-    return `The ${l.what} for ${quotedList(l.names.filter((n, k, all) => all.indexOf(n) === k))} is lost: ${why.join('; ')}.${after}${fix}`;
+    return `The ${l.what} for ${names} is lost: ${why.join('; ')}${rest}.${after}${fix}`;
   }
 
   private styleWarning(line: (offset: number) => number): RequirementWarning | undefined {

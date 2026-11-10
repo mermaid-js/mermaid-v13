@@ -176,6 +176,10 @@ const PARSE_SHAPES: [string, (n: number) => string][] = [
   ],
   ['a long style id list', (n) => H + 'element a {\n}\nstyle ' + 'a,'.repeat(n) + 'a fill:red'],
   [
+    'a class list of distinct undefined names',
+    (n) => H + 'class ' + Array.from({ length: n / 2 }, (_, k) => `n${k}`).join(',') + ' c',
+  ],
+  [
     'the style-copy cap',
     (n) =>
       H +

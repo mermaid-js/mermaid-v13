@@ -142,6 +142,19 @@ describe('the builder beyond v12 (D433, D434)', () => {
     );
   });
 
+  it('names the first five lost names and counts the rest, keeping every entry', () => {
+    const db = builder();
+    const names = Array.from({ length: 40 }, (_, k) => `n${k}`);
+    db.setClass(refs(...names, 'n0'), ['c'], at('class:1'));
+    db.setClass(refs('m'), ['c'], at('class:2'));
+    const w = db.model(undefined, () => 4).warnings[0];
+    expect(w?.astIds).toEqual(['class:1', 'class:2']);
+    expect(w?.related).toHaveLength(2);
+    expect(w?.related?.[0]?.message).toBe(
+      'The class for "n0", "n1", "n2", "n3", "n4" and 35 more is lost: no requirement or element is named "n0"; no requirement or element is named "n1"; no requirement or element is named "n2"; no requirement or element is named "n3"; no requirement or element is named "n4"; and 35 more.'
+    );
+  });
+
   it('gives palette slots requirements first, then elements', () => {
     const db = builder();
     db.addElement('e', def('element:e'));
