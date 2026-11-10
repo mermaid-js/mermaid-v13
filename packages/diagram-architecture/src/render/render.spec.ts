@@ -143,18 +143,22 @@ describe('icons (D505, D506)', () => {
     expect(r.warnings[0]!.message).toContain('"bogus", "aws:lambda", "nope"');
   });
 
-  it('asks the extensions for pack icons only, at the icon size, and draws their glyph', async () => {
+  it('asks the extensions for every non-built-in name at its size, and draws their glyph', async () => {
     const asked: [string, number][] = [];
     const icon = ((name: string, size: number) => {
       asked.push([name, size]);
-      return { tag: 'rect', attrs: { class: 'glyph', width: size, height: size } };
+      return name === 'bogus'
+        ? undefined
+        : { tag: 'rect', attrs: { class: 'glyph', width: size, height: size } };
     }) as RenderContext['icon'];
     const r = await render(
       'architecture-beta\n  group g(logos:aws)[G]\n  service a(logos:aws)[A] in g\n  service b(server)[B] in g\n  service c(bogus)[C] in g\n',
       { ...grid, icon }
     );
+    // Services are drawn before groups (v12's order).
     expect(asked).toEqual([
       ['logos:aws', 80],
+      ['bogus', 80],
       ['logos:aws', 30],
     ]);
     expect(count(r.svg, /class="glyph"/g)).toBe(2);
@@ -170,12 +174,13 @@ describe('icons (D505, D506)', () => {
     expect(codes(r)).toEqual([]);
   });
 
-  it('lists pack icons, once each, as the icons hook (D505), and every label text', () => {
+  it('lists non-built-in icons, once each, as the icons hook (D505), and every label text', () => {
     const model = modelOf(
       'architecture-beta\n  group g(logos:aws)[G]\n  service a(logos:aws)[A] in g\n  service b(server)[B #amp; C]\n  service c "txt"[C]\n  a:R -[e]- L:b\n'
     );
-    expect(architectureIcons(model)).toEqual(['logos:aws']);
-    expect(architecture.icons(model)).toEqual(['logos:aws']);
+    const listed = [{ name: 'logos:aws', fallbackPrefix: 'mermaid-architecture' }];
+    expect(architectureIcons(model)).toEqual(listed);
+    expect(architecture.icons(model)).toEqual(listed);
     expect(architectureLabels(model)).toEqual(['G', 'A', 'B &amp; C', 'C', 'txt', 'e']);
   });
 
@@ -352,7 +357,7 @@ describe('edges (D507)', () => {
     expect(icon.svg).toMatch(/class="node-icon-text"[^>]*>x &amp; y</);
   });
 
-  it('shrinks both heads of a <--> run shorter than the two, and warns once (GAPS T3)', async () => {
+  it('shrinks both heads of a <--> run too short for the two, and warns once (GAPS T3)', async () => {
     const big = { ...grid, config: { architecture: { iconSize: 300 } } };
     const r = await render(`${PAIR}  a:R <--> L:b\n  a:B <--> T:b\n`, big);
     expect(codes(r)).toEqual([ARCHITECTURE_ARROW_SHRUNK]);
@@ -366,7 +371,8 @@ describe('edges (D507)', () => {
       .map((p) => numbers(p));
     const run = Math.abs(e![0]! - s![0]!);
     expect(run).toBeLessThan(100);
-    expect(heads[0]![2]! - heads[0]![0]!).toBeCloseTo(run / 2);
+    // Both bases meet in the middle: each head is half the run plus its 2 px tip.
+    expect(heads[0]![2]! - heads[0]![0]!).toBeCloseTo(run / 2 + 2, 1);
     // Never at the default sizes.
     expect(codes(await render(`${PAIR}  a:R <--> L:b\n`, grid))).toEqual([]);
   });

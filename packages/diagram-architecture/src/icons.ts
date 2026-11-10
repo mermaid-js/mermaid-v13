@@ -1,17 +1,18 @@
 /**
  * The icons an architecture diagram draws outside its labels (`DiagramPlugin.icons`, D293, D505):
- * every service's and group's icon with a pack prefix (`logos:aws`), as written, once each in
- * source order. The seven built-ins are the package's own and need no extension; any other
- * name without a prefix draws v12's `?` square.
+ * every group's and service's icon but the seven built-ins, as written, once each in source
+ * order, with v12's fallback pack (`mermaid-architecture`), so the icons extension splits and
+ * loads each as v12 resolved it (`logos:aws` and `logos-aws` from `logos`).
  */
+import type { DiagramIcon } from '@mermaid-js/core';
 import type { ArchitectureModel } from './model.ts';
-import { isPackIcon } from './render/assets.ts';
+import { BUILTIN_PACK, isBuiltinIcon } from './render/assets.ts';
 
-export function architectureIcons(model: ArchitectureModel): readonly string[] {
+export function architectureIcons(model: ArchitectureModel): readonly DiagramIcon[] {
   const names = new Set<string>();
   for (const item of [...model.groups, ...model.services])
-    if (item.icon !== undefined && isPackIcon(item.icon)) names.add(item.icon);
-  return [...names];
+    if (item.icon !== undefined && !isBuiltinIcon(item.icon)) names.add(item.icon);
+  return [...names].map((name) => ({ name, fallbackPrefix: BUILTIN_PACK }));
 }
 
 /** Every text the layout and renderer hand to core's label layout (D176, D178). */

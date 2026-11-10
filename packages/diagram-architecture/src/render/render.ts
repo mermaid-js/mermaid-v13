@@ -22,7 +22,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
-import { ARCHITECTURE_ARROW_SHRUNK } from '../codes.ts';
+import { ARCHITECTURE_ARROW_SHRUNK, ARCHITECTURE_EDGE_NOT_DRAWN } from '../codes.ts';
 import type { ArchitectureLayout } from '../layout/layout.ts';
 import type { ArchitectureSizes } from '../layout/metrics.ts';
 import type { ArchitectureNodeView } from '../layout/prepare.ts';
@@ -32,9 +32,6 @@ import type { ArchitectureRenderContext } from './context.ts';
 import { edgeScene, type EdgeEnd, type EdgeScene, type Extent, type PlacedLabel } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
 
-/** v12's open-bottom outline of a service with neither icon nor text (`svgDraw.ts:344-348`). */
-const CORNER = 5;
-
 interface Scene {
   readonly w: SvgWriter;
   readonly model: ArchitectureModel;
@@ -43,8 +40,8 @@ interface Scene {
   readonly paint: Paints;
   readonly sizes: ArchitectureSizes;
   readonly font: FontKey;
-  /** Each edge's line, heads and label, in model order; absent where the engine routed none. */
-  readonly edges: readonly (EdgeScene | undefined)[];
+  /** Each edge's line, heads and label, in model order; no points where the engine routed none. */
+  readonly edges: readonly EdgeScene[];
   /** The drawing's bounds: the layout's, and whatever edge labels reach past them. */
   readonly bounds: Extent;
   /** Names drawn as v12's `?` that no extension warned about. */
@@ -80,20 +77,29 @@ export function renderArchitecture(
   drawGroups(scene);
   w.close();
   if (scene.unresolved.length > 0) iconsNotRendered(ctx, scene.unresolved);
-  const shrunk = edges.filter((e) => e?.shrunk).length;
+  const missing = edges.filter((e) => e.points.length < 2).map((e) => e.ast);
+  if (missing.length > 0)
+    ctx.warn({
+      code: ARCHITECTURE_EDGE_NOT_DRAWN,
+      message: `The layout engine routed no line for ${missing.map((id) => JSON.stringify(id)).join(', ')}; ${missing.length === 1 ? 'it is' : 'they are'} left out of the drawing.`,
+    });
+  const shrunk = edges.filter((e) => e.shrunk).length;
   if (shrunk > 0)
     ctx.warn({
       code: ARCHITECTURE_ARROW_SHRUNK,
-      message: `The arrowheads of ${String(shrunk)} edge${shrunk === 1 ? '' : 's'} were shrunk to fit their line: at architecture.iconSize ${String(sizes.iconSize)} they are longer than the gap between nodes.`,
+      message: `The arrowheads of ${String(shrunk)} edge${shrunk === 1 ? '' : 's'} were shrunk to fit their line: at architecture.iconSize ${String(sizes.iconSize)} they are longer than the line's end.`,
     });
 }
 
-/** Each edge's scene, from the engine's route and the boxes of its two ends. */
+/**
+ * Each edge's scene, from the engine's route and the boxes of its two ends; an edge the engine
+ * routed none for keeps a scene with no points, so it still has its element (D508).
+ */
 function planEdges(
   model: ArchitectureModel,
   layout: ArchitectureLayout,
   ctx: ArchitectureRenderContext
-): (EdgeScene | undefined)[] {
+): EdgeScene[] {
   const { sizes, font, edges: views } = layout.architecture;
   const junctions = new Set(model.junctions.map((j) => j.id));
   const endOf = (id: string): EdgeEnd | undefined => {
@@ -103,11 +109,18 @@ function planEdges(
   return views.map((v) => {
     const edge = model.edges[v.index]!;
     const route = layout.edges.get(v.id);
+    if (!route || route.points.length < 2)
+      return { ast: edge.astId, points: [], heads: [], shrunk: false };
     const source = endOf(edge.lhsId);
     const target = endOf(edge.rhsId);
-    if (!route || route.points.length < 2 || !source || !target) return undefined;
     return edgeScene(
-      { edge, route, source, target, ...(v.label ? { label: v.label } : {}) },
+      {
+        edge,
+        route,
+        ...(source ? { source } : {}),
+        ...(target ? { target } : {}),
+        ...(v.label ? { label: v.label } : {}),
+      },
       sizes,
       font,
       ctx
@@ -116,7 +129,7 @@ function planEdges(
 }
 
 /** The layout's box, grown to hold every edge label and arrowhead. */
-function boundsOf(layout: ArchitectureLayout, edges: readonly (EdgeScene | undefined)[]): Extent {
+function boundsOf(layout: ArchitectureLayout, edges: readonly EdgeScene[]): Extent {
   let x0 = 0;
   let y0 = 0;
   let x1 = layout.width;
@@ -128,7 +141,6 @@ function boundsOf(layout: ArchitectureLayout, edges: readonly (EdgeScene | undef
     y1 = Math.max(y1, y);
   };
   for (const e of edges) {
-    if (!e) continue;
     for (const head of e.heads)
       for (let i = 0; i + 1 < head.length; i += 2) take(head[i]!, head[i + 1]!);
     if (e.label) {
@@ -200,12 +212,17 @@ function drawLabel(
 
 /** `g.architecture-edges`: per edge a `g` with its `path.edge`, `polygon.arrow` heads and label. */
 function drawEdges(scene: Scene): void {
-  const { w, model, paint, edges } = scene;
+  const { w, paint, edges } = scene;
   w.open('g', { class: 'architecture-edges' });
-  edges.forEach((e, i) => {
-    if (!e) return;
-    const ast = model.edges[i]!.astId;
+  for (const e of edges) {
+    const { ast } = e;
     w.open('g');
+    if (e.points.length < 2) {
+      // Not routed: its element stays, with no line (ARCHITECTURE_EDGE_NOT_DRAWN).
+      w.leaf('path', { class: 'edge', 'data-id': ast, 'data-ast': ast });
+      w.close();
+      continue;
+    }
     const d = w.path();
     e.points.forEach((p, k) => (k === 0 ? d.moveTo(p.x, p.y) : d.lineTo(p.x, p.y)));
     w.outline('edge', 'path', {
@@ -221,7 +238,7 @@ function drawEdges(scene: Scene): void {
       w.leaf('polygon', { class: 'arrow', 'data-id': ast, points: head, fill: paint.arrow });
     if (e.label) drawLabel(scene, ast, e.label.box, e.label.at.x, e.label.at.y, e.label);
     w.close();
-  });
+  }
   w.close();
 }
 
@@ -257,9 +274,9 @@ function drawService(scene: Scene, v: ArchitectureNodeView): void {
   if (service.icon !== undefined) {
     if (drawIcon(w, ctx, service.icon, size, corner)) scene.unresolved.push(service.icon);
   } else if (service.iconText !== undefined) {
-    drawTextIcon(w, fitTextIcon(service.iconText, size, font, ctx), size, corner);
+    drawTextIcon(w, fitTextIcon(service.iconText, sizes, font, ctx), size, corner);
   } else {
-    const r = Math.min(CORNER, size / 2);
+    const r = sizes.serviceCorner;
     const d = w
       .path()
       .moveTo(0, size)

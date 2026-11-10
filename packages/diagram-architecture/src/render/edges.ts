@@ -21,14 +21,19 @@
  *   corner. On a route with more bends, which v12 could not draw, the label stays flat and
  *   unwrapped where `compass` placed it.
  */
-import type { LayoutModelEdge, LayoutModelNode, Point } from '@mermaid-js/core/layout';
+import type { LayoutModelEdge, LayoutModelNode, Point, Side } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { ArchitectureSizes } from '../layout/metrics.ts';
+import { ARCHITECTURE_METRICS, type ArchitectureSizes } from '../layout/metrics.ts';
 import type { ArchitectureEdge, ArchitectureSide } from '../model.ts';
 import type { ArchitectureRenderContext } from './context.ts';
 
-/** How far an arrowhead's tip runs past the end, into the node (v12's `± 2` shift). */
-const TIP = 2;
+/** The engine's ports as v12's sides. */
+const SIDE_OF: Readonly<Record<Side, ArchitectureSide>> = {
+  left: 'L',
+  right: 'R',
+  top: 'T',
+  bottom: 'B',
+};
 
 /** An axis-aligned box: left, top, right, bottom. */
 export interface Extent {
@@ -53,11 +58,13 @@ export interface PlacedLabel {
 
 /** A drawn edge. */
 export interface EdgeScene {
+  /** The edge's AST id (D508). */
+  readonly ast: string;
   readonly points: readonly Point[];
   /** Arrowhead triangles as flat x, y lists, source end first. */
   readonly heads: readonly (readonly number[])[];
   readonly label?: PlacedLabel;
-  /** Both heads were shrunk to fit the line. */
+  /** A head was shrunk to fit its end of the line. */
   readonly shrunk: boolean;
 }
 
@@ -71,9 +78,14 @@ const horizontal = (side: ArchitectureSide): boolean => side === 'L' || side ===
 
 /**
  * v12's arrowhead (`ArchitectureDirectionArrow`) for an end on `side` at `end`, `size` across,
- * moved as `ArchitectureDirectionArrowShift` moved it: its tip `TIP` past the end, into the node.
+ * moved as `ArchitectureDirectionArrowShift` moved it: its tip `tip` past the end, into the node.
  */
-export function arrowhead(side: ArchitectureSide, end: Point, size: number): number[] {
+export function arrowhead(
+  side: ArchitectureSide,
+  end: Point,
+  size: number,
+  tip: number = ARCHITECTURE_METRICS.arrowTip
+): number[] {
   const h = size / 2;
   // Corner of the triangle's box, then its three corners in v12's order.
   let x: number;
@@ -81,19 +93,19 @@ export function arrowhead(side: ArchitectureSide, end: Point, size: number): num
   let pts: number[];
   switch (side) {
     case 'L':
-      [x, y] = [end.x - size + TIP, end.y - h];
+      [x, y] = [end.x - size + tip, end.y - h];
       pts = [size, h, 0, size, 0, 0];
       break;
     case 'R':
-      [x, y] = [end.x - TIP, end.y - h];
+      [x, y] = [end.x - tip, end.y - h];
       pts = [0, h, size, 0, size, size];
       break;
     case 'T':
-      [x, y] = [end.x - h, end.y - size + TIP];
+      [x, y] = [end.x - h, end.y - size + tip];
       pts = [0, 0, size, 0, h, size];
       break;
     case 'B':
-      [x, y] = [end.x - h, end.y - TIP];
+      [x, y] = [end.x - h, end.y - tip];
       pts = [h, 0, size, size, 0, size];
       break;
   }
@@ -105,10 +117,10 @@ function endPoint(
   p: Point,
   side: ArchitectureSide,
   group: boolean,
-  end: EdgeEnd,
+  end: EdgeEnd | undefined,
   sizes: ArchitectureSizes
 ): Point {
-  if (group) return p;
+  if (group || !end) return p;
   const { box } = end;
   if (end.junction) return horizontal(side) ? { x: box.x, y: p.y } : { x: p.x, y: box.y };
   if (horizontal(side) && box.width > sizes.iconSize) {
@@ -166,10 +178,46 @@ function bendFactors(lhs: ArchitectureSide, rhs: ArchitectureSide): [number, num
 export interface EdgeInputs {
   readonly edge: ArchitectureEdge;
   readonly route: LayoutModelEdge;
-  readonly source: EdgeEnd;
-  readonly target: EdgeEnd;
+  /** The end boxes; absent where the engine placed no such node (the route is drawn as given). */
+  readonly source?: EdgeEnd;
+  readonly target?: EdgeEnd;
   /** The label as the layout measured it (unwrapped); absent for `--`. */
   readonly label?: MeasuredLabel;
+}
+
+/** The two sides the route meets its ends by: the engine's ports, else the declared sides. */
+function sidesOf(
+  edge: ArchitectureEdge,
+  route: LayoutModelEdge
+): [ArchitectureSide, ArchitectureSide] {
+  const ports = route.ports as Partial<LayoutModelEdge['ports']> | undefined;
+  return [
+    ports?.source ? SIDE_OF[ports.source] : edge.lhsDir,
+    ports?.target ? SIDE_OF[ports.target] : edge.rhsDir,
+  ];
+}
+
+const distance = (a: Point, b: Point): number => Math.hypot(b.x - a.x, b.y - a.y);
+
+/**
+ * Each head's size: `arrow`, but no more than keeps its base on its own end segment. A head's tip
+ * runs `tip` past the end into the node, so its base sits `size − tip` back along the segment:
+ * it fits while `size ≤ segment + tip`, or `segment / 2 + tip` when both heads share the line's
+ * one segment (GAPS T3). `compass`'s 12 px stubs leave 14 px, so the default 13.3 px heads keep
+ * their size.
+ */
+function headSizes(
+  edge: ArchitectureEdge,
+  points: readonly Point[],
+  sizes: ArchitectureSizes
+): [number, number] {
+  const n = points.length;
+  const first = distance(points[0]!, points[1]!);
+  const last = distance(points[n - 2]!, points[n - 1]!);
+  const shared = n === 2 && edge.lhsInto && edge.rhsInto;
+  const fit = (leg: number): number =>
+    Math.max(0, Math.min(sizes.arrow, (shared ? leg / 2 : leg) + sizes.arrowTip));
+  return [fit(first), fit(last)];
 }
 
 /** Where an edge's line, heads and label go. */
@@ -180,27 +228,21 @@ export function edgeScene(
   ctx: ArchitectureRenderContext
 ): EdgeScene {
   const raw = route.points;
-  const first = raw[0]!;
-  const last = raw[raw.length - 1]!;
-  const start = endPoint(first, edge.lhsDir, edge.lhsGroup, source, sizes);
-  const end = endPoint(last, edge.rhsDir, edge.rhsGroup, target, sizes);
+  const [lhs, rhs] = sidesOf(edge, route);
+  const start = endPoint(raw[0]!, lhs, edge.lhsGroup, source, sizes);
+  const end = endPoint(raw[raw.length - 1]!, rhs, edge.rhsGroup, target, sizes);
   const points = corners([start, ...raw.slice(1, -1), end]);
+  const line = points.length > 1 ? points : [start, end];
 
-  let size = sizes.arrow;
-  let shrunk = false;
-  if (edge.lhsInto && edge.rhsInto) {
-    const run = lengthOf(points);
-    if (run < 2 * size) {
-      size = run / 2;
-      shrunk = true;
-    }
-  }
+  const [startHead, endHead] = headSizes(edge, line, sizes);
   const heads: number[][] = [];
-  if (edge.lhsInto) heads.push(arrowhead(edge.lhsDir, start, size));
-  if (edge.rhsInto) heads.push(arrowhead(edge.rhsDir, end, size));
+  if (edge.lhsInto) heads.push(arrowhead(lhs, start, startHead, sizes.arrowTip));
+  if (edge.rhsInto) heads.push(arrowhead(rhs, end, endHead, sizes.arrowTip));
+  const shrunk =
+    (edge.lhsInto && startHead < sizes.arrow) || (edge.rhsInto && endHead < sizes.arrow);
 
-  const placed = label && placeLabel({ edge, route, label }, points, font, ctx);
-  return { points, heads, shrunk, ...(placed ? { label: placed } : {}) };
+  const placed = label && placeLabel({ edge, route, label, lhs, rhs }, line, font, ctx);
+  return { ast: edge.astId, points: line, heads, shrunk, ...(placed ? { label: placed } : {}) };
 }
 
 /** Which way v12 set a label: along a level line, up a vertical one, or across a bend. */
@@ -214,11 +256,20 @@ function axisOf(lhs: ArchitectureSide, rhs: ArchitectureSide): LabelAxis {
 /** v12's wrap width: the line, two thirds of it on Y (clear of the service labels), half on a bend. */
 function wrapWidth(axis: LabelAxis, dx: number, dy: number): number {
   if (axis === 'X') return dx;
-  return axis === 'Y' ? dy / 1.5 : dx / 2;
+  return axis === 'Y' ? dy / ARCHITECTURE_METRICS.verticalLabelWrap : dx / 2;
+}
+
+interface LabelInputs {
+  readonly edge: ArchitectureEdge;
+  readonly route: LayoutModelEdge;
+  readonly label: MeasuredLabel;
+  /** The sides the route meets its ends by. */
+  readonly lhs: ArchitectureSide;
+  readonly rhs: ArchitectureSide;
 }
 
 function placeLabel(
-  { edge, route, label: measured }: Pick<EdgeInputs, 'edge' | 'route'> & { label: MeasuredLabel },
+  { edge, route, label: measured, lhs, rhs }: LabelInputs,
   points: readonly Point[],
   font: FontKey,
   ctx: ArchitectureRenderContext
@@ -248,7 +299,7 @@ function placeLabel(
         };
   const dx = Math.abs(start.x - end.x);
   const dy = Math.abs(start.y - end.y);
-  const axis = axisOf(edge.lhsDir, edge.rhsDir);
+  const axis = axisOf(lhs, rhs);
   const wrap = wrapWidth(axis, dx, dy);
   const box = layoutLabel(edge.title!, font, wrap > 0 ? wrap : Infinity, ctx.measurer, {
     markdown: true,
@@ -256,8 +307,8 @@ function placeLabel(
   });
   if (box.lines.length === 0) return undefined;
   if (axis === 'XY') {
-    const [fx, fy] = bendFactors(edge.lhsDir, edge.rhsDir);
-    const angle = -fx * fy * 45;
+    const [fx, fy] = bendFactors(lhs, rhs);
+    const angle = -fx * fy * ARCHITECTURE_METRICS.bendLabelTurn;
     // The turned label's box is square, (w + h) / √2 a side; v12 set it in the corner's quarter.
     const side = (box.width + box.height) / Math.SQRT2;
     const at = { x: mid.x + (fx * side) / 2, y: mid.y + (fy * side) / 2 };
@@ -273,9 +324,9 @@ function placeLabel(
   return {
     box,
     at,
-    angle: -90,
+    angle: ARCHITECTURE_METRICS.verticalLabelTurn,
     about: mid,
-    extent: turnedExtent(centre, box.width, box.height, -90),
+    extent: turnedExtent(centre, box.width, box.height, ARCHITECTURE_METRICS.verticalLabelTurn),
   };
 }
 

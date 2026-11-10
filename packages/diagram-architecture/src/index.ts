@@ -12,6 +12,7 @@ export type { ArchitectureRenderContext } from './render/context.ts';
 export { ICON_NOT_RENDERED } from './render/assets.ts';
 export {
   ARCHITECTURE_ARROW_SHRUNK,
+  ARCHITECTURE_EDGE_NOT_DRAWN,
   ARCHITECTURE_ALIGN_MEMBER,
   ARCHITECTURE_ALIGN_REPEAT,
   ARCHITECTURE_ALIGN_SHORT,

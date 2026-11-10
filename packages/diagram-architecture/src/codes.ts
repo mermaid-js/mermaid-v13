@@ -48,3 +48,12 @@ export const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';
  * one warning per render. Never raised at the default sizes (60 px against 27).
  */
 export const ARCHITECTURE_ARROW_SHRUNK = 'ARCHITECTURE_ARROW_SHRUNK';
+/**
+ * Warning (#614 review): the layout engine routed no line for an edge (an engine other than
+ * `compass` may drop one). The edge keeps its `path.edge` with its `data-ast` and no line, so
+ * every AST node still has its element (D508); one warning per render, naming each.
+ */
+export const ARCHITECTURE_EDGE_NOT_DRAWN = 'ARCHITECTURE_EDGE_NOT_DRAWN';
+
+/** How many names a warning lists, and how long each may be, before it says "and n more". */
+export const WARNING_NAMES = { listed: 8, longest: 60 } as const;

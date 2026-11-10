@@ -36,6 +36,9 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
       groupLabelGap: 4,
       groupDash: 8,
       anchorY: 40,
+      arrowTip: 2,
+      serviceCorner: 5,
+      iconTextMargin: 1,
     });
   });
 

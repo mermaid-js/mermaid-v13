@@ -29,6 +29,18 @@ export const ARCHITECTURE_METRICS = {
   groupDash: 8,
   /** The weight labels are measured and drawn at (v12's `createText`, no bold but markdown's). */
   fontWeight: 400,
+  /** How far an arrowhead's tip runs past the edge's end, into the node (`ArchitectureDirectionArrowShift`). */
+  arrowTip: 2,
+  /** The corner radius of a service drawn with neither icon nor text (`svgDraw.ts:347`). */
+  serviceCorner: 5,
+  /** A text icon's margin inside its square (`.node-icon-text > div { margin: 1px }`). */
+  iconTextMargin: 1,
+  /** A label beside a vertical edge wraps at the edge's length over this (`svgDraw.ts:135`). */
+  verticalLabelWrap: 1.5,
+  /** A label beside a vertical edge is turned this many degrees (`svgDraw.ts:162`). */
+  verticalLabelTurn: -90,
+  /** A label in a bend is turned this many degrees, signed by the bend (`svgDraw.ts:171`). */
+  bendLabelTurn: 45,
 } as const;
 
 /** v12's lengths for one document's `iconSize` and `padding`, px. */
@@ -55,6 +67,12 @@ export interface ArchitectureSizes {
   readonly groupLabelGap: number;
   /** A group border's dash. */
   readonly groupDash: number;
+  /** How far an arrowhead's tip runs past the edge's end. */
+  readonly arrowTip: number;
+  /** A service outline's corner radius (no icon, no text), at most half the icon. */
+  readonly serviceCorner: number;
+  /** A text icon's margin inside its square. */
+  readonly iconTextMargin: number;
 }
 
 /** The lengths v12 drew with for `iconSize` and `padding` (px). */
@@ -76,5 +94,8 @@ export function architectureSizes(
     groupIcon: padding * M.groupIconRatio,
     groupLabelGap: M.groupLabelGap,
     groupDash: M.groupDash,
+    arrowTip: M.arrowTip,
+    serviceCorner: Math.min(M.serviceCorner, iconSize / 2),
+    iconTextMargin: M.iconTextMargin,
   };
 }

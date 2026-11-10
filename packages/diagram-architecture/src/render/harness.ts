@@ -35,8 +35,8 @@ export interface RenderArchitectureOptions {
   readonly measurer?: Measurer;
   /** The extensions' glyphs (`RenderContext.icon`, D293), as an icons extension would give them. */
   readonly icon?: RenderContext['icon'];
-  /** The API's icon packs (`RenderContext.iconPacks`, D294): whether a pack is still loading. */
-  readonly iconPacks?: RenderContext['iconPacks'];
+  /** The extensions' inline-box providers (`RenderContext.inline`, D177). */
+  readonly inline?: RenderContext['inline'];
 }
 
 export interface RenderedArchitecture {
@@ -98,7 +98,7 @@ export async function renderArchitectureForTest(
     limits: resolveLimits(config),
     warn,
     ...(options.icon ? { icon: options.icon } : {}),
-    ...(options.iconPacks ? { iconPacks: options.iconPacks } : {}),
+    ...(options.inline ? { inline: options.inline } : {}),
   };
   const layout = layoutArchitecture(parse.model, ctx);
   const gradient = theme.gradient();

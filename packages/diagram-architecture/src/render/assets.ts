@@ -1,184 +1,54 @@
 /**
- * Architecture's icons (D505, D506): the seven built-ins drawn by the package, pack icons through
- * the extensions' glyphs (`RenderContext.icon`, D293), v12's `?` square for anything else, and
- * text icons laid out in the `blank` square.
+ * Architecture's icons (D505, D506): the seven built-ins drawn by the package (`builtins.ts`),
+ * every other name through the extensions' glyphs (`RenderContext.icon`, D293) resolved as v12
+ * resolved it, v12's `?` square where nothing draws it, and text icons laid out in the `blank`
+ * square.
  *
- * The built-ins are v12's `architectureIcons.ts` (80 × 80, `#087ebf` with white strokes, the same
- * in every theme, D152) as package constants: each element as v12 wrote it, its `style` written
- * as presentation attributes and its `id`/`data-name` dropped (they would repeat on a page).
- * `unknown` is v12's `unknownIcon` (`rendering-util/icons.ts`). A size other than 80 scales them.
+ * v12 looked a name up with `getIconSVG(name, { fallbackPrefix: 'mermaid-architecture' })`:
+ * Iconify's `stringToIcon`, so `logos:aws` and the dash form `logos-aws` are the `logos` pack's
+ * `aws`, `a:b:c` is `b:c`, and a bare name is its own pack's (checked against 12.2.0's
+ * `@iconify/utils` 3.1.7). The icons extension splits names the same way (`plugin-icons`
+ * `iconName`, parity-tested against v12), so a name is handed to it as written, with that
+ * fallback pack, and never split here.
  */
 import type { Point } from '@mermaid-js/core/layout';
-import {
-  checkStyle,
-  scale,
-  transforms,
-  translate,
-  writeFragment,
-  type Attrs,
-  type PathData,
-  type SafeColor,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { scale, transforms, translate, writeFragment, type SvgWriter } from '@mermaid-js/core/svg';
 import {
   layoutLabel,
+  type BoxRun,
   type FontKey,
   type MeasuredLabel,
   type Run,
   type SvgFragment,
 } from '@mermaid-js/core/text';
+import { WARNING_NAMES } from '../codes.ts';
+import type { ArchitectureSizes } from '../layout/metrics.ts';
+import { ART_SIZE, BUILTIN_PACK, WHITE, builtinIcons } from './builtins.ts';
 import type { ArchitectureRenderContext } from './context.ts';
+
+export { BUILTIN_PACK } from './builtins.ts';
 
 export const ICON_NOT_RENDERED = 'ICON_NOT_RENDERED';
 
-/** The side of v12's icon squares, which every built-in is drawn in. */
-const SIDE = 80;
-/** v12's icon square and its white strokes. */
-const BLUE = '#087ebf' as SafeColor;
-const WHITE = '#fff' as SafeColor;
-/** v12's `.node-icon-text > div { margin: 1px }`: the room a text icon keeps from its square. */
-const TEXT_MARGIN = 1;
 const ELLIPSIS = '…';
 
-/** How many unresolved names the warning lists, and how long each may be (as mindmap's). */
-const LISTED = 8;
-const LONGEST = 60;
+const { listed: LISTED, longest: LONGEST } = WARNING_NAMES;
 
-/** Path data written here, in v12's own (relative) form: package constants, never input. */
-const d = (data: string): PathData => data as PathData;
-
-/** `fill: none; stroke: #fff; stroke-miterlimit: 10; stroke-width: 2px`. */
-const LINE: Attrs = { fill: 'none', stroke: WHITE, 'stroke-miterlimit': 10, 'stroke-width': 2 };
-/** The same without its width (the server's slot outlines). */
-const THIN: Attrs = { fill: 'none', stroke: WHITE, 'stroke-miterlimit': 10 };
-/** `fill: #fff; stroke-width: 0px`. */
-const SOLID: Attrs = { fill: WHITE, 'stroke-width': 0 };
-/** `fill: #fff; stroke: #fff; stroke-miterlimit: 10`. */
-const DOT: Attrs = { fill: WHITE, stroke: WHITE, 'stroke-miterlimit': 10 };
-
-const el = (
-  tag: SvgFragment['tag'],
-  attrs: Attrs,
-  children?: readonly (SvgFragment | string)[]
-): SvgFragment => (children ? { tag, attrs, children } : { tag, attrs });
-const path = (data: string, paint: Attrs): SvgFragment => el('path', { d: d(data), ...paint });
-const line = (x1: number, y1: number, x2: number, y2: number): SvgFragment =>
-  el('line', { x1, y1, x2, y2, ...LINE });
-const ellipse = (cx: number, cy: number, rx: number, ry: number, paint = LINE): SvgFragment =>
-  el('ellipse', { cx, cy, rx, ry, ...paint });
-
-/** v12's `wrapIcon`: the blue square under the glyph. */
-const wrap = (glyph: readonly SvgFragment[]): SvgFragment =>
-  el('g', {}, [el('rect', { width: SIDE, height: SIDE, fill: BLUE, 'stroke-width': 0 }), ...glyph]);
-
-/** The database's arcs (v12 `database`), top to bottom of the stack. */
-const arc = (y: string): SvgFragment =>
-  path(`m20,${y}c0,3.94,8.95,7.14,20,7.14s20-3.2,20-7.14`, LINE);
-/** One of the server's three slots: its handle, then its three lights. */
-const slot = (y: number): SvgFragment => {
-  const handle = `m56.25,${y}c0,.27-.45.5-1,.5h-10.5c-.55,0-1-.23-1-.5s.45-.5,1-.5h10.5c.55,0,1,.23,1,.5Z`;
-  return el('g', {}, [path(handle, SOLID), path(handle, THIN)]);
-};
-const lights = (y: number): SvgFragment =>
-  el(
-    'g',
-    {},
-    [32.5, 27.5, 22.5].map((cx) => el('circle', { cx, cy: y, r: 0.75, ...DOT }))
-  );
-
-let builtins: ReadonlyMap<string, SvgFragment> | undefined;
-
-/** v12's seven icons, built once. */
-function builtinIcons(): ReadonlyMap<string, SvgFragment> {
-  if (builtins) return builtins;
-  const question = {
-    fill: WHITE,
-    ...checkStyle(['font-family: ArialMT, Arial', 'font-size: 67.75px']).text,
-  };
-  builtins = new Map<string, SvgFragment>([
-    [
-      'database',
-      wrap([
-        arc('57.86'),
-        arc('45.95'),
-        arc('34.05'),
-        ellipse(40, 22.14, 20, 7.14),
-        line(20, 57.86, 20, 22.14),
-        line(60, 57.86, 60, 22.14),
-      ]),
-    ],
-    [
-      'server',
-      wrap([
-        el('rect', { x: 17.5, y: 17.5, width: 45, height: 45, rx: 2, ry: 2, ...LINE }),
-        line(17.5, 32.5, 62.5, 32.5),
-        line(17.5, 47.5, 62.5, 47.5),
-        slot(25),
-        slot(40),
-        slot(55),
-        lights(25),
-        lights(40),
-        lights(55),
-      ]),
-    ],
-    [
-      'disk',
-      wrap([
-        el('rect', { x: 20, y: 15, width: 40, height: 50, rx: 1, ry: 1, ...LINE }),
-        ellipse(24, 19.17, 0.8, 0.83),
-        ellipse(56, 19.17, 0.8, 0.83),
-        ellipse(24, 60.83, 0.8, 0.83),
-        ellipse(56, 60.83, 0.8, 0.83),
-        ellipse(40, 33.75, 14, 14.58),
-        ellipse(40, 33.75, 4, 4.17, { ...DOT, 'stroke-width': 2 }),
-        path(
-          'm37.51,42.52l-4.83,13.22c-.26.71-1.1,1.02-1.76.64l-4.18-2.42c-.66-.38-.81-1.26-.33-1.84l9.01-10.8c.88-1.05,2.56-.08,2.09,1.2Z',
-          SOLID
-        ),
-      ]),
-    ],
-    [
-      'internet',
-      wrap([
-        el('circle', { cx: 40, cy: 40, r: 22.5, ...LINE }),
-        line(40, 17.5, 40, 62.5),
-        line(17.5, 40, 62.5, 40),
-        path('m39.99,17.51c-15.28,11.1-15.28,33.88,0,44.98', LINE),
-        path('m40.01,17.51c15.28,11.1,15.28,33.88,0,44.98', LINE),
-        line(19.75, 30.1, 60.25, 30.1),
-        line(19.75, 49.9, 60.25, 49.9),
-      ]),
-    ],
-    [
-      'cloud',
-      wrap([
-        path(
-          'm65,47.5c0,2.76-2.24,5-5,5H20c-2.76,0-5-2.24-5-5,0-1.87,1.03-3.51,2.56-4.36-.04-.21-.06-.42-.06-.64,0-2.6,2.48-4.74,5.65-4.97,1.65-4.51,6.34-7.76,11.85-7.76.86,0,1.69.08,2.5.23,2.09-1.57,4.69-2.5,7.5-2.5,6.1,0,11.19,4.38,12.28,10.17,2.14.56,3.72,2.51,3.72,4.83,0,.03,0,.07-.01.1,2.29.46,4.01,2.48,4.01,4.9Z',
-          LINE
-        ),
-      ]),
-    ],
-    // v12's `unknownIcon`, its `translate(21.16 64.67)` written as the text's position.
-    ['unknown', wrap([el('text', { x: 21.16, y: 64.67, ...question }, ['?'])])],
-    ['blank', wrap([])],
-  ]);
-  return builtins;
+/** The built-in `name` names, written bare or with v12's own pack; undefined for any other. */
+function builtin(name: string): SvgFragment | undefined {
+  const icons = builtinIcons();
+  const bare = name.startsWith(`${BUILTIN_PACK}:`) ? name.slice(BUILTIN_PACK.length + 1) : name;
+  return icons.get(bare);
 }
 
-/** Whether `name` is one of the seven built-ins (D505). */
+/** Whether `name` is one of the seven built-ins (D505): no extension is asked for it. */
 export function isBuiltinIcon(name: string): boolean {
-  return builtinIcons().has(name);
+  return builtin(name) !== undefined;
 }
 
-/** Whether `name` names a pack (`logos:aws`): the extensions' glyphs are asked for it (D505). */
-export function isPackIcon(name: string): boolean {
-  return name.includes(':');
-}
-
-/** Writes a built-in icon in a `size` square with its corner at `at`. */
-function drawBuiltin(w: SvgWriter, name: string, size: number, at: Point): void {
-  const icon = builtinIcons().get(name)!;
-  const k = size / SIDE;
+/** Writes `icon` (drawn in v12's square) in a `size` square with its corner at `at`. */
+function drawArt(w: SvgWriter, icon: SvgFragment, size: number, at: Point): void {
+  const k = size / ART_SIZE;
   const parts = [];
   if (at.x !== 0 || at.y !== 0) parts.push(translate(at.x, at.y));
   if (k !== 1) parts.push(scale(k));
@@ -191,10 +61,13 @@ function drawBuiltin(w: SvgWriter, name: string, size: number, at: Point): void 
   );
 }
 
+const drawNamed = (w: SvgWriter, name: 'unknown' | 'blank', size: number, at: Point): void =>
+  drawArt(w, builtinIcons().get(name)!, size, at);
+
 /**
- * Draws the icon `name` in a `size` square with its corner at `at`: a built-in, a pack's glyph,
- * nothing while its pack loads (D299), or v12's `?` square. True when it drew the `?` for a name
- * no extension warned about (the render's one `ICON_NOT_RENDERED` lists it).
+ * Draws the icon `name` in a `size` square with its corner at `at`: a built-in, the extension's
+ * glyph, nothing while its pack loads (D299), or v12's `?` square. True when it drew the `?` for
+ * a name no extension warned about (the render's one `ICON_NOT_RENDERED` lists it).
  */
 export function drawIcon(
   w: SvgWriter,
@@ -203,30 +76,30 @@ export function drawIcon(
   size: number,
   at: Point
 ): boolean {
-  if (isBuiltinIcon(name)) {
-    drawBuiltin(w, name, size, at);
+  const own = builtin(name);
+  if (own) {
+    drawArt(w, own, size, at);
     return false;
   }
-  const glyph = isPackIcon(name) ? ctx.icon?.(name, size) : undefined;
+  const glyph = ctx.icon?.(name, size, { fallbackPrefix: BUILTIN_PACK, pending: true });
+  if (glyph === 'pending') return false;
   if (glyph) {
     w.open('g', { transform: translate(at.x, at.y) });
     writeFragment(w, glyph);
     w.close();
     return false;
   }
-  // `undefined` is a placeholder only while the API knows the pack is loading (D294, D299).
-  const pack = name.slice(0, name.lastIndexOf(':'));
-  if (glyph === undefined && pack && ctx.icon && ctx.iconPacks?.state(pack) === 'pending')
-    return false;
-  drawBuiltin(w, 'unknown', size, at);
+  drawNamed(w, 'unknown', size, at);
   return glyph !== null;
 }
 
 /**
  * The render's one `ICON_NOT_RENDERED` (D291, D505) for the names drawn as v12's `?` that no
- * extension warned about, through the inline providers' deduplicating `warn` when there are any.
+ * extension warned about, each once, through the inline providers' deduplicating `warn` when
+ * there are any.
  */
-export function iconsNotRendered(ctx: ArchitectureRenderContext, names: readonly string[]): void {
+export function iconsNotRendered(ctx: ArchitectureRenderContext, drawn: readonly string[]): void {
+  const names = [...new Set(drawn)];
   const quoted = names
     .slice(0, LISTED)
     .map((n) => JSON.stringify(n.slice(0, LONGEST)))
@@ -234,34 +107,52 @@ export function iconsNotRendered(ctx: ArchitectureRenderContext, names: readonly
   const more = names.length > LISTED ? ` and ${String(names.length - LISTED)} more` : '';
   const warning = {
     code: ICON_NOT_RENDERED,
-    message: `Icons not rendered: ${quoted}${more}. Architecture draws database, server, disk, internet, cloud, blank and unknown itself; a pack icon (pack:name) needs an icons extension with that pack. Each is drawn as a "?" square.`,
+    message: `Icons not rendered: ${quoted}${more}. Architecture draws database, server, disk, internet, cloud, blank and unknown itself; any other icon needs an icons extension with its pack (logos:aws or logos-aws). Each is drawn as a "?" square.`,
   };
   if (ctx.inline) ctx.inline.warn(warning);
   else ctx.warn(warning);
 }
 
 /**
+ * Where each line of `label` ends, down from its top: `lineHeight` apart, or as far as an inline
+ * box grew a line (core's `grownBaselines`: a line is as tall as its tallest box above and below
+ * the baseline).
+ */
+function lineBottoms(label: MeasuredLabel): number[] {
+  const { baselines, baseline, lineHeight } = label;
+  return label.lines.map((line, i) => {
+    if (!baselines) return (i + 1) * lineHeight;
+    let below = lineHeight - baseline;
+    for (const r of line)
+      if (r.kind === 'box') below = Math.max(below, (r as BoxRun).height - (r as BoxRun).baseline);
+    return baselines[i]! + below;
+  });
+}
+
+/**
  * A text icon's text (D506): laid out as a label wrapped to the square less v12's 1 px margin,
- * cut to the lines that fit (v12's `-webkit-line-clamp`) and to the width, the last kept line
- * ending in an ellipsis where anything was cut. Undefined when not one line fits.
+ * cut to the lines whose real height fits (v12's `-webkit-line-clamp`) and to the width, the last
+ * kept line ending in an ellipsis where anything was cut. Undefined when not one line fits.
  */
 export function fitTextIcon(
   text: string,
-  size: number,
+  sizes: ArchitectureSizes,
   font: FontKey,
   ctx: ArchitectureRenderContext
 ): MeasuredLabel | undefined {
-  const room = size - 2 * TEXT_MARGIN;
+  const room = sizes.iconSize - 2 * sizes.iconTextMargin;
   if (!(room > 0)) return undefined;
   const label = layoutLabel(text, font, room, ctx.measurer, { inline: ctx.inline });
-  const most = Math.floor(room / label.lineHeight);
-  if (most < 1 || label.lines.length === 0) return undefined;
+  const bottoms = lineBottoms(label);
+  let most = 0;
+  while (most < bottoms.length && bottoms[most]! <= room) most++;
+  if (most < 1) return undefined;
   const cut = label.lines.length > most;
   if (!cut && label.width <= room) return label;
   const lines: Run[][] = [];
   const widths: number[] = [];
   const indents: number[] = [];
-  for (let i = 0; i < Math.min(most, label.lines.length); i++) {
+  for (let i = 0; i < most; i++) {
     let runs = label.lines[i]!;
     let width = label.widths[i]!;
     if (width > room || (cut && i === most - 1))
@@ -276,8 +167,8 @@ export function fitTextIcon(
     widths,
     indents,
     width: Math.max(0, ...widths),
-    height: lines.length * label.lineHeight,
-    ...(label.baselines ? { baselines: label.baselines.slice(0, lines.length) } : {}),
+    height: bottoms[most - 1]!,
+    ...(label.baselines ? { baselines: label.baselines.slice(0, most) } : {}),
   };
 }
 
@@ -299,14 +190,19 @@ function withEllipsis(
     const rest = width - last.width;
     const dots = ctx.measurer.width(ELLIPSIS, font, last.style);
     if (last.kind !== 'box' && rest + dots <= room) {
-      // The longest head of this run that fits with the ellipsis (whole code points).
+      // The longest head of this run that fits with the ellipsis (whole code points), found by
+      // halving: a head's width grows with its length.
       const chars = [...last.text];
-      let keep = chars.length;
-      const widthOf = (n: number): number =>
-        ctx.measurer.width(chars.slice(0, n).join('').trimEnd() + ELLIPSIS, font, last.style);
-      while (keep > 0 && rest + widthOf(keep) > room) keep--;
-      const text = chars.slice(0, keep).join('').trimEnd() + ELLIPSIS;
-      const run: Run = { ...last, text, width: widthOf(keep) };
+      const textOf = (n: number): string => chars.slice(0, n).join('').trimEnd() + ELLIPSIS;
+      const widthOf = (n: number): number => ctx.measurer.width(textOf(n), font, last.style);
+      let lo = 0;
+      let hi = chars.length;
+      while (lo < hi) {
+        const mid = Math.ceil((lo + hi) / 2);
+        if (rest + widthOf(mid) <= room) lo = mid;
+        else hi = mid - 1;
+      }
+      const run: Run = { ...last, text: textOf(lo), width: widthOf(lo) };
       out.push(run);
       return [out, rest + run.width];
     }
@@ -321,7 +217,7 @@ export function drawTextIcon(
   size: number,
   at: Point
 ): void {
-  drawBuiltin(w, 'blank', size, at);
+  drawNamed(w, 'blank', size, at);
   if (label)
     w.label(label, at.x + size / 2, at.y + size / 2, { class: 'node-icon-text', fill: WHITE });
 }
