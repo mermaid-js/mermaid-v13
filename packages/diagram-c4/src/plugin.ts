@@ -35,11 +35,12 @@ function c4Labels(model: C4Model): string[] {
  * relations (#540); `render` writes the whole `<svg>` document (#541); `theme` is the diagram's
  * own table (`theme/table.ts`, D456). The registry loads it from the package's `mermaid`
  * manifest (#542); `configDefaults` are the `c4` section's generated defaults (`gen:config`).
- * SVG only until #545.
+ * Text output is the lazily loaded `./ascii` entry (#545); in a text render the layout runs on
+ * the cell profile (`layout/cells.ts`).
  */
 export const c4 = {
   id: 'c4',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   theme,
   configDefaults: c4ConfigDefaults as Readonly<Record<string, unknown>>,

@@ -24,8 +24,9 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'c4',
     pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/,
     id: 'c4',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-c4').then((m) => m.c4),
+    loadAscii: () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii),
   },
   {
     type: 'kanban',

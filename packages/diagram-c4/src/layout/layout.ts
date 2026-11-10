@@ -20,6 +20,7 @@ import {
   type GridNode,
   type GridSpacing,
 } from './grid.ts';
+import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
 import { Lanes, pointsOf, route, Work, type Route } from './route.ts';
 import { shapeOf, shapeSize, type Outline, type ShapeRoom } from './shapes.ts';
@@ -34,9 +35,12 @@ import type {
   Rect,
 } from './types.ts';
 
-/** What the layout reads from the render context. */
+/**
+ * What the layout reads from the render context. With the cell profile (`units.id === 'cell'`,
+ * text output) it lays out in px with the text measured in cells (`./cells.ts`, D459).
+ */
 export type C4LayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline' | 'warn' | 'limits'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn' | 'limits' | 'units'>>;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -126,7 +130,11 @@ const outlineOf = (
 /** Lays out a C4 diagram in px. */
 export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const warn = ctx.warn ?? ignoreWarning;
-  const config = c4LayoutConfig(ctx.config);
+  const units = ctx.units?.id === 'cell' ? ctx.units : undefined;
+  const config = units
+    ? cellConfig(c4LayoutConfig(ctx.config), units, warn)
+    : c4LayoutConfig(ctx.config);
+  const measurer = units ? cellPxMeasurer(ctx.measurer, units.pxPerUnit) : ctx.measurer;
   const family = ctx.theme.value('fontFamily');
   const fonts = c4Fonts(ctx.config, family, warn);
   const inline = ctx.inline ? { inline: ctx.inline } : {};
@@ -139,7 +147,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     text === undefined || text.trim() === ''
       ? undefined
       : {
-          text: layoutLabel(text, font, maxWidth, ctx.measurer, {
+          text: layoutLabel(text, font, maxWidth, measurer, {
             ...inline,
             keepWords: true,
             style,
@@ -149,7 +157,9 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
         };
 
   // Measure first: elements.
-  const room = shapeRoom(config, ctx.theme);
+  const room = units
+    ? cellRoom(shapeRoom(config, ctx.theme), units.pxPerUnit)
+    : shapeRoom(config, ctx.theme);
   const nodes = model.elements.map((element, index) =>
     elementNode(element, index, { config, fonts, measure }, room)
   );
@@ -226,7 +236,8 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     { family, size: M.titleFontSize, weight: FONT_WEIGHT.normal },
     Infinity
   );
-  return assemble({ nodes, order, relations, ...(title ? { title } : {}), config });
+  const cell = units ? { cell: units.pxPerUnit } : {};
+  return assemble({ nodes, order, relations, ...(title ? { title } : {}), config, ...cell });
 }
 
 function group(index: number, boundary: GridGroup['boundary'], parent: number): Group {
@@ -627,6 +638,7 @@ interface Parts {
   readonly relations: RoutedAll;
   readonly title?: Measured;
   readonly config: C4LayoutConfig;
+  readonly cell?: CellSize;
 }
 
 /** The move from the grid's frame onto the canvas. */
@@ -781,6 +793,7 @@ function assemble(p: Parts): C4Layout {
     relations: p.relations.list.map((r) => relationOut(r, shift)),
     bounds: title ? union(content, title) : content,
     careful: p.relations.careful,
+    ...(p.cell ? { cell: p.cell } : {}),
   };
 }
 

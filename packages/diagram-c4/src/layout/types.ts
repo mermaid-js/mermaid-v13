@@ -137,4 +137,9 @@ export interface C4Layout {
    * (R-SEC-5, D455's budget): relations then go straight and labels sit at their middle.
    */
   readonly careful: boolean;
+  /**
+   * Set when laid out for text output (the cell profile, #545): px per cell. Text was measured
+   * in cells at this size, so the layout divided by it is the drawing on the character grid.
+   */
+  readonly cell?: { readonly x: number; readonly y: number };
 }

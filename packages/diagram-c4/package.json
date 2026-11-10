@@ -16,6 +16,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./ascii": {
+      "mermaid-source": "./src/ascii.ts",
+      "types": "./dist/ascii.d.ts",
+      "default": "./dist/ascii.js"
+    },
     "./language": {
       "mermaid-source": "./src/language.ts",
       "types": "./dist/language.d.ts",
@@ -52,9 +57,11 @@
       "c4"
     ],
     "formats": [
-      "svg"
+      "svg",
+      "ascii"
     ],
     "export": "c4",
+    "ascii": "./dist/ascii.js",
     "language": "./dist/language.js"
   }
 }

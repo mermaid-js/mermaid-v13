@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { c4 } from '@mermaid-js/diagram-c4';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -226,11 +226,169 @@ describe('C4 diagrams through the public API (#542)', () => {
     expect(acc).not.toContain('class="c4-title"');
   });
 
-  it('supports svg only until #545: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {
+  it('reports svg and ascii, and draws nothing as text in an SVG render (R-ASCII-5)', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('c4', 'svg')).toBe(true);
-    expect(m.supportsFormat('c4', 'ascii')).toBe(false);
-    const e = await rejection(m.render('c11', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
+    expect(m.supportsFormat('c4', 'ascii')).toBe(true);
+    const svg = await m.render('c11', TEXT);
+    expect(svg.svg).toContain('aria-roledescription="c4"');
+  });
+});
+
+// #545 (D459): text output draws the SVG's grid on a character grid: boxes with `[Kind]`,
+// boundaries as dashed frames with the label in the top border, stepped relations with the
+// label at the middle and arrowheads.
+const LOOP = [
+  'C4Context',
+  'Person(a, "Alice")',
+  'System(b, "Billing system with a long name", "Takes the money")',
+  'Rel(a, b, "Pays")',
+  'Rel(b, b, "Retries")',
+].join('\n');
+
+const BOUNDARY = [
+  'C4Context',
+  'title Payments',
+  'Person(a, "Alice")',
+  'System_Boundary(bank, "Bank") {',
+  '  SystemDb(db, "Ledger", "Holds the balances")',
+  '}',
+  'Rel(a, db, "Pays", "HTTPS")',
+].join('\n');
+
+describe('C4 text output (#545, D459)', () => {
+  it('draws boxes, stepped relations, arrowheads and a self-loop in Unicode', async () => {
+    const r = await createMermaid().render('a1', LOOP, { format: 'ascii' });
+    expect(r.text).toBe(
+      [
+        '╭─────────────────────────╮             ╭─────────────────────────╮',
+        '│                         │             │  Billing system with a  │',
+        '│                         │             │        long name        ├───┐',
+        '│          Alice          ├─── Pays ───►│    [Software System]    │ Retries',
+        '│        [Person]         │             │     Takes the money     │◄──┘',
+        '╰─────────────────────────╯             │                         │',
+        '                                        ╰─────────────────────────╯',
+      ].join('\n')
+    );
+    expect(r).toMatchObject({ format: 'ascii', columns: 75, rows: 7, diagramType: 'c4' });
+    expect(r.warnings).toEqual([]);
+  });
+
+  it('draws a boundary as a dashed frame with its label in the top border, in both charsets', async () => {
+    const m = createMermaid();
+    const unicode = await m.render('a2', BOUNDARY, { format: 'ascii' });
+    const lines = unicode.text.split('\n');
+    expect(lines[0]).toBe('                Payments');
+    expect(lines).toContain('┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐');
+    expect(lines).toContain('┆               [SYSTEM]               ┆');
+    expect(lines).toContain('┆      ╒═════════════════════════╕     ┆');
+    expect(unicode.text).toContain('Pays');
+    expect(unicode.text).toContain('[HTTPS]');
+    const ascii = await m.render('a3', BOUNDARY, { format: 'ascii', ascii: { charset: 'ascii' } });
+    expect(ascii.text).toBe(
+      [
+        '                Payments',
+        '',
+        '+-------------------------+',
+        '|                         |',
+        '|                         |',
+        '|          Alice          |',
+        '|        [Person]         |',
+        '|                         |',
+        '+----------------+--------+',
+        '                 |',
+        '                 |',
+        '                 |',
+        '+................ Bank ................+',
+        ':               [SYSTEM]               :',
+        ':              Pays                    :',
+        ':             [HTTPS]                  :',
+        ':                |                     :',
+        ':                v                     :',
+        ':      +=========================+     :',
+        ':      |                         |     :',
+        ':      |                         |     :',
+        ':      |         Ledger          |     :',
+        ':      |    [Software System]    |     :',
+        ':      |   Holds the balances    |     :',
+        ':      |                         |     :',
+        ':      +=========================+     :',
+        ':                                      :',
+        ':                                      :',
+        '+......................................+',
+      ].join('\n')
+    );
+    expect(ascii.text).not.toMatch(/[─-╿…]/u);
+  });
+
+  it('renders synchronously once prepared for text', async () => {
+    const m = createMermaid();
+    await m.prepare(LOOP, { format: 'ascii' });
+    const sync = m.renderSync(LOOP, { format: 'ascii' });
+    expect(sync.text).toBe((await m.render('a4', LOOP, { format: 'ascii' })).text);
+  });
+
+  it('is never cropped: ASCII_TOO_WIDE when it does not fit ascii.maxWidth (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const wide = await m.render('a5', LOOP, { format: 'ascii', ascii: { maxWidth: 30 } });
+    expect(wide.columns).toBe(75);
+    expect(wide.text).toBe((await m.render('a6', LOOP, { format: 'ascii' })).text);
+    expect(wide.warnings.map((w) => w.code)).toEqual(['ASCII_TOO_WIDE']);
+    expect(wide.warnings[0]!.message).toContain('ascii.maxWidth is 30');
+    const fits = await m.render('a7', LOOP, { format: 'ascii', ascii: { maxWidth: 75 } });
+    expect(fits.warnings).toEqual([]);
+  });
+
+  it('warns once per feature it drops; config colours and fonts not at all (D459, D82)', async () => {
+    const text = [
+      'C4Context',
+      'accTitle: Payments',
+      'Person(a, "Alice")',
+      'System(b, "Bank")',
+      'System(c, "Ledger")',
+      'Rel(a, b, "Pays", "HTTPS", "Card payments")',
+      'Rel(b, c, "Books")',
+      'UpdateElementStyle(a, $bgColor="red")',
+      'UpdateRelStyle(a, b, $lineColor="blue", $offsetX="10")',
+      'UpdateRelStyle(b, c, $offsetY="-5")',
+    ].join('\n');
+    const m = createMermaid();
+    const r = await m.render('a8', text, {
+      format: 'ascii',
+      config: { c4: { person_bg_color: '#ff0000', personFontSize: 30 } },
+    });
+    const dropped = r.warnings.filter((w) => w.code === 'ASCII_DROPPED');
+    expect(dropped.map((w) => [w.feature, w.astIds])).toEqual([
+      ['style', ['element:a', 'rel:a->b']],
+      ['offset', ['rel:a->b', 'rel:b->c']],
+      ['tooltip', ['rel:a->b']],
+      ['accessibility', []],
+    ]);
+    expect(r.warnings).toHaveLength(4);
+    // The SVG draws all of it: none of these warnings there.
+    const svg = await m.render('a9', text);
+    expect(svg.warnings.filter((w) => w.code === 'ASCII_DROPPED')).toEqual([]);
+  });
+
+  it('raises a padding or margin with no room for a border, with C4_CONFIG_IGNORED (pitfall 22)', async () => {
+    const m = createMermaid();
+    const config = { c4: { c4ShapePadding: 0, c4ShapeMargin: 4 } };
+    const r = await m.render('a10', LOOP, { format: 'ascii', config });
+    expect(r.warnings.map((w) => [w.code, w.path])).toEqual([
+      ['C4_CONFIG_IGNORED', 'c4.c4ShapePadding'],
+      ['C4_CONFIG_IGNORED', 'c4.c4ShapeMargin'],
+    ]);
+    expect(r.text).toContain('Alice');
+    expect(r.text).toContain('Billing system with a');
+    const svg = await m.render('a11', LOOP, { config });
+    expect(svg.warnings).toEqual([]);
+  });
+
+  it('adds a row round each element’s text with ascii.padding: roomy', async () => {
+    const m = createMermaid();
+    const compact = await m.render('a12', LOOP, { format: 'ascii' });
+    const roomy = await m.render('a13', LOOP, { format: 'ascii', ascii: { padding: 'roomy' } });
+    expect(roomy.rows).toBeGreaterThan(compact.rows);
+    expect(roomy.warnings).toEqual([]);
   });
 });

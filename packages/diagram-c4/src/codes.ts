@@ -41,3 +41,9 @@ export const C4_BOUNDARY_CYCLE = 'C4_BOUNDARY_CYCLE';
  * render names every dropped value (v12 wrote them raw).
  */
 export const C4_COLOR_INVALID = 'C4_COLOR_INVALID';
+
+/**
+ * Text output (#545): a `c4.c4ShapePadding` that leaves an element no room for its border on the
+ * character grid (under two cells across or a row down); the least that does is used.
+ */
+export const C4_CONFIG_IGNORED = 'C4_CONFIG_IGNORED';
