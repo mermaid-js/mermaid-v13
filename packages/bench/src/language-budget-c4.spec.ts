@@ -1,12 +1,13 @@
 /**
  * The C4 language-service bench fixture and cycle (R-LANG-4, #543, #542), as the venn one is
  * checked: the fixture is a 50,000-character C4 diagram with no diagnostics and every query in a
- * cycle does its work. The absolute ≤ 15 ms (D156) on the reference runner is
+ * cycle does its work; and, as a ratio (timing tests never assert absolute times), four times
+ * the text costs at most four times the cycle. The absolute ≤ 15 ms (D156) on the reference runner is
  * `pnpm --filter @mermaid-js/bench exec tsx --conditions=mermaid-source src/cli/language-c4.ts --enforce`.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from '@mermaid-js/language-service';
-import { typing } from './language.ts';
+import { bestOfEach, typing } from './language.ts';
 import { C4_FIXTURE, c4Cycle, measureC4 } from './language-c4.ts';
 
 const service = createLanguageService();
@@ -41,5 +42,23 @@ describe('the C4 language-service bench fixture', () => {
     expect(r.total).toBeGreaterThan(0);
     expect(sum).toBeGreaterThan(r.total * 0.25);
     expect(sum).toBeLessThan(r.total * 2.5);
+  }, 60_000);
+});
+
+/**
+ * Robust under machine load: the ratio takes the best of many runs, measured alternately so load
+ * hits both sides alike, in CPU time (`bestOfEach`), as flowchart's and packet's do.
+ */
+describe('the R-LANG-4 budget for C4, as a ratio', () => {
+  it('four times the text at most four times the cycle (plus noise; quadratic gives 16)', () => {
+    const body = C4_FIXTURE.slice(C4_FIXTURE.indexOf('System_Boundary(b0,'));
+    const one = typing(C4_FIXTURE);
+    const four = typing(C4_FIXTURE + body + body + body);
+    const [a, b] = bestOfEach(
+      15,
+      (i) => c4Cycle(service, one(i)),
+      (i) => c4Cycle(service, four(i))
+    );
+    expect(b! / a!).toBeLessThanOrEqual(6);
   }, 60_000);
 });
