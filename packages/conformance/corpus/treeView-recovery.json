@@ -1,0 +1,308 @@
+[
+  {
+    "id": "treeView-recovery/an-unclosed-name",
+    "name": "an unclosed name",
+    "source": "treeView-beta\nsrc/\n  \"a.js\n  b.js",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["src", "b.js"]
+  },
+  {
+    "id": "treeView-recovery/a-line-of-blanks-before-an-indented-node",
+    "name": "a line of blanks before an indented node",
+    "source": "treeView-beta\na\n  \n  b",
+    "errors": [["STRAY_BLANK", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-blank-after-a-quoted-name",
+    "name": "a blank after a quoted name",
+    "source": "treeView-beta\n\"a\"  \n  b",
+    "errors": [["STRAY_BLANK", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-blank-before-a-comment-after-a-quoted-name",
+    "name": "a blank before a comment after a quoted name",
+    "source": "treeView-beta\n\"a\" %% c\n  b",
+    "errors": [["STRAY_BLANK", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-line-of-blanks-at-the-end",
+    "name": "a line of blanks at the end",
+    "source": "treeView-beta\na\n  ",
+    "errors": [["STRAY_BLANK", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/a-title-after-a-node",
+    "name": "a title after a node",
+    "source": "treeView-beta\na\ntitle T\nb",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-name-read-as-a-title-after-a-node",
+    "name": "a name read as a title after a node",
+    "source": "treeView-beta\nsrc/\n  title.txt\n  b",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["src", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-class-at-the-start-of-a-line",
+    "name": "a class at the start of a line",
+    "source": "treeView-beta\na\n:::x\nb",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-description-at-the-start-of-a-line",
+    "name": "a description at the start of a line",
+    "source": "treeView-beta\na\n## d\nb",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-icon-at-the-start-of-a-line",
+    "name": "an icon at the start of a line",
+    "source": "treeView-beta\na\nicon(x)\nb",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-icon-with-no-closing-parenthesis",
+    "name": "an icon with no closing parenthesis",
+    "source": "treeView-beta\na icon(x\nb",
+    "errors": [["UNCLOSED_ICON", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-icon-name-with-a-blank",
+    "name": "an icon name with a blank",
+    "source": "treeView-beta\na icon(x y)\nb",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-second-header",
+    "name": "a second header",
+    "source": "treeView-beta\na\n  treeView-beta\nb",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/text-after-the-header",
+    "name": "text after the header",
+    "source": "treeView-beta x\na",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/a-blank-after-the-header",
+    "name": "a blank after the header",
+    "source": "treeView-beta \na",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/a-class-before-the-first-node",
+    "name": "a class before the first node",
+    "source": "treeView-beta\n  :::x\na",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/a-class-glued-to-a-quoted-name",
+    "name": "a class glued to a quoted name",
+    "source": "treeView-beta\n\"a\":::x\nb",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-empty-box-drawing-node",
+    "name": "an empty box-drawing node",
+    "source": "treeView-beta\n├── a\n├── \n└── b",
+    "errors": [["BOX_EMPTY_NODE", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-indented-line-in-box-drawing",
+    "name": "an indented line in box drawing",
+    "source": "treeView-beta\n├── a\n    b\n└── c",
+    "errors": [["BOX_UNEXPECTED_INDENT", 3]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "treeView-recovery/an-unclosed-name-in-narrow-box-drawing",
+    "name": "an unclosed name in narrow box drawing",
+    "source": "treeView-beta\n├─ a\n│ └─ \"b\n└─ c",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/a-blank-before-a-comment-in-box-drawing",
+    "name": "a blank before a comment in box drawing",
+    "source": "treeView-beta\n├── \"a\" %% c\n└── b",
+    "errors": [["STRAY_BLANK", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-title-after-a-node-in-box-drawing",
+    "name": "a title after a node in box drawing",
+    "source": "treeView-beta\n├── a\ntitle x\n└── b",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/an-unclosed-name-and-a-title-after-a-node",
+    "name": "an unclosed name and a title after a node",
+    "source": "treeView-beta\na\ntitle T\nb\n  \"c",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNCLOSED_STRING", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/two-lines-of-blanks",
+    "name": "two lines of blanks",
+    "source": "treeView-beta\na\n  \n  b\n  \n  c",
+    "errors": [
+      ["STRAY_BLANK", 3],
+      ["STRAY_BLANK", 5]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "treeView-recovery/a-class-and-a-description-at-line-starts",
+    "name": "a class and a description at line starts",
+    "source": "treeView-beta\na\n:::x\nb\n## d\nc",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED_CHARACTER", 5]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "treeView-recovery/two-icons-that-do-not-close",
+    "name": "two icons that do not close",
+    "source": "treeView-beta\n  a icon(x y)\n  b icon(\n  c",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNCLOSED_ICON", 3]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "treeView-recovery/a-second-header-and-an-accessible-title-after-a-node",
+    "name": "a second header and an accessible title after a node",
+    "source": "treeView-beta\na\n  treeView-beta\nb\naccTitle: x\nc",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "treeView-recovery/a-comment-after-the-header-and-an-unclosed-name",
+    "name": "a comment after the header and an unclosed name",
+    "source": "treeView-beta %% c\na\n  \"b",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNCLOSED_STRING", 3]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/two-box-drawing-errors",
+    "name": "two box-drawing errors",
+    "source": "treeView-beta\n├── a\n├──\n├── b\n    c\n└── d",
+    "errors": [
+      ["BOX_EMPTY_NODE", 3],
+      ["BOX_UNEXPECTED_INDENT", 5]
+    ],
+    "keeps": ["a", "b", "d"]
+  },
+  {
+    "id": "treeView-recovery/an-empty-box-drawing-node-and-a-title-after-a-node",
+    "name": "an empty box-drawing node and a title after a node",
+    "source": "treeView-beta\n├── a\n├──\n└── b\ntitle x",
+    "errors": [
+      ["BOX_EMPTY_NODE", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "treeView-recovery/a-blank-after-a-quoted-name-and-a-glued-class",
+    "name": "a blank after a quoted name and a glued class",
+    "source": "treeView-beta\n\"a\"  \n  \"b\":::x\nc",
+    "errors": [
+      ["STRAY_BLANK", 2],
+      ["UNEXPECTED_CHARACTER", 3]
+    ],
+    "keeps": ["a", "b", "c"]
+  },
+  {
+    "id": "treeView-recovery/a-class-before-the-first-node-and-a-title-after-one",
+    "name": "a class before the first node and a title after one",
+    "source": "treeView-beta\n  :::x\na\ntitle t",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/two-errors-in-narrow-box-drawing",
+    "name": "two errors in narrow box drawing",
+    "source": "treeView-beta\n├─ a\n│ └─ \"b\n└─ c icon(x y)",
+    "errors": [
+      ["UNCLOSED_STRING", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/three-annotations-and-names-out-of-place",
+    "name": "three annotations and names out of place",
+    "source": "treeView-beta\n:::a\nb\n## c\nd\n  \"e",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNCLOSED_STRING", 6]
+    ],
+    "keeps": ["b", "d"]
+  },
+  {
+    "id": "treeView-recovery/an-empty-box-drawing-node-and-an-unclosed-name",
+    "name": "an empty box-drawing node and an unclosed name",
+    "source": "treeView-beta\n├── a\n├──\n└── \"b",
+    "errors": [
+      ["BOX_EMPTY_NODE", 3],
+      ["UNCLOSED_STRING", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "treeView-recovery/an-indented-line-in-box-drawing-and-an-icon-that-does-not-close",
+    "name": "an indented line in box drawing and an icon that does not close",
+    "source": "treeView-beta\n├── a\n    x\n│   └── c icon(x y)\n└── d",
+    "errors": [
+      ["BOX_UNEXPECTED_INDENT", 3],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["a", "c", "d"]
+  },
+  {
+    "id": "treeView-recovery/a-stray-blank-an-empty-box-drawing-node-and-a-title-after-a-node",
+    "name": "a stray blank, an empty box-drawing node and a title after a node",
+    "source": "treeView-beta\n├── a\n├── \"b\" %% c\n├──\n└── d\ntitle x",
+    "errors": [
+      ["STRAY_BLANK", 3],
+      ["BOX_EMPTY_NODE", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["a", "b", "d"]
+  }
+]

@@ -1,0 +1,6 @@
+@ 3:4  a|.js
+  prepare: 3:3-3:7 "a.js"; rename to "b.js":
+  %% rename-to: b.js
+  treeView-beta
+    b.js
+    b.js

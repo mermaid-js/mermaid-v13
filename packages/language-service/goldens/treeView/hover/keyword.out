@@ -1,0 +1,27 @@
+@ 1:12  treeView-be|ta
+  1:1-1:14 "treeView-beta"
+  | **`treeView-beta`**
+  |
+  | `treeView-beta`: starts a tree view.
+@ 2:5  ti|tle Files
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Files`: the title of the diagram (the last one wins).
+@ 3:8  accTi|tle: Files
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr: Files
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
+@ 5:9  a.js :|::highlight ## notes
+  5:8-5:11 ":::"
+  | **`:::`**
+  |
+  | ` :::name`: the class of the node before it (`highlight` draws a highlighted row). The last one written wins.
+@ 5:26  a.js :::highlight ## no|tes
+  none

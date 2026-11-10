@@ -17,15 +17,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, ishikawa, requirement |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, ishikawa, requirement |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, ishikawa, requirement, treeview |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, ishikawa, requirement, treeview |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, ishikawa, requirement |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, ishikawa, requirement |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, ishikawa, requirement, treeview |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, ishikawa, requirement |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban, requirement |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er, requirement |
@@ -420,6 +420,18 @@ flags and opacities, which are read literally.
 | `cScalePeer11` | | color | `#ff6e81` | `#a6a6a6` | `#191a1a` | `#ffd4d9` | `#53a8ff` | `#0182cf` | `#cfb447` | `#5e5e5e` | `#ff502a` | `#429cf5` | `#191a1a` |
 | `treemapTitleColor` | `treemap.titleColor` | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#333333` | `#000000` | `#dfe0e0` |
 | `treemapTitleFontSize` | `treemap.titleFontSize` | length | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` | `14` |
+
+### treeview
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `treeViewLabelFontSize` | `treeView.labelFontSize` | length | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` | `16` |
+| `treeViewLabelColor` | `treeView.labelColor` | color | `black` | `black` | `#cccccc` | `#cccccc` | `black` | `#cccccc` | `black` | `black` | `black` | `black` | `#cccccc` |
+| `treeViewLineColor` | `treeView.lineColor` | color | `black` | `black` | `#cccccc` | `#cccccc` | `black` | `#d3d3d3` | `black` | `black` | `black` | `black` | `#cccccc` |
+| `treeViewIconColor` | `treeView.iconColor` | color | `#546e7a` | `#546e7a` | `#90a4ae` | `#90a4ae` | `#546e7a` | `#90a4ae` | `#546e7a` | `#546e7a` | `#546e7a` | `#546e7a` | `#90a4ae` |
+| `treeViewDescriptionColor` | `treeView.descriptionColor` | color | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` | `#6a9955` |
+| `treeViewHighlightBg` | `treeView.highlightBg` | color | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` | `rgba(255, 193, 7, 0.15)` |
+| `treeViewHighlightStroke` | `treeView.highlightStroke` | color | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` | `#ffc107` |
 
 ### venn
 

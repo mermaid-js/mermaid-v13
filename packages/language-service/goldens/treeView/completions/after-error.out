@@ -1,0 +1,8 @@
+@ 3:5  "b|
+  none
+@ 4:8  c.js |
+  :::highlight class (a highlighted row) 4:8-4:8 "" -> ":::highlight"
+  icon(file) constant (the built-in file glyph) 4:8-4:8 "" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 4:8-4:8 "" -> "icon(folder)"
+  icon(none) constant (no icon) 4:8-4:8 "" -> "icon(none)"
+  ## operator (then a description) 4:8-4:8 "" -> "## "
