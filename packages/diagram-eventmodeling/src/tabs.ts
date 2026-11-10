@@ -1,8 +1,8 @@
 /**
  * Tabs in data text (D523, shown as written): each tab moves to the next tab stop, every
  * {@link TAB_STOP} columns from the start of its line, so tab and mixed tab/space indentation
- * keep their nesting when the text is dedented and drawn in mono. Read by the parser's data
- * conversion and by the layout (for a model built by hand).
+ * keep their nesting when the common indent is removed and the text drawn in mono. Read by the
+ * parser's data conversion and by the layout (for a model built by hand).
  */
 
 /** Columns between tab stops (an editor's common default; v12 drew a tab as one blank). */

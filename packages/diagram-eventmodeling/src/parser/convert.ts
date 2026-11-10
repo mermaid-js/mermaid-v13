@@ -73,8 +73,8 @@ function decodeReferences(text: string): string {
  * D523: a data token's text: between the braces (`{ … }`, the first and the last) or the quotes
  * (`"…"`, `'…'`), without its blank first and last lines, each line's trailing blanks, and the
  * indentation its lines share. Tabs are expanded to the next tab stop first (`expandTabs`,
- * columns from the start of each line of the text), so tab indentation dedents and nests as
- * written.
+ * columns from the start of each line of the text), so tab indentation loses its common indent
+ * and nests as written.
  */
 export function dataText(image: string): string {
   const inner =
