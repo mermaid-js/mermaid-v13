@@ -1120,7 +1120,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "e2e/diagrams/block/nightly-check/space-over-the-cap-is-cut.mmd",
+    "id": "block-cases/space-over-the-cap-is-cut",
     "inputHash": "sha256:525d3a7f3a429f64",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1128,7 +1128,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (commented)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (commented)",
     "inputHash": "sha256:dc7896f47bbebbde",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1136,7 +1136,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CR cut)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CR cut)",
     "inputHash": "sha256:d61f35c6a8025cd0",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1144,7 +1144,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CR cut by a directive)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CR cut by a directive)",
     "inputHash": "sha256:86121ec8c3a635b9",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1152,7 +1152,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (CRLF)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CRLF)",
     "inputHash": "sha256:634a3a6e72d40d10",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1160,7 +1160,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (tabs)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (tabs)",
     "inputHash": "sha256:693e9c49e78004ed",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
@@ -1168,7 +1168,7 @@
     "since": "2026-11-09"
   },
   {
-    "id": "block-gate/e2e/nightly-check/space-over-the-cap-is-cut.mmd (mid-line directive)",
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (mid-line directive)",
     "inputHash": "sha256:4f7711bdb912dcca",
     "kind": "model",
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",

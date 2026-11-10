@@ -20,8 +20,9 @@ import { layout as v12Layout, type V12Block } from './v12-layout.ts';
  * v12 spec and syntax-page strings). `layoutBlock`'s cells are that grid.
  *
  * Left out, each asserted: the sources with a labelled composite, whose label band is D444's
- * (v12 put the label under the children), and the spacer cut to 100,000 cells (v12's copy would
- * hold them all; the linear grid runs it in `layout-stress.spec.ts`).
+ * (v12 put the label under the children), and any spacer cut to 100,000 cells (v12's copy would
+ * hold them all; the linear grid lays the same 100,000-cell spacer out in
+ * `layout-stress.spec.ts`).
  *
  * v12 sizes a block at depth d 2^d times, and the repeats are not idempotent (a spanning child
  * grows by `padding · (span − 1) / span` each time). The grid replays v12's calls, a block with
@@ -132,7 +133,8 @@ describe('block grid parity with v12', () => {
       ].map((f) => `e2e/baseline/${f}.mmd`),
       'e2e/nightly-check/composite-with-a-label.mmd',
     ]);
-    expect(tooLarge).toEqual(['e2e/nightly-check/space-over-the-cap-is-cut.mmd']);
+    // The 100,000-cell spacer is a corpus case since #558 (too tall for an e2e screenshot).
+    expect(tooLarge).toEqual([]);
     expect(compared).toBeGreaterThan(90);
     // Composites inside composites are in the comparison too.
     expect(nested).toBeGreaterThan(5);

@@ -718,5 +718,9 @@
   {
     "id": "block-cases/nbsp-between-ids",
     "source": "block\n  a b﻿c"
+  },
+  {
+    "id": "block-cases/space-over-the-cap-is-cut",
+    "source": "---\ndescription: >-\n  A `space:100001` is cut to 100,000 cells, with one BLOCK_TRUNCATED warning\n  (D445, R-SEC-5). mermaid@12.2.0 kept every cell, and rejected a spacer over\n  16,777,214 cells (`Map maximum size exceeded`).\n---\nblock\n  columns 3\n  a space:100001 b\n"
   }
 ]
