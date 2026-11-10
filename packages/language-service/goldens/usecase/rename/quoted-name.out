@@ -1,0 +1,9 @@
+@ 4:19  User --> "Reset |password"
+  prepare: 4:13-4:27 "Reset password"; rename to "Change password":
+  %% rename-to: Change password
+  usecase-beta
+    actor User
+    User --> "Change password"
+    "Change password" --> Done
+    note for Change_password "x"
+    class Change_password hot

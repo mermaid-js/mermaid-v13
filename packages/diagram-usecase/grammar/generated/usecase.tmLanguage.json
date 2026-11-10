@@ -1,0 +1,646 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-usecase",
+  "scopeName": "source.mermaid-usecase",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-usecase"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-usecase"
+    },
+    "rule-0": {
+      "begin": "(?<=^|\\n)[\\t ]*(?=%%)",
+      "end": "(%%[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-comment"
+        }
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "comment.line.mermaid-usecase"
+        }
+      }
+    },
+    "rule-1": {
+      "begin": "(?<=^|\\n)[\\t ]*(?=accTitle[\\t ]*:|accDescr[\\t ]*(?::|\\{[^}]*\\}))",
+      "end": "(accDescr[\\t ]*\\{[^}]*\\})|(accTitle[\\t ]*:[^\\n]*)|(accDescr[\\t ]*:[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc"
+        }
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-usecase"
+        },
+        "2": {
+          "name": "keyword.control.mermaid-usecase"
+        },
+        "3": {
+          "name": "keyword.control.mermaid-usecase"
+        }
+      }
+    },
+    "rule-2": {
+      "match": "[\\t ]+"
+    },
+    "rule-3": {
+      "begin": "\"`",
+      "end": "`\"",
+      "name": "string.quoted.mermaid-usecase"
+    },
+    "rule-4": {
+      "match": "\"`[\\s\\S]*",
+      "name": "string.quoted.mermaid-usecase"
+    },
+    "rule-5": {
+      "match": "\\n"
+    },
+    "rule-6": {
+      "begin": "json[\\t ]+\\w+[\\t ]*@[\\t ]*(?=\\{)",
+      "end": "(\\{(?:[^{}\"]|\"(?:[^\"\\\\]|\\\\[\\s\\S])*\"|\\{(?:[^{}\"]|\"(?:[^\"\\\\]|\\\\[\\s\\S])*\"|\\{(?:[^{}\"]|\"(?:[^\"\\\\]|\\\\[\\s\\S])*\"|\\{(?:[^{}\"]|\"(?:[^\"\\\\]|\\\\[\\s\\S])*\"|\\{(?:[^{}\"]|\"(?:[^\"\\\\]|\\\\[\\s\\S])*\")*\\})*\\})*\\})*\\})*\\})|(\\{[\\s\\S]*)",
+      "patterns": [
+        {
+          "include": "#mode-jsonBody"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-usecase"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-usecase"
+        },
+        "2": {
+          "name": "string.quoted.mermaid-usecase"
+        }
+      }
+    },
+    "rule-7": {
+      "match": "usecase-beta(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-8": {
+      "match": "actor(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-9": {
+      "match": "systemBoundary(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-10": {
+      "match": "end(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-11": {
+      "match": "direction(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-12": {
+      "match": "TD(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-13": {
+      "match": "TB(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-14": {
+      "match": "BT(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-15": {
+      "match": "LR(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-16": {
+      "match": "RL(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-17": {
+      "match": "note(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-18": {
+      "match": "for(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-19": {
+      "match": "json(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-20": {
+      "match": "classDef(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-21": {
+      "match": "class(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-22": {
+      "match": "style(?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-23": {
+      "match": "[Ii][Nn][Cc][Ll][Uu][Dd][Ee](?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-24": {
+      "match": "[Ee][Xx][Tt][Ee][Nn][Dd](?!\\w)",
+      "name": "keyword.control.mermaid-usecase"
+    },
+    "rule-25": {
+      "match": "true(?!\\w)",
+      "name": "constant.language.mermaid-usecase"
+    },
+    "rule-26": {
+      "match": "false(?!\\w)",
+      "name": "constant.language.mermaid-usecase"
+    },
+    "rule-27": {
+      "match": "(?:actor|systemBoundary|end|direction|TD|TB|BT|LR|RL|note|for|json|classDef|class|style|[Ii][Nn][Cc][Ll][Uu][Dd][Ee]|[Ee][Xx][Tt][Ee][Nn][Dd]|true|false)\\w+",
+      "name": "variable.other.mermaid-usecase"
+    },
+    "rule-28": {
+      "match": "--\\|>",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-29": {
+      "match": "\\.\\.>",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-30": {
+      "begin": "<<",
+      "end": "(>>)|((?!(?=(?:(?!>>)[^\\n])*?(?!>>)\\S)(?:(?!>>)[^\\n])+>>)[^\\n]+)",
+      "patterns": [
+        {
+          "include": "#mode-stereotype"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-usecase"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-usecase"
+        },
+        "2": {
+          "name": "string.quoted.mermaid-usecase"
+        }
+      }
+    },
+    "rule-31": {
+      "match": ":::",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-32": {
+      "match": "--+>",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-33": {
+      "match": "<--(?!-)",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-34": {
+      "match": "<--+",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-35": {
+      "match": "--o",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-36": {
+      "match": "o--",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-37": {
+      "match": "--x",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-38": {
+      "match": "x--",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-39": {
+      "match": "--(?!-)",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-40": {
+      "match": "--+",
+      "name": "keyword.operator.mermaid-usecase"
+    },
+    "rule-41": {
+      "match": "@\\{",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-42": {
+      "match": "@",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-43": {
+      "match": "\\{",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-44": {
+      "match": "\\}",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-45": {
+      "match": "\\[",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-46": {
+      "match": "\\]",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-47": {
+      "match": "\\(",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-48": {
+      "match": "\\)",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-49": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-50": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-51": {
+      "match": "#[0-9A-Fa-f]+",
+      "name": "constant.language.mermaid-usecase"
+    },
+    "rule-52": {
+      "match": "\"[^\\n\"]*\"|'[^\\n']*'",
+      "name": "string.quoted.mermaid-usecase"
+    },
+    "rule-53": {
+      "match": "[A-Z_a-z]\\w*(?:-\\w+)+",
+      "name": "variable.other.mermaid-usecase"
+    },
+    "rule-54": {
+      "match": "\\d+\\.\\d+[A-Za-z]*",
+      "name": "constant.numeric.mermaid-usecase"
+    },
+    "rule-55": {
+      "match": "(?:[Aa][Ll][Ll][Oo][Ww][Mm][Ii][Xx][Ii][Nn][Gg]|[Nn][Ee][Ww][Pp][Aa][Gg][Ee]|[Pp][Aa][Cc][Kk][Aa][Gg][Ee]|[Rr][Ee][Cc][Tt][Aa][Nn][Gg][Ll][Ee]|[Ss][Kk][Ii][Nn][Pp][Aa][Rr][Aa][Mm])(?!\\w)",
+      "name": "variable.other.mermaid-usecase"
+    },
+    "rule-56": {
+      "match": "\\w+",
+      "name": "variable.other.mermaid-usecase"
+    },
+    "rule-57": {
+      "match": "\\.\\d+[A-Za-z]*",
+      "name": "constant.numeric.mermaid-usecase"
+    },
+    "rule-58": {
+      "match": "\\\\,",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-59": {
+      "match": "-",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-60": {
+      "match": "\\.",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-61": {
+      "match": "%",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-62": {
+      "match": "[!#$&*+\\/=?^_|~]",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-63": {
+      "match": "[;<>\\\\`]",
+      "name": "punctuation.definition.mermaid-usecase"
+    },
+    "rule-64": {
+      "match": "[^\\t\\n\\r -~]+"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        },
+        {
+          "include": "#rule-46"
+        },
+        {
+          "include": "#rule-47"
+        },
+        {
+          "include": "#rule-48"
+        },
+        {
+          "include": "#rule-49"
+        },
+        {
+          "include": "#rule-50"
+        },
+        {
+          "include": "#rule-51"
+        },
+        {
+          "include": "#rule-52"
+        },
+        {
+          "include": "#rule-53"
+        },
+        {
+          "include": "#rule-54"
+        },
+        {
+          "include": "#rule-55"
+        },
+        {
+          "include": "#rule-56"
+        },
+        {
+          "include": "#rule-57"
+        },
+        {
+          "include": "#rule-58"
+        },
+        {
+          "include": "#rule-59"
+        },
+        {
+          "include": "#rule-60"
+        },
+        {
+          "include": "#rule-61"
+        },
+        {
+          "include": "#rule-62"
+        },
+        {
+          "include": "#rule-63"
+        },
+        {
+          "include": "#rule-64"
+        }
+      ]
+    },
+    "mode-comment": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-jsonBody": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-73": {
+      "match": "(?=(?:(?!>>)[^\\n])*?(?!>>)\\S)(?:(?!>>)[^\\n])+(?=>>)",
+      "name": "string.quoted.mermaid-usecase"
+    },
+    "mode-stereotype": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-73"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-usecase"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-usecase"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-usecase"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-usecase"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

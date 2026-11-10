@@ -35,6 +35,7 @@
   themeVariables property (object) 9:4-9:4 "" -> "themeVariables"
   themeCSS property (string) 9:4-9:4 "" -> "themeCSS"
   layout property (string) 9:4-9:4 "" -> "layout"
+  lineHops property (boolean | string) 9:4-9:4 "" -> "lineHops"
   ascii property (object) 9:4-9:4 "" -> "ascii"
   darkMode property (boolean) 9:4-9:4 "" -> "darkMode"
   fontFamily property (string) 9:4-9:4 "" -> "fontFamily"

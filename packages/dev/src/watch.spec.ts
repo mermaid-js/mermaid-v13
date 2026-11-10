@@ -118,7 +118,10 @@ describe('the dev bundle', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+    // Not a time limit on what it checks: it imports the whole dev bundle (megabytes of
+    // JavaScript) and renders once, which takes more than vitest's default 5 s on a busy
+    // runner. The same limit as the server start above.
+  }, 60_000);
 
   it('serves the reload client at /dev/reload.js', async () => {
     const res = await get('/dev/reload.js');

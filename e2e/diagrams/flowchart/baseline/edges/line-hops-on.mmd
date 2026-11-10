@@ -1,0 +1,14 @@
+---
+description: crossing edges with `lineHops` on (D537), and each crossing gets a 6px arc on the run that gives way
+config:
+  lineHops: true
+  flowchart:
+    curve: linear
+---
+flowchart TD
+  A --> D
+  A --> E
+  B --> D
+  B --> F
+  C --> E
+  C --> F

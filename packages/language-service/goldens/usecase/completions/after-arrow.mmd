@@ -1,0 +1,11 @@
+usecase-beta
+  actor User
+  "Reset password" --> Login
+  systemBoundary Shop
+  end
+  User --> |
+  User -->|
+  User --> Lo|
+  actor User --> |
+  User -- "label" --> |
+  Login ..> : include |
