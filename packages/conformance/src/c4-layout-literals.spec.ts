@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
 
 // The C4 custom layout takes every length from its metrics table or the `c4` config (spec #522,
-// pitfall 13): no file in `packages/diagram-c4/src/layout/` but `metrics.ts` holds a length
-// literal. The numbers the others may still write are counts, multipliers and tolerances.
+// pitfall 13): no file in `packages/diagram-c4/src/layout/` but `metrics.ts`, nor the config
+// reader `src/config.ts`, holds a length literal. The numbers they may still write are counts,
+// multipliers and tolerances. The config reader's defaults are the schema's
+// (`C4DiagramConfig`), checked against it here instead.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'empty sizes, comparisons, the first index',
   '1': 'the next index; a whole; the top level (-1)',
@@ -37,6 +39,24 @@ const SOURCES = readdirSync(DIR).filter(
     f !== 'metrics.ts'
 );
 
+const CONFIG = join(REPO_ROOT, 'packages/diagram-c4/src/config.ts');
+const SCHEMA = join(REPO_ROOT, 'packages/core/schema/config.schema.yaml');
+
+/** The config reader's text less its schema defaults: `C4_CONFIG_DEFAULTS` and the two font sizes. */
+function configCode(source: string): string {
+  return source
+    .replace(/export const C4_CONFIG_DEFAULTS[\s\S]*?\n};/, '')
+    .replace(/export const C4_(?:MESSAGE_)?FONT_SIZE = \d+;/g, '');
+}
+
+/** A `C4DiagramConfig` key's schema default, as written. */
+function schemaDefault(schema: string, key: string): string | undefined {
+  const section = schema.slice(schema.indexOf('  C4DiagramConfig:'));
+  return new RegExp(`\\n      ${key}:\\n(?:        .*\\n)*?        default: (\\S+)`).exec(
+    section
+  )?.[1];
+}
+
 describe('c4 layout', () => {
   it('finds a length literal the scan is meant to catch', () => {
     expect(numericLiterals("const PAD = 20; // 8\nx = w + 12 + 'a 4' + 1e4;")).toEqual([
@@ -64,5 +84,38 @@ describe('c4 layout', () => {
       (n) => !(n in ALLOWED)
     );
     expect(stray).toEqual([]);
+  });
+
+  it('the config reader holds no length literal outside its schema defaults', () => {
+    const stray = numericLiterals(configCode(readFileSync(CONFIG, 'utf8'))).filter(
+      (n) => !(n in ALLOWED)
+    );
+    expect(stray).toEqual([]);
+  });
+
+  it('the config reader’s defaults are the schema’s', () => {
+    const source = readFileSync(CONFIG, 'utf8');
+    const schema = readFileSync(SCHEMA, 'utf8');
+    const defaults = /export const C4_CONFIG_DEFAULTS[\s\S]*?\n};/.exec(source)![0];
+    const pairs = [...defaults.matchAll(/^\s+(\w+): (\w+),$/gm)].map((m): [string, string] => [
+      m[1]!,
+      m[2]!,
+    ]);
+    expect(pairs.map(([k]) => k)).toEqual([
+      'diagramMarginX',
+      'diagramMarginY',
+      'c4ShapeMargin',
+      'c4ShapePadding',
+      'width',
+      'nextLinePaddingX',
+      'c4ShapeInRow',
+      'c4BoundaryInRow',
+      'wrap',
+    ]);
+    for (const [key, value] of pairs) expect(schemaDefault(schema, key), key).toBe(value);
+    expect(/C4_FONT_SIZE = (\d+);/.exec(source)![1]).toBe(schemaDefault(schema, 'personFontSize'));
+    expect(/C4_MESSAGE_FONT_SIZE = (\d+);/.exec(source)![1]).toBe(
+      schemaDefault(schema, 'messageFontSize')
+    );
   });
 });

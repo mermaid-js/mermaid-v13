@@ -82,11 +82,14 @@ grammars:
           docOf: UPDATE_EL_STYLE
 
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4): the
-# files ported from Pele's C4 layout and router (#540). Pele is a shared upstream (its notices are
-# mermaid's own), so this package needs no notices/mermaid.txt.
+# files ported from Pele's C4 layout, router and label placement (#540), as THIRD_PARTY_NOTICES
+# lists them. Pele is a shared upstream (its notices are mermaid's own), so this package needs no
+# notices/mermaid.txt.
 credits:
   files:
     src/layout/grid.ts: ['Pele']
+    src/layout/layout.ts: ['Pele']
+    src/layout/metrics.ts: ['Pele']
     src/layout/path.ts: ['Pele']
     src/layout/route.ts: ['Pele']
     src/layout/shapes.ts: ['Pele']

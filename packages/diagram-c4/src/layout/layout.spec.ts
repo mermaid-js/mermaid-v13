@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
+import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
@@ -343,15 +344,70 @@ describe('c4 relations (D455)', () => {
     expect(Math.hypot(last.x - r.end.x, last.y - r.end.y)).toBeCloseTo(10);
   });
 
-  it('goes straight with labels at the middle over the comparison budget (R-SEC-5)', () => {
+  it('counts its comparisons: once 2,000,000 are spent, the relations left go straight (R-SEC-5)', () => {
     const n = 800;
     const lines = ['C4Context'];
     for (let i = 0; i < n; i++) lines.push(`System(s${i}, "S${i}")`);
     for (let i = 0; i < n; i++) lines.push(`Rel(s${i}, s${(i * 7 + 3) % n}, "r${i}")`);
-    const { model, layout } = lay(lines.join('\n'));
+    const { model, config, layout } = lay(lines.join('\n'));
     expect(layout.careful).toBe(false);
-    expect(layout.relations.every((r) => r.route === 'line' || r.route === 'loop')).toBe(true);
+    // The first relations are routed with care; past the budget every one is straight.
+    const lastBent = layout.relations.map((r) => r.route).lastIndexOf('bent');
+    expect(lastBent).toBeGreaterThan(0);
+    expect(lastBent).toBeLessThan(n - 1);
+    expect(layout.relations.slice(lastBent + 1).every((r) => r.route !== 'bent')).toBe(true);
     expect(c4LayoutViolations(model, layout)).toEqual([]);
+    // Counted, not timed: the same layout every time.
+    expect(layoutC4(model, c4TestContext(config, theme))).toEqual(layout);
+  });
+
+  it('spends no more than the integrator’s maxLayoutWork (D542)', () => {
+    const src = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nRel(a, c, "skips")';
+    const { model, config } = parsedC4(src);
+    const ctx = c4TestContext(config, theme);
+    expect(layoutC4(model, ctx).careful).toBe(true);
+    const tight = layoutC4(model, { ...ctx, limits: { ...DEFAULT_LIMITS, maxLayoutWork: 0 } });
+    expect(tight.careful).toBe(false);
+    expect(rel(tight, 'a', 'c').route).toBe('line');
+  });
+});
+
+describe('c4 wrapping (v12: relations and boundaries need the root wrap and c4.wrap)', () => {
+  const long = 'word '.repeat(30).trim();
+  const src = [
+    'C4Context',
+    `Boundary(b, "${long}") {`,
+    `  System(s, "S", "${long}")`,
+    '}',
+    'System(t, "T")',
+    `Rel(s, t, "${long}")`,
+  ].join('\n');
+
+  it.each([
+    [false, false, false],
+    [false, true, false],
+    [true, false, false],
+    [true, true, true],
+  ])('root wrap %s, c4.wrap %s: relation and boundary text wrap %s', (root, c4, both) => {
+    const layout = sound(src, { measurer: grid, integrator: { wrap: root, c4: { wrap: c4 } } });
+    const lines = (l: PlacedLabel | undefined): number => l!.text.lines.length;
+    expect(lines(rel(layout, 's', 't').label) > 1).toBe(both);
+    expect(lines(frame(layout, 'b').label) > 1).toBe(both);
+    // Element text follows c4.wrap alone.
+    expect(lines(el(layout, 's').descr) > 1).toBe(c4);
+  });
+});
+
+describe('c4 global (D454)', () => {
+  it('draws Boundary(global, …) as an ordinary boundary', () => {
+    const layout = sound(
+      'C4Context\nBoundary(global, "G") {\n  Person(a, "A")\n}\nSystem(s, "S")\nRel(s, global, "in")'
+    );
+    const g = frame(layout, 'global');
+    expect(g.parent).toBe(-1);
+    expect(textOf(g.label!)).toBe('G');
+    expect(el(layout, 'a').box.y).toBeGreaterThan(g.box.y + g.head);
+    expect(rel(layout, 's', 'global').end.y).toBeCloseTo(g.box.y);
   });
 });
 
@@ -396,6 +452,18 @@ describe('c4 layout checker', () => {
     const off = { ...r!, start: { ...r!.start, y: r!.start.y - 30 } };
     expect(c4LayoutViolations(model, { ...layout, relations: [off, ...others] }).join()).toMatch(
       /not on the outline/
+    );
+  });
+
+  it('catches an element on a frame it is not in', () => {
+    const { model, layout } = lay(sourceOf2());
+    const frameBox = layout.boundaries[0]!.box;
+    const outsider = layout.elements.find((e) => model.elements[e.index]!.parent < 0)!;
+    const moved = layout.elements.map((e) =>
+      e === outsider ? { ...e, box: { ...e.box, x: frameBox.x, y: frameBox.y } } : e
+    );
+    expect(c4LayoutViolations(model, { ...layout, elements: moved }).join()).toMatch(
+      /element x overlaps boundary c, which it is not in/
     );
   });
 

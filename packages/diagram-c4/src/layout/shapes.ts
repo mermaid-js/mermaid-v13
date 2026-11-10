@@ -58,12 +58,17 @@ export interface ShapeSize {
   readonly dy: number;
 }
 
+/** How a shape is sized: its padding all round and its least width (`c4ShapePadding`, `c4.width`). */
+export interface ShapeRoom {
+  readonly pad: number;
+  readonly least: number;
+}
+
 export function shapeSize(
   shape: C4ShapeId,
   tw: number,
   th: number,
-  pad: number,
-  least: number
+  { pad, least }: ShapeRoom
 ): ShapeSize {
   const w = Math.max(least, tw + 2 * pad);
   const h = th + 2 * pad;
@@ -118,7 +123,7 @@ const ellipse = (cx: number, cy: number, rx: number, ry: number): Piece => ({
 });
 
 /** A rounded rectangle: two rectangles across and down, and a circle in each corner. */
-function roundedPieces(x: number, y: number, w: number, h: number, radius: number): Piece[] {
+function roundedPieces({ x, y, width: w, height: h }: Rect, radius: number): Piece[] {
   const r = Math.min(radius, w / 2, h / 2);
   if (!(r > 0)) return [rectPiece(x, y, x + w, y + h)];
   return [
@@ -143,7 +148,10 @@ export function piecesOf(box: Outline): Piece[] {
   switch (box.form) {
     case 'person':
       return [
-        ...roundedPieces(x, y + M.personHead, w, h - M.personHead, M.shapeRadius),
+        ...roundedPieces(
+          { x, y: y + M.personHead, width: w, height: h - M.personHead },
+          M.shapeRadius
+        ),
         ellipse(x + w / 2, y + M.personHeadCentre, M.personHeadRadius, M.personHeadRadius),
       ];
     case 'cyl': {
@@ -163,10 +171,10 @@ export function piecesOf(box: Outline): Piece[] {
       ];
     }
     case 'frame':
-      return roundedPieces(x, y, w, h, M.boundaryRadius);
+      return roundedPieces(box, M.boundaryRadius);
     case 'rounded':
     case 'fr-rect':
-      return roundedPieces(x, y, w, h, M.shapeRadius);
+      return roundedPieces(box, M.shapeRadius);
   }
 }
 
@@ -186,13 +194,11 @@ export const sidesOf = (r: Rect): Sides => ({
   y1: r.y + r.height,
 });
 
-/** How far along the segment from (px, py) by (dx, dy) it first meets the rectangle; Infinity when it misses. */
+/** How far along the segment from `p` by `d` it first meets the rectangle; Infinity when it misses. */
 export function hitRect(
   { x0, y0, x1, y1 }: Sides,
-  px: number,
-  py: number,
-  dx: number,
-  dy: number
+  { x: px, y: py }: Point,
+  { x: dx, y: dy }: Point
 ): number {
   let enter = 0;
   let leave = 1;
@@ -217,10 +223,8 @@ export function hitRect(
 
 function hitEllipse(
   p: Extract<Piece, { kind: 'ellipse' }>,
-  px: number,
-  py: number,
-  dx: number,
-  dy: number
+  { x: px, y: py }: Point,
+  { x: dx, y: dy }: Point
 ): number {
   const ux = dx / p.rx;
   const uy = dy / p.ry;
@@ -237,13 +241,12 @@ function hitEllipse(
   return c <= 0 ? 0 : Infinity;
 }
 
-/** Where the segment from (px, py) to (qx, qy), from outside, first meets `box`'s outline, as a fraction of it. */
-export function hit(box: Outline, px: number, py: number, qx: number, qy: number): number {
-  const dx = qx - px;
-  const dy = qy - py;
+/** Where the segment from `p` to `q`, from outside, first meets `box`'s outline, as a fraction of it. */
+export function hit(box: Outline, p: Point, q: Point): number {
+  const d = { x: q.x - p.x, y: q.y - p.y };
   let t = Infinity;
-  for (const p of piecesOf(box)) {
-    const at = p.kind === 'rect' ? hitRect(p, px, py, dx, dy) : hitEllipse(p, px, py, dx, dy);
+  for (const piece of piecesOf(box)) {
+    const at = piece.kind === 'rect' ? hitRect(piece, p, d) : hitEllipse(piece, p, d);
     if (at < t) t = at;
   }
   return t;

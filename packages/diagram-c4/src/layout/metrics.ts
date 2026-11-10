@@ -22,9 +22,10 @@ export const C4_METRICS = {
   boundaryLabelTop: 8,
   boundaryTypeGap: 5,
   boundaryDescrGap: 20,
-  /** v12: a boundary's label is `boundaryFontSize + 2`, its description `− 2`. */
+  /** v12: a boundary's label is `boundaryFontSize + 2`, its description `− 2`, at least `minFontSize`. */
   boundaryLabelGrow: 2,
   boundaryDescrShrink: 2,
+  minFontSize: 1,
   /** Room each side of a header wider than the boundary's contents (Pele `HEAD_LEFT`). */
   boundaryHeadPadX: 16,
   /** v12 `svgDraw.ts`: a boundary's corner radius. */
@@ -92,10 +93,12 @@ export const C4_METRICS = {
   /** A leaning label moves out by its half height less this. */
   leanSlack: 14,
 
-  /** R-SEC-5, D455: above this many box comparisons, relations go straight and labels sit at the middle. */
+  /**
+   * R-SEC-5, D455: the box and stretch comparisons the router and label placement may make (also
+   * capped by the integrator's `limits.maxLayoutWork`, D542); past it, the relations left go
+   * straight and their labels sit at their middle.
+   */
   careBudget: 2_000_000,
-  /** The comparisons each relation makes with the others (Pele's `3 · rels`). */
-  carePerRelation: 3,
   /** The lane steps a detour tries for a free lane. */
   laneTries: 4,
   /** Places a side offers a line, and the steps tried to find them. */

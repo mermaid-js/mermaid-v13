@@ -11,7 +11,7 @@
  */
 // cspell:ignore kepano
 import { C4_METRICS as M } from './metrics.ts';
-import { hit, hitRect, sidesOf, type Outline } from './shapes.ts';
+import { hit, hitRect, sidesOf, type Outline, type Sides } from './shapes.ts';
 import type { C4RouteKind, Point } from './types.ts';
 
 /** A routed relation: its corners, the stretch its label may sit on, and how to place it. */
@@ -41,17 +41,12 @@ export interface Route {
 }
 
 /** Whether a polyline (x, y pairs) crosses the rectangle. */
-export function crosses(
-  points: readonly number[],
-  x0: number,
-  y0: number,
-  x1: number,
-  y1: number
-): boolean {
+export function crosses(points: readonly number[], box: Sides): boolean {
   for (let i = 2; i < points.length; i += 2) {
     const px = points[i - 2]!;
     const py = points[i - 1]!;
-    if (hitRect({ x0, y0, x1, y1 }, px, py, points[i]! - px, points[i + 1]! - py) <= 1) return true;
+    if (hitRect(box, { x: px, y: py }, { x: points[i]! - px, y: points[i + 1]! - py }) <= 1)
+      return true;
   }
   return false;
 }
@@ -92,7 +87,7 @@ function connect(a: Outline, b: Outline, shift: number): [number, number, number
       ox = least === left ? outer.x : outer.x + outer.width;
       oy = iy;
     }
-    const t = Math.min(hit(inner, ox, oy, ix, iy), 1);
+    const t = Math.min(hit(inner, { x: ox, y: oy }, { x: ix, y: iy }), 1);
     const mx = ox + (ix - ox) * t;
     const my = oy + (iy - oy) * t;
     return down ? [ox, oy, mx, my] : [mx, my, ox, oy];
@@ -112,8 +107,8 @@ function connect(a: Outline, b: Outline, shift: number): [number, number, number
   const len = Math.hypot(qx - px, qy - py) || 1;
   const nx = (-(qy - py) / len) * shift;
   const ny = ((qx - px) / len) * shift;
-  let ta = hit(a, qx + nx, qy + ny, px + nx, py + ny);
-  let tb = hit(b, px + nx, py + ny, qx + nx, qy + ny);
+  let ta = hit(a, { x: qx + nx, y: qy + ny }, { x: px + nx, y: py + ny });
+  let tb = hit(b, { x: px + nx, y: py + ny }, { x: qx + nx, y: qy + ny });
   if (ta <= 1 && tb <= 1) {
     px += nx;
     py += ny;
@@ -124,29 +119,52 @@ function connect(a: Outline, b: Outline, shift: number): [number, number, number
     py = ay;
     qx = bx;
     qy = by;
-    ta = Math.min(hit(a, qx, qy, px, py), 1);
-    tb = Math.min(hit(b, px, py, qx, qy), 1);
+    ta = Math.min(hit(a, { x: qx, y: qy }, { x: px, y: py }), 1);
+    tb = Math.min(hit(b, { x: px, y: py }, { x: qx, y: qy }), 1);
   }
   return [qx + (px - qx) * ta, qy + (py - qy) * ta, px + (qx - px) * tb, py + (qy - py) * tb];
+}
+
+/** The sides of a box a line leaves or reaches. */
+export const SIDE = { left: 0, right: 1, top: 2, bottom: 3 } as const;
+export type Side = (typeof SIDE)[keyof typeof SIDE];
+
+/**
+ * The router's work counter (R-SEC-5, D455): the box and stretch comparisons it has made, against
+ * its budget. Once spent, the relations still to route go straight and their labels sit at their
+ * middle. Counted, never timed (R-ARCH-6), so the result is the same on every machine.
+ */
+export class Work {
+  spent = 0;
+  constructor(readonly budget: number) {}
+
+  charge(n: number): void {
+    this.spent += n;
+  }
+
+  get done(): boolean {
+    return this.spent >= this.budget;
+  }
 }
 
 /**
  * What the routes drawn so far take up, so that the next keeps apart from them: upright
  * stretches as x, top, bottom; level ones as y, left, right; and where lines leave or reach each
- * side of a shape.
+ * side of a shape. Each scan is charged to `work`.
  */
 export class Lanes {
   private readonly upright: number[] = [];
   private readonly level: number[] = [];
   private readonly frames: [number[], number[]] = [[], []];
   private readonly taken = new Map<Outline, number[]>();
-  /** Routes that found no lane of their own. */
-  squeezed = 0;
+
+  constructor(readonly work: Work) {}
 
   free(upright: boolean, at: number, a0: number, a1: number): boolean {
     const lo = Math.min(a0, a1);
     const hi = Math.max(a0, a1);
     const near = (list: readonly number[], gap: number): boolean => {
+      this.work.charge(list.length / 3);
       for (let i = 0; i < list.length; i += 3)
         if (Math.abs(list[i]! - at) < gap && list[i + 1]! < hi && list[i + 2]! > lo) return true;
       return false;
@@ -171,6 +189,7 @@ export class Lanes {
         upright ? points[i + 1]! : points[i]!
       );
       const list = upright ? this.level : this.upright;
+      this.work.charge(list.length / 3);
       for (let j = 0; j < list.length; j += 3)
         if (list[j]! > lo && list[j]! < hi && list[j + 1]! < at && list[j + 2]! > at) count++;
     }
@@ -201,10 +220,10 @@ export class Lanes {
   }
 
   /**
-   * Where on one side of a shape (0 left, 1 right, 2 top, 3 bottom) a line can leave or arrive,
-   * between lo and hi: the places clear of the lines already there, nearest `want` first.
+   * Where on one side of a shape a line can leave or arrive, between lo and hi: the places clear
+   * of the lines already there, nearest `want` first.
    */
-  ports(box: Outline, side: number, want: number, lo: number, hi: number): number[] {
+  ports(box: Outline, side: Side, want: number, [lo, hi]: readonly [number, number]): number[] {
     const used = this.taken.get(box) ?? [];
     const out: number[] = [];
     for (let k = 0; k < M.portTries && out.length < M.portCandidates; k++) {
@@ -218,22 +237,22 @@ export class Lanes {
     return out.length ? out : [want];
   }
 
-  claim(box: Outline, side: number, at: number): void {
+  claim(box: Outline, side: Side, at: number): void {
     const used = this.taken.get(box);
     if (used) used.push(side, at);
     else this.taken.set(box, [side, at]);
   }
 }
 
+/** Whether a polyline crosses none of `others` but the ends `a` and `b`; charged to `work`. */
 function clearOf(
   points: readonly number[],
   others: readonly Outline[],
-  a: Outline,
-  b: Outline
+  [a, b]: readonly [Outline, Outline],
+  work: Work
 ): boolean {
-  for (const o of others)
-    if (o !== a && o !== b && crosses(points, o.x, o.y, o.x + o.width, o.y + o.height))
-      return false;
+  work.charge(others.length);
+  for (const o of others) if (o !== a && o !== b && crosses(points, sidesOf(o))) return false;
   return true;
 }
 
@@ -271,17 +290,12 @@ function across(lo: number, hi: number): number[] {
   return out;
 }
 
-/** Ports along a side of `box`, clear of its corners. */
-const portsOn = (
-  lanes: Lanes,
-  box: Outline,
-  side: number,
-  want: number,
-  upright: boolean
-): number[] =>
-  upright
-    ? lanes.ports(box, side, want, box.y + M.portInset, box.y + box.height - M.portInset)
-    : lanes.ports(box, side, want, box.x + M.portInset, box.x + box.width - M.portInset);
+/** Ports along a side of `box`, clear of its corners: along y on the left and right, else along x. */
+function portsOn(lanes: Lanes, box: Outline, side: Side, want: number): number[] {
+  return side === SIDE.left || side === SIDE.right
+    ? lanes.ports(box, side, want, [box.y + M.portInset, box.y + box.height - M.portInset])
+    : lanes.ports(box, side, want, [box.x + M.portInset, box.x + box.width - M.portInset]);
+}
 
 function elbow(
   a: Outline,
@@ -293,11 +307,11 @@ function elbow(
   const ay = cy(a);
   const bx = cx(b);
   const by = cy(b);
-  let best:
-    | { points: number[]; cost: number; upright: boolean; sides: [number, number] }
-    | undefined;
-  const consider = (points: number[], upright: boolean, sides: [number, number]): void => {
-    if (!clearOf(points, others, a, b)) return;
+  let best: { points: number[]; cost: number; upright: boolean; sides: [Side, Side] } | undefined;
+  const consider = (points: number[], upright: boolean, sides: [Side, Side]): void => {
+    // A spent budget ends the search: the line goes straight.
+    if (lanes.work.done) return;
+    if (!clearOf(points, others, [a, b], lanes.work)) return;
     for (let i = 2; i < points.length; i += 2) {
       const up = points[i] === points[i - 2];
       if (
@@ -334,14 +348,14 @@ function elbow(
   if (a.x + a.width <= b.x || b.x + b.width <= a.x) {
     const right = bx > ax;
     const down = Math.sign(by - ay);
-    const sides: [number, number] = right ? [1, 0] : [0, 1];
+    const sides: [Side, Side] = right ? [SIDE.right, SIDE.left] : [SIDE.left, SIDE.right];
     search(
-      portsOn(lanes, a, sides[0], ay + (down * a.height) / 4, true),
-      portsOn(lanes, b, sides[1], by - (down * b.height) / 4, true),
+      portsOn(lanes, a, sides[0], ay + (down * a.height) / 4),
+      portsOn(lanes, b, sides[1], by - (down * b.height) / 4),
       across(right ? a.x + a.width : b.x + b.width, right ? b.x : a.x),
       (y0, y1, lane) => {
-        const x0 = lane + (ax - lane) * Math.min(hit(a, lane, y0, ax, y0), 1);
-        const x1 = lane + (bx - lane) * Math.min(hit(b, lane, y1, bx, y1), 1);
+        const x0 = lane + (ax - lane) * Math.min(hit(a, { x: lane, y: y0 }, { x: ax, y: y0 }), 1);
+        const x1 = lane + (bx - lane) * Math.min(hit(b, { x: lane, y: y1 }, { x: bx, y: y1 }), 1);
         consider([x0, y0, lane, y0, lane, y1, x1, y1], true, sides);
       }
     );
@@ -349,14 +363,14 @@ function elbow(
   if (a.y + a.height <= b.y || b.y + b.height <= a.y) {
     const below = by > ay;
     const sideways = Math.sign(bx - ax);
-    const sides: [number, number] = below ? [3, 2] : [2, 3];
+    const sides: [Side, Side] = below ? [SIDE.bottom, SIDE.top] : [SIDE.top, SIDE.bottom];
     search(
-      portsOn(lanes, a, sides[0], ax + (sideways * a.width) / 4, false),
-      portsOn(lanes, b, sides[1], bx - (sideways * b.width) / 4, false),
+      portsOn(lanes, a, sides[0], ax + (sideways * a.width) / 4),
+      portsOn(lanes, b, sides[1], bx - (sideways * b.width) / 4),
       across(below ? a.y + a.height : b.y + b.height, below ? b.y : a.y),
       (x0, x1, lane) => {
-        const y0 = lane + (ay - lane) * Math.min(hit(a, x0, lane, x0, ay), 1);
-        const y1 = lane + (by - lane) * Math.min(hit(b, x1, lane, x1, by), 1);
+        const y0 = lane + (ay - lane) * Math.min(hit(a, { x: x0, y: lane }, { x: x0, y: ay }), 1);
+        const y1 = lane + (by - lane) * Math.min(hit(b, { x: x1, y: lane }, { x: x1, y: by }), 1);
         consider([x0, y0, x0, lane, x1, lane, x1, y1], false, sides);
       }
     );
@@ -377,7 +391,7 @@ function loop(a: Outline): Route {
   const y = cy(a);
   const far = x + M.loop;
   const endAt = (yy: number): number =>
-    far + (cx(a) - far) * Math.min(hit(a, far, yy, cx(a), yy), 1);
+    far + (cx(a) - far) * Math.min(hit(a, { x: far, y: yy }, { x: cx(a), y: yy }), 1);
   const sx = endAt(y - spread);
   const ex = endAt(y + spread);
   const len = Math.hypot(M.loop, spread) || 1;
@@ -402,31 +416,33 @@ function loop(a: Outline): Route {
   };
 }
 
+/** How a relation is routed: its sideways shift, the shapes to steer clear of, and the lanes taken. */
+export interface RouteOptions {
+  readonly shift: number;
+  /** Undefined once the budget is spent: the line goes straight. */
+  readonly others?: readonly Outline[];
+  readonly lanes: Lanes;
+}
+
 /**
  * Routes a relation from a to b. `shift` moves the line sideways when another runs the opposite
  * way. `others` are the shapes to steer clear of; undefined skips that check (over the budget).
  * `lanes` holds what the routes before it take up, so that this one keeps apart from them.
  */
-export function route(
-  a: Outline,
-  b: Outline,
-  shift: number,
-  others: readonly Outline[] | undefined,
-  lanes: Lanes
-): Route {
+export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOptions): Route {
   if (a === b) return loop(a);
 
   const [sx, sy, ex, ey] = connect(a, b, shift);
   const upright = sx === ex;
   const level = sy === ey;
   const inTheWay = (o: Outline): boolean =>
-    o !== a && o !== b && hitRect(sidesOf(o), sx, sy, ex - sx, ey - sy) <= 1;
+    o !== a && o !== b && hitRect(sidesOf(o), { x: sx, y: sy }, { x: ex - sx, y: ey - sy }) <= 1;
+  if (others) lanes.work.charge(others.length);
   const blocked =
     others !== undefined && !contains(a, b) && !contains(b, a) && others.some(inTheWay);
   if (others && blocked && !upright && !level) {
     const around = elbow(a, b, others, lanes);
     if (around) return around;
-    lanes.squeezed++;
   }
   if (others && blocked && (upright || level))
     return detour({ a, b, others, lanes, upright, line: [sx, sy, ex, ey], inTheWay });
@@ -464,10 +480,10 @@ interface Detour {
   readonly inTheWay: (o: Outline) => boolean;
 }
 
-/** The side of a box a detour leaves from: 0 left, 1 right, 2 top, 3 bottom. */
-function detourSide(upright: boolean, forward: boolean): number {
-  if (upright) return forward ? 1 : 0;
-  return forward ? 3 : 2;
+/** The side of a box a detour leaves from. */
+function detourSide(upright: boolean, forward: boolean): Side {
+  if (upright) return forward ? SIDE.right : SIDE.left;
+  return forward ? SIDE.bottom : SIDE.top;
 }
 
 /** An upright or level line past shapes: a lane round them on one side. */
@@ -483,6 +499,7 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
     };
     widen(a);
     widen(b);
+    lanes.work.charge(others.length);
     for (const o of others) if (inTheWay(o)) widen(o);
     return lane;
   };
@@ -491,6 +508,7 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
     ? Math.max(a.y + a.height, b.y + b.height)
     : Math.max(a.x + a.width, b.x + b.width);
   const outside = (forward: boolean, lane: number): boolean => {
+    lanes.work.charge(others.length);
     for (const o of others) {
       if (o === a || o === b) continue;
       const near = upright ? o.y < hi && o.y + o.height > lo : o.x < hi && o.x + o.width > lo;
@@ -511,31 +529,31 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
   // it went; one past the last try when none was free.
   const along = (
     forward: boolean
-  ): { points: number[]; side: number; p0: number; p1: number; step: number } => {
+  ): { points: number[]; side: Side; p0: number; p1: number; step: number } => {
     const lane = laneOn(forward);
     const sign = forward ? 1 : -1;
     const side = detourSide(upright, forward);
     const p0 = upright
-      ? portsOn(lanes, a, side, ay + (towards * a.height) / 4, true)[0]!
-      : portsOn(lanes, a, side, ax + (towards * a.width) / 4, false)[0]!;
+      ? portsOn(lanes, a, side, ay + (towards * a.height) / 4)[0]!
+      : portsOn(lanes, a, side, ax + (towards * a.width) / 4)[0]!;
     const p1 = upright
-      ? portsOn(lanes, b, side, by - (towards * b.height) / 4, true)[0]!
-      : portsOn(lanes, b, side, bx - (towards * b.width) / 4, false)[0]!;
+      ? portsOn(lanes, b, side, by - (towards * b.height) / 4)[0]!
+      : portsOn(lanes, b, side, bx - (towards * b.width) / 4)[0]!;
     const pointsAt = (at: number): number[] => {
       if (upright) {
-        const x0 = at + (ax - at) * Math.min(hit(a, at, p0, ax, p0), 1);
-        const x1 = at + (bx - at) * Math.min(hit(b, at, p1, bx, p1), 1);
+        const x0 = at + (ax - at) * Math.min(hit(a, { x: at, y: p0 }, { x: ax, y: p0 }), 1);
+        const x1 = at + (bx - at) * Math.min(hit(b, { x: at, y: p1 }, { x: bx, y: p1 }), 1);
         return [x0, p0, at, p0, at, p1, x1, p1];
       }
-      const y0 = at + (ay - at) * Math.min(hit(a, p0, at, p0, ay), 1);
-      const y1 = at + (by - at) * Math.min(hit(b, p1, at, p1, by), 1);
+      const y0 = at + (ay - at) * Math.min(hit(a, { x: p0, y: at }, { x: p0, y: ay }), 1);
+      const y1 = at + (by - at) * Math.min(hit(b, { x: p1, y: at }, { x: p1, y: by }), 1);
       return [p0, y0, p0, at, p1, at, p1, y1];
     };
     let points = pointsAt(lane + sign * M.lane);
     for (let k = 0; k <= M.laneTries; k++) {
       const at = lane + sign * (M.lane + k * M.laneStep);
       const tried = pointsAt(at);
-      if (!clearOf(tried, others, a, b)) continue;
+      if (!clearOf(tried, others, [a, b], lanes.work)) continue;
       points = tried;
       if (lanes.free(upright, at, p0, p1)) return { points, side, p0, p1, step: k };
     }
@@ -554,9 +572,8 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
   let forward = natural;
   if (back && !out) forward = !natural;
   else if (other && cost(other) < cost(first)) forward = !natural;
-  const { points, side, p0, p1, step } = forward === natural ? first : (other ?? along(!natural));
+  const { points, side, p0, p1 } = forward === natural ? first : (other ?? along(!natural));
   const sign = forward ? 1 : -1;
-  if (step > M.laneTries) lanes.squeezed++;
   lanes.take(points);
   lanes.claim(a, side, p0);
   lanes.claim(b, side, p1);

@@ -21,7 +21,7 @@ import {
   type GridSpacing,
 } from './grid.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { Lanes, pointsOf, route, type Route } from './route.ts';
+import { Lanes, pointsOf, route, Work, type Route } from './route.ts';
 import { shapeOf, shapeSize, type Outline } from './shapes.ts';
 import type {
   C4BoundaryLayout,
@@ -36,7 +36,7 @@ import type {
 
 /** What the layout reads from the render context. */
 export type C4LayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn' | 'limits'>>;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -131,7 +131,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
 
   // Measure first: elements.
   const nodes = model.elements.map((element, index) =>
-    elementNode(element, index, config, fonts, measure)
+    elementNode(element, index, { config, fonts, measure })
   );
 
   // The groups: the top level, then each boundary under its parent (D454: a cycle broken).
@@ -165,7 +165,9 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     shapeInRow: model.shapeInRow ?? config.c4ShapeInRow,
     boundaryInRow: model.boundaryInRow ?? config.c4BoundaryInRow,
   };
-  placeGrid(order, spacing, (g, contentW) => header(g as Group, contentW, config, fonts, measure));
+  placeGrid(order, spacing, (g, contentW) =>
+    header(g as Group, contentW, { config, fonts, measure })
+  );
 
   // The outlines the router sees.
   const elementBoxes = new Map<string, Outline>();
@@ -189,6 +191,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
 
   const relations = routeAll({
     model,
+    budget: Math.min(M.careBudget, ctx.limits?.maxLayoutWork ?? Infinity),
     endOf,
     shapes,
     frames: frameList,
@@ -231,13 +234,18 @@ type Measure = (
   style?: number
 ) => Measured | undefined;
 
+/** What measuring an element's or a boundary's text reads. */
+interface Measuring {
+  readonly config: C4LayoutConfig;
+  readonly fonts: C4Fonts;
+  readonly measure: Measure;
+}
+
 /** An element's three sections, measured in its kind's font, and its shape's size around them. */
 function elementNode(
   element: C4Element,
   index: number,
-  config: C4LayoutConfig,
-  fonts: C4Fonts,
-  measure: Measure
+  { config, fonts, measure }: Measuring
 ): Node {
   const font = fonts.element(element.kind);
   const wrapW = config.wrap
@@ -260,7 +268,7 @@ function elementNode(
   }
   textH += Math.max(0, count - 1) * M.sectionGap;
   const form = shapeOf(element);
-  const size = shapeSize(form, tw, textH, config.c4ShapePadding, config.width);
+  const size = shapeSize(form, tw, textH, { pad: config.c4ShapePadding, least: config.width });
   return {
     index,
     element,
@@ -276,14 +284,12 @@ function elementNode(
   };
 }
 
-/** A boundary's header (v12 `drawInsideBoundary`), wrapped to its contents' width when both wraps are on. */
-function header(
-  g: Group,
-  contentW: number,
-  config: C4LayoutConfig,
-  fonts: C4Fonts,
-  measure: Measure
-): void {
+/**
+ * A boundary's header (v12 `drawInsideBoundary`), wrapped to its contents' width when both wraps
+ * are on. It is measured once the grid knows that width (the one text measured during the grid,
+ * from `placeGrid`'s callback), and before the boundary is sized.
+ */
+function header(g: Group, contentW: number, { config, fonts, measure }: Measuring): void {
   const b = g.boundary!;
   const f = fonts.boundary;
   const wrapW = config.wrapAll ? Math.max(contentW, config.width) : Infinity;
@@ -291,7 +297,7 @@ function header(
   const type = measure(b.type ? `[${b.type}]` : undefined, f, wrapW);
   const descr = measure(
     b.descr,
-    { ...f, size: Math.max(1, f.size - M.boundaryDescrShrink) },
+    { ...f, size: Math.max(M.minFontSize, f.size - M.boundaryDescrShrink) },
     wrapW
   );
   let head = M.boundaryLabelTop + (label?.text.height ?? 0);
@@ -322,15 +328,14 @@ interface RoutedAll {
 }
 
 /** What routing the relations reads. */
-interface RouteInput {
+interface RouteInput extends Measuring {
   readonly model: C4Model;
+  /** Comparisons the router and the label placement may make (R-SEC-5, D455, D542). */
+  readonly budget: number;
   readonly endOf: (alias: string) => Outline | undefined;
   readonly shapes: readonly Outline[];
   readonly frames: readonly Outline[];
   readonly order: readonly Group[];
-  readonly config: C4LayoutConfig;
-  readonly fonts: C4Fonts;
-  readonly measure: Measure;
 }
 
 /**
@@ -339,6 +344,8 @@ interface RouteInput {
  */
 class Taken {
   private readonly boxes: number[] = [];
+
+  constructor(private readonly work: Work) {}
 
   add(x0: number, y0: number, x1: number, y1: number): void {
     this.boxes.push(x0, y0, x1, y1);
@@ -352,6 +359,7 @@ class Taken {
   /** The area of the box x0, y0, x1, y1 that is taken. */
   covered(x0: number, y0: number, x1: number, y1: number): number {
     const t = this.boxes;
+    this.work.charge(t.length / 4);
     let area = 0;
     for (let i = 0; i < t.length; i += 4) {
       const w = Math.min(x1, t[i + 2]!) - Math.max(x0, t[i]!);
@@ -377,11 +385,11 @@ function routeAll(input: RouteInput): RoutedAll {
     if (!targets) pairs.set(a, (targets = new Set()));
     targets.add(b);
   });
-  const careful =
-    drawn.length * (shapes.length + order.length + M.carePerRelation * drawn.length) <=
-    M.careBudget;
-
-  const taken = new Taken();
+  // The comparisons are counted as they are made: once the budget is spent, the relations still
+  // to route go straight and the labels still to place sit at their middle, in model order.
+  const work = new Work(input.budget);
+  let careful = true;
+  const taken = new Taken(work);
   for (const s of shapes)
     taken.add(
       s.x + M.labelEdge,
@@ -390,35 +398,34 @@ function routeAll(input: RouteInput): RoutedAll {
       s.y + s.height - M.labelEdge
     );
   // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
-  const lanes = new Lanes();
+  const lanes = new Lanes(work);
   for (const f of frames) lanes.frame(f);
   const routes = drawn.map(({ rel, a, b }) => {
     const reverse = a !== b && pairs.get(b)?.has(a) === true;
-    const r = route(a, b, reverse ? M.pairShift : 0, careful ? shapes : undefined, lanes);
+    if (work.done) careful = false;
+    const r = route(a, b, {
+      shift: reverse ? M.pairShift : 0,
+      ...(work.done ? {} : { others: shapes }),
+      lanes,
+    });
     const startArrow = rel.kind === 'birel' || rel.kind === 'rel_b';
     const endArrow = rel.kind !== 'rel_b';
     const p = r.points;
     const n = p.length;
-    if (careful && startArrow) taken.around(p[0]!, p[1]!, M.arrow);
-    if (careful && endArrow) taken.around(p[n - 2]!, p[n - 1]!, M.arrow);
+    if (startArrow) taken.around(p[0]!, p[1]!, M.arrow);
+    if (endArrow) taken.around(p[n - 2]!, p[n - 1]!, M.arrow);
     return { r, startArrow, endArrow };
   });
-  if (careful)
-    for (const g of order) {
-      const box = headerBox(g);
-      if (box) taken.add(box.x, box.y, box.x + box.width, box.y + box.height);
-    }
+  for (const g of order) {
+    const box = headerBox(g);
+    if (box) taken.add(box.x, box.y, box.x + box.width, box.y + box.height);
+  }
 
   const list = drawn.map(({ rel, index }, k): Routed => {
     const { r, startArrow, endArrow } = routes[k]!;
-    return {
-      rel,
-      index,
-      route: r,
-      startArrow,
-      endArrow,
-      ...placeLabel(rel, index, r, input, careful ? taken : undefined),
-    };
+    if (work.done) careful = false;
+    const placedLabel = placeLabel({ rel, index, r, input, taken: work.done ? undefined : taken });
+    return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
   });
   return { list, careful };
 }
@@ -426,18 +433,30 @@ function routeAll(input: RouteInput): RoutedAll {
 const offset = (v: number | undefined): number =>
   v ? Math.max(-M.maxOffset, Math.min(M.maxOffset, v)) : 0;
 
+/** What placing one relation's label reads. */
+interface LabelInput {
+  readonly rel: C4Relation;
+  readonly index: number;
+  readonly r: Route;
+  readonly input: RouteInput;
+  /** What the label should not cover; undefined once the budget is spent. */
+  readonly taken: Taken | undefined;
+}
+
 /**
  * A relation's label and `[techn]`, measured and placed along its line (Pele `render.ts`): on
  * the line, or beside it when another relation runs the opposite way, moved by the author's
- * offsets; with `taken`, slid to the spot that covers least of it (and added to it).
+ * offsets; with `taken`, slid to the spot that covers least of it (and added to it). Measured
+ * after routing, as Pele does: its wrap width (the route's `room`) depends on the line it sits on.
  */
-function placeLabel(
-  rel: C4Relation,
-  index: number,
-  r: Route,
-  { model, config, fonts, measure }: RouteInput,
-  taken: Taken | undefined
-): Pick<Routed, 'label' | 'techn' | 'cx' | 'top'> {
+function placeLabel({
+  rel,
+  index,
+  r,
+  input,
+  taken,
+}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top'> {
+  const { model, config, fonts, measure } = input;
   const room = config.wrapAll ? r.room : Infinity;
   // v12 numbers C4Dynamic's relations in model order, from 1.
   const text = (model.c4Type === 'C4Dynamic' ? `${index + 1}: ` : '') + rel.label;
@@ -448,8 +467,7 @@ function placeLabel(
     room,
     Style.Italic
   );
-  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + M.labelPad;
-  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0);
+  const [lw, lh] = labelSize({ label, techn });
   if (lh === 0) return { cx: r.x0, top: r.y0 };
 
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
@@ -509,7 +527,7 @@ interface Shift {
 }
 
 /** A label's box: the label and `[techn]` stacked, with the label pad across. */
-function labelSize(r: Pick<Routed, 'label' | 'techn'>): [number, number] {
+function labelSize(r: { readonly label?: Measured; readonly techn?: Measured }): [number, number] {
   const lw = Math.max(r.label?.text.width ?? 0, r.techn?.text.width ?? 0) + M.labelPad;
   return [lw, (r.label?.text.height ?? 0) + (r.techn?.text.height ?? 0)];
 }

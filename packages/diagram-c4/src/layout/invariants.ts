@@ -2,10 +2,10 @@
  * The C4 layout's invariants (spec #522 "Testing Decisions", T3, R-LAYOUT-3): what every
  * `C4Layout` must satisfy for the model it was laid out from. `c4LayoutViolations` is empty when
  * the layout is sound; each entry names a broken rule: a number that is not finite; elements
- * that overlap or stand outside their boundary's frame (below its header); a boundary outside
- * its parent's; sibling boundaries that overlap; a header outside its frame; a relation whose
- * ends are not on its shapes' outlines; anything drawn outside the bounds, or the bounds outside
- * the canvas. `c4RelationCrossings` lists the relations that cross an element other than their
+ * that overlap, stand outside their boundary's frame (below its header) or overlap a frame they
+ * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
+ * outside its frame; a relation whose ends are not on its shapes' outlines; anything drawn
+ * outside the bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the relations that cross an element other than their
  * own ends, which the corpus specs pin (the spec allows listed exceptions). Exported from
  * `@mermaid-js/diagram-c4/testing`.
  */
@@ -107,6 +107,25 @@ function checkElements(model: C4Model, layout: C4Layout, out: string[]): void {
   }
   for (const [a, b] of overlapping(layout.elements, (e) => e.box))
     out.push(`elements ${a.alias} and ${b.alias} overlap`);
+  checkForeignFrames(model, layout, out);
+}
+
+/** The drawn boundaries holding boundary `index`, itself included, through the drawn parents. */
+function ancestors(layout: C4Layout, index: number): Set<number> {
+  const parentOf = new Map(layout.boundaries.map((b) => [b.index, b.parent]));
+  const out = new Set<number>();
+  for (let at = index; at >= 0 && !out.has(at); at = parentOf.get(at) ?? -1) out.add(at);
+  return out;
+}
+
+/** An element against every frame it is not in: they must not overlap. */
+function checkForeignFrames(model: C4Model, layout: C4Layout, out: string[]): void {
+  for (const e of layout.elements) {
+    const own = ancestors(layout, model.elements[e.index]?.parent ?? -1);
+    for (const b of layout.boundaries)
+      if (!own.has(b.index) && overlap(b.box, e.box))
+        out.push(`element ${e.alias} overlaps boundary ${b.alias}, which it is not in`);
+  }
 }
 
 function checkBoundaries(model: C4Model, layout: C4Layout, out: string[]): void {
@@ -201,7 +220,9 @@ export function c4RelationCrossings(layout: C4Layout): string[] {
     for (const e of layout.elements) {
       if (e.alias === r.from || e.alias === r.to) continue;
       const { x, y, width, height } = e.box;
-      const hitIt = loop ? overlap(loop, e.box) : crosses(pts, x, y, x + width, y + height);
+      const hitIt = loop
+        ? overlap(loop, e.box)
+        : crosses(pts, { x0: x, y0: y, x1: x + width, y1: y + height });
       if (hitIt) out.push(`${r.from} -> ${r.to} crosses ${e.alias}`);
     }
   }

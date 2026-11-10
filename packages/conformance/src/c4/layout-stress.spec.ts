@@ -5,14 +5,19 @@ import { c4TestContext, parsedC4 } from '@mermaid-js/diagram-c4/testing';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 
 /**
- * R-SEC-5, D455: the C4 layout stays linear in the diagram's size once the router's budget
- * (2,000,000 box comparisons) is spent: relations then go straight and labels sit at their
- * middle. Shape from `./stress.spec.ts` (#531): n and 8n elements, each with a relation;
- * linear is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of
- * five, of the layout alone (each source parsed once). Not measured on a steady machine.
+ * R-SEC-5, D455: the C4 layout's work is bounded. The router and the label placement count the
+ * comparisons they make, and once 2,000,000 are spent the relations left go straight and their
+ * labels sit at their middle, so past the budget the layout is linear in the diagram's size, and
+ * the slowest careful case (long relations across a grid, just under Pele's old up-front estimate
+ * `rels · (elements + boundaries + 3·rels) ≤ 2,000,000` at the large size) costs no more than its
+ * budget. Shape from `./stress.spec.ts` (#531): n and 8n elements; linear is ~8x, quadratic
+ * ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, of the layout alone
+ * (each source parsed once), the small layout repeated until it takes at least `MIN_MS`. Not
+ * measured on a steady machine.
  */
 const C = 'C4Context\n';
-const SHAPES: [string, (n: number) => string][] = [
+/** A shape: its name, its source for n elements, n for the small size, and whether it is past the budget there. */
+const SHAPES: [string, (n: number) => string, number, boolean][] = [
   [
     'elements in a row, each related to the next',
     (n) => {
@@ -21,6 +26,8 @@ const SHAPES: [string, (n: number) => string][] = [
         s += `System(s${i}, "S${i}", "about s${i}")\nRel(s${i}, s${(i + 1) % n}, "next", "HTTP")\n`;
       return s;
     },
+    1_000,
+    true,
   ],
   [
     'elements in boundaries, related across them',
@@ -36,10 +43,28 @@ const SHAPES: [string, (n: number) => string][] = [
         for (let i = 0; i < 10; i++) s += `Rel(c${b}_${i}, c${(b + 1) % groups}_${i}, "x")\n`;
       return s;
     },
+    1_000,
+    true,
   ],
   [
     'nested boundaries',
     (n) => C + 'Boundary(b, "B") {\nSystem(s, "S")\n'.repeat(n / 10) + '}\n'.repeat(n / 10),
+    1_000,
+    false,
+  ],
+  [
+    // 800 elements and 560 relations at the large size: 560 · (800 + 1,680) = 1,388,800.
+    'long relations across a grid, under the old estimate',
+    (n) => {
+      let s = C;
+      for (let i = 0; i < n; i++) s += `System(s${i}, "S${i}")\n`;
+      const rels = (n * 7) / 10;
+      for (let i = 0; i < rels; i++)
+        s += `Rel(s${(i * 37) % n}, s${(i * 101 + 13) % n}, "r${i}")\n`;
+      return s;
+    },
+    100,
+    false,
   ],
 ];
 
@@ -87,17 +112,17 @@ beforeAll(async () => {
 describe('stress: the C4 layout is linear in diagram size past the router budget', () => {
   it.each(SHAPES)(
     '%s',
-    (_name, build) => {
+    (_name, build, n, pastBudget) => {
       const parse = (src: string): [C4Model, ResolvedConfig] => {
         const { model, config } = parsedC4(src);
         return [model, config];
       };
-      const [small, smallConfig] = parse(build(1_000));
-      const [large, largeConfig] = parse(build(8_000));
+      const [small, smallConfig] = parse(build(n));
+      const [large, largeConfig] = parse(build(8 * n));
       const lay = (model: C4Model, config: ResolvedConfig) =>
         layoutC4(model, c4TestContext(config, theme));
-      // Past the budget: no steering (a diagram with no relations has none to spend it on).
-      if (small.relations.length > 0) expect(lay(small, smallConfig).careful).toBe(false);
+      // Past the budget at both sizes: the relations left go straight.
+      if (pastBudget) expect(lay(small, smallConfig).careful).toBe(false);
       lay(large, largeConfig); // warm up
       const reps = repeatsFor(() => lay(small, smallConfig));
       const repsLarge = Math.max(1, reps / 8);

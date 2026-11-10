@@ -90,23 +90,24 @@ export function brokenCycles(model: Pick<C4Model, 'boundaries'>): {
   return { parents, moved };
 }
 
-/** Places boxes left to right in rows of `perRow` from (0, 0); returns the width and height they take. */
-function rows(
-  boxes: readonly GridBox[],
-  perRow: number,
-  gapX: number,
-  gapY: number,
-  indent: number
-): [number, number] {
-  const indents: number[] = [];
-  for (let from = 0, row = 0; from < boxes.length; from += perRow, row++)
-    indents.push(row === 0 ? 0 : indent);
-  const least = Math.min(0, ...indents);
+/** How a run of boxes is put in rows. */
+interface Rows {
+  readonly perRow: number;
+  readonly gapX: number;
+  readonly gapY: number;
+  /** How far rows after the first move right (left when negative). */
+  readonly indent: number;
+}
+
+/** Places boxes left to right in rows from (0, 0); returns the width and height they take. */
+function rows(boxes: readonly GridBox[], { perRow, gapX, gapY, indent }: Rows): [number, number] {
+  // A negative indent moves the first row right instead, so no row starts left of 0.
+  const least = boxes.length > perRow ? Math.min(0, indent) : 0;
   let width = 0;
   let y = 0;
   for (let from = 0, row = 0; from < boxes.length; from += perRow, row++) {
     const to = Math.min(boxes.length, from + perRow);
-    let x = indents[row]! - least;
+    let x = (row === 0 ? 0 : indent) - least;
     let rowH = 0;
     for (let i = from; i < to; i++) rowH = Math.max(rowH, boxes[i]!.h);
     for (let i = from; i < to; i++) {
@@ -134,14 +135,18 @@ export function placeGrid(
   for (let i = order.length - 1; i >= 0; i--) {
     const group = order[i]!;
     const top = group.index < 0;
-    const [gridW, gridH] = rows(
-      group.nodes,
-      s.shapeInRow,
-      s.shapeGapX,
-      s.shapeGapY,
-      s.nextLinePaddingX
-    );
-    const [kidsW, kidsH] = rows(group.kids, s.boundaryInRow, s.groupGapX, s.groupGapY, 0);
+    const [gridW, gridH] = rows(group.nodes, {
+      perRow: s.shapeInRow,
+      gapX: s.shapeGapX,
+      gapY: s.shapeGapY,
+      indent: s.nextLinePaddingX,
+    });
+    const [kidsW, kidsH] = rows(group.kids, {
+      perRow: s.boundaryInRow,
+      gapX: s.groupGapX,
+      gapY: s.groupGapY,
+      indent: 0,
+    });
     const between = gridH > 0 && kidsH > 0 ? s.groupGapY : 0;
     kidsTop.set(group, gridH + between);
     const contentW = Math.max(gridW, kidsW);
