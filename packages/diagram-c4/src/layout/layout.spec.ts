@@ -73,12 +73,19 @@ const CROSSING_EXCEPTIONS = [
 ];
 
 /**
- * Labels with no clear spot on the e2e fixtures, each over another relation's line. Under the
- * 10 px grid measurer, `Moves to` (88 px) fills the 100 px gap between `c` and `d`, and
- * `b -> p`'s upright lane runs down the middle of that gap past both rows: every spot along
- * `c -> d` and beside it lies across that lane. The real measurer's label is narrower and clears it.
+ * Labels with no clear spot on the e2e fixtures, each over another relation's line, as it was
+ * before labels kept off other lines. In `rows-and-fixed-width`, `b -> p`'s upright lane runs
+ * down the middle of the gap between `c` and `d`, past both rows: `Moves to` fills too much of
+ * that gap to clear it on its line, and beside it clears the lane only below `c`, three label
+ * depths out, which costs more than the crossing. In the docs' container example the author's
+ * `UpdateRelStyle` offsets put `backend_api -> banking_system`'s label on the SPA; on its own
+ * line, `web_app -> spa`'s level stretch runs 11 px from it through every spot.
  */
-const CROWDED_EXCEPTIONS = ['baseline/config/rows-and-fixed-width grid: c -> d'];
+const CROWDED_EXCEPTIONS = [
+  'baseline/config/rows-and-fixed-width table: c -> d',
+  'baseline/config/rows-and-fixed-width grid: c -> d',
+  'nightly-check/docs/2-container table: backend_api -> banking_system',
+];
 
 describe('c4 layout invariants on the e2e fixtures', () => {
   it('finds the fixtures, the five docs files (the six syntax-page examples) among them', () => {

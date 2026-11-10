@@ -96,6 +96,8 @@ export const C4_METRICS = {
   besideSteps: 8,
   /** What another relation's stretch through a label costs, as a share of the label's area. */
   lineCover: 0.5,
+  /** What each step beside the line past the first costs, as a share of `lineCover`'s cost. */
+  besideStepCost: 0.5,
 
   /**
    * R-SEC-5, D455: the box and stretch comparisons the router and label placement may make (also

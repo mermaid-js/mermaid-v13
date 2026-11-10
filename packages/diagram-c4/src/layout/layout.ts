@@ -663,7 +663,7 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   let crossed = 0;
   const perLine = M.lineCover * lw * lh;
   const done = (): Clearest => ({ ...best, crowded: worst > 0 || crossed > 0 });
-  const tryAt = (px: number, py: number): boolean => {
+  const tryAt = (px: number, py: number, away = 0): boolean => {
     for (const t of M.slide) {
       const x = r.x0 + (r.x1 - r.x0) * t + px;
       const y = r.y0 + (r.y1 - r.y0) * t + py;
@@ -672,7 +672,10 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
       if (bad > worst || (bad === worst && bad > 0)) continue;
       const lines = bad > 0 ? 0 : keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
       const cost =
-        bad > 0 ? Infinity : keep.taken.covered(box.x0, box.y0, box.x1, box.y1) + lines * perLine;
+        bad > 0
+          ? Infinity
+          : keep.taken.covered(box.x0, box.y0, box.x1, box.y1) +
+            (lines + away * M.besideStepCost) * perLine;
       if (bad < worst || cost < least) {
         [worst, least, crossed] = [bad, cost, lines];
         best = { at: t, dx: px, dy: py };
@@ -691,10 +694,12 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   const half = Math.abs(nx) * (lw / 2) + Math.abs(ny) * (lh / 2) + M.besideGap;
   const depth = Math.abs(nx) * lw + Math.abs(ny) * lh;
   const [ax, ay] = [given[0] - online[0], given[1] - online[1]];
-  for (let k = 0; k < M.besideSteps; k++)
+  // Each step past the first costs a share of a line through the label: a label keeps by its
+  // own line rather than move far from it to clear another's.
+  for (let k = 0; k < M.besideSteps && (worst > 0 || k * M.besideStepCost * perLine < least); k++)
     for (const side of [1, -1]) {
       const d = side * (half + k * depth);
-      if (tryAt(ax + nx * d, ay + ny * d)) return done();
+      if (tryAt(ax + nx * d, ay + ny * d, k)) return done();
     }
   return done();
 }
