@@ -289,14 +289,16 @@ function placeLabel(
   }
   const start = points[0]!;
   const end = points[points.length - 1]!;
-  // v12's midpoint: the corner of a bend, else halfway between the engine's ends.
+  // v12's midpoint: the corner of a bend (D507 turns the label about it); on a straight line the
+  // engine's label point, where it made room (`compass` puts it halfway, as v12 did), else
+  // halfway between the engine's ends.
   const mid =
     bends === 1
       ? points[1]!
-      : {
+      : (route.label ?? {
           x: (raw[0]!.x + raw[raw.length - 1]!.x) / 2,
           y: (raw[0]!.y + raw[raw.length - 1]!.y) / 2,
-        };
+        });
   const dx = Math.abs(start.x - end.x);
   const dy = Math.abs(start.y - end.y);
   const axis = axisOf(lhs, rhs);

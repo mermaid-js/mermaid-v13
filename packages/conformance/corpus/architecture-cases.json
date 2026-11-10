@@ -368,6 +368,14 @@
     "source": "architecture-beta\naccTitle x\nservice a"
   },
   {
+    "id": "architecture-cases/acc-title-edge-id",
+    "source": "architecture-beta\ngroup g\nservice accTitle in g\nservice b\naccTitle{group}:R -- L:b"
+  },
+  {
+    "id": "architecture-cases/acc-title-edge-id-colon",
+    "source": "architecture-beta\nservice accTitle\nservice b\naccTitle:R -- L:b"
+  },
+  {
     "id": "architecture-cases/acc-descr-percent",
     "source": "architecture-beta\naccDescr: a %% b\naccTitle: c%%d"
   },

@@ -94,20 +94,27 @@ export function drawIcon(
 }
 
 /**
+ * `names` for a warning (`WARNING_NAMES`): the first few quoted, each cut to its longest, then
+ * "and n more".
+ */
+export function listNames(names: readonly string[]): string {
+  const quoted = names
+    .slice(0, LISTED)
+    .map((n) => JSON.stringify(n.slice(0, LONGEST)))
+    .join(', ');
+  return names.length > LISTED ? `${quoted} and ${String(names.length - LISTED)} more` : quoted;
+}
+
+/**
  * The render's one `ICON_NOT_RENDERED` (D291, D505) for the names drawn as v12's `?` that no
  * extension warned about, each once, through the inline providers' deduplicating `warn` when
  * there are any.
  */
 export function iconsNotRendered(ctx: ArchitectureRenderContext, drawn: readonly string[]): void {
   const names = [...new Set(drawn)];
-  const quoted = names
-    .slice(0, LISTED)
-    .map((n) => JSON.stringify(n.slice(0, LONGEST)))
-    .join(', ');
-  const more = names.length > LISTED ? ` and ${String(names.length - LISTED)} more` : '';
   const warning = {
     code: ICON_NOT_RENDERED,
-    message: `Icons not rendered: ${quoted}${more}. Architecture draws database, server, disk, internet, cloud, blank and unknown itself; any other icon needs an icons extension with its pack (logos:aws or logos-aws). Each is drawn as a "?" square.`,
+    message: `Icons not rendered: ${listNames(names)}. Architecture draws database, server, disk, internet, cloud, blank and unknown itself; any other icon needs an icons extension with its pack (logos:aws or logos-aws). Each is drawn as a "?" square.`,
   };
   if (ctx.inline) ctx.inline.warn(warning);
   else ctx.warn(warning);

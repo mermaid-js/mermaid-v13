@@ -7,8 +7,7 @@
  * can set any of these.
  */
 
-/** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
-const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';
+import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
 
 /** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
 const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;

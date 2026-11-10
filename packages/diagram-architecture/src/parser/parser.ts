@@ -745,8 +745,10 @@ class ArchitectureParser {
    * ARROW_INTO? ARROW_DIRECTION ":" ID ARROW_GROUP? EOL
    */
   private edge(): void {
-    // `accTitle` with no `:` or an unclosed `accDescr {` lexes as an id.
-    this.accessibilityName(this.range());
+    // `accTitle` with no `:` or an unclosed `accDescr {` lexes as an id; followed by `{group}`
+    // or `:` it is an edge's left id, as in v12 (`accTitle{group}:R -- L:b`).
+    const next = this.kind(this.i + 1);
+    if (next !== T.ArrowGroup && next !== T.Colon) this.accessibilityName(this.range());
     const lhsName = this.name();
     const lhsGroup = this.groupMark(AFTER_LHS_ID);
     this.expect(T.Colon, lhsGroup ? [T.Colon] : AFTER_LHS_ID);

@@ -29,7 +29,7 @@ import type { ArchitectureLayout } from '../layout/layout.ts';
 import type { ArchitectureSizes } from '../layout/metrics.ts';
 import type { ArchitectureNodeView } from '../layout/prepare.ts';
 import type { ArchitectureModel } from '../model.ts';
-import { drawIcon, drawTextIcon, fitTextIcon, iconsNotRendered } from './assets.ts';
+import { drawIcon, drawTextIcon, fitTextIcon, iconsNotRendered, listNames } from './assets.ts';
 import type { ArchitectureRenderContext } from './context.ts';
 import { edgeScene, type EdgeEnd, type EdgeScene, type Extent, type PlacedLabel } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
@@ -83,7 +83,7 @@ export function renderArchitecture(
   if (missing.length > 0)
     ctx.warn({
       code: ARCHITECTURE_EDGE_NOT_DRAWN,
-      message: `The layout engine routed no line for ${missing.map((id) => JSON.stringify(id)).join(', ')}; ${missing.length === 1 ? 'it is' : 'they are'} left out of the drawing.`,
+      message: `The layout engine routed no line for ${listNames(missing)}; ${missing.length === 1 ? 'it is' : 'they are'} left out of the drawing.`,
     });
   const shrunk = edges.filter((e) => e.shrunk).length;
   if (shrunk > 0)

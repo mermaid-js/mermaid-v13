@@ -4,7 +4,12 @@
 // character, 20 px a line), so the expected sizes are worked out by hand, not by the code under
 // test.
 import { describe, expect, it } from 'vitest';
-import { validateLayout, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
+import {
+  pxProfile,
+  validateLayout,
+  type LayoutGraph,
+  type LayoutModel,
+} from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
@@ -32,8 +37,6 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
       arrow: 80 / 6,
       labelWidth: 120,
       labelAt: { x: 40, y: 80 },
-      groupEdge: { side: 44, bottom: 62 },
-      junctionEnd: 40,
       groupIcon: 30,
       groupLabelGap: 4,
       groupDash: 8,
@@ -46,18 +49,8 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
 
   it('scales with iconSize and padding as v12 did', () => {
     const s = architectureSizes(120, 20);
-    expect([s.arrow, s.labelWidth, s.labelAt, s.junctionEnd]).toEqual([
-      20,
-      180,
-      { x: 60, y: 120 },
-      60,
-    ]);
-    expect([s.groupEdge, s.groupIcon, s.groupDash, s.anchorY]).toEqual([
-      { side: 24, bottom: 42 },
-      15,
-      8,
-      60,
-    ]);
+    expect([s.arrow, s.labelWidth, s.labelAt]).toEqual([20, 180, { x: 60, y: 120 }]);
+    expect([s.groupIcon, s.groupDash, s.anchorY]).toEqual([15, 8, 60]);
   });
 });
 
@@ -94,7 +87,7 @@ describe('services and junctions', () => {
       shape: 'junction',
       parent: 'g',
     });
-    expect(nodes[0]).toEqual({ id: 'j', kind: 'junction', index: 0, width: 80, height: 80 });
+    expect(nodes[0]).toEqual({ id: 'j', kind: 'junction', index: 0 });
   });
 
   it('measures every label in the theme font before layout (pitfall 16)', async () => {
@@ -219,10 +212,10 @@ describe('edges and align', () => {
     expect((await prepared('service a')).graph.align).toBeUndefined();
   });
 
-  it("hands the engine v12's margin, padding as spacing, and nodes in model order", async () => {
+  it("hands the engine v12's margin, core's spacing, and nodes in model order", async () => {
     const { graph } = await prepared('junction j\nservice a\ngroup g\nservice b in g');
     expect(graph.diagramPadding).toBe(40);
-    expect(graph.spacing).toEqual({ node: 40, rank: 40, edge: 40 });
+    expect(graph.spacing).toEqual(pxProfile.builder.spacing);
     expect(graph.nodes.map((n) => n.id)).toEqual(['a', 'b', 'j']);
   });
 });

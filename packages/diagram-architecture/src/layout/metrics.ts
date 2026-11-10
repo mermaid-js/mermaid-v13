@@ -19,10 +19,6 @@ export const ARCHITECTURE_METRICS = {
   arrowDivisor: 6,
   /** A service label wraps at `iconSize × labelWidthRatio` (`svgDraw.ts:294`). */
   labelWidthRatio: 1.5,
-  /** A `{group}` end runs `padding + groupEdgeExtra` past the node (`svgDraw.ts:55`). */
-  groupEdgeExtra: 4,
-  /** … and on a bottom side this much more, for the service label (`svgDraw.ts:56-62`). */
-  groupEdgeBottom: 18,
   /** A group's icon is `padding × groupIconRatio` square (`svgDraw.ts:200`). */
   groupIconRatio: 0.75,
   /** A group's label starts this far after its icon, or after its corner (`svgDraw.ts:263`). */
@@ -59,10 +55,6 @@ export interface ArchitectureSizes {
   readonly anchorY: number;
   /** Where a service label's top centre sits from the icon's corner: `(iconSize / 2, iconSize)`. */
   readonly labelAt: { readonly x: number; readonly y: number };
-  /** How far a `{group}` end runs past its node: `padding + 4`, and on a bottom side 18 more. */
-  readonly groupEdge: { readonly side: number; readonly bottom: number };
-  /** How far a junction end runs on into the junction (to its centre): `iconSize / 2`. */
-  readonly junctionEnd: number;
   /** A group's icon: `padding × 0.75` square. */
   readonly groupIcon: number;
   /** Between a group's icon (or its corner) and its label. */
@@ -83,7 +75,6 @@ export function architectureSizes(
   padding: number = ARCHITECTURE_METRICS.padding
 ): ArchitectureSizes {
   const M = ARCHITECTURE_METRICS;
-  const side = padding + M.groupEdgeExtra;
   return {
     iconSize,
     padding,
@@ -91,8 +82,6 @@ export function architectureSizes(
     labelWidth: iconSize * M.labelWidthRatio,
     anchorY: iconSize / 2,
     labelAt: { x: iconSize / 2, y: iconSize },
-    groupEdge: { side, bottom: side + M.groupEdgeBottom },
-    junctionEnd: iconSize / 2,
     groupIcon: padding * M.groupIconRatio,
     groupLabelGap: M.groupLabelGap,
     groupDash: M.groupDash,

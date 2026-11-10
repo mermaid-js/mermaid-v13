@@ -37,15 +37,16 @@ export const ARCHITECTURE_ALIGN_SHORT = 'ARCHITECTURE_ALIGN_SHORT';
  */
 export const ARCHITECTURE_GROUP_EDGE_UNGROUPED = 'ARCHITECTURE_GROUP_EDGE_UNGROUPED';
 /**
- * Warning (#607, pitfall 22): `architecture.iconSize` is not a number above 0, or
- * `architecture.padding` not one of at least 0; the layout uses v12's default (80, 40).
+ * Warning (#607, pitfall 22): `architecture.iconSize` or `architecture.padding` is not a number
+ * from 0 up to 10000 (0 is taken for either); the layout uses v12's default (80, 40).
  */
 export const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';
 /**
- * Warning (#614, GAPS T3): an edge with an arrowhead at each end whose line is shorter than the
- * two heads (`iconSize / 6` each): `compass`'s gap between nodes is fixed, so a large
- * `architecture.iconSize` would draw them over each other. Both heads shrink to half the line;
- * one warning per render. Never raised at the default sizes (60 px against 27).
+ * Warning (#614, GAPS T3): an arrowhead (`iconSize / 6`) longer than the end segment it sits on,
+ * on any edge: `compass`'s gap between nodes is fixed, so a large `architecture.iconSize` would
+ * run a head past its segment. Each head is capped to its own end segment (to half of it on a
+ * straight line with a head at both ends, so the two do not overlap); one warning per render,
+ * counting the edges. Never raised at the default sizes (60 px against 27).
  */
 export const ARCHITECTURE_ARROW_SHRUNK = 'ARCHITECTURE_ARROW_SHRUNK';
 /**
