@@ -21,26 +21,22 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T0b #591
 
-Unmet criteria: none of the ticket's. **Size target not met:** gated core +947 B gz against the coordinator's +589 (review rework, findings 1–10).
+Unmet criteria: none of the ticket's. **Size is open, for Knut (A/B/C in tickets/591.md):** gated core +1,270 B gz as is; +1,195 without node-wide lane avoidance.
 
 Choices:
-- **Redrawn from the ends, not patched.** Only an edge where a named side moves an end is redrawn; graphs without sides, and edges whose sides layered already took, are byte-identical.
-- **Where ends go.** A moved end goes to the side's middle. Any named `left`/`right` end goes to `anchorY`, moved or not (finding 4).
-- **Stubs.** The source stub is `corner` plus the start marker (no `headRoom`, finding 7). The target stub is `corner` plus `headRoom` plus the end marker.
-- **Links.** Right angles go stub → label → stub. A cost (boxes crossed and doubling back 9 each, a turn 1, length a little) picks among two-corner paths on lines through either end, midway, or `corner` past an end box.
-- **Growth.** The drawing grows, shifting everything, where a stub or lane reaches into the margin (finding 3: growth was chosen over clamping, since clamped stubs left markers no room).
+- **Redrawn from the ends.** An edge is redrawn only where a named side moves an end; graphs without sides are byte-identical.
+- **Named `left`/`right` ends go to `anchorY` even when layered already used that side** (second review 4). Architecture wants its icon line, so those edges are always redrawn. Other ends whose sides match stay as layered drew them.
+- **Stubs and links.** The source stub is `corner` plus the start marker; the target stub is `corner` plus `headRoom` plus the end marker. Links run stub → label → stub, chosen by cost: nodes crossed and doubling back 9 each, a turn 1, length a little. Lanes are tried past the end boxes, then past any node the best path still crosses. Points the route runs straight through are dropped.
+- **Growth.** The drawing grows, shifting everything, where a stub or lane enters the margin (first review 3).
+- **`anchorY`** must be finite and within 0…height; a bad value is a `RangeError` (second review 5).
 
 Known limits:
+- **Edges between a node and its own group** keep layered's route and ports. Layered ends them inside the group box (second review 1, 2).
+- **A self-loop with both ends on one side** keeps layered's loop, which lies on the right or below, and reports those ports (`it.todo`, second review 6). A loop with two sides routes through layered's loop label.
 - Ends on one side are not spread apart (`it.todo`).
 - An unknown side is not refused (`it.todo`).
-- A loop with both ends on one side keeps layered's loop (`it.todo`). A loop with two sides routes through layered's loop label.
-- Routes may cross other nodes and edges; there is no global avoidance.
+- Lanes are tried past the end boxes and past nodes the best path crosses, not past every node, so a route can still cross a node when both lane passes fail. Groups are not avoided.
 - Not applied on the grid.
-
-Size options if +947 is too much:
-- (1) Drop growth and keep stubs inside the margin: about −140, with stubs at the edge cut short.
-- (2) A lazily registered post-pass, which needs a D-id.
-- (3) Accept the size.
 
 ## T0c #592
 
