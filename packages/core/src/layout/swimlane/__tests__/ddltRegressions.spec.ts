@@ -44,4 +44,15 @@ describe('swimlane DDLT regressions', () => {
     for (let i = 0; i < points.length - 1; i++)
       expect(gap(points[i]!, points[i + 1]!, label)).toBeGreaterThan(2);
   });
+
+  it("#636: a same-rank back edge (LR) never takes a terminal tail through its target's box", () => {
+    const { model, issues } = layOut('pebr-2-edge-intrudes-lane-label');
+    const edge = 'L_Dep2.Proc2_Dep1.Proc2_0';
+    expect(issues.filter((i) => i.edgeId === edge).map((i) => i.message)).toEqual([]);
+    const target = box(model.nodes.get('Dep1.Proc2')!);
+    const points = model.edges.get(edge)!.points;
+    // Only the last leg reaches the target; every other leg stays more than 2px off it.
+    for (let i = 0; i < points.length - 2; i++)
+      expect(gap(points[i]!, points[i + 1]!, target)).toBeGreaterThan(2);
+  });
 });
