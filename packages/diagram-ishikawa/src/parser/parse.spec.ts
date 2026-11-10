@@ -3,7 +3,7 @@ import { ISHIKAWA_EMPTY, ISHIKAWA_INDENT_CLAMPED, parseIshikawa } from '../index
 import type { IshikawaCause, IshikawaModel } from '../index.ts';
 
 /**
- * The ishikawa parser through `parseIshikawa` (spec #519 T2). Expected trees are mermaid\@12's,
+ * The ishikawa parser through `parseIshikawa` (spec #519). Expected trees are mermaid\@12's,
  * from the oracle (`getRoot()`, `getDiagramTitle()`), unless a test says otherwise.
  */
 const model = (src: string): IshikawaModel => {
@@ -192,6 +192,29 @@ describe('ishikawa parser: warnings (D496)', () => {
     expect(w.range.start).toBe(src.indexOf('B'));
     expect(w.related?.map((x) => src.slice(x.range.start, x.range.end))).toEqual(['B', 'C']);
     expect(w.message).toMatch(/2 causes are indented less than the first cause \(`A` at line 3\)/);
+  });
+
+  it('names every clamped cause in the message, up to ten, then how many more (D496)', () => {
+    const clamp = (n: number) =>
+      parseIshikawa(
+        ['ishikawa-beta', 'P', '    A', ...Array.from({ length: n }, (_, i) => `  C${i + 1}`)].join(
+          '\n'
+        )
+      ).model.warnings[0]!;
+    const five = clamp(5);
+    expect(five.message).toBe(
+      '5 causes are indented less than the first cause (`A` at line 3), so they are read as top-level causes: `C1` at line 4, `C2` at line 5, `C3` at line 6, `C4` at line 7, `C5` at line 8. Indent them at least as deep as the first cause to nest them.'
+    );
+    expect(five.related).toHaveLength(5);
+    const twelve = clamp(12);
+    expect(twelve.message).toContain(': `C1` at line 4, `C2` at line 5,');
+    expect(twelve.message).toContain(
+      '`C10` at line 13, and 2 more. Indent them at least as deep as the first cause to nest them.'
+    );
+    expect(twelve.message).not.toContain('`C11`');
+    expect(twelve.related?.map((r) => r.message.split(' ')[0])).toEqual(
+      Array.from({ length: 12 }, (_, i) => `\`C${i + 1}\``)
+    );
   });
 });
 

@@ -2,10 +2,9 @@
  * Test harness (`@mermaid-js/diagram-ishikawa/testing`): renders an ishikawa source or model
  * through the plugin's own seam, `parse` → `layout` → `render`, with the config, theme and render
  * context of the tests' one builder (`../test-context.ts`, as the pipeline builds them), and the
- * stream writer with an optional outline drawer. Until the manifest lands (T5) `createMermaid()`
- * cannot render ishikawa; this renders the plugin alone, with what the public API does not take
- * (a model, an outline drawer, a measurer) and gives back what it does not return (the model,
- * the AST, the layout).
+ * stream writer with an optional outline drawer. It renders the plugin alone, with what the
+ * public API does not take (a model, an outline drawer, a measurer) and gives back what it does
+ * not return (the model, the AST, the layout).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';

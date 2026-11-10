@@ -23,7 +23,6 @@ import {
   CR,
   firstHole,
   isSpace,
-  isWord,
   Kind,
   LF,
   localOffset,
@@ -33,16 +32,11 @@ import {
   cook,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { keywordAt, lower } from './keywords.ts';
 import { T } from './tokens.ts';
 
 /** What a regex `.` does not match, once CRs are LFs. */
 const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
-
-/** The two keywords, longest first as in `ishikawa.jison`, lower case. */
-const KEYWORDS = ['ishikawa-beta', 'ishikawa'] as const;
-
-/** ASCII lower case of `c`, for case-insensitive literals. */
-const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
 
 /** A lex: the token stream, and the text of each token as v12's parser read it. */
 export interface Lexed {
@@ -238,20 +232,6 @@ class IshikawaLexer {
     return j;
   }
 
-  /** The length of the keyword at `q` (`ishikawa-beta` or `ishikawa`, then `\b`), or 0. */
-  private keyword(q: number): number {
-    const { input } = this;
-    for (const word of KEYWORDS) {
-      const end = q + word.length;
-      if (end > this.inputEnd || isWord(input.charCodeAt(end))) continue;
-      let same = 0;
-      while (same < word.length && lower(input.charCodeAt(q + same)) === word.charCodeAt(same))
-        same++;
-      if (same === word.length) return word.length;
-    }
-    return 0;
-  }
-
   // --- Rules --------------------------------------------------------------------------------
 
   /** The first rule of `ishikawa.jison` that matches at `p`, written as its token. */
@@ -264,7 +244,7 @@ class IshikawaLexer {
       return;
     }
     // `"ishikawa-beta"` and `"ishikawa"` (jison adds `\b` after a literal ending in a letter).
-    const keywordLength = lower(c) === 0x69 ? this.keyword(p) : 0;
+    const keywordLength = lower(c) === 0x69 ? keywordAt(input, p, this.inputEnd) : 0;
     if (keywordLength > 0) {
       this.emit(T.Ishikawa, p, p + keywordLength);
       return;

@@ -9,7 +9,8 @@
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { ISHIKAWA_INDENT_CLAMPED } from '../codes.ts';
 import { ishikawaDocs } from '../generated/docs.ts';
-import type { IshikawaCause, IshikawaModel } from '../model.ts';
+import { causeCount, sideOf, type IshikawaCause, type IshikawaModel } from '../model.ts';
+import { positionOf } from '../parser/ast-ids.ts';
 import type { IshikawaDocument, IshikawaLineNode } from '../parser/ast.ts';
 import { code } from './tables.ts';
 
@@ -31,27 +32,13 @@ function lineAt(doc: DocumentView<IshikawaDocument>, at: number): IshikawaLineNo
   return undefined;
 }
 
-/** Every cause under `causes`, at any depth. */
-function count(causes: readonly IshikawaCause[]): number {
-  let n = 0;
-  const stack = [...causes];
-  for (let c = stack.pop(); c; c = stack.pop()) {
-    n++;
-    stack.push(...c.causes);
-  }
-  return n;
-}
-
 function effectHover(model: IshikawaModel, text: string): string {
   const top = model.causes.length;
-  const all = count(model.causes);
+  const all = causeCount(model.causes);
   const causes =
     all > top ? `${plural(top, 'cause')}, ${all} with their sub-causes` : plural(top, 'cause');
   return `**effect** ${code(text)}\n\nThe head of the fish · ${causes}`;
 }
-
-/** The 1-based tree position an AST id `cause:<i>.<j>…` names (D497). */
-const positionOf = (ast: string): number[] => ast.slice('cause:'.length).split('.').map(Number);
 
 /** The causes from the top-level one down to the one at `position`; empty if there is none. */
 function pathTo(model: IshikawaModel, position: readonly number[]): IshikawaCause[] {
@@ -67,15 +54,15 @@ function pathTo(model: IshikawaModel, position: readonly number[]): IshikawaCaus
 }
 
 /**
- * Whether the parse reported the cause at `range` clamped to the top level (D496): an
- * `ISHIKAWA_INDENT_CLAMPED` at it, or the warning's `related` entry for it.
+ * Whether the parse reported the cause at `range` clamped to the top level (D496): the facet
+ * parses with `clampPerCause`, so an `ISHIKAWA_INDENT_CLAMPED` at it.
  */
 function clamped(doc: DocumentView<IshikawaDocument>, range: Range): boolean {
-  const at = (r: Range) => r.start === range.start && r.end === range.end;
   return doc.result.diagnostics.some(
     (d) =>
       d.code === ISHIKAWA_INDENT_CLAMPED &&
-      (at(d.range) || (d.related ?? []).some((x) => at(x.range)))
+      d.range.start === range.start &&
+      d.range.end === range.end
   );
 }
 
@@ -86,7 +73,7 @@ function causeHover(doc: DocumentView<IshikawaDocument>, ast: string): string | 
   if (!cause) return undefined;
   const depth = path.length;
   const parent = path[depth - 2];
-  const side = position[0]! % 2 === 1 ? 'above the spine' : 'below the spine';
+  const side = sideOf(position[0]! - 1) === 'upper' ? 'above the spine' : 'below the spine';
   const place =
     parent === undefined
       ? `Depth 1, a top-level cause, ${side}`

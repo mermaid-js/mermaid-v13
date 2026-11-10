@@ -14,11 +14,7 @@ import {
   RIGHT,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
-
-/** A line of the tree: a cause, with the causes under it in source order. */
-export interface OutlineNode<N> {
-  readonly causes: readonly N[];
-}
+import { eachCause, type IshikawaCause } from '../model.ts';
 
 /** `tree(1)`'s connectors, a branch to a cause, to the last one, and the trunk past a cause. */
 const TREE = {
@@ -32,13 +28,12 @@ const TRUNK = 2;
 /**
  * The outline of `effect` (plain text) and `causes`, each written as `textOf` gives it: `\n`
  * line ends, no trailing spaces, never cropped (an `ASCII_TOO_WIDE` warning is the API's). The
- * front-matter `title`, when given, is centred on the first line, as written on one line (D82).
- * A loop, not recursion: chains run thousands of causes deep.
+ * front-matter `title` (one line, `labels.ts`), when given, is centred on the first line (D82).
  */
-export function drawOutline<N extends OutlineNode<N>>(
+export function drawOutline(
   effect: string,
-  causes: readonly N[],
-  textOf: (cause: N) => string,
+  causes: readonly IshikawaCause[],
+  textOf: (cause: IshikawaCause) => string,
   glyphs: GlyphSet,
   title?: string
 ): string {
@@ -50,22 +45,17 @@ export function drawOutline<N extends OutlineNode<N>>(
     box.set(TRUNK, 2, glyphFor(armOf(LEFT, 1) | armOf(RIGHT, 1) | armOf(DOWN, 1), glyphs)!);
   const lines = box.toString().split('\n');
   const t = TREE[glyphs.name];
-  const indent = ' '.repeat(TRUNK);
-  const stack: [N, string, boolean][] = [];
-  const push = (nodes: readonly N[], prefix: string): void => {
-    for (let i = nodes.length - 1; i >= 0; i--)
-      stack.push([nodes[i]!, prefix, i === nodes.length - 1]);
-  };
-  push(causes, indent);
-  for (let top = stack.pop(); top !== undefined; top = stack.pop()) {
-    const [node, prefix, last] = top;
-    lines.push(`${prefix}${last ? t.last : t.tee}${textOf(node)}`.trimEnd());
-    push(node.causes, prefix + (last ? ' '.repeat(t.bar.length) : t.bar));
-  }
-  const heading = title?.replace(/\s+/g, ' ').trim();
-  if (heading) {
+  // `prefixes[d]`: what comes before a depth-`d` cause's connector, the trunks of its ancestors.
+  // In pre-order a cause's own causes follow it before any cause at its depth or above.
+  const prefixes = ['', ' '.repeat(TRUNK)];
+  eachCause(causes, (cause, depth, last) => {
+    const prefix = prefixes[depth]!;
+    lines.push(`${prefix}${last ? t.last : t.tee}${textOf(cause)}`.trimEnd());
+    prefixes[depth + 1] = prefix + (last ? ' '.repeat(t.bar.length) : t.bar);
+  });
+  if (title) {
     const across = lines.reduce((m, l) => Math.max(m, cellWidth(l)), 0);
-    lines.unshift(' '.repeat(Math.max(0, Math.floor((across - cellWidth(heading)) / 2))) + heading);
+    lines.unshift(' '.repeat(Math.max(0, Math.floor((across - cellWidth(title)) / 2))) + title);
   }
   return lines.join('\n');
 }

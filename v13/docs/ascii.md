@@ -413,10 +413,12 @@ ishikawa-beta
 - Every label is one line of plain text, as the SVG's `<title>`: entities decode, markup goes
   and a `<br>` reads as a space. Labels never wrap and the outline is never folded: wider than
   `ascii.maxWidth`, it is drawn whole, with `ASCII_TOO_WIDE`.
-- The front-matter `title` is centred on the first line. An empty body (no effect) is no text,
-  as the SVG draws nothing, with the same `ISHIKAWA_EMPTY` warning.
+- The front-matter `title` is centred on the first line, on one line. An empty body (no effect)
+  is the title line alone, or no text without a title, as the SVG draws nothing, with the same
+  `ISHIKAWA_EMPTY` warning.
 - The pixel geometry (`ishikawa.diagramPadding`) is ignored, with no warning.
-- Dropped, one `ASCII_DROPPED` warning: `emphasis` (bold and italic labels).
+- Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels, drawn
+  plain), `math` (`$$…$$`, the TeX shown as written) and `icon` (`fa:fa-…`, shown as written).
 
 ## What gets dropped
 

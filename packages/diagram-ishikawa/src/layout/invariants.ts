@@ -17,9 +17,8 @@
  * pair's text, so a box can reach over the next bone), and removing that is a follow-up with its
  * own decision. {@link ishikawaLabelOverlaps} reports them.
  */
-import type { IshikawaModel } from '../model.ts';
+import { sideOf, type IshikawaModel } from '../model.ts';
 import { corners, ends, grown, inside, overlaps, segmentBox } from './geometry.ts';
-import { sideOf } from './side.ts';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,

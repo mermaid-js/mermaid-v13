@@ -8,8 +8,9 @@
 import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core/parser-kit';
 import { ishikawaDocs } from '../generated/docs.ts';
 import type { IshikawaDocument } from '../parser/ast.ts';
+import { KEYWORDS } from '../parser/keywords.ts';
 import { T } from '../parser/tokens.ts';
-import { KEYWORDS, LINE_BREAK, lineBefore, span } from './tables.ts';
+import { LINE_BREAK, lineBefore, span } from './tables.ts';
 
 const BLANK = /^\s*$/;
 

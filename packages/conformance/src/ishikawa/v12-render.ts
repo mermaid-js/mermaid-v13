@@ -1,5 +1,5 @@
 /**
- * v12's drawn ishikawa geometry (spec #519 T3): mermaid\@12.2.0's own `ishikawaRenderer.ts` run
+ * v12's drawn ishikawa geometry (spec #519): mermaid\@12.2.0's own `ishikawaRenderer.ts` run
  * under jsdom, with `getBBox` answering v12's sizes as a fixed measure: every character
  * {@link CHAR_EM} em wide (v12's own wrap count assumed as much) at the size v12 drew it, 14 px for
  * the head label and the config's 16 px for the rest, and every line {@link LINE} px high.

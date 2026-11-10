@@ -1,5 +1,5 @@
 /**
- * The layout specs' sources (spec #519 T3): every `.mmd` fixture under `e2e/diagrams/ishikawa/`,
+ * The layout specs' sources (spec #519): every `.mmd` fixture under `e2e/diagrams/ishikawa/`,
  * parsed as the plugin parses it, by its path in that folder without the extension
  * (`nightly-check/layout/side-minimum`), with its front matter's `ishikawa` config; and a
  * measurer with round numbers standing in for v12's `getBBox` sizes.

@@ -14,7 +14,7 @@ import { ishikawaGateCorpus } from './corpus.ts';
 import { CHAR_EM, closeV12, LINE, v12Drawn, type V12Drawn } from './v12-render.ts';
 
 /**
- * Layout parity with v12 (spec #519 T3, pitfall 29): the spine, head, bones, label boxes and
+ * Layout parity with v12 (spec #519, pitfall 29): the spine, head, bones, label boxes and
  * sub-cause text points equal what mermaid\@12.2.0's own renderer drew, within 1e-6, at v12's
  * sizes (`v12-render.ts`: v12 run under jsdom, its `getBBox` a fixed measure, and v13 measuring
  * the same), in the classic theme (v12 laid out at the config `fontSize`, 16).

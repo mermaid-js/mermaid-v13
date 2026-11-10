@@ -11,9 +11,10 @@ import { renderIshikawa } from './render/index.ts';
  * The ishikawa plugin (DESIGN §12.1, spec #519): `layoutKind: 'custom'` with its own
  * `IshikawaLayout` (D491). `parse` takes the whole source; `layout` measures every label and
  * places the fishbone; `render` writes the whole `<svg>` document. Text output is the separate
- * `./ascii` entry (#586, D498), which draws the model as an outline. No theme table: it reads only shared variables. The registry loads it from
- * the package's `mermaid` manifest (#585); `configDefaults` are the generated `ishikawa` section
- * defaults, the one source of every ishikawa default (`src/config.ts` falls back to them too).
+ * `./ascii` entry (#586, D498), which draws the model as an outline. No theme table: it reads
+ * only shared variables. The registry loads it from the package's `mermaid` manifest (#585);
+ * `configDefaults` are the generated `ishikawa` section defaults, the one source of every
+ * ishikawa default (`src/config.ts` falls back to them too).
  */
 export const ishikawa = {
   id: 'ishikawa',

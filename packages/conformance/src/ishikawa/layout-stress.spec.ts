@@ -8,7 +8,7 @@ import {
 } from '@mermaid-js/diagram-ishikawa/testing';
 
 /**
- * The ishikawa layout is linear in the causes it lays out (spec #519 T3, pitfalls 5 and 19), and
+ * The ishikawa layout is linear in the causes it lays out (spec #519, pitfalls 5 and 19), and
  * a chain as deep as the parser takes does not overflow the stack. Pie's shape
  * (`../pie/stress.spec.ts`): n and 8n units, linear is ~8x, quadratic ~64x, and the bar is 24x;
  * this thread's CPU time, best of five, small and large alternating. Not measured on a steady

@@ -3,10 +3,8 @@
  * that cause. A rename changes that label only (causes are `standalone`).
  */
 import { parseIshikawa } from '../parser/index.ts';
+import { KEYWORD_REWORD, keywordAt } from '../parser/keywords.ts';
 import { LINE_BREAK } from './tables.ts';
-
-/** The keyword at the start of a line: v12's lexer takes it wherever a token starts. */
-const KEYWORD = /^ishikawa\b/i;
 
 /** A line of a cause under an effect, to read `name` back as a cause. */
 const BEFORE = 'ishikawa\nEffect\n  ';
@@ -28,8 +26,9 @@ export function invalidReason(name: string, kind = 'cause'): string | undefined 
   if (LINE_BREAK.test(name)) return 'A cause is one line: it cannot hold a line break.';
   if (name !== name.trim())
     return 'A cause cannot start or end with a blank: the indent before it sets its depth, and blanks after it are dropped.';
-  if (KEYWORD.test(name))
-    return 'A cause cannot start with `ishikawa`: a line starting with the keyword is an error. Reword it, as in `The ishikawa way`.';
+  // v12's lexer takes the keyword wherever a token starts.
+  if (keywordAt(name, 0) > 0)
+    return `A cause cannot start with \`ishikawa\`: a line starting with the keyword is an error; ${KEYWORD_REWORD}.`;
   if (name.startsWith('%%')) return 'A cause cannot start with `%%`: the line would be a comment.';
   return readsAsCause(name) ? undefined : `'${name}' would not read as that cause.`;
 }

@@ -1,6 +1,6 @@
 // cspell:ignore lerp
 /**
- * The ishikawa custom layout (spec #519 T3, `layoutKind: 'custom'`, D491): `IshikawaModel` in,
+ * The ishikawa custom layout (spec #519, `layoutKind: 'custom'`, D491): `IshikawaModel` in,
  * `IshikawaLayout` out. It follows v12's `ishikawaRenderer.ts` with the drawing taken out; the
  * numbers are the metrics table's (`metrics.ts`, pitfall 13):
  *
@@ -33,10 +33,16 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { ishikawaLayoutConfig } from '../config.ts';
-import type { IshikawaCause, IshikawaModel } from '../model.ts';
+import {
+  causeCount,
+  sideOf,
+  type IshikawaCause,
+  type IshikawaModel,
+  type IshikawaSide,
+} from '../model.ts';
 import { boxUnion, grown, pointsBox, quadBox, segmentBox } from './geometry.ts';
 import { ISHIKAWA_METRICS as m } from './metrics.ts';
-import { horizontal, sideOf, sign } from './side.ts';
+import { horizontal, sign } from './side.ts';
 import type {
   IshikawaArrow,
   IshikawaBone,
@@ -45,7 +51,6 @@ import type {
   IshikawaLabelKind,
   IshikawaLayout,
   IshikawaPairLayout,
-  IshikawaSide,
   IshikawaSubCauseLayout,
   PlacedLabel,
   Point,
@@ -154,17 +159,6 @@ function layout(model: IshikawaModel, ctx: IshikawaLayoutContext, fix: boolean):
   };
 }
 
-/** The number of causes below `cause`, at any depth (a loop: chains run deep). */
-function descendants(cause: IshikawaCause): number {
-  let n = 0;
-  const stack: IshikawaCause[] = [cause];
-  for (let c = stack.pop(); c !== undefined; c = stack.pop()) {
-    n += c.causes.length;
-    stack.push(...c.causes);
-  }
-  return n;
-}
-
 /**
  * Each side's length (v12 `sideStats`): with any descendants, `sidePool` shared by descendant
  * count, at least `sideMin`; else `spineBase` each. Then at least `max × slotFactor × fontSize`.
@@ -176,7 +170,7 @@ function sideLengths(
   const stats = { upper: { total: 0, max: 0 }, lower: { total: 0, max: 0 } };
   causes.forEach((cause, i) => {
     const side = stats[sideOf(i)];
-    const n = descendants(cause);
+    const n = causeCount(cause.causes);
     side.total += n;
     side.max = Math.max(side.max, n);
   });

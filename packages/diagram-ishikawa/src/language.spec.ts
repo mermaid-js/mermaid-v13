@@ -100,18 +100,13 @@ describe('ishikawa language facet', () => {
     );
   });
 
-  it('reads the clamp from the parse, per cause or from the one warning (D496)', () => {
+  it("reads the clamp from the facet parse's per-cause diagnostics (D496)", () => {
     const text = 'ishikawa\nE\n    A\n  B\n  C\n';
-    const offset = text.indexOf('C');
-    for (const result of [
-      ishikawaLanguage.parse(text, { keepTokens: true }),
-      parseIshikawa(text, { keepTokens: true }),
-    ]) {
-      const h = ishikawaLanguage.hover({ offset }, { text, result });
-      expect(h?.contents).toMatch(/Indented less than the first cause/);
-      const first = ishikawaLanguage.hover({ offset: text.indexOf('A') }, { text, result });
-      expect(first?.contents).not.toMatch(/Indented less/);
-    }
+    const result = ishikawaLanguage.parse(text, { keepTokens: true });
+    const h = ishikawaLanguage.hover({ offset: text.indexOf('C') }, { text, result });
+    expect(h?.contents).toMatch(/Indented less than the first cause/);
+    const first = ishikawaLanguage.hover({ offset: text.indexOf('A') }, { text, result });
+    expect(first?.contents).not.toMatch(/Indented less/);
   });
 
   it('gives each clamped cause an information diagnostic, where a render warns once (D496)', () => {

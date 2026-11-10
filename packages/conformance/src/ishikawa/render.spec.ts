@@ -11,13 +11,12 @@ import type { CorpusItem } from '../types.ts';
 import { ishikawaCases, ishikawaCorpus } from './corpus.ts';
 
 /**
- * Render properties and the AST round-trip of ishikawa (spec #519 T4, DESIGN §13.2, §13.4,
+ * Render properties and the AST round-trip of ishikawa (spec #519, DESIGN §13.2, §13.4,
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page strings
  * and the cases, each in every theme and `theme: 'auto'` set as `initialize()` would (a source's
  * own front matter still wins). Sources go through the plugin's own seam, parse → layout →
  * render, with core's render context (`renderIshikawaForTest`), not `createMermaid()`: the
- * manifest lands with T5, and the checks read the layout beside the SVG (the head's curve, which
- * bones were drawn). Sources the parser rejects stay out.
+ * checks read the layout beside the SVG (the head's curve, which bones were drawn). Sources the parser rejects stay out.
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, no
  * `foreignObject`, `<marker>` or `<defs>` and no `<style>` but `theme: 'auto'`'s, no element id

@@ -90,7 +90,18 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
     const types = asciiTypes();
-    expect(types).toEqual(expect.arrayContaining(['flowchart', 'er', 'sequence', 'packet']));
+    // The discovery may find more, never fewer than the types that have a text entry today.
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'flowchart',
+        'er',
+        'sequence',
+        'packet',
+        'info',
+        'kanban',
+        'ishikawa',
+      ])
+    );
     for (const type of types)
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });

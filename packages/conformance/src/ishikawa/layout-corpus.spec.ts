@@ -13,7 +13,7 @@ import type { CorpusItem } from '../types.ts';
 import { ishikawaGateCorpus } from './corpus.ts';
 
 /**
- * Layout invariants on parser-produced fixtures (R-LAYOUT-3, spec #519 T3): every source of the
+ * Layout invariants on parser-produced fixtures (R-LAYOUT-3, spec #519): every source of the
  * ishikawa gate corpus (e2e fixtures, v12 spec and syntax-page strings, the cases, each in the
  * gate's variants) parsed by the v13 parser, rejected sources included (the model of what
  * parsed), laid out with its front-matter config in a classic (16 px) and two 14 px themes and

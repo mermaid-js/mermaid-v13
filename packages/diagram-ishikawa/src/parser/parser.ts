@@ -56,7 +56,9 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { ISHIKAWA_EMPTY, ISHIKAWA_INDENT_CLAMPED } from '../codes.ts';
 import type { IshikawaCause, IshikawaEffect, IshikawaModel } from '../model.ts';
+import { causeId, EFFECT_ID } from './ast-ids.ts';
 import type { IshikawaDocument, IshikawaLineNode } from './ast.ts';
+import { KEYWORD_REWORD, KEYWORDS } from './keywords.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import { T } from './tokens.ts';
@@ -99,13 +101,12 @@ const PROBE_FOLLOWS = kindSet(T.SpaceList, T.SpaceLine);
 type Read = 'line' | 'indent' | 'blank' | 'comment';
 
 // What the parser expects, in Mermaid terms (R-ERR-2, R-ERR-5).
-const HEADER = ['`ishikawa`', '`ishikawa-beta`'];
+const HEADER = KEYWORDS.map((k) => `\`${k}\``);
 const LINE = ['a line of text: the effect or a cause'];
 const LINE_BREAK = ['a line break'];
 
 const HEADER_HINT = 'an Ishikawa diagram starts with `ishikawa` or `ishikawa-beta`';
-const KEYWORD_HINT =
-  'a line may not start with the keyword: `ishikawa` starts the diagram and comes only once; reword the line, as in `The ishikawa way`';
+const KEYWORD_HINT = `a line may not start with the keyword: \`ishikawa\` starts the diagram and comes only once; ${KEYWORD_REWORD}`;
 const EMPTY_HEADER_HINT = 'end the header line with a line break, then write the effect';
 const PAIRS_HINT =
   'remove a blank or comment line above it, or add one: mermaid@12 reads the blank and comment lines between two lines in pairs (blank lines in a row count as one), and rejects a line here';
@@ -118,6 +119,9 @@ const SEPARATOR_HINT =
  */
 class Stop extends Error {}
 const STOP = new Stop();
+
+/** How many clamped causes the render's one `ISHIKAWA_INDENT_CLAMPED` names; `related` has all. */
+const CLAMP_NAMED = 10;
 
 /** Author text as a message quotes it: in backticks, at most 24 characters. */
 const quote = (text: string): string =>
@@ -145,8 +149,8 @@ interface Open {
   level: number;
   /** The causes under it; the model's top-level ones for the effect. */
   causes: OpenCause[];
-  /** The id prefix of the causes under it: `cause:` for the effect, else `<ast>.`. */
-  prefix: string;
+  /** Its AST id, which the ids of the causes under it extend. */
+  ast: string;
   /** A cause's span, which holds the spans of the causes under it; none for the effect. */
   span: StatementSpan | undefined;
 }
@@ -407,10 +411,10 @@ class IshikawaParser {
     const before = this.lastEnd;
     this.lastEnd = range.end;
     if (!this.effect) {
-      this.effect = { ast: 'effect', text, range };
-      this.children.push({ id: 'effect', type: 'Effect', range, text, indent });
+      this.effect = { ast: EFFECT_ID, text, range };
+      this.children.push({ id: EFFECT_ID, type: 'Effect', range, text, indent });
       this.st.statement('effect', range);
-      this.stack.push({ level: 0, causes: this.causes, prefix: 'cause:', span: undefined });
+      this.stack.push({ level: 0, causes: this.causes, ast: EFFECT_ID, span: undefined });
       return;
     }
     this.baseline ??= indent;
@@ -422,14 +426,14 @@ class IshikawaParser {
       top = stack[stack.length - 1];
     }
     const parent = stack[stack.length - 1]!;
-    const ast = `${parent.prefix}${parent.causes.length + 1}`;
+    const ast = causeId(parent.ast, parent.causes.length + 1);
     const cause: OpenCause = { ast, text, level, range, causes: [] };
     parent.causes.push(cause);
     if (indent < this.baseline) this.clamped.push(cause);
     this.children.push({ id: ast, type: 'Cause', range, text, indent, level });
     st.symbol(text, 'cause', range, 'def');
     const span = st.beginStatement('cause', range.start);
-    stack.push({ level, causes: cause.causes, prefix: `${ast}.`, span });
+    stack.push({ level, causes: cause.causes, ast, span });
   }
 
   /** The D496 warnings. */
@@ -462,7 +466,10 @@ class IshikawaParser {
       }
       return;
     }
-    const list = clamped.slice(0, 3).map(shown).join(', ') + (clamped.length > 3 ? ', …' : '');
+    // Every clamped cause by name, up to a cap (the public warning has no `related`).
+    const named = clamped.slice(0, CLAMP_NAMED).map(shown);
+    const more = clamped.length - named.length;
+    const list = named.join(', ') + (more > 0 ? `, and ${more} more` : '');
     const message =
       clamped.length === 1
         ? `A cause is indented less than the first cause (${shown(baseline)}), so it is read as a top-level cause: ${list}. Indent it at least as deep as the first cause to nest it.`

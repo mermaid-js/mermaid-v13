@@ -1,3 +1,3 @@
-/** The ishikawa custom layout (spec #519 T3). */
+/** The ishikawa custom layout (spec #519). */
 export { layoutIshikawa, type IshikawaLayoutContext } from './layout.ts';
 export type * from './types.ts';

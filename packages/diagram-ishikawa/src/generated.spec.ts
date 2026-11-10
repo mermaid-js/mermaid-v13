@@ -5,8 +5,8 @@ import { ishikawaDocs } from './generated/docs.ts';
 
 /**
  * The tables `pnpm gen:grammar` makes from `grammar/ishikawa.ebnf` (D93, D94), for the language
- * facet (T6, #584): every kind has a highlight category, and the keyword hover explains has a
- * doc.
+ * facet (`language.ts`, #584): every kind has a highlight category, and the keyword hover
+ * explains has a doc.
  */
 describe('generated ishikawa tables', () => {
   it('categorise the keyword, comments and the text of a line', () => {

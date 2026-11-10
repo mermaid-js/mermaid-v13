@@ -15,8 +15,8 @@ import type { Charset } from './structure.ts';
 // in both charsets, through the public `format: 'ascii'` API: renders every diagram that renders
 // to SVG and rejects the others as SVG does; deterministic (a fresh API object draws the same
 // text); `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces,
-// no box glyph in ascii. Read back against the parsed model: the front-matter title centred on
-// the first line, the effect in a closed box (a tee under its first column when it has causes),
+// no box glyph in ascii. Read back against the parsed model: an empty body its title alone (no
+// text without one), the front-matter title centred on the first line, the effect in a closed box (a tee under its first column when it has causes),
 // then one line per cause in source order, its `tree(1)` connector at its depth (`└──` for the
 // last of its siblings), a trunk under every ancestor with a later sibling, and its label.
 
@@ -150,12 +150,13 @@ describe('ishikawa ascii corpus properties (#586, D498, R-ASCII-9)', { timeout: 
     ).toEqual({});
   });
 
-  it('draws nothing for an empty body, and the front-matter title centred on the first line', () => {
+  it('draws an empty body as its title alone, and the front-matter title centred on the first line', () => {
     expect(
       problems((c, cs) => {
         const { text } = c.out[cs];
-        if (!c.model.effect) return text === '' ? [] : ['an empty body drew text'];
         const title = normal(c.model.title ?? '');
+        if (!c.model.effect)
+          return text === title ? [] : [`an empty body drew ${JSON.stringify(text)}`];
         if (!title) return [];
         const lines = text.split('\n');
         const first = lines[0] ?? '';

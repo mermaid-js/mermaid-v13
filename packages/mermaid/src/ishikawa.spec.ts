@@ -75,7 +75,7 @@ describe('ishikawa diagrams through the public API (#585)', () => {
 
   it('rejects what v12 rejects, detected headers included', async () => {
     const m = createMermaid();
-    // The keyword is a token wherever a token starts (T1), so a cause can't start with it.
+    // The keyword is a token wherever a token starts (the lexer, as v12's), so a cause can't start with it.
     const keyword = await rejection(m.render('i3', 'ishikawa\n  Effect\n  ishikawa cause\n'));
     expect(keyword).toBeInstanceOf(MermaidError);
     expect((keyword as MermaidError).code).toBe('SYNTAX');
@@ -138,6 +138,13 @@ describe('ishikawa diagrams through the public API (#585)', () => {
       'ishikawa-beta\n  Power outage\n    Grid\n      Storm damage\n  Generator\n    Fuel empty\n'
     );
     expect(clamped.warnings.map((w) => w.code)).toEqual(['ISHIKAWA_INDENT_CLAMPED']);
+    // The public warning has no `related`: its message names every clamped cause.
+    const five = await m.render('i7', 'ishikawa-beta\nP\n    A\n  B\n  C\n  D\n  E\n  F\n');
+    const [clampWarning] = five.warnings;
+    expect(clampWarning?.message).toContain(
+      ': `B` at line 4, `C` at line 5, `D` at line 6, `E` at line 7, `F` at line 8. Indent them'
+    );
+    expect(clampWarning?.message).not.toContain('….');
     const empty = await m.render('i7', 'ishikawa\n');
     expect(empty.warnings.map((w) => w.code)).toEqual(['ISHIKAWA_EMPTY']);
     expect(empty.svg).not.toContain('<g class="ishikawa"');
@@ -219,6 +226,24 @@ describe('ishikawa diagrams through the public API (#585)', () => {
     const empty = await m.render('i11', 'ishikawa\n', { format: 'ascii' });
     expect(empty.text).toBe('');
     expect(empty.warnings.map((w) => w.code)).toEqual(['ISHIKAWA_EMPTY']);
+  });
+
+  it('draws an empty body with a front-matter title as the title line alone (D82)', async () => {
+    const m = createMermaid();
+    const empty = await m.render('i15', '---\ntitle: " Why  not "\n---\nishikawa\n', {
+      format: 'ascii',
+    });
+    expect([empty.text, empty.rows, empty.columns]).toEqual(['Why not', 1, 7]);
+    expect(empty.warnings.map((w) => w.code)).toEqual(['ISHIKAWA_EMPTY']);
+  });
+
+  it('writes the front-matter title on one line, the same in the SVG <title> and the text', async () => {
+    const m = createMermaid();
+    const text = '---\ntitle: " Why\\tit  failed "\n---\nishikawa\n  Blurry photo\n';
+    expect(title((await m.render('i16', text)).svg)).toBe('Why it failed');
+    expect((await m.render('i16', text, { format: 'ascii' })).text.split('\n')[0]).toBe(
+      ' Why it failed'
+    );
   });
 
   it('draws a 1,000-deep chain one cause a line, the last 4 columns a level in (a loop, no recursion)', async () => {

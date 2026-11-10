@@ -4,14 +4,16 @@
  *
  * It draws from `IshikawaModel`, not from the layout: the outline is the model's tree, and the
  * fishbone's geometry has no text form (D498). Each label goes through core's label layout in
- * cells and is written as plain text, as the SVG's `<title>` is (T4): entities decoded, markup
- * gone, a `<br>` a space. Bold and italic are dropped with one `ASCII_DROPPED` warning (D82).
+ * cells and is written as plain text, as the SVG's `<title>` is (`labels.ts`): entities decoded,
+ * markup gone, a `<br>` a space. Bold and italic are dropped with one `ASCII_DROPPED` warning
+ * (D82); math and icons are shown as written, with core's own `ASCII_DROPPED` warnings.
  */
 import type { TextRenderContext, Warning } from '@mermaid-js/core';
 import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@mermaid-js/core/ascii';
 import { layoutLabel, Style, type LabelOptions, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { IshikawaCause, IshikawaModel } from './model.ts';
 import { drawOutline } from './ascii/outline.ts';
+import { plainLabel, plainTitle } from './labels.ts';
+import type { IshikawaCause, IshikawaModel } from './model.ts';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
@@ -33,26 +35,23 @@ const emphasised = (label: MeasuredLabel): boolean =>
 /**
  * The ishikawa `ascii` hook (DESIGN §12.1): the outline as text, `\n` line ends, no trailing
  * spaces, never cropped (the API adds `ASCII_TOO_WIDE`, R-ASCII-8). The layout is not read. An
- * empty body (no effect) is the empty string, as the SVG draws nothing.
+ * empty body (no effect) is its front-matter title alone, or the empty string with no title, as
+ * the SVG draws nothing.
  */
 export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAsciiContext): string {
   const { effect } = model;
-  if (!effect) return '';
+  const title = plainTitle(model.title);
+  if (!effect) return title ?? '';
   const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
   const options: LabelOptions = ctx.inline ? { inline: ctx.inline } : {};
   const dropped: string[] = [];
   const plain = (text: string, ast: string): string => {
     const label = layoutLabel(text, FONT, Infinity, cellMeasurer, options);
     if (emphasised(label)) dropped.push(ast);
-    return label.lines
-      .map((runs) => {
-        const line = runs.map((r) => r.text).join('');
-        // A list item's own marker: a bullet written in the text stays as written.
-        return glyphs.name === 'ascii' && label.left ? line.replace(/^(\s*)[•◦]/, '$1-') : line;
-      })
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // A list item's own marker: a bullet written in the text stays as written.
+    return glyphs.name === 'ascii' && label.left
+      ? plainLabel(label.lines, (line) => line.replace(/^(\s*)[•◦]/, '$1-'))
+      : plainLabel(label.lines);
   };
   const head = plain(effect.text, effect.ast);
   const text = drawOutline(
@@ -60,7 +59,7 @@ export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAscii
     model.causes,
     (c: IshikawaCause) => plain(c.text, c.ast),
     glyphs,
-    model.title
+    title
   );
   if (dropped.length > 0)
     ctx.warn({

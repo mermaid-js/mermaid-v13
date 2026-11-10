@@ -1,12 +1,13 @@
 /**
  * IshikawaLayout: the plain-data result of the ishikawa custom layout (`layoutKind: 'custom'`,
- * spec #519 §Layout). Every length is in px (ishikawa draws SVG; T7's ASCII outline draws from
- * the model), in the diagram's coordinates, v12's: the head's back is at `(0, spineY)` and the
- * causes reach left into negative x. The renderer draws them as they are. Rectangles have their
+ * spec #519 §Layout). Every length is in px (ishikawa draws SVG; the text output, `ascii.ts`,
+ * draws from the model), in the diagram's coordinates, v12's: the head's back is at
+ * `(0, spineY)` and the causes reach left into negative x. The renderer draws them as they are. Rectangles have their
  * top-left corner at `x`, `y`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { IshikawaSide } from '../model.ts';
 
 export interface Point {
   readonly x: number;
@@ -48,9 +49,6 @@ export interface IshikawaArrow {
   readonly left: Point;
   readonly right: Point;
 }
-
-/** Above the spine (a cause at an even index) or below it. */
-export type IshikawaSide = 'upper' | 'lower';
 
 export interface IshikawaBone extends Segment {
   /** 1 for a cause, 2 and on for the sub-causes below it. */

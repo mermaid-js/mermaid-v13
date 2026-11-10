@@ -1,4 +1,4 @@
-// The ishikawa renderer (spec #519 T4) through the plugin's own seam: `.mmd` fixtures parsed, laid
+// The ishikawa renderer (spec #519) through the plugin's own seam: `.mmd` fixtures parsed, laid
 // out and drawn with core's render context (`renderIshikawaForTest`). v12's structure and
 // classes, the arrowheads as paths, the shared colours and fonts (D493), the AST marks (D497),
 // the accessible name (D492), the `w.outline` hook (D494) and the root. The corpus properties

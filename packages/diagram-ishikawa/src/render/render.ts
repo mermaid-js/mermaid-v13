@@ -1,5 +1,5 @@
 /**
- * Draws a laid-out ishikawa diagram through the SvgWriter (spec #519 T4, DESIGN §7). The layout
+ * Draws a laid-out ishikawa diagram through the SvgWriter (spec #519, DESIGN §7). The layout
  * (`layoutIshikawa`) measured and placed everything in v12's coordinates; this file only paints
  * it, in v12's order and with v12's classes (`ishikawaRenderer.ts`): `g.ishikawa` holding
  * `line.ishikawa-spine`, `g.ishikawa-head-group` (`path.ishikawa-head`,
@@ -20,8 +20,8 @@
  * `data-ast` marks one element per AST node (D497, pitfall 12): the head group (the effect),
  * each cause's label group, each sub-cause's sub-group (a sub-cause has no label group). Bones,
  * arrowheads and text carry `data-id`, the node's AST id; the spine the effect's. The SVG
- * `<title>` is the front-matter `title`, else the effect's text as drawn, plain (entities
- * decoded, a line break a space) (D492); no title is drawn.
+ * `<title>` is the front-matter `title` on one line, else the effect's text as drawn, plain
+ * (entities decoded, a line break a space; `labels.ts`) (D492); no title is drawn.
  *
  * Hand-drawn (D494): the head and the label boxes are `node` outlines, the spine and bones
  * `edge` outlines (`line`); the drawer sketches them with its role's options, as venn's (the
@@ -51,6 +51,7 @@ import type {
   Segment,
 } from '../layout/index.ts';
 import { ishikawaUseMaxWidth } from '../config.ts';
+import { plainLabel, plainTitle } from '../labels.ts';
 import type { IshikawaModel } from '../model.ts';
 
 /** What the ishikawa renderer reads from the render context. */
@@ -243,18 +244,6 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs, box: LabelBox = p.tex
   w.label(box, p.x + p.width / 2, p.y + p.height / 2, attrs);
 }
 
-/**
- * A label's text as plain text, for the accessible name: its lines as drawn (entities decoded,
- * markup gone), joined by a space, so a `<br>` or a wrap reads as one.
- */
-function plainText(p: PlacedLabel): string {
-  return p.text.lines
-    .map((line) => line.map((span) => span.text).join(''))
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 /** The `<svg>` root with its title (R-A11Y-1, D133, D492). */
 function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRenderContext): void {
   const { theme, config } = ctx;
@@ -265,7 +254,8 @@ function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRende
   const maxWidth = ishikawaUseMaxWidth(
     config.ishikawa as Readonly<Record<string, unknown>> | undefined
   );
-  const title = model.title?.trim() || (layout.head && plainText(layout.head.label));
+  const title =
+    plainTitle(model.title) ?? (layout.head && plainLabel(layout.head.label.text.lines));
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   const auto = theme.autoDeclarations();
