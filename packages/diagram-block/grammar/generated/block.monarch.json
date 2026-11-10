@@ -575,7 +575,7 @@
         "\\]>\\s*\\(",
         {
           "token": "delimiter",
-          "next": "@ARROW_DIR"
+          "switchTo": "@ARROW_DIR"
         }
       ]
     ],

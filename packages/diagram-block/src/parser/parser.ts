@@ -29,6 +29,9 @@
  * Unlike jison the parser does not stop at the first error (R-PARSE-4): it reports it, skips to
  * the next statement that starts on a later line, and carries on. A failed composite header
  * still opens the composite, so its `end` closes it (pitfall 8).
+ *
+ * With a probe (R-LANG-7, D95) the parser records the kinds it tests at the probed token at each
+ * decision point (`expected.ts`); its mode is the lexer's start condition. Recovery stops it.
  */
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import {
@@ -36,6 +39,8 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -101,6 +106,7 @@ import {
   withHint,
 } from './messages.ts';
 import type { Unclosed } from './messages.ts';
+import * as EXPECTED from './expected.ts';
 import { esc, shapeType } from './text.ts';
 import { T } from './tokens.ts';
 
@@ -256,6 +262,8 @@ class BlockParser {
   private readonly holes: readonly Hole[];
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly maxDepth: number;
   private readonly builder: ModelBuilder;
   private readonly doc: BlockStatementNode[] = [];
@@ -279,8 +287,16 @@ class BlockParser {
       pre.directives.map((d) => d.range)
     );
     this.holes = view.holes;
-    this.lexed = lex(src, pre.bodyStart, view);
-    this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    if (options.probe === undefined) {
+      this.lexed = lex(src, pre.bodyStart, view);
+      this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    } else {
+      const probe = (this.probe = new Probe(src, options.probe, EXPECTED.PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      this.lexed = lex(src, pre.bodyStart, view, probe);
+      // The cursor marks an offset inside a comment or directive as outside code.
+      this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
+    }
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     this.builder = new ModelBuilder(this.st, {
       maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
@@ -302,7 +318,7 @@ class BlockParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.doc,
     };
-    return st.result(model, ast, this.c.tokens, this.options);
+    return st.result(model, ast, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -500,6 +516,7 @@ class BlockParser {
   /** `start`: the header. Without it the rest is still read. */
   private start(): void {
     const { c } = this;
+    c.tested(T.Block);
     if (c.kind === T.Block) {
       this.st.statement('header', c.range);
       c.next();
@@ -512,6 +529,12 @@ class BlockParser {
   private document(): void {
     const { c } = this;
     for (;;) {
+      // `end` closes a composite that holds a statement (an empty one is an error).
+      c.tested(
+        this.frames.length > 1 && this.frame.statements > 0
+          ? EXPECTED.BODY_KINDS
+          : EXPECTED.STATEMENT_KINDS
+      );
       const k = c.kind;
       if (k === Kind.EOF) {
         if (!this.sawEof && !this.st.diagnostics.hasErrors)
@@ -629,14 +652,18 @@ class BlockParser {
     const chain: Chain = { first: this.nodeId(), span: undefined, links: [] };
     try {
       chain.first = this.withShape(chain.first);
+      c.tested(EXPECTED.SIZE_KINDS);
       if (c.kind === T.Size) {
         const j = c.next();
         const range = this.range(j);
         chain.span = { value: parseInt(this.raw(j), 10), range };
         chain.first = { ...chain.first, range: { start: chain.first.range.start, end: range.end } };
       }
-      while (c.kind === T.Link || c.kind === T.StartLink) {
+      for (;;) {
+        c.tested(EXPECTED.LINK_KINDS);
+        if (c.kind !== T.Link && c.kind !== T.StartLink) break;
         const link = this.link();
+        c.tested(T.NodeId);
         if (c.kind !== T.NodeId) this.fail(BLOCK);
         const k = chain.links.push([link, this.nodeId()]) - 1;
         const next = chain.links[k] as [LinkParts, NodeParts];
@@ -666,6 +693,7 @@ class BlockParser {
   /** The rest of a `node`: an optional shape or block arrow. */
   private nodeShape(): Shape | undefined {
     const { c } = this;
+    c.tested(EXPECTED.SHAPE_KINDS);
     if (c.kind === T.NodeDStart) return this.shape();
     if (c.kind === T.BlockArrowStart) return this.blockArrow();
     return undefined;
@@ -675,8 +703,10 @@ class BlockParser {
   private shape(): Shape {
     const { c } = this;
     const open = this.raw(c.next());
+    c.tested(T.Str);
     if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
     const label = this.raw(c.next());
+    c.tested(T.NodeDEnd);
     if (c.kind !== T.NodeDEnd) this.fail(closerFor(open));
     const close = c.next();
     return { typeStr: open + this.raw(close), label, end: this.range(close).end };
@@ -686,11 +716,17 @@ class BlockParser {
   private blockArrow(): Shape {
     const { c } = this;
     c.next();
+    c.tested(T.Str);
     if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
     const label = this.raw(c.next());
+    c.tested(EXPECTED.DIR_KINDS);
     if (c.kind !== T.Dir) this.fail(DIRECTION);
     const directions: string[] = [];
-    while (c.kind === T.Dir) directions.push(this.raw(c.next()));
+    for (;;) {
+      directions.push(this.raw(c.next()));
+      c.tested(EXPECTED.DIR_OR_CLOSE_KINDS);
+      if (c.kind !== T.Dir) break;
+    }
     if (c.kind !== T.BlockArrowEnd) this.fail(DIRECTION_OR_CLOSE);
     const close = c.next();
     return { typeStr: '<[' + this.raw(close), label, directions, end: this.tightEnd(close) };
@@ -703,10 +739,13 @@ class BlockParser {
     const start = this.range(j).start;
     if (this.c.tokens.kind[j] === T.Link)
       return { link: this.raw(j), range: { start, end: this.tightEnd(j) } };
+    c.tested(T.LinkLabel);
     if (c.kind !== T.LinkLabel) this.fail(EDGE_LABEL);
     c.next();
+    c.tested(T.Str);
     if (c.kind !== T.Str) this.fail(EDGE_LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : undefined);
     const label = this.raw(c.next());
+    c.tested(T.Link);
     if (c.kind !== T.Link) this.fail(EDGE_END);
     const close = c.next();
     return { link: this.raw(close), label, range: { start, end: this.tightEnd(close) } };
@@ -835,6 +874,7 @@ class BlockParser {
       this.open({ ...body, span, opener, statements: 0 });
       return;
     }
+    c.tested(T.NodeId);
     if (c.kind !== T.NodeId) {
       const body = { block: undefined, into: parent.into, ast: parent.ast };
       this.open({ ...body, span, opener, statements: 1 });
@@ -890,11 +930,13 @@ class BlockParser {
   private classDef(): void {
     const { c } = this;
     const start = c.next();
+    c.tested(T.ClassDefId);
     if (c.kind === T.DefaultClassDefId) this.fail(CLASS_NAME, DEFAULT_HINT);
     if (c.kind !== T.ClassDefId) this.fail(CLASS_NAME);
     const idTok = c.next();
     const idText = this.raw(idTok);
     const [name, at] = BlockParser.trimmed(idText);
+    c.tested(T.ClassDefStyleOpts);
     if (c.kind !== T.ClassDefStyleOpts) this.fail(CLASS_STYLES);
     const cssTok = c.next();
     const css = this.raw(cssTok).trim();
@@ -929,8 +971,10 @@ class BlockParser {
   private classStatement(): void {
     const { c } = this;
     const start = c.next();
+    c.tested(T.ClassEntityIds);
     if (c.kind !== T.ClassEntityIds) this.fail(IDS);
     const idsTok = c.next();
+    c.tested(T.StyleClass);
     if (c.kind !== T.StyleClass) this.fail(CLASS_NAME);
     const nameTok = c.next();
     const text = this.raw(nameTok);
@@ -951,8 +995,10 @@ class BlockParser {
   private styleStatement(): void {
     const { c } = this;
     const start = c.next();
+    c.tested(T.StyleEntityIds);
     if (c.kind !== T.StyleEntityIds) this.fail(IDS);
     const idsTok = c.next();
+    c.tested(T.StyleDefinitionData);
     if (c.kind !== T.StyleDefinitionData) this.fail(STYLES);
     const dataTok = c.next();
     const styles = this.raw(dataTok).trim();

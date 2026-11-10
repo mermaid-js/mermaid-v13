@@ -41,3 +41,14 @@ grammars:
           mode: acc_descr_multiline
           pattern: '[\}]'
           docOf: acc_descr
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - shapes/
+    - plugin.ts
+    - index.ts
+    - testing.ts
+    - test-context.ts

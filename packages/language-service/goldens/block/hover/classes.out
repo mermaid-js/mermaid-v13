@@ -1,0 +1,21 @@
+@ 3:12  classDef |hot fill:#f96,stroke:#333
+  3:12-3:15 "hot"
+  | **class** `hot`
+  |
+  | Styles: `fill:#f96,stroke:#333`
+  |
+  | Used by 1 block
+@ 4:11  class a |hot
+  4:11-4:14 "hot"
+  | **class** `hot`
+  |
+  | Styles: `fill:#f96,stroke:#333`
+  |
+  | Used by 1 block
+@ 5:11  class b |cold
+  5:11-5:15 "cold"
+  | **class** `cold`
+  |
+  | No `classDef` defines it
+  |
+  | Used by 1 block

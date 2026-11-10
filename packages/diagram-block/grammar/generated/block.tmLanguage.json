@@ -1465,12 +1465,44 @@
         }
       }
     },
-    "rule-69": {
-      "begin": "<\\[",
-      "end": "$",
+    "phase-BLOCK_ARROW": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[\"][`]|[\"])(?=\\]>\\s*\\())",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[\"][`]|[\"])(?=\\]>\\s*\\()",
       "patterns": [
         {
           "include": "#mode-BLOCK_ARROW"
+        }
+      ]
+    },
+    "switch-76": {
+      "begin": "\\]>\\s*\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,?\\s*right\\s*|,?\\s*left\\s*|,?\\s*x\\s*|,?\\s*y\\s*|,?\\s*up\\s*|,?\\s*down\\s*)(\\)\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-ARROW_DIR"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      }
+    },
+    "rule-69": {
+      "begin": "<\\[",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-BLOCK_ARROW"
+        },
+        {
+          "include": "#switch-76"
         }
       ],
       "beginCaptures": {
@@ -1848,25 +1880,6 @@
         }
       }
     },
-    "rule-76": {
-      "begin": "\\]>\\s*\\(",
-      "end": "(\\)\\s*)",
-      "patterns": [
-        {
-          "include": "#mode-ARROW_DIR"
-        }
-      ],
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.mermaid-block"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.mermaid-block"
-        }
-      }
-    },
     "mode-BLOCK_ARROW": {
       "patterns": [
         {
@@ -1880,9 +1893,6 @@
         },
         {
           "include": "#rule-75"
-        },
-        {
-          "include": "#rule-76"
         }
       ]
     },

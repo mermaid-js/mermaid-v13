@@ -196,14 +196,14 @@ Modes: `INITIAL`, `string`, `md_string`, `NODE`, `BLOCK_ARROW`, `ARROW_DIR`, `LL
 | NODE | — | `["][`]` | push(md_string) |  |
 | NODE | — | `["]` | push(string) |  |
 | BLOCK_ARROW | — | `["]` | push(string) |  |
-| BLOCK_ARROW | — | `\]>\s*\(` | push(ARROW_DIR) |  |
+| BLOCK_ARROW | — | `\]>\s*\(` | pop push(ARROW_DIR) |  |
 | ARROW_DIR | DIR | `,?\s*right\s*` |  | A block arrow's direction: `right`, `left`, `up`, `down`, `x` (both sides) or `y` (top and bottom), separated by commas. |
 | ARROW_DIR | DIR | `,?\s*left\s*` |  |  |
 | ARROW_DIR | DIR | `,?\s*x\s*` |  |  |
 | ARROW_DIR | DIR | `,?\s*y\s*` |  |  |
 | ARROW_DIR | DIR | `,?\s*up\s*` |  |  |
 | ARROW_DIR | DIR | `,?\s*down\s*` |  |  |
-| ARROW_DIR | BLOCK_ARROW_END | `\)\s*` | pop pop |  |
+| ARROW_DIR | BLOCK_ARROW_END | `\)\s*` | pop |  |
 | INITIAL | LINK | `\s*[xo<]?--+[-xo>]\s*` |  | An edge: `-->`, `---`, `--x`, `--o`, `<-->`, `==>` (thick), `-.->` (dotted) and their kin, with any number of dashes or equals signs. |
 | INITIAL | LINK | `\s*[xo<]?==+[=xo>]\s*` |  |  |
 | INITIAL | LINK | `\s*[xo<]?-?\.+-[xo>]?\s*` |  |  |

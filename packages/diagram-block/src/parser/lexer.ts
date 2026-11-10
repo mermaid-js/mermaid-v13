@@ -63,7 +63,7 @@ import {
   SourceOffsets,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of block.jison (all exclusive) that its rules use.
@@ -85,6 +85,26 @@ const S = {
   ACC_DESCR: 14,
   ACC_DESCR_MULTILINE: 15,
 } as const;
+
+/** Start condition names by number, as `block.jison` names them, for the probe's mode (R-LANG-7). */
+const S_NAMES: readonly string[] = [
+  'INITIAL',
+  'string',
+  'md_string',
+  'NODE',
+  'BLOCK_ARROW',
+  'ARROW_DIR',
+  'LLABEL',
+  'CLASSDEF',
+  'CLASSDEFID',
+  'CLASS',
+  'CLASS_STYLE',
+  'STYLE_STMNT',
+  'STYLE_DEFINITION',
+  'acc_title',
+  'acc_descr',
+  'acc_descr_multiline',
+];
 
 const LOWER_O = 0x6f;
 const LOWER_X = 0x78;
@@ -149,10 +169,11 @@ function rewrite(kind: number, text: string): string {
 }
 
 /**
- * Lex the block body `src[from…]`. `from` and `view` come from `blockView` (`./index.ts`).
+ * Lex the block body `src[from…]`. `from` and `view` come from `blockView` (`./index.ts`). With
+ * a `probe`, the start condition at the probe's offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView): Lexed {
-  const tokens = new BlockLexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {
+  const tokens = new BlockLexer(src, from, view).run(probe);
   return {
     tokens,
     text: (j) =>
@@ -263,8 +284,20 @@ class BlockLexer {
     return !o || o.source(q + 1) === o.source(q) + 1;
   }
 
-  run(): TokenStream {
-    while (this.p < this.n) this.step(this.text.charCodeAt(this.p));
+  run(probe?: Probe): TokenStream {
+    const { text, n } = this;
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
+    else {
+      while (this.p < n) {
+        const before = this.source(this.p);
+        const state = this.state;
+        this.step(text.charCodeAt(this.p));
+        // An opener's text is read in the state before it, a closer's in the one it leaves.
+        probe.lexed(before, this.source(this.p), S_NAMES[state] ?? '');
+      }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
+    }
     this.atEnd();
     this.trivia(this.src.length + 1);
     return this.w.finish(this.src);

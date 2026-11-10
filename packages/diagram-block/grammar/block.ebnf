@@ -134,7 +134,9 @@ EOF                          /$/ ;
 <NODE> -                     /["][`]/                        push(md_string) :string ;
 <NODE> -                     /["]/                           push(string) :string ;
 <BLOCK_ARROW> -              /["]/                           push(string) :string ;
-<BLOCK_ARROW> -              /\]>\s*\(/                      push(ARROW_DIR) :punctuation ;
+(* `]>(` leaves the block arrow for its directions (jison pushes, then pops twice at `)`; one
+swap and one pop read the same and the highlighters follow them). *)
+<BLOCK_ARROW> -              /\]>\s*\(/                      pop push(ARROW_DIR) :punctuation ;
 (** A block arrow's direction: `right`, `left`, `up`, `down`, `x` (both sides) or `y` (top and
 bottom), separated by commas. *)
 <ARROW_DIR> DIR              /,?\s*right\s*/                 :keyword ;
@@ -143,7 +145,7 @@ bottom), separated by commas. *)
 <ARROW_DIR> DIR              /,?\s*y\s*/                     :keyword ;
 <ARROW_DIR> DIR              /,?\s*up\s*/                    :keyword ;
 <ARROW_DIR> DIR              /,?\s*down\s*/                  :keyword ;
-<ARROW_DIR> BLOCK_ARROW_END  /\)\s*/                         pop pop :punctuation ;
+<ARROW_DIR> BLOCK_ARROW_END  /\)\s*/                         pop :punctuation ;
 
 (** An edge: `-->`, `---`, `--x`, `--o`, `<-->`, `==>` (thick), `-.->` (dotted) and their
 kin, with any number of dashes or equals signs. *)

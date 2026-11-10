@@ -37,4 +37,4 @@ Block #521, c4 #522 and agentflow #523 run in parallel on AI-Max: at most one ti
 - #637 move done on `feature/521_block` (ae43c85ae, local): block's rows in its own files. Integration is not pushed until T5 adds the manifest (coordinator; #640 fixes `tools/workspace/sync.spec.ts` for pre-manifest packages).
 - T3 #555 merged (ff e7fef7bd3): exact v12 sizing to four nesting levels, linear (depth 800 with spans 7.7 ms, 16k spanning blocks 43 ms).
 - T4 #556 merged (ff 3c3553fc4).
-- In flight: T6 #557 on `feature/557_block_language` in this worktree.
+- T6 #557 done on `feature/557_block_language` (handoff `tickets/557.md`), not merged yet.
