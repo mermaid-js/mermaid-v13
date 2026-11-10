@@ -15,6 +15,7 @@ import type { KanbanModel } from './model.ts';
 import { priorityWarning } from './render/priority.ts';
 import { drawKanban } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
+import { glyphSetOf } from '@mermaid-js/core/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 
@@ -38,7 +39,7 @@ function layoutAscii(model: KanbanModel, ctx: TextRenderContext): KanbanLayout {
  */
 export function ascii(model: KanbanModel, layout: KanbanLayout, ctx: TextRenderContext): string {
   const laid = layout.units === 'cell' ? layout : layoutAscii(model, ctx);
-  const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  const glyphs = glyphSetOf(ctx.config);
   // The cards the layout placed, in its order, as the SVG renderer checks them.
   const items = new Map(model.items.map((item) => [item.ast, item]));
   const priority = priorityWarning(laid.cards.flatMap((c) => items.get(c.ast) ?? []));

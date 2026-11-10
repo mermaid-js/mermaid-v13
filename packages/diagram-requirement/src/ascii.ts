@@ -21,6 +21,7 @@ import { layoutRequirement, type RequirementLayout } from './layout/layout.ts';
 import type { RequirementModel } from './model.ts';
 import { drawRequirement, type RequirementGlyphs } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
+import { asciiRoute } from '@mermaid-js/core/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -80,15 +81,8 @@ export function ascii(
   const curve = ctx.config.flowchart?.curve;
   for (const w of asciiWarnings(model, prepared, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which relations cross or share.
-  if (unresolved.length > 0) {
-    const edges = [...new Set(unresolved.map((c) => c.edge))];
-    const warning: AsciiRouteWarning = {
-      code: 'ASCII_ROUTE',
-      astIds: edges,
-      message: `No free lane for relations ${edges.join(', ')}; their lines touch other lines or text.`,
-    };
-    ctx.warn(warning);
-  }
+  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'relations');
+  if (routeWarning) ctx.warn(routeWarning);
   const maxWidth = ctx.config.ascii?.maxWidth;
   const title = ctx.title ?? model.title;
   return drawRequirement(prepared, laid, routes, glyphsFor(ctx), {

@@ -16,3 +16,5 @@ export type { AsciiInput, AsciiOptions } from './options.ts';
 export { snapRoute } from './snap.ts';
 export { cellMeasurer, cellWidth, graphemes, graphemeWidth } from './measurer.ts';
 export type { Grapheme } from './measurer.ts';
+// Spike (shared diagram text helpers): one self-contained block.
+export * from './diagram.ts';

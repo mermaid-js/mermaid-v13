@@ -34,6 +34,7 @@ import type {
   SequenceLayout,
 } from '../layout/index.ts';
 import { symbolForm } from './symbols.ts';
+import { dirOf } from '@mermaid-js/core/ascii';
 
 /** A head drawn in one cell: v12's marker families, in text. */
 type Head = 'arrow' | 'open' | 'cross' | 'top' | 'bottom';
@@ -77,11 +78,6 @@ interface Cell {
   readonly x: number;
   readonly y: number;
 }
-
-const dirOf = (a: Cell, b: Cell): Dir => {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-};
 
 /**
  * Draws a run of cells as one line: each cell gets arms to its neighbours, the ends also the

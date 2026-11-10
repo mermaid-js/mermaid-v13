@@ -28,66 +28,16 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { AgentflowEdgeView, AgentflowPrepared, Arrowhead } from '../layout/index.ts';
 import { textForm } from './shapes.ts';
-
-interface Centred {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
- * The cells of a box from its centre and size: columns `x − w/2 + ½ … x + w/2 − ½`, the grid
- * model's convention (`LayoutGraph.grid`), which the repair router shares.
- */
-export function cellRect(b: Centred): CellRect {
-  const x = Math.round(b.x - b.width / 2 + 0.5);
-  const y = Math.round(b.y - b.height / 2 + 0.5);
-  return {
-    x,
-    y,
-    width: Math.round(b.x + b.width / 2 - 0.5) - x + 1,
-    height: Math.round(b.y + b.height / 2 - 0.5) - y + 1,
-  };
-}
-
-function dirOf(a: Point, b: Point): Dir {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-}
-
-/** The cells a corner polyline passes, in order. */
-function cellsOf(points: readonly Point[]): Point[] {
-  const out: Point[] = [];
-  points.forEach((p, i) => {
-    if (i === 0) return void out.push(p);
-    const prev = points[i - 1]!;
-    const d = dirOf(prev, p);
-    const n = Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y);
-    for (let k = 1; k <= n; k++) out.push({ x: prev.x + DX[d] * k, y: prev.y + DY[d] * k });
-  });
-  return out;
-}
-
-/** Writes a label's lines centred in a `width`-cell-wide block from (x, y). */
-function writeLabel(
-  canvas: Canvas,
-  label: MeasuredLabel,
-  x: number,
-  y: number,
-  width: number,
-  glyphs: GlyphSet
-): void {
-  label.lines.forEach((runs, i) => {
-    let text = runs.map((r) => r.text).join('');
-    // Only a list item's own marker: a bullet written in the text stays as written.
-    if (glyphs.name === 'ascii' && label.left) text = text.replace(/^(\s*)[•◦]/, '$1-');
-    const indent = label.indents[i] ?? 0;
-    const lineWidth = label.widths[i] ?? 0;
-    const at = label.left ? x + Math.floor((width - label.width) / 2) + indent : x;
-    drawText(canvas, label.left ? at : x + Math.floor((width - lineWidth) / 2), y + i, text);
-  });
-}
+import type { Centred } from '@mermaid-js/core/ascii';
+import { cellRect } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/core/ascii';
+import { cellsOf } from '@mermaid-js/core/ascii';
+import { wrapTitle } from '@mermaid-js/core/ascii';
+import { finish } from '@mermaid-js/core/ascii';
+import { tee } from '@mermaid-js/core/ascii';
+import { writeLabel } from '@mermaid-js/core/ascii';
+import { drawLineCells } from '@mermaid-js/core/ascii';
+export { cellRect } from '@mermaid-js/core/ascii';
 
 interface End {
   /** The node or flow the edge ends at. */
@@ -113,18 +63,7 @@ function drawEdge(
   const last = cells.length - 1;
   const source = { at: e.source, cell: cells[0]!, into: INTO[ports.source], marker: e.start };
   const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
-  cells.forEach((c, i) => {
-    let arms = 0;
-    const arm = (d: Dir): void => void (arms |= armOf(d, 1));
-    if (i > 0) arm(dirOf(c, cells[i - 1]!));
-    if (i < last) arm(dirOf(c, cells[i + 1]!));
-    if (i === 0) arm(source.into);
-    if (i === last) arm(target.into);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, 1) | armOf(RIGHT, 1))) glyph = dotted.h;
-    if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
-  });
+  drawLineCells(canvas, glyphs, cells, source.into, target.into, dotted);
   ends.push(source, target);
 }
 
@@ -138,19 +77,6 @@ function markerGlyph(glyphs: GlyphSet, end: End): string | undefined {
     case 'none':
       return undefined;
   }
-}
-
-/** The border glyph where an edge leaves a box: a tee with its stem towards the edge. */
-function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
-  const x = end.cell.x + DX[end.into];
-  const y = end.cell.y + DY[end.into];
-  const out = opposite(end.into);
-  const fallback = sideOf(glyphs.tee, out);
-  if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
-  // A one-armed stub towards the edge, merged into the border as a tee.
-  const stub = glyphFor(armOf(out, 1), unicode)!;
-  const merged = junction(canvas.get(x, y), stub);
-  canvas.set(x, y, merged === stub ? fallback : merged);
 }
 
 export interface DrawOptions {
@@ -187,7 +113,7 @@ export function drawAgentflow(
       width: g.label.width,
       height: Math.max(g.label.height, 1),
     });
-    writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs);
+    writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs.name === 'ascii' ? '-' : undefined);
     gaps.push({ x: at.x - 1, y: at.y }, { x: at.x + at.width, y: at.y });
   }
 
@@ -226,7 +152,7 @@ export function drawAgentflow(
     // The patch around the text is the edge's own (repair keeps other lines out of it).
     for (let y = r.y; y < r.y + r.height; y++)
       for (let x = r.x - 1; x <= r.x + r.width; x++) canvas.set(x, y, ' ');
-    writeLabel(canvas, e.label, r.x, r.y, r.width, glyphs);
+    writeLabel(canvas, e.label, r.x, r.y, r.width, glyphs.name === 'ascii' ? '-' : undefined);
   }
 
   for (const n of prepared.nodes) {
@@ -239,46 +165,9 @@ export function drawAgentflow(
     // D140: a grown box keeps its label centred.
     const lines = n.label.lines.length;
     const top = r.y + Math.floor((r.height - lines) / 2);
-    writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
+    writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs.name === 'ascii' ? '-' : undefined);
   }
-  for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs, end);
+  for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs.tee, glyphs.name === 'unicode', end);
 
   return finish(canvas, options.title, options.maxWidth);
-}
-
-// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
-function wrapTitle(text: string, width: number): string[] {
-  if (cellWidth(text) <= width) return [text];
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.split(/\s+/)) {
-    const next = line === '' ? word : `${line} ${word}`;
-    if (line !== '' && cellWidth(next) > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line !== '') lines.push(line);
-  return lines;
-}
-
-/** Trims the empty margin and puts the title, centred, on the first lines. */
-function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  const text = title?.trim();
-  if (text) {
-    const width = Math.max(0, ...lines.map(cellWidth));
-    // Only a width budget wraps it: then to the budget, or to the drawing when that is wider.
-    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
-    const out = new Canvas();
-    wrapped.forEach((line, i) =>
-      drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)
-    );
-    lines.unshift(...out.toString().split('\n'));
-  }
-  return lines.join('\n');
 }

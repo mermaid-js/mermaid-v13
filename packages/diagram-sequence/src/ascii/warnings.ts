@@ -7,6 +7,8 @@ import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { SequenceLayout } from '../layout/index.ts';
 import type { ParticipantKind, SequenceModel, SequenceStatement } from '../model.ts';
 import { symbolForm } from './symbols.ts';
+import { emphasised } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link' | 'accessibility';
@@ -65,11 +67,6 @@ function idsByType(ast: AstNode | undefined, out: Map<string, string[]>): void {
   }
   for (const child of ast.children ?? []) idsByType(child, out);
 }
-
-const emphasised = (label: MeasuredLabel | undefined): boolean =>
-  label?.lines.some((line) =>
-    line.some((run) => (run.style & (Style.Bold | Style.Italic)) !== 0)
-  ) ?? false;
 
 // `sequence.*FontWeight` set bold, which text cannot show either.
 const WEIGHTS = ['actorFontWeight', 'messageFontWeight', 'noteFontWeight'] as const;
@@ -142,12 +139,7 @@ export function asciiWarnings(
   for (const feature of Object.keys(WHAT) as AsciiDroppedFeature[]) {
     const ids = found[feature];
     if (!ids) continue;
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...new Set(ids)],
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...new Set(ids)], WHAT[feature]));
   }
 
   const shapes: (ParticipantKind | 'half-arrowhead')[] = [];

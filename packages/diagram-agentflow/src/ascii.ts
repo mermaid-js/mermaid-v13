@@ -22,6 +22,7 @@ import type { AgentflowModel } from './parser/index.ts';
 import type { AgentflowRenderContext } from './render/context.ts';
 import { drawAgentflow } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
+import { asciiRoute } from '@mermaid-js/core/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -71,16 +72,9 @@ export function ascii(
   const { routes, unresolved } = repairRoutes(prepared.graph, laid);
   for (const w of asciiWarnings(model, prepared, ctx.config, ctx.ast)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
-  if (unresolved.length > 0) {
-    const edges = [...new Set(unresolved.map((c) => c.edge))];
-    const ast = new Map(prepared.edges.map((e) => [e.id, e.edge.ast]));
-    const warning: AsciiRouteWarning = {
-      code: 'ASCII_ROUTE',
-      astIds: edges.flatMap((id) => ast.get(id) ?? []),
-      message: `No free lane for edges ${edges.join(', ')}; their lines touch other lines or text.`,
-    };
-    ctx.warn(warning);
-  }
+  const ast = new Map(prepared.edges.map((e) => [e.id, e.edge.ast]));
+  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'edges', (id) => ast.get(id) ?? []);
+  if (routeWarning) ctx.warn(routeWarning);
   return drawAgentflow(prepared, laid, routes, glyphs, {
     title: ctx.title ?? model.title,
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),

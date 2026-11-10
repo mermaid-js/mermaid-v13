@@ -6,6 +6,9 @@ import type { CheckedStyle } from '@mermaid-js/core/svg';
 import type { ErModel } from '../parser/index.ts';
 import type { ErWarning } from '../layout/context.ts';
 import type { ErPrepared } from '../layout/prepare.ts';
+import { styled } from '@mermaid-js/core/ascii';
+import { statements } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'accessibility';
@@ -36,17 +39,6 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   accessibility: ['AccTitle', 'AccDescr'],
 };
 
-const styled = (s: CheckedStyle): boolean =>
-  Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
-
-function statements(ast: AstNode | undefined, out: Map<string, string[]>): void {
-  if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child, out);
-}
-
 /**
  * The warnings for one drawing: the features without a text form, one per kind (D82). `ast`
  * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …).
@@ -68,12 +60,7 @@ export function asciiWarnings(model: ErModel, er: ErPrepared, ast?: AstNode): As
       for (const id of stmts.get(kind) ?? []) add(feature, id);
     const ids = found[feature];
     if (!ids) continue;
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...ids],
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...ids], WHAT[feature]));
   }
   return out;
 }

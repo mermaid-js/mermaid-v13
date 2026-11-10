@@ -6,6 +6,7 @@
 import type { Warning } from '@mermaid-js/core';
 import type { C4Layout } from '../layout/index.ts';
 import type { C4Model } from '../model.ts';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'offset' | 'tooltip' | 'accessibility';
@@ -53,12 +54,7 @@ export function asciiWarnings(model: C4Model, layout: C4Layout): AsciiWarning[] 
   }
   const out: AsciiWarning[] = [];
   const add = (feature: AsciiDroppedFeature, astIds: readonly string[]): void =>
-    void out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds,
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    void out.push(asciiDropped(feature, astIds, WHAT[feature]));
   for (const feature of ['style', 'offset', 'tooltip'] as const)
     if (found[feature].length > 0) add(feature, [...new Set(found[feature])]);
   if (given(model.accTitle, model.accDescr)) add('accessibility', []);

@@ -10,6 +10,10 @@ import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
+import { styled } from '@mermaid-js/core/ascii';
+import { statements } from '@mermaid-js/core/ascii';
+import { emphasised } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -63,22 +67,6 @@ const UNDRAWN: readonly UsecaseConfigKey[] = [
   'useMaxWidth',
   'diagramPadding',
 ];
-
-const styled = (s: CheckedStyle): boolean =>
-  Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
-
-const emphasised = (label: MeasuredLabel | undefined): boolean =>
-  label?.lines.some((line) =>
-    line.some((run) => (run.style & (Style.Bold | Style.Italic)) !== 0)
-  ) ?? false;
-
-function statements(ast: AstNode | undefined, out: Map<string, string[]>): void {
-  if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child, out);
-}
 
 /**
  * The `usecase` keys the author set (`UsecaseLayoutConfig.set`: taken, and off their default)
@@ -150,12 +138,7 @@ export function asciiWarnings(
     const ids = found[feature];
     if (!ids) continue;
     const keys = feature === 'config' ? ` (${undrawn.join(', ')})` : '';
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...ids],
-      message: `Text output has no ${FEATURE_TEXT[feature]}${keys}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...ids], FEATURE_TEXT[feature], keys));
   }
   return out;
 }

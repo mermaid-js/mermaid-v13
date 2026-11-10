@@ -14,6 +14,8 @@ import { layoutLabel, Style, type LabelOptions, type MeasuredLabel } from '@merm
 import { drawOutline } from './ascii/outline.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
+import { emphasised } from '@mermaid-js/core/ascii';
+import { glyphSetOf } from '@mermaid-js/core/ascii';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
@@ -29,9 +31,6 @@ export interface AsciiDroppedWarning extends Warning {
 /** The cell measurer ignores the font: one key for every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;
 
-const emphasised = (label: MeasuredLabel): boolean =>
-  label.lines.some((line) => line.some((r) => (r.style & (Style.Bold | Style.Italic)) !== 0));
-
 /**
  * The ishikawa `ascii` hook (DESIGN §12.1): the outline as text, `\n` line ends, no trailing
  * spaces, never cropped (the API adds `ASCII_TOO_WIDE`, R-ASCII-8). The layout is not read. An
@@ -42,7 +41,7 @@ export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAscii
   const { effect } = model;
   const title = plainTitle(model.title);
   if (!effect) return title ?? '';
-  const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  const glyphs = glyphSetOf(ctx.config);
   const options: LabelOptions = ctx.inline ? { inline: ctx.inline } : {};
   const dropped: string[] = [];
   const plain = (text: string, ast: string): string => {

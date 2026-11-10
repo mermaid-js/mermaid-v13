@@ -11,6 +11,8 @@ import { gridAdvance, gridPosition } from '../layout/grid.ts';
 import { isComposite, type Block, type BlockModel, type BlockType } from '../model.ts';
 import { arrowSides, type ArrowSide } from '../shapes/block-arrow.ts';
 import { BLOCK_TEXT_METRICS, type TextSpacing } from './metrics.ts';
+import { cut } from '@mermaid-js/core/ascii';
+export { cut } from '@mermaid-js/core/ascii';
 
 /**
  * One drawn block: a leaf box or a composite's frame. A leaf that holds children (a composite a
@@ -79,20 +81,6 @@ export function textLabel(text: string, inline?: InlineSpans): TextLabel {
     width: Math.max(0, ...lines.map(cellWidth)),
     emphasis: m.lines.some((l) => l.some((r) => (r.style & (Style.Bold | Style.Italic)) !== 0)),
   };
-}
-
-/** `text` cut to `width` cells, ending in `mark` when it was cut. */
-export function cut(text: string, width: number, mark: string): string {
-  if (cellWidth(text) <= width) return text;
-  if (width <= 0) return '';
-  let out = '';
-  let used = 0;
-  for (const g of graphemes(text)) {
-    if (used + g.width > width - 1) break;
-    out += g.text;
-    used += g.width;
-  }
-  return out + mark;
 }
 
 /** A node of the text tree: a block, or a run of space cells. */
@@ -279,7 +267,7 @@ function place(
 
 /** A frame's title: its label on one line, cut to `width`; none for an unlabelled frame. */
 const titleLines = (label: TextLabel, width: number, mark: string): string[] =>
-  label.width > 0 ? [cut(label.lines.join(' '), width, mark)] : [];
+  label.width > 0 ? [cut(label.lines.join(' '), width, mark, true)] : [];
 
 /** Where a node's children go in its cell: inside a frame, or below a leaf's own box. */
 function childArea(node: Node, cell: CellRect, s: TextSpacing): CellRect {
@@ -315,7 +303,7 @@ function layout(model: BlockModel, t: ReturnType<typeof tree>, o: GridOptions, c
     const rect = node.frame || !node.grid ? cell : { ...cell, height: node.box };
     const lines = node.frame
       ? titleLines(node.label, Math.min(cap, rect.width - BLOCK_TEXT_METRICS.titleFrame), o.mark)
-      : node.label.lines.map((l) => cut(l, Math.min(cap, rect.width - 2 - 2 * s.padX), o.mark));
+      : node.label.lines.map((l) => cut(l, Math.min(cap, rect.width - 2 - 2 * s.padX), o.mark, true));
     const { block } = node;
     boxes.push({
       id: block.id,

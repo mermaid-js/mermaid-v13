@@ -10,6 +10,9 @@ import type { FlowWarning } from '../render/context.ts';
 import type { NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
+import { styled } from '@mermaid-js/core/ascii';
+import { statements } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -63,9 +66,6 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   accessibility: ['AccTitle', 'AccDescr'],
 };
 
-const styled = (s: CheckedStyle): boolean =>
-  Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
-
 // Bold or italic the label has beyond what its style asked for.
 function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
   const weight = style.text['font-weight'];
@@ -74,14 +74,6 @@ function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
     (style.text['font-style'] === 'italic' ? Style.Italic : 0);
   const mask = (Style.Bold | Style.Italic) & ~base;
   return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
-}
-
-function statements(ast: AstNode | undefined, out: Map<string, string[]>): void {
-  if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child, out);
 }
 
 type Found = Record<AsciiDroppedFeature, Set<string> | undefined>;
@@ -158,12 +150,7 @@ export function asciiWarnings(
     const ids = found[feature];
     if (!ids) continue;
     for (const kind of STATEMENTS[feature]) for (const id of stmts.get(kind) ?? []) ids.add(id);
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...ids],
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...ids], WHAT[feature]));
   }
   const shapes = shapeWarning(flow, glyphs);
   if (shapes) out.push(shapes);

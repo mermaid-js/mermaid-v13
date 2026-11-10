@@ -7,6 +7,10 @@ import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { RequirementLayoutWarning } from '../layout/context.ts';
 import { requirementCurve, type RequirementPrepared } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
+import { styled } from '@mermaid-js/core/ascii';
+import { statements } from '@mermaid-js/core/ascii';
+import { emphasised } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'curve' | 'emphasis' | 'accessibility';
@@ -40,20 +44,6 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   emphasis: [],
   accessibility: ['AccTitle', 'AccDescr'],
 };
-
-const styled = (s: CheckedStyle): boolean =>
-  Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
-
-const emphasised = (label: MeasuredLabel): boolean =>
-  label.lines.some((line) => line.some((r) => (r.style & (Style.Bold | Style.Italic)) !== 0));
-
-function statements(ast: AstNode | undefined, out: Map<string, string[]>): void {
-  if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child, out);
-}
 
 /** The curves SVG draws with square corners, as text does. */
 const SQUARE = new Set(['step', 'stepBefore', 'stepAfter']);
@@ -90,12 +80,7 @@ export function asciiWarnings(
       for (const id of stmts.get(kind) ?? []) add(feature, id);
     const ids = found[feature];
     if (!ids) continue;
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...ids],
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...ids], WHAT[feature]));
   }
   return out;
 }

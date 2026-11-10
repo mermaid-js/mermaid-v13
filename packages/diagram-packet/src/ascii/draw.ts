@@ -20,6 +20,8 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { PacketModel, PacketPiece } from '../model.ts';
+import { cut } from '@mermaid-js/core/ascii';
+import { emphasised } from '@mermaid-js/core/ascii';
 
 /** Columns a bit takes; a piece of `n` bits is `COLUMNS * n + 1` wide, borders included. */
 const COLUMNS = 2;
@@ -54,22 +56,6 @@ const FONT = { family: '', size: 1, weight: 400 } as const;
 /** A label's lines as plain text (core label layout: entities decoded, `<br>` broken). */
 function plainLines(label: MeasuredLabel): string[] {
   return label.lines.map((line) => line.map((r) => r.text).join(''));
-}
-
-const emphasised = (label: MeasuredLabel): boolean =>
-  label.lines.some((line) => line.some((r) => (r.style & (Style.Bold | Style.Italic)) !== 0));
-
-/** `text` cut to `width` cells, ending in `mark` when it was cut. */
-function cut(text: string, width: number, mark: string): string {
-  if (cellWidth(text) <= width) return text;
-  let out = '';
-  let used = 0;
-  for (const g of graphemes(text)) {
-    if (used + g.width > width - 1) break;
-    out += g.text;
-    used += g.width;
-  }
-  return out + mark;
 }
 
 interface Placed {

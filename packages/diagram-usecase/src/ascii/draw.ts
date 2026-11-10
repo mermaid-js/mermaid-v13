@@ -38,43 +38,14 @@ import type {
   UsecasePrepared,
   UseCaseView,
 } from '../layout/prepare.ts';
-
-interface Centred {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/** The cells of a box from its centre and size (the grid model's convention, `LayoutGraph.grid`). */
-function cellRect(b: Centred): CellRect {
-  const x = Math.round(b.x - b.width / 2 + 0.5);
-  const y = Math.round(b.y - b.height / 2 + 0.5);
-  return {
-    x,
-    y,
-    width: Math.round(b.x + b.width / 2 - 0.5) - x + 1,
-    height: Math.round(b.y + b.height / 2 - 0.5) - y + 1,
-  };
-}
-
-function dirOf(a: Point, b: Point): Dir {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-}
-
-/** The cells a corner polyline passes, in order. */
-function cellsOf(points: readonly Point[]): Point[] {
-  const out: Point[] = [];
-  points.forEach((p, i) => {
-    if (i === 0) return void out.push(p);
-    const prev = points[i - 1]!;
-    const d = dirOf(prev, p);
-    const n = Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y);
-    for (let k = 1; k <= n; k++) out.push({ x: prev.x + DX[d] * k, y: prev.y + DY[d] * k });
-  });
-  return out;
-}
+import type { Centred } from '@mermaid-js/core/ascii';
+import { cellRect } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/core/ascii';
+import { cellsOf } from '@mermaid-js/core/ascii';
+import { wrapTitle } from '@mermaid-js/core/ascii';
+import { finish } from '@mermaid-js/core/ascii';
+import { writeLabel } from '@mermaid-js/core/ascii';
+import { drawLineCells } from '@mermaid-js/core/ascii';
 
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;
@@ -96,28 +67,6 @@ const USECASE_GLYPHS: Readonly<Record<GlyphSet['name'], UsecaseGlyphs>> = {
   unicode: { triangle: { up: '△', down: '▽', left: '◁', right: '▷' }, mergeTees: true },
   ascii: { bullet: '-', mergeTees: false },
 };
-
-/**
- * Writes a label's lines centred in a `width`-cell-wide block from (x, y); a Markdown list keeps
- * its lines left aligned, with `-` for its bullets in the `ascii` charset (as the flowchart's).
- */
-function writeLabel(
-  canvas: Canvas,
-  label: MeasuredLabel,
-  x: number,
-  y: number,
-  width: number,
-  glyphs: GlyphSet
-): void {
-  const { bullet } = USECASE_GLYPHS[glyphs.name];
-  label.lines.forEach((runs, i) => {
-    let text = runs.map((r) => r.text).join('');
-    if (bullet !== undefined && label.left) text = text.replace(/^(\s*)[•◦]/, `$1${bullet}`);
-    const left = x + Math.floor((width - label.width) / 2) + (label.indents[i] ?? 0);
-    const centred = x + Math.floor((width - (label.widths[i] ?? 0)) / 2);
-    drawText(canvas, label.left ? left : centred, y + i, text);
-  });
-}
 
 interface End {
   /** The layout node the line ends at. */
@@ -145,18 +94,7 @@ function drawLine(
   const dotted = e.dotted ? glyphs.dotted : undefined;
   const last = cells.length - 1;
   const into = { source: INTO[ports.source], target: INTO[ports.target] };
-  cells.forEach((c, i) => {
-    let arms = 0;
-    const arm = (d: Dir): void => void (arms |= armOf(d, 1));
-    if (i > 0) arm(dirOf(c, cells[i - 1]!));
-    if (i < last) arm(dirOf(c, cells[i + 1]!));
-    if (i === 0) arm(into.source);
-    if (i === last) arm(into.target);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, 1) | armOf(RIGHT, 1))) glyph = dotted.h;
-    if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
-  });
+  drawLineCells(canvas, glyphs, cells, into.source, into.target, dotted);
   // The cell before the end, where a two-cell head (`|>`) puts its bar: not the other end's.
   const end = (i: number, step: number, d: Dir, node: string, marker: MarkerType): End => {
     const b = cells[i + 2 * step] ? cells[i + step] : undefined;
@@ -251,8 +189,8 @@ function drawActor(canvas: Canvas, glyphs: GlyphSet, v: ActorView, r: CellRect):
   // Rounded as the engine rounds a lone end on the box's middle.
   const figure = r.x + Math.round((r.width - FIGURE[0].length) / 2);
   FIGURE.forEach((row, i) => drawText(canvas, figure, at.y + v.glyphTop + i, row));
-  if (v.stereotype) writeLabel(canvas, v.stereotype, r.x, at.y + v.stereotypeTop, r.width, glyphs);
-  writeLabel(canvas, v.label, r.x, at.y + v.labelTop, r.width, glyphs);
+  if (v.stereotype) writeLabel(canvas, v.stereotype, r.x, at.y + v.stereotypeTop, r.width, USECASE_GLYPHS[glyphs.name].bullet);
+  writeLabel(canvas, v.label, r.x, at.y + v.labelTop, r.width, USECASE_GLYPHS[glyphs.name].bullet);
 }
 
 /**
@@ -270,10 +208,10 @@ function drawUseCase(canvas: Canvas, glyphs: GlyphSet, v: UseCaseView, r: CellRe
   }
   let y = top;
   if (v.stereotype) {
-    writeLabel(canvas, v.stereotype, r.x + 1, y, r.width - 2, glyphs);
+    writeLabel(canvas, v.stereotype, r.x + 1, y, r.width - 2, USECASE_GLYPHS[glyphs.name].bullet);
     y += v.stereotype.height + v.stereotypeGap;
   }
-  writeLabel(canvas, v.label, r.x + 1, y, r.width - 2, glyphs);
+  writeLabel(canvas, v.label, r.x + 1, y, r.width - 2, USECASE_GLYPHS[glyphs.name].bullet);
 }
 
 /**
@@ -292,7 +230,7 @@ function drawJson(
   const bottom = r.y + r.height - 1;
   const top = r.y + Math.floor((r.height - v.height) / 2);
   const titleTop = top + v.border + Math.floor((v.titleHeight - v.title.height) / 2);
-  writeLabel(canvas, v.title, r.x + 1, titleTop, r.width - 2, glyphs);
+  writeLabel(canvas, v.title, r.x + 1, titleTop, r.width - 2, USECASE_GLYPHS[glyphs.name].bullet);
   if (v.rows.length === 0) return;
   const rule = top + v.border + v.titleHeight;
   // Stubs merged into what is drawn: the sides become tees, the divider crosses the rule.
@@ -333,7 +271,7 @@ function drawNode(
     case 'note': {
       drawBox(canvas, glyphs, r);
       const top = r.y + Math.floor((r.height - v.label.height) / 2);
-      return writeLabel(canvas, v.label, r.x + 1, top, r.width - 2, glyphs);
+      return writeLabel(canvas, v.label, r.x + 1, top, r.width - 2, USECASE_GLYPHS[glyphs.name].bullet);
     }
   }
 }
@@ -417,7 +355,7 @@ export function drawUsecase(
       width: g.label.width,
       height: Math.max(g.label.height, 1),
     });
-    writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs);
+    writeLabel(canvas, g.label, at.x, at.y, at.width, USECASE_GLYPHS[glyphs.name].bullet);
     gaps.push({ x: at.x - 1, y: at.y }, { x: at.x + at.width, y: at.y });
   }
 
@@ -438,7 +376,7 @@ export function drawUsecase(
     // The patch around the text is the edge's own (repair keeps other lines out of it).
     for (let y = r.y; y < r.y + r.height; y++)
       for (let x = r.x - 1; x <= r.x + r.width; x++) canvas.set(x, y, ' ');
-    writeLabel(canvas, label, r.x, r.y, r.width, glyphs);
+    writeLabel(canvas, label, r.x, r.y, r.width, USECASE_GLYPHS[glyphs.name].bullet);
   }
 
   for (const v of prepared.nodes.values()) {
@@ -456,40 +394,4 @@ export function drawUsecase(
   }
 
   return finish(canvas, options.title, options.maxWidth);
-}
-
-// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
-function wrapTitle(text: string, width: number): string[] {
-  if (cellWidth(text) <= width) return [text];
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.split(/\s+/)) {
-    const next = line === '' ? word : `${line} ${word}`;
-    if (line !== '' && cellWidth(next) > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line !== '') lines.push(line);
-  return lines;
-}
-
-/** Trims the empty margin and puts the title, centred, on the first lines. */
-function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  const text = title?.trim();
-  if (text) {
-    const width = Math.max(0, ...lines.map(cellWidth));
-    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
-    const out = new Canvas();
-    wrapped.forEach((line, i) =>
-      drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)
-    );
-    lines.unshift(...out.toString().split('\n'));
-  }
-  return lines.join('\n');
 }

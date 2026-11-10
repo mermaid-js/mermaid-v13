@@ -12,6 +12,9 @@ import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
 import { emphasisBits, numericValue, TITLE_MARGIN_DEFAULTS } from '../layout/index.ts';
 import type { AgentflowPrepared, AgentflowWarning } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
+import { styled } from '@mermaid-js/core/ascii';
+import { statements } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -86,21 +89,10 @@ export function undrawnConfig(config: ResolvedConfig): string[] {
   return out;
 }
 
-const styled = (s: CheckedStyle): boolean =>
-  Object.keys(s.shape).length > 0 || Object.keys(s.text).length > 0;
-
 // Bold or italic the label has beyond what its style asked for.
 function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
   const mask = (Style.Bold | Style.Italic) & ~emphasisBits(style);
   return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
-}
-
-function statements(ast: AstNode | undefined, out: Map<string, string[]>): void {
-  if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child, out);
 }
 
 type Found = Partial<Record<AsciiDroppedFeature, Set<string>>>;
@@ -152,12 +144,7 @@ export function asciiWarnings(
     if (!ids) continue;
     for (const kind of STATEMENTS[feature]) for (const id of stmts.get(kind) ?? []) ids.add(id);
     const keys = feature === 'config' ? ` (${undrawnConfig(config).join(', ')})` : '';
-    out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds: [...ids],
-      message: `Text output has no ${WHAT[feature]}${keys}; dropped.`,
-    });
+    out.push(asciiDropped(feature, [...ids], WHAT[feature], keys));
   }
   return out;
 }

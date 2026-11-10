@@ -28,43 +28,14 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErCardinality } from '../parser/index.ts';
 import type { EdgeView, EntityView, ErPrepared } from '../layout/prepare.ts';
-
-interface Centred {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/** The cells of a box from its centre and size (the grid model's convention, `LayoutGraph.grid`). */
-function cellRect(b: Centred): CellRect {
-  const x = Math.round(b.x - b.width / 2 + 0.5);
-  const y = Math.round(b.y - b.height / 2 + 0.5);
-  return {
-    x,
-    y,
-    width: Math.round(b.x + b.width / 2 - 0.5) - x + 1,
-    height: Math.round(b.y + b.height / 2 - 0.5) - y + 1,
-  };
-}
-
-function dirOf(a: Point, b: Point): Dir {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-}
-
-/** The cells a corner polyline passes, in order. */
-function cellsOf(points: readonly Point[]): Point[] {
-  const out: Point[] = [];
-  points.forEach((p, i) => {
-    if (i === 0) return void out.push(p);
-    const prev = points[i - 1]!;
-    const d = dirOf(prev, p);
-    const n = Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y);
-    for (let k = 1; k <= n; k++) out.push({ x: prev.x + DX[d] * k, y: prev.y + DY[d] * k });
-  });
-  return out;
-}
+import type { Centred } from '@mermaid-js/core/ascii';
+import { cellRect } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/core/ascii';
+import { cellsOf } from '@mermaid-js/core/ascii';
+import { wrapTitle } from '@mermaid-js/core/ascii';
+import { finish } from '@mermaid-js/core/ascii';
+import { tee } from '@mermaid-js/core/ascii';
+import { drawLineCells } from '@mermaid-js/core/ascii';
 
 const textOf = (label: MeasuredLabel, line: number): string =>
   (label.lines[line] ?? []).map((r) => r.text).join('');
@@ -108,18 +79,7 @@ function drawLine(
   const dotted = e.relationship.identifying ? undefined : glyphs.dotted;
   const last = cells.length - 1;
   const into = { source: INTO[ports.source], target: INTO[ports.target] };
-  cells.forEach((c, i) => {
-    let arms = 0;
-    const arm = (d: Dir): void => void (arms |= armOf(d, 1));
-    if (i > 0) arm(dirOf(c, cells[i - 1]!));
-    if (i < last) arm(dirOf(c, cells[i + 1]!));
-    if (i === 0) arm(into.source);
-    if (i === last) arm(into.target);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, 1) | armOf(RIGHT, 1))) glyph = dotted.h;
-    if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
-  });
+  drawLineCells(canvas, glyphs, cells, into.source, into.target, dotted);
   // The cell before the end, also where the line turns there: the outer mark says zero or one,
   // which a drawing must not lose. Not the other end's cell on a two-cell line.
   const before = (i: number, step: number): Point | undefined =>
@@ -153,18 +113,6 @@ function marks(glyphs: GlyphSet, end: End): [string, string | undefined] {
     case 'mdParent':
       return [c.parent, undefined];
   }
-}
-
-/** The border glyph where a line leaves a box: a tee with its stem towards the line. */
-function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
-  const x = end.cell.x + DX[end.into];
-  const y = end.cell.y + DY[end.into];
-  const out = opposite(end.into);
-  const fallback = sideOf(glyphs.tee, out);
-  if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
-  const stub = glyphFor(armOf(out, 1), unicode)!;
-  const merged = junction(canvas.get(x, y), stub);
-  canvas.set(x, y, merged === stub ? fallback : merged);
 }
 
 /**
@@ -292,47 +240,11 @@ export function drawEr(
   };
   for (const end of ends) {
     const framed = onFrame(end);
-    if (!framed) tee(canvas, glyphs, end);
+    if (!framed) tee(canvas, glyphs.tee, glyphs.name === 'unicode', end);
     const [near, far] = marks(glyphs, framed ? { ...end, into: opposite(end.into) } : end);
     canvas.set(end.cell.x, end.cell.y, near);
     if (far && end.before) canvas.set(end.before.x, end.before.y, far);
   }
 
   return finish(canvas, options.title, options.maxWidth);
-}
-
-// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
-function wrapTitle(text: string, width: number): string[] {
-  if (cellWidth(text) <= width) return [text];
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.split(/\s+/)) {
-    const next = line === '' ? word : `${line} ${word}`;
-    if (line !== '' && cellWidth(next) > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line !== '') lines.push(line);
-  return lines;
-}
-
-/** Trims the empty margin and puts the title, centred, on the first lines. */
-function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  const text = title?.trim();
-  if (text) {
-    const width = Math.max(0, ...lines.map(cellWidth));
-    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
-    const out = new Canvas();
-    wrapped.forEach((line, i) =>
-      drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)
-    );
-    lines.unshift(...out.toString().split('\n'));
-  }
-  return lines.join('\n');
 }

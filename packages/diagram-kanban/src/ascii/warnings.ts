@@ -9,6 +9,8 @@ import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
 import { userClasses } from '../render/classes.ts';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
+import { emphasised } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/core/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';
@@ -27,11 +29,6 @@ const WHAT: Record<AsciiDroppedFeature, string> = {
   emphasis: 'bold and italic text',
   link: 'ticket links (kanban.ticketBaseUrl)',
 };
-
-const emphasised = (label: MeasuredLabel | undefined): boolean =>
-  label?.lines.some((line) =>
-    line.some((run) => (run.style & (Style.Bold | Style.Italic)) !== 0)
-  ) ?? false;
 
 /** What the layout drew for one item: its labels, and a card's ticket. */
 interface Drawn {
@@ -72,12 +69,7 @@ export function asciiWarnings(
   for (const feature of Object.keys(found) as AsciiDroppedFeature[]) {
     const astIds = found[feature];
     if (astIds.length > 0)
-      out.push({
-        code: 'ASCII_DROPPED',
-        feature,
-        astIds,
-        message: `Text output has no ${WHAT[feature]}; dropped.`,
-      });
+      out.push(asciiDropped(feature, astIds, WHAT[feature]));
   }
   return out;
 }

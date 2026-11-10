@@ -20,6 +20,8 @@ import type { ErModel } from './parser/index.ts';
 import { layoutEr, type ErLayout, type ErRenderContext } from './layout/layout.ts';
 import { drawEr } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
+import { asciiRoute } from '@mermaid-js/core/ascii';
+import { glyphSetOf } from '@mermaid-js/core/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -37,7 +39,7 @@ export interface ErAsciiContext extends ErRenderContext {
 }
 
 const glyphsFor = (ctx: ErRenderContext): GlyphSet =>
-  asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  glyphSetOf(ctx.config);
 
 /** Lays an ER diagram out in cells: the cell measurer and the cell profile (`ascii.padding`). */
 export function layoutAscii(model: ErModel, ctx: ErRenderContext): ErLayout {
@@ -61,15 +63,8 @@ export function ascii(model: ErModel, layout: ErLayout, ctx: ErAsciiContext): st
   const { routes, unresolved } = repairRoutes(er.graph, laid);
   for (const w of asciiWarnings(model, er, ctx.ast)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
-  if (unresolved.length > 0) {
-    const edges = [...new Set(unresolved.map((c) => c.edge))];
-    const warning: AsciiRouteWarning = {
-      code: 'ASCII_ROUTE',
-      astIds: edges,
-      message: `No free lane for relationships ${edges.join(', ')}; their lines touch other lines or text.`,
-    };
-    ctx.warn(warning);
-  }
+  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'relationships');
+  if (routeWarning) ctx.warn(routeWarning);
   const maxWidth = ctx.config.ascii?.maxWidth;
   return drawEr(er, laid, routes, glyphs, {
     title: ctx.title,
