@@ -1,0 +1,42 @@
+@ 2:19  tf 01 ui Screen [[|Payload]]
+  2:19-2:26 "Payload"
+  | **data** `Payload`
+  |
+  | Written as `json`.
+  |
+  | Defined 2 times: frames show the first.
+  |
+  | Shown by `01` (`ui Screen`).
+@ 3:23  tf 02 cmd Add [[Missin|g]]
+  3:17-3:24 "Missing"
+  | **data** `Missing`
+  |
+  | No `data` block is named `Missing`, so a frame that refers to it shows no data from it.
+@ 4:6  data |Payload `json` {
+  4:6-4:13 "Payload"
+  | **data** `Payload`
+  |
+  | Written as `json`.
+  |
+  | Defined 2 times: frames show the first.
+  |
+  | Shown by `01` (`ui Screen`).
+@ 10:6  data |Unused {
+  10:6-10:12 "Unused"
+  | **data** `Unused`
+  |
+  | No frame shows it: a frame does with `[[Unused]]`.
+@ 13:8  entity |Item
+  13:8-13:12 "Item"
+  | **entity** `Item`
+  |
+  | Not drawn.
+  |
+  | Named by the `gwt` of frame `01`.
+@ 14:32  gwt 01 given evt Item then evt |Other
+  14:32-14:37 "Other"
+  | **entity** `Other`
+  |
+  | No `entity` statement declares `Other`.
+  |
+  | Named by the `gwt` of frame `01`.

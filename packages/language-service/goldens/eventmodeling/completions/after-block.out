@@ -1,0 +1,14 @@
+@ 5:2  }|
+  tf keyword (frame) 5:2-5:2 "" -> "tf "
+  rf keyword (reset frame) 5:2-5:2 "" -> "rf "
+  timeframe keyword (frame) 5:2-5:2 "" -> "timeframe "
+  resetframe keyword (reset frame) 5:2-5:2 "" -> "resetframe "
+  entity keyword 5:2-5:2 "" -> "entity "
+  data keyword 5:2-5:2 "" -> "data "
+  note keyword 5:2-5:2 "" -> "note "
+  gwt keyword 5:2-5:2 "" -> "gwt "
+@ 6:5  ti|
+  timeframe keyword (frame) 6:3-6:5 "ti" -> "timeframe "
+  title keyword 6:3-6:5 "ti" -> "title "
+@ 10:7  accT|
+  accTitle: keyword 10:3-10:7 "accT" -> "accTitle: "

@@ -1,0 +1,29 @@
+---
+config:
+  theme: neo
+description: >-
+  one representative event model in the neo theme: every frame kind, namespaced lanes,
+  referenced data blocks, explicit and inferred relations and a reset frame, so
+  every event modeling colour shows
+---
+eventmodeling
+tf 01 ui Cart.CartScreen
+tf 02 cmd Cart.AddItem ->> 01 [[AddItemData]]
+tf 03 evt Cart.ItemAdded ->> 02 [[ItemAddedData]]
+tf 04 rmo CartItems ->> 03
+tf 05 pcr Pricing.Recalculate ->> 04
+tf 06 cmd Pricing.ApplyDiscount ->> 05
+tf 07 evt Pricing.DiscountApplied
+rf 08 ui CheckoutScreen ->> 04
+tf 09 rmo Checkout.Summary ->> 07
+
+data AddItemData
+{
+  productId: 7
+}
+
+data ItemAddedData
+{
+  productId: 7,
+  quantity: 1
+}

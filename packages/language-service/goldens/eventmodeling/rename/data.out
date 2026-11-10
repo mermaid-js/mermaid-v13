@@ -1,0 +1,8 @@
+@ 3:22  tf 01 ui Screen [[Pay|load]]
+  prepare: 3:19-3:26 "Payload"; rename to "Payload_2":
+  %% rename-to: Payload_2
+  eventmodeling
+  tf 01 ui Screen [[Payload_2]]
+  data Payload_2 {
+    a: 1
+  }

@@ -139,6 +139,42 @@ describe('straightenAlignedCrossLaneEdges', () => {
     );
   });
 
+  // v13 (#636): pebr-2's same-rank back edge and its forward twin doubled back across each other.
+  it('draws two opposed edges that alone use the facing faces as two lines side by side', () => {
+    const opposed = (shape: string) => {
+      const nodes = nodeMap(box('A', shape, 0, 0, 'top'), box('B', shape, 0, GAP, 'low'));
+      const jog = GAP - HALF - LABEL;
+      const down = edge('A-B', 'A', 'B', [
+        { x: -10, y: HALF },
+        { x: -10, y: jog },
+        { x: 10, y: jog },
+        { x: 10, y: GAP - HALF },
+      ]);
+      const up = edge('B-A', 'B', 'A', [
+        { x: -20, y: GAP - HALF },
+        { x: -20, y: jog },
+        { x: 10, y: jog },
+        { x: 10, y: HALF },
+      ]);
+      return { nodes, down, up };
+    };
+    const rects = opposed('roundedRect');
+    expect(straightenAlignedCrossLaneEdges([rects.down, rects.up], rects.nodes)).toBe(true);
+    expect(rects.down.points).toEqual([
+      { x: -6, y: HALF },
+      { x: -6, y: GAP - HALF },
+    ]);
+    expect(rects.up.points).toEqual([
+      { x: 6, y: GAP - HALF },
+      { x: 6, y: HALF },
+    ]);
+    // A diamond's facing face ends in its vertex: a line beside it would miss the node.
+    const diamonds = opposed('diamond');
+    expect(straightenAlignedCrossLaneEdges([diamonds.down, diamonds.up], diamonds.nodes)).toBe(
+      false
+    );
+  });
+
   it('leaves an edge alone when a node or a label sits between the two', () => {
     const blocked = stacked();
     blocked.nodes.set('X', box('X', 'roundedRect', 0, GAP / 2, 'mid', { width: LABEL }));

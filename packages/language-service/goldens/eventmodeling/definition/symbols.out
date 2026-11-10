@@ -1,0 +1,20 @@
+@ 3:19  tf 02 cmd Add ->> |01 [[Payload]]
+  -> 2:4-2:6 "01"
+@ 3:24  tf 02 cmd Add ->> 01 [[|Payload]]
+  -> 6:6-6:13 "Payload"
+@ 4:22  tf 03 evt Added ->> 0|2 ->> 09
+  -> 3:4-3:6 "02"
+@ 4:28  tf 03 evt Added ->> 02 ->> |09
+  -> none
+@ 5:8  entity |Item
+  -> 5:8-5:12 "Item"
+@ 9:6  note |01 {
+  -> 2:4-2:6 "01"
+@ 12:18  gwt 03 given evt |Item then evt Item
+  -> 5:8-5:12 "Item"
+@ 12:35  gwt 03 given evt Item then evt Ite|m
+  -> 5:8-5:12 "Item"
+@ 13:6  gwt 0|3 given evt Item then evt Unknown
+  -> 4:4-4:6 "03"
+@ 13:38  gwt 03 given evt Item then evt Unknow|n
+  -> none

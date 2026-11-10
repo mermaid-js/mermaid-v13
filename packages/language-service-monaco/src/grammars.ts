@@ -36,6 +36,9 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   class: { load: () => import('./generated/class.monarch.js').then((m) => m.default) },
   cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
   er: { load: () => import('./generated/er.monarch.js').then((m) => m.default) },
+  eventmodeling: {
+    load: () => import('./generated/eventmodeling.monarch.js').then((m) => m.default),
+  },
   flowchart: { load: () => import('./generated/flowchart.monarch.js').then((m) => m.default) },
   gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
   gitGraph: { load: () => import('./generated/gitGraph.monarch.js').then((m) => m.default) },
