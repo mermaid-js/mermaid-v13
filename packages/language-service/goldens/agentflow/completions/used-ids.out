@@ -1,0 +1,17 @@
+@ 7:9  style | fill:#eee
+  inbox node (connector: Inbox) 7:9-7:9 "" -> "inbox"
+  read node (input: Read input) 7:9-7:9 "" -> "read"
+  think node (task) 7:9-7:9 "" -> "think"
+  plan subgraph (flow: Plan) 7:9-7:9 "" -> "plan"
+@ 8:9  class | hot
+  inbox node (connector: Inbox) 8:9-8:9 "" -> "inbox"
+  read node (input: Read input) 8:9-8:9 "" -> "read"
+  think node (task) 8:9-8:9 "" -> "think"
+  plan subgraph (flow: Plan) 8:9-8:9 "" -> "plan"
+@ 9:13  connector |
+  none
+@ 10:13  inbox --> |
+  inbox node (connector: Inbox) 10:13-10:13 "" -> "inbox"
+  read node (input: Read input) 10:13-10:13 "" -> "read"
+  think node (task) 10:13-10:13 "" -> "think"
+  plan subgraph (flow: Plan) 10:13-10:13 "" -> "plan"

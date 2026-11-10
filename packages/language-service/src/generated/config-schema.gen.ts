@@ -1138,7 +1138,9 @@ export const configSchema: ConfigSchema = {
     "agentflow": {
       "$ref": "#/$defs/AgentflowDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Agentflow also reads three `flowchart` keys, as v12 did (D466): `flowchart.padding` (the padding between a node's label and its shape), `flowchart.inheritDir` (a flow without a `direction` of its own takes the diagram's) and `flowchart.subGraphTitleMargin` (room above and below a flow's title). Its edges follow `flowchart.curve`, as class diagrams do. `flowchart.arrowMarkerAbsolute` stays ignored: arrowheads are inline paths."
       }
     },
     "sequence": {
@@ -5731,7 +5733,7 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig"
         }
       ],
-      "description": "The object containing configurations specific for the agentflow diagram type.\n\nAgentflow renders through the shared unified renderer, so it owns the same\nspacing and padding knobs a flowchart does. They live in their own block so\nthat agentflow can be tuned without moving every flowchart on the page.\n",
+      "description": "The object containing configurations specific for the agentflow diagram type.\n\nAgentflow renders through the shared unified renderer, so it owns the same\nspacing and padding knobs a flowchart does. They live in their own block so\nthat agentflow can be tuned without moving every flowchart on the page.\n\nA length here (`titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`,\n`wrappingWidth`, `minNodeWidth`) that is not a number from 0 up to 10,000 (a whole\nnumeric string such as `\"20\"` is taken, as v12 took it) draws with its default, with\none `AGENTFLOW_CONFIG_INVALID` warning.\n",
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
@@ -5739,7 +5741,9 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for agentflow diagrams (a diagram section beats the top level within a config layer), as 12.2.0's `resolveAppearance`. The default, `redux-color`, is the top-level default too."
           }
         },
         "look": {
@@ -5751,13 +5755,39 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Agentflow lays out with `layered` by default, not v12's `elk` (D127, R-LAYOUT-7: ELK is never the default): with no agentflow default, the top-level `layout` applies. Set here, it wins for agentflow diagrams. `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered (a flow's own `algorithm` is read but not applied, with one `ELK_ALGORITHM_IGNORED` warning, D174); without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). `compass` is taken by name."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the agentflow renderer never did."
+          }
+        },
         "titleTopMargin": {
           "description": "Margin top for the text over the diagram",
           "type": "integer",
           "minimum": 0,
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The front-matter title's baseline sits this far above the drawing (D218). An invalid length warns as the section says."
           }
         },
         "diagramPadding": {
@@ -5766,7 +5796,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Padding around the drawing, as v12. An invalid length warns as the section says."
           }
         },
         "nodeSpacing": {
@@ -5775,7 +5807,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Passed to the layout engine, as v12 (flowchart's `nodeSpacing` does not apply). An invalid length warns as the section says."
           }
         },
         "rankSpacing": {
@@ -5784,7 +5818,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Passed to the layout engine, as v12 (flowchart's `rankSpacing` does not apply). An invalid length warns as the section says."
           }
         },
         "wrappingWidth": {
@@ -5792,7 +5828,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 120,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Labels wrap at this width, as v12. An invalid length warns as the section says."
           }
         },
         "minNodeWidth": {
@@ -5800,7 +5838,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 120,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Labels narrower than this are widened to it (not a collapsed flow's card), as v12. An invalid length warns as the section says."
           }
         }
       }

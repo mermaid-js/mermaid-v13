@@ -1,0 +1,18 @@
+@ 3:13  connector |inbox[Inbox]@{ owner: ops }
+  prepare: 3:13-3:18 "inbox"; rename to "mailbox":
+  %% rename-to: mailbox
+  agentflow-beta LR
+    connector mailbox[Inbox]@{ owner: ops }
+    mailbox --> read
+    flow f
+      mailbox --> think
+    end
+@ 6:5  |inbox --> think
+  prepare: 6:5-6:10 "inbox"; rename to "mailbox":
+  %% rename-to: mailbox
+  agentflow-beta LR
+    connector mailbox[Inbox]@{ owner: ops }
+    mailbox --> read
+    flow f
+      mailbox --> think
+    end

@@ -11,7 +11,8 @@ sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet di
 [below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa
 diagram (`ishikawa`, [below](#ishikawa-diagrams)), the usecase
 diagram (`usecase-beta`, [below](#usecase-diagrams)), the block diagram (`block`,
-[below](#block-diagrams)) and `info`. See
+[below](#block-diagrams)), the agentflow (`agentflow-beta`,
+[below](#agentflow-diagrams)) and `info`. See
 [the format matrix](format-matrix.md) for every type.
 
 ```
@@ -120,7 +121,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram and the block diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram, the block diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -431,6 +432,73 @@ User──┐
   plain figure and boxes), `animation`, `config` (the `usecase` fonts, `colorScheme`,
   `useMaxWidth` and `diagramPadding` set off their defaults) and `accessibility`.
 
+## Agentflow diagrams
+
+The agentflow's text entry (`@mermaid-js/diagram-agentflow/ascii`, #551, D320, D469) draws the
+same graph as SVG, laid out in cells with `layered` (any other `layout` warns `ASCII_DROPPED`
+`layout`, as for every graph type), with flowchart's text forms. It cannot use the flowchart's
+entry (a diagram imports no other diagram), so it draws from the agentflow model with the same
+core kit.
+
+```
+                                            ╓───────╖      ┌─────╲
+                                            ║       ╟┄┄┄┄┄┄┤ FAQ │
+                                          ┌►║ Reply ║      └─────┘
+┌──────────── Triage ───────────┐         │ ║       ╟───┐
+│                               │         │ ╙───────╜   │
+│                 ┌────◇────┐   │         │             │
+│ ┌────────┐      │         ├───┼─── no ──┘             │  ┌+─────┐
+│ / Ticket ├─────►◇ Urgent? ◇   │                       └─►│ Done │
+│ └────────┘      │         ├───┼─────────┐                └──────┘
+│                 └────◇────┘   │         │
+│                               │         │ ┌──────┐
+└───────────────────────────────┘         └✕< Page >
+                                            └──────┘
+```
+
+from
+
+```mermaid
+agentflow-beta LR
+  flow triage["Triage"]
+    ticket["Ticket"]@{ shape: input } --> check["Urgent?"]@{ shape: decision }
+  end
+  flow done["Done"]
+    log["Log"]
+  end
+  done@{ view: "collapsed" }
+  check -->|"no"| reply["Reply"]@{ shape: tool }
+  check --x page["Page"]@{ shape: action }
+  reply -.- faq["FAQ"]@{ shape: refdoc }
+  reply --> done
+```
+
+| Kind or element | `unicode`                               | `ascii`             |
+| --------------- | --------------------------------------- | ------------------- |
+| task, connector | rounded box `╭─╮ ╰─╯`                   | `+-+`               |
+| tool            | double sides `║ ║`                      | `I I`               |
+| input           | box with `/` at each side's middle      | same                |
+| decision        | box with `◇` at each side's middle      | box with `*`        |
+| refdoc          | box with a folded top-right corner `╲`  | `\`                 |
+| action          | box with `<` and `>` on the left and right | same             |
+| flow            | frame with the title on the top border  | same                |
+| collapsed flow  | box with a `+` marker                   | same                |
+
+- Every box fits its label, wrapped at `agentflow.wrappingWidth` (120 px is 15 columns);
+  `agentflow.nodeSpacing` and `rankSpacing` convert at 8 × 16 px a cell, as the flowchart's
+  lengths do. `minNodeWidth` has no text form.
+- `-->` ends in a head (`►`, `>`), `--x` in a cross (`✕`, `x`), and `-.-` is dotted with no head;
+  a line leaves its box at a tee. Labels sit on their line.
+- An edge between a flow and one of its members ends on the flow's frame, its head pointing out
+  of the flow. Edge labels and heads stay off every other frame.
+- The front-matter `title` is centred on the first line.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`,
+  `linkStyle`; palette colours are dropped silently), `curve` (`linkStyle … interpolate`, a
+  `flowchart.curve` that is set), `emphasis`, `animation`, `link` (`click` links, tooltips and
+  callbacks), `config` (`agentflow.useMaxWidth`, `diagramPadding`, `minNodeWidth` and
+  `titleTopMargin` set off their defaults, and `flowchart.padding` or a
+  `flowchart.subGraphTitleMargin` that is set) and `accessibility` (`accTitle`, `accDescr`).
+
 ## Packet diagrams
 
 The packet diagram's text entry (`@mermaid-js/diagram-packet/ascii`, D347) draws from the bit
@@ -613,7 +681,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's or info's)
+packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's, the agentflow's or
+info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

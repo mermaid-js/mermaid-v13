@@ -41,11 +41,11 @@ What still is a shared edit, by design: a change to shared code itself (a new co
 
 Until T5 adds the `mermaid` manifest, your `packages/diagram-<type>` is a **pre-manifest** package. Give it a `workspace.yaml` from T1 on (an empty one, a comment only, is enough), and the workspace tools count it (`workspaceDiagrams()` in `tools/workspace/diagrams.ts`):
 
-- `pnpm regen` adds it to `packages/conformance`'s devDependencies (and to `tools/gen-grammar`'s once a spec there imports it);
+- `pnpm regen` adds it to `packages/conformance`'s devDependencies (and to `tools/gen-grammar`'s once a spec there imports it), and, once its package.json exports `./language` (T6 before T5), to `packages/language-service`'s devDependencies, so a test-only `UNLISTED_FACETS` row can import its facet;
 - `gen:grammar` reads its `grammars:`;
 - the theme scan reads its sources (set `theme: { notDrawnYet: true }` until it draws), and the licence check its `credits:`.
 
-It stays out of everything that registers or publishes a diagram until the manifest lands: the generated registry, detectors and facets (so the type is still `UNSUPPORTED_DIAGRAM`), gen-config's sections (`configDefaults` waits for T5), the `mermaid`, `bench` and language packages' dependencies, the RELEASING rows and mermaid's notices. Do not add the manifest early to get any of this: it gives the type a registry loader before it has a plugin. A `diagram-*` folder with neither a manifest nor a `workspace.yaml` is not counted at all (`tools/workspace/pre-manifest.spec.ts`).
+It stays out of everything that registers or publishes a diagram until the manifest lands: the generated registry, detectors and facets (so the type is still `UNSUPPORTED_DIAGRAM`), gen-config's sections (`configDefaults` waits for T5), the `mermaid` and `bench` dependencies, the language service's peers and the language server's dependencies, the RELEASING rows and mermaid's notices. Do not add the manifest early to get any of this: it gives the type a registry loader before it has a plugin. A `diagram-*` folder with neither a manifest nor a `workspace.yaml` is not counted at all (`tools/workspace/pre-manifest.spec.ts`).
 
 ## Moving an in-flight port (do this on your next merge of `mermaid-v13`)
 

@@ -1,0 +1,6 @@
+@ 3:13  connector |inbox
+  prepare: 3:13-3:18 "inbox"; rename to "plan":
+  refused: 'plan' is already a subgraph id in this diagram.
+@ 5:5  |think --> inbox
+  prepare: 5:5-5:10 "think"; rename to "plan":
+  refused: 'plan' is already a subgraph id in this diagram.

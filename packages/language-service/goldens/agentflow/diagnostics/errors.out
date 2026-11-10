@@ -1,0 +1,3 @@
+2:5-2:6 "=" error UNEXPECTED_CHARACTER: Unexpected character `=`; agentflow links are written `-->`, `--x` or `-.-`.
+4:9-4:10 "[" error UNCLOSED: Unclosed flow title: the `[` at line 4 has no closing `]` before `{` at line 6. Add `]` to close it.
+7:3-7:6 "end" error UNEXPECTED_END: Unexpected `end`: there is no open `flow` or `global` to close. Remove it, or add a `flow` above.

@@ -1,0 +1,39 @@
+---
+config:
+  theme: neo-dark
+  look: handDrawn
+  handDrawnSeed: 1
+description: >-
+  the representative agentflow hand-drawn in the neo-dark theme (D301, D307): vertices, their inner
+  lines, flow frames, the collapsed card with its separator and dots, and edges sketched
+  through w.outline; arrowheads and text plain; the layout as without the look
+---
+agentflow-beta TB
+  connector llm["LLM API"]
+
+  global
+    policy["Support Policy"]@{ shape: refdoc }
+  end
+
+  flow triage["Triage Agent"]
+    ticket["ticket"]@{ shape: input }
+    classify["classify_intent"]@{ shape: tool }
+    severity["Severity?"]@{ shape: decision }
+    ticket --> classify --> severity
+  end
+
+  flow resolve["Resolution Agent"]
+    draft["draft_reply"]@{ shape: task }
+    send["send_reply"]@{ shape: action }
+    draft --> send
+  end
+
+  flow audit["Audit"]
+    record["record_outcome"]@{ shape: task }
+  end
+  audit@{ view: "collapsed" }
+
+  severity -->|"low"| resolve
+  severity --x audit
+  classify -.- policy
+  resolve --> audit
