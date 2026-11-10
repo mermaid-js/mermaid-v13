@@ -1,13 +1,13 @@
 /**
- * Test harness (`@mermaid-js/diagram-requirement/testing`): renders a requirement source or
- * model through the plugin's own seam, `parse` → `layout` → `render`, with a render context
- * built as the pipeline builds one (`themeFor` in `mermaid/src/api.ts`, and
- * `core/src/pipeline/draw.ts`): core's config defaults under the integrator's config and the source's front matter
- * and directives, the theme with the plugin's table, its `themeVariables` and its dark half for
- * `theme: 'auto'`, the table measurer, the layout engine (`layered`, or the one given), and the
- * stream writer with the theme's gradient and an optional outline drawer. The manifest is T5's
- * (#587); until then this is how requirement renders, and after it, how to render the plugin
- * alone with what the public API does not take (a model, an engine, a drawer, a measurer).
+ * Test harness for the package's own specs: renders a requirement source or model through the
+ * plugin's own seam, `parse` → `layout` → `render`, with a render context built as the pipeline
+ * builds one (`themeFor` in `mermaid/src/api.ts`, and `core/src/pipeline/draw.ts`): core's
+ * config defaults under the integrator's config and the source's front matter and directives,
+ * the theme with the plugin's table, its `themeVariables` and its dark half for `theme: 'auto'`,
+ * the table measurer, the layout engine (`layered`, or the one given), and the stream writer
+ * with the theme's gradient and an optional outline drawer. It renders the plugin alone with
+ * what the public API does not take (a model, an engine, a drawer, a measurer, an id prefix);
+ * corpus properties go through `createMermaid().render()` (pitfall 24), not through this.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
