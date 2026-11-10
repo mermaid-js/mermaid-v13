@@ -139,7 +139,11 @@ export function readStructure(text: string, charset: Charset, expected: Expected
     (label) => !boxes.some((b) => squash(b.lines.join('')) === squash(label))
   );
   for (const t of expected.texts) {
-    for (const line of t.split('\n')) if (line.trim()) d.find(line.trim(), TEXT);
+    // A title on a border first: an edge label may be the same text (`A -- Lane --> B`).
+    for (const line of t.split('\n')) {
+      const want = line.trim();
+      if (want && !d.find(want, TEXT, true)) d.find(want, TEXT);
+    }
   }
   // Words, not lines: v13 may wrap a label where mermaid-ascii does not.
   const missingEdgeLabels = expected.edgeLabels
@@ -295,8 +299,11 @@ class Drawing {
     }
   }
 
-  /** Marks the first free occurrence of `needle` (outside node boxes) as `mark`. */
-  find(needle: string, mark: typeof TEXT | typeof WILD): boolean {
+  /**
+   * Marks the first free occurrence of `needle` (outside node boxes) as `mark`; with `titled`,
+   * only one `maskTitle` found on a horizontal line.
+   */
+  find(needle: string, mark: typeof TEXT | typeof WILD, titled = false): boolean {
     const want = toGrid(needle)[0]!;
     if (want.length === 0) return true;
     for (let y = 0; y < this.grid.length; y++) {
@@ -305,6 +312,7 @@ class Drawing {
       const free = (i: number) => kind[i] !== INTERIOR && kind[i] !== TEXT && kind[i] !== WILD;
       for (let x = 0; x + want.length <= row.length; x++) {
         if (!want.every((c, i) => row[x + i] === c && free(x + i))) continue;
+        if (titled && !this.titled.has(`${y},${x}`)) continue;
         // A label line is centred in its block: the spaces padding it join the line too.
         let from = x;
         let to = x + want.length - 1;

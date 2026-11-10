@@ -95,6 +95,13 @@ describe('subgraphs', () => {
     );
   });
 
+  it('blanks the border beside the first title line, not beside a wider line under it', async () => {
+    const src = 'flowchart TB\nsubgraph s ["Two\\na much wider line"]\n a\nend';
+    const [top, second] = (await text(src)).split('\n');
+    expect(top).toMatch(/^┌─+ Two ─+┐$/u);
+    expect(second).toContain('│ a much wider line │');
+  });
+
   it('draws nested subgraphs inside each other, each with its own direction', async () => {
     const src = [
       'flowchart LR',
