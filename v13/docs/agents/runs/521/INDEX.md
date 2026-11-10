@@ -12,7 +12,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T3 layout | #555 | #554 | merged (ff e7fef7bd3; package entry 17,666 B gz, no core change) |
 | T4 SVG renderer and local shapes | #556 | #552, #555 | merged (ff 3c3553fc4; package entry 20,507 B gz, no core change) |
 | T6 language facet | #557 | #554 | merged (ff b9f104d0d; package entry 20,898 B gz, `./language` 16,721 B gz; shared language-service: one frozen empty modifiers array, `deepFreeze` without per-object key arrays) |
-| T5 integration | #558 | #556, #557 | done on `feature/558_block_integration` (handoff `tickets/558.md`), not merged yet |
+| T5 integration | #558 | #556, #557 | merged (ff 813312af7; core 94,429 B gz, block rows +17 B; package entry 20,778 B gz; warm render 118× geomean vs 12.2.0) |
 | T7 ASCII renderer (optional, D320) | #559 | #558 | |
 
 - `01-v12-block.md`: pointer notes on v12 grammar, DB, layout, renderer, shapes, specs, corpus, Pele.
