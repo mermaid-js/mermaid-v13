@@ -9,7 +9,7 @@ Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then
 | T2 grammars, parsers, model, AST | #610 | #608 | merged (ff 35d9a65f9; runtime entry 10,668 B gz, `./testing` 5,332 B gz; no core change) |
 | T3 layout | #612 | #610 | merged (ff 8ec205a7e; layout 2,830 B gz, runtime entry 13,535 B gz; core 94,412 unchanged) |
 | T4 renderer and theme table | #613 | #612 | merged (ff b12716ef9; runtime entry ~16 KB gz; core 94,412 unchanged; theme matches 12.2.0 in all eleven themes) |
-| T6 language facet | #616 | #610 | open |
+| T6 language facet | #616 | #610 | merged (ff bb971c3a7; `./language` 15,569 B gz; core 94,412 unchanged; goldens run from conformance until T5) |
 | T5 integration | #615 | #613, #616 | open |
 | T7 ascii (optional, D518) | #617 | #615 | open |
 
