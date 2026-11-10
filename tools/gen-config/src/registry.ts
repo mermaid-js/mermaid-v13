@@ -12,6 +12,8 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCHEMA_PATH } from './generate.ts';
+import { loadSchema } from './schema.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 export const REGISTRY_PATH = join(ROOT, 'packages/mermaid/src/generated/registry.gen.ts');
@@ -143,6 +145,31 @@ export function readManifests(root = ROOT): ManifestSource[] {
   return out;
 }
 
+let sections: ReadonlySet<string> | undefined;
+/** The top-level config sections of core's schema (objects with a `$ref`). */
+function schemaSections(): ReadonlySet<string> {
+  sections ??= new Set(
+    Object.entries(loadSchema(readFileSync(join(ROOT, SCHEMA_PATH), 'utf8')).properties ?? {})
+      .filter(([, node]) => typeof node.$ref === 'string')
+      .map(([key]) => key)
+  );
+  return sections;
+}
+
+/**
+ * A layout name a type may default to: `layered` and v12's `dagre`, a lazy first-party engine
+ * (mermaid's `LAZY_LAYOUTS` rows but `lineHops`), or the ELK family (`elk`, `elk.*`).
+ */
+function knownLayout(name: string): boolean {
+  if (name === 'layered' || name === 'dagre' || /^elk(\.[\w-]+)?$/.test(name)) return true;
+  const source = readFileSync(join(ROOT, 'packages/mermaid/src/registry.ts'), 'utf8');
+  const lazy = source.slice(
+    source.indexOf('const LAZY_LAYOUTS'),
+    source.indexOf(']);', source.indexOf('const LAZY_LAYOUTS'))
+  );
+  return [...lazy.matchAll(/^ {2}\['([\w.-]+)', \(\) => import\(/gm)].some((m) => m[1] === name);
+}
+
 /** The manifest serving each v12 type; throws on a type v12 does not have. */
 function manifestsByType(manifests: readonly ManifestSource[]): Map<string, ManifestSource> {
   const byType = new Map<string, ManifestSource>();
@@ -153,9 +180,18 @@ function manifestsByType(manifests: readonly ManifestSource[]): Map<string, Mani
       }
       byType.set(type, m);
     }
-    for (const type of Object.keys(m.manifest.typeOptions ?? {}))
+    for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
       if (!m.manifest.types.includes(type))
         throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
+      if (o.section !== undefined && !schemaSections().has(o.section))
+        throw new Error(
+          `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
+        );
+      if (o.layout !== undefined && !knownLayout(o.layout))
+        throw new Error(
+          `${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`
+        );
+    }
   }
   return byType;
 }
@@ -196,6 +232,13 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
   return lines.join('\n');
 }
 
+/** The sections a type reads, highest first (see {@link generateFacets}). */
+function sectionsOf(m: ManifestSource, type: string): string[] {
+  const own = m.manifest.section ?? m.manifest.id;
+  const typed = m.manifest.typeOptions?.[type]?.section;
+  return typed === undefined || typed === own ? [own] : [typed, own];
+}
+
 /**
  * `firstPartyFacets` of `@mermaid-js/language-service` (DESIGN §4.5, D89): every v12 type in
  * detector order, so the service tells a type with no facet yet (an info diagnostic) from an
@@ -207,13 +250,6 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
  * section also gets `baseSection`, the package's, which it reads under its own (D534). A type
  * with no package has neither.
  */
-/** The sections a type reads, highest first (see {@link generateFacets}). */
-function sectionsOf(m: ManifestSource, type: string): string[] {
-  const own = m.manifest.section ?? m.manifest.id;
-  const typed = m.manifest.typeOptions?.[type]?.section;
-  return typed === undefined || typed === own ? [own] : [typed, own];
-}
-
 export function generateFacets(manifests: readonly ManifestSource[]): string {
   const byType = manifestsByType(manifests);
   const lines = [

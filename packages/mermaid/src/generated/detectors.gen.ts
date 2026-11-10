@@ -16,7 +16,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'pie', pattern: /^\s*pie/, id: 'pie', formats: ['svg'] },
   { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
   { type: 'sequence', pattern: /^\s*sequenceDiagram/, id: 'sequence', formats: ['svg', 'ascii'] },
-  { type: 'swimlane', pattern: /^\s*swimlane-beta\b/, id: 'flowchart', formats: ['svg', 'ascii'], section: 'swimlane', layout: 'swimlane' },
+  { type: 'swimlane', pattern: /^\s*swimlane-beta\b/, id: 'flowchart', formats: ['svg', 'ascii'], section: 'swimlane' },
   { type: 'flowchart-v2', pattern: /^\s*(graph|flowchart)/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'timeline', pattern: /^\s*timeline/, id: 'timeline', formats: ['svg'] },
   { type: 'gitGraph', pattern: /^\s*gitGraph/, id: 'gitGraph', formats: ['svg'] },

@@ -8,7 +8,7 @@
  * lane drawing and warnings, T2 (#598, D536).
  */
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
-import type { LayoutEngine } from '@mermaid-js/core/layout';
+import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, detectType, type MermaidConfig } from './index.ts';
 
@@ -96,11 +96,24 @@ describe('swimlane-beta registration (D534, D535)', () => {
     expect(r.svg).toBe((await createMermaid().render('s', text)).svg);
   });
 
+  it('preloads no ELK for `flowchart`: the default layout is per type, not per plugin', async () => {
+    const loads: string[] = [];
+    const m = createMermaid();
+    m.registerLayoutLoaders([
+      { name: 'elk', loader: () => (loads.push('elk'), Promise.resolve(layered)) },
+    ]);
+    await m.preload({ types: ['flowchart'] });
+    await m.preload({ types: ['flowchart-v2'] });
+    expect(loads).toEqual([]);
+    await m.preload({ types: ['flowchart-elk'] });
+    expect(loads).toEqual(['elk']);
+  });
+
   it('may take `layered` or `elk` (D535)', async () => {
     const m = createMermaid();
-    const layered = await m.render('s', `---\nconfig:\n  layout: layered\n---\n${SWIMLANE}`);
-    expect(layered.warnings).toEqual([]);
-    expect(layered.svg).toBe(
+    const byLayered = await m.render('s', `---\nconfig:\n  layout: layered\n---\n${SWIMLANE}`);
+    expect(byLayered.warnings).toEqual([]);
+    expect(byLayered.svg).toBe(
       (await m.render('s', `---\nconfig:\n  layout: dagre\n---\n${SWIMLANE}`)).svg
     );
     const elk = await m.render('s', `---\nconfig:\n  swimlane:\n    layout: elk\n---\n${SWIMLANE}`);
@@ -161,6 +174,21 @@ describe('swimlane-beta registration (D534, D535)', () => {
       expect((await m.render('s', front('  swimlane:\n    useMaxWidth: false'))).svg).not.toMatch(
         /max-width/
       );
+    });
+
+    it('mirrors any swimlane.* key flowchart’s schema has too, with no default (useWidth)', async () => {
+      const m = createMermaid();
+      const own = await m.prepare(front('  swimlane:\n    useWidth: 500'));
+      expect(own.config.flowchart?.useWidth).toBe(500);
+      const both = await m.prepare(
+        front('  flowchart:\n    useWidth: 300\n  swimlane:\n    useWidth: 500')
+      );
+      expect(both.config.flowchart?.useWidth).toBe(500);
+      // An unscoped directive key in swimlane's schema goes there, then reaches flowchart.
+      const init = await m.prepare(`%%{init: {"config": {"useWidth": 400}}}%%\n${SWIMLANE}`);
+      expect(init.warnings).toEqual([]);
+      expect(init.config.swimlane?.useWidth).toBe(400);
+      expect(init.config.flowchart?.useWidth).toBe(400);
     });
 
     it('sends an unscoped %%{init: {config}}%% key to swimlane when its schema has it, else to flowchart', async () => {

@@ -5,6 +5,7 @@
  */
 import {
   CORE_DEFAULTS,
+  KEY_TREE,
   resolveSite,
   type ConfigFragment,
   type ConfigInput,
@@ -212,7 +213,7 @@ export class Overlays {
 /**
  * Init directive config in source order (v12's `config` key moved into the section). With a
  * chain of sections (`['swimlane', 'flowchart']`, D534), each `config` key goes to the first
- * section when that section has a default for it (core's own engine sections), else to the last.
+ * section when that section's schema has it, else to the last.
  */
 export function directiveConfig(
   pre: PreprocessResult,
@@ -220,7 +221,7 @@ export function directiveConfig(
 ): ConfigInput[] {
   const out: ConfigInput[] = [];
   const [first, last] = section === undefined ? [] : [section].flat();
-  const own = (CORE_DEFAULTS as Plain)[first ?? ''];
+  const own = (KEY_TREE as Plain)[first ?? ''];
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {

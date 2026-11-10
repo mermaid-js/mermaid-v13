@@ -11,7 +11,12 @@ import {
   type LayoutManifest,
   type PluginManifest,
 } from '@mermaid-js/core';
-import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
+import {
+  CORE_DEFAULTS,
+  checkFragment,
+  type ConfigFragment,
+  type ResolvedConfig,
+} from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import type { lineHops as LineHops } from '@mermaid-js/core/layout/hops';
 import {
@@ -525,8 +530,8 @@ export class Registry {
     let old: string | undefined;
     const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
     for (const e of this.detectionOrder()) {
-      // The entry is a `Detected`: its type, id and the type's section and layout (D534).
-      if (e.detect(body, cleaned, config, v12)) return e;
+      if (e.detect(body, cleaned, config, v12))
+        return { type: e.type, id: e.id, section: e.section, layout: e.layout };
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
@@ -535,9 +540,17 @@ export class Registry {
     );
   }
 
-  /** A type's default layout (D534), for `preload`. */
+  /**
+   * A first-party type's default layout (D534), for `preload`: its own (`elk` for
+   * `flowchart-elk`), else its section's schema default (`swimlane.layout`). The type only,
+   * never a plugin id (`flowchart` must not load ELK).
+   */
   layoutOf(type: string): string | undefined {
-    return this.entryFor(type)?.layout;
+    const e = this.entries.find((x) => x.type === type);
+    const section = (CORE_DEFAULTS as Record<string, { layout?: string } | undefined>)[
+      e?.section ?? ''
+    ];
+    return e?.layout ?? section?.layout;
   }
 
   /** The loaded plugin for a detected type, if any. */

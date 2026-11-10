@@ -63,8 +63,7 @@
         "layout": "elk"
       },
       "swimlane": {
-        "section": "swimlane",
-        "layout": "swimlane"
+        "section": "swimlane"
       }
     },
     "formats": [

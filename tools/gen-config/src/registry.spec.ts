@@ -173,6 +173,13 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     expect(() => generateRegistry([{ ...flowchart, manifest: stray }])).toThrow(
       /not one of its types/
     );
+    const bad = (typeOptions: Record<string, { section?: string; layout?: string }>) => () =>
+      generateRegistry([{ ...flowchart, manifest: { ...manifest, typeOptions } }]);
+    expect(bad({ swimlane: { section: 'lanes' } })).toThrow(/"lanes" is not a config section/);
+    expect(bad({ swimlane: { layout: 'lineHops' } })).toThrow(/"lineHops" is not a known layout/);
+    expect(bad({ swimlane: { layout: 'nope' } })).toThrow(/not a known layout/);
+    for (const layout of ['layered', 'dagre', 'tree', 'compass', 'swimlane', 'elk', 'elk.stress'])
+      expect(bad({ swimlane: { layout } })).not.toThrow();
   });
 
   it('names the ids that have a facet in one union type', () => {

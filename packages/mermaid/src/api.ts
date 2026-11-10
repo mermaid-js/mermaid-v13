@@ -405,7 +405,7 @@ export function createMermaid(
     plugin?: AnyPlugin
   ): string | readonly string[] | undefined {
     const own = plugin?.configSection ?? plugin?.id ?? detected.id;
-    return detected.section && own ? [detected.section, own] : own;
+    return detected.section && own && detected.section !== own ? [detected.section, own] : own;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).

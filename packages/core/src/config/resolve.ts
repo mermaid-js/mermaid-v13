@@ -182,7 +182,7 @@ export function resolveSite(
     defaults: deepFreeze(looks.strip(coreDefaults)),
   };
   return {
-    plain: layered(layers, section, {}),
+    plain: layered({ ...layers, tree }, section, {}),
     ...layers,
     tree,
     secure,
@@ -240,13 +240,18 @@ export function resolveText(
 // The site's base with `text` merged over it, appearance resolved, frozen. Parts `text` does
 // not touch stay shared with the (frozen) site.
 function layered(
-  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults'>,
+  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults' | 'tree'>,
   section: ResolvedSite['section'],
   text: Plain
 ): ResolvedConfig {
   const config: Plain = { ...layers.base };
   merge(config, text);
-  resolveAppearance(config, section, [text, layers.site, layers.plugin, layers.defaults]);
+  resolveAppearance(
+    config,
+    section,
+    [text, layers.site, layers.plugin, layers.defaults],
+    layers.tree
+  );
   return deepFreeze(config) as ResolvedConfig;
 }
 
@@ -302,17 +307,26 @@ function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
  * the diagram-scoped value beats the global one. (v12 also passed over unknown theme names;
  * that check belongs with the theme registry, core/theme.)
  */
-function resolveAppearance(config: Plain, section: ResolvedSite['section'], layers: Plain[]) {
+function resolveAppearance(
+  config: Plain,
+  section: ResolvedSite['section'],
+  layers: Plain[],
+  tree: ResolvedSite['tree']
+) {
   const sections = section === undefined ? [] : [section].flat();
   const scopedOf = (layer: Plain, s: string): Plain | undefined => {
     const value = layer[s];
     return isPlainObject(value) ? value : undefined;
   };
-  // Keys a chained type's sections share (`useMaxWidth`) resolve like `theme` and `layout`,
-  // without a top-level key.
+  const inSchema = (s: string, key: string): boolean => {
+    const node = tree[s];
+    return sections.length > 1 && typeof node === 'object' && key in node;
+  };
+  // A chained type's first-section keys that a later section's schema has too (`useMaxWidth`,
+  // `useWidth`) resolve like `theme` and `layout`, without a top-level key, into every section.
   const keys = new Set<string>(APPEARANCE_KEYS);
   for (const key of Object.keys(scopedOf(config, sections[0] ?? '') ?? {}))
-    if (sections.some((s, i) => i > 0 && scopedOf(config, s)?.[key] !== undefined)) keys.add(key);
+    if (sections.some((s, i) => i > 0 && inSchema(s, key))) keys.add(key);
   for (const key of keys) {
     const top = key === 'theme' || key === 'layout';
     let value: unknown;
@@ -327,7 +341,7 @@ function resolveAppearance(config: Plain, section: ResolvedSite['section'], laye
     if (top) config[key] = value;
     for (const s of sections) {
       const scoped = scopedOf(config, s);
-      if (scoped?.[key] !== undefined && scoped[key] !== value)
+      if ((scoped?.[key] !== undefined || inSchema(s, key)) && scoped?.[key] !== value)
         config[s] = { ...scoped, [key]: value };
     }
   }
