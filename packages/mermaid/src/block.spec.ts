@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
-import { block } from '@mermaid-js/diagram-block';
+import { block, parseBlock } from '@mermaid-js/diagram-block';
 import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
@@ -140,6 +140,14 @@ describe('block diagrams through the public API (#558)', () => {
     const look = await m.render('b7', '%%{init: {"block": {"look": "neo"}}}%%\n' + TEXT);
     expect(look.svg).toBe(base.svg);
     expect(look.warnings.map((w) => w.code)).toEqual(['LOOK_REMOVED']);
+  });
+
+  it('lists the labels it draws for extensions, and no style or class text', () => {
+    const { model } = parseBlock(
+      'block\n  a["A $$x$$"] space b\n  block:g["G"]\n    c\n  end\n  block\n    d\n  end\n' +
+        '  a -- "to b" --> b\n  b --> c\n  classDef k fill:#f00\n  style a stroke:#00f\n'
+    );
+    expect(block.labels(model)).toEqual(['A $$x$$', 'b', 'G', 'c', 'd', 'to b']);
   });
 
   it('supports svg only until #559: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {

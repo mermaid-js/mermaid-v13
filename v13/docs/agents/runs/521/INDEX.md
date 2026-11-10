@@ -12,7 +12,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T3 layout | #555 | #554 | merged (ff e7fef7bd3; package entry 17,666 B gz, no core change) |
 | T4 SVG renderer and local shapes | #556 | #552, #555 | merged (ff 3c3553fc4; package entry 20,507 B gz, no core change) |
 | T6 language facet | #557 | #554 | merged (ff b9f104d0d; package entry 20,898 B gz, `./language` 16,721 B gz; shared language-service: one frozen empty modifiers array, `deepFreeze` without per-object key arrays) |
-| T5 integration | #558 | #556, #557 | |
+| T5 integration | #558 | #556, #557 | done on `feature/558_block_integration` (handoff `tickets/558.md`), not merged yet |
 | T7 ASCII renderer (optional, D320) | #559 | #558 | |
 
 - `01-v12-block.md`: pointer notes on v12 grammar, DB, layout, renderer, shapes, specs, corpus, Pele.
@@ -31,6 +31,8 @@ Block #521, c4 #522 and agentflow #523 run in parallel on AI-Max: at most one ti
 | --- | --- | --- |
 | base (521fb76ee) | 93,891 | — |
 | T0 #552 | 94,217 | +326 |
+| base of T5 (`feature/521_block` b9f104d0d, after the `mermaid-v13` merges) | 94,412 | +195 |
+| T5 #558 (registry, detector and facet rows) | 94,429 | +17 |
 
 ## Resumed (2026-11-10)
 

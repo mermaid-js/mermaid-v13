@@ -1,0 +1,16 @@
+---
+config:
+  theme: redux
+  block:
+    padding: 24
+    useMaxWidth: false
+description: >-
+  block.padding 24 (grid gap, composite inset and leaf label padding, default 8) and
+  useMaxWidth false (the SVG is drawn at its own width and height, no max-width)
+---
+block-beta
+  columns 2
+  a["Wide gaps"] b["Between"]
+  block:g["Inset"]:2
+    c["Inside"] d["Too"]
+  end

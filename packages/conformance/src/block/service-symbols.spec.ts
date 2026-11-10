@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { detectBlock, language, parseBlock } from '@mermaid-js/diagram-block/language';
+import { parseBlock } from '@mermaid-js/diagram-block/language';
 import type { BlockParseResult, BlockStatementNode } from '@mermaid-js/diagram-block/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
-import { createLanguageService } from '@mermaid-js/language-service';
+import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import type { Oracle } from '../oracle.ts';
@@ -26,8 +26,8 @@ import { blockV13Snapshot, parseBlockForParity } from './v13.ts';
  *   blocks, edges, edge ids, and the label of a block written without one) and nothing else;
  *   renaming it to another block's id is refused.
  *
- * The manifest (#558) is not there yet, so the facet is given to the service as a row of its
- * own; once it is, the row only replaces the generated one.
+ * The service loads the facet through the generated registry row (block's manifest `language`
+ * entry, #558).
  */
 const FRESH = 'renamedZq7';
 const key = (r: Range | undefined) => (r ? `${r.start}:${r.end}` : 'none');
@@ -82,13 +82,12 @@ interface Case {
 }
 
 let oracle: Oracle;
+let service: ReturnType<typeof createLanguageService>;
 const cases: Case[] = [];
 
 beforeAll(async () => {
   oracle = await loadOracle();
-  const service = createLanguageService({
-    facets: [{ type: 'block', id: 'block', detector: (src) => detectBlock(src), facet: language }],
-  });
+  service = createLanguageService();
   await service.preload({ types: ['block'] });
   for (const item of [...(await blockCorpus()), ...blockCases()]) {
     const v12 = await oracle.parse(item.source);
@@ -249,5 +248,10 @@ describe('block symbols, folding and rename through the service match v12', () =
     }
     expect(problems).toEqual([]);
     expect(refused).toBeGreaterThan(550);
+  });
+
+  it('loads the facet from the generated registry (#558)', () => {
+    expect(firstPartyFacets.find((e) => e.type === 'block')?.load).toBeTypeOf('function');
+    expect(service.update('x:///b', 'block\n  a b\n').facet?.id).toBe('block');
   });
 });

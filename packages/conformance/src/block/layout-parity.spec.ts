@@ -122,7 +122,14 @@ describe('block grid parity with v12', () => {
       if (depth(root) > 3) nested++;
     }
     expect(failures).toEqual([]);
-    expect(banded.filter((id) => id.startsWith('e2e/'))).toEqual([
+    // The baselines (#558) show D444's band, so each has a labelled composite.
+    expect(banded.filter((id) => id.startsWith('e2e/')).sort()).toEqual([
+      ...[
+        'config/padding-and-fixed-width',
+        ...['default', 'neo-dark', 'neo', 'redux'].map((t) => `handdrawn/${t}`),
+        ...['off', 'on-dark', 'on', 'style-beats-the-palette'].map((p) => `palette/${p}`),
+        ...['default', 'neo-dark', 'neo', 'redux'].map((t) => `themes/${t}`),
+      ].map((f) => `e2e/baseline/${f}.mmd`),
       'e2e/nightly-check/composite-with-a-label.mmd',
     ]);
     expect(tooLarge).toEqual(['e2e/nightly-check/space-over-the-cap-is-cut.mmd']);

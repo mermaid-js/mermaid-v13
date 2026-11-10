@@ -30,6 +30,20 @@
   arrow).
 - **Generated ids** of spaces and anonymous composites are `id-1`, `id-2`, … in source order,
   where v12 drew random ones (R-ARCH-6).
+- **Self-loops and parallel edges** (D441): edges stay v12's straight segments between the
+  centres, clipped at the outlines, and parallel edges still overlap; a self-loop (`a --> a`),
+  which v12 drew with zero length, is an arc standing out at the block's top right.
+- **Composite labels** (D444): `block:g["Title"] … end` reserves a band above the composite's
+  grid for its label, so the label no longer sits under the children; an unlabelled composite
+  is laid out as in v12.
+- **Config** (the `block` section): `padding` (default 8: the grid gap and inset, and a leaf's
+  label padding) and `useMaxWidth` are honoured, and a block-scoped `theme` wins over the top
+  level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block renderer never read
+  them (block lays out its own grid). `look` is removed (D153): ignored with one
+  `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
+  paddings.
+- **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until block's ASCII
+  renderer lands (R-ASCII-5, #559).
 
 ## Block SVG structure
 

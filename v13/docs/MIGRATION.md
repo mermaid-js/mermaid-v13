@@ -381,7 +381,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the block renderer never did. |  |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.layout` | ignored | Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it. |  |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `radar.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
@@ -716,7 +718,8 @@ npm install @mermaid-js/plugin-hand-drawn
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
-  the priority bar is kept, D379) and venn (circles and the overlaps a style fills, D319). v12
+  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and block
+  (leaf shapes and their inner lines; composites, block arrows and edges plain, D447). v12
   did not sketch mindmap's plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
@@ -724,7 +727,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (requirement, block, swimlanes, ishikawa, usecase, agentflow) are
+  v13 has not ported yet (requirement, swimlanes, ishikawa, usecase, agentflow) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -2435,6 +2438,20 @@ no per-call options (D319, D302).
   arrow).
 - **Generated ids** of spaces and anonymous composites are `id-1`, `id-2`, … in source order,
   where v12 drew random ones (R-ARCH-6).
+- **Self-loops and parallel edges** (D441): edges stay v12's straight segments between the
+  centres, clipped at the outlines, and parallel edges still overlap; a self-loop (`a --> a`),
+  which v12 drew with zero length, is an arc standing out at the block's top right.
+- **Composite labels** (D444): `block:g["Title"] … end` reserves a band above the composite's
+  grid for its label, so the label no longer sits under the children; an unlabelled composite
+  is laid out as in v12.
+- **Config** (the `block` section): `padding` (default 8: the grid gap and inset, and a leaf's
+  label padding) and `useMaxWidth` are honoured, and a block-scoped `theme` wins over the top
+  level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block renderer never read
+  them (block lays out its own grid). `look` is removed (D153): ignored with one
+  `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
+  paddings.
+- **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until block's ASCII
+  renderer lands (R-ASCII-5, #559).
 
 ## Block SVG structure
 

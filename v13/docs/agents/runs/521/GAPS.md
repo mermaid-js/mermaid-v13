@@ -80,7 +80,13 @@ Choices the D-ids leave open (each a `divergences.json` entry where it changes v
 
 ## T5 #558
 
-- The plugin object exists (`src/plugin.ts`, `layoutKind: 'custom'`, T3); add `render` (T4), `configDefaults` and the manifest.
+- **Config statuses.** `block.padding` and `useMaxWidth` honoured (spec). `block.theme` is honoured too, not ignored: 12.2.0's `resolveAppearance` reads a diagram-scoped `theme` for every type, block included, and core's `resolveConfig` does the same (`block.spec.ts` checks it). `useWidth` and `layout` ignored (v12's block renderer never read them; core still copies `block.layout` to the top level, which block does not read). `look` keeps the base row's `ignored`/`LOOK_REMOVED`. A `padding` that is not a finite number of 0 or more still lays out at 8 with no warning (T3's choice; no `BLOCK_CONFIG_INVALID` code added).
+- **Public package**: `13.0.0-alpha.0` (as sankey and venn at their T5), `repository`, README, `THIRD_PARTY_NOTICES` (Pele: `shapes/leaf.ts`, `shapes/draw.ts`, `render/arrowheads.ts`), three changesets. Pele is a shared upstream (`SHARED_UPSTREAMS`), so `workspace.yaml` `credits` has `files` only. `notices/mermaid.txt` is headed `Pele, in @mermaid-js/diagram-block` (not `Pele`, which mermaid's own notices already use) and names the files in prose (a `src/…` line would be read as one of mermaid's own files). Flowchart's Pele-derived files have no line in mermaid's notices (flowchart has no `notices/mermaid.txt`); not touched here.
+- **`tools/workspace/sync.spec.ts`** passes with the manifest: #640 (still open) is not needed on this branch.
+- **Baselines** `e2e/diagrams/block/baseline/` (13): `themes/` × 4 families (`default`, `redux`, `neo`, `neo-dark`), `handdrawn/` × 4 (D307), `palette/` (`on` redux-color, `off` redux, `on-dark` redux-dark-color, `style-beats-the-palette`), `config/padding-and-fixed-width`. Each has a labelled composite (D444's band), so layout parity leaves all of them out (asserted list); the e2e pins move 77 → 90.
+- `conformance/src/block/hand-drawn.spec.ts` dropped: `block/outline.ts` puts block in `outline-identity`/`outline-roles`, and `plugin-hand-drawn/src/block.spec.ts` checks the real drawer in four families.
+- `labels` hook added (`blockLabels`, `plugin.ts`): every drawn block label (spaces and unlabelled composites have none) and every edge label, so an extension (math's `$$`) scans labels only, not `style`/`classDef` text; block's layout passes `ctx.inline` to `layoutLabel`.
+- The self-loop arc (D441) is still unchecked against Pele (not on AI-Max); MIGRATION.md describes it as drawn.
 
 ## T6 #557
 
