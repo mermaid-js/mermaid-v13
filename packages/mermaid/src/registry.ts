@@ -483,7 +483,7 @@ export class Registry {
   detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);
     const body = src.slice(start);
-    if (body.trimStart().toLowerCase().startsWith('---')) {
+    if (body.trimStart().startsWith('---')) {
       throw new MermaidError(
         'SYNTAX',
         'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
@@ -491,7 +491,7 @@ export class Registry {
         { source: src, offset: start, length: 3 }
       );
     }
-    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    if (/^error$/i.test(body.trim())) return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
     let old: string | undefined;

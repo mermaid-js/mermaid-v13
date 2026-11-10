@@ -129,6 +129,23 @@ describe('detectType', () => {
   it('throws UNSUPPORTED_DIAGRAM for unknown text', () => {
     expect(thrown(() => detectType('hello')).code).toBe('UNSUPPORTED_DIAGRAM');
   });
+
+  it('recognizes only the complete error sentinel, regardless of case and surrounding whitespace', () => {
+    for (const text of ['error', 'ERROR', '\t ErRoR\r\n', '\u00a0error\uFEFF']) {
+      expect(detectType(text)).toBe('error');
+    }
+    for (const text of ['errors', 'error\nextra', 'error\u200b', 'ｅrror']) {
+      expect(thrown(() => detectType(text)).code).toBe('UNSUPPORTED_DIAGRAM');
+    }
+  });
+
+  it('rejects an unclosed front-matter prefix after whitespace', () => {
+    for (const text of ['---broken', ' \t---broken', '\u00a0---broken']) {
+      const error = thrown(() => detectType(text));
+      expect(error.code).toBe('SYNTAX');
+      expect(error.message).toContain('Diagrams beginning with --- are not valid');
+    }
+  });
 });
 
 describe('prepare and renderSync (R-API-2)', () => {
