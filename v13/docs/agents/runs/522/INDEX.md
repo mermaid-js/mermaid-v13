@@ -18,6 +18,11 @@ Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR:
 - `GAPS.md`: unmet criteria and choices per ticket.
 - `tickets/<n>.md`: handoffs.
 
+## Resumed (2026-11-10)
+
+- `mermaid-v13` 58ddf094e merged in (e1bb4396e) and c4's rows moved into its own files per #637 (89d8f1870). **Kept local until T5 adds the manifest** (coordinator's rule; #640 fixes two pre-manifest gaps). Until #640 merges, `pnpm check` fails only `tools/workspace/sync.spec.ts` > "take a new diagram package from its own folder alone". If #640 is merged when we push, take theirs for `tools/workspace/sync.spec.ts`.
+- T3 #540 resumes at 90e339620: merge `feature/522_c4`, move its licence credits to `workspace.yaml` `credits:` plus `notices/mermaid.txt`, drop the core `fontFamily.usedBy` edit, then the checks.
+
 ## Merge order (coordinator)
 
 Wave 3 runs block #521, c4 #522 and agentflow #523 on AI-Max. Block's T0 (shape-geometry rows into core) merges into `mermaid-v13` before c4's T4. Merge `mermaid-v13` into this branch as it moves, keeping every side's rows; regenerate generated files, the lockfile and goldens rather than hand-merging.

@@ -32,13 +32,13 @@ Unmet acceptance criteria and choices not covered by the spec or a D-id, per own
 - Choice: the router clips to the real outlines, rounded corners included (Pele treated `rounded` as a rectangle), so ends lie on the drawn outline. Arrowhead trims are the renderer's: `c4RelationPath(rel, startTrim, endTrim)`.
 - Choice: `C4_BOUNDARY_CYCLE` is a render warning (`ctx.warn`, AST id of the boundary moved), raised by the layout: on each cycle, the boundary first in the model goes to the top level.
 - Font family keys go through `checkStyle` (`STYLE_VALUE_DROPPED`, sequence's precedent); size keys through `fontSizePx` (base 14).
-- Core: `fontFamily` gains `'c4'` in `usedBy` (`gen:theme` regenerated `theme-variables.md`); `NOT_DRAWN_YET` in `theme-used-by.spec.ts` is now empty. Core gz unchanged (94,412 B before and after).
+- No core edit (after #637): c4's `fontFamily` read is found by the source scan (`gen:theme` lists c4 in `theme-variables.md`); `theme.notDrawnYet` is gone from `workspace.yaml`, and the Pele credits are `credits.files` there (Pele is a shared upstream already in mermaid's own notices, so no `notices/mermaid.txt`, as flowchart and state). Core gz unchanged.
 - Listed exceptions to "relations cross no other element" (e2e corpus, 141 relations): 4 relations in `nightly-check/large-diagram` (6 crossings, pinned in `layout/layout.spec.ts`): a diagonal between boundaries finds no free two-bend elbow and Pele's router tries no longer route. The docs examples and every other fixture cross nothing.
 - Over the R-SEC-5 budget (`rels · (elements + boundaries + 3·rels) > 2,000,000`) relations go straight and labels sit at their middle (`C4Layout.careful` false). Just under it a careful layout takes about 0.5 s here (not measured on a steady machine).
 
 ## T4 (#541)
 
-- Block's T0 merged as #589 (`mermaid-v13` ad3648a91): `cylinderPadding*` (`cyx`, `cyy`) and `subroutinePadding*` (`srx`, `sry`) are core rows in `packages/core/src/theme/vocabulary.ts` with `usedBy: ['flowchart']` (plus block). T4 adds `'c4'` to `usedBy` on each row its sources read, nothing else in core. The integration branch merges `mermaid-v13` before T4 starts.
+- Block's T0 merged as #589 (`mermaid-v13` ad3648a91): `cylinderPadding*` (`cyx`, `cyy`) and `subroutinePadding*` (`srx`, `sry`) are core rows in `packages/core/src/theme/vocabulary.ts` with `usedBy: ['flowchart']` (plus block). Since #637, core rows' users come from a scan of c4's sources: T4 edits no core `usedBy`. The integration branch merges `mermaid-v13` before T4 starts.
 - v12 never draws a boundary's `$fontColor` (text always `#444444`, `svgDraw.ts:167,175`). Keep v12 (light themes v12-identical, D456); the boundary text reads `c4BoundaryColor`. List in MIGRATION.md only if v13 changes it.
 - v13 flowchart shapes have no per-shape intersect functions (only `cyl` defines `shapeInset`); the router's outline clip (Pele `route.ts` `hit()`) lives in the package, with T3.
 

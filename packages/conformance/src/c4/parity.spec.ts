@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { loadDivergences } from '../divergences.ts';
 import { loadJisonLexerOracle } from '../jison/oracle.ts';
 import { loadOracle } from '../oracle.ts';
-import { DIVERGENCES_FILE } from '../registry.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { diffPaths, runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { c4Cases, c4Corpus, c4ParityCorpus, VARIANTS } from './corpus.ts';
@@ -18,7 +18,7 @@ import { c4Adapter, c4V13Snapshot, parseC4ForParity } from './v13.ts';
  * fixture, v12 spec string and case with comment lines added, CR line breaks cut by a comment or
  * a directive, CRLF, tab indents, U+2028/U+2029 in every line and a directive mid-line. The
  * sources themselves run in the main parity suite (`registry.ts`), each divergence listed in
- * `divergences.json`.
+ * `divergences/c4.json`.
  *
  * A variant may differ from mermaid\@12 only for a reason already decided:
  * - its source is one of D452's lexing exclusions (`d452.ts`; the lexer gate lists them): a
@@ -85,7 +85,7 @@ async function titleTrimmedOnly(source: string): Promise<boolean> {
 describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
   it('differs only by D452 lexing or as the listed source does', async () => {
     const items = await c4ParityCorpus();
-    const listed = loadDivergences(fileURLToPath(DIVERGENCES_FILE));
+    const listed = loadDivergences(fileURLToPath(DIVERGENCES_DIR));
     const listedKind = new Map(listed.map((d) => [d.id, d.kind]));
     const report = await runParity({ adapters: [c4Adapter], corpus: each(items), divergences: [] });
     const lexer = await loadJisonLexerOracle('c4');

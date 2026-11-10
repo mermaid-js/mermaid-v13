@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadDivergences, resolveCorpus, runParity } from './index.ts';
-import { DIVERGENCES_FILE, PARITY_SUITES } from './registry.ts';
+import { DIVERGENCES_DIR, PARITY_SUITES } from './registry.ts';
 
 /**
  * The oracle parity suite (R-COMPAT-2…4). In CI it runs over the in-repo fixtures of every
@@ -13,7 +13,7 @@ describe('oracle parity with mermaid@12', () => {
     const report = await runParity({
       adapters: PARITY_SUITES.map((s) => s.adapter),
       corpus: resolveCorpus(process.env, PARITY_SUITES),
-      divergences: loadDivergences(fileURLToPath(DIVERGENCES_FILE)),
+      divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
     });
     const count = (status: string) => report.results.filter((r) => r.status === status).length;
     process.stdout.write(

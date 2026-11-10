@@ -3,6 +3,7 @@
  * artefacts, never imported by a published package), the syntax reference pages and each
  * diagram's runtime kind → category table (D94) and keyword doc table (D93).
  */
+import { workspaceDiagrams, type WorkspaceDiagram } from '../../workspace/diagrams.ts';
 import { categoriesModule, kindKeys } from './categories.ts';
 import type { KindSource } from './categories.ts';
 import { docsModule } from './docs.ts';
@@ -33,358 +34,77 @@ export interface GrammarTarget {
   kinds: KindSource;
 }
 
-/** Diagram types that have a grammar file, `packages/diagram-<type>/grammar/<type>.ebnf`. */
-export const GRAMMARS: GrammarTarget[] = [
-  {
-    type: 'flowchart',
-    title: 'Flowchart syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      unnamed: {
-        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
-        // jison returns no token for `click`; the lexer does, with the click statement's doc.
-        ClickKeyword: { mode: 'INITIAL', pattern: 'click\\s+', docOf: 'CLICK' },
-      },
-      // `@{` and the text between quotes are Meta, the quoted values String.
-      mixed: ['SHAPE_DATA'],
-      // `call <name>`: the keyword is not a token of its own. `click` is offered as a
-      // completion for the node id the parser expects (`Click`).
-      documented: ['Click', 'CallbackName'],
-    },
-  },
-  {
-    type: 'class',
-    title: 'Class diagram syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },
-  },
-  {
-    type: 'sequence',
-    title: 'Sequence diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
-      unnamed: {
-        AccDescrMultiline: { mode: 'INITIAL', pattern: '(?i:accDescr)\\s*\\{\\s*' },
-        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
-      },
-    },
-  },
-  {
-    type: 'state',
-    title: 'State diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // Text jison consumes without a terminal; the hand-written lexer keeps a token for it.
-      unnamed: {
-        State: { mode: 'struct', pattern: '(?i:state)\\s+' },
-        Quote: { mode: 'STATE', pattern: '"' },
-        Marker: {
-          mode: 'STATE',
-          pattern: '(?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\])',
-        },
-        EndNote: { mode: 'NOTE_TEXT', pattern: '\\n\\s*(?i:end note)\\b' },
-        AccDescrOpen: { mode: 'INITIAL', pattern: '(?i:accDescr)\\s*\\{\\s*' },
-        AccDescrClose: { mode: 'acc_descr_multiline', pattern: '\\}' },
-        ScaleWidth: { mode: 'SCALE', pattern: '\\s+(?i:width)\\b' },
-      },
-      // A pseudo-state's name: the `state` keyword before it is not a token of its own.
-      documented: ['Fork', 'Join', 'Choice'],
-    },
-  },
-  {
-    type: 'er',
-    title: 'Entity relationship diagram syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'journey',
-    title: 'User journey syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
-      unnamed: {
-        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
-        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
-      },
-    },
-  },
-  {
-    type: 'timeline',
-    title: 'Timeline syntax',
-    // `accDescr {` and its `}` are named in the grammar file (jison returns no token for them).
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'mindmap',
-    title: 'Mindmap syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
-      unnamed: {
-        ClassStart: { mode: 'INITIAL', pattern: ':::', docOf: 'CLASS' },
-        ClassEnd: { mode: 'class', pattern: '\\n' },
-        IconStart: { mode: 'INITIAL', pattern: '::icon\\(', docOf: 'ICON' },
-        IconEnd: { mode: 'icon', pattern: '\\)' },
-        MdStringStart: { mode: 'node', pattern: '["][`]' },
-        MdStringEnd: { mode: 'nstr2', pattern: '[`]["]' },
-        StringStart: { mode: 'node', pattern: '["]' },
-        StringEnd: { mode: 'nstr', pattern: '["]' },
-      },
-      // A `%%` comment v12 left and a blank run are both SPACELINE.
-      mixed: ['SPACELINE'],
-    },
-  },
-  {
-    type: 'gantt',
-    title: 'Gantt chart syntax',
-    // The openers and closers of jison's start conditions are named in the grammar file.
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'pie',
-    title: 'Pie chart syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // A label starts a section and `:` follows it: completion offers both, with the doc.
-      documented: ['String', 'Colon'],
-    },
-  },
-  {
-    type: 'gitgraph',
-    title: 'Git graph syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // A quoted text and a name follow keywords: completion offers them, with the doc.
-      documented: ['String', 'Reference'],
-    },
-  },
-  {
-    type: 'packet',
-    title: 'Packet diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // A field's label: `"` is offered after `:` (T6), with the doc.
-      documented: ['String', 'Colon'],
-    },
-  },
-  {
-    type: 'cynefin',
-    title: 'Cynefin diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // An item starts with its quote; completion offers it after a domain, with the doc.
-      documented: ['String', 'Colon'],
-    },
-  },
-  {
-    type: 'info',
-    title: 'Info diagram syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'radar',
-    title: 'Radar chart syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'treemap',
-    title: 'Treemap syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'wardley',
-    title: 'Wardley map syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
-  },
-  {
-    type: 'quadrant',
-    title: 'Quadrant chart syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
-      unnamed: {
-        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
-        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
-        MdStringStart: { mode: 'INITIAL', pattern: '"`' },
-        MdStringEnd: { mode: 'md_string', pattern: '`"' },
-        StringStart: { mode: 'INITIAL', pattern: '"' },
-        StringEnd: { mode: 'string', pattern: '"' },
-        ClassMarker: { mode: 'INITIAL', pattern: ':::' },
-        PointComma: { mode: 'point_x', pattern: '\\s*,\\s*' },
-        PointEnd: { mode: 'point_start', pattern: '\\s*\\][ ]*' },
-      },
-    },
-  },
-  {
-    type: 'kanban',
-    title: 'Kanban syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      unnamed: {
-        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
-        ClassStart: { mode: 'INITIAL', pattern: ':::', docOf: 'CLASS' },
-        ClassEnd: { mode: 'class', pattern: '\\n' },
-        IconStart: { mode: 'INITIAL', pattern: '::icon\\(', docOf: 'ICON' },
-        IconEnd: { mode: 'icon', pattern: '\\)' },
-        MdStringStart: { mode: 'node', pattern: '["][`]' },
-        MdStringEnd: { mode: 'nstr2', pattern: '[`]["]' },
-        StringStart: { mode: 'node', pattern: '["]' },
-        StringEnd: { mode: 'nstr', pattern: '["]' },
-        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
-        // One `SHAPE_DATA` rule each: the lexer keeps a kind per rule.
-        ShapeDataStart: { mode: 'INITIAL', pattern: '@\\{', terminal: 'SHAPE_DATA' },
-        ShapeDataQuote: { mode: 'shapeData', pattern: '"', terminal: 'SHAPE_DATA' },
-        ShapeDataStr: { mode: 'shapeDataStr', pattern: '[^"]+', terminal: 'SHAPE_DATA' },
-      },
-      // A `%%` comment v12 left and a blank run are both SPACELINE; `@{` and the text between
-      // quotes are Meta, the quoted values String.
-      mixed: ['SPACELINE', 'SHAPE_DATA'],
-    },
-  },
-  {
-    type: 'sankey',
-    title: 'Sankey diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'SankeyKind',
-      // One kind per rule where jison names two rules alike (`DQUOTE`) or the kind is named
-      // after what it holds (`Text` for `NON_ESCAPED_TEXT`).
-      unnamed: {
-        OpenQuote: { mode: 'csv', pattern: '"', terminal: 'DQUOTE' },
-        CloseQuote: { mode: 'escaped_text', pattern: '"(?!")', terminal: 'DQUOTE' },
-        Text: {
-          mode: 'csv',
-          pattern: '[\\x20-\\x21\\x23-\\x2B\\x2D-\\x7E]*',
-          terminal: 'NON_ESCAPED_TEXT',
-        },
-      },
-    },
-  },
-  {
-    type: 'xychart',
-    title: 'XY chart syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
-      unnamed: {
-        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
-        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
-        StringStart: { mode: 'INITIAL', pattern: '"' },
-        StringEnd: { mode: 'string', pattern: '"' },
-        DeadMdRule: {
-          mode: 'INITIAL',
-          pattern:
-            '`\\)[ ]{36}\\{ this\\.pushState\\(md_string\\); \\}\\n<md_string>\\(\\?:\\(\\?!`"\\)\\.\\)\\+[ ]{18}\\{ return MD_STR; \\}\\n<md_string>\\(\\?:`',
-        },
-        Blanks: { mode: 'INITIAL', pattern: '\\s+' },
-      },
-    },
-  },
-  {
-    type: 'venn',
-    title: 'Venn diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      unnamed: {
-        // The `text` after an indent: jison returns no token for it; the lexer keeps one.
-        IndentTextKeyword: { mode: 'indentText', pattern: 'text\\b', docOf: 'INDENT_TEXT' },
-        // Both `BRACKET_LABEL` rules: the lexer keeps a kind per rule.
-        QuotedLabel: { mode: 'quotedLabel', pattern: '[^"]*(?="\\])', terminal: 'BRACKET_LABEL' },
-        Label: { mode: 'label', pattern: '[^\\]"]*?(?=\\s*\\])', terminal: 'BRACKET_LABEL' },
-      },
-    },
-  },
-  {
-    type: 'c4',
-    title: 'C4 diagram syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      unnamed: {
-        // Text jison matches without returning a token; the hand-written lexer keeps one for it.
-        AccDescrBlockStart: {
-          mode: 'INITIAL',
-          pattern: 'accDescr\\s*\\{\\s*',
-          docOf: 'acc_descr_multiline_value',
-        },
-        AccDescrBlockEnd: {
-          mode: 'acc_descr_multiline',
-          pattern: '\\}',
-          docOf: 'acc_descr_multiline_value',
-        },
-        ArgsOpen: { mode: 'macro', pattern: '\\(' },
-        Comma: { mode: 'attribute', pattern: ',' },
-        QuoteOpen: { mode: 'attribute', pattern: '[ ]*"' },
-        QuoteClose: { mode: 'string', pattern: '"' },
-        KeyStart: { mode: 'attribute', pattern: '[ ]*\\$' },
-        KeyEquals: { mode: 'string_kv_key', pattern: '=[ ]*"' },
-        ValueClose: { mode: 'string_kv_value', pattern: '"' },
-        // Kinds named apart from their jison terminal (`SYSTEM_EXT_QUEUE` is `SystemQueue_Ext`).
-        AccDescrBlockValue: {
-          mode: 'acc_descr_multiline',
-          pattern: '[^\\}]*',
-          terminal: 'acc_descr_multiline_value',
-        },
-        SystemQueueExt: {
-          mode: 'INITIAL',
-          pattern: 'SystemQueue_Ext\\b',
-          terminal: 'SYSTEM_EXT_QUEUE',
-          docOf: 'SYSTEM_EXT_QUEUE',
-        },
-        SystemDbExt: {
-          mode: 'INITIAL',
-          pattern: 'SystemDb_Ext\\b',
-          terminal: 'SYSTEM_EXT_DB',
-          docOf: 'SYSTEM_EXT_DB',
-        },
-        ContainerQueueExt: {
-          mode: 'INITIAL',
-          pattern: 'ContainerQueue_Ext\\b',
-          terminal: 'CONTAINER_EXT_QUEUE',
-          docOf: 'CONTAINER_EXT_QUEUE',
-        },
-        ContainerDbExt: {
-          mode: 'INITIAL',
-          pattern: 'ContainerDb_Ext\\b',
-          terminal: 'CONTAINER_EXT_DB',
-          docOf: 'CONTAINER_EXT_DB',
-        },
-        ComponentQueueExt: {
-          mode: 'INITIAL',
-          pattern: 'ComponentQueue_Ext\\b',
-          terminal: 'COMPONENT_EXT_QUEUE',
-          docOf: 'COMPONENT_EXT_QUEUE',
-        },
-        ComponentDbExt: {
-          mode: 'INITIAL',
-          pattern: 'ComponentDb_Ext\\b',
-          terminal: 'COMPONENT_EXT_DB',
-          docOf: 'COMPONENT_EXT_DB',
-        },
-        UpdateElementStyle: {
-          mode: 'INITIAL',
-          pattern: 'UpdateElementStyle\\b',
-          terminal: 'UPDATE_EL_STYLE',
-          docOf: 'UPDATE_EL_STYLE',
-        },
-      },
-    },
-  },
-];
+const TARGET_KEYS = new Set(['type', 'grammar', 'title', 'kinds']);
+const KIND_KEYS = new Set(['module', 'object', 'unnamed', 'mixed', 'documented']);
+const UNNAMED_KEYS = new Set(['mode', 'pattern', 'docOf', 'terminal']);
 
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+const isStrings = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((s) => typeof s === 'string');
+
+/**
+ * One `grammars` entry of `<dir>/workspace.yaml` as a target, or the reason it is not one. The
+ * package is where the file is: an entry names `package` only by its place, never as a key.
+ */
+export function grammarTarget(pkg: string, entry: unknown): GrammarTarget {
+  const where = `packages/diagram-${pkg}/workspace.yaml grammars`;
+  if (!isRecord(entry)) throw new Error(`${where}: each entry must be a mapping`);
+  for (const key of Object.keys(entry))
+    if (!TARGET_KEYS.has(key)) throw new Error(`${where}: unknown key "${key}"`);
+  const { type, grammar, title, kinds } = entry;
+  if (typeof type !== 'string' || typeof title !== 'string')
+    throw new Error(`${where}: an entry needs a string \`type\` and \`title\``);
+  if (grammar !== undefined && typeof grammar !== 'string')
+    throw new Error(`${where} ${type}: \`grammar\` must be a string`);
+  if (!isRecord(kinds) || typeof kinds.module !== 'string' || typeof kinds.object !== 'string')
+    throw new Error(`${where} ${type}: \`kinds\` needs a string \`module\` and \`object\``);
+  for (const key of Object.keys(kinds))
+    if (!KIND_KEYS.has(key)) throw new Error(`${where} ${type}: unknown kinds key "${key}"`);
+  for (const key of ['mixed', 'documented'] as const)
+    if (kinds[key] !== undefined && !isStrings(kinds[key]))
+      throw new Error(`${where} ${type}: \`kinds.${key}\` must be a list of names`);
+  if (kinds.unnamed !== undefined) {
+    if (!isRecord(kinds.unnamed))
+      throw new Error(`${where} ${type}: \`kinds.unnamed\` must map kinds`);
+    for (const [kind, rule] of Object.entries(kinds.unnamed)) {
+      const ok =
+        isRecord(rule) &&
+        typeof rule.mode === 'string' &&
+        typeof rule.pattern === 'string' &&
+        Object.keys(rule).every((k) => UNNAMED_KEYS.has(k)) &&
+        ['docOf', 'terminal'].every((k) => rule[k] === undefined || typeof rule[k] === 'string');
+      if (!ok)
+        throw new Error(
+          `${where} ${type}: \`kinds.unnamed.${kind}\` must be { mode, pattern, docOf?, terminal? }`
+        );
+    }
+  }
+  return {
+    type,
+    ...(type !== pkg && { package: pkg }),
+    ...(grammar !== undefined && { grammar }),
+    title,
+    kinds: kinds as unknown as KindSource,
+  };
+}
+
+/**
+ * The grammar targets of `packages`: each diagram package's `workspace.yaml` `grammars`, in
+ * package order, a pre-manifest package's too (its T2 writes the grammar before T5 adds the
+ * manifest). A port adds its own entries there; no list here names it.
+ */
+export function grammarTargets(
+  packages: readonly WorkspaceDiagram[] = workspaceDiagrams()
+): GrammarTarget[] {
+  return packages.flatMap((p) => (p.wiring.grammars ?? []).map((g) => grammarTarget(p.type, g)));
+}
+
+/**
+ * Every grammar file in the workspace, `packages/diagram-<pkg>/grammar/<grammar>.ebnf`, with its
+ * target: what each package's `workspace.yaml` declares under `grammars`.
+ */
+export const GRAMMARS: GrammarTarget[] = grammarTargets();
 /** The grammar file of `grammar` in `packages/diagram-<pkg>`. */
 export const grammarPath = (grammar: string, pkg: string = grammar): string =>
   `packages/diagram-${pkg}/grammar/${grammar}.ebnf`;

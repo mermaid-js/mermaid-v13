@@ -1,0 +1,36 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: journey
+    title: User journey syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed:
+        AccDescrMultiline:
+          mode: INITIAL
+          pattern: accDescr\s*\{\s*
+        AccDescrMultilineEnd:
+          mode: acc_descr_multiline
+          pattern: \}
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - labels.ts
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals
+# can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
+theme:
+  # No theme sets them, only an author: `actor0`–`actor5` (D249), which win over `journey.actorColours` when set.
+  authorOnly: ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5']
