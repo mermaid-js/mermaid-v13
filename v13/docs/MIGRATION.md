@@ -355,7 +355,17 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.xAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
 | `xyChart.yAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
+| `requirement.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the requirement renderer never did. |  |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `requirement.rect_fill` | ignored | v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435). |  |
+| `requirement.text_color` | ignored | v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435). |  |
+| `requirement.rect_border_size` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435). |  |
+| `requirement.rect_border_color` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435). |  |
+| `requirement.rect_min_width` | ignored | v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436). |  |
+| `requirement.rect_min_height` | ignored | v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436). |  |
+| `requirement.fontSize` | ignored | v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style. |  |
+| `requirement.rect_padding` | ignored | v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436). |  |
+| `requirement.line_height` | ignored | v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436). |  |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -387,7 +397,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the block renderer never did. |  |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.layout` | ignored | Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it. |  |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treeView.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treeView renderer never did. |  |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -750,6 +762,7 @@ npm install @mermaid-js/plugin-hand-drawn
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
   the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319),
+  requirement (boxes, dividers, relation lines; the markers stay plain, as in v12),
   ishikawa (the head, label boxes, spine and bones, D494) and
   usecase (actor glyphs, use cases, notes, JSON tables and their cells, boundary frames and tabs,
   relationship lines; business marks stay plain, as v12 drew them without roughjs). v12
@@ -760,7 +773,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (requirement, block, swimlanes, agentflow) are
+  v13 has not ported yet (block, swimlanes, agentflow) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -820,7 +833,7 @@ the passes (D174). Parity is with v12's ELK options, not its pixels.
 | Per-container `id@{ algorithm: elk.box }` laid that container out with its own algorithm | Parsed but not applied yet: the container is laid out with the diagram's ELK algorithm, with one `ELK_ALGORITHM_IGNORED` warning per render listing the algorithms asked for | D174 |
 | `elk.radial` did not exist as a layout name (only as a container id); a container that was not a tree failed the render | `layout: elk.radial` lays out a tree radially. A graph that is not a tree (a cycle, or a node with two parents) is drawn with `layered`, plus one `ELK_RADIAL_NOT_A_TREE` warning | D171 |
 | `cycleBreakingStrategy: MODEL_ORDER` was set on every container, and elkjs 0.12 threw for a container laid out with its parent, so that render failed | `MODEL_ORDER` is set on the root and on containers ELK lays out on their own (one with its own `direction` that no edge crosses); a container laid out with its parent follows the root's value | D174 |
-| `lineHops` drew hops and dropped the rounding of corners | Same hops (arc or gap, v12's radius and rule), drawn on straight runs only; corners keep their rounding | D174 |
+| `lineHops` drew hops and dropped the rounding of corners | Same hops (arc or gap, v12's radius and rule), drawn on straight runs only; corners keep their rounding. Core draws them (D537): a top-level `lineHops: false` turns ELK's hops off too | D174, D537 |
 | v12's frame-evening and label post-passes (`evenGroupFrames`, `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, marker segment lengths) | Not ported: no `elk.*` key controls them, and v13's diagrams clip edges at their own outlines. Two edges into one side can share an end point | D174 |
 | Spacing from `spacing.baseValue` | Spacing comes from the diagram's `nodeSpacing` and `rankSpacing`, as for `layered` | D174 |
 | Text output did not exist | Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not, with one `ASCII_DROPPED` warning (`feature: 'layout'`) for the ELK name and no `ELK_NOT_INSTALLED` | D179 |
@@ -2439,6 +2452,91 @@ overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
 
+## Block diagram
+
+- **Syntax** is v12's (the grammar is in [syntax/block.md](./syntax/block.md)): line breaks
+  separate nothing, ids take `;`, `,`, `.`, `|`, `%`, `#` and Unicode, labels are quoted, and
+  every error is reported, not only the first, with messages in words (R-PARSE-4). What v12
+  rejected is still rejected, except `style` (below).
+- **Edge chains** (D442): `a --> b --> c` declares `a`, `b` and `c` and draws both edges. v12
+  dropped `a`, `b` and the first edge and drew a block `undefined`.
+- **`class` before its block** (D442) gives the block the class, and the block is drawn. v12
+  made a hidden block of the id, so the later declaration was never placed.
+- **`class a, b`** (D442) gives `b` the class too: the ids are trimmed. v12 looked up ` b` and
+  drew `b` without the class.
+- **`root`** (D442) is an ordinary block id. v12 merged it into its own top level and drew
+  nothing for it.
+- **A leaf later opened as `block:a … end`** (D442) keeps its place and holds the children.
+  v12 lost the children.
+- **A composite opened a second time** keeps both bodies: the second adds to the first. v12 lost
+  the second body's new blocks. Pending a D-id (D440).
+- **A chain in a composite header**, `block:a --> b … end`: the composite is `a`, and the edge
+  and `b` stand next to it. v12 drew a composite with no id and lost the edge. Pending a D-id
+  (D440).
+- **`style`** (D443) applies after every statement, so `style a …` before `a` and
+  `style a,b …` work; ids that never appear get one `BLOCK_STYLE_UNKNOWN` warning. v12 threw a
+  TypeError and rejected the diagram.
+- **Degenerate sizes** (D445). `columns 0` lays out as `columns auto` and a span `:0` as `:1`,
+  with one `BLOCK_SIZE_INVALID` warning (v12 threw or drew NaN). Spans are capped at 1,000
+  columns and `space:n` at 100,000 cells, with one `BLOCK_TRUNCATED` warning; v12 kept larger
+  ones, and rejected a spacer over 16,777,214 cells (`Map maximum size exceeded`), which v13
+  now accepts. Block-arrow directions are trimmed, so `( right , left )` draws (v12 drew no
+  arrow).
+- **Generated ids** of spaces and anonymous composites are `id-1`, `id-2`, … in source order,
+  where v12 drew random ones (R-ARCH-6).
+- **Self-loops and parallel edges** (D441): edges stay v12's straight segments between the
+  centres, clipped at the outlines, and parallel edges still overlap; a self-loop (`a --> a`),
+  which v12 drew with zero length, is an arc standing out at the block's top right.
+- **Composite labels** (D444): `block:g["Title"] … end` reserves a band above the composite's
+  grid for its label, so the label no longer sits under the children; an unlabelled composite
+  is laid out as in v12.
+- **Config** (the `block` section): `padding` (default 8: the grid gap and inset, and a leaf's
+  label padding) and `useMaxWidth` are honoured. A `padding` that is not a finite number of 0 or
+  more (`-3`, `"x"`, `"20"`) lays out at 8, and one over 1,000 at 1,000, each with one
+  `BLOCK_CONFIG_INVALID` warning (D226, D445); v12 laid it out as it was (a string was
+  concatenated into the sizes, `1e9` drew a viewBox about 1e9 wide). A block-scoped `theme`
+  wins over the top level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block
+  renderer never read them (block lays out its own grid). `look` is removed (D153): ignored with one
+  `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
+  paddings.
+- **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
+  loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
+  frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See
+  [ASCII output](../ascii.md#block-diagrams).
+
+## Block SVG structure
+
+What changed in the block diagram's SVG compared with v12 (spec #521). v12's classes are kept,
+and its block order: `g.block` holds every block in pre-order (a composite before its children),
+each a `g.node` (`node <classes or default> flowchart-label`) holding its shape as
+`label-container` (a composite's is `rect.basic.cluster.composite.label-container`) and its
+`g.label`; then the edges as `path.flowchart-link` with `edge-thickness-*` and
+`edge-pattern-*`; then the edge labels as `g.edgeLabel` (a change of order, below).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id (shape, edge, label and palette rules) | No root `id`; `class="mermaid mermaid-block"`, `role="img"`, `aria-roledescription="block"` (kept), `data-mermaid-version`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes and widths are presentation attributes reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-THEME-3 |
+| `<defs>` with `<marker>`s (point, circle, cross) referenced by `marker-start`/`marker-end`, and for `look: neo` a gradient and a drop-shadow `<filter>` | Arrowheads drawn inline after their edge (`path.marker`, `circle.marker`); the drop shadow is the theme's `dropShadow` as a `filter` attribute; the gradient is core's one scoped `<linearGradient>` (`<id>-gradient`), on outlines only | DESIGN §7.1, D182 |
+| Ids on every block (`<render id>-<id>`) and edge (`<render id>-<k>-<a>-<b>`) | No ids: `data-id` (the block's id, the edge's `<k>-<a>-<b>`) on each `g.node`, edge `path`, `g.label` and `g.edgeLabel`; `data-ast` on each `g.node` and edge `path` only | R-ARCH-6, R-PARSE-8, pitfall 12 |
+| Labels: `g.label` > `foreignObject` > HTML `span` | `g.label` > `text`/`tspan` from core's label layout; markdown strings stay rejected (syntax) | R-SEC-2 |
+| Every block wrote a `g.label`, an unlabelled composite's empty (`labelHelper`) | An unlabelled composite has no `g.label` | Nothing invisible is drawn |
+| A composite's label at its centre | In its band above the grid (`padding`, then the label) | D444 |
+| A block arrow's polygon `label-container`, as a leaf polygon's | `label-container block-arrow`, so a hand-drawn drawer and a stylesheet can tell the two apart | D447 |
+| Edge classes `… flowchart-link LS-a1 LE-b1` (fixed, meaningless `LS`/`LE`) | `edge-thickness-* edge-pattern-* flowchart-link` | Dead classes dropped |
+| Edges from centre to centre, clipped at the outline v12's intersect found (the crossing nearest the far end) | Clipped at the outermost crossing of each outline; a self-loop is a cubic standing out at the top right | D441 |
+| Edge label `g.edgeLabel` > `g.label` > `foreignObject`, a background at `edgeLabelBackground` | `g.edgeLabel` > its background `rect` (`edgeLabelBackground`) and its `text` | R-SEC-2 |
+| Each edge label drawn straight after its edge (`insertEdges`), so a later edge could cross it | Every edge first, then every edge label, so no edge crosses a label | As flowchart v13 (one family, user story 6) |
+| Arrowheads painted `lineColor` (block's `.marker` rule) | Painted `arrowheadColor`, as flowchart v13: the same colour in every theme but `forest` and `neutral`, which set their own | One family with flowchart |
+| Composite palette in CSS (`[data-look][data-color-id="color-i"].node rect.composite`), only in `redux-color` and `redux-dark-color` | `data-color-id="color-<n>"` on the composite's `g.node` (kept) with the slot's stroke and fill on its `rect`, wherever the theme or the author sets `borderColorArray`; `style`/`classDef` still beat it | D152, `paletteSlots()` |
+| `data-look` on nodes; `look: neo` drew the gradient and shadow | No `data-look`: `look` is ignored (`LOOK_REMOVED`); the redux and `neo` families carry the gradient and shadow, on leaves, block arrows and composites, never on edges or labels | D153, D181, D227 |
+| Edge line ends: the SVG default butt caps | Round caps on solid edges, butt on dotted ones (round caps would close a 2 px dash's gaps); widths as v12 (`strokeWidth`, thick 3.5, dotted dashed `2`) | As flowchart v13 |
+| `classDef` text styles applied by CSS (`color` rewritten to `fill`) | A class's or `style`'s `color` is the label's `fill`; a styled `fill` gives the label the matching ink | As flowchart v13 |
+| A double circle grew with its cell (both rings stretched to the cell's width) | Drawn at its natural size, centred in its cell, as the circle and the diamond are | Spec #521 (GAPS T3) |
+| Composites nested 5 or more levels deep sized as v12's repeated sizing compounded (a block at depth d sized 2^d times) | Each composite is sized at most 16 times, so the layout stays linear: v12's sizes exactly to 4 levels; at 5 levels 97 of 300 generated trees differ (median 544 px, at most 27,405 px), at 6 levels 32 of 100 (median 2,496 px, at most 53,192 px) | Linear layout; past the cap pending a D-id (D440) |
+| The `viewBox` from the browser's `getBBox()` plus 5, and a height one "magic factor" taller | The layout's bounds (every outline, label and edge, plus v12's 5 px) | D224 |
+| No text output | `format: 'ascii'` (both charsets): boxes on a character grid, one width per column at the widest label, composites as frames with the label on the top border, spaces blank, labels cut with `…`, block arrows as boxes with an arrowhead per pointing side, edges as stepped lines with arrowheads; `block.padding` ignored with no warning | D449, D320 |
+| Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12 | D301, D302, D447 |
+
 ## C4 diagram
 
 The C4 parser accepts the v12 language (`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`,
@@ -2550,6 +2648,90 @@ and bones as `edge` outlines at the drawer's defaults for those roles (node roug
 hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
 options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
 are drawn plain, as without the look (D302); text is never sketched, as in v12.
+
+## Requirement diagram
+
+- **Detection:** `requirementDiagram` and v12's bare `requirement` are detected by v12's
+  case-sensitive detector with no word boundary (`/^\s*requirement(Diagram)?/`), between `pie`
+  and `sequence` as in v12. So `requirementsx` is detected and then rejected as a syntax error
+  (`SYNTAX`), and `RequirementDiagram` is not detected (`UNSUPPORTED_DIAGRAM`), as in v12. The
+  language service, CodeMirror and Monaco know it.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture, the v12
+  spec strings and docs examples, and the grammar is in
+  [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
+  with a range at the token (R-PARSE-4).
+- **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
+  v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
+  now accept. The six forms v12 accepted only because a blank swallowed the next line break
+  (`requirement ⏎ a {`, `a - traces ⏎-> b`, …) keep v12's model.
+- **`direction`** (D432) is a statement only at the start of a line, and the rest of the line
+  is read as usual: `a - traces -> b direction LR` is a relation to `b direction LR`, which v12
+  dropped silently. Text after a line-start direction (`direction LR;`,
+  `direction LR a - traces -> b`) is now one syntax error, where v12 dropped the rest of the
+  line.
+- **Order-dependent styling** (D433) is kept: a `style`, `class` or `:::` before its box is
+  defined is lost, `style` stops at its first unknown name and `classDef default` reaches the
+  boxes defined before it only, as in v12. One `REQUIREMENT_STYLE_DROPPED` warning per render
+  lists each lost statement (`related`, `astIds`). Style copies are capped at 1,000,000: past
+  that the render fails with `MermaidError` `code: 'LIMIT'`, `limit: 'maxLayoutWork'`
+  (R-SEC-5).
+- **Unknown ends, duplicates and shared names** (D434): a relation to a name no box has stays
+  in the model and is not drawn, with one `REQUIREMENT_UNKNOWN_NODE` warning; of duplicate
+  definitions the first is kept, with one `REQUIREMENT_DUPLICATE` warning; a requirement and an
+  element of one name are two boxes, relations and styles reaching the requirement first (v12's
+  order), with one `REQUIREMENT_SHARED_NAME` warning. v12 warned about none of them.
+- **Theme variables** (D435): `requirementBackground`, `requirementBorderColor`,
+  `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
+  documented and never read, now take effect, with `relationColor` and `relationLabelColor`
+  added; unset, they draw v12's colours. The redux themes' label chip is white (dark: `#16141f`),
+  as v12 drew it. See [theme-variables.md](./theme-variables.md).
+- **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
+  (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the
+  line above, and a font whose half line passes the 20px padding no longer draws text above
+  the box (its top is clamped). Body lines are left-aligned 10px in under every engine, where
+  v12 with dagre centred them.
+- **Config.** The `requirement` section is honoured: `theme` (default `redux-color`, as v12),
+  `layout` (no requirement default: the top-level `layout`, `layered`) and `useMaxWidth`. v12's
+  renderer read `state.useMaxWidth`, `state.nodeSpacing`, `state.rankSpacing` and
+  `state.titleTopMargin` instead (a v12 bug): v13 reads `requirement.useMaxWidth`, and the
+  spacing (50 by 50) and title margin (25) are fixed, v12's defaults; a `state.*` key no longer
+  changes a requirement diagram. `useWidth`, `rect_fill`, `text_color`, `rect_border_size`,
+  `rect_border_color`, `rect_min_width`, `rect_min_height`, `fontSize`, `rect_padding` and
+  `line_height` are accepted and ignored, as v12.2.0's renderer never read them (see the
+  ignored-keys table); `look` as everywhere (D153).
+- **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
+  layout keeps room for each marker so it no longer overlaps the next box.
+- **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
+  [ASCII output](../ascii.md#requirement-diagrams).
+- **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
+  and the relation lines (markers are never sketched, D301).
+
+## Requirement SVG structure
+
+What changed in the requirement diagram's SVG compared with v12 (DESIGN §7.2, spec #520 T4,
+#574). The groups are v12's unified render's (`edgePaths`, `edgeLabels`, `nodes`), and v12's
+class names are kept where the element still exists (`node default <classDef>`, `basic
+label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-normal`,
+`edge-pattern-solid`/`-dashed`, `edgeLabel`, `labelBkg`, `requirementDiagramTitleText`).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="requirementDiagram"`, `aria-roledescription="requirement"`, a `<style>` element | No root `id`; `class="mermaid mermaid-requirement requirementDiagram"`, `role="img"`, `aria-roledescription="requirement"`, `data-mermaid-version`; no `<style>`, colours are presentation attributes reading `var(--_x)` aliases | Only `<id>-title` and `<id>-desc` ids, and the neo gradient's (D182, R-A11Y-1); inert output (R-SEC-2) |
+| Box `<g class="node default …" id="<render id>-<name>" data-look>` | `<g class="node default …" data-id="<name>" data-ast="requirement:<name>"\|"element:<name>" data-color-id transform>` | `data-ast` maps the box to its definition (D437, R-PARSE-8); `look` is removed (D153) |
+| Outline as rough.js paths in `<g class="basic label-container outer-path">` (a fill path and a stroke path) | One `<rect class="basic label-container outer-path">` (through the outline hook: a sketch under `look: handDrawn`) | One element per outline (D302) |
+| Each line a `<g class="label">` holding a `<foreignObject>` (or `<text>`), `<<Kind>>` and the name centred, the body centred under dagre and left-aligned under ELK | One `<text class="label kind\|name\|id\|text\|risk\|verification\|type\|docRef">` per line; the body left-aligned 10px in under every engine, a multi-line value stacked line under line | Text labels only (D5); GAPS #570 |
+| Divider `<g class="divider">` with a rough.js line (neo: a 0.001-tall polygon) | `<g class="divider">` with one `<path>`: the rule alone, its right end lifted 0.01 under the neo gradient so the gradient paints it | D185, as class's dividers; the outline is sketched once under `look: handDrawn` |
+| Relation `<path class="edge-thickness-normal edge-pattern-dashed\|solid relationshipLine" id="<render id>-<src>-<dst>-<n>" data-id="<src>-<dst>-<n>" marker-start\|marker-end>`, `<marker>` elements in `<defs>` | `<path class="edge-thickness-normal edge-pattern-dashed\|solid relationshipLine" data-id="<src>-<dst>-<n>" data-ast="relation:<src>-><dst>">` and its marker beside it: `<path class="marker requirement_arrow">` (the chevron's two strokes) at the target, or `<g class="marker requirement_contains">` (a `<circle>` and the plus `<path>`) at the source | No `<defs>` or ids (D35); markers are never sketched (D301) |
+| A relation to a name no box has: an edge with an undefined end | Not drawn; its `<n>` still counts it | D434 |
+| `look: neo`: 2px lines, the chevron at 0.8 in user space, marker strokes and box outline at `strokeWidth`, the gradient on the outline and divider, the drop shadow on the outline | The same, by theme family: the redux and neo themes draw it, the classic themes draw v12 classic (1px lines, a 20 × 20 chevron and r 9 circle with 1px strokes, a 1.3px outline, no shadow). The geometry is `relationStrokeWidth` (lines and marker strokes), `relationArrowScale` and `requirementBorderSize` | D152, D153, D227 |
+| Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
+| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with `<rect class="labelBkg">` 4px wider than the text each side and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
+| A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
+| A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |
+| Palette colours by CSS `[data-color-id].node path` rules | `data-color-id` kept; the colours are attributes on the outline and divider; an author `style` still wins | D152 |
+| Front-matter `title` as `<text class="requirementDiagramTitleText" y="-25">` | `<text class="requirementDiagramTitleText">` centred over the drawing, its baseline 25px above the layout's top, in `textColor`; the viewBox grows to hold it | D218 |
+| Five documented theme variables (`requirementBackground`, `…BorderColor`, `…BorderSize`, `…TextColor`, `relationLabelBackground`) drew nothing | They, `relationColor` and `relationLabelColor` paint the boxes, text, lines, markers and label chips, with v12's drawn values by default | D435 |
 
 ## Tree view
 

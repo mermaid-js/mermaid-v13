@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ganttLanguage } from '@mermaid-js/diagram-gantt/language';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-LANG-4 (#382 review): gantt completion is linear in the number of tasks, and a statement
  * completion costs less than a parse of the document (it does not lex the document again per
  * item). n and 8n tasks: linear is ~8x, quadratic ~64x, and the bar is 24x, as in
- * `stress.spec.ts`. Times are this thread's CPU time; the probe parse is not timed.
+ * `stress.spec.ts` and timed by `linearRatio` (../linear-time.ts). Times are this thread's CPU
+ * time; the probe parse is not timed.
  */
 const cpuMs = (): number => {
   const u =
@@ -48,9 +50,7 @@ describe('stress: gantt completion is linear in the number of tasks', () => {
     (_name, tail) => {
       const small = completer(chart(1_000, tail));
       const large = completer(chart(8_000, tail));
-      small();
-      large();
-      expect(cost(large) / Math.max(cost(small), 2)).toBeLessThan(24);
+      expect(linearRatio(small, large)).toBeLessThan(24);
     },
     60_000
   );

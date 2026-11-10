@@ -11,6 +11,7 @@ import {
   treemapTestTheme,
   treemapTokens,
 } from '@mermaid-js/diagram-treemap/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the treemap lexer is linear in input size, in every rule. v12's lexer is
@@ -70,39 +71,18 @@ const SHAPES: [name: string, build: (n: number) => string, scale?: number][] = [
   ['style separators', (n) => TREEMAP + '"a":::'.repeat(n / 6)],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the treemap lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build, scale = 1) => {
       const small = build(4_000 * scale);
       const large = build(32_000 * scale);
-      treemapTokens(small); // warm up
-      treemapTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => treemapTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => treemapTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => treemapTokens(small),
+          () => treemapTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
@@ -111,7 +91,7 @@ describe('stress: the treemap lexer is linear in input size', () => {
 /**
  * Pitfall 19: the layout does no per-node rework (no scan of the siblings or the children per
  * row), so it is linear in the rows, give or take d3's sort. Pie's pattern: n and 8n rows, best
- * of five, CPU time, `tLarge / Math.max(tSmall, 2) < 24` (linear ~8x, quadratic ~64x). The
+ * of five, CPU time, per-run ratio under 24 (`linearRatio`; linear ~8x, quadratic ~64x). The
  * models are built, not parsed, so only the layout is timed. Not measured on a steady machine.
  */
 const LONG = 'a label far too long for any box it could get '.repeat(8);
@@ -220,13 +200,7 @@ describe('stress: the treemap layout is linear in rows', () => {
         expect(smallCut).toBeGreaterThan(10);
         expect(largeCut).toBeGreaterThan(100);
       }
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(tSmall, cost(laySmall));
-        tLarge = Math.min(tLarge, cost(layLarge));
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(linearRatio(laySmall, layLarge)).toBeLessThan(24);
     },
     60_000
   );

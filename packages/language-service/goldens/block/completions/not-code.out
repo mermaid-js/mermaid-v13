@@ -1,0 +1,10 @@
+@ 2:8  title: |x
+  none
+@ 5:11  %% a com|ment
+  none
+@ 6:8  a["la|bel"]
+  none
+@ 7:11  b -- "ed|ge" --> a
+  none
+@ 8:21  classDef hot fill:|#f96
+  none

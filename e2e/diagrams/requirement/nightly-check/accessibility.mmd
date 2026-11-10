@@ -1,0 +1,25 @@
+---
+description: >-
+  `accTitle`, a one-line `accDescr` and a multi-line `accDescr { … }` block
+  (the last one written wins in v12).
+---
+requirementDiagram
+  accTitle: Checkout requirements
+  accDescr: The checkout requirement and the element that satisfies it.
+  accDescr {
+    The checkout requirement,
+    and the payment service that satisfies it.
+  }
+
+  requirement checkout {
+    id: 1
+    text: Orders must be payable online.
+    risk: high
+    verifymethod: test
+  }
+
+  element payment_service {
+    type: service
+  }
+
+  payment_service - satisfies -> checkout

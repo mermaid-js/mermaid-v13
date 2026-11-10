@@ -101,6 +101,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:^
         version: link:../diagram-c4
@@ -149,6 +152,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -234,6 +240,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:^
         version: link:../diagram-c4
@@ -282,6 +291,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -426,6 +438,12 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/diagram-block:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-c4:
     devDependencies:
       '@mermaid-js/core':
@@ -522,6 +540,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-requirement:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
@@ -587,6 +611,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:*
         version: link:../diagram-c4
@@ -635,6 +662,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -681,6 +711,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:*
         version: link:../diagram-c4
@@ -729,6 +762,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -931,6 +967,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:*
         version: link:../diagram-c4
@@ -979,6 +1018,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -1107,6 +1149,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../../packages/diagram-block
       '@mermaid-js/diagram-c4':
         specifier: workspace:^
         version: link:../../packages/diagram-c4

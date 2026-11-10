@@ -1,0 +1,27 @@
+---
+description: >-
+  `style`, `class` and `:::` before the node they name (v12 loses them, D433
+  warns), `classDef default` before and after a node, and `style a,b` stopping
+  at its first unknown id.
+---
+requirementDiagram
+  style early_req fill:#f9f
+  class early_req important
+  early_req:::important
+
+  classDef default fill:#eef
+  classDef important stroke:#f00,stroke-width:3px
+
+  requirement early_req {
+    id: 1
+    text: styled too early
+  }
+
+  element late_el {
+    type: simulation
+  }
+
+  classDef default stroke-dasharray: 5 5
+  style ghost,late_el fill:#ccf
+  style early_req,late_el color:#333
+  class late_el important

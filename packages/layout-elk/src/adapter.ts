@@ -16,8 +16,9 @@
  * `buildSubgraphLayoutOptions` do (`options.ts`); `orientFeedbackEdges` hands the edges that
  * re-enter a group to ELK reversed and `keepEntryNodeOnTop` pins each recursive flow's entry to
  * the first layer (`passes.ts`); `straightenEdges` drops the port-to-channel step after layout
- * (`straighten.ts`). `lineHops` changes how edges are drawn, so it is the package's `postRender`
- * hook (`hops.ts`). A group's `algorithm` is not applied (D174): `mermaid` warns.
+ * (`straighten.ts`). `elk.lineHops` changes how edges are drawn, not where they go: core draws
+ * hops for every diagram (D537), and `elk.lineHops` is ELK's override of the shared key. A
+ * group's `algorithm` is not applied (D174): `mermaid` warns.
  *
  * `elk.radial` needs a tree. ELK throws when no node is a root, and recurses without end (a stack
  * overflow) on a cycle under one, so the engine checks the edges first (`isEdgeTree`: no cycle, no
@@ -41,6 +42,9 @@ import type {
   Side,
 } from '@mermaid-js/core/layout';
 import { layered as layeredEngine } from '@mermaid-js/core/layout';
+
+/** Core's line-hop step (D537), loaded with the engine: see `index.ts`. */
+export { lineHops } from '@mermaid-js/core/layout/hops';
 import type {
   ElkEdgeSection,
   ElkExtendedEdge,
@@ -53,8 +57,6 @@ import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
-
-export { drawLineHops, type HopStyle } from './hops.ts';
 
 /** The ELK algorithms the package's layout names select (D171). */
 export type ElkAlgorithm =

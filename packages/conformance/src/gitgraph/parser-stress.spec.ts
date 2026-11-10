@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGitGraph } from '@mermaid-js/diagram-gitgraph';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the gitGraph parser and model builder are linear in input size. Same
@@ -39,38 +40,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['blank runs in a title', (n) => `gitGraph\ntitle a${'  b'.repeat(n / 3)}`],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the gitGraph parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseGitGraph(small); // warm up
-      parseGitGraph(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseGitGraph(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseGitGraph(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseGitGraph(small),
+          () => parseGitGraph(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

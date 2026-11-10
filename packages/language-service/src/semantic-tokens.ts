@@ -63,6 +63,9 @@ const BY_SYMBOL: Readonly<Record<string, SemanticTokenType>> = {
   class: 'class',
 };
 
+/** The modifiers of a token that has none: one frozen array, so 13k tokens do not each freeze one. */
+const NONE: SemanticTokenModifier[] = Object.freeze([]) as unknown as SemanticTokenModifier[];
+
 const isBlank = (c: string) => c === ' ' || c === '\t' || c === '\n' || c === '\r';
 
 function symbolTokens(list: readonly Occurrence[], declaredOnly: boolean): SemanticToken[] {
@@ -125,7 +128,7 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
     let end = to;
     while (start < end && isBlank(text.charAt(start))) start++;
     while (end > start && isBlank(text.charAt(end - 1))) end--;
-    if (start < end) out.push({ range: { start, end }, type, modifiers: [] });
+    if (start < end) out.push({ range: { start, end }, type, modifiers: NONE });
   };
   let j = 0;
   // Out is in order and disjoint (LSP needs it): `done` is the end of the last symbol put in.

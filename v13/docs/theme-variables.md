@@ -17,23 +17,23 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, usecase |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, c4, ishikawa, treeview, usecase |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, c4, ishikawa, treeview, usecase |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, ishikawa, usecase |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, block, c4, ishikawa, requirement, treeview, usecase |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, block, c4, ishikawa, requirement, treeview, usecase |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, block, ishikawa, requirement, usecase |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, c4, ishikawa, treeview, usecase |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, ishikawa, usecase |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban, c4, usecase |
-| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, c4, ishikawa, requirement, treeview, usecase |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, block, ishikawa, requirement, usecase |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban, block, c4, requirement, usecase |
+| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er, block, requirement |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, usecase |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, usecase |
-| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state, usecase |
-| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
+| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state, block, usecase |
+| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color |  |
 | `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark |  |
@@ -42,41 +42,41 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state, usecase |
 | `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark, neo, neo-dark | core |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, usecase |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, block, requirement, usecase |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline, gitgraph |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
-| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state |
-| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state |
-| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state |
-| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart |
-| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart |
-| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
-| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
-| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
-| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap |
-| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap |
-| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
-| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
-| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap |
-| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap |
-| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap |
-| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
-| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
-| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
-| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
-| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart, c4 |
-| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart, c4 |
-| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart, c4 |
-| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart, c4 |
-| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
-| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
-| `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
-| `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |
+| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state, block |
+| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state, block |
+| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state, block |
+| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart, block |
+| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart, block |
+| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart, block |
+| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart, block |
+| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart, block |
+| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap, block |
+| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap, block |
+| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart, block |
+| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart, block |
+| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart, mindmap, block |
+| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart, mindmap, block |
+| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart, mindmap, block |
+| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart, block |
+| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart, block |
+| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap, block |
+| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart, block |
+| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart, block, c4 |
+| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart, block, c4 |
+| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart, block, c4 |
+| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart, block, c4 |
+| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart, block |
+| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart, block |
+| `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart, block |
+| `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart, block |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, block, requirement |
 | `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
 | `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
 | `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
@@ -95,7 +95,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `rowBkg` | `--mermaid-rowBkg` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | default, dark, neutral | er |
 | `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
-| `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
+| `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er, requirement |
 | `nestedBkg` | `--mermaid-nestedBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | state |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -357,6 +357,20 @@ flags and opacities, which are read literally.
 | `radarGraticuleStrokeWidth` | `radar.graticuleStrokeWidth` | length | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` |
 | `radarLegendBoxSize` | `radar.legendBoxSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
 | `radarLegendFontSize` | `radar.legendFontSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+
+### requirement
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `requirementBackground` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `requirementBorderColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#13540c` | `#999999` | `#d9cfbc` | `#000000` | `#cccccc` |
+| `requirementBorderSize` | | length | `2` | `2` | `2` | `2` | `1.3` | `1.3` | `1.3` | `1.3` | `1.3` | `2` | `2` |
+| `requirementTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
+| `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#16141f` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
+| `relationColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `relationLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
+| `relationStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
+| `relationArrowScale` | | length | `0.8` | `0.8` | `0.8` | `0.8` | `1` | `1` | `1` | `1` | `1` | `0.8` | `0.8` |
 
 ### sequence
 

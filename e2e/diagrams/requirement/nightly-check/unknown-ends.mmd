@@ -1,0 +1,22 @@
+---
+description: >-
+  Relations to names no requirement or element defines: v12 keeps them with
+  undefined ends; v13 keeps them in the model, leaves them out of the layout
+  and warns (D434).
+---
+requirementDiagram
+  requirement known_req {
+    id: 1
+    text: a defined requirement
+    risk: low
+    verifymethod: analysis
+  }
+
+  element known_el {
+    type: simulation
+  }
+
+  known_el - satisfies -> known_req
+  ghost_el - satisfies -> known_req
+  known_req - traces -> ghost_req
+  ghost_a - derives -> ghost_b

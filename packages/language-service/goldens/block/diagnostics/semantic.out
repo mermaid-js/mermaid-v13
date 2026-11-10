@@ -1,0 +1,2 @@
+2:3-2:12 "columns 0" warning BLOCK_SIZE_INVALID: `columns 0` reads as `columns auto` and a span `:0` as `:1`, as mermaid@12 could not draw them.
+5:11-5:13 "zz" warning BLOCK_STYLE_UNKNOWN: `style` names a block the diagram does not have: `zz`. Declare it, or check the spelling.

@@ -848,6 +848,25 @@ export const configSchema: ConfigSchema = {
         "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
       }
     },
+    "lineHops": {
+      "description": "Draws edge crossings as small arcs (\"hops\") or breaks in the line, so it\nis clear which line passes over which where two edges meet. Every\ndiagram that draws edges reads it.\n\nOf a horizontal and a vertical run, the horizontal one gives way;\notherwise the later edge does. Only straight runs carry hops: curves\nand rounded corners are left as drawn, and a crossing too close to a\nbend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the\nline. Off by default.\n\nA layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;\n`elk.lineHops`, default `true`) applies when that engine lays the\ndiagram out, so those layouts hop by default. Precedence: the engine\nkey when set explicitly, then this key when set explicitly, then the\nengine's default. Setting this key to `false` turns hops off\neverywhere, engine keys included.\n",
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "enum": [
+        false,
+        true,
+        "arc",
+        "gap"
+      ],
+      "default": false,
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
+      }
+    },
     "maxTextSize": {
       "description": "The maximum allowed size of the users text diagram",
       "type": "number",
@@ -1193,7 +1212,8 @@ export const configSchema: ConfigSchema = {
     "requirement": {
       "$ref": "#/$defs/RequirementDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "architecture": {
@@ -1260,7 +1280,8 @@ export const configSchema: ConfigSchema = {
     "block": {
       "$ref": "#/$defs/BlockDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "eventmodeling": {
@@ -3054,7 +3075,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {
@@ -3066,67 +3088,109 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No requirement default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` and `elk.<algorithm>` apply only when an author sets them, and are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D106, D173)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the requirement renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's requirement renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `requirement.useMaxWidth`."
+          }
+        },
         "rect_fill": {
           "type": "string",
           "default": "#f9f9f9",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435)."
           }
         },
         "text_color": {
           "type": "string",
           "default": "#333",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435)."
           }
         },
         "rect_border_size": {
           "type": "string",
           "default": "0.5px",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435)."
           }
         },
         "rect_border_color": {
           "type": "string",
           "default": "#bbb",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435)."
           }
         },
         "rect_min_width": {
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436)."
           }
         },
         "rect_min_height": {
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436)."
           }
         },
         "fontSize": {
           "type": "number",
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style."
           }
         },
         "rect_padding": {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436)."
           }
         },
         "line_height": {
           "type": "number",
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436)."
           }
         }
       }
@@ -5862,7 +5926,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "lineHops": {
-          "description": "Renders edge crossings as small arcs (\"hops\") or visible gaps so that\noverlapping edges are easier to read. Set to `false` to disable. Edges\nrendered as curves are skipped to avoid corrupting the geometry.\n",
+          "description": "Renders edge crossings as small arcs (\"hops\") or visible gaps so that\noverlapping edges are easier to read. Set to `false` to disable. Edges\nrendered as curves are skipped to avoid corrupting the geometry.\nApplies whenever the `swimlane` layout lays the diagram out, over the\nshared top-level `lineHops` unless that is `false` (D537).\n",
           "oneOf": [
             {
               "type": "boolean"
@@ -5877,7 +5941,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "arc",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "ignoreCrossLaneEdges": {
@@ -6498,11 +6563,46 @@ export const configSchema: ConfigSchema = {
       "unevaluatedProperties": false,
       "properties": {
         "padding": {
+          "description": "The gap between the blocks of a grid and the inset of a composite's grid, and the\npadding around a leaf's label.\n",
           "type": "number",
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the grid gap and inset, and a leaf's label padding (a composite's label padding is 0). A value that is not a finite number of 0 or more lays out with the default 8, and one over 1,000 with 1,000, each with one `BLOCK_CONFIG_INVALID` warning (D226, D445)."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the block renderer never did."
+          }
+        },
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for block diagrams (a diagram section beats the top level within a config layer), as 12.2.0's `resolveAppearance`."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it."
           }
         }
       }
