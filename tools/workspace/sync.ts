@@ -17,6 +17,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { load } from 'js-yaml';
 import { ROOT, workspaceDiagrams, type WorkspaceDiagram } from './diagrams.ts';
 
 type DependencyField =
@@ -203,6 +204,7 @@ export function syncedFiles(root = ROOT): Map<string, string> {
       `${parts.map((p) => readFileSync(p, 'utf8').replace(/\n+$/, '')).join('\n\n')}\n`
     );
   }
+  for (const [path, text] of docLists(root)) files.set(path, text);
   return files;
 }
 
@@ -223,4 +225,117 @@ export function staleFiles(root = ROOT): string[] {
       return !existsSync(file) || readFileSync(file, 'utf8') !== content;
     })
     .map(([path]) => path);
+}
+
+// ---------------------------------------------------------------------------- doc lists
+
+/**
+ * The lists of diagram types in hand-written docs, each built from one fragment per type so a
+ * port adds a file instead of editing a shared sentence. A list sits between inline markers,
+ * `<!-- BEGIN <name> -->…<!-- END <name> -->`, which render as nothing, so the paragraph reads
+ * as before; a fragment file is `<order>-<type>.md` (numbered ones first, a new port's
+ * `<type>.md` after them).
+ *
+ * - `v13/docs/ascii.md`: the types with text output, from `v13/docs/ascii/*.md`. A fragment's
+ *   YAML front matter names it in the intro (`intro`), in the CLI exit-code paragraph (`cli`,
+ *   optional) and in the size paragraph (`size`); its body, when it has one, is its section,
+ *   and the sections stand between the `ascii-sections` markers in fragment order.
+ * - `v13/docs/MIGRATION.md` "Hand-drawn look": what is sketched, one `v13/docs/hand-drawn/*.md`
+ *   phrase per sketched type; and the v12-sketched types not ported yet, {@link V12_SKETCHED}
+ *   without those that have a phrase.
+ */
+export const ASCII_DOC = 'v13/docs/ascii.md';
+export const ASCII_FRAGMENTS = 'v13/docs/ascii';
+export const MIGRATION_DOC = 'v13/docs/MIGRATION.md';
+export const HAND_DRAWN_FRAGMENTS = 'v13/docs/hand-drawn';
+
+/**
+ * The types v12 sketched with `look: handDrawn` whose v13 port had not landed when this list was
+ * written (v12 is frozen, so it never grows). Each leaves the "not ported yet" sentence when it
+ * adds its `v13/docs/hand-drawn/` phrase.
+ */
+export const V12_SKETCHED: readonly string[] = [
+  'requirement',
+  'block',
+  'swimlanes',
+  'usecase',
+  'agentflow',
+];
+
+interface DocFragment {
+  /** The type: the file name without its order prefix and `.md`. */
+  readonly type: string;
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly body: string;
+}
+
+function docFragments(root: string, dir: string): DocFragment[] {
+  const path = join(root, dir);
+  if (!existsSync(path)) return [];
+  return readdirSync(path)
+    .filter((n) => n.endsWith('.md'))
+    .sort()
+    .map((name) => {
+      const text = readFileSync(join(path, name), 'utf8');
+      const front = /^---\n([\s\S]*?)\n---\n?/.exec(text);
+      const data = (front ? load(front[1]!) : {}) as Record<string, unknown>;
+      return {
+        type: name.replace(/^\d+-/, '').replace(/\.md$/, ''),
+        data,
+        body: (front ? text.slice(front[0].length) : text).trim(),
+      };
+    });
+}
+
+/** `a`, `a and b`, `a, b and c` (with `last` for the final joiner). */
+function listOf(items: readonly string[], last = ' and '): string {
+  return items.length <= 1
+    ? items.join('')
+    : `${items.slice(0, -1).join(', ')}${last}${items[items.length - 1]!}`;
+}
+
+/** `text` with the content between `<!-- BEGIN name … -->` and `<!-- END name -->` replaced. */
+function splice(text: string, path: string, name: string, value: string): string {
+  const begin = new RegExp(`<!-- BEGIN ${name}\\b[^>]*-->`).exec(text);
+  const endMark = `<!-- END ${name} -->`;
+  const end = begin ? text.indexOf(endMark, begin.index) : -1;
+  if (!begin || end < 0) throw new Error(`${path}: missing the ${name} markers`);
+  return text.slice(0, begin.index + begin[0].length) + value + text.slice(end);
+}
+
+export function docLists(root: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const ascii = join(root, ASCII_DOC);
+  if (existsSync(ascii)) {
+    const parts = docFragments(root, ASCII_FRAGMENTS);
+    const field = (key: string) =>
+      parts.map((p) => p.data[key]).filter((v): v is string => typeof v === 'string');
+    let text = readFileSync(ascii, 'utf8');
+    text = splice(text, ASCII_DOC, 'ascii-list:intro', listOf(field('intro')));
+    text = splice(text, ASCII_DOC, 'ascii-list:cli', listOf(field('cli')));
+    text = splice(text, ASCII_DOC, 'ascii-list:size', listOf(field('size'), ' or '));
+    const sections = parts.map((p) => p.body).filter((b) => b !== '');
+    text = splice(text, ASCII_DOC, 'ascii-sections', `\n\n${sections.join('\n\n')}\n\n`);
+    out.set(ASCII_DOC, text);
+  }
+  const migration = join(root, MIGRATION_DOC);
+  if (existsSync(migration)) {
+    const sketched = docFragments(root, HAND_DRAWN_FRAGMENTS);
+    const types = new Set(sketched.map((p) => p.type));
+    let text = readFileSync(migration, 'utf8');
+    text = splice(
+      text,
+      MIGRATION_DOC,
+      'hand-drawn-list:sketched',
+      listOf(sketched.map((p) => p.body))
+    );
+    text = splice(
+      text,
+      MIGRATION_DOC,
+      'hand-drawn-list:pending',
+      V12_SKETCHED.filter((t) => !types.has(t)).join(', ')
+    );
+    out.set(MIGRATION_DOC, text);
+  }
+  return out;
 }

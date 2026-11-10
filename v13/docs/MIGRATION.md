@@ -713,13 +713,7 @@ npm install @mermaid-js/plugin-hand-drawn
   `neo-dark` the gradient strokes the sketch and the `dropShadow` filter sits on the sketch's
   `<g>`; v12 never combined neo and hand-drawn. Fills are hachured as in v12; state composites
   are solid.
-- **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
-  collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
-  (states, composites, notes, start and end, choice, fork and join, region dividers,
-  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
-  mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
-  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and
-  ishikawa (the head, label boxes, spine and bones, D494). v12 did not sketch mindmap's plain
+- **What is sketched (D301):** <!-- BEGIN hand-drawn-list:sketched -->flowchart (node shapes, their inner lines, subgraphs, the collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state (states, composites, notes, start and end, choice, fork and join, region dividers, transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines), mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards; the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and ishikawa (the head, label boxes, spine and bones, D494)<!-- END hand-drawn-list:sketched -->. v12 did not sketch mindmap's plain
   node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are
   never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
@@ -728,7 +722,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (requirement, block, swimlanes, usecase, agentflow) are
+  v13 has not ported yet (<!-- BEGIN hand-drawn-list:pending -->requirement, block, swimlanes, usecase, agentflow<!-- END hand-drawn-list:pending -->) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence

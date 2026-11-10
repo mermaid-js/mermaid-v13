@@ -4,12 +4,7 @@ Mermaid v13 can render a diagram as plain text instead of SVG: Unicode box drawi
 pure ASCII. Text output runs the same parser and the same layout as SVG, laid out in character
 cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN §6.3, ADR-14).
 
-Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
-flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
-relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
-sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
-[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa diagram (`ishikawa`,
-[below](#ishikawa-diagrams)) and `info`. See
+Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are <!-- BEGIN ascii-list:intro -->the flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables, relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the packet diagram (`packet`, [below](#packet-diagrams)), the Ishikawa diagram (`ishikawa`, [below](#ishikawa-diagrams)) and `info`<!-- END ascii-list:intro -->. See
 [the format matrix](format-matrix.md) for every type.
 
 ```
@@ -117,8 +112,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board and the Ishikawa diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+Of the diagram types built into 13.0, <!-- BEGIN ascii-list:cli -->the flowchart, the ER diagram, the sequence diagram, the kanban board, the packet diagram and the Ishikawa diagram<!-- END ascii-list:cli --> render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -208,6 +202,8 @@ Where an edge leaves a diamond at a side mark, the tee replaces the mark.
 Subgraphs are frames with the title on the top border (`┌─ build ──┐`). Nested subgraphs nest.
 An empty subgraph is drawn as an empty frame. A front-matter `title` is printed centred on the
 first line.
+
+<!-- BEGIN ascii-sections: pnpm regen, from v13/docs/ascii/*.md -->
 
 ## Sequence diagrams
 
@@ -420,6 +416,8 @@ ishikawa-beta
 - Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels, drawn
   plain), `math` (`$$…$$`, the TeX shown as written) and `icon` (`fa:fa-…`, shown as written).
 
+<!-- END ascii-sections -->
+
 ## What gets dropped
 
 Text output is plain: no colour. Features with no text form are left out, with **one**
@@ -447,8 +445,7 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 ## Size
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
-plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's or info's)
+plus one diagram type's text entry (<!-- BEGIN ascii-list:size -->the flowchart's, the ER diagram's, the sequence diagram's, the kanban board's, the packet diagram's, the Ishikawa diagram's or info's<!-- END ascii-list:size -->)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

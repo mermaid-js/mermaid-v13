@@ -90,17 +90,11 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
     const types = asciiTypes();
-    // The discovery may find more, never fewer than the types that have a text entry today.
+    // A fixed floor, so a broken discovery cannot pass on an empty list: 13.0's first six text
+    // types. A port never adds itself here; its manifest's `ascii` entry puts it in `types`, and
+    // the next spec holds every discovered type to its own text path.
     expect(types).toEqual(
-      expect.arrayContaining([
-        'flowchart',
-        'er',
-        'sequence',
-        'packet',
-        'info',
-        'kanban',
-        'ishikawa',
-      ])
+      expect.arrayContaining(['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
     );
     for (const type of types)
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
