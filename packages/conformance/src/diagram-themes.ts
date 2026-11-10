@@ -25,6 +25,7 @@ import { journey } from '@mermaid-js/diagram-journey';
 import { mindmap } from '@mermaid-js/diagram-mindmap';
 import { pie } from '@mermaid-js/diagram-pie';
 import { quadrant } from '@mermaid-js/diagram-quadrant';
+import { requirement } from '@mermaid-js/diagram-requirement';
 import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
 import { timeline } from '@mermaid-js/diagram-timeline';
@@ -44,6 +45,7 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
   mindmap: table(mindmap),
   pie: table(pie),
   quadrant: table(quadrant),
+  requirement: table(requirement),
   sequence: table(sequence),
   state: table(state),
   timeline: table(timeline),

@@ -74,6 +74,7 @@
     "@mermaid-js/diagram-quadrant": "workspace:*",
     "@mermaid-js/diagram-radar": "workspace:*",
     "@mermaid-js/diagram-railroad": "workspace:*",
+    "@mermaid-js/diagram-requirement": "workspace:*",
     "@mermaid-js/diagram-sankey": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",

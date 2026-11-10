@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseIshikawa } from '@mermaid-js/diagram-ishikawa';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5 and 11: the ishikawa parser, model, AST ids, spans and warnings included,
@@ -32,38 +33,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['long indents', (n) => H + `${' '.repeat(n / 4)}x\n`.repeat(4)],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the ishikawa parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseIshikawa(small); // warm up
-      parseIshikawa(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseIshikawa(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseIshikawa(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseIshikawa(small),
+          () => parseIshikawa(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );

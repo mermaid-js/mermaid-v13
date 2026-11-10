@@ -25,6 +25,7 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   quadrantChart: () => import('./generated/quadrantChart.parser.js').then((m) => m.parser),
   radar: () => import('./generated/radar.parser.js').then((m) => m.parser),
   railroad: () => import('./generated/railroad.parser.js').then((m) => m.parser),
+  requirement: () => import('./generated/requirement.parser.js').then((m) => m.parser),
   sankey: () => import('./generated/sankey.parser.js').then((m) => m.parser),
   sequence: () => import('./generated/sequence.parser.js').then((m) => m.parser),
   state: () => import('./generated/state.parser.js').then((m) => m.parser),

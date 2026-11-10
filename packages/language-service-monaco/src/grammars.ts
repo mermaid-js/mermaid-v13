@@ -48,6 +48,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   },
   radar: { load: () => import('./generated/radar.monarch.js').then((m) => m.default) },
   railroad: { load: () => import('./generated/railroad.monarch.js').then((m) => m.default) },
+  requirement: { load: () => import('./generated/requirement.monarch.js').then((m) => m.default) },
   sankey: { load: () => import('./generated/sankey.monarch.js').then((m) => m.default) },
   sequence: { load: () => import('./generated/sequence.monarch.js').then((m) => m.default) },
   state: { load: () => import('./generated/state.monarch.js').then((m) => m.default) },
