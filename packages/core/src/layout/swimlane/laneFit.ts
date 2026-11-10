@@ -154,3 +154,41 @@ export function fitLanesToRoutes(data: LayoutData): void {
     followBorder(data.edges, far, cross, farSpan.hi, high);
   }
 }
+
+/** The least room beside a lane title, as an empty lane's band (`adapter.ts` `placeEmptyLanes`). */
+const TITLE_SIDE = 20;
+
+/**
+ * Widens each lane whose title is longer than the lane is across the flow (v13; v12 let the
+ * title run past the lane): the lane grows to its title's width plus `max(padding, 20)` each side.
+ * Everything inside it moves by half the growth, so its content stays centred, and everything
+ * beyond it by the whole growth. Routes are right-angled, so the shift keeps them so.
+ */
+export function fitLanesToTitles(data: LayoutData): void {
+  const laneModel = buildLaneModel(data.nodes);
+  const sideways = data.direction === 'LR' || data.direction === 'RL';
+  const cross: Axis = sideways ? 'y' : 'x';
+  const lanes = data.nodes
+    .filter((n) => laneModel.isLane(n.id) && n.titleSize && (n.width ?? 0) > 0)
+    .sort((a, b) => (a[cross] ?? 0) - (b[cross] ?? 0));
+  for (const lane of lanes) {
+    const span = spanOf(lane, cross);
+    const side = Math.max(lane.padding ?? TITLE_SIDE, TITLE_SIDE);
+    const grow = lane.titleSize!.width + 2 * side - (span.hi - span.lo);
+    if (grow <= 0) continue;
+    const shift = (v: number): number => {
+      if (v >= span.hi - 1e-6) return v + grow;
+      return v > span.lo + 1e-6 ? v + grow / 2 : v;
+    };
+    const [lo, hi] = cross === 'x' ? (['left', 'right'] as const) : (['top', 'bottom'] as const);
+    for (const n of data.nodes) {
+      if (n === lane) continue;
+      const v = n[cross];
+      if (v !== undefined) n[cross] = shift(v);
+      const r = n.groupTitleRect;
+      if (r) n.groupTitleRect = { ...r, [lo]: shift(r[lo]), [hi]: shift(r[hi]) };
+    }
+    for (const e of data.edges) for (const p of e.points ?? []) p[cross] = shift(p[cross]);
+    setSpan(lane, cross, { lo: span.lo, hi: span.hi + grow });
+  }
+}

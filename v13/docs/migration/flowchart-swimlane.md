@@ -25,8 +25,27 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
   when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
   or `linkStyle default interpolate` wins.
-- **Lanes** draw as flowchart's subgraph clusters for now; v12's title bands, lane palette and
-  the shared-node and nested-lane warnings come with lane drawing (D536).
+- **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
+  (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
+  then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
+  to read upward, for `LR` and `RL`. **Fixed:** v12 turned only `LR`, so `RL` lanes got a top
+  band over a left-reserved layout; in v13 `RL` matches `LR` (D536). The default lane (nodes
+  outside every subgraph) has no label, `data-id="__swimlane_default__"` and the palette slot
+  after every subgraph's, as in v12. A subgraph inside a lane is a plain subgraph box. The
+  same lanes draw for any flowchart with `layout: swimlane` (D535).
+- **Lane colours.** In the colour themes (`redux-color`, `redux-dark-color`) each lane takes
+  flowchart's per-subgraph palette slot (`data-color-id`) on both halves, stroke and, where the
+  theme has a background palette, fill: what v12's `[data-color-id]` lane rules drew, now as
+  attributes. An author's `style` or `classDef` still wins. Lanes have no drop shadow (v12
+  turned it off), and a lane without a slot is stroked `clusterBorder`, never the neo gradient.
+  No new theme variables. With the hand-drawn plugin both halves are sketched (D301).
+- **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
+  lane across the flow to the title plus 20px each side.
+- **Warnings** (D226, D536), only when the `swimlane` engine lays the diagram out, where v12
+  only logged: `SWIMLANE_SHARED_NODE` for a node listed in two lanes (it stays in the first;
+  `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
+  (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
+  it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.
 - **`format: 'ascii'`** draws the flowchart with `layered`, lanes as plain groups, with one
   `ASCII_DROPPED` warning (`feature: 'layout'`), as for any engine text output does not use
   (D179, D534).

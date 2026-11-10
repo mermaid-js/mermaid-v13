@@ -31,7 +31,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Note for T0b's follow-up: `pebr-2-edge-intrudes-lane-label` takes about 1.8–2.5 s per swimlane layout, so the swimlane corpus spec runs one test per fixture. Worth a stress check on the router.
 
 ## #598 T2 lane drawing
-- Open: since #589 (block T0) flowchart has no theme table (`packages/diagram-flowchart/src/theme/` is gone; its shape rows are core rows). Lanes need no new variables per the spec (they read `clusterBkg`/`clusterBorder` and flowchart's existing per-subgraph palette). If T2 finds it needs a lane-only row, where it lives (flowchart's own table, recreated, versus core) is a choice the spec doesn't settle: record it here as **Choice** and follow `theming.md` as it stands after #589. D474's `slot(<palette>, <n>, <fallback>)` rule form (usecase T0 #620; `CONTRACT.md` "DSL additions") may fit the per-lane palette.
+- Closed: no lane-only theme row was needed (lanes read `clusterBkg`, `clusterBorder`, `titleColor` and flowchart's `borderColorArray`/`bkgColorArray` palette), so the #589 table question does not arise.
+- Closed: T0a's long lane title (`laneFit.ts` `fitLanesToTitles`).
+- **Choice:** a lane emptied by a shared node stays, drawn empty (v12 removed it), so every subgraph keeps its `data-ast`.
+- **Choice:** `SWIMLANE_SHARED_NODE` lists both lanes in `astIds` (D536 says `related`; render warnings have none).
+- **Choice:** lanes are drawn when `config.layout` is `swimlane`; a placeholder stand-in render draws them too.
 
 ## #601 T3 integration
 - From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.

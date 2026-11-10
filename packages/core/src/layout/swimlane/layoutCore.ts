@@ -10,7 +10,7 @@ import { sugiyamaLayout } from './pipeline.ts';
 import { resolveTopLaneOrder } from './phase2.options.ts';
 import { routeForDirection } from './turnedRouting.ts';
 import { routeSelfLoops } from './selfLoops.ts';
-import { fitLanesToRoutes } from './laneFit.ts';
+import { fitLanesToRoutes, fitLanesToTitles } from './laneFit.ts';
 import { reattachTerminals } from './terminalReattach.ts';
 
 export type SwimlaneDirection = 'TB' | 'LR' | 'BT' | 'RL';
@@ -56,6 +56,8 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   reattachTerminals(data4Layout);
   // v13: lanes hold every route, now that flowchart's groups have 20 padding (`laneFit.ts`).
   fitLanesToRoutes(data4Layout);
+  // v13: a lane is at least as wide across the flow as its title (`laneFit.ts`).
+  fitLanesToTitles(data4Layout);
 
   return direction;
 }

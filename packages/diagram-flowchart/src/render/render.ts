@@ -1,12 +1,18 @@
 // Draws a laid-out flowchart through the SvgWriter (DESIGN §7). Structure follows v12's group
 // classes (`clusters`, `edgePaths`, `edgeLabels`, `nodes`); every vertex, edge and subgraph is
 // one element with `data-id`, `data-ast` and semantic classes (R-SVG-2, -3, R-PARSE-8).
-import type { LayoutModel, LayoutModelNode, RoutePoint } from '@mermaid-js/core/layout';
+import type {
+  LayoutModel,
+  LayoutModelGroup,
+  LayoutModelNode,
+  RoutePoint,
+} from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
   px,
+  rotate,
   styleScope,
   styleText,
   themeStyleSheet,
@@ -21,6 +27,7 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
+import { bySwimlane, DEFAULT_LANE, laneBox, laneWarnings } from './lanes.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -85,7 +92,7 @@ interface Tint {
  * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
  * empty, so `redux-dark-color` colours borders only.
  */
-function paletteSlots(theme: FlowRenderContext['theme']): (view: NodeView) => Tint | undefined {
+function paletteSlots(theme: FlowRenderContext['theme']): Paints['slotOf'] {
   const border = theme.palette('borderColorArray');
   const bkg = theme.palette('bkgColorArray');
   return (view) => {
@@ -133,9 +140,15 @@ interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
+  /**
+   * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
+   * `stroke: clusterBorder` on lanes without a palette slot). Set only under the swimlane engine.
+   */
+  readonly laneStroke?: Color;
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
-  readonly slotOf: (view: NodeView) => Tint | undefined;
+  /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
+  readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
   readonly edgeLabel?: { fill: Color; text: Color };
 }
 
@@ -144,7 +157,7 @@ interface Paints {
  * `style` can declare exactly the aliases used (theme.rootStyle()). The order is the order
  * they are declared in.
  */
-function paints(theme: ThemeOf, flow: Prepared): Paints {
+function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const heads = arrowheads(theme);
   const node: NodePaint = {
     font: theme.font(),
@@ -161,8 +174,9 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
+  // Under the swimlane engine loose nodes sit in a lane, which flowchart's model does not have.
   const cluster =
-    flow.groups.length > 0
+    flow.groups.length > 0 || lanes
       ? {
           fill: theme.color('clusterBkg'),
           stroke: theme.outline('clusterBorder'),
@@ -173,11 +187,12 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
   const collapsedLine = flow.nodes.some((v) => v.shape === 'collapsedGroup')
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
+  const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { heads, node, cluster, collapsedLine, slotOf, edgeLabel };
+  return { heads, node, cluster, laneStroke, collapsedLine, slotOf, edgeLabel };
 }
 
 /** What every section of one render draws from. */
@@ -188,6 +203,8 @@ interface Scene {
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
   readonly warn: (warning: FlowWarning) => void;
+  /** Laid out by the swimlane engine: top-level subgraphs draw as lanes (D536). */
+  readonly lanes: boolean;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -198,16 +215,19 @@ export function renderFlowchart(
   w: SvgWriter
 ): void {
   const flow = layout.flow ?? prepare(model, ctx);
+  const lanes = bySwimlane(ctx);
   const scene: Scene = {
     w,
     layout,
     flow,
     ctx,
-    paint: paints(ctx.theme, flow),
+    paint: paints(ctx.theme, flow, lanes),
     warn: (warning) => ctx.warn(warning),
+    lanes,
   };
+  if (lanes) laneWarnings(model, flow, scene.warn);
   openRoot(scene, model);
-  if (scene.paint.cluster) drawClusters(scene);
+  if (scene.paint.cluster) drawClusters(scene, model);
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
@@ -265,12 +285,20 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: str
   w.close();
 }
 
-function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
+function drawClusters(scene: Scene, model: FlowModel): void {
+  const { w, layout, flow, ctx, paint } = scene;
   const cluster = paint.cluster!;
   w.open('g', { class: 'clusters' });
+  const loose = scene.lanes ? layout.groups.get(DEFAULT_LANE) : undefined;
+  // v12 gives the default lane the slot after every subgraph's, so it never takes the first one.
+  if (loose) drawLane(scene, loose, undefined, model.subgraphs.length);
   for (const g of flow.groups) {
     const box = layout.groups.get(g.id);
     if (!box) continue;
+    if (scene.lanes && g.parent === undefined) {
+      drawLane(scene, box, g, g.order);
+      continue;
+    }
     const fill = g.style.shape.fill;
     const slot = paint.slotOf(g);
     w.open('g', {
@@ -297,6 +325,51 @@ function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
       ...g.style.text,
     });
     w.close();
+  }
+  w.close();
+}
+
+/**
+ * A lane as v12's swimlane cluster: `rect.swimlane-body` (unfilled), `rect.swimlane-title`
+ * (filled `clusterBkg`), both stroked `clusterBorder`, then the label, centred in the band and
+ * turned −90° when the band is on the left. In the colour themes both rects take the palette
+ * slot, fill included, as v12's `[data-color-id]` lane rules did. The author's `style` and
+ * `classDef` still win (spread after). No drop shadow: v12's swimlane styles turned it off.
+ * `view` is undefined for the default lane, which has no subgraph and no label.
+ */
+function drawLane(
+  { w, layout, ctx, paint }: Scene,
+  box: LayoutModelGroup,
+  view: NodeView | undefined,
+  order: number | undefined
+): void {
+  const cluster = paint.cluster!;
+  const slot = paint.slotOf({ order });
+  const parts = laneBox(box, layout.direction);
+  const own = view?.style.shape;
+  w.open('g', {
+    class: 'cluster swimlane' + cls(view?.classes ?? []),
+    'data-id': view?.id ?? DEFAULT_LANE,
+    'data-ast': view?.ast,
+    'data-color-id': slot?.id,
+  });
+  const paintOf = (fill: Attrs['fill']): Attrs => ({
+    fill: slot?.fill ?? fill,
+    stroke: slot?.stroke ?? paint.laneStroke,
+    'stroke-width': cluster.strokeWidth,
+    ...own,
+  });
+  w.outline('group', 'rect', { class: 'swimlane-body', ...parts.body, ...paintOf('none') });
+  w.outline('group', 'rect', { class: 'swimlane-title', ...parts.title, ...paintOf(cluster.fill) });
+  if (view) {
+    const { x, y } = box.title;
+    const fill = own?.fill;
+    w.label(view.label, x, y, {
+      class: 'cluster-label swimlane-label',
+      transform: parts.turned ? rotate(-90, x, y) : undefined,
+      fill: (fill && ctx.theme.ink(fill)) || cluster.text,
+      ...view.style.text,
+    });
   }
   w.close();
 }
