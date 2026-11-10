@@ -1,0 +1,27 @@
+@ 2:1  |Person(a, "A")
+  element:a 2:1-2:15 "Person(a, \"A\")"
+@ 2:8  Person(|a, "A")
+  element:a 2:1-2:15 "Person(a, \"A\")"
+@ 2:12  Person(a, "|A")
+  element:a 2:1-2:15 "Person(a, \"A\")"
+@ 3:10  Boundary(|b, "B") {
+  boundary:b 3:1-6:2 "Boundary(b, \"B\") {\n  System(s, \"S\")\n  Rel(a, s, \"Uses\")\n}"
+@ 4:3  |System(s, "S")
+  element:s 4:3-4:17 "System(s, \"S\")"
+  boundary:b 3:1-6:2 "Boundary(b, \"B\") {\n  System(s, \"S\")\n  Rel(a, s, \"Uses\")\n}"
+@ 5:7  Rel(|a, s, "Uses")
+  rel:a->s 5:3-5:20 "Rel(a, s, \"Uses\")"
+  boundary:b 3:1-6:2 "Boundary(b, \"B\") {\n  System(s, \"S\")\n  Rel(a, s, \"Uses\")\n}"
+@ 5:14  Rel(a, s, "|Uses")
+  rel:a->s 5:3-5:20 "Rel(a, s, \"Uses\")"
+  boundary:b 3:1-6:2 "Boundary(b, \"B\") {\n  System(s, \"S\")\n  Rel(a, s, \"Uses\")\n}"
+@ 7:8  Person(|a, "Merged")
+  element:a@2 7:1-7:20 "Person(a, \"Merged\")"
+@ 8:12  Rel(a, s, "|Merged relation")
+  rel:a->s@2 8:1-8:29 "Rel(a, s, \"Merged relation\")"
+@ 9:1  |UpdateElementStyle(a, $bgColor="grey")
+  style:1 9:1-9:39 "UpdateElementStyle(a, $bgColor=\"grey\")"
+@ 10:35  UpdateLayoutConfig($c4ShapeInRow="|2")
+  style:2 10:1-10:38 "UpdateLayoutConfig($c4ShapeInRow=\"2\")"
+@ 11:1  |
+  none

@@ -94,3 +94,16 @@ credits:
     src/layout/route.ts: ['Pele']
     src/layout/shapes.ts: ['Pele']
     src/render/shapes.ts: ['Pele']
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench; read
+# once the manifest has its `language` entry, T5).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - config.ts
+    - plugin.ts
+    - index.ts
+    - testing.ts
+    - test-context.ts

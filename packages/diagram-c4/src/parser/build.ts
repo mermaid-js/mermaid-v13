@@ -32,7 +32,7 @@ export interface BoundaryMacro {
 }
 
 /** The fields a named argument sets on an element or a boundary; any other name is `extra`. */
-const ELEMENT_FIELDS: ReadonlySet<string> = new Set([
+export const ELEMENT_FIELDS: ReadonlySet<string> = new Set([
   'label',
   'descr',
   'techn',
@@ -49,7 +49,7 @@ const ELEMENT_FIELDS: ReadonlySet<string> = new Set([
   'legendSprite',
 ]);
 /** The text fields a named argument sets on a relation (`offsetX`/`offsetY` are numbers). */
-const RELATION_FIELDS: ReadonlySet<string> = new Set([
+export const RELATION_FIELDS: ReadonlySet<string> = new Set([
   'label',
   'descr',
   'techn',
@@ -59,7 +59,7 @@ const RELATION_FIELDS: ReadonlySet<string> = new Set([
   'textColor',
   'lineColor',
 ]);
-const OFFSETS: ReadonlySet<string> = new Set(['offsetX', 'offsetY']);
+export const OFFSETS: ReadonlySet<string> = new Set(['offsetX', 'offsetY']);
 const ELEMENT_KINDS: ReadonlySet<string> = new Set<C4ElementKind>([
   'person',
   'external_person',
@@ -125,6 +125,8 @@ interface Setting {
   name: string;
   value: string;
   at: Range;
+  /** The named argument it came from, when one did. */
+  arg?: Arg;
   /** The structural names the statement sets again after its arguments. */
   last: ReadonlySet<string>;
 }
@@ -273,15 +275,19 @@ export class C4Builder {
       this.kept(s, 'changes nothing', 'wrapping follows the `c4.wrap` config');
     } else if (item.type === 'relation') {
       if (name === 'type') item.bag.kind = value;
-      else
+      else {
+        this.namedRef(s, undefined);
         this.relationEnds(
           item.index,
           name === 'from' ? value : item.bag.from,
           name === 'to' ? value : item.bag.to
         );
+      }
     } else if (name === 'alias') {
+      this.namedRef(s, item.type);
       this.rename(item, value, s);
     } else if (name === 'parentBoundary') {
+      if (value !== 'global') this.namedRef(s, 'boundary');
       const parent = this.boundaryIndex.get(value) ?? (value === 'global' ? -1 : undefined);
       if (parent === undefined)
         this.kept(s, 'changes nothing', `no boundary has the alias \`${value}\``);
@@ -351,7 +357,7 @@ export class C4Builder {
     const name = arg.name ?? '';
     if (item.type === 'relation' && OFFSETS.has(name)) {
       this.offset(item.bag, name, arg.value, arg.range);
-    } else this.set({ item, name, value: arg.value, at: arg.range, last });
+    } else this.set({ item, name, value: arg.value, at: arg.range, arg, last });
   }
 
   /** D457: an offset as v12's renderer read it, 0 when it is not a number. */
@@ -417,22 +423,45 @@ export class C4Builder {
 
   // ---- symbols ------------------------------------------------------------------------
 
-  /** `arg` written exactly as `name` in the source (else no symbol: the service drops it). */
-  private exact(name: string, arg: Arg | undefined): arg is Arg {
-    return (
-      arg !== undefined &&
-      arg.name === undefined &&
-      name !== '' &&
-      this.src.slice(arg.range.start, arg.range.end) === name
-    );
-  }
+  // Each alias written as an argument is an occurrence at the argument's range: bare, or with
+  // its quotes (the service reads the text between them, D191). Where the source does not
+  // write it as it is (an entity, a directive or blanks inside its quotes) the range does not
+  // read as the name: the service drops the occurrence and refuses to rename the symbol, which
+  // it could not rename everywhere.
 
   private definition(name: string, arg: Arg | undefined, kind: string, first: boolean): void {
-    if (this.exact(name, arg)) this.st.symbol(name, kind, arg.range, first ? 'def' : 'ref');
+    if (arg === undefined || arg.name !== undefined || name === '') return;
+    this.st.symbol(name, kind, arg.range, first ? 'def' : 'ref');
   }
 
   private ref(name: string, arg: Arg | undefined): void {
-    if (this.exact(name, arg)) this.refs.push({ name, range: arg.range });
+    if (arg === undefined || arg.name !== undefined || name === '') return;
+    this.refs.push({ name, range: arg.range });
+  }
+
+  /**
+   * The range of a named argument's value, when the source writes it as `value` between the
+   * quotes of `$name="…"` (blanks around it aside); else the whole argument, which the service
+   * drops.
+   */
+  private valueRange(arg: Arg): Range {
+    const { start, end } = arg.range;
+    const text = this.src.slice(start, end);
+    const open = text.indexOf('"');
+    if (open < 0 || !text.endsWith('"')) return arg.range;
+    let from = start + open + 1;
+    let to = end - 1;
+    while (from < to && /\s/.test(this.src.charAt(from))) from++;
+    while (to > from && /\s/.test(this.src.charAt(to - 1))) to--;
+    return this.src.slice(from, to) === arg.value ? { start: from, end: to } : arg.range;
+  }
+
+  /** An alias a named argument gives: an occurrence at its value (a reference). */
+  private namedRef(s: Setting, kind: string | undefined): void {
+    if (s.value === '' || s.arg === undefined) return;
+    const range = this.valueRange(s.arg);
+    if (kind === undefined) this.refs.push({ name: s.value, range });
+    else this.st.symbol(s.value, kind, range, 'ref');
   }
 
   // ---- statements ---------------------------------------------------------------------

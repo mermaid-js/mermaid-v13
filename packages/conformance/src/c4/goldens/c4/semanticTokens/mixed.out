@@ -1,0 +1,71 @@
+4:1-4:12 "C4Container" keyword
+5:1-5:17 "title Containers" keyword
+6:1-6:10 "accTitle:" keyword
+6:11-6:27 "Accessible title" string
+7:1-7:13 "%% a comment" comment
+8:1-8:7 "Person" keyword
+8:7-8:8 "(" operator
+8:8-8:12 "user" variable [declaration, definition]
+8:12-8:13 "," operator
+8:14-8:15 "\"" string
+8:15-8:19 "User" string
+8:19-8:20 "\"" string
+8:20-8:21 "," operator
+8:22-8:23 "$" variable
+8:23-8:29 "sprite" variable
+8:29-8:31 "=\"" string
+8:31-8:37 "person" string
+8:37-8:38 "\"" string
+8:38-8:39 ")" operator
+9:1-9:19 "Container_Boundary" keyword
+9:19-9:20 "(" operator
+9:20-9:22 "c1" variable [declaration, definition]
+9:22-9:23 "," operator
+9:24-9:25 "\"" string
+9:25-9:28 "App" string
+9:28-9:29 "\"" string
+9:29-9:30 ")" operator
+9:31-9:32 "{" operator
+10:3-10:14 "ContainerDb" keyword
+10:14-10:15 "(" operator
+10:15-10:17 "db" variable [declaration, definition]
+10:17-10:18 "," operator
+10:19-10:20 "\"" string
+10:20-10:28 "Database" string
+10:28-10:29 "\"" string
+10:29-10:30 "," operator
+10:31-10:32 "\"" string
+10:32-10:35 "SQL" string
+10:35-10:36 "\"" string
+10:36-10:37 "," operator
+10:38-10:39 "\"" string
+10:39-10:50 "Stores data" string
+10:50-10:51 "\"" string
+10:51-10:52 ")" operator
+11:1-11:2 "}" operator
+12:1-12:4 "Rel" keyword
+12:4-12:5 "(" operator
+12:5-12:9 "user" variable
+12:9-12:10 "," operator
+12:11-12:13 "db" variable
+12:13-12:14 "," operator
+12:15-12:17 "\"\"" operator
+12:17-12:18 "," operator
+12:19-12:20 "\"" string
+12:20-12:24 "JDBC" string
+12:24-12:25 "\"" string
+12:25-12:26 ")" operator
+13:1-13:19 "UpdateLayoutConfig" keyword
+13:19-13:20 "(" operator
+13:20-13:21 "$" variable
+13:21-13:33 "c4ShapeInRow" variable
+13:33-13:35 "=\"" string
+13:35-13:36 "3" string
+13:36-13:37 "\"" string
+13:37-13:38 "," operator
+13:39-13:40 "$" variable
+13:40-13:55 "c4BoundaryInRow" variable
+13:55-13:57 "=\"" string
+13:57-13:58 "1" string
+13:58-13:59 "\"" string
+13:59-13:60 ")" operator

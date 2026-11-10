@@ -1,0 +1,4 @@
+3:8-3:22 "$label=\"moved\"" warning C4_NAMED_ARGUMENT_MOVED: `$label` is written where the alias belongs: it sets `label`, and the alias is empty.
+4:1-4:23 "Rel(a, nobody, \"Uses\")" error C4_UNKNOWN_END: C4 rel "a" -> "nobody" references an unknown shape or boundary
+7:22-7:37 "$offsetX=\"left\"" warning C4_OFFSET_INVALID: `offsetX` takes a whole number of pixels; `left` counts as 0.
+8:16-8:30 "$__proto__=\"x\"" warning C4_NAME_RESERVED: `$__proto__` sets no field; it is kept as an unknown name (mermaid@12 failed on it).

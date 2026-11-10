@@ -61,7 +61,7 @@ import {
   SPACE,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { HEADERS, KEYWORD_MAX, KEYWORDS, T } from './tokens.ts';
 
 const DOLLAR = 0x24;
@@ -80,6 +80,20 @@ const S = {
   ACC_DESCR: 8,
   ACC_DESCR_MULTILINE: 9,
 } as const;
+
+/** Start condition names by number (jison's), for the probe's lexer mode (R-LANG-7). */
+const S_NAMES: readonly string[] = [
+  'INITIAL',
+  'macro',
+  'attribute',
+  'string',
+  'string_kv',
+  'string_kv_key',
+  'string_kv_value',
+  'acc_title',
+  'acc_descr',
+  'acc_descr_multiline',
+];
 
 /** What a regex `.` does not match, once CRs are LFs. */
 // LF, U+2028 (line separator) and U+2029 (paragraph separator).
@@ -128,10 +142,11 @@ const ENTITY_END = '\u00b6';
 
 /**
  * Lex the C4 body `src[from…]`. `view` comes from {@link sourceView} with default options
- * (v12's c4 ran every shared rewrite). The stream ends in `Kind.EOF`; trivia is in it.
+ * (v12's c4 ran every shared rewrite). The stream ends in `Kind.EOF`; trivia is in it. With a
+ * `probe`, the start condition at the probe's offset is recorded as its mode (R-LANG-7).
  */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new C4Lexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): TokenStream {
+  return new C4Lexer(src, from, view).run(probe);
 }
 
 /**
@@ -240,13 +255,25 @@ class C4Lexer {
     return !o || o.source(q + 1) === o.source(q) + 1;
   }
 
-  run(): TokenStream {
+  run(probe?: Probe): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     const start = this.p;
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
     if (this.p > start) this.emit(Kind.Space, start, this.p);
-    while (this.p < n) this.step(text.charCodeAt(this.p));
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
+    else {
+      probe.lexed(this.source(start), this.source(this.p), S_NAMES[S.INITIAL] ?? '');
+      while (this.p < n) {
+        const before = this.source(this.p);
+        const state = this.state;
+        this.step(text.charCodeAt(this.p));
+        // An opener's text is read in the state before it, a closer's in the one it leaves.
+        probe.lexed(before, this.source(this.p), S_NAMES[state] ?? '');
+      }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
+    }
     this.end();
     this.trivia(this.src.length + 1);
     return this.w.finish(this.src);

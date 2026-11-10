@@ -1,0 +1,11 @@
+C4Context
+Person(|customerA, "Customer A")
+System_Boundary(|b1, "Banking") {
+  System(|sys, "System")
+  Rel(customerA, sys, "Uses")
+}
+Person(customerA, "Merged")
+Rel(customerA, b1, "Uses the boundary")
+UpdateElementStyle(sys, $bgColor="grey")
+UpdateRelStyle(customerA, sys, $textColor="red")
+Rel("customerA", "sys", "Quoted ends")

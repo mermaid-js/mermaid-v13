@@ -476,14 +476,14 @@
         "\\([ ]*,",
         {
           "token": "delimiter",
-          "next": "@attribute"
+          "switchTo": "@attribute"
         }
       ],
       [
         "\\(",
         {
           "token": "delimiter",
-          "next": "@attribute"
+          "switchTo": "@attribute"
         }
       ],
       [
@@ -607,7 +607,7 @@
         "[^=]*",
         {
           "token": "variable",
-          "next": "@string_kv_key"
+          "switchTo": "@string_kv_key"
         }
       ]
     ],

@@ -1,0 +1,10 @@
+C4Context
+Person(|customerA, "|Customer A", "|A customer", "sprite", "tags", "link", "|extra")
+Container(c, "C", "|Java", "Descr", $|link="http://x", $|colour="red")
+System_Boundary(|bank, "Bank") {
+  System(sys, "System")
+}
+Rel(|customerA, |bank, "|Uses", $|type="birel")
+Rel(customerA, |nobody, "Unknown")
+UpdateElementStyle(|sys, $|bgColor="grey", "|red")
+UpdateLayoutConfig("|3", $|c4BoundaryInRow="1")

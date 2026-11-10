@@ -1032,6 +1032,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../../packages/diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class

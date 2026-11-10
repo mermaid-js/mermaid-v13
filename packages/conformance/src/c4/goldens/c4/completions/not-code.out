@@ -1,0 +1,14 @@
+@ 1:10  %% a comm|ent
+  none
+@ 3:11  title A ti|tle
+  none
+@ 4:17  Person(a, "A lab|el", "A description")
+  none
+@ 4:29  Person(a, "A label", "A desc|ription")
+  none
+@ 5:14  Rel(a, a, "La|bel", "techn")
+  none
+@ 5:23  Rel(a, a, "Label", "te|chn")
+  none
+@ 7:12  in the bl|ock
+  none

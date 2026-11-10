@@ -22,6 +22,11 @@
  * Symbols (D458): each alias of an element or a boundary is an `element` or `boundary` symbol
  * (separate namespaces); the first statement with it defines it, a later one refers to it, and
  * so do relation ends and `Update…Style` targets (a shape first, as v12 looks them up).
+ *
+ * With a probe (R-LANG-7, D95) the parser records what it would accept at the probed token: a
+ * header on the first line, a statement start after each line break (a macro, a title or
+ * accessibility line, a boundary's `}`), an argument or `)` in the arguments; the lexer records
+ * its jison start condition as the mode. Recovery stops the recording.
  */
 import {
   cook,
@@ -31,6 +36,8 @@ import {
   kindSet,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -147,6 +154,44 @@ const DIRECTIONS = kindSet(T.DirectionTB, T.DirectionBT, T.DirectionRL, T.Direct
 /** Where the text ends: jison's `EOF`, or the stream's end (the lexer ended in a value). */
 const ENDS = kindSet(T.Eof, Kind.EOF);
 
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+const HEADER_KINDS = [...HEADERS];
+/** What may start a statement: a macro, then a title or accessibility line. */
+const STATEMENT_KINDS = [
+  ...MACROS.keys(),
+  T.Title,
+  T.AccDescription,
+  T.AccTitle,
+  T.AccDescr,
+  T.AccDescrBlockStart,
+];
+/** What may start a statement in a boundary: those and its `}`. */
+const BOUNDARY_STATEMENT_KINDS = [...STATEMENT_KINDS, T.RBrace];
+/** What may come next in the arguments. */
+const ARGUMENT_KINDS = [T.ArgsClose, T.Str, T.AttributeEmpty, T.QuoteOpen, T.KeyStart];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset: the
+ * punctuation of the arguments and braces, and the openers that take the blanks after them.
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.ArgsOpen,
+  T.ArgsClose,
+  T.Comma,
+  T.AttributeEmpty,
+  T.QuoteOpen,
+  T.QuoteClose,
+  T.KeyStart,
+  T.KeyEquals,
+  T.ValueClose,
+  T.LBrace,
+  T.RBrace,
+  T.AccTitle,
+  T.AccDescr,
+  T.AccDescrBlockStart,
+  T.AccDescrBlockEnd
+);
+
 /** What may follow a statement: a separator, or (after an other statement) a macro. */
 type After = 0 | 1 | 2;
 const DIAGRAM_STATEMENT: After = 0;
@@ -216,6 +261,8 @@ class C4Parser {
   private readonly view: SourceView;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly b: C4Builder;
   private readonly doc: C4Document;
 
@@ -239,7 +286,14 @@ class C4Parser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+    if (options.probe === undefined) {
+      this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+    } else {
+      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      // The cursor marks an offset inside a comment or directive as outside code.
+      this.c = new ProbeCursor(lex(src, pre.bodyStart, this.view, probe), probe, SKIPPED);
+    }
     this.b = new C4Builder(src, this.st);
     this.doc = {
       id: 'doc',
@@ -265,7 +319,7 @@ class C4Parser {
       accDescr: this.accDescr,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
-    return st.result(model, this.doc, this.c.tokens, this.options);
+    return st.result(model, this.doc, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -377,6 +431,7 @@ class C4Parser {
    */
   private recover(from: Start): void {
     const { c } = this;
+    c.recovering();
     const role = MACROS.get(c.tokens.kind[from.pos] ?? 0)?.role;
     let boundary = role === 'boundary' && this.frames.length === from.frames;
     const parenLine = role !== undefined && this.zeroWidthAfter(from.pos);
@@ -435,6 +490,7 @@ class C4Parser {
   /** `header NEWLINE`. */
   private header(): void {
     const { c } = this;
+    c.tested(HEADER_KINDS);
     const k = c.kind;
     if (HEADERS.has(k)) {
       this.c4Type = this.text(c.pos) as C4Type;
@@ -459,6 +515,8 @@ class C4Parser {
         this.failed.push({ start, end: c.start });
       }
     }
+    // At the end of the text a statement could still start, after the header.
+    if (this.c4Type !== undefined) c.tested(this.statementKinds());
     // The lexer ended outside the statements (in a value) with nothing reported yet.
     if (c.kind === Kind.EOF && !this.st.diagnostics.hasErrors) {
       this.st.diagnostics.unexpected('UNEXPECTED', c.range, LINE_BREAK, this.found());
@@ -479,9 +537,15 @@ class C4Parser {
     this.fail(LINE_BREAK, MACROS.has(k) || inKindSet(OTHER, k) ? ONE_LINE_HINT : this.hint());
   }
 
+  /** What may start a statement here. */
+  private statementKinds(): number[] {
+    return this.frames.length > 0 ? BOUNDARY_STATEMENT_KINDS : STATEMENT_KINDS;
+  }
+
   /** One statement; what may come after it. */
   private statement(): After {
     const { c } = this;
+    c.tested(this.statementKinds());
     const k = c.kind;
     const frame = this.frames[this.frames.length - 1];
     if (k === T.RBrace && frame) {
@@ -650,6 +714,7 @@ class C4Parser {
     } else if (c.kind === T.ArgsOpen) c.next();
     else this.fail(['`(`'], this.hint() ?? `\`${name}\` takes its arguments in \`( )\``);
     for (;;) {
+      c.tested(ARGUMENT_KINDS);
       const k = c.kind;
       if (k === T.ArgsClose) {
         if (out.length === 0) this.fail(['an argument'], `\`${name}()\` needs at least an alias`);
