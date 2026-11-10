@@ -15,9 +15,9 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, c4 |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, c4 |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
@@ -25,9 +25,9 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, c4 |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban, c4 |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
@@ -68,10 +68,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart, mindmap |
 | `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
-| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
-| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
-| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart |
-| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart |
+| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart, c4 |
+| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart, c4 |
+| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart, c4 |
+| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart, c4 |
 | `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
@@ -131,6 +131,14 @@ resolves in each theme: a table is keyed by the theme's family and dark traits, 
 name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name
 wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from
 flags and opacities, which are read literally.
+
+### c4
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `c4RelationColor` | | color | `#444444` | `#444444` | `#cccccc` | `#cccccc` | `#444444` | `#d3d3d3` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
+| `c4BoundaryColor` | | color | `#444444` | `#444444` | `#ffffff` | `#ffffff` | `#444444` | `#cccccc` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
+| `c4TitleColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### class
 

@@ -34,3 +34,10 @@ export const C4_STRUCTURE_KEPT = 'C4_STRUCTURE_KEPT';
  * parents a cycle, which v12 left undrawn): it is drawn at the top level.
  */
 export const C4_BOUNDARY_CYCLE = 'C4_BOUNDARY_CYCLE';
+/**
+ * A colour that is not one core's colour check allows (`UpdateElementStyle`'s `$bgColor`,
+ * `$fontColor`, `$borderColor`, `UpdateRelStyle`'s `$textColor`, `$lineColor`, a config
+ * `<kind>_bg_color` or `_border_color`): it is dropped and the default drawn. One warning per
+ * render names every dropped value (v12 wrote them raw).
+ */
+export const C4_COLOR_INVALID = 'C4_COLOR_INVALID';

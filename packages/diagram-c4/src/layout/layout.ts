@@ -22,7 +22,7 @@ import {
 } from './grid.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
 import { Lanes, pointsOf, route, Work, type Route } from './route.ts';
-import { shapeOf, shapeSize, type Outline } from './shapes.ts';
+import { shapeOf, shapeSize, type Outline, type ShapeRoom } from './shapes.ts';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -130,8 +130,9 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
         };
 
   // Measure first: elements.
+  const room = shapeRoom(config, ctx.theme);
   const nodes = model.elements.map((element, index) =>
-    elementNode(element, index, { config, fonts, measure })
+    elementNode(element, index, { config, fonts, measure }, room)
   );
 
   // The groups: the top level, then each boundary under its parent (D454: a cycle broken).
@@ -241,11 +242,32 @@ interface Measuring {
   readonly measure: Measure;
 }
 
+/**
+ * The shapes' padding: `c4ShapePadding` all round, and the cylinder's, the queue's and
+ * `fr-rect`'s totals from the theme's shape rows (D152), `2·pad` in the classic themes.
+ */
+function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): ShapeRoom {
+  const total = 2 * config.c4ShapePadding;
+  const pad = (name: string, base = total): number => theme.padding(name, base);
+  return {
+    pad: config.c4ShapePadding,
+    least: config.width,
+    cylinder: { x: pad('cylinderPaddingX'), y: pad('cylinderPaddingY') },
+    // v12's tilted cylinder padded half what its cylinder did.
+    queue: {
+      x: pad('cylinderPaddingX', 2 * total) / 2,
+      y: pad('cylinderPaddingY', 2 * total) / 2,
+    },
+    subroutine: { x: pad('subroutinePaddingX'), y: pad('subroutinePaddingY') },
+  };
+}
+
 /** An element's three sections, measured in its kind's font, and its shape's size around them. */
 function elementNode(
   element: C4Element,
   index: number,
-  { config, fonts, measure }: Measuring
+  { config, fonts, measure }: Measuring,
+  room: ShapeRoom
 ): Node {
   const font = fonts.element(element.kind);
   const wrapW = config.wrap
@@ -268,7 +290,7 @@ function elementNode(
   }
   textH += Math.max(0, count - 1) * M.sectionGap;
   const form = shapeOf(element);
-  const size = shapeSize(form, tw, textH, { pad: config.c4ShapePadding, least: config.width });
+  const size = shapeSize(form, tw, textH, room);
   return {
     index,
     element,

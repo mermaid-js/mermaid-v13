@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { C4_ELEMENT_COLORS, C4_ELEMENT_KINDS } from '@mermaid-js/diagram-c4';
 import { REPO_ROOT } from './index.ts';
 
 // The C4 custom layout takes every length from its metrics table or the `c4` config (spec #522,
@@ -117,5 +118,15 @@ describe('c4 layout', () => {
     expect(/C4_MESSAGE_FONT_SIZE = (\d+);/.exec(source)![1]).toBe(
       schemaDefault(schema, 'messageFontSize')
     );
+  });
+
+  it('the element palette’s defaults are the schema’s', () => {
+    const schema = readFileSync(SCHEMA, 'utf8');
+    expect(Object.keys(C4_ELEMENT_COLORS).sort()).toEqual([...C4_ELEMENT_KINDS].sort());
+    for (const kind of C4_ELEMENT_KINDS) {
+      const [bg, border] = C4_ELEMENT_COLORS[kind];
+      expect(schemaDefault(schema, `${kind}_bg_color`), kind).toBe(`'${bg}'`);
+      expect(schemaDefault(schema, `${kind}_border_color`), kind).toBe(`'${border}'`);
+    }
   });
 });

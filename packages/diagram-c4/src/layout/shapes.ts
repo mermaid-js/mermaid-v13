@@ -7,7 +7,11 @@
  * Sizes follow v12's shapes with `c4.c4ShapePadding` as their padding and `c4.width` as their
  * least width (`c4ShapeAdapter.ts`, `drawRect`): a rounded box `max(width, text + 2·pad)` by
  * `text + 2·pad`; the person 26 taller for its head; the cylinder `3·ry` taller for its caps; the
- * queue `2·rx` wider; `fr-rect` 16 wider for its frame lines.
+ * queue `2·rx` wider; `fr-rect` 16 wider for its frame lines. The cylinder, the queue and
+ * `fr-rect` take their padding from the theme's shape rows instead (v12 `look: neo`, D152): the
+ * cylinder `cylinderPadding*`, the queue half of it (v12's tilted cylinder padded half what its
+ * cylinder did, in both looks), `fr-rect` `subroutinePadding*`; in the classic themes each is
+ * `2·pad`, as the others.
  */
 // cspell:ignore kepano
 import type { C4Element } from '../model.ts';
@@ -58,17 +62,29 @@ export interface ShapeSize {
   readonly dy: number;
 }
 
-/** How a shape is sized: its padding all round and its least width (`c4ShapePadding`, `c4.width`). */
+/** Padding totals across (`x`) and down (`y`). */
+export interface PadXY {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * How a shape is sized: its padding all round and its least width (`c4ShapePadding`,
+ * `c4.width`), and the totals the cylinder, the queue and `fr-rect` take from the theme.
+ */
 export interface ShapeRoom {
   readonly pad: number;
   readonly least: number;
+  readonly cylinder: PadXY;
+  readonly queue: PadXY;
+  readonly subroutine: PadXY;
 }
 
 export function shapeSize(
   shape: C4ShapeId,
   tw: number,
   th: number,
-  { pad, least }: ShapeRoom
+  { pad, least, cylinder, queue, subroutine }: ShapeRoom
 ): ShapeSize {
   const w = Math.max(least, tw + 2 * pad);
   const h = th + 2 * pad;
@@ -76,15 +92,22 @@ export function shapeSize(
     case 'person':
       return { w, h: h + M.personHead, dx: 0, dy: M.personHead / 2 };
     case 'cyl': {
-      const ry = capRy(w);
-      return { w, h: h + 3 * ry, dx: 0, dy: ry / 2 };
+      const cw = Math.max(least, tw + cylinder.x);
+      const ry = capRy(cw);
+      return { w: cw, h: th + cylinder.y + 3 * ry, dx: 0, dy: ry / 2 };
     }
     case 'h-cyl': {
-      const rx = queueRx(h);
-      return { w: Math.max(least, tw + 2 * pad + 2 * rx), h, dx: -rx / 2, dy: 0 };
+      const qh = th + queue.y;
+      const rx = queueRx(qh);
+      return { w: Math.max(least, tw + queue.x + 2 * rx), h: qh, dx: -rx / 2, dy: 0 };
     }
     case 'fr-rect':
-      return { w: Math.max(least, tw + 2 * pad + 2 * M.frameInset), h, dx: 0, dy: 0 };
+      return {
+        w: Math.max(least, tw + subroutine.x + 2 * M.frameInset),
+        h: th + subroutine.y,
+        dx: 0,
+        dy: 0,
+      };
     case 'rounded':
       return { w, h, dx: 0, dy: 0 };
   }
@@ -172,8 +195,10 @@ export function piecesOf(box: Outline): Piece[] {
     }
     case 'frame':
       return roundedPieces(box, M.boundaryRadius);
-    case 'rounded':
     case 'fr-rect':
+      // v12's subroutine is a square polygon (its `rx` style does not round one).
+      return [rectPiece(x, y, x + w, y + h)];
+    case 'rounded':
       return roundedPieces(box, M.shapeRadius);
   }
 }

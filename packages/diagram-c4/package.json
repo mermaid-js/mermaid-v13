@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-c4",
   "version": "0.0.0",
   "private": true,
-  "description": "C4 diagram plugin for Mermaid: lexer, parser, model and layout (renderer to follow).",
+  "description": "C4 diagram plugin for Mermaid: lexer, parser, model, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,

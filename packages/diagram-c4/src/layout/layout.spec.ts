@@ -255,6 +255,33 @@ describe('c4 element text and shapes', () => {
     );
     expect(['a', 'b', 'c'].map((x) => el(layout, x).shape)).toEqual(['h-cyl', 'person', 'fr-rect']);
   });
+
+  it('pads the cylinder, the queue and fr-rect with the theme’s shape rows: 2·pad classic, v12 neo’s in neo (D152)', async () => {
+    const neo = createTheme(await loadTheme('neo'));
+    // A 300 px name (30 characters) over a 110 px type line: text 300 × 32.4.
+    const name = 'n'.repeat(30);
+    const src = `C4Container\nContainerDb(c, "${name}")\nContainerQueue(q, "${name}")\nContainer(f, "${name}", $tags="component")`;
+    const size = (t: Theme): number[][] => {
+      const parsed = parsedC4(src);
+      const layout = layoutC4(parsed.model, c4TestContext(parsed.config, t, [], grid));
+      expect(c4LayoutViolations(parsed.model, layout)).toEqual([]);
+      return ['c', 'q', 'f'].map((a) => [el(layout, a).box.width, el(layout, a).box.height]);
+    };
+    const round = (rows: number[][]): number[][] => rows.map((r) => r.map((v) => +v.toFixed(2)));
+    // Cylinder: text + 2·20 (classic) or + 24 (neo), and three cap radii (12) taller.
+    // Queue: half the cylinder's, ends of radius min(12, h/4) each side.
+    // fr-rect: 2·20 (classic) or 28 × 12 (neo), and the two 8 px frames.
+    expect(round(size(theme))).toEqual([
+      [340, 108.4],
+      [364, 72.4],
+      [356, 72.4],
+    ]);
+    expect(round(size(neo))).toEqual([
+      [324, 92.4],
+      [334.2, 44.4],
+      [344, 44.4],
+    ]);
+  });
 });
 
 describe('c4 relations (D455)', () => {

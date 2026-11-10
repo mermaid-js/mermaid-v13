@@ -1,0 +1,7 @@
+sketched
+
+v12 sketched this diagram type's elements with `look: handDrawn` (D301: boundaries and
+relations stay plain). With the hand-drawn plugin on, this folder's whole corpus renders through
+it in packages/plugin-hand-drawn/src/corpus.spec.ts once c4 is registered (#542), and a gallery
+baseline here needs its four-family hand-drawn set (packages/dev/src/adapter.spec.ts, D307). The
+first line is read: `sketched` or `unsketched`.
