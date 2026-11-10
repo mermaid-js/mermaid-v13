@@ -132,11 +132,13 @@ interface NodePaint {
 interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
+  readonly shapeAttrs: Attrs;
+  readonly lineAttrs: Attrs;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
   readonly slotOf: (view: NodeView) => Tint | undefined;
-  readonly edgeLabel?: { fill: Color; text: Color };
+  readonly edgeLabel?: { fill: Color; text: Color; attrs: Attrs };
 }
 
 /**
@@ -174,10 +176,29 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const slotOf = paletteSlots(theme);
-  const edgeLabel = flow.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
-    : undefined;
-  return { heads, node, cluster, collapsedLine, slotOf, edgeLabel };
+  let edgeLabel: Paints['edgeLabel'];
+  if (flow.edges.some((e) => e.label.width > 0)) {
+    const fill = theme.color('edgeLabelBackground');
+    const text = theme.color('textColor');
+    edgeLabel = { fill, text, attrs: { fill: text } };
+  }
+  const shapeAttrs: Attrs = {
+    fill: node.fill,
+    stroke: node.stroke,
+    'stroke-width': node.strokeWidth,
+    filter: node.shadow,
+  };
+  const lineAttrs: Attrs = { stroke: node.stroke, 'stroke-width': node.strokeWidth };
+  return {
+    heads,
+    node,
+    shapeAttrs,
+    lineAttrs,
+    cluster,
+    collapsedLine,
+    slotOf,
+    edgeLabel,
+  };
 }
 
 /** What every section of one render draws from. */
@@ -365,6 +386,12 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
+// Checked style objects are shared by prepare; testing emptiness needs no key array.
+function hasAttrs(attrs: Attrs): boolean {
+  for (const _name in attrs) return true;
+  return false;
+}
+
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
@@ -378,7 +405,14 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
     rx: 3,
     fill: paint.edgeLabel!.fill,
   });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text, ...e.style.text });
+  w.label(
+    e.label,
+    at.x,
+    at.y,
+    hasAttrs(e.style.text)
+      ? { fill: paint.edgeLabel!.text, ...e.style.text }
+      : paint.edgeLabel!.attrs
+  );
   w.close();
 }
 
@@ -408,19 +442,22 @@ function drawNode(
       : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
   if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
   // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
-  const shapeAttrs: Attrs = {
-    fill: slot?.fill ?? paint.node.fill,
-    stroke: slot?.stroke ?? paint.node.stroke,
-    'stroke-width': paint.node.strokeWidth,
-    filter: paint.node.shadow,
-    ...view.style.shape,
-  };
+  const shapeAttrs: Attrs =
+    slot || hasAttrs(view.style.shape)
+      ? {
+          fill: slot?.fill ?? paint.node.fill,
+          stroke: slot?.stroke ?? paint.node.stroke,
+          'stroke-width': paint.node.strokeWidth,
+          filter: paint.node.shadow,
+          ...view.style.shape,
+        }
+      : paint.shapeAttrs;
   // Inner lines follow the outline, except a collapsed card's separator and dots, which take
   // the palette slot's border or else clusterBorder.
-  let lineAttrs: Attrs = {
-    stroke: shapeAttrs.stroke,
-    'stroke-width': shapeAttrs['stroke-width'],
-  };
+  let lineAttrs: Attrs =
+    shapeAttrs === paint.shapeAttrs
+      ? paint.lineAttrs
+      : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
   if (paint.collapsedLine && view.shape === 'collapsedGroup') {
     lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
   }
@@ -434,10 +471,14 @@ function drawNode(
     drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
-  w.label(view.label, 0, view.dy, {
-    fill: fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined,
-    ...view.style.text,
-  });
+  const ink =
+    fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined;
+  w.label(
+    view.label,
+    0,
+    view.dy,
+    ink !== undefined || hasAttrs(view.style.text) ? { fill: ink, ...view.style.text } : undefined
+  );
   if (href) w.close();
   w.close();
 }

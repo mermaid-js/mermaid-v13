@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { streamWriter } from './index.ts';
+import { streamWriter, treeWriter, type LabelBox } from './index.ts';
 
 describe('SvgWriter (streaming)', () => {
   it('writes nested elements, leaves and text in call order', () => {
@@ -157,4 +157,69 @@ describe('SvgWriter label', () => {
     );
     expect(w.finish()).toBe('<text class="label" x="32" y="23" text-anchor="start">ab</text>');
   });
+});
+
+describe('plain stream labels agree with the tree writer', () => {
+  it.each(['plain', '', '\u0000', '<script>&"\t\n😀'])(
+    'writes %j in nested and adjacent labels',
+    (text) => {
+      for (const left of [false, true]) {
+        const box: LabelBox = {
+          lines: [[{ text }]],
+          height: 20,
+          lineHeight: 20,
+          baseline: 14,
+          width: 30,
+          left,
+          indents: [2.125],
+        };
+        const stream = streamWriter();
+        const tree = treeWriter();
+        for (const w of [stream, tree]) {
+          w.open('g');
+          w.label(box, 12.345, -4.125);
+          w.label(box, 0, 0, { class: 'styled', x: 99 });
+          w.label({ ...box, lines: [[{ text, bold: true }]] }, 0, 0);
+          w.label(box, 1, 2);
+          w.close();
+          w.leaf('rect');
+        }
+        expect(stream.finish()).toBe(tree.finish());
+      }
+    }
+  );
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid coordinates %s', (x) => {
+    const box: LabelBox = {
+      lines: [[{ text: 'label' }]],
+      height: 20,
+      lineHeight: 20,
+      baseline: 14,
+    };
+    for (const w of [streamWriter(), treeWriter()]) {
+      expect(() => w.label(box, x, 0)).toThrow(RangeError);
+      expect(() => w.label(box, 0, x)).toThrow(RangeError);
+      expect(() => w.label({ ...box, baseline: x }, 0, 0)).toThrow(RangeError);
+    }
+  });
+});
+
+it('escapes runtime string coordinates in direct labels just as the tree does', () => {
+  const stream = streamWriter();
+  const tree = treeWriter();
+  for (const w of [stream, tree]) {
+    w.label(
+      {
+        lines: [[{ text: 'label' }]],
+        height: 20,
+        lineHeight: 20,
+        // @ts-expect-error -- callers bypassing types still cannot inject markup
+        baseline: '" onload="alert(1)',
+      },
+      0,
+      0
+    );
+  }
+  expect(stream.finish()).toBe(tree.finish());
+  expect(stream.finish()).toContain('&quot; onload=&quot;');
 });

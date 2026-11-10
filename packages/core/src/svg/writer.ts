@@ -502,6 +502,34 @@ class Stream implements StreamSvgWriter {
   }
 
   label(box: LabelBox, x: number, y: number, attrs?: Attrs): void {
+    const line = box.lines.length === 1 ? box.lines[0] : undefined;
+    const span = line?.length === 1 ? line[0] : undefined;
+    if (
+      attrs === undefined &&
+      span &&
+      !isBox(span) &&
+      !span.bold &&
+      !span.italic &&
+      !span.underline &&
+      !span.strike &&
+      !span.attrs
+    ) {
+      // The common plain label needs no temporary attribute object. Keep the same name and
+      // value checks as open(), and the same empty-text/self-closing behavior as text().
+      const left = box.left === true && box.width !== undefined ? x - box.width / 2 : undefined;
+      checkTag('text');
+      const sx = formatValue('text', 'x', left === undefined ? x : left + (box.indents?.[0] ?? 0));
+      const sy = formatValue('text', 'y', y - box.height / 2 + box.baseline);
+      const anchor = formatValue('text', 'text-anchor', left === undefined ? 'middle' : 'start');
+      const content = esc(span.text);
+      this.flush();
+      this.out += '<text';
+      if (sx !== undefined) this.out += ' x="' + escAttr(sx) + '"';
+      if (sy !== undefined) this.out += ' y="' + escAttr(sy) + '"';
+      this.out += ' text-anchor="' + anchor + '"';
+      this.out += content === '' ? '/>' : '>' + content + '</text>';
+      return;
+    }
     writeLabel(this, box, x, y, attrs);
   }
 
