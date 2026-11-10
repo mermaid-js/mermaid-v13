@@ -3,6 +3,7 @@
   themeVariables property (object) 3:4-3:6 "th" -> "themeVariables"
   themeCSS property (string) 3:4-3:6 "th" -> "themeCSS"
   layout property (string) 3:4-3:6 "th" -> "layout"
+  lineHops property (boolean | string) 3:4-3:6 "th" -> "lineHops"
   ascii property (object) 3:4-3:6 "th" -> "ascii"
   darkMode property (boolean) 3:4-3:6 "th" -> "darkMode"
   fontFamily property (string) 3:4-3:6 "th" -> "fontFamily"
