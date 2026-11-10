@@ -32,3 +32,24 @@
   | **edge** `db` `R` – `L` `web`
   |
   | From the right side (`R`) of group `api` (around service `db`) to the left side (`L`) of service `web`.
+@ 12:12  api:R -- |L:web
+  12:12-12:13 "L"
+  | **edge** `api` `R` – `L` `web`
+  |
+  | From the right side (`R`) of group `api` to the left side (`L`) of service `web`.
+  |
+  | `api` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `api` instead.
+@ 13:19  api{group}:R -- |L:web
+  13:19-13:20 "L"
+  | **edge** `api` `R` – `L` `web`
+  |
+  | From the right side (`R`) of group `api` to the left side (`L`) of service `web`.
+  |
+  | `api` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `api` instead.
+@ 16:17  g{group}:B -- |T:web
+  16:17-16:18 "T"
+  | **edge** `g` `B` – `T` `web`
+  |
+  | From the bottom side (`B`) of group `g` to the top side (`T`) of service `web`.
+  |
+  | `g` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `g` instead.

@@ -50,7 +50,9 @@ export function idReason(name: string): string | undefined {
   if (/[^\w-]/.test(name) || /^-|-$/.test(name)) return `\`${name}\` is not an id: ${LETTERS}.`;
   if (/^[LRTB]/.test(name)) {
     const lower = `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
-    return `\`${name}\` starts with a capital \`${name.charAt(0)}\`, which reads as a side: an id cannot start with \`L\`, \`R\`, \`T\` or \`B\`. Choose another name, such as \`${lower}\`.`;
+    // Lower-cased, the name may be a keyword (`Row`) or start with `title` (`Title`).
+    const suggested = [lower, `${lower}1`, `my${name}`].find((n) => idReason(n) === undefined);
+    return `\`${name}\` starts with a capital \`${name.charAt(0)}\`, which reads as a side: an id cannot start with \`L\`, \`R\`, \`T\` or \`B\`. Choose another name, such as \`${suggested ?? `my${name}`}\`.`;
   }
   if (name.startsWith('title')) {
     return `\`${name}\` starts with \`title\`, which starts a title: choose another name.`;

@@ -7,14 +7,25 @@ describe('architecture language facet', () => {
     expect(BUILTIN_ICON_NAMES).toEqual([...builtinIcons().keys()]);
   });
 
-  it.each(['db', 'a-b', 'x_1', '_', '9', 'services', 'rows', 'inx', 'l', 'r2', 'bTitle', 'Api'])(
-    'accepts %s as an id of every kind',
-    (name) => {
-      for (const kind of ['service', 'junction', 'group']) {
-        expect(language.isValidId(name, kind)).toBeUndefined();
-      }
+  it.each([
+    'db',
+    'a-b',
+    'x_1',
+    '_',
+    '9',
+    'services',
+    'rows',
+    'inx',
+    'l',
+    'r2',
+    'bTitle',
+    'Api',
+    'In',
+  ])('accepts %s as an id of every kind', (name) => {
+    for (const kind of ['service', 'junction', 'group']) {
+      expect(language.isValidId(name, kind)).toBeUndefined();
     }
-  );
+  });
 
   // D508: what v12 cannot lex as one id, wherever an id goes.
   it.each([
@@ -37,4 +48,15 @@ describe('architecture language facet', () => {
   ])('refuses %j (%s)', (name, why) => {
     expect(language.isValidId(name)).toContain(why);
   });
+
+  // A suggested name is itself a valid id: `Row` and `Title` lower-cased are refused.
+  it.each(['Row', 'Title', 'Rows', 'Backend', 'L', 'T', 'Bx'])(
+    'suggests a valid id for %j',
+    (name) => {
+      const reason = language.isValidId(name) ?? '';
+      const suggested = /such as `([^`]+)`/.exec(reason)?.[1];
+      expect(suggested).toBeDefined();
+      expect(language.isValidId(suggested!)).toBeUndefined();
+    }
+  );
 });

@@ -1,9 +1,11 @@
 /**
  * Architecture completion (DESIGN §4.5, D95, R-LANG-7): the probe's expected kinds mapped to
  * items. An item is offered only where the parser tests its kind at the cursor:
- * `architecture-beta` at the start; the statements as the first word of a line; `row` and
- * `column` after `align`; `in` after a declaration's id, icon or label; the sides after an
- * edge end's `:` (and before the right-hand one's); the arrows after the left-hand side.
+ * `architecture-beta` at the start; the statements as the first word of a line, or after the
+ * header on its own line (v12 accepts a first statement there); `row` and `column` after
+ * `align`; `in` after a declaration's id, icon or label; the sides after an edge end's `:` (and
+ * before the right-hand one's); the arrows after the left-hand side, and the right-hand `>`
+ * after `--` or `-[label]-`.
  *
  * Ids, from the model (so only ids v12 registered):
  * - after `in`, the groups: for a service or junction every group (v12 adds the groups first),
@@ -30,7 +32,7 @@ import { architectureDocs } from '../generated/docs.ts';
 import type { ArchitectureModel } from '../model.ts';
 import type { ArchitectureDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { atLineStart, BUILTIN_ICON_NAMES, ITEMS, lineBefore, span, tokenBefore } from './tables.ts';
+import { BUILTIN_ICON_NAMES, ITEMS, lineTokens, span, tokenBefore } from './tables.ts';
 
 /** The probed word's range: the prefix, plus the rest of the token after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
@@ -138,7 +140,7 @@ function unfinished(c: Context, offset: number): CompletionItem[] | undefined {
   const open = paren ?? brace;
   if (!open) return undefined;
   const at = offset - open[0].length;
-  const before = lineBefore(c.tokens, at);
+  const before = lineTokens(c.tokens, at);
   if (paren) {
     if (!iconPlace(c, before)) return undefined;
     const range = span(at, runEnd(c.text, offset, /[\w:-]/, ')'));
@@ -151,16 +153,18 @@ function unfinished(c: Context, offset: number): CompletionItem[] | undefined {
 
 /** Ids for the place: groups after `in`, members after `align`, edge ends elsewhere. */
 function ids(c: Context, offset: number, lineStart: boolean): { id: string; kind: string }[] {
-  const { model, ast } = c;
+  const { model } = c;
   const last = kindOf(c, c.before[c.before.length - 1]);
   const first = kindOf(c, c.before[0]);
   if (last === T.In) {
     if (first !== T.Group) return model.groups.map((g) => ({ id: g.id, kind: 'group' }));
     // A group's parent is declared before it, and is not the group itself.
     const own = c.before[1] === undefined ? undefined : textOf(c, c.before[1]);
+    const earlier = new Set<string>();
+    for (const n of c.ast.children)
+      if (n.type === 'Group' && n.range.end <= offset) earlier.add(n.id);
     return model.groups
-      .filter((g) => g.id !== own)
-      .filter((g) => ast.children.some((n) => n.id === g.astId && n.range.end <= offset))
+      .filter((g) => g.id !== own && earlier.has(g.astId))
       .map((g) => ({ id: g.id, kind: 'group' }));
   }
   const nodes = [
@@ -174,6 +178,34 @@ function ids(c: Context, offset: number, lineStart: boolean): { id: string; kind
   // An edge's ends: the first word of a line, and after the right-hand side's `:`.
   const rhs = last === T.Colon && kindOf(c, c.before[c.before.length - 2]) === T.Direction;
   return (lineStart || (rhs && inEdge(c))) && first !== T.Align ? nodes : [];
+}
+
+/** The {@link ITEMS} the parser accepts here; `last` is the kind of the line's last token. */
+function keywords(
+  expected: ReadonlySet<number>,
+  range: Range,
+  prefix: string,
+  lineStart: boolean,
+  last: number
+): CompletionItem[] {
+  const out: CompletionItem[] = [];
+  for (const k of ITEMS) {
+    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
+    // `<--` starts an edge's arrow, after its left-hand side; `>` ends it, after `--` or `-[…]-`.
+    if (k.afterSide && last !== T.Direction) continue;
+    if (k.afterArrow && last !== T.DashDash && last !== T.Dash) continue;
+    if (!k.label.startsWith(prefix)) continue;
+    const documentation = architectureDocs[k.kind];
+    out.push({
+      label: k.label,
+      kind: k.item,
+      insertText: k.insert ?? k.label,
+      range,
+      ...(k.detail === undefined ? {} : { detail: k.detail }),
+      ...(documentation === undefined ? {} : { documentation }),
+    });
+  }
+  return out;
 }
 
 export function architectureCompletions(
@@ -191,25 +223,17 @@ export function architectureCompletions(
   const expected = new Set(probe.expected);
   const range = wordRange(text, tokens, probe);
   const prefix = text.slice(range.start, probe.offset);
-  const lineStart = atLineStart(text, range.start);
-  const c: Context = { ...c0, before: lineBefore(tokens, range.start) };
-  const last = kindOf(c, c.before[c.before.length - 1]);
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
-    // `<--` starts an edge's arrow, after its left-hand side; `<` elsewhere is the right end's.
-    if (k.kind === T.ArrowInto && last !== T.Direction) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    const documentation = architectureDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
+  const c: Context = { ...c0, before: lineTokens(tokens, range.start) };
+  // Nothing but the header before the word on its line: a statement starts here (v12 lets the
+  // first statement share the `architecture-beta` line).
+  const lineStart = c.before.length === 0;
+  const out = keywords(
+    expected,
+    range,
+    prefix,
+    lineStart,
+    kindOf(c, c.before[c.before.length - 1])
+  );
   if (expected.has(T.Icon) && iconPlace(c, c.before)) out.push(...icons(range, prefix));
   if (expected.has(T.ArrowGroup)) {
     const id = groupMarkId(c, c.before);

@@ -18,6 +18,10 @@ export interface KeywordItem {
   readonly detail?: string;
   /** Offered only as the first word of its line (the statements). */
   readonly lineStart?: true;
+  /** Offered only right after the left-hand side (an arrow that starts with `<`). */
+  readonly afterSide?: true;
+  /** Offered only after `--` or `-[label]-` (the right-hand arrowhead). */
+  readonly afterArrow?: true;
 }
 
 const statement = (kind: number, label: string, insert = `${label} `): KeywordItem => ({
@@ -64,9 +68,28 @@ export const ITEMS: readonly KeywordItem[] = [
   ),
   { kind: T.DashDash, label: '--', item: 'operator', detail: 'edge' },
   { kind: T.DashDash, label: '-->', item: 'operator', detail: 'edge, arrowhead on the right' },
-  { kind: T.ArrowInto, label: '<--', item: 'operator', detail: 'edge, arrowhead on the left' },
-  { kind: T.ArrowInto, label: '<-->', item: 'operator', detail: 'edge, arrowheads on both ends' },
+  {
+    kind: T.ArrowInto,
+    label: '<--',
+    item: 'operator',
+    detail: 'edge, arrowhead on the left',
+    afterSide: true,
+  },
+  {
+    kind: T.ArrowInto,
+    label: '<-->',
+    item: 'operator',
+    detail: 'edge, arrowheads on both ends',
+    afterSide: true,
+  },
   { kind: T.Dash, label: '-[label]-', item: 'operator', detail: 'labelled edge' },
+  {
+    kind: T.ArrowInto,
+    label: '>',
+    item: 'operator',
+    detail: 'arrowhead on the right',
+    afterArrow: true,
+  },
 ];
 
 /**
@@ -117,9 +140,10 @@ export function tokenBefore(tokens: TokenStream, offset: number): number {
 
 /**
  * The indexes of the significant tokens of the line before `at` that end at or before it, first
- * to last.
+ * to last, without the `architecture-beta` header (the first statement may share its line).
+ * Token indexes, unlike other facets' text-based `lineBefore`.
  */
-export function lineBefore(tokens: TokenStream | undefined, at: number): number[] {
+export function lineTokens(tokens: TokenStream | undefined, at: number): number[] {
   const out: number[] = [];
   if (!tokens) return out;
   for (let j = tokenBefore(tokens, at); j >= 0; j--) {
@@ -128,14 +152,8 @@ export function lineBefore(tokens: TokenStream | undefined, at: number): number[
     if (k === Kind.Newline) break;
     if (ARCHITECTURE_TRIVIA[k] !== 1) out.push(j);
   }
-  return out.reverse();
-}
-
-/** Whether only blanks come before `at` on its line. */
-export function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
+  out.reverse();
+  return tokens.kind[out[0] ?? -1] === T.ArchitectureBeta ? out.slice(1) : out;
 }
 
 /** Markdown inline code holding `text` as written, whatever backticks it has. */

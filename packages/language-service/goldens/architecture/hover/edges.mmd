@@ -9,3 +9,8 @@ architecture-beta
   web:R -[re|ads]- L:db
   web{group}:T -- B:db{gro|up}
   db{group}:|R -- L:web
+  api:R -- |L:web
+  api{group}:R -- |L:web
+  group p
+  group g in p
+  g{group}:B -- |T:web

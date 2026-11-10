@@ -19,6 +19,10 @@ languageBundle:
     - layout/
     - plugin.ts
     - icons.ts
+    - theme/
+    - index.ts
+    - testing.ts
+    - v12-specs/
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:

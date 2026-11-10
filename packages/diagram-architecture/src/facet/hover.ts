@@ -1,8 +1,10 @@
 /**
  * Architecture hover (DESIGN §4.5, D93): an id, where it is declared or used, shows what it is
- * (service, junction or group, as v12 registered it), its label, icon and group; an edge,
+ * (service, junction or group, as v12 registered it), its label, icon and group, or that
+ * nothing has the id (an id nothing registered has no symbol); an edge,
  * anywhere but on its ids (its sides, arrow, arrowheads, label, `{group}`), shows its two ends
- * and the sides they meet, with its arrowheads and label; a keyword the one-line doc of the
+ * and the sides they meet, with its arrowheads and label, and that it is an error when an end
+ * is a group (D504, with or without `{group}`); a keyword the one-line doc of the
  * grammar file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
@@ -49,11 +51,16 @@ function idHover(model: ArchitectureModel, id: string): string {
   return lines.join('\n\n');
 }
 
+/** Whether the end's id is a group (an error, D504). */
+const isGroup = (model: ArchitectureModel, end: ArchitectureEdgeEnd): boolean =>
+  elementOf(model, end.name.value)?.kind === 'group';
+
 /** One end of an edge in words: the side it meets and of what (the id, or its group). */
 function endText(model: ArchitectureModel, end: ArchitectureEdgeEnd): string {
   const side = `the ${SIDE_NAMES[end.side]} side (${code(end.side)})`;
   const id = named(model, end.name.value);
-  if (end.group === undefined) return `${side} of ${id}`;
+  // D504: an edge cannot end at a group, with or without `{group}` (edgeHover says so).
+  if (end.group === undefined || isGroup(model, end)) return `${side} of ${id}`;
   const parent = elementOf(model, end.name.value)?.element.in;
   // D504: `{group}` on an id in no group is ignored (with a warning).
   if (parent === undefined) return `${side} of ${id} (in no group, so \`{group}\` is ignored)`;
@@ -69,6 +76,12 @@ function edgeHover(model: ArchitectureModel, edge: ArchitectureEdgeNode): string
   const heads = [lhs, rhs].filter((e) => e.into).map((e) => code(e.name.value));
   if (heads.length > 0) lines.push(`Arrowhead at ${heads.join(' and ')}.`);
   if (edge.label) lines.push(`Label ${code(edge.label.value)}.`);
+  for (const end of [lhs, rhs].filter((e) => isGroup(model, e))) {
+    const g = code(end.name.value);
+    lines.push(
+      `${g} is a group, and an edge cannot end at one, so this edge is an error: write \`{group}\` after a service or junction in ${g} instead.`
+    );
+  }
   return lines.join('\n\n');
 }
 
@@ -97,6 +110,10 @@ export function architectureHover(
   const t = at.token;
   const edge = edgeAt(doc.result.ast, at.offset, t?.range);
   if (edge) return { range: edge.range, contents: edgeHover(model, edge.edge) };
+  // An id nothing registered has no symbol: still described.
+  if (t?.kind === T.Id) {
+    return { range: t.range, contents: idHover(model, text.slice(t.range.start, t.range.end)) };
+  }
   if (!t || NO_DOC.has(t.kind)) return undefined;
   let range = t.range;
   const word = TEXT_WORDS[t.kind];

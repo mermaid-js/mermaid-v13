@@ -16,6 +16,7 @@
   R constant (right) 9:11-9:11 "" -> "R"
   T constant (top) 9:11-9:11 "" -> "T"
   B constant (bottom) 9:11-9:11 "" -> "B"
+  > operator (arrowhead on the right) 9:11-9:11 "" -> ">"
 @ 10:13  db:R -- L:|
   db node (service) 10:13-10:13 "" -> "db"
   web node (service) 10:13-10:13 "" -> "web"
@@ -34,3 +35,21 @@
   {group} keyword 16:16-16:19 "{gr" -> "{group}"
 @ 17:7  web{|
   none
+@ 18:11  db:R -- |
+  L constant (left) 18:11-18:11 "" -> "L"
+  R constant (right) 18:11-18:11 "" -> "R"
+  T constant (top) 18:11-18:11 "" -> "T"
+  B constant (bottom) 18:11-18:11 "" -> "B"
+  > operator (arrowhead on the right) 18:11-18:11 "" -> ">"
+@ 19:14  db:R -[x]- |
+  L constant (left) 19:14-19:14 "" -> "L"
+  R constant (right) 19:14-19:14 "" -> "R"
+  T constant (top) 19:14-19:14 "" -> "T"
+  B constant (bottom) 19:14-19:14 "" -> "B"
+  > operator (arrowhead on the right) 19:14-19:14 "" -> ">"
+@ 20:12  db:R <-- |
+  L constant (left) 20:12-20:12 "" -> "L"
+  R constant (right) 20:12-20:12 "" -> "R"
+  T constant (top) 20:12-20:12 "" -> "T"
+  B constant (bottom) 20:12-20:12 "" -> "B"
+  > operator (arrowhead on the right) 20:12-20:12 "" -> ">"
