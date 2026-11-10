@@ -121,6 +121,50 @@ describe('cook', () => {
     expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('x &amp; &#35; #a\ny');
   });
 
+  it.each([
+    ['#0;', '&#0;'],
+    ['#123;', '&#123;'],
+    ['#00123;', '&#00123;'],
+    ['#123a;', '&123a;'],
+    ['#a123;', '&a123;'],
+    ['#123_;', '&123_;'],
+    ['#_;', '&_;'],
+    ['#;', '#;'],
+    ['#１２;', '#１２;'],
+  ])('distinguishes numeric and named entity placeholders: %s', (src, expected) => {
+    expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe(expected);
+  });
+
+  it('cooks only the requested range, including partial entities and empty ranges', () => {
+    const src = '#35;plain\r\n#amp;';
+    const view = sourceView(src, 0, []);
+    expect(cook(src, 4, 9, view)).toBe('plain');
+    expect(cook(src, 0, 3, view)).toBe('#35');
+    expect(cook(src, 1, 4, view)).toBe('35;');
+    expect(cook(src, 9, 10, view)).toBe('\n');
+    expect(cook(src, 10, 11, view)).toBe('\n');
+    expect(cook(src, 11, src.length, view)).toBe('&amp;');
+    expect(cook(src, 0, 0, view)).toBe('');
+    expect(cook(src, 9, 9, view)).toBe('');
+    expect(cook(src, src.length, src.length, view)).toBe('');
+  });
+
+  it('reads quote masks only inside the range being cooked', () => {
+    const src = '<b x="y">plain';
+    const view = sourceView(src, 0, []);
+    expect(cook(src, 9, src.length, view)).toBe('plain');
+    expect(cook(src, 5, 8, view)).toBe("'y'");
+    expect(cook(src, 0, 5, view)).toBe('<b x=');
+  });
+
+  it('collapses blanks after a brace outside the range, including a removed span', () => {
+    for (const gap of ['', '%%{init: {}}%%']) {
+      const src = `}${gap}  \nplain`;
+      const view = sourceView(src, 0, directivesOf(src), { braceNewline: true });
+      expect(cook(src, 1 + gap.length, src.length, view)).toBe('\nplain');
+    }
+  });
+
   it('skips a removed span inside the range', () => {
     const src = 'a\n%% c\nb';
     expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('a\nb');

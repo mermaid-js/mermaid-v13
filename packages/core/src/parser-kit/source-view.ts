@@ -27,7 +27,7 @@ import {
   RBRACE,
   SEMI,
 } from './char-codes.ts';
-import { isSpace, isWord } from './chars.ts';
+import { isDigit, isSpace, isWord } from './chars.ts';
 import type { Range } from './positions.ts';
 
 /** Mask bit: a `"` that v12 turned into `'` (an HTML attribute quote). */
@@ -398,9 +398,8 @@ export function cook(src: string, start: number, end: number, view: SourceView):
   const split = (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
   if (
     !split &&
-    !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
     (!braceNewline || src.charCodeAt(start - 1) !== RBRACE) &&
-    !masked(mask, start, end)
+    !needsCooking(src, start, end, mask, braceNewline)
   )
     return src.slice(start, end);
   const from = localOffset(view, start);
@@ -426,10 +425,14 @@ export function cook(src: string, start: number, end: number, view: SourceView):
     }
     if (c === HASH) {
       let j = i + 1;
-      while (j < to && isWord(text.charCodeAt(j))) j++;
+      let numeric = true;
+      while (j < to && isWord(text.charCodeAt(j))) {
+        if (!isDigit(text.charCodeAt(j))) numeric = false;
+        j++;
+      }
       if (j > i + 1 && j < to && text.charCodeAt(j) === SEMI) {
         const name = text.slice(i + 1, j);
-        out += /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
+        out += numeric ? `&#${name};` : `&${name};`;
         i = j;
         continue;
       }
@@ -496,8 +499,17 @@ export function firstHole(view: SourceView, at: number): number {
   return lo;
 }
 
-function masked(mask: Uint8Array | undefined, start: number, end: number): boolean {
-  if (!mask) return false;
-  for (let i = start; i < end; i++) if (mask[i]) return true;
+/** Inspect just the source range, without a temporary substring or per-token RegExp. */
+function needsCooking(
+  src: string,
+  start: number,
+  end: number,
+  mask: Uint8Array | undefined,
+  braceNewline: boolean
+): boolean {
+  for (let i = start; i < end; i++) {
+    const c = src.charCodeAt(i);
+    if (c === CR || c === HASH || (braceNewline && c === RBRACE) || mask?.[i]) return true;
+  }
   return false;
 }
