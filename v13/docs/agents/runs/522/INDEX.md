@@ -10,7 +10,7 @@ Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR:
 | T4 SVG renderer | #541 | #540; block's T0 (#521, PR #589) merged into `mermaid-v13` | merged (ff 5f5344bfe; package entry 25,234 B gz; core unchanged) |
 | T5 integration | #542 | #541, #543 | merged (ff f767d4b3e; core 94,434 B gz, +22 registry row; load path 125,322 B; warm-render geomean 31.2× vs 12.2.0, not a steady machine) |
 | T6 language facet | #543 | #539 | merged (ff bc3c97782; package entry 26,244 B gz, `./language` 18,312 B gz core external; core unchanged) |
-| T7 ascii (Should) | #545 | #542 | open |
+| T7 ascii (Should) | #545 | #542 | merged (ff a3f71747a; text path 12,288 B gz; core +12, the `loadAscii` row) |
 
 - `01-v12-c4.md`: pointer notes on v12 grammar, DB, renderer, shapes, specs, config, corpus, Pele.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams, size guards.
