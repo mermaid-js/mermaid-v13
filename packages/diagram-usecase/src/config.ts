@@ -192,9 +192,8 @@ export function usecaseLayoutConfig(
       DEFAULTS.colorScheme,
       (v) => (v === 'role' || v === 'rotate' ? v : undefined)
     ),
-    useMaxWidth: take('useMaxWidth', DEFAULTS.useMaxWidth, String(DEFAULTS.useMaxWidth), (v) =>
-      v === false ? false : true
-    ),
+    // Only `false` turns it off.
+    useMaxWidth: take('useMaxWidth', DEFAULTS.useMaxWidth, '', (v) => v !== false),
     set,
   };
 }
