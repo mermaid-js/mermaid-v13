@@ -264,7 +264,8 @@ export function fitTextIcon(
   for (let i = 0; i < Math.min(most, label.lines.length); i++) {
     let runs = label.lines[i]!;
     let width = label.widths[i]!;
-    if (width > room || (cut && i === most - 1)) [runs, width] = ellipsised(runs, room, font, ctx);
+    if (width > room || (cut && i === most - 1))
+      [runs, width] = withEllipsis(runs, room, font, ctx);
     lines.push(runs);
     widths.push(width);
     indents.push(label.indents[i] ?? 0);
@@ -281,7 +282,7 @@ export function fitTextIcon(
 }
 
 /** `runs` cut from the end until it and an ellipsis fit in `room`, and its width. */
-function ellipsised(
+function withEllipsis(
   runs: readonly Run[],
   room: number,
   font: FontKey,

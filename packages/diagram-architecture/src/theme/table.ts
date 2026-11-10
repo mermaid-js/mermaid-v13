@@ -12,7 +12,7 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  *   (the D332 input gitGraph's tags read: the author's `primaryBorderColor`, else v12's resolved
  *   border), so `inline(calloutBorder, primaryBorderColor)` gives v12's border in ten themes,
  *   where `primaryBorderColor` gives it in five (GAPS T4).
- * - The widths: v12's `3` (unitless, so px) and `2px` in every theme.
+ * - The widths: v12's `3` (no unit, so px) and `2px` in every theme.
  *
  * v12's `base` pinned `#777` and `#000` where every other theme derived them; no trait separates
  * `base` from `default`, so it takes the rule (D541, a family-rule approximation the oracle
