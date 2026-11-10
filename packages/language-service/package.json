@@ -49,6 +49,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
+    "@mermaid-js/diagram-treeview": "workspace:*",
     "@mermaid-js/diagram-usecase": "workspace:*",
     "@mermaid-js/diagram-venn": "workspace:*",
     "@mermaid-js/diagram-wardley": "workspace:*",
@@ -115,6 +116,9 @@
     "@mermaid-js/diagram-treemap": {
       "optional": true
     },
+    "@mermaid-js/diagram-treeview": {
+      "optional": true
+    },
     "@mermaid-js/diagram-usecase": {
       "optional": true
     },
@@ -150,6 +154,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
+    "@mermaid-js/diagram-treeview": "workspace:*",
     "@mermaid-js/diagram-usecase": "workspace:*",
     "@mermaid-js/diagram-venn": "workspace:*",
     "@mermaid-js/diagram-wardley": "workspace:*",

@@ -1,0 +1,52 @@
+@ 2:5  ap|p/
+  2:3-2:7 "app/"
+  | **directory** `app/`
+  |
+  | Path: `/app/`
+  |
+  | Icon: none, since `showIcons` is off and it has no `icon(…)`.
+@ 3:7  sr|c/
+  3:5-3:9 "src/"
+  | **directory** `src/`
+  |
+  | Path: `/app/src/`
+  |
+  | Icon: none, since `showIcons` is off and it has no `icon(…)`.
+@ 4:11  inde|x.js
+  4:7-4:15 "index.js"
+  | **file** `index.js`
+  |
+  | Path: `/app/src/index.js`
+  |
+  | Icon: none, since `showIcons` is off and it has no `icon(…)`.
+@ 5:13  "my fi|le" icon(none)
+  5:7-5:16 "\"my file\""
+  | **file** `my file`
+  |
+  | Path: `/app/src/my file`
+  |
+  | Icon: none, since its `icon(…)` hides it.
+@ 5:24  "my file" icon(no|ne)
+  5:17-5:27 "icon(none)"
+  | **icon** `icon(none)` of `my file`
+  |
+  | Icon: none, since its `icon(…)` hides it.
+@ 6:8  REA|DME.md icon(logos:markdown)
+  6:5-6:14 "README.md"
+  | **file** `README.md`
+  |
+  | Path: `/app/README.md`
+  |
+  | Icon: `logos:markdown`, from its `icon(…)`.
+@ 6:22  README.md icon(lo|gos:markdown)
+  6:15-6:35 "icon(logos:markdown)"
+  | **icon** `icon(logos:markdown)` of `README.md`
+  |
+  | Icon: `logos:markdown`, from its `icon(…)`.
+@ 7:5  em|pty/
+  7:3-7:9 "empty/"
+  | **directory** `empty/`
+  |
+  | Path: `/empty/`
+  |
+  | Icon: none, since `showIcons` is off and it has no `icon(…)`.

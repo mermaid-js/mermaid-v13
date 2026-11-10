@@ -161,6 +161,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:^
         version: link:../diagram-usecase
@@ -288,6 +291,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:^
         version: link:../diagram-usecase
@@ -534,6 +540,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-treeview:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-usecase:
     devDependencies:
       '@mermaid-js/core':
@@ -623,6 +635,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:*
         version: link:../diagram-usecase
@@ -711,6 +726,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:*
         version: link:../diagram-usecase
@@ -955,6 +973,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:*
         version: link:../diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:*
+        version: link:../diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:*
         version: link:../diagram-usecase
@@ -1122,6 +1143,9 @@ importers:
       '@mermaid-js/diagram-treemap':
         specifier: workspace:^
         version: link:../../packages/diagram-treemap
+      '@mermaid-js/diagram-treeview':
+        specifier: workspace:^
+        version: link:../../packages/diagram-treeview
       '@mermaid-js/diagram-usecase':
         specifier: workspace:^
         version: link:../../packages/diagram-usecase

@@ -1,0 +1,174 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-treeview",
+  "scopeName": "source.mermaid-treeview",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-treeview"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-treeview"
+    },
+    "rule-0": {
+      "match": "treeView-beta(?=[\\n\\r]|$|[\\t ]+(?::::[\\t ]*[A-Z_a-z]|icon\\(|##))",
+      "name": "keyword.control.mermaid-treeview"
+    },
+    "rule-1": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-treeview"
+    },
+    "rule-2": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-treeview"
+    },
+    "rule-3": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-treeview"
+    },
+    "rule-4": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-treeview"
+    },
+    "rule-5": {
+      "match": "[\\t ]+:::[\\t ]*[A-Z_a-z][\\w-]*",
+      "name": "keyword.operator.mermaid-treeview"
+    },
+    "rule-6": {
+      "match": "[\\t ]+icon\\([\\w-]*(?::[\\w-]+)?\\)",
+      "name": "entity.name.function.mermaid-treeview"
+    },
+    "rule-7": {
+      "match": "[\\t ]+##[^\\n\\r]*",
+      "name": "comment.line.mermaid-treeview"
+    },
+    "rule-8": {
+      "match": "[\\t ]+"
+    },
+    "rule-9": {
+      "match": "\"[^\"]*\"|'[^']*'",
+      "name": "string.quoted.mermaid-treeview"
+    },
+    "rule-10": {
+      "match": "%%[^\\n]*",
+      "name": "comment.line.mermaid-treeview"
+    },
+    "rule-11": {
+      "match": "\\n"
+    },
+    "rule-12": {
+      "match": "(?!:::|icon\\(|##)[^\\t\\n\\r \"'](?:(?![\\t ]+:::[\\t ]*[A-Z_a-z]|[\\t ]+icon\\(|[\\t ]+##)[^\\n\\r])*",
+      "name": "variable.other.mermaid-treeview"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-treeview"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-treeview"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-treeview"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-treeview"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

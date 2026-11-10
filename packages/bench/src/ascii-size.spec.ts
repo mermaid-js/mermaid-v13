@@ -94,6 +94,20 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(text).toContain('packages/diagram-usecase/src/ascii/sizing.ts');
   });
 
+  // Each type with a text entry: its plugin's chunks, as an SVG render loads them, hold no
+  // ascii module (the entry is its own lazily imported chunk, D76).
+  it.each(asciiTypes().map((t) => [t]))(
+    'a %s SVG render loads its plugin and no ascii module',
+    (type) => {
+      const plugin = chunkOf(prod, `packages/diagram-${type}/src/index.ts`);
+      expect(plugin).toBeDefined();
+      const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+      const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+      expect(inputs).toContain(`packages/diagram-${type}/src/plugin.ts`);
+      expect(inputs.filter(isAsciiModule)).toEqual([]);
+    }
+  );
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -115,6 +129,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
         'info',
         'kanban',
         'ishikawa',
+        'treeview',
       ])
     );
     for (const type of types)
