@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ganttTokens, parseGantt } from '@mermaid-js/diagram-gantt';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the gantt lexer is linear in input size, in every free-text state, and
@@ -71,39 +72,18 @@ const PARSER_SHAPES: [string, (n: number) => string][] = [
   ['tag-only data', (n) => G + 'a :done\n'.repeat(n / 8)],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the gantt lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      ganttTokens(small); // warm up
-      ganttTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => ganttTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => ganttTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => ganttTokens(small),
+          () => ganttTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
@@ -115,21 +95,12 @@ describe('stress: the gantt parser is linear in input size', () => {
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseGantt(small); // warm up
-      parseGantt(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseGantt(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseGantt(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseGantt(small),
+          () => parseGantt(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
