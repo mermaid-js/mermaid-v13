@@ -1,0 +1,13 @@
+---
+description: >-
+  An edge from a member to the collapsed flow that holds it: both ends fold into the card, so
+  v12 drops it (start and end are the card, the authored ends differ); an edge from outside to
+  the member ends at the card.
+---
+agentflow-beta TB
+  flow f["Collapsed"]
+    a["A"]
+    a --> f
+  end
+  f@{ view: "collapsed" }
+  c["C"] --> a
