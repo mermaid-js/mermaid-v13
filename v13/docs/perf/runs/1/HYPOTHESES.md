@@ -1,6 +1,7 @@
 # Round 1 hypotheses
 
-Status: prepared, not started. All candidates use the same frozen round base.
+Status: first batch (2b, 1c, 5b) evaluated and rejected; see [the report](batch-1/REPORT.md).
+Remaining hypotheses are prepared but untested. All candidates use the same frozen round base.
 P28 withdraws 3a: cache reset is a measurement requirement already handled by the harness,
 not a production cache-removal task. Do not dispatch 3a.
 Read [the operating manual](../../LOOP.md) before implementation. Claimed lanes below are

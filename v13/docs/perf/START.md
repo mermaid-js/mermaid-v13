@@ -5,9 +5,19 @@
 **Formal headless Node round 0 is complete and published.** All 15 jobs completed under P27
 in `.tmp/perf-round-0-p27`. See [the generated report](runs/0/REPORT.md),
 [aggregate results](runs/0/RESULTS.json), and [baseline review](runs/0/REVIEW.md).
-No optimization hypothesis was implemented or evaluated. **Stop before round 1:** review the
-baseline with Knut before dispatching implementers. P28 resolves the former P18/P12 question:
-cache reset is for measurement only; production cache removal is not required.
+At round-0 publication no optimization hypothesis had been implemented or evaluated. Knut has
+now authorized the first round-1 batch: **5b, 2b and 1c**, each against the same frozen source
+snapshot. See [BATCH-1.md](runs/1/BATCH-1.md) for execution status and assignments. P28 resolves
+the former P18/P12 question: cache reset is for measurement only; production cache removal is
+not required. The round-0 evidence and review below remain unchanged.
+
+**Round 1's first batch is now complete.** [The report](runs/1/batch-1/REPORT.md) records
+2b, 1c and 5b as unfit: observed Node gains of 1.833%, 1.690% and 3.021% fall below the
+fixed 7.402% threshold. 5b also fails its measurer-call condition. All candidates passed
+Node acceptance and produced byte-identical SVGs for the frozen 5,000 records. No candidate
+is integrated; no accepted speedup is claimed. Other hypotheses remain untested. Docker was
+stopped before the final diagnostics/reference jobs; all timing comparisons used the same
+frozen P27 limits. Browser validation and e2e remain pending/unverified.
 
 The exact freeze prerequisite was `.tmp/perf-validation-p27-20261110-02/acceptance.json`:
 `validationProfile: "node"`, `sourceStable: true`, `ready: true`. Node 24.16.0 and pnpm 10.30.3

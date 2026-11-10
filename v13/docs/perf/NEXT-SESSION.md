@@ -1,5 +1,12 @@
 # Next session: validate Node execution access, then headless round 0
 
+> Current execution checkpoint: round 0 is complete, and round 1's first batch (2b, 1c, 5b)
+> has been measured and rejected. See [START.md](START.md) and [the batch report](runs/1/batch-1/REPORT.md).
+> No runner is active. Preserve all frozen evidence; do not rerun round 0 or redispatch these
+> candidates as new work. Remaining hypotheses need the next batch selection. Browser/e2e
+> validation remains pending. The round-0 launch instructions below are retained for provenance.
+
+
 **Completed on 2026-11-10:** formal headless Node round 0 is published at
 [runs/0/REPORT.md](runs/0/REPORT.md), with [baseline review](runs/0/REVIEW.md).
 [START.md](START.md) records the exact passing acceptance and completed P27 run. The workflow
