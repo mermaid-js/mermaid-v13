@@ -44,6 +44,8 @@ theme:
 # languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
 languageBundle:
   renderer:
+    - ascii/
+    - ascii.ts
     - render/
     - layout/
     - theme/
@@ -52,7 +54,7 @@ languageBundle:
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:
-  summary: 'The agentflow diagram plugin (SVG; `agentflow-beta`).'
+  summary: 'The agentflow diagram plugin (SVG, and text output from `/ascii`; `agentflow-beta`).'
   install: 'with `mermaid/slim`'
 
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):

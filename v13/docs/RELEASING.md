@@ -13,7 +13,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `mermaid` | The API (`render`, `initialize`, `run`, `mount`, CLI) plus every first-party diagram, each loaded on first use. | for everything: `npm install mermaid@v13-alpha` |
 | `mermaid/slim` | A subpath of `mermaid`, not a package: the same API with only the diagrams passed to `createMermaid({ diagrams })`. | to pick diagrams, with the `@mermaid-js/diagram-*` packages they want |
 | `@mermaid-js/core` | The DOM-free engine: plugin contract, parser kit, layout, SVG writer, theme, config. | never directly; `mermaid` brings it |
-| `@mermaid-js/diagram-agentflow` | The agentflow diagram plugin (SVG; `agentflow-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-agentflow` | The agentflow diagram plugin (SVG, and text output from `/ascii`; `agentflow-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-class` | The class diagram plugin (SVG; `classDiagram` and `classDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-cynefin` | The Cynefin framework plugin (SVG; `cynefin-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |

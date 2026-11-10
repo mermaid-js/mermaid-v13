@@ -166,6 +166,8 @@ interface Measure {
   readonly units: UnitProfile;
   /** `agentflow.*` lengths. */
   readonly agentflowLength: ConfigLength;
+  /** Character cells (text output, #551): every node is a text-form box (DESIGN §6.3). */
+  readonly cells: boolean;
   readonly font: FontKey;
   readonly geometry: ShapeGeometry;
   readonly wrap: number;
@@ -212,6 +214,8 @@ export function prepareAgentflow(
     ctx,
     units,
     agentflowLength,
+    // This is the only place the builder looks at which profile it has (flowchart's rule).
+    cells: units.id === 'cell',
     font,
     geometry: { pads: padsOf(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
@@ -382,6 +386,16 @@ function measureNode(view: AgentflowNodeView, m: Measure): void {
   const markdown = (view.vertex?.labelType ?? view.flow?.labelType) === 'markdown';
   view.label = m.label(text, markdown, f, m.wrap, bits);
   const lw = view.label.width;
+  if (m.cells) {
+    // A text-form box (D469): the label, the profile's padding and a border cell on each side;
+    // no least width (as flowchart's text forms). An empty label keeps its row, so a side's
+    // mark never lands on a corner.
+    const pad = m.units.builder.nodePad;
+    view.w = lw + 2 * (pad.x + 1);
+    view.h = Math.max(view.label.lines.length, 1) + 2 * (pad.y + 1);
+    view.dy = 0;
+    return;
+  }
   // v12 widens a vertex label to `agentflow.minNodeWidth`; a collapsed card keeps its own.
   const keep = view.shape === 'collapsedGroup';
   const s = shapeSize(
@@ -466,13 +480,16 @@ function layoutGraph(
   // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
   const down = spacingOn('y', 'x');
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
-  const titleRoom = fromPx(units, titleMargin.top + titleMargin.bottom, 'y');
+  // In cells a flow's title sits on its top border (`ascii/warnings.ts` names a margin set).
+  const titleRoom = m.cells ? 0 : fromPx(units, titleMargin.top + titleMargin.bottom, 'y');
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
-      node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.geometry);
+      // A text-form box leaves the span to the engine's `corner` metric.
+      if (!m.cells)
+        node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.geometry);
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
@@ -511,7 +528,11 @@ function layoutGraph(
     })),
     spacing,
     ...(turned ? { turnedSpacing: down } : {}),
-    diagramPadding: fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
+    // Text output trims the empty margin, so in cells a margin would only eat into
+    // `ascii.maxWidth` (D84): the profile's own (0) applies.
+    diagramPadding: m.cells
+      ? b.diagramPadding
+      : fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
     routing:
       units.grid === undefined
         ? (ROUTING[curveKind(model.defaultInterpolate ?? m.ctx.config.flowchart?.curve)] ??

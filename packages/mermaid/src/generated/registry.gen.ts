@@ -23,8 +23,9 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'agentflow',
     pattern: /^\s*agentflow-beta\b/,
     id: 'agentflow',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-agentflow').then((m) => m.agentflow),
+    loadAscii: () => import('@mermaid-js/diagram-agentflow/ascii').then((m) => m.ascii),
   },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   {

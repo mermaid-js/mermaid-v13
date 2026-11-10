@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { agentflow, agentflowConfigDefaults, parseAgentflow } from '@mermaid-js/diagram-agentflow';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -255,12 +255,70 @@ describe('agentflow diagrams through the public API (#550)', () => {
     expect(agentflow.labels(model)).toEqual(expect.arrayContaining(['F $$x$$', 'A', 'to b']));
   });
 
-  it('supports svg only until #551: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {
+  it('draws as text (#551, D469): kinds as text forms, flows as frames, both charsets', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('agentflow', 'svg')).toBe(true);
-    expect(m.supportsFormat('agentflow', 'ascii')).toBe(false);
-    const e = await rejection(m.render('a14', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('agentflow');
+    expect(m.supportsFormat('agentflow', 'ascii')).toBe(true);
+    const result = await m.render('a14', TEXT, { format: 'ascii' });
+    expect(result).toMatchObject({
+      format: 'ascii',
+      diagramType: 'agentflow',
+      columns: 76,
+      rows: 19,
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.text).toBe(
+      [
+        '                                          ╭─────────╮',
+        '                                          │ LLM API │',
+        '                                          ╰─────────╯',
+        '                                                                  ┌+──────┐',
+        '                                                               ┌─►│ Audit │',
+        '                                                               │  └───────┘',
+        '                                                               │',
+        '                                                               │',
+        '┌────────────────────── Triage ─────────────────────┐          │',
+        '│                                                   │          │  ┌─────┐',
+        '│                                   ┌─────◇─────┐   │          │┌✕< act >',
+        '│                 ╓──────────╖      │           ├───┼─── low ──┘│ └─────┘',
+        '│ ┌────────┐      ║          ╟─────►◇ Severity? ◇   │           │',
+        '│ / ticket ├─────►║ classify ║      │           ├───┼───────────┘',
+        '│ └────────┘      ║          ╟┄┄┄┐  └─────◇─────┘   │',
+        '│                 ╙──────────╜   ┆                  │             ┌────────╲',
+        '│                                └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┤ Policy │',
+        '│                                                   │             └────────┘',
+        '└───────────────────────────────────────────────────┘',
+      ].join('\n')
+    );
+    const ascii = m.renderSync(TEXT, { format: 'ascii', config: { ascii: { charset: 'ascii' } } });
+    expect(ascii.text).toContain(
+      '| / ticket +----->I classify I      |           +---+-----------+'
+    );
+    expect(ascii.text).toContain('|           +---+--- low --+| +-----+');
+    expect(ascii.text).not.toMatch(/[\u2500-\u25ff\u2715]/u);
+    // A text render leaves the instance's SVG render as a fresh one draws it.
+    expect((await m.render('a14', TEXT)).svg).toBe((await createMermaid().render('a14', TEXT)).svg);
+  });
+
+  it('never crops: wider than ascii.maxWidth turns LR to TB, then warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const turned = await m.render('a15', TEXT, { format: 'ascii', ascii: { maxWidth: 40 } });
+    expect(turned.columns).toBe(39);
+    expect(turned.warnings).toEqual([]);
+    const wide = await m.render('a15', TEXT, { format: 'ascii', ascii: { maxWidth: 20 } });
+    expect(wide.text).toBe(turned.text);
+    expect(codes(wide)).toEqual(['ASCII_TOO_WIDE']);
+  });
+
+  it('warns for what text output cannot honour: another engine, SVG-only options (pitfall 22)', async () => {
+    const text = '---\nconfig:\n  layout: elk\n  agentflow:\n    useMaxWidth: false\n---\n' + TEXT;
+    const m = createMermaid();
+    const r = await m.render('a16', text, { format: 'ascii' });
+    expect(r.warnings.map((w) => [w.code, (w as { feature?: string }).feature])).toEqual([
+      ['ASCII_DROPPED', 'layout'],
+      ['ASCII_DROPPED', 'config'],
+    ]);
+    expect(r.warnings[1]!.message).toContain('agentflow.useMaxWidth');
+    expect(r.text).toBe((await m.render('a16', TEXT, { format: 'ascii' })).text);
   });
 });

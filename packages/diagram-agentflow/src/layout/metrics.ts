@@ -70,8 +70,8 @@ export interface AgentflowMetrics {
 }
 
 /**
- * The px metrics, the only set drawn today; text output (D320, #551) adds a cell set chosen by
- * the unit profile.
+ * The px metrics, the only set: text output (D320, #551) draws every shape as a text-form box
+ * sized from the cell profile (`prepare.ts`), so it reads none of these.
  */
 export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   minLabel: 12,

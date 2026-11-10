@@ -23,11 +23,12 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
  * typesets math with the math plugin and warns `MATH_NOT_RENDERED` without it (D176). `render`
  * writes the whole `<svg>` document; `theme` is the diagram's own table (D331). `configDefaults`
  * are the `agentflow` section's generated defaults; the manifest in package.json gives the
- * registry row (#550). SVG only: `format: 'ascii'` throws `UnsupportedFormatError` until #551.
+ * registry row (#550). Text output (`format: 'ascii'`) is the lazily loaded `./ascii` entry
+ * (#551, D469): the pipeline lays out in cells through this `layout`, then calls its hook.
  */
 export const agentflow = {
   id: 'agentflow',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
   configDefaults: agentflowConfigDefaults as Readonly<Record<string, unknown>>,
   theme,
