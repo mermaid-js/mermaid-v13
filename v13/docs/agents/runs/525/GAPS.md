@@ -21,16 +21,26 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T0b #591
 
-Unmet criteria: none. Size rework (coordinator brief): gated core +589 B gz, down from +2,704 in the first version. Choices and known limits:
+Unmet criteria: none of the ticket's. **Size target not met:** gated core +947 B gz against the coordinator's +589 (review rework, findings 1–10).
 
-- **Only moved ends are redrawn.** An end already on its named side keeps layered's route; a graph whose sides match layered's ports is byte-identical. A moved end goes to the side's middle, or `anchorY` down a `left`/`right` side (D501 said only `compass` reads it; the doc comment is updated). Its stub is `corner + headRoom + marker length`. Then right angles join the route's middle: along the stub first where the route lies ahead, else across to a lane one stub past the box. That is up to three turns, against the brief's two: the lane cut end-box crossings in the matrix from 164 to 4 of 384 for about 20 B. A 2-point route gives both ends stubs.
-- **Dropped for size (limits):**
-  - Ends on one side are not spread apart, so a moved end may meet another end at the side's middle (`it.todo`).
-  - The drawing does not grow. New points are clamped to half the padding, so a stub at the drawing's edge can be shorter than its marker room.
-  - In-line and doubled-back points are not removed; the extra points draw over the same line.
-  - An unknown side is not a `RangeError` (`Side` is typed; `compass` still checks it) (`it.todo`).
-  - No global avoidance: routes may cross other nodes and edges, and 4 matrix routes still cross an end box (counted in the spec).
-- **No special cases.** Self-loops and group ends go through the same path; the self-loop label stays where layered put it. The grid (ASCII) ignores sides.
+Choices:
+- **Redrawn from the ends, not patched.** Only an edge where a named side moves an end is redrawn; graphs without sides, and edges whose sides layered already took, are byte-identical.
+- **Where ends go.** A moved end goes to the side's middle. Any named `left`/`right` end goes to `anchorY`, moved or not (finding 4).
+- **Stubs.** The source stub is `corner` plus the start marker (no `headRoom`, finding 7). The target stub is `corner` plus `headRoom` plus the end marker.
+- **Links.** Right angles go stub → label → stub. A cost (boxes crossed and doubling back 9 each, a turn 1, length a little) picks among two-corner paths on lines through either end, midway, or `corner` past an end box.
+- **Growth.** The drawing grows, shifting everything, where a stub or lane reaches into the margin (finding 3: growth was chosen over clamping, since clamped stubs left markers no room).
+
+Known limits:
+- Ends on one side are not spread apart (`it.todo`).
+- An unknown side is not refused (`it.todo`).
+- A loop with both ends on one side keeps layered's loop (`it.todo`). A loop with two sides routes through layered's loop label.
+- Routes may cross other nodes and edges; there is no global avoidance.
+- Not applied on the grid.
+
+Size options if +947 is too much:
+- (1) Drop growth and keep stubs inside the margin: about −140, with stubs at the edge cut short.
+- (2) A lazily registered post-pass, which needs a D-id.
+- (3) Accept the size.
 
 ## T0c #592
 
@@ -63,6 +73,20 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 - **Corpus**: 22 `db-*` cases added to `architecture-cases.json` (one per v12 DB check, plus `__proto__`), and `architecture-recovery.json` joins the gate corpus; T1's lexer gate still passes on both.
 
 ## T3 #607
+
+Unmet criteria: none. Choices the spec and D-ids leave open, and the probes:
+
+- **Box = icon + label.** A service's box is `max(iconSize, label width)` by `iconSize + label height`, the label wrapped at `iconSize × 1.5` and centred under the icon, `anchorY = iconSize / 2` (T0's "Using it"). v12's cytoscape node was the icon alone, its label hanging below; so `compass` keeps clear of labels where v12 could overlap them. Junctions are `iconSize` squares, `anchorY` the same.
+- **Group title band** = group icon (`padding × 0.75`), then 4 px (v12's `+ 4`, `svgDraw.ts:263`, also with no icon) and the label, as high as the taller; icon alone is the icon square; neither, no `title`. Titles and edge labels are measured unwrapped: v12 wrapped them to the drawn group width / edge length, unknown before layout (D507: T4 places edge labels and may re-wrap).
+- **Font.** Every label in the theme's `fontFamily` / `fontSize` at weight 400, markdown on (v12's `createText`), `ctx.inline` passed; `architecture.fontSize` not read (D507). Reading those two rows drops `theme.notDrawnYet` from `workspace.yaml` (the flag means "not reached layout"); `pnpm regen` lists architecture on both rows in `theme-variables.md`. T4 adds its table.
+- **Config.** `architecture.iconSize` and `padding` are read with the config-length reader class, er, state and flowchart each copy (`layout/config-length.ts`: 0 up to 10,000, numeric strings too); anything else lays out with 80 / 40 and warns the new `ARCHITECTURE_CONFIG_IGNORED` once per key (pitfall 22). `iconSize: 0` is taken (degenerate, as in v12; the layout stays valid). The cap stops `1e9` hanging and `1e308` crashing `compass` (review). No core helper exists, so the copy is a fifth one; `conformance/src/architecture/config-length.spec.ts` keeps it equal to class's but for names. **Follow-up:** one core reader for all five. No schema defaults until T5's `configDefaults`, so the builder falls back to the table.
+- **Graph.** `direction: 'TB'` (every edge names its sides), `spacing` all `padding` (compass reads none; other engines get something sane), `diagramPadding: padding` (v12's `setupGraphViewbox` margin). Layout ids: model ids for nodes and groups (one namespace), the edge's AST id (`edge:a->b`, `@2`) for edges.
+- **Metrics table** (`layout/metrics.ts`): `ARCHITECTURE_METRICS` (v12's constants) and `architectureSizes(iconSize, padding)` (arrow, label width and position, `{group}` offsets 44 / 62, junction end, group icon, dash), all exported for T4. `conformance/src/architecture/layout-literals.spec.ts` allows only 0, 1, 2 and the invariants' 0.5 slack elsewhere in `layout/`.
+- **Pair order against fcose** (real 12.2.0 in headless Chromium, icon centres, against `compass`'s icon centre lines): 327/411 pairs agree at 25 px tolerance, the two deep-nesting files differing (`should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram` 27/66, `should-render-with-randomize-true-without-errors` 21/66), as the research doc found. At 5 px a third differs: `should-render-an-architecture-diagram-with-groups-within-groups` (`db`/`gateway`: fcose puts `gateway` 21 px left of `db`, `compass` in one column), 326/411.
+- **Q5 probed (12.2.0): confirmed.** `shiftPositionByArchitectureDirectionPair` (`architectureTypes.ts:141`) flips the vertical for an `L`/`R` → `T`/`B` bend. Alone the pair gets no constraint and fcose puts `b` anywhere (`a:R -- T:b`: up and to the left of `a`); next to a straight edge from the same side the wrong cell feeds a constraint: `a:R -- L:c` + `a:R -- T:b` puts `b` above `c` (should be below), `a:R -- B:b` puts it below, `a:L -- T:b` above. `T`/`B` → `L`/`R` bends are right. `compass` follows the sides as written: fixture `nightly-check/layout-bends-follow-written-sides.mmd`, checked in `architecture/layout.spec.ts`. Visible change from v12 on such documents; follows the spec ("`compass` follows the sides as written"), MIGRATION row is T5's.
+- **Fixed cell gap, visible: needs a D-id.** With `iconSize` 200 every gap stays 60 px while v12's arrowhead is `iconSize / 6` = 33 px, so a `<-->` edge (two heads, 67 px) overdraws itself; at `iconSize` 40 the gaps look wide. Left as is (no core change in T3). Fix would be a way for the graph to set the gap (`compass` reading `spacing.node`, which T3 already sets to `padding`, or Pele's `max(padding, 0.75 × iconSize)` from a `LayoutGraph` field). **Proposal for T4 until then (not done):** architecture's own side only: when an edge has heads at both ends and its drawn run is shorter than the two heads (`2 × arrow`), shrink both heads to fit and warn once per render (e.g. `ARCHITECTURE_ARROW_SHRUNK`), so a large `iconSize` never draws overlapping heads; nothing changes at the default (60 px against 27 px).
+- **Review (10 findings) closed:** caps above; title gap; `anchorY` in the sizes table; `architectureSizesOf` no longer exported (renderers read `prepared.sizes`, so one read and one warning per render); the conformance harness builds the theme as a render does (`resolveThemeName`, `auto`, `themeVariables`, config warnings); the literal guard reads template expressions, strings holding `//`, hex and subfolders; `portLines` indexes once per graph; the corpus specs share `layoutBytes` / `portLines` / `OPPOSITE_SIDE` and lay each fixture out once; plain loops build the views.
+- **Corpus spec moved.** `compass/architecture-graph.ts` is gone; `compass/architecture-corpus.spec.ts` builds through `conformance/src/architecture/layout.ts` (preprocess, config, `parseArchitecture`, `prepareArchitecture`, table measurer). Same 8 misses; snapshot ids are now AST ids.
 
 ## T4 #614
 
