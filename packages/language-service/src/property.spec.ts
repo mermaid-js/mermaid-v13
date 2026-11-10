@@ -83,27 +83,30 @@ function check(name: string, text: string): string[] {
   const limit = Math.max(FLOOR_MS, RATIO * updateMs(uri, text));
   const doc = service.update(uri, text);
   const problems: string[] = [];
-  const run = (query: string, call: () => unknown, offset?: number) => {
+  /** Runs `call` against the budget; returns its last result, or undefined when it threw. */
+  const run = <T>(query: string, call: () => T, offset?: number): T | undefined => {
     const where = offset === undefined ? query : `${query} @${offset}`;
     // Best of three when the first call is over: a GC pause or a busy CI core is not repeated,
     // a slow query is.
     let ms = Infinity;
+    let result: T | undefined;
     for (let i = 0; i < 3 && ms > limit; i++) {
       const t = cpuMs();
       try {
-        call();
+        result = call();
       } catch (error) {
         problems.push(`${name}: ${where} threw ${(error as Error).message}`);
-        return;
+        return undefined;
       }
       ms = Math.min(ms, cpuMs() - t);
     }
     if (ms > limit) problems.push(`${name}: ${where} took ${ms.toFixed(1)} ms (> ${limit} ms)`);
+    return result;
   };
   run('diagnostics', () => doc.diagnostics());
   run('foldingRanges', () => doc.foldingRanges());
-  run('semanticTokens', () => doc.semanticTokens());
-  const tokens = doc.semanticTokens();
+  // A query's own result is checked too; it is called again only when it threw, as before.
+  const tokens = run('semanticTokens', () => doc.semanticTokens()) ?? doc.semanticTokens();
   for (let i = 1; i < tokens.length; i++) {
     const [a, b] = [tokens[i - 1]!.range, tokens[i]!.range];
     if (b.start < a.end)
@@ -118,13 +121,10 @@ function check(name: string, text: string): string[] {
     run('prepareRename', () => doc.prepareRename(at), at);
     run('rename', () => doc.rename(at, 'renamed1'), at);
     run('astAt', () => doc.astAt(at).map((id) => doc.rangeOf(id)), at);
-    run('completions', () => doc.completions(at), at);
-    const bad = doc
-      .completions(at)
-      .find(
-        ({ range: r }) =>
-          r.start > at || r.end < at || /[\r\n]/.test(doc.text.slice(r.start, r.end))
-      );
+    const items = run('completions', () => doc.completions(at), at) ?? doc.completions(at);
+    const bad = items.find(
+      ({ range: r }) => r.start > at || r.end < at || /[\r\n]/.test(doc.text.slice(r.start, r.end))
+    );
     if (bad)
       problems.push(
         `${name}: completion ${JSON.stringify(bad.label)} @${at} replaces [${bad.range.start},${bad.range.end}), off the cursor's line`

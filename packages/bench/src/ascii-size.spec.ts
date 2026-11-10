@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,25 @@ import { bundle } from './build.ts';
 import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
+const packages = fileURLToPath(new URL('../../', import.meta.url));
+
+/**
+ * The diagram types with a text entry, from their manifests (the `mermaid.ascii` key), sorted:
+ * a port that adds one is found here, so no list in this file names it.
+ */
+function asciiTypes(): string[] {
+  const out: string[] = [];
+  for (const dir of readdirSync(packages).sort()) {
+    const manifest = join(packages, dir, 'package.json');
+    if (!dir.startsWith('diagram-') || !existsSync(manifest)) continue;
+    const { mermaid } = JSON.parse(readFileSync(manifest, 'utf8')) as {
+      mermaid?: { plugin?: string; ascii?: string };
+    };
+    if (mermaid?.plugin === 'diagram' && mermaid.ascii !== undefined)
+      out.push(dir.slice('diagram-'.length));
+  }
+  return out;
+}
 
 /** The production bundle the bench serves as `v13` (R-PERF-1), built once for the file. */
 let prod: Bundle;
@@ -85,7 +104,20 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban', 'usecase'])
+    const types = asciiTypes();
+    // The discovery may find more, never fewer than the types that have a text entry today.
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'flowchart',
+        'er',
+        'sequence',
+        'packet',
+        'info',
+        'kanban',
+        'ishikawa',
+      ])
+    );
+    for (const type of types)
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -93,15 +125,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    expect(paths.map((p) => p.diagram)).toEqual([
-      'er',
-      'flowchart',
-      'info',
-      'kanban',
-      'packet',
-      'sequence',
-      'usecase',
-    ]);
+    expect(paths.map((p) => p.diagram)).toEqual(asciiTypes());
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
       expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
@@ -118,7 +142,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // depend on the working directory, or the gate measures nothing.
   it('finds the ascii chunks when built from the bench package directory', () => {
     const probe = [
-      "import { mkdtempSync, readFileSync } from 'node:fs';",
+      "import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';",
       "import { tmpdir } from 'node:os';",
       "import { join } from 'node:path';",
       "import { bundle } from './src/build.ts';",

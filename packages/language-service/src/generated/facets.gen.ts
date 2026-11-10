@@ -163,7 +163,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*radar-beta/.test(text),
     load: () => import('@mermaid-js/diagram-radar/language').then((m) => m.language),
   },
-  { type: 'ishikawa', id: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i, detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text) },
+  {
+    type: 'ishikawa',
+    id: 'ishikawa',
+    section: 'ishikawa',
+    pattern: /^\s*ishikawa(-beta)?\b/i,
+    detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text),
+    load: () => import('@mermaid-js/diagram-ishikawa/language').then((m) => m.language),
+  },
   {
     type: 'treemap',
     id: 'treemap',
@@ -214,4 +221,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'radar' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
