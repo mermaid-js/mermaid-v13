@@ -1,0 +1,90 @@
+@ 3:3  |a["Start"]:2
+  3:3-3:4 "a"
+  | **block** `a`
+  |
+  | Shape: square, `["…"]`
+  |
+  | Label: `Start`
+  |
+  | Span: 2 columns
+  |
+  | Classes: `hot`
+@ 4:8  b{"Ch|oice"}
+  4:3-4:14 "b{\"Choice\"}"
+  | **block** `b`
+  |
+  | Shape: diamond, `{"…"}`
+  |
+  | Label: `Choice`
+  |
+  | Span: 1 column
+@ 5:11  c<["Go"]|>(right, up)
+  5:3-5:23 "c<[\"Go\"]>(right, up)"
+  | **block** `c`
+  |
+  | Shape: block arrow, `<["…"]>(…)`
+  |
+  | Label: `Go`
+  |
+  | Points: right, up
+  |
+  | Span: 1 column
+@ 6:9  block:|g["Group"]:2
+  6:9-6:10 "g"
+  | **block** `g`
+  |
+  | Shape: composite, `block:id … end`
+  |
+  | Label: `Group`
+  |
+  | Span: 2 columns
+  |
+  | Columns: 3
+  |
+  | Holds 1 block
+@ 8:5  |d
+  8:5-8:6 "d"
+  | **block** `d`
+  |
+  | Shape: square (no shape written)
+  |
+  | Span: 1 column
+  |
+  | In `g`
+@ 10:5  bl|ock
+  10:3-10:8 "block"
+  | **`block`**
+  |
+  | `block:id … end` (the header may take a label, a span and edges) or `block … end`.
+  |
+  | Shape: composite, `block:id … end`
+  |
+  | Span: 1 column
+  |
+  | Columns: auto
+  |
+  | Holds 1 block
+@ 13:9  a --> |g
+  13:9-13:10 "g"
+  | **block** `g`
+  |
+  | Shape: composite, `block:id … end`
+  |
+  | Label: `Group`
+  |
+  | Span: 2 columns
+  |
+  | Columns: 3
+  |
+  | Holds 1 block
+@ 14:9  class |a hot
+  14:9-14:10 "a"
+  | **block** `a`
+  |
+  | Shape: square, `["…"]`
+  |
+  | Label: `Start`
+  |
+  | Span: 2 columns
+  |
+  | Classes: `hot`

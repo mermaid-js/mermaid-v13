@@ -29,6 +29,7 @@
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-block": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
@@ -44,6 +45,7 @@
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",
     "@mermaid-js/diagram-radar": "workspace:*",
+    "@mermaid-js/diagram-requirement": "workspace:*",
     "@mermaid-js/diagram-sankey": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",
@@ -56,6 +58,9 @@
     "@mermaid-js/diagram-xychart": "workspace:*"
   },
   "peerDependenciesMeta": {
+    "@mermaid-js/diagram-block": {
+      "optional": true
+    },
     "@mermaid-js/diagram-class": {
       "optional": true
     },
@@ -101,6 +106,9 @@
     "@mermaid-js/diagram-radar": {
       "optional": true
     },
+    "@mermaid-js/diagram-requirement": {
+      "optional": true
+    },
     "@mermaid-js/diagram-sankey": {
       "optional": true
     },
@@ -134,6 +142,7 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-block": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
@@ -149,6 +158,7 @@
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",
     "@mermaid-js/diagram-radar": "workspace:*",
+    "@mermaid-js/diagram-requirement": "workspace:*",
     "@mermaid-js/diagram-sankey": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",

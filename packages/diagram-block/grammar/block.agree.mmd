@@ -1,0 +1,15 @@
+block-beta
+  %% a comment
+  columns 3
+  a["Start"]:2 b{"Choice"}
+  block:group["Group"]
+    columns 2
+    c(("C")) d[("Store")]
+    space
+  end
+  e<["Next"]>(right, down)
+  a --> b -- "yes" --> group
+  b -.-> e
+  classDef hot fill:#f96,stroke:#333
+  class a hot
+  style e fill:#9f6

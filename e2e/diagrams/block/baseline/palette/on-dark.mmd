@@ -1,0 +1,22 @@
+---
+config:
+  theme: redux-dark-color
+description: >-
+  the composite palette on in the dark colour theme, with the borders from borderColorArray
+  (redux-dark-color)
+---
+block-beta
+  columns 3
+  block:ingest["Ingest"]
+    a["Fetch"] b["Validate"]
+  end
+  block:transform["Transform"]
+    columns 1
+    c["Normalise"]
+    block:inner
+      d["Enrich"]
+    end
+  end
+  block:store["Store"]
+    e[("Warehouse")]
+  end

@@ -24,6 +24,7 @@ describe('the diagram theme tables the theme specs pass (spec #414 T0b)', () => 
         'mindmap',
         'pie',
         'quadrant',
+        'requirement',
         'sequence',
         'state',
         'timeline',

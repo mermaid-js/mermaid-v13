@@ -1,0 +1,73 @@
+@ 1:4  blo|ck
+  1:1-1:6 "block"
+  | **`block`**
+  |
+  | A block diagram is `block-beta` or `block`, then at least one statement.
+@ 2:6  col|umns 3
+  2:3-2:12 "columns 3"
+  | **`columns 3`**
+  |
+  | `columns n` or `columns auto`: how many columns the level's grid has; the last one wins.
+@ 3:5  sp|ace:2
+  3:3-3:10 "space:2"
+  | **`space:2`**
+  |
+  | `space` or `space:n`: n empty cells of the grid.
+@ 4:5  bl|ock
+  4:3-4:8 "block"
+  | **`block`**
+  |
+  | `block:id … end` (the header may take a label, a span and edges) or `block … end`.
+  |
+  | Shape: composite, `block:id … end`
+  |
+  | Span: 1 column
+  |
+  | Columns: auto
+  |
+  | Holds 1 block
+@ 6:4  e|nd
+  6:3-6:6 "end"
+  | **`end`**
+  |
+  | `end`: closes the innermost composite.
+@ 7:8  block|:g
+  7:3-7:9 "block:"
+  | **`block:`**
+  |
+  | `block:id … end` (the header may take a label, a span and edges) or `block … end`.
+@ 10:6  a -|-> b
+  10:5-10:8 "-->"
+  | **`-->`**
+  |
+  | An edge: `-->`, `---`, `--x`, `--o`, `<-->`, `==>` (thick), `-.->` (dotted) and their kin, with any number of dashes or equals signs.
+@ 11:6  a -|- "label" --> b
+  11:5-11:7 "--"
+  | **`--`**
+  |
+  | The start of a labelled edge, as `a -- "text" --> b`.
+@ 12:14  c<["C"]>(ri|ght, down)
+  12:12-12:17 "right"
+  | **`right`**
+  |
+  | A block arrow's direction: `right`, `left`, `up`, `down`, `x` (both sides) or `y` (top and bottom), separated by commas.
+@ 12:20  c<["C"]>(right, d|own)
+  12:17-12:23 ", down"
+  | **`down`**
+  |
+  | A block arrow's direction: `right`, `left`, `up`, `down`, `x` (both sides) or `y` (top and bottom), separated by commas.
+@ 13:8  class|Def hot fill:#f96
+  13:3-13:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name styles`: a class of CSS styles, as `classDef hot fill:#f96,stroke:#333`.
+@ 14:5  cl|ass a hot
+  14:3-14:8 "class"
+  | **`class`**
+  |
+  | `class a, b name`: gives the blocks a class.
+@ 15:5  st|yle b fill:#9f6
+  15:3-15:8 "style"
+  | **`style`**
+  |
+  | `style a, b styles`: CSS styles for the blocks, applied after every statement.
