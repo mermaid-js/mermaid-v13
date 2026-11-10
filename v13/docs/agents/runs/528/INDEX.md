@@ -1,6 +1,6 @@
 # Run notes, spec #528 (M5b swimlane layout engine, flowchart `swimlane-beta`)
 
-Integration branch `feature/528_swimlane` (from `mermaid-v13` at 521fb76ee). Draft PR: not yet open.
+Integration branch `feature/528_swimlane` (from `mermaid-v13` at 521fb76ee). Draft PR: see below.
 
 T0a, T0b and T0c land as their own PRs into `mermaid-v13` (spec: reviewed apart from flowchart). The integration branch merges each T0 branch so T1+ can build on them, and re-merges `mermaid-v13` once they land.
 
@@ -9,7 +9,7 @@ T0a, T0b and T0c land as their own PRs into `mermaid-v13` (spec: reviewed apart 
 | T0a engine skeleton, lane rules, phases through coordinates | #593 | `feature/593_swimlane-engine` (own PR #628) | — | PR #628 merged into `mermaid-v13` (e540d3eb7); merged here. Core 94,352 → 94,385 B gz, chunk 15,316 B gz |
 | T0b orthogonal router, post-processing, DDLT gates | #595 | `feature/595_swimlane-router` (own PR #639) | #593 | PR #639 ready (b1a443289; core 94,412 B gz unchanged; chunk ~43 KB gz). #634 and #636 need a D-id |
 | T0c shared line hops, lazy core chunk (closes #78) | #596 | `feature/596_line-hops` (own PR) | — | PR #646 ready (ddd32b7a2; core 94,412 → 94,541 B gz, hops +103, swimlane section defaults +26) |
-| T1 flowchart registration and config section | #597 | `feature/597_swimlane-registration` | #593, #595 | in progress (from the integration branch with T0b and T0c merged) |
+| T1 flowchart registration and config section | #597 | `feature/597_swimlane-registration` | #593, #595 | merged (ff f6928a06b; core 95,929 → 96,254 B gz, +325: section layering and directive routing) |
 | T2 lane drawing, palette, warnings | #598 | `feature/598_swimlane-lanes` | #597 | not started |
 | T3 integration | #601 | `feature/601_swimlane-integration` | #598, #596 | not started |
 | T4 ascii | #603 | `feature/603_swimlane-ascii` | #597 | not started |

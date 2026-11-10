@@ -25,8 +25,9 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice (sent to T1 after review):** config layering for `swimlane-beta`, lowest first: flowchart defaults < swimlane defaults < the author's `flowchart.*` < the author's `swimlane.*`. An unscoped directive key goes to `swimlane` when its schema has it, else `flowchart`. D534 says "the swimlane section on top of flowchart's" without the author/default split.
 - Default curve needed no code: flowchart's default curve is already `rounded` in v13, and an author's `flowchart.curve` wins.
 - `swimlane.theme` now takes effect through the section scope, so it moves to `honoured`.
-- **For the maintainer:** T1 costs +256 B gz in core (94,623 → 94,879 on the integration branch), against 15–60 B for earlier ports' registration. About +225 B is the section layering and directive routing above; `typeOptions` (per-type `section`/`layout` in flowchart's manifest, replacing `type === …` branches, also used by `flowchart-elk`) is +28 B.
-- **Deviation:** an unscoped directive key goes to `swimlane` when core's swimlane defaults have it (every swimlane key but `useWidth`, which flowchart also has, and `look`, stripped).
+- **For the maintainer:** T1 costs +325 B gz in core (95,929 → 96,254 on the integration branch at bb9f244e3), against 15–60 B for earlier ports' registration. Most of it is the section layering and schema-keyed directive routing above (core's `KEY_TREE` now exported from `@mermaid-js/core/config`); `typeOptions` (per-type `section`/`layout` in flowchart's manifest, replacing `type === …` branches, also used by `flowchart-elk`) is +28 B.
+- Second review fixed: `preload({ types: ['flowchart'] })` loaded ELK (type lookup matched the plugin id); `detect()` returned internal entries; `useWidth` routing and mirroring. Directive keys now route by the swimlane schema, and keys both schemas have are mirrored.
+- Note: a third-party replacement of `flowchart` also takes over the `swimlane` row (one plugin id).
 - Note for T0b's follow-up: `pebr-2-edge-intrudes-lane-label` takes about 1.8–2.5 s per swimlane layout, so the swimlane corpus spec runs one test per fixture. Worth a stress check on the router.
 
 ## #598 T2 lane drawing
