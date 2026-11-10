@@ -1,0 +1,16 @@
+eventmodeling:keyword
+tf:keyword
+ui:keyword
+CartScreen:variable
+tf:keyword
+cmd:keyword
+AddItem:variable
+->>:operator
+{ productId: 7 }:string
+tf:keyword
+evt:keyword
+ItemAdded:variable
+tf:keyword
+rmo:keyword
+CartItems:variable
+->>:operator

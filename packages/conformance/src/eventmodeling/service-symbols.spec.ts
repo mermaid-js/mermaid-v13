@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  detectEventModeling,
-  eventModelingLanguage,
-  parseEventModel,
-} from '@mermaid-js/diagram-eventmodeling/language';
+import { parseEventModel } from '@mermaid-js/diagram-eventmodeling/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -26,19 +22,11 @@ import { eventModelingV13Snapshot, parseEventModelForParity } from './v13.ts';
  * - renaming a frame id to a fresh id, v12 reads the new text as the same model with the id
  *   changed and nothing else.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until event
- * modeling's manifest has its `language` entry (#611); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (event modeling's manifest
+ * `language` entry, #611).
  */
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'eventmodeling',
-      id: 'eventmodeling',
-      detector: (t) => detectEventModeling(t),
-      facet: eventModelingLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['eventmodeling'] });
 
 const FRESH = '987';
 const key = (r: Range | undefined) => (r ? `${r.start}:${r.end}` : 'none');
@@ -174,7 +162,11 @@ describe('event modeling symbols, hover, folding and rename through the service 
     expect(renamed).toBeGreaterThan(100);
   }, 120_000);
 
-  it('is still unlisted (drop the eager row once the manifest has `language`)', () => {
-    expect(firstPartyFacets.find((e) => e.type === 'eventmodeling')?.load).toBeUndefined();
+  it('loads the facet from the generated registry (#611)', () => {
+    const row = firstPartyFacets.find((e) => e.type === 'eventmodeling');
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///t', 'eventmodeling\ntf 01 evt A\n').facet?.id).toBe(
+      'eventmodeling'
+    );
   });
 });

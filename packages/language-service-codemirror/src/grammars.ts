@@ -12,6 +12,7 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   class: () => import('./generated/class.parser.js').then((m) => m.parser),
   cynefin: () => import('./generated/cynefin.parser.js').then((m) => m.parser),
   er: () => import('./generated/er.parser.js').then((m) => m.parser),
+  eventmodeling: () => import('./generated/eventmodeling.parser.js').then((m) => m.parser),
   flowchart: () => import('./generated/flowchart.parser.js').then((m) => m.parser),
   gantt: () => import('./generated/gantt.parser.js').then((m) => m.parser),
   gitGraph: () => import('./generated/gitGraph.parser.js').then((m) => m.parser),
