@@ -25,6 +25,13 @@
  * node with two parents). On a graph that is not a tree it lays the graph out with core's
  * `layered` and notes it (`takeNotes`), and the package's hook warns.
  *
+ * Sides (D503): under ELK layered, each edge end that names a side (`LayoutEdge.sides`) gets its
+ * own port on that side of its node or group, and the node `FIXED_SIDE`, so ELK places, orders
+ * and routes around it. A node with `anchorY` that takes a `left` or `right` end is `FIXED_POS`
+ * instead: those ports sit at `anchorY`, `top` and `bottom` ones at the side's middle, as
+ * `compass` puts them. An end with no side is left to ELK. The other algorithms ignore ports, so
+ * they get none.
+ *
  * Coordinates: every shape and edge is read in root coordinates (`elk.json.*Coords: ROOT`).
  * Only `x`, `y`, `width`, `height`, sections and labels are read back, never GWT's `$H` hash
  * counters, which differ from run to run.
@@ -50,6 +57,7 @@ import type {
   ElkExtendedEdge,
   ElkLabel,
   ElkNode,
+  ElkPort,
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
@@ -70,6 +78,12 @@ export type ElkAlgorithm =
   | 'radial';
 
 const DIRECTION: Record<Dir, string> = { TB: 'DOWN', BT: 'UP', LR: 'RIGHT', RL: 'LEFT' };
+const PORT_SIDE: Record<Side, string> = {
+  top: 'NORTH',
+  bottom: 'SOUTH',
+  left: 'WEST',
+  right: 'EAST',
+};
 
 const padding = (top: number, right: number, bottom: number, left: number): string =>
   `[top=${top},left=${left},bottom=${bottom},right=${right}]`;
@@ -105,6 +119,8 @@ const FIXED_GROUP: LayoutOptions = {
 const LABEL_KINDS = { label: 'c', startLabel: 's', endLabel: 'e' } as const;
 const PLACEMENT = { c: 'CENTER', s: 'TAIL', e: 'HEAD' } as const;
 const MARKER = { s: 'startMarker', e: 'endMarker' } as const;
+/** An edge end's port id: `<edge id>\u0000source` or `…target`. */
+const portId = (edgeId: string, end: 'source' | 'target'): string => `${edgeId}\u0000${end}`;
 
 interface Built {
   root: ElkNode;
@@ -157,6 +173,64 @@ function hierarchyHandling(graph: LayoutGraph, tree: Tree): Map<string, Handling
     }
   }
   return handling;
+}
+
+/** Where a port on `side` of a `width` × `height` box sits under `FIXED_POS`, as `compass` puts ends. */
+const fixedAt = (side: Side, width: number, height: number, anchorY: number): Point =>
+  ({
+    top: { x: width / 2, y: 0 },
+    bottom: { x: width / 2, y: height },
+    left: { x: 0, y: anchorY },
+    right: { x: width, y: anchorY },
+  })[side];
+
+/**
+ * Gives each edge end that names a side its own port on that side of its node or group in
+ * `nodes`, and the node `FIXED_SIDE`, or `FIXED_POS` where the node sets `anchorY` and takes a
+ * `left` or `right` end; under any algorithm but layered, none. Returns the id each edge leaves
+ * from and enters: the port, else the node.
+ */
+function sidePorts(
+  graph: LayoutGraph,
+  nodes: Map<string, ElkNode>,
+  layered: boolean
+): { sources: string[]; targets: string[] } {
+  const sided = new Map<ElkNode, Side[]>();
+  const portFor = (e: LayoutGraph['edges'][number], end: 'source' | 'target'): string => {
+    // Only ELK layered reads ports.
+    const side = layered ? e.sides?.[end] : undefined;
+    if (!side) return e[end];
+    const n = nodes.get(e[end])!;
+    const port: ElkPort = {
+      id: portId(e.id, end),
+      width: 0,
+      height: 0,
+      layoutOptions: { 'elk.port.side': PORT_SIDE[side] },
+    };
+    (n.ports ??= []).push(port);
+    sided.set(n, [...(sided.get(n) ?? []), side]);
+    return port.id;
+  };
+  const sources = graph.edges.map((e) => portFor(e, 'source'));
+  const targets = graph.edges.map((e) => portFor(e, 'target'));
+  const shapeOf = new Map(graph.nodes.map((n) => [n.id, n]));
+  for (const [n, sides] of sided) {
+    const shape = shapeOf.get(n.id);
+    const anchorY = shape?.anchorY;
+    const fixed = anchorY !== undefined && sides.some((s) => s === 'left' || s === 'right');
+    n.layoutOptions = {
+      ...n.layoutOptions,
+      'elk.portConstraints': fixed ? 'FIXED_POS' : 'FIXED_SIDE',
+    };
+    if (!fixed) continue;
+    // As `compass` and `layered` refuse it.
+    if (!(anchorY >= 0 && anchorY <= shape!.height))
+      throw new RangeError(`layout: anchorY of node '${n.id}' lies outside its box`);
+    n.ports!.forEach((p, i) =>
+      Object.assign(p, fixedAt(sides[i]!, shape!.width, shape!.height, anchorY))
+    );
+  }
+  return { sources, targets };
 }
 
 /**
@@ -266,6 +340,9 @@ export function toElkGraph(
   );
   const reversed = new Set(graph.edges.filter((_, i) => flags[i]).map((e) => e.id));
 
+  // Sides (D503): what each ELK edge leaves from and enters, a port where the end names a side.
+  const { sources, targets } = sidePorts(graph, nodes, layered);
+
   const edges = new Map<string, ElkExtendedEdge>();
   for (const index of orderNestedEdgeEnds(ends, tree)) {
     const e = graph.edges[index]!;
@@ -294,8 +371,8 @@ export function toElkGraph(
     }
     const edge: ElkExtendedEdge = {
       id: e.id,
-      sources: [ends[index]!.source],
-      targets: [ends[index]!.target],
+      sources: [turned ? targets[index]! : sources[index]!],
+      targets: [turned ? sources[index]! : targets[index]!],
       ...(labels.length ? { labels } : {}),
     };
     nodes.get(findCommonAncestor(e.source, e.target, tree))!.edges!.push(edge);
@@ -494,6 +571,20 @@ function extent(
   };
 }
 
+/** The sides an edge's ends meet: a named side where ELK placed the edge (D503), else the route's. */
+function portsOf(
+  e: LayoutGraph['edges'][number],
+  placedByElk: boolean,
+  rects: Map<string, Rect>,
+  points: Point[]
+): LayoutModelEdge['ports'] {
+  const named = placedByElk ? e.sides : undefined;
+  return {
+    source: named?.source ?? sideOf(rects.get(e.source)!, points[0]!),
+    target: named?.target ?? sideOf(rects.get(e.target)!, points[points.length - 1]!),
+  };
+}
+
 function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutModel {
   const chainOf = containers(treeOf(graph));
   const rects = new Map<string, Rect>();
@@ -554,10 +645,7 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
     };
     const model: LayoutModelEdge = {
       points: routePoints(points.map(at)),
-      ports: {
-        source: sideOf(rects.get(e.source)!, points[0]!),
-        target: sideOf(rects.get(e.target)!, points[points.length - 1]!),
-      },
+      ports: portsOf(e, placedByElk, rects, points),
     };
     const label = placed('label', 0.5);
     const startLabel = placed('startLabel', 0.1);
