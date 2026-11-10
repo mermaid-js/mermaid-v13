@@ -1,0 +1,22 @@
+---
+config:
+  theme: redux
+  look: handDrawn
+description: >-
+  one representative swimlane diagram, hand-drawn in the redux theme (D307): lanes, their title bands, nodes and edges sketched
+---
+swimlane-beta LR
+  subgraph Sales
+    A[Quote] --> B{Accepted?}
+  end
+  subgraph Ops[Operations]
+    C[Plan] --> D[(Stock)]
+    D --> E[Ship]
+  end
+  subgraph Billing
+    F[Invoice]
+  end
+  Start([New lead]) --> A
+  B -- yes --> C
+  B -. no .-> A
+  E --> F

@@ -1,7 +1,12 @@
 // Draws a laid-out flowchart through the SvgWriter (DESIGN §7). Structure follows v12's group
 // classes (`clusters`, `edgePaths`, `edgeLabels`, `nodes`); every vertex, edge and subgraph is
 // one element with `data-id`, `data-ast` and semantic classes (R-SVG-2, -3, R-PARSE-8).
-import type { LayoutModel, LayoutModelNode, RoutePoint } from '@mermaid-js/core/layout';
+import type {
+  LayoutModel,
+  LayoutModelGroup,
+  LayoutModelNode,
+  RoutePoint,
+} from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
@@ -28,13 +33,57 @@ import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shap
 export interface FlowLayout extends LayoutModel {
   /** Set by `layoutFlowchart`; a `postLayout` hook that builds a new model drops it. */
   readonly flow?: Prepared;
+  /** With `flow`: the lane drawer, on a layout the `swimlane` layout made (D535, D536). */
+  readonly lanes?: LaneDrawer;
+}
+
+/**
+ * Draws every group of a swimlane render: the lanes the engine made, then each subgraph in
+ * order, a lane as a lane and any other through `plain` (the renderer's subgraph box).
+ */
+export type LaneDrawer = (scene: Scene, plain: PlainCluster) => void;
+
+/**
+ * Swimlane lane drawing and warnings (spec #528, D535, D536): a part of its own
+ * (`../lanes.ts`), which `mermaid` loads with the `swimlane` layout for flowcharts
+ * (`layoutParts`), so a plain flowchart loads none of it (R-PERF-1). A render gets it as
+ * `ctx.layoutPart` only when that layout laid it out, so it is also the answer to "is this a
+ * swimlane render": then the top-level groups are lanes. Its default export makes one layout's
+ * drawer, its lanes worked out once, and given `warn`, raises v12's swimlane warnings.
+ */
+export type LaneDrawerFactory = (
+  cls: Classes,
+  model: FlowModel,
+  flow: Prepared,
+  layout: LayoutModel,
+  warn?: Warn
+) => LaneDrawer;
+
+/** The renderer's class-name helper, passed to the part so it imports none of this file. */
+export type Classes = (names: readonly string[]) => string;
+
+/** Draws one subgraph as a plain box. */
+export type PlainCluster = (view: NodeView, box: LayoutModelGroup) => void;
+
+type Warn = (warning: FlowWarning) => void;
+
+/** The layout's lane drawer: only on a render the `swimlane` layout laid out. */
+function lanesFor(
+  { layoutPart }: FlowRenderContext,
+  ...args: [FlowModel, Prepared, LayoutModel, Warn?]
+): LaneDrawer | undefined {
+  return typeof layoutPart === 'function'
+    ? (layoutPart as LaneDrawerFactory)(cls, ...args)
+    : undefined;
 }
 
 /** Measures the model and lays it out with `ctx.layout` (default `layered`). */
 export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
   const prepared = prepare(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
-  return { ...laid, flow: prepared };
+  // Its warnings at layout, as prepare's own: once per layout, also for a host that only lays out.
+  const lanes = lanesFor(ctx, model, prepared, laid, (w) => ctx.warn(w));
+  return { ...laid, flow: prepared, lanes };
 }
 
 const THICK = 3.5;
@@ -73,7 +122,7 @@ function inset(
   return p;
 }
 
-interface Tint {
+export interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
@@ -85,7 +134,7 @@ interface Tint {
  * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
  * empty, so `redux-dark-color` colours borders only.
  */
-function paletteSlots(theme: FlowRenderContext['theme']): (view: NodeView) => Tint | undefined {
+function paletteSlots(theme: FlowRenderContext['theme']): Paints['slotOf'] {
   const border = theme.palette('borderColorArray');
   const bkg = theme.palette('bkgColorArray');
   return (view) => {
@@ -104,7 +153,7 @@ type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
 /** Node paint: every vertex, and the edges' lines and heads. */
-interface NodePaint {
+export interface NodePaint {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly fill: Color;
@@ -129,13 +178,19 @@ interface NodePaint {
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
 }
 
-interface Paints {
+export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
+  /**
+   * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
+   * `stroke: clusterBorder` on lanes without a palette slot). Set only under the swimlane engine.
+   */
+  readonly laneStroke?: Color;
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
-  readonly slotOf: (view: NodeView) => Tint | undefined;
+  /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
+  readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
   readonly edgeLabel?: { fill: Color; text: Color };
 }
 
@@ -144,7 +199,7 @@ interface Paints {
  * `style` can declare exactly the aliases used (theme.rootStyle()). The order is the order
  * they are declared in.
  */
-function paints(theme: ThemeOf, flow: Prepared): Paints {
+function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const heads = arrowheads(theme);
   const node: NodePaint = {
     font: theme.font(),
@@ -161,8 +216,9 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
+  // Under the swimlane engine loose nodes sit in a lane, which flowchart's model does not have.
   const cluster =
-    flow.groups.length > 0
+    flow.groups.length > 0 || lanes
       ? {
           fill: theme.color('clusterBkg'),
           stroke: theme.outline('clusterBorder'),
@@ -173,21 +229,24 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
   const collapsedLine = flow.nodes.some((v) => v.shape === 'collapsedGroup')
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
+  const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { heads, node, cluster, collapsedLine, slotOf, edgeLabel };
+  return { heads, node, cluster, laneStroke, collapsedLine, slotOf, edgeLabel };
 }
 
 /** What every section of one render draws from. */
-interface Scene {
+export interface Scene {
   readonly w: SvgWriter;
   readonly layout: FlowLayout;
   readonly flow: Prepared;
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
-  readonly warn: (warning: FlowWarning) => void;
+  readonly warn: Warn;
+  /** The lane drawer, on a render the `swimlane` layout laid out (D535, D536). */
+  readonly lanes: LaneDrawer | undefined;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -198,13 +257,16 @@ export function renderFlowchart(
   w: SvgWriter
 ): void {
   const flow = layout.flow ?? prepare(model, ctx);
+  // Built once, at layout; a layout from elsewhere (a `postLayout` model) gets its own.
+  const lanes = layout.lanes ?? lanesFor(ctx, model, flow, layout);
   const scene: Scene = {
     w,
     layout,
     flow,
     ctx,
-    paint: paints(ctx.theme, flow),
+    paint: paints(ctx.theme, flow, !!lanes),
     warn: (warning) => ctx.warn(warning),
+    lanes,
   };
   openRoot(scene, model);
   if (scene.paint.cluster) drawClusters(scene);
@@ -265,12 +327,11 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: str
   w.close();
 }
 
-function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
+function drawClusters(scene: Scene): void {
+  const { w, layout, flow, ctx, paint } = scene;
   const cluster = paint.cluster!;
   w.open('g', { class: 'clusters' });
-  for (const g of flow.groups) {
-    const box = layout.groups.get(g.id);
-    if (!box) continue;
+  const plain: PlainCluster = (g, box) => {
     const fill = g.style.shape.fill;
     const slot = paint.slotOf(g);
     w.open('g', {
@@ -297,7 +358,13 @@ function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
       ...g.style.text,
     });
     w.close();
-  }
+  };
+  if (scene.lanes) scene.lanes(scene, plain);
+  else
+    for (const g of flow.groups) {
+      const box = layout.groups.get(g.id);
+      if (box) plain(g, box);
+    }
   w.close();
 }
 

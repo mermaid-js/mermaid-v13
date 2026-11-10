@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  lazyEngines,
   DETECTORS_PATH,
   FACETS_PATH,
   generateDetectors,
@@ -137,6 +138,7 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     expect(out).toContain('    detector: (text) => /^\\s*(graph|flowchart)/.test(text),');
     // The config section the renderer reads: the package id; a type with no package has none.
     expect(out).toContain("    section: 'flowchart',");
+    expect(out).not.toContain('baseSection');
     expect(out).not.toMatch(/type: 'mindmap'.*section/);
     expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'mindmap'"));
     expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
@@ -147,6 +149,67 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     const out = generateFacets([{ ...flowchart, manifest }]);
     expect(out).toContain("    section: 'flowchart-beta',");
     expect(out).toContain("    id: 'flowchart',");
+  });
+
+  it('gives a type with its own section and layout both, its own first (swimlane, D534)', () => {
+    const manifest = {
+      ...flowchart.manifest,
+      types: ['flowchart-elk', 'flowchart-v2', 'swimlane'],
+      typeOptions: {
+        swimlane: { section: 'swimlane', layout: 'swimlane' },
+        'flowchart-elk': { layout: 'elk' },
+      },
+    };
+    const facets = generateFacets([{ ...flowchart, manifest }]);
+    expect(facets).toContain("    section: 'swimlane',\n    baseSection: 'flowchart',");
+    expect(facets.match(/baseSection/g)).toHaveLength(1);
+    const rows = generateRegistry([{ ...flowchart, manifest }]);
+    expect(rows).toMatch(/type: 'swimlane',[^}]*section: 'swimlane',\n {4}layout: 'swimlane',/);
+    expect(rows).toMatch(/type: 'flowchart-elk',[^}]*layout: 'elk',/);
+    expect(rows).not.toMatch(/type: 'flowchart-v2',[^}]*layout:/);
+    expect(generateDetectors([{ ...flowchart, manifest }])).toContain(
+      "formats: ['svg'], section: 'swimlane', layout: 'swimlane' },"
+    );
+    const stray = { ...manifest, typeOptions: { sequence: { layout: 'elk' } } };
+    expect(() => generateRegistry([{ ...flowchart, manifest: stray }])).toThrow(
+      /not one of its types/
+    );
+    const bad = (typeOptions: Record<string, { section?: string; layout?: string }>) => () =>
+      generateRegistry([{ ...flowchart, manifest: { ...manifest, typeOptions } }]);
+    expect(bad({ swimlane: { section: 'lanes' } })).toThrow(/"lanes" is not a config section/);
+    expect(bad({ swimlane: { layout: 'lineHops' } })).toThrow(/"lineHops" is not a known layout/);
+    expect(bad({ swimlane: { layout: 'nope' } })).toThrow(/not a known layout/);
+    // A drawing part loads under a layout name but is no engine (#651).
+    expect(bad({ swimlane: { layout: 'flowchartLanes' } })).toThrow(
+      /"flowchartLanes" is not a known layout/
+    );
+    for (const layout of ['layered', 'dagre', 'tree', 'compass', 'swimlane', 'elk', 'elk.stress'])
+      expect(bad({ swimlane: { layout } })).not.toThrow();
+  });
+
+  it("reads mermaid's lazy engines from LAZY_LAYOUTS, parts and line hops left out (#651)", () => {
+    const source = readFileSync(
+      new URL('../../../packages/mermaid/src/registry.ts', import.meta.url),
+      'utf8'
+    );
+    expect([...lazyEngines(source)].sort()).toEqual(['compass', 'swimlane', 'tree']);
+    // Layout whitespace, quotes and comments do not matter.
+    const reformatted = `
+      const NOT_ENGINES: ReadonlySet<string> = new Set([
+        LINE_HOPS,
+        "part",
+      ]);
+      const LAZY_LAYOUTS = new Map<string, Loader>([
+        // ['commented', () => import('x')],
+        [
+          "tree",
+          () => import('t').then((m) => m.tree),
+        ],
+        ['part', () => import('p')],
+        [LINE_HOPS, () => import('h')],
+      ]);`;
+    expect([...lazyEngines(reformatted)]).toEqual(['tree']);
+    expect(() => lazyEngines('const LAZY_LAYOUTS = new Map([]);')).toThrow(/NOT_ENGINES/);
   });
 
   it('names the ids that have a facet in one union type', () => {

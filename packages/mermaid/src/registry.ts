@@ -36,6 +36,10 @@ export interface FirstPartyEntry {
   /** The plugin id (`flowchart`). */
   readonly id?: string;
   readonly formats?: readonly string[];
+  /** The config section the type reads on top of its plugin's (`swimlane`, D534). */
+  readonly section?: string;
+  /** The type's default layout, below every config layer (`elk`, `swimlane`; D534). */
+  readonly layout?: string;
   readonly load?: () => Promise<AnyPlugin>;
   /** The lazily loaded text-output hook (manifest key `ascii`, D76). */
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -133,9 +137,7 @@ export interface SkippedPlugin {
   readonly package: string;
 }
 
-interface Entry {
-  readonly type: string;
-  readonly id: string | undefined;
+interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
    * `body` is the text from the diagram's start (front matter, leading directives and comments
@@ -192,6 +194,10 @@ export interface Detected {
   readonly type: string;
   /** Plugin id; undefined when the type has no v13 package (R-COMPAT-7). */
   readonly id: string | undefined;
+  /** {@link FirstPartyEntry.section}. */
+  readonly section?: string;
+  /** {@link FirstPartyEntry.layout}. */
+  readonly layout?: string;
 }
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
@@ -203,6 +209,14 @@ export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 export const LINE_HOPS = 'lineHops';
 
 /**
+ * Lazy chunks loaded under a layout name that are no engine: core's line-hop step and
+ * flowchart's lane part, the one part `layoutParts` may name (`layoutPart`, first-party only,
+ * #651). Never a `layout` (`find`), and no loader replaces them
+ * (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
+ */
+const NOT_ENGINES: ReadonlySet<string> = new Set([LINE_HOPS, 'flowchartLanes']);
+
+/**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
  * closure (R-PERF-8). A diagram reaches one only when it is its `layoutEngine.default` (D285),
  * unless a loader of the same name is registered or the engine is in `PEER_LAYOUTS`.
@@ -211,8 +225,11 @@ const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
   ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
   ['swimlane', () => import('@mermaid-js/core/layout/swimlane')],
-  // Not an engine: core's line-hop step (D537), loaded the same way. D285's gate keeps it from
-  // laying a diagram out; `registerLayouts` and discovery refuse the name.
+  // Not an engine (`NOT_ENGINES`): flowchart's lane drawing (spec #528), a part its
+  // `layoutParts` asks for with `swimlane`, so a plain flowchart and other diagrams never load
+  // it (R-PERF-1).
+  ['flowchartLanes', () => import('@mermaid-js/diagram-flowchart/lanes') as never],
+  // Not an engine (`NOT_ENGINES`): core's line-hop step (D537), loaded the same way.
   [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
 ]);
 
@@ -435,14 +452,13 @@ export class Registry {
       if (e.id !== undefined) this.firstPartyNames.add(e.id);
     }
     for (const e of firstParty) {
+      // The row's own fields (type, id, section, layout, loaders) come along.
       this.entries.push({
-        type: e.type,
+        ...e,
         id: e.id,
         formats: e.formats ?? [],
         detect: (body, _clean, _config, v12) =>
           firstPartyDetects((text) => e.pattern.test(text), body, v12),
-        load: e.load,
-        loadAscii: e.loadAscii,
       });
     }
   }
@@ -520,13 +536,22 @@ export class Registry {
     let old: string | undefined;
     const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
     for (const e of this.detectionOrder()) {
-      if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
+      // The entry itself: its type, id, section and layout (D534).
+      if (e.detect(body, cleaned, config, v12)) return e;
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
       { source: src, offset: start }
     );
+  }
+
+  /**
+   * A first-party type's default layout (D534), for `preload`: `elk` for `flowchart-elk`,
+   * `swimlane` for `swimlane`. The type only, never a plugin id (`flowchart` must not load ELK).
+   */
+  layoutOf(type: string): string | undefined {
+    return this.entries.find((x) => x.type === type)?.layout;
   }
 
   /** The loaded plugin for a detected type, if any. */
@@ -888,8 +913,9 @@ export class Registry {
     for (const l of loaders)
       if (l.extension?.config !== undefined) this.addFragment(l.extension.config);
     for (const l of loaders) {
-      // Core's line-hop chunk is loaded under this name (D537): no loader replaces it.
-      if (l.name === LINE_HOPS) continue;
+      // Core's line-hop chunk (D537) and the drawing parts load under these names: no loader
+      // replaces them.
+      if (NOT_ENGINES.has(l.name)) continue;
       this.layoutLoaders.set(l.name, l.loader);
       if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);
       else this.layoutExtensions.delete(l.name);
@@ -932,12 +958,13 @@ export class Registry {
   private find(name: string, declares: boolean): LayoutFound {
     const loader = this.layoutLoader(name);
     // A lazy first-party engine that nobody replaced: only for a diagram that names it (D285),
-    // unless it is a peer of `layered` (D502, D535).
+    // unless it is a peer of `layered` (D502, D535). A chunk that is no engine: never.
     if (
-      !declares &&
-      !PEER_LAYOUTS.has(name) &&
-      loader !== undefined &&
-      loader === LAZY_LAYOUTS.get(name)
+      NOT_ENGINES.has(name) ||
+      (!declares &&
+        !PEER_LAYOUTS.has(name) &&
+        loader !== undefined &&
+        loader === LAZY_LAYOUTS.get(name))
     )
       return { engine: layered, state: 'unknown' };
     const engine = this.layouts.get(name);
@@ -945,6 +972,18 @@ export class Registry {
     if (loader) return { engine: layered, state: 'missing', need: name };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
+  }
+
+  /**
+   * The part of `plugin`'s drawing that layout `name` brings (`layoutParts`, flowchart's
+   * swimlane lanes, #601): its name, and the part once loaded. A render hands the part on only
+   * when `name` itself laid it out (ready, no stand-in). First-party only (#651): the part is
+   * mermaid's own `flowchartLanes` (never an engine, nor any other name), and only with
+   * mermaid's own engine `name`, not a loader registered under it.
+   */
+  layoutPart(plugin: AnyPlugin, name: string): [name?: string, part?: unknown] {
+    const part = this.layoutLoaders.has(name) || plugin.layoutParts?.get(name);
+    return part === 'flowchartLanes' ? [part, this.layouts.get(part)] : [];
   }
 
   /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */

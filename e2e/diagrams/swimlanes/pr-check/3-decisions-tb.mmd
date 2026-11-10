@@ -2,16 +2,17 @@
 description: >-
   Four lanes with a branch-and-merge flow: Decision1 forks into two
   cross-lane paths and Decision2 merges two incoming edges (via the `&`
-  fan-in syntax) into a single Finish node, rendered as `swimlane-beta LR`.
-  Byte-identical to the sibling `2-decisions-lr.mmd` despite the filenames
-  implying different layout directions - both actually use LR.
+  fan-in syntax) into a single Finish node, rendered as `swimlane-beta TB`.
+  The sibling `2-decisions-lr.mmd` is the same diagram left to right (v12's
+  two files were byte-identical, both LR; v13 makes this one TB, as its name
+  says).
 config:
   logLevel: 0
   flowchart:
     htmlLabels: false
     useMaxWidth: false
 ---
-swimlane-beta LR
+swimlane-beta TB
   subgraph Dep1
   Start
   end

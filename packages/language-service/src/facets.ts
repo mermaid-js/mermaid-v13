@@ -11,11 +11,14 @@ export interface FacetEntry {
   /** The diagram id (`flowchart`); the type itself for a v12 type with no package yet. */
   readonly id: string;
   /**
-   * First-party rows: the config section the renderer reads for this type (the package id,
-   * as mermaid's registry gives it); absent for a type with no v13 package. Third-party rows
-   * leave it out: their section is their `id`, as for a registered plugin.
+   * First-party rows: the config section the renderer reads for this type (the type's own, as
+   * `swimlane` for `swimlane-beta`, else the package id, as mermaid's registry gives it); absent
+   * for a type with no v13 package. Third-party rows leave it out: their section is their `id`,
+   * as for a registered plugin.
    */
   readonly section?: string;
+  /** First-party rows with a section of their own: the package's, read under it (D534). */
+  readonly baseSection?: string;
   /**
    * First-party rows: v12's detector regex, which `detector` tests (editors that cannot run
    * `detector`, such as Monaco's Monarch tokenizer, derive their dispatch from it).

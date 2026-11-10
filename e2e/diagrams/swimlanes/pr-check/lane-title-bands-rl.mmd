@@ -1,0 +1,23 @@
+---
+description: >-
+  Right-to-left lanes: the title band is on the left of each lane, its label
+  turned to read upward, as for LR (D536; v12 put RL's band on the right,
+  the listed fix). Three lanes, a group nested in the first, a loose node in
+  the default lane, and a lane title longer than its one node is tall,
+  which the lane grows to hold.
+---
+swimlane-beta RL
+  subgraph L1[Sales]
+    subgraph G1[Intake]
+      A[Receive order] --> B[Check stock]
+    end
+    C[Confirm]
+  end
+  subgraph L2[Warehouse and dispatch, second shift]
+    D[Pick]
+  end
+  subgraph L3[Billing]
+    E[Invoice] --> F[Collect]
+  end
+  B --> C --> D --> E
+  Start --> A

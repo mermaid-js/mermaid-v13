@@ -1,6 +1,7 @@
 // Ported from v12 `swimlanes/direction/materializedGeometry.ts` at upstream `c9b12739f` (D532).
 // Changed: the title-band passes follow D536 (BT lifts a top band, RL shifts a left band); types
-// tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types.
+// tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types;
+// the tail swap keeps legs off the destination's box (#636); `liftRailsOffForeignEdgeLabels` (#634).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, sonarjs/no-identical-functions -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore Wybrow sonarjs
 
@@ -724,6 +725,160 @@ export function liftObstacleHuggingSameSideRails(
 }
 
 /**
+ * v13 (#634): moves an interior rail that runs through or along another edge's label clear of
+ * it. The router leaves labels out (they are anchored after routing), so a rail placed beside a
+ * node can run along a label wider than that node. The rail moves to the label's nearer side,
+ * `ROUTE_TOUCH_TOLERANCE` out (the least gap a reader sees between two strokes), only where that
+ * hits no node or label, shares no track and adds no crossing. Moving a rail next to a short
+ * terminal stub must not turn that stub back into its own box: each terminal leg keeps its
+ * direction, and an end box is exempt only for its own terminal leg (as the tail swap, #636).
+ */
+export function liftRailsOffForeignEdgeLabels(
+  edges: MaterializedEdge[],
+  nodeByIdMap: Map<string, MaterializedNode>
+): void {
+  const BUFFER = 2;
+  const CLEARANCE = EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE;
+
+  const { realNodeRects, labelNodeRects } = collectNodeRectEntries(nodeByIdMap.values());
+  if (labelNodeRects.length === 0) {
+    return;
+  }
+  const visibleEdges = edges.filter((edge) => !edge.isLayoutOnly);
+  const pointsFor = (edge: MaterializedEdge): PointLite[] =>
+    dedupeConsecutivePoints(edge.points ?? []);
+  // One segment list per edge, replaced only for the edge that moves.
+  const segmentsByEdge = new Map(visibleEdges.map((edge) => [edge, segmentsFor(pointsFor(edge))]));
+  const othersOf = (edge: MaterializedEdge): SegmentLite[][] =>
+    visibleEdges.filter((other) => other !== edge).map((other) => segmentsByEdge.get(other)!);
+
+  const crossingsOf = (own: SegmentLite[], others: SegmentLite[][]): number => {
+    let count = 0;
+    for (const segments of others) {
+      for (const a of own) {
+        for (const b of segments) {
+          if (orthogonalSegmentsStrictlyCross(a.a, a.b, b.a, b.b, EPS_LOCAL)) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  };
+
+  const railHugsRect = (rail: SegmentLite, rect: RectLite): boolean =>
+    rail.horizontal
+      ? overlapLength(rail.a.x, rail.b.x, rect.left, rect.right) >= MIN_SHARED &&
+        rail.a.y >= rect.top - BUFFER &&
+        rail.a.y <= rect.bottom + BUFFER
+      : overlapLength(rail.a.y, rail.b.y, rect.top, rect.bottom) >= MIN_SHARED &&
+        rail.a.x >= rect.left - BUFFER &&
+        rail.a.x <= rect.right + BUFFER;
+
+  const step = (from: PointLite, to: PointLite): string => {
+    const sign = (d: number): number => (Math.abs(d) < EPS_LOCAL ? 0 : Math.sign(d));
+    return `${sign(to.x - from.x)},${sign(to.y - from.y)}`;
+  };
+  /** Whether the first and last legs of `candidate` still leave and enter as `points` do. */
+  const keepsTerminalLegs = (points: PointLite[], candidate: PointLite[]): boolean =>
+    step(points[0]!, points[1]!) === step(candidate[0]!, candidate[1]!) &&
+    step(points.at(-2)!, points.at(-1)!) === step(candidate.at(-2)!, candidate.at(-1)!);
+
+  const candidateIsSafe = (
+    edge: MaterializedEdge,
+    candidateSegments: SegmentLite[],
+    others: SegmentLite[][]
+  ): boolean => {
+    const ownLabel = edge.labelNodeId ? [edge.labelNodeId] : [];
+    const last = candidateSegments.length - 1;
+    for (const [i, segment] of candidateSegments.entries()) {
+      // An end box is exempt only for the leg that reaches it.
+      const ends = [i === 0 && edge.start, i === last && edge.end].filter((id): id is string =>
+        Boolean(id)
+      );
+      if (
+        segmentHitsAnyRect(segment.a, segment.b, realNodeRects, ends, -BUFFER) ||
+        segmentHitsAnyRect(segment.a, segment.b, labelNodeRects, ownLabel, -BUFFER)
+      ) {
+        return false;
+      }
+    }
+    for (const segments of others) {
+      for (const a of candidateSegments) {
+        for (const b of segments) {
+          if (sameAxisSegmentOverlapLength(a, b, 0.5) >= MIN_SHARED) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
+  // A fix leaves the edge clear of every foreign label, so each edge is fixed at most once; the
+  // bound is the number of interior rails, which is at least that.
+  let rails = 1;
+  for (const segments of segmentsByEdge.values()) {
+    rails += Math.max(0, segments.length - 2);
+  }
+  for (let iteration = 0; iteration < rails; iteration++) {
+    let fixed = false;
+    for (const edge of visibleEdges) {
+      const points = pointsFor(edge);
+      const segments = segmentsByEdge.get(edge)!;
+      if (segments.length !== points.length - 1 || segments.length < 3) {
+        continue;
+      }
+      for (const rail of segments.slice(1, -1)) {
+        const label = labelNodeRects.find(
+          (entry) => entry.id !== edge.labelNodeId && railHugsRect(rail, entry.rect)
+        );
+        if (!label) {
+          continue;
+        }
+        const coord = rail.horizontal ? rail.a.y : rail.a.x;
+        const [low, high] = rail.horizontal
+          ? [label.rect.top, label.rect.bottom]
+          : [label.rect.left, label.rect.right];
+        const coords = [low - CLEARANCE, high + CLEARANCE].sort(
+          (a, b) => Math.abs(a - coord) - Math.abs(b - coord)
+        );
+        const others = othersOf(edge);
+        const crossings = crossingsOf(segments, others);
+        for (const next of coords) {
+          const moved = points.map((point) => ({ ...point }));
+          for (const i of [rail.index, rail.index + 1]) {
+            moved[i] = rail.horizontal ? { ...moved[i]!, y: next } : { ...moved[i]!, x: next };
+          }
+          const candidate = simplifyPolyline(dedupeConsecutivePoints(moved));
+          const candidateSegments = segmentsFor(candidate);
+          if (
+            candidateSegments.length === candidate.length - 1 &&
+            keepsTerminalLegs(points, candidate) &&
+            candidateIsSafe(edge, candidateSegments, others) &&
+            crossingsOf(candidateSegments, others) <= crossings
+          ) {
+            edge.points = candidate;
+            segmentsByEdge.set(edge, candidateSegments);
+            fixed = true;
+            break;
+          }
+        }
+        if (fixed) {
+          break;
+        }
+      }
+      if (fixed) {
+        break;
+      }
+    }
+    if (!fixed) {
+      return;
+    }
+  }
+}
+
+/**
  * Moves top-lane title bands (TB, BT) above any rail that crosses them. A lane with no
  * `direction` of its own takes the layout's `direction`.
  */
@@ -1100,8 +1255,20 @@ export function swapDestinationTerminalTailsToReduceCrossings(
     const endpointIds = [(edge as { start?: string }).start, (edge as { end?: string }).end].filter(
       (id): id is string => Boolean(id)
     );
-    for (const segment of segmentsFor(path)) {
+    const segments = segmentsFor(path);
+    // v13 (#636): the destination is exempt only on the swapped-in last leg; every other leg
+    // must keep off its box too, or the swap can lay a rail through or along it.
+    const destination = realNodeRects.filter(
+      (entry) => entry.id === (edge as { end?: string }).end
+    );
+    for (const [index, segment] of segments.entries()) {
       if (segmentHitsAnyRect(segment.a, segment.b, realNodeRects, endpointIds, -BUFFER)) {
+        return true;
+      }
+      if (
+        index < segments.length - 1 &&
+        segmentHitsAnyRect(segment.a, segment.b, destination, [], -BUFFER)
+      ) {
         return true;
       }
     }

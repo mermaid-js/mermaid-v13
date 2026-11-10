@@ -6,6 +6,7 @@
 // all lanes along the flow (they share that extent; the title band stays at the start), and the
 // first and last lane outward across it. Ends of edges that meet a lane move with its border.
 import type { Edge, LayoutData, Node } from './layoutData.ts';
+import { topLaneHorizontalPadding } from './helpers.ts';
 import { buildLaneModel } from './lanes.ts';
 
 type Axis = 'x' | 'y';
@@ -152,5 +153,53 @@ export function fitLanesToRoutes(data: LayoutData): void {
   if (high > farSpan.hi) {
     setSpan(far, cross, { lo: farSpan.lo, hi: high });
     followBorder(data.edges, far, cross, farSpan.hi, high);
+  }
+}
+
+export const isPlaced = (n: Node): boolean => (n.width ?? 0) > 0 && (n.height ?? 0) > 0;
+
+/**
+ * Moves everything at or beyond `at` along `axis` on by `by`: boxes by centre (with their title
+ * bands), and route points. Lanes not placed yet have no size to move.
+ */
+export function shiftBeyond(data: LayoutData, axis: Axis, at: number, by: number): void {
+  for (const n of data.nodes) {
+    const v = n[axis];
+    if (v === undefined || v < at || (n.isGroup && !isPlaced(n))) continue;
+    n[axis] = v + by;
+    const r = n.groupTitleRect;
+    if (r && axis === 'x') n.groupTitleRect = { ...r, left: r.left + by, right: r.right + by };
+    if (r && axis === 'y') n.groupTitleRect = { ...r, top: r.top + by, bottom: r.bottom + by };
+  }
+  for (const e of data.edges) for (const p of e.points ?? []) if (p[axis] >= at) p[axis] += by;
+}
+
+/**
+ * Widens each lane whose title is longer than the lane is across the flow (v13; v12 let the
+ * title run past the lane): the lane grows to its title's width plus `topLaneHorizontalPadding`
+ * each side. What lies inside it moves by half the growth, so its content stays centred, and
+ * what lies beyond it by the whole; a point within 0.5 of a border counts as on it, as elsewhere
+ * here (a route end on the near border stays, one on the far border moves with it). Routes are
+ * right-angled, so the shift keeps them so.
+ */
+export function fitLanesToTitles(data: LayoutData): void {
+  const laneModel = buildLaneModel(data.nodes);
+  const sideways = data.direction === 'LR' || data.direction === 'RL';
+  const cross: Axis = sideways ? 'y' : 'x';
+  const lanes = data.nodes
+    .filter((n) => laneModel.isLane(n.id) && n.titleSize && isPlaced(n))
+    .sort((a, b) => (a[cross] ?? 0) - (b[cross] ?? 0));
+  for (const lane of lanes) {
+    const span = spanOf(lane, cross);
+    const side = topLaneHorizontalPadding(lane);
+    const grow = lane.titleSize!.width + 2 * side - (span.hi - span.lo);
+    if (grow <= 0) continue;
+    const [centre, rect] = [lane[cross], lane.groupTitleRect];
+    shiftBeyond(data, cross, span.lo + 0.5, grow / 2);
+    shiftBeyond(data, cross, span.hi + grow / 2 - 0.5, grow / 2);
+    // The lane itself keeps its near border and grows at the far one.
+    lane[cross] = centre;
+    if (rect) lane.groupTitleRect = rect;
+    setSpan(lane, cross, { lo: span.lo, hi: span.hi + grow });
   }
 }

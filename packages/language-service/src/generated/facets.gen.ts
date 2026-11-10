@@ -100,7 +100,15 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*sequenceDiagram/.test(text),
     load: () => import('@mermaid-js/diagram-sequence/language').then((m) => m.language),
   },
-  { type: 'swimlane', id: 'swimlane', pattern: /^\s*swimlane-beta\b/, detector: (text) => /^\s*swimlane-beta\b/.test(text) },
+  {
+    type: 'swimlane',
+    id: 'flowchart',
+    section: 'swimlane',
+    baseSection: 'flowchart',
+    pattern: /^\s*swimlane-beta\b/,
+    detector: (text) => /^\s*swimlane-beta\b/.test(text),
+    load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
+  },
   {
     type: 'flowchart-v2',
     id: 'flowchart',

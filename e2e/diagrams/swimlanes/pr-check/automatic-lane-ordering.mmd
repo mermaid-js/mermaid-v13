@@ -1,0 +1,34 @@
+---
+description: >-
+  `swimlane.automaticLaneOrdering: true`: five lanes written so that the
+  busy ones (Intake, Review, Delivery) are kept apart by two that only talk
+  to each other (Archive, Records). The weighted-linear-arrangement pass
+  moves the busy lanes next to each other, so the cross-lane edges get
+  shorter; with the default (`false`) the lanes keep their source order.
+config:
+  swimlane:
+    automaticLaneOrdering: true
+---
+swimlane-beta LR
+  subgraph Intake
+    A[Receive] --> B[Triage]
+  end
+  subgraph Archive
+    X[Store]
+  end
+  subgraph Review
+    C[Assess] --> D[Decide]
+    D --> R[Reopen]
+  end
+  subgraph Records
+    Y[Index]
+  end
+  subgraph Delivery
+    E[Build] --> F[Ship]
+  end
+  B --> C
+  D --> E
+  B --> E
+  R --> A
+  X --> Y
+  F --> X

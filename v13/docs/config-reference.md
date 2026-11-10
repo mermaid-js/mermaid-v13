@@ -150,13 +150,13 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `swimlane` | object |  | pending |  | The object containing configurations specific for the swimlanes diagram type. Swimlanes reuses the flowchart renderer and flowchart config for shared options (curve, htmlLabels, spacing, …); this block holds the knobs that only affect the swimlanes layout pipeline. |
 | `swimlane.useWidth` | number |  | pending |  |  |
 | `swimlane.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `swimlane.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `swimlane.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `swimlane.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
-| `swimlane.layout` | string | `"swimlane"` | pending |  | Defines which layout algorithm to use for rendering the diagram. |
+| `swimlane.layout` | string | `"swimlane"` | honoured (13.0.0) |  | Defines which layout algorithm to use for rendering the diagram. |
 | `swimlane.lineHops` | any | `"arc"` | honoured (13.0.0) |  | Renders edge crossings as small arcs ("hops") or visible gaps so that overlapping edges are easier to read. Set to `false` to disable. Edges rendered as curves are skipped to avoid corrupting the geometry. Applies whenever the `swimlane` layout lays the diagram out, over the shared top-level `lineHops` unless that is `false` (D537). |
-| `swimlane.ignoreCrossLaneEdges` | boolean | `true` | pending |  | Ignores edges that cross swimlane boundaries during swimlane layer assignment. This can improve rank quality for diagrams with many cross-lane links. |
-| `swimlane.optimizeRanksByCrossings` | boolean | `true` | pending |  | Enables a crossing-aware rank optimization pass for swimlane layouts. |
-| `swimlane.automaticLaneOrdering` | boolean | `false` | pending |  | Automatically reorders top-level swimlanes with a deterministic weighted-linear-arrangement heuristic. Disabled by default because source swimlane order can carry semantic meaning. |
+| `swimlane.ignoreCrossLaneEdges` | boolean | `true` | honoured (13.0.0) |  | Ignores edges that cross swimlane boundaries during swimlane layer assignment. This can improve rank quality for diagrams with many cross-lane links. |
+| `swimlane.optimizeRanksByCrossings` | boolean | `true` | honoured (13.0.0) |  | Enables a crossing-aware rank optimization pass for swimlane layouts. It acts only when `ignoreCrossLaneEdges` is `false`, as in v12. |
+| `swimlane.automaticLaneOrdering` | boolean | `false` | honoured (13.0.0) |  | Automatically reorders top-level swimlanes with a deterministic weighted-linear-arrangement heuristic. Disabled by default because source swimlane order can carry semantic meaning. |
 
 ## `agentflow`
 

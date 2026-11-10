@@ -62,3 +62,46 @@ export function astIndex(ast: AstNode): Map<string, AstNode> {
   visit(ast);
   return index;
 }
+
+/**
+ * {@link extents} for graph drawings: also `polygon`, `polyline`, `ellipse` and `image`, whose
+ * coordinates flowchart shapes write (`translate()` accumulated down the tree, as written).
+ */
+export function drawnExtents(tree: SvgView): { x: number; y: number }[] {
+  const out: { x: number; y: number }[] = [];
+  const nums = (s: string | undefined): number[] =>
+    s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
+  const walk = (node: SvgElement, x0: number, y0: number): void => {
+    const tag = tree.tag(node);
+    if (tag === undefined && node !== tree.root) return;
+    const at = (name: string): number => Number(tree.getAttr(node, name) ?? 0);
+    const t = tree.getAttr(node, 'transform');
+    const m = t ? /^translate\((-?[\d.]+),(-?[\d.]+)\)/.exec(t) : null;
+    const dx = m ? x0 + Number(m[1]) : x0;
+    const dy = m ? y0 + Number(m[2]) : y0;
+    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy });
+    if (tag === 'rect' || tag === 'image') {
+      put(at('x'), at('y'));
+      put(at('x') + at('width'), at('y') + at('height'));
+    } else if (tag === 'circle' || tag === 'ellipse') {
+      const rx = tag === 'circle' ? at('r') : at('rx');
+      const ry = tag === 'circle' ? at('r') : at('ry');
+      put(at('cx') - rx, at('cy') - ry);
+      put(at('cx') + rx, at('cy') + ry);
+    } else if (tag === 'polygon' || tag === 'polyline') {
+      const p = nums(tree.getAttr(node, 'points'));
+      for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
+    } else if (tag === 'path') {
+      const d = tree.getAttr(node, 'd') ?? '';
+      for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
+        const p = nums(seg.slice(1));
+        if (seg.startsWith('A')) put(p[5]!, p[6]!);
+        else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
+      }
+    } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
+      put(at('x'), at('y'));
+    for (const c of tree.children(node)) walk(c, dx, dy);
+  };
+  walk(tree.root, 0, 0);
+  return out;
+}

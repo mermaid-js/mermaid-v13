@@ -5,6 +5,7 @@
  */
 import {
   CORE_DEFAULTS,
+  KEY_TREE,
   resolveSite,
   type ConfigFragment,
   type ConfigInput,
@@ -209,20 +210,34 @@ export class Overlays {
   }
 }
 
-/** Init directive config in source order (v12's `config` key moved into the section). */
-export function directiveConfig(pre: PreprocessResult, section: string | undefined): ConfigInput[] {
+/** A diagram's config section, or its chain of sections, highest first (D534). */
+export type Sections = string | readonly string[] | undefined;
+
+/**
+ * Init directive config in source order (v12's `config` key moved into the section). With a
+ * chain of sections (`['swimlane', 'flowchart']`, D534), each `config` key goes to the first
+ * section when that section's schema has it (`look` and any key without a default included),
+ * else to the last; keys both schemas have resolve into both (`resolveAppearance`).
+ */
+export function directiveConfig(pre: PreprocessResult, section: Sections): ConfigInput[] {
   const out: ConfigInput[] = [];
+  const [first, last] = [section ?? []].flat();
+  // A chain's first section is a schema section (gen-config checks the manifest's `section`).
+  const own = (KEY_TREE as Record<string, Plain>)[first!]!;
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {
-      const args = { ...d.args };
+      const args: Plain = { ...d.args };
+      const value = args.config;
       // v12 detectInit: an init `config` key belongs to the detected diagram's section.
-      if (args.config !== undefined && section) {
-        args[section] =
-          isPlain(args[section]) && isPlain(args.config)
-            ? mergeInto({ ...args[section] }, args.config)
-            : args.config;
+      if (value !== undefined && first) {
         delete args.config;
+        const parts: [string, unknown][] =
+          last && isPlain(value)
+            ? Object.entries(value).map(([k, v]) => [k in own ? first : last, { [k]: v }])
+            : [[first, value]];
+        for (const [s, v] of parts)
+          args[s] = isPlain(args[s]) && isPlain(v) ? mergeInto({ ...args[s] }, v) : v;
       }
       out.push(args);
     }
@@ -249,7 +264,7 @@ export class SiteConfigs {
     snap: Snapshot,
     plugin: AnyPlugin,
     detected: Detected,
-    section: string | undefined,
+    section: Sections,
     fragments: readonly ConfigFragment[]
   ): SiteConfig {
     if (fragments !== this.fragments) {
@@ -260,15 +275,21 @@ export class SiteConfigs {
     if (!byPlugin) this.bySnapshot.set(snap, (byPlugin = new WeakMap()));
     let byType = byPlugin.get(plugin);
     if (!byType) byPlugin.set(plugin, (byType = new Map<string, SiteConfig>()));
-    const key = `${section ?? ''}\0${detected.type}`;
+    const key = `${String(section)}\0${detected.type}`;
     let hit = byType.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
-      if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
-      // The plugin's engine (D284), and v12's flowchart-elk detector's `layout: 'elk'`, sit
-      // below the user's config.
+      // The plugin's defaults go to its own section; a type's own section (D534) sits over
+      // them, so on a key both sections have (`theme`, `useMaxWidth`) its defaults outrank the
+      // plugin's.
+      if (plugin.configDefaults)
+        pluginDefaults[plugin.configSection ?? plugin.id] = plugin.configDefaults;
+      if (detected.section)
+        pluginDefaults[detected.section] = (CORE_DEFAULTS as Plain)[detected.section];
+      // The plugin's engine (D284), and the type's default layout (v12's flowchart-elk detector's
+      // `elk`, swimlane's `swimlane`), sit below the user's config.
       if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;
-      if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
+      if (detected.layout) pluginDefaults.layout = detected.layout;
       const recorded: Warning[] = [];
       const site = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
         warn: (w) => void recorded.push(w),

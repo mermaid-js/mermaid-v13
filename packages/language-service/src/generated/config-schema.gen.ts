@@ -5910,7 +5910,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {
@@ -5926,7 +5927,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
           "default": "swimlane",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "lineHops": {
@@ -5954,15 +5956,17 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "optimizeRanksByCrossings": {
-          "description": "Enables a crossing-aware rank optimization pass for swimlane layouts.\n",
+          "description": "Enables a crossing-aware rank optimization pass for swimlane layouts.\nIt acts only when `ignoreCrossLaneEdges` is `false`, as in v12.\n",
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "automaticLaneOrdering": {
@@ -5970,7 +5974,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

@@ -3,7 +3,8 @@
 // each lane's title band (D536), on top for TB/BT and on the left for LR/RL (v12 put RL's on the
 // right and BT's at the bottom).
 import { describe, expect, it } from 'vitest';
-import type { Dir, LayoutModelGroup } from '../../types.ts';
+import type { Dir, LayoutModel, LayoutModelGroup } from '../../types.ts';
+import { DEFAULT_SWIMLANE_ID } from '../helpers.ts';
 import { swimlaneLayout } from '../swimlane.ts';
 import { layoutGraph } from './graphs.ts';
 
@@ -53,5 +54,31 @@ describe.each(['LR', 'RL'] as const)('%s: lane title bands', (direction) => {
     expect(lane.title.y).toBeCloseTo(lane.y, 6);
     expect(lane.title.x).toBeCloseTo(b.left + 36 / 2, 6);
     for (const [, n] of model.nodes) expect(n.x - n.width / 2).toBeGreaterThanOrEqual(b.left + 36);
+  });
+});
+
+describe('lanes are the top-level groups (D535, D536): no field of their own', () => {
+  /** Group ids across the flow, by position. */
+  const across = (model: LayoutModel, direction: string) =>
+    [...model.groups]
+      .sort(([, a], [, b]) => (direction === 'LR' ? a.y - b.y : a.x - b.x))
+      .map(([id]) => id);
+
+  it('lays the lanes out across the flow, the engine-made default lane included', () => {
+    expect(across(swimlaneLayout(graphOf('TB')), 'TB')).toEqual([
+      'HoE',
+      'StatusSeeker',
+      'TechLead',
+    ]);
+    const loose = layoutGraph({
+      direction: 'LR',
+      lanes: { Sales: ['A'], Ops: ['B'] },
+      nodes: ['L'],
+      edges: [['L', 'A']],
+    });
+    const lanes = across(swimlaneLayout(loose), 'LR');
+    expect([...lanes].sort()).toEqual([DEFAULT_SWIMLANE_ID, 'Ops', 'Sales'].sort());
+    expect(lanes.filter((id) => id !== DEFAULT_SWIMLANE_ID)).toEqual(['Sales', 'Ops']);
+    expect('lanes' in swimlaneLayout(loose)).toBe(false);
   });
 });

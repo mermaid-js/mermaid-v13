@@ -88,6 +88,13 @@ export interface FlowModelSubgraph {
   classes: string[];
   dir?: string;
   metadata?: YamlMap;
+  /**
+   * What a declaration of the subgraph listed, in order, when another subgraph declared earlier
+   * kept one of those members (v12 `droppedSubGraphMembers`); a redeclaration that loses one
+   * adds its own list. Absent when no declaration lost a member: a member it lists again
+   * itself, one a subgraph nested in it keeps, or its own id, is no loss. Swimlane's `SWIMLANE_SHARED_NODE` reads it (D536).
+   */
+  listed?: string[];
 }
 
 export interface FlowLink {
@@ -260,7 +267,8 @@ export class FlowBuilder {
   private readonly edgeById = new Map<string, FlowModelEdge>();
   /** Edges so far per start, then per end. */
   private readonly pairCount = new Map<string, Map<string, number>>();
-  private readonly members = new Set<string>();
+  /** Each subgraph member (node or subgraph id) and the subgraph that keeps it. */
+  private readonly members = new Map<string, string>();
   private subCount = 0;
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
   private readonly limitHit = new Set<'edges' | 'nodes'>();
@@ -629,8 +637,23 @@ export class FlowBuilder {
       classes: [],
     };
     if (dir !== undefined) subgraph.dir = dir;
-    for (const nodeId of subgraph.nodes) members.add(nodeId);
+    for (const nodeId of subgraph.nodes) members.set(nodeId, id);
     const existing = this.subgraphById.get(id);
+    // A member another, earlier subgraph kept, for swimlane's shared-node warning (D536): not
+    // this one, nor one nested in it (its keeper's chain reaches this subgraph or its list).
+    const inside = (k: string | undefined): boolean => {
+      for (
+        const walked = new Set<string>();
+        k !== undefined && !walked.has(k);
+        k = members.get(k)
+      ) {
+        if (k === id || seen.has(k)) return true;
+        walked.add(k);
+      }
+      return false;
+    };
+    if (nodeList.some((n) => n !== id && !inside(members.get(n))))
+      ((existing ?? subgraph).listed ??= []).push(...nodeList);
     if (existing) existing.nodes.push(...subgraph.nodes);
     else this.subgraphs.push(subgraph);
     this.subgraphById.set(id, existing ?? subgraph);
