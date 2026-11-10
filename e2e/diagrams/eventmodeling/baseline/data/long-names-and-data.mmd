@@ -1,0 +1,33 @@
+---
+description: >-
+  long frame names that wrap, and data blocks of several lines with nested indentation, drawn
+  in mono as written (D523)
+---
+eventmodeling
+tf 01 ui Ordering.ShoppingCartScreenWithRecommendationsAndRecentlyViewedProducts
+tf 02 cmd Ordering.SubmitOrderWithShippingAddressAndPreferredDeliveryWindow ->> 01 [[SubmitOrderData]]
+tf 03 evt Ordering.OrderSubmittedAndAwaitingPaymentAuthorisation [[OrderSubmittedData]]
+tf 04 rmo OrderStatusOverviewForTheCustomerSupportDashboard ->> 03 [[OrderStatusData]]
+
+data SubmitOrderData `json`
+{
+  "orderId": "A-1001",
+  "deliveryWindow": "2026-11-12 09:00-12:00"
+}
+
+data OrderSubmittedData `json`
+{
+  "orderId": "A-1001",
+  "lines": [
+    { "sku": "PEN-01", "qty": 2 },
+    { "sku": "INK-BLUE", "qty": 1 }
+  ],
+  "total": "12.40"
+}
+
+data OrderStatusData
+{
+  orderId: A-1001
+  status: awaiting payment
+  updatedAt: 2026-11-10T09:30:00Z
+}
