@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Warning } from '../pipeline/types.ts';
 import {
   inlineSpans,
@@ -136,5 +136,61 @@ describe('inline boxes in label layout (D177)', () => {
     const warnings: Warning[] = [];
     layout('price $$5', Infinity, [], false, warnings);
     expect(warnings).toEqual([]);
+  });
+});
+
+describe('inline scan fast paths', () => {
+  it('keeps empty labels empty without provider calls or warnings', () => {
+    const box = vi.fn(() => undefined);
+    const warn = vi.fn();
+    const inline = inlineSpans(
+      [
+        { pattern: /(?:)/u, box },
+        { open: '', close: '', box },
+      ],
+      warn
+    );
+    const metrics = vi.fn(() => ({ ascent: 7, descent: 3, lineHeight: 13 }));
+    const width = vi.fn(() => 99);
+    const label = layoutLabel('', arial, Infinity, { id: 'custom', metrics, width }, { inline });
+    expect(label).toEqual({
+      lines: [],
+      indents: [],
+      widths: [],
+      width: 0,
+      height: 0,
+      baseline: 7,
+      lineHeight: 13,
+    });
+    expect(metrics).toHaveBeenCalledExactlyOnceWith(arial);
+    expect(width).not.toHaveBeenCalled();
+    expect(box).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('retains custom pattern and delimiter providers without dollar or colon markers', () => {
+    const box = fixture().box;
+    expect(shape(layout('hello', Infinity, [{ pattern: /hello/, box }]))).toEqual([['[box 20]']]);
+    expect(shape(layout('[[x]]', Infinity, [{ open: '[[', close: ']]', box }]))).toEqual([
+      ['[box 4]'],
+    ]);
+    expect(shape(layout(' \t ', Infinity, [{ pattern: /\s+/, box }]))).toEqual([['[box 12]']]);
+  });
+
+  it('keeps feature warnings after plain and empty labels in SVG and ASCII', () => {
+    for (const format of ['svg', 'ascii'] as const) {
+      const warn = vi.fn<(warning: Warning) => void>();
+      const inline = inlineSpans([], warn, format);
+      for (const raw of ['', 'plain', '$', ':', '$$x$$', 'fa:fa-car', '$$y$$', 'fa:fa-bus']) {
+        inline.extract(raw, arial, tableMeasurer);
+      }
+      expect(warn.mock.calls.map(([warning]) => warning.code)).toEqual(
+        format === 'svg'
+          ? ['MATH_NOT_RENDERED', 'ICON_NOT_RENDERED']
+          : ['ASCII_DROPPED', 'ASCII_DROPPED']
+      );
+      expect(inline.notRendered('math')).toBe(true);
+      expect(inline.notRendered('icon')).toBe(true);
+    }
   });
 });

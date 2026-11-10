@@ -182,12 +182,13 @@ type Finder<P> = (raw: string, at: number) => Found<P> | undefined;
  * `source` is what is between them). An empty match is no span and moves the search on by a code
  * point: by a code unit, a `u` or `v` pattern would find it again inside a surrogate pair.
  */
-function finder<P extends Spans>(by: P): Finder<P> {
+function finder<P extends Spans>(by: P, marker = by.open): Finder<P> {
   const { open, close, pattern } = by;
   const re = pattern
     ? new RegExp(pattern.source, `${pattern.flags.replace(/[gmy]/g, '')}g`)
     : new RegExp(`${escape(open!)}([^]*?)${escape(close!)}`, 'g');
   return (raw, at) => {
+    if (marker !== undefined && !raw.includes(marker, at)) return undefined;
     re.lastIndex = at;
     for (let m = re.exec(raw); m; m = re.exec(raw)) {
       const start = m.index;
@@ -201,7 +202,7 @@ function finder<P extends Spans>(by: P): Finder<P> {
 /** `text` as a regex matching it: every character but a letter, digit, `_` or space escaped. */
 const escape = (text: string): string => text.replace(/[^\w\s]/g, '\\$&');
 
-const FINDERS = FEATURES.map(finder);
+const FINDERS = FEATURES.map((feature) => finder(feature, feature.open ? '$' : ':'));
 
 /**
  * The inline spans of one render: `providers` in registration order (the span that starts first
@@ -218,7 +219,7 @@ export function inlineSpans(
   iconPacks?: IconPacks
 ): InlineSpans {
   const ascii = format === 'ascii';
-  const finders = ascii ? [] : providers.map(finder);
+  const finders = ascii ? [] : providers.map((provider) => finder(provider));
   const given = new Set<string>();
   const notDrawn = new Set<string>();
   const scratch = {};
@@ -235,6 +236,7 @@ export function inlineSpans(
     scratch,
     notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
+      if (raw === '') return undefined;
       // The spans that may be boxed: a label holding a placeholder character boxes none.
       const blocked = RE_PLACEHOLDER.test(raw);
       const spans: Found<InlineProvider>[] = [];
