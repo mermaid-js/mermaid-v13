@@ -1,0 +1,27 @@
+---
+description: >-
+  Flows with their own direction, a nested flow with none, edges into a flow's frame, and a
+  per-flow `algorithm`, which an ELK layout parses but does not apply (D174).
+---
+agentflow-beta LR
+  input["Request"]@{ shape: input }
+  flow pipeline["Pipeline"]
+    direction TB
+    parse["Parse"]
+    flow tools["Tools"]
+      search["search"]@{ shape: tool }
+      fetch["fetch"]@{ shape: tool }
+    end
+    parse --> search
+    parse --> fetch
+  end
+  tools@{ algorithm: "elk.rectpacking" }
+  flow output["Output"]
+    direction RL
+    write["Write"]@{ shape: action }
+    report["Report"]@{ shape: refdoc }
+    write --> report
+  end
+  input --> pipeline
+  pipeline --> output
+  fetch -.- report

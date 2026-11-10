@@ -1,0 +1,72 @@
+@ 2:13  connector |inbox[Inbox]@{ owner: ops }
+  2:13-2:18 "inbox"
+  | **connector** `inbox`
+  |
+  | Title: `Inbox`
+  |
+  | Metadata: `owner: ops`
+  |
+  | Edges: 0 in, 1 out
+@ 3:8  flow |plan[Plan]@{ view: collapsed }
+  3:8-3:12 "plan"
+  | **flow** `plan`
+  |
+  | Title: `Plan` · 2 members · collapsed
+  |
+  | Metadata: `view: collapsed`
+  |
+  | Edges: 1 in, 0 out
+@ 4:5  |read[Read]@{ shape: input, model: gpt } --> think{Decide}
+  4:5-4:9 "read"
+  | **input** `read`
+  |
+  | Label: `Read` · Shape: `lean-r`
+  |
+  | In flow `plan`, drawn in the collapsed `plan`
+  |
+  | Metadata: `shape: lean-right`, `model: gpt`
+  |
+  | Edges: 1 in, 1 out
+@ 7:5  |log@{ shape: tool }
+  7:5-7:8 "log"
+  | **tool** `log`
+  |
+  | Label: `log` · Shape: `fr-rect`
+  |
+  | Metadata: `shape: subroutine`
+  |
+  | Edges: 0 in, 0 out
+@ 10:3  |think:::hot --> plan
+  10:3-10:8 "think"
+  | **decision** `think`
+  |
+  | Label: `Decide` · Shape: `diam` · Class: `hot`
+  |
+  | In flow `plan`, drawn in the collapsed `plan`
+  |
+  | Edges: 1 in, 1 out
+@ 10:12  think:::h|ot --> plan
+  10:11-10:14 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96`
+  |
+  | Used by 1 node
+@ 10:19  think:::hot --> |plan
+  10:19-10:23 "plan"
+  | **flow** `plan`
+  |
+  | Title: `Plan` · 2 members · collapsed
+  |
+  | Metadata: `view: collapsed`
+  |
+  | Edges: 1 in, 0 out
+@ 11:3  |inbox --> read
+  11:3-11:8 "inbox"
+  | **connector** `inbox`
+  |
+  | Title: `Inbox`
+  |
+  | Metadata: `owner: ops`
+  |
+  | Edges: 0 in, 1 out

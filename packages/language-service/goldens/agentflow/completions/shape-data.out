@@ -1,0 +1,32 @@
+@ 2:7  a@{ | }
+  shape property 2:7-2:7 "" -> "shape: "
+  label property 2:7-2:7 "" -> "label: "
+  labelType property 2:7-2:7 "" -> "labelType: "
+@ 3:14  b@{ shape: | }
+  task shape (task, drawn rounded) 3:14-3:14 "" -> "task"
+  tool shape (tool, drawn fr-rect) 3:14-3:14 "" -> "tool"
+  input shape (input, drawn lean-r) 3:14-3:14 "" -> "input"
+  decision shape (decision, drawn diam) 3:14-3:14 "" -> "decision"
+  refdoc shape (refdoc, drawn lin-doc) 3:14-3:14 "" -> "refdoc"
+  action shape (action, drawn hex) 3:14-3:14 "" -> "action"
+  round shape (task, drawn rounded) 3:14-3:14 "" -> "round"
+  rect shape (task, drawn rounded) 3:14-3:14 "" -> "rect"
+  subroutine shape (tool, drawn fr-rect) 3:14-3:14 "" -> "subroutine"
+  subprocess shape (tool, drawn fr-rect) 3:14-3:14 "" -> "subprocess"
+  subproc shape (tool, drawn fr-rect) 3:14-3:14 "" -> "subproc"
+  framed-rectangle shape (tool, drawn fr-rect) 3:14-3:14 "" -> "framed-rectangle"
+  lean-right shape (input, drawn lean-r) 3:14-3:14 "" -> "lean-right"
+  diamond shape (decision, drawn diam) 3:14-3:14 "" -> "diamond"
+  lin-doc shape (refdoc, drawn lin-doc) 3:14-3:14 "" -> "lin-doc"
+  lined-document shape (refdoc, drawn lin-doc) 3:14-3:14 "" -> "lined-document"
+  hexagon shape (action, drawn hex) 3:14-3:14 "" -> "hexagon"
+  hex shape (action, drawn hex) 3:14-3:14 "" -> "hex"
+@ 4:16  c@{ shape: de| }
+  decision shape (decision, drawn diam) 4:14-4:16 "de" -> "decision"
+@ 5:22  d@{ shape: tool, la| }
+  label property 5:20-5:22 "la" -> "label: "
+  labelType property 5:20-5:22 "la" -> "labelType: "
+@ 6:18  e@{ labelType: | }
+  text constant 6:18-6:18 "" -> "text"
+  string constant 6:18-6:18 "" -> "string"
+  markdown constant 6:18-6:18 "" -> "markdown"

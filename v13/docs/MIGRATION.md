@@ -275,6 +275,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `flowchart.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `flowchart.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `swimlane.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `agentflow.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the agentflow renderer never did. |  |
 | `agentflow.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sequence.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sequence.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
@@ -392,7 +393,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the block renderer never did. |  |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.layout` | ignored | Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it. |  |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treeView.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treeView renderer never did. |  |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -753,9 +756,11 @@ npm install @mermaid-js/plugin-hand-drawn
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
   the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319),
   requirement (boxes, dividers, relation lines; the markers stay plain, as in v12),
-  ishikawa (the head, label boxes, spine and bones, D494) and
+  ishikawa (the head, label boxes, spine and bones, D494),
   usecase (actor glyphs, use cases, notes, JSON tables and their cells, boundary frames and tabs,
-  relationship lines; business marks stay plain, as v12 drew them without roughjs). v12
+  relationship lines; business marks stay plain, as v12 drew them without roughjs) and
+  agentflow (vertices, their inner lines, flow frames, the collapsed card with its separator and
+  dots, edges). v12
   did not sketch mindmap's plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
@@ -763,7 +768,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (block, swimlanes, agentflow) are
+  v13 has not ported yet (block, swimlanes) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -2441,6 +2446,203 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## Agentflow
+
+- **Detection** is v12's: `agentflow-beta` (`/^\s*agentflow-beta\b/`, case-sensitive), fourth
+  in detection order, after `architecture` and before `c4`. `agentflow` alone and
+  `agentflow-betas` are not agentflow diagrams.
+- **Syntax** is v12's (the grammar is in [syntax/agentflow.md](./syntax/agentflow.md)), and
+  every error is reported, not only the first (R-PARSE-4). Two inputs read differently: the
+  short input form `a[/x/]` is a parallelogram of kind `input` (D462), as v12 drew it after
+  12.2.0 (12.2.0 drew a rounded box and warned `SHAPE_UNSUPPORTED`); and a lone `%` in a label
+  (`a[50% done]`) is label text (D463), where 12.2.0 rejected the diagram; `%%` is still a
+  comment.
+- **Metadata** in `@{ … }` is read by v13's YAML reader instead of js-yaml, as flowchart's is:
+  anchors, aliases and tags (`&`, `*`, `!`) are a syntax error, and a prototype key
+  (`__proto__`, `constructor`, `prototype`) is dropped with one `YAML_UNSAFE_KEY` warning (v12
+  dropped it silently). The trailing-comma retry (`shape: tool,`) is kept.
+- **Layout** (D127): agentflow lays out with `layered`, core's engine, where v12 defaulted to
+  ELK. Set `layout: elk` (or `agentflow.layout`) and register `@mermaid-js/layout-elk` to keep
+  ELK; without the plugin `elk` draws with `layered` and warns `ELK_NOT_INSTALLED`. A flow's own
+  `@{ algorithm: … }` is read but not applied, with one `ELK_ALGORITHM_IGNORED` warning (D174).
+- **Geometry and the neo default** (D152, D153): v12 defaulted `agentflow.look` to `neo`, so
+  every theme drew neo's gradient and shadow on agentflow. `look` is removed (ignored, one
+  `LOOK_REMOVED` warning), and the geometry comes with the theme's family: under the default
+  `redux-color` (agentflow's default theme in v12 too) nothing changes, and the classic themes
+  (`default`, `dark`, `forest`, `neutral`, `base`) now draw classic geometry: no shadow, and no
+  gradient in the four that drew one (`dark`, `forest`, `neutral`, `base`). Use a redux or `neo`
+  theme to keep the neo look.
+- **Diagnostics** (D461): v12's three diagnostics are reported at parse, with ranges and v12's
+  messages: `SHAPE_REMOVED` and `SHAPE_UNSUPPORTED` at the bracket or `@{ … }` block, and
+  `CONTAINMENT_VIOLATION` at the inner `flow` opener. `SHAPE_REMOVED` is a warning (v12 called
+  it an error but still drew the diagram), so the diagram renders as it did. An unknown shape
+  (`@{ shape: nope }`) is still an error, and `No such shape: tool,.` names the trailing comma.
+  A `linkStyle` index out of range is a `LINK_STYLE_INDEX` error with v12's bounds message,
+  where v12 threw a `TypeError`. The nine codes v12 reserved for a semantics module and never
+  raised are not raised in v13 either: `EDGE_OPERATOR_UNSUPPORTED`,
+  `REFERENCE_EDGE_LABEL_REJECTED`, `CONNECTOR_REF_UNRESOLVED`, `CONNECTOR_REF_NOT_A_CONNECTOR`,
+  `METADATA_KEY_MISAPPLIED`, `DUPLICATE_ID_NODE`, `RESERVED_SYNTHETIC_ID`,
+  `EDGE_SEMANTIC_CONTRADICTION` and `FLOW_NO_INPUT`.
+- **Silent drops** (D464) are kept, each now with one warning per kind per render (positions of
+  the other places in `related`): metadata written before its `flow` is lost
+  (`AGENTFLOW_METADATA_DROPPED`), the reserved `connectors` id is left out with its edges
+  (`AGENTFLOW_RESERVED_ID`), `view` on a node is ignored (`AGENTFLOW_VIEW_IGNORED`), and a
+  `connector` declared after a node of the same id replaces it
+  (`AGENTFLOW_CONNECTOR_REPLACED`). A `label` that is not text and an unknown `labelType` are
+  read as v12 read them, with one `NODE_DATA_COERCED` warning each.
+- **Tool-builder API** (D465): there is no DB object. v12's `getSemanticModel()`,
+  `getDiagnostics()`, `getElementAtPosition()`, `getElementMappings()` and `getMappingStats()`
+  are removed. `semanticModel(model)` from `@mermaid-js/diagram-agentflow` gives
+  `getSemanticModel()`'s shape (skipped metadata keys included) from `parseAgentflow(text).model`;
+  the parse's diagnostics carry ranges; positions and element spans come from the language
+  service (`@mermaid-js/language-service`: symbols, `definition`, `astAt`, `rangeOf`, folding
+  ranges), which loads the agentflow facet (`@mermaid-js/diagram-agentflow/language`).
+- **Config** (the `agentflow` section): `theme` (a scoped theme wins over the top level, as in
+  12.2.0), `titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`, `wrappingWidth`,
+  `minNodeWidth` and `useMaxWidth` are honoured, with v12's defaults. A length that is not a
+  number from 0 up to 10,000 draws with its default and warns `AGENTFLOW_CONFIG_INVALID` once
+  (v12 drew it as given). `useWidth` is ignored, as v12's renderer never read it. Agentflow
+  still reads three `flowchart` keys (D466): `flowchart.padding` (node padding),
+  `flowchart.inheritDir` (a flow without its own `direction` takes the diagram's) and
+  `flowchart.subGraphTitleMargin` (room around a flow's title); its edges follow
+  `flowchart.curve`.
+- **Limits**: the edge limit is v13's (`maxEdges`, 5,000 by default and set only by the
+  integrator, R-SEC-5), with the message `Edge limit exceeded…`; v12 threw at 501 edges. A source
+  longer than `maxTextSize` is rejected before it is parsed, as for every diagram.
+- **Links and tooltips**: `click a "url" "tooltip"` draws an `<a href>` (only URLs that pass
+  `securityLevel` and `linkSchemes`) and an SVG `<title>`, as flowchart does; `click a callback`
+  needs `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
+- **Hand-drawn**: with `@mermaid-js/plugin-hand-drawn`, vertices, flow frames, collapsed cards
+  and edges are sketched, as in v12 ([Hand-drawn look](#hand-drawn-look)).
+- **Text output** is new (v12 had none, D320, D469): `format: 'ascii'` draws agentflow as text
+  from the lazily loaded `@mermaid-js/diagram-agentflow/ascii` entry, in the `unicode` or
+  `ascii` charset ([ASCII output](./ascii.md#agentflow-diagrams)). It is the same graph laid out
+  in cells with `layered` (another `layout` draws as `layered`, with one `ASCII_DROPPED`
+  `layout` warning). Each kind is flowchart's text form for its shape: a task (and a connector)
+  a rounded box, a tool double sides, an input a slant (`/`), a decision a diamond (`◇`, `*`),
+  a refdoc a folded corner (`╲`, `\`), an action a hexagon (`<`, `>`); a flow is a frame with
+  its title on the top border, a collapsed flow a box marked `+`; `-->` ends in a head, `--x` in
+  a cross (`✕`, `x`), and `-.-` is dotted. It is never cropped: wider than `ascii.maxWidth`
+  it turns `LR` into `TB`, then warns `ASCII_TOO_WIDE`.
+- **Text output drops**, one `ASCII_DROPPED` per kind: `style` (`style`, `classDef`, `class`,
+  `linkStyle`, palette colours), `curve` (`interpolate`, `flowchart.curve`), `emphasis`,
+  `animation`, `link` (`click`, tooltips), `config` and `accessibility`. `config` names the
+  options only the SVG reads, set off their default: `agentflow.useMaxWidth`,
+  `diagramPadding`, `minNodeWidth` and `titleTopMargin`, and `flowchart.padding` and
+  `flowchart.subGraphTitleMargin`. `nodeSpacing`, `rankSpacing` and `wrappingWidth` convert at
+  8 × 16 px a cell, as flowchart's do (120 px wraps a label at 15 columns).
+
+## Agentflow SVG structure
+
+What changed in the agentflow's SVG compared with v12 (spec #523, #548). v12's classes are kept
+so selectors that use them keep working: `clusters`, `cluster`, `flow-cluster`, `cluster-label`,
+`edgePaths`, `flowchart-link`, `edge-thickness-normal`, `edge-pattern-solid`/`-dotted`,
+`edgeLabels`, `edgeLabel`, `nodes`, `node`, `default`, `af-kind-<kind>`, `flow-collapsed`,
+`collapsed-separator`, `collapsed-indicator`, `agentflowTitleText` and user `classDef` classes.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id, `aria-roledescription="agentflow"` | No root `id`; `class="mermaid mermaid-agentflow"`, `role="img"`, `aria-roledescription="agentflow"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases declared on the root `style` (only `theme: 'auto'` writes a custom-property sheet) | Inert output (R-SEC-2); hosts re-theme with `--mermaid-*` (R-THEME-3) |
+| `<g class="root">`, `<defs>` with `<marker>`s (point, circle, cross, hierarchy), `marker-end="url(#…)"` | The four groups are the root's children; each arrowhead is a `<path class="marker">` right after its edge's path: a filled triangle for `-->`, two stroked diagonals for `--x`, none for `-.-` | No `<defs>` or ids (D35); the head takes the edge's colour |
+| Element ids: vertices `<render id>-flowchart-<id>-<n>`, edges `<render id>-L_<a>_<b>_<n>`, flows by their id | `data-id` (the vertex, flow or edge id) and `data-ast` (its AST id: `n:<id>`, `s:<id>`, `e:<a>><b>`) on each `g.node`, flow `g.cluster` and edge `path`; labels carry `data-id` only | Ids are global in a page; `data-ast` maps an element back to its source (R-PARSE-8, D468) |
+| Edge: `<path class="… flowchart-link" id>` inside `g.edges.edgePath` | `<path class="flowchart-link edge-thickness-normal edge-pattern-solid\|dotted[ edge-animation-*][ classes]" data-id data-ast>` directly in `g.edgePaths`; a dotted edge is `stroke-dasharray="2"` with butt caps. Its ends are on the outline of the shape drawn (the layout puts them there), and its curve follows `linkStyle … interpolate`, the default's, or `flowchart.curve` | One element per edge maps it to its source |
+| Labels: `<foreignObject>` with HTML (`span.nodeLabel`, `div.labelBkg`) | `<text>`/`<tspan>` from core's label layout (markdown strings as markdown, math with the math plugin, D176) | No HTML mode (D5); labels measure deterministically (R-TEXT-4) |
+| Vertex: `<g class="node default af-kind-<kind>" id data-look>` with `rect`/`polygon`/`g.outer-path` classed `basic label-container` and a `g.label` | `<g class="node default af-kind-<kind>[ classes]" data-id data-ast transform>` with the shape (`rect`, `polygon` or `path`), its inner lines (the tool's two rails, the refdoc's rule) as one `path`, then one `<text>`; no `label-container`, `label` or `data-look` | Fewer elements; shapes are plain outlines (D446: a local copy of flowchart's) |
+| Flow: `<g class="cluster flow-cluster" id data-look data-color-id>` with `<rect rx="10" stroke="<flowContainerStroke>">` (the stylesheet overrode the stroke) and a `g.cluster-label` around a `<foreignObject>` | `<g class="cluster flow-cluster[ classes]" data-id data-ast[ data-color-id]>` with `<rect rx="10" fill="none" stroke-width="0.75">` and `<text class="cluster-label">` (`titleColor`), `flowchart.subGraphTitleMargin.top` below the frame's top | Text labels; the stroke is what v12 drew (below) |
+| Collapsed flow: `<g class="node" id data-color-id>` with `<rect class="basic label-container flow-collapsed">`, a `line.collapsed-separator` and three `circle.collapsed-indicator` | `<g class="node[ classes]" data-id data-ast="s:<id>"[ data-color-id]>` with `<rect class="flow-collapsed" rx="10">`, `<line class="collapsed-separator">` (0.75 px, dashed `3, 3`, `flowContainerStroke`), three `<circle class="collapsed-indicator">` (r 2.5, `nodeBorder`, opacity 0.5) and the title's `<text>` | It is drawn as a node with its flow's AST id; the paints are v12.2.0's computed ones |
+| Paints from the `<style>`: neo's `[data-look="neo"]` rules stroke vertices, cards and frames with `nodeBorder` (the gradient in themes that have one) and add the shadow; `.flow-cluster rect` leaves frames unfilled at 0.75 px | The same, as attributes: vertices and cards `mainBkg` / `nodeBorder` (`theme.outline`, the gradient where `useGradient` is on, D182) at `strokeWidth`, frames `nodeBorder` unfilled at 0.75 px, all with `dropShadow` where the theme has one; the refdoc's rule is plain `nodeBorder` under the gradient (D185) | D152, D182, D227 |
+| `agentflow.look` defaulted to `neo`, so every theme drew neo's gradient and shadow on agentflow, the classic five included | `look` is ignored (`LOOK_REMOVED`, D153); each theme draws as its family does: the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) without the shadow, and `dark`, `forest`, `neutral` and `base` without the gradient | D152, D153, D227 |
+| Per-item colour: stylesheet rules under the theme names `redux-color` / `redux-dark-color` only, keyed on `[data-look].node.af-kind-<kind>` and `[data-color-id].cluster` | Attributes, on whenever the theme (or the author) carries a non-empty `borderColorArray`, never by theme name: each kind its fixed slot (tool 0, task 1, decision 2, input 3, refdoc 4, connector 5, action 6), each flow `7 + n mod (length − 7)` in declaration order, a collapsed flow its flow's; fill from `bkgColorArray` only when it is not empty; `data-color-id="color-<slot>"` on frames and cards. An author `style`/`classDef` still wins | D152, R-THEME-11 |
+| `themeVariables.flowContainerStroke` (every theme: `… \|\| secondaryBorderColor`), drawn only on the card's separator | `flowContainerStroke`, agentflow's own theme variable (`--mermaid-flowContainerStroke`), rule `secondaryBorderColor`; v13 derives `secondaryBorderColor` with core's rule, so the separator's grey differs slightly from v12's in the themes that derive it | D331 |
+| Title: `insertTitle` appended `<text class="agentflowTitleText">` (18 px, `textColor`) at `y = -titleTopMargin`, centred on the drawing; `setupViewPortForSVG` fitted the `viewBox` around everything | `<text class="agentflowTitleText" font-size="18">` (`textColor`), its baseline `agentflow.titleTopMargin` above the layout's box, centred on it; the `viewBox` starts at a negative `y` (and `x`, for a title wider than the drawing) to hold it with `diagramPadding`. Without a title the `viewBox` is `0 0 w h` | D218, D224 |
+| `click A "url"` wrapped the node in `<a xlink:href>`; tooltips were an HTML hover div; `click … callback` bound through the DB | `<a href>` inside the node group (only URLs that pass `securityLevel` and `linkSchemes`; a refused one warns `URL_REFUSED`); a tooltip is an SVG `<title>` in the node group; `click … callback` draws nothing and is bound by `@mermaid-js/plugin-interactions` | No script in output (R-SVG-4, R-SVG-5, D105) |
+| `look: handDrawn` sketched vertices, frames and the card's frame with roughjs; a sketched frame or card is a `<path>`, which the stylesheet's `.flow-cluster rect` and neo `.cluster rect` rules missed, so both kept the `flowContainerStroke` attribute, unfilled and without the shadow (only a palette slot recoloured a frame) | With `@mermaid-js/plugin-hand-drawn`, every outline goes through `w.outline`: shapes and the card (`node`), frames (`group`), the rails, the rule and the separator (`divider`), the dots (`mark`) and edges (`edge`). A sketched frame and card keep the paint they have without the plugin (`nodeBorder` or their slot, the card filled, the shadow where the theme has one): the renderer never branches on the plugin, and a drawer gets only the role and the paint | D152, D301, D302 |
+
+## Block diagram
+
+- **Syntax** is v12's (the grammar is in [syntax/block.md](./syntax/block.md)): line breaks
+  separate nothing, ids take `;`, `,`, `.`, `|`, `%`, `#` and Unicode, labels are quoted, and
+  every error is reported, not only the first, with messages in words (R-PARSE-4). What v12
+  rejected is still rejected, except `style` (below).
+- **Edge chains** (D442): `a --> b --> c` declares `a`, `b` and `c` and draws both edges. v12
+  dropped `a`, `b` and the first edge and drew a block `undefined`.
+- **`class` before its block** (D442) gives the block the class, and the block is drawn. v12
+  made a hidden block of the id, so the later declaration was never placed.
+- **`class a, b`** (D442) gives `b` the class too: the ids are trimmed. v12 looked up ` b` and
+  drew `b` without the class.
+- **`root`** (D442) is an ordinary block id. v12 merged it into its own top level and drew
+  nothing for it.
+- **A leaf later opened as `block:a … end`** (D442) keeps its place and holds the children.
+  v12 lost the children.
+- **A composite opened a second time** keeps both bodies: the second adds to the first. v12 lost
+  the second body's new blocks. Pending a D-id (D440).
+- **A chain in a composite header**, `block:a --> b … end`: the composite is `a`, and the edge
+  and `b` stand next to it. v12 drew a composite with no id and lost the edge. Pending a D-id
+  (D440).
+- **`style`** (D443) applies after every statement, so `style a …` before `a` and
+  `style a,b …` work; ids that never appear get one `BLOCK_STYLE_UNKNOWN` warning. v12 threw a
+  TypeError and rejected the diagram.
+- **Degenerate sizes** (D445). `columns 0` lays out as `columns auto` and a span `:0` as `:1`,
+  with one `BLOCK_SIZE_INVALID` warning (v12 threw or drew NaN). Spans are capped at 1,000
+  columns and `space:n` at 100,000 cells, with one `BLOCK_TRUNCATED` warning; v12 kept larger
+  ones, and rejected a spacer over 16,777,214 cells (`Map maximum size exceeded`), which v13
+  now accepts. Block-arrow directions are trimmed, so `( right , left )` draws (v12 drew no
+  arrow).
+- **Generated ids** of spaces and anonymous composites are `id-1`, `id-2`, … in source order,
+  where v12 drew random ones (R-ARCH-6).
+- **Self-loops and parallel edges** (D441): edges stay v12's straight segments between the
+  centres, clipped at the outlines, and parallel edges still overlap; a self-loop (`a --> a`),
+  which v12 drew with zero length, is an arc standing out at the block's top right.
+- **Composite labels** (D444): `block:g["Title"] … end` reserves a band above the composite's
+  grid for its label, so the label no longer sits under the children; an unlabelled composite
+  is laid out as in v12.
+- **Config** (the `block` section): `padding` (default 8: the grid gap and inset, and a leaf's
+  label padding) and `useMaxWidth` are honoured. A `padding` that is not a finite number of 0 or
+  more (`-3`, `"x"`, `"20"`) lays out at 8, and one over 1,000 at 1,000, each with one
+  `BLOCK_CONFIG_INVALID` warning (D226, D445); v12 laid it out as it was (a string was
+  concatenated into the sizes, `1e9` drew a viewBox about 1e9 wide). A block-scoped `theme`
+  wins over the top level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block
+  renderer never read them (block lays out its own grid). `look` is removed (D153): ignored with one
+  `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
+  paddings.
+- **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
+  loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
+  frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See
+  [ASCII output](../ascii.md#block-diagrams).
+
+## Block SVG structure
+
+What changed in the block diagram's SVG compared with v12 (spec #521). v12's classes are kept,
+and its block order: `g.block` holds every block in pre-order (a composite before its children),
+each a `g.node` (`node <classes or default> flowchart-label`) holding its shape as
+`label-container` (a composite's is `rect.basic.cluster.composite.label-container`) and its
+`g.label`; then the edges as `path.flowchart-link` with `edge-thickness-*` and
+`edge-pattern-*`; then the edge labels as `g.edgeLabel` (a change of order, below).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id (shape, edge, label and palette rules) | No root `id`; `class="mermaid mermaid-block"`, `role="img"`, `aria-roledescription="block"` (kept), `data-mermaid-version`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes and widths are presentation attributes reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-THEME-3 |
+| `<defs>` with `<marker>`s (point, circle, cross) referenced by `marker-start`/`marker-end`, and for `look: neo` a gradient and a drop-shadow `<filter>` | Arrowheads drawn inline after their edge (`path.marker`, `circle.marker`); the drop shadow is the theme's `dropShadow` as a `filter` attribute; the gradient is core's one scoped `<linearGradient>` (`<id>-gradient`), on outlines only | DESIGN §7.1, D182 |
+| Ids on every block (`<render id>-<id>`) and edge (`<render id>-<k>-<a>-<b>`) | No ids: `data-id` (the block's id, the edge's `<k>-<a>-<b>`) on each `g.node`, edge `path`, `g.label` and `g.edgeLabel`; `data-ast` on each `g.node` and edge `path` only | R-ARCH-6, R-PARSE-8, pitfall 12 |
+| Labels: `g.label` > `foreignObject` > HTML `span` | `g.label` > `text`/`tspan` from core's label layout; markdown strings stay rejected (syntax) | R-SEC-2 |
+| Every block wrote a `g.label`, an unlabelled composite's empty (`labelHelper`) | An unlabelled composite has no `g.label` | Nothing invisible is drawn |
+| A composite's label at its centre | In its band above the grid (`padding`, then the label) | D444 |
+| A block arrow's polygon `label-container`, as a leaf polygon's | `label-container block-arrow`, so a hand-drawn drawer and a stylesheet can tell the two apart | D447 |
+| Edge classes `… flowchart-link LS-a1 LE-b1` (fixed, meaningless `LS`/`LE`) | `edge-thickness-* edge-pattern-* flowchart-link` | Dead classes dropped |
+| Edges from centre to centre, clipped at the outline v12's intersect found (the crossing nearest the far end) | Clipped at the outermost crossing of each outline; a self-loop is a cubic standing out at the top right | D441 |
+| Edge label `g.edgeLabel` > `g.label` > `foreignObject`, a background at `edgeLabelBackground` | `g.edgeLabel` > its background `rect` (`edgeLabelBackground`) and its `text` | R-SEC-2 |
+| Each edge label drawn straight after its edge (`insertEdges`), so a later edge could cross it | Every edge first, then every edge label, so no edge crosses a label | As flowchart v13 (one family, user story 6) |
+| Arrowheads painted `lineColor` (block's `.marker` rule) | Painted `arrowheadColor`, as flowchart v13: the same colour in every theme but `forest` and `neutral`, which set their own | One family with flowchart |
+| Composite palette in CSS (`[data-look][data-color-id="color-i"].node rect.composite`), only in `redux-color` and `redux-dark-color` | `data-color-id="color-<n>"` on the composite's `g.node` (kept) with the slot's stroke and fill on its `rect`, wherever the theme or the author sets `borderColorArray`; `style`/`classDef` still beat it | D152, `paletteSlots()` |
+| `data-look` on nodes; `look: neo` drew the gradient and shadow | No `data-look`: `look` is ignored (`LOOK_REMOVED`); the redux and `neo` families carry the gradient and shadow, on leaves, block arrows and composites, never on edges or labels | D153, D181, D227 |
+| Edge line ends: the SVG default butt caps | Round caps on solid edges, butt on dotted ones (round caps would close a 2 px dash's gaps); widths as v12 (`strokeWidth`, thick 3.5, dotted dashed `2`) | As flowchart v13 |
+| `classDef` text styles applied by CSS (`color` rewritten to `fill`) | A class's or `style`'s `color` is the label's `fill`; a styled `fill` gives the label the matching ink | As flowchart v13 |
+| A double circle grew with its cell (both rings stretched to the cell's width) | Drawn at its natural size, centred in its cell, as the circle and the diamond are | Spec #521 (GAPS T3) |
+| Composites nested 5 or more levels deep sized as v12's repeated sizing compounded (a block at depth d sized 2^d times) | Each composite is sized at most 16 times, so the layout stays linear: v12's sizes exactly to 4 levels; at 5 levels 97 of 300 generated trees differ (median 544 px, at most 27,405 px), at 6 levels 32 of 100 (median 2,496 px, at most 53,192 px) | Linear layout; past the cap pending a D-id (D440) |
+| The `viewBox` from the browser's `getBBox()` plus 5, and a height one "magic factor" taller | The layout's bounds (every outline, label and edge, plus v12's 5 px) | D224 |
+| No text output | `format: 'ascii'` (both charsets): boxes on a character grid, one width per column at the widest label, composites as frames with the label on the top border, spaces blank, labels cut with `…`, block arrows as boxes with an arrowhead per pointing side, edges as stepped lines with arrowheads; `block.padding` ignored with no warning | D449, D320 |
+| Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12 | D301, D302, D447 |
 
 ## Ishikawa diagram
 

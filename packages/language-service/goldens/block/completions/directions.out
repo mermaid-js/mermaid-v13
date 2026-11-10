@@ -1,0 +1,16 @@
+@ 2:12  a<["A"]>(|)
+  right constant (points right) 2:12-2:12 "" -> "right"
+  left constant (points left) 2:12-2:12 "" -> "left"
+  up constant (points up) 2:12-2:12 "" -> "up"
+  down constant (points down) 2:12-2:12 "" -> "down"
+  x constant (points left and right) 2:12-2:12 "" -> "x"
+  y constant (points up and down) 2:12-2:12 "" -> "y"
+@ 3:19  b<["B"]>(right, |)
+  right constant (points right) 3:19-3:19 "" -> "right"
+  left constant (points left) 3:19-3:19 "" -> "left"
+  up constant (points up) 3:19-3:19 "" -> "up"
+  down constant (points down) 3:19-3:19 "" -> "down"
+  x constant (points left and right) 3:19-3:19 "" -> "x"
+  y constant (points up and down) 3:19-3:19 "" -> "y"
+@ 4:13  c<["C"]>(u|)
+  up constant (points up) 4:12-4:13 "u" -> "up"

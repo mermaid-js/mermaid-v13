@@ -1,0 +1,23 @@
+---
+config:
+  theme: redux
+  look: handDrawn
+  handDrawnSeed: 1
+description: >-
+  one representative block diagram, hand-drawn in the redux theme (D307, D447): the leaf
+  shapes and their inner lines sketched through w.outline; the composite, the block arrow,
+  the edges and labels plain
+---
+block-beta
+  columns 3
+  start(("Start")) space check{"Valid?"}
+  block:work["Work"]:3
+    columns 3
+    load["Load"] parse(["Parse"]) store[("Store")]
+  end
+  go<["Next"]>(right) report[["Report"]] done((("Done")))
+  start --> check
+  check -- "yes" --> work
+  store -.-> report
+  classDef hot fill:#f96,stroke:#333
+  class done hot

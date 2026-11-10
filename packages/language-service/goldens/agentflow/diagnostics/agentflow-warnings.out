@@ -1,0 +1,4 @@
+2:7-2:22 "@{ owner: ops }" warning AGENTFLOW_METADATA_DROPPED: The metadata on `late` is lost: it is written before its `flow`, so it lands on a node that the flow replaces (as in v12). Write it on the `flow` line, or after the flow's `end`.
+6:3-6:13 "connectors" warning AGENTFLOW_RESERVED_ID: `connectors` is a reserved id: the node is left out of the diagram and its edges have no end there (as in v12). Use another id.
+7:4-7:24 "@{ view: collapsed }" warning AGENTFLOW_VIEW_IGNORED: `view` on the node `d` is ignored: only a flow can be collapsed (as in v12). Put `view: collapsed` on a flow.
+9:13-9:14 "e" warning AGENTFLOW_CONNECTOR_REPLACED: `connector e` replaces the node `e` written at line 8: the node's label, shape and metadata are dropped (as in v12). Declare the connector before using its id, or use another id.

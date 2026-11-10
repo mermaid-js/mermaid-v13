@@ -1,0 +1,30 @@
+---
+config:
+  theme: redux
+description: >-
+  the palette off (redux has no borderColorArray): every vertex mainBkg / nodeBorder, frames
+  nodeBorder unfilled, no data-color-id
+---
+agentflow-beta LR
+  connector api["API"]
+  flow plan["Plan"]
+    goal["goal"]@{ shape: input }
+    think["think"]@{ shape: task }
+    pick["pick?"]@{ shape: decision }
+    goal --> think --> pick
+  end
+  flow act["Act"]
+    flow tools["Tools"]
+      search["search"]@{ shape: tool }
+      notes["notes"]@{ shape: refdoc }
+      search -.- notes
+    end
+    run["run"]@{ shape: action }
+    search --> run
+  end
+  flow done["Done"]
+    log["log"]@{ shape: task }
+  end
+  done@{ view: "collapsed" }
+  pick --> search
+  run --x done

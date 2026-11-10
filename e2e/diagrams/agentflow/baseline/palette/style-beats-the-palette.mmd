@@ -1,0 +1,34 @@
+---
+config:
+  theme: redux-color
+description: >-
+  an author style and classDef beat the palette slot (redux-color): `think` and the `tools` flow
+  styled, `run` classed; the rest keep their slots
+---
+agentflow-beta LR
+  connector api["API"]
+  flow plan["Plan"]
+    goal["goal"]@{ shape: input }
+    think["think"]@{ shape: task }
+    pick["pick?"]@{ shape: decision }
+    goal --> think --> pick
+  end
+  flow act["Act"]
+    flow tools["Tools"]
+      search["search"]@{ shape: tool }
+      notes["notes"]@{ shape: refdoc }
+      search -.- notes
+    end
+    run["run"]@{ shape: action }
+    search --> run
+  end
+  flow done["Done"]
+    log["log"]@{ shape: task }
+  end
+  done@{ view: "collapsed" }
+  pick --> search
+  run --x done
+  classDef hot fill:#fde68a,stroke:#b45309,stroke-width:2px
+  class run hot
+  style think fill:#bbf7d0,stroke:#15803d
+  style tools stroke:#7c3aed,stroke-width:2px

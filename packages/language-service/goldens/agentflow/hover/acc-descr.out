@@ -1,0 +1,15 @@
+@ 2:6  acc|Descr {
+  2:3-2:13 "accDescr {"
+  | **`accDescr {`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the diagram.
+@ 5:3  |}
+  5:3-5:4 "}"
+  | **`}`** closes `accDescr {`
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the diagram.
+@ 6:6  acc|Descr: one line
+  6:3-6:12 "accDescr:"
+  | **`accDescr:`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the diagram.

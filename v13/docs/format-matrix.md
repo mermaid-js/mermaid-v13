@@ -11,7 +11,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `flowchart-elk` | `@mermaid-js/diagram-flowchart` | yes | yes |
 | `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
 | `architecture` | not ported | no | no |
-| `agentflow` | not ported | no | no |
+| `agentflow` | `@mermaid-js/diagram-agentflow` | yes | yes |
 | `c4` | not ported | no | no |
 | `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
@@ -31,7 +31,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `sankey` | `@mermaid-js/diagram-sankey` | yes | no |
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
-| `block` | not ported | no | no |
+| `block` | `@mermaid-js/diagram-block` | yes | yes |
 | `eventmodeling` | not ported | no | no |
 | `treeView` | `@mermaid-js/diagram-treeview` | yes | yes |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |

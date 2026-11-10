@@ -1,0 +1,49 @@
+1:1-1:15 "agentflow-beta" keyword
+1:16-1:18 "LR" enumMember
+2:3-2:15 "%% a comment" comment
+3:3-3:12 "connector" keyword
+3:13-3:18 "inbox" node [declaration, definition]
+3:18-3:19 "[" operator
+3:20-3:25 "Inbox" string
+3:26-3:27 "]" operator
+4:3-4:7 "flow" keyword
+4:8-4:12 "plan" subgraph [declaration, definition]
+4:12-4:13 "[" operator
+4:13-4:17 "Plan" string
+4:17-4:18 "]" operator
+4:18-4:20 "@{" macro
+4:21-4:36 "view: collapsed" macro
+4:37-4:38 "}" macro
+5:5-5:9 "read" node [declaration, definition]
+5:9-5:11 "@{" macro
+5:12-5:24 "shape: input" macro
+5:25-5:26 "}" macro
+5:27-5:29 "--" operator
+5:30-5:35 "reads" string
+5:36-5:39 "-->" operator
+5:40-5:45 "think" node [declaration, definition]
+5:45-5:46 "{" operator
+5:46-5:51 "Think" string
+5:51-5:52 "}" operator
+6:5-6:10 "think" node
+6:11-6:14 "--x" operator
+6:15-6:20 "retry" node [declaration, definition]
+7:5-7:10 "think" node
+7:11-7:14 "-.-" operator
+7:15-7:19 "spec" node [declaration, definition]
+8:3-8:6 "end" keyword
+9:3-9:11 "classDef" keyword
+9:12-9:15 "hot" class [declaration, definition]
+9:16-9:20 "fill" variable
+9:22-9:25 "f96" variable
+10:3-10:8 "think" node
+10:8-10:11 ":::" operator
+10:11-10:14 "hot" class
+11:3-11:12 "linkStyle" keyword
+11:13-11:14 "0" number
+11:15-11:21 "stroke" variable
+11:22-11:25 "red" variable
+12:3-12:8 "click" keyword
+12:9-12:13 "read" node
+12:15-12:34 "https://example.com" string
+12:36-12:42 "_blank" enumMember

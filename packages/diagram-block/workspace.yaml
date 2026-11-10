@@ -1,0 +1,71 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: block
+    title: Block diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        # `block` and `block-beta` are both jison's `BLOCK_DIAGRAM_KEY`.
+        Block:
+          mode: INITIAL
+          pattern: block\b
+          terminal: BLOCK_DIAGRAM_KEY
+          docOf: BLOCK_DIAGRAM_KEY
+        # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        StringStart:
+          mode: INITIAL
+          pattern: '["]'
+        StringEnd:
+          mode: string
+          pattern: '["]'
+        MdStringStart:
+          mode: INITIAL
+          pattern: '["][`]'
+        MdStringEnd:
+          mode: md_string
+          pattern: '[`]["]'
+        ArrowDirStart:
+          mode: BLOCK_ARROW
+          pattern: '\]>\s*\('
+        AccDescrMultiline:
+          mode: INITIAL
+          pattern: 'accDescr\s*\{\s*'
+          docOf: acc_descr
+        AccDescrMultilineEnd:
+          mode: acc_descr_multiline
+          pattern: '[\}]'
+          docOf: acc_descr
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - shapes/
+    - plugin.ts
+    - index.ts
+    - testing.ts
+    - test-context.ts
+    - ascii/
+    - ascii.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The block diagram plugin (SVG, and text output from `/ascii`; `block`, `block-beta`).'
+  install: 'with `mermaid/slim`'
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
+# the files that must credit an upstream. Pele is a shared upstream (`SHARED_UPSTREAMS`): these
+# files are local copies of flowchart's Pele-derived shapes and arrowheads (D446). mermaid's
+# notices carry them too (its CDN build bundles this package): notices/mermaid.txt.
+credits:
+  files:
+    src/shapes/leaf.ts: ['Pele']
+    src/shapes/draw.ts: ['Pele']
+    src/render/arrowheads.ts: ['Pele']
