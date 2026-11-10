@@ -1261,7 +1261,8 @@ export const configSchema: ConfigSchema = {
     "c4": {
       "$ref": "#/$defs/C4DiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "sankey": {
@@ -1460,13 +1461,47 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for C4 diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the C4 renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: true draws `width=\"100%\"` and a `max-width`; false draws the diagram at its own `width` and `height`."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "C4 lays out with its own grid and relation router (`layoutKind: 'custom'`, D454, D455), as v12 had its own packer; neither the top-level nor a C4-scoped `layout` changes it."
+          }
+        },
         "diagramMarginX": {
           "description": "Margin to the right and left of the c4 diagram, must be a positive value.\n",
           "type": "integer",
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The canvas margin left and right of what is drawn, and the gap between boundaries side by side (D454)."
           }
         },
         "diagramMarginY": {
@@ -1475,7 +1510,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The canvas margin above and below what is drawn, and with `c4ShapeMargin` the gap between boundaries one under the other (D454). The title row (60 px) is above it."
           }
         },
         "c4ShapeMargin": {
@@ -1484,7 +1521,9 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Elements sit `2 · c4ShapeMargin` apart both ways, as v12's packer; a boundary's contents sit `c4ShapeMargin` inside its frame on every side, below its header (D454)."
           }
         },
         "c4ShapePadding": {
@@ -1493,7 +1532,9 @@ export const configSchema: ConfigSchema = {
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The room round an element's text: an element is at least its text's width plus `2 · c4ShapePadding`, as v12's classic look; it also sizes the cylinder, queue and `fr-rect` padding in the classic themes."
           }
         },
         "width": {
@@ -1502,7 +1543,9 @@ export const configSchema: ConfigSchema = {
           "default": 216,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The least width of an element, as v12; a boundary's header wraps at its contents' width or this, whichever is wider. A number of 0 or more (or a numeric string); anything else lays out with the default."
           }
         },
         "height": {
@@ -1511,7 +1554,9 @@ export const configSchema: ConfigSchema = {
           "default": 60,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's C4 renderer never read it: an element is as tall as its text (D454)."
           }
         },
         "boxMargin": {
@@ -1520,7 +1565,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's C4 renderer never read it (D454)."
           }
         },
         "c4ShapeInRow": {
@@ -1529,14 +1576,18 @@ export const configSchema: ConfigSchema = {
           "default": 4,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The elements in a row: a default that `UpdateLayoutConfig`'s `$c4ShapeInRow` overrides; v12 hard-coded 4 and never read the key (D454). An integer of 1 or more; anything else lays out with the default."
           }
         },
         "nextLinePaddingX": {
           "type": "number",
           "default": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Each row of elements after the first starts this far in, as v12's packer."
           }
         },
         "c4BoundaryInRow": {
@@ -1545,7 +1596,9 @@ export const configSchema: ConfigSchema = {
           "default": 2,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The boundaries in a row: a default that `UpdateLayoutConfig`'s `$c4BoundaryInRow` overrides; v12 hard-coded 2 and never read the key (D454). An integer of 1 or more; anything else lays out with the default."
           }
         },
         "personFontSize": {
@@ -1556,15 +1609,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "personFontFamily": {
           "description": "This sets the font weight of Person shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "personFontWeight": {
@@ -1575,7 +1631,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_personFontSize": {
@@ -1586,15 +1644,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_personFontFamily": {
           "description": "This sets the font family of External Person shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_personFontWeight": {
@@ -1605,7 +1666,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "systemFontSize": {
@@ -1616,15 +1679,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "systemFontFamily": {
           "description": "This sets the font family of System shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "systemFontWeight": {
@@ -1635,7 +1701,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_systemFontSize": {
@@ -1646,15 +1714,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_systemFontFamily": {
           "description": "This sets the font family of External System shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_systemFontWeight": {
@@ -1665,7 +1736,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "system_dbFontSize": {
@@ -1676,15 +1749,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "system_dbFontFamily": {
           "description": "This sets the font family of System DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "system_dbFontWeight": {
@@ -1695,7 +1771,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_system_dbFontSize": {
@@ -1706,15 +1784,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_system_dbFontFamily": {
           "description": "This sets the font family of External System DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_system_dbFontWeight": {
@@ -1725,7 +1806,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "system_queueFontSize": {
@@ -1736,15 +1819,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "system_queueFontFamily": {
           "description": "This sets the font family of System Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "system_queueFontWeight": {
@@ -1755,7 +1841,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_system_queueFontSize": {
@@ -1766,15 +1854,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_system_queueFontFamily": {
           "description": "This sets the font family of External System Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_system_queueFontWeight": {
@@ -1785,7 +1876,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "boundaryFontSize": {
@@ -1796,15 +1889,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "boundaryFontFamily": {
           "description": "This sets the font family of Boundary shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "boundaryFontWeight": {
@@ -1815,7 +1911,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "messageFontSize": {
@@ -1826,15 +1924,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "messageFontFamily": {
           "description": "This sets the font family of Message shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "messageFontWeight": {
@@ -1845,7 +1946,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "containerFontSize": {
@@ -1856,15 +1959,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "containerFontFamily": {
           "description": "This sets the font family of Container shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "containerFontWeight": {
@@ -1875,7 +1981,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_containerFontSize": {
@@ -1886,15 +1994,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_containerFontFamily": {
           "description": "This sets the font family of External Container shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_containerFontWeight": {
@@ -1905,7 +2016,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "container_dbFontSize": {
@@ -1916,15 +2029,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "container_dbFontFamily": {
           "description": "This sets the font family of Container DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "container_dbFontWeight": {
@@ -1935,7 +2051,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_container_dbFontSize": {
@@ -1946,15 +2064,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_container_dbFontFamily": {
           "description": "This sets the font family of External Container DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_container_dbFontWeight": {
@@ -1965,7 +2086,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "container_queueFontSize": {
@@ -1976,15 +2099,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "container_queueFontFamily": {
           "description": "This sets the font family of Container Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "container_queueFontWeight": {
@@ -1995,7 +2121,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_container_queueFontSize": {
@@ -2006,15 +2134,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_container_queueFontFamily": {
           "description": "This sets the font family of External Container Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_container_queueFontWeight": {
@@ -2025,7 +2156,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "componentFontSize": {
@@ -2036,15 +2169,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "componentFontFamily": {
           "description": "This sets the font family of Component shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "componentFontWeight": {
@@ -2055,7 +2191,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_componentFontSize": {
@@ -2066,15 +2204,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_componentFontFamily": {
           "description": "This sets the font family of External Component shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_componentFontWeight": {
@@ -2085,7 +2226,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "component_dbFontSize": {
@@ -2096,15 +2239,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "component_dbFontFamily": {
           "description": "This sets the font family of Component DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "component_dbFontWeight": {
@@ -2115,7 +2261,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_component_dbFontSize": {
@@ -2126,15 +2274,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_component_dbFontFamily": {
           "description": "This sets the font family of External Component DB shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_component_dbFontWeight": {
@@ -2145,7 +2296,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "component_queueFontSize": {
@@ -2156,15 +2309,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "component_queueFontFamily": {
           "description": "This sets the font family of Component Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "component_queueFontWeight": {
@@ -2175,7 +2331,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "external_component_queueFontSize": {
@@ -2186,15 +2344,18 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The size the text is measured and drawn at: a number (px), a CSS length or a size keyword; anything else draws at the default. A boundary's label is 2 px larger and bold, its description 2 px smaller, as v12."
           }
         },
         "external_component_queueFontFamily": {
           "description": "This sets the font family of External Component Queue shape for the diagram",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning."
           }
         },
         "external_component_queueFontWeight": {
@@ -2205,7 +2366,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "normal",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`bold`, `bolder` or a number; anything else is normal. The element's name is always bold, as v12."
           }
         },
         "wrap": {
@@ -2213,7 +2376,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Element text wraps at the element's width. Relation labels and boundary headers wrap only when the top-level `wrap` is set too, as v12."
           }
         },
         "wrapPadding": {
@@ -2221,287 +2386,369 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's C4 renderer never read it (D454)."
           }
         },
         "person_bg_color": {
           "type": "string",
           "default": "#08427B",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "person_border_color": {
           "type": "string",
           "default": "#073B6F",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_person_bg_color": {
           "type": "string",
           "default": "#686868",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_person_border_color": {
           "type": "string",
           "default": "#8A8A8A",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_bg_color": {
           "type": "string",
           "default": "#1168BD",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_db_bg_color": {
           "type": "string",
           "default": "#1168BD",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_db_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_queue_bg_color": {
           "type": "string",
           "default": "#1168BD",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "system_queue_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_bg_color": {
           "type": "string",
           "default": "#999999",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_border_color": {
           "type": "string",
           "default": "#8A8A8A",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_db_bg_color": {
           "type": "string",
           "default": "#999999",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_db_border_color": {
           "type": "string",
           "default": "#8A8A8A",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_queue_bg_color": {
           "type": "string",
           "default": "#999999",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_system_queue_border_color": {
           "type": "string",
           "default": "#8A8A8A",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_bg_color": {
           "type": "string",
           "default": "#438DD5",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_db_bg_color": {
           "type": "string",
           "default": "#438DD5",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_db_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_queue_bg_color": {
           "type": "string",
           "default": "#438DD5",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "container_queue_border_color": {
           "type": "string",
           "default": "#3C7FC0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_bg_color": {
           "type": "string",
           "default": "#B3B3B3",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_border_color": {
           "type": "string",
           "default": "#A6A6A6",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_db_bg_color": {
           "type": "string",
           "default": "#B3B3B3",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_db_border_color": {
           "type": "string",
           "default": "#A6A6A6",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_queue_bg_color": {
           "type": "string",
           "default": "#B3B3B3",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_container_queue_border_color": {
           "type": "string",
           "default": "#A6A6A6",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_bg_color": {
           "type": "string",
           "default": "#85BBF0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_border_color": {
           "type": "string",
           "default": "#78A8D8",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_db_bg_color": {
           "type": "string",
           "default": "#85BBF0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_db_border_color": {
           "type": "string",
           "default": "#78A8D8",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_queue_bg_color": {
           "type": "string",
           "default": "#85BBF0",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "component_queue_border_color": {
           "type": "string",
           "default": "#78A8D8",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_bg_color": {
           "type": "string",
           "default": "#CCCCCC",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_border_color": {
           "type": "string",
           "default": "#BFBFBF",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_db_bg_color": {
           "type": "string",
           "default": "#CCCCCC",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_db_border_color": {
           "type": "string",
           "default": "#BFBFBF",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_queue_bg_color": {
           "type": "string",
           "default": "#CCCCCC",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "external_component_queue_border_color": {
           "type": "string",
           "default": "#BFBFBF",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The element palette by kind, under an `UpdateElementStyle` `$bgColor` or `$borderColor`. Each value passes core's colour check: one it refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each (R-SEC-2). v12 wrote the value raw."
           }
         },
         "personFont": {

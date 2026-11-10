@@ -1,0 +1,13 @@
+---
+description: >-
+  D452's parse fixes: an unquoted argument stops at `)` and at the line
+  end, a `%%` comment at the end of a line keeps its line break, and a lone
+  `title` is an empty title (mermaid@12 rejected this text).
+---
+C4Context
+title
+Person(customer, Customer) %% an unquoted alias and label
+System(shop, Shop, "Sells things")
+System_Ext(mail, Mail)
+Rel(customer, shop, Buys)
+Rel(shop, mail, Sends e-mail) %% the last line

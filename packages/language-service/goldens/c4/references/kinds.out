@@ -1,0 +1,16 @@
+@ 2:8  Person(|customerA, "Customer A")
+  2:8-2:17 "customerA"
+  5:7-5:16 "customerA"
+  7:8-7:17 "customerA"
+  8:5-8:14 "customerA"
+  10:16-10:25 "customerA"
+  11:6-11:15 "customerA"
+@ 3:17  System_Boundary(|b1, "Banking") {
+  3:17-3:19 "b1"
+  8:16-8:18 "b1"
+@ 4:10  System(|sys, "System")
+  4:10-4:13 "sys"
+  5:18-5:21 "sys"
+  9:20-9:23 "sys"
+  10:27-10:30 "sys"
+  11:19-11:22 "sys"

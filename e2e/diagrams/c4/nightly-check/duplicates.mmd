@@ -1,0 +1,13 @@
+---
+description: >-
+  Repeated statements: an alias declared twice (the second keeps the first
+  one's place and description and changes its kind) and a relation between
+  the same pair twice (merged into one).
+---
+C4Context
+title Duplicates
+Person(a, "Customer", "Buys things")
+System(b, "Shop")
+System(a, "Customer system")
+Rel(a, b, "Uses", "HTTPS")
+Rel(a, b, "Uses again")

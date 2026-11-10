@@ -1,0 +1,15 @@
+C4Deployment
+accDescr {
+  A deployment
+  over two lines
+}
+Deployment_Node(cloud, "Cloud") {
+  Deployment_Node(region, "Region") {
+    Container(api, "API", "Java")
+  }
+  ContainerDb(db, "Database", "SQL")
+}
+System_Boundary(one, "One line") {
+Person(p, "P")
+}
+Rel(api, db, "Reads")

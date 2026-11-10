@@ -1,0 +1,117 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: c4
+    title: C4 diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        AccDescrBlockStart:
+          mode: INITIAL
+          pattern: 'accDescr\s*\{\s*'
+          docOf: acc_descr_multiline_value
+        AccDescrBlockEnd:
+          mode: acc_descr_multiline
+          pattern: '\}'
+          docOf: acc_descr_multiline_value
+        ArgsOpen:
+          mode: macro
+          pattern: '\('
+        Comma:
+          mode: attribute
+          pattern: ','
+        QuoteOpen:
+          mode: attribute
+          pattern: '[ ]*"'
+        QuoteClose:
+          mode: string
+          pattern: '"'
+        KeyStart:
+          mode: attribute
+          pattern: '[ ]*\$'
+        KeyEquals:
+          mode: string_kv_key
+          pattern: '=[ ]*"'
+        ValueClose:
+          mode: string_kv_value
+          pattern: '"'
+        # Kinds named apart from their jison terminal (`SYSTEM_EXT_QUEUE` is `SystemQueue_Ext`).
+        AccDescrBlockValue:
+          mode: acc_descr_multiline
+          pattern: '[^\}]*'
+          terminal: acc_descr_multiline_value
+        SystemQueueExt:
+          mode: INITIAL
+          pattern: 'SystemQueue_Ext\b'
+          terminal: SYSTEM_EXT_QUEUE
+          docOf: SYSTEM_EXT_QUEUE
+        SystemDbExt:
+          mode: INITIAL
+          pattern: 'SystemDb_Ext\b'
+          terminal: SYSTEM_EXT_DB
+          docOf: SYSTEM_EXT_DB
+        ContainerQueueExt:
+          mode: INITIAL
+          pattern: 'ContainerQueue_Ext\b'
+          terminal: CONTAINER_EXT_QUEUE
+          docOf: CONTAINER_EXT_QUEUE
+        ContainerDbExt:
+          mode: INITIAL
+          pattern: 'ContainerDb_Ext\b'
+          terminal: CONTAINER_EXT_DB
+          docOf: CONTAINER_EXT_DB
+        ComponentQueueExt:
+          mode: INITIAL
+          pattern: 'ComponentQueue_Ext\b'
+          terminal: COMPONENT_EXT_QUEUE
+          docOf: COMPONENT_EXT_QUEUE
+        ComponentDbExt:
+          mode: INITIAL
+          pattern: 'ComponentDb_Ext\b'
+          terminal: COMPONENT_EXT_DB
+          docOf: COMPONENT_EXT_DB
+        UpdateElementStyle:
+          mode: INITIAL
+          pattern: 'UpdateElementStyle\b'
+          terminal: UPDATE_EL_STYLE
+          docOf: UPDATE_EL_STYLE
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4): the
+# files ported from Pele's C4 layout, router and label placement (#540) and its shapes (#541,
+# through flowchart's copy), as THIRD_PARTY_NOTICES lists them. Pele is a shared upstream (its
+# notices are mermaid's own); mermaid's CDN build bundles these files without their legal
+# comments, so notices/mermaid.txt names them in mermaid's notices.
+credits:
+  files:
+    src/layout/grid.ts: ['Pele']
+    src/layout/layout.ts: ['Pele']
+    src/layout/metrics.ts: ['Pele']
+    src/layout/path.ts: ['Pele']
+    src/layout/route.ts: ['Pele']
+    src/layout/shapes.ts: ['Pele']
+    src/render/shapes.ts: ['Pele']
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - ascii/
+    - ascii.ts
+    - theme/
+    - config.ts
+    - plugin.ts
+    - index.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The C4 diagram plugin (SVG; `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`).'
+  install: 'with `mermaid/slim`'
