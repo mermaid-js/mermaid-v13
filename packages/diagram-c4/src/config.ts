@@ -175,33 +175,3 @@ export function c4Fonts(
     message: font('message', C4_MESSAGE_FONT_SIZE),
   };
 }
-
-/**
- * The element palette's defaults, `[bg, border]` by kind: the schema's `<kind>_bg_color` and
- * `<kind>_border_color` (`C4DiagramConfig`), drawn where the config leaves a key unset or sets
- * one that is not a colour.
- */
-export const C4_ELEMENT_COLORS: Readonly<
-  Record<C4ElementKind, readonly [bg: string, border: string]>
-> = {
-  person: ['#08427B', '#073B6F'],
-  external_person: ['#686868', '#8A8A8A'],
-  system: ['#1168BD', '#3C7FC0'],
-  external_system: ['#999999', '#8A8A8A'],
-  system_db: ['#1168BD', '#3C7FC0'],
-  external_system_db: ['#999999', '#8A8A8A'],
-  system_queue: ['#1168BD', '#3C7FC0'],
-  external_system_queue: ['#999999', '#8A8A8A'],
-  container: ['#438DD5', '#3C7FC0'],
-  external_container: ['#B3B3B3', '#A6A6A6'],
-  container_db: ['#438DD5', '#3C7FC0'],
-  external_container_db: ['#B3B3B3', '#A6A6A6'],
-  container_queue: ['#438DD5', '#3C7FC0'],
-  external_container_queue: ['#B3B3B3', '#A6A6A6'],
-  component: ['#85BBF0', '#78A8D8'],
-  external_component: ['#CCCCCC', '#BFBFBF'],
-  component_db: ['#85BBF0', '#78A8D8'],
-  external_component_db: ['#CCCCCC', '#BFBFBF'],
-  component_queue: ['#85BBF0', '#78A8D8'],
-  external_component_queue: ['#CCCCCC', '#BFBFBF'],
-};

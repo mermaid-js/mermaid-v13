@@ -9,6 +9,7 @@ import type { LRParser } from '@lezer/lr';
 import type { FirstPartyFacetId } from '@mermaid-js/language-service';
 
 export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promise<LRParser>>> = {
+  c4: () => import('./generated/c4.parser.js').then((m) => m.parser),
   class: () => import('./generated/class.parser.js').then((m) => m.parser),
   cynefin: () => import('./generated/cynefin.parser.js').then((m) => m.parser),
   er: () => import('./generated/er.parser.js').then((m) => m.parser),

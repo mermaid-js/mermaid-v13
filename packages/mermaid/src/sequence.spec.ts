@@ -36,16 +36,12 @@ describe('sequence through the public API (#145)', () => {
     expect((e as MermaidError).code).toBe('SYNTAX');
   });
 
-  // v12's c4 detector sits ahead of sequence and matches `C4Container` (and `C4Component`,
-  // `C4Dynamic`, `C4Deployment`) anywhere in the text; only `C4Context` is anchored. v12 sent
-  // these diagrams to c4 too, so the order and the regex are kept (MIGRATION.md).
-  it('leaves a sequence diagram naming C4Container to c4, as v12 did', async () => {
-    const stolen = await render('seq-c4', 'sequenceDiagram\n  A->>C4Container: hi\n').catch(
-      (x: unknown) => x
-    );
-    expect(stolen).toBeInstanceOf(MermaidError);
-    expect((stolen as MermaidError).code).toBe('UNSUPPORTED_DIAGRAM');
-    expect((stolen as MermaidError).message).toContain('"c4"');
+  // v12's c4 detector sits ahead of sequence and matched `C4Container` (and `C4Component`,
+  // `C4Dynamic`, `C4Deployment`) anywhere in the text; only `C4Context` was anchored. D451
+  // anchors all five headers, so a sequence diagram naming one is a sequence diagram (#542).
+  it('keeps a sequence diagram naming C4Container a sequence diagram (D451)', async () => {
+    const named = await render('seq-c4', 'sequenceDiagram\n  A->>C4Container: hi\n');
+    expect(named.diagramType).toBe('sequence');
     const kept = await render('seq-c4b', 'sequenceDiagram\n  participant C4Context\n');
     expect(kept.diagramType).toBe('sequence');
   });

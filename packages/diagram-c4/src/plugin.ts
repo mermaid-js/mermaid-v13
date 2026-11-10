@@ -1,5 +1,6 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import {
   boundaryTypeText,
   layoutC4,
@@ -32,14 +33,16 @@ function c4Labels(model: C4Model): string[] {
  * The C4 plugin (DESIGN §12.1, spec #522): `layoutKind: 'custom'` with its own `C4Layout`.
  * `parse` takes the whole source; `layout` measures everything, places the grid and routes the
  * relations (#540); `render` writes the whole `<svg>` document (#541); `theme` is the diagram's
- * own table (`theme/table.ts`, D456). The manifest, `configDefaults` and the registry row are
- * T5's (#542).
+ * own table (`theme/table.ts`, D456). The registry loads it from the package's `mermaid`
+ * manifest (#542); `configDefaults` are the `c4` section's generated defaults (`gen:config`).
+ * SVG only until #545.
  */
 export const c4 = {
   id: 'c4',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
   theme,
+  configDefaults: c4ConfigDefaults as Readonly<Record<string, unknown>>,
   // D451: one of the five headers, word-bounded, where the diagram starts.
   detector: (text: string): boolean => detectC4(text),
   parse: (text: string, ctx: DiagramParseContext): C4ParseResult =>

@@ -1755,6 +1755,25 @@ y?: number
  */
 export interface C4DiagramConfig extends BaseDiagramConfig {
 /**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
  * Margin to the right and left of the c4 diagram, must be a positive value.
  * 
  */

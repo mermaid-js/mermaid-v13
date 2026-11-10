@@ -1,8 +1,8 @@
 /**
  * The C4 tests' context builder, which the layout specs (the package's and the conformance
  * layout corpus) share. It builds what the pipeline builds (`mermaid/src/api.ts`,
- * `core/src/pipeline/draw.ts`): the config core resolves from its defaults, the source's front
- * matter and directives; and a layout context with a theme and a measurer (the table measurer by
+ * `core/src/pipeline/draw.ts`): the config core resolves from its defaults, the plugin's section
+ * defaults, the source's front matter and directives; and a layout context with a theme and a measurer (the table measurer by
  * default), the warnings collected.
  */
 import type { Warning } from '@mermaid-js/core';
@@ -16,13 +16,15 @@ import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
+import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import type { C4LayoutContext } from './layout/layout.ts';
 import type { C4Model } from './model.ts';
 import { parseC4 } from './parser/index.ts';
 
 /**
- * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`
- * would get it, then the front matter and `init` directives.
+ * The config a render of `pre` resolves: core's defaults and the `c4` section's generated
+ * defaults (the plugin's `configDefaults`), then `integrator` as `initialize()` would get it, then
+ * the front matter and `init` directives.
  */
 export function c4TestConfig(
   pre?: PreprocessResult,
@@ -31,9 +33,14 @@ export function c4TestConfig(
   const directives = (pre?.directives ?? []).flatMap((d) =>
     d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
   );
-  return resolveConfig(CORE_DEFAULTS, integrator, pre?.frontMatter?.config, directives, undefined, {
-    section: 'c4',
-  });
+  return resolveConfig(
+    CORE_DEFAULTS,
+    integrator,
+    pre?.frontMatter?.config,
+    directives,
+    { c4: c4ConfigDefaults },
+    { section: 'c4' }
+  );
 }
 
 /** A source parsed: its model, its diagnostics, and the config its text resolves to. */

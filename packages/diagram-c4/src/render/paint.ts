@@ -7,7 +7,8 @@
  * - a boundary: fill `$bgColor`, else none; stroke `$borderColor`, else `c4BoundaryColor`; its
  *   header `c4BoundaryColor` (v12 drew `#444444` whatever `$fontColor` said);
  * - an element: fill and stroke `UpdateElementStyle`'s `$bgColor`/`$borderColor`, else the
- *   config's `<kind>_bg_color`/`_border_color`, else the schema's; text `$fontColor`, else
+ *   config's `<kind>_bg_color`/`_border_color`, else the section's generated default (the
+ *   schema's); text `$fontColor`, else
  *   `#FFFFFF` (v12 `c4ShapeAdapter.ts`);
  * - a relation: line `$lineColor`, else `c4RelationColor`; text `$textColor`, else
  *   `c4RelationColor`, on a box of the page's `background`; arrowheads the page's `textColor`
@@ -20,10 +21,14 @@
 import type { Warning } from '@mermaid-js/core';
 import { checkColor, type Paint } from '@mermaid-js/core/svg';
 import { C4_COLOR_INVALID } from '../codes.ts';
-import { c4Section, C4_ELEMENT_COLORS } from '../config.ts';
+import { c4Section } from '../config.ts';
+import { c4ConfigDefaults } from '../generated/config-defaults.ts';
 import type { C4Layout } from '../layout/types.ts';
 import type { C4ElementKind, C4Model } from '../model.ts';
 import type { C4RenderContext } from './context.ts';
+
+/** The two palette keys of an element kind: `<kind>_bg_color` and `<kind>_border_color`. */
+type Part = 'bg' | 'border';
 
 /** v12's element text (`c4ShapeAdapter.ts`). */
 const ELEMENT_TEXT = checkColor('#FFFFFF') as Paint;
@@ -139,13 +144,12 @@ function elementPaints(
   const kindPaint = (kind: C4ElementKind): readonly [Paint, Paint] => {
     let got = palette.get(kind);
     if (!got) {
-      const [bg, border] = C4_ELEMENT_COLORS[kind];
-      const key = (part: string): string => `${kind}_${part}_color`;
-      got = [
-        colours.checked(section[key('bg')], `c4.${key('bg')}`) ?? (checkColor(bg) as Paint),
-        colours.checked(section[key('border')], `c4.${key('border')}`) ??
-          (checkColor(border) as Paint),
-      ];
+      const key = (part: Part): `${C4ElementKind}_${Part}_color` => `${kind}_${part}_color`;
+      // A key the config leaves unset is the default already; a refused one draws the default.
+      const paint = (part: Part): Paint =>
+        colours.checked(section[key(part)], `c4.${key(part)}`) ??
+        (checkColor(c4ConfigDefaults[key(part)] ?? '') as Paint);
+      got = [paint('bg'), paint('border')];
       palette.set(kind, got);
     }
     return got;

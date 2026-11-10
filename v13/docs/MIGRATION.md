@@ -376,7 +376,12 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gitGraph.nodeLabel.x` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.nodeLabel.y` | ignored | v12's gitGraph never read `nodeLabel`. |  |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `c4.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the C4 renderer never did. |  |
 | `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `c4.layout` | ignored | C4 lays out with its own grid and relation router (`layoutKind: 'custom'`, D454, D455), as v12 had its own packer; neither the top-level nor a C4-scoped `layout` changes it. |  |
+| `c4.height` | ignored | v12's C4 renderer never read it: an element is as tall as its text (D454). |  |
+| `c4.boxMargin` | ignored | v12's C4 renderer never read it (D454). |  |
+| `c4.wrapPadding` | ignored | v12's C4 renderer never read it (D454). |  |
 | `sankey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |
@@ -417,6 +422,28 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
+| `c4.personFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_personFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.systemFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_systemFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.system_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_system_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.system_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_system_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.boundaryFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.containerFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_containerFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.container_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_container_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.container_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_container_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.componentFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_componentFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.component_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_component_dbFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.component_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
+| `c4.external_component_queueFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect; one the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
@@ -716,7 +743,9 @@ npm install @mermaid-js/plugin-hand-drawn
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
-  the priority bar is kept, D379) and venn (circles and the overlaps a style fills, D319). v12
+  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and C4
+  (elements, the cylinder's and the queue's rims and `fr-rect`'s frame lines; boundaries and
+  relations plain, D301). v12
   did not sketch mindmap's plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
@@ -996,12 +1025,12 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`
   applies (named and system colours, `rgb()`/`hsl()` in legacy and modern syntax); `calc()`
   inside a colour is not read and makes the word part of the title.
-- **Detection is v12's, quirks included.** v12's C4 detector runs before the sequence one and
-  matches `C4Container`, `C4Component`, `C4Dynamic` or `C4Deployment` anywhere in the text, so a
-  sequence diagram that names a participant `C4Container` is detected as C4. v12 then drew a C4
-  diagram; v13 has no C4 package yet and throws `UNSUPPORTED_DIAGRAM`. Rename the participant
-  (or use an alias: `participant C as C4Container` still matches, `participant C as Container`
-  does not).
+- **A participant named like a C4 header stays a sequence diagram** (D451). v12's C4 detector
+  runs before the sequence one and matched `C4Container`, `C4Component`, `C4Dynamic` or
+  `C4Deployment` anywhere in the text, so a sequence diagram that named a participant
+  `C4Container` was detected as C4 and failed to parse. v13's C4 detector takes the five headers
+  only where the diagram starts, so such a diagram (or a flowchart with a `C4Container` label)
+  is drawn as itself.
 
 ## State diagram syntax
 
@@ -2402,6 +2431,33 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## C4 diagram
+
+The C4 parser accepts the v12 language (`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`,
+`C4Deployment`; oracle parity over the corpus, grammar in [syntax/c4.md](./syntax/c4.md)). The
+layout is a port of Pele's C4 grid and relation router, sized with v12's `c4` lengths (D454,
+D455). What changes (spec #522):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| The detector matched `C4Context` where the diagram starts but `C4Container`, `C4Component`, `C4Dynamic` and `C4Deployment` anywhere in the text, so a flowchart or sequence diagram that named one was taken for C4 and failed | All five headers only where the diagram starts, as a whole word (`/^\s*C4(Context\|Container\|Component\|Dynamic\|Deployment)\b/`), still fifth in v12's detector order | D451 |
+| An unquoted argument ran on past `)` and across the line end; a trailing `%%` comment took its line break, joining the next statement to it; a lone `title` took the next line as the title | An unquoted argument stops at `)` and at the line end; a comment keeps its line break; a lone `title` is an empty title | D452 |
+| A `direction TB` line (even inside a quoted label), and a `$__proto__` argument, crashed the parse | `direction` is a syntax error with a `C4_DIRECTION` diagnostic saying C4 has no `direction`; `$__proto__` sets nothing, with one `C4_NAME_RESERVED` warning | D452 |
+| A `$name="value"` in the alias, label or relation-end slot was stored there as written (`Person($label="x", u)` aliased `$label="x"`) | It sets the field it names and leaves the slot empty, with one `C4_NAMED_ARGUMENT_MOVED` warning; elsewhere v12's slot rule, `UpdateLayoutConfig`'s by-position reading and the empty argument of `"A" ,` are kept | D452 |
+| A structural `$name` could break the model: `$parentBoundary` naming no boundary dropped the element from the drawing, a boundary renamed by `$alias` left the statements in its braces outside the diagram, and an unknown `$typeC4Shape` or `$nodeType`, or `$wrap`, were stored as given | The structure is kept, with one `C4_STRUCTURE_KEPT` warning; v12's other structural names (`$alias` renames, a relation's `$type`/`$from`/`$to`, `UpdateElementStyle`'s `$parentBoundary`/`$typeC4Shape`/`$nodeType`) apply as in v12 | D450, for the maintainer |
+| `accTitle:` set the visible title too; the in-text `title` kept its trailing blanks; a front-matter `title` was not drawn; `accDescr` leaked into every later render | `accTitle` sets the accessible name only; the in-text `title` is trimmed; a front-matter `title` is drawn where the in-text one is when the text has none (D218); `accDescr` belongs to its own render | D453 |
+| A relation to an alias nothing defines failed at render with `C4 rel "a" -> "b" references an unknown shape or boundary` | The same message, now a parse diagnostic (`C4_UNKNOWN_END`) at the statement | D457 |
+| A non-numeric `$offsetX`/`$offsetY` was read as `NaN` | It counts as 0, with one `C4_OFFSET_INVALID` warning | D457 |
+| v12's packer placed elements in rows by statement order with fixed widths, wrapping at `screen.availWidth`; boundaries in rows below their parent's header, each `c4BoundaryInRow` a fixed share of the parent | Pele's grid: the same rows by statement order, each boundary sized bottom-up from its contents, with v12's lengths as gaps and margins (`c4ShapeMargin`, `diagramMarginX`/`Y`, `nextLinePaddingX`); the layout no longer depends on the screen | D454 |
+| `c4ShapeInRow` and `c4BoundaryInRow` were never read from the config: the DB hard-coded 4 and 2, which only `UpdateLayoutConfig` changed | Read from the `c4` section as defaults that `UpdateLayoutConfig` overrides | D454 |
+| The `c4` section's `height`, `boxMargin` and `wrapPadding` were never read | Ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | D454 |
+| `Boundary(global, …)` merged into the top level, which then drew nothing; a boundary reopened inside itself (a parent cycle) was left undrawn | `global` is an ordinary alias; a boundary in a cycle is drawn at the top level, with one `C4_BOUNDARY_CYCLE` warning | D454 |
+| `Rel_U`, `Rel_D`, `Rel_L` and `Rel_R` were plain relations | The same: the router picks the route | D455 |
+| Relation labels never wrapped: v12 measured each against its own width | With both `c4.wrap` and the top-level `wrap`, a relation label wraps at the room the router leaves (88 px across a column gap, else 160); a boundary header wraps at its contents' width or `c4.width`, whichever is wider (v12's limit came from `screen.availWidth`) | D455, for the maintainer |
+| Each relation one fixed curve, with no work to limit | The router and label placement count their comparisons against `min(2,000,000, limits.maxLayoutWork)` (1,500,000 by default, R-SEC-5); once spent, the remaining relations are drawn straight with their labels at the middle, never an error | D455, for the maintainer |
+| Every `*FontFamily` defaulted to `"Open Sans", sans-serif` | Unset, the theme's `fontFamily` ([Changed defaults](#changed-defaults)); a set family the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning | Sequence's precedent |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` until C4's text output lands (R-ASCII-5, #545) | D320 |
 
 ## C4 SVG structure
 

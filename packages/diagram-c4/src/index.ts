@@ -21,7 +21,6 @@ export {
 export type * from './layout/types.ts';
 export {
   C4_CONFIG_DEFAULTS,
-  C4_ELEMENT_COLORS,
   C4_ELEMENT_KINDS,
   c4Fonts,
   c4LayoutConfig,

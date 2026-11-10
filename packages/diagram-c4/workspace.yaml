@@ -1,5 +1,6 @@
 # How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
-# A pre-manifest package (no `mermaid` manifest until T5): configDefaults and release wait for T5.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
 
 # grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
 # type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
@@ -84,7 +85,8 @@ grammars:
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4): the
 # files ported from Pele's C4 layout, router and label placement (#540) and its shapes (#541,
 # through flowchart's copy), as THIRD_PARTY_NOTICES lists them. Pele is a shared upstream (its
-# notices are mermaid's own), so this package needs no notices/mermaid.txt.
+# notices are mermaid's own); mermaid's CDN build bundles these files without their legal
+# comments, so notices/mermaid.txt names them in mermaid's notices.
 credits:
   files:
     src/layout/grid.ts: ['Pele']
@@ -95,8 +97,7 @@ credits:
     src/layout/shapes.ts: ['Pele']
     src/render/shapes.ts: ['Pele']
 
-# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench; read
-# once the manifest has its `language` entry, T5).
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
 languageBundle:
   renderer:
     - render/
@@ -107,3 +108,8 @@ languageBundle:
     - index.ts
     - testing.ts
     - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The C4 diagram plugin (SVG; `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`).'
+  install: 'with `mermaid/slim`'

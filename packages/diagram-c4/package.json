@@ -1,10 +1,14 @@
 {
   "name": "@mermaid-js/diagram-c4",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "C4 diagram plugin for Mermaid: lexer, parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-c4"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -40,5 +44,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "c4",
+    "types": [
+      "c4"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "c4",
+    "language": "./dist/language.js"
   }
 }

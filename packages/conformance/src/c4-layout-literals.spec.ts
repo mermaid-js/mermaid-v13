@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { C4_ELEMENT_COLORS, C4_ELEMENT_KINDS } from '@mermaid-js/diagram-c4';
+import { c4, C4_ELEMENT_KINDS } from '@mermaid-js/diagram-c4';
 import { REPO_ROOT } from './index.ts';
 
 // The C4 custom layout takes every length from its metrics table or the `c4` config (spec #522,
@@ -120,13 +120,14 @@ describe('c4 layout', () => {
     );
   });
 
-  it('the element palette’s defaults are the schema’s', () => {
+  it('the element palette’s defaults are the schema’s, from the plugin’s configDefaults (#542)', () => {
     const schema = readFileSync(SCHEMA, 'utf8');
-    expect(Object.keys(C4_ELEMENT_COLORS).sort()).toEqual([...C4_ELEMENT_KINDS].sort());
+    const defaults = c4.configDefaults;
     for (const kind of C4_ELEMENT_KINDS) {
-      const [bg, border] = C4_ELEMENT_COLORS[kind];
-      expect(schemaDefault(schema, `${kind}_bg_color`), kind).toBe(`'${bg}'`);
-      expect(schemaDefault(schema, `${kind}_border_color`), kind).toBe(`'${border}'`);
+      for (const part of ['bg', 'border']) {
+        const key = `${kind}_${part}_color`;
+        expect(`'${String(defaults[key])}'`, key).toBe(schemaDefault(schema, key));
+      }
     }
   });
 });

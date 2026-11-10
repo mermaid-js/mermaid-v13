@@ -20,7 +20,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   },
   { type: 'architecture', pattern: /^\s*architecture/ },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
-  { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
+  {
+    type: 'c4',
+    pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/,
+    id: 'c4',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-c4').then((m) => m.c4),
+  },
   {
     type: 'kanban',
     pattern: /^\s*kanban/,
