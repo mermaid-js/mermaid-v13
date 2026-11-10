@@ -1,0 +1,31 @@
+---
+description: >-
+  A requirement defined twice (v12 keeps the first body) and a requirement and
+  an element sharing one name (v12 draws two nodes with one id): D434 keeps the
+  first, draws both boxes and warns; relations resolve to the requirement.
+---
+requirementDiagram
+  requirement dup_req {
+    id: 1
+    text: the first definition
+    risk: low
+    verifymethod: test
+  }
+
+  requirement dup_req {
+    id: 2
+    text: the second definition (dropped)
+    risk: high
+    verifymethod: inspection
+  }
+
+  requirement shared {
+    id: 3
+    text: a requirement named shared
+  }
+
+  element shared {
+    type: an element named shared
+  }
+
+  shared - satisfies -> dup_req

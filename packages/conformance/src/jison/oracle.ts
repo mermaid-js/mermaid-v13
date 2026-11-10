@@ -32,6 +32,23 @@ export interface TokensOptions {
    * stream compared with a lexer of v12's text (not of the source). Default false.
    */
   keepAppendedNewline?: boolean;
+  /**
+   * Rules to run in place of v12's own for this call, by rule number (the index into the
+   * compiled lexer's `rules`), for a gate whose type decided to lex some text differently
+   * (requirement's D431 and D432): v12's lexer with that decision applied. Each is called with
+   * the input not matched yet and the text matched so far, and returns its match at the start
+   * of the input, or null. v12's own rules are back when the call returns.
+   */
+  rules?: Readonly<Record<number, JisonRule>>;
+}
+
+/** A replacement lexer rule (see {@link TokensOptions.rules}). */
+export type JisonRule = (input: string, matched: string) => RegExpMatchArray | null;
+
+/** The parts of jison's lexer a replaced rule reads and writes. */
+interface RuleTable {
+  rules: unknown[];
+  matched: string;
 }
 
 export interface JisonLexerOracle {
@@ -59,6 +76,15 @@ export interface JisonLexerOracle {
    * parser's part (venn's).
    */
   pulledTokens(source: string): Promise<JisonToken[] | undefined>;
+  /**
+   * Run `run` (which parses through the v12 oracle, e.g. `oracle.parse`) with `rules` in place
+   * of v12's own lexer rules, as {@link TokensOptions.rules} does for one `tokens` call: v12's
+   * parser with a decided lexer change applied (requirement's D431 and D432). v12's own rules
+   * are back when the returned promise settles. Not reentrant: callers must be sequential
+   * (await each call before the next, and never call it from inside `run`), as every call on
+   * this oracle.
+   */
+  withRules<R>(rules: Readonly<Record<number, JisonRule>>, run: () => Promise<R>): Promise<R>;
   readonly LEXICAL_ERROR: typeof LEXICAL_ERROR;
 }
 
@@ -140,37 +166,86 @@ async function load(type: JisonType, descriptor: JisonTypeDescriptor): Promise<J
         pulled = undefined;
       }
     },
+    async withRules(rules, run) {
+      // jison's `parse` lexes with `Object.create(parser.lexer)`: a replaced rule reads what
+      // that lexer matched so far, so `lex` notes which lexer is running.
+      let current: JisonLexer = lexer;
+      const running = (l: JisonLexer) => {
+        current = l;
+      };
+      const restore = replaceRules(lexer, rules, () => current);
+      lexer.lex = function (this: JisonLexer) {
+        running(this);
+        return lex.call(this);
+      };
+      try {
+        return await run();
+      } finally {
+        lexer.lex = lex;
+        restore();
+      }
+    },
     async tokens(source, options = {}) {
       const input = await lexedText(source);
       if (input === undefined) return undefined;
       const listeners: ((name: string, image: string) => void)[] = [];
       setInput(input, yy({ db, lexer, onToken: (listener) => listeners.push(listener) }));
+      const restore = options.rules ? replaceRules(lexer, options.rules) : undefined;
       const out: JisonToken[] = [];
       let clipped = options.keepAppendedNewline === true;
       let left = input.length;
-      for (let stalled = 0; stalled < MAX_STALLED; ) {
-        let t: number | string;
-        try {
-          t = lexer.lex();
-        } catch {
-          out.push([LEXICAL_ERROR, '']);
-          break;
+      try {
+        for (let stalled = 0; stalled < MAX_STALLED; ) {
+          let t: number | string;
+          try {
+            t = lexer.lex();
+          } catch {
+            out.push([LEXICAL_ERROR, '']);
+            break;
+          }
+          if (t === 1) break; // $end
+          stalled = lexer._input.length < left ? 0 : stalled + 1;
+          left = lexer._input.length;
+          let image = lexer.yytext;
+          // The first token returned once the text is used up: its match took the appended
+          // `\n`, unless a skipped rule did (then it does not end in `\n`, or it is empty).
+          if (!clipped && lexer._input === '') {
+            clipped = true;
+            if (image.endsWith('\n')) image = image.slice(0, -1);
+          }
+          out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
+          for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
         }
-        if (t === 1) break; // $end
-        stalled = lexer._input.length < left ? 0 : stalled + 1;
-        left = lexer._input.length;
-        let image = lexer.yytext;
-        // The first token returned once the text is used up: its match took the appended `\n`,
-        // unless a skipped rule did (then it does not end in `\n`, or it is an empty match).
-        if (!clipped && lexer._input === '') {
-          clipped = true;
-          if (image.endsWith('\n')) image = image.slice(0, -1);
-        }
-        out.push([typeof t === 'number' ? (parser.terminals_[t] ?? String(t)) : t, image]);
-        for (const listener of listeners) listener(...(out.at(-1) as JisonToken));
+      } finally {
+        // A listener may throw: v12's own rules go back on the cached lexer either way.
+        restore?.();
       }
       return out;
     },
+  };
+}
+
+/**
+ * Put `rules` in place of the lexer's own; the returned function puts them back. `running` is
+ * the lexer whose matched text a rule reads (`lexer` itself unless a parse lexes with a copy).
+ */
+function replaceRules(
+  lexer: JisonLexer,
+  rules: Readonly<Record<number, JisonRule>>,
+  running: () => JisonLexer = () => lexer
+): () => void {
+  const table = lexer as unknown as RuleTable;
+  const saved = new Map<number, unknown>();
+  for (const [key, rule] of Object.entries(rules)) {
+    const k = Number(key);
+    saved.set(k, table.rules[k]);
+    // jison matches with `input.match(rule)`, which calls `Symbol.match`.
+    table.rules[k] = {
+      [Symbol.match]: (text: string) => rule(text, (running() as unknown as RuleTable).matched),
+    };
+  }
+  return () => {
+    for (const [k, rule] of saved) table.rules[k] = rule;
   };
 }
 

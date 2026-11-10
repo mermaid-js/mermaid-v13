@@ -1,0 +1,50 @@
+@ 1:1  |requirementDiagram
+  1:1-1:19 "requirementDiagram"
+  | **`requirementDiagram`**
+  |
+  | A requirement diagram is `requirementDiagram` on a line of its own, then statements: requirements, elements, relations, classes and styles, the direction and the accessible title and description.
+@ 2:9  requir|ement r1 {
+  2:3-2:14 "requirement"
+  | **`requirement`**
+  |
+  | `requirement name { … }`, or one of `functionalRequirement`, `interfaceRequirement`, `performanceRequirement`, `physicalRequirement` and `designConstraint`: a requirement box. The `{` ends its line; each field, and the `}`, is on a line of its own.
+@ 3:7  ri|sk: high
+  3:5-3:9 "risk"
+  | **`risk`**
+  |
+  | `id: …`, `text: …`, `risk: low|medium|high` and `verifymethod: analysis|demonstration|inspection|test`. A repeated field keeps its first value.
+@ 4:11  verify|method: test
+  4:5-4:17 "verifymethod"
+  | **`verifymethod`**
+  |
+  | `id: …`, `text: …`, `risk: low|medium|high` and `verifymethod: analysis|demonstration|inspection|test`. A repeated field keeps its first value.
+@ 6:6  ele|ment e1 {
+  6:3-6:10 "element"
+  | **`element`**
+  |
+  | `element name { … }`: an element box, with the fields `type: …` and `docref: …`.
+@ 7:7  ty|pe: sim
+  7:5-7:9 "type"
+  | **`type`**
+  |
+  | `element name { … }`: an element box, with the fields `type: …` and `docref: …`.
+@ 9:6  sty|le r1 fill:#f00
+  9:3-9:8 "style"
+  | **`style`**
+  |
+  | `style name,… fill:#f9f,stroke:#333`: styles boxes defined before it.
+@ 10:9  classD|ef k fill:#0f0
+  10:3-10:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name,… fill:#f9f,color:#000`: defines classes of styles.
+@ 11:7  dire|ction TB
+  11:3-11:15 "direction TB"
+  | **`direction TB`**
+  |
+  | `direction LR`: the layout direction, on a line of its own.
+@ 12:6  acc|Title: Title
+  12:3-12:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the diagram.
