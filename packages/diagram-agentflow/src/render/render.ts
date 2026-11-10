@@ -31,7 +31,7 @@ import type {
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from './edges.ts';
+import { marker, markerTrim, routePath } from '@mermaid-js/core/svg';
 import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
@@ -281,8 +281,9 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     'fill-opacity': e.style.shape['stroke-opacity'],
   };
   const start = { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy };
-  marker(w, e.start, start, headPaint, paint.heads);
-  marker(w, e.end, { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy }, headPaint, paint.heads);
+  marker(w, e.start, start, headPaint, paint.heads, true);
+  const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+  marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {

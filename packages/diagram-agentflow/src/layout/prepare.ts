@@ -23,7 +23,7 @@ import type {
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { checkStyle, curveKind, type CheckedStyle, type CurveKind } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -108,8 +108,7 @@ export interface AgentflowEdgeView {
 /** The arrowheads an agentflow edge has: `-->`, `--x` or none (`-.-`). */
 export type Arrowhead = 'none' | 'arrow_point' | 'arrow_cross';
 
-/** How an edge is drawn between its route points (flowchart's kinds; v12's d3 curves are `curved`). */
-export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+export type { CurveKind };
 
 export interface AgentflowPrepared {
   graph: LayoutGraph;
@@ -129,16 +128,6 @@ export interface AgentflowPrepared {
 
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-/** A curve name as flowchart reads it: any other name (v12's d3 curves) is `curved`. */
-function curveKind(curve: string | undefined): CurveKind {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
 
 /** How the engine routes for the diagram's default curve (flowchart's table); else stepped. */
 const ROUTING: Readonly<Partial<Record<CurveKind, EdgeRouting>>> = {

@@ -28,7 +28,7 @@ import {
 } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
-import { routePath } from './route.ts';
+import { routePath } from '@mermaid-js/core/svg';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;

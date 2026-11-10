@@ -13,6 +13,7 @@ import {
   type LayoutNode,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
+import { curveKind, type CurveKind } from '@mermaid-js/core/svg';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,
@@ -150,18 +151,9 @@ const NOTE_PAD = 6;
 const GROUP_PAD = 16;
 
 /** How class edges are drawn: v12 drew them with `flowchart.curve` (flowchart's names). */
-export type ClassCurve = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+export type ClassCurve = CurveKind;
 
-/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
-export function classCurve(curve: string | undefined): ClassCurve {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
+export const classCurve = curveKind;
 
 /** How the engine routes each curve (flowchart's table): the rest are right angles. */
 const ROUTING: Readonly<Partial<Record<ClassCurve, 'straight' | 'curved'>>> = {

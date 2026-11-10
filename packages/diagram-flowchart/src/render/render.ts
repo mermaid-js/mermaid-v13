@@ -20,7 +20,13 @@ import {
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
+import {
+  arrowheads,
+  marker,
+  markerTrim,
+  routePath,
+  type Arrowheads,
+} from '@mermaid-js/core/svg';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 

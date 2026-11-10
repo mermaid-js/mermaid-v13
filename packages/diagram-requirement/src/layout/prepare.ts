@@ -10,7 +10,7 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { checkStyle, curveKind, type CheckedStyle, type CurveKind } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -98,13 +98,7 @@ export interface RelationView {
 }
 
 /** How relation lines are drawn: v12 drew them with `flowchart.curve` (class's precedent). */
-export type RequirementCurve =
-  | 'curved'
-  | 'linear'
-  | 'step'
-  | 'stepBefore'
-  | 'stepAfter'
-  | 'rounded';
+export type RequirementCurve = CurveKind;
 
 export interface RequirementPrepared {
   readonly graph: LayoutGraph;
@@ -123,16 +117,7 @@ export interface RequirementPrepared {
   readonly title?: MeasuredLabel;
 }
 
-/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
-export function requirementCurve(curve: string | undefined): RequirementCurve {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
+export const requirementCurve = curveKind;
 
 /** How the engine routes each curve (flowchart's table): the rest are right angles. */
 const ROUTING: Readonly<Partial<Record<RequirementCurve, EdgeRouting>>> = {

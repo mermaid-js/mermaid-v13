@@ -7,13 +7,18 @@
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
 import {
+  arrowheads,
   checkLinkTarget,
   checkUrl,
+  marker,
+  markerTrim,
   px,
+  routePath,
   styleScope,
   styleText,
   themeStyleSheet,
   translate,
+  type Arrowheads,
   type Attrs,
   type OutlinePaint,
   type Paint,
@@ -33,7 +38,6 @@ import type {
 import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
-import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -65,7 +69,7 @@ interface Tint {
 
 /** Every theme variable the body uses, looked up before the root is written (rootStyle). */
 interface Paints {
-  readonly head: Arrowhead;
+  readonly head: Arrowheads;
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly strokeWidth: Length;
@@ -130,7 +134,7 @@ function paletteSlots(theme: ThemeOf, model: StateModel, s: StatePrepared): Map<
 
 function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const node = {
-    head: arrowhead(theme),
+    head: arrowheads(theme),
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     strokeWidth: theme.length('strokeWidth'),
@@ -394,7 +398,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       w,
       route.points,
       e.source === e.target ? 'rounded' : 'curved',
-      e.note ? 0 : arrowTrim(paint.head)
+      0,
+      e.note ? 0 : markerTrim('arrow_point', paint.head)
     );
     // Paint comes from the `edgePaths` group (stroke, width, no fill).
     w.outline('edge', 'path', {
@@ -402,7 +407,10 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       'stroke-dasharray': e.note ? NOTE_DASH : undefined,
       'stroke-linecap': e.note ? 'butt' : undefined,
     });
-    if (!e.note) drawArrowhead(w, path, { fill: paint.arrow }, paint.head);
+    if (!e.note) {
+      const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+      marker(w, 'arrow_point', end, { fill: paint.arrow }, paint.head);
+    }
   }
   w.close();
 }

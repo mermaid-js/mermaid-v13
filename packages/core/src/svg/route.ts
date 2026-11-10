@@ -1,16 +1,10 @@
-// Relation paths from layout routes, following `flowchart.curve` (DESIGN §7.1, spec #520 T4).
+// Edge paths from layout routes, trimmed at each end for an end marker (DESIGN §7.1).
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
-// (c) 2026 kepano): `routePath`, as the flowchart renderer has it (diagram-flowchart
-// src/render/edges.ts) and diagram-class copies it; a diagram package never imports another, so
-// the route drawing is copied here (conformance `class-route-parity.spec.ts` keeps the copies
-// equal). The markers are in markers.ts.
+// (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
 // cspell:ignore kepano
-import type { RoutePoint } from '@mermaid-js/core/layout';
-import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
-import type { RequirementCurve } from '../layout/index.ts';
-
-/** How the line between two route points is drawn (`RequirementPrepared.curve`). */
-export type CurveKind = RequirementCurve;
+import type { RoutePoint } from '../layout/types.ts';
+import type { PathData } from './types.ts';
+import type { SvgWriter } from './writer.ts';
 
 // How far an edge runs straight before a marker at its end, where it has the room.
 const LEAD = 6;
@@ -21,6 +15,20 @@ const STEP_CORNER = 12;
 const RADIUS = 5;
 // How far the handles of a wide turn reach along its two legs.
 const HANDLE = 0.62;
+
+/** How the line between two route points is drawn, from the v12 `curve` name. */
+export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+
+/** The curve kind for a v12 `curve` name: `curved` for any name that is not drawn otherwise. */
+export function curveKind(curve: string | undefined): CurveKind {
+  return curve === 'linear' ||
+    curve === 'step' ||
+    curve === 'stepBefore' ||
+    curve === 'stepAfter' ||
+    curve === 'rounded'
+    ? curve
+    : 'curved';
+}
 
 export interface EdgePath {
   d: PathData;

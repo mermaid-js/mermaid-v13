@@ -34,7 +34,7 @@ import { prepareClass } from '../layout/index.ts';
 import type { ClassModel, ClassNode } from '../parser/index.ts';
 import type { ClassRenderContext } from './context.ts';
 import { marker, markers, markerTrim, type Markers } from './markers.ts';
-import { routePath } from './route.ts';
+import { routePath } from '@mermaid-js/core/svg';
 
 // v12's dash patterns: `.edge-pattern-dashed` (relationships written `..`) and
 // `.edge-pattern-dotted` (note edges).
