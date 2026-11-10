@@ -192,3 +192,9 @@ Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` 
 - **`layout: layered` routes since #647: accepted for now** (Knut, relayed by the coordinator, 2026-11-10). `compass` stays the default; the choice of default engine for architecture gets a later review. No code change.
 
 - **Site-level `layout` on architecture: probed, works.** `initialize({ layout: "layered" })`, front matter `config.layout` and `architecture.layout` all change the output, with no warnings. T0c's note that `initialize({ layout: "elk" })` did not reach architecture is most likely how the scratch run registered the ELK plugin; not an architecture bug.
+
+Final whole-branch review (`feature/525_final_review`, see `tickets/final-review.md`). Follow-ups, not done there:
+
+- **`compass` reading a spacing input (the fixed 60 px gap): needs a D-id**, a core change (T3, T4 above). Since the final review the graph's `spacing` is core's default (`pxProfile.builder.spacing`, 50/50/20), not `padding`, so a `compass` that reads `spacing.node` would need architecture to pass its own gap again.
+- **Seven copies of `configLengths`** (class, er, state, flowchart, agentflow, railroad, architecture): fold into one core helper. `conformance/src/architecture/config-length.spec.ts` pins architecture's copy to class's.
+- **One-bend edge labels under `layered`/ELK** keep v12's corner (D507's 45° label in the corner's quarter) rather than the engine's label point: under `compass` the two differ (5 of 23 labelled ≤ 1-bend edges in the e2e fixtures), so taking the engine point there would change default renders. Straight edges take the engine point.
