@@ -16,28 +16,16 @@
 import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';
 import type { KanbanLayout, Rect } from './types.ts';
+import { nonFinite as numbers } from '@mermaid-js/core/layout';
+import { rectsOverlap as overlaps } from '@mermaid-js/core/layout';
+import { within } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
-
-function numbers(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
-}
-
-const within = (v: number, lo: number, hi: number): boolean => v >= lo - EPS && v <= hi + EPS;
 const contains = (outer: Rect, inner: Rect): boolean =>
   within(inner.x, outer.x, outer.x + outer.width) &&
   within(inner.x + inner.width, outer.x, outer.x + outer.width) &&
   within(inner.y, outer.y, outer.y + outer.height) &&
   within(inner.y + inner.height, outer.y, outer.y + outer.height);
-const overlaps = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
 const box = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
 
 /** Every invariant `layout` breaks for `input`, one line each; empty when it holds them all. */

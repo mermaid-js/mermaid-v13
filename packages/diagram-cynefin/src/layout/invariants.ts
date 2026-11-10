@@ -9,6 +9,7 @@ import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/core/layout';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;
@@ -176,13 +177,4 @@ function contains(outer: Rect, inner: Rect): boolean {
     inner.x + inner.width <= outer.x + outer.width + EPS &&
     inner.y + inner.height <= outer.y + outer.height + EPS
   );
-}
-
-/** Every number in `v`, at any depth, is finite. */
-function finite(v: unknown, path: string, out: string[]): void {
-  if (typeof v === 'number') {
-    if (!Number.isFinite(v)) out.push(`${path} is ${v}`);
-  } else if (Array.isArray(v)) v.forEach((x, i) => finite(x, `${path}[${i}]`, out));
-  else if (v !== null && typeof v === 'object')
-    for (const [k, x] of Object.entries(v)) finite(x, `${path}.${k}`, out);
 }

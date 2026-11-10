@@ -40,3 +40,5 @@ export {
   type LayoutMetrics,
   type UnitProfile,
 } from './units.ts';
+// Spike (shared layout invariant helpers): one self-contained block.
+export * from './invariants.ts';

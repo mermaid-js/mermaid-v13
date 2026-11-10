@@ -7,6 +7,7 @@ import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
 import type { PieLayout, Point, Rect } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/core/layout';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;
@@ -143,13 +144,4 @@ function meetsDisc(a: Rect, c: Point, r: number): boolean {
   const dx = Math.max(a.x - c.x, 0, c.x - (a.x + a.width));
   const dy = Math.max(a.y - c.y, 0, c.y - (a.y + a.height));
   return Math.hypot(dx, dy) < r - EPS;
-}
-
-/** Every number in `v`, at any depth, is finite. */
-function finite(v: unknown, path: string, out: string[]): void {
-  if (typeof v === 'number') {
-    if (!Number.isFinite(v)) out.push(`${path} is ${v}`);
-  } else if (Array.isArray(v)) v.forEach((x, i) => finite(x, `${path}[${i}]`, out));
-  else if (v !== null && typeof v === 'object')
-    for (const [k, x] of Object.entries(v)) finite(x, `${path}.${k}`, out);
 }

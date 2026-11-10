@@ -16,21 +16,12 @@ import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
 import { onOutline, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/core/layout';
 
 /** Float tolerance of the checks, in px. */
 const EPS = 1e-6;
 /** How far an end may lie off its outline, in px. */
 const END_TOL = 0.01;
-
-function finite(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-    return;
-  }
-  if (value === null || typeof value !== 'object') return;
-  if (Array.isArray(value)) value.forEach((v, i) => finite(v, `${path}[${i}]`, out));
-  else for (const [k, v] of Object.entries(value)) finite(v, `${path}.${k}`, out);
-}
 
 const inside = (outer: Rect, inner: Rect, top = outer.y): boolean =>
   inner.x >= outer.x - EPS &&

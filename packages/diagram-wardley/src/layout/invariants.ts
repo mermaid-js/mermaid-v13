@@ -16,6 +16,7 @@ import type {
   WardleyLayout,
   WardleyNodeLayout,
 } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/core/layout';
 
 /** Float tolerance of the checks, relative to the canvas. */
 const EPS = 1e-6;
@@ -387,13 +388,4 @@ function walk(v: unknown, path: string, inside: (p: Point, what: string) => void
   if (isRect(v)) inside({ x: v.x + v.width, y: v.y + v.height }, path);
   if (isPoint(v)) inside(v, path);
   for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`, inside);
-}
-
-/** Every number in `v`, at any depth, is finite. */
-function finite(v: unknown, path: string, out: string[]): void {
-  if (typeof v === 'number') {
-    if (!Number.isFinite(v)) out.push(`${path} is ${v}`);
-  } else if (Array.isArray(v)) v.forEach((x, i) => finite(x, `${path}[${i}]`, out));
-  else if (v !== null && typeof v === 'object')
-    for (const [k, x] of Object.entries(v)) finite(x, `${path}.${k}`, out);
 }

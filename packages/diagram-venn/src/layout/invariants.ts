@@ -20,24 +20,10 @@ import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import { circleBox, drawnBoxes, overlaps } from './geometry.ts';
 import { VENN_METRICS } from './metrics.ts';
 import type { Circle, Rect, VennLayout } from './types.ts';
+import { numbers } from '@mermaid-js/core/layout';
+import { rectInside as inside } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
-
-/** Every number in `value`, with its path. */
-function* numbers(value: unknown, path: string): Generator<[string, number]> {
-  if (typeof value === 'number') yield [path, value];
-  else if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) yield* numbers(value[i], `${path}[${i}]`);
-  } else if (value && typeof value === 'object') {
-    for (const [k, v] of Object.entries(value)) yield* numbers(v, `${path}.${k}`);
-  }
-}
-
-const inside = (inner: Rect, outer: Rect, eps: number): boolean =>
-  inner.x >= outer.x - eps &&
-  inner.y >= outer.y - eps &&
-  inner.x + inner.width <= outer.x + outer.width + eps &&
-  inner.y + inner.height <= outer.y + outer.height + eps;
 
 /** A rectangle as a violation message prints it. */
 const printed = (r: Rect): string =>

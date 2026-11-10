@@ -16,19 +16,12 @@ import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
 import { drawn } from './layout.ts';
 import type { EventModelLayout, Point, Rect } from './types.ts';
+import { numbers } from '@mermaid-js/core/layout';
+import { rectInside as inside } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
 
 const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-
-function inside(inner: Rect, outer: Rect): boolean {
-  return (
-    inner.x >= outer.x - EPS &&
-    inner.y >= outer.y - EPS &&
-    inner.x + inner.width <= outer.x + outer.width + EPS &&
-    inner.y + inner.height <= outer.y + outer.height + EPS
-  );
-}
 
 function overlap(a: Rect, b: Rect): boolean {
   return (
@@ -50,18 +43,10 @@ function onEdge(p: Point, r: Rect): boolean {
   );
 }
 
-/** Every number in the layout, with a path to name it. */
-function numbers(value: unknown, path: string, out: [string, number][]): void {
-  if (typeof value === 'number') out.push([path, value]);
-  else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value !== null && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
-}
-
 export function eventModelLayoutViolations(model: EventModel, layout: EventModelLayout): string[] {
   const out: string[] = [];
   const all: [string, number][] = [];
-  numbers(layout, 'layout', all);
+  for (const n of numbers(layout, 'layout')) all.push(n);
   for (const [path, n] of all) if (!Number.isFinite(n)) out.push(`${path} is ${n}`);
   structureViolations(model, layout, out);
   placementViolations(layout, out);

@@ -10,6 +10,8 @@ import type { JourneyModel } from '../model.ts';
 import { drawnRects } from './extent.ts';
 import { journeyMetrics } from './metrics.ts';
 import type { JourneyLayout, Rect } from './types.ts';
+import { rectsOverlap as overlaps } from '@mermaid-js/core/layout';
+import { within } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
 
@@ -22,18 +24,11 @@ function numbers(value: unknown, path: string, out: string[]): void {
   else if (value && typeof value === 'object')
     for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
 }
-
-const within = (v: number, lo: number, hi: number): boolean => v >= lo - EPS && v <= hi + EPS;
 const contains = (outer: Rect, inner: Rect): boolean =>
   within(inner.x, outer.x, outer.x + outer.width) &&
   within(inner.x + inner.width, outer.x, outer.x + outer.width) &&
   within(inner.y, outer.y, outer.y + outer.height) &&
   within(inner.y + inner.height, outer.y, outer.y + outer.height);
-const overlaps = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
 
 /** A legend row's box: its dot and its label. */
 function rowOf(e: JourneyLayout['legend'][number]): Rect {
