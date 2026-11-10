@@ -1,0 +1,66 @@
+1:1-1:19 "requirementDiagram" keyword
+2:3-2:15 "%% a comment" comment
+3:3-3:12 "accTitle:" keyword
+3:13-3:22 "The title" string
+4:3-4:19 "designConstraint" keyword
+4:20-4:27 "\"a req\"" variable [declaration, definition]
+4:28-4:29 "{" operator
+5:5-5:7 "id" keyword
+5:7-5:8 ":" operator
+5:9-5:12 "1.2" variable
+6:5-6:9 "text" keyword
+6:9-6:10 ":" operator
+6:11-6:20 "the text." variable
+7:5-7:9 "risk" keyword
+7:9-7:10 ":" operator
+7:11-7:17 "medium" enumMember
+8:5-8:17 "verifymethod" keyword
+8:17-8:18 ":" operator
+8:19-8:29 "inspection" enumMember
+9:3-9:4 "}" operator
+10:3-10:10 "element" keyword
+10:11-10:13 "e1" variable [declaration, definition]
+10:13-10:16 ":::" operator
+10:16-10:19 "hot" class
+10:20-10:21 "{" operator
+11:5-11:9 "type" keyword
+11:9-11:10 ":" operator
+11:11-11:12 "\"" string
+11:12-11:15 "sim" string
+11:15-11:16 "\"" string
+12:5-12:11 "docref" keyword
+12:11-12:12 ":" operator
+12:13-12:20 "reqs/e1" variable
+13:3-13:4 "}" operator
+14:3-14:5 "e1" variable
+14:6-14:7 "-" operator
+14:8-14:17 "satisfies" keyword
+14:18-14:20 "->" operator
+14:21-14:28 "\"a req\"" variable
+15:3-15:10 "\"a req\"" variable
+15:11-15:13 "<-" operator
+15:14-15:20 "copies" keyword
+15:21-15:22 "-" operator
+15:23-15:25 "e1" variable
+16:3-16:15 "direction LR" keyword
+17:3-17:11 "classDef" keyword
+17:12-17:15 "hot" class [declaration, definition]
+17:16-17:20 "fill" string
+17:20-17:21 ":" operator
+17:21-17:22 "#" operator
+17:22-17:25 "f96" string
+17:25-17:26 "," operator
+17:26-17:32 "stroke" string
+17:32-17:33 "-" operator
+17:33-17:38 "width" string
+17:38-17:39 ":" operator
+17:39-17:42 "2px" string
+18:3-18:8 "style" keyword
+18:9-18:11 "e1" variable
+18:12-18:16 "fill" string
+18:16-18:17 ":" operator
+18:17-18:18 "#" operator
+18:18-18:21 "f00" string
+19:3-19:8 "class" keyword
+19:9-19:11 "e1" variable
+19:12-19:15 "hot" class

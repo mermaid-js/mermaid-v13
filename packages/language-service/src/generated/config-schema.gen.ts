@@ -1212,7 +1212,8 @@ export const configSchema: ConfigSchema = {
     "requirement": {
       "$ref": "#/$defs/RequirementDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "architecture": {
@@ -2826,7 +2827,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {
@@ -2838,67 +2840,109 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No requirement default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` and `elk.<algorithm>` apply only when an author sets them, and are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D106, D173)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the requirement renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's requirement renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `requirement.useMaxWidth`."
+          }
+        },
         "rect_fill": {
           "type": "string",
           "default": "#f9f9f9",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435)."
           }
         },
         "text_color": {
           "type": "string",
           "default": "#333",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435)."
           }
         },
         "rect_border_size": {
           "type": "string",
           "default": "0.5px",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435)."
           }
         },
         "rect_border_color": {
           "type": "string",
           "default": "#bbb",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435)."
           }
         },
         "rect_min_width": {
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436)."
           }
         },
         "rect_min_height": {
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436)."
           }
         },
         "fontSize": {
           "type": "number",
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style."
           }
         },
         "rect_padding": {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436)."
           }
         },
         "line_height": {
           "type": "number",
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436)."
           }
         }
       }

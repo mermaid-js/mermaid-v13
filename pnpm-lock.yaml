@@ -146,6 +146,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -276,6 +279,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -510,6 +516,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-requirement:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
@@ -620,6 +632,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -711,6 +726,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -958,6 +976,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
