@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadFixtures } from './fixtures.ts';
 import { classifyFixtures, isSupported } from './support.ts';
+import { unportedType } from './unported.ts';
 
 describe('fixture support', () => {
   it('takes the supported types from the generated registry: rows with a v13 package', () => {
@@ -10,7 +11,7 @@ describe('fixture support', () => {
     expect(isSupported('classDiagram')).toBe(true);
     expect(isSupported('journey')).toBe(true);
     expect(isSupported('gantt')).toBe(true);
-    expect(isSupported('eventmodeling')).toBe(false);
+    expect(isSupported(unportedType().type)).toBe(false);
   });
 
   it('runs every corpus diagram and the Pele flowcharts, sequence and class, and sets the rest aside by type', () => {
@@ -29,11 +30,11 @@ describe('fixture support', () => {
   it('detects through front-matter and directives, and keeps undetectable text as an error', () => {
     const fixture = (id: string, source: string) => ({ ...loadFixtures()[0]!, id, source });
     const { supported, unsupported } = classifyFixtures([
-      fixture('x/front', '---\ntitle: t\n---\neventmodeling\n  tf 01 cmd Start\n'),
+      fixture('x/front', `---\ntitle: t\n---\n${unportedType().source}`),
       fixture('x/init', '%%{init: {"theme": "dark"}}%%\ngraph TD\n  A --> B\n'),
       fixture('x/junk', 'not a diagram\n'),
     ]);
-    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', 'eventmodeling']]);
+    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', unportedType().type]]);
     // Text no detector claims still runs, so a broken fixture shows up as a render error.
     expect(supported.map((f) => f.id)).toEqual(['x/init', 'x/junk']);
   });

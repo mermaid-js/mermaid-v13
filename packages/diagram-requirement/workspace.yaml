@@ -44,6 +44,10 @@ languageBundle:
     - labels.ts
     - limits.ts
     - testing.ts
+    # Type-only today; listed so the bundle stays as the old allow-list had it (language, codes,
+    # facet/, parser/, generated/).
+    - model.ts
+    - v12-specs/
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:

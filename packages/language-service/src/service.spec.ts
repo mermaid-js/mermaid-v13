@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
 import type { DocumentSnapshot, Range } from './index.ts';
+import { facetlessType } from './testing/facetless.ts';
 
 const service = createLanguageService();
 beforeAll(() => service.preload());
@@ -101,14 +102,16 @@ describe('diagnostics (D91)', () => {
   });
 
   it('gives a v12 type with no facet one info diagnostic on its header', async () => {
-    const doc = await open('%% hi\nswimlane-beta\n  A --> B\n');
+    // The first generated row with no facet: there must still be one (see the helper).
+    const { type, header, source } = facetlessType();
+    const doc = await open(`%% hi\n${source}`);
     expect(doc.facet).toBeUndefined();
-    expect(doc.type).toBe('swimlane');
+    expect(doc.type).toBe(type);
     const [d, ...rest] = doc.diagnostics();
     expect(rest).toEqual([]);
     expect(d?.severity).toBe('info');
     expect(d?.code).toBe('NO_LANGUAGE_SUPPORT');
-    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('swimlane-beta');
+    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe(header);
   });
 
   it('gives an unknown type UNSUPPORTED_DIAGRAM, as the renderer does', async () => {
@@ -267,11 +270,12 @@ describe('definition, references and rename (D92)', () => {
   });
 
   it('refuses everything on a type with no facet', async () => {
-    const doc = await open('swimlane-beta\n  A --> B\n');
-    expect(doc.definition(11)).toBeUndefined();
-    expect(doc.references(11)).toEqual([]);
-    expect(doc.rename(11, 'X')).toEqual({
-      refused: 'swimlane diagrams are not supported by the v13 language service yet.',
+    const { type, source } = facetlessType();
+    const doc = await open(source);
+    expect(doc.definition(1)).toBeUndefined();
+    expect(doc.references(1)).toEqual([]);
+    expect(doc.rename(1, 'X')).toEqual({
+      refused: `${type} diagrams are not supported by the v13 language service yet.`,
     });
   });
 });
