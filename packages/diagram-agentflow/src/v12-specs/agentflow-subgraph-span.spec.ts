@@ -7,7 +7,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
 // skipped: issue #59: sibling subgraph span overlap — reads v12's element mappings (D465); the flow spans are checked against the AST's ranges in src/parser/positions.spec.ts
-// skipped: innermost-match ranking — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: innermost-match ranking — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
 // Regression spec for issue #59 — sibling subgraph span overlap.
 //
 // A flow's mapping `endLine` used to bleed past its own `end` into the next

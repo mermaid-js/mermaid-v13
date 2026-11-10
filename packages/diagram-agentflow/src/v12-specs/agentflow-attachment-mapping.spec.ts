@@ -6,7 +6,7 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: every test — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: every test — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
 // Regression spec for issue #75 — standalone attachment mappings.
 //
 // A standalone `id@{ ... }` metadata block annotates an element declared

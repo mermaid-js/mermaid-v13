@@ -38,7 +38,7 @@ export const NOT_PORTED: Record<string, string> = {
 const DB_API =
   "tests v12's DB methods for tool builders, removed in v13 (D465): positions come from the language service";
 const MAPPINGS =
-  "reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)";
+  "reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts";
 const POSITION =
   "matches js-yaml's message text (R-ERR-5); its line and column are checked against v13's ranges in src/parser/positions.spec.ts";
 const SPAN =

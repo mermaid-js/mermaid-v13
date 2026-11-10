@@ -6,11 +6,11 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import agentflow, { AgentFlowDB } from './adapter.ts';
-// skipped: a blank line directly after an inline @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
-// skipped: the fold accumulates — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
-// skipped: a comment line after an @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
-// skipped: an edge after a @{ }+blank block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
-// skipped: still strips trailing whitespace after } — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): positions are the language facet's symbols and astAt (#549)
+// skipped: a blank line directly after an inline @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
+// skipped: the fold accumulates — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
+// skipped: a comment line after an @{ } block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
+// skipped: an edge after a @{ }+blank block — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
+// skipped: still strips trailing whitespace after } — reads v12's element mappings (getElementById, getElementMappings, getElementAtPosition), removed in v13 (D465): re-asked through the language service (astAt, rangeOf, definition, folding) in packages/conformance/src/agentflow/service-positions.spec.ts
 // Regression spec for issue #56 — parser error/position drift from a
 // blank-line fold.
 //

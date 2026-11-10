@@ -1,0 +1,15 @@
+agentflow-beta LR
+  connector |inbox[Inbox]
+  flow |plan[Plan]
+    |read --> think
+    think --> read
+    inbox --> think
+  end
+  plan --> done
+  global
+    rea|d
+  end
+  classDef |hot fill:#f96
+  class think,read hot
+  think a1@--> plan
+  |a1@{ curve: basis }

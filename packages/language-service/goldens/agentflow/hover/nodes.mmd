@@ -1,0 +1,11 @@
+agentflow-beta LR
+  connector |inbox[Inbox]@{ owner: ops }
+  flow |plan[Plan]@{ view: collapsed }
+    |read[Read]@{ shape: input, model: gpt } --> think{Decide}
+  end
+  global
+    |log@{ shape: tool }
+  end
+  classDef hot fill:#f96
+  |think:::h|ot --> |plan
+  |inbox --> read

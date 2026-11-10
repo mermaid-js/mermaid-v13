@@ -1,0 +1,28 @@
+---
+title: Folding
+---
+agentflow-beta TB
+  accTitle: one line
+  accDescr {
+    A description
+    over two lines
+  }
+  flow outer[Outer]@{
+    view: collapsed
+  }
+    flow inner
+      a["A"]@{ shape: tool }
+
+      b["B"]
+    end
+    c
+  end
+  global
+    g
+  end
+  connector hub@{
+    owner: ops
+  }
+  d@{ shape: decision,
+      label: "two lines" }
+  e@{ shape: action }

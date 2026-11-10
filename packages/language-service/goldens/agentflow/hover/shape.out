@@ -1,0 +1,20 @@
+@ 2:16  a@{ shape: to|ol }
+  2:14-2:18 "tool"
+  | **`tool`** shape
+  |
+  | Kind: `tool` · drawn as `fr-rect`
+@ 3:14  b@{ shape: |subroutine }
+  3:14-3:24 "subroutine"
+  | **`subroutine`** shape
+  |
+  | Kind: `tool` · drawn as `fr-rect`
+@ 4:17  c@{ shape: cyl|inder }
+  4:14-4:22 "cylinder"
+  | **`cylinder`** shape
+  |
+  | Kind: `task` · removed in agentflow: drawn as `rounded` (`SHAPE_REMOVED`)
+@ 5:17  d@{ shape: clo|ud }
+  5:14-5:19 "cloud"
+  | **`cloud`** shape
+  |
+  | Kind: `task` · not an agentflow shape: drawn as `rounded` (`SHAPE_UNSUPPORTED`)

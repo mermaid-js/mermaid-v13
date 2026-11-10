@@ -2,7 +2,8 @@
  * `@mermaid-js/diagram-agentflow`: the agentflow diagram plugin (spec #523). The lexer, parser,
  * model and AST are here, with `semanticModel` for tool builders (D465), the layout
  * (`layoutAgentflow`), the SVG renderer (`renderAgentflow`) and the plugin object (`agentflow`,
- * with its theme table); the manifest and registry row land with #550.
+ * with its theme table); the manifest and registry row land with #550. The language facet is
+ * on `./language`.
  */
 export { agentflow } from './plugin.ts';
 export { agentflowLabels } from './labels.ts';
@@ -11,6 +12,7 @@ export type { AgentflowRenderContext, AgentflowRenderWarning } from './render/co
 export {
   agentflowTokens,
   AgentflowTokenKind,
+  detectAgentflow,
   JISON_NAMES,
   parseAgentflow,
 } from './parser/index.ts';

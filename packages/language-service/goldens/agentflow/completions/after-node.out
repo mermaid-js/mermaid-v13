@@ -1,0 +1,29 @@
+@ 3:9  think |
+  --> operator (sequence: the target runs after the source) 3:9-3:9 "" -> "-->"
+  --x operator (failure: the target runs when the source fails) 3:9-3:9 "" -> "--x"
+  -.- operator (reference: the source refers to the target; no step follows) 3:9-3:9 "" -> "-.-"
+  & operator 3:9-3:9 "" -> "&"
+@ 4:12  read --> |
+  read node (task: Read) 4:12-4:12 "" -> "read"
+  think node (task) 4:12-4:12 "" -> "think"
+  rea node (task) 4:12-4:12 "" -> "rea"
+@ 5:10  read & |
+  read node (task: Read) 5:10-5:10 "" -> "read"
+  think node (task) 5:10-5:10 "" -> "think"
+  rea node (task) 5:10-5:10 "" -> "rea"
+@ 6:16  think --> rea|
+  read node (task: Read) 6:13-6:16 "rea" -> "read"
+  rea[rea] shape (task with a label) 6:13-6:16 "rea" -> "rea[rea]"
+  rea@{ shape: task } shape (task) 6:13-6:16 "rea" -> "rea@{ shape: task }"
+  rea@{ shape: tool } shape (tool) 6:13-6:16 "rea" -> "rea@{ shape: tool }"
+  rea@{ shape: input } shape (input) 6:13-6:16 "rea" -> "rea@{ shape: input }"
+  rea@{ shape: decision } shape (decision) 6:13-6:16 "rea" -> "rea@{ shape: decision }"
+  rea@{ shape: refdoc } shape (refdoc) 6:13-6:16 "rea" -> "rea@{ shape: refdoc }"
+  rea@{ shape: action } shape (action) 6:13-6:16 "rea" -> "rea@{ shape: action }"
+@ 7:10  think -|
+  --> operator (sequence: the target runs after the source) 7:9-7:10 "-" -> "-->"
+  --x operator (failure: the target runs when the source fails) 7:9-7:10 "-" -> "--x"
+  -.- operator (reference: the source refers to the target; no step follows) 7:9-7:10 "-" -> "-.-"
+@ 8:10  read --|
+  --> operator (sequence: the target runs after the source) 8:8-8:10 "--" -> "-->"
+  --x operator (failure: the target runs when the source fails) 8:8-8:10 "--" -> "--x"

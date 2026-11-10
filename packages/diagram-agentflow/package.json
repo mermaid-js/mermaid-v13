@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-agentflow",
   "version": "0.0.0",
   "private": true,
-  "description": "Agentflow diagram plugin for Mermaid: lexer, parser, model, semantic model and layout (renderer to follow).",
+  "description": "Agentflow diagram plugin for Mermaid: lexer, parser, model, semantic model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -21,6 +21,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
     }
   },
   "files": [

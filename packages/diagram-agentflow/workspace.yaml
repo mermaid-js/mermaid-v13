@@ -1,6 +1,6 @@
 # How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
-# Pre-manifest until #550 (T5) adds the `mermaid` manifest: configDefaults, release and
-# languageBundle come then (v13/docs/agents/port-diagram/shared-files.md, "Before T5").
+# Pre-manifest until #550 (T5) adds the `mermaid` manifest: configDefaults and release
+# come then (v13/docs/agents/port-diagram/shared-files.md, "Before T5").
 
 # grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
 # type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
@@ -40,3 +40,13 @@ theme:
       'leanPaddingX',
       'leanPaddingY',
     ]
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench). The
+# bench checks it once the manifest has `language` (#550).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - theme/
+    - plugin.ts
+    - labels.ts

@@ -3,16 +3,11 @@ import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { agentflowLabels } from './labels.ts';
 import { layoutAgentflow, type AgentflowLayout } from './layout/index.ts';
+import { detectAgentflow } from './parser/detect.ts';
 import { parseAgentflow, type AgentflowModel, type AgentflowParseResult } from './parser/index.ts';
 import type { AgentflowRenderContext } from './render/context.ts';
 import { renderAgentflow } from './render/render.ts';
 import { theme } from './theme/table.ts';
-
-/**
- * v12's detector (`afDetector.ts:10`), on the text the pipeline hands `detector` (front matter,
- * directives and comments already removed).
- */
-const DETECT = /^\s*agentflow-beta\b/;
 
 /** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
@@ -33,7 +28,7 @@ export const agentflow = {
   formats: ['svg'] as const,
   layoutKind: 'graph' as const,
   theme,
-  detector: (text: string): boolean => DETECT.test(text),
+  detector: detectAgentflow,
   parse: (text: string, ctx: DiagramParseContext): AgentflowParseResult => {
     const caps = limits(ctx);
     const maxTextSize = ctx.config.maxTextSize;

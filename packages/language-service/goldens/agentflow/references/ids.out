@@ -1,0 +1,23 @@
+@ 2:13  connector |inbox[Inbox]
+  2:13-2:18 "inbox"
+  6:5-6:10 "inbox"
+@ 3:8  flow |plan[Plan]
+  3:8-3:12 "plan"
+  8:3-8:7 "plan"
+  14:16-14:20 "plan"
+@ 4:5  |read --> think
+  4:5-4:9 "read"
+  5:15-5:19 "read"
+  10:5-10:9 "read"
+  13:15-13:19 "read"
+@ 10:8  rea|d
+  4:5-4:9 "read"
+  5:15-5:19 "read"
+  10:5-10:9 "read"
+  13:15-13:19 "read"
+@ 12:12  classDef |hot fill:#f96
+  12:12-12:15 "hot"
+  13:20-13:23 "hot"
+@ 15:3  |a1@{ curve: basis }
+  14:9-14:11 "a1"
+  15:3-15:5 "a1"

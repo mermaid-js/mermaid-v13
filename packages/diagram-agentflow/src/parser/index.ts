@@ -1,3 +1,4 @@
+export { AGENTFLOW_DETECT, detectAgentflow } from './detect.ts';
 export { parseAgentflow } from './parser.ts';
 export type { AgentflowParseOptions, AgentflowParseResult } from './parser.ts';
 export { agentflowTokens } from './tokens-api.ts';

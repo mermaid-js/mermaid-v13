@@ -630,6 +630,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -1032,6 +1035,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../../packages/diagram-agentflow
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class
