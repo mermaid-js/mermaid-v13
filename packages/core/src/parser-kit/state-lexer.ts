@@ -37,6 +37,8 @@ export abstract class StateLexer {
   /** Length of v12's text without the appended line break. */
   protected readonly len: number;
   protected readonly n: number;
+  /** The view's text: CRs as written. */
+  protected readonly raw: string;
   /**
    * `at[i]` is the view-text offset of `text[i]` (`at[len]` its end), when a CR made the two
    * differ; else undefined and they are the same.
@@ -68,6 +70,7 @@ export abstract class StateLexer {
     this.holes = view.holes;
     this.hole = firstHole(view, from);
     const start = localOffset(view, from);
+    this.raw = view.text;
     let text = this.viewText(view);
     if (this.foldCrlf && text.includes('\r', start)) {
       const at = new Uint32Array(text.length + 1);
