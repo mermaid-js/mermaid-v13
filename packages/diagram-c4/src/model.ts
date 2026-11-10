@@ -36,34 +36,71 @@ import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 /** The five headers. */
 export type C4Type = 'C4Context' | 'C4Container' | 'C4Component' | 'C4Dynamic' | 'C4Deployment';
 
-/** An element's kind: v12's `typeC4Shape`. */
-export type C4ElementKind =
-  | 'person'
-  | 'external_person'
-  | 'system'
-  | 'system_db'
-  | 'system_queue'
-  | 'external_system'
-  | 'external_system_db'
-  | 'external_system_queue'
-  | 'container'
-  | 'container_db'
-  | 'container_queue'
-  | 'external_container'
-  | 'external_container_db'
-  | 'external_container_queue'
-  | 'component'
-  | 'component_db'
-  | 'component_queue'
-  | 'external_component'
-  | 'external_component_db'
-  | 'external_component_queue';
+/**
+ * The ten base element kinds, each with an `external_` twin (v12 `C4_ELEMENT_TYPES`): the one
+ * list the element kinds come from.
+ */
+export const C4_BASE_KINDS = [
+  'person',
+  'system',
+  'system_db',
+  'system_queue',
+  'container',
+  'container_db',
+  'container_queue',
+  'component',
+  'component_db',
+  'component_queue',
+] as const;
 
-/** A deployment node's kind: `Deployment_Node`/`Node`, `Node_L` or `Node_R`. */
-export type C4NodeKind = 'node' | 'nodeL' | 'nodeR';
+/** A base element kind: one of {@link C4_BASE_KINDS}. */
+export type C4BaseKind = (typeof C4_BASE_KINDS)[number];
 
-/** A relation's kind (`RelIndex` is `rel`; `Rel_Up` and `Rel_U` are `rel_u`, …). */
-export type C4RelationKind = 'rel' | 'birel' | 'rel_u' | 'rel_d' | 'rel_l' | 'rel_r' | 'rel_b';
+/** An element's kind: v12's `typeC4Shape`, a base kind or its `external_` twin. */
+export type C4ElementKind = C4BaseKind | `external_${C4BaseKind}`;
+
+/** The twenty element kinds, each base kind then its external twin. */
+export const C4_ELEMENT_KINDS: readonly C4ElementKind[] = C4_BASE_KINDS.flatMap((kind) => [
+  kind,
+  `external_${kind}` as const,
+]);
+
+/** A deployment node's kinds: `Deployment_Node`/`Node`, `Node_L` or `Node_R`. */
+export const C4_NODE_KINDS = ['node', 'nodeL', 'nodeR'] as const;
+export type C4NodeKind = (typeof C4_NODE_KINDS)[number];
+
+/** A relation's kinds (`RelIndex` is `rel`; `Rel_Up` and `Rel_U` are `rel_u`, …). */
+export const C4_RELATION_KINDS = [
+  'rel',
+  'birel',
+  'rel_u',
+  'rel_d',
+  'rel_l',
+  'rel_r',
+  'rel_b',
+] as const;
+export type C4RelationKind = (typeof C4_RELATION_KINDS)[number];
+
+const EXTERNAL = 'external_';
+
+/** Whether an element kind is an external one (v12's `c4-external` class). */
+export const isExternal = (kind: C4ElementKind): boolean => kind.startsWith(EXTERNAL);
+
+/** An element kind without its `external_`. */
+export const baseKind = (kind: C4ElementKind): C4BaseKind =>
+  (isExternal(kind) ? kind.slice(EXTERNAL.length) : kind) as C4BaseKind;
+
+/** What an element kind is: a person, a system, a container or a component. */
+export type C4Family = 'person' | 'system' | 'container' | 'component';
+
+/** An element kind's family, and its store when it is a database or a queue. */
+export function kindParts(kind: C4ElementKind): { family: C4Family; store?: 'db' | 'queue' } {
+  const [family, store] = baseKind(kind).split('_') as [C4Family, 'db' | 'queue' | undefined];
+  return store ? { family, store } : { family };
+}
+
+/** An element kind in words, as hover shows it (`external system db`). */
+export const kindWords = (kind: C4ElementKind): string => kind.split('_').join(' ');
 
 /** A `$name="value"` whose name sets no field of the model: the last value given. */
 export interface C4Extra {

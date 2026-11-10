@@ -8,7 +8,7 @@
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { c4Docs } from '../generated/docs.ts';
-import type { C4Boundary, C4Element, C4Model } from '../model.ts';
+import { kindWords, type C4Boundary, type C4Element, type C4Model } from '../model.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
 import {
   ELEMENT_FIELDS,
@@ -115,7 +115,7 @@ function short(text: string): string {
 }
 
 function elementFacts(model: C4Model, e: C4Element): string {
-  const facts = [`**${e.kind.replace(/_/g, ' ')}** ${code(e.alias)}`];
+  const facts = [`**${kindWords(e.kind)}** ${code(e.alias)}`];
   if (e.label !== '') facts.push(`Label: ${code(short(e.label))}`);
   const parent = model.boundaries[e.parent];
   if (parent) facts.push(`In ${code(parent.alias)}`);

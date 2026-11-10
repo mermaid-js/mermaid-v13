@@ -10,21 +10,13 @@
 import type { Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import { c4RelationPath } from '../layout/path.ts';
 import type { C4RelationEnd, C4RelationLayout } from '../layout/types.ts';
-import type { C4RelationKind } from '../model.ts';
+import { C4_RELATION_KINDS, type C4RelationKind } from '../model.ts';
 import type { Scene } from './context.ts';
 import { C4_RENDER_METRICS as R } from './metrics.ts';
 import { drawText } from './text.ts';
 
 /** v12's relation kinds; any other kind a `$type` set draws as `rel`. */
-const RELATION_KINDS: ReadonlySet<string> = new Set<C4RelationKind>([
-  'rel',
-  'birel',
-  'rel_u',
-  'rel_d',
-  'rel_l',
-  'rel_r',
-  'rel_b',
-]);
+const RELATION_KINDS: ReadonlySet<string> = new Set(C4_RELATION_KINDS);
 
 /** The relation's kind as its class names it: v12's, else `rel`. */
 const kindOf = (kind: string): C4RelationKind =>

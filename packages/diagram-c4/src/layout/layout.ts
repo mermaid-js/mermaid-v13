@@ -12,7 +12,14 @@ import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
-import type { C4Boundary, C4Element, C4Model, C4Relation } from '../model.ts';
+import {
+  kindParts,
+  type C4Boundary,
+  type C4Element,
+  type C4Family,
+  type C4Model,
+  type C4Relation,
+} from '../model.ts';
 import {
   brokenCycles,
   placeGrid,
@@ -46,7 +53,7 @@ export type C4LayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme
 const ignoreWarning = (): void => undefined;
 
 /** v12 `c4ShapeAdapter.ts` `STEREOTYPE_NAMES`. */
-const STEREOTYPES: Readonly<Record<string, string>> = {
+const STEREOTYPES: Readonly<Record<C4Family, string>> = {
   person: 'Person',
   system: 'Software System',
   container: 'Container',
@@ -55,8 +62,7 @@ const STEREOTYPES: Readonly<Record<string, string>> = {
 
 /** v12's type line: `[Person]`, `[Software System]`, `[Container: techn]` (external, db and queue as their base). */
 export function stereotypeText(element: Pick<C4Element, 'kind' | 'techn'>): string {
-  const base = element.kind.replace(/^external_/, '').replace(/_(db|queue)$/, '');
-  const name = STEREOTYPES[base] ?? base.replace(/_/g, ' ');
+  const name = STEREOTYPES[kindParts(element.kind).family];
   return element.techn ? `[${name}: ${element.techn}]` : `[${name}]`;
 }
 

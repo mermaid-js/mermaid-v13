@@ -7,14 +7,16 @@
  */
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
-import type {
-  C4Boundary,
-  C4Element,
-  C4ElementKind,
-  C4Extra,
-  C4Model,
-  C4NodeKind,
-  C4Relation,
+import {
+  C4_ELEMENT_KINDS,
+  C4_NODE_KINDS,
+  type C4Boundary,
+  type C4Element,
+  type C4ElementKind,
+  type C4Extra,
+  type C4Model,
+  type C4NodeKind,
+  type C4Relation,
 } from '../model.ts';
 import type { C4Argument } from './ast.ts';
 import {
@@ -50,29 +52,8 @@ export interface BoundaryMacro {
   nodeKind?: C4NodeKind;
 }
 
-const ELEMENT_KINDS: ReadonlySet<string> = new Set<C4ElementKind>([
-  'person',
-  'external_person',
-  'system',
-  'system_db',
-  'system_queue',
-  'external_system',
-  'external_system_db',
-  'external_system_queue',
-  'container',
-  'container_db',
-  'container_queue',
-  'external_container',
-  'external_container_db',
-  'external_container_queue',
-  'component',
-  'component_db',
-  'component_queue',
-  'external_component',
-  'external_component_db',
-  'external_component_queue',
-]);
-const NODE_KINDS: ReadonlySet<string> = new Set<C4NodeKind>(['node', 'nodeL', 'nodeR']);
+const ELEMENT_KINDS: ReadonlySet<string> = new Set(C4_ELEMENT_KINDS);
+const NODE_KINDS: ReadonlySet<string> = new Set(C4_NODE_KINDS);
 type Open<T> = { -readonly [K in keyof T]: T[K] };
 type OpenElement = Open<C4Element>;
 type OpenBoundary = Open<C4Boundary>;

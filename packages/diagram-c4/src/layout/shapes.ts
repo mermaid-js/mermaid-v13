@@ -14,7 +14,7 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
-import type { C4Element } from '../model.ts';
+import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
 
@@ -42,10 +42,10 @@ export function shapeOf(element: Pick<C4Element, 'shape' | 'sprite' | 'tags' | '
     const tagged = keyword(tag.trim());
     if (tagged) return tagged;
   }
-  const kind = element.kind;
-  if (kind.endsWith('person')) return 'person';
-  if (kind.endsWith('_db')) return 'cyl';
-  if (kind.endsWith('_queue')) return 'h-cyl';
+  const { family, store } = kindParts(element.kind);
+  if (family === 'person') return 'person';
+  if (store === 'db') return 'cyl';
+  if (store === 'queue') return 'h-cyl';
   return 'rounded';
 }
 

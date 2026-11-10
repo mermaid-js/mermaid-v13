@@ -18,32 +18,7 @@ import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
-import type { C4ElementKind } from './model.ts';
-
-/** The ten base element kinds; each has an `external_` twin. */
-const BASE_KINDS = [
-  'person',
-  'system',
-  'system_db',
-  'system_queue',
-  'container',
-  'container_db',
-  'container_queue',
-  'component',
-  'component_db',
-  'component_queue',
-] as const satisfies readonly C4ElementKind[];
-
-/** The twenty element kinds, each with its own font keys (v12 `C4_ELEMENT_TYPES`). */
-export const C4_ELEMENT_KINDS: readonly C4ElementKind[] = BASE_KINDS.flatMap((kind) => [
-  kind,
-  `external_${kind}` as const,
-]);
-
-/** The ten external kinds (v12's `c4-external` class). */
-export const C4_EXTERNAL_KINDS: ReadonlySet<C4ElementKind> = new Set(
-  BASE_KINDS.map((kind) => `external_${kind}` as const)
-);
+import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
 
 /** The `c4` lengths, row counts and flags the layout reads, every one set. */
 export interface C4LayoutConfig {

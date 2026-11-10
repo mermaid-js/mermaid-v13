@@ -19,10 +19,10 @@
  * config margins round it (D224). Only elements are sketched by a hand-drawn drawer (D301).
  */
 import { px, styleScope, styleText, themeStyleSheet, type SvgWriter } from '@mermaid-js/core/svg';
-import { c4Section, C4_EXTERNAL_KINDS } from '../config.ts';
+import { c4Section } from '../config.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4BoundaryLayout, C4ElementLayout, C4Layout } from '../layout/types.ts';
-import type { C4ElementKind, C4Model } from '../model.ts';
+import { isExternal, type C4ElementKind, type C4Model } from '../model.ts';
 import type { C4RenderContext, Scene } from './context.ts';
 import { C4_RENDER_METRICS as R } from './metrics.ts';
 import { paints } from './paint.ts';
@@ -136,7 +136,7 @@ function drawBoundary(scene: Scene, b: C4BoundaryLayout): void {
 
 /** v12's element classes: `node c4-shape c4-<kind>`, and `c4-external` for an external kind. */
 const elementClass = (kind: C4ElementKind): string =>
-  `node c4-shape c4-${kind}${C4_EXTERNAL_KINDS.has(kind) ? ' c4-external' : ''}`;
+  `node c4-shape c4-${kind}${isExternal(kind) ? ' c4-external' : ''}`;
 
 /** An element: its `g.node`, its outline, then its text in a `g.label`. */
 function drawElement(scene: Scene, e: C4ElementLayout): void {

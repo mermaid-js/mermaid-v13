@@ -8,7 +8,7 @@ export { renderC4, type C4RenderContext } from './render/index.ts';
 export { C4TokenKind, c4Tokens, detectC4, JISON_NAMES, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';
-export { parentAlias } from './model.ts';
+export { C4_ELEMENT_KINDS, parentAlias } from './model.ts';
 export {
   c4RelationPath,
   C4_METRICS,
@@ -21,7 +21,6 @@ export {
 export type * from './layout/types.ts';
 export {
   C4_CONFIG_DEFAULTS,
-  C4_ELEMENT_KINDS,
   c4Fonts,
   c4LayoutConfig,
   type C4Fonts,
