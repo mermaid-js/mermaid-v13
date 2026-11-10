@@ -1,0 +1,6 @@
+@ 3:13  connector |hub
+  prepare: 3:13-3:16 "hub"; rename to "connector":
+  refused: 'connector' is a keyword.
+@ 4:8  flow |f
+  prepare: 4:8-4:9 "f"; rename to "connector":
+  refused: 'connector' is a keyword.

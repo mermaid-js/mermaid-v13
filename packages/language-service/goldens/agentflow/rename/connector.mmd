@@ -1,0 +1,7 @@
+%% rename-to: mailbox
+agentflow-beta LR
+  connector |inbox[Inbox]@{ owner: ops }
+  inbox --> read
+  flow f
+    |inbox --> think
+  end

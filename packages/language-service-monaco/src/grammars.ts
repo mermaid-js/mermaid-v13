@@ -30,6 +30,7 @@ export interface MonarchHighlighter {
 }
 
 export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHighlighter>> = {
+  agentflow: { load: () => import('./generated/agentflow.monarch.js').then((m) => m.default) },
   block: { load: () => import('./generated/block.monarch.js').then((m) => m.default) },
   class: { load: () => import('./generated/class.monarch.js').then((m) => m.default) },
   cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },

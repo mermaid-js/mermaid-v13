@@ -1,0 +1,12 @@
+agentflow-beta LR
+  %% a comment
+  connector inbox["Inbox"]
+  flow plan[Plan]@{ view: collapsed }
+    read@{ shape: input } -- reads --> think{Think}
+    think --x retry
+    think -.- spec
+  end
+  classDef hot fill:#f96
+  think:::hot
+  linkStyle 0 stroke:red
+  click read "https://example.com" _blank

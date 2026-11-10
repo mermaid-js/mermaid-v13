@@ -1,0 +1,12 @@
+@ 1:16  agentflow-beta |
+  TB constant (top to bottom) 1:16-1:16 "" -> "TB"
+  TD constant (top down (same as TB)) 1:16-1:16 "" -> "TD"
+  BT constant (bottom to top) 1:16-1:16 "" -> "BT"
+  LR constant (left to right) 1:16-1:16 "" -> "LR"
+  RL constant (right to left) 1:16-1:16 "" -> "RL"
+@ 4:15  direction |
+  TB constant (top to bottom) 4:15-4:15 "" -> "TB"
+  TD constant (top down (same as TB)) 4:15-4:15 "" -> "TD"
+  BT constant (bottom to top) 4:15-4:15 "" -> "BT"
+  LR constant (left to right) 4:15-4:15 "" -> "LR"
+  RL constant (right to left) 4:15-4:15 "" -> "RL"
