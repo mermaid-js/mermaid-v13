@@ -1,0 +1,16 @@
+@ 2:9  title: C|art
+  none
+@ 4:23  eventmodeling title Ca|rt
+  none
+@ 5:6  %% a |comment
+  none
+@ 6:6  /* a |block */
+  none
+@ 7:6  // a |line
+  none
+@ 8:20  tf 01 ui Screen { a|: 1 }
+  none
+@ 10:4  a|: 1
+  none
+@ 12:17  tf 02 cmd Add "a|b"
+  none

@@ -1,0 +1,5 @@
+3:4-3:6 "01" error EVENTMODELING_DUPLICATE_FRAME: Duplicate event modeling frame ID "01" on line 3
+4:11-4:15 "data" error UNEXPECTED: Expected a name, got `data`; `data` is a keyword and cannot be a name.
+5:7-5:8 "4" error UNEXPECTED: Expected a kind (`ui`, `pcr`, `cmd`, `rmo` or `evt`), got `4`; a frame id has one to three digits.
+6:7-6:10 "Evt" error UNEXPECTED: Expected a kind (`ui`, `pcr`, `cmd`, `rmo` or `evt`), got `Evt`.
+7:12-7:22 "{ inline }" error UNEXPECTED: Expected a data block: `{`, its lines, then `}` on a line of its own, got `{ inline }`; a block starts a new line after `{`, and its `}` stands on a line of its own.

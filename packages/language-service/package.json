@@ -35,6 +35,7 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
+    "@mermaid-js/diagram-eventmodeling": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-gantt": "workspace:*",
     "@mermaid-js/diagram-gitgraph": "workspace:*",
@@ -76,6 +77,9 @@
       "optional": true
     },
     "@mermaid-js/diagram-er": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-eventmodeling": {
       "optional": true
     },
     "@mermaid-js/diagram-flowchart": {
@@ -156,6 +160,7 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
+    "@mermaid-js/diagram-eventmodeling": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-gantt": "workspace:*",
     "@mermaid-js/diagram-gitgraph": "workspace:*",

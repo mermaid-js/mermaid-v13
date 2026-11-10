@@ -1,0 +1,790 @@
+[
+  {
+    "id": "eventmodeling-cases/header-alone",
+    "source": "eventmodeling"
+  },
+  {
+    "id": "eventmodeling-cases/header-blank-end",
+    "source": "eventmodeling   "
+  },
+  {
+    "id": "eventmodeling-cases/header-suffix",
+    "source": "eventmodelingX\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/header-beta",
+    "source": "eventmodeling-beta\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/header-brace",
+    "source": "eventmodeling{\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/header-comment",
+    "source": "eventmodeling%% c\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/header-leading-blank-lines",
+    "source": "\n\n   eventmodeling\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/header-upper",
+    "source": "EventModeling\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/one-line",
+    "source": "eventmodeling tf 01 evt A tf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/one-line-tabs",
+    "source": "eventmodeling\ttf\t01\tevt\tA"
+  },
+  {
+    "id": "eventmodeling-cases/title-same-line",
+    "source": "eventmodeling title My Model\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/title-own-line",
+    "source": "eventmodeling\ntitle My Model\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/title-indented-own-line",
+    "source": "eventmodeling\n  title My Model\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/title-after-frame",
+    "source": "eventmodeling\ntf 01 evt A title Foo"
+  },
+  {
+    "id": "eventmodeling-cases/title-after-frame-tab",
+    "source": "eventmodeling\ntf 01 evt A\ttitle\tFoo bar"
+  },
+  {
+    "id": "eventmodeling-cases/title-alone",
+    "source": "eventmodeling title"
+  },
+  {
+    "id": "eventmodeling-cases/title-alone-blank",
+    "source": "eventmodeling title \ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/title-bar",
+    "source": "eventmodeling\ntf 01 evt titleBar"
+  },
+  {
+    "id": "eventmodeling-cases/title-bar-own-line",
+    "source": "eventmodeling\ntf 01 evt A\ntitleBar"
+  },
+  {
+    "id": "eventmodeling-cases/titled",
+    "source": "eventmodeling titled"
+  },
+  {
+    "id": "eventmodeling-cases/title-percent",
+    "source": "eventmodeling title A %% c\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/title-percent-only",
+    "source": "eventmodeling title %%c"
+  },
+  {
+    "id": "eventmodeling-cases/title-colon",
+    "source": "eventmodeling title: A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-same-line",
+    "source": "eventmodeling accTitle: T\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-own-line",
+    "source": "eventmodeling\naccTitle: T\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-blanks",
+    "source": "eventmodeling accTitle \t : T"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-no-colon",
+    "source": "eventmodeling accTitle T"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-percent",
+    "source": "eventmodeling accTitle: T %% c"
+  },
+  {
+    "id": "eventmodeling-cases/acc-title-empty",
+    "source": "eventmodeling accTitle:"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-colon",
+    "source": "eventmodeling accDescr: D\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-colon-percent",
+    "source": "eventmodeling accDescr: D %%c"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-block",
+    "source": "eventmodeling accDescr {\n  line one\n  line two\n}\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-block-next-line",
+    "source": "eventmodeling accDescr\n{ x }\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-block-unclosed",
+    "source": "eventmodeling accDescr {\n  line one\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-block-unclosed-repeated",
+    "source": "eventmodeling accDescr {\n accDescr {\n accDescr {\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-no-colon",
+    "source": "eventmodeling accDescr D"
+  },
+  {
+    "id": "eventmodeling-cases/acc-descr-own-line",
+    "source": "eventmodeling\naccDescr: D"
+  },
+  {
+    "id": "eventmodeling-cases/acc-after-frame",
+    "source": "eventmodeling\ntf 01 evt A accTitle: T accDescr: D"
+  },
+  {
+    "id": "eventmodeling-cases/keyword-name-text",
+    "source": "eventmodeling\ntf 01 evt text"
+  },
+  {
+    "id": "eventmodeling-cases/keyword-name-data",
+    "source": "eventmodeling\ntf 01 evt data"
+  },
+  {
+    "id": "eventmodeling-cases/keyword-prefix-names",
+    "source": "eventmodeling\ntf 01 evt tf01\ntf 02 cmd evtA\ntf 03 ui dataX"
+  },
+  {
+    "id": "eventmodeling-cases/keyword-upper",
+    "source": "eventmodeling\nTF 01 EVT A"
+  },
+  {
+    "id": "eventmodeling-cases/keyword-mixed",
+    "source": "eventmodeling\nTf 01 Evt A"
+  },
+  {
+    "id": "eventmodeling-cases/name-underscore",
+    "source": "eventmodeling\ntf 01 evt _a_1"
+  },
+  {
+    "id": "eventmodeling-cases/name-digits",
+    "source": "eventmodeling\ntf 01 evt A123"
+  },
+  {
+    "id": "eventmodeling-cases/name-unicode",
+    "source": "eventmodeling\ntf 01 evt Caf\u00e9"
+  },
+  {
+    "id": "eventmodeling-cases/name-dash",
+    "source": "eventmodeling\ntf 01 evt my-event"
+  },
+  {
+    "id": "eventmodeling-cases/name-starts-digit",
+    "source": "eventmodeling\ntf 01 evt 1abc"
+  },
+  {
+    "id": "eventmodeling-cases/frame-id-zero",
+    "source": "eventmodeling\ntf 0 evt A\ntf 00 evt B\ntf 01 evt C"
+  },
+  {
+    "id": "eventmodeling-cases/frame-id-four-digits",
+    "source": "eventmodeling\ntf 1234 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/frame-id-letters",
+    "source": "eventmodeling\ntf 01abc evt A"
+  },
+  {
+    "id": "eventmodeling-cases/frame-id-one",
+    "source": "eventmodeling\ntf 1 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/frame-missing-id",
+    "source": "eventmodeling\ntf evt A"
+  },
+  {
+    "id": "eventmodeling-cases/kinds-short",
+    "source": "eventmodeling\ntf 01 ui A\ntf 02 cmd B\ntf 03 evt C\ntf 04 rmo D\ntf 05 pcr E"
+  },
+  {
+    "id": "eventmodeling-cases/kinds-long",
+    "source": "eventmodeling\ntimeframe 01 ui A\ntimeframe 02 command B\ntimeframe 03 event C\ntimeframe 04 readmodel D\ntimeframe 05 processor E"
+  },
+  {
+    "id": "eventmodeling-cases/reset-frames",
+    "source": "eventmodeling\ntf 01 evt A\nrf 02 evt B\nresetframe 03 cmd C"
+  },
+  {
+    "id": "eventmodeling-cases/qualified",
+    "source": "eventmodeling\ntf 01 evt ns.A\ntf 02 cmd a.b.c"
+  },
+  {
+    "id": "eventmodeling-cases/qualified-double-dot",
+    "source": "eventmodeling\ntf 01 evt a..b"
+  },
+  {
+    "id": "eventmodeling-cases/qualified-trailing-dot",
+    "source": "eventmodeling\ntf 01 evt a."
+  },
+  {
+    "id": "eventmodeling-cases/qualified-leading-dot",
+    "source": "eventmodeling\ntf 01 evt .a"
+  },
+  {
+    "id": "eventmodeling-cases/qualified-spaced",
+    "source": "eventmodeling\ntf 01 evt a . b"
+  },
+  {
+    "id": "eventmodeling-cases/arrow",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B ->> 01"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-multiple",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 cmd B\ntf 03 evt C ->> 01 ->> 02"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-tight",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B->>01"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-short",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B -> 01"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-long",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B -->> 01"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-spaced",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B - >> 01"
+  },
+  {
+    "id": "eventmodeling-cases/arrow-forward",
+    "source": "eventmodeling\ntf 01 evt A ->> 02\ntf 02 cmd B"
+  },
+  {
+    "id": "eventmodeling-cases/ref",
+    "source": "eventmodeling\ntf 01 evt A [[D]]\ndata D {\n  a: 1\n}"
+  },
+  {
+    "id": "eventmodeling-cases/ref-spaced",
+    "source": "eventmodeling\ntf 01 evt A [[ D ]]"
+  },
+  {
+    "id": "eventmodeling-cases/ref-single",
+    "source": "eventmodeling\ntf 01 evt A [D]"
+  },
+  {
+    "id": "eventmodeling-cases/ref-close-alone",
+    "source": "eventmodeling\ntf 01 evt A ]]"
+  },
+  {
+    "id": "eventmodeling-cases/ref-arrow-order",
+    "source": "eventmodeling\ntf 01 cmd A\ntf 02 evt B ->> 01 [[D]] { x }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-brace",
+    "source": "eventmodeling\ntf 01 cmd A { a: 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-empty",
+    "source": "eventmodeling\ntf 01 cmd A {}"
+  },
+  {
+    "id": "eventmodeling-cases/inline-greedy",
+    "source": "eventmodeling\ntf 01 evt A { a } tf 02 evt B { b }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-nested",
+    "source": "eventmodeling\ntf 01 cmd A { a: { b: 1 } }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote",
+    "source": "eventmodeling\ntf 01 cmd A \"some text\""
+  },
+  {
+    "id": "eventmodeling-cases/inline-squote",
+    "source": "eventmodeling\ntf 01 cmd A 'some text'"
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote-greedy",
+    "source": "eventmodeling\ntf 01 cmd A \"x\" tf 02 evt B \"y\""
+  },
+  {
+    "id": "eventmodeling-cases/inline-dquote-unterminated",
+    "source": "eventmodeling\ntf 01 cmd A \"x\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/inline-squote-unterminated",
+    "source": "eventmodeling\ntf 01 cmd A 'x\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/inline-brace-unclosed",
+    "source": "eventmodeling\ntf 01 cmd A { a\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/inline-brace-unclosed-line",
+    "source": "eventmodeling\ntf 01 cmd A { { { {"
+  },
+  {
+    "id": "eventmodeling-cases/inline-quote-run",
+    "source": "eventmodeling\ntf 01 cmd A \"\"\"\"\"\""
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed",
+    "source": "eventmodeling\ntf 01 cmd A `json` { \"a\": 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed-all",
+    "source": "eventmodeling\ntf 01 cmd A `jsobj` {a}\ntf 02 cmd B `figma` {b}\ntf 03 cmd C `salt` {c}\ntf 04 cmd D `uri` \"d\"\ntf 05 cmd E `md` \"e\"\ntf 06 cmd F `html` \"f\"\ntf 07 cmd G `text` \"g\""
+  },
+  {
+    "id": "eventmodeling-cases/inline-typed-unknown",
+    "source": "eventmodeling\ntf 01 cmd A `xml` { a }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-line-separator",
+    "source": "eventmodeling\ntf 01 cmd A { a \u2028 b }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-paragraph-separator",
+    "source": "eventmodeling\ntf 01 cmd A \" a \u2029 b \""
+  },
+  {
+    "id": "eventmodeling-cases/inline-cr",
+    "source": "eventmodeling\ntf 01 cmd A { a \r b }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-tag-quotes",
+    "source": "eventmodeling\ntf 01 cmd A { <a href=\"x\">link</a> }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-entities",
+    "source": "eventmodeling\ntf 01 cmd A { a #amp; b #59; }"
+  },
+  {
+    "id": "eventmodeling-cases/inline-percent",
+    "source": "eventmodeling\ntf 01 cmd A { a %% b }"
+  },
+  {
+    "id": "eventmodeling-cases/block-data",
+    "source": "eventmodeling\ndata D {\n  a: 1\n}\ntf 01 evt A [[D]]"
+  },
+  {
+    "id": "eventmodeling-cases/block-data-next-line",
+    "source": "eventmodeling\ndata D\n{\n  a: 1\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-empty",
+    "source": "eventmodeling\ndata D {\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-blanks-after-brace",
+    "source": "eventmodeling\ndata D { \t\n  a\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-text-after-brace",
+    "source": "eventmodeling\ndata D { a\n  b\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-group-first",
+    "source": "eventmodeling\ndata D {\n}\ntf 01 evt A\n}\n"
+  },
+  {
+    "id": "eventmodeling-cases/block-closer-followed",
+    "source": "eventmodeling\ndata D {\n  a\n}x\n}\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-closer-at-end",
+    "source": "eventmodeling\ndata D {\n  a\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-closer-blank",
+    "source": "eventmodeling\ndata D {\n  a\n} tf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-closer-indented",
+    "source": "eventmodeling\ndata D {\n  a\n  }\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-unclosed",
+    "source": "eventmodeling\ndata D {\n  a\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-unclosed-repeated",
+    "source": "eventmodeling\ndata D {\n{\n{\n{\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-typed",
+    "source": "eventmodeling\ndata D `json` {\n  \"a\": 1\n}"
+  },
+  {
+    "id": "eventmodeling-cases/block-nested-braces",
+    "source": "eventmodeling\ndata D {\n  a: {\n    b: 1\n  }\n}\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-cr-only",
+    "source": "eventmodeling\rdata D {\r  a\r}\rtf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/block-line-separator",
+    "source": "eventmodeling\ndata D {\u2028  a\u2028}"
+  },
+  {
+    "id": "eventmodeling-cases/note",
+    "source": "eventmodeling\ntf 01 evt A\nnote 01 {\n  hello\n}"
+  },
+  {
+    "id": "eventmodeling-cases/note-inline",
+    "source": "eventmodeling\ntf 01 evt A\nnote 01 { hello }"
+  },
+  {
+    "id": "eventmodeling-cases/entity",
+    "source": "eventmodeling\nentity Cart\nentity ns.Cart"
+  },
+  {
+    "id": "eventmodeling-cases/gwt",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A when cmd B then evt C"
+  },
+  {
+    "id": "eventmodeling-cases/gwt-multi",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A evt B then rmo C ui D"
+  },
+  {
+    "id": "eventmodeling-cases/comment-line",
+    "source": "eventmodeling\n%% comment\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/comment-inline",
+    "source": "eventmodeling\ntf 01 evt A %% trailing\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/comment-inline-tight",
+    "source": "eventmodeling\ntf 01 evt A%%x"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block",
+    "source": "eventmodeling\n/* c */ tf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block-multiline",
+    "source": "eventmodeling\n/*\n tf 00 evt X\n*/\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block-unclosed",
+    "source": "eventmodeling\ntf 01 evt A /* c\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block-unclosed-repeated",
+    "source": "eventmodeling\n/* a\n/* b\n/* c\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block-slash-star-slash",
+    "source": "eventmodeling\n/*/ tf 01 evt A */"
+  },
+  {
+    "id": "eventmodeling-cases/comment-block-stars",
+    "source": "eventmodeling\n/** c **/ tf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/comment-slashes",
+    "source": "eventmodeling\n// c\ntf 01 evt A // d"
+  },
+  {
+    "id": "eventmodeling-cases/comment-single-slash",
+    "source": "eventmodeling\ntf 01 evt A / B"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-line",
+    "source": "eventmodeling\ntf 01 evt A %%{init: {}}%%\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-line-unclosed",
+    "source": "eventmodeling\ntf 01 evt A %%{init: {}\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/directive-line",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\neventmodeling\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/unclosed-directive",
+    "source": "eventmodeling\n%%{init: {}\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/front-matter",
+    "source": "---\ntitle: FM\n---\neventmodeling\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-in-body",
+    "source": "eventmodeling\n---\na: 1\n---\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-dashes-alone",
+    "source": "eventmodeling\n---\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-dashes-text",
+    "source": "eventmodeling\n--- x\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/error-hash",
+    "source": "eventmodeling\ntf 01 evt A # B"
+  },
+  {
+    "id": "eventmodeling-cases/error-at",
+    "source": "eventmodeling\ntf 01 evt @A"
+  },
+  {
+    "id": "eventmodeling-cases/error-emoji",
+    "source": "eventmodeling\ntf 01 evt \ud83d\ude00"
+  },
+  {
+    "id": "eventmodeling-cases/error-colon",
+    "source": "eventmodeling\ntf 01 evt A: B"
+  },
+  {
+    "id": "eventmodeling-cases/error-close-brace",
+    "source": "eventmodeling\ntf 01 evt A } B"
+  },
+  {
+    "id": "eventmodeling-cases/error-comma",
+    "source": "eventmodeling\ntf 01 evt A, B"
+  },
+  {
+    "id": "eventmodeling-cases/error-paren",
+    "source": "eventmodeling\ntf 01 evt A(B)"
+  },
+  {
+    "id": "eventmodeling-cases/ws-line-separators",
+    "source": "eventmodeling\u2028tf 01 evt A\u2029tf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/ws-nbsp",
+    "source": "eventmodeling\u00a0tf 01\u00a0evt A"
+  },
+  {
+    "id": "eventmodeling-cases/ws-bom",
+    "source": "eventmodeling\ufefftf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/ws-vertical-tab",
+    "source": "eventmodeling\u000btf 01 evt A\ftf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/ws-cr-only",
+    "source": "eventmodeling\rtf 01 evt A\rtf 02 evt B\r"
+  },
+  {
+    "id": "eventmodeling-cases/ws-trailing-cr",
+    "source": "eventmodeling\ntf 01 evt A\r"
+  },
+  {
+    "id": "eventmodeling-cases/ws-blank-lines",
+    "source": "eventmodeling\n\n\n   \n\ttf 01 evt A\n\n"
+  },
+  {
+    "id": "eventmodeling-cases/title-line-separator",
+    "source": "eventmodeling title A\u2028tf 01 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/title-cr",
+    "source": "eventmodeling title A\rtf 01 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/ls-comment",
+    "source": "eventmodeling\ntf 01 evt A %% a\u2028b\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/ls-block-comment",
+    "source": "eventmodeling\n/* a\u2028b */ tf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/ls-line-comment",
+    "source": "eventmodeling\ntf 01 evt A // a\u2029b\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/ls-acc-title",
+    "source": "eventmodeling accTitle: a\u2028b\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/ls-acc-descr-block",
+    "source": "eventmodeling accDescr {\u2028a\u2029}\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/ls-block-body",
+    "source": "eventmodeling\ndata D {\n  a\u2028b\n}"
+  },
+  {
+    "id": "eventmodeling-cases/ls-after-header",
+    "source": "eventmodeling\u2028title A"
+  },
+  {
+    "id": "eventmodeling-cases/ls-before-title",
+    "source": "eventmodeling\ntf 01 evt A\u2028title B"
+  },
+  {
+    "id": "eventmodeling-cases/comment-ls-then-percent",
+    "source": "eventmodeling\n%% \u2028%%01--- x"
+  },
+  {
+    "id": "eventmodeling-cases/comment-ps-then-comment-title",
+    "source": "eventmodeling\n %% \u2029  %% c\n title tf01tf"
+  },
+  {
+    "id": "eventmodeling-cases/comment-ls-then-comment-entities",
+    "source": "eventmodeling\n%% \u2028 %% c\n -&gt;&gt;-&gt;&gt;"
+  },
+  {
+    "id": "eventmodeling-cases/comment-percents-in-line",
+    "source": "eventmodeling\n%% a %% b %%%% c %\u2028%% d\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/directive-then-comment",
+    "source": "%%{init: {}}%%\n%% c\neventmodeling\n%% d\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/directive-in-comment-line",
+    "source": "eventmodeling\n%% a %%{init: {}}%% b\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-group-first",
+    "source": "eventmodeling\n---\n---\ntf 01 evt A\n---\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-closer-followed",
+    "source": "eventmodeling\n---\na: 1\n---x\n---\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/yaml-unclosed-repeated",
+    "source": "eventmodeling\n---\n---x\n---y\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/crlf-already",
+    "source": "eventmodeling\r\ntf 01 evt A\r\ndata D {\r\n  a\r\n}\r\n"
+  },
+  {
+    "id": "eventmodeling-cases/full",
+    "source": "eventmodeling\ntitle ignored\ntf 01 ui CartScreen\ntf 02 cmd AddItem ->> 01 { productId: 7 }\ntf 03 evt ItemAdded ->> 02 [[ItemAddedData]]\nrf 04 rmo Cart.Items ->> 03\n\ndata ItemAddedData {\n  productId: 7\n}\nnote 02 {\n  A note\n}\ngwt 03 given evt ItemAdded when cmd AddItem then evt ItemAdded"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-id",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd Command\ntf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-reset",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd Command\nrf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-after-front-matter",
+    "source": "---\ntitle: T\n---\neventmodeling\ntf 01 ui UI\ntf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-after-comment",
+    "source": "eventmodeling\n  tf 01 ui UI\n  %% This comment occupies a source line.\n  rf 01 evt Event"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-three",
+    "source": "eventmodeling\ntf 7 ui A\ntf 7 cmd B\ntf 7 evt C"
+  },
+  {
+    "id": "eventmodeling-cases/parser-duplicate-relations",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd A ->> 01 ->> 01\ntf 02 cmd B ->> 01\nrf 03 evt E\ntf 04 ui F\ntf 04 ui G"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-no-then",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A when evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-no-given",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 when evt A then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-step-no-name",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-gwt-qualified-step",
+    "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt Ns.A then evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-inline",
+    "source": "eventmodeling\ntf 01 evt A [[D]]\ndata D { x: 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-note-inline",
+    "source": "eventmodeling\ntf 01 evt A\nnote 01 { x }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-unclosed",
+    "source": "eventmodeling\ntf 01 evt A [[D\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-qualified",
+    "source": "eventmodeling\ntf 01 evt A [[D.E]]"
+  },
+  {
+    "id": "eventmodeling-cases/parser-arrow-no-id",
+    "source": "eventmodeling\ntf 01 evt A ->>\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-arrow-name",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 evt B ->> A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-second-header",
+    "source": "eventmodeling\ntf 01 evt A\neventmodeling\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-typed-block-on-frame",
+    "source": "eventmodeling\ntf 01 evt A `json` {\n  a: 1\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-type-no-data",
+    "source": "eventmodeling\ntf 01 evt A `json`\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-type-unknown",
+    "source": "eventmodeling\ntf 01 evt A `yaml` { a: 1 }"
+  },
+  {
+    "id": "eventmodeling-cases/parser-entity-no-name",
+    "source": "eventmodeling\nentity\ntf 01 evt A"
+  },
+  {
+    "id": "eventmodeling-cases/parser-frame-no-kind",
+    "source": "eventmodeling\ntf 01 A\ntf 02 evt B"
+  },
+  {
+    "id": "eventmodeling-cases/parser-kind-as-name",
+    "source": "eventmodeling\ntf 01 evt cmd"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-no-name",
+    "source": "eventmodeling\ndata {\n  a\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-ref-before-arrow",
+    "source": "eventmodeling\ntf 01 evt A\ntf 02 evt B [[D]] ->> 01"
+  },
+  {
+    "id": "eventmodeling-cases/parser-data-before-ref",
+    "source": "eventmodeling\ntf 01 evt A { a } [[D]]"
+  },
+  {
+    "id": "eventmodeling-cases/parser-note-no-frame",
+    "source": "eventmodeling\ntf 01 evt A\nnote A {\n  x\n}"
+  },
+  {
+    "id": "eventmodeling-cases/parser-frame-id-name",
+    "source": "eventmodeling\ntf 01 evt A\ntf A evt B"
+  }
+]

@@ -1,0 +1,12 @@
+eventmodeling title Cart
+tf 01 ui CartScreen
+tf 02 cmd AddItem ->> 01 { productId: 7 }
+tf 03 evt Cart.ItemAdded [[Added]]
+rf 04 rmo CartItems ->> 03
+entity Cart.Item
+data Added `json` {
+  "productId": 7
+}
+note 02 {
+  The first command.
+}
