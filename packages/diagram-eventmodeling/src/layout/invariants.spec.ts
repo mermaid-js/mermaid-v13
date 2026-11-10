@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { eventModelTestContext, eventModelTestTheme } from '../test-context.ts';
-import { frame, halfEm, model } from './fixtures.ts';
+import { frame, halfEm, model } from './layout.fixtures.ts';
 import { eventModelLayoutViolations } from './invariants.ts';
 import { layoutEventModel } from './layout.ts';
 import type { EventModelBoxLayout, EventModelLayout } from './types.ts';

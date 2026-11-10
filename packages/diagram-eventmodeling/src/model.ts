@@ -40,6 +40,12 @@ export interface EventModelFrame {
   readonly name: string;
   /** The `->>` source ids as written, in order, repeats kept. */
   readonly sources: readonly string[];
+  /**
+   * The AST id of each `->>` source, parallel to {@link sources}: the parser's
+   * `relation:<source>-><id>`, `@2`, … for a later mention of the same pair (a repeat, or a
+   * second frame with the same id in a recovered parse). Added after T2 (final review).
+   */
+  readonly sourceAstIds: readonly AstId[];
   /** The `[[name]]` data reference, defined or not. */
   readonly dataRef?: string;
   /** Inline data (`{ … }`, `"…"`, `'…'`). */

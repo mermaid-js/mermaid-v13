@@ -33,6 +33,7 @@ import {
 import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
+import { expandTabs } from '../tabs.ts';
 import {
   EVENTMODELING_METRICS as M,
   FONT_WEIGHT,
@@ -189,7 +190,8 @@ function boxText(env: Env, name: string, data: string | undefined): BoxText {
   const fullName = env.label(name, M.textWrap, Style.Bold);
   const nameLabel = upTo(fullName, room);
   const gap = nameLabel.lineHeight;
-  const fullData = data === undefined ? undefined : dataLabel(env, data);
+  // Empty data (`""`, `{}`, a `[[ref]]` to an empty block) is no data: no gap, no line.
+  const fullData = data === undefined || data === '' ? undefined : dataLabel(env, data);
   const dataLabelFit =
     fullData === undefined ? undefined : upTo(fullData, room - nameLabel.height - gap);
   const shown = dataLabelFit && dataLabelFit.lines.length > 0 ? dataLabelFit : undefined;
@@ -224,7 +226,8 @@ const literal = (text: string): string =>
 
 /**
  * The data as one left-aligned label in mono: each source line laid out on its own, as written
- * ({@link literal}), wrapped at 430 less its indentation, which `indents` keeps. A blank line
+ * ({@link literal}), wrapped at 430 less its indentation, which `indents` keeps. Tabs go to
+ * the next tab stop first (`expandTabs`; the parser's data text has none left). A blank line
  * stays a blank line.
  */
 function dataLabel(env: Env, text: string): MeasuredLabel {
@@ -233,7 +236,8 @@ function dataLabel(env: Env, text: string): MeasuredLabel {
   const widths: number[] = [];
   let lineHeight = 0;
   let baseline = 0;
-  for (const source of text.split('\n')) {
+  for (const written of text.split('\n')) {
+    const source = expandTabs(written);
     const body = source.trimStart();
     const lead = source.slice(0, source.length - body.length);
     const indent = lead === '' ? 0 : Math.min(env.monoWidth(lead), M.textWrap / 2);

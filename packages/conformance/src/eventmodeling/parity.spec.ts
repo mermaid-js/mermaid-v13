@@ -30,6 +30,8 @@ const only = (path: RegExp) => ({
   detail: (detail: string) => detail.split(', ').every((p) => path.test(p)),
 });
 const D523 = only(/^boxes\[\d+\]\.text$/);
+/** D523 with tabs: v13 expands them to 4-column tab stops, Pele's `blockText` keeps them. */
+const D523_TABS = only(/^(?:boxes|dataBlocks)\[\d+\]\.text$/);
 const D522 = only(/^(?:boxes\[\d+\]\.lane|lanes\b.*|relations\[\d+\]\.source)$/);
 const reject = (detail: string) => detail.startsWith('UNCLOSED_DIRECTIVE');
 const LISTED: ReadonlyMap<string, { kind: string; detail: (detail: string) => boolean }> = new Map([
@@ -37,7 +39,7 @@ const LISTED: ReadonlyMap<string, { kind: string; detail: (detail: string) => bo
   ['eventmodeling-cases/directive-in-line-unclosed', { kind: 'reject', detail: reject }],
   ['eventmodeling-cases/inline-', D523],
   ['e2e/nightly-check/parser-inline-data.mmd', D523],
-  ['e2e/nightly-check/layout-data-literal.mmd', D523],
+  ['e2e/nightly-check/layout-data-literal.mmd', D523_TABS],
   ['v12-specs/eventmodeling.test.ts#1', D523],
   ['e2e/nightly-check/parser-namespace-repeated.mmd', D522],
   ['e2e/nightly-check/parser-same-lane.mmd', D522],

@@ -25,7 +25,11 @@ function numericLiterals(source: string): string[] {
 const DIR = join(REPO_ROOT, 'packages/diagram-eventmodeling/src/layout');
 // The table itself, test fixtures and specs are not layout code.
 const SOURCES = readdirSync(DIR).filter(
-  (f) => f.endsWith('.ts') && !f.endsWith('.spec.ts') && f !== 'metrics.ts' && f !== 'fixtures.ts'
+  (f) =>
+    f.endsWith('.ts') &&
+    !f.endsWith('.spec.ts') &&
+    f !== 'metrics.ts' &&
+    !f.endsWith('.fixtures.ts')
 );
 
 describe('event modeling layout', () => {

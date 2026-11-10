@@ -87,6 +87,7 @@ export function normalise(
       keyword: node.kind.value,
       name: node.name.value,
       sources: node.children.map((s) => s.frame.value),
+      sourceAstIds: node.children.map((s) => s.id),
       ...(node.dataRef && { dataRef: node.dataRef.value }),
       ...(node.data && { data: data(node.data) }),
       astId: node.id,

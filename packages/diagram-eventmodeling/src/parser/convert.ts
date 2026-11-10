@@ -24,6 +24,7 @@ import {
   type SourceView,
 } from '@mermaid-js/core/parser-kit';
 import { entityAt } from '@mermaid-js/core/text';
+import { expandTabs } from '../tabs.ts';
 
 /**
  * The text of the source range `[start, end)` as v12 drew it: v12's lexer's text (`cook()`),
@@ -71,12 +72,14 @@ function decodeReferences(text: string): string {
 /**
  * D523: a data token's text: between the braces (`{ … }`, the first and the last) or the quotes
  * (`"…"`, `'…'`), without its blank first and last lines, each line's trailing blanks, and the
- * indentation its lines share.
+ * indentation its lines share. Tabs are expanded to the next tab stop first (`expandTabs`,
+ * columns from the start of each line of the text), so tab indentation dedents and nests as
+ * written.
  */
 export function dataText(image: string): string {
   const inner =
     image.charCodeAt(0) === LBRACE ? image.slice(1, image.lastIndexOf('}')) : image.slice(1, -1);
-  const lines = inner.split('\n');
+  const lines = inner.split('\n').map(expandTabs);
   let first = 0;
   let last = lines.length - 1;
   while (first <= last && (lines[first] ?? '').trim() === '') first++;

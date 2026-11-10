@@ -18,9 +18,19 @@ export const halfEm: Measurer = {
 export function frame(
   kind: EventModelKind,
   name: string,
-  extra: Partial<Omit<EventModelFrame, 'id' | 'astId'>> = {}
+  extra: Partial<Omit<EventModelFrame, 'id' | 'astId' | 'sourceAstIds'>> = {}
 ): EventModelFrame {
-  return { id: '', reset: false, kind, keyword: kind, name, sources: [], astId: '', ...extra };
+  return {
+    id: '',
+    reset: false,
+    kind,
+    keyword: kind,
+    name,
+    sources: [],
+    sourceAstIds: [],
+    astId: '',
+    ...extra,
+  };
 }
 
 /** A model of `frames`, numbered `01`, `02`, … in order. */
@@ -28,7 +38,9 @@ export function model(...frames: EventModelFrame[]): EventModel {
   return {
     frames: frames.map((f, k) => {
       const id = String(k + 1).padStart(2, '0');
-      return { ...f, id, astId: `frame:${id}` };
+      // The parser's AST ids (the fixtures repeat no source).
+      const sourceAstIds = f.sources.map((s) => `relation:${s}->${id}`);
+      return { ...f, id, astId: `frame:${id}`, sourceAstIds };
     }),
     entities: [],
     dataBlocks: [],

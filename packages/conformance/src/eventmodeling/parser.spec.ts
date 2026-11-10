@@ -84,6 +84,7 @@ describe('event modeling parser on the fixtures', () => {
         keyword: 'ui',
         name: 'CartScreen',
         sources: [],
+        sourceAstIds: [],
         astId: 'frame:01',
       },
       {
@@ -93,6 +94,7 @@ describe('event modeling parser on the fixtures', () => {
         keyword: 'cmd',
         name: 'AddItem',
         sources: [],
+        sourceAstIds: [],
         data: { text: 'productId: 7' },
         astId: 'frame:02',
       },
@@ -103,6 +105,7 @@ describe('event modeling parser on the fixtures', () => {
         keyword: 'evt',
         name: 'ItemAdded',
         sources: [],
+        sourceAstIds: [],
         dataRef: 'ItemAddedData',
         astId: 'frame:03',
       },
@@ -227,6 +230,16 @@ describe('event modeling parser on the fixtures', () => {
   });
 });
 
+describe('event modeling data text (D523)', () => {
+  it('expands tabs to 4-column tab stops before dedenting, and keeps empty data empty', () => {
+    const { model } = parse(nightly('layout-data-literal'));
+    const text = (name: string) => model.dataBlocks.find((d) => d.name === name)?.data.text;
+    expect(text('Tabs')).toBe('{\n    "id": 42,\n    "mixed":    true\n}');
+    expect(text('Nothing')).toBe('');
+    expect(model.frames.find((f) => f.name === 'Braces')?.data?.text).toBe('');
+  });
+});
+
 describe('event modeling AST, symbols and spans (D528)', () => {
   it('gives frames and their sources ids, with ranges over their text', () => {
     const src = nightly('parser-sources');
@@ -311,6 +324,21 @@ describe('event modeling diagnostics', () => {
     expect(codes(emCase('parser-duplicate-three'))).toEqual([
       ['error', EVENTMODELING_DUPLICATE_FRAME],
       ['error', EVENTMODELING_DUPLICATE_FRAME],
+    ]);
+  });
+
+  it('keeps relation ids unique and on their own `->>` when a recovered parse repeats a frame id', () => {
+    const { model, ast } = parse(emCase('parser-duplicate-relations'));
+    const frames = ast.children.filter((n): n is EventModelFrameNode => n.type === 'Frame');
+    expect(model.frames.map((f) => [f.astId, f.sourceAstIds])).toEqual(
+      frames.map((f) => [f.id, f.children.map((s) => s.id)])
+    );
+    const { relations } = eventModelStructure(model);
+    expect(relations.map((r) => [r.id, r.astId])).toEqual([
+      ['relation:01->02', 'relation:01->02'],
+      ['relation:01->02@3', 'relation:01->02@3'], // `@2` is A's repeated `->> 01`
+      ['relation:03->04', undefined],
+      ['relation:03->04@2', undefined],
     ]);
   });
 

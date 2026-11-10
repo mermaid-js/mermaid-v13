@@ -3,7 +3,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { Theme } from '@mermaid-js/core/theme';
 import { EVENTMODELING_CONFIG_INVALID } from '../codes.ts';
 import { eventModelTestContext, eventModelTestTheme } from '../test-context.ts';
-import { frame, halfEm, model } from './fixtures.ts';
+import { frame, halfEm, model } from './layout.fixtures.ts';
 import { eventModelLayoutViolations } from './invariants.ts';
 import { layoutEventModel } from './layout.ts';
 import type { EventModel } from '../model.ts';
@@ -208,6 +208,22 @@ describe('layoutEventModel', () => {
     expect(data?.text.widths).toEqual(
       (shown ?? []).map((line, k) => (data?.text.indents[k] ?? 0) + [...line].length * 8)
     );
+  });
+
+  it('expands tabs to the next 4-column tab stop, so tab indentation nests (D523)', () => {
+    const text = '{\n\t"a": 1,\n\t  \t"b":\t2\n}';
+    const data = lay(model(frame('cmd', 'A', { data: { text } }))).boxes[0]?.data;
+    expect(data?.text.indents).toEqual([0, 32, 64, 0]);
+    expect(
+      data?.text.lines.map((line) => line.map((r) => r.text.replace(/\u00a0/g, ' ')).join(''))
+    ).toEqual(['{', '"a": 1,', '"b":    2', '}']);
+  });
+
+  it('draws empty data as no data: no gap, no blank line', () => {
+    const plain = lay(model(frame('cmd', 'A'))).boxes[0];
+    const empty = lay(model(frame('cmd', 'A', { data: { text: '' } }))).boxes[0];
+    expect(empty?.data).toBeUndefined();
+    expect([empty?.width, empty?.height]).toEqual([plain?.width, plain?.height]);
   });
 
   it('wraps names and data at 430, so a box is at most 470 wide', () => {

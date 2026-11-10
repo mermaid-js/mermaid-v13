@@ -696,6 +696,10 @@
     "source": "eventmodeling\ntf 7 ui A\ntf 7 cmd B\ntf 7 evt C"
   },
   {
+    "id": "eventmodeling-cases/parser-duplicate-relations",
+    "source": "eventmodeling\ntf 01 ui UI\ntf 02 cmd A ->> 01 ->> 01\ntf 02 cmd B ->> 01\nrf 03 evt E\ntf 04 ui F\ntf 04 ui G"
+  },
+  {
     "id": "eventmodeling-cases/parser-gwt-no-then",
     "source": "eventmodeling\ntf 01 evt A\ngwt 01 given evt A when evt A"
   },

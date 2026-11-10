@@ -67,11 +67,15 @@ export interface EventModelRelation {
   readonly target: number;
   /** No `->>` wrote it: from the nearest earlier box in another lane. */
   readonly inferred: boolean;
-  /** `relation:<source>-><target>`: the drawn path's `data-id` (D528; an inferred one's too). */
+  /**
+   * `relation:<source>-><target>`: the drawn path's `data-id` (D528; an inferred one's too),
+   * unique in the structure (`@n` as the parser's ids where two would meet).
+   */
   readonly id: string;
   /**
-   * The AST id of the `->>` that wrote it (the same text as {@link id}); none when inferred, so
-   * its path carries `data-id` and no `data-ast` (#606).
+   * The AST id of the first `->>` naming the source in the frame (`frame.sourceAstIds`; the same
+   * text as {@link id}); none when inferred, so its path carries `data-id` and no `data-ast`
+   * (#606).
    */
   readonly astId?: AstId;
 }
@@ -137,12 +141,19 @@ function content(f: EventModelFrame, firstData: ReadonlyMap<string, string>): { 
   return f.data ? { data: f.data.text } : {};
 }
 
-/** v12's `decidePositionRelation`, frame by frame. */
+/**
+ * v12's `decidePositionRelation`, frame by frame. An explicit relation's `astId` is the parser's
+ * id of the first `->>` naming that source in the frame (`frame.sourceAstIds`, so `@n` where the
+ * parser counted a repeat), and its `id` is the same text. An inferred relation's `id` is
+ * `relation:<source>-><target>`, with the parser's `@n` rule against every id given before and
+ * every explicit one, so the drawn `data-id`s stay unique even when a recovered parse holds two
+ * frames with one id.
+ */
 function relations(
   frames: readonly EventModelFrame[],
   laneOf: readonly EventModelLane[]
 ): EventModelRelation[] {
-  const out: EventModelRelation[] = [];
+  const out: (Omit<EventModelRelation, 'id'> & { id?: string })[] = [];
   const firstOf = firstFrameAt(frames);
   /**
    * Where the run of boxes in one lane that ends at each frame starts: the nearest earlier box
@@ -156,35 +167,38 @@ function relations(
     );
     if (f.sources.length > 0) {
       // v12 filtered the frames by the ids named, so each source counts once, in frame order;
-      // only those placed already have a box.
-      const named = new Set(f.sources);
-      const sources = [...named]
+      // only those placed already have a box. The AST id is the first `->>` naming it.
+      const astOf = new Map<string, AstId>();
+      for (const [k, id] of f.sources.entries()) {
+        if (!astOf.has(id)) astOf.set(id, f.sourceAstIds[k] ?? relationId(id, f.id));
+      }
+      const sources = [...astOf.keys()]
         .map((id) => firstOf.get(id))
         .filter((k): k is number => k !== undefined && k <= target)
         .sort((a, b) => a - b);
       for (const source of sources) {
-        const id = frames[source]?.id ?? '';
-        out.push({
-          source,
-          target,
-          inferred: false,
-          id: relationId(f, id),
-          astId: relationId(f, id),
-        });
+        const astId = astOf.get(frames[source]?.id ?? '') ?? '';
+        out.push({ source, target, inferred: false, id: astId, astId });
       }
       continue;
     }
     if (target === 0 || f.reset) continue;
     const before = target - 1;
     const source = laneOf[before] === laneOf[target] ? (runStart[before] ?? 0) - 1 : before;
-    if (source >= 0) {
-      out.push({ source, target, inferred: true, id: relationId(f, frames[source]?.id ?? '') });
-    }
+    if (source >= 0) out.push({ source, target, inferred: true });
   }
-  return out;
+  const used = new Set(out.flatMap((r) => (r.id === undefined ? [] : [r.id])));
+  return out.map((r) => {
+    if (r.id !== undefined) return { ...r, id: r.id };
+    const base = relationId(frames[r.source]?.id ?? '', frames[r.target]?.id ?? '');
+    let id = base;
+    for (let n = 2; used.has(id); n++) id = `${base}@${n}`;
+    used.add(id);
+    return { ...r, id };
+  });
 }
 
-/** The AST id of the first `->> source` of frame `f` (`relation:<source>-><target>`). */
-function relationId(f: EventModelFrame, source: string): AstId {
-  return `relation:${source}->${f.id}`;
+/** `relation:<source>-><target>`: the parser's id of a first `->> source` in frame `target`. */
+function relationId(source: string, target: string): AstId {
+  return `relation:${source}->${target}`;
 }
