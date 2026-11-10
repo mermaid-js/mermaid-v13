@@ -7,6 +7,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { noFacetType } from '../../packages/language-service/src/testing/no-facet.ts';
 import { highlighted, sampleOf } from '../../packages/language-service-monaco/scripts/highlighted.ts';
 import { startExample } from './example-server.ts';
 import type { ExampleServer } from './example-server.ts';
@@ -284,7 +285,8 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   page,
 }) => {
   await open(page);
-  const unported = 'requirementDiagram\n  element E {\n  }\n';
+  // The first generated row with no package, so no facet and no highlighter.
+  const unported = noFacetType().source;
   await page.evaluate((t) => (window as unknown as EditorWindow).editor.setValue(t), unported);
   // Past the debounce that re-detects the model's type.
   await page.waitForTimeout(500);
@@ -311,12 +313,13 @@ test('editing the header back after a type with no highlighter colours it again'
     TYPE_DOCS.flowchart!
   );
   await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
-  // `flowchart LR` → `requirementDiagram`: the same body is now a type with no Monarch file.
-  await header('requirementDiagram', 'flowchart LR');
+  // `flowchart LR` → a facet-less header: the same body is now a type with no Monarch file.
+  const bare = noFacetType().header;
+  await header(bare, 'flowchart LR');
   await page.waitForTimeout(500);
-  expect(await wordColour(page, 'requirementDiagram')).not.toBe('rgb(0, 0, 255)');
+  expect(await wordColour(page, bare)).not.toBe('rgb(0, 0, 255)');
   // And back: re-picked from the edited line, coloured as a flowchart again.
-  await header('flowchart LR', 'requirementDiagram');
+  await header('flowchart LR', bare);
   await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
   const text = await page.evaluate(() => (window as unknown as EditorWindow).editor.getValue());
   expect((await tokenTypes(page, text))[0]?.[0]).toBe('keyword.mermaid-flowchart');

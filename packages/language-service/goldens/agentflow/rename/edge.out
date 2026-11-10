@@ -1,0 +1,6 @@
+@ 3:5  a |e1@--> b
+  prepare: 3:5-3:7 "e1"; rename to "next":
+  %% rename-to: next
+  agentflow-beta LR
+    a next@--> b
+    next@{ animate: true }

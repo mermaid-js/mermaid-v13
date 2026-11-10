@@ -8,5 +8,5 @@
     "customConditions": []
   },
   "include": ["src"],
-  "exclude": ["src/**/*.spec.ts", "src/cdn.ts", "src/cdn-loader.ts"]
+  "exclude": ["src/**/*.spec.ts", "src/testing/**", "src/cdn.ts", "src/cdn-loader.ts"]
 }

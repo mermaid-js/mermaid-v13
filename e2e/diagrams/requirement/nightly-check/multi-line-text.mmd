@@ -1,0 +1,22 @@
+---
+description: >-
+  Quoted names and values spanning lines (v12 keeps the line breaks), and
+  markdown in quoted and unquoted values.
+---
+requirementDiagram
+  requirement "multi line
+  name" {
+    id: "1.2"
+    text: "the first line
+    and the second line"
+    risk: low
+    verifymethod: inspection
+  }
+
+  element "an element" {
+    type: "**bold** type"
+    docref: ref *italic*
+  }
+
+  "an element" - satisfies -> "multi line
+  name"

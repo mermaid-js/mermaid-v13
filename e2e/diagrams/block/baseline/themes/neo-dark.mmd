@@ -1,0 +1,22 @@
+---
+config:
+  theme: neo-dark
+description: >-
+  one representative block diagram in the neo-dark theme (neo family, dark, D215, D227): a circle, a
+  diamond, a labelled composite with its band above the grid (D444), a stadium, a cylinder,
+  a block arrow, a subroutine, a double circle with a class, a space, and three edges
+  (solid, labelled, dotted)
+---
+block-beta
+  columns 3
+  start(("Start")) space check{"Valid?"}
+  block:work["Work"]:3
+    columns 3
+    load["Load"] parse(["Parse"]) store[("Store")]
+  end
+  go<["Next"]>(right) report[["Report"]] done((("Done")))
+  start --> check
+  check -- "yes" --> work
+  store -.-> report
+  classDef hot fill:#f96,stroke:#333
+  class done hot

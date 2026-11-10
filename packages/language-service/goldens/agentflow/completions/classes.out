@@ -1,0 +1,8 @@
+@ 4:7  a:::|
+  hot class 4:7-4:7 "" -> "hot"
+  cold class 4:7-4:7 "" -> "cold"
+@ 5:11  class a |
+  hot class 5:11-5:11 "" -> "hot"
+  cold class 5:11-5:11 "" -> "cold"
+@ 6:9  class |
+  a node (task) 6:9-6:9 "" -> "a"

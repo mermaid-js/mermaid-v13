@@ -1,0 +1,4 @@
+2:5-2:6 "u" error UNEXPECTED: Expected a quoted text such as `"text"`, got `u`; a label is written in quotes, as in `a["text"]`.
+4:3-4:12 "classDef " error UNEXPECTED: Expected a block such as `b` or `b["text"]`, got `classDef`.
+5:3-6:3 "end\n  " error UNEXPECTED: Expected a block such as `a` or `a["text"]`, a composite `block:id … end`, `columns` or `space` or `classDef`, `class` or `style`, got `end`; an `end` closes a `block`, and none is open.
+7:4-7:5 "[" error UNCLOSED_SHAPE: Unclosed shape: the `[` at line 7 has no closing `]`. Add `]` after its text.

@@ -1,0 +1,44 @@
+1:1-1:11 "block-beta" keyword
+2:3-2:15 "%% a comment" comment
+3:3-3:12 "columns 3" keyword
+4:3-4:4 "a" variable [declaration, definition]
+4:4-4:5 "[" operator
+4:5-4:6 "\"" string
+4:6-4:7 "A" string
+4:7-4:8 "\"" string
+4:8-4:9 "]" operator
+4:9-4:11 ":2" number
+4:12-4:15 "-->" operator
+4:16-4:17 "b" variable [declaration, definition]
+4:17-4:19 "((" operator
+4:19-4:20 "\"" string
+4:20-4:21 "B" string
+4:21-4:22 "\"" string
+4:22-4:24 "))" operator
+4:25-4:27 "--" operator
+4:28-4:29 "\"" string
+4:29-4:33 "edge" string
+4:33-4:34 "\"" string
+4:35-4:38 "-->" operator
+4:39-4:40 "c" variable [declaration, definition]
+4:40-4:42 "<[" operator
+4:42-4:43 "\"" string
+4:43-4:44 "C" string
+4:44-4:45 "\"" string
+4:45-4:48 "]>(" operator
+4:48-4:53 "right" keyword
+4:53-4:57 ", up" keyword
+4:57-4:58 ")" operator
+5:3-5:9 "block:" keyword
+5:9-5:10 "g" variable [declaration, definition]
+6:5-6:12 "space:2" keyword
+7:3-7:6 "end" keyword
+8:3-8:11 "classDef" keyword
+8:12-8:15 "hot" class [declaration, definition]
+8:16-8:25 "fill:#f96" string
+9:3-9:8 "class" keyword
+9:9-9:10 "a" variable
+9:11-9:14 "hot" class
+10:3-10:8 "style" keyword
+10:9-10:10 "b" variable
+10:11-10:20 "fill:#9f6" string

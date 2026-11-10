@@ -1,0 +1,10 @@
+@ 3:20  requirement "the |req" {
+  prepare: 3:16-3:23 "the req"; rename to "the new req":
+  %% rename-to: the new req
+  requirementDiagram
+    requirement "the new req" {
+    }
+    element e1 {
+    }
+    e1 - satisfies -> "the new req"
+    style "the new req" fill:#f00

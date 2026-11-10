@@ -1,0 +1,5 @@
+4:5-4:9 "type" error UNEXPECTED: Expected a field such as `id: 1`, `text: …`, `risk: high` or `verifymethod: test`, got `type`; a requirement takes the fields `id`, `text`, `risk` and `verifymethod`.
+6:7-6:14 "follows" error UNEXPECTED: Expected a relationship such as `satisfies`, `traces` or `contains`, got `follows`; write a relation as `a - satisfies -> b` or `b <- satisfies - a`.
+8:5-8:9 "risk" error UNEXPECTED: Expected a field such as `type: …` or `docref: …`, got `risk`; an element takes the fields `type` and `docref`.
+10:3-10:26 "style missing fill:#f00" warning REQUIREMENT_STYLE_DROPPED: The style for "missing" is lost: no requirement or element is named "missing".
+11:16-11:16 "" error UNEXPECTED: Expected a name, got a line break; write a relation as `a - satisfies -> b` or `b <- satisfies - a`.

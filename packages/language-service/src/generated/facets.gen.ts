@@ -20,7 +20,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     load: () => import('@mermaid-js/diagram-mindmap/language').then((m) => m.language),
   },
   { type: 'architecture', id: 'architecture', pattern: /^\s*architecture/, detector: (text) => /^\s*architecture/.test(text) },
-  { type: 'agentflow', id: 'agentflow', pattern: /^\s*agentflow-beta\b/, detector: (text) => /^\s*agentflow-beta\b/.test(text) },
+  {
+    type: 'agentflow',
+    id: 'agentflow',
+    section: 'agentflow',
+    pattern: /^\s*agentflow-beta\b/,
+    detector: (text) => /^\s*agentflow-beta\b/.test(text),
+    load: () => import('@mermaid-js/diagram-agentflow/language').then((m) => m.language),
+  },
   { type: 'c4', id: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/, detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
   {
     type: 'kanban',
@@ -70,7 +77,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*pie/.test(text),
     load: () => import('@mermaid-js/diagram-pie/language').then((m) => m.language),
   },
-  { type: 'requirement', id: 'requirement', pattern: /^\s*requirement(Diagram)?/, detector: (text) => /^\s*requirement(Diagram)?/.test(text) },
+  {
+    type: 'requirement',
+    id: 'requirement',
+    section: 'requirement',
+    pattern: /^\s*requirement(Diagram)?/,
+    detector: (text) => /^\s*requirement(Diagram)?/.test(text),
+    load: () => import('@mermaid-js/diagram-requirement/language').then((m) => m.language),
+  },
   {
     type: 'sequence',
     id: 'sequence',
@@ -152,7 +166,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*xychart(-beta)?/.test(text),
     load: () => import('@mermaid-js/diagram-xychart/language').then((m) => m.language),
   },
-  { type: 'block', id: 'block', pattern: /^\s*block(-beta)?/, detector: (text) => /^\s*block(-beta)?/.test(text) },
+  {
+    type: 'block',
+    id: 'block',
+    section: 'block',
+    pattern: /^\s*block(-beta)?/,
+    detector: (text) => /^\s*block(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-block/language').then((m) => m.language),
+  },
   { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
   {
     type: 'treeView',
@@ -228,4 +249,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'agentflow' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

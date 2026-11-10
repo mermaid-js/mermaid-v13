@@ -19,7 +19,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-mindmap').then((m) => m.mindmap),
   },
   { type: 'architecture', pattern: /^\s*architecture/ },
-  { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
+  {
+    type: 'agentflow',
+    pattern: /^\s*agentflow-beta\b/,
+    id: 'agentflow',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-agentflow').then((m) => m.agentflow),
+    loadAscii: () => import('@mermaid-js/diagram-agentflow/ascii').then((m) => m.ascii),
+  },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   {
     type: 'kanban',
@@ -66,7 +73,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-pie').then((m) => m.pie),
   },
-  { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
+  {
+    type: 'requirement',
+    pattern: /^\s*requirement(Diagram)?/,
+    id: 'requirement',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-requirement').then((m) => m.requirement),
+    loadAscii: () => import('@mermaid-js/diagram-requirement/ascii').then((m) => m.ascii),
+  },
   {
     type: 'sequence',
     pattern: /^\s*sequenceDiagram/,
@@ -141,7 +155,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-xychart').then((m) => m.xychart),
   },
-  { type: 'block', pattern: /^\s*block(-beta)?/ },
+  {
+    type: 'block',
+    pattern: /^\s*block(-beta)?/,
+    id: 'block',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-block').then((m) => m.block),
+    loadAscii: () => import('@mermaid-js/diagram-block/ascii').then((m) => m.ascii),
+  },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
   {
     type: 'treeView',

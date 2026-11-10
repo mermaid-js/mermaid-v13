@@ -1,0 +1,13 @@
+agentflow-beta LR
+  accTitle: Order agent
+  connector inbox[Inbox]
+  flow plan[Plan]@{ view: collapsed }
+    read@{ shape: input } --> think@{ shape: decision }
+    think --> act@{ shape: action }
+    act --x retry
+    act -.- spec@{ shape: refdoc }
+  end
+  global
+    log@{ shape: tool }
+  end
+  inbox --> read

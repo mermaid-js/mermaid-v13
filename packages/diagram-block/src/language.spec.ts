@@ -1,0 +1,189 @@
+import { describe, expect, it } from 'vitest';
+import { tokenAt } from './facet/text.ts';
+import { blockLanguage, language } from './language.ts';
+
+/**
+ * The block language facet (#557) at its own seam: the parse the service reads, completions and
+ * hover at a probe parse, and `isValidId`, as the language service calls them. The
+ * service-level behaviour (definition, references, rename, folding, semantic tokens) is in the
+ * goldens (`packages/language-service/goldens/block`).
+ */
+const CURSOR = '¦';
+
+function split(marked: string): [text: string, at: number] {
+  const at = marked.indexOf(CURSOR);
+  return [marked.slice(0, at) + marked.slice(at + 1), at];
+}
+
+/** Completion labels at `¦`. */
+function complete(marked: string): string[] {
+  const [text, at] = split(marked);
+  const result = blockLanguage.parse(text, { keepTokens: true, probe: at });
+  return blockLanguage.completions(result.probe!, { text, result }).map((c) => c.label);
+}
+
+/** The probe's mode at `¦`. */
+function modeAt(marked: string): string {
+  const [text, at] = split(marked);
+  return blockLanguage.parse(text, { keepTokens: true, probe: at }).probe!.mode;
+}
+
+const STATEMENTS = ['columns', 'space', 'block:', 'block', 'classDef', 'class', 'style'];
+
+describe('the block facet', () => {
+  it('is exported under the name the service imports', () => {
+    expect(language).toBe(blockLanguage);
+    expect(language.id).toBe('block');
+    expect(language.namespaces).toEqual([['block'], ['class']]);
+  });
+
+  it("reports the lexer's start condition as the probe's mode", () => {
+    expect(modeAt('block\n  a["x¦"]')).toBe('string');
+    expect(modeAt('block\n  a[¦')).toBe('NODE');
+    expect(modeAt('block\n  a<["x"]>(¦')).toBe('ARROW_DIR');
+    expect(modeAt('block\n  class ¦')).toBe('CLASS');
+    expect(modeAt('block\n  a ¦')).toBe('INITIAL');
+    expect(modeAt('%% x¦\nblock\n  a')).toBe('comment');
+  });
+
+  it('completes the header, then statements, `end` only inside a composite', () => {
+    expect(complete('¦')).toEqual(['block', 'block-beta']);
+    expect(complete('bl¦')).toEqual(['block', 'block-beta']);
+    expect(complete('block\n  ¦')).toEqual(STATEMENTS);
+    expect(complete('block\n  block:g\n    a\n    ¦\n  end')).toEqual([
+      ...STATEMENTS,
+      'end',
+      'g',
+      'a',
+    ]);
+    // An empty composite cannot end yet.
+    expect(complete('block\n  block:g\n    ¦\n  end')).toEqual([...STATEMENTS, 'g']);
+    // The word being typed is no used id; a new id gets its shapes.
+    expect(complete('block\n  a\n  cl¦').slice(0, 3)).toEqual(['classDef', 'class', 'cl["cl"]']);
+    // A bare `columns` is an id: after it, its count.
+    expect(complete('block\n  a\n  columns ¦')).toEqual(['auto']);
+    expect(complete('block\n  a\n  columns a¦')).toEqual(['auto']);
+  });
+
+  it('completes links, shapes, `space` and ids after a block on its line, ids after a link', () => {
+    const links = [
+      '-->',
+      '---',
+      '--x',
+      '--o',
+      '<-->',
+      '==>',
+      '===',
+      '<==>',
+      '-.->',
+      '-.-',
+      '<-.->',
+    ];
+    const after = complete('block\n  a ¦');
+    expect(after.slice(0, links.length)).toEqual(links);
+    expect(after).toContain('["a"]');
+    expect(after.slice(-2)).toEqual(['space', 'a']);
+    // A block with a shape takes no other.
+    expect(complete('block\n  a["A"] ¦')).toEqual([...links, 'space', 'a']);
+    expect(complete('block\n  a -¦')).toEqual(['-->', '---', '--x', '--o', '-.->', '-.-']);
+    expect(complete('block\n  a ==¦')).toEqual(['==>', '===']);
+    expect(complete('block\n  a <¦')).toEqual(['<-->', '<==>', '<-.->']);
+    expect(complete('block\n  a --> b\n  c --> ¦')).toEqual(['a', 'b', 'c']);
+    // A labelled edge's text: what closes it.
+    expect(complete('block\n  a -- "x" ¦')).toEqual([
+      '-->',
+      '---',
+      '--x',
+      '--o',
+      '==>',
+      '===',
+      '-.->',
+      '-.-',
+    ]);
+  });
+
+  it("offers an id's shapes at its end, and after `block:` nothing else", () => {
+    const items = complete('block\n  a\n  a --> a¦');
+    expect(items[0]).toBe('a');
+    expect(items).toContain('a["a"]');
+    expect(items).toContain('a{{"a"}}');
+    expect(items).toContain('a<["a"]>(right)');
+    expect(complete('block\n  newId¦')).toContain('newId["newId"]');
+    expect(complete('block\n  a\n  block:¦')).toEqual([]);
+    expect(complete('block\n  a\n  block:g¦')[0]).toBe('g["g"]');
+    expect(complete('block\n  a\n  block:a¦')).not.toContain('a');
+  });
+
+  it("completes a block arrow's directions, class and style targets and class names", () => {
+    expect(complete('block\n  a<["x"]>(¦)')).toEqual(['right', 'left', 'up', 'down', 'x', 'y']);
+    expect(complete('block\n  a<["x"]>(right, d¦)')).toEqual(['down']);
+    expect(complete('block\n  a\n  b.c\n  class ¦')).toEqual(['a']);
+    expect(complete('block\n  a\n  b\n  style a, ¦')).toEqual(['a', 'b']);
+    expect(complete('block\n  a\n  classDef hot fill:#f00\n  class a ¦')).toEqual(['hot']);
+    // Nothing in a label or a style definition.
+    expect(complete('block\n  a["¦"]')).toEqual([]);
+    expect(complete('block\n  a\n  style a fill:¦')).toEqual([]);
+  });
+
+  it('takes block ids the id rule reads alone, and classDef names of word characters', () => {
+    for (const ok of ['a', 'a.b', 'x;y', 'Ärlig', 'a]b', 'c%d'])
+      expect(blockLanguage.isValidId(ok, 'block'), ok).toBeUndefined();
+    for (const bad of [
+      '',
+      'a b',
+      'a-b',
+      'a:b',
+      'a=b',
+      'a(b',
+      'a{b',
+      'a<b',
+      'end',
+      'space',
+      'class',
+    ])
+      expect(blockLanguage.isValidId(bad, 'block'), bad).toBeTypeOf('string');
+    expect(blockLanguage.isValidId('hot_1', 'class')).toBeUndefined();
+    for (const bad of ['', 'a.b', 'DEFAULT'])
+      expect(blockLanguage.isValidId(bad, 'class'), bad).toBeTypeOf('string');
+    expect(blockLanguage.isValidId('a', 'edge')).toBeTypeOf('string');
+  });
+
+  const hoverIn = (text: string) => {
+    const result = blockLanguage.parse(text, { keepTokens: true });
+    return (needle: string, delta = 0) => {
+      const offset = text.indexOf(needle) + delta;
+      const symbol = result.symbols.find((s) => s.range.start <= offset && offset <= s.range.end);
+      const tokens = result.tokens!;
+      const j = tokenAt(tokens, offset);
+      const token =
+        j < 0
+          ? undefined
+          : {
+              kind: tokens.kind[j]!,
+              range: { start: tokens.start[j]!, end: tokens.end[j]! },
+            };
+      return blockLanguage.hover(
+        { offset, ...(token ? { token } : {}), ...(symbol ? { symbol } : {}) },
+        { text, result }
+      )?.contents;
+    };
+  };
+
+  it('hovers a block with its shape, span and columns, and a keyword with its doc', () => {
+    const hover = hoverIn('block\n  block:g:2\n    columns 3\n    a{"Choice"}\n  end\n  a --> g');
+    expect(hover('g:2', 0)).toBe(
+      '**block** `g`\n\nShape: composite, `block:id … end`\n\nSpan: 2 columns\n\nColumns: 3\n\nHolds 1 block'
+    );
+    expect(hover('"Choice"', 2)).toBe(
+      '**block** `a`\n\nShape: diamond, `{"…"}`\n\nLabel: `Choice`\n\nSpan: 1 column\n\nIn `g`'
+    );
+    expect(hover('columns')).toMatch(/^\*\*`columns 3`\*\*\n\n`columns n` or `columns auto`/);
+  });
+
+  it('hovers a composite a later mention made a circle as the circle the diagram draws', () => {
+    const hover = hoverIn('block\nblock:a["Grp"]\n b c\nend\na(("x"))');
+    expect(hover('a((')).toBe(
+      '**block** `a`\n\nShape: circle, `(("…"))`\n\nLabel: `x`\n\nSpan: 1 column'
+    );
+  });
+});

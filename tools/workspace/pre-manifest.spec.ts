@@ -1,12 +1,4 @@
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -14,6 +6,7 @@ import { readManifests } from '../gen-config/src/registry.ts';
 import { grammarTargets } from '../gen-grammar/src/generate.ts';
 import { diagramPackages, ROOT, WIRING_FILE, workspaceDiagrams } from './diagrams.ts';
 import { DEPENDENCY_RULES, MERMAID_NOTICES, RELEASING, syncedFiles } from './sync.ts';
+import { copyWorkspaceInputs } from './testing.ts';
 
 /**
  * A port before its T5 (a pre-manifest package): `packages/diagram-<type>` with a
@@ -27,19 +20,7 @@ describe('a pre-manifest diagram package (before its T5)', () => {
   const scratch = mkdtempSync(join(tmpdir(), 'mermaid-pre-manifest-'));
   afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
-  const copy = (path: string) => {
-    mkdirSync(join(scratch, path, '..'), { recursive: true });
-    cpSync(join(ROOT, path), join(scratch, path), { recursive: true });
-  };
-  for (const rule of DEPENDENCY_RULES) copy(`${rule.pkg}/package.json`);
-  for (const d of workspaceDiagrams()) {
-    copy(`${d.dir}/package.json`);
-    if (existsSync(join(ROOT, d.dir, WIRING_FILE))) copy(`${d.dir}/${WIRING_FILE}`);
-    if (existsSync(join(ROOT, d.dir, 'notices'))) copy(`${d.dir}/notices`);
-  }
-  copy(RELEASING);
-  copy('packages/mermaid/notices');
-  copy('tools/gen-grammar/src');
+  copyWorkspaceInputs(ROOT, scratch);
 
   const write = (path: string, text: string) => {
     mkdirSync(join(scratch, path, '..'), { recursive: true });
@@ -68,6 +49,16 @@ describe('a pre-manifest diagram package (before its T5)', () => {
     'tools/gen-grammar/src/zzpre-agreement.spec.ts',
     "import { T } from '@mermaid-js/diagram-zzpre/tokens';\n"
   );
+  // A pre-manifest port past its T6: a `./language` export the language service's specs load
+  // through a test-only `UNLISTED_FACETS` row.
+  write(
+    'packages/diagram-zzfacet/package.json',
+    JSON.stringify({
+      name: '@mermaid-js/diagram-zzfacet',
+      exports: { '.': './src/index.ts', './language': './src/language.ts' },
+    })
+  );
+  write(`packages/diagram-zzfacet/${WIRING_FILE}`, '# pre-manifest, T6 done\n');
   // A diagram folder with neither a manifest nor a workspace.yaml is not a diagram package yet.
   write('packages/diagram-zzbare/package.json', JSON.stringify({ name: '@mermaid-js/zzbare' }));
 
@@ -104,5 +95,37 @@ describe('a pre-manifest diagram package (before its T5)', () => {
     expect(files.get(RELEASING)).not.toContain('diagram-zzpre');
     expect(files.get(MERMAID_NOTICES)).not.toContain('zzpre-notice');
     expect(files.get(MERMAID_NOTICES)).toBe(readFileSync(join(ROOT, MERMAID_NOTICES), 'utf8'));
+  });
+  const dependents = (root: string, name: string) => {
+    const files = syncedFiles(root);
+    return DEPENDENCY_RULES.filter((rule) => {
+      const manifest = JSON.parse(files.get(`${rule.pkg}/package.json`)!) as Record<
+        string,
+        Record<string, unknown> | undefined
+      >;
+      return manifest[rule.field]?.[name] !== undefined;
+    }).map((rule) => `${rule.pkg} ${rule.field}`);
+  };
+
+  it("with a `./language` export, is a language-service dev dependency, not a peer or the server's", () => {
+    expect(dependents(scratch, '@mermaid-js/diagram-zzfacet')).toEqual([
+      'packages/language-service devDependencies',
+      'packages/conformance devDependencies',
+    ]);
+    expect(readManifests(scratch).map((m) => m.name)).not.toContain('@mermaid-js/diagram-zzfacet');
+  });
+
+  it('keeps its entries through the scratch copy the regen specs make (copyWorkspaceInputs)', () => {
+    const again = mkdtempSync(join(tmpdir(), 'mermaid-pre-manifest-copy-'));
+    try {
+      copyWorkspaceInputs(scratch, again);
+      for (const name of ['@mermaid-js/diagram-zzpre', '@mermaid-js/diagram-zzfacet'])
+        expect(dependents(again, name), name).toEqual(dependents(scratch, name));
+      expect(dependents(again, '@mermaid-js/diagram-zzpre')).toContain(
+        'packages/conformance devDependencies'
+      );
+    } finally {
+      rmSync(again, { recursive: true, force: true });
+    }
   });
 });

@@ -1,0 +1,30 @@
+@ 2:6  a -|-> b
+  2:5-2:8 "-->"
+  | **`-->`** sequence: the target runs after the source
+  |
+  | `a` → `b`
+  |
+  | The three links: `-->` (a sequence), `--x` (a failure) and `-.-` (a reference); `--` followed by text opens an edge-text mode, closed by `-->` or `--x`.
+@ 3:7  b --|x c
+  3:5-3:8 "--x"
+  | **`--x`** failure: the target runs when the source fails
+  |
+  | `b` → `c`
+  |
+  | The three links: `-->` (a sequence), `--x` (a failure) and `-.-` (a reference); `--` followed by text opens an edge-text mode, closed by `-->` or `--x`.
+@ 4:7  c -.|- a
+  4:5-4:8 "-.-"
+  | **`-.-`** reference: the source refers to the target; no step follows
+  |
+  | `c` → `a`
+  |
+  | The three links: `-->` (a sequence), `--x` (a failure) and `-.-` (a reference); `--` followed by text opens an edge-text mode, closed by `-->` or `--x`.
+@ 5:11  a -- ret|ries --> b
+  none
+@ 6:14  a -->|on fa|il| c
+  none
+@ 7:6  b e|1@--> c
+  7:5-7:7 "e1"
+  | **edge** `e1`
+  |
+  | `b` → `c`: sequence: the target runs after the source

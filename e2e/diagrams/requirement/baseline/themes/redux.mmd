@@ -1,0 +1,43 @@
+---
+config:
+  theme: redux
+description: >-
+  one representative requirement diagram in the redux theme (redux family, D227: strokeWidth outlines and lines, the chevron at 0.8, white label chips (D435));
+  three requirement kinds, two elements and four relations, `contains` marked at its source
+---
+requirementDiagram
+
+  requirement test_req {
+    id: 1
+    text: the test text.
+    risk: high
+    verifymethod: test
+  }
+
+  functionalRequirement test_req2 {
+    id: 1.1
+    text: the second test text.
+    risk: low
+    verifymethod: inspection
+  }
+
+  performanceRequirement test_req3 {
+    id: 1.2
+    text: the third test text.
+    risk: medium
+    verifymethod: demonstration
+  }
+
+  element test_entity {
+    type: simulation
+  }
+
+  element test_entity2 {
+    type: word doc
+    docRef: reqs/test_entity
+  }
+
+  test_entity - satisfies -> test_req2
+  test_req - traces -> test_req2
+  test_req - contains -> test_req3
+  test_entity2 - verifies -> test_req

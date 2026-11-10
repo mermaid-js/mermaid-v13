@@ -1,0 +1,48 @@
+@ 1:1  |agentflow-beta LR
+  1:1-1:15 "agentflow-beta"
+  | **`agentflow-beta`**
+  |
+  | `agentflow-beta LR`. The direction is optional (default `TB`).
+@ 1:17  agentflow-beta L|R
+  1:16-1:18 "LR"
+  | **`LR`** direction: left to right
+@ 2:7  conn|ector c
+  2:3-2:12 "connector"
+  | **`connector`**
+  |
+  | `connector id`, `connector id[title]`, either with metadata `@{ … }`.
+@ 3:5  fl|ow f
+  3:3-3:7 "flow"
+  | **`flow`**
+  |
+  | `flow id`, `flow id[title]`, either with metadata `@{ … }`, or an anonymous `flow`; then statements, then `end`.
+@ 4:8  dir|ection TB
+  4:5-4:17 "direction TB"
+  | **`direction TB`**
+  |
+  | `direction LR` inside a flow: the direction of its layout.
+@ 6:4  e|nd
+  6:3-6:6 "end"
+  | **`end`**
+  |
+  | `flow id`, `flow id[title]`, either with metadata `@{ … }`, or an anonymous `flow`; then statements, then `end`.
+@ 7:6  glo|bal
+  7:3-7:9 "global"
+  | **`global`**
+  |
+  | `global` … `end`: the nodes written in it belong to no flow.
+@ 10:6  sty|le a fill:#f00
+  10:3-10:8 "style"
+  | **`style`**
+  |
+  | `style id fill:#f9f,stroke:#333`: styles one node or flow.
+@ 11:8  class|Def k fill:#0f0
+  11:3-11:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …` styles every node without a class.
+@ 12:6  acc|Title: Title
+  12:3-12:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the diagram.

@@ -1,0 +1,20 @@
+@ 3:8  flow |plan[Plan]
+  prepare: 3:8-3:12 "plan"; rename to "planning":
+  %% rename-to: planning
+  agentflow-beta LR
+    flow planning[Plan]
+      a --> b
+    end
+    planning@{ view: collapsed }
+    start --> planning
+    style planning fill:#eee
+@ 8:11  style pl|an fill:#eee
+  prepare: 8:9-8:13 "plan"; rename to "planning":
+  %% rename-to: planning
+  agentflow-beta LR
+    flow planning[Plan]
+      a --> b
+    end
+    planning@{ view: collapsed }
+    start --> planning
+    style planning fill:#eee

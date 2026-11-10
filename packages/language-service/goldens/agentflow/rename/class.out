@@ -1,0 +1,14 @@
+@ 3:12  classDef |hot fill:#f96
+  prepare: 3:12-3:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  agentflow-beta LR
+    classDef warm fill:#f96
+    a:::warm --> b
+    class b warm
+@ 5:11  class b |hot
+  prepare: 5:11-5:14 "hot"; rename to "warm":
+  %% rename-to: warm
+  agentflow-beta LR
+    classDef warm fill:#f96
+    a:::warm --> b
+    class b warm

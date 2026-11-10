@@ -1,0 +1,14 @@
+agentflow-beta LR
+  connector inbox[Inbox]
+  flow plan[Plan]
+    read --> think
+    think e1@--x |read
+    |inbox --> think
+  end
+  pla|n --> done
+  classDef hot fill:#f96
+  thi|nk:::h|ot
+  click th|ink "https://example.com"
+  style |plan fill:#eee
+  linkStyle 0 stroke:red
+  e|1@{ animate: true }

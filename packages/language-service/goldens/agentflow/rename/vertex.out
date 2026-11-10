@@ -1,0 +1,22 @@
+@ 3:3  |think --> act
+  prepare: 3:3-3:8 "think"; rename to "planner":
+  %% rename-to: planner
+  agentflow-beta LR
+    planner --> act
+    flow f
+      planner@{ shape: decision } --> act
+    end
+    style planner fill:#f00
+    class planner hot
+    click planner "https://example.com"
+@ 9:9  click |think "https://example.com"
+  prepare: 9:9-9:14 "think"; rename to "planner":
+  %% rename-to: planner
+  agentflow-beta LR
+    planner --> act
+    flow f
+      planner@{ shape: decision } --> act
+    end
+    style planner fill:#f00
+    class planner hot
+    click planner "https://example.com"

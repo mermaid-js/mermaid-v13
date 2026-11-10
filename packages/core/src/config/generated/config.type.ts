@@ -477,6 +477,11 @@ automaticLaneOrdering?: boolean
  * spacing and padding knobs a flowchart does. They live in their own block so
  * that agentflow can be tuned without moving every flowchart on the page.
  * 
+ * A length here (`titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`,
+ * `wrappingWidth`, `minNodeWidth`) that is not a number from 0 up to 10,000 (a whole
+ * numeric string such as `"20"` is taken, as v12 took it) draws with its default, with
+ * one `AGENTFLOW_CONFIG_INVALID` warning.
+ * 
  * 
  * This interface was referenced by `MermaidConfig`'s JSON-Schema
  * via the `definition` "AgentflowDiagramConfig".
@@ -494,6 +499,19 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
  * 
  */
 look?: ("classic" | "handDrawn" | "neo")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+useWidth?: number
 /**
  * Margin top for the text over the diagram
  */
@@ -1495,6 +1513,19 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
  * 
  */
 look?: ("classic" | "handDrawn" | "neo")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 rect_fill?: string
 text_color?: string
 rect_border_size?: string
@@ -2273,7 +2304,31 @@ paddingY?: number
  * via the `definition` "BlockDiagramConfig".
  */
 export interface BlockDiagramConfig extends BaseDiagramConfig {
+/**
+ * The gap between the blocks of a grid and the inset of a composite's grid, and the
+ * padding around a leaf's label.
+ * 
+ */
 padding?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+useWidth?: number
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
 }
 /**
  * The object containing configurations specific for Event Modeling diagrams.
