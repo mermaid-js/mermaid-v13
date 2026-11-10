@@ -1,0 +1,23 @@
+---
+config:
+  theme: redux-color
+description: >-
+  the composite palette on (redux-color sets borderColorArray and bkgColorArray): four
+  composites, one nested, take palette slots 0 to 3 in pre-order (data-color-id color-0 to
+  color-3); leaves keep mainBkg
+---
+block-beta
+  columns 3
+  block:ingest["Ingest"]
+    a["Fetch"] b["Validate"]
+  end
+  block:transform["Transform"]
+    columns 1
+    c["Normalise"]
+    block:inner
+      d["Enrich"]
+    end
+  end
+  block:store["Store"]
+    e[("Warehouse")]
+  end

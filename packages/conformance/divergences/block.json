@@ -1,0 +1,1178 @@
+[
+  {
+    "id": "e2e/diagrams/block/nightly-check/block-arrow-directions-with-blanks.mmd",
+    "inputHash": "sha256:0e2a29009d823398",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/class-before-declaration-applies.mmd",
+    "inputHash": "sha256:9491e439b7574fb6",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/class-list-with-blanks-applies-to-each.mmd",
+    "inputHash": "sha256:86cbf8ea0f6fb076",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/columns-zero-reads-as-auto.mmd",
+    "inputHash": "sha256:9ef98b9cfb8e6cf0",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/composite-header-with-an-edge.mmd",
+    "inputHash": "sha256:5869071dd30a4201",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/composite-opened-twice-keeps-both-bodies.mmd",
+    "inputHash": "sha256:a843da5dad7164b4",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/edge-chain-declares-every-block.mmd",
+    "inputHash": "sha256:6a8357afb8fc0bab",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/leaf-then-composite-adopts-children.mmd",
+    "inputHash": "sha256:7c8e35df3ce40db4",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/root-as-a-block-id.mmd",
+    "inputHash": "sha256:c431ea247f24be42",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/span-over-the-cap-is-cut.mmd",
+    "inputHash": "sha256:8c2c8a04ad83d936",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/span-zero-reads-as-one.mmd",
+    "inputHash": "sha256:a7b1e4e53563aeac",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/nightly-check/style-before-declaration-and-several-ids.mmd",
+    "inputHash": "sha256:804364ab3a22cc1e",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/columns-zero",
+    "inputHash": "sha256:b9c8b9b4767a14bf",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/span-zero",
+    "inputHash": "sha256:a18929a1db62d172",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/arrow-directions-blanks",
+    "inputHash": "sha256:605d1fa95ae41040",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/arrow-direction-lines",
+    "inputHash": "sha256:af3eec3af1d44637",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/edge-chain",
+    "inputHash": "sha256:75b8cc17ad06f660",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/style-ids",
+    "inputHash": "sha256:cd97f00ada7cee7f",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/style-entity",
+    "inputHash": "sha256:44844a712d459ee5",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/unclosed-directive-1",
+    "inputHash": "sha256:4b1b268ac6a1ef63",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour; GAPS #553).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/line-separator-in-directions",
+    "inputHash": "sha256:2fb4b55e094dfcbe",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (commented)",
+    "inputHash": "sha256:965572e6d2519dd1",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (commented)",
+    "inputHash": "sha256:2393dd50fbfb9d80",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (commented)",
+    "inputHash": "sha256:29415145319a228f",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (commented)",
+    "inputHash": "sha256:977e05474bfb7b26",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (commented)",
+    "inputHash": "sha256:1e35708799d0538b",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (commented)",
+    "inputHash": "sha256:0e433788b9147d8e",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (commented)",
+    "inputHash": "sha256:595b9bd17eb096d1",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (commented)",
+    "inputHash": "sha256:a79ca6f2edcbe057",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (commented)",
+    "inputHash": "sha256:6b3395d0545eafdf",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (commented)",
+    "inputHash": "sha256:7714d1107d15c082",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (commented)",
+    "inputHash": "sha256:50433f29cd91c130",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (commented)",
+    "inputHash": "sha256:9ded4d49e60f39de",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (commented)",
+    "inputHash": "sha256:b7b49a95cf1ec17e",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (commented)",
+    "inputHash": "sha256:41816b22a65a7c67",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions (commented)",
+    "inputHash": "sha256:8be96bd330fb73ad",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (commented)",
+    "inputHash": "sha256:506a10256c109739",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (commented)",
+    "inputHash": "sha256:2ff6d467124df482",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (commented)",
+    "inputHash": "sha256:822e0338bc7bed07",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (commented)",
+    "inputHash": "sha256:ebbd2e1b4b1927f8",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (CR cut)",
+    "inputHash": "sha256:e08166266fe161c6",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (CR cut)",
+    "inputHash": "sha256:0b9e0e8ebbdd63ca",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (CR cut)",
+    "inputHash": "sha256:eb7c1eda9c28a356",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (CR cut)",
+    "inputHash": "sha256:0956ad0c14c08f19",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CR cut)",
+    "inputHash": "sha256:a1ab5dd7f6eca9d0",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CR cut)",
+    "inputHash": "sha256:8466531c6bc84d2a",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (CR cut)",
+    "inputHash": "sha256:0a3954d325607b44",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (CR cut)",
+    "inputHash": "sha256:a30e30d38cedad07",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (CR cut)",
+    "inputHash": "sha256:652685078d6fa49f",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (CR cut)",
+    "inputHash": "sha256:95fc78df20daae7c",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (CR cut)",
+    "inputHash": "sha256:7e0cba51aec71f58",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (CR cut)",
+    "inputHash": "sha256:a8ed1f8116563f97",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (CR cut)",
+    "inputHash": "sha256:0d673385ae5fa3d3",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (CR cut)",
+    "inputHash": "sha256:428e5f11669a8bb5",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (CR cut)",
+    "inputHash": "sha256:f0b683c06128f2e1",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (CR cut)",
+    "inputHash": "sha256:5fbc3bc0f45f763f",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (CR cut)",
+    "inputHash": "sha256:9dc5d3db87e64430",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-ids (CR cut)",
+    "inputHash": "sha256:fa91ae285a762b21",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-entity (CR cut)",
+    "inputHash": "sha256:1d1a1a5763e4d6c6",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (CR cut)",
+    "inputHash": "sha256:55bf7cebee05acf5",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (CR cut by a directive)",
+    "inputHash": "sha256:1d8b4b6e2988e960",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (CR cut by a directive)",
+    "inputHash": "sha256:adec0470466fdb31",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (CR cut by a directive)",
+    "inputHash": "sha256:b7addd6c0ddb25d8",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (CR cut by a directive)",
+    "inputHash": "sha256:6528f341a24ce303",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CR cut by a directive)",
+    "inputHash": "sha256:4d511abe3fc23d54",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CR cut by a directive)",
+    "inputHash": "sha256:1e6bc72d7b0b2d5f",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (CR cut by a directive)",
+    "inputHash": "sha256:06c9fef23c555785",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (CR cut by a directive)",
+    "inputHash": "sha256:878fdc8e2169df11",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (CR cut by a directive)",
+    "inputHash": "sha256:f3e485ed17a817cd",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (CR cut by a directive)",
+    "inputHash": "sha256:c47ed6ffa93558c4",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (CR cut by a directive)",
+    "inputHash": "sha256:0adadd9404ca77dc",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (CR cut by a directive)",
+    "inputHash": "sha256:7486d629edbca03f",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (CR cut by a directive)",
+    "inputHash": "sha256:54a397c05f9329df",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (CR cut by a directive)",
+    "inputHash": "sha256:3e363b4d16c6e8f6",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (CR cut by a directive)",
+    "inputHash": "sha256:dbf081bc3c6b80aa",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (CR cut by a directive)",
+    "inputHash": "sha256:0ff68106c2ba834c",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (CR cut by a directive)",
+    "inputHash": "sha256:b17aaa7bec75dabe",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-ids (CR cut by a directive)",
+    "inputHash": "sha256:05bd39b00c36aaa0",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-entity (CR cut by a directive)",
+    "inputHash": "sha256:09b0add4f7cbaf80",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (CR cut by a directive)",
+    "inputHash": "sha256:432895ecdaf53768",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (CRLF)",
+    "inputHash": "sha256:7bd3ee9f534c4178",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (CRLF)",
+    "inputHash": "sha256:511e243786449e19",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (CRLF)",
+    "inputHash": "sha256:e0917921fff8c7e3",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (CRLF)",
+    "inputHash": "sha256:b1c81b01d55cd4fa",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (CRLF)",
+    "inputHash": "sha256:db722d7e76359469",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (CRLF)",
+    "inputHash": "sha256:d6244d74f7ccea70",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (CRLF)",
+    "inputHash": "sha256:1b550df9996fab60",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (CRLF)",
+    "inputHash": "sha256:ef536c9092b81041",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (CRLF)",
+    "inputHash": "sha256:c5ebbdd5d340f0df",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (CRLF)",
+    "inputHash": "sha256:f2b76764198d2afe",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (CRLF)",
+    "inputHash": "sha256:08a032b7c06d5154",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (CRLF)",
+    "inputHash": "sha256:ecd1d758812a4059",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (CRLF)",
+    "inputHash": "sha256:d827a427640322f5",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (CRLF)",
+    "inputHash": "sha256:f61d99adba1f8fc2",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (CRLF)",
+    "inputHash": "sha256:c18b0f28b44a1bbb",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (CRLF)",
+    "inputHash": "sha256:c987bc261ca5bf7a",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (CRLF)",
+    "inputHash": "sha256:36437f019520f8ed",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-ids (CRLF)",
+    "inputHash": "sha256:d5a1db9e30001e8d",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-entity (CRLF)",
+    "inputHash": "sha256:61a26154aeb17457",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (CRLF)",
+    "inputHash": "sha256:a8b99b6efe9f0a59",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (tabs)",
+    "inputHash": "sha256:e8621ecc1bd0d11b",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (tabs)",
+    "inputHash": "sha256:3f8038df2128b3e8",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (tabs)",
+    "inputHash": "sha256:5e8805566ca13e1c",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (tabs)",
+    "inputHash": "sha256:3f63de356f4213d3",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (tabs)",
+    "inputHash": "sha256:8554e675bb7b94a9",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (tabs)",
+    "inputHash": "sha256:0b22991fc7cba7c3",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (tabs)",
+    "inputHash": "sha256:2027e223511aeda7",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (tabs)",
+    "inputHash": "sha256:72c594450f1115de",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (tabs)",
+    "inputHash": "sha256:040b46e75935a84c",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (tabs)",
+    "inputHash": "sha256:35f7bf66f5b92b97",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (tabs)",
+    "inputHash": "sha256:3ca6f333f80fd820",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (tabs)",
+    "inputHash": "sha256:ae3c489954dbf21f",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (tabs)",
+    "inputHash": "sha256:eedfb6c9ba3b2ea6",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (tabs)",
+    "inputHash": "sha256:cad9ca229bcacaf0",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (tabs)",
+    "inputHash": "sha256:9ff5c55d38fb757f",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (tabs)",
+    "inputHash": "sha256:6a5988922d01c923",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (tabs)",
+    "inputHash": "sha256:690590843855cd17",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-ids (tabs)",
+    "inputHash": "sha256:cd3b6180a50deb78",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-entity (tabs)",
+    "inputHash": "sha256:8c178aec9a2ce4b0",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (tabs)",
+    "inputHash": "sha256:ea702e136aeb517d",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/block-arrow-directions-with-blanks.mmd (mid-line directive)",
+    "inputHash": "sha256:263097f595fd485d",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-before-declaration-applies.mmd (mid-line directive)",
+    "inputHash": "sha256:d35c12d6f77caf0b",
+    "kind": "model",
+    "reason": "A `class` before the block it names no longer hides the block (D442): v12 created a hidden `na` block, so the later declaration counted as a repeat and was never placed (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/class-list-with-blanks-applies-to-each.mmd (mid-line directive)",
+    "inputHash": "sha256:3a158fbf934166a9",
+    "kind": "model",
+    "reason": "`class a, b` trims its ids (D442): v12 looked up ` b`, made a hidden block of it and replaced the real `b`, which lost the class (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/columns-zero-reads-as-auto.mmd (mid-line directive)",
+    "inputHash": "sha256:97ab6cd8251a5c2f",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-header-with-an-edge.mmd (mid-line directive)",
+    "inputHash": "sha256:140359f1ba49b0ee",
+    "kind": "model",
+    "reason": "`block:a --> b … end`: the composite is `a`, and the edge and `b` sit next to it (GAPS #554, pending a D-id, D440); v12 spread the header chain into a composite with no id and lost the edge.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/composite-opened-twice-keeps-both-bodies.mmd (mid-line directive)",
+    "inputHash": "sha256:acd6872f003a5ab7",
+    "kind": "model",
+    "reason": "A composite opened a second time adds the second body to the first, as D442 does for a leaf (GAPS #554, pending a D-id, D440); v12 lost the second body's new blocks.",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/edge-chain-declares-every-block.mmd (mid-line directive)",
+    "inputHash": "sha256:9b125ccddc54c8ef",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/leaf-then-composite-adopts-children.mmd (mid-line directive)",
+    "inputHash": "sha256:c89442639f1f10f6",
+    "kind": "model",
+    "reason": "A block first written as a leaf and then opened as `block:id … end` keeps its place and adopts the children (D442); v12 put the children on an object it never stored, so they were lost (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/root-as-a-block-id.mmd (mid-line directive)",
+    "inputHash": "sha256:905f7156072e1bc9",
+    "kind": "model",
+    "reason": "`root` is an ordinary id (D442): v12 seeded its DB with its own top-level `root`, so a block `root` merged into it and was never drawn (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-over-the-cap-is-cut.mmd (mid-line directive)",
+    "inputHash": "sha256:720e0675a5c80054",
+    "kind": "model",
+    "reason": "A span over 1,000 columns is cut to 1,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept it (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/span-zero-reads-as-one.mmd (mid-line directive)",
+    "inputHash": "sha256:11c9050cac52782a",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/e2e/nightly-check/style-before-declaration-and-several-ids.mmd (mid-line directive)",
+    "inputHash": "sha256:2639ef6e07886211",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/columns-zero (mid-line directive)",
+    "inputHash": "sha256:2c806a2dcb791680",
+    "kind": "model",
+    "reason": "`columns 0` counts as `columns auto` (D445), with one BLOCK_SIZE_INVALID warning: the level's columns are -1 where v12 kept 0 and threw at render (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/span-zero (mid-line directive)",
+    "inputHash": "sha256:91bf37a2285c3a4d",
+    "kind": "model",
+    "reason": "A span `:0` counts as `:1` (D445), with one BLOCK_SIZE_INVALID warning; v12 kept 0 and drew NaN (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-directions-blanks (mid-line directive)",
+    "inputHash": "sha256:4a9f62c38c08856c",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-direction-lines (mid-line directive)",
+    "inputHash": "sha256:23a63d37092b987a",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/edge-chain (mid-line directive)",
+    "inputHash": "sha256:f584d5a47eae5e75",
+    "kind": "model",
+    "reason": "An `a --> b --> c` chain declares a, b and c and keeps both edges (D442); v12's grammar read the first link's result as a node, so it dropped a, b and a→b and added a block `undefined` (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-ids (mid-line directive)",
+    "inputHash": "sha256:ff9877ff08360060",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/style-entity (mid-line directive)",
+    "inputHash": "sha256:08bda087b753644b",
+    "kind": "accept",
+    "reason": "`style` applies after every statement to each id it lists (D443), so a style before its block, on several ids or on an unknown id (one BLOCK_STYLE_UNKNOWN warning) is accepted; v12's DB threw a TypeError (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/line-separator-in-directions (mid-line directive)",
+    "inputHash": "sha256:6d618d9e179e564d",
+    "kind": "model",
+    "reason": "Block-arrow directions are trimmed (D445), so `( right , left )` reads `right`, `left`; v12 kept the blanks (and line breaks) and so matched no direction and drew no arrow (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-cases/space-over-the-cap-is-cut",
+    "inputHash": "sha256:525d3a7f3a429f64",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (commented)",
+    "inputHash": "sha256:dc7896f47bbebbde",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CR cut)",
+    "inputHash": "sha256:d61f35c6a8025cd0",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CR cut by a directive)",
+    "inputHash": "sha256:86121ec8c3a635b9",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (CRLF)",
+    "inputHash": "sha256:634a3a6e72d40d10",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (tabs)",
+    "inputHash": "sha256:693e9c49e78004ed",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "block-gate/block-cases/space-over-the-cap-is-cut (mid-line directive)",
+    "inputHash": "sha256:4f7711bdb912dcca",
+    "kind": "model",
+    "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
+    "owner": "#554",
+    "since": "2026-11-09"
+  }
+]

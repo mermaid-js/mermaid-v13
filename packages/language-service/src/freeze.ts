@@ -8,6 +8,9 @@ export function deepFreeze<T>(value: T): T {
   if (typeof value !== 'object' || value === null || Object.isFrozen(value)) return value;
   if (ArrayBuffer.isView(value)) return value;
   Object.freeze(value);
-  for (const v of Object.values(value)) deepFreeze(v);
+  // No key array per object: results hold tens of thousands of small ones (R-LANG-4).
+  // Plain objects and class instances only, whose methods are not enumerable.
+  if (Array.isArray(value)) for (const v of value as unknown[]) deepFreeze(v);
+  else for (const k in value) deepFreeze((value as Record<string, unknown>)[k]);
   return value;
 }

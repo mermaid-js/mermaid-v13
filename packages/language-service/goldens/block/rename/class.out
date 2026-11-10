@@ -1,0 +1,14 @@
+@ 4:12  classDef |hot fill:#f96
+  prepare: 4:12-4:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  block
+    a
+    classDef warm fill:#f96
+    class a warm
+@ 5:11  class a |hot
+  prepare: 5:11-5:14 "hot"; rename to "warm":
+  %% rename-to: warm
+  block
+    a
+    classDef warm fill:#f96
+    class a warm
