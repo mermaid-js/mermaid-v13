@@ -11,8 +11,8 @@ import { theme } from './theme/table.ts';
 /**
  * The usecase plugin (DESIGN §12.1, spec #517): a graph type (`layoutKind: 'graph'`), laid out
  * with `ctx.layout` (core's `layered` unless `layout` names another engine, R-LAYOUT-7) and drawn
- * through the `SvgWriter` (#566). SVG only until T7 (`format: 'ascii'` throws
- * `UnsupportedFormatError`). `theme` is the diagram's own table (`theme/table.ts`, D331, D474).
+ * through the `SvgWriter` (#566). Its text output (`format: 'ascii'`, T7) is the lazily loaded
+ * `./ascii` entry, which draws the same graph laid out in cells (D478). `theme` is the diagram's own table (`theme/table.ts`, D331, D474).
  * The registry loads it from the package's `mermaid` manifest (#567). `configDefaults` are the
  * `usecase` section's generated defaults: v12's `usecase.theme` default `redux-color`, which a
  * `theme` from `initialize()` or the text beats, and no font family, so the families the layout
@@ -20,7 +20,7 @@ import { theme } from './theme/table.ts';
  */
 export const usecase = {
   id: 'usecase',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
   configDefaults: usecaseConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectUsecase(text),

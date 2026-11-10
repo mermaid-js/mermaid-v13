@@ -44,4 +44,4 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `venn` | `@mermaid-js/diagram-venn` | yes | no |
 | `wardley` | `@mermaid-js/diagram-wardley` | yes | no |
 | `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |
-| `usecase` | `@mermaid-js/diagram-usecase` | yes | no |
+| `usecase` | `@mermaid-js/diagram-usecase` | yes | yes |

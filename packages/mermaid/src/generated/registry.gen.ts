@@ -188,7 +188,8 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'usecase',
     pattern: /^\s*usecase-beta(?:\s|$)/,
     id: 'usecase',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-usecase').then((m) => m.usecase),
+    loadAscii: () => import('@mermaid-js/diagram-usecase/ascii').then((m) => m.ascii),
   },
 ];

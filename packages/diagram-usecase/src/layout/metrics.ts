@@ -57,3 +57,15 @@ export const PX = Object.freeze({
   /** Edge labels, `«include»` and `«extend»` among them, are drawn 10px (`styles.ts` `.edgeLabel`). */
   edgeFontSize: 10,
 });
+
+/**
+ * The text output's cell metrics (D478, spec #517 T7): the shapes' own lengths in character
+ * cells. Paddings, spacing, wrap widths and the group frame come from core's cell profile; px
+ * config values convert through it (`fromPx`) only when an author set them (as ER's, D124).
+ */
+export const CELL = Object.freeze({
+  /** The actor's three-line figure (` O `, `/|\`, `/ \`), the labels right under it. */
+  actor: Object.freeze({ glyphWidth: 3, glyphHeight: 3, labelGap: 0, stereotypeGap: 0, pad: 0 }),
+  /** A box side: a use case's, its label rows `( … )` (`[ … ]`), a note's and a table's. */
+  side: 1,
+});

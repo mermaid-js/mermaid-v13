@@ -3,13 +3,17 @@
 // are a glyph with the labels below and take no least width; use cases, notes and JSON tables
 // are at least `minNodeWidth` wide. Boundaries are groups with the title in the top padding. A
 // note joins its target through an internal dotted edge. Every length comes from the metrics
-// table, the config or core's px profile (pitfall 13: `usecase-layout-literals.spec.ts`).
+// table, the config or core's px profile (pitfall 13: `usecase-layout-literals.spec.ts`). With
+// the cell profile (text output, T7) the shapes take D478's text forms in character cells: the
+// cell table, the profile's paddings and spacing, px config values converted only when set.
 import {
+  fromPx,
   pxProfile,
   type LayoutEdge,
   type LayoutGraph,
   type LayoutGroup,
   type LayoutNode,
+  type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
@@ -24,6 +28,7 @@ import {
   FONT_WEIGHT,
   fontWeight,
   MAX_LENGTH,
+  USECASE_CONFIG_DEFAULTS,
   usecaseLayoutConfig,
   type ConfigFont,
   type UsecaseLayoutConfig,
@@ -40,7 +45,7 @@ import type {
   UsecaseUseCase,
 } from '../model.ts';
 import type { UsecaseLayoutContext } from './context.ts';
-import { PX } from './metrics.ts';
+import { CELL, PX } from './metrics.ts';
 
 /** Fields every node view has. */
 interface NodeViewBase {
@@ -110,6 +115,7 @@ export interface JsonTableView extends NodeViewBase {
   /** The title row's height, under the top border. */
   readonly titleHeight: number;
   readonly keyWidth: number;
+  /** What the title and the key cells leave, the divider between key and value taken off. */
   readonly valueWidth: number;
   readonly rows: readonly JsonRowView[];
 }
@@ -181,9 +187,20 @@ export interface UsecasePrepared {
   readonly title?: MeasuredLabel;
 }
 
-/** A relationship's label as v12 drew it: `«include»`, `«extend»`, an association's label. */
-export function relationText(r: UsecaseRelationship): string | undefined {
-  if (r.type === 'include' || r.type === 'extend') return `«${r.type}»`;
+/** `«` and `»`; text output's `ascii` charset writes `<<` and `>>` (D478). */
+export type Quotes = readonly [open: string, close: string];
+
+const ANGLE_QUOTES: Quotes = ['«', '»'];
+
+/**
+ * A relationship's label as v12 drew it: `«include»`, `«extend»` (`<<include>>` with ASCII
+ * `quotes`), an association's label.
+ */
+export function relationText(
+  r: UsecaseRelationship,
+  [open, close]: Quotes = ANGLE_QUOTES
+): string | undefined {
+  if (r.type === 'include' || r.type === 'extend') return `${open}${r.type}${close}`;
   if (r.type === 'association' && r.label) return r.label;
   return undefined;
 }
@@ -216,11 +233,65 @@ interface Fonts {
   readonly edge: FontKey;
 }
 
+/** The lengths the view builders read that differ between px and character cells. */
+interface Scale {
+  readonly units: UnitProfile;
+  /** Text output: every length in character cells (`units.grid` set). */
+  readonly cells: boolean;
+  /** Stereotype and include/extend quotes: `<<` and `>>` in the `ascii` charset. */
+  readonly quotes: Quotes;
+  /** Node labels wrap here. */
+  readonly wrap: number;
+  /** The least label block of a use case, note or table title. */
+  readonly minWidth: number;
+  /** Boundary titles, JSON cells and edge labels wrap here. */
+  readonly titleWrap: number;
+  readonly cellWrap: number;
+  readonly edgeWrap: number;
+}
+
 /** What every view builder reads. */
 interface Parts {
   readonly fonts: Fonts;
   readonly config: UsecaseLayoutConfig;
   readonly measure: Measure;
+  readonly scale: Scale;
+}
+
+/**
+ * The lengths of `units`. In px, v12's: the config and the metrics table. In cells (D478) a px
+ * config length converts only when an author set it; v12's defaults (120 px wraps and widths)
+ * would not read as text, so the cell profile's own wrap and no least width apply (as ER's, D124).
+ */
+function scaleOf(config: UsecaseLayoutConfig, ctx: UsecaseLayoutContext): Scale {
+  const units = ctx.units ?? pxProfile;
+  const b = units.builder;
+  if (units.grid === undefined)
+    return {
+      units,
+      cells: false,
+      quotes: ANGLE_QUOTES,
+      wrap: config.wrappingWidth,
+      minWidth: config.minNodeWidth,
+      titleWrap: PX.boundary.titleWrap,
+      cellWrap: PX.json.cellWrap,
+      edgeWrap: b.edgeWrap,
+    };
+  const set = (key: 'wrappingWidth' | 'minNodeWidth'): number | undefined =>
+    config[key] === USECASE_CONFIG_DEFAULTS[key] ? undefined : config[key];
+  const wrap = set('wrappingWidth');
+  const minWidth = set('minNodeWidth');
+  const charset = (ctx.config.ascii as { readonly charset?: unknown } | undefined)?.charset;
+  return {
+    units,
+    cells: true,
+    quotes: charset === 'ascii' ? ['<<', '>>'] : ANGLE_QUOTES,
+    wrap: wrap === undefined ? b.wrapWidth : fromPx(units, wrap, 'x', 1),
+    minWidth: minWidth === undefined ? 0 : fromPx(units, minWidth, 'x'),
+    titleWrap: Infinity,
+    cellWrap: b.wrapWidth,
+    edgeWrap: b.edgeWrap,
+  };
 }
 
 /** A config font in the theme's family when it names none. */
@@ -291,6 +362,7 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
     },
     config,
     measure: measureFor(model, ctx),
+    scale: scaleOf(config, ctx),
   };
 
   const boundaryOf = new Map<string, string>();
@@ -345,7 +417,11 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
     });
   }
 
-  const graph = layoutGraph({ direction: model.direction, nodes, boundaries, edges }, config);
+  const graph = layoutGraph(
+    { direction: model.direction, nodes, boundaries, edges },
+    config,
+    parts.scale
+  );
   const text = model.title?.trim();
   const plain = parts.measure.styleOf([]);
   const title = text ? parts.measure.label(text, base, Infinity, plain) : undefined;
@@ -376,15 +452,12 @@ function withParent<T extends object>(view: T, parent: string | undefined): T {
 
 /** v12 `renderUsecaseActor`: the glyph, the stereotype and the name, padded; no least width. */
 function actorView(actor: UsecaseActor, parent: string | undefined, parts: Parts): ActorView {
-  const actorPx = PX.actor;
-  const { measure, config } = parts;
+  const { measure, scale } = parts;
+  const actorPx = scale.cells ? CELL.actor : PX.actor;
   const style = measure.styleOf(actor.classes, actor.styles);
   const font = measure.font(parts.fonts.actor, style);
-  const label = measure.label(actor.label, font, config.wrappingWidth, style, actor.labelType);
-  const stereotype =
-    actor.stereotype !== undefined
-      ? measure.label(`«${actor.stereotype}»`, font, config.wrappingWidth, style)
-      : undefined;
+  const label = measure.label(actor.label, font, scale.wrap, style, actor.labelType);
+  const stereotype = stereotypeOf(actor.stereotype, font, style, parts);
   const glyphTop = actorPx.pad;
   const stereotypeTop = glyphTop + actorPx.glyphHeight + actorPx.labelGap;
   const labelTop = stereotypeTop + (stereotype ? stereotype.height + actorPx.stereotypeGap : 0);
@@ -407,35 +480,49 @@ function actorView(actor: UsecaseActor, parent: string | undefined, parts: Parts
   );
 }
 
+/** `«stereotype»`, measured as a label of its own. */
+function stereotypeOf(
+  text: string | undefined,
+  font: FontKey,
+  style: CheckedStyle,
+  { measure, scale }: Parts
+): MeasuredLabel | undefined {
+  if (text === undefined) return undefined;
+  const [open, close] = scale.quotes;
+  return measure.label(`${open}${text}${close}`, font, scale.wrap, style);
+}
+
 /**
  * v12 `usecaseEllipse` / `usecaseBusiness`: the oval is the label block plus `inset` each side;
  * a `[rect]` use case (v12 `squareRect`) pads it with the profile's node padding. A stereotype
  * on a plain oval or a box is folded over the label as a line of its own (v12 drew
- * `«s»<br/>label`); a business oval keeps it 2px above.
+ * `«s»<br/>label`); a business oval keeps it 2px above. In cells (D478) a box, rounded for an
+ * oval, whose label rows are written `( label )` (`[ label ]`): its sides take a cell each, and
+ * the profile's node padding is inside them. The top and bottom rows give an LR end a side cell
+ * off the corners (D140).
  */
 function useCaseView(
   useCase: UsecaseUseCase,
   parent: string | undefined,
   parts: Parts
 ): UseCaseView {
-  const { measure, config } = parts;
+  const { measure, scale } = parts;
   const style = measure.styleOf(useCase.classes, useCase.styles);
   const font = measure.font(parts.fonts.usecase, style);
-  const label = measure.label(useCase.label, font, config.wrappingWidth, style, useCase.labelType);
-  const stereotype =
-    useCase.stereotype !== undefined
-      ? measure.label(`«${useCase.stereotype}»`, font, config.wrappingWidth, style)
-      : undefined;
-  const business = useCase.shape === 'ellipse' && useCase.business;
+  const label = measure.label(useCase.label, font, scale.wrap, style, useCase.labelType);
+  const stereotype = stereotypeOf(useCase.stereotype, font, style, parts);
+  const business = useCase.shape === 'ellipse' && useCase.business && !scale.cells;
   const stereotypeGap = stereotype && business ? PX.ellipse.stereotypeGap : 0;
+  const lines = label.height + (stereotype ? stereotype.height + stereotypeGap : 0);
   const block = {
-    width: Math.max(label.width, stereotype?.width ?? 0, config.minNodeWidth),
-    height: label.height + (stereotype ? stereotype.height + stereotypeGap : 0),
+    width: Math.max(label.width, stereotype?.width ?? 0, scale.minWidth),
+    // In cells an empty label still takes its row, which reads `(  )`.
+    height: scale.cells ? Math.max(lines, CELL.side) : lines,
   };
-  const pad =
-    useCase.shape === 'ellipse'
-      ? { x: PX.ellipse.inset, y: PX.ellipse.inset }
-      : pxProfile.builder.nodePad;
+  const nodePad = scale.units.builder.nodePad;
+  let pad = nodePad;
+  if (scale.cells) pad = { x: CELL.side + nodePad.x, y: CELL.side + nodePad.y };
+  else if (useCase.shape === 'ellipse') pad = { x: PX.ellipse.inset, y: PX.ellipse.inset };
   return withParent(
     {
       kind: 'usecase',
@@ -457,11 +544,15 @@ function useCaseView(
 
 /** v12's generic `note` shape: the label, at least `minNodeWidth` wide, padded. */
 function noteView(note: UsecaseNote, target: string, parts: Parts): NoteView {
-  const { measure, config } = parts;
+  const { measure, scale } = parts;
   const style = measure.styleOf([]);
   const font = measure.font(parts.fonts.base, style);
-  const label = measure.label(note.label, font, config.wrappingWidth, style, note.labelType);
-  const pad = PX.note.pad;
+  const label = measure.label(note.label, font, scale.wrap, style, note.labelType);
+  // In cells a box: its border and the profile's node padding.
+  const nodePad = scale.units.builder.nodePad;
+  const pad = scale.cells
+    ? { x: CELL.side + nodePad.x, y: CELL.side + nodePad.y }
+    : { x: PX.note.pad, y: PX.note.pad };
   return {
     kind: 'note',
     id: note.astId,
@@ -470,26 +561,32 @@ function noteView(note: UsecaseNote, target: string, parts: Parts): NoteView {
     target,
     style,
     font,
-    width: Math.max(label.width, config.minNodeWidth) + 2 * pad,
-    height: label.height + 2 * pad,
+    width: Math.max(label.width, scale.minWidth) + 2 * pad.x,
+    height: label.height + 2 * pad.y,
   };
 }
 
 /**
  * v12 `usecaseJsonTable`: a title row (the id, at least `minNodeWidth` wide), then one row per
- * key and value, each cell padded; the value column takes what the title leaves over.
+ * key and value, each cell padded; the value column takes what the title leaves over. In cells
+ * (D478) a key/value box as ER's tables: a border, a rule under the title and a divider between
+ * the columns take a cell each, and the cells take the profile's node padding.
  */
 function jsonView(table: UsecaseJsonTable, parts: Parts): JsonTableView {
-  const jsonPx = PX.json;
-  const { measure, config } = parts;
+  const { measure, scale } = parts;
+  const nodePad = scale.units.builder.nodePad;
+  const jsonPx = scale.cells
+    ? { cellPadX: nodePad.x, cellPadY: nodePad.y, border: CELL.side, rule: CELL.side }
+    : { ...PX.json, rule: 0 };
   const style = measure.styleOf(table.classes, table.styles);
   const font = measure.font(parts.fonts.base, style);
   const title = measure.label(table.id, font, Infinity, style);
   const cells = table.rows.map((row) => ({
     row,
-    key: measure.label(row.key, font, jsonPx.cellWrap, style),
-    value: measure.label(row.value, font, jsonPx.cellWrap, style),
+    key: measure.label(row.key, font, scale.cellWrap, style),
+    value: measure.label(row.value, font, scale.cellWrap, style),
   }));
+  const rule = cells.length > 0 ? jsonPx.rule : 0;
   let keys = 0;
   let values = 0;
   for (const c of cells) {
@@ -497,10 +594,10 @@ function jsonView(table: UsecaseJsonTable, parts: Parts): JsonTableView {
     values = Math.max(values, c.value.width);
   }
   const keyWidth = keys + 2 * jsonPx.cellPadX;
-  const titleWidth = Math.max(title.width, config.minNodeWidth) + 2 * jsonPx.cellPadX;
-  const inner = Math.max(titleWidth, keyWidth + values + 2 * jsonPx.cellPadX);
+  const titleWidth = Math.max(title.width, scale.minWidth) + 2 * jsonPx.cellPadX;
+  const inner = Math.max(titleWidth, keyWidth + jsonPx.rule + values + 2 * jsonPx.cellPadX);
   const titleHeight = title.height + 2 * jsonPx.cellPadY;
-  let top = jsonPx.border + titleHeight;
+  let top = jsonPx.border + titleHeight + rule;
   const rows = cells.map((c): JsonRowView => {
     const height = Math.max(c.key.height, c.value.height) + 2 * jsonPx.cellPadY;
     const view = { ...c, top, height };
@@ -517,28 +614,25 @@ function jsonView(table: UsecaseJsonTable, parts: Parts): JsonTableView {
     border: jsonPx.border,
     titleHeight,
     keyWidth,
-    valueWidth: inner - keyWidth,
+    valueWidth: inner - keyWidth - jsonPx.rule,
     rows,
     width: inner + 2 * jsonPx.border,
     height: top + jsonPx.border,
   };
 }
 
-/** v12 `usecaseSystemBoundary`: the title over the content; a package's in its tab. */
+/**
+ * v12 `usecaseSystemBoundary`: the title over the content; a package's in its tab. In cells
+ * (D478) every boundary is a frame with its title on the top border.
+ */
 function boundaryView(boundary: UsecaseBoundary, parts: Parts): BoundaryView {
   const boundaryPx = PX.boundary;
-  const { measure } = parts;
+  const { measure, scale } = parts;
   const style = measure.styleOf(boundary.classes, boundary.styles);
   const font = measure.font(parts.fonts.base, style);
-  const label = measure.label(
-    boundary.label,
-    font,
-    boundaryPx.titleWrap,
-    style,
-    boundary.labelType
-  );
+  const label = measure.label(boundary.label, font, scale.titleWrap, style, boundary.labelType);
   const view: BoundaryView = { id: boundary.astId, boundary, label, style, font };
-  if (boundary.type !== 'package') return view;
+  if (boundary.type !== 'package' || scale.cells) return view;
   return {
     ...view,
     tab: {
@@ -558,8 +652,8 @@ function relationView(
   target: string,
   parts: Parts
 ): RelationEdgeView {
-  const { measure } = parts;
-  const text = relationText(r);
+  const { measure, scale } = parts;
+  const text = relationText(r, scale.quotes);
   const style = measure.styleOf(r.classes, r.styles);
   const font = measure.font(parts.fonts.edge, style);
   const type = r.type === 'association' ? r.labelType : 'text';
@@ -571,7 +665,7 @@ function relationView(
     target,
     dotted: r.type === 'include' || r.type === 'extend',
     ...(text !== undefined
-      ? { label: measure.label(text, font, pxProfile.builder.edgeWrap, style, type) }
+      ? { label: measure.label(text, font, scale.edgeWrap, style, type) }
       : {}),
     style,
     font,
@@ -586,28 +680,30 @@ interface Views {
   readonly edges: readonly UsecaseEdgeView[];
 }
 
-/** The graph the layout engine gets. */
-function layoutGraph(views: Views, config: UsecaseLayoutConfig): LayoutGraph {
-  const builder = pxProfile.builder;
+/**
+ * The graph the layout engine gets. In cells (text output) on the grid: spacing in cells, a px
+ * spacing converted only when an author set it, and with the spacing a width budget that turns
+ * LR to TB uses (as ER's); frames take the profile's group padding, with the title on the border.
+ */
+function layoutGraph(views: Views, config: UsecaseLayoutConfig, scale: Scale): LayoutGraph {
+  const { units, cells } = scale;
+  const builder = units.builder;
   const across = sideways(views.direction);
-  const pad = PX.boundary.pad;
-  return {
+  const graph: LayoutGraph = {
     direction: views.direction,
     nodes: [...views.nodes.values()].map((v): LayoutNode => {
       const node: LayoutNode = { id: v.id, width: v.width, height: v.height, shape: v.kind };
       if (v.parent !== undefined) node.parent = v.parent;
       // Ends on an oval keep to the middle half of its side, where the oval is near the box,
       // so clipping them to the oval (`clip.ts`) moves them little.
-      if (isOval(v)) node.span = (across ? v.height : v.width) / 2;
+      if (isOval(v) && !cells) node.span = (across ? v.height : v.width) / 2;
       return node;
     }),
     groups: views.boundaries.map((g): LayoutGroup => {
-      const group: LayoutGroup = {
-        id: g.id,
-        padding: { top: pad, right: pad, bottom: pad, left: pad },
-      };
+      const titled = g.tab !== undefined || g.label.height > 0;
+      const group: LayoutGroup = { id: g.id, padding: framePadding(scale, titled) };
       if (g.tab) group.title = { ...g.tab };
-      else if (g.label.height > 0) group.title = { width: g.label.width, height: g.label.height };
+      else if (titled) group.title = { width: g.label.width, height: g.label.height };
       return group;
     }),
     edges: views.edges.map((e): LayoutEdge => {
@@ -627,6 +723,42 @@ function layoutGraph(views: Views, config: UsecaseLayoutConfig): LayoutGraph {
     spacing: { node: config.nodeSpacing, rank: config.rankSpacing, edge: builder.spacing.edge },
     diagramPadding: config.diagramPadding,
     headRoom: builder.headRoom,
-    metrics: pxProfile.engine,
+    metrics: units.engine,
   };
+  if (!cells) return graph;
+  // usecase.nodeSpacing runs across the flow, rankSpacing along it.
+  const set = (key: 'nodeSpacing' | 'rankSpacing'): number | undefined =>
+    config[key] === USECASE_CONFIG_DEFAULTS[key] ? undefined : config[key];
+  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => {
+    const n = set('nodeSpacing');
+    const r = set('rankSpacing');
+    const { spacing, minSpacing } = builder;
+    return {
+      node: n === undefined ? spacing.node : fromPx(units, n, node, minSpacing.node),
+      rank: r === undefined ? spacing.rank : fromPx(units, r, rank, minSpacing.rank),
+      edge: spacing.edge,
+    };
+  };
+  const along = across ? 'x' : 'y';
+  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
+  const down = spacingOn('y', 'x');
+  return {
+    ...graph,
+    spacing,
+    ...(down.node !== spacing.node || down.rank !== spacing.rank ? { turnedSpacing: down } : {}),
+    // Text output trims the empty margin: the profile's own applies (as ER's and the flowchart's).
+    diagramPadding: builder.diagramPadding,
+    grid: units.grid,
+  };
+}
+
+/**
+ * A boundary's padding: v12's on every side in px, the title in the top one; in cells the
+ * profile's, the title on the top border (as ER's). The engine keeps two cells between a frame
+ * and a member's side, so a two-cell head (`|>`) stays off the frame (pitfall 20).
+ */
+function framePadding({ cells, units }: Scale, titled: boolean): LayoutGroup['padding'] {
+  const pad = cells ? units.builder.groupPad : PX.boundary.pad;
+  const top = cells && titled ? units.builder.titlePad : pad;
+  return { top, right: pad, bottom: pad, left: pad };
 }

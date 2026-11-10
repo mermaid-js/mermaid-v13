@@ -17,10 +17,15 @@ export interface UsecaseLayout extends LayoutModel {
   readonly usecase?: UsecasePrepared;
 }
 
-/** Measures the model, lays it out with `ctx.layout` (default `layered`), clips ends to ovals. */
+/**
+ * Measures the model, lays it out with `ctx.layout` (default `layered`), clips ends to ovals.
+ * With the cell profile (`ctx.units`, text output) the graph is on the grid and nothing is clipped.
+ */
 export function layoutUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): UsecaseLayout {
   const prepared = prepareUsecase(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
+  // On the grid (text output) ends stay in their cells: use cases are drawn `( label )`.
+  if (prepared.graph.grid !== undefined) return { ...laid, usecase: prepared };
   const ends = new Map(prepared.edges.map((e) => [e.id, e]));
   const oval = (id: string): boolean => isOval(prepared.nodes.get(id));
   return { ...clipToOvals(laid, ends, oval), usecase: prepared };

@@ -14,6 +14,8 @@ grammars:
 # languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
 languageBundle:
   renderer:
+    - ascii/
+    - ascii.ts
     - render/
     - layout/
     - theme/

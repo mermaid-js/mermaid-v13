@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { usecase } from '@mermaid-js/diagram-usecase';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -212,12 +212,64 @@ describe('usecase diagrams through the public API (#567)', () => {
     expect(r.svg).toContain('Shop use cases');
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError until T7', async () => {
+  it('draws as text (#569, D478): figures, ( label ), frames, «include», in both charsets', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('usecase', 'svg')).toBe(true);
-    expect(m.supportsFormat('usecase', 'ascii')).toBe(false);
-    const e = await rejection(m.render('u12', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('usecase');
+    expect(m.supportsFormat('usecase', 'ascii')).toBe(true);
+    const result = await m.render('u12', TEXT, { format: 'ascii' });
+    expect(result).toMatchObject({
+      format: 'ascii',
+      diagramType: 'usecase',
+      columns: 58,
+      rows: 13,
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.text).toBe(
+      [
+        '             ┌───── Shop ────┐',
+        '             │               │',
+        '             │   ╭───────╮   │                    ╭──────╮',
+        '      ┌──────┼──►( Login )┄┄┄┼┄┄┄┄┄┄┄ «include» ┄►( Auth )',
+        '  O   │      │   ╰───────╯   │                    ╰──────╯',
+        ' /|\\──┘      │               │',
+        ' / \\         └───────────────┘',
+        'User──┐',
+        '      │',
+        '      │ ╭─────────────────────────╮',
+        '      └►( Pay for the whole order )',
+        '        (    with a saved card    )',
+        '        ╰─────────────────────────╯',
+      ].join('\n')
+    );
+    const ascii = m.renderSync(TEXT, { format: 'ascii', config: { ascii: { charset: 'ascii' } } });
+    expect(ascii.text).toContain('( Login )...+....... <<include>> .>( Auth )');
+    expect(ascii.text).not.toMatch(/[\u2500-\u25ff]/u);
+    // A text render leaves the instance's SVG render as a fresh one draws it.
+    expect((await m.render('u12', TEXT)).svg).toBe((await createMermaid().render('u12', TEXT)).svg);
+  });
+
+  it('never crops: wider than ascii.maxWidth turns LR to TB, then warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const wide = await m.render('u13', TEXT, { format: 'ascii', ascii: { maxWidth: 20 } });
+    expect(wide.columns).toBe(41);
+    expect(wide.text.split('\n')[0]).toBe('                O');
+    expect(codes(wide)).toEqual(['ASCII_TOO_WIDE']);
+    const fits = await m.render('u13', TEXT, { format: 'ascii', ascii: { maxWidth: 80 } });
+    expect(fits.columns).toBe(58);
+    expect(fits.warnings).toEqual([]);
+  });
+
+  it('warns for what text output cannot honour: another engine, usecase fonts and options (pitfall 22)', async () => {
+    const text =
+      '---\nconfig:\n  layout: elk\n  usecase:\n    actorFontSize: 20\n    useMaxWidth: false\n---\n' +
+      TEXT;
+    const m = createMermaid();
+    const r = await m.render('u14', text, { format: 'ascii' });
+    expect(r.warnings.map((w) => [w.code, (w as { feature?: string }).feature])).toEqual([
+      ['ASCII_DROPPED', 'layout'],
+      ['ASCII_DROPPED', 'config'],
+    ]);
+    expect(r.warnings[1]!.message).toContain('actorFontSize, useMaxWidth');
+    expect(r.text).toBe((await m.render('u14', TEXT, { format: 'ascii' })).text);
   });
 });

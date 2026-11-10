@@ -60,6 +60,17 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     ).toEqual([]);
   });
 
+  // #569: usecase's text entry is its own lazily imported chunk; its SVG render (core and the
+  // plugin chunk) loads none of it, though the plugin's layout lays out in cells too.
+  it('a usecase SVG render loads the usecase plugin, and no ascii module', () => {
+    const plugin = chunkOf(prod, 'packages/diagram-usecase/src/index.ts');
+    expect(plugin).toBeDefined();
+    const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+    const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+    expect(inputs).toContain('packages/diagram-usecase/src/plugin.ts');
+    expect(inputs.filter(isAsciiModule)).toEqual([]);
+  });
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -70,7 +81,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
+    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban', 'usecase'])
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -85,6 +96,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
       'kanban',
       'packet',
       'sequence',
+      'usecase',
     ]);
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);

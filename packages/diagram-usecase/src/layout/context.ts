@@ -1,6 +1,6 @@
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
@@ -11,6 +11,11 @@ import type { Theme } from '@mermaid-js/core/theme';
 export interface UsecaseLayoutContext {
   readonly config: ResolvedConfig;
   readonly measurer: Measurer;
+  /**
+   * The unit profile; px when left out. The cell profile (text output, `grid` set) sizes every
+   * shape in character cells from the cell table and lays the graph out on the grid (T7).
+   */
+  readonly units?: UnitProfile;
   /** Gives the font (`fontFamily`, `fontSize`) of notes, tables, titles and edge labels. */
   readonly theme: Theme;
   /** Config warnings (`USECASE_CONFIG_IGNORED`) and style warnings. */

@@ -23,7 +23,7 @@ changes (spec #517):
 | A `usecase` length, font or `colorScheme` of the wrong type reached the renderer as it was (`wrappingWidth: "wide"`, `actorFontSize: -1`) | A length is a number or a numeric string, from the schema's minimum up to 10000; a weight one of the schema's; a family one the style check allows; `colorScheme` `role` or `rotate`. Anything else draws with the default and one `USECASE_CONFIG_IGNORED` warning per key | Pitfall 22 |
 | A styled `font-size` (`classDef`, `style`) in `vw`, `vh`, `0` or 10000px and up was drawn as given | Measured and drawn at the element's default size, with one `USECASE_STYLE_IGNORED` warning per value: the layout measures every label before drawing it | Pitfalls 16, 22 |
 | `usecase.theme` (default `redux-color`) chose the theme when no other layer set one | The same: honoured with v12's default; a `theme` from `initialize()` or the text wins over it, and `usecase.theme` over the top-level `theme` within a layer | P2 |
-| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+| No text output | `format: 'ascii'` draws the diagram as text ([ASCII output](ascii.md#usecase-diagrams)): actors as a figure, use cases as `( label )`, boundaries as frames | D320, D478 |
 
 ## Usecase SVG structure
 
