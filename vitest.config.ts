@@ -26,6 +26,13 @@ const GANTT_ZONES = { 'gantt-utc': 'UTC', 'gantt-la': 'America/Los_Angeles' };
 // (`VITEST_MAX_WORKERS` overrides the project's single worker too: they still run last.)
 const LANGUAGE_BUDGET_SPECS = ['packages/bench/src/language-budget*.spec.ts'];
 
+// The stress specs check that a parser or layout is linear in its input as a ratio of two
+// timings, against a bar a busy CI runner's noise can cross (24.55 and 24.94 against 24, a
+// small run read as 0 ms). On CI a failed one is measured again, up to twice, before it
+// fails; locally a failure shows at once. The budget specs above are retried the same way.
+const TIMING_SPECS = ['packages/*/src/**/*stress*.spec.ts', 'packages/*/src/**/*-linear.spec.ts'];
+const timingRetry = process.env.CI ? 2 : 0;
+
 // One root config for the whole workspace. Tests run in plain Node: there is no DOM
 // shim anywhere (R-ARCH-1).
 export default defineConfig({
@@ -48,7 +55,18 @@ export default defineConfig({
             'e2e/helpers/argos-metadata.spec.ts',
             'e2e/helpers/platform-harness.spec.ts',
           ],
-          exclude: [...exclude, ...GANTT_SPECS, ...LANGUAGE_BUDGET_SPECS],
+          exclude: [...exclude, ...GANTT_SPECS, ...LANGUAGE_BUDGET_SPECS, ...TIMING_SPECS],
+        },
+      },
+      {
+        resolve,
+        ssr,
+        test: {
+          name: 'timing',
+          environment: 'node',
+          include: TIMING_SPECS,
+          exclude: [...exclude, ...GANTT_SPECS],
+          retry: timingRetry,
         },
       },
       ...Object.entries(GANTT_ZONES).map(([name, TZ]) => ({
@@ -67,6 +85,7 @@ export default defineConfig({
           fileParallelism: false,
           maxWorkers: 1,
           sequence: { groupOrder: 1 },
+          retry: timingRetry,
         },
       },
     ],
