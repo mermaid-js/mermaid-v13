@@ -1,3 +1,4 @@
+// cspell:words ackend LRTB
 /**
  * Architecture ids (D508): what `isValidId` accepts as a new id. Services, junctions and groups
  * share one namespace and one spelling, so the rule is the same for every kind. The lexer
