@@ -18,7 +18,7 @@ import {
   type FontKey,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
-import type { Element, Relation, Requirement, RequirementModel } from '../model.ts';
+import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
 import {
   markerGeometry,
@@ -54,11 +54,6 @@ export interface LineView {
    */
   readonly cut?: number;
 }
-
-/** A box of either kind: `kind` says which model record `box` is. */
-export type BoxOf =
-  | { readonly kind: 'requirement'; readonly box: Requirement }
-  | { readonly kind: 'element'; readonly box: Element };
 
 /** A requirement or an element measured as v12's `requirementBox`. */
 export type BoxView = BoxOf & BoxMeasures;
@@ -161,7 +156,7 @@ export const angled = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
 /** v12's head and body lines, in order: an empty field draws nothing. */
 export function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
   const [kind, fields]: [string, [LinePart, string, string][]] =
-    of.kind === 'requirement'
+    of.is === 'requirement'
       ? [
           of.box.kind,
           [
@@ -376,8 +371,8 @@ export function prepareRequirement(
   const cells = ctx.units?.grid === undefined ? undefined : ctx.units;
   const view = (of: BoxOf): BoxView => (cells ? cellBoxView(of, env, cells) : boxView(of, env));
   const boxes = [
-    ...model.requirements.map((box) => view({ kind: 'requirement', box })),
-    ...model.elements.map((box) => view({ kind: 'element', box })),
+    ...model.requirements.map((box) => view({ is: 'requirement', box })),
+    ...model.elements.map((box) => view({ is: 'element', box })),
   ];
   const relations: RelationView[] = [];
   model.relations.forEach((r, n) => {

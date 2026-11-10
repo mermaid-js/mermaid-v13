@@ -3,14 +3,15 @@
  * ({@link Occurrence}); {@link symbolsOf} settles kinds and roles once the model is built.
  */
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
-import type { RequirementModel } from '../model.ts';
+import { boxesByName, boxNamed } from '../model.ts';
+import type { BoxKind, RequirementModel } from '../model.ts';
 
 /**
  * A name or class name as read: a box's own name (`requirement`, `element`), a name a statement
  * refers to (`name`), a class name a `classDef` defines (`classDef`) or one it applies (`class`).
  */
 export interface Occurrence {
-  as: 'requirement' | 'element' | 'name' | 'classDef' | 'class';
+  as: BoxKind | 'name' | 'classDef' | 'class';
   name: string;
   range: Range;
 }
@@ -27,8 +28,7 @@ export function symbolsOf(
   occurrences: readonly Occurrence[],
   model: Pick<RequirementModel, 'requirements' | 'elements'>
 ): SymbolOccurrence[] {
-  const requirements = new Set(model.requirements.map((r) => r.name));
-  const elements = new Set(model.elements.map((e) => e.name));
+  const byName = boxesByName(model);
   const boxes = new Set<string>();
   const classes = new Set<string>();
   const out: SymbolOccurrence[] = [];
@@ -37,7 +37,7 @@ export function symbolsOf(
     let kind: string;
     let role: 'def' | 'ref' = 'ref';
     if (o.as === 'name') {
-      kind = requirements.has(o.name) || !elements.has(o.name) ? 'requirement' : 'element';
+      kind = boxNamed(o.name, byName)?.is ?? 'requirement';
     } else if (o.as === 'requirement' || o.as === 'element') {
       kind = o.as;
       if (!boxes.has(o.name)) role = 'def';

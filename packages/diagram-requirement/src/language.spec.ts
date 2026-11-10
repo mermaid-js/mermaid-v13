@@ -326,6 +326,26 @@ describe('requirement language facet: hover (D93)', () => {
     expect(hover(at(13, 'sim'))).toBe(want);
   });
 
+  it('counts the relations that reach the box, not those that share its name (D434)', () => {
+    // `a` names both: the relations reach the requirement, so the element has none.
+    const shared = [
+      'requirementDiagram',
+      'requirement a {',
+      '}',
+      'element a {',
+      '}',
+      'a - traces -> b',
+    ];
+    shared.push('requirement b {', '}', '');
+    const on = (line: number) => {
+      const lines = [...shared];
+      lines[line] = lines[line]!.replace(' a ', ' ¦a ');
+      return lines.join('\n');
+    };
+    expect(hover(on(1))).toMatch(/\n\n1 relation$/);
+    expect(hover(on(3))).toBe('**Element** `a`\n\nNo fields.\n\n0 relations');
+  });
+
   it("shows a class's styles", () => {
     expect(hover(at(13, 'hot'))).toBe(
       '**class** `hot`\n\n`classDef hot fill:#f96,stroke:#333`\n\nUsed by 1 box'

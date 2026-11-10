@@ -12,7 +12,8 @@ import type {
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
 import { requirementDocs } from '../generated/docs.ts';
-import type { Element, Requirement, RequirementModel } from '../model.ts';
+import { boxesByName, boxNamed } from '../model.ts';
+import type { BoxOf, RequirementModel } from '../model.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';
@@ -22,17 +23,11 @@ const fieldList = (fields: readonly (readonly [key: string, value: string])[]): 
   return set.length === 0 ? 'No fields.' : set.map(([k, v]) => `${k}: ${code(v)}`).join(' · ');
 };
 
-/** A box and which of the two it is. */
-type Box =
-  | { readonly is: 'requirement'; readonly box: Requirement }
-  | { readonly is: 'element'; readonly box: Element };
-
 /** The box `name` denotes: the requirement first (v12), the element for an element's own name. */
-function findBox(name: string, kind: string, model: RequirementModel): Box | undefined {
-  const req = model.requirements.find((r) => r.name === name);
-  const el = model.elements.find((e) => e.name === name);
-  if (el && (kind === 'element' || !req)) return { is: 'element', box: el };
-  return req ? { is: 'requirement', box: req } : undefined;
+function findBox(name: string, kind: string, model: RequirementModel): BoxOf | undefined {
+  const byName = boxesByName(model);
+  const own = kind === 'element' ? byName.elements.get(name) : undefined;
+  return own ? { is: 'element', box: own } : boxNamed(name, byName);
 }
 
 function boxHover(name: string, kind: string, model: RequirementModel): string | undefined {
@@ -56,7 +51,9 @@ function boxHover(name: string, kind: string, model: RequirementModel): string |
             [spelling(T.DocRef), found.box.docRef],
           ]),
         ];
-  const relations = model.relations.filter((r) => r.src === name || r.dst === name).length;
+  // By resolved end, not name: an element sharing a requirement's name has none of its relations.
+  const { ast } = found.box;
+  const relations = model.relations.filter((r) => r.from === ast || r.to === ast).length;
   const facts = [plural(relations, 'relation')];
   const classes = [...new Set(found.box.classes.filter((c) => c !== 'default'))];
   if (classes.length > 0) {

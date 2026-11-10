@@ -103,7 +103,7 @@ describe('the requirement box (requirementBox.ts)', () => {
 
   it('draws an element with Type and Doc Ref', () => {
     const box = lay(FULL).layout.requirement!.boxes[1]!;
-    expect(box.kind).toBe('element');
+    expect(box.is).toBe('element');
     expect(box.lines.map(text)).toEqual([
       '<<Element>>',
       'test_entity',

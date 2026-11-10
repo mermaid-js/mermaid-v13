@@ -10,8 +10,8 @@ export function requirementLabels(model: RequirementModel): readonly string[] {
   const box = (lines: ReturnType<typeof linesOf>, name: string): void => {
     out.push(lines.kind, name, ...lines.body.map(([, text]) => text));
   };
-  for (const r of model.requirements) box(linesOf({ kind: 'requirement', box: r }), r.name);
-  for (const e of model.elements) box(linesOf({ kind: 'element', box: e }), e.name);
+  for (const r of model.requirements) box(linesOf({ is: 'requirement', box: r }), r.name);
+  for (const e of model.elements) box(linesOf({ is: 'element', box: e }), e.name);
   for (const r of model.relations)
     if (r.from !== undefined && r.to !== undefined) out.push(angled(r.kind));
   if (model.title?.trim()) out.push(model.title.trim());

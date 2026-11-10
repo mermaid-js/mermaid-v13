@@ -28,7 +28,9 @@ import {
   REQUIREMENT_STYLE_DROPPED,
   REQUIREMENT_UNKNOWN_NODE,
 } from '../codes.ts';
+import { boxNamed } from '../model.ts';
 import type {
+  BoxesByName,
   Element,
   Relation,
   RelationshipKind,
@@ -142,6 +144,10 @@ function quotedList(names: readonly string[]): string {
 export class RequirementBuilder {
   private readonly requirements = new Map<string, Writable<Requirement>>();
   private readonly elements = new Map<string, Writable<Element>>();
+  private readonly byName: BoxesByName<Writable<Requirement>, Writable<Element>> = {
+    requirements: this.requirements,
+    elements: this.elements,
+  };
   private readonly relations: { kind: RelationshipKind; src: string; dst: string; at: At }[] = [];
   private readonly classes = new Map<string, Writable<RequirementClass>>();
   /** Boxes in definition order, both kinds: what a `classDef default` reached. */
@@ -278,8 +284,7 @@ export class RequirementBuilder {
     const elements = [...this.elements.values()];
     requirements.forEach((r, k) => (r.slot = k));
     elements.forEach((e, k) => (e.slot = requirements.length + k));
-    const resolve = (name: string) =>
-      this.requirements.get(name)?.ast ?? this.elements.get(name)?.ast;
+    const resolve = (name: string) => this.lookup(name)?.ast;
     const relations = this.relations.map(
       ({ kind, src, dst, at }): Relation => ({
         ast: at.ast,
@@ -351,7 +356,7 @@ export class RequirementBuilder {
 
   /** A box of `name`: the requirement, else the element (v12's order). */
   private lookup(name: string): Box | undefined {
-    return this.requirements.get(name) ?? this.elements.get(name);
+    return boxNamed(name, this.byName)?.box;
   }
 
   /** Record that `box` has class `name`. */

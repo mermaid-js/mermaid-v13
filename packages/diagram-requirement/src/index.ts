@@ -46,7 +46,6 @@ export {
 } from './layout/index.ts';
 export type {
   BoxMeasures,
-  BoxOf,
   BoxView,
   LinePart,
   LineView,
