@@ -1,0 +1,37 @@
+---
+config:
+  theme: default
+description: >-
+  one representative agentflow in the default theme, the classic family (D152, D227): classic geometry, no shadow, no gradient, where v12's forced `look: neo` drew neo's: a connector, a global refdoc, two open
+  flows holding an input, a tool, a decision, a task and an action, a collapsed flow drawn as a
+  card, and every link (sequence, labelled sequence, failure, reference)
+---
+agentflow-beta TB
+  connector llm["LLM API"]
+
+  global
+    policy["Support Policy"]@{ shape: refdoc }
+  end
+
+  flow triage["Triage Agent"]
+    ticket["ticket"]@{ shape: input }
+    classify["classify_intent"]@{ shape: tool }
+    severity["Severity?"]@{ shape: decision }
+    ticket --> classify --> severity
+  end
+
+  flow resolve["Resolution Agent"]
+    draft["draft_reply"]@{ shape: task }
+    send["send_reply"]@{ shape: action }
+    draft --> send
+  end
+
+  flow audit["Audit"]
+    record["record_outcome"]@{ shape: task }
+  end
+  audit@{ view: "collapsed" }
+
+  severity -->|"low"| resolve
+  severity --x audit
+  classify -.- policy
+  resolve --> audit

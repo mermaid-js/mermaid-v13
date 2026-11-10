@@ -1,0 +1,122 @@
+[
+  {
+    "id": "e2e/diagrams/agentflow/pr-check/13-should-render-the-short-input-form.mmd",
+    "inputHash": "sha256:7589d5166509dba6",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/agentflow-shape-catalogue.spec.ts#7",
+    "inputHash": "sha256:2cdb19ce313a7f91",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/agentflow-comments.spec.ts#11",
+    "inputHash": "sha256:67a334d9c21ba627",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "v12-specs/parser/agentflow-mappings.spec.ts#2",
+    "inputHash": "sha256:e6d73932a7d8f392",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/shape-09",
+    "inputHash": "sha256:75c380ed499a8f95",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/short-input",
+    "inputHash": "sha256:2debfd4200dcac48",
+    "kind": "model",
+    "reason": "v12 fixed `[/…/]` after mermaid@12.2.0 (`2ff8286f9`): a parallelogram of kind input, shape `lean-right`, where 12.2.0 drew a rounded box and reported SHAPE_UNSUPPORTED for `lean_right` (D462, D316).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-text",
+    "inputHash": "sha256:f3672b24748b6e30",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-text-start",
+    "inputHash": "sha256:248fd0451bb2c44f",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-text-end",
+    "inputHash": "sha256:78d76a45c7229ca0",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-trap",
+    "inputHash": "sha256:b7784fc30f802d82",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-round",
+    "inputHash": "sha256:408c7821a334883b",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-diamond",
+    "inputHash": "sha256:3794bc1ba0d9479a",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-pipe",
+    "inputHash": "sha256:d8591bdf053a74d4",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/percent-two",
+    "inputHash": "sha256:ae4b3b7cbfc8c155",
+    "kind": "accept",
+    "reason": "A lone `%` in a label is label text, as the jison rules `%(?!%)` intend and flowchart reads it; mermaid@12.2.0 compiled them to `(?!)` and stops with a lexical error (D463).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/model-yaml-anchors",
+    "inputHash": "sha256:3c513ddc740e4648",
+    "kind": "reject",
+    "reason": "Core's YAML reader rejects anchors and aliases (`&k`, `*k`) in `@{ … }`, as it does for flowchart's shape data and front matter; js-yaml resolved them (spec #523, a listed difference).",
+    "owner": "#546",
+    "since": "2026-11-09"
+  }
+]

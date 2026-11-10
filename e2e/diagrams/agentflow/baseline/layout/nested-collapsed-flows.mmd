@@ -1,0 +1,27 @@
+---
+description: >-
+  Collapsed flows inside an open one and inside each other: everything inside the outer
+  collapsed flow, the inner collapsed flow included, folds into the outer card, and edges
+  from outside end at the outermost collapsed flow that hides their end.
+---
+agentflow-beta LR
+  flow team["Team"]
+    lead["Lead"]
+    flow research["Research"]
+      flow sources["Sources"]
+        web["Web search"]@{ shape: tool }
+        docs["Docs"]@{ shape: refdoc }
+      end
+      sources@{ view: "collapsed" }
+      summarise["Summarise"]
+    end
+    research@{ view: "collapsed" }
+    flow review["Review"]
+      check{"Good enough?"}
+    end
+  end
+  lead --> web
+  docs --> summarise
+  summarise --> check
+  check -->|no| lead
+  check --x lead

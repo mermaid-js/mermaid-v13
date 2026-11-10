@@ -1,0 +1,7 @@
+@ 3:3  |a --> b
+  prepare: 3:3-3:4 "a"; rename to "flow":
+  refused: 'flow' is a keyword.
+@ 4:5  fl|ow f
+  prepare: refused: There is no id or class name here to rename.
+@ 6:6  glo|bal
+  prepare: refused: There is no id or class name here to rename.

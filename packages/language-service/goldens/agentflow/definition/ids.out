@@ -1,0 +1,16 @@
+@ 5:18  think e1@--x |read
+  -> 4:5-4:9 "read"
+@ 6:5  |inbox --> think
+  -> 2:13-2:18 "inbox"
+@ 8:6  pla|n --> done
+  -> 3:8-3:12 "plan"
+@ 10:6  thi|nk:::hot
+  -> 4:14-4:19 "think"
+@ 10:12  think:::h|ot
+  -> 9:12-9:15 "hot"
+@ 11:11  click th|ink "https://example.com"
+  -> 4:14-4:19 "think"
+@ 12:9  style |plan fill:#eee
+  -> 3:8-3:12 "plan"
+@ 14:4  e|1@{ animate: true }
+  -> 5:11-5:13 "e1"

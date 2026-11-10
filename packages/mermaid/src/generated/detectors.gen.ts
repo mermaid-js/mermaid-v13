@@ -6,7 +6,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
   { type: 'architecture', pattern: /^\s*architecture/ },
-  { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
+  { type: 'agentflow', pattern: /^\s*agentflow-beta\b/, id: 'agentflow', formats: ['svg', 'ascii'] },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   { type: 'kanban', pattern: /^\s*kanban/, id: 'kanban', formats: ['svg', 'ascii'] },
   { type: 'classDiagram', pattern: /^\s*classDiagram/, id: 'class', formats: ['svg'] },

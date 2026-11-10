@@ -1,0 +1,12 @@
+agentflow-beta TB
+  a@{ shape: cylinder }
+  b@{ shape: cloud }
+  c((circle))
+  flow A["Flow A"]
+    a1["Task A1"]
+    a1 --> B
+  end
+  flow B["Flow B"]
+    b1["Task B1"]
+    b1 --> A
+  end

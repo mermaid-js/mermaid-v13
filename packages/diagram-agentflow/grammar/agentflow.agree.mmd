@@ -1,0 +1,22 @@
+---
+title: Agreement
+config:
+  theme: dark
+---
+agentflow-beta LR
+  accDescr {
+    two lines
+    of description
+  }
+  connector inbox["Inbox"]
+  flow plan[Plan]@{ view: collapsed }
+    read@{ shape: input } --> think{"Think"}
+    think --x retry
+    think -.- spec@{ shape: refdoc,
+        label: "Spec" }
+  end
+  global
+    log@{ shape: tool }
+  end
+  classDef hot fill:#f00
+  class read,think hot
