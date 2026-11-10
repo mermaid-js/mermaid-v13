@@ -1,0 +1,57 @@
+@ 1:16  architecture-be|ta
+  1:1-1:18 "architecture-beta"
+  | **`architecture-beta`**
+  |
+  | `architecture-beta`: starts an architecture diagram.
+@ 2:5  ti|tle Shop
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Shop`: the title, kept for accessibility tools but not drawn (the last one wins).
+@ 3:6  acc|Title: Shop
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:5  ac|cDescr: The shop
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
+@ 5:6  gro|up api(cloud)[API]
+  5:3-5:8 "group"
+  | **`group`**
+  |
+  | `group id(icon)[Label] in parent`: a group, drawn as a dashed box around what is in it, with an optional icon and label. A parent group is declared before the group.
+@ 6:7  serv|ice db(database) in api
+  6:3-6:10 "service"
+  | **`service`**
+  |
+  | `service id(icon)[Label] in group`: a service, drawn as its icon with the label below; a text icon in quotes (`service id "text"[Label]`) draws the text in place of an icon.
+@ 6:25  service db(database) i|n api
+  6:24-6:26 "in"
+  | **`in`**
+  |
+  | `in g`: places a service, junction or group in the group `g`, declared before it when it is a group.
+@ 7:7  junc|tion hub
+  7:3-7:11 "junction"
+  | **`junction`**
+  |
+  | `junction id in group`: a point where edges meet, drawn as nothing, optionally in a group.
+@ 8:6  ali|gn row db hub
+  8:3-8:8 "align"
+  | **`align`**
+  |
+  | `align row a b` or `align column a b c`: lines up at least two services or junctions in a row or a column.
+@ 8:10  align r|ow db hub
+  8:9-8:12 "row"
+  | **`row`**
+  |
+  | `align row a b`: the members share a row.
+@ 9:12  align col|umn db hub
+  9:9-9:15 "column"
+  | **`column`**
+  |
+  | `align column a b`: the members share a column.
+@ 10:11  title Sh|op
+  none

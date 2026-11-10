@@ -25,6 +25,7 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     section: 'architecture',
     pattern: /^\s*architecture/,
     detector: (text) => /^\s*architecture/.test(text),
+    load: () => import('@mermaid-js/diagram-architecture/language').then((m) => m.language),
   },
   {
     type: 'agentflow',
@@ -255,4 +256,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'agentflow' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

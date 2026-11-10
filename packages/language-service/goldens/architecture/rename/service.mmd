@@ -1,0 +1,8 @@
+%% rename-to: store
+architecture-beta
+  group api[API]
+  service |db(database) in api
+  junction hub in api
+  db:L -- R:hub
+  hub{group}:B --> T:db
+  align row hub d|b

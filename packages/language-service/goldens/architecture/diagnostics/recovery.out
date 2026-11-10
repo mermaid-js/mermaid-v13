@@ -1,0 +1,4 @@
+2:12-2:13 "(" error UNEXPECTED_CHARACTER: Unexpected character `(`; an icon is a name in parentheses, with no blanks, such as `(database)` or `(logos:aws)`.
+3:12-3:13 "[" error UNCLOSED_LABEL: Unclosed label: the `[` at line 3 has no closing `]` on its line. Add `]` after the label.
+6:8-6:9 "[" error UNCLOSED_LABEL: Unclosed label: the `[` at line 6 has no closing `]` on its line. Add `]` after the label.
+8:3-8:11 "accDescr" error UNCLOSED_ACC_DESCR: Unclosed accessible description: the `accDescr {` at line 8 has no closing `}`. Write `accDescr { … }` or `accDescr: …`.

@@ -1,0 +1,47 @@
+1:1-1:18 "architecture-beta" keyword
+2:3-2:13 "title Shop" keyword
+3:3-3:17 "accTitle: Shop" keyword
+4:3-4:21 "accDescr: The shop" keyword
+5:3-5:8 "group" keyword
+5:9-5:12 "api" variable [declaration, definition]
+5:12-5:19 "(cloud)" string
+5:19-5:24 "[API]" string
+6:3-6:10 "service" keyword
+6:11-6:13 "db" variable [declaration, definition]
+6:13-6:23 "(database)" string
+6:23-6:33 "[Database]" string
+6:34-6:36 "in" keyword
+6:37-6:40 "api" variable
+7:3-7:10 "service" keyword
+7:11-7:14 "web" variable [declaration, definition]
+7:15-7:20 "\"WWW\"" string
+7:20-7:25 "[Web]" string
+7:26-7:28 "in" keyword
+7:29-7:32 "api" variable
+8:3-8:11 "junction" keyword
+8:12-8:15 "hub" variable [declaration, definition]
+9:3-9:15 "%% a comment" comment
+10:3-10:5 "db" variable
+10:5-10:12 "{group}" keyword
+10:12-10:13 ":" operator
+10:13-10:14 "L" keyword
+10:15-10:16 "<" operator
+10:16-10:17 "-" operator
+10:17-10:24 "[reads]" string
+10:24-10:25 "-" operator
+10:25-10:26 ">" operator
+10:27-10:28 "R" keyword
+10:28-10:29 ":" operator
+10:29-10:32 "hub" variable
+11:3-11:6 "web" variable
+11:6-11:7 ":" operator
+11:7-11:8 "B" keyword
+11:9-11:11 "--" operator
+11:11-11:12 ">" operator
+11:13-11:14 "T" keyword
+11:14-11:15 ":" operator
+11:15-11:17 "db" variable
+12:3-12:8 "align" keyword
+12:9-12:12 "row" keyword
+12:13-12:15 "db" variable
+12:16-12:19 "web" variable

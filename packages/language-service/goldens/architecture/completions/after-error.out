@@ -1,0 +1,5 @@
+@ 6:13  db:R -- L:|
+  db node (service) 6:13-6:13 "" -> "db"
+  hub node (junction) 6:13-6:13 "" -> "hub"
+@ 7:16  align row db |
+  hub node (junction) 7:16-7:16 "" -> "hub"

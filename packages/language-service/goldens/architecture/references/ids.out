@@ -1,0 +1,19 @@
+@ 3:11  service |db(database) in api
+  3:11-3:13 "db"
+  5:3-5:5 "db"
+  6:15-6:17 "db"
+  7:16-7:18 "db"
+@ 4:20  junction hub in a|pi
+  2:9-2:12 "api"
+  3:27-3:30 "api"
+  4:19-4:22 "api"
+@ 6:15  hub:B --> T:|db
+  3:11-3:13 "db"
+  5:3-5:5 "db"
+  6:15-6:17 "db"
+  7:16-7:18 "db"
+@ 7:19  align column db |hub
+  4:12-4:15 "hub"
+  5:13-5:16 "hub"
+  6:3-6:6 "hub"
+  7:19-7:22 "hub"

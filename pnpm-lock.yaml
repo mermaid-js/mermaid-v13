@@ -626,6 +626,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:*
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -726,6 +729,9 @@ importers:
       '@mermaid-js/diagram-agentflow':
         specifier: workspace:*
         version: link:../diagram-agentflow
+      '@mermaid-js/diagram-architecture':
+        specifier: workspace:*
+        version: link:../diagram-architecture
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block

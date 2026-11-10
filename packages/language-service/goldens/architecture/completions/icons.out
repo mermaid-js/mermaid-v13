@@ -1,0 +1,29 @@
+@ 2:14  service db |
+  in keyword 2:14-2:14 "" -> "in "
+  (database) constant (built-in icon) 2:14-2:14 "" -> "(database)"
+  (server) constant (built-in icon) 2:14-2:14 "" -> "(server)"
+  (disk) constant (built-in icon) 2:14-2:14 "" -> "(disk)"
+  (internet) constant (built-in icon) 2:14-2:14 "" -> "(internet)"
+  (cloud) constant (built-in icon) 2:14-2:14 "" -> "(cloud)"
+  (unknown) constant (built-in icon) 2:14-2:14 "" -> "(unknown)"
+  (blank) constant (built-in icon) 2:14-2:14 "" -> "(blank)"
+@ 3:14  service db(|
+  (database) constant (built-in icon) 3:13-3:14 "(" -> "(database)"
+  (server) constant (built-in icon) 3:13-3:14 "(" -> "(server)"
+  (disk) constant (built-in icon) 3:13-3:14 "(" -> "(disk)"
+  (internet) constant (built-in icon) 3:13-3:14 "(" -> "(internet)"
+  (cloud) constant (built-in icon) 3:13-3:14 "(" -> "(cloud)"
+  (unknown) constant (built-in icon) 3:13-3:14 "(" -> "(unknown)"
+  (blank) constant (built-in icon) 3:13-3:14 "(" -> "(blank)"
+@ 4:16  service db(da|
+  (database) constant (built-in icon) 4:13-4:16 "(da" -> "(database)"
+@ 5:16  service db(da|)
+  (database) constant (built-in icon) 5:13-5:17 "(da)" -> "(database)"
+@ 6:12  group g(c|
+  (cloud) constant (built-in icon) 6:10-6:12 "(c" -> "(cloud)"
+@ 7:19  service web "W" |
+  in keyword 7:19-7:19 "" -> "in "
+@ 8:14  junction j |
+  in keyword 8:14-8:14 "" -> "in "
+@ 9:22  service x(logos:aws|
+  none

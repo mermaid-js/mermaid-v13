@@ -1,0 +1,19 @@
+@ 5:3  |
+  service keyword 5:3-5:3 "" -> "service "
+  group keyword 5:3-5:3 "" -> "group "
+  junction keyword 5:3-5:3 "" -> "junction "
+  align keyword 5:3-5:3 "" -> "align "
+  title keyword 5:3-5:3 "" -> "title "
+  accTitle keyword 5:3-5:3 "" -> "accTitle: "
+  accDescr: keyword 5:3-5:3 "" -> "accDescr: "
+  accDescr { keyword 5:3-5:3 "" -> "accDescr { }"
+  db node (service) 5:3-5:3 "" -> "db"
+  hub node (junction) 5:3-5:3 "" -> "hub"
+@ 6:5  se|
+  service keyword 6:3-6:5 "se" -> "service "
+@ 7:6  acc|
+  accTitle keyword 7:3-7:6 "acc" -> "accTitle: "
+  accDescr: keyword 7:3-7:6 "acc" -> "accDescr: "
+  accDescr { keyword 7:3-7:6 "acc" -> "accDescr { }"
+@ 8:4  d|
+  db node (service) 8:3-8:4 "d" -> "db"

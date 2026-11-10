@@ -1,0 +1,12 @@
+architecture-beta
+  title Shop
+  accTitle: Shop
+  accDescr: The shop
+  group api(cloud)[API]
+  service db(database)[Database] in api
+  service web "WWW"[Web] in api
+  junction hub
+  %% a comment
+  db{group}:L <-[reads]-> R:hub
+  web:B --> T:db
+  align row db web

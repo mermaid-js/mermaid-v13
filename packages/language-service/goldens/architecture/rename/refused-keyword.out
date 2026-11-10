@@ -1,0 +1,3 @@
+@ 3:11  service |db
+  prepare: 3:11-3:13 "db"; rename to "group":
+  refused: `group` is a keyword, and an id cannot be one: choose another name, such as `group1`.

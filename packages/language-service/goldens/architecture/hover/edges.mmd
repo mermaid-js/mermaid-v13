@@ -1,0 +1,11 @@
+architecture-beta
+  group api[API]
+  service db(database) in api
+  service web
+  junction hub in api
+  db:|L -- R:hub
+  db:L -|- R:hub
+  hub:B <-->| T:web
+  web:R -[re|ads]- L:db
+  web{group}:T -- B:db{gro|up}
+  db{group}:|R -- L:web

@@ -1,0 +1,10 @@
+architecture-beta
+  group |api(cloud)[API]
+  group inner in a|pi
+  service |db(database)[Database] in inner
+  service web "WWW"[Web]
+  junction h|ub
+  db:L -- R:h|ub
+  w|eb:R -- L:ghost
+  service |x
+  group x

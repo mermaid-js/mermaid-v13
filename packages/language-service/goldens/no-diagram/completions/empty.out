@@ -4,6 +4,7 @@
   flowchart-elk keyword 1:1-1:1 "" -> "flowchart-elk"
   swimlane-beta keyword 1:1-1:1 "" -> "swimlane-beta"
   mindmap keyword 1:1-1:1 "" -> "mindmap"
+  architecture-beta keyword 1:1-1:1 "" -> "architecture-beta"
   agentflow-beta keyword 1:1-1:1 "" -> "agentflow-beta"
   kanban keyword 1:1-1:1 "" -> "kanban"
   classDiagram keyword 1:1-1:1 "" -> "classDiagram"

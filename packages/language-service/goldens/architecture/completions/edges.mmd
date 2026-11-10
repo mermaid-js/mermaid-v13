@@ -1,0 +1,17 @@
+architecture-beta
+  group api
+  service db in api
+  service web
+  junction hub in api
+  db:|
+  db |
+  db:R |
+  db:R -- |
+  db:R -- L:|
+  db:R -- L:w|
+  web:R --> L:hub |
+  web:R --> L:web |
+  web |
+  hub{|
+  db:R -- L:hub{gr|
+  web{|

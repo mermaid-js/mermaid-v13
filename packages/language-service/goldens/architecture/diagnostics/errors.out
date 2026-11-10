@@ -1,0 +1,10 @@
+4:11-4:13 "db" error ARCHITECTURE_DUPLICATE_ID: The service id [db] is already in use by another node
+5:26-5:33 "nowhere" error ARCHITECTURE_UNKNOWN_PARENT: The service [web]'s parent does not exist. Please make sure the parent is created before this service
+6:20-6:22 "db" error ARCHITECTURE_PARENT_NOT_GROUP: The service [cache]'s parent is not a group
+7:17-7:21 "self" error ARCHITECTURE_SELF_PARENT: The group [self] cannot be placed within itself
+8:13-8:18 "ghost" error ARCHITECTURE_UNKNOWN_ID: The right-hand id [ghost] does not yet exist. Please create the service/group before declaring an edge to it.
+9:6-9:7 "X" error UNEXPECTED: Expected a side, `L`, `R`, `T` or `B`, got `X`; a side is one capital letter, `L`, `R`, `T` or `B`, followed by `:` and the id.
+10:3-10:4 "B" error UNEXPECTED: Expected `service`, `group`, `junction` or `align`, an edge such as `a:R -- L:b`, `title`, `accTitle:` or `accDescr`, a line break or the end of the text, got `B`; an id cannot start with a capital `L`, `R`, `T` or `B`, which reads as a side: rename `Backend`, such as `backend`.
+11:3-11:6 "api" error ARCHITECTURE_GROUP_EDGE_END: The left-hand id [api] is a group. Add {group} to a service inside it instead.
+12:16-12:21 "ghost" error ARCHITECTURE_ALIGN_MEMBER: align row references [ghost], which is not a service or junction
+13:20-13:23 "web" error ARCHITECTURE_ALIGN_REPEAT: align column lists [web] more than once
