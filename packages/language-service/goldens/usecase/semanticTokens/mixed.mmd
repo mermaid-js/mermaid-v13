@@ -1,0 +1,16 @@
+%%{init: {"theme": "dark"}}%%
+usecase-beta
+  %% a comment
+  accTitle: Shop
+  direction LR
+  actor User@{ type: hollow } <<Human>>
+  systemBoundary Shop["The shop"]:::frame
+    Login(Sign in)
+  end
+  "Reset password" --> Done
+  User e1@-- "buys" --> Login
+  Login ..> : include Done
+  json Data@{ "a": 1 }
+  classDef frame stroke:#333,stroke-width:2px
+  class Login frame
+  style User fill:#f96

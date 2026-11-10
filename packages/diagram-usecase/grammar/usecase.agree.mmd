@@ -1,0 +1,14 @@
+usecase-beta
+  direction LR
+  accTitle: Shop
+  actor User@{ type: hollow } <<Human>>
+  systemBoundary Shop["The shop"]:::frame
+    Login(Sign in)
+    "Reset password"
+  end
+  User e1@--> Login
+  Login ..> : include Reset_password
+  json Order@{ "total": 10 }
+  note for Login "Validates the user"
+  classDef frame stroke:#333
+  style User fill:#f96

@@ -1,0 +1,19 @@
+---
+config:
+  treeView:
+    showIcons: true
+    filenameIcons:
+      Dockerfile: none
+    extensionIcons:
+      .lock: none
+description: >-
+  showIcons with icon maps that hide an icon (`none`) by file name and by extension, and an
+  explicit icon(none) and icon(folder) overriding the defaults
+---
+treeView-beta
+  app/
+    main.go
+    go.lock
+    Dockerfile
+    notes.txt icon(none)
+    assets icon(folder)

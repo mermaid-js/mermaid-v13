@@ -18,6 +18,14 @@ const GANTT_SPECS = [
 ];
 const GANTT_ZONES = { 'gantt-utc': 'UTC', 'gantt-la': 'America/Los_Angeles' };
 
+// R-LANG-4's PR check times an editing cycle against bare parses, as a ratio of CPU times
+// (bench's language.ts). With other spec files busy on the other cores the cycle's CPU cost
+// rises more than a parse's, and packet's read 4.59–4.93 against its 4.5 bar on busy CI
+// runners (quiet runs: 4.0–4.1). These files run in a project of their own, one file at a
+// time, after every other project has finished (`groupOrder` 1), so nothing runs beside them.
+// (`VITEST_MAX_WORKERS` overrides the project's single worker too: they still run last.)
+const LANGUAGE_BUDGET_SPECS = ['packages/bench/src/language-budget*.spec.ts'];
+
 // One root config for the whole workspace. Tests run in plain Node: there is no DOM
 // shim anywhere (R-ARCH-1).
 export default defineConfig({
@@ -40,7 +48,7 @@ export default defineConfig({
             'e2e/helpers/argos-metadata.spec.ts',
             'e2e/helpers/platform-harness.spec.ts',
           ],
-          exclude: [...exclude, ...GANTT_SPECS],
+          exclude: [...exclude, ...GANTT_SPECS, ...LANGUAGE_BUDGET_SPECS],
         },
       },
       ...Object.entries(GANTT_ZONES).map(([name, TZ]) => ({
@@ -48,6 +56,19 @@ export default defineConfig({
         ssr,
         test: { name, environment: 'node' as const, include: GANTT_SPECS, exclude, env: { TZ } },
       })),
+      {
+        resolve,
+        ssr,
+        test: {
+          name: 'language-budget',
+          environment: 'node',
+          include: LANGUAGE_BUDGET_SPECS,
+          exclude,
+          fileParallelism: false,
+          maxWorkers: 1,
+          sequence: { groupOrder: 1 },
+        },
+      },
     ],
   },
 });

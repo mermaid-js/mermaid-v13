@@ -1,6 +1,7 @@
 Adamiecki
 agentflow
 agentic
+allowmixing
 arrowend
 Bendpoints
 bmatrix
@@ -26,12 +27,14 @@ kanban
 marginx
 marginy
 Markdownish
+markerless
 mermaidchart
 mermaidjs
 mindmap
 mindmaps
 mrtree
 multigraph
+newpage
 nodesep
 NOTEGROUP
 Pinterest
@@ -44,8 +47,10 @@ refdoc
 sandboxed
 sentencepiece
 siebling
+skinparam
 statediagram
 Structurizr
+stylables
 substate
 treeview
 unfixable

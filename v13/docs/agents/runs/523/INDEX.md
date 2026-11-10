@@ -9,7 +9,7 @@ Integration branch `feature/523_agentflow` (from `mermaid-v13` at 521fb76ee). Dr
 | T3 layout | #547 | #546 | merged (no-ff, head 609401fd9; main entry 28,512 B gz before review fixes; core usedBy rows dropped in the #637 move) |
 | T4 SVG renderer | #548 | #547, block's shape-geometry T0 (#521) | merged (ff 4c7cabae9; main entry 34,786 B gz, core untouched) |
 | T6 language facet | #549 | #546 | merged (ff 619d40c16; `./language` 30,041 B gz; carries #640's commit d6d83c2 until it merges) |
-| T5 integration | #550 | #548, #549 | open |
+| T5 integration | #550 | #548, #549 | merged (ff e359511c6; core 94,434 B gz, +22 B registry row; load path 133,173 B; main 34,935 B, `./language` 30,244 B) |
 | T7 ASCII renderer (optional, D320) | #551 | #550 | open |
 
 Core size at the base: 93,891 B gz (`measureCoreSize`, gate 98,304 B, D546). One ticket agent at a time (three ports share AI-Max).

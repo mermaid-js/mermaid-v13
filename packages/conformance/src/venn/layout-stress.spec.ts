@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { layoutVenn, parseVenn, type VennModel } from '@mermaid-js/diagram-venn';
 import { vennTestContext, vennTestTheme } from '@mermaid-js/diagram-venn/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * The venn layout is linear in what it lays out besides the sets (spec #429 T3, pitfall 5):
@@ -25,18 +26,6 @@ const SHAPES: [string, (n: number) => string][] = [
   ['a text node of many words', (n) => `venn-beta\nset A\n  text t["${'word '.repeat(n)}"]`],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = await vennTestTheme();
@@ -51,21 +40,12 @@ describe('stress: the venn layout is linear in text nodes, styles and words', ()
       const small = model(build(500));
       const large = model(build(4_000));
       const lay = (m: VennModel) => layoutVenn(m, vennTestContext(theme));
-      lay(small); // warm up
-      lay(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => lay(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => lay(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => lay(small),
+          () => lay(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );
