@@ -11,7 +11,7 @@ Integration branch `feature/526_railroad` (from `mermaid-v13` at 521fb76ee, then
 | T4 renderer and theme table | #613 | #612 | merged (ff b12716ef9; runtime entry ~16 KB gz; core 94,412 unchanged; theme matches 12.2.0 in all eleven themes) |
 | T6 language facet | #616 | #610 | merged (ff bb971c3a7; `./language` 15,569 B gz; core 94,412 unchanged; goldens run from conformance until T5) |
 | T5 integration | #615 | #613, #616 | merged (ff 267645d1e; core 94,435 B gz (+23); load path 114,769 B gz, railroad 20,334; warm render 20.3× vs 12.2.0 under load) |
-| T7 ascii (optional, D518) | #617 | #615 | open |
+| T7 ascii (optional, D518) | #617 | #615 | merged (ff 7f4b57aa3; `./ascii` 8,152 B gz; runtime entry 16,678 B gz) |
 
 - `01-v12-railroad.md`: pointer notes on v12's four Langium grammars, DB, renderer, styles, specs, docs, corpus and the oracle.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams.
