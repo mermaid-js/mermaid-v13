@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { eventModelingTokens } from '@mermaid-js/diagram-eventmodeling/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the event modeling lexer is linear in input size, in every rule. v12's
@@ -7,8 +8,8 @@ import { eventModelingTokens } from '@mermaid-js/diagram-eventmodeling/testing';
  * line), of unclosed `/*`, of unclosed `accDescr {` and of unclosed `%%{`, and on a line of `{`
  * with no `}` (EM_DATA_INLINE rescans the line from each). Shape copied from
  * `../treemap/stress.spec.ts` (pie's pattern): n and 8n units; linear is ~8x, quadratic ~64x,
- * and the bar is 24x. Times are this thread's CPU time, best of five, and small and large lexes
- * alternate. Not measured on a steady machine: the bar is a ratio.
+ * and the bar is 24x, timed with `linearRatio` (`../linear-time.ts`). Not measured on a steady
+ * machine: the bar is a ratio.
  */
 const EM = 'eventmodeling\n';
 const FRAME = EM + 'tf 01 cmd A ';
@@ -67,39 +68,19 @@ const SHAPES: [name: string, build: (n: number) => string, scale?: number][] = [
   ['entities in inline data', (n) => FRAME + '{' + '#a;'.repeat(n / 3) + '}'],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the event modeling lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build, scale = 1) => {
       const small = build(4_000 * scale);
       const large = build(32_000 * scale);
-      eventModelingTokens(small); // warm up
-      eventModelingTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => eventModelingTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => eventModelingTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => eventModelingTokens(small),
+          () => eventModelingTokens(large),
+          process.env.EVENTMODELING_STRESS_LOG ? _name : undefined
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

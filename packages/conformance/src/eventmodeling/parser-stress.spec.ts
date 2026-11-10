@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { eventModelStructure, parseEventModel } from '@mermaid-js/diagram-eventmodeling';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5 and 11: the event modeling parser, value conversion, D525's warnings and
  * the lanes, boxes and relations (`eventModelStructure`) are linear in input size. v12 found a
  * frame's inferred source by scanning back box by box, and its sources by filtering every frame;
  * here each is a lookup. Same frame as `stress.spec.ts`: each shape at `n` and `8n` units, `n`
- * picked so the small parse costs a few ms here, best of five, bar 24x (linear ~8x, quadratic
- * ~64x), CPU time. Not measured on a steady machine: the bar is a ratio.
+ * picked so the small parse costs a few ms here, bar 24x (linear ~8x, quadratic ~64x), timed
+ * with `linearRatio` (`../linear-time.ts`). Not measured on a steady machine: the bar is a ratio.
  */
 const lines = (n: number, line: (k: number) => string) =>
   Array.from({ length: n }, (_, k) => line(k)).join('\n');
@@ -67,16 +68,6 @@ const SHAPES: [string, (n: number) => string, number][] = [
   ],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
 const parseAll = (src: string) => eventModelStructure(parseEventModel(src).model);
 
 describe('stress: the event modeling parser is linear in input size', () => {
@@ -85,24 +76,13 @@ describe('stress: the event modeling parser is linear in input size', () => {
     (_name, build, n) => {
       const small = build(n);
       const large = build(8 * n);
-      parseAll(small); // warm up
-      parseAll(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseAll(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseAll(large))
-        );
-      }
-      if (process.env.EVENTMODELING_STRESS_LOG) {
-        process.stdout.write(`${_name}: ${tSmall.toFixed(1)} ms, ${tLarge.toFixed(1)} ms\n`);
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseAll(small),
+          () => parseAll(large),
+          process.env.EVENTMODELING_STRESS_LOG ? _name : undefined
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

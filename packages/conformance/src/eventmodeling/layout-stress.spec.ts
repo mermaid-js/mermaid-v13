@@ -9,12 +9,13 @@ import {
   eventModelTestContext,
   eventModelTestTheme,
 } from '@mermaid-js/diagram-eventmodeling/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-LAYOUT-3, pitfall 5: the event modeling layout (#604) is linear in the number of frames,
  * lanes, relations and data lines. The same frame as `parser-stress.spec.ts`: each model at `n`
- * and `8n` units (parsed outside the timing), laid out with the table measurer, best of five,
- * bar 24x (linear ~8x, quadratic ~64x), CPU time. Not measured on a steady machine: the bar is a
+ * and `8n` units (parsed outside the timing), laid out with the table measurer,
+ * bar 24x (linear ~8x, quadratic ~64x), timed with `linearRatio` (`../linear-time.ts`). Not measured on a steady machine: the bar is a
  * ratio.
  */
 const lines = (n: number, line: (k: number) => string) =>
@@ -43,17 +44,6 @@ const SHAPES: [string, (n: number) => string, number][] = [
   ['a long name', (n) => `${H}tf 01 evt ${lines(n, (k) => `p${k}`).replace(/\n/g, '_')}`, 3_000],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = await eventModelTestTheme();
@@ -67,24 +57,13 @@ describe('stress: the event modeling layout is linear in input size', () => {
       const layoutOf = (m: EventModel) => layoutEventModel(m, ctx);
       const small = parseEventModel(build(n)).model;
       const large = parseEventModel(build(8 * n)).model;
-      layoutOf(small); // warm up
-      layoutOf(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => layoutOf(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => layoutOf(large))
-        );
-      }
-      if (process.env.EVENTMODELING_STRESS_LOG) {
-        process.stdout.write(`${_name}: ${tSmall.toFixed(1)} ms, ${tLarge.toFixed(1)} ms\n`);
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => layoutOf(small),
+          () => layoutOf(large),
+          process.env.EVENTMODELING_STRESS_LOG ? _name : undefined
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
