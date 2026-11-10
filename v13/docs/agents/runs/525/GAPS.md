@@ -42,6 +42,20 @@ Known limits:
 
 ## T0c #592
 
+Unmet criteria: none of the ticket's. Core unchanged (gated 96,072 B gz, as at base); the ELK adapter chunk grows +389 B gz.
+
+Choices:
+- **One port per named end**, id `<edge id>\u0000source|target`, 0×0, `elk.port.side` NORTH/SOUTH/WEST/EAST. The node (or group) gets `elk.portConstraints: FIXED_SIDE`; an end with no side still attaches to the node, and ELK picks its side, even on a node that has ports.
+- **`anchorY` → `FIXED_POS`** on a node that sets `anchorY` and takes a named `left` or `right` end. FIXED_POS needs a position for every port on the node, so `left`/`right` ports sit at `anchorY` and `top`/`bottom` ports at the side's middle, as `compass` puts them. Several ends on one side of such a node meet at one point (as in `compass`; FIXED_SIDE nodes spread them). A node with `anchorY` and only `top`/`bottom` ends keeps FIXED_SIDE. `anchorY` outside 0…height is a `RangeError`, checked only where a port uses it.
+- **ELK layered only.** stress, force, mrtree, box, rectpacking, sporeOverlap and radial ignore ports (probed stress, force, mrtree and box: they route between the boxes or not at all), so they get no ports, and their `ports` stay read off the route. Under layered, `ports` reports the named side wherever ELK routed the edge, and reads the others off the route as before.
+- Reversed edges (`orientFeedbackEdges`) keep each port on its real end.
+
+Known limits:
+- **`border` (`{group}`) is not read**, as in `layered`: the end sits on the node's named side, not the group's border, and `validateLayout` reports it (`does not start at its source`). Mapping it would attach the end to a port on the parent group; it touches the hierarchy handling and common-ancestor code, so it was left out.
+- `initialize({ layout: 'elk' })` did not reach architecture in the scratch run; front matter `config: layout: elk` did. Seen, not investigated (T5/T6 may want to check that the site-level `layout` applies to architecture).
+
+Identity: every `.mmd` under `e2e/diagrams` (3,199 files) rendered as written, with `layout: elk` and with `layout: elk.stress` (9,597 renders, 3,027 ELK calls): base and branch give identical graphs, models and SVG. The only difference is gantt's `today` line in `should-render-when-compact-is-true.mmd`, which follows the clock.
+
 ## T1 #594
 
 Unmet criteria: none. Choices the spec and D-ids leave open:
@@ -138,6 +152,22 @@ Notes from T4 for T5, as written:
 
 ## T6 #619
 
+Unmet criteria: none. Choices the spec and D-ids leave open:
+
+- **One namespace** `[['service', 'junction', 'group']]` (D508: ids share one namespace), so the service's own clash check refuses an id in use of any kind. No `quoteId`: an architecture id cannot be quoted, so a refused name stays refused. No `declaredOnly`/`standalone` (T2 records symbols only for registered ids, each with its `def`).
+- **`isValidId` lexes the name** (as wardley's `names.ts`) in six places an id goes (declaration, both edge ends, `{group}` after the left end, after `in`, in `align`) and wants one `ID` token over it, after clear-message checks for D508's classes (initial `L`/`R`/`T`/`B`, a keyword, a non-`\w` character or end `-`, a `title` prefix). The lex catches `accDescr`/`accTitle`, which an edge's left end reads as the accessibility token. Same rule for every kind.
+- **Completion beyond the ticket's list**, each only where the probe tests its kind: `in` after a declaration's id/icon/label, `row`/`column` after `align`, the five arrows (`--`, `-->`, `<--`, `<-->`, `-[label]-`) after a left-hand side, the header, and service/junction ids as an edge's ends (line start, after the right side's `:`). Group ids are never offered as edge ends (D504 makes that an error).
+- **Groups after `in`**: every group for a service or junction (v12 registers groups first), for a group only those declared before it, not itself.
+- **`align` members**: services and junctions not already on the line (a repeat is `ARCHITECTURE_ALIGN_REPEAT`).
+- **`{group}`** is offered only after an edge end whose id is a service or junction **in a group**; on an ungrouped end it would only raise D504's warning.
+- **Icons and `{` read from the text**: an unclosed `(` or `{` is an `Error` token, so the probe has no icon or `{group}` expectation there. The facet then checks the line's tokens (`service|group ID` before `(`; an edge end's id before `{`) and offers the items over the typed text, its closing `)`/`}` included. Icons are the seven built-ins as `(name)`, `unknown` and `blank` included. The facet keeps its own name list (`facet/tables.ts`, the renderer's map is off-limits to the language bundle); `src/language.spec.ts` checks it equals `builtinIcons()`.
+- **Hover**: an id shows its v12 kind, label, icon or text icon and group; an edge, on any of its tokens but its ids (sides, arrow, arrowheads, label, `{group}`), shows both ends, the sides in words, `{group}` borders (or that `{group}` is ignored on an ungrouped end), arrowheads and label. Keyword docs on the keyword only (a `title`/`acc*` token holds its value).
+- **Folding**: every multi-line statement span folds (the service's generic rule), so a service with a text icon over lines folds as `service` too, besides `accDescr { … }`.
+- **Oracle spec fold check**: no accepted corpus source has a multi-line v12 `accDescr` value, so `service-symbols.spec.ts` checks every `accDescr { … }` written over lines in a v12-accepted source (15) has an `accDescr` fold.
+- **No per-type bench CLI**: the ticket asks for a size only if the bench measures one, and the bench checks the bundle boundary, not size. Measured by hand (T6 handoff).
+- **Review (bc62e9328), 9 findings.** Fixed: completion after a statement on the `architecture-beta` line (the header token is dropped from the line's tokens, so nothing before the word means a statement start: statements, icons, `{group}` and edge ids now work there); the right-hand `>` after `--` / `-[label]-`; the groups after `in` in one pass; a side-letter rename suggestion is checked with `idReason` (`Row` → `row1`, `Title` → `myTitle`); hover on an id nothing registered says so; an edge ending at a group (with or without `{group}`) is described as an error (D504); `languageBundle.renderer` adds `theme/`, `index.ts`, `testing.ts`, `v12-specs/`; README lists seven built-ins. `lineBefore` is `lineTokens` here (token indexes; other facets' `lineBefore` is text).
+- **Follow-up, shared refactor (not done):** `tokenBefore`, `code`, `span` and `inside` (and `atLineStart`) are copied in about 15 facets; one parser-kit helper module would serve them all.
+
 ## Integration
 
 Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` #638 into `feature/525_architecture`:
@@ -149,3 +179,7 @@ Merge of `mermaid-v13` #637 (per-diagram files) and `fix/pre-manifest-diagrams` 
 
 - `tools/workspace/sync.spec.ts` one-line copy: **closed** at 0adf04817. `mermaid-v13` (eb57fdadb) already carries the same `workspaceDiagrams()` fix, so the merge took theirs and the copy is gone. #640 is still open; T6 only needs it if it lands before T5's manifest.
 - **Closed at T5 #618:** `configDefaults: true` and `release:` are in `workspace.yaml`; `languageBundle:` waits for T6's `./language` (above). `theme.notDrawnYet` was already gone (T3). The `sync.spec.ts` copy is unchanged here: still the re-merge item above.
+
+- **`layout: layered` routes since #647: accepted for now** (Knut, relayed by the coordinator, 2026-11-10). `compass` stays the default; the choice of default engine for architecture gets a later review. No code change.
+
+- **Site-level `layout` on architecture: probed, works.** `initialize({ layout: "layered" })`, front matter `config.layout` and `architecture.layout` all change the output, with no warnings. T0c's note that `initialize({ layout: "elk" })` did not reach architecture is most likely how the scratch run registered the ELK plugin; not an architecture bug.
