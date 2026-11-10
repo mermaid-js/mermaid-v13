@@ -14,24 +14,24 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
-| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
+| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, ishikawa |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, ishikawa |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, ishikawa |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt |
-| `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
-| `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
-| `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, ishikawa, railroad |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, ishikawa, railroad |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, ishikawa, railroad |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt, railroad |
+| `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core, railroad |
+| `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core, railroad |
+| `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core, railroad |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
 | `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, ishikawa |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, ishikawa |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, ishikawa, railroad |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
-| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
+| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, railroad |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
-| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn |
+| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, railroad |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
@@ -349,6 +349,22 @@ flags and opacities, which are read literally.
 | `radarGraticuleStrokeWidth` | `radar.graticuleStrokeWidth` | length | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` | `1` |
 | `radarLegendBoxSize` | `radar.legendBoxSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
 | `radarLegendFontSize` | `radar.legendFontSize` | length | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` | `12` |
+
+### railroad
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `railroadTerminalFill` | `railroad.terminalFill` | color | `#ffffde` | `#ffffde` | `#38383e` | `#38383e` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#ffffde` | `#ffffde` | `#584343` |
+| `railroadTerminalStroke` | `railroad.terminalStroke` | color | `#adadad` | `#adadad` | `#2f2f2f` | `#2f2f2f` | `#d9d9bd` | `#6c6d6d` | `#aed997` | `#d6d6d6` | `#cfbcd9` | `#b3b3b3` | `#6c6d6d` |
+| `railroadTerminalTextColor` | `railroad.terminalTextColor` | color | `#28253d` | `#28253d` | `#b9b7b7` | `#b9b7b7` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#b9b7b7` |
+| `railroadNonTerminalFill` | `railroad.nonTerminalFill` | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `railroadNonTerminalStroke` | `railroad.nonTerminalStroke` | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `railroadNonTerminalTextColor` | `railroad.nonTerminalTextColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `railroadLineColor` | `railroad.lineColor` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `railroadMarkerFill` | `railroad.markerFill` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `railroadSpecialFill` | `railroad.specialFill` | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `railroadSpecialStroke` | `railroad.specialStroke` | color | `#d9d9d9` | `#d9d9d9` | `#060606` | `#060606` | `#d4d9c9` | `#4d4c4c` | `#bfcba3` | `#cacaca` | `#d1d4d9` | `#e6e6e6` | `#4d4c4c` |
+| `railroadRuleNameColor` | `railroad.ruleNameColor` | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#333333` | `#000000` | `#dfe0e0` |
 
 ### sequence
 
