@@ -6,7 +6,9 @@
 // from the package's theme table (D152, D435); outlines and lines go through `w.outline`
 // (D301, D302), the markers are plain.
 import {
+  classNames,
   px,
+  routePath,
   styleScope,
   styleText,
   themeStyleSheet,
@@ -28,19 +30,9 @@ import {
 } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
-import { routePath } from '@mermaid-js/core/svg';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = RequirementRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -284,7 +276,7 @@ function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {
   const boxPaint = paint.box;
   const shape = view.style.shape;
   w.open('g', {
-    class: 'node' + cls(view.classes),
+    class: 'node' + classNames(view.classes),
     'data-id': view.box.name,
     'data-ast': view.id,
     'data-color-id': slot?.id,

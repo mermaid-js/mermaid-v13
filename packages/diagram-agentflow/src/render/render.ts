@@ -11,7 +11,12 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
+  classNames,
+  edgeLabel,
+  marker,
+  markerTrim,
   px,
+  routePath,
   styleScope,
   styleText,
   themeStyleSheet,
@@ -31,7 +36,6 @@ import type {
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from '@mermaid-js/core/svg';
 import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
@@ -42,17 +46,6 @@ const FRAME_WIDTH = 0.75;
 const TITLE_SIZE = 18;
 const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
 interface Title {
@@ -203,7 +196,7 @@ function drawFrames(scene: Scene, frame: FramePaint): void {
     const slot = flowSlot(scene, g.id);
     const top = box.y - box.height / 2;
     w.open('g', {
-      class: 'cluster flow-cluster' + cls(g.classes),
+      class: 'cluster flow-cluster' + classNames(g.classes),
       'data-id': g.id,
       'data-ast': g.ast,
       'data-color-id': slot?.id,
@@ -246,7 +239,7 @@ function edgeClass(e: AgentflowEdgeView, animated: boolean): string {
   const edge = e.edge;
   const pattern = edge.stroke === 'dotted' ? 'dotted' : 'solid';
   const animation = animated ? ` edge-animation-${edge.animation ?? 'fast'}` : '';
-  return `flowchart-link edge-thickness-normal edge-pattern-${pattern}${animation}${cls(edge.classes)}`;
+  return `flowchart-link edge-thickness-normal edge-pattern-${pattern}${animation}${classNames(edge.classes)}`;
 }
 
 /** One edge: its `path` (with `data-ast`) and its arrowhead after it. */
@@ -289,18 +282,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
-    fill: paint.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.text, ...e.style.text });
-  w.close();
+  edgeLabel(w, e.label, at, e.edge.id, paint.fill, { fill: paint.text, ...e.style.text }, 3);
 }
 
 /** A vertex's kind tint or a card's flow tint, under a palette. */
@@ -349,7 +331,7 @@ function drawNode(scene: Scene, view: AgentflowNodeView, tip?: string): void {
   const isCard = view.shape === 'collapsedGroup';
   const slot = nodeTint(scene, view);
   w.open('g', {
-    class: (isCard ? 'node' : `node default af-kind-${v?.kind ?? 'task'}`) + cls(view.classes),
+    class: (isCard ? 'node' : `node default af-kind-${v?.kind ?? 'task'}`) + classNames(view.classes),
     'data-id': view.id,
     'data-ast': view.ast,
     'data-color-id': isCard ? slot?.id : undefined,

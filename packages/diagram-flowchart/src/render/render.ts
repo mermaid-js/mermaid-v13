@@ -6,6 +6,8 @@ import { layered } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
+  classNames,
+  edgeLabel,
   px,
   styleScope,
   styleText,
@@ -45,16 +47,6 @@ export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowL
 
 const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
-const LABEL_PAD = 4;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
@@ -280,7 +272,7 @@ function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
     const fill = g.style.shape.fill;
     const slot = paint.slotOf(g);
     w.open('g', {
-      class: 'cluster' + cls(g.classes),
+      class: 'cluster' + classNames(g.classes),
       'data-id': g.id,
       'data-ast': g.ast,
       'data-color-id': slot?.id,
@@ -316,7 +308,7 @@ function edgeClass(edge: EdgeView['edge']): string {
         }`;
   const animation =
     edge.animate || edge.animation ? ` edge-animation-${edge.animation ?? 'fast'}` : '';
-  return 'edge flowchart-link' + look + animation + cls(edge.classes);
+  return 'edge flowchart-link' + look + animation + classNames(edge.classes);
 }
 
 function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
@@ -374,18 +366,8 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: 3,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text, ...e.style.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  edgeLabel(w, e.label, at, e.edge.id, fill, { fill: text, ...e.style.text }, 3);
 }
 
 function drawNode(
@@ -401,7 +383,7 @@ function drawNode(
   w.open('g', {
     class:
       (view.shape === 'collapsedGroup' ? 'node cluster collapsed' : 'node default') +
-      cls(view.classes),
+      classNames(view.classes),
     'data-id': view.id,
     'data-ast': view.ast,
     'data-color-id': slot?.id,

@@ -5,6 +5,8 @@
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
 import {
+  classNames,
+  edgeLabel,
   px,
   styleScope,
   styleText,
@@ -27,17 +29,7 @@ import { drawEnd, fitEnds, lineEnd, routePath, type EndPaint, type LineEnd } fro
 // The dash of a non-identifying line (v12 `.edge-pattern-dashed`, every theme).
 const DASH = '8,8' as SafeValue;
 // Room left and right of an edge label inside its background (as the flowchart's).
-const LABEL_PAD = 4;
 const CELL_CLASSES = ['attribute-type', 'attribute-name', 'attribute-keys', 'attribute-comment'];
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = ErRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -276,7 +268,7 @@ function drawCluster(
   const sg = g.subgraph;
   const fill = g.style.shape.fill;
   w.open('g', {
-    class: 'cluster' + cls(sg.classes),
+    class: 'cluster' + classNames(sg.classes),
     'data-id': sg.name,
     'data-ast': sg.id,
   });
@@ -335,17 +327,8 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': edgeDataId(e, i) });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  edgeLabel(w, e.label, at, edgeDataId(e, i), fill, { fill: text });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {
@@ -356,7 +339,7 @@ function drawEntity(scene: Scene, view: EntityView): void {
   const t = paint.table;
   const shape = view.style.shape;
   w.open('g', {
-    class: 'node' + cls(view.classes),
+    class: 'node' + classNames(view.classes),
     'data-id': view.entity.name,
     'data-ast': view.id,
     'data-color-id': slot?.id,

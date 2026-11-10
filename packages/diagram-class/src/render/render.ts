@@ -8,7 +8,10 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
+  classNames,
+  edgeLabel,
   px,
+  routePath,
   styleScope,
   styleText,
   themeStyleSheet,
@@ -34,7 +37,6 @@ import { prepareClass } from '../layout/index.ts';
 import type { ClassModel, ClassNode } from '../parser/index.ts';
 import type { ClassRenderContext } from './context.ts';
 import { marker, markers, markerTrim, type Markers } from './markers.ts';
-import { routePath } from '@mermaid-js/core/svg';
 
 // v12's dash patterns: `.edge-pattern-dashed` (relationships written `..`) and
 // `.edge-pattern-dotted` (note edges).
@@ -42,16 +44,6 @@ const DASHED = '3' as SafeValue;
 const DOTTED = '2' as SafeValue;
 const DASH: Readonly<Record<string, SafeValue | undefined>> = { dashed: DASHED, dotted: DOTTED };
 /** Room on each side of a relationship label's background (as the flowchart's). */
-const LABEL_PAD = 4;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = ClassRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -361,20 +353,8 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
 function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
-  if (e.label && at.label && paint.edgeLabel) {
-    const lw = e.label.width + 2 * LABEL_PAD;
-    w.open('g', { class: 'edgeLabel', 'data-id': id });
-    w.leaf('rect', {
-      x: at.label.x - lw / 2,
-      y: at.label.y - e.label.height / 2,
-      width: lw,
-      height: e.label.height,
-      rx: 3,
-      fill: paint.edgeLabel,
-    });
-    w.label(e.label, at.label.x, at.label.y, { fill: paint.text });
-    w.close();
-  }
+  if (e.label && at.label && paint.edgeLabel)
+    edgeLabel(w, e.label, at.label, id, paint.edgeLabel, { fill: paint.text }, 3);
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
     [e.startLabel, at.startLabel],
     [e.endLabel, at.endLabel],
@@ -418,7 +398,7 @@ function drawClass(
   const slot = paint.slotOf(order);
   const at = placed(box);
   w.open('g', {
-    class: 'node' + cls(node.classes),
+    class: 'node' + classNames(node.classes),
     'data-id': view.id,
     'data-ast': view.ast,
     'data-color-id': slot?.id,

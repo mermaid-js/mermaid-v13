@@ -34,6 +34,7 @@ export { ALLOWED_ATTRS, ALLOWED_TAGS, SVG_NS } from './allowlist.ts';
 export { esc, num } from './escape.ts';
 export { pathBuilder, rotate, scale, transforms, translate, type PathBuilder } from './path.ts';
 export { arrowheads, marker, markerTrim, type Arrowheads, type LineEnd } from './arrowheads.ts';
+export { classNames, edgeLabel } from './graph.ts';
 export { curveKind, curveRouting, routePath, type CurveKind, type EdgePath } from './route.ts';
 export type { SvgMatch, SvgNode, SvgTree } from './tree.ts';
 export {

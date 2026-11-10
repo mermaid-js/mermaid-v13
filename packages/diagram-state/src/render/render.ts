@@ -10,6 +10,8 @@ import {
   arrowheads,
   checkLinkTarget,
   checkUrl,
+  classNames,
+  edgeLabel,
   marker,
   markerTrim,
   px,
@@ -45,17 +47,6 @@ import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 const NOTE_DASH = '5' as SafeValue;
 const DIVIDER_DASH = '10 10' as SafeValue;
 // Room either side of a transition label on its background.
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = StateRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -297,7 +288,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
     class:
       'statediagram-state statediagram-cluster' +
       (alt ? ' statediagram-cluster-alt' : '') +
-      cls(g.state?.classes ?? []),
+      classNames(g.state?.classes ?? []),
     'data-id': g.id,
     'data-ast': g.ast,
     'data-color-id': slot?.id,
@@ -418,25 +409,15 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  edgeLabel(w, e.label, at, e.id, fill, { fill: text }, 3);
 }
 
 function nodeClass(view: StateNodeView): string {
   if (view.shape === 'note') return 'node statediagram-note';
   // v12 `stateStart` and `stateEnd` wrote `node default` and no state classes.
   if (view.shape === 'start' || view.shape === 'end') return 'node default';
-  return 'node statediagram-state' + cls(view.state?.classes ?? []);
+  return 'node statediagram-state' + classNames(view.state?.classes ?? []);
 }
 
 function drawNode(
