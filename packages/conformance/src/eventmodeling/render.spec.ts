@@ -54,10 +54,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await eventModelingApi();
+  api = eventModelingApi();
   const corpus = await eventModelingGateCorpus();
   for (const theme of THEMES) {
-    const themed = await eventModelingApi({ theme });
+    const themed = eventModelingApi({ theme });
     for (const item of corpus) {
       if (!detectEventModeling(item.source)) continue;
       try {
@@ -164,7 +164,7 @@ describe('event modeling render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes, async and sync (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await eventModelingApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, eventModelingApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -357,7 +357,7 @@ describe('event modeling render: what is drawn', () => {
   it("paints v12 default's colours in default, and the text in textColor (D527)", async () => {
     const { tree } = await render(
       fixture('nightly-check/parser-kinds-long.mmd'),
-      await literal('default')
+      literal('default')
     );
     const boxes = tree.find((n, t) => t.getAttr(n, 'class') === 'em-box');
     const paint = boxes.map((b) => {
@@ -386,11 +386,11 @@ describe('event modeling render: what is drawn', () => {
   });
 
   it("paints v12 dark's values in neo-dark, and follows an author's variables", async () => {
-    const dark = await literal('neo-dark');
+    const dark = literal('neo-dark');
     const { tree } = await render(fixture('nightly-check/parser-kinds-long.mmd'), dark);
     const box = tree.find((n, t) => t.getAttr(n, 'class') === 'em-box')[0]!;
     expect(hex(attr(tree, tree.children(box)[0], 'fill'))).toBe('#2d2d2d');
-    const authored = await literal('default', {
+    const authored = literal('default', {
       emArrowhead: '#ff0000',
       emEventFill: '#00ff00',
       emTextColor: '#0000ff',
@@ -436,7 +436,7 @@ describe('event modeling render: what is drawn', () => {
     const [, , w, h] = attr(tree, root, 'viewBox')!.split(' ');
     expect(attr(tree, root, 'width')).toBe('100%');
     expect(attr(tree, root, 'style')).toContain(`max-width:${w}px`);
-    const fixed = await eventModelingApi({ eventmodeling: { useMaxWidth: false } });
+    const fixed = eventModelingApi({ eventmodeling: { useMaxWidth: false } });
     const f = await render(src, fixed);
     const froot = f.tree.find({ tag: 'svg' })[0]!;
     expect([attr(f.tree, froot, 'width'), attr(f.tree, froot, 'height')]).toEqual([w, h]);
@@ -444,7 +444,7 @@ describe('event modeling render: what is drawn', () => {
   });
 
   it('warns once and keeps useMaxWidth on for a value that is not a boolean (D226)', async () => {
-    const odd = await eventModelingApi({
+    const odd = eventModelingApi({
       eventmodeling: { useMaxWidth: 'no' },
     } as unknown as MermaidConfig);
     const r = await render(fixture('pr-check/state-change-pattern.mmd'), odd);

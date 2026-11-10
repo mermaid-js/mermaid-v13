@@ -1,5 +1,6 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
 import { layoutEventModel, type EventModelLayout } from './layout/index.ts';
 import type { EventModel } from './model.ts';
 import {
@@ -17,14 +18,14 @@ import { theme } from './theme/table.ts';
  *
  * `theme` is event modeling's own table (`theme/table.ts`, D331, D527). `labels` gives no
  * strings: box text is plain (D523), laid out as written and never through `ctx.inline`, so a
- * `$$` in data loads no math engine (D176, D178). The manifest, and with
- * it the registry row and `configDefaults`, land with T5 (#611); until then a test registers
- * the plugin over the first-party `eventmodeling` row (`replace: true`).
+ * `$$` in data loads no math engine (D176, D178). It is registered from the package's `mermaid`
+ * manifest (#611); `configDefaults` are the `eventmodeling` section's generated defaults.
  */
 export const eventmodeling = {
   id: 'eventmodeling',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: eventmodelingConfigDefaults as Readonly<Record<string, unknown>>,
   labels: (): readonly string[] => [],
   detector: (text: string): boolean => detectEventModeling(text),
   parse: (text: string, ctx: DiagramParseContext): EventModelParseResult =>

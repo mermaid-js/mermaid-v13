@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/diagram-eventmodeling",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Event modeling plugin for Mermaid: parser, layout, SVG renderer and language facet (in progress).",
+  "version": "13.0.0-alpha.0",
+  "description": "Event modeling plugin for Mermaid: parser, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -44,5 +43,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "eventmodeling",
+    "types": [
+      "eventmodeling"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "eventmodeling",
+    "language": "./dist/language.js"
   }
 }

@@ -1,9 +1,9 @@
 /**
- * `@mermaid-js/diagram-eventmodeling`: the event modeling plugin (spec #527), in progress. The
+ * `@mermaid-js/diagram-eventmodeling`: the event modeling plugin (spec #527). The
  * runtime entry has the parser, detection, the model and the AST (#602), the model's lanes,
  * boxes and relations (`eventModelStructure`), the custom layout (`layoutEventModel`, #604), and
- * the SVG renderer, theme table and plugin object (`eventmodeling`, #606). The manifest lands
- * with T5. The lexer and its parity gate's helpers are in `./testing` (#600).
+ * the SVG renderer, theme table and plugin object (`eventmodeling`, #606), registered from the
+ * package's manifest (#611). The language facet is `./language` (#609). The lexer and its parity gate's helpers are in `./testing` (#600).
  */
 export { eventmodeling } from './plugin.ts';
 export { renderEventModel } from './render/index.ts';

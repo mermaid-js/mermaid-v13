@@ -2,7 +2,9 @@
  * The `eventmodeling` options, checked (D226: never NaN, one warning per key), as packet's and
  * cynefin's (D366). The config resolver does not check value types or the schema's minimums, so
  * a directive can set `"padding": -5` or `"padding": "wide"`. The layout reads `padding` (#604),
- * the renderer `useMaxWidth` (#606); T5 (#611) marks them honoured.
+ * the renderer `useMaxWidth` (#606); both are honoured (#611), and the section's defaults are the
+ * schema's (`generated/config-defaults.ts`, the plugin's `configDefaults`). `rowHeight` and
+ * `useWidth` are ignored: v12 read neither.
  *
  * `padding` is a number, or a numeric string as its number (v12 passed it on as given), of 0 or
  * more, small enough that the bounds it pads stay finite (`PADDING_HEADROOM`); anything else is

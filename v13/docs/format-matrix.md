@@ -32,7 +32,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `packet` | `@mermaid-js/diagram-packet` | yes | yes |
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | not ported | no | no |
-| `eventmodeling` | not ported | no | no |
+| `eventmodeling` | `@mermaid-js/diagram-eventmodeling` | yes | no |
 | `treeView` | not ported | no | no |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
 | `ishikawa` | not ported | no | no |

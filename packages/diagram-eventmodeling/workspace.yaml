@@ -1,4 +1,6 @@
 # How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
 
 # grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
 # type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
@@ -21,3 +23,8 @@ languageBundle:
     - config.ts
     - testing.ts
     - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The event modeling plugin (SVG; `eventmodeling`).'
+  install: 'with `mermaid/slim`'

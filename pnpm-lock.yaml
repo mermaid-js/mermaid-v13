@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:^
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:^
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -557,6 +560,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:*
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -880,6 +886,9 @@ importers:
       '@mermaid-js/diagram-er':
         specifier: workspace:*
         version: link:../diagram-er
+      '@mermaid-js/diagram-eventmodeling':
+        specifier: workspace:*
+        version: link:../diagram-eventmodeling
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
