@@ -41,3 +41,10 @@ export const ARCHITECTURE_GROUP_EDGE_UNGROUPED = 'ARCHITECTURE_GROUP_EDGE_UNGROU
  * `architecture.padding` not one of at least 0; the layout uses v12's default (80, 40).
  */
 export const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';
+/**
+ * Warning (#614, GAPS T3): an edge with an arrowhead at each end whose line is shorter than the
+ * two heads (`iconSize / 6` each): `compass`'s gap between nodes is fixed, so a large
+ * `architecture.iconSize` would draw them over each other. Both heads shrink to half the line;
+ * one warning per render. Never raised at the default sizes (60 px against 27).
+ */
+export const ARCHITECTURE_ARROW_SHRUNK = 'ARCHITECTURE_ARROW_SHRUNK';
