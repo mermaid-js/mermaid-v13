@@ -6950,7 +6950,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "verticalSeparation": {
@@ -6961,7 +6961,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "horizontalSeparation": {
@@ -6972,7 +6972,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "arcRadius": {
@@ -6983,7 +6983,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "fontSize": {
@@ -6993,7 +6993,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number of 0 or more, or a string read as its number; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently."
+            "reason": "The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number, or a string read with `parseFloat`, from 0 up to 10000; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently (and drew 10000 or more)."
           }
         },
         "fontFamily": {
@@ -7076,7 +7076,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         },
         "markerFill": {
@@ -7160,7 +7160,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "A number, or a string read as its number (`\"12px\"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12."
+            "reason": "A number, or a string read with `parseFloat` as v12 read it (`\"12px\"` is 12), from 0 up to 10000; anything else lays out with the default and one `RAILROAD_CONFIG_INVALID` warning (v12 fell back silently, and drew 10000 or more)."
           }
         }
       }

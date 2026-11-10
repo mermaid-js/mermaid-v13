@@ -1,12 +1,15 @@
 /**
  * The `railroad` options the layout reads (spec #526 §Layout, D515), from the resolved `railroad`
  * config section as v12's `buildRailroadStyleOptions` (`styles.ts:189-254`) read them: a length
- * is a number, or a string read with `parseFloat` (`"12px"` is 12), finite and 0 or more, else
- * v12's default, with no warning (`sanitizeNumberValue`, `styles.ts:103-112`).
+ * is a number, or a string read with `parseFloat` (`"12px"` is 12, v12's `sanitizeNumberValue`,
+ * `styles.ts:103-112`, checked against 12.2.0 in `conformance/src/railroad/config.spec.ts`),
+ * finite and 0 or more. v13 adds the cap every ported type has (`config-lengths-checked`): below
+ * 10000, since v12 wrote `1e308` into the SVG. Anything else is drawn with the generated default
+ * and named in the one `RAILROAD_CONFIG_INVALID` (v12 fell back silently).
  *
  * `fontSize` and `fontFamily` have no default (D515): unset, the theme's `fontSize` and
- * `fontFamily` are used. A size must be above 0 (v12's `parseThemeFontSize`); a family must pass
- * core's style check. The colour keys have no default either: unset, the theme variable's colour
+ * `fontFamily` are used. A size is read as a length (the theme's size must be above 0, v12's
+ * `parseThemeFontSize`); a family must pass core's style check. The colour keys have no default either: unset, the theme variable's colour
  * is drawn (D516). A colour or font that fails core's checks is dropped with one
  * `RAILROAD_CONFIG_INVALID` (the layout raises it). The section's keys are `honoured` (#615) and
  * its defaults generated (`gen:config`).
@@ -34,37 +37,44 @@ export interface RailroadLayoutConfig {
 
 /**
  * The lengths a value the layout cannot use falls back to: the section's generated defaults
- * (`packages/core/schema/config.schema.yaml`, `gen:config`), v12's `DEFAULT_RAILROAD_CONFIG`,
- * which the plugin also hands core as its `configDefaults`.
+ * (`packages/core/schema/config.schema.yaml`, `gen:config`, v12's `DEFAULT_RAILROAD_CONFIG`), the
+ * one source, which the plugin also hands core as its `configDefaults`.
  */
-export const RAILROAD_LAYOUT_DEFAULTS: RailroadLayoutConfig = Object.freeze({
-  padding: railroadConfigDefaults.padding ?? 10,
-  verticalSeparation: railroadConfigDefaults.verticalSeparation ?? 8,
-  horizontalSeparation: railroadConfigDefaults.horizontalSeparation ?? 10,
-  arcRadius: railroadConfigDefaults.arcRadius ?? 10,
-  markerRadius: railroadConfigDefaults.markerRadius ?? 5,
-  strokeWidth: railroadConfigDefaults.strokeWidth ?? 2,
-});
+const LENGTH_KEYS = [
+  'padding',
+  'verticalSeparation',
+  'horizontalSeparation',
+  'arcRadius',
+  'markerRadius',
+  'strokeWidth',
+] as const satisfies readonly (keyof RailroadLayoutConfig)[];
 
-const KEYS = Object.keys(RAILROAD_LAYOUT_DEFAULTS) as (keyof RailroadLayoutConfig)[];
+export const RAILROAD_LAYOUT_DEFAULTS: RailroadLayoutConfig = Object.freeze(
+  Object.fromEntries(LENGTH_KEYS.map((key) => [key, railroadConfigDefaults[key]]))
+) as unknown as RailroadLayoutConfig;
 
-/** v12's number reading: a number as it is, a string through `parseFloat`; else NaN. */
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return Number.parseFloat(value);
-  return Number.NaN;
+/** Lengths and sizes at or above this are not drawn: the cap every ported type has. */
+const MAX_LENGTH = 1e4;
+
+/**
+ * A length or font size as v12 read it (a number, or a string through `parseFloat`), finite,
+ * from 0 up to `MAX_LENGTH`; else undefined.
+ */
+function configLength(value: unknown): number | undefined {
+  let n = Number.NaN;
+  if (typeof value === 'number') n = value;
+  else if (typeof value === 'string') n = Number.parseFloat(value);
+  return Number.isFinite(n) && n >= 0 && n < MAX_LENGTH ? n : undefined;
 }
 
-/** The layout's lengths from the resolved `railroad` section. */
+/** The layout's lengths from the resolved `railroad` section; unusable ones are the defaults. */
 export function railroadLayoutConfig(
   section: Readonly<Record<string, unknown>> | undefined
 ): RailroadLayoutConfig {
   const given = section ?? {};
   const out: Record<string, number> = {};
-  for (const key of KEYS) {
-    const n = configNumber(given[key]);
-    out[key] = Number.isFinite(n) && n >= 0 ? n : RAILROAD_LAYOUT_DEFAULTS[key];
-  }
+  for (const key of LENGTH_KEYS)
+    out[key] = configLength(given[key]) ?? RAILROAD_LAYOUT_DEFAULTS[key];
   return Object.freeze(out) as unknown as RailroadLayoutConfig;
 }
 
@@ -83,18 +93,18 @@ export function checkFontFamily(value: unknown): SafeValue | undefined {
 
 /**
  * `fontFamily` and `fontSize` from the resolved `railroad` section, where usable: a family that
- * passes core's style check (the renderer writes it), a size of 0 or more (v12's
- * `sanitizeNumberValue` for the config's size; only the theme's size had to be above 0).
+ * passes core's style check (the renderer writes it), a size read as a length (v12's
+ * `sanitizeNumberValue` for the config's size, capped; only the theme's size had to be above 0).
  */
 export function railroadFontOverride(
   section: Readonly<Record<string, unknown>> | undefined
 ): RailroadFontOverride {
   const given = section ?? {};
   const family = checkFontFamily(given.fontFamily);
-  const size = configNumber(given.fontSize);
+  const size = configLength(given.fontSize);
   return {
     ...(family === undefined ? {} : { family }),
-    ...(Number.isFinite(size) && size >= 0 ? { size } : {}),
+    ...(size === undefined ? {} : { size }),
   };
 }
 
@@ -119,7 +129,7 @@ export const RAILROAD_COLOUR_KEYS = {
 
 export type RailroadColourKey = keyof typeof RAILROAD_COLOUR_KEYS;
 
-/** A `railroad` colour or font the renderer cannot use (D515). */
+/** A `railroad` length, colour or font the renderer cannot use (D515). */
 export const RAILROAD_CONFIG_INVALID = 'RAILROAD_CONFIG_INVALID';
 
 /** The `railroad` section, checked once (D515), for the layout and the renderer. */
@@ -130,7 +140,10 @@ export interface RailroadConfig {
   /** The colours it sets that pass core's colour check: each beats its theme variable. */
   readonly colours: Readonly<Partial<Record<RailroadColourKey, SafeColor>>>;
   readonly useMaxWidth: boolean;
-  /** Each colour or font key it sets that is not usable, as `railroad.<key> <value>`. */
+  /**
+   * Each length, colour or font key it sets that is not usable: its path, its value and, in
+   * brackets, what is drawn instead (`railroad.padding -4 (the default 10)`).
+   */
   readonly dropped: readonly string[];
 }
 
@@ -151,19 +164,25 @@ export function railroadConfig(
 ): RailroadConfig {
   const given = section ?? {};
   const dropped: string[] = [];
+  for (const key of LENGTH_KEYS) {
+    if (given[key] !== undefined && configLength(given[key]) === undefined)
+      dropped.push(
+        `railroad.${key} ${shown(given[key])} (the default ${RAILROAD_LAYOUT_DEFAULTS[key]})`
+      );
+  }
   const colours: Partial<Record<RailroadColourKey, SafeColor>> = {};
   for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
     const value = given[key];
     if (value === undefined) continue;
     const colour = typeof value === 'string' ? checkColor(value.trim()) : undefined;
     if (colour) colours[key] = colour;
-    else dropped.push(`railroad.${key} ${shown(value)}`);
+    else dropped.push(`railroad.${key} ${shown(value)} (the theme's)`);
   }
   const font = railroadFontOverride(given);
   if (given.fontFamily !== undefined && font.family === undefined)
-    dropped.push(`railroad.fontFamily ${shown(given.fontFamily)}`);
+    dropped.push(`railroad.fontFamily ${shown(given.fontFamily)} (the theme's)`);
   if (given.fontSize !== undefined && font.size === undefined)
-    dropped.push(`railroad.fontSize ${shown(given.fontSize)}`);
+    dropped.push(`railroad.fontSize ${shown(given.fontSize)} (the theme's)`);
   return {
     lengths: railroadLayoutConfig(given),
     font,
@@ -174,15 +193,15 @@ export function railroadConfig(
 }
 
 /**
- * One `RAILROAD_CONFIG_INVALID` naming every colour or font key of the section that is set but
- * unusable (D515), or none. Each such key is drawn with the theme's value, where v12 fell back
- * silently. A length that is not a number of 0 or more falls back silently, as in v12.
+ * One `RAILROAD_CONFIG_INVALID` naming every length, colour or font key of the section that is
+ * set but unusable (D515), or none: a length is drawn with its default, a colour or font with the
+ * theme's, where v12 fell back silently (and drew a length of 10000 or more).
  */
 export function railroadConfigWarning(config: RailroadConfig): Warning | undefined {
   if (config.dropped.length === 0) return undefined;
   return {
     code: RAILROAD_CONFIG_INVALID,
-    message: `${config.dropped.join(', ')}: not usable; using the theme's value`,
+    message: `Not usable, so drawn with what each names instead: ${config.dropped.join(', ')}`,
     path: config.dropped[0]!.split(' ')[0]!,
   };
 }

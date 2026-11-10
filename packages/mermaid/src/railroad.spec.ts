@@ -134,15 +134,38 @@ describe('railroad diagrams through the public API (#615)', () => {
     expect(root((await m.render('r4', init({ strokeWidth: 3 }))).svg)).toContain(
       'stroke-width="3"'
     );
-    // A length v12 could not read falls back silently, as in v12.
-    const bad = await m.render('r4', init({ padding: -4 }));
-    expect(bad.svg).toBe(plain.svg);
-    expect(bad.warnings).toEqual([]);
+    // v12's reading (`sanitizeNumberValue`): a string through `parseFloat`, so "30px" is 30.
+    expect((await m.render('r4', init({ padding: '30px' }))).svg).toBe(
+      (await m.render('r4', init({ padding: 30 }))).svg
+    );
     const fixed = await m.render('r4', init({ useMaxWidth: false }));
     const [, , w, h] = box(fixed.svg)!.split(' ');
     expect(root(fixed.svg)).toContain(`width="${w}" height="${h}"`);
     expect(fixed.svg).not.toContain('max-width');
   });
+
+  it.each([
+    ['padding', -4],
+    ['padding', 1e308],
+    ['verticalSeparation', 1e4],
+    ['horizontalSeparation', 'wide'],
+    ['arcRadius', 1e308],
+    ['markerRadius', Number.MAX_VALUE],
+    ['strokeWidth', 1e308],
+    ['fontSize', 1e308],
+    ['fontSize', -1],
+  ])(
+    'draws railroad.%s %s with the default, with one RAILROAD_CONFIG_INVALID',
+    async (key, value) => {
+      const m = createMermaid();
+      const plain = await m.render('r10', TEXT);
+      const bad = await m.render('r10', init({ [key]: value }));
+      expect(bad.svg).toBe(plain.svg);
+      expect(bad.svg).not.toMatch(/NaN|Infinity/);
+      expect(bad.warnings.map((w) => w.code)).toEqual(['RAILROAD_CONFIG_INVALID']);
+      expect(bad.warnings[0]!.path).toBe(`railroad.${key}`);
+    }
+  );
 
   it('draws the theme’s font and colours where the section sets none (D515, D516)', async () => {
     const m = createMermaid();

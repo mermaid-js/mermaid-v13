@@ -51,7 +51,9 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - **Done (T5):** the switch-on above, all four steps; goldens pass unchanged from their new home.
 - **Choice (done):** the colour and font reasons say "The documented default changes … to none", so MIGRATION's generated Changed defaults table lists the 13 keys (v12's runtime already drew the theme's, so no drawing changes).
-- **Choice (done):** `src/parser/base.ts` renamed `parser.ts`: the shared `bench/src/language-bundle.spec.ts` expects `src/parser/parser.ts` in every facet bundle (a shared list, not edited).
+- **Choice (done):** `src/parser/base.ts` renamed `parser.ts`: the shared `bench/src/language-bundle.spec.ts` expects `src/parser/parser.ts` in every facet bundle (shared spec not edited). **For the maintainer:** a `languageBundle.parser` key in workspace.yaml would remove the hard-coded path.
+- **Choice (done, review):** lengths and `fontSize` keep v12's reading (`parseFloat`: `"12px"` is 12; 12.2.0's `getStyles` checked in `conformance/src/railroad/config.spec.ts`), not the shared whole-numeric rule, and add the shared cap (0 up to 10000). A length that is set but unusable (negative, not a number, 10000 or more) is drawn with the generated default and named in the one `RAILROAD_CONFIG_INVALID` (v12 fell back silently; `1e308` threw `NaN` into the SVG writer before this fix). `RAILROAD_CONFIG_INVALID` kept rather than `RAILROAD_CONFIG_IGNORED`: it already names dropped colours and fonts, one warning per render.
+- Review: the gate-corpus language property and rename round-trip spec (`conformance/src/railroad/language-properties.spec.ts`, style/classDef exception kept) and the per-notation goldens check (`language-goldens.spec.ts`, goldens in `packages/language-service/goldens/railroad/`) are restored on the generated facet rows.
 - **Choice (done):** baselines are one per notation in each of the four families (16 files), not the eleven themes; the theme oracle covers the eleven.
 - Warm render 20.3× geomean measured at load ~23 (not steady); rerun on a quiet machine for the PR body.
 
