@@ -1,0 +1,14 @@
+@ 2:31  functionalRequirement "test |req" {
+  2:26-2:34 "test req"
+  | **Functional Requirement** `test req`
+  |
+  | id: `1.2` · text: `the test text.` · risk: `High` · verifymethod: `Test`
+  |
+  | 1 relation
+@ 11:16  style "test r|eq" fill:#f00
+  11:10-11:18 "test req"
+  | **Functional Requirement** `test req`
+  |
+  | id: `1.2` · text: `the test text.` · risk: `High` · verifymethod: `Test`
+  |
+  | 1 relation

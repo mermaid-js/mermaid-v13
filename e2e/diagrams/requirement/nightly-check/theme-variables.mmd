@@ -1,0 +1,29 @@
+---
+description: >-
+  The requirement theme variables v12 documents, set through themeVariables
+  (v12's selectors never apply them; D435 makes them work).
+config:
+  theme: base
+  themeVariables:
+    requirementBackground: '#fff8e1'
+    requirementBorderColor: '#ff8f00'
+    requirementBorderSize: '2'
+    requirementTextColor: '#4e342e'
+    relationColor: '#6d4c41'
+    relationLabelBackground: '#ffe0b2'
+    relationLabelColor: '#3e2723'
+---
+requirementDiagram
+  requirement themed_req {
+    id: 1
+    text: a themed requirement
+    risk: medium
+    verifymethod: analysis
+  }
+
+  element themed_el {
+    type: simulation
+  }
+
+  themed_el - satisfies -> themed_req
+  themed_req - contains -> themed_req

@@ -1,0 +1,10 @@
+{
+  "outcome": "warning",
+  "diagnostics": [
+    {
+      "id": "SHAPE_REMOVED",
+      "nodeId": "store",
+      "line": 8
+    }
+  ]
+}

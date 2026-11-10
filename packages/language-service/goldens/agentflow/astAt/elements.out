@@ -1,0 +1,24 @@
+@ 4:7  |a["Alpha"] --> b
+  n:a 4:7-4:17 "a[\"Alpha\"]"
+  e:a>b 4:7-4:23 "a[\"Alpha\"] --> b"
+  chain:1 4:7-4:23 "a[\"Alpha\"] --> b"
+  s:inner 3:5-5:8 "flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end"
+  s:outer 2:3-7:6 "flow outer[\"Outer\"]\n    flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end\n    c --x a\n  end"
+@ 4:19  a["Alpha"] -|-> b
+  e:a>b 4:7-4:23 "a[\"Alpha\"] --> b"
+  chain:1 4:7-4:23 "a[\"Alpha\"] --> b"
+  s:inner 3:5-5:8 "flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end"
+  s:outer 2:3-7:6 "flow outer[\"Outer\"]\n    flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end\n    c --x a\n  end"
+@ 5:6  e|nd
+  s:inner 3:5-5:8 "flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end"
+  s:outer 2:3-7:6 "flow outer[\"Outer\"]\n    flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end\n    c --x a\n  end"
+@ 6:3  |  c --x a
+  s:outer 2:3-7:6 "flow outer[\"Outer\"]\n    flow inner[\"Inner\"]\n      a[\"Alpha\"] --> b\n    end\n    c --x a\n  end"
+@ 8:13  connector |hub@{ owner: ops }
+  n:hub 8:3-8:31 "connector hub@{ owner: ops }"
+@ 10:5  |g
+  n:g 10:5-10:6 "g"
+  chain:3 10:5-10:6 "g"
+  global:1 9:3-11:6 "global\n    g\n  end"
+@ 13:8  A d|escription
+  accDescr:1 12:3-14:4 "accDescr {\n    A description\n  }"

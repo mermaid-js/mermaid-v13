@@ -16,24 +16,26 @@ import { bundle } from './build.ts';
 import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
-const packages = fileURLToPath(new URL('../../', import.meta.url));
 
 /**
- * The diagram types with a text entry, from their manifests (the `mermaid.ascii` key), sorted:
- * a port that adds one is found here, so no list in this file names it.
+ * The diagram types whose manifest names an `ascii` entry, sorted: read from each package's
+ * own `package.json`, so a port's text output needs no line here (shared-files.md rule 1).
  */
 function asciiTypes(): string[] {
-  const out: string[] = [];
-  for (const dir of readdirSync(packages).sort()) {
-    const manifest = join(packages, dir, 'package.json');
-    if (!dir.startsWith('diagram-') || !existsSync(manifest)) continue;
-    const { mermaid } = JSON.parse(readFileSync(manifest, 'utf8')) as {
-      mermaid?: { plugin?: string; ascii?: string };
-    };
-    if (mermaid?.plugin === 'diagram' && mermaid.ascii !== undefined)
-      out.push(dir.slice('diagram-'.length));
-  }
-  return out;
+  const packages = fileURLToPath(new URL('../../', import.meta.url));
+  return readdirSync(packages)
+    .filter((dir) => dir.startsWith('diagram-'))
+    .flatMap((dir) => {
+      const path = join(packages, dir, 'package.json');
+      if (!existsSync(path)) return [];
+      const { mermaid } = JSON.parse(readFileSync(path, 'utf8')) as {
+        mermaid?: { plugin?: string; ascii?: unknown };
+      };
+      return mermaid?.plugin === 'diagram' && typeof mermaid.ascii === 'string'
+        ? [dir.slice('diagram-'.length)]
+        : [];
+    })
+    .sort();
 }
 
 /** The production bundle the bench serves as `v13` (R-PERF-1), built once for the file. */

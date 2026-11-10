@@ -1,0 +1,10 @@
+agentflow-beta LR
+  connector inbox[Inbox]
+  flow plan[Plan]
+    read[Read input]@{ shape: input } --> think
+  end
+  classDef hot fill:#f96
+  style | fill:#eee
+  class | hot
+  connector | 
+  inbox --> |

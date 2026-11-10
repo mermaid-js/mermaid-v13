@@ -1,0 +1,14 @@
+---
+description: >-
+  Two flows that name each other from inside, so each would hold the other: the nesting that
+  closes the loop is cut (D461), and the edges from a member to the other flow end at its frame.
+---
+agentflow-beta TB
+  flow A["Flow A"]
+    a1["Task A1"]
+    a1 --> B
+  end
+  flow B["Flow B"]
+    b1["Task B1"]
+    b1 --> A
+  end

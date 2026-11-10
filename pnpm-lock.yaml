@@ -101,9 +101,15 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-architecture':
         specifier: workspace:^
         version: link:../diagram-architecture
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -149,6 +155,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -234,9 +243,15 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-architecture':
         specifier: workspace:^
         version: link:../diagram-architecture
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -282,6 +297,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:^
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:^
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:^
         version: link:../diagram-sankey
@@ -426,7 +444,19 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/diagram-agentflow:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-architecture:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-block:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
@@ -522,6 +552,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-requirement:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
@@ -587,6 +623,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -632,6 +674,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -678,6 +723,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -723,6 +774,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -925,9 +979,15 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-architecture':
         specifier: workspace:*
         version: link:../diagram-architecture
+      '@mermaid-js/diagram-block':
+        specifier: workspace:*
+        version: link:../diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -973,6 +1033,9 @@ importers:
       '@mermaid-js/diagram-radar':
         specifier: workspace:*
         version: link:../diagram-radar
+      '@mermaid-js/diagram-requirement':
+        specifier: workspace:*
+        version: link:../diagram-requirement
       '@mermaid-js/diagram-sankey':
         specifier: workspace:*
         version: link:../diagram-sankey
@@ -1101,6 +1164,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../../packages/diagram-agentflow
+      '@mermaid-js/diagram-block':
+        specifier: workspace:^
+        version: link:../../packages/diagram-block
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class

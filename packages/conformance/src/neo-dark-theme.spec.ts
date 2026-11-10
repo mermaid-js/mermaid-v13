@@ -98,6 +98,12 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     [0, 1, 2, 3, 4, 5].map((i) => [`actor${i}`, 'D249: author-only; no theme sets actor<n>'])
   ),
   tagBorder: "D267: author-only, v12's other name for tagLabelBorder; no theme sets it",
+  // Requirement (#574): v12 declared these but drew mainBkg, strokeWidth and edgeLabelBackground.
+  requirementBackground: 'D435, D541: v12 resolved primaryColor; it drew the box in mainBkg',
+  requirementBorderSize:
+    "D435, D541, D183: v12 resolved '1' and drew strokeWidth (1 in v12 neo-dark); v13 strokeWidth is 2",
+  relationLabelBackground:
+    'D435, D541, D183: edgeLabelBackground, as v12 drew it; v13 neo-dark derives it darker (DARK_RULES)',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',

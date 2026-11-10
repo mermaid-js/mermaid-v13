@@ -1,0 +1,9 @@
+@ 2:15  flow plan@{ | }
+  view property 2:15-2:15 "" -> "view: "
+@ 4:22  flow other@{ view: | }
+  collapsed constant 4:22-4:22 "" -> "collapsed"
+@ 6:18  plan@{ view: co| }
+  collapsed constant 6:16-6:18 "co" -> "collapsed"
+@ 8:19  e1@{ animation: | }
+  fast constant 8:19-8:19 "" -> "fast"
+  slow constant 8:19-8:19 "" -> "slow"

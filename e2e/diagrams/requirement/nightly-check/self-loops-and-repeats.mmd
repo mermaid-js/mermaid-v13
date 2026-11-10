@@ -1,0 +1,21 @@
+---
+description: >-
+  A self-loop of each line style (contains and a dashed one) and a relation
+  written twice: v12 keeps every one.
+---
+requirementDiagram
+  requirement loop_req {
+    id: 1
+    text: refers to itself
+    risk: medium
+    verifymethod: demonstration
+  }
+
+  element loop_el {
+    type: simulation
+  }
+
+  loop_req - contains -> loop_req
+  loop_req - refines -> loop_req
+  loop_el - satisfies -> loop_req
+  loop_el - satisfies -> loop_req

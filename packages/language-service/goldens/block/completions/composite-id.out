@@ -1,0 +1,18 @@
+@ 3:12  block:grp|
+  grp["grp"] shape (square) 3:9-3:12 "grp" -> "grp[\"grp\"]"
+  grp("grp") shape (round) 3:9-3:12 "grp" -> "grp(\"grp\")"
+  grp(("grp")) shape (circle) 3:9-3:12 "grp" -> "grp((\"grp\"))"
+  grp((("grp"))) shape (doublecircle) 3:9-3:12 "grp" -> "grp(((\"grp\")))"
+  grp(["grp"]) shape (stadium) 3:9-3:12 "grp" -> "grp([\"grp\"])"
+  grp[["grp"]] shape (subroutine) 3:9-3:12 "grp" -> "grp[[\"grp\"]]"
+  grp[("grp")] shape (cylinder) 3:9-3:12 "grp" -> "grp[(\"grp\")]"
+  grp{"grp"} shape (diamond) 3:9-3:12 "grp" -> "grp{\"grp\"}"
+  grp{{"grp"}} shape (hexagon) 3:9-3:12 "grp" -> "grp{{\"grp\"}}"
+  grp>"grp"] shape (rect_left_inv_arrow) 3:9-3:12 "grp" -> "grp>\"grp\"]"
+  grp[/"grp"/] shape (lean_right) 3:9-3:12 "grp" -> "grp[/\"grp\"/]"
+  grp[\"grp"\] shape (lean_left) 3:9-3:12 "grp" -> "grp[\\\"grp\"\\]"
+  grp[/"grp"\] shape (trapezoid) 3:9-3:12 "grp" -> "grp[/\"grp\"\\]"
+  grp[\"grp"/] shape (inv_trapezoid) 3:9-3:12 "grp" -> "grp[\\\"grp\"/]"
+  grp<["grp"]>(right) shape (block_arrow) 3:9-3:12 "grp" -> "grp<[\"grp\"]>(right)"
+@ 4:11  block:|
+  none

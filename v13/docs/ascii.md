@@ -10,7 +10,9 @@ relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`
 sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
 [below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa
 diagram (`ishikawa`, [below](#ishikawa-diagrams)), the usecase
-diagram (`usecase-beta`, [below](#usecase-diagrams)) and `info`. See
+diagram (`usecase-beta`, [below](#usecase-diagrams)), the block diagram (`block`,
+[below](#block-diagrams)), the agentflow (`agentflow-beta`,
+[below](#agentflow-diagrams)) and `info`. See
 [the format matrix](format-matrix.md) for every type.
 
 ```
@@ -119,7 +121,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board, the Ishikawa diagram and the usecase diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram, the block diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -320,6 +322,77 @@ is 25 columns).
   italic text) and `link` (ticket links from `kanban.ticketBaseUrl`). Column colours come from
   the theme and are dropped silently; icons are drawn by neither output.
 
+## Block diagrams
+
+The block diagram's text entry (`@mermaid-js/diagram-block/ascii`, #559, D449) lays its own grid
+out in cells from the model; the px layout is not read.
+
+```
+╭─────────╮                   ┌────◇────┐
+│  Start  ├──────────────────►◇ Valid?  ◇
+╰─────────╯                   └──┬─◇────┘
+                             yes │
+                                 ▼
+┌──────────────── Work ─────────────────┐
+│                                       │
+│  ┌───────┐    ╭───────╮    ╒═══════╕  │
+│  │ Load  │    │ Parse │  ┌┄┤ Store │  │
+│  └───────┘    ╰───────╯  ┆ ╘═══════╛  │
+│                          ┆            │
+└──────────────────────────┼────────────┘
+                           ┆
+                           ┆
+┌─────────┐    ╓─────────╖ ┆  ┌─────────┐
+│  Next   ►    ║ Report  ║◄┘  │  Done   │
+└─────────┘    ╙─────────╜    └─────────┘
+```
+
+from
+
+```mermaid
+block
+  columns 3
+  start(("Start")) space check{"Valid?"}
+  block:work["Work"]:3
+    columns 3
+    load["Load"] parse(["Parse"]) store[("Store")]
+  end
+  go<["Next"]>(right) report[["Report"]] done((("Done")))
+  start --> check
+  check -- "yes" --> work
+  store -.-> report
+```
+
+- Blocks are boxes on a character grid, placed as in SVG (`columns`, spans, a block wider than
+  the rest of its row). Every column of a grid is one width, its widest block's per column, so
+  the widest label sets it; each row is as tall as its tallest block, and blocks fill their
+  cells. Columns are four cells apart and rows two lines (`ascii.padding: roomy`: six and three,
+  with a blank line above and below each label).
+- A composite is a frame around its own grid, its label centred on the top border
+  (`┌─ Work ─┐`). A frame grows to hold its widest row, so no block crosses it.
+- A space keeps its cells and draws nothing; a row of spaces alone takes no room.
+- Labels longer than 40 cells are cut with `…` (`~` in ASCII); with `ascii.maxWidth` labels are
+  cut shorter, down to two cells, until the drawing fits. One that still does not is drawn
+  whole, with `ASCII_TOO_WIDE`.
+- Shapes take flowchart's text forms: rounded corners for round, circle and stadium, `◇` side
+  marks for a diamond, `<` `>` for a hexagon, double sides for a subroutine, `═` caps for a
+  cylinder. Double circles, the odd shape, the leans and the trapezoids are plain boxes, named in
+  one `ASCII_SHAPE` warning.
+- A block arrow is a box with an arrowhead in the middle of each side it points to (`right` `►`,
+  `x` both `◄` and `►`, `y` both `▲` and `▼`). Lines never leave a block arrow at its arrowhead.
+- Edges are stepped lines that leave a block at a tee and end in an arrowhead next to the other,
+  `✕` for `--x` and `●` for `--o`; thick edges are heavy (`━`, `=`), dotted ones dashed (`┄`,
+  `.`). They go round blocks, cross frames straight through and other lines only at right
+  angles; an edge to a composite holding its other block ends inside the frame. No arrowhead or
+  label sits on a frame. A self-loop leaves one side and comes back into the next one round.
+  An edge no free route is found for is drawn across what is there, with `ASCII_ROUTE`.
+- An edge label is written on its line where the line runs straight and has room for it, else on
+  free cells beside the line.
+- `block.padding` is pixel geometry: text ignores it, with no warning (D449). The composites'
+  palette and other theme colours are dropped silently.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`) and
+  `emphasis` (bold and italic text).
+
 ## Usecase diagrams
 
 The usecase diagram's text entry (`@mermaid-js/diagram-usecase/ascii`, #569, D320, D478) draws
@@ -358,6 +431,73 @@ User──┐
   `emphasis`, `glyph` (business marks, icons and the hollow and awesome figures, drawn as the
   plain figure and boxes), `animation`, `config` (the `usecase` fonts, `colorScheme`,
   `useMaxWidth` and `diagramPadding` set off their defaults) and `accessibility`.
+
+## Agentflow diagrams
+
+The agentflow's text entry (`@mermaid-js/diagram-agentflow/ascii`, #551, D320, D469) draws the
+same graph as SVG, laid out in cells with `layered` (any other `layout` warns `ASCII_DROPPED`
+`layout`, as for every graph type), with flowchart's text forms. It cannot use the flowchart's
+entry (a diagram imports no other diagram), so it draws from the agentflow model with the same
+core kit.
+
+```
+                                            ╓───────╖      ┌─────╲
+                                            ║       ╟┄┄┄┄┄┄┤ FAQ │
+                                          ┌►║ Reply ║      └─────┘
+┌──────────── Triage ───────────┐         │ ║       ╟───┐
+│                               │         │ ╙───────╜   │
+│                 ┌────◇────┐   │         │             │
+│ ┌────────┐      │         ├───┼─── no ──┘             │  ┌+─────┐
+│ / Ticket ├─────►◇ Urgent? ◇   │                       └─►│ Done │
+│ └────────┘      │         ├───┼─────────┐                └──────┘
+│                 └────◇────┘   │         │
+│                               │         │ ┌──────┐
+└───────────────────────────────┘         └✕< Page >
+                                            └──────┘
+```
+
+from
+
+```mermaid
+agentflow-beta LR
+  flow triage["Triage"]
+    ticket["Ticket"]@{ shape: input } --> check["Urgent?"]@{ shape: decision }
+  end
+  flow done["Done"]
+    log["Log"]
+  end
+  done@{ view: "collapsed" }
+  check -->|"no"| reply["Reply"]@{ shape: tool }
+  check --x page["Page"]@{ shape: action }
+  reply -.- faq["FAQ"]@{ shape: refdoc }
+  reply --> done
+```
+
+| Kind or element | `unicode`                               | `ascii`             |
+| --------------- | --------------------------------------- | ------------------- |
+| task, connector | rounded box `╭─╮ ╰─╯`                   | `+-+`               |
+| tool            | double sides `║ ║`                      | `I I`               |
+| input           | box with `/` at each side's middle      | same                |
+| decision        | box with `◇` at each side's middle      | box with `*`        |
+| refdoc          | box with a folded top-right corner `╲`  | `\`                 |
+| action          | box with `<` and `>` on the left and right | same             |
+| flow            | frame with the title on the top border  | same                |
+| collapsed flow  | box with a `+` marker                   | same                |
+
+- Every box fits its label, wrapped at `agentflow.wrappingWidth` (120 px is 15 columns);
+  `agentflow.nodeSpacing` and `rankSpacing` convert at 8 × 16 px a cell, as the flowchart's
+  lengths do. `minNodeWidth` has no text form.
+- `-->` ends in a head (`►`, `>`), `--x` in a cross (`✕`, `x`), and `-.-` is dotted with no head;
+  a line leaves its box at a tee. Labels sit on their line.
+- An edge between a flow and one of its members ends on the flow's frame, its head pointing out
+  of the flow. Edge labels and heads stay off every other frame.
+- The front-matter `title` is centred on the first line.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`,
+  `linkStyle`; palette colours are dropped silently), `curve` (`linkStyle … interpolate`, a
+  `flowchart.curve` that is set), `emphasis`, `animation`, `link` (`click` links, tooltips and
+  callbacks), `config` (`agentflow.useMaxWidth`, `diagramPadding`, `minNodeWidth` and
+  `titleTopMargin` set off their defaults, and `flowchart.padding` or a
+  `flowchart.subGraphTitleMargin` that is set) and `accessibility` (`accTitle`, `accDescr`).
 
 ## Packet diagrams
 
@@ -410,6 +550,59 @@ packet
   not cropped and warns `ASCII_TOO_WIDE`.
 - Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels and title)
   and `accessibility` (`accTitle`, `accDescr`).
+
+## Requirement diagrams
+
+The requirement diagram's text entry (`@mermaid-js/diagram-requirement/ascii`, #588, D438) lays
+the diagram out in cells with the same layout as SVG, after the ER diagram's.
+
+```
+┌──────────────────┐
+│   <<Element>>    │
+│   test_entity    │
+├──────────────────┤
+│ Type: simulation │
+└─────────┬────────┘
+          ┆
+          ┆
+          ┆
+    <<satisfies>>
+          ┆
+          ┆
+          ▼
+ ┌─────────────────┐
+ │ <<Requirement>> │
+ │    test_req     │
+ ├─────────────────┤
+ │ ID: 1           │
+ │ Risk: High      │
+ └─────────────────┘
+```
+
+from
+
+```mermaid
+requirementDiagram
+  requirement test_req {
+    id: 1
+    risk: high
+  }
+  element test_entity {
+    type: simulation
+  }
+  test_entity - satisfies -> test_req
+```
+
+- Each requirement and element is a box: `<<Kind>>` and the name centred, a divider, then one
+  `Key: value` line per field that has a value. A value longer than 40 columns is cut to 40,
+  the last an ellipsis (`…`, `~` in `ascii`); names are never cut.
+- Relations are lines labelled `<<kind>>`: solid for `contains`, dotted for the others.
+  `contains` is marked `⊕` (`(+)` in `ascii`) where it leaves its source; the others end in an
+  arrowhead at the target.
+- A drawing wider than `ascii.maxWidth` is drawn whole, with `ASCII_TOO_WIDE`.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`),
+  `curve` (a `flowchart.curve` other than `step`, `stepBefore` or `stepAfter`), `emphasis`
+  (bold and italic text) and `accessibility` (`accTitle`, `accDescr`).
 
 ## Ishikawa diagrams
 
@@ -488,7 +681,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's or info's)
+packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's, the agentflow's or
+info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

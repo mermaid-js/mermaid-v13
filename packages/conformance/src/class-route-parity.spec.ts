@@ -3,10 +3,11 @@ import type { RoutePoint } from '@mermaid-js/core/layout';
 import { streamWriter } from '@mermaid-js/core/svg';
 import { routePath as classRoute } from '@mermaid-js/diagram-class/testing';
 import { routePath as flowRoute, type CurveKind } from '@mermaid-js/diagram-flowchart/testing';
+import { routePath as requirementRoute } from '@mermaid-js/diagram-requirement/testing';
 
-// The class renderer draws edges with a copy of the flowchart's `routePath` (packages never
-// import each other, spec #126 T4). This keeps the copies equal: a fix in one fails here until
-// it is made in the other.
+// The class and requirement renderers draw edges with a copy of the flowchart's `routePath`
+// (packages never import each other, spec #126 T4, spec #520 T4). This keeps the copies equal: a
+// fix in one fails here until it is made in the others.
 
 const KINDS: readonly CurveKind[] = [
   'curved',
@@ -55,7 +56,7 @@ const draw = (f: typeof flowRoute, pts: RoutePoint[], kind: CurveKind, s: number
   return { ...p, d: String(p.d) };
 };
 
-describe('class and flowchart routePath stay the same', () => {
+describe('class, requirement and flowchart routePath stay the same', () => {
   it('draws identical paths and ends on generated routes', () => {
     const r = rng(156);
     let n = 0;
@@ -64,8 +65,10 @@ describe('class and flowchart routePath stay the same', () => {
       const kind = KINDS[i % KINDS.length]!;
       const s = [0, 4, 13.5, 17.25][Math.floor(r() * 4)]!;
       const e = [0, 4, 13.5, 17.25][Math.floor(r() * 4)]!;
-      expect(draw(classRoute, pts, kind, s, e), JSON.stringify({ pts, kind, s, e })).toEqual(
-        draw(flowRoute, pts, kind, s, e)
+      const flow = draw(flowRoute, pts, kind, s, e);
+      expect(draw(classRoute, pts, kind, s, e), JSON.stringify({ pts, kind, s, e })).toEqual(flow);
+      expect(draw(requirementRoute, pts, kind, s, e), JSON.stringify({ pts, kind, s, e })).toEqual(
+        flow
       );
       n++;
     }
