@@ -30,8 +30,14 @@ export function graphemeWidth(cluster: string): 0 | 1 | 2 {
   return EMOJI.test(cluster) || WIDE.test(cluster) ? 2 : 1;
 }
 
+// Printable ASCII, box drawing and the ellipsis: each is a cluster of its own, one cell wide,
+// unless a mark or joiner follows it, which this set leaves out. Most drawn text is only these.
+const SIMPLE = /^[\x20-\x7e─-╿…]*$/;
+
 /** `text` split into grapheme clusters with their widths. */
 export function graphemes(text: string): Grapheme[] {
+  // The segmenter's split, without the segmenter: drawn lines are mostly such text, and fast.
+  if (SIMPLE.test(text)) return Array.from(text, (c) => ({ text: c, width: 1 as const }));
   // A fixed locale keeps the split the same on every host (R-ARCH-6).
   segmenter ??= new Intl.Segmenter('en', { granularity: 'grapheme' });
   const out: Grapheme[] = [];
