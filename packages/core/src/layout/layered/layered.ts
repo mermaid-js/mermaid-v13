@@ -1884,7 +1884,9 @@ function assignTracks(
         for (const j of after[pick]!) waiting[j]!--;
       }
     }
-    const taken = new Set<number>();
+    // Track IDs are in [0, count). A fresh stamp per piece replaces clearing a Set;
+    // unplaced neighbours have track -1 and cannot block any candidate track.
+    const taken = new Int32Array(weighed ? count : 0);
     const onTrack: number[][] = [];
     let rows = 0;
     for (const at of sequence) {
@@ -1892,9 +1894,12 @@ function assignTracks(
       let t = 0;
       for (const i of above[at]! ?? []) if (track[list[i]!]! >= t) t = track[list[i]!]! + 1;
       if (weighed) {
-        taken.clear();
-        for (const i of clashes[at]!) taken.add(track[list[i]!]!);
-        while (taken.has(t)) t++;
+        const stamp = at + 1;
+        for (const i of clashes[at]!) {
+          const other = track[list[i]!]!;
+          if (other >= 0) taken[other] = stamp;
+        }
+        while (taken[t] === stamp) t++;
       } else {
         while (onTrack[t]?.some((other) => clash(k, other))) t++;
         (onTrack[t] ??= []).push(k);
