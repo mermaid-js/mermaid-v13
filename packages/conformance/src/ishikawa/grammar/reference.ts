@@ -1,0 +1,129 @@
+/**
+ * The grammar-side half of the ishikawa differential test: lex with the grammar's lexer, parse
+ * with the reference parser built from the grammar, and project the result to an AST shape
+ * that the hand-written parser's AST can be compared with. Dev and CI only.
+ */
+import {
+  astOf,
+  buildParser,
+  emptyModel,
+  learnDerivation,
+  learnToken,
+  sourceRange,
+} from '@mermaid-js/gen-grammar';
+import type { AstShape, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
+import { parseIshikawa } from '@mermaid-js/diagram-ishikawa';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import { grammarTokens, ishikawaGrammar } from './ishikawa-grammar.ts';
+
+/** A comparable AST: type and source range (blanks trimmed off both ends). */
+export interface Shape {
+  type: string;
+  range: [number, number];
+}
+
+export interface Verdict {
+  accepted: boolean;
+  /** Line-level AST shapes, when accepted. */
+  ast: Shape[] | undefined;
+}
+
+let parser: ReferenceParser | undefined;
+export function referenceParser(): ReferenceParser {
+  parser ??= buildParser(ishikawaGrammar().grammar);
+  return parser;
+}
+
+const trim = (src: string, start: number, end: number): [number, number] => {
+  let s = start;
+  let e = end;
+  while (s < e && /\s/.test(src[s] ?? '')) s++;
+  while (e > s && /\s/.test(src[e - 1] ?? '')) e--;
+  return [s, e];
+};
+
+/** Accept/reject and AST shape by the grammar (lexer + reference parser). */
+export function referenceVerdict(source: string): Verdict {
+  const lexed = grammarTokens(source);
+  if (lexed.error !== undefined) return { accepted: false, ast: undefined };
+  const tree = referenceParser().parse(lexed.tokens.map((t) => t.name));
+  if (!tree) return { accepted: false, ast: undefined };
+  // A range that ends where a directive was cut out maps to either side of it.
+  const directives = preprocess(source).directives.map((d) => d.range);
+  const toShape = (a: AstShape): Shape => {
+    const [from, to] = trim(
+      lexed.input.text,
+      lexed.tokens[a.start]?.outerStart ?? 0,
+      lexed.tokens[a.end - 1]?.outerEnd ?? 0
+    );
+    const r = sourceRange(lexed.input, from, to);
+    return { type: a.type, range: trimRemoved(source, r.start, r.end, directives) };
+  };
+  return { accepted: true, ast: astOf(tree).map(toShape) };
+}
+
+/**
+ * Accept/reject and AST shape by the hand-written parser; its effect and causes are the
+ * grammar's `Node`s (the grammar cannot tell the first line from the others). Preprocess
+ * diagnostics are left out (an unclosed directive): the grammar reads the text after v12's
+ * preprocessing.
+ */
+export function handWrittenVerdict(source: string): Verdict {
+  const pre = preprocess(source);
+  const result = parseIshikawa(source, { preprocessed: pre });
+  if (result.diagnostics.some((d) => d.severity === 'error')) {
+    return { accepted: false, ast: undefined };
+  }
+  const directives = pre.directives.map((d) => d.range);
+  return {
+    accepted: true,
+    ast: result.ast.children.map((s) => ({
+      type: 'Node',
+      range: trimRemoved(source, s.range.start, s.range.end, directives),
+    })),
+  };
+}
+
+/**
+ * {@link trim}, also past directives at either end: a token's range covers the removed spans
+ * it runs over, the grammar's text has none.
+ */
+function trimRemoved(
+  src: string,
+  start: number,
+  end: number,
+  removed: readonly { start: number; end: number }[]
+): [number, number] {
+  let [s, e] = trim(src, start, end);
+  for (let moved = true; moved; ) {
+    moved = false;
+    for (const r of removed) {
+      if (r.end === e && r.start >= s) [s, e] = trim(src, s, r.start);
+      else if (r.start === s && r.end <= e) [s, e] = trim(src, r.end, e);
+      else continue;
+      moved = true;
+    }
+  }
+  return [s, e];
+}
+
+/** A sentence model learnt from corpus sources the grammar accepts. */
+export function learnSentenceModel(sources: readonly string[]): SentenceModel {
+  const model = emptyModel(referenceParser());
+  for (const source of sources) {
+    const lexed = grammarTokens(source);
+    if (lexed.error !== undefined) continue;
+    const tree = referenceParser().parse(lexed.tokens.map((t) => t.name));
+    if (!tree) continue;
+    learnDerivation(model, tree);
+    let prev = '';
+    let prevEnd = 0;
+    for (const t of lexed.tokens) {
+      const r = sourceRange(lexed.input, prevEnd, t.outerEnd);
+      learnToken(model, prev, t.name, source.slice(r.start, r.end));
+      prev = t.name;
+      prevEnd = t.outerEnd;
+    }
+  }
+  return model;
+}
