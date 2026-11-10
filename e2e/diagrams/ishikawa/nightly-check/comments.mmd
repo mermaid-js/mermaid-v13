@@ -1,0 +1,14 @@
+---
+description: >-
+  Whole-line `%%` comments (removed, at any indent) and an inline `%%`, which
+  v12 keeps as part of the cause label.
+---
+ishikawa-beta
+  %% the effect comes first
+  Failed release
+  Testing %% not a comment
+    %% between a cause and its sub-cause
+    Flaky tests
+%% a comment at column 0
+  Deployment
+    Manual steps

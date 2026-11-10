@@ -360,6 +360,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
+| `ishikawa.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the ishikawa renderer never did. |  |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `treemap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treemap renderer never did. |  |
 | `treemap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -393,13 +394,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `wardley-beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `cynefin.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the cynefin renderer never did. |  |
 | `cynefin.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
-| `railroad.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the railroad renderer never did. |  |
 | `railroad.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
-| `railroad.compactMode` | ignored | v12 read it and drew nothing different (D515). |  |
-| `railroad.commentFill` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
-| `railroad.commentStroke` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
-| `railroad.commentTextColor` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
-| `railroad.showMarkers` | ignored | v12 read it and drew the start and end markers either way (D515). |  |
 | `dompurifyConfig` | removed | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). | none |
 
 ### Changed defaults
@@ -423,20 +418,8 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
+| `ishikawa.useMaxWidth` | `true` | The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
-| `railroad.fontSize` |  | The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number, or a string read with `parseFloat`, from 0 up to 10000; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently (and drew 10000 or more). |
-| `railroad.fontFamily` |  | The documented default changes from `monospace` to none (D515): unset, the theme's `fontFamily` is used, as v12 drew (its runtime config reset `monospace`), so fonts stay uniform across diagrams. A value that fails core's style check is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.terminalFill` |  | The documented default changes from `#FFFFC0` to none (D515): unset, the theme's `railroadTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.terminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.terminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.nonTerminalFill` |  | The documented default changes from `#FFFFFF` to none (D515): unset, the theme's `railroadNonTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.nonTerminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.nonTerminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.lineColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadLineColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.markerFill` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadMarkerFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.specialFill` |  | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.specialStroke` |  | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
-| `railroad.ruleNameColor` |  | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -735,15 +718,17 @@ npm install @mermaid-js/plugin-hand-drawn
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines),
   mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards;
-  the priority bar is kept, D379) and venn (circles and the overlaps a style fills, D319). v12
-  did not sketch mindmap's plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are never sketched, as in v12.
+  the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and
+  ishikawa (the head, label boxes, spine and bones, D494). v12 did not sketch mindmap's plain
+  node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are
+  never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
   (flowchart's `text` and brace hit boxes, state's region frame) stays the plain element.
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (requirement, block, swimlanes, ishikawa, usecase, agentflow) are
+  v13 has not ported yet (requirement, block, swimlanes, usecase, agentflow) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -2422,51 +2407,55 @@ overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
 
-## Railroad diagram
+## Ishikawa diagram
 
-The four railroad parsers accept v12's four languages (`railroad-beta`, `railroad-ebnf-beta`,
-`railroad-abnf-beta`, `railroad-peg-beta`; oracle parity per notation over the corpus, grammars
-in [syntax/railroad.md](./syntax/railroad.md), [syntax/railroad-ebnf.md](./syntax/railroad-ebnf.md),
-[syntax/railroad-abnf.md](./syntax/railroad-abnf.md) and
-[syntax/railroad-peg.md](./syntax/railroad-peg.md)), v12's lexer quirks included (D513), and
-the layout is v12's (D514). One package draws all four, with one `railroad` config section
-(D511). What changes (spec #526):
+The ishikawa parser accepts the v12 language (`ishikawa` and `ishikawa-beta`, any case; oracle
+parity over the corpus, grammar in [syntax/ishikawa.md](./syntax/ishikawa.md)), and the layout
+is v12's fishbone geometry, ported into the package (D491). The layout also fixes two v12
+overlaps (below), which await a maintainer decision (D499); with those fixes off, every
+compared corpus source lays out as v12 drew it. What changes (spec #519):
 
 | v12 | v13 | Why |
 | --- | --- | --- |
-| A rule name was measured at normal weight and drawn bold, so a long bold name ran into its start marker | The name is measured bold: the start marker, the definition and the end marker move right by the difference between the bold and normal widths (a few px for a short name), and the diagram widens by as much | D514 |
-| A choice branch closer than `2 × arcRadius` to the main line (a small font, or a large `arcRadius`) was drawn with arcs that overshot it, the vertical piece running backwards | That branch, and every branch beyond it on the same side, moves out to `2 × arcRadius` from the main line, so the arcs meet it; the main line is then no longer at half the choice's height. An optional's bypass and a repetition's loop sit `max(2 × arcRadius, verticalSeparation)` from the element (v12: `2 × arcRadius`). With v12's defaults, only choices v12 overshot change | D514 |
-| The schema documented defaults for `railroad.fontSize` (14), `railroad.fontFamily` (`monospace`) and the colour keys, which v12's runtime config reset, so the theme's were drawn | No documented default: unset, the theme's font and the theme's railroad variables are drawn, as v12 drew them. Set, each wins over the theme, as in v12 | D515 |
-| The `railroad` keys `compactMode`, `showMarkers`, `commentFill`, `commentStroke` and `commentTextColor` were read and drew nothing different | Ignored (listed under [Config](#config)) | D515 |
-| `themeVariables.railroad.<key>` reached v12's style sheet; the terminal fill was `secondBkg ?? secondaryColor` | Railroad's own theme variables (`railroadTerminalFill` … `railroadRuleNameColor`), each also read as `themeVariables.railroad.<v12 key>`; every theme draws 12.2.0's colours (see [Railroad SVG structure](#railroad-svg-structure)) | D516 |
-| A rule defined twice: both drawn, with a `log.warn` | Both drawn, with one `RAILROAD_DUPLICATE_RULE` warning | D517 |
-| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+| The effect was also stored as the diagram title (`setDiagramTitle`); no title was drawn, and the SVG had no `<title>` | No title is drawn. The SVG `<title>` is the front-matter `title` when one is given, else the effect as drawn, as plain text (entities decoded, a `<br>` or a wrap a space) | D492, D218, R-A11Y-1 |
+| Cause and sub-cause labels were laid out at the config `fontSize` (16) and drawn at the theme's | Measured and drawn at the theme's `fontSize`, one source: classic themes are unchanged; in `neo` and the redux themes (14 px) the bones fit the text they draw | D493 |
+| The effect was drawn at 14 px, weight 600, and wrapped at `max(6, floor(110 / (fontSize × 0.6)))` characters of the config `fontSize` (11) | The same 14 px 600 in every theme (D493), measured, and wrapped at 110 px scaled by the size it is drawn at: `110 × 14 / 16 = 96.25` px in every theme, the same 11 characters at 0.6 em. D495's literal rule, `110 × fontSize / 16`, would give 110 px (13 characters) in the classic themes | Awaits a maintainer decision (D499) |
+| Sub-causes wrapped greedily at 15 characters, breaking between words (a longer word kept whole), `<br>` counted as characters; cause labels never wrapped | Core's label layout (D225): entities, `<br>` forms, math and icons work. Sub-causes wrap at `144 × fontSize / 16` px; cause labels still never wrap, only break at `<br>` | D495 |
+| Labels passed through `sanitizeText` (DOMPurify) | Text is escaped when written, never sanitised. Labels take the label subset ([Labels and text](#labels-and-text)): `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic and `<br>` breaks the line; other HTML element tags, `<script>` and `<img>` among them, are dropped and their text kept; text that only looks like a tag, such as `<T>`, is shown as written | R-SEC-1 |
+| The first pair of causes always started 20 px left of the head, so a short leaf cause's label box could sit on the head (`baseline-clamp`, fixture 13) | A pair whose box would reach over the head's back on the head's rows starts further left by the overlap | The layout invariant (no label over the head); a visible change no D-id covers, awaiting a maintainer decision (D499) |
+| A leaf cause's bone was 20 % of its side's length, so a tall (`<br>`) label on a short bone was drawn across the spine | A cause bone is at least long enough that its label box clears the spine (`(h/2 + 2 − 11) / sin 82°`). With both fixes, 66 of the 481 compared corpus sources move; the rest equal v12 | The layout invariant (no label across the spine); a visible change no D-id covers, awaiting a maintainer decision (D499) |
+| Causes indented less than the first cause were read as top-level causes, silently | The same reading, with one `ISHIKAWA_INDENT_CLAMPED` warning; its message names every clamped cause and its line (the first ten, then how many more) and the diagnostic's `related` lists them all; the editor reports each one as information | D496 |
+| An empty body (no effect) drew an empty SVG with no `viewBox`, silently | Still nothing drawn, with one `ISHIKAWA_EMPTY` warning; the root gets a `viewBox` of the padding about the origin ([Ishikawa SVG structure](#ishikawa-svg-structure)) | D496 |
+| The `viewBox` was `getBBox()` of the drawing plus `diagramPadding`, strokes left out | Computed from the layout, half of each stroke included (≤ 1 px larger), plus `diagramPadding` | D224 |
+| `ishikawa.useMaxWidth` was documented with default `false`, but the runtime config gave `true` | Default `true`, the value v12 drew with ([Changed defaults](#changed-defaults)) | P2 |
+| An `ishikawa.diagramPadding` that was not a number reached the renderer as it was | A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning | No `NaN` in the output |
+| No text output | `format: 'ascii'` draws an outline, not the fishbone: the effect in a box, the causes below it as a `tree(1)`-style tree in source order (`├── `, `└── `, `│   `; `\|-- `, `` `-- ``, `\|   ` in the `ascii` charset), labels as plain text (entities decoded, a `<br>` a space), the front-matter `title` centred on the first line (an empty body draws the title alone); bold and italic are dropped with one `ASCII_DROPPED` warning, and math and icons are shown as written with one `ASCII_DROPPED` warning each | D498, D320, D82 |
 
-## Railroad SVG structure
+## Ishikawa SVG structure
 
-What changed in the railroad diagram's SVG compared with v12 (spec #526, DESIGN §7.2), for all
-four notations (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`,
-`railroad-peg-beta`). v12's structure, class names and order are kept: per rule a
-`g.railroad-rule` translated to its place, holding the definition's `g` (translated to where the
-definition starts) with the expression groups `g.railroad-terminal`, `g.railroad-nonterminal`,
-`g.railroad-special`, `g.railroad-sequence`, `g.railroad-choice`, `g.railroad-optional` and
-`g.railroad-repetition` nested inside it (each child translated within its parent, written in
-v12's order: a sequence's elements each followed by the connector to the next, a choice's
-branches each followed by its left and right `path.railroad-line`, an optional's or a
-repetition's element followed by its paths), then `g.railroad-rule-name-group >
-text.railroad-rule-name`, `g.railroad-start > circle`, `g.railroad-end > circle` and the lead-in
-and lead-out `path.railroad-line`, so selectors that use them keep working. Every position is
-v12's, apart from the two layout fixes of D514.
+What changed in the ishikawa diagram's SVG compared with v12 (spec #519). v12's classes and draw
+order are kept: `g.ishikawa` holds `line.ishikawa-spine`, `g.ishikawa-head-group`
+(`path.ishikawa-head`, `text.ishikawa-head-label`) and a `g.ishikawa-pair` per pair of causes,
+each with its `line.ishikawa-branch`, `g.ishikawa-label-group` (`rect.ishikawa-label-box`,
+`text.ishikawa-label.cause`) and a `g.ishikawa-sub-group` per sub-cause
+(`line.ishikawa-sub-branch`, `text.ishikawa-label` with `align`, `up` or `down`).
 
 | v12 | v13 | Why |
 | --- | --- | --- |
-| Root `id="<render id>"`, `class="railroad-diagram"`, `role="graphics-document document"`, a `<style>` scoped by the id that coloured and sized `.railroad-terminal`, `.railroad-nonterminal`, `.railroad-special`, `.railroad-line`, `.railroad-start`/`.railroad-end` and `.railroad-rule-name` | No root `id`; `class="mermaid mermaid-railroad railroad-diagram"`, `role="img"`, `aria-roledescription` the diagram type (`railroad`, `railroadEbnf`, `railroadAbnf`, `railroadPeg`), `data-mermaid-version`. Paints are presentation attributes: each `rect` carries its `fill` and `stroke` (and a special's `stroke-dasharray="5,3"`, a terminal's `rx`/`ry`), each `text` its `fill`, each `circle` its `fill`, each `path.railroad-line` `fill="none"` and its `stroke`; a colour the `railroad` config sets is written as it is, any other reads a `var(--_x)` alias on the root `style`, which a host can re-theme with `--mermaid-railroadTerminalFill` and the other ten railroad variables. What every element shares is written once on the root and inherited: `font-family`, `font-size` and `stroke-width`; the font family and size are the theme's `var(--_x)` aliases (so `--mermaid-fontFamily` and `--mermaid-fontSize` reach them) unless the `railroad` config sets them. No `<style>`, except under `theme: 'auto'`: core's light/dark sheet, scoped by `data-p` on the root, as for every type | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
-| A box's text centred by the CSS (`text-anchor: middle`, `dominant-baseline: middle`); the rule name bold by the CSS (`font-weight: bold`) | The same values as attributes on each `text`: `text-anchor="middle"` and `dominant-baseline="middle"` on a box's text, `font-weight="bold"` on `text.railroad-rule-name` | No style sheet (R-SEC-2) |
-| The CSS rules `.railroad-comment` and `.railroad-group` (which matched nothing: v12 drew no comment or group element) | Gone | Nothing drawn |
-| No source mapping | Each `g.railroad-rule` carries `data-id` and `data-ast` `"rule:<name>"` (`rule:<name>@2` for a rule defined again) and each expression `g` both as `"<rule id>/<path>"` (the definition is `rule:a/0`, its second child `rule:a/0/1`); each `text` carries only the `data-id` of the rule or expression it labels. The definition's wrapping `g` and the name, marker and line elements carry nothing | One `data-ast` element per AST node (R-PARSE-8, D517, pitfall 12) |
-| Path data and transforms as v12's `PathBuilder` and d3 wrote them: `M 0 40 A 10 10 0 0 0 10 30 L 10 28`, `translate(74, 0)`, numbers in full | The same commands and points in core's writer format: `M0,40A10,10 0 0,0 10,30L10,28`, `translate(74,0)`, numbers rounded to two decimals; the root `style` as `max-width:<w>px` | Core's SVG writer (R-SEC-2) |
-| `viewBox="0 0 <width> <height>"`: v12's canvas, which clipped a rule name in a font taller than its rule | The same unless something runs past it: the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn, half the stroke included, and may start above 0 | D224 |
-| The `title` statement and front-matter `title` stored, never drawn; `accTitle`/`accDescr` as `<title>`/`<desc>` with ids from the render id | The `title` still not drawn (D218); `accTitle` and `accDescr` as `<title id="<id>-title">` and `<desc id="<id>-desc">`, the only ids in the SVG, named by `aria-labelledby`/`aria-describedby` | R-A11Y-1 |
-| A `railroad` colour, font family or font size that failed v12's checks fell back to the theme's silently; a length that was no number of 0 or more fell back to its default silently; a length or font size of any finite size was drawn (`1e308` broke the drawing) | The same fallbacks, and a length or font size of 10000 or more falls back too, with one `RAILROAD_CONFIG_INVALID` warning naming every dropped key. A string length is still read with `parseFloat`, as v12 read it (`"12px"` is 12) | D515 |
-| Colours from `buildThemeDefaults`: each from a shared theme variable, the terminal fill from `secondBkg` over theme-default's variables (`#ffffde` in base, neo, redux and redux-color, which have none) | The same sources through railroad's own variables (`railroadTerminalFill` … `railroadRuleNameColor`, nested as `themeVariables.railroad.<v12 key>`, which now reach the drawing too); the terminal fill is 12.2.0's in all eleven themes. Where v13 core resolves a shared variable (`secondaryBorderColor`, `secondaryTextColor`, `primaryBorderColor`, `tertiaryBorderColor`, `titleColor`) differently from v12, railroad follows core's value, as v12 followed its own | D516, D541 |
-| `neo` and the redux themes: the same railroad as the classic themes | The same: railroad differs between families by colour and font only, with no gradient, shadow or hand-drawn outline | D227, D301 |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="ishikawa"`, a `<style>` scoped by the id for strokes, fills and fonts | No root `id`; `class="mermaid mermaid-ishikawa"`, `role="img"`, `aria-roledescription="ishikawa"` (kept), `data-mermaid-version`, and `<title id="<id>-title">` (D492). No `<style>` (except `theme: 'auto'`'s variables-only sheet): `stroke`, `fill`, `stroke-width`, `font-size` and `font-weight` are attributes on each element, colours reading `var(--_x)` aliases (`lineColor`, `mainBkg`, `textColor`) on the root `style`, and `font-family` on the root | R-SEC-2, R-A11Y-1, D133, R-THEME-3 |
+| Arrowheads: `marker#ishikawa-arrow-<id>` in `g.ishikawa > defs`, `marker-start` on every branch and sub-branch, scaled by the stroke width (12 px and 6 px) | No `<marker>` and no `<defs>`: a filled `path.ishikawa-arrow` after each branch and sub-branch, the same 12 px and 6 px triangle with its tip at the bone's start | R-SEC-2 (no ids but `-title`), D302 |
+| The head group was translated to the spine (`transform="translate(0, spineY)"`), its label by a `translate` from `getBBox()` | Every element at absolute coordinates: no `transform` anywhere | Layout before render |
+| Sub-cause labels: `text-anchor: end` at the bone's end, `tspan` lines | `text-anchor="start"` at measured per-line indents, so each line ends at the bone's end (right-aligned, as v12's); head and cause labels centred, as v12's style sheet | `w.label` has no end anchor |
+| The spine was drawn first and its length set after the pairs (hand-drawn: drawn last) | The spine first in both looks: its length is known before drawing | Layout before render |
+| No source mapping | `data-ast` on the head group, each cause's label group and each sub-cause's sub-group; `data-id` (the AST id: `effect`, `cause:<i>.<j>…`) on bones, arrowheads and text, the spine carrying `effect` | D497, R-PARSE-8 |
+| An empty body: an `<svg>` with no `viewBox` and nothing in it | The root only (with a `<title>` when the front matter has a `title`), no `g.ishikawa`, and a `viewBox` of the padding about the origin | D496 |
+| `look: neo` and the redux and neo themes: the same shapes as the classic themes | The same: ishikawa differs between families by colour and font size only | D227 |
+
+Hand-drawn (`@mermaid-js/plugin-hand-drawn`): v12 sketched the head and label boxes at roughness
+1.5 with a hachure of `mainBkg` (fill weight 2.5, gap 5, stroke 2), the spine and bones at
+roughness 1.5, and the arrowheads as rough solid triangles. D494 asks for those parameters; v13
+does **not** reproduce them. It sketches the head and label boxes as `node` outlines and the spine
+and bones as `edge` outlines at the drawer's defaults for those roles (node roughness 0.7,
+hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
+options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
+are drawn plain, as without the look (D302); text is never sketched, as in v12.

@@ -1,0 +1,65 @@
+(** Ishikawa (fishbone) diagram syntax (R-PARSE-9, D54): the normative grammar of `ishikawa`
+and `ishikawa-beta` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text that no rule takes apart; and a line break appended. Keywords are matched without
+regard to case.
+
+**Lines.** The first line of text is the effect, on the header line or after it. Every later
+line is a cause, nested by its indent (spaces and tabs count one column each) under the last
+cause indented less. The first cause's indent is the baseline: a cause indented less than it is
+a top-level cause. A line may not start with the keyword. A blank or comment line counts as a
+line where one may start, so a line right after two of them in a row (or one right after the
+header) is an error, as in mermaid@12. *)
+
+@lexer
+
+@options case-insensitive ;
+
+(** A `%%` comment v12's comment removal left (after the keyword, or a bare `%%` line), with the
+blanks and line breaks before it: a blank line. *)
+SPACELINE                 /\s*%%.*/                        :comment ;
+(** `ishikawa-beta` or `ishikawa`: starts an Ishikawa (fishbone) diagram. Its first line is the
+effect, at the head of the fish; the indented lines after it are the causes, as bones off the
+spine. *)
+ISHIKAWA                  /ishikawa-beta\b/                :keyword ;
+ISHIKAWA                  /ishikawa\b/                     :keyword ;
+(** Blanks up to the last line break of their run: a blank line. *)
+SPACELINE                 /[\s]+[\n]/ ;
+NL                        /[\n]+/ ;
+(** The indent before a cause: how deep it is in the tree. *)
+SPACELIST                 /[\s]+/ ;
+(** The effect or a cause: the rest of the line, blanks around it dropped. `<br>` breaks it. *)
+TEXT                      /[^\n]+/                         :string ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** An Ishikawa diagram is the keyword, then its lines, each followed by a line break, a blank
+line or the end. Blank and comment lines may come before the keyword. *)
+diagram = [ SPACELINE { SPACELINE | NL } ] ISHIKAWA [ NL ] statement stop { statement stop } ;
+stop = ( NL | EOF | SPACELINE ) { NL | EOF } ;
+
+statement = SPACELIST [ Node ]
+  | Node
+  | SPACELINE ;
+
+(** The effect (the first one) or a cause, by its indent. *)
+Node @Node = TEXT ;

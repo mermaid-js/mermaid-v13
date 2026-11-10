@@ -37,6 +37,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
   gitGraph: { load: () => import('./generated/gitGraph.monarch.js').then((m) => m.default) },
   info: { load: () => import('./generated/info.monarch.js').then((m) => m.default) },
+  ishikawa: { load: () => import('./generated/ishikawa.monarch.js').then((m) => m.default) },
   journey: { load: () => import('./generated/journey.monarch.js').then((m) => m.default) },
   kanban: { load: () => import('./generated/kanban.monarch.js').then((m) => m.default) },
   mindmap: { load: () => import('./generated/mindmap.monarch.js').then((m) => m.default) },

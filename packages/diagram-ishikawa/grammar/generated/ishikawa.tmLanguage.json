@@ -1,0 +1,130 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-ishikawa",
+  "scopeName": "source.mermaid-ishikawa",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-ishikawa"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-ishikawa"
+    },
+    "rule-0": {
+      "match": "(?i)\\s*%%.*",
+      "name": "comment.line.mermaid-ishikawa"
+    },
+    "rule-1": {
+      "match": "(?i)ishikawa-beta\\b",
+      "name": "keyword.control.mermaid-ishikawa"
+    },
+    "rule-2": {
+      "match": "(?i)ishikawa\\b",
+      "name": "keyword.control.mermaid-ishikawa"
+    },
+    "rule-3": {
+      "match": "(?i)[\\s]+[\\n]"
+    },
+    "rule-4": {
+      "match": "(?i)[\\n]+"
+    },
+    "rule-5": {
+      "match": "(?i)[\\s]+"
+    },
+    "rule-6": {
+      "match": "(?i)[^\\n]+",
+      "name": "string.quoted.mermaid-ishikawa"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-ishikawa"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-ishikawa"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-ishikawa"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-ishikawa"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}
