@@ -34,7 +34,7 @@ Scope and target
 
 Measurement
 
-- **P5. Reference machine.** AI-Max is the reference machine for this effort, and Knut keeps it idle while measurements run. Implementation happens elsewhere. This replaces D208's M1 Max for this effort only.
+- **P5. One machine.** All of the work runs on AI-Max: implementation, building, checks and measurement. AI-Max is the reference machine for this effort, and Knut runs no other jobs there. Implementing and measuring never overlap: no agent session, `pnpm` command, build, test or browser runs during a measurement window (P14). This replaces D208's M1 Max for this effort only.
 - **P6. Sample.** The sample is 5,000 random flowcharts from the 834,276-diagram set. Reuse the lab's 5,000-diagram random sample if it holds only flowcharts. Otherwise redraw with a recorded seed. The hash of the list goes in the log header, and size buckets are reported from it. If the set is user data, the diagrams stay out of the repo and the log records only aggregates.
 - **P7. Metric.** Node only. Node warm render time, interleaved head and base on the same diagram, decides. Instruction counts (`perf stat`, if AI-Max has the counters) and the named counters are diagnostics. These counters are always reported: measurer calls, output bytes, elements, attributes, bytes allocated, scavenge time.
   - Why not Chrome: in Node, `selectMeasurer` (`packages/mermaid/src/measurer.ts:154`) uses the table measurer, so the canvas path never runs. The lab's Chrome-only cost comes from the default font string, which is a look change (P3). Without that change, the only way to cut the cost is fewer measurer calls, and Node counts those.
@@ -70,6 +70,7 @@ Gates and the bar for fit
 Process
 
 - **P14. Rounds.**
+  - Each round has two phases on AI-Max. In the implement phase, the round's hypothesis sessions run in parallel worktrees, each building and checking its own branch. The measure phase starts only once every branch is pushed and built. Nothing else runs while it lasts: the serial queue measures each hypothesis, then the merged result, then the round's Chromium run.
   - Each hypothesis is implemented in its own worktree and measured on its own against the round's base.
   - When all hypotheses in the round are measured, the fit ones are merged in order of gain, and the combination is measured once.
   - If the combination gains less than the best single hypothesis, members are dropped one at a time until the clash is found.
@@ -77,7 +78,7 @@ Process
   - Unfit hypotheses are discarded. Each leaves a log entry and no diff.
 - **P15. Roles.**
   - *Hypothesis generator:* Opus at high effort. It reads the log, the latest profile and counters, and the source.
-  - *Implementers:* Sonnet, one per hypothesis, each in its own worktree on any machine.
+  - *Implementers:* Sonnet, one per hypothesis, each in its own worktree on AI-Max, during the implement phase only.
   - *Measurement:* one serial queue on AI-Max that builds each branch and measures it while nothing else runs.
   - *Fit:* the evaluator script decides.
 
@@ -92,7 +93,7 @@ Process
   - `runs/<n>/LEDGER.md`, generated from the JSONL.
 
   A requirement amendment also gets a D-row in the main log, in the round's PR.
-- **P20. The harness.** The lab's harness (on the M5, at `~/repos/mermaid-perf-lab`) moves to AI-Max and is the only measurement function for this effort. `packages/bench` stays the PR and CI gate. One session on AI-Max ports the harness and adds the reset hook (P9), the counters (P7), the pixel check (P11), the feature counts (P10) and the A/A run. It then runs round 0. Implementers start only after round 0 is in the log. Open fact: from the dev Mac, `ssh AI-Max` did not resolve on 2026-11-09 (the tailnet looked down).
+- **P20. The harness.** The lab's harness (on the M5, at `~/repos/mermaid-perf-lab`) moves to AI-Max and is the only measurement function for this effort. `packages/bench` stays the PR and CI gate. One session on AI-Max ports the harness and adds the reset hook (P9), the counters (P7), the pixel check (P11), the feature counts (P10) and the A/A run. The harness also guards the measure phase. It refuses to start while other `node`, `pnpm`, `claude` or Chromium processes are using CPU, and it logs the machine's load next to each result. Pinning measurements to spare cores is not a substitute, because memory bandwidth, caches and boost clocks are shared. The harness then runs round 0. Implementers start only after round 0 is in the log. The M5 is needed once, to copy the lab harness and the 834k set to AI-Max. Open fact: from the dev Mac, `ssh AI-Max` did not resolve on 2026-11-09 (the tailnet looked down).
 
 ## Findings from reading the tip source
 
