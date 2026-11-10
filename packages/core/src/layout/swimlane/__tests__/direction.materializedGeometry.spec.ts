@@ -6,6 +6,7 @@ import { node } from './internalData.ts';
 import {
   collapseRedundantRectangularDoglegs,
   liftObstacleHuggingSameSideRails,
+  liftRailsOffForeignEdgeLabels,
   liftTopLaneTitleBandsAboveRails,
   reassignCrossingExternalRailChannels,
   separateSharedRenderedTerminalLanes,
@@ -322,6 +323,34 @@ describe('materialized render geometry cleanup', () => {
     expect(strictCrossingCount(edges)).toBe(0);
     expect(edges[0]!.points!.at(-1)).toEqual(dExitRightPort);
     expect(edges[1]!.points!.at(-1)).toEqual(cExitTopPort);
+  });
+
+  // v13 (#634): 5-car-fun-sales-wide-tb's I→K ran along I→J's label, wider than I.
+  it("moves a rail off the side of another edge's label, and leaves its own label alone", () => {
+    const nodeById = new Map<string, Node>([
+      ['N1', node({ id: 'N1', x: 30, y: -60, width: 60, height: 20 })],
+      ['N2', node({ id: 'N2', x: 30, y: 100, width: 60, height: 20 })],
+      ['label', node({ id: 'label', x: 50, y: 20, width: 100, height: 40, isEdgeLabel: true })],
+    ]);
+    const rail = (x: number) => [
+      { x: 60, y: -60 },
+      { x, y: -60 },
+      { x, y: 100 },
+      { x: 60, y: 100 },
+    ];
+    const foreign: Edge = { id: 'foreign', start: 'N1', end: 'N2', points: rail(101) };
+    liftRailsOffForeignEdgeLabels([foreign], nodeById);
+    expect(foreign.points).toEqual(rail(106));
+
+    const own: Edge = {
+      id: 'own',
+      start: 'N1',
+      end: 'N2',
+      labelNodeId: 'label',
+      points: rail(101),
+    };
+    liftRailsOffForeignEdgeLabels([own], nodeById);
+    expect(own.points).toEqual(rail(101));
   });
 
   it('reassigns overlapping external rail channels as a crossing-minimizing bundle', () => {
