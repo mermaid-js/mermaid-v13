@@ -204,7 +204,7 @@ export async function quadrantCorpus(): Promise<CorpusItem[]> {
 
 /**
  * Cases left out of the gate: v12's directive regex removes an unclosed `%%{` and everything
- * after it, core's preprocess keeps the text (a listed parity divergence, `divergences.json`).
+ * after it, core's preprocess keeps the text (a listed parity divergence, `divergences/`).
  */
 const PREPROCESS_DIFFERS = new Set(['quadrant-cases/unclosed-directive']);
 

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { diagramPackages } from '../../workspace/diagrams.ts';
 import { danglingExports } from './manifest.ts';
 import type { PackedManifest } from './manifest.ts';
 import { REGISTRIES, packAll, publishAll } from './publish.ts';
@@ -20,30 +21,16 @@ describe('packAll (this workspace)', () => {
     // The workspace is not versioned to an alpha until `changeset version` runs in CI.
     const packed = packAll(root, { target: 'private', outDir, requireAlpha: false });
     const names = packed.map((p) => p.name);
+    // Every published diagram package, found from its manifest (so a new port joins unchanged),
+    // under its private-registry name, in name order.
+    const diagrams = diagramPackages(root)
+      .filter((p) => !p.private)
+      .map((p) => p.name.replace(/^@mermaid-js\//, '@mermaid-chart/'))
+      .sort();
+    expect(diagrams.length).toBeGreaterThan(20);
     expect(names).toEqual([
       '@mermaid-chart/core',
-      '@mermaid-chart/diagram-class',
-      '@mermaid-chart/diagram-cynefin',
-      '@mermaid-chart/diagram-er',
-      '@mermaid-chart/diagram-flowchart',
-      '@mermaid-chart/diagram-gantt',
-      '@mermaid-chart/diagram-gitgraph',
-      '@mermaid-chart/diagram-info',
-      '@mermaid-chart/diagram-journey',
-      '@mermaid-chart/diagram-kanban',
-      '@mermaid-chart/diagram-mindmap',
-      '@mermaid-chart/diagram-packet',
-      '@mermaid-chart/diagram-pie',
-      '@mermaid-chart/diagram-quadrant',
-      '@mermaid-chart/diagram-radar',
-      '@mermaid-chart/diagram-sankey',
-      '@mermaid-chart/diagram-sequence',
-      '@mermaid-chart/diagram-state',
-      '@mermaid-chart/diagram-timeline',
-      '@mermaid-chart/diagram-treemap',
-      '@mermaid-chart/diagram-venn',
-      '@mermaid-chart/diagram-wardley',
-      '@mermaid-chart/diagram-xychart',
+      ...diagrams,
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',

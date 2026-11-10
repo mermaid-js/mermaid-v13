@@ -8,6 +8,8 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 
 - Follow-up (programme level, not this port): the lexer's source-mapping helpers (`v12Text`, `adjacent`, `placeholders`, `view`, `trivia`, `emit`, `dropAt`, `spaces`) are a third copy of venn's and kanban's (review of #553). A parser-kit home for them is a separate change.
 
+- #637 move (2026-11-10): block's shared-file rows now live in its own files (`packages/diagram-block/workspace.yaml`, `packages/conformance/src/block/{tables,suite}.ts`, `packages/conformance/divergences/block.json`, `v13/docs/migration/block.md`). `tools/workspace/sync.spec.ts` "take a new diagram package from its own folder alone" fails while block is pre-manifest (its copy drops pre-manifest packages, so it does not expect `@mermaid-js/diagram-block` in conformance's devDependencies): fixed by #640 (open). Take #640's `sync.spec.ts` when it merges; until then the integration branch is not pushed (coordinator, 2026-11-10), at the latest T5 adds the manifest. `e2e/diagrams/block/hand-drawn.txt` (`sketched`, D447) lands with T4, when block draws.
+
 ## T0 #552
 
 - Done in its own PR into `mermaid-v13`. Rows get `usedBy` `['flowchart']`; T4 adds `'block'` to each row it reads.

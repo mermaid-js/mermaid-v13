@@ -1,0 +1,43 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# A pre-manifest package until T5 (#558) adds the `mermaid` manifest; `configDefaults` and
+# `release` land with it (v13/docs/agents/port-diagram/shared-files.md, "Before T5").
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: block
+    title: Block diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      unnamed:
+        # `block` and `block-beta` are both jison's `BLOCK_DIAGRAM_KEY`.
+        Block:
+          mode: INITIAL
+          pattern: block\b
+          terminal: BLOCK_DIAGRAM_KEY
+          docOf: BLOCK_DIAGRAM_KEY
+        # Text jison matches without returning a token; the hand-written lexer keeps one for it.
+        StringStart:
+          mode: INITIAL
+          pattern: '["]'
+        StringEnd:
+          mode: string
+          pattern: '["]'
+        MdStringStart:
+          mode: INITIAL
+          pattern: '["][`]'
+        MdStringEnd:
+          mode: md_string
+          pattern: '[`]["]'
+        ArrowDirStart:
+          mode: BLOCK_ARROW
+          pattern: '\]>\s*\('
+        AccDescrMultiline:
+          mode: INITIAL
+          pattern: 'accDescr\s*\{\s*'
+          docOf: acc_descr
+        AccDescrMultilineEnd:
+          mode: acc_descr_multiline
+          pattern: '[\}]'
+          docOf: acc_descr

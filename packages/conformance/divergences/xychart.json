@@ -1,0 +1,50 @@
+[
+  {
+    "id": "xychart-cases/unclosed-directive-in-data",
+    "inputHash": "sha256:9c29fa36fac0c13c",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-own-line",
+    "inputHash": "sha256:f76bb18325c4c10d",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-word-argument",
+    "inputHash": "sha256:aac34c6d2c6b1dbe",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-colon-word",
+    "inputHash": "sha256:d2db7244fa5d65da",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-line-separator",
+    "inputHash": "sha256:8e6875e474f48ca5",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/unclosed-directive-twice",
+    "inputHash": "sha256:ee0f43d0a1c78edd",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
+    "owner": "#508",
+    "since": "2026-11-08"
+  }
+]

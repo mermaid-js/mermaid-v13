@@ -149,7 +149,7 @@ export async function xyChartGateCorpus(): Promise<CorpusItem[]> {
 /**
  * Whether core's preprocess finds an unclosed `%%{` in `source`. v12's directive regex cut such
  * a directive (with the rest of the text, or up to a word argument's end), so v12 reads less
- * text; v13 rejects it. The cases that have one are listed divergences (`divergences.json`), as
+ * text; v13 rejects it. The cases that have one are listed divergences (`divergences/`), as
  * for quadrant and radar; their generated variants are left out of the parity corpus, since
  * they only repeat that divergence. Nothing else is left out (the grammar gates compare these
  * too: both sides lex the text v12 cut).

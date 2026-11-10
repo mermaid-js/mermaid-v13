@@ -1,0 +1,18 @@
+[
+  {
+    "id": "quadrant-cases/unclosed-directive",
+    "inputHash": "sha256:f315ebfb42881e73",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour; GAPS #300, #301).",
+    "owner": "#301",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "quadrant-cases/unclosed-directive-end",
+    "inputHash": "sha256:7011b1c6fe1ec37c",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour; GAPS #300, #301).",
+    "owner": "#301",
+    "since": "2026-11-05"
+  }
+]
