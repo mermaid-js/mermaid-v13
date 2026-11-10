@@ -1,8 +1,8 @@
 /**
  * `@mermaid-js/diagram-block`: the block diagram plugin (spec #521): the lexer, the parser with
  * its model and AST, the codes of the warnings it raises, the layout and its shape geometry, the
- * SVG renderer (#556), and the plugin object (`layoutKind: 'custom'`). The manifest lands with
- * #558.
+ * SVG renderer (#556), and the plugin object (`layoutKind: 'custom'`), which the registry loads
+ * from the package's `mermaid` manifest (#558).
  */
 export {
   BlockTokenKind,

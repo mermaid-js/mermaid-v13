@@ -1258,7 +1258,8 @@ export const configSchema: ConfigSchema = {
     "block": {
       "$ref": "#/$defs/BlockDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "eventmodeling": {
@@ -6228,11 +6229,46 @@ export const configSchema: ConfigSchema = {
       "unevaluatedProperties": false,
       "properties": {
         "padding": {
+          "description": "The gap between the blocks of a grid and the inset of a composite's grid, and the\npadding around a leaf's label.\n",
           "type": "number",
           "minimum": 0,
           "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the grid gap and inset, and a leaf's label padding (a composite's label padding is 0). A value that is not a finite number of 0 or more lays out with the default 8."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the block renderer never did."
+          }
+        },
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for block diagrams (a diagram section beats the top level within a config layer), as 12.2.0's `resolveAppearance`."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Block lays out with its own column grid (`layoutKind: 'custom'`), as v12; neither the top-level nor a block-scoped `layout` changes it."
           }
         }
       }

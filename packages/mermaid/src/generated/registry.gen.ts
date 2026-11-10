@@ -141,7 +141,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-xychart').then((m) => m.xychart),
   },
-  { type: 'block', pattern: /^\s*block(-beta)?/ },
+  {
+    type: 'block',
+    pattern: /^\s*block(-beta)?/,
+    id: 'block',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-block').then((m) => m.block),
+  },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
   { type: 'treeView', pattern: /^\s*treeView-beta/ },
   {
