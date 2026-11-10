@@ -1,0 +1,3 @@
+@ 4:12  classDef |hot fill:#f96
+  prepare: 4:12-4:15 "hot"; rename to "hot-1":
+  refused: A class name takes letters, digits and `_` only, as `classDef` reads it.

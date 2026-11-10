@@ -1,0 +1,11 @@
+---
+description: >-
+  A block first written as a leaf and then opened as `block:a … end` keeps its
+  place and holds the children (D442). mermaid@12 lost the children.
+---
+block
+  columns 2
+  a b
+  block:a
+    c d
+  end

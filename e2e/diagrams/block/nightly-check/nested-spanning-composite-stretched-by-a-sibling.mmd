@@ -1,0 +1,17 @@
+---
+description: >-
+  A composite `o` sits beside a wider block `x`, so v12 stretches `o` and gives each of its
+  children the same width (its even stretch), spans ignored: `i`, which spans three columns,
+  comes out one column wide, while its own children were sized for three. `e` then ends past
+  `i`'s right edge, as v12 drew it (GAPS #555, pending a D-id: D440).
+---
+block
+  block:o
+    columns 3
+    a:2 b
+    block:i:3
+      columns 2
+      c:2 d e
+    end
+  end
+  x["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]

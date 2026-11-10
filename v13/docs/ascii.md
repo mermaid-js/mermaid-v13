@@ -10,7 +10,8 @@ relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`
 sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
 [below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa
 diagram (`ishikawa`, [below](#ishikawa-diagrams)), the usecase
-diagram (`usecase-beta`, [below](#usecase-diagrams)), the agentflow (`agentflow-beta`,
+diagram (`usecase-beta`, [below](#usecase-diagrams)), the block diagram (`block`,
+[below](#block-diagrams)), the agentflow (`agentflow-beta`,
 [below](#agentflow-diagrams)) and `info`. See
 [the format matrix](format-matrix.md) for every type.
 
@@ -120,7 +121,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the Ishikawa diagram, the usecase diagram, the block diagram and the agentflow render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -320,6 +321,77 @@ is 25 columns).
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`:::` classes), `emphasis` (bold and
   italic text) and `link` (ticket links from `kanban.ticketBaseUrl`). Column colours come from
   the theme and are dropped silently; icons are drawn by neither output.
+
+## Block diagrams
+
+The block diagram's text entry (`@mermaid-js/diagram-block/ascii`, #559, D449) lays its own grid
+out in cells from the model; the px layout is not read.
+
+```
+╭─────────╮                   ┌────◇────┐
+│  Start  ├──────────────────►◇ Valid?  ◇
+╰─────────╯                   └──┬─◇────┘
+                             yes │
+                                 ▼
+┌──────────────── Work ─────────────────┐
+│                                       │
+│  ┌───────┐    ╭───────╮    ╒═══════╕  │
+│  │ Load  │    │ Parse │  ┌┄┤ Store │  │
+│  └───────┘    ╰───────╯  ┆ ╘═══════╛  │
+│                          ┆            │
+└──────────────────────────┼────────────┘
+                           ┆
+                           ┆
+┌─────────┐    ╓─────────╖ ┆  ┌─────────┐
+│  Next   ►    ║ Report  ║◄┘  │  Done   │
+└─────────┘    ╙─────────╜    └─────────┘
+```
+
+from
+
+```mermaid
+block
+  columns 3
+  start(("Start")) space check{"Valid?"}
+  block:work["Work"]:3
+    columns 3
+    load["Load"] parse(["Parse"]) store[("Store")]
+  end
+  go<["Next"]>(right) report[["Report"]] done((("Done")))
+  start --> check
+  check -- "yes" --> work
+  store -.-> report
+```
+
+- Blocks are boxes on a character grid, placed as in SVG (`columns`, spans, a block wider than
+  the rest of its row). Every column of a grid is one width, its widest block's per column, so
+  the widest label sets it; each row is as tall as its tallest block, and blocks fill their
+  cells. Columns are four cells apart and rows two lines (`ascii.padding: roomy`: six and three,
+  with a blank line above and below each label).
+- A composite is a frame around its own grid, its label centred on the top border
+  (`┌─ Work ─┐`). A frame grows to hold its widest row, so no block crosses it.
+- A space keeps its cells and draws nothing; a row of spaces alone takes no room.
+- Labels longer than 40 cells are cut with `…` (`~` in ASCII); with `ascii.maxWidth` labels are
+  cut shorter, down to two cells, until the drawing fits. One that still does not is drawn
+  whole, with `ASCII_TOO_WIDE`.
+- Shapes take flowchart's text forms: rounded corners for round, circle and stadium, `◇` side
+  marks for a diamond, `<` `>` for a hexagon, double sides for a subroutine, `═` caps for a
+  cylinder. Double circles, the odd shape, the leans and the trapezoids are plain boxes, named in
+  one `ASCII_SHAPE` warning.
+- A block arrow is a box with an arrowhead in the middle of each side it points to (`right` `►`,
+  `x` both `◄` and `►`, `y` both `▲` and `▼`). Lines never leave a block arrow at its arrowhead.
+- Edges are stepped lines that leave a block at a tee and end in an arrowhead next to the other,
+  `✕` for `--x` and `●` for `--o`; thick edges are heavy (`━`, `=`), dotted ones dashed (`┄`,
+  `.`). They go round blocks, cross frames straight through and other lines only at right
+  angles; an edge to a composite holding its other block ends inside the frame. No arrowhead or
+  label sits on a frame. A self-loop leaves one side and comes back into the next one round.
+  An edge no free route is found for is drawn across what is there, with `ASCII_ROUTE`.
+- An edge label is written on its line where the line runs straight and has room for it, else on
+  free cells beside the line.
+- `block.padding` is pixel geometry: text ignores it, with no warning (D449). The composites'
+  palette and other theme colours are dropped silently.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`) and
+  `emphasis` (bold and italic text).
 
 ## Usecase diagrams
 
@@ -609,7 +681,7 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the agentflow's or
+packet diagram's, the kanban board's, the Ishikawa diagram's, the usecase diagram's, the block diagram's, the agentflow's or
 info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures

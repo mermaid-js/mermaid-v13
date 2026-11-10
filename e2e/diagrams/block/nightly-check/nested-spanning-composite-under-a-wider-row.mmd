@@ -1,0 +1,17 @@
+---
+description: >-
+  As `nested-spanning-composite-stretched-by-a-sibling`, with the wider block in a row above
+  `o` (`columns 1`): v12's even stretch narrows `i` below the two columns its last row needs,
+  so `e` ends just past `i`'s right edge, as v12 drew it (GAPS #555, pending a D-id: D440).
+---
+block
+  columns 1
+  w["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"]
+  block:o
+    columns 3
+    a:2 b
+    block:i:3
+      columns 2
+      c:2 d e
+    end
+  end

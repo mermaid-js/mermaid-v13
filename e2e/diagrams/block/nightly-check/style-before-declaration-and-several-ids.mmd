@@ -1,0 +1,10 @@
+---
+description: >-
+  `style` applies after every statement, to each id it lists (D443): before
+  the block, and to `a,b` at once; an id that never appears gets one
+  BLOCK_STYLE_UNKNOWN warning. mermaid@12 threw a TypeError.
+---
+block
+  style a,b fill:#f96,stroke:#333
+  style ghost fill:#000
+  a b c
