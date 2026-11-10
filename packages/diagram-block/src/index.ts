@@ -17,15 +17,6 @@ export type * from './parser/index.ts';
 export type * from './model.ts';
 export { BLOCK_SIZE_INVALID, BLOCK_STYLE_UNKNOWN, BLOCK_TRUNCATED } from './codes.ts';
 export { block } from './plugin.ts';
-export {
-  BLOCK_METRICS,
-  blockPadding,
-  gridPosition,
-  layoutBlock,
-  placeGrid,
-  sizeGrid,
-  type BlockLayoutContext,
-  type GridNode,
-} from './layout/index.ts';
+export { blockPadding, layoutBlock, type BlockLayoutContext } from './layout/index.ts';
 export type * from './layout/types.ts';
 export type { LeafShape } from './shapes/leaf.ts';

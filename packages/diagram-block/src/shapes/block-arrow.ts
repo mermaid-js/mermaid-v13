@@ -235,6 +235,28 @@ const arrowPointFactories = /* @__PURE__ */ new Map<string, ArrowPointsFactory>(
 ]);
 
 /**
+ * v12's arrow metrics about a label box: half the node padding as the arrow's `padding`, the
+ * label's height plus twice the node padding as its height, the midpoint half that, and by
+ * default the label's width plus the height and the node padding as its width (`getArrowPoints`
+ * and `block_arrow` derived the same numbers each their own way).
+ */
+function arrowMetrics(
+  bbox: { readonly width: number; readonly height: number },
+  nodePadding: number,
+  totalWidth?: number
+): ArrowMetrics {
+  const padding = nodePadding / 2;
+  const height = bbox.height + 4 * padding;
+  const midpoint = height / 2;
+  return {
+    height,
+    midpoint,
+    padding,
+    width: totalWidth ?? bbox.width + 2 * midpoint + 2 * padding,
+  };
+}
+
+/**
  * v12 `getArrowPoints`: the polygon for `directions` around a label box `bbox`, in v12's frame,
  * `totalWidth` wide (by default the natural width).
  */
@@ -244,37 +266,39 @@ export const getArrowPoints = (
   node: { readonly padding?: number },
   totalWidth?: number
 ): Point[] => {
-  const directions = expandAndDeduplicateDirections(duplicatedDirections);
-  const padding = (node.padding ?? 0) / 2;
-  const height = bbox.height + 4 * padding;
-  const midpoint = height / 2;
-  const width = totalWidth ?? bbox.width + 2 * midpoint + 2 * padding;
-  const key = getDirectionKey(directions);
+  const key = getDirectionKey(expandAndDeduplicateDirections(duplicatedDirections));
   const pointFactory = arrowPointFactories.get(key) ?? arrowPointFactories.get(POINT_KEY)!;
-
-  return pointFactory({ height, midpoint, padding, width });
+  return pointFactory(arrowMetrics(bbox, node.padding ?? 0, totalWidth));
 };
 
-/** v12 `block_arrow`'s natural size about a label box `tw × th`, with the block padding. */
-export function blockArrowSize(tw: number, th: number, padding: number): { w: number; h: number } {
-  const h = th + 2 * padding;
-  return { w: tw + h + padding, h };
+/** v12 `block_arrow`'s natural size about a label box, with the block padding. */
+export function blockArrowSize(
+  label: { readonly width: number; readonly height: number },
+  padding: number
+): { w: number; h: number } {
+  const { width, height } = arrowMetrics(label, padding);
+  return { w: width, h: height };
 }
 
-/**
- * The arrow's polygon about the block's centre, `width` wide (v12 stretched it to its cell only
- * when it spans more than one column and the cell is wider; the caller decides).
- */
-export function blockArrowPolygon(
-  directions: readonly string[],
-  tw: number,
-  th: number,
-  padding: number,
-  width: number
-): Point[] {
-  const { h } = blockArrowSize(tw, th, padding);
-  return getArrowPoints(directions, { width: tw, height: th }, { padding }, width).map((p) => ({
+/** What {@link blockArrowPolygon} draws. */
+export interface ArrowParts {
+  readonly directions: readonly string[];
+  /** The label's box. */
+  readonly label: { readonly width: number; readonly height: number };
+  /** The block padding. */
+  readonly padding: number;
+  /**
+   * The width: v12 stretched the arrow to its cell only when it spans more than one column and
+   * the cell is wider; the caller decides.
+   */
+  readonly width: number;
+}
+
+/** The arrow's polygon about the block's centre. */
+export function blockArrowPolygon({ directions, label, padding, width }: ArrowParts): Point[] {
+  const { height } = arrowMetrics(label, padding, width);
+  return getArrowPoints(directions, label, { padding }, width).map((p) => ({
     x: p.x - width / 2,
-    y: p.y + h / 2,
+    y: p.y + height / 2,
   }));
 }

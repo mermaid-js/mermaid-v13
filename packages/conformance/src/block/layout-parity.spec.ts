@@ -1,7 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { layoutBlock, placeGrid, sizeGrid, type GridNode } from '@mermaid-js/diagram-block';
+import { layoutBlock } from '@mermaid-js/diagram-block';
 import {
   blockGrid,
+  placeGrid,
+  sizeGrid,
+  type GridNode,
   blockTestContext,
   blockTestTheme,
   parsedBlock,
@@ -20,10 +23,13 @@ import { layout as v12Layout, type V12Block } from './v12-layout.ts';
  * (v12 put the label under the children), and the spacer cut to 100,000 cells (v12's copy would
  * hold them all; the linear grid runs it in `layout-stress.spec.ts`).
  *
- * v12 sizes a block at depth d 2^d times. The linear grid sizes it twice, which is v12's result
- * exactly while no composite holds a composite: the generated trees check that for every mix of
- * spans, columns, spaces, empty composites and composite widths, and report how often the two
- * still agree a level deeper (GAPS #555).
+ * v12 sizes a block at depth d 2^d times, and the repeats are not idempotent (a spanning child
+ * grows by `padding · (span − 1) / span` each time). The grid replays v12's calls, a block with
+ * children at most 16 times (`BLOCK_METRICS.maxSizings`), so it is v12's result exactly wherever
+ * composites nest at most 4 deep: the generated trees (seeded; spans, columns, `auto`, spaces,
+ * empty composites, composites wider than their children) check one to four levels. Five levels
+ * deep v12 sizes the innermost 32 times: measured on 300 trees, 97 differ, by a median of
+ * 544 px and at most 27,405 px (v12's own growth; pending a D-id, D440, GAPS #555).
  */
 
 let corpus: CorpusItem[];
@@ -100,7 +106,7 @@ describe('block grid parity with v12', () => {
       }
       const v12 = v12Tree(root, 'root');
       v12Layout(v12, padding);
-      sizeGrid(root, padding);
+      sizeGrid(root, padding, 16);
       placeGrid(root, padding);
       const d = worst(v12Boxes(v12), boxes(root));
       if (!(d < 1e-9)) failures.push(`${item.id}: ${d}`);
@@ -176,7 +182,7 @@ function agreeing(n: number, options: TreeOptions, seed: number): number {
     const root = tree(rnd, options);
     const v12 = v12Tree(root, 'root');
     v12Layout(v12, 8);
-    sizeGrid(root, 8);
+    sizeGrid(root, 8, 16);
     placeGrid(root, 8);
     // v12's strict comparisons can flip on float noise: compare to 1e-6.
     if (worst(v12Boxes(v12), boxes(root)) < 1e-6) same++;
@@ -185,14 +191,16 @@ function agreeing(n: number, options: TreeOptions, seed: number): number {
 }
 
 describe('block grid parity with v12 on generated trees', () => {
-  it('agrees on every tree whose composites hold no composite', () => {
-    expect(agreeing(2000, { levels: 1, spans: true }, 7)).toBe(2000);
-    expect(agreeing(2000, { levels: 1, spans: false }, 11)).toBe(2000);
-  });
+  it('agrees with v12 wherever composites nest at most four deep', () => {
+    expect(agreeing(1000, { levels: 1, spans: true }, 7)).toBe(1000);
+    expect(agreeing(1000, { levels: 2, spans: true }, 13)).toBe(1000);
+    expect(agreeing(1000, { levels: 2, spans: false }, 11)).toBe(1000);
+    expect(agreeing(1000, { levels: 3, spans: true }, 17)).toBe(1000);
+    expect(agreeing(300, { levels: 4, spans: true }, 19)).toBe(300);
+  }, 120_000);
 
-  it('mostly agrees a level deeper, and less where spanning children grow in v12', () => {
-    // Recorded in GAPS #555: v12's repeats grow a spanning child by padding · (span − 1) / span.
-    expect(agreeing(1000, { levels: 2, spans: false }, 13)).toBeGreaterThanOrEqual(990);
-    expect(agreeing(1000, { levels: 2, spans: true }, 17)).toBeGreaterThan(700);
-  });
+  it('stops at 16 sizings a block, five levels down (v12: 32)', () => {
+    // Measured: 203 of 300 agree; v12's repeats grow the rest by a median of 544 px.
+    expect(agreeing(300, { levels: 5, spans: true }, 23)).toBe(203);
+  }, 120_000);
 });

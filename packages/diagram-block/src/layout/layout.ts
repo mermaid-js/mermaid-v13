@@ -4,19 +4,19 @@
  * (pitfall 16), and never wrapped (v12 passed `wrappingWidth: Infinity`); a leaf's natural size
  * is its label plus its shape's padding (the theme's rows over `block.padding`, D152). The grid
  * is v12's (`grid.ts`), linear in blocks and depth. Then each block gets its outline (filling
- * its cell or keeping its size, spec #521 §Stretch), edges are clipped at the outlines (D441),
- * and the bounds cover everything drawn plus v12's 5 px (D224). Lengths come from the `block`
- * config and the metrics table (pitfall 13).
+ * its cell or keeping its size, spec #521 §Stretch; `kinds.ts`), edges are clipped at the
+ * outlines (D441), and the bounds cover everything drawn plus v12's 5 px (D224). Lengths come
+ * from the `block` config and the metrics table (pitfall 13).
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
 import type { Block, BlockEdge, BlockModel } from '../model.ts';
-import { blockArrowPolygon, blockArrowSize } from '../shapes/block-arrow.ts';
-import { keepsSize, leafOutline, leafShape, leafSize, padsOf, type Pads } from '../shapes/leaf.ts';
-import { clipOutline, outlineExtent, type Outline, type Point } from '../shapes/outline.ts';
+import { padsOf, type Pads } from '../shapes/leaf.ts';
+import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
 import { placeGrid, sizeGrid, type GridNode } from './grid.ts';
-import { BLOCK_METRICS, NORMAL_WEIGHT } from './metrics.ts';
+import { kindOf, SHAPE_OF, type Natural } from './kinds.ts';
+import { BLOCK_METRICS, CUBIC_MIDDLE, NORMAL_WEIGHT } from './metrics.ts';
 import type {
   BlockEdgeLayout,
   BlockLayout,
@@ -40,8 +40,8 @@ interface Item extends BlockGridItem {
   readonly block: Block;
   readonly parent?: number;
   readonly label?: Measured;
-  /** A leaf's natural size and label shift, as its shape measures it. */
-  readonly natural: { readonly w: number; readonly h: number; readonly dy: number };
+  /** Its natural size, label shift and band, as its kind measures it. */
+  readonly natural: Natural;
 }
 
 /**
@@ -63,7 +63,7 @@ function fonts(model: BlockModel, ctx: BlockLayoutContext) {
   const classDefs = new Map<string, readonly string[]>();
   for (const c of model.classDefs) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
   const cache = new Map<string, [FontKey, number]>();
-  const of = (block: Block): [FontKey, number] => {
+  const fontOf = (block: Block): [FontKey, number] => {
     // v12 looked each `class` statement's text up as one name (`classDb.get(className)`).
     const decls: string[] = [];
     for (const name of block.classes) for (const s of classDefs.get(name) ?? []) decls.push(s);
@@ -87,7 +87,7 @@ function fonts(model: BlockModel, ctx: BlockLayoutContext) {
     }
     return hit;
   };
-  return { base, of };
+  return { base, fontOf };
 }
 
 /** One measured block of {@link blockGrid}: its grid node and how it is drawn. */
@@ -123,7 +123,7 @@ function prepare(model: BlockModel, ctx: BlockLayoutContext) {
   const { root, items } = measureGrid(
     model,
     (b) => {
-      const [f, bits] = font.of(b);
+      const [f, bits] = font.fontOf(b);
       return measure(b.label, f, bits);
     },
     padding,
@@ -135,17 +135,16 @@ function prepare(model: BlockModel, ctx: BlockLayoutContext) {
 /** Lays out a block diagram in px. */
 export function layoutBlock(model: BlockModel, ctx: BlockLayoutContext): BlockLayout {
   const { root, items, padding, pads, base, measure } = prepare(model, ctx);
-  sizeGrid(root, padding);
+  sizeGrid(root, padding, BLOCK_METRICS.maxSizings);
   placeGrid(root, padding);
-  const blocks = items.map((item) => drawn(item, padding, pads));
-  const edges = edgesOf(model.edges, items, blocks, (text) => measure(text, base, 0));
+  const blocks = items.map((item) => placedBlock(item, padding, pads));
+  const edges = edgesOf(model.edges, blockIndex(blocks), (text) => measure(text, base, 0));
   return { columns: model.columns, blocks, edges, padding, bounds: boundsOf(blocks, edges) };
 }
 
 /**
- * The grid of `model` (v12's root block and its tree), every leaf measured: the label's box plus
- * the shape's padding; a labelled composite gets its label band (D444) and is at least its label
- * plus the padding each side wide; a block turned into a leaf type that keeps children (a later
+ * The grid of `model` (v12's root block and its tree), every block measured as its kind
+ * measures it (`kinds.ts`); a block turned into a leaf type that keeps children (a later
  * mention, as in v12) starts at its shape's size, as v12 measured it. Spaces are one cell per
  * `space:n` cell (v12's clones), measured as nothing.
  */
@@ -156,7 +155,6 @@ function measureGrid(
   pads: Pads
 ): { root: GridNode; items: Item[] } {
   const items: Item[] = [];
-  const zero = { w: 0, h: 0, dy: 0 };
   type Parts = Pick<GridNode, 'space' | 'span' | 'band' | 'w' | 'h'> & {
     readonly columns?: number;
     readonly children: GridNode[];
@@ -167,6 +165,7 @@ function measureGrid(
     x: 0,
     y: 0,
   });
+  const nothing = { w: 0, h: 0, dy: 0, band: 0 };
 
   // Pre-order, without recursion: each entry fills its parent's child list in source order.
   const root = node({
@@ -187,39 +186,37 @@ function measureGrid(
   // (pre-order) and fill its list in source order.
   while (stack.length > 0) {
     const { block, into, parent } = stack.pop()!;
-    if (block.type === 'space') {
+    const { type } = block;
+    if (type === 'space') {
       for (let j = 0; j < (block.cells ?? 1); j++) {
         const grid = node({ space: true, span: 1, band: 0, children: [], w: 0, h: 0 });
         into.push(grid);
-        items.push({ grid, block, id: `${block.id}-${j}`, shape: 'space', parent, natural: zero });
+        items.push({
+          grid,
+          block,
+          id: `${block.id}-${j}`,
+          shape: 'space',
+          parent,
+          natural: nothing,
+        });
       }
       continue;
     }
-    const composite = block.type === 'composite';
-    const text = composite && block.label === '' ? undefined : label(block);
-    let natural = zero;
-    let band = 0;
-    let shape: BlockShape;
-    if (composite) {
-      shape = 'composite';
-      if (text) {
-        band = text.height + padding;
-        natural = { w: text.width + 2 * padding, h: band + padding, dy: 0 };
-      }
-    } else if (block.type === 'block_arrow') {
-      shape = 'block-arrow';
-      natural = { ...blockArrowSize(text!.width, text!.height, padding), dy: 0 };
-    } else {
-      const leaf = leafShape(block.type);
-      shape = leaf;
-      natural = leafSize(leaf, text!.width, text!.height, pads);
-    }
+    const text = type === 'composite' && block.label === '' ? undefined : label(block);
+    const natural = kindOf(type).natural({
+      type,
+      span: block.span,
+      directions: block.directions ?? [],
+      ...(text ? { label: { w: text.width, h: text.height } } : {}),
+      padding,
+      pads,
+    });
     const children: GridNode[] = [];
     const grid = node({
       space: false,
       span: block.span,
       columns: block.columns,
-      band,
+      band: natural.band,
       children,
       w: natural.w,
       h: natural.h,
@@ -230,7 +227,7 @@ function measureGrid(
       grid,
       block,
       id: block.id,
-      shape,
+      shape: SHAPE_OF[type],
       parent,
       ...(text ? { label: text } : {}),
       natural,
@@ -247,58 +244,52 @@ const rectAt = (cx: number, cy: number, w: number, h: number): Rect => ({
   height: h,
 });
 
-/** One item as drawn: its cell, its outline and box, its label placed. */
-function drawn(item: Item, padding: number, pads: Pads): BlockNodeLayout {
-  const { grid: g, block, natural } = item;
-  const cell = rectAt(g.x, g.y, g.w, g.h);
-  const centre = { x: g.x, y: g.y };
+/** One item as placed: its cell, its outline and box, its label placed. */
+function placedBlock(item: Item, padding: number, pads: Pads): BlockNodeLayout {
+  const { grid, block, natural } = item;
+  const cell = rectAt(grid.x, grid.y, grid.w, grid.h);
+  const centre = { x: grid.x, y: grid.y };
   const common = {
     id: item.id,
     ast: block.ast,
     type: block.type,
     shape: item.shape,
     ...(item.parent !== undefined ? { parent: item.parent } : {}),
-    span: g.span,
-    ...(g.children.length > 0 && g.columns !== undefined ? { columns: g.columns } : {}),
+    span: grid.span,
+    ...(grid.children.length > 0 && grid.columns !== undefined ? { columns: grid.columns } : {}),
     cell,
     centre,
     ...(block.colorIndex !== undefined && item.shape === 'composite'
       ? { colorIndex: block.colorIndex }
       : {}),
   };
-  if (item.shape === 'space') return { ...common, box: cell };
-
-  let outline: Outline;
-  let labelCentre = centre;
-  if (item.shape === 'composite') {
-    outline = { kind: 'rect', width: g.w, height: g.h, rx: 0 };
-    if (item.label) {
-      labelCentre = { x: g.x, y: cell.y + padding + item.label.height / 2 };
-    }
-  } else if (item.shape === 'block-arrow') {
-    // v12 stretched the arrow to its cell only when it spans and the cell is wider.
-    const width = block.span > 1 && g.w > natural.w ? g.w : natural.w;
-    const l = item.label!;
-    outline = {
-      kind: 'polygon',
-      points: blockArrowPolygon(block.directions ?? [], l.width, l.height, padding, width),
-    };
-  } else {
-    const keep = keepsSize(item.shape);
-    // The shapes that fill their cell are at least their own size, as v12's `rect` drew.
-    const W = keep ? natural.w : Math.max(natural.w, g.w);
-    const H = keep ? natural.h : Math.max(natural.h, g.h);
-    const rx = block.type === 'round' ? BLOCK_METRICS.roundRadius : 0;
-    outline = leafOutline(item.shape, W, H, pads, rx);
-    labelCentre = { x: g.x, y: g.y + natural.dy };
-  }
+  if (block.type === 'space') return { ...common, box: cell };
+  const { outline, label: offset } = kindOf(block.type).draw({
+    type: block.type,
+    span: block.span,
+    directions: block.directions ?? [],
+    ...(item.label ? { label: { w: item.label.width, h: item.label.height } } : {}),
+    padding,
+    pads,
+    natural,
+    cell: { w: grid.w, h: grid.h },
+  });
   const [x0, y0, x1, y1] = outlineExtent(outline);
-  const box = { x: g.x + x0, y: g.y + y0, width: x1 - x0, height: y1 - y0 };
+  const box = { x: grid.x + x0, y: grid.y + y0, width: x1 - x0, height: y1 - y0 };
   const label = item.label && {
     ...item.label,
-    ...rectAt(labelCentre.x, labelCentre.y, item.label.width, item.label.height),
+    ...rectAt(grid.x + offset.x, grid.y + offset.y, item.label.width, item.label.height),
   };
   return { ...common, box, outline, ...(label ? { label } : {}) };
+}
+
+/** Each drawn block by id (the first, as edges name it): built once per layout. */
+export function blockIndex(
+  blocks: readonly BlockNodeLayout[]
+): ReadonlyMap<string, BlockNodeLayout> {
+  const byId = new Map<string, BlockNodeLayout>();
+  for (const b of blocks) if (b.shape !== 'space' && !byId.has(b.id)) byId.set(b.id, b);
+  return byId;
 }
 
 const add = (a: Point, b: Point): Point => ({ x: a.x + b.x, y: a.y + b.y });
@@ -317,16 +308,11 @@ function clipAt(b: BlockNodeLayout, dx: number, dy: number): Point {
  */
 function edgesOf(
   edges: readonly BlockEdge[],
-  items: readonly Item[],
-  blocks: readonly BlockNodeLayout[],
+  byId: ReadonlyMap<string, BlockNodeLayout>,
   measure: (text: string) => Measured
 ): BlockEdgeLayout[] {
-  const byId = new Map<string, BlockNodeLayout>();
-  items.forEach((item, i) => {
-    if (item.shape !== 'space' && !byId.has(item.id)) byId.set(item.id, blocks[i]!);
-  });
-  const m = BLOCK_METRICS;
-  const angle = (m.loopAngle * Math.PI) / 180;
+  const { loopAngle, loopReach } = BLOCK_METRICS;
+  const angle = (loopAngle * Math.PI) / 180;
   const out: BlockEdgeLayout[] = [];
   for (const e of edges) {
     const a = byId.get(e.start);
@@ -341,25 +327,26 @@ function edgesOf(
       const u2 = { x: Math.cos(angle), y: -Math.sin(angle) };
       const s = clipAt(a, u1.x, u1.y);
       const t = clipAt(a, u2.x, u2.y);
-      const c1 = { x: s.x + m.loopReach * u1.x, y: s.y + m.loopReach * u1.y };
-      const c2 = { x: t.x + m.loopReach * u2.x, y: t.y + m.loopReach * u2.y };
+      const c1 = { x: s.x + loopReach * u1.x, y: s.y + loopReach * u1.y };
+      const c2 = { x: t.x + loopReach * u2.x, y: t.y + loopReach * u2.y };
       points = [s, c1, c2, t];
       // The Bézier's point at one half.
+      const { end, control } = CUBIC_MIDDLE;
       middle = {
-        x: (s.x + 3 * c1.x + 3 * c2.x + t.x) / 8,
-        y: (s.y + 3 * c1.y + 3 * c2.y + t.y) / 8,
+        x: end * (s.x + t.x) + control * (c1.x + c2.x),
+        y: end * (s.y + t.y) + control * (c1.y + c2.y),
       };
     } else {
       kind = 'line';
       let dx = b.centre.x - a.centre.x;
       let dy = b.centre.y - a.centre.y;
-      const one = !(Math.hypot(dx, dy) > 0);
-      if (one) {
+      const sameCentre = !(Math.hypot(dx, dy) > 0);
+      if (sameCentre) {
         dx = 0;
         dy = 1;
       }
       const s = clipAt(a, dx, dy);
-      const t = one ? clipAt(b, dx, dy) : clipAt(b, -dx, -dy);
+      const t = sameCentre ? clipAt(b, dx, dy) : clipAt(b, -dx, -dy);
       middle = { x: (a.centre.x + b.centre.x) / 2, y: (a.centre.y + b.centre.y) / 2 };
       const along = (p: Point): number => (p.x - a.centre.x) * dx + (p.y - a.centre.y) * dy;
       const [ls, lm, lt] = [along(s), along(middle), along(t)];
@@ -414,6 +401,11 @@ function boundsOf(blocks: readonly BlockNodeLayout[], edges: readonly BlockEdgeL
     y1 = Math.max(y1, r.y + r.height);
   }
   if (x0 > x1) [x0, y0, x1, y1] = [0, 0, 0, 0];
-  const m = BLOCK_METRICS.margin;
-  return { x: x0 - m, y: y0 - m, width: x1 - x0 + 2 * m, height: y1 - y0 + 2 * m };
+  const { margin } = BLOCK_METRICS;
+  return {
+    x: x0 - margin,
+    y: y0 - margin,
+    width: x1 - x0 + 2 * margin,
+    height: y1 - y0 + 2 * margin,
+  };
 }

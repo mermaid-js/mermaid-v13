@@ -23,6 +23,11 @@ export interface BlockMetrics {
   readonly loopAngle: number;
   /** … its control points this far out along those rays, so the loop stands clear. */
   readonly loopReach: number;
+  /**
+   * How many times the grid sizes a block with children at most (`grid.ts`): v12 sized one at
+   * depth d 2^d times, so the grid is v12's wherever composites nest at most 4 deep.
+   */
+  readonly maxSizings: number;
   /** A styled `font-size` at or past this is ignored (flowchart's bound on a label's font). */
   readonly maxFontSize: number;
 }
@@ -33,8 +38,12 @@ export const BLOCK_METRICS: BlockMetrics = {
   margin: 5,
   loopAngle: 30,
   loopReach: 24,
+  maxSizings: 16,
   maxFontSize: 1000,
 };
+
+/** A cubic Bézier's point at one half: its ends weigh 1/8 each, its control points 3/8. */
+export const CUBIC_MIDDLE = { end: 1 / 8, control: 3 / 8 } as const;
 
 /** The CSS weight block text is measured and drawn at: v12 sets none, so normal. */
 export const NORMAL_WEIGHT = 400;

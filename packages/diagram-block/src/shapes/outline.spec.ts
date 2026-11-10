@@ -83,11 +83,19 @@ describe('every block shape', () => {
   const outlines: [string, Outline][] = [
     ...SHAPES.map((s): [string, Outline] => {
       const { w, h } = leafSize(s, 60, 20, PADS);
-      return [s, leafOutline(s, w * 1.5, h, PADS, 5)];
+      return [s, leafOutline({ shape: s, width: w * 1.5, height: h, pads: PADS, rx: 5 })];
     }),
     ...['right', 'left', 'up', 'down', 'x', 'y', 'right,down'].map((d): [string, Outline] => [
       `block arrow ${d}`,
-      { kind: 'polygon', points: blockArrowPolygon(d.split(','), 60, 20, 8, 120) },
+      {
+        kind: 'polygon',
+        points: blockArrowPolygon({
+          directions: d.split(','),
+          label: { width: 60, height: 20 },
+          padding: 8,
+          width: 120,
+        }),
+      },
     ]),
   ];
 

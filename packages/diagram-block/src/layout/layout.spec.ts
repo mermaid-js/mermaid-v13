@@ -68,7 +68,7 @@ describe('v12 layout.spec.ts, ported', () => {
       [20, 260],
     ] as const) {
       const r = root();
-      sizeGrid(r, padding);
+      sizeGrid(r, padding, 16);
       placeGrid(r, padding);
       expect(r.w).toBe(width);
       expect(r.children.map((c) => c.x)).toEqual([50, 50 + 100 + padding]);
@@ -147,15 +147,30 @@ describe('sizes', () => {
   });
 
   it('gives a labelled composite a label band above its grid (D444), none to an unlabelled one', () => {
-    const l = lay('block\nblock:g["Group"]\na\nend\nblock:h\nb\nend');
-    const g = byId(l, 'g');
+    const l = lay('block\nblock:g["Group label"]\na\nend\nblock:h\nb\nend');
+    const group = byId(l, 'g');
     const a = byId(l, 'a');
-    // The label (50 × 17.5) at the padding below the top, the grid below the band.
-    expect(g.label).toMatchObject({ x: g.cell.x + 8, y: g.cell.y + 8, width: 50, height: 17.5 });
-    expect(a.cell.y).toBe(g.cell.y + 8 + 17.5 + 8);
-    expect(g.cell.width).toBe(50 + 2 * 8);
+    // The label (110 × 17.5) at the padding below the top; the grid below the band.
+    expect(group.label).toMatchObject({ y: group.cell.y + 8, width: 110, height: 17.5 });
+    expect(a.cell.y).toBe(group.cell.y + 8 + 17.5 + 8);
+    // As wide as its label, with v12's composite padding (0): `a` is widened to fill it.
+    expect(group.cell.width).toBe(110);
+    expect(group.label!.x).toBe(group.cell.x);
+    expect(a.cell.width).toBe(110 - 2 * 8);
     expect(byId(l, 'h').label).toBeUndefined();
     expect(byId(l, 'b').cell.y).toBe(byId(l, 'h').cell.y + 8);
+  });
+
+  it('keeps v12’s even stretch: a spanning composite can end narrower than its grid', () => {
+    const { model, config } = fixture(
+      'nightly-check/nested-spanning-composite-stretched-by-a-sibling'
+    );
+    const l = layoutBlock(model, blockTestContext(theme, config));
+    const i = byId(l, 'i');
+    const e = byId(l, 'e');
+    // `e` ends past `i` (as v12 drew it), and the invariant counts its row as overflowing.
+    expect(right(e.box) - right(i.box)).toBeGreaterThan(50);
+    expect(blockLayoutViolations(l)).toEqual([]);
   });
 });
 
@@ -277,8 +292,8 @@ describe('bounds (D224) and degenerate input (D445)', () => {
 describe('block layout invariants on the e2e fixtures', () => {
   it.each(FIXTURES)('%s', async (path) => {
     const { model, config, resolved } = fixture(path);
-    const own = await blockTestTheme(resolved);
-    const layout = layoutBlock(model, blockTestContext(own, config));
+    const sourceTheme = await blockTestTheme(resolved);
+    const layout = layoutBlock(model, blockTestContext(sourceTheme, config));
     expect(blockLayoutViolations(layout)).toEqual([]);
   });
 });

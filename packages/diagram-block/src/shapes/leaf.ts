@@ -4,13 +4,9 @@
  * and the outline), as class, state and mindmap keep theirs. Only the geometry half is here:
  * the size, whether the shape fills its grid cell, and the outline edges are clipped at. The
  * drawing is #556's.
- *
- * Block's types map onto the flowchart names as v12's `renderHelpers.ts` mapped them onto its
- * shapes: square and `na` are `rect`, and round is `rect` with v12's corner radius (it sized as
- * the square, not as flowchart's rounded rectangle).
+ * Which block type is which shape is `../layout/kinds.ts`'s table.
  */
 import type { Theme } from '@mermaid-js/core/theme';
-import type { BlockType } from '../model.ts';
 import type { Outline, Point } from './outline.ts';
 
 /** Padding added across (`x`) and down (`y`). */
@@ -44,8 +40,28 @@ export interface Pads {
   readonly circleMin: number;
 }
 
+// Flowchart's shape constants (`diagram-flowchart/src/render/shapes.ts`), named; conformance's
+// `block-layout-literals.spec.ts` allows these by name.
 /** A hexagon slant of 0 would put its points at infinity (flowchart's `MIN_SLANT`). */
 const MIN_SLANT = 1;
+/** The rectangle is at least this much label wide. */
+const MIN_LABEL_WIDTH = 12;
+/** The subroutine's two frames, 8 px each. */
+const FRAMES_WIDTH = 16;
+/** The cylinder: at least this wide; its caps `W / CAP_RY_DIVISOR` deep, within the bounds. */
+const CYLINDER_MIN_WIDTH = 56;
+const CAP_RY_MIN = 6;
+const CAP_RY_MAX = 12;
+const CAP_RY_DIVISOR = 14;
+/** The body between the caps' front edges is label + padding + ry, plus a cap above and below. */
+const CYLINDER_CAPS = 3;
+/** The stadium is at least this many times its height wide. */
+const STADIUM_MIN_RATIO = 1.5;
+/** A lean or trapezoid side slants by a quarter of its height at each end: half in all. */
+const LEAN_SLANT = 0.5;
+const SLANT_DIVISOR = 4;
+/** The odd shape's notch is a quarter of its height deep. */
+const ODD_NOTCH = 0.25;
 
 /** The theme's shape padding (the rows block shares with flowchart), over `block.padding`. */
 export function padsOf(theme: Theme, pad: number): Pads {
@@ -101,7 +117,7 @@ interface ShapeDef {
 }
 
 const box: Sizer = (tw, th, p) => ({
-  w: Math.max(tw, 12) + 2 * p.node.x,
+  w: Math.max(tw, MIN_LABEL_WIDTH) + 2 * p.node.x,
   h: th + 2 * p.node.y,
   dy: 0,
 });
@@ -116,16 +132,16 @@ const padded =
     const h = th + k * y;
     return { w: tw + k * x + ex + exH * h, h, dy: 0 };
   };
-const lean = padded((p) => p.lean, 0, 0.5);
+const lean = padded((p) => p.lean, 0, LEAN_SLANT);
 
-const capRy = (W: number): number => Math.min(12, Math.max(6, W / 14));
+const capRy = (W: number): number => Math.min(CAP_RY_MAX, Math.max(CAP_RY_MIN, W / CAP_RY_DIVISOR));
 
 // v12 cylinder: the padding plus a cap height on top of the label (the body between the caps'
 // front edges is label + padding + ry).
 function cylinderSize(tw: number, th: number, p: Pads): ShapeSize {
-  const w = Math.max(tw + p.cylinder.x, 56);
+  const w = Math.max(tw + p.cylinder.x, CYLINDER_MIN_WIDTH);
   const ry = capRy(w);
-  return { w, h: th + p.cylinder.y + 3 * ry, dy: ry / 2 };
+  return { w, h: th + p.cylinder.y + CYLINDER_CAPS * ry, dy: ry / 2 };
 }
 
 const rect =
@@ -141,15 +157,22 @@ const polygon = (coords: readonly number[]): Outline => {
   return { kind: 'polygon', points };
 };
 
-/**
- * A box with some corners cut in by a quarter of its height: the lean and trapezoid shapes.
- * Corners go clockwise from the top left.
- */
-function slanted(tl: boolean, tr: boolean, br: boolean, bl: boolean, size = lean): ShapeDef {
+/** Which corners of a box are cut in, clockwise from the top left. */
+interface Corners {
+  readonly tl: boolean;
+  readonly tr: boolean;
+  readonly br: boolean;
+  readonly bl: boolean;
+  /** The sizer; the lean's by default. */
+  readonly size?: Sizer;
+}
+
+/** A box with some corners cut in by a quarter of its height: the lean and trapezoid shapes. */
+function slanted({ tl, tr, br, bl, size = lean }: Corners): ShapeDef {
   return {
     size,
     outline: (W, H) => {
-      const s = H / 4;
+      const s = H / SLANT_DIVISOR;
       const l = -W / 2;
       const r = W / 2;
       return polygon([
@@ -166,7 +189,7 @@ function slanted(tl: boolean, tr: boolean, br: boolean, bl: boolean, size = lean
   };
 }
 
-const S: Readonly<Record<LeafShape, ShapeDef>> = {
+const SHAPE_DEFS: Readonly<Record<LeafShape, ShapeDef>> = {
   // v12 drew the square and round blocks as its `rect`, round with its corner radius.
   rect: { size: box, outline: rect((W, H, rx) => Math.min(rx, W / 2, H / 2)) },
   stadium: {
@@ -175,12 +198,16 @@ const S: Readonly<Record<LeafShape, ShapeDef>> = {
       const { x, y } = p.stadium;
       const h = th + y;
       const cap = Math.sqrt(Math.max(0, h * h - th * th));
-      return { w: Math.max(tw + h / 4 + x, 1.5 * h, tw + x + h - cap), h, dy: 0 };
+      return {
+        w: Math.max(tw + h / SLANT_DIVISOR + x, STADIUM_MIN_RATIO * h, tw + x + h - cap),
+        h,
+        dy: 0,
+      };
     },
     outline: rect((W, H) => Math.min(H / 2, W / 2)),
   },
   // v12 subroutine: the padding inside the two 8px frames.
-  'fr-rect': { size: padded((p) => p.subroutine, 16), outline: square },
+  'fr-rect': { size: padded((p) => p.subroutine, FRAMES_WIDTH), outline: square },
   cyl: {
     size: cylinderSize,
     outline: (width, height) => ({ kind: 'cylinder', width, height, ry: capRy(width) }),
@@ -218,79 +245,52 @@ const S: Readonly<Record<LeafShape, ShapeDef>> = {
       return { w: tw + 2 * (h / p.hexagonSlant) + p.hexagon.x, h, dy: 0 };
     },
     outline: (W, H, p) => {
-      const m = H / p.hexagonSlant;
+      const point = H / p.hexagonSlant;
       const x = W / 2;
       const y = H / 2;
-      return polygon([-x + m, -y, x - m, -y, x, 0, x - m, y, -x + m, y, -x, 0]);
+      return polygon([-x + point, -y, x - point, -y, x, 0, x - point, y, -x + point, y, -x, 0]);
     },
   },
   // v12 rect_left_inv_arrow.
   odd: {
-    size: padded((p) => p.odd, 0, 0.25),
+    size: padded((p) => p.odd, 0, ODD_NOTCH),
     outline: (W, H) => {
       const x = W / 2;
       const y = H / 2;
-      return polygon([-x, -y, x, -y, x, y, -x, y, -x + H / 4, 0]);
+      return polygon([-x, -y, x, -y, x, y, -x, y, -x + H * ODD_NOTCH, 0]);
     },
   },
-  'lean-r': slanted(true, false, true, false),
-  'lean-l': slanted(false, true, false, true),
-  'trap-b': slanted(true, true, false, false),
+  'lean-r': slanted({ tl: true, tr: false, br: true, bl: false }),
+  'lean-l': slanted({ tl: false, tr: true, br: false, bl: true }),
+  'trap-b': slanted({ tl: true, tr: true, br: false, bl: false }),
   // v12 inv_trapezoid pads each side.
-  'trap-t': slanted(
-    false,
-    false,
-    true,
-    true,
-    padded((p) => p.lean, 0, 0.5, true)
-  ),
+  'trap-t': slanted({
+    tl: false,
+    tr: false,
+    br: true,
+    bl: true,
+    size: padded((p) => p.lean, 0, LEAN_SLANT, true),
+  }),
 };
-
-/** The shape a leaf block of `type` is drawn as (v12 `getNodeFromBlock`). */
-export function leafShape(type: BlockType): LeafShape {
-  switch (type) {
-    case 'circle':
-      return 'circle';
-    case 'doublecircle':
-      return 'dbl-circ';
-    case 'diamond':
-      return 'diam';
-    case 'hexagon':
-      return 'hex';
-    case 'stadium':
-      return 'stadium';
-    case 'subroutine':
-      return 'fr-rect';
-    case 'cylinder':
-      return 'cyl';
-    case 'rect_left_inv_arrow':
-      return 'odd';
-    case 'lean_right':
-      return 'lean-r';
-    case 'lean_left':
-      return 'lean-l';
-    case 'trapezoid':
-      return 'trap-b';
-    case 'inv_trapezoid':
-      return 'trap-t';
-    // Square, round and `na`; composites, spaces and block arrows have shapes of their own.
-    case 'square':
-    case 'round':
-    case 'na':
-    case 'composite':
-    case 'space':
-    case 'block_arrow':
-      return 'rect';
-  }
-}
 
 /** The natural size of `shape` about a label box `tw × th`. */
 export const leafSize = (shape: LeafShape, tw: number, th: number, p: Pads): ShapeSize =>
-  S[shape].size(tw, th, p);
+  SHAPE_DEFS[shape].size(tw, th, p);
 
 /** Whether `shape` keeps its natural size in its cell (circle, double circle, diamond). */
-export const keepsSize = (shape: LeafShape): boolean => S[shape].keepsSize === true;
+export const keepsSize = (shape: LeafShape): boolean => SHAPE_DEFS[shape].keepsSize === true;
 
-/** The outline of `shape` drawn `W × H`, corners rounded by `rx` where the shape has corners. */
-export const leafOutline = (shape: LeafShape, W: number, H: number, p: Pads, rx: number): Outline =>
-  S[shape].outline(W, H, p, rx);
+/** What {@link leafOutline} draws. */
+export interface LeafParts {
+  readonly shape: LeafShape;
+  /** The drawn size. */
+  readonly width: number;
+  readonly height: number;
+  readonly pads: Pads;
+  /** The corner radius, where the shape has corners. */
+  readonly rx: number;
+}
+
+/** The outline of a leaf shape. */
+export const leafOutline = ({ shape, width, height, pads, rx }: LeafParts): Outline =>
+  SHAPE_DEFS[shape].outline(width, height, pads, rx);

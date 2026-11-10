@@ -33,12 +33,12 @@ describe('block layout invariants on parser-produced fixtures', () => {
     let edges = 0;
     let loops = 0;
     for (const item of corpus) {
-      const { model, config: own, resolved } = parsedBlock(item.source);
+      const { model, config: sourceConfig, resolved } = parsedBlock(item.source);
       const name = String(resolved.theme);
       let theme = themes.get(name);
       if (!theme) themes.set(name, (theme = await blockTestTheme(resolved)));
       for (const block of CONFIGS) {
-        const config = { ...own, ...block };
+        const config = { ...sourceConfig, ...block };
         const layout = layoutBlock(model, blockTestContext(theme, config));
         blocks += layout.blocks.length;
         edges += layout.edges.length;
@@ -52,7 +52,7 @@ describe('block layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(75);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(77);
     expect(blocks).toBeGreaterThan(10_000);
     expect(edges).toBeGreaterThan(300);
     expect(loops).toBeGreaterThan(0);

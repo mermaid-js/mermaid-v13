@@ -11,13 +11,11 @@
  * `ySize = ⌈total span / xSize⌉`); then stretched where it is narrower than `siblingWidth`
  * (children evened out over the sibling size) or than its own width (children widened). It
  * calls itself on every child twice, once with no sibling size before the cells are set and once
- * with `maxW × maxH` after, so a block at depth d is sized 2^d times. Here each block is sized
- * twice: {@link naturalPass} is v12's first call (bottom up, no sibling size), and the stretch
- * pass is its second (top down, with the sibling size, at the point v12 makes it: after the
- * parent's cells, before the parent's own stretch). That is v12's result exactly while no
- * composite holds a composite (v12's repeats then change nothing), and on every corpus
- * fixture; where composites nest, v12's repeats can grow a spanning child by
- * `padding · (span − 1) / span` per repeat, and v13 takes one (GAPS #555).
+ * with `maxW × maxH` after, so a block at depth d is sized 2^d times, and the repeats are not
+ * idempotent (a spanning child grows by `padding · (span − 1) / span` each time). The grid
+ * replays those calls, but sizes a block with children at most `maxSizings` times, which keeps
+ * it linear and v12's numbers wherever composites nest at most log2(`maxSizings`) deep
+ * (GAPS #555).
  *
  * **Centres.** v12's `layoutBlocks`, unchanged: children packed left to right by width from the
  * container's left edge (`−padding` when its centre is at 0, v12's falsy test), wrapping by
@@ -54,6 +52,15 @@ export function gridPosition(columns: number, position: number): { px: number; p
   return { px: position % columns, py: Math.floor(position / columns) };
 }
 
+/**
+ * The grid position after a child of `span` columns at `position` (v12's `columnsFilled`): with
+ * `columns`, a child wider than the rest of its row takes only the rest, so the next one starts
+ * a row.
+ */
+function advance(columns: number, position: number, span: number): number {
+  return position + (columns > 0 ? Math.min(span, columns - (position % columns)) : span);
+}
+
 /** v12 `getMaxChildSize`: the widest width per column and the tallest height. */
 function maxChildSize(node: GridNode): { mW: number; mH: number } {
   let mW = 0;
@@ -75,12 +82,23 @@ function setCells(node: GridNode, mW: number, mH: number, padding: number): void
   }
 }
 
+interface FinishParts {
+  readonly node: GridNode;
+  /** The container's own widest width per column and tallest height. */
+  readonly max: { readonly mW: number; readonly mH: number };
+  /** Its parent's (v12's `siblingWidth`, `siblingHeight`). */
+  readonly sibling: { readonly mW: number; readonly mH: number };
+  readonly padding: number;
+}
+
 /**
  * The end of v12's `setBlockSizes` on a container: its own size from `maxW × maxH`, stretched
  * to `siblingWidth × siblingHeight` when narrower (the children evened out), then to its own
  * width before the call when narrower still (the children widened).
  */
-function finish(node: GridNode, mW: number, mH: number, sw: number, sh: number, padding: number) {
+function finish({ node, max, sibling, padding }: FinishParts): void {
+  const { mW, mH } = max;
+  const { mW: sw, mH: sh } = sibling;
   const columns = node.columns ?? -1;
   const kids = node.children;
   let numItems = 0;
@@ -93,6 +111,7 @@ function finish(node: GridNode, mW: number, mH: number, sw: number, sh: number, 
     width = sw;
     height = sh;
     const cw = (sw - xSize * padding - padding) / xSize;
+    // Never below 0 (D445): a label band (D444) taller than the sibling height leaves no room.
     const ch = Math.max(0, (sh - node.band - ySize * padding - padding) / ySize);
     for (const child of kids) {
       child.w = cw;
@@ -121,53 +140,60 @@ function preOrder(root: GridNode): GridNode[] {
   return out;
 }
 
-/** v12's first `setBlockSizes` call on each block below `root`: bottom up, no sibling size. */
-function naturalPass(order: readonly GridNode[], padding: number): void {
-  for (let i = order.length - 1; i >= 1; i--) {
-    const node = order[i]!;
-    if (!node.w) {
-      node.w = 0;
-      node.h = 0;
-    }
-    if (node.children.length === 0) continue;
-    const { mW, mH } = maxChildSize(node);
-    setCells(node, mW, mH, padding);
-    finish(node, mW, mH, 0, 0, padding);
-  }
+/** One `setBlockSizes` call in progress: the explicit stack's frame. */
+interface Sizing {
+  readonly node: GridNode;
+  readonly sibling: { readonly mW: number; readonly mH: number };
+  /** The next child to size, and whether the cells are set (the second round of calls). */
+  next: number;
+  second: boolean;
+  /** The container's own widest width per column and tallest height, once the cells are set. */
+  max: { mW: number; mH: number };
 }
 
 /**
- * Sizes every block of the tree under `root` (v12 `setBlockSizes(root)`), in two passes: the
- * natural pass, then the stretch pass. The stretch pass sets each container's cells top down
- * (its sibling size is its parent's `maxW × maxH` as the parent computed them), and finishes
- * each container bottom up, after its children, as v12's recursion did.
+ * Sizes every block of the tree under `root`: v12's `setBlockSizes(root)`, call for call, with
+ * an explicit stack, except that a block with children is sized at most `maxSizings` times.
+ * v12 sizes a block at depth d (the root's children at 1) 2^d times, so the two agree wherever
+ * composites nest at most log2(`maxSizings`) deep; past that, a block keeps what its first
+ * `maxSizings` sizings gave it. Each sizing costs its children, so the whole is linear in
+ * blocks and depth. A leaf's calls (the size given by its sibling when it has none) are never
+ * skipped.
  */
-export function sizeGrid(root: GridNode, padding: number): void {
-  const order = preOrder(root);
-  root.w = 0;
-  root.h = 0;
-  naturalPass(order, padding);
-  const sibling = new Map<GridNode, { mW: number; mH: number }>();
-  sibling.set(root, { mW: 0, mH: 0 });
-  const own = new Map<GridNode, { mW: number; mH: number }>();
-  for (const node of order) {
-    const { mW: sw, mH: sh } = sibling.get(node)!;
-    if (!node.w) {
-      node.w = sw;
-      node.h = sh;
+export function sizeGrid(root: GridNode, padding: number, maxSizings: number): void {
+  const sizings = new Map<GridNode, number>();
+  const stack: Sizing[] = [];
+  const call = (node: GridNode, sibling: Sizing['sibling']): void => {
+    if (node.children.length > 0) {
+      const done = sizings.get(node) ?? 0;
+      if (done >= maxSizings) return;
+      sizings.set(node, done + 1);
     }
-    if (node.children.length === 0) continue;
-    const size = maxChildSize(node);
-    setCells(node, size.mW, size.mH, padding);
-    own.set(node, size);
-    for (const child of node.children) sibling.set(child, size);
-  }
-  for (let i = order.length - 1; i >= 0; i--) {
-    const node = order[i]!;
-    const size = own.get(node);
-    if (!size) continue;
-    const { mW: sw, mH: sh } = sibling.get(node)!;
-    finish(node, size.mW, size.mH, sw, sh, padding);
+    if (!node.w) {
+      node.w = sibling.mW;
+      node.h = sibling.mH;
+    }
+    if (node.children.length > 0) {
+      stack.push({ node, sibling, next: 0, second: false, max: { mW: 0, mH: 0 } });
+    }
+  };
+  // v12's root block has no size: its first step gives it 0 × 0.
+  root.w = 0;
+  call(root, { mW: 0, mH: 0 });
+  while (stack.length > 0) {
+    const top = stack[stack.length - 1]!;
+    const kids = top.node.children;
+    if (top.next < kids.length) {
+      call(kids[top.next++]!, top.second ? top.max : { mW: 0, mH: 0 });
+    } else if (!top.second) {
+      top.max = maxChildSize(top.node);
+      setCells(top.node, top.max.mW, top.max.mH, padding);
+      top.second = true;
+      top.next = 0;
+    } else {
+      stack.pop();
+      finish({ node: top.node, max: top.max, sibling: top.sibling, padding });
+    }
   }
 }
 
@@ -184,7 +210,7 @@ export function placeGrid(root: GridNode, padding: number): void {
     for (const child of node.children) {
       const { py } = gridPosition(columns, pos);
       if (child.h > (rowHeights[py] ?? 0)) rowHeights[py] = child.h;
-      pos += columns > 0 ? Math.min(child.span, columns - (pos % columns)) : child.span;
+      pos = advance(columns, pos, child.span);
     }
     const rowOffsets: number[] = [];
     let offset = 0;
@@ -208,7 +234,7 @@ export function placeGrid(root: GridNode, padding: number): void {
       startX = child.x + child.w / 2;
       const rowHeight = rowHeights[py] ?? child.h;
       child.y = node.y - node.h / 2 + node.band + (rowOffsets[py] ?? 0) + rowHeight / 2 + padding;
-      pos += columns > 0 ? Math.min(child.span, columns - (pos % columns)) : child.span;
+      pos = advance(columns, pos, child.span);
     }
   }
 }

@@ -5,15 +5,19 @@
  *
  * - no number is NaN or infinite;
  * - siblings never overlap (their boxes: the outline's, a space's cell);
- * - a child that does not overflow its composite's grid is inside the composite. A child
- *   overflows where v12's grid has no room for it: its columns run past the grid's `xSize`
- *   (`columns` when set and below the total span, else the child count), counting columns as
- *   v12's placement does (a block wider than the rest of its row takes only the rest);
+ * - a child that does not overflow is inside its composite. Overflow is read off the boxes, not
+ *   the grid's rules: the composite's children form rows (one centre line each); a row
+ *   overflows when its cells and the gaps around them (`padding` before, between and after)
+ *   are wider than the composite, or when it ends below it (the label band, D444, then the
+ *   rows above and their gaps). That covers v12's three ways out: a block wider than the rest
+ *   of its row, a grid v12 sized one column per child though its children span more, and v12's
+ *   even stretch, which gives every child of a stretched composite the same width, so a
+ *   spanning composite comes out narrower than the grid its children were sized in;
  * - each edge starts on its start block's outline and ends on its end block's;
  * - everything drawn is inside `bounds`.
  */
 import { outlineDistance } from '../shapes/outline.ts';
-import { drawnBoxes } from './layout.ts';
+import { blockIndex, drawnBoxes } from './layout.ts';
 import type { BlockLayout, BlockNodeLayout, Rect } from './types.ts';
 
 const EPS = 1e-6;
@@ -57,15 +61,15 @@ export function blockLayoutViolations(layout: BlockLayout): string[] {
   const groups = new Map<number, number[]>();
   layout.blocks.forEach((block, i) => {
     const key = block.parent ?? -1;
-    let g = groups.get(key);
-    if (!g) groups.set(key, (g = []));
-    g.push(i);
+    let siblings = groups.get(key);
+    if (!siblings) groups.set(key, (siblings = []));
+    siblings.push(i);
   });
   for (const [parent, kids] of groups) {
     siblingsApart(layout.blocks, kids, eps, out);
     if (parent >= 0) {
       const p = layout.blocks[parent]!;
-      if (p.shape === 'composite') childrenInside(layout.blocks, p, kids, eps, out);
+      if (p.shape === 'composite') childrenInside(layout, p, kids, eps, out);
     }
   }
   edgesOnOutlines(layout, eps, out);
@@ -114,35 +118,55 @@ function siblingsApart(
   }
 }
 
-/** Each child that fits v12's grid is inside its composite. */
+/** The children of a composite in rows: one per centre line, top to bottom. */
+function rows(blocks: readonly BlockNodeLayout[], kids: readonly number[], eps: number) {
+  const out: number[][] = [];
+  const centre = (i: number): number => blocks[i]!.cell.y + blocks[i]!.cell.height / 2;
+  for (const i of [...kids].sort((a, b) => centre(a) - centre(b))) {
+    const row = out.at(-1);
+    if (row && Math.abs(centre(row[0]!) - centre(i)) <= eps) row.push(i);
+    else out.push([i]);
+  }
+  return out;
+}
+
+/** Each child in a row that fits its composite is inside it. */
 function childrenInside(
-  blocks: readonly BlockNodeLayout[],
+  layout: BlockLayout,
   parent: BlockNodeLayout,
   kids: readonly number[],
   eps: number,
   out: string[]
 ): void {
-  const columns = parent.columns ?? -1;
-  let total = 0;
-  for (const i of kids) total += blocks[i]!.span;
-  const xSize = columns > 0 && columns < total ? columns : kids.length;
-  let pos = 0;
-  for (const i of kids) {
-    const child = blocks[i]!;
-    const column = columns > 0 ? pos % columns : pos;
-    if (column + child.span <= xSize && !inside(child.box, parent.box, eps)) {
-      out.push(
-        `${child.id} ${printed(child.box)} is outside its composite ${parent.id} ${printed(parent.box)}`
-      );
+  const { blocks, padding } = layout;
+  const band = parent.label ? padding + parent.label.height : 0;
+  let bottom = parent.cell.y + band + padding;
+  for (const row of rows(blocks, kids, eps)) {
+    let width = padding;
+    let height = 0;
+    for (const i of row) {
+      width += blocks[i]!.cell.width + padding;
+      height = Math.max(height, blocks[i]!.cell.height);
     }
-    pos += columns > 0 ? Math.min(child.span, columns - (pos % columns)) : child.span;
+    bottom += height;
+    const fits =
+      width <= parent.cell.width + eps && bottom <= parent.cell.y + parent.cell.height + eps;
+    bottom += padding;
+    if (!fits) continue;
+    for (const i of row) {
+      const child = blocks[i]!;
+      if (!inside(child.box, parent.box, eps)) {
+        out.push(
+          `${child.id} ${printed(child.box)} is outside its composite ${parent.id} ${printed(parent.box)}`
+        );
+      }
+    }
   }
 }
 
 /** Each edge's first point on its start's outline, its last on its end's. */
 function edgesOnOutlines(layout: BlockLayout, eps: number, out: string[]): void {
-  const byId = new Map<string, BlockNodeLayout>();
-  for (const b of layout.blocks) if (b.shape !== 'space' && !byId.has(b.id)) byId.set(b.id, b);
+  const byId = blockIndex(layout.blocks);
   for (const e of layout.edges) {
     const ends: [string, BlockNodeLayout | undefined, number][] = [
       ['starts', byId.get(e.start), 0],

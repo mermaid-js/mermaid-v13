@@ -79,7 +79,7 @@ describe('stress: the block layout is linear in blocks and depth', () => {
     (_name, n, build) => {
       const small = model(build(n));
       const large = model(build(8 * n));
-      const lay = (m: BlockModel) => layoutBlock(m, blockTestContext(theme));
+      const lay = (diagram: BlockModel) => layoutBlock(diagram, blockTestContext(theme));
       expect(blockLayoutViolations(lay(small))).toEqual([]);
       expect(blockLayoutViolations(lay(large))).toEqual([]);
       let tSmall = Infinity;
@@ -100,8 +100,8 @@ describe('stress: the block layout is linear in blocks and depth', () => {
   );
 
   it('lays out the 100,000-cell spacer (D445) in one pass', () => {
-    const m = model('block\ncolumns 3\na space:100001 b\n');
-    const layout = layoutBlock(m, blockTestContext(theme));
+    const spacer = model('block\ncolumns 3\na space:100001 b\n');
+    const layout = layoutBlock(spacer, blockTestContext(theme));
     expect(layout.blocks).toHaveLength(100_002);
     expect(blockLayoutViolations(layout)).toEqual([]);
   });

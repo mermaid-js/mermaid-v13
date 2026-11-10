@@ -9,7 +9,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T0 shape-geometry theme rows move to core | #552 | — | merged into `mermaid-v13` as #589 (ad3648a91); merged into `feature/521_block` |
 | T1 lexer parity gate | #553 | #285 (merged) | merged (ff 7dfe6e49d; package entry 4,623 B gz, no core change) |
 | T2 grammar, parser, model, AST | #554 | #553 | merged (ff f8bf0c3c2; package entry 11,883 B gz, no core change) |
-| T3 layout | #555 | #554 | handoff `tickets/555.md` (package entry 17,338 B gz; core usedBy rows, core/theme +12 B gz) |
+| T3 layout | #555 | #554 | handoff `tickets/555.md` (package entry 17,666 B gz, no core change) |
 | T4 SVG renderer and local shapes | #556 | #552, #555 | |
 | T6 language facet | #557 | #554 | |
 | T5 integration | #558 | #556, #557 | |

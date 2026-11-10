@@ -22,6 +22,9 @@ import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-j
 import type { BlockModel } from './model.ts';
 import { parseBlock } from './parser/index.ts';
 
+/** The `data-mermaid-version` the test renders write. */
+export const TEST_VERSION = '13.0.0-alpha.0';
+
 /** The config a render of `pre` resolves: core's defaults, then the front matter and directives. */
 export function blockTestConfig(pre?: PreprocessResult): ResolvedConfig {
   const directives = (pre?.directives ?? []).flatMap((d) =>
@@ -52,8 +55,8 @@ export function blockTestContext(
   warnings: Warning[] = []
 ): RenderContext {
   const base = blockTestConfig();
-  const own = (base as { block?: Record<string, unknown> }).block ?? {};
-  const config = { ...base, block: { ...own, ...section } } as unknown as ResolvedConfig;
+  const resolved = (base as { block?: Record<string, unknown> }).block ?? {};
+  const config = { ...base, block: { ...resolved, ...section } } as unknown as ResolvedConfig;
   return {
     config,
     measurer,
@@ -61,7 +64,7 @@ export function blockTestContext(
     theme,
     securityLevel: 'default',
     idPrefix: 'mermaid-0',
-    version: '13.0.0-alpha.0',
+    version: TEST_VERSION,
     layout: () => {
       throw new Error('block lays itself out (layoutKind: custom)');
     },

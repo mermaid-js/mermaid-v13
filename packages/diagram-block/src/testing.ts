@@ -5,11 +5,14 @@
  * loads for a block render stays small (D217).
  */
 export { blockLayoutViolations } from './layout/invariants.ts';
+export { gridPosition, placeGrid, sizeGrid, type GridNode } from './layout/grid.ts';
+export { BLOCK_METRICS } from './layout/metrics.ts';
 export { blockGrid, type BlockGridItem } from './layout/layout.ts';
 export {
   blockTestConfig,
   blockTestContext,
   blockTestTheme,
   parsedBlock,
+  TEST_VERSION,
   type ParsedBlock,
 } from './test-context.ts';
