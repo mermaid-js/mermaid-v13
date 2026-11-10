@@ -2,12 +2,12 @@
  * The requirement parser's public surface: the parser, detection, and the lexer gated against
  * v12's jison lexer.
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { lex } from './lexer.ts';
+import { Kind } from '@mermaid-js/core/parser-kit';
+import type { Range } from '@mermaid-js/core/parser-kit';
+import { lex, requirementView } from './lexer.ts';
 
 export { JISON_NAMES, T as RequirementTokenKind } from './tokens.ts';
+export { requirementView } from './lexer.ts';
 export { parseRequirement } from './parser.ts';
 export type { RequirementParseOptions, RequirementParseResult } from './parser.ts';
 export { detectRequirement } from './detect.ts';
@@ -28,20 +28,6 @@ export interface RequirementToken {
   /** The token's text as v12's parser read it (`Lexed.text` in `./lexer.ts`). */
   text: string;
   range: Range;
-}
-
-/**
- * Where the requirement body of `src` starts and its source view (what v12's preprocessing
- * removed and rewrote), as `lex` takes them.
- */
-export function requirementView(src: string): { from: number; view: SourceView } {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return { from: pre.bodyStart, view };
 }
 
 /**

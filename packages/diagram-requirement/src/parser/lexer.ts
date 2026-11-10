@@ -64,10 +64,13 @@ import {
   RBRACE,
   SEMI,
   SourceOffsets,
+  sourceView,
   SPACE,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { KEYWORD_SPELLINGS, T } from './tokens.ts';
 
 // Start conditions of requirementDiagram.jison that rules enter (`token` and `unqString` are
@@ -145,8 +148,25 @@ export interface Lexed {
 }
 
 /**
- * Lex the requirement body `src[from…]`. `from` and `view` come from `requirementView`
- * (`./index.ts`). With a `probe`, the start condition at its offset is recorded as its mode.
+ * Where the requirement body of `src` starts and its source view (what v12's preprocessing
+ * removed and rewrote), as `lex` takes them: the one path of the parser and the lexer gate.
+ * `pre` is `src`'s preprocess result, when the caller has it.
+ */
+export function requirementView(
+  src: string,
+  pre: PreprocessResult = preprocess(src)
+): { from: number; view: SourceView } {
+  const view = sourceView(
+    src,
+    pre.bodyStart,
+    pre.directives.map((d) => d.range)
+  );
+  return { from: pre.bodyStart, view };
+}
+
+/**
+ * Lex the requirement body `src[from…]`. `from` and `view` come from {@link requirementView}.
+ * With a `probe`, the start condition at its offset is recorded as its mode.
  */
 export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {
   const tokens = new RequirementLexer(src, from, view).run(probe);

@@ -33,7 +33,6 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
-  sourceView,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -60,7 +59,7 @@ import type { ElementFields, Ref, RequirementFields } from './builder.ts';
 import { NameIds } from './ids.ts';
 import { symbolsOf } from './symbols.ts';
 import type { Occurrence } from './symbols.ts';
-import { lex } from './lexer.ts';
+import { lex, requirementView } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
 import {
   BODY_BOUNDARY,
@@ -194,16 +193,12 @@ class RequirementParser {
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    const view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
+    const { from, view } = requirementView(src, pre);
     const probe =
       options.probe === undefined
         ? undefined
         : (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-    this.lexed = lex(src, pre.bodyStart, view, probe);
+    this.lexed = lex(src, from, view, probe);
     if (probe === undefined) this.c = new TokenCursor(this.lexed.tokens);
     else {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
