@@ -1,0 +1,194 @@
+[
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#1",
+    "source": "requirementDiagram\n\nrequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#2",
+    "source": "requirementDiagram\n\nelement test_el {\ntype: test_type\ndocref: test_ref\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#3",
+    "source": "requirementDiagram\n      accTitle: test title\n      accDescr: my chart description\n      element test_name {\n      type: test_type\n      docref: test_ref\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#4",
+    "source": "requirementDiagram\n      accTitle: test title\n      accDescr {\n        my chart description\nline 2\n      }\n      element test_name {\n      type: test_type\n      docref: test_ref\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#5",
+    "source": "requirementDiagram\n\na - contains -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#7",
+    "source": "requirementDiagram\n\nfunctionalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#8",
+    "source": "requirementDiagram\n\ninterfaceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#9",
+    "source": "requirementDiagram\n\nperformanceRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#10",
+    "source": "requirementDiagram\n\nphysicalRequirement test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#11",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#12",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: Low\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#13",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: Medium\nverifymethod: Analysis\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#16",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Inspection\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#17",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Test\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#18",
+    "source": "requirementDiagram\n\ndesignConstraint test_req {\nid: test_id\ntext: the test text.\nrisk: High\nverifymethod: Demonstration\n}"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#20",
+    "source": "requirementDiagram\n\na - copies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#21",
+    "source": "requirementDiagram\n\na - derives -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#22",
+    "source": "requirementDiagram\n\na - satisfies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#23",
+    "source": "requirementDiagram\n\na - verifies -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#24",
+    "source": "requirementDiagram\n\na - refines -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#25",
+    "source": "requirementDiagram\n\na - traces -> b"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#26",
+    "source": "requirementDiagram\n      requirement __proto__ {\n        id: 1\n        text: the test text.\n        risk: high\n        verifymethod: test\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#27",
+    "source": "requirementDiagram\n      element __proto__ {\n        type: simulation\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#28",
+    "source": "requirementDiagram\n      requirement constructor {\n        id: 1\n        text: the test text.\n        risk: high\n        verifymethod: test\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#29",
+    "source": "requirementDiagram\n      element constructor {\n        type: simulation\n      }"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#30",
+    "source": "requirementDiagram\n\nrequirement test_req {\n}\nstyle test_req fill:#f9f,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#31",
+    "source": "requirementDiagram\n\nelement test_element {\n}\nstyle test_element fill:#f9f,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#32",
+    "source": "requirementDiagram\n\nrequirement test_requirement {\n}\nelement test_element {\n}\nstyle test_requirement,test_element fill:#f9f,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#33",
+    "source": "requirementDiagram\n\nclassDef myClass fill:#f9f,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#34",
+    "source": "requirementDiagram\n\nclassDef firstClass,secondClass fill:#f9f,stroke:#333,stroke-width:4px\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#35",
+    "source": "requirementDiagram\n\nrequirement myReq {\n}\nclassDef myClass fill:#f9f,stroke:#333,stroke-width:4px\nclass myReq myClass\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#36",
+    "source": "requirementDiagram\n\nrequirement req {\n}\nelement elem {\n}\nclassDef class1,class2 fill:#f9f,stroke:#333,stroke-width:4px\nclass req,elem class1,class2\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#37",
+    "source": "requirementDiagram\n\nrequirement myReq {\n}\nclassDef myClass fill:#f9f,stroke:#333,stroke-width:4px\nmyReq:::myClass\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#38",
+    "source": "requirementDiagram\n\nrequirement myReq {\n}\nclassDef class1 fill:#f9f,stroke:#333,stroke-width:4px\nclassDef class2 color:blue\nmyReq:::class1,class2\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#39",
+    "source": "requirementDiagram\n\nrequirement myReq:::class1 {\n}\nelement myElem:::class1,class2 {\n}\n\nclassDef class1 fill:#f9f,stroke:#333,stroke-width:4px\nclassDef class2 color:blue\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#40",
+    "source": "requirementDiagram\n\ndirection TB\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#41",
+    "source": "requirementDiagram\n\ndirection BT\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#42",
+    "source": "requirementDiagram\n\ndirection LR\n"
+  },
+  {
+    "id": "v12-specs/parser/requirementDiagram.spec.js#43",
+    "source": "requirementDiagram\n\ndirection RL\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#1",
+    "source": "    requirementDiagram\n\n    requirement test_req {\n    id: 1\n    text: the test text.\n    risk: high\n    verifymethod: test\n    }\n\n    element test_entity {\n    type: simulation\n    }\n\n    test_entity - satisfies -> test_req\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#2",
+    "source": "requirementDiagram\n  requirement checkout_req {\n    id: 1\n    text: Orders must be payable online.\n    risk: high\n    verifymethod: test\n  }\n  functionalRequirement payment_req {\n    id: 1.1\n    text: Card payments must be authorised.\n    risk: high\n    verifymethod: test\n  }\n  element checkout_service {\n    type: service\n  }\n  checkout_req - contains -> payment_req\n  checkout_service - satisfies -> payment_req\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#3",
+    "source": "---\nconfig:\n  theme: default\n  look: classic\n  layout: dagre\n---\nrequirementDiagram\n  requirement checkout_req {\n    id: 1\n    text: Orders must be payable online.\n    risk: high\n    verifymethod: test\n  }\n  functionalRequirement payment_req {\n    id: 1.1\n    text: Card payments must be authorised.\n    risk: high\n    verifymethod: test\n  }\n  element checkout_service {\n    type: service\n  }\n  checkout_req - contains -> payment_req\n  checkout_service - satisfies -> payment_req\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#4",
+    "source": "requirementDiagram\n\nrequirement \"__test_req__\" {\n    id: 1\n    text: \"*italicized text* **bold text**\"\n    risk: high\n    verifymethod: test\n}\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#5",
+    "source": "    requirementDiagram\n\n    requirement test_req {\n    id: 1\n    text: the test text.\n    risk: high\n    verifymethod: test\n    }\n\n    functionalRequirement test_req2 {\n    id: 1.1\n    text: the second test text.\n    risk: low\n    verifymethod: inspection\n    }\n\n    performanceRequirement test_req3 {\n    id: 1.2\n    text: the third test text.\n    risk: medium\n    verifymethod: demonstration\n    }\n\n    interfaceRequirement test_req4 {\n    id: 1.2.1\n    text: the fourth test text.\n    risk: medium\n    verifymethod: analysis\n    }\n\n    physicalRequirement test_req5 {\n    id: 1.2.2\n    text: the fifth test text.\n    risk: medium\n    verifymethod: analysis\n    }\n\n    designConstraint test_req6 {\n    id: 1.2.3\n    text: the sixth test text.\n    risk: medium\n    verifymethod: analysis\n    }\n\n    element test_entity {\n    type: simulation\n    }\n\n    element test_entity2 {\n    type: word doc\n    docRef: reqs/test_entity\n    }\n\n    element test_entity3 {\n    type: \"test suite\"\n    docRef: github.com/all_the_tests\n    }\n\n\n    test_entity - satisfies -> test_req2\n    test_req - traces -> test_req2\n    test_req - contains -> test_req3\n    test_req3 - contains -> test_req4\n    test_req4 - derives -> test_req5\n    test_req5 - refines -> test_req6\n    test_entity3 - verifies -> test_req5\n    test_req <- copies - test_entity2\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#6",
+    "source": "requirementDiagram\n\ndirection LR\n\nrequirement test_req {\n    id: 1\n    text: the test text.\n    risk: high\n    verifymethod: test\n}\n\nelement test_entity {\n    type: simulation\n}\n\ntest_entity - satisfies -> test_req\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#7",
+    "source": "requirementDiagram\n\nrequirement test_req {\n    id: 1\n    text: styling example\n    risk: low\n    verifymethod: test\n}\n\nelement test_entity {\n    type: simulation\n}\n\nstyle test_req fill:#ffa,stroke:#000, color: green\nstyle test_entity fill:#f9f,stroke:#333, color: blue\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#8",
+    "source": "requirementDiagram\n\nrequirement test_req {\n    id: 1\n    text: \"class styling example\"\n    risk: low\n    verifymethod: test\n}\n\nelement test_entity {\n    type: simulation\n}\n\nclassDef important fill:#f96,stroke:#333,stroke-width:4px\nclassDef test fill:#ffa,stroke:#000\n"
+  },
+  {
+    "id": "v12-docs/requirementDiagram.md#9",
+    "source": "requirementDiagram\n\nrequirement test_req:::important {\n    id: 1\n    text: \"class styling example\"\n    risk: low\n    verifymethod: test\n}\n\nelement test_entity {\n    type: simulation\n}\n\nclassDef important font-weight:bold\n\nclass test_entity important\nstyle test_entity fill:#f9f,stroke:#333\n"
+  }
+]

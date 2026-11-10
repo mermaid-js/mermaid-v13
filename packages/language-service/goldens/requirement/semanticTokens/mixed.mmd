@@ -1,0 +1,19 @@
+requirementDiagram
+  %% a comment
+  accTitle: The title
+  designConstraint "a req" {
+    id: 1.2
+    text: the text.
+    risk: medium
+    verifymethod: inspection
+  }
+  element e1:::hot {
+    type: "sim"
+    docref: reqs/e1
+  }
+  e1 - satisfies -> "a req"
+  "a req" <- copies - e1
+  direction LR
+  classDef hot fill:#f96,stroke-width:2px
+  style e1 fill:#f00
+  class e1 hot

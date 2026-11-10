@@ -1,0 +1,13 @@
+@ 6:8  r1:::|
+  hot class 6:8-6:8 "" -> "hot"
+  cold class 6:8-6:8 "" -> "cold"
+@ 7:9  class |
+  r1 node (Requirement) 7:9-7:9 "" -> "r1"
+  r2 node (Requirement) 7:9-7:9 "" -> "r2"
+@ 8:13  class r1 c|
+  cold class 8:12-8:13 "c" -> "cold"
+@ 9:12  style r1 |
+  none
+@ 10:20  requirement r2:::|
+  hot class 10:20-10:20 "" -> "hot"
+  cold class 10:20-10:20 "" -> "cold"

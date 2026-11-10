@@ -1,0 +1,10 @@
+@ 3:15  requirement |r1 {
+  prepare: 3:15-3:17 "r1"; rename to "login req":
+  %% rename-to: login req
+  requirementDiagram
+    requirement "login req" {
+    }
+    element e1 {
+    }
+    e1 - satisfies -> "login req"
+    class "login req" hot

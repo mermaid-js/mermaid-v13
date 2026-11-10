@@ -1,0 +1,15 @@
+@ 6:11  e1 - sat|isfies -> r1
+  6:8-6:17 "satisfies"
+  | **`satisfies`** `e1` satisfies `r1`
+  |
+  | `a - satisfies -> b` or `b <- satisfies - a`: a relation from `a` to `b`, of the kinds `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines` and `traces`.
+@ 7:12  r1 <- con|tains - e1
+  7:9-7:17 "contains"
+  | **`contains`** `e1` contains `r1`
+  |
+  | `a - satisfies -> b` or `b <- satisfies - a`: a relation from `a` to `b`, of the kinds `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines` and `traces`.
+@ 8:7  e1 -| refines -> r1
+  8:6-8:7 "-"
+  | **`-`**
+  |
+  | `a - satisfies -> b` or `b <- satisfies - a`: a relation from `a` to `b`, of the kinds `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines` and `traces`.

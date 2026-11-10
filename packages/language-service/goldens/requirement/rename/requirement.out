@@ -1,0 +1,14 @@
+@ 3:15  requirement |r1 {
+  prepare: 3:15-3:17 "r1"; rename to "login_req":
+  %% rename-to: login_req
+  requirementDiagram
+    requirement login_req {
+      id: 1
+    }
+    element e1 {
+    }
+    e1 - satisfies -> login_req
+    login_req <- traces - e1
+    style login_req fill:#f00
+    class login_req hot
+    login_req:::hot
