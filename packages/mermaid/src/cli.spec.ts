@@ -7,7 +7,6 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { unportedType } from './testing/unported.ts';
 import { VERSION } from './version.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
@@ -220,11 +219,11 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
   it.concurrent(
     'exits 1 for a diagram type this build does not have',
     async () => {
-      const { type, source } = unportedType();
-      const r = await cli(['render', '--format', 'ascii'], source);
+      // ZenUML: a v12 diagram (external there) with no v13 package.
+      const r = await cli(['render', '--format', 'ascii'], 'zenuml\n  A.method()\n');
       expect(r.code).toBe(1);
       expect(r.stdout).toBe('');
-      expect(r.stderr).toContain(`"${type}" is not supported`);
+      expect(r.stderr).toContain('No diagram type detected');
     },
     T
   );

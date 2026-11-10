@@ -58,7 +58,7 @@ Report the run's summary (`gh run view <id>`): its published lines. A real run (
    pnpm build
    pnpm release:rehearse
    ```
-   Every check must be ✔. Report the bundle sizes it prints. If *guide snippets* fails on `Missing expected rejection`, a diagram type was ported: `tools/release/fixtures/rehearsal/full.mjs` uses a type with no renderer as its `UNSUPPORTED_DIAGRAM` example. Switch it to a type that is still unported, ask the user before committing and pushing that change, then re-run the rehearsal. For `dry run`, stop here: say what would publish and that nothing left the machine. Also say that the version commit from step 3 is local, if it wasn't pushed. Ask whether to keep it or drop it (`git reset --hard HEAD~1`, only with a yes).
+   Every check must be ✔. Report the bundle sizes it prints. If *guide snippets* fails on `Missing expected rejection`, ZenUML was ported: `tools/release/fixtures/rehearsal/full.mjs` and the specs use it as their `UNSUPPORTED_DIAGRAM` example, because every other v12 type has a package. Switch them to text no detector knows, ask the user before committing and pushing that change, then re-run the rehearsal. For `dry run`, stop here: say what would publish and that nothing left the machine. Also say that the version commit from step 3 is local, if it wasn't pushed. Ask whether to keep it or drop it (`git reset --hard HEAD~1`, only with a yes).
 
 5. **Publish.** List each `name@version` that `release:preflight` reports as *not on the registry yet*, and ask for a yes. Then:
    ```bash

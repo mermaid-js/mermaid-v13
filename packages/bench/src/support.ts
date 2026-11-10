@@ -22,9 +22,12 @@ function detected(source: string): string | undefined {
 
 /**
  * Splits fixtures by detected type. Text no detector claims stays with the supported ones, so a
- * broken fixture still shows up as a render error.
+ * broken fixture still shows up as a render error. `supports` defaults to `isSupported`; specs pass their own.
  */
-export function classifyFixtures(fixtures: Fixture[]): {
+export function classifyFixtures(
+  fixtures: Fixture[],
+  supports: (type: string) => boolean = isSupported
+): {
   supported: Fixture[];
   unsupported: UnsupportedFixture[];
 } {
@@ -32,7 +35,7 @@ export function classifyFixtures(fixtures: Fixture[]): {
   const unsupported: UnsupportedFixture[] = [];
   for (const f of fixtures) {
     const type = detected(f.source);
-    if (type === undefined || isSupported(type)) supported.push(f);
+    if (type === undefined || supports(type)) supported.push(f);
     else unsupported.push({ id: f.id, set: f.set, type });
   }
   return { supported, unsupported };

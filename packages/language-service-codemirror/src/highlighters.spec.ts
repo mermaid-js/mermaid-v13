@@ -9,7 +9,6 @@ import type { Tree } from '@lezer/common';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { firstPartyFacets } from '@mermaid-js/language-service';
-import { noFacetType } from './testing/no-facet.ts';
 import { highlighted, sampleOf } from '../scripts/highlighted.ts';
 import { LEZER_HIGHLIGHTERS, loadHighlighter, mermaidLanguage } from './language.ts';
 
@@ -69,8 +68,8 @@ describe('the per-type first-paint highlighters (D134)', () => {
     });
 
     it.each([
-      // The first generated row with no package, so no facet and no highlighter.
-      ['a type with no v13 highlighter', noFacetType().source],
+      // ZenUML: a v12 diagram (external there) with no v13 package, so no highlighter.
+      ['a type with no v13 highlighter', 'zenuml\n  A.method()\n'],
       ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
       ['an empty text', ''],
       ['a header being typed', 'flo'],
@@ -92,7 +91,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(spans(state.doc.toString(), treeOf(state))).toEqual(spans(state.doc.toString()));
       expect(spans(state.doc.toString(), treeOf(state))[0]).toBe('flowchart:keyword');
       state = state.update({
-        changes: { from: 0, to: 'flowchart LR'.length, insert: noFacetType().header },
+        changes: { from: 0, to: 'flowchart LR'.length, insert: 'zenuml' },
       }).state;
       expect(spans(state.doc.toString(), treeOf(state))).toEqual([]);
     });

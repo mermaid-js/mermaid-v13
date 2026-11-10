@@ -19,11 +19,11 @@ import mermaid, {
   type ExtensionPlugin,
 } from './index.ts';
 import { defaultIdPrefix } from './config-snapshot.ts';
-import { DETECTORS } from './generated/detectors.gen.ts';
-import { exampleOf, unportedType } from './testing/unported.ts';
 import { VERSION } from './version.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
+/** A v12 diagram with no v13 package: ZenUML, external in v12, so no detector knows it. */
+const ZENUML = 'zenuml\n  A.method()\n';
 
 async function rejection(p: Promise<unknown>): Promise<MermaidError> {
   try {
@@ -85,19 +85,11 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
     expect(e.line).toBe(5);
   });
 
-  it('reports a v12 diagram type without a v13 package as UNSUPPORTED_DIAGRAM (R-COMPAT-7)', async () => {
-    // The first generated row with no package: there must still be one (see the helper).
-    const { type, source } = unportedType();
-    const e = await rejection(render('x', source));
-    expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(e.message).toContain(`"${type}"`);
-    expect(thrown(() => renderSync(source)).code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(detectType(source)).toBe(type);
-  });
-
-  it('derives a detected header from every generated detector (the unported-type helper)', () => {
-    for (const row of DETECTORS)
-      expect(detectType(exampleOf(row.pattern)), row.type).toBe(row.type);
+  it('reports a v12 diagram without a v13 package as UNSUPPORTED_DIAGRAM (R-COMPAT-7)', async () => {
+    // Every v12 detector row has a package; a detected type with none is mermaid/slim's case.
+    expect((await rejection(render('x', ZENUML))).code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(thrown(() => renderSync(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(thrown(() => detectType(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
   });
 
   it('rejects text no detector knows with UNSUPPORTED_DIAGRAM', async () => {
@@ -218,7 +210,7 @@ describe('prepare and renderSync (R-API-2)', () => {
   it('reports which formats a type supports (R-ASCII-5)', () => {
     expect(mermaid.supportsFormat('flowchart-v2', 'svg')).toBe(true);
     expect(mermaid.supportsFormat('flowchart', 'ascii')).toBe(true);
-    expect(mermaid.supportsFormat(unportedType().type, 'svg')).toBe(false);
+    expect(mermaid.supportsFormat('zenuml', 'svg')).toBe(false);
   });
 });
 
@@ -610,7 +602,7 @@ describe('no console output (R-ERR-4)', () => {
     );
     expect(r.warnings.length).toBeGreaterThan(4);
     await rejection(m.render('q', 'flowchart TD\n  A['));
-    await rejection(m.render('q', unportedType().source));
+    await rejection(m.render('q', ZENUML));
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
   });
 });

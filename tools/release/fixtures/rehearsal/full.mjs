@@ -18,9 +18,9 @@ assert.ok(Array.isArray(warnings), 'warnings');
 const { text } = await mermaid.render('id', 'flowchart LR\n  A --> B', { format: 'ascii' });
 assert.match(text, /A/);
 
-// A type every build still detects but has no renderer for yet; change it when requirement is ported.
+// ZenUML: a v12 diagram (external there) that v13 has no package for.
 await assert.rejects(
-  mermaid.render('u', 'requirementDiagram\n  requirement R {\n    id: 1\n  }\n'),
+  mermaid.render('u', 'zenuml\n  A.method()\n'),
   (e) => e instanceof MermaidError && e.code === 'UNSUPPORTED_DIAGRAM'
 );
 await assert.rejects(
