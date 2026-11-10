@@ -35,16 +35,29 @@ export interface NodePaint {
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
 }
 
+/** A flow's frame (`nodeBorder` stroke, as v12's neo rule drew it) and its title. */
+export interface FramePaint {
+  readonly stroke: OutlinePaint;
+  readonly text: Color;
+}
+
+/** A label's background and ink. */
+export interface LabelPaint {
+  readonly fill: Color;
+  readonly text: Color;
+}
+
 export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
-  /** A flow's frame (`nodeBorder` stroke, as v12's neo rule drew it) and its title. */
-  readonly frame?: { readonly stroke: OutlinePaint; readonly text: Color };
+  /** Set when there is a frame to draw. */
+  readonly frame?: FramePaint;
   /** A collapsed card's separator (`flowContainerStroke`) and dots (`nodeBorder`). */
   readonly card?: { readonly separator: Color; readonly dots: Color };
   /** Per-item colour, when the theme carries a non-empty `borderColorArray` (D152). */
   readonly palette?: Palette;
-  readonly edgeLabel?: { readonly fill: Color; readonly text: Color };
+  /** Set when an edge has a label. */
+  readonly edgeLabel?: LabelPaint;
   /** The front-matter title (D218): `textColor`. */
   readonly title?: Color;
 }

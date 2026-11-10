@@ -369,11 +369,14 @@ const HEADS: ReadonlyMap<Arrowhead, HeadKind> = /* @__PURE__ */ new Map<Arrowhea
           .moveTo(cx - vx, cy - vy)
           .lineTo(cx + vx, cy + vy)
           .done();
+        // A stroked head: the line's colour, opacity and stroke-opacity (`fill-opacity` here).
         w.leaf('path', {
           class: 'marker',
           d,
           stroke: paint.fill,
           'stroke-width': g.crossStrokeWidth,
+          opacity: paint.opacity,
+          'stroke-opacity': paint['fill-opacity'],
         });
       },
     },

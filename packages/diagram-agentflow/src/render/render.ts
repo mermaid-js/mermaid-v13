@@ -22,20 +22,18 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
-import {
-  AGENTFLOW_LENGTH_DEFAULTS,
-  configLengths,
-  type AgentflowEdgeView,
-  type AgentflowGroupView,
-  type AgentflowLayout,
-  type AgentflowNodeView,
-  type AgentflowPrepared,
+import type {
+  AgentflowEdgeView,
+  AgentflowGroupView,
+  AgentflowLayout,
+  AgentflowNodeView,
+  AgentflowPrepared,
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
 import { marker, markerTrim, routePath } from './edges.ts';
-import { paints, type Paints } from './paint.ts';
-import { drawShape, usesPlain, type ShapePaint } from './shapes.ts';
+import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
+import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
 
 /** v12's frame (`clusters.js` `flowGroup`): corner radius and stroke width. */
@@ -43,7 +41,9 @@ const FRAME = { radius: 10, width: 0.75 } as const;
 /** v12's `.agentflowTitleText`: 18 px. */
 const TITLE_SIZE = 18;
 const DOTTED = '2' as SafeValue;
+/** An edge label's background: padding either side, corner radius. */
 const LABEL_PAD = 4;
+const LABEL_RADIUS = 3;
 
 const cls = (names: readonly string[]): string => {
   let out = '';
@@ -91,7 +91,8 @@ export function renderAgentflow(
     order: flowOrder(model),
   };
   openRoot(scene, model, title);
-  if (scene.paint.frame) drawFrames(scene);
+  const { frame, edgeLabel, title: ink } = scene.paint;
+  if (frame) drawFrames(scene, frame);
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
@@ -102,13 +103,13 @@ export function renderAgentflow(
   for (const e of prepared.edges) drawEdge(scene, e);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  if (scene.paint.edgeLabel) for (const e of prepared.edges) drawEdgeLabel(scene, e);
+  if (edgeLabel) for (const e of prepared.edges) drawEdgeLabel(scene, e, edgeLabel);
   w.close();
   const tips = new Map(model.tooltips);
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
   for (const view of prepared.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
-  if (title) drawTitle(scene, title);
+  if (title && ink) drawTitle(w, title, ink);
   w.close();
 }
 
@@ -123,15 +124,9 @@ function titleOf(
 ): Title | undefined {
   const text = model.title?.trim();
   if (!text) return undefined;
-  const margin = configLengths(
-    ctx.config.agentflow,
-    AGENTFLOW_LENGTH_DEFAULTS,
-    'agentflow',
-    (warning) => ctx.warn(warning)
-  )('titleTopMargin');
   const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
   const label = layoutLabel(text, font, Infinity, ctx.measurer);
-  const top = -margin - label.baseline;
+  const top = -layout.agentflow.titleTopMargin - label.baseline;
   return { label, x: layout.width / 2, y: top + label.height / 2 };
 }
 
@@ -198,9 +193,8 @@ function flowSlot({ paint, order }: Scene, id: string): Tint | undefined {
  * stroke `nodeBorder` and the shadow as v12's neo rule drew it, or its palette slot; the title
  * `subGraphTitleMargin.top` below the frame's top (D466).
  */
-function drawFrames(scene: Scene): void {
+function drawFrames(scene: Scene, frame: FramePaint): void {
   const { w, layout, prepared, ctx, paint } = scene;
-  const frame = paint.frame!;
   const titlePad = (ctx.units ?? pxProfile).builder.titlePad;
   w.open('g', { class: 'clusters' });
   for (const g of prepared.groups) {
@@ -227,35 +221,32 @@ function drawFrames(scene: Scene): void {
       filter: paint.node.shadow,
       ...g.style.shape,
     });
-    drawFrameTitle(scene, g, box.title.x, top + prepared.titleMargin.top + titlePad / 2);
+    drawFrameTitle(scene, g, frame, box.title.x, top + prepared.titleMargin.top + titlePad / 2);
     w.close();
   }
   w.close();
 }
 
 function drawFrameTitle(
-  { w, ctx, paint }: Scene,
+  { w, ctx }: Scene,
   g: AgentflowGroupView,
+  frame: FramePaint,
   x: number,
   top: number
 ): void {
   const fill = g.style.shape.fill;
   w.label(g.label, x, top + g.label.height / 2, {
     class: 'cluster-label',
-    fill: (fill && ctx.theme.ink(fill)) || paint.frame!.text,
+    fill: (fill && ctx.theme.ink(fill)) || frame.text,
     ...g.style.text,
   });
 }
 
-function edgeClass(e: AgentflowEdgeView): string {
+function edgeClass(e: AgentflowEdgeView, animated: boolean): string {
   const edge = e.edge;
-  const animation =
-    edge.animate || edge.animation ? ` edge-animation-${edge.animation ?? 'fast'}` : '';
-  return (
-    `flowchart-link edge-thickness-normal edge-pattern-${edge.stroke === 'dotted' ? 'dotted' : 'solid'}` +
-    animation +
-    cls(edge.classes)
-  );
+  const pattern = edge.stroke === 'dotted' ? 'dotted' : 'solid';
+  const animation = animated ? ` edge-animation-${edge.animation ?? 'fast'}` : '';
+  return `flowchart-link edge-thickness-normal edge-pattern-${pattern}${animation}${cls(edge.classes)}`;
 }
 
 /** One edge: its `path` (with `data-ast`) and its arrowhead after it. */
@@ -271,14 +262,15 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     markerTrim(e.end, paint.heads)
   );
   const dotted = edge.stroke === 'dotted';
+  const animated = edge.animate === true || edge.animation !== undefined;
   w.outline('edge', 'path', {
-    class: edgeClass(e),
+    class: edgeClass(e, animated),
     'data-id': edge.id,
     'data-ast': edge.ast,
     d: path.d,
     'stroke-dasharray': dotted ? DOTTED : undefined,
     // v12 drew dotted edges with butt caps; animated edges keep round ones.
-    'stroke-linecap': dotted && !edge.animate && !edge.animation ? 'butt' : undefined,
+    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
     ...e.style.shape,
     fill: 'none',
   });
@@ -293,7 +285,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   marker(w, e.end, { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy }, headPaint, paint.heads);
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
+function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const lw = e.label.width + 2 * LABEL_PAD;
@@ -303,10 +295,10 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: AgentflowEdgeView): void 
     y: at.y - e.label.height / 2,
     width: lw,
     height: e.label.height,
-    rx: 3,
-    fill: paint.edgeLabel!.fill,
+    rx: LABEL_RADIUS,
+    fill: paint.fill,
   });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text, ...e.style.text });
+  w.label(e.label, at.x, at.y, { fill: paint.text, ...e.style.text });
   w.close();
 }
 
@@ -328,41 +320,38 @@ function linkOf(ctx: AgentflowRenderContext, view: AgentflowNodeView): SafeUrl |
   });
 }
 
-/** The outline's paint (the slot over the theme's, the author's style last) and inner lines'. */
-function shapePaint({ paint }: Scene, view: AgentflowNodeView, slot: Tint | undefined): ShapePaint {
-  const shape: Attrs = {
+/** The outline's paint: the slot over the theme's, the author's style last. */
+function outlinePaint({ paint }: Scene, view: AgentflowNodeView, slot: Tint | undefined): Attrs {
+  return {
     fill: slot?.fill ?? paint.node.fill,
     stroke: slot?.stroke ?? paint.node.stroke,
     'stroke-width': paint.node.strokeWidth,
     filter: paint.node.shadow,
     ...view.style.shape,
   };
-  let line: Attrs = { stroke: shape.stroke, 'stroke-width': shape['stroke-width'] };
-  if (paint.node.plainStroke && line.stroke === paint.node.stroke && usesPlain(view.shape))
-    line = { ...line, stroke: paint.node.plainStroke };
-  const card =
-    view.shape === 'collapsedGroup' && paint.card
-      ? {
-          separator: { stroke: paint.card.separator },
-          dots: { fill: paint.card.dots, filter: paint.node.shadow },
-        }
-      : undefined;
-  return { shape, line, card };
+}
+
+/** Inner lines follow the outline; the refdoc's rule is plain under the gradient (D185). */
+function linePaint({ paint }: Scene, view: AgentflowNodeView, outline: Attrs): Attrs {
+  const line: Attrs = { stroke: outline.stroke, 'stroke-width': outline['stroke-width'] };
+  return paint.node.plainStroke && line.stroke === paint.node.stroke && usesPlain(view.shape)
+    ? { ...line, stroke: paint.node.plainStroke }
+    : line;
 }
 
 /** A vertex (`g.node.default.af-kind-<kind>`) or a collapsed flow's card (`g.node`). */
 function drawNode(scene: Scene, view: AgentflowNodeView, tip?: string): void {
-  const { w, layout, prepared, ctx } = scene;
+  const { w, layout, prepared, ctx, paint } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   const v = view.vertex;
-  const card = view.shape === 'collapsedGroup';
+  const isCard = view.shape === 'collapsedGroup';
   const slot = nodeTint(scene, view);
   w.open('g', {
-    class: (card ? 'node' : `node default af-kind-${v?.kind ?? 'task'}`) + cls(view.classes),
+    class: (isCard ? 'node' : `node default af-kind-${v?.kind ?? 'task'}`) + cls(view.classes),
     'data-id': view.id,
     'data-ast': view.ast,
-    'data-color-id': card ? slot?.id : undefined,
+    'data-color-id': isCard ? slot?.id : undefined,
     transform: translate(box.x, box.y),
   });
   if (tip) textElement(w, 'title', tip);
@@ -370,7 +359,15 @@ function drawNode(scene: Scene, view: AgentflowNodeView, tip?: string): void {
   if (href) {
     w.open('a', { href, target: checkLinkTarget(v?.linkTarget, (warning) => ctx.warn(warning)) });
   }
-  drawShape(view.shape, w, view.w, view.h, shapePaint(scene, view, slot), prepared.geometry);
+  const outline = outlinePaint(scene, view, slot);
+  const line = linePaint(scene, view, outline);
+  shapeDrawer(view.shape)(w, view.w, view.h, outline, line, prepared.geometry);
+  // A card's separator (`flowContainerStroke`) and dots (`nodeBorder`, with the shadow).
+  if (isCard && paint.card) {
+    const separator = { stroke: paint.card.separator };
+    const dots = { fill: paint.card.dots, filter: paint.node.shadow };
+    drawCardTrim(w, view.w, view.h, separator, dots, prepared.geometry);
+  }
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {
     fill: fill ? ctx.theme.ink(fill) : undefined,
@@ -380,10 +377,10 @@ function drawNode(scene: Scene, view: AgentflowNodeView, tip?: string): void {
   w.close();
 }
 
-function drawTitle({ w, paint }: Scene, title: Title): void {
+function drawTitle(w: SvgWriter, title: Title, fill: LabelPaint['text']): void {
   w.label(title.label, title.x, title.y, {
     class: 'agentflowTitleText',
-    fill: paint.title,
+    fill,
     'font-size': TITLE_SIZE,
   });
 }

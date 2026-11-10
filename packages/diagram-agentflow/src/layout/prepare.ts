@@ -116,6 +116,8 @@ export interface AgentflowPrepared {
   geometry: ShapeGeometry;
   /** `flowchart.subGraphTitleMargin` (D466): room above and below each flow title. */
   titleMargin: { readonly top: number; readonly bottom: number };
+  /** `agentflow.titleTopMargin` (D218): the front-matter title's baseline above the drawing. */
+  titleTopMargin: number;
 }
 
 const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
@@ -220,7 +222,11 @@ export function prepareAgentflow(
   const edges = edgeViews(model, views, groups, m);
   const titleMargin = { top: titleMarginLength('top'), bottom: titleMarginLength('bottom') };
   const graph = layoutGraph(model, rootDir, { groups, nodes, edges, flowDir, titleMargin }, m);
-  return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin };
+  // Read only for a title, so an unused bad value raises no warning.
+  const titleTopMargin = model.title?.trim()
+    ? agentflowLength('titleTopMargin')
+    : AGENTFLOW_LENGTH_DEFAULTS.titleTopMargin!;
+  return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin, titleTopMargin };
 }
 
 function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {

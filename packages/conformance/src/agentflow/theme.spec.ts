@@ -21,6 +21,7 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
+import type { Attrs, OutlineDraw } from '@mermaid-js/core/svg';
 import { agentflow } from '@mermaid-js/diagram-agentflow';
 import { renderAgentflowForTest } from '@mermaid-js/diagram-agentflow/testing';
 
@@ -45,10 +46,15 @@ interface Paint {
   readonly frameFill: string;
   readonly separator: string;
   readonly dots: string;
+  /**
+   * What the hand-drawn hook gets (`w.outline`): the frame's stroke, fill and shadow (`F`/`-`),
+   * then the card's stroke and fill.
+   */
+  readonly handDrawn: string;
 }
 
 /** 12.2.0's computed styles (Chromium), redux-color's frame being the first flow's slot. */
-const V12: Readonly<Record<ThemeName, Paint>> = {
+const V12: Readonly<Record<ThemeName, Omit<Paint, 'handDrawn'>>> = {
   default: {
     stroke: '#9370db',
     fill: '#ececff',
@@ -161,6 +167,28 @@ const V12: Readonly<Record<ThemeName, Paint>> = {
   },
 };
 
+/**
+ * 12.2.0 under `look: handDrawn` (computed styles): roughjs draws the frame and the card as a
+ * `<path>`, which neither `.flow-cluster rect` nor neo's `.cluster rect` match, so both keep the
+ * `flowContainerStroke` attribute, unfilled and without the shadow; only the palette's
+ * `[data-color-id].cluster path` rule recolours (and, under redux-color, fills) a frame.
+ */
+const HAND_DRAWN = (frame: string, card = frame, fill = 'none') =>
+  `frame ${frame} ${fill} -; card ${card} none`;
+const V12_HAND_DRAWN: Readonly<Record<ThemeName, string>> = {
+  default: HAND_DRAWN('#eeeebc'),
+  dark: HAND_DRAWN('#2f2f2f'),
+  forest: HAND_DRAWN('#b4e599'),
+  neutral: HAND_DRAWN('#e3e3e3'),
+  base: HAND_DRAWN('#debbee'),
+  redux: HAND_DRAWN('#b3b3b3'),
+  'redux-dark': HAND_DRAWN('#2f2f2f'),
+  'redux-color': HAND_DRAWN('#facc15', '#b3b3b3', '#fefce8'),
+  'redux-dark-color': HAND_DRAWN('#facc15', '#2f2f2f'),
+  neo: HAND_DRAWN('#b3b3b3'),
+  'neo-dark': HAND_DRAWN('#2f2f2f'),
+};
+
 const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'];
 /** Themes whose border colours v13 derives with core's rule, where v12 used khroma's `mkBorder`. */
 const DERIVED = ['default', 'dark', 'forest', 'neutral', 'base', 'redux', 'redux-color'];
@@ -175,7 +203,15 @@ const NEO_DEFAULT =
   'D152, D153, D227: v12 drew agentflow with `look: neo` in every theme; v13 has no look, so the classic family draws without the neo gradient and shadow';
 const BORDER_RULE =
   "core's border derivation (`mix(<colour>, black, 15%)`, theme-variables.md) where v12 used khroma's mkBorder: flowContainerStroke is secondaryBorderColor, the dots nodeBorder";
+/**
+ * v13 draws a frame and a card the same with or without the hand-drawn plugin: the renderer
+ * never branches on it (D152, D301), and an outline drawer gets only the role and the paint, so
+ * the plugin can't tell a frame's `nodeBorder` from v12's sketched `flowContainerStroke` either.
+ */
+const HAND_DRAWN_PAINT =
+  'D152, D301, D302: v12 sketched frames and cards as paths its stylesheet missed (flowContainerStroke, unfilled, no shadow); v13 hands w.outline the paint it draws without the plugin';
 const DIFFERENCES: Readonly<Record<string, string>> = Object.fromEntries<string>([
+  ...THEME_NAMES.map((t): [string, string] => [`${t}.handDrawn`, HAND_DRAWN_PAINT]),
   ...CLASSIC.map((t): [string, string] => [`${t}.shadow`, NEO_DEFAULT]),
   ...['dark', 'forest', 'neutral', 'base'].flatMap((t): [string, string][] => [
     [`${t}.stroke`, NEO_DEFAULT],
@@ -205,7 +241,14 @@ function first(svg: string, tag: string, from: string): Record<string, string> {
 }
 
 async function v13(name: ThemeName): Promise<Paint> {
-  const r = await renderAgentflowForTest(SOURCE, { config: { theme: name } });
+  // The frame (`group`) and the card (the `flow-collapsed` rect) as a drawer receives them.
+  const sketched: { frame?: Attrs; card?: Attrs } = {};
+  const outline: OutlineDraw = (role, _tag, attrs) => {
+    if (role === 'group') sketched.frame ??= attrs;
+    if (role === 'node' && attrs.class === 'flow-collapsed') sketched.card = attrs;
+    return false;
+  };
+  const r = await renderAgentflowForTest(SOURCE, { config: { theme: name }, outline });
   const theme = createTheme(await loadTheme(name), {
     diagram: agentflow.theme,
     cssVariables: false,
@@ -220,6 +263,7 @@ async function v13(name: ThemeName): Promise<Paint> {
     const alias = /^var\(--_([\w-]+)\)$/.exec(v)?.[1];
     return alias ? hex(theme.value(aliases.get(alias)!)) : hex(v);
   };
+  const paint = (v: Attrs['stroke']): string => resolve(v);
   const task = first(r.svg, 'rect', 'data-id="t2"');
   const frame = first(r.svg, 'rect', 'data-id="outer"');
   return {
@@ -231,6 +275,9 @@ async function v13(name: ThemeName): Promise<Paint> {
     frameFill: resolve(frame.fill),
     separator: resolve(first(r.svg, 'line', 'collapsed-separator').stroke),
     dots: resolve(first(r.svg, 'circle', 'collapsed-indicator').fill),
+    handDrawn: `frame ${paint(sketched.frame?.stroke)} ${paint(sketched.frame?.fill)} ${
+      sketched.frame?.filter === undefined ? '-' : 'F'
+    }; card ${paint(sketched.card?.stroke)} ${paint(sketched.card?.fill)}`,
   };
 }
 
@@ -239,7 +286,7 @@ describe('agentflow paints against 12.2.0 in all eleven themes', () => {
     const found: string[] = [];
     for (const name of THEME_NAMES) {
       const now = await v13(name);
-      const then = V12[name];
+      const then: Paint = { ...V12[name], handDrawn: V12_HAND_DRAWN[name] };
       for (const key of Object.keys(then) as (keyof Paint)[])
         if (now[key] !== then[key]) found.push(`${name}.${key}`);
     }

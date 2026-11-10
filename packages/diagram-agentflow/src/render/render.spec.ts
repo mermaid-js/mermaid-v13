@@ -129,6 +129,19 @@ describe('structure (v12 classes, D468)', () => {
   });
 });
 
+describe('arrowheads fade with a styled line', () => {
+  it('gives a point head and a cross head the line’s colour, opacity and stroke-opacity', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a --> b
+  c --x d
+  linkStyle 0,1 stroke:#ff0000,opacity:0.5,stroke-opacity:0.4
+`);
+    const [point, cross] = byClass(svg, 'path', 'marker');
+    expect(point).toMatchObject({ fill: '#ff0000', opacity: '0.5', 'fill-opacity': '0.4' });
+    expect(cross).toMatchObject({ stroke: '#ff0000', opacity: '0.5', 'stroke-opacity': '0.4' });
+  });
+});
+
 describe('shapes on the layout outlines (D446)', () => {
   it('draws each polygon shape with the outline the layout ends edges on', async () => {
     const { svg, layout } = await renderAgentflowForTest(EVERY);
@@ -253,6 +266,31 @@ describe('palette slots (v12 colorSlots.ts, D152)', () => {
       'color-1',
       'color-1',
     ]);
+  });
+
+  it('wraps a flow slot to a short author palette before it reads bkgColorArray (v12 containerSlot)', async () => {
+    const { svg } = await renderAgentflowForTest(EVERY, {
+      config: {
+        theme: 'redux-color',
+        themeVariables: { borderColorArray: ['#ff0000', '#00ff00', '#0000ff'] },
+      },
+    });
+    // Flows: (7 + n mod 1) mod 3 = slot 1 → border #00ff00, redux-color's bkgColorArray[1].
+    for (const id of ['outer', 'second'])
+      expect(elements(group(svg, id), 'rect')[0], id).toMatchObject({
+        stroke: '#00ff00',
+        fill: '#f0fdfa',
+      });
+    expect(group(svg, 'coll')).toContain('data-color-id="color-1"');
+    expect(elements(group(svg, 'coll'), 'rect')[0]).toMatchObject({
+      stroke: '#00ff00',
+      fill: '#f0fdfa',
+    });
+    // Kinds index both palettes with their own slot: input (3) → border 0, bkgColorArray[3].
+    expect(elements(group(svg, 't4'), 'polygon')[0]).toMatchObject({
+      stroke: '#ff0000',
+      fill: '#ecfeff',
+    });
   });
 
   it("lets the author's style win over the palette", async () => {

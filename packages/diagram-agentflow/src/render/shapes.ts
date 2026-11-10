@@ -2,34 +2,34 @@
  * Draws agentflow's seven shapes through the SvgWriter: a local copy of v13 flowchart's drawers
  * for task `rounded`, tool `fr-rect`, input `lean-r`, decision `diam`, refdoc `lin-doc`, action
  * `hex` and v12's collapsed-flow card (D446), on the geometry the layout sized and outlined them
- * with (`layout/shapes.ts`), so every edge end the layout put on an outline is on the drawn one.
- * Every element goes through `w.outline` (D301, D302): the outline as `node`, inner lines as
- * `divider`, the card's dots as `mark`; a flow's frame as `group` (`render.ts`).
+ * with (`layout/shapes.ts`, `layout/metrics.ts`), so every edge end the layout put on an outline
+ * is on the drawn one. Every element goes through `w.outline` (D301, D302): the outline as
+ * `node`, inner lines as `divider`, the card's dots as `mark`; a flow's frame as `group`
+ * (`render.ts`).
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import { cornerRadius, type LayoutShape, type ShapeGeometry } from '../layout/index.ts';
 
-/** v12's card trimmings (`collapsedGroup.ts`): separator inset, dash; dot radius and spacing. */
-const CARD = {
-  inset: 8,
+/** v12's card trimmings' paint (`collapsedGroup.ts`, `styles.ts`); their geometry is the layout's. */
+const CARD_PAINT = {
   dash: '3, 3' as SafeValue,
   lineWidth: 0.75,
-  dot: 2.5,
-  dotGap: 10,
   dotOpacity: 0.5,
 } as const;
 
-/** The paints a drawer gets: the outline's, its inner lines', and the card's trimmings. */
-export interface ShapePaint {
-  /** The outline: fill, stroke, width, shadow, then the author's style. */
-  readonly shape: Attrs;
-  /** Inner lines (the tool's rails, the refdoc's rule): the outline's stroke and width. */
-  readonly line: Attrs;
-  /** The card's separator stroke (`flowContainerStroke`) and dot paint (`nodeBorder`). */
-  readonly card?: { readonly separator: Attrs; readonly dots: Attrs };
-}
-
-type Drawer = (w: SvgWriter, W: number, H: number, p: ShapePaint, g: ShapeGeometry) => void;
+/**
+ * Draws a `W` × `H` shape centred on the origin: `outline` paints its outline (fill, stroke,
+ * width, shadow, then the author's style), `line` its inner lines (the tool's rails, the
+ * refdoc's rule). A card's trimmings are {@link drawCardTrim}'s.
+ */
+type Drawer = (
+  w: SvgWriter,
+  W: number,
+  H: number,
+  outline: Attrs,
+  line: Attrs,
+  geometry: ShapeGeometry
+) => void;
 
 const poly = (w: SvgWriter, points: number[], a: Attrs): void =>
   w.outline('node', 'polygon', { points, ...a });
@@ -54,19 +54,19 @@ function box(w: SvgWriter, W: number, H: number, a: Attrs, rx: number): void {
 }
 
 const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
-  rounded: (w, W, H, p, g) => box(w, W, H, p.shape, cornerRadius('rounded', W, H, g)),
-  'fr-rect': (w, W, H, p, g) => {
-    box(w, W, H, p.shape, 0);
+  rounded: (w, W, H, outline, _line, g) => box(w, W, H, outline, cornerRadius('rounded', W, H, g)),
+  'fr-rect': (w, W, H, outline, line, g) => {
+    box(w, W, H, outline, 0);
     const x = W / 2 - g.metrics.frame;
-    lines(w, [-x, -H / 2, -x, H / 2, x, -H / 2, x, H / 2], p.line);
+    lines(w, [-x, -H / 2, -x, H / 2, x, -H / 2, x, H / 2], line);
   },
-  'lean-r': (w, W, H, p, g) => {
+  'lean-r': (w, W, H, outline, _line, g) => {
     const c = g.metrics.leanCut * H;
-    poly(w, [-W / 2 + c, -H / 2, W / 2, -H / 2, W / 2 - c, H / 2, -W / 2, H / 2], p.shape);
+    poly(w, [-W / 2 + c, -H / 2, W / 2, -H / 2, W / 2 - c, H / 2, -W / 2, H / 2], outline);
   },
-  diam: (w, W, H, p) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], p.shape),
+  diam: (w, W, H, outline) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], outline),
   // The wave is the outline's two quadratic halves: control points `control` off the base.
-  'lin-doc': (w, W, H, p, g) => {
+  'lin-doc': (w, W, H, outline, line, g) => {
     const x = W / 2;
     const base = H / 2 - g.metrics.wave.depth;
     const k = g.metrics.wave.control;
@@ -79,21 +79,20 @@ const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
       .quadTo(-x / 2, base + k, -x, base)
       .close()
       .done();
-    w.outline('node', 'path', { d, ...p.shape });
+    w.outline('node', 'path', { d, ...outline });
     // The rule runs down to the wave: on the left half it is at `t` = (x − rule) / x.
     const rx = -x + g.metrics.docRule;
     const t = x > 0 ? Math.max(0, x - g.metrics.docRule) / x : 0;
-    lines(w, [rx, -H / 2, rx, base + 2 * k * t * (1 - t)], p.line);
+    lines(w, [rx, -H / 2, rx, base + 2 * k * t * (1 - t)], line);
   },
-  hex: (w, W, H, p, g) => {
+  hex: (w, W, H, outline, _line, g) => {
     const c = H / g.pads.hexagonSlant;
     const x = W / 2;
     const y = H / 2;
-    poly(w, [-x + c, -y, x - c, -y, x, 0, x - c, y, -x + c, y, -x, 0], p.shape);
+    poly(w, [-x + c, -y, x - c, -y, x, 0, x - c, y, -x + c, y, -x, 0], outline);
   },
-  // v12 collapsedGroup's `flow` style: the label above a dashed separator and three dots.
-  collapsedGroup: (w, W, H, p, g) => {
-    const m = g.metrics.card;
+  // v12 collapsedGroup's `flow` style: a rounded card (its trimmings: `drawCardTrim`).
+  collapsedGroup: (w, W, H, outline, _line, g) =>
     w.outline('node', 'rect', {
       class: 'flow-collapsed',
       x: -W / 2,
@@ -101,40 +100,47 @@ const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
       width: W,
       height: H,
       rx: cornerRadius('collapsedGroup', W, H, g),
-      ...p.shape,
-    });
-    const sy = H / 2 - m.pad - m.row;
-    w.outline('divider', 'line', {
-      class: 'collapsed-separator',
-      x1: -W / 2 + CARD.inset,
-      y1: sy,
-      x2: W / 2 - CARD.inset,
-      y2: sy,
-      'stroke-width': CARD.lineWidth,
-      'stroke-dasharray': CARD.dash,
-      ...p.card?.separator,
-    });
-    for (let i = -1; i <= 1; i++)
-      w.outline('mark', 'circle', {
-        class: 'collapsed-indicator',
-        cx: i * CARD.dotGap,
-        cy: sy + m.row / 2,
-        r: CARD.dot,
-        opacity: CARD.dotOpacity,
-        ...p.card?.dots,
-      });
-  },
+      ...outline,
+    }),
 };
 
-/** Draws `shape`, `W` × `H` and centred on the origin. */
-export const drawShape = (
-  shape: LayoutShape,
+/**
+ * A `W` × `H` card's trimmings (v12 collapsedGroup): the dashed separator under the label,
+ * painted `separator` (`flowContainerStroke`), and three dots in the indicator row, `dots`.
+ */
+export function drawCardTrim(
   w: SvgWriter,
   W: number,
   H: number,
-  p: ShapePaint,
+  separator: Attrs,
+  dots: Attrs,
   g: ShapeGeometry
-): void => DRAW[shape](w, W, H, p, g);
+): void {
+  const m = g.metrics.card;
+  const sy = H / 2 - m.pad - m.row;
+  w.outline('divider', 'line', {
+    class: 'collapsed-separator',
+    x1: -W / 2 + m.inset,
+    y1: sy,
+    x2: W / 2 - m.inset,
+    y2: sy,
+    'stroke-width': CARD_PAINT.lineWidth,
+    'stroke-dasharray': CARD_PAINT.dash,
+    ...separator,
+  });
+  for (let i = -1; i <= 1; i++)
+    w.outline('mark', 'circle', {
+      class: 'collapsed-indicator',
+      cx: i * m.dotGap,
+      cy: sy + m.row / 2,
+      r: m.dot,
+      opacity: CARD_PAINT.dotOpacity,
+      ...dots,
+    });
+}
+
+/** The drawer of `shape`: it draws it `W` × `H` and centred on the origin. */
+export const shapeDrawer = (shape: LayoutShape): Drawer => DRAW[shape];
 
 /**
  * Whether the shape's inner line is one segment, whose zero-width box a bounding-box gradient

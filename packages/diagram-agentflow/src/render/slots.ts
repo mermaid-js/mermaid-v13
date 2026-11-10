@@ -35,6 +35,10 @@ export interface Palette {
   readonly bkg: readonly SafeColor[];
 }
 
+/**
+ * The tint of palette slot `slot` as v12's stylesheet drew it (`styles.ts` `genColor`): the
+ * border `border[slot mod length]`, the fill `bkg[slot mod its length]`.
+ */
 function tint(p: Palette, slot: number): Tint {
   const s = slot % p.border.length;
   return {
@@ -44,15 +48,16 @@ function tint(p: Palette, slot: number): Tint {
   };
 }
 
-/** A vertex's tint: its kind's slot. */
+/** A vertex's tint: its kind's slot, as is (v12 indexes both palettes with it). */
 export const kindTint = (p: Palette, kind: VertexKind): Tint => tint(p, KIND_SLOT[kind]);
 
 /**
  * The `n`th flow's tint (v12 `containerSlot`): `7 + n mod (length − 7)`, at least one slot to
- * cycle, wrapped to the palette, so a palette shorter than eight reuses a kind's colour.
+ * cycle, then wrapped to the border palette's length, so a palette shorter than eight reuses a
+ * kind's colour; the fill reads `bkgColorArray` at that wrapped slot, as v12's rule for it did.
  */
 export const flowTint = (p: Palette, n: number): Tint =>
-  tint(p, KIND_COUNT + (n % Math.max(1, p.border.length - KIND_COUNT)));
+  tint(p, (KIND_COUNT + (n % Math.max(1, p.border.length - KIND_COUNT))) % p.border.length);
 
 /**
  * Each flow's number in declaration order (v12 `getData`'s container walk): a pre-order walk

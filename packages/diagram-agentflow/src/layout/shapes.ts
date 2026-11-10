@@ -53,6 +53,8 @@ interface ShapeDef {
   /** How much of a side edges may spread along (top/bottom, or left/right when sideways). */
   span(W: number, H: number, sideways: boolean, g: ShapeGeometry): number;
   outline(W: number, H: number, g: ShapeGeometry): Point[];
+  /** The corner radius of a rounded outline; none for the others. */
+  radius?(W: number, H: number, g: ShapeGeometry): number;
 }
 
 /** A `W` × `H` box with corners of radius `r`, clockwise from the top left corner's arc. */
@@ -95,6 +97,7 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
       dy: 0,
     }),
     span: flat,
+    radius: (W, H, { pads: p }) => Math.min(p.r, W / 2, H / 2),
     outline: (W, H, g) => roundedBox(W, H, cornerRadius('rounded', W, H, g), g.metrics.curveSteps),
   },
   // v12 subroutine (tool): the theme's padding inside the two side frames.
@@ -198,6 +201,7 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
       dy: -(m.card.gap + m.card.row) / 2,
     }),
     span: flat,
+    radius: (W, H, { metrics: m }) => Math.min(m.card.radius, W / 2, H / 2),
     outline: (W, H, g) =>
       roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), g.metrics.curveSteps),
   },
@@ -219,11 +223,8 @@ export const shapeSpan = (
 ): number => Math.max(0, SHAPES[shape].span(W, H, sideways, g));
 
 /** The corner radius of a rounded shape's outline (the task box and the card), else 0. */
-export function cornerRadius(shape: LayoutShape, W: number, H: number, g: ShapeGeometry): number {
-  if (shape === 'rounded') return Math.min(g.pads.r, W / 2, H / 2);
-  if (shape === 'collapsedGroup') return Math.min(g.metrics.card.radius, W / 2, H / 2);
-  return 0;
-}
+export const cornerRadius = (shape: LayoutShape, W: number, H: number, g: ShapeGeometry): number =>
+  SHAPES[shape].radius?.(W, H, g) ?? 0;
 
 /** The shape's outline in its own frame: a closed polygon, centre at 0, y down. */
 export const shapeOutline = (shape: LayoutShape, W: number, H: number, g: ShapeGeometry): Point[] =>
