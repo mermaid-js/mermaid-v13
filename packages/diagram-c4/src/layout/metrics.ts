@@ -94,6 +94,8 @@ export const C4_METRICS = {
   leanSlack: 14,
   /** How far out beside its line a label is tried, in label depths, when the line has no room. */
   besideSteps: 8,
+  /** What another relation's stretch through a label costs, as a share of the label's area. */
+  lineCover: 0.5,
 
   /**
    * R-SEC-5, D455: the box and stretch comparisons the router and label placement may make (also

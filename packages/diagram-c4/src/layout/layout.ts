@@ -22,8 +22,8 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { Lanes, pointsOf, route, Work, type Route } from './route.ts';
-import { shapeOf, shapeSize, type Outline, type ShapeRoom } from './shapes.ts';
+import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
+import { hitRect, shapeOf, shapeSize, type Outline, type ShapeRoom } from './shapes.ts';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -428,6 +428,40 @@ class Taken {
   }
 }
 
+/**
+ * Every relation's line, so that a label keeps off the others' (#522 final review): the
+ * stretches as x0, y0, x1, y1 runs, each with the index of the relation it is part of.
+ */
+class Lines {
+  private readonly runs: number[] = [];
+  private readonly owners: number[] = [];
+
+  constructor(private readonly work: Work) {}
+
+  /** The polyline (x, y pairs) of relation `owner`. */
+  add(owner: number, line: readonly number[]): void {
+    for (let i = 2; i < line.length; i += 2) {
+      this.runs.push(line[i - 2]!, line[i - 1]!, line[i]!, line[i + 1]!);
+      this.owners.push(owner);
+    }
+  }
+
+  /** How many stretches of relations other than `own` clip the box x0, y0, x1, y1 (Liang–Barsky). */
+  through(own: number, x0: number, y0: number, x1: number, y1: number): number {
+    const t = this.runs;
+    this.work.charge(this.owners.length);
+    const box = { x0, y0, x1, y1 };
+    let count = 0;
+    for (let k = 0; k < this.owners.length; k++) {
+      if (this.owners[k] === own) continue;
+      const i = 4 * k;
+      const p = { x: t[i]!, y: t[i + 1]! };
+      if (hitRect(box, p, { x: t[i + 2]! - p.x, y: t[i + 3]! - p.y }) <= 1) count++;
+    }
+    return count;
+  }
+}
+
 /** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
@@ -478,6 +512,8 @@ function routeAll(input: RouteInput): RoutedAll {
     for (let i = 0; i < heads.length; i += 2) taken.around(heads[i]!, heads[i + 1]!, M.arrow);
     return { r, startArrow, endArrow, heads };
   });
+  const lines = new Lines(work);
+  routes.forEach(({ r }, k) => lines.add(k, lineOf(r.points, r.controls)));
   for (const g of order) {
     const box = headerBox(g);
     if (!box) continue;
@@ -488,7 +524,7 @@ function routeAll(input: RouteInput): RoutedAll {
   const list = drawn.map(({ rel, index }, k): Routed => {
     const { r, startArrow, endArrow, heads } = routes[k]!;
     if (work.done) careful = false;
-    const keep = work.done ? undefined : { taken, blocked, heads, work };
+    const keep = work.done ? undefined : { taken, blocked, heads, lines, own: k, work };
     const placedLabel = placeLabel({ rel, index, r, input, keep });
     return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
   });
@@ -516,11 +552,22 @@ interface Keep {
   readonly blocked: Taken;
   /** Its own arrowheads' tips, as x, y pairs: it must not cover their squares either. */
   readonly heads: readonly number[];
+  /** Every relation's line; the label should keep off all but its own (`own`, by index in `Lines`). */
+  readonly lines: Lines;
+  readonly own: number;
   readonly work: Work;
 }
 
-/** How much of the box x0, y0, x1, y1 a label must not cover: `blocked`, and its own heads. */
-function forbidden(keep: Keep, x0: number, y0: number, x1: number, y1: number): number {
+/** A label box, x0, y0, x1, y1. */
+interface Box {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/** How much of a label box it must not cover: `blocked`, and its own heads. */
+function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
   let area = keep.blocked.covered(x0, y0, x1, y1);
   const h = keep.heads;
   keep.work.charge(h.length / 2);
@@ -559,7 +606,14 @@ function placeLabel({
   let at = M.slide[0]!;
   let crowded = false;
   if (keep)
-    [at, dx, dy, crowded] = clearest(r, lw, lh, [dx, dy], [r.nx * aside, r.ny * aside], keep);
+    ({ at, dx, dy, crowded } = clearest({
+      r,
+      lw,
+      lh,
+      given: [dx, dy],
+      online: [r.nx * aside, r.ny * aside],
+      keep,
+    }));
   const cx = r.x0 + (r.x1 - r.x0) * at + dx;
   const top = r.y0 + (r.y1 - r.y0) * at + dy - lh / 2;
   keep?.taken.add(cx - lw / 2, top, cx + lw / 2, top + lh);
@@ -572,42 +626,64 @@ function placeLabel({
   };
 }
 
+/** What finding a label's spot reads. */
+interface ClearestInput {
+  readonly r: Route;
+  /** The label box's size. */
+  readonly lw: number;
+  readonly lh: number;
+  /** Its offset from the line's stretch: the author's offsets added, and without them. */
+  readonly given: readonly [number, number];
+  readonly online: readonly [number, number];
+  readonly keep: Keep;
+}
+
+/** Where a label goes: `at` along its stretch, `dx`, `dy` off it. */
+interface Clearest {
+  readonly at: number;
+  readonly dx: number;
+  readonly dy: number;
+  /** No spot was clear: the one taken covers what it should not, or another relation's line. */
+  readonly crowded: boolean;
+}
+
 /**
- * Where along the line, and how far off it, a `lw` × `lh` label goes, as `[t, dx, dy, crowded]`.
- * First on the line (the author's offsets, then none), slid to the spot that covers least of
- * `taken` (Pele `render.ts`); when that spot still covers something, also beside the line on
- * either side, a label's depth further out at each step. A spot that covers `forbidden` is never
- * taken while another does not; when none clears it, the one that covers least of it is, and the
- * label is crowded.
+ * Where along the line, and how far off it, a `lw` × `lh` label goes. First on the line (the
+ * author's offsets, then none), slid to the spot that covers least of `taken` (Pele
+ * `render.ts`), each other relation's stretch through it costing `lineCover` of its area; when
+ * that spot still costs anything, also beside the line on either side, a label's depth further
+ * out at each step. A spot that covers `forbidden` is never taken while another does not; when
+ * none clears it, the one that covers least of it is, and the label is crowded, as it is when
+ * the spot taken lies over another relation's line.
  */
-function clearest(
-  r: Route,
-  lw: number,
-  lh: number,
-  given: readonly [number, number],
-  online: readonly [number, number],
-  keep: Keep
-): [number, number, number, boolean] {
-  let best: [number, number, number] = [M.slide[0]!, given[0], given[1]];
+function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
+  let best = { at: M.slide[0]!, dx: given[0], dy: given[1] };
   let least = Infinity;
   let worst = Infinity;
+  let crossed = 0;
+  const perLine = M.lineCover * lw * lh;
+  const done = (): Clearest => ({ ...best, crowded: worst > 0 || crossed > 0 });
   const tryAt = (px: number, py: number): boolean => {
     for (const t of M.slide) {
       const x = r.x0 + (r.x1 - r.x0) * t + px;
       const y = r.y0 + (r.y1 - r.y0) * t + py;
-      const [x0, y0, x1, y1] = [x - lw / 2, y - lh / 2, x + lw / 2, y + lh / 2];
-      const bad = forbidden(keep, x0, y0, x1, y1);
+      const box: Box = { x0: x - lw / 2, y0: y - lh / 2, x1: x + lw / 2, y1: y + lh / 2 };
+      const bad = forbidden(keep, box);
       if (bad > worst || (bad === worst && bad > 0)) continue;
-      const area = bad > 0 ? Infinity : keep.taken.covered(x0, y0, x1, y1);
-      if (bad < worst || area < least) [worst, least, best] = [bad, area, [t, px, py]];
-      if (bad === 0 && area === 0) return true;
+      const lines = bad > 0 ? 0 : keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
+      const cost =
+        bad > 0 ? Infinity : keep.taken.covered(box.x0, box.y0, box.x1, box.y1) + lines * perLine;
+      if (bad < worst || cost < least) {
+        [worst, least, crossed] = [bad, cost, lines];
+        best = { at: t, dx: px, dy: py };
+      }
+      if (bad === 0 && cost === 0) return true;
     }
     return false;
   };
   // Offsets from the diagram are kept unless a spot on the line itself covers less.
   const moved = given[0] !== online[0] || given[1] !== online[1];
-  for (const [px, py] of moved ? [given, online] : [given])
-    if (tryAt(px, py)) return [...best, false];
+  for (const [px, py] of moved ? [given, online] : [given]) if (tryAt(px, py)) return done();
   // Beside the line, on either side, one label depth further out at each step: across the
   // stretch the label sits on (a self-loop's has no length: then up and down).
   const len = Math.hypot(r.x1 - r.x0, r.y1 - r.y0);
@@ -618,9 +694,9 @@ function clearest(
   for (let k = 0; k < M.besideSteps; k++)
     for (const side of [1, -1]) {
       const d = side * (half + k * depth);
-      if (tryAt(ax + nx * d, ay + ny * d)) return [...best, false];
+      if (tryAt(ax + nx * d, ay + ny * d)) return done();
     }
-  return [...best, worst > 0];
+  return done();
 }
 
 /** A boundary's header box, centred under the frame's top edge; none at the top level. */

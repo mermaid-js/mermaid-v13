@@ -5,7 +5,8 @@
  * that overlap, stand outside their boundary's frame (below its header) or overlap a frame they
  * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
  * outside its frame; a relation whose ends are not on its shapes' outlines; in a careful layout,
- * a label box not marked `crowded` over its own arrowheads or over any element (#542); anything
+ * a label box not marked `crowded` over its own arrowheads, any element (#542) or another
+ * relation's line (#522 final review); anything
  * drawn outside the bounds, or the bounds outside the canvas. `c4RelationCrossings` lists the
  * relations that cross an element other than their
  * own ends, which the corpus specs pin (the spec allows listed exceptions). Exported from
@@ -13,7 +14,7 @@
  */
 import type { C4Model } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
-import { crosses } from './route.ts';
+import { crosses, lineOf } from './route.ts';
 import { onOutline, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
 
@@ -189,9 +190,13 @@ function checkRelations(model: C4Model, layout: C4Layout, out: string[]): void {
   }
 }
 
+/** The polyline a relation's label box is checked against (`lineOf`), as x, y pairs. */
+const lineOfLayout = (r: C4RelationLayout): number[] =>
+  lineOf(flat(r.points), r.controls ? flat(r.controls) : undefined);
+
 /**
- * In a careful layout, no label box covers its own arrowheads or any element, unless the layout
- * marks it `crowded` (no spot cleared them).
+ * In a careful layout, no label box covers its own arrowheads, any element or another
+ * relation's line, unless the layout marks it `crowded` (no spot cleared them).
  */
 function checkLabels(layout: C4Layout, out: string[]): void {
   const square = (p: Point): Rect => ({
@@ -200,6 +205,8 @@ function checkLabels(layout: C4Layout, out: string[]): void {
     width: 2 * M.arrow,
     height: 2 * M.arrow,
   });
+  const lines = new Map(layout.relations.map((r) => [r.index, lineOfLayout(r)]));
+  const byIndex = new Map(layout.relations.map((r) => [r.index, `${r.from} -> ${r.to}`]));
   for (const r of layout.relations) {
     const box = r.labelBox;
     if (!box || r.crowded) continue;
@@ -211,6 +218,16 @@ function checkLabels(layout: C4Layout, out: string[]): void {
       out.push(`${name}: its label covers its own arrowhead`);
     for (const e of layout.elements)
       if (overlap(box, e.box)) out.push(`${name}: its label covers element ${e.alias}`);
+    // The box less the tolerance: a line along its edge does not run through it.
+    const inner = {
+      x0: box.x + EPS,
+      y0: box.y + EPS,
+      x1: box.x + box.width - EPS,
+      y1: box.y + box.height - EPS,
+    };
+    for (const [k, o] of lines.entries())
+      if (k !== r.index && crosses(o, inner))
+        out.push(`${name}: its label is over the line of relation ${byIndex.get(k)}`);
   }
 }
 

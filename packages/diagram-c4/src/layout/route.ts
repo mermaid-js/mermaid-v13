@@ -51,6 +51,15 @@ export function crosses(points: readonly number[], box: Sides): boolean {
   return false;
 }
 
+/**
+ * The polyline a relation's label should keep off, as x, y pairs: its corners, or a self-loop's
+ * ends and control points (the box its curve stays in).
+ */
+export function lineOf(points: readonly number[], controls?: readonly number[]): number[] {
+  if (!controls || controls.length < 4) return [...points];
+  return [points[0]!, points[1]!, ...controls, points[2]!, points[3]!];
+}
+
 function contains(outer: Outline, inner: Outline): boolean {
   return (
     outer.x <= inner.x &&

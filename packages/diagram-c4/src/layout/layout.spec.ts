@@ -72,6 +72,14 @@ const CROSSING_EXCEPTIONS = [
   'nightly-check/large-diagram: c5_0 -> c0_0 crosses c2_7',
 ];
 
+/**
+ * Labels with no clear spot on the e2e fixtures, each over another relation's line. Under the
+ * 10 px grid measurer, `Moves to` (88 px) fills the 100 px gap between `c` and `d`, and
+ * `b -> p`'s upright lane runs down the middle of that gap past both rows: every spot along
+ * `c -> d` and beside it lies across that lane. The real measurer's label is narrower and clears it.
+ */
+const CROWDED_EXCEPTIONS = ['baseline/config/rows-and-fixed-width grid: c -> d'];
+
 describe('c4 layout invariants on the e2e fixtures', () => {
   it('finds the fixtures, the five docs files (the six syntax-page examples) among them', () => {
     expect(FIXTURES.length).toBeGreaterThanOrEqual(46);
@@ -80,14 +88,19 @@ describe('c4 layout invariants on the e2e fixtures', () => {
 
   it.each(FIXTURES)('hold on %s', (path) => {
     const { model, config } = fixture(path);
-    for (const measurer of [undefined, grid]) {
+    for (const [name, measurer] of [
+      ['table', undefined],
+      ['grid', grid],
+    ] as const) {
       const layout = layoutC4(model, c4TestContext(config, theme, [], measurer));
       expect(c4LayoutViolations(model, layout)).toEqual([]);
-      // Every label found a spot off its own arrowheads, the elements and the headers (#542),
-      // so the label invariant held for each, none excused as crowded.
-      expect(layout.relations.filter((r) => r.crowded).map((r) => `${r.from} -> ${r.to}`)).toEqual(
-        []
-      );
+      // Every label found a spot off its own arrowheads, the elements, the headers (#542) and
+      // the other relations' lines, so the label invariant held for each, none excused as
+      // crowded but the listed ones.
+      const crowded = layout.relations
+        .filter((r) => r.crowded)
+        .map((r) => `${path} ${name}: ${r.from} -> ${r.to}`);
+      expect(crowded).toEqual(CROWDED_EXCEPTIONS.filter((c) => c.startsWith(`${path} ${name}:`)));
     }
   });
 
