@@ -40,7 +40,7 @@
     {
       "root": "v13",
       "path": "packages/diagram-flowchart/src/render/render.ts",
-      "sha256": "be748855e4e1a6f04715914e31fbc41e1fd52faa4daf2e07a7f1c2edbe4010d5"
+      "sha256": "4b67a71566b0e45bd4a963def3fa8114bb2a4bb389f53c28ec647a2cee748378"
     }
   ],
   "peleMeasurer": {
