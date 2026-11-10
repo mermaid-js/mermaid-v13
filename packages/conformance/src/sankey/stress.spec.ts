@@ -3,6 +3,7 @@ import { detectSankey, parseSankey } from '@mermaid-js/diagram-sankey';
 import { sankeyLanguage } from '@mermaid-js/diagram-sankey/language';
 import { sankeyTokens } from '@mermaid-js/diagram-sankey/testing';
 import { createLanguageService } from '@mermaid-js/language-service';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the sankey lexer (and below, the parser) is linear in input size, in
@@ -48,37 +49,14 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
-/** Best-of-five CPU ratio of `run` on n and 8n units of `build`. */
+/** Per-run CPU ratio of `run` on n and 8n units of `build` (`linearRatio`). */
 const ratio = (build: (n: number) => string, run: (src: string) => unknown): number => {
   const small = build(4_000);
   const large = build(32_000);
-  run(small); // warm up
-  run(large);
-  let tSmall = Infinity;
-  let tLarge = Infinity;
-  for (let round = 0; round < 5; round++) {
-    tSmall = Math.min(
-      tSmall,
-      cost(() => run(small))
-    );
-    tLarge = Math.min(
-      tLarge,
-      cost(() => run(large))
-    );
-  }
-  return tLarge / Math.max(tSmall, 2);
+  return linearRatio(
+    () => run(small),
+    () => run(large)
+  );
 };
 
 describe('stress: the sankey lexer is linear in input size', () => {

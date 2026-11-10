@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { layoutXyChart, parseXyChart, type XyChartModel } from '@mermaid-js/diagram-xychart';
 import { xyChartTestContext, xyChartTestTheme } from '@mermaid-js/diagram-xychart/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * The XY chart layout is linear in the data (pitfall 5): many categories with data labels, long
@@ -43,12 +44,6 @@ const SHAPES: [string, (n: number) => string, Record<string, unknown>][] = [
   ['a wide canvas', (n) => `xychart\n  bar [${nums(n)}]\n`, { showDataLabel: true, width: 1e9 }],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-
 let theme: Theme;
 beforeAll(async () => {
   theme = await xyChartTestTheme();
@@ -60,20 +55,8 @@ describe('stress: the XY chart layout is linear in the data', () => {
     (_name, build, section) => {
       const small = parseXyChart(build(400)).model;
       const large = parseXyChart(build(3_200)).model;
-      const run = (m: XyChartModel): number => {
-        const t0 = cpuMs();
-        layoutXyChart(m, xyChartTestContext(theme, section));
-        return cpuMs() - t0;
-      };
-      run(small);
-      run(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(tSmall, run(small));
-        tLarge = Math.min(tLarge, run(large));
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      const run = (m: XyChartModel) => () => layoutXyChart(m, xyChartTestContext(theme, section));
+      expect(linearRatio(run(small), run(large))).toBeLessThan(24);
     },
     60_000
   );

@@ -10,6 +10,7 @@ import {
   type GanttLayout,
   type GanttModel,
 } from '@mermaid-js/diagram-gantt';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-SEC-5 stress for the schedule and layout (spec #293 T3): cost grows linearly with the
@@ -141,21 +142,12 @@ describe('stress: the gantt schedule and layout are linear', () => {
     (_name, build) => {
       const small = build(500).model();
       const large = build(4_000).model();
-      lay(small);
-      lay(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => lay(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => lay(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => lay(small),
+          () => lay(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );
