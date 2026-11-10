@@ -13,6 +13,7 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
+import type { lineHops as LineHops } from '@mermaid-js/core/layout/hops';
 import {
   detectText,
   diagramStart,
@@ -71,7 +72,7 @@ export interface ManifestPlugin {
   /**
    * The extension the same `config` module exports as `extension` (layouts with one), loaded
    * with it. It runs only on renders laid out by one of the package's names, as
-   * `LayoutLoader.extension` (ELK's `lineHops`).
+   * `LayoutLoader.extension` (ELK's warnings).
    */
   readonly extension?: ExtensionPlugin;
 }
@@ -82,6 +83,10 @@ export type ExternalDiagram = AnyPlugin | LazyDiagram | ExtensionPlugin | Manife
 /** `registerLayoutLoaders` input (R-LAYOUT-2): an engine `(graph, ctx?) → LayoutModel`. */
 export interface LayoutLoader {
   readonly name: string;
+  /**
+   * The engine, or a module holding it as `layout` or `default`. A module may also carry core's
+   * line-hop step as `lineHops` (D537), registered with it.
+   */
   loader(): Promise<LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }>;
   /**
    * The layout plugin's config fragment (D153), known from registration on, before the engine
@@ -89,9 +94,9 @@ export interface LayoutLoader {
    */
   readonly config?: ConfigFragment;
   /**
-   * The layout plugin's own hooks (an extension plugin, D174: ELK's `lineHops` is a
-   * `postRender` edit). They run only on renders laid out by this loader's name, so other
-   * renders keep the stream writer. Loaders of one package share one.
+   * The layout plugin's own hooks (an extension plugin, D174: ELK's warnings). They run only on
+   * renders laid out by this loader's name, so other renders keep the stream writer. Loaders of
+   * one package share one.
    */
   readonly extension?: ExtensionPlugin;
 }
@@ -194,6 +199,9 @@ const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
 
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
+/** Core's line-hop chunk, loaded as a lazy layout (D537): `preload({ layouts: ['lineHops'] })`. */
+export const LINE_HOPS = 'lineHops';
+
 /**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
  * closure (R-PERF-8). A diagram reaches one only when it is its `layoutEngine.default` (D285),
@@ -202,7 +210,10 @@ export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
   ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
-  ['swimlane', () => import('@mermaid-js/core/layout/swimlane').then((m) => m.swimlane)],
+  ['swimlane', () => import('@mermaid-js/core/layout/swimlane')],
+  // Not an engine: core's line-hop step (D537), loaded the same way. D285's gate keeps it from
+  // laying a diagram out; `registerLayouts` and discovery refuse the name.
+  [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
 ]);
 
 /**
@@ -877,6 +888,8 @@ export class Registry {
     for (const l of loaders)
       if (l.extension?.config !== undefined) this.addFragment(l.extension.config);
     for (const l of loaders) {
+      // Core's line-hop chunk is loaded under this name (D537): no loader replaces it.
+      if (l.name === LINE_HOPS) continue;
       this.layoutLoaders.set(l.name, l.loader);
       if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);
       else this.layoutExtensions.delete(l.name);
@@ -934,6 +947,9 @@ export class Registry {
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
   }
 
+  /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */
+  hops: typeof LineHops | undefined;
+
   /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */
   loadLayout(name: string): Promise<void> {
     const loader = this.layoutLoader(name);
@@ -942,6 +958,8 @@ export class Registry {
     if (inflight?.loader === loader) return inflight.pending;
     const pending: Promise<void> = loader()
       .then((m) => {
+        // An engine module that carries core's line-hop step (D537) registers it too.
+        this.hops ??= (m as { lineHops?: typeof LineHops }).lineHops;
         const engine = unwrap<LayoutEngine>(m);
         if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
         if (this.layoutLoader(name) === loader) this.layouts.set(name, engine);
