@@ -1,0 +1,61 @@
+{
+  "source": "/Users/knsv/repos/mermaid-perf-lab",
+  "note": "Read-only inventory; original lab has no Git metadata. Verify hashes after copy finishes and before porting.",
+  "files": [
+    {
+      "file": "package.json",
+      "bytes": 351,
+      "sha256": "ebaff54c66b2407ec1d728741532a7ba3450e72908ecb6510a2791d29688b167"
+    },
+    {
+      "file": "entries/v13.ts",
+      "bytes": 2523,
+      "sha256": "7df95be75b0ec52cf6eceda7b3a386f730e6aec83dcdeb2b2a27cf728f68ccbc"
+    },
+    {
+      "file": "entries/pele.ts",
+      "bytes": 1330,
+      "sha256": "702fa09cc31261efe4cec5df71f3bb345f44f24c76166452dbeb2281f71b0f53"
+    },
+    {
+      "file": "scripts/build.mjs",
+      "bytes": 2444,
+      "sha256": "62004c47a49349a7ccdecbf968fa77eb39554d282d3ccd22a58637cfce7b9de4"
+    },
+    {
+      "file": "scripts/dtd-run.mjs",
+      "bytes": 3186,
+      "sha256": "c23d36a0dc8b9352b4fdcd48b7312faa556a89585214ca907a6d655a3716c6e3"
+    },
+    {
+      "file": "scripts/dtd-lib.mjs",
+      "bytes": 1394,
+      "sha256": "2fd7f591c013b587c49d0a95d1c5da179f46eca8caf59f2abd73105c2305ea45"
+    },
+    {
+      "file": "scripts/bench-node.mjs",
+      "bytes": 2743,
+      "sha256": "6bfea4ace7a1ca2f539054a8ab39c36e1a2898eda441308c1c973f6a86a7cb08"
+    },
+    {
+      "file": "scripts/bench-chrome.mjs",
+      "bytes": 11152,
+      "sha256": "00e23f143cabfecb88d51d795da98ec95043a6dcc89ec9ea24b11f1895fdb9b0"
+    },
+    {
+      "file": "scripts/calls.mjs",
+      "bytes": 2857,
+      "sha256": "d93968193f0be7791295d111e3f71cfe79a8e2ac66bed307e3753dd14b96b19b"
+    },
+    {
+      "file": "scripts/gc-trace.mjs",
+      "bytes": 1777,
+      "sha256": "b6c41713cf9cc32652dc2dc0b66f1d0540d588efaed16f6b930a19bf362a4327"
+    },
+    {
+      "file": "scripts/stages.mjs",
+      "bytes": 1767,
+      "sha256": "bfd16c17cc5e7975c1c36721edc6c1779e2409ec57579162019f22a869c23a68"
+    }
+  ]
+}

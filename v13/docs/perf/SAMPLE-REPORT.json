@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "purpose": "untimed sample validation; not performance evidence",
+  "policy": "fixed-random",
+  "timeoutMs": 30000,
+  "requested": 5000,
+  "selected": 5000,
+  "attempted": 5000,
+  "excluded": 0,
+  "failureCounts": {},
+  "node": "v24.16.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "sourceCommit": "9bee2019c2c14fccd2b9078d11c3b70c68ea66e2",
+  "pele": "1.13.0",
+  "inputSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+  "workerSha256": "bae9b66f33918d551859b406e4c0796e578f5bba01212d8aeeb47576eb749cf6",
+  "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+  "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+  "browserCount": 500,
+  "limits": {
+    "maxTextSize": 10000000,
+    "maxEdges": 1000000,
+    "peleOutputLimit": 9007199254740991
+  },
+  "sourceBytes": {
+    "min": 132,
+    "median": 1573,
+    "max": 70784
+  },
+  "uniqueSourceHashes": 5000,
+  "selectionSeed": "mermaid-flowchart-perf-2026-11-10-v1",
+  "corpusRecords": 834276,
+  "corpusCommit": "cd6602701a61cc28e9b62849e4461059c28d5913",
+  "checks": [
+    "5000 unique corpus record ordinals",
+    "all source hashes verified",
+    "500 valid unique browser indices",
+    "all sample renders passed for both engines",
+    "deterministic selection repeat check",
+    "invalid syntax and non-flowchart rejection",
+    "corrupt source hash rejection",
+    "all 5000 frozen records passed both minimal renderers on pinned Node 24.16.0"
+  ],
+  "eligibilityPolicy": "common-renderable; frozen sample rechecked without replacement against minimal Pele",
+  "renderers": {
+    "v13": "mermaid/slim + @mermaid-js/diagram-flowchart",
+    "pele": "pele/core + pele/diagrams/flowchart"
+  },
+  "preflightScriptSha256": "91c764fec537fe55ad90bdd41001f37d118e39e81656c3d134c5b2e8f660230b",
+  "selectionScriptSha256": "3a3219f3c89a51b92a346a0204886757d9d3d68b55479045a6b1af0df8dbb70f"
+}

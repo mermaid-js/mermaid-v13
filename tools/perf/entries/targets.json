@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "peleVersion": "1.13.0",
+  "targets": [
+    {
+      "root": "v13",
+      "path": "packages/mermaid/src/api.ts",
+      "sha256": "0ea2df8ace903a45ae29ed1f86b65e986b6533c846851ec000e2563ccd33aab9"
+    },
+    {
+      "root": "v13",
+      "path": "packages/mermaid/src/analysis-reset.ts",
+      "sha256": "c1a88c42db197c6c858d85c519f9109a246c8627516d51217ed5fd78cfb2294a"
+    },
+    {
+      "root": "v13",
+      "path": "packages/mermaid/src/measurer.ts",
+      "sha256": "f890ee6e75ac3a0f22a2e8b2a69b25a67dea9c6ec16f65995df78173a88a1fde"
+    },
+    {
+      "root": "v13",
+      "path": "packages/core/src/text/label.ts",
+      "sha256": "d0bd7f0135836d6836b3081228454569d3771d907d6a8cab09aebc62bcad3de5"
+    },
+    {
+      "root": "v13",
+      "path": "packages/core/src/timing/index.ts",
+      "sha256": "1c149470adea130e7e76d335cc155f15b3ad6b380dfa8262fa9aa78cd84a6779"
+    },
+    {
+      "root": "v13",
+      "path": "packages/diagram-flowchart/src/plugin.ts",
+      "sha256": "78e92c84b959425899fcc790bcb4ead96ff1b390e7d83123564c13b4c723d6b1"
+    },
+    {
+      "root": "pele",
+      "path": "dist/esm/chunks/STHDNR4A.js",
+      "sha256": "e87941238268cfb54c88586ec7816615307504beb5a81ae61089c6114109064b"
+    },
+    {
+      "root": "v13",
+      "path": "packages/diagram-flowchart/src/render/render.ts",
+      "sha256": "be748855e4e1a6f04715914e31fbc41e1fd52faa4daf2e07a7f1c2edbe4010d5"
+    }
+  ],
+  "peleMeasurer": {
+    "path": "dist/esm/chunks/STHDNR4A.js",
+    "targets": ["width(e,n,t){", "width(o,l,a){"]
+  }
+}

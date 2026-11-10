@@ -1,0 +1,733 @@
+{
+  "schemaVersion": 1,
+  "round": 0,
+  "scope": "formal",
+  "validationProfile": "node",
+  "browserValidation": "unverified",
+  "pins": {
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+    "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+    "headArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+    "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+    "headSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+    "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+  },
+  "source": {
+    "commit": "9bee2019c2c14fccd2b9078d11c3b70c68ea66e2",
+    "digest": "ebd3148d9688e34698f0c7fad1f64a1f54d01f8893144663577b869d790e7c10"
+  },
+  "node": {
+    "version": "v24.16.0",
+    "execPath": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+    "sha256": "1ee75375e33b94fc34b3b19aede049e11dae90efb63b374dc96d6bdace70c4b8",
+    "versions": {
+      "node": "24.16.0",
+      "acorn": "8.16.0",
+      "ada": "3.4.4",
+      "amaro": "1.1.9",
+      "ares": "1.34.6",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.1",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.68.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.6",
+      "simdjson": "4.6.1",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.0",
+      "tz": "2026b",
+      "undici": "7.25.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.49",
+      "zlib": "1.3.1-e00f703",
+      "zstd": "1.5.7"
+    },
+    "execArgv": [],
+    "nodeOptions": ""
+  },
+  "machine": {
+    "hostname": "AI-Max",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "browserPin": null,
+  "policy": {
+    "schemaVersion": 1,
+    "sampleCount": 5000,
+    "browserCount": 500,
+    "timing": {
+      "warmups": 3,
+      "pairs": 7,
+      "renderTimeoutMs": 30000,
+      "aaBlocks": 10,
+      "retries": 0,
+      "estimator": "median per diagram then geomean of head/base ratios",
+      "order": "alternate AB/BA by diagram index plus repetition plus block",
+      "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+    },
+    "noise": {
+      "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+      "minimumBlocks": 10
+    },
+    "fit": {
+      "minimumGain": 0.005,
+      "noiseMultiplier": 3,
+      "minimumByteReduction": 0.05,
+      "maximumBucketRegression": 0.01,
+      "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+    },
+    "buckets": [
+      {
+        "name": "tiny",
+        "minBytes": 0,
+        "maxBytes": 1024
+      },
+      {
+        "name": "small",
+        "minBytes": 1024,
+        "maxBytes": 4096
+      },
+      {
+        "name": "medium",
+        "minBytes": 4096,
+        "maxBytes": 16384
+      },
+      {
+        "name": "large",
+        "minBytes": 16384,
+        "maxBytes": null
+      }
+    ],
+    "configuration": {
+      "maxTextSize": 10000000,
+      "maxEdges": 1000000,
+      "peleOutputLimit": 9007199254740991,
+      "theme": "renderer defaults plus original input directives",
+      "pele": "native default font/wrap settings; no matching of v13 appearance",
+      "renderId": "m<sample-index>",
+      "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+    },
+    "diagnostics": {
+      "warmups": 3,
+      "repetitions": 7,
+      "emptyGraphRepetitions": 1000
+    },
+    "quiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "browser": {
+      "viewport": {
+        "width": 1600,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1,
+      "colorScheme": "light"
+    },
+    "backgroundLoad": {
+      "decision": "P27",
+      "measurementEnvironment": "observed background activity; not an idle-host baseline",
+      "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+      "startedAt": "2026-11-10T13:02:09.057Z",
+      "finishedAt": "2026-11-10T13:03:14.100Z",
+      "machine": "AI-Max",
+      "node": "v24.16.0",
+      "samples": 60,
+      "actualDurationMs": 65008.65083300001,
+      "bufferFraction": 0.2,
+      "totalCpuMsP95": 1280,
+      "busiestProcessCpuMsP95": 330,
+      "frozenQuiet": {
+        "intervalMs": 1000,
+        "quietMs": 3000,
+        "maxCpuMs": 1536,
+        "maxTotalCpuMs": 1536
+      },
+      "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+      "rawEvidence": {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+        "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+      },
+      "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+      "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+      "calibrationDecision": "P26",
+      "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+      "supersededPerProcessLimitMs": 396
+    }
+  },
+  "aa": [
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9821069169792459,
+      "sumBaseNs": 3821746359,
+      "sumHeadNs": 3765539404,
+      "summedHeadOverBase": 0.9852928609802595,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9790462912107862
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9823287157820731
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9894145391858882
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9949549921040323
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9782241308725177,
+      "sumBaseNs": 3825539023,
+      "sumHeadNs": 3754188220,
+      "summedHeadOverBase": 0.9813488236373952,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9764157500023328
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9779728862872863
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9846159845849399
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9943844336678674
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9829109451666945,
+      "sumBaseNs": 3833579909,
+      "sumHeadNs": 3777965555,
+      "summedHeadOverBase": 0.985492840811943,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9814232241366088
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9826403112235601
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9891074742694601
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9875012968370355
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9770713128523466,
+      "sumBaseNs": 3845579118,
+      "sumHeadNs": 3775612873,
+      "summedHeadOverBase": 0.9818060575915578,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9745827181088043
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9767137055469268
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9860274764721043
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9982457868015551
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9759196022644996,
+      "sumBaseNs": 3846061900,
+      "sumHeadNs": 3762555204,
+      "summedHeadOverBase": 0.9782877399867121,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9742018866741798
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9751670863641776
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.985614851050526
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9888987210474102
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9799137428883439,
+      "sumBaseNs": 3823499901,
+      "sumHeadNs": 3758622065,
+      "summedHeadOverBase": 0.9830318196208055,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9806886165547358
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9785594160916058
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9850040041169916
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 1.0080942455087212
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.9781536389983702,
+      "sumBaseNs": 3840290929,
+      "sumHeadNs": 3763318365,
+      "summedHeadOverBase": 0.9799565800031604,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9759076869252674
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9778018553301812
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9876628369969216
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9762765966802658
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.981186208128861,
+      "sumBaseNs": 3827529474,
+      "sumHeadNs": 3770515690,
+      "summedHeadOverBase": 0.9851042860970011,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9800733401560433
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.980315530247834
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9891451508293795
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 1.005151207444471
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.979536955023784,
+      "sumBaseNs": 3852445379,
+      "sumHeadNs": 3783748050,
+      "summedHeadOverBase": 0.9821678642416386,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9785684424086319
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.9783322165820618
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9904989266354762
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9832738741210325
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "geomeanHeadOverBase": 0.978572109923257,
+      "sumBaseNs": 3832601496,
+      "sumHeadNs": 3764663837,
+      "summedHeadOverBase": 0.9822737482436134,
+      "buckets": {
+        "tiny": {
+          "count": 1426,
+          "geomeanHeadOverBase": 0.9779917701792848
+        },
+        "small": {
+          "count": 3088,
+          "geomeanHeadOverBase": 0.97731472036108
+        },
+        "medium": {
+          "count": 459,
+          "geomeanHeadOverBase": 0.9881424952651778
+        },
+        "large": {
+          "count": 27,
+          "geomeanHeadOverBase": 0.9913083702493395
+        }
+      }
+    }
+  ],
+  "spread": 0.024674571224540278,
+  "fitThreshold": 0.07402371367362083,
+  "pele": {
+    "count": 5000,
+    "geomeanHeadOverBase": 0.6148843758503054,
+    "sumBaseNs": 3794495076,
+    "sumHeadNs": 2598289840,
+    "summedHeadOverBase": 0.6847524605932576,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 0.5546517259169742
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 0.6322628844748793
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 0.6957553167020005
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 0.7191810730963094
+      }
+    }
+  },
+  "trailingComment": {
+    "count": 5000,
+    "geomeanHeadOverBase": 1.0256826377525918,
+    "sumBaseNs": 3843740691,
+    "sumHeadNs": 3918050994,
+    "summedHeadOverBase": 1.0193328085773308,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 1.0353575940712032
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 1.0222514573296992
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 1.0194118544904285
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 1.0171460016320395
+      }
+    }
+  },
+  "cacheOn": {
+    "count": 5000,
+    "geomeanHeadOverBase": 0.7760073587707813,
+    "sumBaseNs": 3752965620,
+    "sumHeadNs": 3017489111,
+    "summedHeadOverBase": 0.8040279119316845,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 0.7767981861754156
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 0.7723510362523924
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 0.7968013172813024
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 0.805112937888657
+      }
+    }
+  },
+  "diagnostics": {
+    "methods": {
+      "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+      "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+      "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+      "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+      "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+      "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+      "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+      "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+    },
+    "renderers": {
+      "v13": {
+        "totals": {
+          "outputBytes": 95296904,
+          "elements": 1043859,
+          "attributes": 3614479,
+          "measurerCalls": 1198406,
+          "parserCalls": 5000,
+          "metricsCalls": 220480
+        },
+        "allocatedBytesEstimate": 1044224896,
+        "allocationError": {
+          "maximumCalibrationRelativeError": 0.006850719451904297,
+          "replicateRelativeRange": 0.0074777684672248995,
+          "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+        },
+        "gc": {
+          "scavengePauseMs": 799.4000000000026,
+          "scavengeEvents": 738,
+          "otherGcPauseMs": 59.099999999999994,
+          "otherGcEvents": 40,
+          "boundaryGcPauseMs": 3.7,
+          "outsideRenderGcPauseMs": 102.09999999999998,
+          "intervalOccupancyAllocatedBytes": 57580157936,
+          "intervalOccupancyEvents": 873,
+          "pauseRoundingErrorMs": 38.900000000000006,
+          "scavengePauseMsPerPass": 114.20000000000037,
+          "otherGcPauseMsPerPass": 8.442857142857141
+        }
+      },
+      "pele": {
+        "totals": {
+          "outputBytes": 81604595,
+          "elements": 962992,
+          "attributes": 3105130,
+          "measurerCalls": 828402,
+          "parserCalls": 5000
+        },
+        "allocatedBytesEstimate": 755175144,
+        "allocationError": {
+          "maximumCalibrationRelativeError": 0.006850719451904297,
+          "replicateRelativeRange": 0.008753127075909162,
+          "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+        },
+        "gc": {
+          "scavengePauseMs": 187.20000000000084,
+          "scavengeEvents": 542,
+          "otherGcPauseMs": 0,
+          "otherGcEvents": 0,
+          "boundaryGcPauseMs": 3.2,
+          "outsideRenderGcPauseMs": 0.2,
+          "intervalOccupancyAllocatedBytes": 36396648288,
+          "intervalOccupancyEvents": 544,
+          "pauseRoundingErrorMs": 27.1,
+          "scavengePauseMsPerPass": 26.742857142857265,
+          "otherGcPauseMsPerPass": 0
+        }
+      }
+    },
+    "features": {
+      "occurrences": {
+        "frontMatter": 1934,
+        "initDirectives": 162,
+        "themeVariables": 228,
+        "shapeData": 17172,
+        "subgraphs": 10653,
+        "comments": 12144,
+        "wideLabels": 66138,
+        "labelledEdges": 35013
+      },
+      "diagrams": {
+        "frontMatter": 1934,
+        "initDirectives": 162,
+        "themeVariables": 228,
+        "shapeData": 512,
+        "subgraphs": 2461,
+        "comments": 1297,
+        "wideLabels": 4796,
+        "labelledEdges": 3572
+      }
+    },
+    "emptyGraph": {
+      "repetitions": 1000,
+      "medianMs": {
+        "total": 0.03762500000000557,
+        "unaccounted": 0.010084000000006199,
+        "parse": 0.0072909999999950514,
+        "measure": 0.006624999999999659,
+        "graphLayout": 0.004249999999998977,
+        "layout": 0.011375000000001023,
+        "serialise": 0.008749999999992042
+      }
+    }
+  },
+  "browser": null,
+  "evidence": [
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-0/result.json",
+      "sha256": "f7d9ff5484a01c4a6252a2c1ebc784d475e2b67841c9be5e0f1ba5e469880b45"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-0/evidence-tree.json",
+      "sha256": "3e5555963f436e1fce1943181489581d1efae5c0c456365823c5543f53135b8a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-1/result.json",
+      "sha256": "73bde1e7b76ccc04bf085cfac17f53a936d670c035b4f18472f2ef79bb247026"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-1/evidence-tree.json",
+      "sha256": "a19a996968de158fd328907c72a88d4d6f67585fb87d07e3c7f0390db1961854"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-2/result.json",
+      "sha256": "5fb3ed48bed38229e15f55e0bc8feeba7e8887c1b21b8a1b8c789e9a51cf73f9"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-2/evidence-tree.json",
+      "sha256": "ce2425eb1009a37c1daafe984b75c3ac11a3af2e831952f9c045ce8ee7da1a90"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-3/result.json",
+      "sha256": "1bbf34b94dbccb86246ef76e00fef1cbc203a553ae533843d919eef5f05ac39a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-3/evidence-tree.json",
+      "sha256": "ae712f76b3af9cf73da6fdf558d75d887774af913c459c96b7dc34f59e974a42"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-4/result.json",
+      "sha256": "4b9fa416cc244903e8f02814be0736cbbd2daa4f4ce9d0c75fe2e3148b1e9ac8"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-4/evidence-tree.json",
+      "sha256": "563597a98e6d1ef317f201c73a535100c738f089b76c27c9b74b0764e124955f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-5/result.json",
+      "sha256": "bd7f32a1a61d27e254f13fb67c2a4cd30262088843b07d185ba217f30ac95e65"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-5/evidence-tree.json",
+      "sha256": "1e2470ed523f51bd6b113d9bed34b16524ff82c53b961bdb746c926f155a0741"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-6/result.json",
+      "sha256": "1ff7058bb10745251a21438f83b058107f529b9e88dbc30bb1c00adabb52dddb"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-6/evidence-tree.json",
+      "sha256": "262cb77b028fa460abd9d8c0094f2f5ceebce258a525760c2a7b16d3c705f12d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-7/result.json",
+      "sha256": "75a69e092908e14292c0070d777758bd00e88c5eb75126d5260db1374bd02d5a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-7/evidence-tree.json",
+      "sha256": "1e0cf1aa26ee04f0cef328faef9fcf400eb0ef3038a82e4dc726e4ac9551e69b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-8/result.json",
+      "sha256": "aae6743ea031cb6a05d68d6f220adcdd6758e6bb224101000afcb4e674efd4c4"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-8/evidence-tree.json",
+      "sha256": "9c391aff279d77fdf5df72662b11c582c2a487cf993cc6e4293c21347302d4e7"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-9/result.json",
+      "sha256": "59db3579bb6c0259ab3d4477a377f018a11dde2bb9a1841729feec74bf2fcb25"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/aa-9/evidence-tree.json",
+      "sha256": "b89df53023d119d09f52454f4b2226315b62da8d2a452d533e9e5a576ffe0cd5"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/pele/result.json",
+      "sha256": "dd0ad97732fc3e4682ecb5269eec9f2c69209e8a58eb373d39c5aa90a6ec8796"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/pele/evidence-tree.json",
+      "sha256": "590ca7d2776b8424b72412883b260af1779f38b3ca2de574b3fe3694ed2a684d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/trailing-comment/result.json",
+      "sha256": "61a3a9dd48bc95d90d997404da219ff1a3c3a4770f33de473d2e8c179dacc870"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/trailing-comment/evidence-tree.json",
+      "sha256": "2588644bb7167e2da540b1b745c6d0ca7e914584fcfce11d04b04afbd81b89a1"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/cache/result.json",
+      "sha256": "121f4c4650f0acf1b62a5c1f37040fe086ed5a500a8052d9f95b4bdf680572a3"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/cache/evidence-tree.json",
+      "sha256": "b81055abefaa2cef74972cc728e288edebadcd424177b65491b89190fc843947"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/diagnostics/result.json",
+      "sha256": "e6a1e6445b8c3d92e33cb6483d8797d0410115b6df7f4ac0c0cacf2e42190301"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/diagnostics/evidence-tree.json",
+      "sha256": "d270162289b39c06f0a3ffde12a69a9f69146906f14abb38ce982332c3fc87d3"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/gates/result.json",
+      "sha256": "9c900011487407dd53bc0e09dd8bc667bfe5817c7db4b4eea9715c6d06823df4"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/raw/gates/evidence-tree.json",
+      "sha256": "a9649136124f1923872b4ba7bd6ea220ee4bf401da54bad4be7fbd08e6c3c6ea"
+    }
+  ],
+  "instructions": {
+    "available": false,
+    "reason": "macOS/Apple Silicon: no Linux perf stat counter provider configured; optional diagnostic only"
+  },
+  "summedV13OverPele": 1.4603817547929911
+}

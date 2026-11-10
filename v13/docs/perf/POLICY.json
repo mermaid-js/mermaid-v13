@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "sampleCount": 5000,
+  "browserCount": 500,
+  "timing": {
+    "warmups": 3,
+    "pairs": 7,
+    "renderTimeoutMs": 30000,
+    "aaBlocks": 10,
+    "retries": 0,
+    "estimator": "median per diagram then geomean of head/base ratios",
+    "order": "alternate AB/BA by diagram index plus repetition plus block",
+    "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+  },
+  "noise": {
+    "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+    "minimumBlocks": 10
+  },
+  "fit": {
+    "minimumGain": 0.005,
+    "noiseMultiplier": 3,
+    "minimumByteReduction": 0.05,
+    "maximumBucketRegression": 0.01,
+    "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+  },
+  "buckets": [
+    {
+      "name": "tiny",
+      "minBytes": 0,
+      "maxBytes": 1024
+    },
+    {
+      "name": "small",
+      "minBytes": 1024,
+      "maxBytes": 4096
+    },
+    {
+      "name": "medium",
+      "minBytes": 4096,
+      "maxBytes": 16384
+    },
+    {
+      "name": "large",
+      "minBytes": 16384,
+      "maxBytes": null
+    }
+  ],
+  "configuration": {
+    "maxTextSize": 10000000,
+    "maxEdges": 1000000,
+    "peleOutputLimit": 9007199254740991,
+    "theme": "renderer defaults plus original input directives",
+    "pele": "native default font/wrap settings; no matching of v13 appearance",
+    "renderId": "m<sample-index>",
+    "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+  },
+  "diagnostics": {
+    "warmups": 3,
+    "repetitions": 7,
+    "emptyGraphRepetitions": 1000
+  },
+  "quiet": {
+    "intervalMs": 1000,
+    "quietMs": 3000,
+    "maxCpuMs": 1536,
+    "maxTotalCpuMs": 1536
+  },
+  "browser": {
+    "viewport": {
+      "width": 1600,
+      "height": 1200
+    },
+    "deviceScaleFactor": 1,
+    "colorScheme": "light"
+  },
+  "backgroundLoad": {
+    "decision": "P27",
+    "measurementEnvironment": "observed background activity; not an idle-host baseline",
+    "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+    "startedAt": "2026-11-10T13:02:09.057Z",
+    "finishedAt": "2026-11-10T13:03:14.100Z",
+    "machine": "AI-Max",
+    "node": "v24.16.0",
+    "samples": 60,
+    "actualDurationMs": 65008.65083300001,
+    "bufferFraction": 0.2,
+    "totalCpuMsP95": 1280,
+    "busiestProcessCpuMsP95": 330,
+    "frozenQuiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+    "rawEvidence": {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+      "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+    },
+    "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+    "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+    "calibrationDecision": "P26",
+    "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+    "supersededPerProcessLimitMs": 396
+  }
+}
