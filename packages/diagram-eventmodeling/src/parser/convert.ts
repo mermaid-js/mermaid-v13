@@ -13,16 +13,13 @@
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here.
  */
-import {
-  AMP,
-  HASH,
-  cook,
-  isBlank,
-  isLineEnd,
-  isSpace,
-  LBRACE,
-  type SourceView,
+export {
+  accDescrValue,
+  accTitleValue,
+  titleValue,
 } from '@mermaid-js/core/parser-kit';
+import { AMP, cook, HASH, LBRACE } from '@mermaid-js/core/parser-kit';
+import type { SourceView } from '@mermaid-js/core/parser-kit';
 import { entityAt } from '@mermaid-js/core/text';
 import { expandTabs } from '../tabs.ts';
 
@@ -96,75 +93,4 @@ export function dataText(image: string): string {
     out.push(line.slice(Math.min(indent, line.length)).trimEnd());
   }
   return out.join('\n');
-}
-
-/** `match[1].trim().replace(/[\t ]{2,}/gm, ' ')`: the one-line value. */
-function oneLine(text: string): string {
-  const t = text.trim();
-  return /[\t ]{2}/.test(t) ? t.replace(/[\t ]{2,}/g, ' ') : t;
-}
-
-/** `title …`: the text after the keyword, trimmed, blank runs as one space. */
-export function titleValue(image: string): string {
-  return oneLine(image.slice(image.indexOf('title') + 5));
-}
-
-/** `accTitle: …`: the text after the colon, as {@link titleValue}. */
-export function accTitleValue(image: string): string {
-  return oneLine(image.slice(image.indexOf(':', image.indexOf('accTitle')) + 1));
-}
-
-/**
- * `accDescr: …` as {@link titleValue}, or `accDescr { … }`: each line trimmed, blank lines
- * dropped, blank runs as one space. commonDb's `.replace(/\n\s+/g, '\n')` then changes nothing.
- */
-export function accDescrValue(image: string): string {
-  let j = image.indexOf('accDescr') + 8;
-  while (isBlank(image.charCodeAt(j))) j++;
-  if (image[j] === ':') return oneLine(image.slice(j + 1));
-  const body = image.slice(image.indexOf('{', j) + 1, image.lastIndexOf('}'));
-  return dropLineEnds(dropLineStarts(body))
-    .replace(/[\t ]{2,}/g, ' ')
-    .replace(/[\n\r]{2,}/g, '\n');
-}
-
-/**
- * `.replace(/^\s*\/gm, '')`: the whitespace at each line start goes, and a run of it takes the
- * empty lines after it along.
- */
-function dropLineStarts(text: string): string {
-  let out = '';
-  let i = 0;
-  const n = text.length;
-  for (;;) {
-    while (i < n && isSpace(text.charCodeAt(i))) i++;
-    const from = i;
-    while (i < n && !isLineEnd(text.charCodeAt(i))) i++;
-    if (i >= n) return out + text.slice(from);
-    out += text.slice(from, ++i);
-  }
-}
-
-/**
- * `.replace(/\s+$/gm, '')`: in each whitespace run, the part before its last line end goes (all
- * of it at the end of the text). A run with no line end after its first character stays.
- */
-function dropLineEnds(text: string): string {
-  let out = '';
-  let i = 0;
-  const n = text.length;
-  while (i < n) {
-    const from = i;
-    while (i < n && !isSpace(text.charCodeAt(i))) i++;
-    out += text.slice(from, i);
-    if (i >= n) break;
-    const a = i;
-    let last = -1;
-    for (; i < n && isSpace(text.charCodeAt(i)); i++) {
-      if (i > a && isLineEnd(text.charCodeAt(i))) last = i;
-    }
-    if (i === n) break;
-    out += text.slice(last < 0 ? a : last, i);
-  }
-  return out;
 }
