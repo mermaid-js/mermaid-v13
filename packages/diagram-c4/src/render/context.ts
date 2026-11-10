@@ -1,4 +1,8 @@
 import type { RenderContext } from '@mermaid-js/core';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import type { C4Layout } from '../layout/types.ts';
+import type { C4Model } from '../model.ts';
+import type { Paints } from './paint.ts';
 
 /**
  * What the C4 renderer reads from the render context: the config (`c4.useMaxWidth` and the
@@ -9,3 +13,14 @@ export type C4RenderContext = Pick<
   RenderContext,
   'config' | 'theme' | 'idPrefix' | 'version' | 'warn'
 >;
+
+/** What every section of one render draws from. */
+export interface Scene {
+  readonly w: SvgWriter;
+  readonly ctx: C4RenderContext;
+  readonly model: C4Model;
+  readonly layout: C4Layout;
+  readonly paint: Paints;
+  /** The theme's font family, which the root carries: text measured in it names no family. */
+  readonly family: string;
+}

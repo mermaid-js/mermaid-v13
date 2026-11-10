@@ -12,7 +12,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
-import type { C4Element, C4Model, C4Relation } from '../model.ts';
+import type { C4Boundary, C4Element, C4Model, C4Relation } from '../model.ts';
 import {
   brokenCycles,
   placeGrid,
@@ -54,6 +54,25 @@ export function stereotypeText(element: Pick<C4Element, 'kind' | 'techn'>): stri
   const base = element.kind.replace(/^external_/, '').replace(/_(db|queue)$/, '');
   const name = STEREOTYPES[base] ?? base.replace(/_/g, ' ');
   return element.techn ? `[${name}: ${element.techn}]` : `[${name}]`;
+}
+
+/** A boundary's `[type]` line, when it has a type (v12 `drawInsideBoundary`). */
+export function boundaryTypeText(boundary: Pick<C4Boundary, 'type'>): string | undefined {
+  return boundary.type ? `[${boundary.type}]` : undefined;
+}
+
+/** A relation's drawn label: C4Dynamic numbers its relations in model order, from 1 (v12). */
+export function relationLabelText(
+  model: Pick<C4Model, 'c4Type'>,
+  rel: C4Relation,
+  index: number
+): string {
+  return (model.c4Type === 'C4Dynamic' ? `${index + 1}: ` : '') + rel.label;
+}
+
+/** A relation's `[techn]` line, when it has one. */
+export function relationTechnText(rel: Pick<C4Relation, 'techn'>): string | undefined {
+  return rel.techn ? `[${rel.techn}]` : undefined;
 }
 
 /** A text measured, before it is placed. */
@@ -253,7 +272,10 @@ function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): Sha
     pad: config.c4ShapePadding,
     least: config.width,
     cylinder: { x: pad('cylinderPaddingX'), y: pad('cylinderPaddingY') },
-    // v12's tilted cylinder padded half what its cylinder did.
+    // The queue has no row of its own: it reads half the cylinder's token, as v12's tilted
+    // cylinder padded half what its cylinder did in both looks. Under neo that is 12 (half of
+    // 24); in the classic themes the base is doubled first, so the queue keeps `2·pad` as the
+    // cylinder does. An author's `cylinderPadding*` override moves the queue too (half of it).
     queue: {
       x: pad('cylinderPaddingX', 2 * total) / 2,
       y: pad('cylinderPaddingY', 2 * total) / 2,
@@ -316,7 +338,7 @@ function header(g: Group, contentW: number, { config, fonts, measure }: Measurin
   const f = fonts.boundary;
   const wrapW = config.wrapAll ? Math.max(contentW, config.width) : Infinity;
   const label = measure(b.label, { ...f, size: f.size + M.boundaryLabelGrow }, wrapW, Style.Bold);
-  const type = measure(b.type ? `[${b.type}]` : undefined, f, wrapW);
+  const type = measure(boundaryTypeText(b), f, wrapW);
   const descr = measure(
     b.descr,
     { ...f, size: Math.max(M.minFontSize, f.size - M.boundaryDescrShrink) },
@@ -480,15 +502,8 @@ function placeLabel({
 }: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top'> {
   const { model, config, fonts, measure } = input;
   const room = config.wrapAll ? r.room : Infinity;
-  // v12 numbers C4Dynamic's relations in model order, from 1.
-  const text = (model.c4Type === 'C4Dynamic' ? `${index + 1}: ` : '') + rel.label;
-  const label = measure(text, fonts.message, room);
-  const techn = measure(
-    rel.techn ? `[${rel.techn}]` : undefined,
-    fonts.message,
-    room,
-    Style.Italic
-  );
+  const label = measure(relationLabelText(model, rel, index), fonts.message, room);
+  const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
   const [lw, lh] = labelSize({ label, techn });
   if (lh === 0) return { cx: r.x0, top: r.y0 };
 

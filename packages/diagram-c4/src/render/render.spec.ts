@@ -297,7 +297,7 @@ UpdateElementStyle(b, $bgColor="lightyellow", $borderColor="green", $fontColor="
 });
 
 describe('relations (D455)', () => {
-  it('draws inline arrowheads, none as <marker>: at the end, at both ends for BiRel, at the start for Rel_Back', async () => {
+  it('draws inline arrowheads, none as <marker>: at the end, at both ends for BiRel, at the start only for Rel_Back', async () => {
     const { svg, layout } = await renderC4ForTest(CONTEXT);
     expect(svg).not.toContain('<marker');
     const heads = (from: string) =>
@@ -312,7 +312,8 @@ describe('relations (D455)', () => {
       +back.start.x.toFixed(2),
       +back.start.y.toFixed(2),
     ]);
-    for (const h of byClass(svg, 'path', 'marker')) expect(h.fill).toBe('var(--_c4r)');
+    // v12's markers took the page's text colour (the root's fill), whatever the line's.
+    for (const h of byClass(svg, 'path', 'marker')) expect(h.fill).toBe('var(--_tx)');
   });
 
   it('writes the label, the italic [techn] and the descr as the relation’s <title>', async () => {
@@ -324,8 +325,8 @@ describe('relations (D455)', () => {
     );
     expect(byClass(rel, 'text', 'c4-rel-label')).toHaveLength(1);
     expect(rel).toContain('font-style="italic">[HTTPS]<');
-    // Text sits on a box of the page's background, which the line does not run through.
-    expect(byClass(rel, 'rect', 'c4-rel-label-box')[0]).toMatchObject({ fill: 'var(--_bg)' });
+    // No box under the text: v12 drew none (D455 takes Pele's placement only).
+    expect(rel).not.toContain('<rect');
   });
 
   it('numbers C4Dynamic’s relations in model order', async () => {
@@ -335,11 +336,11 @@ describe('relations (D455)', () => {
     expect(svg).toContain('>2: second<');
   });
 
-  it('takes UpdateRelStyle’s colours for the line, its heads and its text', async () => {
+  it('takes UpdateRelStyle’s colours for the line and its text, not its heads', async () => {
     const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")\nUpdateRelStyle(a, b, $textColor="blue", $lineColor="red")`;
     const { svg } = await renderC4ForTest(src);
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('red');
-    expect(byClass(svg, 'path', 'marker')[0]!.fill).toBe('red');
+    expect(byClass(svg, 'path', 'marker')[0]!.fill).toBe('var(--_tx)');
     expect(byClass(svg, 'text', 'c4-rel-label')[0]!.fill).toBe('blue');
     expect(byClass(svg, 'text', 'c4-rel-techn')[0]!.fill).toBe('blue');
   });

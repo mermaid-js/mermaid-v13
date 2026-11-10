@@ -4,13 +4,14 @@
  * gradient or shadow (D227). Every theme colour is read before the root is written, and only
  * when something drawn uses it, so the root declares exactly the aliases used.
  *
+ * - a boundary: fill `$bgColor`, else none; stroke `$borderColor`, else `c4BoundaryColor`; its
+ *   header `c4BoundaryColor` (v12 drew `#444444` whatever `$fontColor` said);
  * - an element: fill and stroke `UpdateElementStyle`'s `$bgColor`/`$borderColor`, else the
  *   config's `<kind>_bg_color`/`_border_color`, else the schema's; text `$fontColor`, else
  *   `#FFFFFF` (v12 `c4ShapeAdapter.ts`);
- * - a boundary: fill `$bgColor`, else none; stroke `$borderColor`, else `c4BoundaryColor`; its
- *   header `c4BoundaryColor` (v12 drew `#444444` whatever `$fontColor` said);
- * - a relation: line and arrowheads `$lineColor`, else `c4RelationColor`; text `$textColor`,
- *   else `c4RelationColor`, on a box of the page's `background`;
+ * - a relation: line `$lineColor`, else `c4RelationColor`; text `$textColor`, else
+ *   `c4RelationColor`; arrowheads the page's `textColor` (v12's markers took the root's
+ *   `fill`, whatever `$lineColor` said);
  * - the title `c4TitleColor`.
  *
  * A value the check refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` per
@@ -41,11 +42,11 @@ export interface BoundaryPaint {
   readonly text?: Paint;
 }
 
-/** A relation's line and arrowheads, and its text and its box (undefined when it has none). */
+/** A relation's line, its arrowheads, and its text (undefined when it has none). */
 export interface RelationPaint {
   readonly stroke: Paint;
+  readonly head: Paint;
   readonly text?: Paint;
-  readonly labelBkg?: Paint;
 }
 
 export interface Paints {
@@ -65,32 +66,72 @@ interface Dropped {
   readonly ast?: string;
 }
 
-/** Every paint the layout's items need, read in drawing order. */
-export function paints(model: C4Model, layout: C4Layout, ctx: C4RenderContext): Paints {
-  const { theme } = ctx;
-  const dropped: Dropped[] = [];
-  const checked = (value: unknown, where: string, ast?: string): Paint | undefined => {
+/** Checks author and config colours, collecting what it drops; reads theme colours once. */
+class Colours {
+  readonly dropped: Dropped[] = [];
+  private readonly read = new Map<string, Paint>();
+
+  constructor(private readonly ctx: C4RenderContext) {}
+
+  /** The theme variable `name` as paint, read once. */
+  theme(name: string): Paint {
+    let paint = this.read.get(name);
+    if (paint === undefined) this.read.set(name, (paint = this.ctx.theme.color(name)));
+    return paint;
+  }
+
+  /** `value` if the colour check allows it; else undefined, and `where` noted when one was given. */
+  checked(value: unknown, where: string, ast?: string): Paint | undefined {
     if (value === undefined) return undefined;
     const colour = typeof value === 'string' ? checkColor(value) : undefined;
     if (colour === undefined)
-      dropped.push({ where, value: JSON.stringify(value), ...(ast ? { ast } : {}) });
+      this.dropped.push({ where, value: JSON.stringify(value), ...(ast ? { ast } : {}) });
     return colour;
-  };
-  let boundaryColor: Paint | undefined;
-  const boundaryInk = (): Paint => (boundaryColor ??= theme.color('c4BoundaryColor'));
-  let relationColor: Paint | undefined;
-  const relationInk = (): Paint => (relationColor ??= theme.color('c4RelationColor'));
-
-  const boundaries = new Map<number, BoundaryPaint>();
-  for (const b of layout.boundaries) {
-    const m = model.boundaries[b.index]!;
-    const at = (name: string): string => `$${name} of ${m.alias}`;
-    const fill = checked(m.bgColor, at('bgColor'), m.ast) ?? 'none';
-    const stroke = checked(m.borderColor, at('borderColor'), m.ast) ?? boundaryInk();
-    const text = b.label || b.type || b.descr ? boundaryInk() : undefined;
-    boundaries.set(b.index, { fill, stroke, ...(text ? { text } : {}) });
   }
+}
 
+/** Where an `Update…Style` argument was given: `$<name> of <owner>`. */
+const named = (name: string, owner: string): string => `$${name} of ${owner}`;
+
+/** Every paint the layout's items need, read in drawing order. */
+export function paints(model: C4Model, layout: C4Layout, ctx: C4RenderContext): Paints {
+  const colours = new Colours(ctx);
+  const boundaries = boundaryPaints(model, layout, colours);
+  const elements = elementPaints(model, layout, ctx, colours);
+  const relations = relationPaints(model, layout, colours);
+  const title = layout.title ? colours.theme('c4TitleColor') : undefined;
+  if (colours.dropped.length > 0) ctx.warn(colourWarning(colours.dropped));
+  return { elements, boundaries, relations, ...(title ? { title } : {}) };
+}
+
+function boundaryPaints(
+  model: C4Model,
+  layout: C4Layout,
+  colours: Colours
+): Map<number, BoundaryPaint> {
+  const out = new Map<number, BoundaryPaint>();
+  for (const b of layout.boundaries) {
+    const { alias, ast, bgColor, borderColor } = model.boundaries[b.index]!;
+    const fill = colours.checked(bgColor, named('bgColor', alias), ast) ?? 'none';
+    const stroke =
+      colours.checked(borderColor, named('borderColor', alias), ast) ??
+      colours.theme('c4BoundaryColor');
+    const header = b.label ?? b.type ?? b.descr;
+    out.set(b.index, {
+      fill,
+      stroke,
+      ...(header ? { text: colours.theme('c4BoundaryColor') } : {}),
+    });
+  }
+  return out;
+}
+
+function elementPaints(
+  model: C4Model,
+  layout: C4Layout,
+  ctx: C4RenderContext,
+  colours: Colours
+): Map<number, ElementPaint> {
   // The config palette: each key checked once, for the kinds drawn.
   const section = c4Section(ctx.config);
   const palette = new Map<C4ElementKind, readonly [Paint, Paint]>();
@@ -100,40 +141,45 @@ export function paints(model: C4Model, layout: C4Layout, ctx: C4RenderContext): 
       const [bg, border] = C4_ELEMENT_COLORS[kind];
       const key = (part: string): string => `${kind}_${part}_color`;
       got = [
-        checked(section[key('bg')], `c4.${key('bg')}`) ?? (checkColor(bg) as Paint),
-        checked(section[key('border')], `c4.${key('border')}`) ?? (checkColor(border) as Paint),
+        colours.checked(section[key('bg')], `c4.${key('bg')}`) ?? (checkColor(bg) as Paint),
+        colours.checked(section[key('border')], `c4.${key('border')}`) ??
+          (checkColor(border) as Paint),
       ];
       palette.set(kind, got);
     }
     return got;
   };
-  const elements = new Map<number, ElementPaint>();
+  const out = new Map<number, ElementPaint>();
   for (const e of layout.elements) {
-    const m = model.elements[e.index]!;
+    const { alias, ast, bgColor, borderColor, fontColor } = model.elements[e.index]!;
     const [bg, border] = kindPaint(e.kind);
-    const at = (name: string): string => `$${name} of ${m.alias}`;
-    elements.set(e.index, {
-      fill: checked(m.bgColor, at('bgColor'), m.ast) ?? bg,
-      stroke: checked(m.borderColor, at('borderColor'), m.ast) ?? border,
-      text: checked(m.fontColor, at('fontColor'), m.ast) ?? ELEMENT_TEXT,
+    out.set(e.index, {
+      fill: colours.checked(bgColor, named('bgColor', alias), ast) ?? bg,
+      stroke: colours.checked(borderColor, named('borderColor', alias), ast) ?? border,
+      text: colours.checked(fontColor, named('fontColor', alias), ast) ?? ELEMENT_TEXT,
     });
   }
+  return out;
+}
 
-  let page: Paint | undefined;
-  const relations = new Map<number, RelationPaint>();
+function relationPaints(
+  model: C4Model,
+  layout: C4Layout,
+  colours: Colours
+): Map<number, RelationPaint> {
+  const out = new Map<number, RelationPaint>();
   for (const r of layout.relations) {
-    const m = model.relations[r.index]!;
-    const at = (name: string): string => `$${name} of ${m.from} -> ${m.to}`;
-    const stroke = checked(m.lineColor, at('lineColor'), m.ast) ?? relationInk();
-    const given = checked(m.textColor, at('textColor'), m.ast);
-    const text = r.label || r.techn ? (given ?? relationInk()) : undefined;
-    if (text) page ??= theme.color('background');
-    relations.set(r.index, { stroke, ...(text ? { text, labelBkg: page! } : {}) });
+    const { from, to, ast, lineColor, textColor } = model.relations[r.index]!;
+    const owner = `${from} -> ${to}`;
+    const stroke =
+      colours.checked(lineColor, named('lineColor', owner), ast) ??
+      colours.theme('c4RelationColor');
+    const given = colours.checked(textColor, named('textColor', owner), ast);
+    const text = r.label || r.techn ? (given ?? colours.theme('c4RelationColor')) : undefined;
+    const head = colours.theme('textColor');
+    out.set(r.index, { stroke, head, ...(text ? { text } : {}) });
   }
-
-  const title = layout.title ? theme.color('c4TitleColor') : undefined;
-  if (dropped.length > 0) ctx.warn(colourWarning(dropped));
-  return { elements, boundaries, relations, ...(title ? { title } : {}) };
+  return out;
 }
 
 /** The one `C4_COLOR_INVALID` of a render, naming every dropped value. */

@@ -7,7 +7,17 @@
 import { checkStyle, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
 import { FONT_WEIGHT } from '../layout/metrics.ts';
 import type { PlacedLabel } from '../layout/types.ts';
-import type { Scene } from './render.ts';
+import type { Scene } from './context.ts';
+
+/** What a text is drawn from. */
+export interface TextParts {
+  readonly label: PlacedLabel;
+  /** Its class: `c4-name`, `c4-rel-label`, … */
+  readonly cls: string;
+  readonly fill: Paint;
+  /** The user's id of what it labels; text never carries `data-ast` (pitfall 12). */
+  readonly dataId?: string;
+}
 
 /** The font attributes of `label`, beside the root's family. */
 function fontAttrs(scene: Scene, label: PlacedLabel): Attrs {
@@ -22,14 +32,8 @@ function fontAttrs(scene: Scene, label: PlacedLabel): Attrs {
   return { 'font-family': family, 'font-size': font.size, 'font-weight': weight };
 }
 
-/** `label` as a `<text>` of class `cls`, filled `fill`, with `data-id` only (pitfall 12). */
-export function drawText(
-  scene: Scene,
-  label: PlacedLabel,
-  cls: string,
-  fill: Paint,
-  dataId?: string
-): void {
+/** A label as a `<text>`, centred in its box. */
+export function drawText(scene: Scene, { label, cls, fill, dataId }: TextParts): void {
   scene.w.label(label.text, label.x + label.width / 2, label.y + label.height / 2, {
     class: cls,
     'data-id': dataId,

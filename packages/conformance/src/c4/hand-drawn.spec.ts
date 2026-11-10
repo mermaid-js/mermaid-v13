@@ -16,7 +16,7 @@ import { c4Corpus } from './corpus.ts';
  * - with T0's fixture drawer, C4's elements reach it as `node` (the outline, the person's head)
  *   and `divider` (the cylinder's and the queue's rim, `fr-rect`'s frame lines); everything
  *   else stays plain, as v12 sketched elements only (D301): boundary frames, relation lines,
- *   arrowheads, relation-label boxes and text.
+ *   arrowheads and text.
  */
 const ROLES: readonly OutlineRole[] = ['divider', 'node'];
 const THEMES = ['default', 'neo'] as const;
@@ -28,7 +28,6 @@ const PLAIN = [
   /<g class="c4-boundary[^"]*"[^>]*><rect [^>]*\/>/g,
   /<path class="c4-rel [^>]*\/>/g,
   /<path class="marker"[^>]*\/>/g,
-  /<rect class="c4-rel-label-box"[^>]*\/>/g,
 ];
 const SHAPE = /<(rect|circle|ellipse|polygon|line|path)\b[^>]*>/;
 const count = (s: string, re: RegExp): number => s.match(re)?.length ?? 0;

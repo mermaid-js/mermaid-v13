@@ -19,10 +19,21 @@ import type { C4ShapeId, Rect } from '../layout/types.ts';
 /** The main outline's class (v12's shapes write `label-container`; its `g.label` is a sibling). */
 const CONTAINER = 'label-container';
 
-/** Draws shape `shape` filling `box`: the outline painted `a`, inner lines stroked as `line`. */
-export function drawShape(w: SvgWriter, shape: C4ShapeId, box: Rect, a: Attrs, line: Attrs): void {
+/** What a shape is drawn from. */
+export interface ShapeParts {
+  readonly shape: C4ShapeId;
+  /** The element's laid-out box, which the outline fills. */
+  readonly box: Rect;
+  /** The outline's paint: fill, stroke and width. */
+  readonly paint: Attrs;
+  /** Inner lines' stroke and width. */
+  readonly line: Attrs;
+}
+
+/** Draws `shape` filling `box`: the outline painted `paint`, inner lines stroked as `line`. */
+export function drawShape(w: SvgWriter, { shape, box, paint, line }: ShapeParts): void {
   const { x, y, width: W, height: H } = box;
-  const outline: Attrs = { class: CONTAINER, ...a };
+  const outline: Attrs = { class: CONTAINER, ...paint };
   const inner: Attrs = { ...line, fill: 'none' };
   switch (shape) {
     case 'rounded':
