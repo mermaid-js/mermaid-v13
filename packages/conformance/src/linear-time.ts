@@ -17,6 +17,7 @@
  *   calibration costs no extra windows.
  *   A window that reads 0 (the clock did not move) is one of those, never a fast run.
  */
+import { expect } from 'vitest';
 
 /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
 function cpuMs(): number {
@@ -90,6 +91,26 @@ export function linearRatio(small: () => unknown, large: () => unknown, log?: st
     for (const side of sides) if (side.rounds < 5) measure(side);
   const [s, l] = sides;
   const [perSmall, perLarge] = [s.best / s.reps, l.best / l.reps];
+  // DIAGNOSTIC (temporary, #643): the old loop's reading beside this one, for every shape.
+  {
+    let oS = Infinity;
+    let oL = Infinity;
+    for (let round = 0; round < 5; round++) {
+      oS = Math.min(oS, cost(small, 1));
+      oL = Math.min(oL, cost(large, 1));
+    }
+    // Cold estimate: the mean of 20 alternating single runs (a tick clock is unbiased in sum).
+    let cS = 0;
+    let cL = 0;
+    for (let round = 0; round < 20; round++) {
+      cS += cost(small, 1);
+      cL += cost(large, 1);
+    }
+    const name = expect.getState().currentTestName;
+    process.stdout.write(
+      `LINEAR-DIAG\t${name}\tstep=${clockStepMs()}\tsmall=${perSmall.toFixed(3)}\tlarge=${perLarge.toFixed(3)}\treps=${s.reps}/${l.reps}\tharness=${(perLarge / perSmall).toFixed(2)}\tcold=${(cS > 0 ? cL / cS : Infinity).toFixed(2)}\told=${(oL / Math.max(oS, 2)).toFixed(2)}\toldS=${oS}\toldL=${oL}\n`
+    );
+  }
   if (log !== undefined)
     process.stdout.write(`${log}: ${perSmall.toFixed(2)} ms, ${perLarge.toFixed(2)} ms per run\n`);
   return perLarge / perSmall;
