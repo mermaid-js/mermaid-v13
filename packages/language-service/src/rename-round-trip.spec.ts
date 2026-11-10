@@ -15,10 +15,13 @@ const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
 const FRESH = 'renamedZq7';
 /**
  * Fresh names for a symbol kind whose facet refuses {@link FRESH}, tried in order: the first the
- * facet's `isValidId` accepts for the kind is used (event modeling's frame ids are one to three
- * digits, D528). A file whose text holds it skips that symbol, as one holding `FRESH` is skipped.
+ * facet's `isValidId` accepts for the kind and the file's text does not hold is used (event
+ * modeling's frame ids are one to three digits, D528). A symbol none fits is a problem, so no
+ * rename is skipped silently; {@link MIN_OTHERWISE} renames must use one.
  */
-const FRESH_OTHERWISE = ['987'];
+const FRESH_OTHERWISE = ['987', '986'];
+/** At least this many renames use a name of {@link FRESH_OTHERWISE} (the corpus's frame ids). */
+const MIN_OTHERWISE = 100;
 
 /**
  * Renames that change the model, found by this test and left to their owners (GAPS.md):
@@ -181,11 +184,17 @@ function symbolPositions(doc: DocumentSnapshot): { at: number; kind: string }[] 
   return out;
 }
 
-/** The fresh name for a symbol of `kind`: {@link FRESH}, or the first of the others accepted. */
-function freshFor(doc: DocumentSnapshot, kind: string): string {
+/**
+ * The fresh name for a symbol of `kind`: {@link FRESH}, else the first of the others the facet
+ * accepts and `text` does not hold; `undefined` when the facet accepts one but `text` holds
+ * them all.
+ */
+function freshFor(doc: DocumentSnapshot, kind: string, text: string): string | undefined {
   const facet = doc.facet!;
   if (facet.isValidId(FRESH, kind) === undefined) return FRESH;
-  return FRESH_OTHERWISE.find((n) => facet.isValidId(n, kind) === undefined) ?? FRESH;
+  const valid = FRESH_OTHERWISE.filter((n) => facet.isValidId(n, kind) === undefined);
+  if (valid.length === 0) return FRESH;
+  return valid.find((n) => !text.includes(n));
 }
 
 describe('rename, re-parse, same model modulo the name', () => {
@@ -193,6 +202,7 @@ describe('rename, re-parse, same model modulo the name', () => {
     const problems: string[] = [];
     const refused: string[] = [];
     let renamed = 0;
+    let otherwise = 0;
     let fixed = 0;
     for (const file of corpus) {
       const text = readFileSync(join(CORPUS, file), 'utf8');
@@ -202,8 +212,11 @@ describe('rename, re-parse, same model modulo the name', () => {
       const order = NAME_ORDERED[doc.facet.id] ?? ((m: unknown) => m);
       const before = order(modulo(contextOf(doc).result?.model, FRESH, FRESH));
       for (const { at, kind } of symbolPositions(doc)) {
-        const fresh = freshFor(doc, kind);
-        if (fresh !== FRESH && text.includes(fresh)) continue;
+        const fresh = freshFor(doc, kind, text);
+        if (fresh === undefined) {
+          problems.push(`${file.split('\\').join('/')} @${at}: no fresh ${kind} name fits`);
+          continue;
+        }
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
         const result = doc.rename(at, fresh);
@@ -219,6 +232,7 @@ describe('rename, re-parse, same model modulo the name', () => {
           continue;
         }
         renamed++;
+        if (fresh !== FRESH) otherwise++;
         const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
         const after = order(modulo(contextOf(next).result?.model, fresh, name));
         if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
@@ -231,6 +245,7 @@ describe('rename, re-parse, same model modulo the name', () => {
       }
     }
     expect(renamed).toBeGreaterThan(2000);
+    expect(otherwise).toBeGreaterThanOrEqual(MIN_OTHERWISE);
     expect(fixed).toBeGreaterThan(0);
     expect(problems).toEqual([...KNOWN_MODEL_CHANGES, ...KNOWN_BACK_REFUSALS]);
     expect(refused).toEqual(KNOWN_REFUSALS);

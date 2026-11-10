@@ -5,10 +5,11 @@
  * and `accDescr` only after a blank behind an earlier token on the line, where the lexer reads
  * them); the kinds after a frame id and in a `gwt`; `->>` after a frame's name or sources; the
  * data types after a backtick; `given`, `when` and `then` in a `gwt`. Symbols: the earlier
- * frames' ids after `->>`, every frame's id after `note` and `gwt`, the data block names
+ * frames' ids and the frame's own after `->>`, every frame's id after `note` and `gwt`, the data block names
  * inside `[[ ]]` and the entity names in a `gwt` step. Inside data, a comment, a statement's
  * text (probe modes `data`, `comment`, `title`, …) and outside code nothing is offered.
  */
+import { tokenText } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   DocumentView,
@@ -21,28 +22,42 @@ import type { EventModelDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { frameNodes, ITEMS, KIND_KINDS, kindsBefore, span, tokenBefore } from './tables.ts';
 
-/** The probed word's range: the prefix, plus the rest of the token the cursor is in. */
+/** The probed word's range: the prefix, plus the rest of the word token the cursor is in. */
 function wordRange(tokens: TokenStream | undefined, probe: ProbeResult): Range {
   const o = probe.offset;
-  let end = o;
   const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0)) {
-    const k = tokens.kind[i];
-    if (k === T.Id || k === T.FrameId || (k !== undefined && KIND_KINDS.has(k))) {
-      end = tokens.end[i] ?? o;
-    }
-  }
-  return span(probe.prefix.start, end);
+  // A word (a name, a frame id or a keyword) is replaced whole; data and text are not words.
+  const inWord =
+    tokens !== undefined &&
+    i >= 0 &&
+    (tokens.start[i] ?? 0) < o &&
+    o < (tokens.end[i] ?? 0) &&
+    /^\w+$/.test(tokenText(tokens, i));
+  return span(probe.prefix.start, inWord ? (tokens.end[i] ?? o) : o);
 }
 
 /**
- * Whether `at` follows a blank that follows a non-blank on its line: where the lexer reads
- * ` title`, ` accTitle` and ` accDescr` (at a line start, or glued to a token, they are names).
+ * Whether only blanks, at least one, lie between the end of the token before `at` and `at`:
+ * where the lexer reads ` title`, ` accTitle` and ` accDescr` (the blanks start their token).
+ * After a line break the lexer skips it with the blanks after it, so they are names there;
+ * a data block or `---` block takes the line break after its closer, so after one they are
+ * read.
  */
-function afterBlank(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i < at && i > 0 && !/[\n\r\u2028\u2029]/.test(text.charAt(i - 1));
+function afterBlank(text: string, tokens: TokenStream | undefined, at: number): boolean {
+  if (!tokens) return false;
+  for (let j = tokenBefore(tokens, at); j >= 0; j--) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start === end || end > at) continue;
+    return /^[\t ]+$/.test(text.slice(end, at));
+  }
+  return false;
+}
+
+/** `insert` without its trailing blank where a blank follows the replaced range already. */
+function fitted(insert: string, text: string, range: Range): string {
+  const next = text.charAt(range.end);
+  return insert.endsWith(' ') && (next === ' ' || next === '\t') ? insert.slice(0, -1) : insert;
 }
 
 export function eventModelingCompletions(
@@ -55,7 +70,7 @@ export function eventModelingCompletions(
   const range = wordRange(result.tokens, probe);
   const prefix = text.slice(range.start, probe.offset);
   const out: CompletionItem[] = [];
-  const blank = afterBlank(text, range.start);
+  const blank = afterBlank(text, result.tokens, range.start);
   for (const k of ITEMS) {
     if (!expected.has(k.kind) || (k.afterBlank && !blank)) continue;
     if (!k.label.startsWith(prefix)) continue;
@@ -63,15 +78,51 @@ export function eventModelingCompletions(
     out.push({
       label: k.label,
       kind: k.item,
-      insertText: k.insert ?? k.label,
+      insertText: fitted(k.insert ?? k.label, text, range),
       range,
       ...(k.detail === undefined ? {} : { detail: k.detail }),
       ...(documentation === undefined ? {} : { documentation }),
     });
   }
-  symbolItems(out, expected, result.ast, kindsBefore(result.tokens, range.start, 2), range, prefix);
+  const before = kindsBefore(result.tokens, range.start, 2);
+  symbolItems(out, expected, result.ast, before, range, prefix);
+  if (expected.has(T.FrameId) && before[0] === T.Arrow) {
+    // The frame itself: v12 draws a relation from a frame named as its own source.
+    const own = ownFrameId(result.tokens, range.start);
+    if (own !== undefined && own.startsWith(prefix) && !out.some((c) => c.label === own)) {
+      out.push({ label: own, kind: 'value', insertText: own, range, detail: 'this frame' });
+    }
+  }
   return out;
 }
+
+/**
+ * The id of the frame whose `->>` sources run up to `at`: the frame id after the last frame
+ * keyword before it, if no other statement starts between them.
+ */
+function ownFrameId(tokens: TokenStream | undefined, at: number): string | undefined {
+  if (!tokens) return undefined;
+  for (let j = tokenBefore(tokens, at); j >= 0; j--) {
+    if ((tokens.start[j] ?? 0) >= at) continue;
+    const k = tokens.kind[j] ?? -1;
+    if (FRAME_KEYWORDS.has(k)) {
+      return tokens.kind[j + 1] === T.FrameId ? tokenText(tokens, j + 1) : undefined;
+    }
+    if (OTHER_STARTS.has(k)) return undefined;
+  }
+  return undefined;
+}
+
+const FRAME_KEYWORDS = new Set<number>([T.Tf, T.Timeframe, T.Rf, T.Resetframe]);
+const OTHER_STARTS = new Set<number>([
+  T.Entity,
+  T.Data,
+  T.Note,
+  T.Gwt,
+  T.Title,
+  T.AccTitle,
+  T.AccDescr,
+]);
 
 /**
  * The frame ids, data names and entity names the parser takes at the probe, appended to `out`:

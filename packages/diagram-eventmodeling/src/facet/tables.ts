@@ -5,7 +5,15 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { EventModelDocument, EventModelFrameNode } from '../parser/ast.ts';
-import { EVENTMODELING_TRIVIA, KEYWORDS, T } from '../parser/tokens.ts';
+import {
+  DATA_TYPES,
+  EVENTMODELING_TRIVIA,
+  KEYWORDS,
+  KIND_LIST,
+  KINDS,
+  T,
+} from '../parser/tokens.ts';
+import { defaultLaneLabel } from '../structure.ts';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -41,21 +49,11 @@ const constant = (kind: number, detail: string): KeywordItem => ({
   detail,
 });
 
-/** The frame kinds with the lane each picks, short forms first. */
-const KINDS: readonly [number, string][] = [
-  [T.Ui, 'UI/Automation lane'],
-  [T.Pcr, 'UI/Automation lane'],
-  [T.Processor, 'UI/Automation lane'],
-  [T.Cmd, 'Command/Read Model lane'],
-  [T.Command, 'Command/Read Model lane'],
-  [T.Rmo, 'Command/Read Model lane'],
-  [T.Readmodel, 'Command/Read Model lane'],
-  [T.Evt, 'Events lane'],
-  [T.Event, 'Events lane'],
-];
-
-/** The data types, written between backticks. */
-const DATA_TYPES = [T.Json, T.Jsobj, T.Figma, T.Salt, T.Uri, T.Md, T.Html, T.Text];
+/** A kind keyword's item: its detail names the default lane it picks. */
+const kindItem = (k: number): KeywordItem => {
+  const short = KINDS[k];
+  return keyword(k, short === undefined ? undefined : `${defaultLaneLabel(short)} lane`);
+};
 
 /**
  * Everything completion offers but frame ids, data names and entity names, in the order it is
@@ -74,7 +72,7 @@ export const ITEMS: readonly KeywordItem[] = [
   { kind: T.Title, label: 'title', item: 'keyword', insert: 'title ', afterBlank: true },
   { kind: T.AccTitle, label: 'accTitle:', item: 'keyword', insert: 'accTitle: ', afterBlank: true },
   { kind: T.AccDescr, label: 'accDescr:', item: 'keyword', insert: 'accDescr: ', afterBlank: true },
-  ...KINDS.map(([k, lane]) => keyword(k, lane)),
+  ...KIND_LIST.map(kindItem),
   { kind: T.Arrow, label: '->>', item: 'operator', insert: '->> ', detail: 'source frame' },
   ...DATA_TYPES.map((k) => constant(k, 'data type')),
   keyword(T.Given),
@@ -83,7 +81,7 @@ export const ITEMS: readonly KeywordItem[] = [
 ];
 
 /** The kind keywords. */
-export const KIND_KINDS: ReadonlySet<number> = new Set(KINDS.map(([k]) => k));
+export const KIND_KINDS: ReadonlySet<number> = new Set(KIND_LIST);
 
 /** The completed frames, in source order. */
 export const frameNodes = (doc: EventModelDocument): EventModelFrameNode[] =>

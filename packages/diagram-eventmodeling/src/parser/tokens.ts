@@ -5,6 +5,7 @@
  * (TS enums are banned).
  */
 import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import type { EventModelKind } from '../model.ts';
 
 const F = FIRST_DIAGRAM_KIND;
 
@@ -115,6 +116,51 @@ export const KEYWORDS: ReadonlyMap<string, number> = /* @__PURE__ */ new Map([
   ['tf', T.Tf],
   ['rf', T.Rf],
 ]);
+
+/** The short form of each kind keyword (parser, facet). */
+export const KINDS: Readonly<Partial<Record<number, EventModelKind>>> = {
+  [T.Ui]: 'ui',
+  [T.Pcr]: 'pcr',
+  [T.Processor]: 'pcr',
+  [T.Cmd]: 'cmd',
+  [T.Command]: 'cmd',
+  [T.Rmo]: 'rmo',
+  [T.Readmodel]: 'rmo',
+  [T.Evt]: 'evt',
+  [T.Event]: 'evt',
+};
+
+/** The kind keywords, short forms first, in the order the facet offers them. */
+export const KIND_LIST: readonly number[] = [
+  T.Ui,
+  T.Pcr,
+  T.Processor,
+  T.Cmd,
+  T.Command,
+  T.Rmo,
+  T.Readmodel,
+  T.Evt,
+  T.Event,
+];
+
+/** The data types, written between backticks. */
+export const DATA_TYPES: readonly number[] = [
+  T.Json,
+  T.Jsobj,
+  T.Figma,
+  T.Salt,
+  T.Uri,
+  T.Md,
+  T.Html,
+  T.Text,
+];
+
+/** Each text statement's keyword (its token holds its text too). */
+export const TEXT_WORD: Readonly<Partial<Record<number, string>>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
 
 /**
  * Trivia for the event modeling parser: the comment and directive kinds and the hidden YAML and `/* *\/`

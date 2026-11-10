@@ -79,7 +79,7 @@ describe('event modeling language facet', () => {
   it('completes keywords, kinds, sources, data names and types where the parser takes them', () => {
     const doc = 'eventmodeling\ntf 01 ui Screen\ndata Payload {\n  a: 1\n}\n';
     expect(complete(`${doc}tf 02 ¦`)).toContain('evt');
-    expect(complete(`${doc}tf 02 cmd Add ->> ¦`)).toEqual(['01']);
+    expect(complete(`${doc}tf 02 cmd Add ->> ¦`)).toEqual(['01', '02']);
     expect(complete(`${doc}tf 02 cmd Add [[¦]]`)).toEqual(['Payload']);
     expect(complete(`${doc}tf 02 cmd Add \`j¦\` { a: 1 }`)).toEqual(['json', 'jsobj']);
     // `title` after a blank behind a token on its line, never at a line start.
@@ -94,6 +94,9 @@ describe('event modeling language facet', () => {
     expect(mode('eventmodeling\n// a¦\n')).toBe('comment');
     expect(mode('eventmodeling title My¦ model\n')).toBe('title');
     expect(mode('eventmodeling\ntf¦ 01 ui A\n')).toBe('INITIAL');
+    // A block's token takes the line break after its `}`: right after the `}` is code.
+    expect(mode('eventmodeling\ndata P {\n  a: 1\n}¦\ntf 01 ui A\n')).toBe('INITIAL');
+    expect(mode('eventmodeling\ndata P {\n  a: 1\n¦}\n')).toBe('data');
     expect(complete('eventmodeling\ntf 01 ui A { a¦: 1 }\n')).toEqual([]);
   });
 
@@ -104,5 +107,9 @@ describe('event modeling language facet', () => {
     );
     expect(hover(doc.replace('tf 02', 'tf 0¦2'))).toContain('In the **Command/Read Model** lane.');
     expect(hover(doc.replace('rf 03', 'rf 0¦3'))).toContain('a reset frame with no `->>`');
+    expect(hover(doc.replace('tf 01', 'tf 0¦1'))).toContain('No source: the first frame');
+    expect(hover('eventmodeling\ntf 01 ui A\ntf 02 ui B\n'.replace('tf 02', 'tf 0¦2'))).toContain(
+      'No source: no `->>`, and no earlier frame is in another lane.'
+    );
   });
 });

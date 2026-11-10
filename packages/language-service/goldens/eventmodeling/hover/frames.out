@@ -4,7 +4,7 @@
   |
   | In the **UI/Automation** lane.
   |
-  | No source: the first frame with no `->>`.
+  | No source: the first frame, with no `->>`.
   |
   | Source of `02` (`cmd Add`) and `04` (`rmo View`).
 @ 3:4  tf |02 cmd Add

@@ -14,8 +14,9 @@ import { firstFrameAt } from '../frames.ts';
 import { eventmodelingDocs } from '../generated/docs.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import type { EventModelDocument } from '../parser/ast.ts';
-import { T } from '../parser/tokens.ts';
+import { T, TEXT_WORD } from '../parser/tokens.ts';
 import { eventModelStructure } from '../structure.ts';
+import type { EventModelRelation } from '../structure.ts';
 import { code, inside, list, span } from './tables.ts';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */
@@ -30,19 +31,20 @@ const NO_DOC = new Set<number>([
   T.CloseRef,
 ]);
 
-/** Each text statement's keyword: only the keyword of its token is hovered. */
-const TEXT_WORD: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
 /** A frame as hover names it: its id, then its kind and name (`01` and `cmd AddItem`). */
 const frameLabel = (f: EventModelFrame): string =>
   `${code(f.id)} (${code(`${f.keyword} ${f.name}`)})`;
 
+/** Why a frame with no `->>` has no source: the first, a reset frame, or none in another lane. */
+function noSource(at: number, frame: EventModelFrame): string {
+  if (at === 0) return 'No source: the first frame, with no `->>`.';
+  if (frame.reset) return 'No source: a reset frame with no `->>` gets no inferred one.';
+  return 'No source: no `->>`, and no earlier frame is in another lane.';
+}
+
 function frameHover(id: string, model: EventModel): string {
-  const at = firstFrameAt(model.frames).get(id);
+  const firstAt = firstFrameAt(model.frames);
+  const at = firstAt.get(id);
   const frame = at === undefined ? undefined : model.frames[at];
   if (at === undefined || !frame) return `**frame** ${code(id)}\n\nNo frame has id ${code(id)}.`;
   const structure = eventModelStructure(model);
@@ -52,8 +54,17 @@ function frameHover(id: string, model: EventModel): string {
     `**${frame.reset ? 'reset frame' : 'frame'}** ${code(id)}: ${code(`${frame.keyword} ${frame.name}`)}`,
   ];
   if (lane) lines.push(`In the **${lane.label}** lane.`);
-  const into = structure.relations.filter((r) => r.target === at);
-  const named = (r: { source: number }) => {
+  // One pass: the relations into the frame and the frames it feeds (itself aside).
+  const into: EventModelRelation[] = [];
+  const targets: EventModelFrame[] = [];
+  for (const r of structure.relations) {
+    if (r.target === at) into.push(r);
+    else if (r.source === at) {
+      const f = model.frames[r.target];
+      if (f) targets.push(f);
+    }
+  }
+  const named = (r: EventModelRelation) => {
     const f = model.frames[r.source];
     return f ? frameLabel(f) : '';
   };
@@ -65,26 +76,16 @@ function frameHover(id: string, model: EventModel): string {
   } else if (into.length > 0) {
     lines.push(`Sources (\`->>\`): ${list(into.map(named))}.`);
   } else if (frame.sources.length === 0) {
-    lines.push(
-      frame.reset
-        ? 'No source: a reset frame with no `->>` gets no inferred one.'
-        : 'No source: the first frame with no `->>`.'
-    );
+    lines.push(noSource(at, frame));
   }
   const drawn = new Set(into.map((r) => model.frames[r.source]?.id));
   const notDrawn = [...new Set(frame.sources)].filter((s) => !drawn.has(s));
   if (notDrawn.length > 0) {
-    const why = (s: string) => {
-      const k = firstFrameAt(model.frames).get(s);
-      return `${code(s)} (${k === undefined ? 'no frame has it' : 'it comes later'})`;
-    };
+    const why = (s: string) =>
+      `${code(s)} (${firstAt.has(s) ? 'it comes later' : 'no frame has it'})`;
     lines.push(`Named but not drawn: ${list(notDrawn.map(why))}.`);
   }
-  const out = structure.relations.filter((r) => r.source === at && r.target !== at);
-  if (out.length > 0) {
-    const targets = out.map((r) => model.frames[r.target]).filter((f) => f !== undefined);
-    lines.push(`Source of ${list(targets.map(frameLabel))}.`);
-  }
+  if (targets.length > 0) lines.push(`Source of ${list(targets.map(frameLabel))}.`);
   return lines.join('\n\n');
 }
 

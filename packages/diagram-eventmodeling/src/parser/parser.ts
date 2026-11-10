@@ -59,7 +59,15 @@ import type {
 import { accDescrValue, accTitleValue, dataText, displayText, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { normalise } from './normalise.ts';
-import { EVENTMODELING_TRIVIA, KEYWORDS, T } from './tokens.ts';
+import {
+  DATA_TYPES,
+  EVENTMODELING_TRIVIA,
+  KEYWORDS,
+  KIND_LIST,
+  KINDS,
+  T,
+  TEXT_WORD,
+} from './tokens.ts';
 import { eventModelingView } from './view.ts';
 
 export interface EventModelParseOptions extends ParseOptions {
@@ -69,20 +77,6 @@ export interface EventModelParseOptions extends ParseOptions {
 
 export type EventModelParseResult = ParseResult<EventModel, EventModelDocument>;
 
-/** The short form of each kind keyword. */
-const KINDS: Readonly<Partial<Record<number, EventModelKind>>> = {
-  [T.Ui]: 'ui',
-  [T.Pcr]: 'pcr',
-  [T.Processor]: 'pcr',
-  [T.Cmd]: 'cmd',
-  [T.Command]: 'cmd',
-  [T.Rmo]: 'rmo',
-  [T.Readmodel]: 'rmo',
-  [T.Evt]: 'evt',
-  [T.Event]: 'evt',
-};
-const KIND_LIST = [T.Ui, T.Pcr, T.Processor, T.Cmd, T.Command, T.Rmo, T.Readmodel, T.Evt, T.Event];
-const DATA_TYPES = [T.Json, T.Jsobj, T.Figma, T.Salt, T.Uri, T.Md, T.Html, T.Text];
 const DATA_TYPE_SET = kindSet(...DATA_TYPES);
 const FRAMES = [T.Tf, T.Timeframe, T.Rf, T.Resetframe];
 const TEXTS = [T.Title, T.AccTitle, T.AccDescr];
@@ -136,12 +130,10 @@ const PROBE_FOLLOWS = kindSet(
   T.DataBlock
 );
 
-/** Each text statement's keyword, for the probe's mode. */
-const TEXT_WORD: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
+/** The end of a data token's closer: a block's `}`, inline data's last character. */
+function dataEnd(src: string, start: number, end: number, kind: number): number {
+  return kind === T.DataBlock ? start + src.slice(start, end).lastIndexOf('}') + 1 : end;
+}
 
 /**
  * Where the probe's offset `o` is (R-LANG-7). The lexer has no modes (Langium's has none), so
@@ -160,12 +152,18 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     // At its end, a `//` comment holds the offset (its line break is not in it); a closed
     // `/* *\/` or data token does not.
     if (kind === T.LineComment) return 'comment';
-    if (kind === T.BlockComment || kind === T.Yaml) {
-      if (o < end) return kind === T.Yaml ? 'yaml' : 'comment';
+    if (kind === T.BlockComment) {
+      if (o < end) return 'comment';
       continue;
     }
+    // A `---` block, up to its closing `---` (its token takes the line break after it).
+    if (kind === T.Yaml) {
+      if (o < start + src.slice(start, end).lastIndexOf('---') + 3) return 'yaml';
+      continue;
+    }
+    // Data up to its closer: a block's token also takes the line break after its `}`.
     if (kind === T.DataInline || kind === T.DataBlock) {
-      if (o < end) return 'data';
+      if (o < dataEnd(src, start, end, kind)) return 'data';
       continue;
     }
     const word = TEXT_WORD[kind];
@@ -181,7 +179,7 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
 }
 
 /** v12's text-statement words, which v12 lexes as a name at a line start. */
-const TEXT_WORDS = ['title', 'accTitle', 'accDescr'];
+const TEXT_WORDS = Object.values(TEXT_WORD);
 
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
@@ -272,7 +270,6 @@ class EventModelParser {
     const { st, src } = this;
     this.statement(() => this.header());
     this.document();
-    this.foldComments();
     const parsed: Parsed = {
       children: this.children,
       frames: this.frames,
@@ -290,23 +287,6 @@ class EventModelParser {
       children: this.children,
     };
     return st.result(model, ast, this.full, this.opts, this.probe);
-  }
-
-  /**
-   * A statement span `comment` over each `/* *\/` comment that runs over lines, so it folds
-   * (spec #527, T6), kept in source order with the statements.
-   */
-  private foldComments(): void {
-    const { full, src, st } = this;
-    let added = false;
-    for (let j = 0; j < full.length; j++) {
-      if (full.kind[j] !== T.BlockComment) continue;
-      const range = { start: full.start[j] ?? 0, end: full.end[j] ?? 0 };
-      if (!/[\n\r\u2028\u2029]/.test(src.slice(range.start, range.end))) continue;
-      st.statements.push({ kind: 'comment', range });
-      added = true;
-    }
-    if (added) st.statements.sort((a, b) => a.range.start - b.range.start);
   }
 
   // ---- tokens -------------------------------------------------------------------------

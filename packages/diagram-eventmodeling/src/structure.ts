@@ -36,6 +36,11 @@ const BAND_OF: Readonly<Record<EventModelKind, EventModelBand>> = {
   evt: 'stream',
 };
 
+/** The label of the default lane a frame of `kind` goes to (`UI/Automation`, …). */
+export function defaultLaneLabel(kind: EventModelKind): string {
+  return BANDS[BAND_OF[kind]][1];
+}
+
 export interface EventModelLane {
   /** v12's swimlane index: 0, 100, 200, or the next after them for a namespace. */
   readonly index: number;
