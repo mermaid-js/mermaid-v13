@@ -66,6 +66,8 @@ export interface Block {
   readonly classes: readonly string[];
   /** v12's `styles`: the last `style` statement's text split at `,`, as written. */
   readonly styles: readonly string[];
+  /** True for an anonymous `block … end`, whose id is generated (`id-<n>`). */
+  readonly anonymous?: true;
   /** A composite's palette slot: composites numbered in declaration order (v12 `colorIndex`). */
   readonly colorIndex?: number;
   readonly children: readonly Block[];

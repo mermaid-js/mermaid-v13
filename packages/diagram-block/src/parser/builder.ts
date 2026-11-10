@@ -159,6 +159,7 @@ export class ModelBuilder {
     };
     const block = this.create(m, place);
     block.colorIndex = this.nextColor++;
+    block.anonymous = true;
     return block;
   }
 

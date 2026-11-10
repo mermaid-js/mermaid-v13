@@ -627,20 +627,10 @@ class BlockParser {
 
   /** `nodeStatement`, built into the current level as far as it got. */
   private nodeStatement(): void {
-    const start = this.c.start;
     const frame = this.frame;
     const { chain, failed } = this.chain();
     this.applyChain(chain, frame);
     if (failed) throw STOP;
-    this.st.statement('node', { start, end: this.lastEnd() });
-  }
-
-  /** The end of the last token read. */
-  private lastEnd(): number {
-    const t = this.c.tokens;
-    let j = this.c.pos - 1;
-    while (j > 0 && SKIPPED[t.kind[j] ?? 0] === 1) j--;
-    return t.end[j] ?? 0;
   }
 
   /**
@@ -833,7 +823,6 @@ class BlockParser {
       columns: written,
     });
     this.builder.setColumns(written, range, frame.block, this.frames.length === 1);
-    this.st.statement('columns', range);
   }
 
   /** `SPACE_BLOCK`: `space` or `space:n`, n cells (D445: capped). */
@@ -847,7 +836,6 @@ class BlockParser {
     const ast = `block:${id}`;
     frame.ast.push({ id: ast, type: 'Space', range, cells: written });
     this.builder.space(ast, id, written, { into: frame.into, range });
-    this.st.statement('space', range);
   }
 
   /**
@@ -946,7 +934,6 @@ class BlockParser {
     const range = { start: this.range(start).start, end: this.range(cssTok).end };
     this.frame.ast.push({ id, type: 'ClassDef', range, name, nameRange, css });
     this.builder.classDef(name, css);
-    this.st.statement('classDef', range);
   }
 
   /**
@@ -988,7 +975,6 @@ class BlockParser {
     for (const m of text.matchAll(/\S+/g))
       this.st.symbol(m[0], 'class', BlockParser.rangeIn(source, m.index, m[0].length), 'ref');
     this.builder.classes(targets, className);
-    this.st.statement('class', range);
   }
 
   /** `style STYLE_ENTITY_IDS STYLE_DEFINITION_DATA`: applied after every statement (D443). */
@@ -1008,6 +994,5 @@ class BlockParser {
     this.frame.ast.push({ id, type: 'Style', range, targets, styles });
     for (const t of targets) this.st.symbol(t.name, 'block', t.range, 'ref');
     this.builder.style(targets, styles);
-    this.st.statement('style', range);
   }
 }

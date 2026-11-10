@@ -7,6 +7,13 @@ import { Kind } from '@mermaid-js/core/parser-kit';
 import { blockTokens } from '../parser/index.ts';
 import { T } from '../parser/tokens.ts';
 
+/** The symbol kinds the block parser records. */
+const KINDS = ['block', 'class'] as const;
+export type BlockSymbolKind = (typeof KINDS)[number];
+
+const isKind = (kind: string): kind is BlockSymbolKind =>
+  (KINDS as readonly string[]).includes(kind);
+
 /** What the id rule (`[^\(\[\n\-\)\{\}\s\<\>:=]+`) does not take. */
 const NOT_ID = /[([\-){}\s<>:=]/u;
 /** `CLASSDEF_ID`'s `\w+`. */
@@ -28,18 +35,23 @@ function readsAsId(name: string): boolean {
   );
 }
 
-/** Why `name` cannot be a `kind` name (a block id when omitted), if it cannot. */
-export function invalidReason(name: string, kind = 'block'): string | undefined {
-  if (kind === 'class') {
-    if (name === '') return 'A class name cannot be empty.';
-    if (!CLASS_NAME.test(name))
-      return 'A class name takes letters, digits and `_` only, as `classDef` reads it.';
-    if (name === 'DEFAULT') return '`DEFAULT` is not a class name a block diagram takes.';
-    return undefined;
-  }
-  if (kind !== 'block') return `'${kind}' is not a block symbol kind.`;
+function classReason(name: string): string | undefined {
+  if (name === '') return 'A class name cannot be empty.';
+  if (!CLASS_NAME.test(name))
+    return 'A class name takes letters, digits and `_` only, as `classDef` reads it.';
+  if (name === 'DEFAULT') return '`DEFAULT` is not a class name a block diagram takes.';
+  return undefined;
+}
+
+function blockReason(name: string): string | undefined {
   if (name === '') return 'A block id cannot be empty.';
   if (NOT_ID.test(name))
     return 'A block id cannot hold blanks, line breaks or any of `(`, `)`, `[`, `{`, `}`, `<`, `>`, `-`, `:` and `=`.';
   return readsAsId(name) ? undefined : `'${name}' would not read as a block id.`;
+}
+
+/** Why `name` cannot be a `kind` name (a block id when omitted), if it cannot. */
+export function invalidReason(name: string, kind = 'block'): string | undefined {
+  if (!isKind(kind)) return `'${kind}' is not a block symbol kind.`;
+  return kind === 'class' ? classReason(name) : blockReason(name);
 }

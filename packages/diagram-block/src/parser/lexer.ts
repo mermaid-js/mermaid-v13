@@ -66,11 +66,11 @@ import {
 import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
-// Start conditions of block.jison (all exclusive) that its rules use.
+// Start conditions of block.jison (all exclusive) that its rules use, under jison's names.
 const S = {
   INITIAL: 0,
-  STRING: 1,
-  MD_STRING: 2,
+  string: 1,
+  md_string: 2,
   NODE: 3,
   BLOCK_ARROW: 4,
   ARROW_DIR: 5,
@@ -81,30 +81,13 @@ const S = {
   CLASS_STYLE: 10,
   STYLE_STMNT: 11,
   STYLE_DEFINITION: 12,
-  ACC_TITLE: 13,
-  ACC_DESCR: 14,
-  ACC_DESCR_MULTILINE: 15,
+  acc_title: 13,
+  acc_descr: 14,
+  acc_descr_multiline: 15,
 } as const;
 
 /** Start condition names by number, as `block.jison` names them, for the probe's mode (R-LANG-7). */
-const S_NAMES: readonly string[] = [
-  'INITIAL',
-  'string',
-  'md_string',
-  'NODE',
-  'BLOCK_ARROW',
-  'ARROW_DIR',
-  'LLABEL',
-  'CLASSDEF',
-  'CLASSDEFID',
-  'CLASS',
-  'CLASS_STYLE',
-  'STYLE_STMNT',
-  'STYLE_DEFINITION',
-  'acc_title',
-  'acc_descr',
-  'acc_descr_multiline',
-];
+const S_NAMES = /* @__PURE__ */ Object.keys(S);
 
 const LOWER_O = 0x6f;
 const LOWER_X = 0x78;
@@ -129,9 +112,9 @@ const REST: Readonly<Record<number, readonly [kind: number, toBrace: boolean]>> 
   [S.CLASSDEFID]: [T.ClassDefStyleOpts, false],
   [S.CLASS_STYLE]: [T.StyleClass, false],
   [S.STYLE_DEFINITION]: [T.StyleDefinitionData, false],
-  [S.ACC_TITLE]: [T.AccTitleValue, false],
-  [S.ACC_DESCR]: [T.AccDescrValue, false],
-  [S.ACC_DESCR_MULTILINE]: [T.AccDescrMultilineValue, true],
+  [S.acc_title]: [T.AccTitleValue, false],
+  [S.acc_descr]: [T.AccDescrValue, false],
+  [S.acc_descr_multiline]: [T.AccDescrMultilineValue, true],
 };
 
 /** A lex: the token stream, and the text of each token as v12's parser read it. */
@@ -307,7 +290,7 @@ class BlockLexer {
   private atEnd(): void {
     const { len, state } = this;
     if (state === S.INITIAL) this.emit(T.Eof, len, len);
-    else if (state === S.STRING) this.emit(T.Str, len, len);
+    else if (state === S.string) this.emit(T.Str, len, len);
     else {
       const rest = REST[state];
       if (rest) this.emit(rest[0], len, len);
@@ -470,10 +453,10 @@ class BlockLexer {
       case S.INITIAL:
         this.initial(c);
         return;
-      case S.STRING:
+      case S.string:
         this.string(c);
         return;
-      case S.MD_STRING:
+      case S.md_string:
         this.mdString(c);
         return;
       case S.NODE:
@@ -631,12 +614,12 @@ class BlockLexer {
       this.begin(
         title ? T.AccTitle : T.AccDescr,
         this.spaces(s + 1),
-        title ? S.ACC_TITLE : S.ACC_DESCR
+        title ? S.acc_title : S.acc_descr
       );
       return true;
     }
     if (title || c !== LBRACE) return false;
-    this.begin(T.AccDescrMultiline, this.spaces(s + 1), S.ACC_DESCR_MULTILINE);
+    this.begin(T.AccDescrMultiline, this.spaces(s + 1), S.acc_descr_multiline);
     return true;
   }
 
@@ -708,8 +691,8 @@ class BlockLexer {
   private quote(c: number, kind: number = T.StringStart): boolean {
     if (c !== DQUOTE) return false;
     const { p } = this;
-    if (this.text.charCodeAt(p + 1) === BACKTICK) this.begin(T.MdStringStart, p + 2, S.MD_STRING);
-    else this.begin(kind, p + 1, S.STRING);
+    if (this.text.charCodeAt(p + 1) === BACKTICK) this.begin(T.MdStringStart, p + 2, S.md_string);
+    else this.begin(kind, p + 1, S.string);
     return true;
   }
 

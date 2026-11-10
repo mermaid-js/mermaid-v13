@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { tokenAt } from './facet/text.ts';
 import { blockLanguage, language } from './language.ts';
 
 /**
@@ -57,30 +58,63 @@ describe('the block facet', () => {
     ]);
     // An empty composite cannot end yet.
     expect(complete('block\n  block:g\n    ¦\n  end')).toEqual([...STATEMENTS, 'g']);
-    expect(complete('block\n  a\n  cl¦')).toEqual(['classDef', 'class']);
+    // The word being typed is no used id; a new id gets its shapes.
+    expect(complete('block\n  a\n  cl¦').slice(0, 3)).toEqual(['classDef', 'class', 'cl["cl"]']);
+    // A bare `columns` is an id: after it, its count.
+    expect(complete('block\n  a\n  columns ¦')).toEqual(['auto']);
+    expect(complete('block\n  a\n  columns a¦')).toEqual(['auto']);
   });
 
-  it('completes links after a block on its line, ids after a link', () => {
-    const links = ['-->', '---', '--x', '--o', '<-->', 'x--x', 'o--o', '==>', '===', '-.->', '-.-'];
-    expect(complete('block\n  a ¦')).toEqual(links);
-    expect(complete('block\n  a["A"] ¦')).toEqual(links);
+  it('completes links, shapes, `space` and ids after a block on its line, ids after a link', () => {
+    const links = [
+      '-->',
+      '---',
+      '--x',
+      '--o',
+      '<-->',
+      '==>',
+      '===',
+      '<==>',
+      '-.->',
+      '-.-',
+      '<-.->',
+    ];
+    const after = complete('block\n  a ¦');
+    expect(after.slice(0, links.length)).toEqual(links);
+    expect(after).toContain('["a"]');
+    expect(after.slice(-2)).toEqual(['space', 'a']);
+    // A block with a shape takes no other.
+    expect(complete('block\n  a["A"] ¦')).toEqual([...links, 'space', 'a']);
     expect(complete('block\n  a -¦')).toEqual(['-->', '---', '--x', '--o', '-.->', '-.-']);
     expect(complete('block\n  a ==¦')).toEqual(['==>', '===']);
-    expect(complete('block\n  a <¦')).toEqual(['<-->']);
+    expect(complete('block\n  a <¦')).toEqual(['<-->', '<==>', '<-.->']);
     expect(complete('block\n  a --> b\n  c --> ¦')).toEqual(['a', 'b', 'c']);
+    // A labelled edge's text: what closes it.
+    expect(complete('block\n  a -- "x" ¦')).toEqual([
+      '-->',
+      '---',
+      '--x',
+      '--o',
+      '==>',
+      '===',
+      '-.->',
+      '-.-',
+    ]);
   });
 
-  it("offers an id's shapes at its end once it is used elsewhere", () => {
+  it("offers an id's shapes at its end, and after `block:` nothing else", () => {
     const items = complete('block\n  a\n  a --> a¦');
     expect(items[0]).toBe('a');
     expect(items).toContain('a["a"]');
     expect(items).toContain('a{{"a"}}');
     expect(items).toContain('a<["a"]>(right)');
-    // A new id is not known yet: no shapes.
-    expect(complete('block\n  newId¦')).toEqual([]);
+    expect(complete('block\n  newId¦')).toContain('newId["newId"]');
+    expect(complete('block\n  a\n  block:¦')).toEqual([]);
+    expect(complete('block\n  a\n  block:g¦')[0]).toBe('g["g"]');
+    expect(complete('block\n  a\n  block:a¦')).not.toContain('a');
   });
 
-  it("completes a block arrow's directions, class and style targets and classDef names", () => {
+  it("completes a block arrow's directions, class and style targets and class names", () => {
     expect(complete('block\n  a<["x"]>(¦)')).toEqual(['right', 'left', 'up', 'down', 'x', 'y']);
     expect(complete('block\n  a<["x"]>(right, d¦)')).toEqual(['down']);
     expect(complete('block\n  a\n  b.c\n  class ¦')).toEqual(['a']);
@@ -120,15 +154,14 @@ describe('the block facet', () => {
     const hover = (needle: string, delta = 0) => {
       const offset = text.indexOf(needle) + delta;
       const symbol = result.symbols.find((s) => s.range.start <= offset && offset <= s.range.end);
-      const j = [...Array(result.tokens!.length).keys()].find(
-        (i) => result.tokens!.start[i]! <= offset && offset < result.tokens!.end[i]!
-      );
+      const tokens = result.tokens!;
+      const j = tokenAt(tokens, offset);
       const token =
-        j === undefined
+        j < 0
           ? undefined
           : {
-              kind: result.tokens!.kind[j]!,
-              range: { start: result.tokens!.start[j]!, end: result.tokens!.end[j]! },
+              kind: tokens.kind[j]!,
+              range: { start: tokens.start[j]!, end: tokens.end[j]! },
             };
       return blockLanguage.hover(
         { offset, ...(token ? { token } : {}), ...(symbol ? { symbol } : {}) },

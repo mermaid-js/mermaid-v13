@@ -312,19 +312,9 @@ describe('block parser: AST, symbols and statements (D448)', () => {
     ]);
   });
 
-  it('records statements, composites with their body', () => {
-    expect(r.statements.map((s) => s.kind)).toEqual([
-      'header',
-      'node',
-      'node',
-      'composite',
-      'composite',
-      'classDef',
-      'class',
-      'style',
-      'columns',
-    ]);
-    expect(r.statements[3]?.children?.map((s) => s.kind)).toEqual(['space']);
+  it('records the header and each composite as statements, the only spans that fold (#557)', () => {
+    expect(r.statements.map((s) => s.kind)).toEqual(['header', 'composite', 'composite']);
+    expect(r.statements[1]?.children).toBeUndefined();
   });
 
   it('parses 16k statements and depth 800 (limits raised)', () => {

@@ -16,7 +16,8 @@ import { blockDocs } from '../generated/docs.ts';
 import type { Block, BlockModel } from '../model.ts';
 import type { BlockDocument, BlockStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, plural, span, TYPE_NAMES } from './tables.ts';
+import { TYPE_NAMES } from './tables.ts';
+import { code, plural, span, tokenAt } from './text.ts';
 
 /** The tokens of a block's shape or block arrow, after its id up to its closer. */
 const SHAPE_PARTS = new Set<number>([
@@ -72,7 +73,7 @@ function blockFacts({ block, parent }: Found): string[] {
     const columns = block.columns === undefined || block.columns < 0 ? 'auto' : `${block.columns}`;
     facts.push(`Columns: ${columns}`, `Holds ${plural(block.children.length, 'block')}`);
   }
-  if (parent) facts.push(`In ${parent.id.startsWith('id-') ? 'a composite' : code(parent.id)}`);
+  if (parent) facts.push(`In ${parent.anonymous ? 'a composite' : code(parent.id)}`);
   if (block.classes.length > 0) facts.push(`Classes: ${block.classes.map(code).join(', ')}`);
   return facts;
 }
@@ -103,16 +104,6 @@ function tight(text: string, r: Range): Range {
   while (end > start && /\s/.test(text.charAt(end - 1))) end--;
   while (start < end && /\s/.test(text.charAt(start))) start++;
   return span(start, end);
-}
-
-/** The index of the token of `kind` starting at `start`, or -1. */
-function tokenIndex(tokens: TokenStream, start: number, kind: number): number {
-  for (let j = 0; j < tokens.length; j++) {
-    const s = tokens.start[j] ?? 0;
-    if (s > start) break;
-    if (s === start && tokens.kind[j] === kind) return j;
-  }
-  return -1;
 }
 
 /**
@@ -172,7 +163,7 @@ export function blockHover(at: HoverTarget, doc: DocumentView<BlockDocument>): H
     return { range, contents: `**${code(word)}**\n\n${docText}` };
   }
   if (!SHAPE_PARTS.has(t.kind)) return undefined;
-  const j = tokenIndex(tokens, t.range.start, t.kind);
+  const j = tokenAt(tokens, t.range.start);
   const owner = j < 0 ? undefined : shapeOwner(tokens, j);
   if (!owner) return undefined;
   const contents = blockText(model, text.slice(owner.id.start, owner.id.end));

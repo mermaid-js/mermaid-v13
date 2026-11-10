@@ -6,9 +6,11 @@
  *   pnpm --filter \@mermaid-js/bench exec tsx --conditions=mermaid-source src/cli/language-block.ts
  *     [--runs 50] [--warmup 10] [--enforce]
  *
- * Until the manifest (#558) makes block a registered type and a bench dependency, the facet is
- * passed in as a row of its own and imported by a specifier the type check does not resolve;
- * the CLI runs where `@mermaid-js/diagram-block` resolves from this package.
+ * It cannot run before the manifest (#558): block is not a bench dependency until then, so
+ * `@mermaid-js/diagram-block` does not resolve from this package. The facet is imported by a
+ * specifier the type check does not resolve, so the bench type-checks meanwhile, and passed in
+ * as a row of its own; T5 runs this CLI and reports its numbers, and may then import the facet
+ * statically and drop the row.
  */
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { LanguageFacet } from '@mermaid-js/language-service';
@@ -18,7 +20,10 @@ import { round } from '../stats.ts';
 import { parseArgs } from './args.ts';
 
 const BLOCK_LANGUAGE = '@mermaid-js/diagram-block/language';
-const { language } = (await import(BLOCK_LANGUAGE)) as { language: LanguageFacet };
+const { detectBlock, language } = (await import(BLOCK_LANGUAGE)) as {
+  detectBlock: (src: string) => boolean;
+  language: LanguageFacet;
+};
 
 const args = parseArgs(process.argv.slice(2));
 const log = (line: string) => process.stdout.write(line + '\n');
@@ -27,7 +32,7 @@ const service = createLanguageService({
     {
       type: 'block',
       id: 'block',
-      detector: (src) => /^\s*block(-beta)?/.test(src),
+      detector: detectBlock,
       facet: language,
     },
   ],
