@@ -1,0 +1,19 @@
+---
+config:
+  theme: redux
+description: >-
+  UpdateElementStyle ($bgColor, $fontColor, $borderColor) and UpdateRelStyle ($textColor,
+  $lineColor, $offsetX, $offsetY) over the palette and the theme's relation colour, and a boundary's
+  own $bgColor and $borderColor under its contents
+---
+C4Context
+title Styles in the text
+Person(u, "Customer")
+Boundary(b, "Shop", "system", $bgColor="#FFF3E0", $borderColor="#E65100") {
+  System(s, "Web shop", "Sells things")
+  SystemDb(d, "Orders", "PostgreSQL")
+}
+Rel(u, s, "Buys from")
+Rel(s, d, "Stores orders in")
+UpdateElementStyle(u, $bgColor="#00695C", $fontColor="#FFFF8D", $borderColor="#004D40")
+UpdateRelStyle(u, s, $textColor="#AD1457", $lineColor="#AD1457", $offsetX="20", $offsetY="-20")

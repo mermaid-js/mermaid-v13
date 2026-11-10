@@ -1,0 +1,26 @@
+---
+config:
+  theme: default
+  c4:
+    person_bg_color: '#2E7D32'
+    person_border_color: '#1B5E20'
+    system_bg_color: '#6A1B9A'
+    external_system_bg_color: '#BDBDBD'
+    personFontSize: 18
+    systemFontWeight: bold
+    messageFontSize: 14
+    boundaryFontFamily: 'Georgia, serif'
+description: >-
+  the c4 config palette (<kind>_bg_color, <kind>_border_color) and fonts: a larger person font,
+  bold system text, larger relation labels and a serif boundary header; families left unset take
+  the theme's fontFamily
+---
+C4Context
+title Palette and fonts from the config
+Person(u, "Analyst", "Reads the reports")
+System_Boundary(core, "Core") {
+  System(r, "Reporting", "Builds the reports")
+}
+System_Ext(x, "Data provider", "Feeds market data")
+Rel(u, r, "Reads")
+Rel(x, r, "Feeds", "SFTP")

@@ -1,0 +1,19 @@
+---
+config:
+  theme: neo
+description: >-
+  C4Dynamic: relations numbered in statement order (the number drawn before each label), a
+  RelIndex whose index is parsed and not drawn (it is numbered 3, as v12, D457), and a container
+  boundary holding components
+---
+C4Dynamic
+title Sign in
+Container(spa, "Single-page app", "Angular")
+Container_Boundary(api, "API application") {
+  Component(sign, "Sign-in controller", "Spring MVC")
+  Component(sec, "Security component", "Spring Bean")
+}
+ContainerDb(db, "Database", "Oracle")
+Rel(spa, sign, "Submits credentials", "JSON/HTTPS")
+Rel(sign, sec, "Calls isAuthenticated()")
+RelIndex(9, sec, db, "Selects the user", "JDBC")

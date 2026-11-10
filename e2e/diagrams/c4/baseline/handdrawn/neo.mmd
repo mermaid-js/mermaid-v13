@@ -1,0 +1,28 @@
+---
+config:
+  theme: neo
+  look: handDrawn
+  handDrawnSeed: 1
+description: >-
+  one representative C4 container diagram, hand-drawn in the neo theme (D301, D307): each element
+  outline sketched through w.outline (node), the cylinder and queue rims and the component frame
+  lines (divider); boundaries, relations, arrowheads, label boxes and text plain
+---
+C4Container
+title Internet banking system
+Person(customer, "Customer", "A customer of the bank")
+System_Ext(mail, "E-mail system", "Microsoft Exchange")
+Container_Boundary(bank, "Internet banking") {
+  Container(web, "Web application", "Java, Spring MVC", "Delivers the static content")
+  Container(api, "API application", "Java, Docker", "Provides banking over JSON/HTTPS")
+  ContainerDb(db, "Database", "Oracle", "Stores accounts and logs")
+  ContainerQueue(events, "Events", "Kafka", "Account events")
+  Container(spa, "Single-page app", "Angular", "Runs in the browser", $sprite="component")
+}
+Rel(customer, web, "Visits", "HTTPS")
+Rel(web, spa, "Delivers")
+Rel(spa, api, "Calls", "JSON/HTTPS")
+BiRel(api, db, "Reads and writes", "JDBC")
+Rel(api, events, "Publishes")
+Rel_Back(customer, mail, "Sends e-mails to")
+Rel(api, mail, "Sends e-mail using", "SMTP")
