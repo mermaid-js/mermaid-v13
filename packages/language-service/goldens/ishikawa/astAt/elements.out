@@ -1,0 +1,12 @@
+@ 1:1  |ishikawa
+  none
+@ 2:3  |Blurry Photo
+  effect 2:3-2:15 "Blurry Photo"
+@ 3:5  |Process
+  cause:1 3:5-3:12 "Process"
+@ 4:11  Out |of focus
+  cause:1.1 4:7-4:19 "Out of focus"
+@ 6:5  |User
+  cause:2 6:5-6:9 "User"
+@ 7:1  |
+  none
