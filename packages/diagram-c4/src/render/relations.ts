@@ -2,10 +2,13 @@
  * A C4 relation drawn (spec #522 §Renderer, D455): its routed line as one `path` (the layout's
  * `c4RelationPath`, stopped short under the arrowheads), the arrowheads inline after it as
  * v12's triangles (no `<marker>`, DESIGN §7.1), then its label and the italic `[techn]` below
- * it, where the layout placed them, with no box (v12 drew none). The relation's `descr` is the
- * group's SVG `<title>`. Relations are not sketched (D301).
+ * it on a box of the page's `background`, as Pele draws them: the layout places a label on its
+ * line where it covers least (D455), so the box keeps the line from running through the text
+ * (v12 drew no box; its labels sat beside a curve). The relation's `descr` is the group's SVG
+ * `<title>`. Relations are not sketched (D301).
  */
 import type { Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import { C4_METRICS as M } from '../layout/metrics.ts';
 import { c4RelationPath } from '../layout/path.ts';
 import type { C4RelationEnd, C4RelationLayout } from '../layout/types.ts';
 import type { C4RelationKind } from '../model.ts';
@@ -51,7 +54,8 @@ export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
   });
   if (rel.startArrow) arrowhead(w, rel.start, colours.head);
   if (rel.endArrow) arrowhead(w, rel.end, colours.head);
-  if (colours.text) {
+  if (colours.text && colours.labelBkg) {
+    labelBox(w, rel, colours.labelBkg);
     const fill = colours.text;
     if (rel.label) drawText(scene, { label: rel.label, cls: 'c4-rel-label', fill, dataId });
     if (rel.techn) drawText(scene, { label: rel.techn, cls: 'c4-rel-techn', fill, dataId });
@@ -88,4 +92,23 @@ function arrowhead(w: SvgWriter, end: C4RelationEnd, fill: Paint): void {
     .close()
     .done();
   w.leaf('path', { class: 'marker', d, fill, stroke: 'none' });
+}
+
+/** The label's box: the label and `[techn]` stacked, `labelPad` wider than the wider (the layout's). */
+function labelBox(w: SvgWriter, rel: C4RelationLayout, fill: Paint): void {
+  const parts = [rel.label, rel.techn].filter((l) => l !== undefined);
+  if (parts.length === 0) return;
+  const cx = parts[0]!.x + parts[0]!.width / 2;
+  const width = Math.max(...parts.map((l) => l.width)) + M.labelPad;
+  const top = parts[0]!.y;
+  const last = parts[parts.length - 1]!;
+  w.leaf('rect', {
+    class: 'c4-rel-label-box',
+    x: cx - width / 2,
+    y: top,
+    width,
+    height: last.y + last.height - top,
+    fill,
+    stroke: 'none',
+  });
 }

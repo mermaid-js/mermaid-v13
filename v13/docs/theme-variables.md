@@ -15,7 +15,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, c4 |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, c4 |

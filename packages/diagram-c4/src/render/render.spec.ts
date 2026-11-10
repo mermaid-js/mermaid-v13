@@ -325,8 +325,8 @@ describe('relations (D455)', () => {
     );
     expect(byClass(rel, 'text', 'c4-rel-label')).toHaveLength(1);
     expect(rel).toContain('font-style="italic">[HTTPS]<');
-    // No box under the text: v12 drew none (D455 takes Pele's placement only).
-    expect(rel).not.toContain('<rect');
+    // Text sits on a box of the page's background, which the line does not run through.
+    expect(byClass(rel, 'rect', 'c4-rel-label-box')[0]).toMatchObject({ fill: 'var(--_bg)' });
   });
 
   it('numbers C4Dynamic’s relations in model order', async () => {

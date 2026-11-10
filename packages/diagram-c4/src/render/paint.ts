@@ -10,8 +10,8 @@
  *   config's `<kind>_bg_color`/`_border_color`, else the schema's; text `$fontColor`, else
  *   `#FFFFFF` (v12 `c4ShapeAdapter.ts`);
  * - a relation: line `$lineColor`, else `c4RelationColor`; text `$textColor`, else
- *   `c4RelationColor`; arrowheads the page's `textColor` (v12's markers took the root's
- *   `fill`, whatever `$lineColor` said);
+ *   `c4RelationColor`, on a box of the page's `background`; arrowheads the page's `textColor`
+ *   (v12's markers took the root's `fill`, whatever `$lineColor` said);
  * - the title `c4TitleColor`.
  *
  * A value the check refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` per
@@ -42,11 +42,12 @@ export interface BoundaryPaint {
   readonly text?: Paint;
 }
 
-/** A relation's line, its arrowheads, and its text (undefined when it has none). */
+/** A relation's line, its arrowheads, and its text and the box under it (undefined when it has none). */
 export interface RelationPaint {
   readonly stroke: Paint;
   readonly head: Paint;
   readonly text?: Paint;
+  readonly labelBkg?: Paint;
 }
 
 export interface Paints {
@@ -177,7 +178,11 @@ function relationPaints(
     const given = colours.checked(textColor, named('textColor', owner), ast);
     const text = r.label || r.techn ? (given ?? colours.theme('c4RelationColor')) : undefined;
     const head = colours.theme('textColor');
-    out.set(r.index, { stroke, head, ...(text ? { text } : {}) });
+    out.set(r.index, {
+      stroke,
+      head,
+      ...(text ? { text, labelBkg: colours.theme('background') } : {}),
+    });
   }
   return out;
 }

@@ -2412,7 +2412,8 @@ new, as v12 wrote no classes there: the title `text.c4-title`; `g.c4-boundaries`
 `g.c4-boundary` (`c4-deployment-node` on a deployment node) with its `rect` and
 `text.c4-boundary-label`, `-type` and `-descr`; `g.c4-elements`; `g.c4-relations` > each
 `g.c4-relation` with its `title` (the `descr`), `path.c4-rel.c4-rel-<kind>`, its arrowheads
-`path.marker`, `text.c4-rel-label` and `text.c4-rel-techn`.
+`path.marker`, the label box `rect.c4-rel-label-box` and `text.c4-rel-label` and
+`text.c4-rel-techn`.
 
 | v12 | v13 | Why |
 | --- | --- | --- |
@@ -2421,7 +2422,8 @@ new, as v12 wrote no classes there: the title `text.c4-title`; `g.c4-boundaries`
 | Arrowheads in the page's text colour (the marker took the root's `fill`), whatever `$lineColor` said, the tip 1 px past the outline (`refX 9` of a 10 px head) | The same colour (`textColor`), the tip on the outline | v12; the line stops at the outline |
 | Element ids `<render id>-<alias>` | No ids: `data-id` (the alias) and `data-ast` on each element's `g.node` and each boundary's `g`; a relation's `path` carries `data-ast` and `data-id` (`<from>-><to>`); text carries `data-id` only | R-ARCH-6, R-PARSE-8, D458, pitfall 12 |
 | Boundaries drawn after their contents, so a boundary's `$bgColor` painted over its shapes | Boundaries first (parents before children), then elements, then relations | Spec #522 |
-| The first relation a `<line>`, the others a quadratic curve through a fixed control point; labels to the right of the midpoint by half their width, no background | Each relation one `path` along the routed line (straight, bent round shapes, or a self-loop), its label and italic `[techn]` placed along the line where they cover least, with no background box, as v12 | D455 |
+| The first relation a `<line>`, the others a quadratic curve through a fixed control point; labels to the right of the midpoint by half their width, no background | Each relation one `path` along the routed line (straight, bent round shapes, or a self-loop), its label and italic `[techn]` placed along the line where they cover least | D455 |
+| Relation labels had no background: they sat beside the curve | Labels and `[techn]` on a `rect.c4-rel-label-box` of the page's `background`, as Pele draws them, since they sit on the line | D455 (needs a D-id) |
 | A relation's `descr` was never drawn | The relation group's SVG `<title>` | D455 |
 | The title a `<text>` at `x = boxWidth/2 − 4·diagramMarginX`, in a row above the diagram reached by a negative-y viewBox | `text.c4-title` centred over the diagram in a 60 px row at the top of a `0 0 width height` viewBox | D224 |
 | `$link`, `$sprite`, `$tags` (but shape words), `$shadowing` and `$legend*` parsed and not drawn | The same: no `<a>`, no icon, no 48 px sprite gap on a boundary | D457 |
