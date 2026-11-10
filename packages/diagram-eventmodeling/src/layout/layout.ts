@@ -51,6 +51,7 @@ import type {
   Point,
   Rect,
 } from './types.ts';
+import { unionRects } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`). */
 export type EventModelLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -399,21 +400,7 @@ export function drawn(
   return out;
 }
 
-/** The smallest rectangle holding every one of `rects`; a zero box at the origin for none. */
-function union(rects: readonly Rect[]): Rect {
-  if (rects.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  let x1 = Infinity;
-  let y1 = Infinity;
-  let x2 = -Infinity;
-  let y2 = -Infinity;
-  for (const r of rects) {
-    x1 = Math.min(x1, r.x);
-    y1 = Math.min(y1, r.y);
-    x2 = Math.max(x2, r.x + r.width);
-    y2 = Math.max(y2, r.y + r.height);
-  }
-  return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-}
+const union = unionRects;
 
 const inflate = (r: Rect, by: number): Rect => ({
   x: r.x - by,

@@ -29,6 +29,7 @@ export {
   V12_SPACING,
   type SpacingConfig,
 } from './layered/index.ts';
+export { RectUnion, unionRects, type Rect } from './bounds.ts';
 export { graphSpacing, groupPadding, labelledEdge, sideways } from './graph.ts';
 export { countCrossings, validateLayout } from './validate.ts';
 export { validateGrid } from './validate-grid.ts';
