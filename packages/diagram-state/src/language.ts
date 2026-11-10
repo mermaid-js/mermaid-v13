@@ -9,6 +9,7 @@ import { stateHover } from './facet/hover.ts';
 import { stateCategories } from './generated/categories.ts';
 import { parseState } from './parser/index.ts';
 import type { StateDocument, StateParseResult } from './parser/index.ts';
+import { shapeReason } from '@mermaid-js/core/parser-kit';
 
 export { stateCategories } from './generated/categories.ts';
 export { stateDocs } from './generated/docs.ts';
@@ -16,14 +17,6 @@ export { detectState, parseState, stateTokens, StateTokenKind } from './parser/i
 export type * from './parser/index.ts';
 
 const HEADER = 'stateDiagram-v2\n';
-
-/** Blank, line-break and space checks every kind of id shares. */
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'An id cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'An id cannot contain a line break.';
-  if (/\s/.test(name)) return 'An id cannot contain spaces.';
-  return undefined;
-}
 
 /**
  * Whether `name`, written for `@` in the one-statement `line`, reads back as exactly one
@@ -58,7 +51,7 @@ const CLASS_LINES = ['classDef @ fill:#000', 'class Z @', 'Z:::@'];
 
 /** Why `name` cannot be a symbol of `kind` (`state`, the default, or `class`), if it cannot. */
 function invalidReason(name: string, kind = 'state'): string | undefined {
-  const shape = shapeReason(name);
+  const shape = shapeReason(name, 'An id');
   if (shape) return shape;
   if (kind === 'class') {
     return CLASS_LINES.every((l) => readsBack(l, name, 'class'))

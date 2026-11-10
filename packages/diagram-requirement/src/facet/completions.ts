@@ -34,6 +34,7 @@ import {
   tokenBefore,
   VALUES,
 } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -59,35 +60,6 @@ const STATEMENT_END = new Set<number>([
 /** Ids, keywords and numbers: a cursor inside one replaces all of it. */
 const isWord = (kind: number) =>
   ['Variable', 'Keyword', 'Number', 'Constant', 'Type'].includes(requirementCategories[kind] ?? '');
-
-/** Items filtered by the typed prefix (case-insensitive, as the keywords), one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.toLowerCase().startsWith(this.prefix.toLowerCase()) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-
-  keywords(table: readonly KeywordItem[], expected: ReadonlySet<number>, kind: CompletionKind) {
-    for (const k of table) {
-      if (!expected.has(k.kind)) continue;
-      const documentation = requirementDocs[k.kind];
-      this.add(k.label, kind, {
-        insertText: k.insert ?? k.label,
-        ...(k.detail === undefined ? {} : { detail: k.detail }),
-        ...(documentation === undefined ? {} : { documentation }),
-      });
-    }
-  }
-}
 
 /** The statement the cursor is in, up to the word being typed. */
 interface Statement {
@@ -192,18 +164,18 @@ export function requirementCompletions(
   if (VALUE_KINDS.some((k) => expected.has(k))) return [];
   const range = wordRange(text, tokens, probe);
   if (!range) return [];
-  const items = new Items(text.slice(range.start, probe.offset), range);
+  const items = new Items(text.slice(range.start, probe.offset), range, true);
   const model = result.model as RequirementModel;
-  items.keywords(STATEMENT_KEYWORDS, expected, 'keyword');
-  items.keywords(FIELDS, expected, 'property');
-  items.keywords(VALUES, expected, 'constant');
-  items.keywords(RELATIONSHIPS, expected, 'keyword');
+  for (const k of STATEMENT_KEYWORDS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
+  for (const k of FIELDS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'property');
+  for (const k of VALUES) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'constant');
+  for (const k of RELATIONSHIPS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
   const st = statementBefore(text, tokens, range.start);
   if (NAME.some((k) => expected.has(k)) || expected.has(T.Alpha)) {
     const context = nameContext(st);
     if (context === 'boxes') boxes(items, model);
     else if (context === 'classes') classes(items, model);
   }
-  if (st.head !== -1) items.keywords(OPERATORS, expected, 'operator');
+  if (st.head !== -1) for (const k of OPERATORS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'operator');
   return items.list;
 }

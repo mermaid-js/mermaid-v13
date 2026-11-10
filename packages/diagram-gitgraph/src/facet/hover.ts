@@ -11,8 +11,8 @@ import type { GitCommit, GitModel } from '../model.ts';
 import type { GitGraphDocument, GitStatementNode, GitValue } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span, TEXT_WORDS } from './tables.ts';
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
+import { inside } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 const plural = (n: number, word: string) =>
   n === 0 ? `no ${word}s` : `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Kinds whose docs describe values, not keywords: no hover. */
@@ -113,15 +113,5 @@ export function gitGraphHover(
   }
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  let range = t.range;
-  const word = TEXT_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = gitgraphDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, TEXT_WORDS[t.kind], gitgraphDocs[t.kind]);
 }

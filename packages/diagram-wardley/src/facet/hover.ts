@@ -23,6 +23,7 @@ import {
   showPercent,
   span,
 } from './tables.ts';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 
 /** Tokens with a doc that hover leaves alone: names, values and text. */
 const NO_DOC = new Set<number>([T.String, T.Decimal, T.Int, T.Id, T.Name, T.LinkLabel]);
@@ -105,16 +106,5 @@ export function wardleyHover(
   if (coordinate) return coordinate;
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  let range = t.range;
-  // A statement token holds its text too: only the keyword is hovered.
-  const word = TEXT_STATEMENTS[t.kind]?.word;
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = wardleyDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, TEXT_STATEMENTS[t.kind]?.word, wardleyDocs[t.kind]);
 }

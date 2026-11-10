@@ -21,26 +21,9 @@ import type { TreemapDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ITEMS, span, tokenBefore } from './tables.ts';
 import type { ItemPlace } from './tables.ts';
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, line break, quote, `:` or `,` after the cursor.
-  const stop = /[\s"':,]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
-
-/** Whether only blanks come before `at` on its line. */
-function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
-}
+import { atLineStart } from '@mermaid-js/core/parser-kit';
+import { wordRange } from '@mermaid-js/core/parser-kit';
+import { keywordItem } from '@mermaid-js/core/parser-kit';
 
 /** The kind of the token that ends right at `at` (no blank between), if any. */
 function gluedBefore(tokens: TokenStream | undefined, at: number): number | undefined {
@@ -60,7 +43,7 @@ export function treemapCompletions(
   if (probe.mode !== 'INITIAL') return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, /[\s"':,]/);
   const prefix = text.slice(range.start, probe.offset);
   const lineStart = atLineStart(text, range.start);
   const before = gluedBefore(result.tokens, range.start);
@@ -76,15 +59,7 @@ export function treemapCompletions(
     // `:::` goes right after the name, with no blank (D401).
     if (k.kind === T.StyleSeparator && before !== T.String) continue;
     if (!k.label.startsWith(prefix)) continue;
-    const documentation = treemapDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    out.push(keywordItem(k, range, treemapDocs[k.kind]));
     if (k.kind !== T.StyleSeparator) continue;
     for (const name of classes) {
       out.push({ label: `:::${name}`, kind: 'class', insertText: `:::${name}`, range });

@@ -172,7 +172,7 @@ function blockIds(
  * edge's label (`closing`), only those that close it (no `<` head).
  */
 function linkRest(text: string, at: number, closing: boolean): CompletionItem[] | undefined {
-  const before = lineBefore(text, at);
+  const before = lineBefore(text, at, true);
   let k = before.length;
   while (k > 0 && LINK_CHAR.test(before.charAt(k - 1))) k--;
   // `x` and `o` before the link are part of the id, unless a blank comes before them.
@@ -295,7 +295,7 @@ export function blockCompletions(
   if (mode === 'LLABEL' && typed === '' && probe.expected.includes(T.Link))
     return linkItems(new Items('', span(offset, offset)), true);
   if (mode !== 'INITIAL' || LINE_BREAK.test(typed)) return [];
-  const count = COLUMNS_ARG.exec(lineBefore(text, offset));
+  const count = COLUMNS_ARG.exec(lineBefore(text, offset, true));
   if (count) {
     const at = offset - (count[1] ?? '').length;
     const items = new Items(count[1] ?? '', span(at, runAround(text, offset, LETTER).end));
@@ -333,7 +333,7 @@ function codeItems(
     if (id !== undefined) shapes(items, id, id);
     return items.list;
   }
-  const lineStart = BLANK.test(lineBefore(text, start));
+  const lineStart = BLANK.test(lineBefore(text, start, true));
   if (typed === '' && !lineStart && AFTER_BLOCK.has(prevKind) && expected.has(T.Link)) {
     // A complete block: what links it on, its shape, and the blocks of its row.
     linkItems(items, false);

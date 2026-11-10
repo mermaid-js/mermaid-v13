@@ -11,6 +11,7 @@ import type { JourneyModel, JourneyTask } from '../model.ts';
 import type { JourneyDocument, JourneyTaskNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, meanScore, names, plural, scoreFace, span } from './tables.ts';
+import { inside } from '@mermaid-js/core/parser-kit';
 
 /** Keyword tokens that also hold text: the keyword hovered, and the doc it shows. */
 const WORDS: Readonly<Partial<Record<number, readonly [word: string, doc: number]>>> = {
@@ -21,8 +22,6 @@ const WORDS: Readonly<Partial<Record<number, readonly [word: string, doc: number
   [T.AccDescr]: ['accDescr', T.AccDescr],
   [T.AccDescrMultiline]: ['accDescr', T.AccDescr],
 };
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 /** The task node whose range holds `r`, with its index in the model's tasks. */
 function taskAt(ast: JourneyDocument, r: Range): [JourneyTaskNode, number] | undefined {

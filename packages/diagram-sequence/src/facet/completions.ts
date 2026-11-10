@@ -32,6 +32,11 @@ import {
   tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
+import { wordRangeOf } from '@mermaid-js/core/parser-kit';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+
+const arrow = (items: Items, a: Arrow): void =>
+  items.add(a.text, 'operator', { detail: a.draws, documentation: MESSAGE_DOC });
 
 /** Lexer modes in which code (not free text) is written. */
 const CODE_MODES = new Set(['INITIAL', 'ID', 'ALIAS', 'LINE']);
@@ -50,27 +55,6 @@ const TITLE_KINDS = new Set<number>([T.Title, T.LegacyTitle]);
 const WORD = /[^\s:;,+<>()-]/;
 /** Characters a half-typed arrow is made of. */
 const ARROW_CHAR = /[-<>xX)|\\/]/;
-
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    private readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-
-  arrow(a: Arrow): void {
-    this.add(a.text, 'operator', { detail: a.draws, documentation: MESSAGE_DOC });
-  }
-}
 
 /** Whether the cursor is inside free text: a message, note, label or title. */
 function inText(tokens: TokenStream, o: number): boolean {
@@ -137,7 +121,7 @@ function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem
   let end = o;
   while (end < text.length && /[-<>|\\/]/.test(text.charAt(end))) end++;
   const items = new Items(typed, span(from, end));
-  for (const a of ARROWS) if (a.text !== text.slice(from, end)) items.arrow(a);
+  for (const a of ARROWS) if (a.text !== text.slice(from, end)) arrow(items, a);
   return items.list;
 }
 
@@ -216,13 +200,6 @@ function menuOrTitle(text: string, tokens: TokenStream, o: number): 'menu' | 'ti
   return undefined;
 }
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, probe: ProbeResult): Range {
-  let end = probe.offset;
-  while (end < text.length && WORD.test(text.charAt(end))) end++;
-  return span(probe.prefix.start, end);
-}
-
 /** Participant ids in first-mention order, with their labels, leaving out the word typed. */
 function participants(items: Items, doc: DocumentView<SequenceDocument>, typedAt: number): void {
   const { model, symbols } = doc.result;
@@ -249,7 +226,7 @@ export function sequenceCompletions(
   if (rest) return rest;
   const menu = menuOrTitle(text, tokens, probe.offset);
   if (menu === 'title') return [];
-  const range = wordRange(text, probe);
+  const range = wordRangeOf(text, probe, WORD);
   const items = new Items(text.slice(range.start, probe.offset), range);
   const expected = new Set(probe.expected);
   const atStatement = expected.has(T.Participant) && expected.has(T.Note);
@@ -259,11 +236,7 @@ export function sequenceCompletions(
     // `link` is also a participant id; `create destroy` is not a statement.
     if (k.kind === T.Link && !atStatement) continue;
     if (k.kind === T.Destroy && afterCreate) continue;
-    const documentation = sequenceDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, sequenceDocs[k.kind]);
   }
   for (const p of PLACEMENTS) {
     if (expected.has(p.kind)) {
@@ -271,6 +244,6 @@ export function sequenceCompletions(
     }
   }
   if (expected.has(T.Actor) || menu === 'menu') participants(items, doc, range.start);
-  if (menu === undefined) for (const a of ARROWS) if (expected.has(a.token)) items.arrow(a);
+  if (menu === undefined) for (const a of ARROWS) if (expected.has(a.token)) arrow(items, a);
   return items.list;
 }

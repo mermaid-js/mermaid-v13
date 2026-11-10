@@ -45,6 +45,9 @@ import {
   span,
   tokenBefore,
 } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+import { afterDirection } from '@mermaid-js/core/parser-kit';
+import { wordRunRange } from '@mermaid-js/core/parser-kit';
 
 /** Modes in which a statement, a header or a `click` target is being written. */
 const CODE_MODES = new Set(['INITIAL', 'dir', 'click']);
@@ -57,23 +60,6 @@ const isWord = (kind: number) =>
 const BLANK = new Set<number>([T.Space, Kind.Space]);
 /** Where a statement ends; `end` closes a block and takes the line break after it. */
 const STATEMENT_END = new Set<number>([Kind.Newline, T.Semi, T.Eof, Kind.EOF, T.End]);
-
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    private readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
 
 /** The statement the cursor is in, up to the word being typed. */
 interface Statement {
@@ -105,29 +91,6 @@ function statementBefore(tokens: TokenStream, at: number): Statement {
   for (let i = kinds.length - 1; i >= 0 && prev < 0; i--)
     if (!BLANK.has(kinds[i]!)) prev = kinds[i]!;
   return { head: first < 0 ? -1 : kinds[first]!, prev, groups };
-}
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  let i = tokenBefore(tokens, o);
-  if (i >= 0 && (tokens.end[i] ?? 0) <= o) i++;
-  while (
-    i < tokens.length &&
-    (tokens.start[i] ?? 0) <= end &&
-    (tokens.end[i] ?? 0) > end &&
-    isWord(tokens.kind[i]!) &&
-    !/\s/.test(text.charAt(end))
-  ) {
-    end = tokens.end[i] ?? end;
-    i++;
-  }
-  // Some tokens take the blanks after them (`end\n  `): the word stops at the first blank
-  // after the cursor, so a range never runs on to the next line or statement.
-  const blank = /\s/.exec(text.slice(o, end));
-  if (blank) end = o + blank.index;
-  return span(probe.prefix.start, end);
 }
 
 /** Whether `[from, to)` is blanks on the header line, right after the header keyword. */
@@ -370,11 +333,7 @@ function shapeData(
 function byKind(items: Items, expected: ReadonlySet<number>): void {
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind)) continue;
-    const documentation = flowchartDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, flowchartDocs[k.kind]);
   }
   if (expected.has(T.LinkTarget)) for (const t of LINK_TARGETS) items.add(t, 'constant');
 }
@@ -401,13 +360,6 @@ function isId(tokens: TokenStream, range: Range): boolean {
     if (!ID_PART.has(tokens.kind[i]!)) return false;
   }
   return true;
-}
-
-/** `direction ` written as a whole line so far: a subgraph direction is being typed. */
-function afterDirection(text: string, at: number): boolean {
-  let lineStart = at;
-  while (lineStart > 0 && !/[\r\n]/.test(text.charAt(lineStart - 1))) lineStart--;
-  return /^[^\S\r\n]*direction[^\S\r\n]+$/.test(text.slice(lineStart, at));
 }
 
 /** Node and subgraph ids, then the word's bracket shapes when it is a node in a chain. */
@@ -457,7 +409,7 @@ export function flowchartCompletions(
   if (rest.length > 0 || EDGE_TEXT_MODES.has(probe.mode)) return rest;
   if (!CODE_MODES.has(probe.mode)) return [];
 
-  const word = wordRange(text, tokens, probe);
+  const word = wordRunRange(text, tokens, probe, isWord);
   // `A,B` is one word to the lexer: only what follows the last comma is replaced.
   const comma = text.slice(word.start, probe.offset).lastIndexOf(',');
   const range = comma >= 0 ? span(word.start + comma + 1, word.end) : word;

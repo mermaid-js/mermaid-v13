@@ -10,6 +10,7 @@ import { sequenceHover } from './facet/hover.ts';
 import { sequenceCategories } from './generated/categories.ts';
 import { parseSequence } from './parser/index.ts';
 import type { SequenceDocument } from './parser/index.ts';
+import { shapeReason } from '@mermaid-js/core/parser-kit';
 
 export { sequenceCategories } from './generated/categories.ts';
 export { sequenceDocs } from './generated/docs.ts';
@@ -45,14 +46,6 @@ const PARTICIPANT_LINES = [
 /** How many lines also name the other participant, `Z`. */
 const ZS = PARTICIPANT_LINES.filter((l) => l.includes('Z')).length;
 
-/** Blank, line-break and space checks. */
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'An id cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'An id cannot contain a line break.';
-  if (name !== name.trim()) return 'An id cannot start or end with a space.';
-  return undefined;
-}
-
 /**
  * Whether `name`, written for `@` in every line of {@link PARTICIPANT_LINES}, reads back as
  * exactly one participant symbol named `name` at each spot, with no error. One parse of all
@@ -79,7 +72,7 @@ function readsBack(name: string): boolean {
 
 /** Why `name` cannot be a participant id, if it cannot. */
 function invalidReason(name: string): string | undefined {
-  return shapeReason(name) ?? (readsBack(name) ? undefined : `'${name}' is not a participant id.`);
+  return shapeReason(name, 'An id', 'ends') ?? (readsBack(name) ? undefined : `'${name}' is not a participant id.`);
 }
 
 /** The sequence facet. */

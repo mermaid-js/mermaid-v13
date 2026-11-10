@@ -5,6 +5,10 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { LINE_BREAK } from '../parser/text.ts';
+import { span } from '@mermaid-js/core/parser-kit';
+export { lineBefore } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /**
  * The `@{ … }` keys v12's `addNode` reads (spec #424 story 4, D375, D376), in the order
@@ -33,23 +37,6 @@ export const DATA_KEYS: readonly (readonly [key: string, doc: string])[] = [
 
 /** Hover doc of each `@{ … }` key. */
 export const KEY_DOCS: Readonly<Record<string, string>> = Object.fromEntries(DATA_KEYS);
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_BREAK.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** The text of `at`'s line from `at` on. */
 export function lineAfter(text: string, at: number): string {

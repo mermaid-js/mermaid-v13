@@ -12,6 +12,7 @@ import { ARROW_SET } from '../parser/tables.ts';
 import { generatedId } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROW_MEANING, code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
 
 /** At most this many members or rows are listed; the rest are counted. */
 const LISTED = 8;
@@ -136,14 +137,6 @@ function relationAt(children: readonly UsecaseStatementNode[], at: number) {
     if (c.type === 'Relation' && c.arrowRange.start <= at && at <= c.arrowRange.end) return c;
   }
   return undefined;
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 const RELATION_WORDS = new Set<number>([T.Include, T.Extend, T.Generalization, T.DependencyArrow]);

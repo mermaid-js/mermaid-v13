@@ -16,14 +16,9 @@ import { textKeyword } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { inside, span, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
+import { code } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */
 const keywordOf = (kind: number): string | undefined =>
@@ -73,15 +68,5 @@ export function treeViewHover(
   }
   const t = at.token;
   if (!t) return undefined;
-  let range = t.range;
-  const word = keywordOf(t.kind);
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (!inside(at.offset, range)) return undefined;
-  const docText = treeviewDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, keywordOf(t.kind), treeviewDocs[t.kind]);
 }

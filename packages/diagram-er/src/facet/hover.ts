@@ -26,6 +26,7 @@ import {
   plural,
   span,
 } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
 
 /** At most this many attributes are listed; the rest are counted. */
 const LISTED = 8;
@@ -86,14 +87,6 @@ function symbolHover(s: SymbolOccurrence, model: ErModel): string | undefined {
     default:
       return undefined;
   }
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 /** The relationship whose cardinalities and line hold `at`. */

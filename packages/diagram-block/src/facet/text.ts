@@ -3,30 +3,14 @@
  * and the token at one.
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { span } from '@mermaid-js/core/parser-kit';
+export { lineBefore } from '@mermaid-js/core/parser-kit';
+export { plural } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** A line break as the lexer reads one (`\s` takes the line separators). */
 export const LINE_BREAK = /[\n\r\u2028\u2029]/;
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
-/** `1 block`, `2 blocks`. */
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_BREAK.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** Where the run of characters matching `re` (one character each) around `at` starts and ends. */
 export function runAround(text: string, at: number, re: RegExp, from = 0, to = text.length): Range {

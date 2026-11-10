@@ -7,6 +7,9 @@ import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
 import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';
+export { lineBefore } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -140,23 +143,6 @@ export const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
   [T.TodayMarker]: 'todayMarker',
   [T.HrefKeyword]: 'href',
 };
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !/[\n\r]/.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** Each id's last task: the one `after`/`until` name (`ids.ts` `lastById`). */
 export function tasksById(model: GanttModel | undefined): Map<string, GanttTask> {

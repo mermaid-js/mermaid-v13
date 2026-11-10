@@ -3,6 +3,10 @@
 import { parseEr } from '../parser/index.ts';
 import { erTokens } from '../parser/tokens-api.ts';
 import { T } from '../parser/tokens.ts';
+import { shapeReason } from '@mermaid-js/core/parser-kit';
+import { readsBack } from '@mermaid-js/core/parser-kit';
+export { readsBack } from '@mermaid-js/core/parser-kit';
+export { shapeReason } from '@mermaid-js/core/parser-kit';
 
 export const HEADER = 'erDiagram\n';
 const KEYWORDS = new Set<number>([
@@ -30,33 +34,9 @@ const RELATIONSHIP_WORDS = new Set<number>([
   T.NonIdentifying,
 ]);
 
-/** Blank, line-break and space checks every kind of name shares. */
-export function shapeReason(name: string): string | undefined {
-  if (name === '') return 'A name cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'A name cannot contain a line break.';
-  if (/\s/.test(name)) return 'A name cannot contain spaces.';
-  return undefined;
-}
-
-/**
- * Whether `name` reads back as exactly one `kind` symbol named `name` at `at` when written
- * into `text` (a one-statement probe document).
- */
-export function readsBack(text: string, at: number, name: string, kind: string): boolean {
-  const { diagnostics, symbols } = parseEr(text);
-  const hits = symbols.filter((s) => s.kind === kind);
-  return (
-    !diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
-}
-
 /** Why `name` cannot be an entity or subgraph name: it must read back alone on a line. */
 export function entityReason(name: string): string | undefined {
-  const shape = shapeReason(name);
+  const shape = shapeReason(name, 'A name');
   if (shape) return shape;
   const text = `${HEADER}${name}\n`;
   const tokens = erTokens(text).filter(
@@ -66,7 +46,7 @@ export function entityReason(name: string): string | undefined {
   if (tokens.some((t) => RELATIONSHIP_WORDS.has(t.kind))) {
     return `'${name}' is read as a cardinality or line.`;
   }
-  return readsBack(text, HEADER.length, name, 'entity')
+  return readsBack(parseEr(text), HEADER.length, name, 'entity')
     ? undefined
     : `'${name}' is not an entity name.`;
 }

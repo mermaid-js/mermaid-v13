@@ -14,6 +14,11 @@ import {
   T,
 } from '../parser/tokens.ts';
 import { defaultLaneLabel } from '../structure.ts';
+import { tokenBefore } from '@mermaid-js/core/parser-kit';
+export { inside } from '@mermaid-js/core/parser-kit';
+export { tokenBefore } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -87,21 +92,6 @@ export const KIND_KINDS: ReadonlySet<number> = new Set(KIND_LIST);
 export const frameNodes = (doc: EventModelDocument): EventModelFrameNode[] =>
   doc.children.filter((n): n is EventModelFrameNode => n.type === 'Frame');
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
 /** The kinds of the significant tokens ending at or before `at`, last first (at most `n`). */
 export function kindsBefore(tokens: TokenStream | undefined, at: number, n: number): number[] {
   const out: number[] = [];
@@ -114,19 +104,6 @@ export function kindsBefore(tokens: TokenStream | undefined, at: number, n: numb
   }
   return out;
 }
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
-/** Whether `offset` is in `r`, its ends included. */
-export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;
 
 /** `a`, `a and b`, `a, b and c`. */
 export function list(items: readonly string[]): string {

@@ -58,3 +58,5 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
+// Spike (shared facet helpers): one self-contained block.
+export * from './facet.ts';

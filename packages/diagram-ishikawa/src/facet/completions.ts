@@ -23,7 +23,7 @@ export function ishikawaCompletions(
   const { offset } = probe;
   const start = probe.prefix.start;
   const prefix = text.slice(start, offset);
-  if (LINE_BREAK.test(prefix) || !BLANK.test(lineBefore(text, start))) return [];
+  if (LINE_BREAK.test(prefix) || !BLANK.test(lineBefore(text, start, true))) return [];
   const lower = prefix.toLowerCase();
   // The rest of the word being typed goes too, when there is a prefix.
   const word = /^\S*/.exec(text.slice(offset))?.[0] ?? '';

@@ -18,6 +18,7 @@ import { T, TEXT_WORD } from '../parser/tokens.ts';
 import { eventModelStructure } from '../structure.ts';
 import type { EventModelRelation } from '../structure.ts';
 import { code, inside, list, span } from './tables.ts';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */
 const NO_DOC = new Set<number>([
@@ -174,16 +175,5 @@ export function eventModelingHover(
   if (name) return { range: name.range, contents: describe(name.kind, name.value) };
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  let range = t.range;
-  // A text statement's token holds its text too: only the keyword is hovered.
-  const word = TEXT_WORD[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = eventmodelingDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, TEXT_WORD[t.kind], eventmodelingDocs[t.kind]);
 }

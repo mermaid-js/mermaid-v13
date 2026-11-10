@@ -11,6 +11,8 @@ import type { PieDocument, PieSliceNode } from '../parser/ast.ts';
 import { pieSum } from '../shares.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span } from './tables.ts';
+import { inside } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -18,8 +20,6 @@ const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
   [T.AccTitle]: 'accTitle',
   [T.AccDescr]: 'accDescr',
 };
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 function sliceHover(node: PieSliceNode, model: PieModel): string {
   const head = `**slice** ${code(node.label)}`;
@@ -58,15 +58,6 @@ export function pieHover(at: HoverTarget, doc: DocumentView<PieDocument>): Hover
     }
   }
   if (!t) return undefined;
-  let range = t.range;
-  const word = VALUE_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = pieDocs[t.kind];
-  if (docText === undefined || t.kind === T.String || t.kind === T.Colon) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  const docText = t.kind === T.String || t.kind === T.Colon ? undefined : pieDocs[t.kind];
+  return keywordHover(text, at.offset, t.range, VALUE_WORDS[t.kind], docText);
 }

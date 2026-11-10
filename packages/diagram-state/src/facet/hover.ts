@@ -16,6 +16,7 @@ import type { StateDocument, StateRegionNode, StateStatementNode } from '../pars
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
 
 /** Kinds with no grammar terminal, and the kind whose doc covers them. */
 const DOC_OF: Readonly<Record<number, number>> = {
@@ -145,14 +146,6 @@ function arrowHover(ast: StateDocument, range: Range): Hover | undefined {
     };
   }
   return undefined;
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 export function stateHover(at: HoverTarget, doc: DocumentView<StateDocument>): Hover | undefined {

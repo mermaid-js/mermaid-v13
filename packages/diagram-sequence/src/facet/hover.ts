@@ -13,12 +13,12 @@ import type {
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROWS, code, MESSAGE_DOC, span } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
+import { plural } from '@mermaid-js/core/parser-kit';
 
 const ARROW_BY_TOKEN = new Map(ARROWS.map((a) => [a.token, a]));
 /** `title …` is one token: only the keyword is hovered. */
 const TITLE_KINDS = new Set<number>([T.Title, T.LegacyTitle]);
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Every statement of the model, blocks opened, in source order. */
 function* statements(list: readonly SequenceStatement[]): Generator<SequenceStatement> {
@@ -60,14 +60,6 @@ function participantHover(name: string, model: SequenceModel): string | undefine
   const lifeLine = life.length === 0 ? '' : `\n\nIt is ${life.join(' and ')}.`;
   const counts = `Messages: ${into} in, ${out} out · ${plural(notes, 'note')}`;
   return `**${p.kind === 'actor' ? 'actor' : 'participant'}** ${code(name)}\n\n${facts.join(' · ')}\n\n${counts}${lifeLine}`;
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 function arrowHover(text: string, range: Range, kind: number, ast: SequenceDocument): Hover {

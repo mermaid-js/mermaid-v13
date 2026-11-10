@@ -9,6 +9,7 @@ import { classHover } from './facet/hover.ts';
 import { classCategories } from './generated/categories.ts';
 import { classTokens, parseClass } from './parser/index.ts';
 import type { ClassDocument, ClassParseResult } from './parser/index.ts';
+import { shapeReason } from '@mermaid-js/core/parser-kit';
 
 export { classCategories } from './generated/categories.ts';
 export { classDocs } from './generated/docs.ts';
@@ -16,14 +17,6 @@ export { ClassTokenKind, classTokens, detectClass, parseClass } from './parser/i
 export type * from './parser/index.ts';
 
 const HEADER = 'classDiagram\n';
-
-/** Blank, line-break and space checks every kind of name shares. */
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'A name cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'A name cannot contain a line break.';
-  if (/\s/.test(name)) return 'A name cannot contain spaces.';
-  return undefined;
-}
 
 /** `'name' is a keyword.` when `name` alone on a line lexes as one keyword. */
 function keywordReason(name: string): string | undefined {
@@ -60,7 +53,7 @@ const PROBES: Readonly<Record<string, readonly [before: string, after: string, n
 
 /** Why `name` cannot be a symbol of `kind` (`class` by default), if it cannot (D92). */
 function invalidReason(name: string, kind = 'class'): string | undefined {
-  const shape = shapeReason(name) ?? keywordReason(name);
+  const shape = shapeReason(name, 'A name') ?? keywordReason(name);
   if (shape) return shape;
   if (kind === 'namespace' && name.includes('.')) {
     return 'A namespace name cannot contain `.`: `A.B` makes namespace `B` inside `A`.';

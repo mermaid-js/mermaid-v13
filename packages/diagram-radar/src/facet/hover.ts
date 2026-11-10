@@ -11,11 +11,11 @@ import { radarDocs } from '../generated/docs.ts';
 import type { RadarAxisNode, RadarDocument, RadarEntryNode } from '../parser/ast.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 import { code, declaredAxes, span } from './tables.ts';
+import { inside } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 
 /** Tokens with a doc that hover leaves alone: punctuation and values. */
 const NO_DOC = new Set<number>([T.String, T.Number, T.Id]);
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 function axisHover(name: string, at: number, doc: DocumentView<RadarDocument>): string {
   const head = `**axis** ${code(name)}`;
@@ -53,16 +53,5 @@ export function radarHover(at: HoverTarget, doc: DocumentView<RadarDocument>): H
   }
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  let range = t.range;
-  // A statement token holds its text too: only the keyword is hovered.
-  const word = TEXT_STATEMENTS[t.kind]?.word;
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = radarDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, TEXT_STATEMENTS[t.kind]?.word, radarDocs[t.kind]);
 }

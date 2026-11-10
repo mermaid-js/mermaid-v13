@@ -37,6 +37,9 @@ import {
   tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+import { afterDirection } from '@mermaid-js/core/parser-kit';
+import { wordRunRange } from '@mermaid-js/core/parser-kit';
 
 /** Modes in which a statement is being written (`class` is after the `class` keyword). */
 const CODE_MODES = new Set(['INITIAL', 'class', 'namespace', 'namespace-body']);
@@ -51,23 +54,6 @@ const BLANK = new Set<number>([T.Space, Kind.Space]);
 const STATEMENT_END = new Set<number>([Kind.Newline, T.Eof, Kind.EOF, T.StructStart, T.StructStop]);
 /** Statement keywords after which the first word is a class name. */
 const CLASS_FIRST = new Set<number>([T.Class, T.NoteFor, T.Style, T.Callback, T.Link, T.Click]);
-
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    private readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
 
 /** The statement the cursor is in, up to the word being typed. */
 interface Statement {
@@ -104,28 +90,6 @@ function statementBefore(text: string, tokens: TokenStream, at: number): Stateme
     if (/\s/.test(gap)) groups++;
   }
   return { kinds, head: kinds[0] ?? -1, prev: kinds[kinds.length - 1] ?? -1, groups };
-}
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  let i = tokenBefore(tokens, o);
-  if (i >= 0 && (tokens.end[i] ?? 0) <= o) i++;
-  while (
-    i < tokens.length &&
-    (tokens.start[i] ?? 0) <= end &&
-    (tokens.end[i] ?? 0) > end &&
-    isWord(tokens.kind[i]!) &&
-    !/\s/.test(text.charAt(end))
-  ) {
-    end = tokens.end[i] ?? end;
-    i++;
-  }
-  // Never past a blank after the cursor: a range stays on the cursor's line.
-  const blank = /\s/.exec(text.slice(o, end));
-  if (blank) end = o + blank.index;
-  return span(probe.prefix.start, end);
 }
 
 /** Names of `kind` in first-mention order, leaving out the word being typed. */
@@ -190,20 +154,9 @@ function byKind(items: Items, expected: ReadonlySet<number>, st: Statement): voi
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind)) continue;
     if (CLICK_ACTIONS.has(k.kind) ? !clickAction : st.head !== -1) continue;
-    const documentation = classDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, classDocs[k.kind]);
   }
   if (expected.has(T.LinkTarget)) for (const t of LINK_TARGETS) items.add(t, 'constant');
-}
-
-/** `direction ` written as a whole line so far. */
-function afterDirection(text: string, at: number): boolean {
-  let lineStart = at;
-  while (lineStart > 0 && !/[\r\n]/.test(text.charAt(lineStart - 1))) lineStart--;
-  return /^[^\S\r\n]*direction[^\S\r\n]+$/.test(text.slice(lineStart, at));
 }
 
 type NameContext = 'classes' | 'styleClasses' | 'annotations' | 'arrows' | 'label' | 'none';
@@ -267,7 +220,7 @@ export function classCompletions(
   if (rest.length > 0) return rest;
   if (!CODE_MODES.has(probe.mode)) return [];
 
-  const range = wordRange(text, tokens, probe);
+  const range = wordRunRange(text, tokens, probe, isWord);
   const items = new Items(text.slice(range.start, probe.offset), range);
   if (afterDirection(text, range.start)) {
     for (const [dir, meaning] of DIRECTIONS) items.add(dir, 'constant', { detail: meaning });

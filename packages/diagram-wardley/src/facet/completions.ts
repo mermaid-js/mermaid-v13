@@ -25,6 +25,8 @@ import { NAME_SET } from '../parser/tables.ts';
 import { T, WARDLEY_TRIVIA } from '../parser/tokens.ts';
 import { nameReason, quoteName } from './names.ts';
 import { declarationKind, declaredNodes, ITEMS, span, tokenBefore } from './tables.ts';
+import { atLineStart } from '@mermaid-js/core/parser-kit';
+import { keywordItem } from '@mermaid-js/core/parser-kit';
 
 /** Tokens after which a node name is a reference: arrows, flows and the referring keywords. */
 const BEFORE_REFERENCE = new Set<number>([
@@ -53,13 +55,6 @@ function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeRe
     if (stop) end = o + stop.index;
   }
   return span(probe.prefix.start, end);
-}
-
-/** Whether only blanks come before `at` on its line. */
-function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
 }
 
 /**
@@ -95,15 +90,7 @@ export function wardleyCompletions(
     if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
     if (k.strategy && strategyWritten) continue;
     if (!k.label.startsWith(prefix)) continue;
-    const documentation = wardleyDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    out.push(keywordItem(k, range, wardleyDocs[k.kind]));
   }
   // A reference: after an arrow or flow (not in `evolution`, whose stages are no nodes), or
   // after a keyword that names a node.

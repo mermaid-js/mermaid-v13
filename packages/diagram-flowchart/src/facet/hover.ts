@@ -19,6 +19,8 @@ import { destructLink } from '../parser/model.ts';
 import { acceptedShape, SHAPE_GROUPS } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
 import { code, describeLink, DIRECTIONS, span, tokenBefore } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
+import { plural } from '@mermaid-js/core/parser-kit';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 
@@ -34,8 +36,6 @@ const unquote = (s: string) => {
   const t = s.trim();
   return t.length > 1 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t;
 };
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 function nodeHover(name: string, model: FlowModel, ast: FlowDocument): string | undefined {
   const v = model.vertices.find((x) => x.id === name);
@@ -104,14 +104,6 @@ function symbolHover(s: SymbolOccurrence, model: FlowModel, ast: FlowDocument): 
     default:
       return undefined;
   }
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 function linkHover(

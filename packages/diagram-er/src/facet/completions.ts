@@ -36,6 +36,10 @@ import {
   span,
   tokenBefore,
 } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+import { afterDirection } from '@mermaid-js/core/parser-kit';
+import { wordRange } from '@mermaid-js/core/parser-kit';
+import { atStatementStart as atLineStart } from '@mermaid-js/core/parser-kit';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -56,23 +60,6 @@ const STATEMENT_END = new Set<number>([Kind.Newline, Kind.EOF, T.Semi, T.Eof, T.
 /** Ids, keywords and numbers: a cursor inside one replaces all of it. */
 const isWord = (kind: number) =>
   ['Variable', 'Keyword', 'Number', 'Operator'].includes(erCategories[kind] ?? '');
-
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
 
 /** The statement the cursor is in, up to the word being typed. */
 interface Statement {
@@ -105,36 +92,6 @@ function statementBefore(text: string, tokens: TokenStream, at: number): Stateme
     prev: found[found.length - 1]?.kind ?? -1,
     groups,
   };
-}
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokenBefore(tokens, o);
-  if (i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0) && isWord(tokens.kind[i]!))
-    end = tokens.end[i] ?? o;
-  // Some tokens take the blanks after them (`end\n  `): the word stops at the first blank.
-  const blank = /\s/.exec(text.slice(o, end));
-  if (blank) end = o + blank.index;
-  return span(probe.prefix.start, end);
-}
-
-/** `direction ` written as a whole line so far: a direction is being typed. */
-function afterDirection(text: string, at: number): boolean {
-  let lineStart = at;
-  while (lineStart > 0 && !/[\r\n]/.test(text.charAt(lineStart - 1))) lineStart--;
-  return /^[^\S\r\n]*direction[^\S\r\n]+$/i.test(text.slice(lineStart, at));
-}
-
-/** Whether `at` starts the first word of its line (an attribute's type position). */
-function atLineStart(text: string, at: number): boolean {
-  for (let i = at - 1; i >= 0; i--) {
-    const c = text.charAt(i);
-    if (c === '\n' || c === '\r' || c === '{') return true;
-    if (!/\s/.test(c)) return false;
-  }
-  return true;
 }
 
 /**
@@ -200,11 +157,7 @@ function idContext(st: Statement): 'entities' | 'classes' | 'none' {
 function keywords(items: Items, expected: ReadonlySet<number>): void {
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind)) continue;
-    const documentation = erDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, erDocs[k.kind]);
   }
 }
 
@@ -242,7 +195,7 @@ function block(
   }
   // In an empty block the parser tests only `}`; a type may start there too.
   const typeAt = expected.has(T.AttributeWord) || expected.has(T.BlockStop);
-  if (typeAt && atLineStart(doc.text, at)) {
+  if (typeAt && atLineStart(doc.text, at, '{')) {
     const model = doc.result.model as ErModel;
     for (const e of model.entities) {
       for (const a of e.attributes) items.add(a.type, 'value', { detail: 'type' });
@@ -256,7 +209,7 @@ export function erCompletions(probe: ProbeResult, doc: DocumentView<ErDocument>)
   if (!tokens || VALUE_MODES.has(probe.mode)) return [];
   const expected = new Set(probe.expected);
   if (VALUE_KINDS.some((k) => expected.has(k))) return [];
-  const range = wordRange(text, tokens, probe);
+  const range = wordRange(text, tokens, probe, /\s/, isWord);
   const items = new Items(text.slice(range.start, probe.offset), range);
   if (probe.mode === 'block') {
     block(items, expected, doc, range.start);

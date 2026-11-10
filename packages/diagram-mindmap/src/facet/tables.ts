@@ -4,6 +4,9 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { MindmapShape } from '../model.ts';
+export { lineBefore } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** A shape written with delimiters: its opener, the closer it reads best with, its name. */
 export interface ShapeForm {
@@ -47,24 +50,7 @@ export const SHAPE_NAMES: Readonly<Record<MindmapShape, string>> = {
   hexagon: 'hexagon',
 };
 
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
 const LINE_END = /[\n\r\u2028\u2029]/;
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_END.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** The text of `at`'s line from `at` on. */
 export function lineAfter(text: string, at: number): string {

@@ -5,14 +5,12 @@
 import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
+import type { KeywordItem } from '@mermaid-js/core/parser-kit';
+export type { KeywordItem } from '@mermaid-js/core/parser-kit';
+export { LINK_TARGETS } from '@mermaid-js/core/parser-kit';
+export { tokenBefore } from '@mermaid-js/core/parser-kit';
+export { span } from '@mermaid-js/core/parser-kit';
+export { code } from '@mermaid-js/core/parser-kit';
 
 /** Statement and clause keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -48,9 +46,6 @@ export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = 
   ['LR', 'left to right'],
   ['RL', 'right to left'],
 ];
-
-/** `click … "url"` targets. */
-export const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
 /** Arrow forms offered where a link may start. */
 export const ARROWS = [
@@ -159,29 +154,3 @@ export function describeLink(type: string, stroke: string, length?: number): str
   const len = length !== undefined && length > 1 ? `, length ${length}` : '';
   return `${line} with ${head}${where}${len}`;
 }
-
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-/** `range` widened to the end of `[start, end)`. */
-export const span = (start: number, end: number): Range => ({ start, end });

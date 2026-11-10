@@ -38,6 +38,8 @@ import {
   STYLE_KEYS,
   tokenBefore,
 } from './tables.ts';
+import { wordRange } from '@mermaid-js/core/parser-kit';
+import { keywordItem } from '@mermaid-js/core/parser-kit';
 
 /** The lexer modes in which the cursor is in code (jison's start conditions). */
 const CODE_MODES = new Set(['INITIAL', 'bol']);
@@ -51,19 +53,6 @@ const STATEMENT_KEYWORDS = new Set<number>([
   T.Title,
   T.Venn,
 ]);
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, line break, quote, bracket, `,` or `:` after the cursor.
-  const stop = /[\s"[,:]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
 
 /** Where in its statement the cursor is. */
 type Place =
@@ -139,21 +128,14 @@ export function vennCompletions(
   const tokens = result.tokens;
   if (!tokens) return [];
   const expected = new Set(probe.expected);
-  const range = wordRange(text, tokens, probe);
+  const range = wordRange(text, tokens, probe, /[\s"[,:]/);
   const prefix = text.slice(range.start, probe.offset);
   const out: CompletionItem[] = [];
   const lineStart = /^[\t ]*$/.test(text.slice(lineStartOf(text, range.start), range.start));
   if (lineStart) {
     for (const k of KEYWORDS) {
       if (!k.kinds.some((kind) => expected.has(kind)) || !k.label.startsWith(prefix)) continue;
-      const documentation = vennDocs[k.doc];
-      out.push({
-        label: k.label,
-        kind: k.item,
-        insertText: k.insert ?? k.label,
-        range,
-        ...(documentation === undefined ? {} : { documentation }),
-      });
+      out.push(keywordItem(k, range, vennDocs[k.doc]));
     }
     if (out.length > 0) return out;
   }

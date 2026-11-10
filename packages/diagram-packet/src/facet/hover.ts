@@ -10,6 +10,8 @@ import { MAX_PACKET_ROWS } from '../normalise.ts';
 import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span } from './tables.ts';
+import { inside } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -17,8 +19,6 @@ const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
   [T.AccTitle]: 'accTitle',
   [T.AccDescr]: 'accDescr',
 };
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 function fieldHover(node: PacketFieldNode): string {
   const head = `**field** ${code(node.label)}`;
@@ -47,15 +47,6 @@ export function packetHover(at: HoverTarget, doc: DocumentView<PacketDocument>):
   }
   const t = at.token;
   if (!t) return undefined;
-  let range = t.range;
-  const word = VALUE_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = packetDocs[t.kind];
-  if (docText === undefined || t.kind === T.String || t.kind === T.Colon) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  const docText = t.kind === T.String || t.kind === T.Colon ? undefined : packetDocs[t.kind];
+  return keywordHover(text, at.offset, t.range, VALUE_WORDS[t.kind], docText);
 }

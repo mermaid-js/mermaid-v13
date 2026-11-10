@@ -17,6 +17,7 @@ import { boxesByName, boxNamed } from '../parser/boxes.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
 
 const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {
   const set = fields.filter(([, v]) => v !== '');
@@ -82,14 +83,6 @@ function classHover(name: string, model: RequirementModel): string {
 
 function symbolHover(s: SymbolOccurrence, model: RequirementModel): string | undefined {
   return s.kind === 'class' ? classHover(s.name, model) : boxHover(s.name, s.kind, model);
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 const relationAt = (doc: RequirementDocument, at: number): RelationNode | undefined =>

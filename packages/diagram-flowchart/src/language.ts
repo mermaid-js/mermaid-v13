@@ -11,6 +11,8 @@ import { flowchartCategories } from './generated/categories.ts';
 import { flowchartTokens, parseFlowchart } from './parser/index.ts';
 import type { FlowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
+import { shapeReason } from '@mermaid-js/core/parser-kit';
+import { readsBack } from '@mermaid-js/core/parser-kit';
 
 export { flowchartCategories } from './generated/categories.ts';
 export { flowchartDocs } from './generated/docs.ts';
@@ -38,7 +40,7 @@ const KEYWORDS = new Set<number>([
  * parser must read `name` alone on a line as one node whose id is exactly `name`.
  */
 function invalidIdReason(name: string): string | undefined {
-  const shape = shapeReason(name);
+  const shape = shapeReason(name, 'An id');
   if (shape) return shape;
   const text = `${HEADER}${name}\n`;
   // Tokens that start inside the name (`end` takes its line break with it).
@@ -60,46 +62,22 @@ function invalidIdReason(name: string): string | undefined {
   return ok ? undefined : `'${name}' is not a node id.`;
 }
 
-/** Blank, line-break and space checks every kind of id shares. */
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'An id cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'An id cannot contain a line break.';
-  if (/\s/.test(name)) return 'An id cannot contain spaces.';
-  return undefined;
-}
-
-/**
- * Whether `name` reads back as exactly one `kind` symbol named `name` at `at` when written
- * into `text` (a one-statement probe document).
- */
-function readsBack(text: string, at: number, name: string, kind: string): boolean {
-  const { diagnostics, symbols } = parseFlowchart(text);
-  const hits = symbols.filter((s) => s.kind === kind);
-  return (
-    !diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
-}
-
 /** Why `name` cannot be a symbol of `kind` (`node`/`subgraph`, `class`, `edge`), if it cannot. */
 function invalidReason(name: string, kind = 'node'): string | undefined {
   if (kind === 'class') {
     const at = HEADER.length + 'classDef '.length;
     const text = `${HEADER}classDef ${name} fill:#000\n`;
     return (
-      shapeReason(name) ??
-      (readsBack(text, at, name, 'class') ? undefined : `'${name}' is not a class name.`)
+      shapeReason(name, 'An id') ??
+      (readsBack(parseFlowchart(text), at, name, 'class') ? undefined : `'${name}' is not a class name.`)
     );
   }
   if (kind === 'edge') {
     const at = HEADER.length + 'A '.length;
     const text = `${HEADER}A ${name}@--> B\n`;
     return (
-      shapeReason(name) ??
-      (readsBack(text, at, name, 'edge') ? undefined : `'${name}' is not an edge id.`)
+      shapeReason(name, 'An id') ??
+      (readsBack(parseFlowchart(text), at, name, 'edge') ? undefined : `'${name}' is not an edge id.`)
     );
   }
   return invalidIdReason(name);

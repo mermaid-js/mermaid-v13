@@ -16,12 +16,11 @@ import { KEYWORDS } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import { code, span } from './markdown.ts';
 import { RELATION_TYPE_DOC, SLOT_DOCS } from './tables.ts';
+import { plural } from '@mermaid-js/core/parser-kit';
 
 const IGNORED = 'This one is ignored.';
 const SET_AFTER =
   'Changes nothing here: mermaid@12 set it again after the arguments (it applies in `UpdateElementStyle`).';
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** One argument under the cursor, from the AST or the tokens. */
 interface ArgAt {

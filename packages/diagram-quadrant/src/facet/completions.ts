@@ -21,6 +21,8 @@ import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { readsAs } from './names.ts';
 import { KEYWORDS, span, STYLE_KEYS, tokenBefore } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+import { wordRange } from '@mermaid-js/core/parser-kit';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -43,23 +45,6 @@ const WORD_KINDS = new Set<number>([T.Alpha, T.Num, T.UnicodeText, T.ClassName, 
 /** Ids, keywords and words of text: a cursor inside one replaces all of it. */
 const isWord = (kind: number) => WORD_KINDS.has(kind) || quadrantCategories[kind] === 'Keyword';
 
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
-
 /** The significant tokens of the statement the cursor is in, up to the word being typed. */
 function statementBefore(tokens: TokenStream, at: number): number[] {
   const kinds: number[] = [];
@@ -75,19 +60,6 @@ function statementBefore(tokens: TokenStream, at: number): number[] {
   return kinds.reverse();
 }
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokenBefore(tokens, o);
-  if (i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0) && isWord(tokens.kind[i]!))
-    end = tokens.end[i] ?? o;
-  // Padded keywords take the blanks after them: the word stops at the first blank.
-  const blank = /\s/.exec(text.slice(o, end));
-  if (blank) end = o + blank.index;
-  return span(probe.prefix.start, end);
-}
-
 /** Keywords whose kind the parser tests at the cursor. */
 function keywords(items: Items, expected: ReadonlySet<number>): void {
   if (expected.has(T.Quadrant)) {
@@ -95,12 +67,7 @@ function keywords(items: Items, expected: ReadonlySet<number>): void {
   }
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind)) continue;
-    const documentation = quadrantDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, quadrantDocs[k.kind]);
   }
 }
 
@@ -173,7 +140,7 @@ export function quadrantCompletions(
   if (!tokens || VALUE_MODES.has(probe.mode)) return [];
   const expected = new Set(probe.expected);
   if (expected.size === 0) return [];
-  const range = wordRange(text, tokens, probe);
+  const range = wordRange(text, tokens, probe, /\s/, isWord);
   const items = new Items(text.slice(range.start, probe.offset), range);
   keywords(items, expected);
   const st = statementBefore(tokens, range.start);

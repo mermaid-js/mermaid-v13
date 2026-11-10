@@ -11,6 +11,7 @@ import type { KanbanDocument, KanbanItemNode } from '../parser/ast.ts';
 import { FIRST_LINE } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, KEY_DOCS, span } from './tables.ts';
+import { plural } from '@mermaid-js/core/parser-kit';
 
 /** The tokens of an item statement, its data aside. */
 const ITEM_TOKENS = new Set<number>([
@@ -23,8 +24,6 @@ const ITEM_TOKENS = new Set<number>([
   T.MdStringStart,
   T.MdStringEnd,
 ]);
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** The item statement holding `at` (AST nodes are in source order and never overlap). */
 function itemAt(doc: DocumentView<KanbanDocument>, at: number): KanbanItemNode | undefined {

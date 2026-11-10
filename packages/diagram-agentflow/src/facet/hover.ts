@@ -25,6 +25,8 @@ import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { code, describeLink, DIRECTION_DOCS, shapeText, span, tokenBefore } from './tables.ts';
+import { trimmed } from '@mermaid-js/core/parser-kit';
+import { plural } from '@mermaid-js/core/parser-kit';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 
@@ -37,8 +39,6 @@ function* chainParts(
     else if (c.type === 'Flow' || c.type === 'Global') yield* chainParts(c.children);
   }
 }
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** A metadata value as a short text: strings as written, the rest as JSON. */
 function valueText(value: unknown): string {
@@ -153,14 +153,6 @@ function symbolHover(
     default:
       return undefined;
   }
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 function linkHover(
