@@ -35,6 +35,7 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | #566 T4 | 94,412 → 94,412 | 0 (core `usedBy` lists only, dropped from the bundle) |
 | #567 T5 | 94,412 → 94,430 | +18 (registry row, detector, config keys) |
 | #569 T7 | 94,430 → 94,444 | +14 (`ascii` in `formats`) |
+| final review | 94,444 → 94,444 | 0 (schema reason text and the usecase package only; load path 131,302 → 131,557, text path 10,307 → 10,893) |
 
 ## Merge log
 
