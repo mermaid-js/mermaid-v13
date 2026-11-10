@@ -1,0 +1,45 @@
+@ 13:5  sr|c/
+  13:3-13:7 "src/"
+  | **directory** `src/`
+  |
+  | Path: `/src/`
+  |
+  | Icon: `mermaid-treeview:folder`, the built-in folder glyph.
+@ 14:8  a.t|s
+  14:5-14:9 "a.ts"
+  | **file** `a.ts`
+  |
+  | Path: `/src/a.ts`
+  |
+  | Icon: `devicon:typescript`, from the icon maps.
+@ 15:8  b.j|s
+  15:5-15:9 "b.js"
+  | **file** `b.js`
+  |
+  | Path: `/src/b.js`
+  |
+  | Icon: `mermaid-treeview:file`, the built-in file glyph.
+@ 16:11  Docker|file
+  16:5-16:15 "Dockerfile"
+  | **file** `Dockerfile`
+  |
+  | Path: `/src/Dockerfile`
+  |
+  | Icon: `fa:docker`, from the icon maps.
+@ 17:9  READ|ME.md
+  17:5-17:14 "README.md"
+  | **file** `README.md`
+  |
+  | Path: `/src/README.md`
+  |
+  | Icon: none, since the icon maps give it `none`.
+@ 18:17  c.js icon(bo|ok)
+  18:10-18:20 "icon(book)"
+  | **icon** `icon(book)` of `c.js`
+  |
+  | Icon: `fa:book`, from its `icon(…)`.
+@ 19:17  d.js icon(fi|le)
+  19:10-19:20 "icon(file)"
+  | **icon** `icon(file)` of `d.js`
+  |
+  | Icon: `mermaid-treeview:file`, the built-in file glyph, from its `icon(…)`.
