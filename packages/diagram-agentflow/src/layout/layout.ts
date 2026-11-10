@@ -25,6 +25,9 @@ export function layoutAgentflow(
 ): AgentflowLayout {
   const prepared = prepareAgentflow(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
+  // In cells (text output, #551) the routes stay on the grid, ending on the boxes' sides: the
+  // `./ascii` entry repairs and draws them.
+  if (prepared.graph.grid !== undefined) return { ...laid, agentflow: prepared };
   return { ...laid, edges: endsOnOutlines(prepared, laid), agentflow: prepared };
 }
 

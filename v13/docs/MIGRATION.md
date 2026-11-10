@@ -2494,8 +2494,23 @@ no per-call options (D319, D302).
   needs `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
 - **Hand-drawn**: with `@mermaid-js/plugin-hand-drawn`, vertices, flow frames, collapsed cards
   and edges are sketched, as in v12 ([Hand-drawn look](#hand-drawn-look)).
-- **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until agentflow's ASCII
-  renderer lands (R-ASCII-5, #551).
+- **Text output** is new (v12 had none, D320, D469): `format: 'ascii'` draws agentflow as text
+  from the lazily loaded `@mermaid-js/diagram-agentflow/ascii` entry, in the `unicode` or
+  `ascii` charset ([ASCII output](./ascii.md#agentflow-diagrams)). It is the same graph laid out
+  in cells with `layered` (another `layout` draws as `layered`, with one `ASCII_DROPPED`
+  `layout` warning). Each kind is flowchart's text form for its shape: a task (and a connector)
+  a rounded box, a tool double sides, an input a slant (`/`), a decision a diamond (`◇`, `*`),
+  a refdoc a folded corner (`╲`, `\`), an action a hexagon (`<`, `>`); a flow is a frame with
+  its title on the top border, a collapsed flow a box marked `+`; `-->` ends in a head, `--x` in
+  a cross (`✕`, `x`), and `-.-` is dotted. It is never cropped: wider than `ascii.maxWidth`
+  it turns `LR` into `TB`, then warns `ASCII_TOO_WIDE`.
+- **Text output drops**, one `ASCII_DROPPED` per kind: `style` (`style`, `classDef`, `class`,
+  `linkStyle`, palette colours), `curve` (`interpolate`, `flowchart.curve`), `emphasis`,
+  `animation`, `link` (`click`, tooltips), `config` and `accessibility`. `config` names the
+  options only the SVG reads, set off their default: `agentflow.useMaxWidth`,
+  `diagramPadding`, `minNodeWidth` and `titleTopMargin`, and `flowchart.padding` and
+  `flowchart.subGraphTitleMargin`. `nodeSpacing`, `rankSpacing` and `wrappingWidth` convert at
+  8 × 16 px a cell, as flowchart's do (120 px wraps a label at 15 columns).
 
 ## Agentflow SVG structure
 
