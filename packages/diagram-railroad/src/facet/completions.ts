@@ -21,7 +21,14 @@ import type { RailroadDocument } from '../parser/ast.ts';
 import { RAILROAD_HEADERS } from '../parser/detect.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
-import { NOTATION_DOCS, notationOf, restOfLine, rulesByName, span, tokenBefore } from './tables.ts';
+import {
+  NOTATION_DOCS,
+  notationOf,
+  ruleFirstLine,
+  rulesByName,
+  span,
+  tokenBefore,
+} from './tables.ts';
 
 /** An item offered when the parser expects `kind`. */
 interface Item {
@@ -140,7 +147,7 @@ function ruleItems(
   const out: CompletionItem[] = [];
   for (const [name, [first]] of rulesByName(doc.result.ast)) {
     if (!first || !name.startsWith(prefix)) continue;
-    const line = restOfLine(doc.text, first.range.start).trim();
+    const line = ruleFirstLine(doc.text, first).trim();
     out.push({
       label: name,
       kind: 'node',

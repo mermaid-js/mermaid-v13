@@ -88,6 +88,12 @@ export function code(text: string): string {
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
+/** The rule's first line: from its start to its line's end or its own end, if sooner. */
+export function ruleFirstLine(text: string, rule: { readonly range: Range }): string {
+  const line = restOfLine(text, rule.range.start);
+  return line.slice(0, rule.range.end - rule.range.start).trimEnd();
+}
+
 /** The line of `text` that holds `at`, from `at` to its end (no line break). */
 export function restOfLine(text: string, at: number): string {
   let end = at;

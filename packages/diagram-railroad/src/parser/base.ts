@@ -41,7 +41,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RailroadModel, RailroadRule } from '../model.ts';
 import type { RailroadDocument, RailroadStatementNode, RailroadTextNode } from './ast.ts';
-import { accDescrValue, accTitleValue, titleValue } from './convert.ts';
+import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
 import { RAILROAD_HEADERS } from './detect.ts';
 import { LEXERS } from './lexers.ts';
 import { RAILROAD_TRIVIA, T } from './tokens.ts';
@@ -62,6 +62,15 @@ export interface RailroadParseOptions extends ParseOptions {
    * rule's tree, a rule's definition being level 1.
    */
   maxDepth?: number;
+  /**
+   * For the language service (#616): a rule that fails to parse keeps the symbols of what was
+   * read of it, once its name and `=` were (its name still defines the rule while it is being
+   * edited), and the names in the text skipped to the next rule are recorded as references. A
+   * name the parser can only guess at there (an IR name outside `nonterminal("…")`) is recorded
+   * with the character before it, a range that does not hold the name, so a rename is refused
+   * rather than missing it. The model and the AST are unchanged: the rule is still left out.
+   */
+  keepFailedRules?: boolean;
 }
 
 export type RailroadParseResult = ParseResult<RailroadModel, RailroadDocument>;
@@ -192,6 +201,10 @@ export abstract class RailroadParser {
   private readonly maxDepth: number;
   /** Groups and calls open around the current token, for {@link NESTING_GUARD}. */
   private nest = 0;
+  /** Whether the rule being read has its name and `=` read. */
+  private defined = false;
+  /** Whether the next recovery skips the rest of a failed rule whose symbols are kept. */
+  private skipNames = false;
   /** The last value of each (Langium's assignments: the last one wins, an empty one too). */
   private title = '';
   private accTitle = '';
@@ -471,11 +484,35 @@ export abstract class RailroadParser {
    */
   private recover(): void {
     this.probe?.freeze();
+    const names = this.skipNames;
+    this.skipNames = false;
     for (;;) {
       const k = this.kind();
       if (k === Kind.EOF || this.startsRule()) return;
+      if (names) this.skippedName();
       this.i++;
       if (k === T.Semi) return;
+    }
+  }
+
+  /**
+   * A name in the skipped rest of a failed rule ({@link RailroadParseOptions.keepFailedRules}):
+   * a name (EBNF, ABNF, PEG) or the string of `nonterminal("…")` (IR) is a reference; an IR name
+   * anywhere else is recorded over the character before it too, so the service cannot rename it.
+   */
+  private skippedName(): void {
+    const k = this.kind();
+    const r = this.range();
+    if (this.notation !== 'railroad') {
+      if (k === T.Id) this.reference(this.raw(), r);
+    } else if (k === T.String) {
+      if (this.kind(this.i - 1) === T.LParen && this.kind(this.i - 2) === T.KwNonterminal)
+        this.reference(stringValue('railroad', this.raw()), {
+          start: r.start + 1,
+          end: Math.max(r.start + 1, r.end - 1),
+        });
+    } else if (k === T.Id) {
+      this.reference(this.raw(), { start: Math.max(0, r.start - 1), end: r.end });
     }
   }
 
@@ -510,7 +547,7 @@ export abstract class RailroadParser {
       if (k !== Kind.EOF) this.i++;
       let why = `put a blank or a line break after \`${word}\``;
       if (text !== word && text.toLowerCase() === word) {
-        why = 'the keyword is written in lower case';
+        why = `mermaid@12 detects the diagram whatever the case, then its parser reads the keyword in lower case only: write \`${word}\``;
       } else if (k === Kind.EOF) why = `a diagram starts with \`${word}\``;
       this.st.diagnostics.error(
         'UNEXPECTED',
@@ -577,16 +614,24 @@ export abstract class RailroadParser {
 
   /**
    * `NAME <define> <definition> ';'`. A rule that fails leaves no trace but its diagnostic: no
-   * model rule, no AST node and no symbols (its name and references are dropped).
+   * model rule, no AST node and no symbols (its name and references are dropped), unless
+   * `keepFailedRules` keeps its symbols for the language service.
    */
   private rule(): void {
     const symbols = this.st.symbols.length;
+    this.defined = false;
     try {
       this.ruleBody();
     } catch (error) {
-      this.st.symbols.length = symbols;
+      if (this.options.keepFailedRules && this.ruleDefined()) this.skipNames = true;
+      else this.st.symbols.length = symbols;
       throw error;
     }
+  }
+
+  /** Whether the rule being read had its name and `=` read (set as `ruleBody` reads it). */
+  private ruleDefined(): boolean {
+    return this.defined;
   }
 
   private ruleBody(): void {
@@ -597,6 +642,7 @@ export abstract class RailroadParser {
     this.tested(this.defines);
     if (!this.defines.includes(this.kind())) this.fail(this.defines);
     this.i++;
+    this.defined = true;
     const draft = this.definition();
     this.tested([T.Semi]);
     if (this.kind() !== T.Semi && (this.startsRule() || this.kind() === Kind.EOF)) {

@@ -1,6 +1,4 @@
-2:1-2:6 "title" info RAILROAD_TITLE_RULE: `title` followed by `=` or `::=` is a `title` line, as in v12: the rest of the line is the title, and no rule named `title` is defined. A rule cannot be named `title`.
-3:10-3:14 "term" warning RAILROAD_UNDEFINED_RULE: No rule named `term` is defined. The diagram still draws its box, as v12 did.
-3:29-3:33 "term" warning RAILROAD_UNDEFINED_RULE: No rule named `term` is defined. The diagram still draws its box, as v12 did.
+2:1-2:6 "title" info RAILROAD_TITLE_RULE: `title` followed by `=` or `::=` is a `title` line, as in v12, not a rule named `title`: a rule cannot be named `title`.
 4:26-4:27 ";" error UNEXPECTED: Expected a string in quotes, such as `"a"`, or a rule name, a special sequence such as `? any character ?` or a group in `( )`, `[ ]` or `{ }`, got `;`; `-` needs an element after it.
 5:31-5:31 "" error UNEXPECTED: Expected `;` at the end of the rule, got `number`; every rule ends with `;`.
 7:1-7:2 "#" error UNEXPECTED_CHARACTER: Unexpected character `#`; EBNF has no `#` comments: write `(* … *)`.

@@ -12,7 +12,7 @@ import type { RailroadDocument } from '../parser/ast.ts';
 import { RULE_SYMBOL } from '../parser/base.ts';
 import { repeatBounds } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import { code, NOTATION_DOCS, notationOf, restOfLine, rulesByName, span } from './tables.ts';
+import { code, NOTATION_DOCS, notationOf, ruleFirstLine, rulesByName, span } from './tables.ts';
 
 /** The header statement tokens: only their keyword is hovered. */
 const STATEMENT_WORDS: Readonly<Record<number, string>> = {
@@ -35,8 +35,8 @@ function ruleHover(name: string, doc: DocumentView<RailroadDocument>): string {
   if (!first) {
     return `${head}\n\nNo rule named ${code(name)} is defined: the diagram draws its box with no rule behind it.`;
   }
-  const line = restOfLine(doc.text, first.range.start).trimEnd();
-  const more = doc.text.slice(first.range.start, first.range.end).length > line.length ? ' …' : '';
+  const line = ruleFirstLine(doc.text, first);
+  const more = first.range.end - first.range.start > line.length ? ' …' : '';
   const parts = [head, block(`${line}${more}`)];
   if (rules.length > 1) {
     const lines = new LineIndex(doc.text);

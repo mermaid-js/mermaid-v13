@@ -31,7 +31,8 @@ function offsets(r: RailroadParseResult, length: number): number[] {
  * statements are the same with and without one, at offsets across the railroad gate corpus
  * (the e2e fixtures, the v12 spec strings, the quirk and recovery cases, rejected ones
  * included, each also with CRLF and with comment lines), in each of the four notations, through
- * the parser and through the facet's parse (which adds the language service's hints and folds);
+ * the parser and through the facet's probe parse (the parser's, keeping failed rules' symbols:
+ * the hints and folds are left out of completion's parses);
  * the probe reports the offset and a mode (code, a string, a statement's text, or where the
  * offset is outside code).
  */
@@ -45,8 +46,11 @@ describe('railroad probe leaves the parse unchanged', () => {
       const notation = detectRailroad(source)!;
       const parses = [
         (probe?: number) => parseRailroad(source, { keepTokens: true, probe }),
+        // The facet's probe parse is the parser's with failed rules' symbols kept, no more.
         (probe?: number) =>
-          language.parse(source, { keepTokens: true, probe }) as RailroadParseResult,
+          probe === undefined
+            ? parseRailroad(source, { keepTokens: true, keepFailedRules: true })
+            : (language.parse(source, { keepTokens: true, probe }) as RailroadParseResult),
       ] as const;
       for (const [which, parse] of parses.entries()) {
         const plain = parse();
