@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { radarTokens } from '@mermaid-js/diagram-radar/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the radar lexer is linear in input size, in every rule. v12's lexer is
@@ -48,39 +49,18 @@ const SHAPES: [name: string, build: (n: number) => string, scale?: number][] = [
   ['entities in labels', (n) => 'radar-beta\naxis A["' + '#a;'.repeat(n / 3) + '"]'],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the radar lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build, scale = 1) => {
       const small = build(4_000 * scale);
       const large = build(32_000 * scale);
-      radarTokens(small); // warm up
-      radarTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => radarTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => radarTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => radarTokens(small),
+          () => radarTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { kanbanTokens, parseKanban } from '@mermaid-js/diagram-kanban';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the kanban lexer is linear in input size, in every free-text state.
@@ -52,39 +53,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the kanban lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      kanbanTokens(small); // warm up
-      kanbanTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => kanbanTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => kanbanTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => kanbanTokens(small),
+          () => kanbanTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
@@ -135,21 +115,12 @@ describe('stress: the kanban parser is linear in input size', () => {
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseKanban(small); // warm up
-      parseKanban(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseKanban(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseKanban(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseKanban(small),
+          () => parseKanban(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
