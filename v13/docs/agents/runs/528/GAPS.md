@@ -22,10 +22,14 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #596 T0c line hops
 
 ## #597 T1 registration
+- **Choice (sent to T1 after review):** config layering for `swimlane-beta`, lowest first: flowchart defaults < swimlane defaults < the author's `flowchart.*` < the author's `swimlane.*`. An unscoped directive key goes to `swimlane` when its schema has it, else `flowchart`. D534 says "the swimlane section on top of flowchart's" without the author/default split.
+- Default curve needed no code: flowchart's default curve is already `rounded` in v13, and an author's `flowchart.curve` wins.
+- `swimlane.theme` now takes effect through the section scope, so it moves to `honoured`.
 
 ## #598 T2 lane drawing
 - Open: since #589 (block T0) flowchart has no theme table (`packages/diagram-flowchart/src/theme/` is gone; its shape rows are core rows). Lanes need no new variables per the spec (they read `clusterBkg`/`clusterBorder` and flowchart's existing per-subgraph palette). If T2 finds it needs a lane-only row, where it lives (flowchart's own table, recreated, versus core) is a choice the spec doesn't settle: record it here as **Choice** and follow `theming.md` as it stands after #589. D474's `slot(<palette>, <n>, <fallback>)` rule form (usecase T0 #620; `CONTRACT.md` "DSL additions") may fit the per-lane palette.
 
 ## #601 T3 integration
+- From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.
 
 ## #603 T4 ascii
