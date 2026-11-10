@@ -12,7 +12,8 @@
 // 5. text: a boundary's label in its top border (`┌╌ Label ╌┐`), its `[type]` and description
 //    on the rows below; an element's name, `[Kind]` and description centred inside; the title;
 // 6. each relation's label and `[techn]`, a space either side, at or beside the middle of its
-//    line, wrapped narrower where it does not fit there (`placeLabel`).
+//    line, wrapped narrower where it does not fit there when the layout's text may wrap (root
+//    `wrap` and `c4.wrap`), else kept on one line and cut (`placeLabel`).
 //
 // A line wider than its room is cut with `…` (`...` in the ascii charset). Glyphs come from core
 // (`armOf`, `glyphFor`, `sideOf`, pitfall 21). The empty margin round the drawing is trimmed.
@@ -46,8 +47,11 @@ import type {
 import { CellSet, clamp, Grid, type Cell } from './grid.ts';
 import { routeLine, RouteBudget, type RouteField, type RouteRequest } from './route.ts';
 
-/** The search steps the relations of one drawing may take together (R-SEC-5). */
-const ROUTE_BUDGET = 1_000_000;
+/**
+ * The search steps and label cells the relations of one drawing may take together (R-SEC-5),
+ * also capped by the integrator's `limits.maxLayoutWork` (D542), as the SVG layout's budget.
+ */
+export const ROUTE_BUDGET = 1_000_000;
 
 /** How far the router may go round the drawing, in cells. */
 const ROUTE_MARGIN = 3;
@@ -127,6 +131,10 @@ interface Pen {
   readonly labelBlocks: CellSet;
   /** Frames' border cells: a label covers them only when no place near its line is clear. */
   readonly frameCells: CellSet;
+  /** What routing and placing labels may still spend. */
+  readonly budget: RouteBudget;
+  /** Whether a label may be wrapped narrower than the layout's lines (`C4Layout.labelsWrap`). */
+  readonly wrap: boolean;
 }
 
 /** A frame: dashed rules for a boundary, solid for a deployment node. */
@@ -392,7 +400,9 @@ function firstPlace(
  * first, covering no label block (boxes, arrowheads, header text, labels), no frame and no other
  * line, only its own straight cells; else the same over other lines; else wrapped narrower (a
  * label wider than the gap between two shapes stays by its line), each width tried both ways,
- * its words whole first, then its longest cut. With no such place it is `crowded`: the same
+ * its words whole first, then its longest cut. Wrapped only with `pen.wrap` (root `wrap` and
+ * `c4.wrap`, the spec's rule); without it each line stays one line, cut narrower instead. Each
+ * place tried is charged to the drawing's budget; once spent, a label sits over the middle. With no such place it is `crowded`: the same
  * places over frames too, else over the middle cell, whatever is there.
  */
 function placeLabel(
@@ -410,6 +420,7 @@ function placeLabel(
       if (i >= 0 && i < cells.length) near.push(cells[i]!);
   /** 0: clear of frames and other lines; 1: of frames; 2: of label blocks only. */
   const fits = (at: Cell, w: number, h: number, tier: number): boolean => {
+    pen.budget.charge(w * h);
     if (!pen.labelBlocks.free(at.x, at.y, w, h)) return false;
     if (tier === 2) return true;
     if (!pen.frameCells.free(at.x, at.y, w, h)) return false;
@@ -420,9 +431,18 @@ function placeLabel(
   };
   const natural = Math.max(...text.map(cellWidth));
   const word = Math.max(...text.flatMap((t) => t.split(/\s+/)).map(cellWidth));
-  const whole = labelWidths(natural, Math.max(LABEL_LEAST, word));
-  // Narrower than its longest word: that word cut, as a last way to stay clear by the line.
-  const cutWords = word > LABEL_LEAST ? labelWidths(word - 1, LABEL_LEAST) : [];
+  // Wrapped narrower only when the layout's text may wrap (root `wrap` and `c4.wrap`); else
+  // each line stays one line, cut with the ellipsis as the last way to stay clear by its line.
+  const whole = pen.wrap ? labelWidths(natural, Math.max(LABEL_LEAST, word)) : [natural];
+  const least = pen.wrap ? word : natural;
+  // Narrower than its longest word (or its own width): cut, as a last way to stay clear.
+  const cutWords = least > LABEL_LEAST ? labelWidths(least - 1, LABEL_LEAST) : [];
+  const linesAt = (width: number): string[] => {
+    if (width === natural) return [...text];
+    return pen.wrap
+      ? wrapped(text, width, pen.ellipsis)
+      : text.map((t) => cut(t, width, pen.ellipsis));
+  };
   const phases: [readonly number[], readonly number[]][] = [
     [whole, [0, 1]],
     [cutWords, [0, 1]],
@@ -430,7 +450,8 @@ function placeLabel(
   ];
   for (const [widths, tiers] of phases)
     for (const width of widths) {
-      const lines = width === natural ? [...text] : wrapped(text, width, pen.ellipsis);
+      if (pen.budget.done) break;
+      const lines = linesAt(width);
       const w = Math.max(...lines.map(cellWidth)) + 2;
       const h = lines.length;
       for (const tier of tiers) {
@@ -507,9 +528,11 @@ function routeBounds(rects: readonly CellRect[], cells: readonly Cell[]): CellRe
  * Draws a layout laid out on the cell profile: `\n` line ends, no trailing spaces, the empty
  * margin round the drawing trimmed. An empty diagram is the empty string.
  */
-export function drawC4(layout: C4Layout, glyphs: GlyphSet): C4Drawing {
+export function drawC4(layout: C4Layout, glyphs: GlyphSet, budget = ROUTE_BUDGET): C4Drawing {
   const grid = new Grid(layout);
   const pen: Pen = {
+    budget: new RouteBudget(budget),
+    wrap: layout.labelsWrap === true,
     canvas: new Canvas(),
     glyphs,
     grid,
@@ -589,10 +612,9 @@ export function drawC4(layout: C4Layout, glyphs: GlyphSet): C4Drawing {
     ])
   );
   const routing: RouteField = { ...field, bounds };
-  const budget = new RouteBudget(ROUTE_BUDGET);
   const lineCells = new CellSet();
   const lines: Line[] = requests.map(({ rel, req }) => {
-    const cells = routeLine(req, routing, budget);
+    const cells = routeLine(req, routing, pen.budget);
     cells.forEach((c, k) => {
       const prev = cells[k - 1];
       const next = cells[k + 1];

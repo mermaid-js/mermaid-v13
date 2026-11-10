@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
+import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
 import { cellMeasurer, unicode } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
@@ -109,5 +110,37 @@ describe('the C4 ascii hook (#545)', () => {
     expect(text).toContain('│ Billing  │');
     expect(text).toContain('│ [Softwa… │');
     expect(text).toContain('│ Takes t… │');
+  });
+
+  it('wraps a relation label narrower only when root `wrap` and `c4.wrap` are both set', () => {
+    // Two shapes side by side: the label is wider than the gap between them.
+    const src = [
+      'C4Context',
+      'System(a, "A")',
+      'System(b, "B")',
+      'Rel(a, b, "Sends monthly statements to")',
+    ].join('\n');
+    const label = (integrator: Record<string, unknown>) => {
+      const { parsed, ctx } = context(src, [], integrator);
+      const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+      return drawC4(laid, unicode).labels[0]!;
+    };
+    // Either flag off: one line, as the SVG keeps it.
+    expect(label({}).height).toBe(1);
+    expect(label({ wrap: true, c4: { wrap: false } }).height).toBe(1);
+    expect(label({ wrap: false, c4: { wrap: true } }).height).toBe(1);
+    // Both on: wrapped narrower to stay by its line.
+    expect(label({ wrap: true }).height).toBeGreaterThan(1);
+  });
+
+  it('charges label places to the drawing budget: with none left, a label sits at its middle', () => {
+    const { parsed, ctx } = context(SRC);
+    const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    expect(drawC4(laid, unicode).labels[0]!.crowded).toBeUndefined();
+    expect(drawC4(laid, unicode, 0).labels[0]!.crowded).toBe(true);
+    // The hook reads the integrator's `maxLayoutWork` (D542).
+    const limits = { ...DEFAULT_LIMITS, maxLayoutWork: 0 };
+    const capped = ascii(parsed.model, laid, { config: ctx.config, warn: () => undefined, limits });
+    expect(capped).toBe(drawC4(laid, unicode, 0).text);
   });
 });

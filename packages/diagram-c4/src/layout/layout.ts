@@ -876,6 +876,7 @@ function assemble(p: Parts): C4Layout {
     relations: p.relations.list.map((r) => relationOut(r, shift)),
     bounds: title ? union(content, title) : content,
     careful: p.relations.careful,
+    ...(p.config.wrapAll ? { labelsWrap: true as const } : {}),
     ...(p.cell ? { cell: p.cell } : {}),
   };
 }

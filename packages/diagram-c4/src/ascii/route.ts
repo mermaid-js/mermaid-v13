@@ -35,9 +35,20 @@ export interface RouteField {
   readonly bounds: CellRect;
 }
 
-/** Search steps left for the drawing (R-SEC-5). */
+/**
+ * Search steps left for the drawing (R-SEC-5): the routes' search steps and the label places
+ * tried, each place charged its cells.
+ */
 export class RouteBudget {
   constructor(public left: number) {}
+
+  charge(n: number): void {
+    this.left -= n;
+  }
+
+  get done(): boolean {
+    return this.left <= 0;
+  }
 }
 
 /** The search steps one relation may take, at the most. */
@@ -129,8 +140,15 @@ class Heap {
   }
 }
 
-/** What stepping onto (x, y) going `d` costs, a turn aside. */
-function stepCost(field: RouteField, guide: readonly Cell[], x: number, y: number, d: Dir): number {
+/** A step of the search: onto cell (x, y), going `d`. */
+interface Step {
+  readonly x: number;
+  readonly y: number;
+  readonly d: Dir;
+}
+
+/** What a step costs, a turn aside. */
+function stepCost(field: RouteField, guide: readonly Cell[], { x, y, d }: Step): number {
   const level = isLevel(d);
   let step = COST.step;
   if ((level ? field.frameLevel : field.frameUpright).has(x, y)) step += COST.along;
@@ -188,7 +206,7 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
       const atEnd = nx === end.x && ny === end.y;
       // The end only straight into its shape; no other relation's end, nothing blocked.
       if (atEnd ? nd !== endInto : field.blocked.has(nx, ny) || field.ends.has(nx, ny)) continue;
-      const step = stepCost(field, guide, nx, ny, nd) + (nd === d ? 0 : COST.turn);
+      const step = stepCost(field, guide, { x: nx, y: ny, d: nd }) + (nd === d ? 0 : COST.turn);
       const next = keyOf(nx, ny, nd);
       const total = base + step;
       if (total >= (cost.get(next) ?? Infinity)) continue;

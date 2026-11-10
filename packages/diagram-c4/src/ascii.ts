@@ -13,13 +13,14 @@ import type { TextRenderContext } from '@mermaid-js/core';
 import { ascii as asciiGlyphs, asciiOptions, unicode } from '@mermaid-js/core/ascii';
 import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
-import { drawC4 } from './ascii/draw.ts';
+import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 
 /** What the hook reads of core's `TextRenderContext`. */
-export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'>;
+export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
+  Partial<Pick<TextRenderContext, 'limits'>>;
 
 /**
  * The C4 `ascii` hook (DESIGN §12.1): the diagram as text, `\n` line ends, no trailing spaces,
@@ -31,5 +32,7 @@ export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'>;
 export function ascii(model: C4Model, layout: C4Layout, ctx: C4AsciiContext): string {
   const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
   for (const w of asciiWarnings(model, layout)) ctx.warn(w);
-  return drawC4(layout, glyphs).text;
+  // R-SEC-5, D542: capped by the integrator's limit, as the SVG layout's budget is.
+  const budget = Math.min(ROUTE_BUDGET, ctx.limits?.maxLayoutWork ?? Infinity);
+  return drawC4(layout, glyphs, budget).text;
 }

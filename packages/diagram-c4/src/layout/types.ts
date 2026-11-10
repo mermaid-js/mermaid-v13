@@ -143,6 +143,11 @@ export interface C4Layout {
    */
   readonly careful: boolean;
   /**
+   * Set when relation and boundary text may wrap: root `wrap` and `c4.wrap` both set (the
+   * spec's rule). The text output wraps a relation's label narrower only then.
+   */
+  readonly labelsWrap?: true;
+  /**
    * Set when laid out for text output (the cell profile, #545): px per cell. Text was measured
    * in cells at this size, so the layout divided by it is the drawing on the character grid.
    */
