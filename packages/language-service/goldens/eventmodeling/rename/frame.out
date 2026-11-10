@@ -1,0 +1,10 @@
+@ 3:4  tf |01 ui Screen
+  prepare: 3:4-3:6 "01"; rename to "10":
+  %% rename-to: 10
+  eventmodeling
+  tf 10 ui Screen
+  tf 02 cmd Add ->> 10
+  note 10 {
+    n
+  }
+  gwt 10 given evt Item then evt Item

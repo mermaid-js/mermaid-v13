@@ -170,7 +170,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-block').then((m) => m.block),
     loadAscii: () => import('@mermaid-js/diagram-block/ascii').then((m) => m.ascii),
   },
-  { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
+  {
+    type: 'eventmodeling',
+    pattern: /^\s*eventmodeling/,
+    id: 'eventmodeling',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-eventmodeling').then((m) => m.eventmodeling),
+  },
   {
     type: 'treeView',
     pattern: /^\s*treeView-beta/,

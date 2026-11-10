@@ -18,6 +18,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-c4` | The C4 diagram plugin (SVG; `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-class` | The class diagram plugin (SVG; `classDiagram` and `classDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-cynefin` | The Cynefin framework plugin (SVG; `cynefin-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-eventmodeling` | The event modeling plugin (SVG; `eventmodeling`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |

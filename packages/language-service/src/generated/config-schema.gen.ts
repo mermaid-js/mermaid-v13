@@ -1289,7 +1289,8 @@ export const configSchema: ConfigSchema = {
     "eventmodeling": {
       "$ref": "#/$defs/EventModelingDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "treeView": {
@@ -6659,12 +6660,30 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the event modeling renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not `true` or `false` draws as `true`, with one `EVENTMODELING_CONFIG_INVALID` warning (D226)."
+          }
+        },
         "padding": {
-          "description": "The padding around the Event Modeling diagram.",
+          "description": "The space around what the event model draws, in pixels.",
           "type": "number",
           "default": 30,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, one that is not a number, or one so large the drawing would not stay finite falls back to 30 with one `EVENTMODELING_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
           }
         },
         "rowHeight": {
@@ -6673,7 +6692,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 1,
           "default": 32,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's event modeling renderer never read it: each lane is as tall as its tallest box, as in v12."
           }
         }
       }

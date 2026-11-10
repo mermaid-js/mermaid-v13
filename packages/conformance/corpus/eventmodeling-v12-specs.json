@@ -1,0 +1,134 @@
+[
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#1",
+    "source": "eventmodeling\n    tf 01 ui UI\n    tf 02 cmd RunAction\n    tf 03 evt ActionExecuted"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#2",
+    "source": "eventmodeling\n    tf 01 cmd AddItem { productId: 7 }\n    tf 02 evt ItemAdded { productId: 7 }"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#3",
+    "source": "eventmodeling\n    tf 01 cmd AddItem\n    tf 02 evt ItemAdded [[ItemAddedData]]\n\ndata ItemAddedData\n{\n  productId: 7\n}"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#4",
+    "source": "eventmodeling\n    tf 01 ui CartUI\n    tf 02 cmd Inventory.AddItem\n    tf 03 evt Inventory.ItemAdded"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#5",
+    "source": "eventmodeling\n    tf 01 ui CartUI\n    tf 02 cmd AddItem\n    tf 03 cmd RemoveItem\n    tf 04 evt ItemChanged ->> 02 ->> 03"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#6",
+    "source": "eventmodeling\n    rf 01 ui CartUI\n    rf 02 cmd AddItem\n    rf 03 evt ItemAdded"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#7",
+    "source": "eventmodeling\n      tf 09 ui PreviousDiagram"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#8",
+    "source": "eventmodeling\n        tf 01 ui UI\n        tf 02 cmd Command\n        rf 01 evt Event"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#9",
+    "source": "eventmodeling\n        tf 01 ui UI\n        %% This comment occupies a source line.\n        rf 01 evt Event"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#10",
+    "source": "eventmodeling\n      tf 01 ui UI\n      tf 02 cmd Command\n      tf 03 evt Event\n      rf 04 rmo ReadModel ->> 03\n      rf 05 ui OtherUI"
+  },
+  {
+    "id": "v12-specs/eventmodeling.spec.ts#11",
+    "source": "eventmodeling\n    tf 01 ui UI\n    tf 02 ui UI2\n    tf 03 cmd Command\n    tf 04 command Command2\n    tf 05 evt Event\n    tf 06 event Event2\n    tf 07 pcr Processor\n    tf 08 processor Processor2\n    tf 09 rmo ReadModel\n    tf 10 readmodel ReadModel2"
+  },
+  {
+    "id": "v12-specs/parser.ts#1",
+    "source": "eventmodeling"
+  },
+  {
+    "id": "v12-specs/parser.ts#2",
+    "source": "eventmodeling\n  tf 01 evt Start\n\n    "
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#1",
+    "source": "eventmodeling\ntf 01 cmd UpdateCartCommand\ntf 02 evt CartUpdatedEvent ->> 01 `jsobj`{ a: b }\ntf 03 rmo CartItemsReadModel ->> 02 [[CartItemsReadModel03]]\ntf 04 evt ProductDescriptionUpdatedEvent ->> 01 `jsobj`{ a: { c: d } }\ntf 05 evt ProductTitleUpdatedEvent ->> 01 { \"a\": { \"c\": true } }\ntf 06 evt ProductCountIncrementedEvent ->> 01 `json`\" { \"a\": { \"c\": true } } \"\n\ndata CartItemsReadModel03 {\n  { a: b }\n}\n\ndata NotAssignedData02 `jsobj` {\n  { a: {\n    d: true\n  }}\n}\n\ndata AnotherNotAssignedData06 {\n  a: 'abc'\n}\n\nnote 02 `md` {\n    # head 1\n    this is markdown note\n}\n\nnote 05 {\n  This is whatever <b>you</b> want\n  On multiple lines\n}\n\ngwt 01\n  given\n    evt CartUpdatedEvent\n    evt CartUpdatedEvent\n  when\n    evt ProductDescriptionUpdatedEvent\n    evt ProductTitleUpdatedEvent\n  then\n    evt ProductTitleUpdatedEvent\n\n\ngwt 03\n  given\n    evt CartUpdatedEvent\n    evt ProductTitleUpdatedEvent\n  then\n    evt ProductTitleUpdatedEvent\n    evt CartUpdatedEvent\n"
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#2",
+    "source": "eventmodeling\ntimeframe 01 event Start\n\n  "
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#3",
+    "source": "eventmodeling\n\ntimeframe 02 ui UI\ntf 01 evt Product.PriceChanged\ntf 03 evt Cart.ItemAdded\n\n  "
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#4",
+    "source": "eventmodeling\n\ntf 02 ui UI\nresetframe 01 evt Product.PriceChanged\ntf 03 evt Cart.ItemAdded\n\n  "
+  },
+  {
+    "id": "v12-specs/eventmodeling.test.ts#5",
+    "source": "eventmodeling\ntf 01 evt Start\ntf 02 evt End\nrf 03 readmodel ReadModel01 ->> 01 ->> 02 { a: true }\nrf 04 rmo ReadModel02 ->> 01 ->> 02\n  "
+  },
+  {
+    "id": "v12-specs/eventmodeling.ts#2",
+    "source": "eventmodeling\n\ntf 01 ui ShopUI\ntf 02 cmd AddItemToCart\ntf 03 evt ItemAdded\ntf 04 rmo CartView ->> 03\ntf 05 ui CheckoutUI\ntf 06 cmd PlaceOrder\ntf 07 evt OrderPlaced\ntf 08 rmo OrderStatus ->> 07\n"
+  },
+  {
+    "id": "v12-specs/eventmodeling.ts#3",
+    "source": "eventmodeling\n\ntf 01 ui CartUI\ntf 02 cmd AddItem [[AddItem01]]\ntf 03 evt ItemAdded [[ItemAdded]]\n\nrf 04 evt Warehouse.StockChanged\ntf 05 pcr StockProcessor\ntf 06 cmd UpdateAvailability\ntf 07 evt Shop.AvailabilityUpdated\n\ndata AddItem01 {\n  sku: 'SHIRT-M'\n  quantity: 2\n}\n\ndata ItemAdded {\n  sku: string\n  quantity: number\n}\n"
+  },
+  {
+    "id": "v12-specs/multi-diagram-id-uniqueness.spec.ts#1",
+    "source": "eventmodeling\n    tf 01 evt Start\n    tf 02 evt End\n    rf 03 readmodel ReadModel01 ->> 01 ->> 02 { a: true }\n    rf 04 rmo ReadModel02 ->> 01 ->> 02"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#1",
+    "source": "eventmodeling\n\ntf 01 ui CartUI\ntf 02 cmd AddItem\ntf 03 evt ItemAdded\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#2",
+    "source": "eventmodeling\n\ntf 01 ui CartUI\ntf 02 cmd AddItem { description: string }\ntf 03 evt ItemAdded { description: string }\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#3",
+    "source": "eventmodeling\n\ntimeframe 01 ui CartUI\ntimeframe 02 command AddItem { description: string }\ntimeframe 03 event ItemAdded { description: string }\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#4",
+    "source": "eventmodeling\n\ntf 01 ui CartUI\ntf 02 cmd AddItem [[AddItem01]]\ntf 03 evt ItemAdded [[ItemAdded]]\ntf 04 cmd AddItem [[AddItem02]]\ntf 05 evt ItemAdded [[ItemAdded]]\n\ndata AddItem01 {\n  description: 'john'\n  image: 'avatar_john'\n  price: 20.4\n}\n\ndata AddItem02 {\n  description: 'jack'\n  image: 'avatar_jack'\n  price: 12.5\n}\n\ndata ItemAdded {\n  description: string\n  image: string\n  price: number\n}\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#5",
+    "source": "eventmodeling\n\ntimeframe 01 ui CartUI\ntimeframe 02 command AddItem [[AddItem01]]\ntimeframe 03 event ItemAdded [[ItemAdded]]\ntimeframe 04 command AddItem [[AddItem02]]\ntimeframe 05 event ItemAdded [[ItemAdded]]\n\ndata AddItem01 {\n  description: 'john'\n  image: 'avatar_john'\n  price: 20.4\n}\n\ndata AddItem02 {\n  description: 'jack'\n  image: 'avatar_jack'\n  price: 12.5\n}\n\ndata ItemAdded {\n  description: string\n  image: string\n  price: number\n}\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#6",
+    "source": "eventmodeling\n\ntf 01 ui CartUI\ntf 02 cmd AddItem\ntf 03 evt ItemAdded\n\nrf 04 evt External.InventoryChanged\ntf 05 pcr InventoryProcessor\ntf 06 cmd ChangeInventory\ntf 07 evt Cart.InventoryChanged\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#7",
+    "source": "eventmodeling\n\ntimeframe 01 ui CartUI\ntimeframe 02 command AddItem\ntimeframe 03 event ItemAdded\n\nresetframe 04 event External.InventoryChanged\ntimeframe 05 processor InventoryProcessor\ntimeframe 06 command ChangeInventory\ntimeframe 07 event Cart.InventoryChanged\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#8",
+    "source": "eventmodeling\n\ntf 01 evt ItemAdded\ntf 02 ui OtherUI\nrf 03 rmo CartItems ->> 01\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#9",
+    "source": "eventmodeling\n\nrf 02 evt CartCreated\nrf 03 evt ItemAdded\nrf 04 evt ItemRemoved\nrf 05 evt CartCleared\ntf 01 rmo CartUI ->> 02 ->> 03 ->> 04 ->> 05\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#11",
+    "source": "eventmodeling\n\ntf 03 evt ItemAdded\ntf 02 rmo CartItems\ntf 04 ui CartUI\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#12",
+    "source": "eventmodeling\n\ntf 03 evt External.InventoryChanged\ntf 02 pcr InventoryProcessor\ntf 04 cmd ChangeInventory\ntf 05 evt Cart.InventoryChanged\n"
+  },
+  {
+    "id": "v12-docs/eventmodeling.md#13",
+    "source": "eventmodeling\n\nrf 01 evt Inventory.InventoryChanged\nrf 02 evt External.InventoryChanged\n"
+  }
+]

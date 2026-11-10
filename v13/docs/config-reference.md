@@ -819,14 +819,14 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `eventmodeling` | object |  | pending |  | The object containing configurations specific for Event Modeling diagrams. |
-| `eventmodeling.useWidth` | number |  | pending |  |  |
-| `eventmodeling.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `eventmodeling` | object |  | honoured (13.0.0) |  | The object containing configurations specific for Event Modeling diagrams. |
+| `eventmodeling.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the event modeling renderer never did. |  |
+| `eventmodeling.useMaxWidth` | boolean | `true` | honoured (13.0.0) | A value that is not `true` or `false` draws as `true`, with one `EVENTMODELING_CONFIG_INVALID` warning (D226). | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `eventmodeling.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `eventmodeling.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `eventmodeling.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `eventmodeling.padding` | number | `30` | pending |  | The padding around the Event Modeling diagram. |
-| `eventmodeling.rowHeight` | number | `32` | pending |  | The height of each row in the Event Modeling diagram. |
+| `eventmodeling.padding` | number | `30` | honoured (13.0.0) | A negative value, one that is not a number, or one so large the drawing would not stay finite falls back to 30 with one `EVENTMODELING_CONFIG_INVALID` warning (D226); a numeric string counts as its number. | The space around what the event model draws, in pixels. |
+| `eventmodeling.rowHeight` | number | `32` | ignored (13.0.0) | v12's event modeling renderer never read it: each lane is as tall as its tallest box, as in v12. | The height of each row in the Event Modeling diagram. |
 
 ## `treeView`
 

@@ -1,0 +1,40 @@
+1:1-1:14 "eventmodeling" keyword
+1:15-1:25 "title Cart" keyword
+2:1-2:13 "%% a comment" comment
+3:1-3:3 "tf" keyword
+3:4-3:6 "01" variable [declaration, definition]
+3:7-3:9 "ui" keyword
+3:10-3:16 "Screen" variable
+4:1-4:3 "tf" keyword
+4:4-4:6 "02" variable [declaration, definition]
+4:7-4:10 "cmd" keyword
+4:11-4:15 "Shop" variable
+4:15-4:16 "." operator
+4:16-4:19 "Add" variable
+4:20-4:23 "->>" operator
+4:24-4:26 "01" variable
+4:27-4:29 "[[" operator
+4:29-4:36 "Payload" variable
+4:36-4:38 "]]" operator
+4:39-4:40 "`" operator
+4:40-4:44 "json" keyword
+4:44-4:45 "`" operator
+4:46-4:56 "{ \"a\": 1 }" string
+5:1-5:5 "data" keyword
+5:6-5:13 "Payload" variable [declaration, definition]
+5:14-7:2 "{\n  a: 1\n}" string
+8:1-8:12 "/* block */" comment
+8:13-8:19 "entity" keyword
+8:20-8:24 "Item" variable [declaration, definition]
+8:25-8:32 "// line" comment
+9:1-9:4 "gwt" keyword
+9:5-9:7 "02" variable
+9:8-9:13 "given" keyword
+9:14-9:17 "evt" keyword
+9:18-9:22 "Item" variable
+9:23-9:27 "when" keyword
+9:28-9:31 "cmd" keyword
+9:32-9:35 "Add" variable
+9:36-9:40 "then" keyword
+9:41-9:44 "evt" keyword
+9:45-9:49 "Item" variable

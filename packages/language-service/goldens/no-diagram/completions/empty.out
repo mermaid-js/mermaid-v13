@@ -33,6 +33,7 @@
   xychart keyword 1:1-1:1 "" -> "xychart"
   block keyword 1:1-1:1 "" -> "block"
   block-beta keyword 1:1-1:1 "" -> "block-beta"
+  eventmodeling keyword 1:1-1:1 "" -> "eventmodeling"
   treeView-beta keyword 1:1-1:1 "" -> "treeView-beta"
   radar-beta keyword 1:1-1:1 "" -> "radar-beta"
   ishikawa keyword 1:1-1:1 "" -> "ishikawa"

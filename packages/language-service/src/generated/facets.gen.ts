@@ -181,7 +181,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*block(-beta)?/.test(text),
     load: () => import('@mermaid-js/diagram-block/language').then((m) => m.language),
   },
-  { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
+  {
+    type: 'eventmodeling',
+    id: 'eventmodeling',
+    section: 'eventmodeling',
+    pattern: /^\s*eventmodeling/,
+    detector: (text) => /^\s*eventmodeling/.test(text),
+    load: () => import('@mermaid-js/diagram-eventmodeling/language').then((m) => m.language),
+  },
   {
     type: 'treeView',
     id: 'treeView',
@@ -284,4 +291,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'railroad' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'railroad' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

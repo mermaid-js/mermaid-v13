@@ -1,0 +1,6 @@
+@ 4:8  entity |Item
+  prepare: 4:8-4:12 "Item"; rename to "Shop.Item":
+  %% rename-to: Shop.Item
+  eventmodeling
+  tf 01 ui Screen
+  entity Shop.Item

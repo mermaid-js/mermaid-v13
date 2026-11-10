@@ -17,15 +17,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, usecase |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, block, c4, ishikawa, railroad, requirement, treeview, usecase |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, block, c4, ishikawa, railroad, requirement, treeview, usecase |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, block, ishikawa, railroad, requirement, usecase |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, block, eventmodeling, ishikawa, railroad, requirement, usecase |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant, gantt, railroad |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core, agentflow, railroad |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core, railroad |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core, railroad |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core, venn |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, agentflow, c4, ishikawa, requirement, treeview, usecase |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, kanban, cynefin, info, radar, sankey, venn, agentflow, c4, eventmodeling, ishikawa, requirement, treeview, usecase |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, sankey, wardley, agentflow, block, ishikawa, railroad, requirement, usecase |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, kanban, agentflow, block, c4, requirement, usecase |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er, agentflow, block, requirement |
@@ -188,6 +188,26 @@ flags and opacities, which are read literally.
 | `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `erZeroOrMoreCircleOffset` | | length | `28` | `28` | `28` | `28` | `30` | `30` | `30` | `30` | `30` | `28` | `28` |
+
+### eventmodeling
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `emUiFill` | | color | `#ffffff` | `#ffffff` | `#2d2d2d` | `#2d2d2d` | `#ffffff` | `#2d2d2d` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2d2d2d` |
+| `emUiStroke` | | color | `#dbdada` | `#dbdada` | `#555555` | `#555555` | `#dbdada` | `#555555` | `#dbdada` | `#dbdada` | `#dbdada` | `#dbdada` | `#555555` |
+| `emProcessorFill` | | color | `#edb3f6` | `#edb3f6` | `#78517b` | `#78517b` | `#edb3f6` | `#78517b` | `#edb3f6` | `#edb3f6` | `#edb3f6` | `#edb3f6` | `#78517b` |
+| `emProcessorStroke` | | color | `#b88cbf` | `#b88cbf` | `#8a6d8c` | `#8a6d8c` | `#b88cbf` | `#8a6d8c` | `#b88cbf` | `#b88cbf` | `#b88cbf` | `#b88cbf` | `#8a6d8c` |
+| `emReadModelFill` | | color | `#d3f1a2` | `#d3f1a2` | `#547c3e` | `#547c3e` | `#d3f1a2` | `#547c3e` | `#d3f1a2` | `#d3f1a2` | `#d3f1a2` | `#d3f1a2` | `#547c3e` |
+| `emReadModelStroke` | | color | `#a3b732` | `#a3b732` | `#6d8c5c` | `#6d8c5c` | `#a3b732` | `#6d8c5c` | `#a3b732` | `#a3b732` | `#a3b732` | `#a3b732` | `#6d8c5c` |
+| `emCommandFill` | | color | `#bcd6fe` | `#bcd6fe` | `#3e547c` | `#3e547c` | `#bcd6fe` | `#3e547c` | `#bcd6fe` | `#bcd6fe` | `#bcd6fe` | `#bcd6fe` | `#3e547c` |
+| `emCommandStroke` | | color | `#679ac3` | `#679ac3` | `#5c6d8c` | `#5c6d8c` | `#679ac3` | `#5c6d8c` | `#679ac3` | `#679ac3` | `#679ac3` | `#679ac3` | `#5c6d8c` |
+| `emEventFill` | | color | `#ffb778` | `#ffb778` | `#7c5f3e` | `#7c5f3e` | `#ffb778` | `#7c5f3e` | `#ffb778` | `#ffb778` | `#ffb778` | `#ffb778` | `#7c5f3e` |
+| `emEventStroke` | | color | `#c19a0f` | `#c19a0f` | `#8c755c` | `#8c755c` | `#c19a0f` | `#8c755c` | `#c19a0f` | `#c19a0f` | `#c19a0f` | `#c19a0f` | `#8c755c` |
+| `emSwimlaneBackgroundOdd` | | color | `#fafafa` | `#fafafa` | `#404040` | `#404040` | `#fafafa` | `#404040` | `#fafafa` | `#fafafa` | `#fafafa` | `#fafafa` | `#404040` |
+| `emSwimlaneBackgroundStroke` | | color | `#f0f0f0` | `#f0f0f0` | `#525252` | `#525252` | `#f0f0f0` | `#525252` | `#f0f0f0` | `#f0f0f0` | `#f0f0f0` | `#f0f0f0` | `#525252` |
+| `emRelationStroke` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `emArrowhead` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `emTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### gantt
 

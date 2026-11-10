@@ -1,0 +1,9 @@
+eventmodeling title Cart
+%% a comment
+tf 01 ui Screen
+tf 02 cmd Shop.Add ->> 01 [[Payload]] `json` { "a": 1 }
+data Payload {
+  a: 1
+}
+/* block */ entity Item // line
+gwt 02 given evt Item when cmd Add then evt Item
