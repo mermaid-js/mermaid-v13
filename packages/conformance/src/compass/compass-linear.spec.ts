@@ -1,8 +1,11 @@
 /**
- * R-PERF-2, R-LAYOUT-9: `compass` places labels in near-linear time. A ratio test on CPU time
- * (best of 5), not an absolute time, so a busy machine slows both sizes alike: 8 times the edges
- * should cost about 8 times as much; scanning every node or label per candidate spot would cost
- * about 64 times.
+ * R-PERF-2, R-LAYOUT-9: `compass` places labels in near-linear time. A ratio test on CPU time, not
+ * an absolute time, so a busy machine slows both sides alike. Each sample compares equal work: one
+ * layout of 8 times the edges against eight layouts of the small graph. Linear work costs about the
+ * same (ratio 1); scanning every node or label per candidate spot would cost about 8 times as much.
+ * Both sides of a sample last tens of milliseconds, so the clock's resolution (a scheduler tick on
+ * Linux, about 4 ms) cannot zero the small side, as it could when one small layout was timed alone
+ * (#630's spec measured 38 against 24 on CI that way).
  */
 import type { LayoutGraph } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
@@ -50,23 +53,23 @@ function labelled(n: number): LayoutGraph {
 }
 
 describe('compass is near linear (R-PERF-2)', () => {
-  it('places labels on 8 times the edges in well under 64 times the time', () => {
+  it('lays out 8 times the edges in about the time of 8 small layouts', () => {
     const small = labelled(1_000);
     const large = labelled(8_000);
-    compass(small); // warm up
+    const eightSmall = (): void => {
+      for (let i = 0; i < 8; i++) compass(small);
+    };
+    eightSmall(); // warm up
     compass(large);
     let tSmall = Infinity;
     let tLarge = Infinity;
     for (let round = 0; round < 5; round++) {
-      tSmall = Math.min(
-        tSmall,
-        cost(() => compass(small))
-      );
+      tSmall = Math.min(tSmall, cost(eightSmall));
       tLarge = Math.min(
         tLarge,
         cost(() => compass(large))
       );
     }
-    expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(3);
   }, 120_000);
 });
