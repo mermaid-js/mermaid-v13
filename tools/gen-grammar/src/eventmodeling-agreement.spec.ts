@@ -24,13 +24,15 @@ import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
  */
 const DATA = '/e2e/diagrams/eventmodeling/nightly-check/layout-data-literal.mmd';
 const LONG = '/e2e/diagrams/eventmodeling/nightly-check/layout-long-text.mmd';
+/** The first data block of each colour since #611's baselines (they sort first). */
+const BASELINE = '/e2e/diagrams/eventmodeling/baseline/data/long-names-and-data.mmd';
 const LINE_BASED = Object.fromEntries(
   ['Monarch', 'TextMate'].flatMap((h) => [
     [`${h}: DataBlock is String, highlighted Keyword`, `${LONG} at 209`],
-    [`${h}: DataBlock is String, highlighted Number`, `${DATA} at 119`],
-    [`${h}: DataBlock is String, highlighted Other`, `${DATA} at 97`],
+    [`${h}: DataBlock is String, highlighted Number`, `${BASELINE} at 824`],
+    [`${h}: DataBlock is String, highlighted Other`, `${BASELINE} at 548`],
     [`${h}: DataBlock is String, highlighted Punctuation`, `${DATA} at 166`],
-    [`${h}: DataBlock is String, highlighted Variable`, `${DATA} at 222`],
+    [`${h}: DataBlock is String, highlighted Variable`, `${BASELINE} at 813`],
     [`${h}: Yaml is Meta, highlighted Number`, 'eventmodeling-cases/yaml-in-body at 21'],
     [`${h}: Yaml is Meta, highlighted Other`, 'eventmodeling-cases/yaml-in-body at 14'],
     [`${h}: Yaml is Meta, highlighted Variable`, 'eventmodeling-cases/yaml-in-body at 18'],

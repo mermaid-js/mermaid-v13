@@ -9,7 +9,7 @@ Integration branch `feature/527_eventmodeling`, cut from `mermaid-v13` at `521fb
 | T3 custom layout (`EventModelLayout`) | #604 | #602 (soft) | merged (ff e7939fc5f; runtime entry 11.5 KB gz, no core code change) |
 | T4 SVG renderer and theme table | #606 | #602, #604 | merged (no-ff, review fixes 26503b553; runtime entry 13.7 KB gz, no core change) |
 | T6 language facet | #609 | #602 | merged (ff 545f38901; `./language` 14.4 KB gz, runtime entry 14.3 KB gz) |
-| T5 integration | #611 | #606, #609 | open |
+| T5 integration | #611 | #606, #609 | done on `feature/611_em_integration` (core 94,431 B gz, chunk 13,920 B gz) |
 
 No T0 (no core change) and no T7 (D320). One ticket agent at a time (the machine is shared by the wave 4 sessions).
 
