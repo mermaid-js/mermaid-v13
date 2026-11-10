@@ -1,7 +1,7 @@
 /**
  * The PEG parser (`railroad-peg-beta`): v12's `railroad-peg.langium` rules and `pegParser.ts`
  * mapping, over the PEG lexer's tokens. The shared part (header, `title`/`acc*`, rules,
- * recovery) is `../base.ts`; `grammar/railroad-peg.ebnf` is the normative form:
+ * recovery) is `../parser.ts`; `grammar/railroad-peg.ebnf` is the normative form:
  *
  *     OrderedChoice: Sequence ('/' Sequence)*        one alternative is itself
  *     Sequence:      Prefix+                         one element is itself
@@ -14,9 +14,9 @@
  * `.` is the special `.`. At most one prefix and one suffix (`!!x` and `x?*` are errors).
  */
 import { ExpectedTable, Kind } from '@mermaid-js/core/parser-kit';
-import { RailroadParser, RULE_START } from '../base.ts';
+import { RailroadParser, RULE_START } from '../parser.ts';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { RailroadParseOptions } from '../base.ts';
+import type { RailroadParseOptions } from '../parser.ts';
 import { stringValue } from '../convert.ts';
 import { T } from '../tokens.ts';
 import { choice, leaf, optional, repetition, sequence } from '../tree.ts';

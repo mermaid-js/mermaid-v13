@@ -1,6 +1,7 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { railroadConfigDefaults } from './generated/config-defaults.ts';
 import { layoutRailroad, type RailroadLayout } from './layout/index.ts';
 import type { RailroadModel } from './model.ts';
 import { detectRailroad, parseRailroad, type RailroadParseResult } from './parser/index.ts';
@@ -13,16 +14,18 @@ import { theme } from './theme/table.ts';
  * flowchart's (`diagram-flowchart/src/plugin.ts`), all four reading the one `railroad` config
  * section. `layoutKind: 'custom'` with its own `RailroadLayout`. `parse` reads the notation its
  * header names; `layout` measures and places everything as v12 did; `render` writes the whole
- * `<svg>` document. The registry loads it from the package's `mermaid` manifest once T5 (#615)
- * adds it, with the section's generated defaults in place of `configDefaults: {}` (D515: the
- * colours and fonts have none).
+ * `<svg>` document, SVG only for now (T7 may add a lazy `ascii` entry, D518; until then core
+ * throws `UnsupportedFormatError` for `format: 'ascii'`). The registry loads it from the
+ * package's `mermaid` manifest (#615); `configDefaults` are the generated `railroad` section
+ * defaults (the lengths and `useMaxWidth`; D515: the colours and fonts have none, so the theme's
+ * are drawn).
  */
 export const railroad = {
   id: 'railroad',
   aliases: ['railroadEbnf', 'railroadAbnf', 'railroadPeg'] as readonly string[],
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
-  configDefaults: {} as Readonly<Record<string, unknown>>,
+  configDefaults: railroadConfigDefaults as Readonly<Record<string, unknown>>,
   theme,
   detector: (text: string): boolean => detectRailroad(text) !== undefined,
   parse: (text: string, ctx: DiagramParseContext): RailroadParseResult =>

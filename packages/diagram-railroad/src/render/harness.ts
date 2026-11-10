@@ -2,9 +2,8 @@
  * Test harness (`@mermaid-js/diagram-railroad/testing`, as venn's): renders a railroad source
  * or model through the plugin's own seam, `parse` → `layout` → `render`, with the config, theme
  * and render context the pipeline would build (`../test-context.ts`), and the stream writer.
- * Until T5 (#615) adds the manifest, `createMermaid()` reports railroad as unsupported; this
- * renders the plugin alone, and gives back what the public API does not return (the model, the
- * AST, the layout).
+ * It renders the plugin alone (`createMermaid()` renders it through the registry since #615), and
+ * gives back what the public API does not return (the model, the AST, the layout).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';

@@ -1,7 +1,7 @@
 /**
  * The EBNF parser (`railroad-ebnf-beta`): v12's `railroad-ebnf.langium` rules and
  * `ebnfParser.ts` mapping, over the EBNF lexer's tokens. The shared part (header,
- * `title`/`acc*`, rules, recovery) is `../base.ts`; `grammar/railroad-ebnf.ebnf` is the
+ * `title`/`acc*`, rules, recovery) is `../parser.ts`; `grammar/railroad-ebnf.ebnf` is the
  * normative form:
  *
  *     Choice:   Sequence ('|' Sequence)*            a one-alternative choice is its alternative
@@ -14,9 +14,9 @@
  * (trimmed). The exception `A - B` is v12's `sequence[A, terminal('-'), B]`.
  */
 import { ExpectedTable, Kind } from '@mermaid-js/core/parser-kit';
-import { RailroadParser, RULE_START } from '../base.ts';
+import { RailroadParser, RULE_START } from '../parser.ts';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { RailroadParseOptions } from '../base.ts';
+import type { RailroadParseOptions } from '../parser.ts';
 import { specialValue, stringValue } from '../convert.ts';
 import { T } from '../tokens.ts';
 import { choice, leaf, optional, repetition, sequence } from '../tree.ts';

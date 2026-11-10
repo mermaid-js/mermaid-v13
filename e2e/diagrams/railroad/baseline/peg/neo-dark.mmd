@@ -1,0 +1,11 @@
+---
+description: >-
+  One representative railroad diagram in the neo family's dark theme, `neo-dark`. PEG (`railroad-peg-beta`): a five-way ordered choice, `?`, `*` and `+` suffixes, a group, a not-predicate and the any character.
+config:
+  theme: neo-dark
+---
+railroad-peg-beta
+Value <- Object / Array / Number / "true" / "null" ;
+Object <- "{" (Member ("," Member)*)? "}" ;
+Number <- "-"? Digit+ ;
+Digit <- !Letter . ;

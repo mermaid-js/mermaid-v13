@@ -9,7 +9,7 @@
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import type { RailroadDocument } from '../parser/ast.ts';
-import { RULE_SYMBOL } from '../parser/base.ts';
+import { RULE_SYMBOL } from '../parser/parser.ts';
 import { repeatBounds } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
 import { code, NOTATION_DOCS, notationOf, ruleFirstLine, rulesByName, span } from './tables.ts';

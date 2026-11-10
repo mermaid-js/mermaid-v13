@@ -2623,12 +2623,28 @@ boundaryAmplitude?: number
 seed?: number
 }
 /**
- * Configuration for Railroad (Syntax) Diagrams
+ * Configuration for railroad (syntax) diagrams: one section for the four notations
+ * (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`, D511).
+ * 
  * 
  * This interface was referenced by `MermaidConfig`'s JSON-Schema
  * via the `definition` "RailroadDiagramConfig".
  */
 export interface RailroadDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Use compact layout mode
  */

@@ -944,36 +944,36 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `railroad` | object |  | pending |  | Configuration for Railroad (Syntax) Diagrams |
-| `railroad.useWidth` | number |  | pending |  |  |
-| `railroad.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `railroad.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `railroad` | object |  | honoured (13.0.0) |  | Configuration for railroad (syntax) diagrams: one section for the four notations (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`, D511). |
+| `railroad.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the railroad renderer never did. |  |
+| `railroad.useMaxWidth` | boolean | `true` | honoured (13.0.0) | True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `railroad.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | honoured (13.0.0) | Set here, it wins over the top-level `theme` for railroad diagrams (a diagram section beats the top level within a config layer). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `railroad.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `railroad.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `railroad.compactMode` | boolean | `false` | pending |  | Use compact layout mode |
-| `railroad.padding` | number | `10` | pending |  | Padding around elements |
-| `railroad.verticalSeparation` | number | `8` | pending |  | Vertical separation between elements |
-| `railroad.horizontalSeparation` | number | `10` | pending |  | Horizontal separation between elements |
-| `railroad.arcRadius` | number | `10` | pending |  | Radius for curved paths |
-| `railroad.fontSize` | number | `14` | pending |  | Font size for text |
-| `railroad.fontFamily` | string | `"monospace"` | pending |  | Font family for text |
-| `railroad.terminalFill` | string | `"#FFFFC0"` | pending |  | Fill color for terminal elements |
-| `railroad.terminalStroke` | string | `"#000000"` | pending |  | Stroke color for terminal elements |
-| `railroad.terminalTextColor` | string | `"#000000"` | pending |  | Text color for terminal elements |
-| `railroad.nonTerminalFill` | string | `"#FFFFFF"` | pending |  | Fill color for non-terminal elements |
-| `railroad.nonTerminalStroke` | string | `"#000000"` | pending |  | Stroke color for non-terminal elements |
-| `railroad.nonTerminalTextColor` | string | `"#000000"` | pending |  | Text color for non-terminal elements |
-| `railroad.lineColor` | string | `"#000000"` | pending |  | Color for connection lines |
-| `railroad.strokeWidth` | number | `2` | pending |  | Width of strokes |
-| `railroad.markerFill` | string | `"#000000"` | pending |  | Fill color for start/end markers |
-| `railroad.commentFill` | string | `"#E8E8E8"` | pending |  | Fill color for comments |
-| `railroad.commentStroke` | string | `"#888888"` | pending |  | Stroke color for comments |
-| `railroad.commentTextColor` | string | `"#666666"` | pending |  | Text color for comments |
-| `railroad.specialFill` | string | `"#F0E0FF"` | pending |  | Fill color for special sequences |
-| `railroad.specialStroke` | string | `"#8800CC"` | pending |  | Stroke color for special sequences |
-| `railroad.ruleNameColor` | string | `"#000066"` | pending |  | Color for rule names |
-| `railroad.showMarkers` | boolean | `true` | pending |  | Show start/end markers |
-| `railroad.markerRadius` | number | `5` | pending |  | Radius of start/end markers |
+| `railroad.compactMode` | boolean | `false` | ignored (13.0.0) | v12 read it and drew nothing different (D515). | Use compact layout mode |
+| `railroad.padding` | number | `10` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Padding around elements |
+| `railroad.verticalSeparation` | number | `8` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Vertical separation between elements |
+| `railroad.horizontalSeparation` | number | `10` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Horizontal separation between elements |
+| `railroad.arcRadius` | number | `10` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Radius for curved paths |
+| `railroad.fontSize` | number |  | honoured (13.0.0) | The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number of 0 or more, or a string read as its number; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Font size for text |
+| `railroad.fontFamily` | string |  | honoured (13.0.0) | The documented default changes from `monospace` to none (D515): unset, the theme's `fontFamily` is used, as v12 drew (its runtime config reset `monospace`), so fonts stay uniform across diagrams. A value that fails core's style check is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Font family for text |
+| `railroad.terminalFill` | string |  | honoured (13.0.0) | The documented default changes from `#FFFFC0` to none (D515): unset, the theme's `railroadTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Fill color for terminal elements |
+| `railroad.terminalStroke` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Stroke color for terminal elements |
+| `railroad.terminalTextColor` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Text color for terminal elements |
+| `railroad.nonTerminalFill` | string |  | honoured (13.0.0) | The documented default changes from `#FFFFFF` to none (D515): unset, the theme's `railroadNonTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Fill color for non-terminal elements |
+| `railroad.nonTerminalStroke` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Stroke color for non-terminal elements |
+| `railroad.nonTerminalTextColor` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Text color for non-terminal elements |
+| `railroad.lineColor` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadLineColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Color for connection lines |
+| `railroad.strokeWidth` | number | `2` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Width of strokes |
+| `railroad.markerFill` | string |  | honoured (13.0.0) | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadMarkerFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Fill color for start/end markers |
+| `railroad.commentFill` | string |  | ignored (13.0.0) | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). | Fill color for comments |
+| `railroad.commentStroke` | string |  | ignored (13.0.0) | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). | Stroke color for comments |
+| `railroad.commentTextColor` | string |  | ignored (13.0.0) | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). | Text color for comments |
+| `railroad.specialFill` | string |  | honoured (13.0.0) | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Fill color for special sequences |
+| `railroad.specialStroke` | string |  | honoured (13.0.0) | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Stroke color for special sequences |
+| `railroad.ruleNameColor` | string |  | honoured (13.0.0) | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. | Color for rule names |
+| `railroad.showMarkers` | boolean | `true` | ignored (13.0.0) | v12 read it and drew the start and end markers either way (D515). | Show start/end markers |
+| `railroad.markerRadius` | number | `5` | honoured (13.0.0) | A number, or a string read as its number (`"12px"` is 12), finite and 0 or more; anything else lays out with the default, with no warning, as in v12. | Radius of start/end markers |
 
 ## `elk` (plugin `@mermaid-js/layout-elk`)
 

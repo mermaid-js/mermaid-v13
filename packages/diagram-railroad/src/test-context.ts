@@ -1,7 +1,7 @@
 /**
  * The railroad render harness's context builder (as venn's `test-context.ts`): what the pipeline
- * builds (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`) before T5 (#615)
- * registers the package: the config core resolves from its defaults, the integrator's config and
+ * builds (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`), for the plugin rendered
+ * alone: the config core resolves from its defaults, the integrator's config and
  * the source's front matter and directives; the theme that config names, with railroad's table,
  * its `themeVariables` and its dark half for `theme: 'auto'`; and a render context with a
  * measurer (the table measurer by default) and the warnings collected.

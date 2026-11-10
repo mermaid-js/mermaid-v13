@@ -8,12 +8,13 @@
  * `fontFamily` are used. A size must be above 0 (v12's `parseThemeFontSize`); a family must pass
  * core's style check. The colour keys have no default either: unset, the theme variable's colour
  * is drawn (D516). A colour or font that fails core's checks is dropped with one
- * `RAILROAD_CONFIG_INVALID` (the renderer raises it). T5 (#615) moves the keys to `honoured` and
- * generates the section defaults.
+ * `RAILROAD_CONFIG_INVALID` (the layout raises it). The section's keys are `honoured` (#615) and
+ * its defaults generated (`gen:config`).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
+import { railroadConfigDefaults } from './generated/config-defaults.ts';
 
 /** The `railroad` lengths the layout reads, every one set. */
 export interface RailroadLayoutConfig {
@@ -32,16 +33,17 @@ export interface RailroadLayoutConfig {
 }
 
 /**
- * v12's defaults (`railroadTypes.ts` `DEFAULT_RAILROAD_CONFIG`, equal to the schema's
- * `RailroadDiagramConfig` defaults in `packages/core/schema/config.schema.yaml`).
+ * The lengths a value the layout cannot use falls back to: the section's generated defaults
+ * (`packages/core/schema/config.schema.yaml`, `gen:config`), v12's `DEFAULT_RAILROAD_CONFIG`,
+ * which the plugin also hands core as its `configDefaults`.
  */
 export const RAILROAD_LAYOUT_DEFAULTS: RailroadLayoutConfig = Object.freeze({
-  padding: 10,
-  verticalSeparation: 8,
-  horizontalSeparation: 10,
-  arcRadius: 10,
-  markerRadius: 5,
-  strokeWidth: 2,
+  padding: railroadConfigDefaults.padding ?? 10,
+  verticalSeparation: railroadConfigDefaults.verticalSeparation ?? 8,
+  horizontalSeparation: railroadConfigDefaults.horizontalSeparation ?? 10,
+  arcRadius: railroadConfigDefaults.arcRadius ?? 10,
+  markerRadius: railroadConfigDefaults.markerRadius ?? 5,
+  strokeWidth: railroadConfigDefaults.strokeWidth ?? 2,
 });
 
 const KEYS = Object.keys(RAILROAD_LAYOUT_DEFAULTS) as (keyof RailroadLayoutConfig)[];

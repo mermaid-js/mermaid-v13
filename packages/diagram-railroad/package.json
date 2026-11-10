@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/diagram-railroad",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Railroad diagram plugin for Mermaid (IR, EBNF, ABNF and PEG): lexers, parsers, model, layout, SVG renderer and theme table (manifest to follow).",
+  "version": "13.0.0-alpha.0",
+  "description": "Railroad diagram plugin for Mermaid (IR, EBNF, ABNF and PEG): parsers, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -44,5 +43,20 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "railroad",
+    "types": [
+      "railroad",
+      "railroadEbnf",
+      "railroadAbnf",
+      "railroadPeg"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "railroad",
+    "language": "./dist/language.js"
   }
 }

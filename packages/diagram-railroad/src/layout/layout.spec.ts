@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { tableMeasurer, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { RAILROAD_LAYOUT_DEFAULTS, railroadLayoutConfig } from '../config.ts';
+import { railroadConfigDefaults } from '../generated/config-defaults.ts';
 import { parseRailroad } from '../parser/index.ts';
 import { railroadLayoutViolations } from './invariants.ts';
 import { layoutRailroad } from './layout.ts';
@@ -322,12 +323,29 @@ describe('config and fonts', () => {
   });
 
   it('takes the theme font under a resolved config (D515: no railroad font default)', () => {
-    // D515: `fontSize`/`fontFamily` have no default, so the theme's win. The schema still says
-    // 14 and 'monospace' (`config.schema.yaml` RailroadDiagramConfig, pending): when T5 (#615)
-    // generates the section defaults, those two must go, or this fails (GAPS #615).
-    const config = resolveConfig(CORE_DEFAULTS, undefined, undefined, [], undefined, {
-      section: 'railroad',
-    });
+    // D515: `fontSize`/`fontFamily` have no default, so the theme's win: the generated section
+    // defaults (the plugin's `configDefaults`) set neither, nor any colour.
+    expect(Object.keys(railroadConfigDefaults).sort()).toEqual(
+      [
+        'arcRadius',
+        'compactMode',
+        'horizontalSeparation',
+        'markerRadius',
+        'padding',
+        'showMarkers',
+        'strokeWidth',
+        'useMaxWidth',
+        'verticalSeparation',
+      ].sort()
+    );
+    const config = resolveConfig(
+      CORE_DEFAULTS,
+      undefined,
+      undefined,
+      [],
+      { railroad: railroadConfigDefaults },
+      { section: 'railroad' }
+    );
     const { model } = parseRailroad('railroad-beta\na = terminal("x") ;\n');
     const layout = layoutRailroad(model, { config, measurer: v12Measurer, theme: plainTheme });
     expect(layout.fonts.text).toEqual({ family: 'monospace', size: 16, weight: 400 });

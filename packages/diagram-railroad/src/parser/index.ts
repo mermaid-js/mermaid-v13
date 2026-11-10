@@ -11,8 +11,8 @@ import type { RailroadNotation } from './tokens.ts';
 export { RAILROAD_TRIVIA, T as RailroadTokenKind } from './tokens.ts';
 export type { RailroadNotation } from './tokens.ts';
 export { parseRailroad } from './parse.ts';
-export { RULE_SYMBOL } from './base.ts';
-export type { RailroadParseOptions, RailroadParseResult } from './base.ts';
+export { RULE_SYMBOL } from './parser.ts';
+export type { RailroadParseOptions, RailroadParseResult } from './parser.ts';
 export { detectRailroad, RAILROAD_HEADERS } from './detect.ts';
 export type * from './ast.ts';
 

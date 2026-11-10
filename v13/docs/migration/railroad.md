@@ -1,3 +1,23 @@
+## Railroad diagram
+
+The four railroad parsers accept v12's four languages (`railroad-beta`, `railroad-ebnf-beta`,
+`railroad-abnf-beta`, `railroad-peg-beta`; oracle parity per notation over the corpus, grammars
+in [syntax/railroad.md](./syntax/railroad.md), [syntax/railroad-ebnf.md](./syntax/railroad-ebnf.md),
+[syntax/railroad-abnf.md](./syntax/railroad-abnf.md) and
+[syntax/railroad-peg.md](./syntax/railroad-peg.md)), v12's lexer quirks included (D513), and
+the layout is v12's (D514). One package draws all four, with one `railroad` config section
+(D511). What changes (spec #526):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| A rule name was measured at normal weight and drawn bold, so a long bold name ran into its start marker | The name is measured bold: the start marker, the definition and the end marker move right by the difference between the bold and normal widths (a few px for a short name), and the diagram widens by as much | D514 |
+| A choice branch closer than `2 × arcRadius` to the main line (a small font, or a large `arcRadius`) was drawn with arcs that overshot it, the vertical piece running backwards | That branch, and every branch beyond it on the same side, moves out to `2 × arcRadius` from the main line, so the arcs meet it; the main line is then no longer at half the choice's height. An optional's bypass and a repetition's loop sit `max(2 × arcRadius, verticalSeparation)` from the element (v12: `2 × arcRadius`). With v12's defaults, only choices v12 overshot change | D514 |
+| The schema documented defaults for `railroad.fontSize` (14), `railroad.fontFamily` (`monospace`) and the colour keys, which v12's runtime config reset, so the theme's were drawn | No documented default: unset, the theme's font and the theme's railroad variables are drawn, as v12 drew them. Set, each wins over the theme, as in v12 | D515 |
+| The `railroad` keys `compactMode`, `showMarkers`, `commentFill`, `commentStroke` and `commentTextColor` were read and drew nothing different | Ignored (listed under [Config](#config)) | D515 |
+| `themeVariables.railroad.<key>` reached v12's style sheet; the terminal fill was `secondBkg ?? secondaryColor` | Railroad's own theme variables (`railroadTerminalFill` … `railroadRuleNameColor`), each also read as `themeVariables.railroad.<v12 key>`; every theme draws 12.2.0's colours (see [Railroad SVG structure](#railroad-svg-structure)) | D516 |
+| A rule defined twice: both drawn, with a `log.warn` | Both drawn, with one `RAILROAD_DUPLICATE_RULE` warning | D517 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
 ## Railroad SVG structure
 
 What changed in the railroad diagram's SVG compared with v12 (spec #526, DESIGN §7.2), for all

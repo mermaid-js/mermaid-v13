@@ -46,7 +46,7 @@ describe('railroad PEG lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)',
     expect(r.unreached).toEqual([...NOT_REACHED].sort());
     expect(r.strays).toEqual([]);
     // Every e2e fixture of the notation reaches its lexer (`pr-check/` and `nightly-check/`).
-    expect(r.e2e).toBe(5);
+    expect(r.e2e).toBe(9);
     expect(r.errors).toBeGreaterThan(0);
   }, 300_000);
 });

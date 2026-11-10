@@ -2,7 +2,7 @@
 /**
  * The IR parser (`railroad-beta`): v12's `railroad.langium` rules and `railroadParser.ts`
  * mapping, over the IR lexer's tokens. The shared part (header, `title`/`acc*`, rules,
- * recovery) is `../base.ts`; `grammar/railroad.ebnf` is the normative form:
+ * recovery) is `../parser.ts`; `grammar/railroad.ebnf` is the normative form:
  *
  *     Expression: KEYWORD '(' …
  *       sequence(e, …)  choice(e, …)       a one-element sequence or choice is its element
@@ -14,9 +14,9 @@
  */
 import { ExpectedTable, Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
-import { RailroadParser, RULE_START } from '../base.ts';
+import { RailroadParser, RULE_START } from '../parser.ts';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { RailroadParseOptions } from '../base.ts';
+import type { RailroadParseOptions } from '../parser.ts';
 import { stringValue } from '../convert.ts';
 import { T } from '../tokens.ts';
 import { choice, leaf, optional, repetition, sequence } from '../tree.ts';

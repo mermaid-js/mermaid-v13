@@ -22,7 +22,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import type { RailroadParseOptions, RailroadParseResult } from '../parser/base.ts';
+import type { RailroadParseOptions, RailroadParseResult } from '../parser/parser.ts';
 import { parseRailroad } from '../parser/parse.ts';
 import { RAILROAD_TRIVIA, T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';

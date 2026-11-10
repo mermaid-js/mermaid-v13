@@ -2,7 +2,7 @@
 /**
  * The ABNF parser (`railroad-abnf-beta`): v12's `railroad-abnf.langium` rules and
  * `abnfParser.ts` mapping, over the ABNF lexer's tokens. The shared part (header,
- * `title`/`acc*`, rules, recovery) is `../base.ts`; `grammar/railroad-abnf.ebnf` is the
+ * `title`/`acc*`, rules, recovery) is `../parser.ts`; `grammar/railroad-abnf.ebnf` is the
  * normative form:
  *
  *     Alternation:   Concatenation ('/' Concatenation)*    one alternative is itself
@@ -16,9 +16,9 @@
  * text after it, it starts a comment (D513).
  */
 import { ExpectedTable, Kind } from '@mermaid-js/core/parser-kit';
-import { RailroadParser, RULE_START } from '../base.ts';
+import { RailroadParser, RULE_START } from '../parser.ts';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { RailroadParseOptions } from '../base.ts';
+import type { RailroadParseOptions } from '../parser.ts';
 import { repeatBounds, stringValue } from '../convert.ts';
 import { T } from '../tokens.ts';
 import { choice, leaf, optional, repetition, sequence } from '../tree.ts';

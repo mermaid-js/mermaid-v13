@@ -393,7 +393,13 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `wardley-beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `cynefin.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the cynefin renderer never did. |  |
 | `cynefin.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `railroad.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the railroad renderer never did. |  |
 | `railroad.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `railroad.compactMode` | ignored | v12 read it and drew nothing different (D515). |  |
+| `railroad.commentFill` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.commentStroke` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.commentTextColor` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.showMarkers` | ignored | v12 read it and drew the start and end markers either way (D515). |  |
 | `dompurifyConfig` | removed | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). | none |
 
 ### Changed defaults
@@ -418,6 +424,19 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
+| `railroad.fontSize` |  | The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number of 0 or more, or a string read as its number; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.fontFamily` |  | The documented default changes from `monospace` to none (D515): unset, the theme's `fontFamily` is used, as v12 drew (its runtime config reset `monospace`), so fonts stay uniform across diagrams. A value that fails core's style check is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalFill` |  | The documented default changes from `#FFFFC0` to none (D515): unset, the theme's `railroadTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalFill` |  | The documented default changes from `#FFFFFF` to none (D515): unset, the theme's `railroadNonTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.lineColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadLineColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.markerFill` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadMarkerFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.specialFill` |  | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.specialStroke` |  | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.ruleNameColor` |  | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -2402,6 +2421,26 @@ stroke). v13 sketches each circle and each
 overlap a style fills as a `node` outline (roughness 0.7, hachure, fill weight 1.5, gap 1.5, the
 hachure at the area's `fill-opacity`), and draws an unfilled overlap plain: the outline hook takes
 no per-call options (D319, D302).
+
+## Railroad diagram
+
+The four railroad parsers accept v12's four languages (`railroad-beta`, `railroad-ebnf-beta`,
+`railroad-abnf-beta`, `railroad-peg-beta`; oracle parity per notation over the corpus, grammars
+in [syntax/railroad.md](./syntax/railroad.md), [syntax/railroad-ebnf.md](./syntax/railroad-ebnf.md),
+[syntax/railroad-abnf.md](./syntax/railroad-abnf.md) and
+[syntax/railroad-peg.md](./syntax/railroad-peg.md)), v12's lexer quirks included (D513), and
+the layout is v12's (D514). One package draws all four, with one `railroad` config section
+(D511). What changes (spec #526):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| A rule name was measured at normal weight and drawn bold, so a long bold name ran into its start marker | The name is measured bold: the start marker, the definition and the end marker move right by the difference between the bold and normal widths (a few px for a short name), and the diagram widens by as much | D514 |
+| A choice branch closer than `2 × arcRadius` to the main line (a small font, or a large `arcRadius`) was drawn with arcs that overshot it, the vertical piece running backwards | That branch, and every branch beyond it on the same side, moves out to `2 × arcRadius` from the main line, so the arcs meet it; the main line is then no longer at half the choice's height. An optional's bypass and a repetition's loop sit `max(2 × arcRadius, verticalSeparation)` from the element (v12: `2 × arcRadius`). With v12's defaults, only choices v12 overshot change | D514 |
+| The schema documented defaults for `railroad.fontSize` (14), `railroad.fontFamily` (`monospace`) and the colour keys, which v12's runtime config reset, so the theme's were drawn | No documented default: unset, the theme's font and the theme's railroad variables are drawn, as v12 drew them. Set, each wins over the theme, as in v12 | D515 |
+| The `railroad` keys `compactMode`, `showMarkers`, `commentFill`, `commentStroke` and `commentTextColor` were read and drew nothing different | Ignored (listed under [Config](#config)) | D515 |
+| `themeVariables.railroad.<key>` reached v12's style sheet; the terminal fill was `secondBkg ?? secondaryColor` | Railroad's own theme variables (`railroadTerminalFill` … `railroadRuleNameColor`), each also read as `themeVariables.railroad.<v12 key>`; every theme draws 12.2.0's colours (see [Railroad SVG structure](#railroad-svg-structure)) | D516 |
+| A rule defined twice: both drawn, with a `log.warn` | Both drawn, with one `RAILROAD_DUPLICATE_RULE` warning | D517 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
 
 ## Railroad SVG structure
 

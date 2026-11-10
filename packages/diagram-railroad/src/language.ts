@@ -4,9 +4,8 @@
  * one facet for the four notations (D511). The four manifest types load it alike; each parse
  * reads the text in the notation its header names, and completion, hover and the categories
  * follow that notation. Nothing reachable from here imports the layout or the renderer: the
- * import-boundary lint holds that now; the bench's language bundle spec checks the bundle
- * against `workspace.yaml` `languageBundle` once T5 (#615) adds the manifest (it skips a
- * package without one).
+ * import-boundary lint holds that, and the bench's language bundle spec checks the bundle
+ * against `workspace.yaml` `languageBundle`.
  *
  * Symbols (D517): each rule name is a `rule` symbol, defined by its rule (the first one when
  * the name is defined again, and also while the rule fails to parse) and referred to by every
@@ -23,7 +22,7 @@ import { railroadHover } from './facet/hover.ts';
 import { nameReason } from './facet/names.ts';
 import { parseForLanguage } from './facet/parse.ts';
 import { RAILROAD_CATEGORIES } from './facet/tables.ts';
-import { RULE_SYMBOL } from './parser/base.ts';
+import { RULE_SYMBOL } from './parser/parser.ts';
 import type { RailroadDocument } from './parser/ast.ts';
 
 export {

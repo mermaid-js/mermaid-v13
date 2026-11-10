@@ -5,7 +5,6 @@ import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { railroadGateCorpus } from './corpus.ts';
-import { RAILROAD_FACETS } from './facets.ts';
 import type { RailroadNodeSnapshot } from './v12.ts';
 import { railroadV12Snapshot } from './v12.ts';
 
@@ -40,9 +39,10 @@ function references(n: RailroadNodeSnapshot, out: Set<string>): Set<string> {
  * - renaming a rule and renaming it back gives the text back;
  * - every v12 rule written over lines is a `rule` fold.
  *
- * The service loads the facet through the railroad rows of `facets.ts` until T5 (#615).
+ * The service loads the facet through the generated registry rows (railroad's manifest
+ * `language` entry, #615).
  */
-const service = createLanguageService({ facets: RAILROAD_FACETS });
+const service = createLanguageService();
 await service.preload({ types: V12_TYPES });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 

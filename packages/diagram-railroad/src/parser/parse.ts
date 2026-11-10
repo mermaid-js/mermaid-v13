@@ -5,7 +5,7 @@
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { AbnfParser } from './abnf/parser.ts';
-import type { RailroadParseOptions, RailroadParseResult, RailroadParser } from './base.ts';
+import type { RailroadParseOptions, RailroadParseResult, RailroadParser } from './parser.ts';
 import { detectRailroad } from './detect.ts';
 import { EbnfParser } from './ebnf/parser.ts';
 import { IrParser } from './ir/parser.ts';
