@@ -2,10 +2,17 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
 import type { DocumentSnapshot, Range } from './index.ts';
-import { noFacetType } from './testing/no-facet.ts';
 
 const service = createLanguageService();
 beforeAll(() => service.preload());
+/**
+ * Every v12 type has a facet, so a type the service knows but cannot read is a host's row
+ * with no facet: ZenUML, as a host that registers its renderer would detect it.
+ */
+const ZENUML = 'zenuml\n  A.method()\n';
+const withZenuml = createLanguageService({
+  facets: [{ type: 'zenuml', id: 'zenuml', detector: (text) => /^\s*zenuml/.test(text) }],
+});
 const open = async (text: string, uri = 'file:///a.mmd'): Promise<DocumentSnapshot> =>
   service.update(uri, text);
 const texts = (doc: DocumentSnapshot, ranges: readonly Range[]) =>
@@ -102,16 +109,14 @@ describe('diagnostics (D91)', () => {
   });
 
   it('gives a v12 type with no facet one info diagnostic on its header', async () => {
-    // The first generated row with no facet: there must still be one (see the helper).
-    const { type, header, source } = noFacetType();
-    const doc = await open(`%% hi\n${source}`);
+    const doc = withZenuml.update('file:///z.mmd', `%% hi\n${ZENUML}`);
     expect(doc.facet).toBeUndefined();
-    expect(doc.type).toBe(type);
+    expect(doc.type).toBe('zenuml');
     const [d, ...rest] = doc.diagnostics();
     expect(rest).toEqual([]);
     expect(d?.severity).toBe('info');
     expect(d?.code).toBe('NO_LANGUAGE_SUPPORT');
-    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe(header);
+    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('zenuml');
   });
 
   it('gives an unknown type UNSUPPORTED_DIAGRAM, as the renderer does', async () => {
@@ -270,12 +275,11 @@ describe('definition, references and rename (D92)', () => {
   });
 
   it('refuses everything on a type with no facet', async () => {
-    const { type, source } = noFacetType();
-    const doc = await open(source);
+    const doc = withZenuml.update('file:///z.mmd', ZENUML);
     expect(doc.definition(1)).toBeUndefined();
     expect(doc.references(1)).toEqual([]);
     expect(doc.rename(1, 'X')).toEqual({
-      refused: `${type} diagrams are not supported by the v13 language service yet.`,
+      refused: 'zenuml diagrams are not supported by the v13 language service yet.',
     });
   });
 });
