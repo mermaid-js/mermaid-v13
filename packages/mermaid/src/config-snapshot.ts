@@ -278,11 +278,13 @@ export class SiteConfigs {
     let hit = byType.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
-      // The plugin's defaults go to its own section. A type's own section (D534) has its
-      // defaults in core's; where both sections have a key (`theme`, `useMaxWidth`) the defaults
-      // agree, so which one wins does not matter (`swimlanesDiagram.spec.ts` checks).
+      // The plugin's defaults go to its own section; a type's own section (D534) sits over
+      // them, so on a key both sections have (`theme`, `useMaxWidth`) its defaults outrank the
+      // plugin's.
       if (plugin.configDefaults)
         pluginDefaults[plugin.configSection ?? plugin.id] = plugin.configDefaults;
+      if (detected.section)
+        pluginDefaults[detected.section] = (CORE_DEFAULTS as Plain)[detected.section];
       // The plugin's engine (D284), and the type's default layout (v12's flowchart-elk detector's
       // `elk`, swimlane's `swimlane`), sit below the user's config.
       if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;

@@ -227,6 +227,24 @@ describe('lanes follow the engine that laid out, not the layout name', () => {
     expect(lanesOf(parseSvg(own.svg)).map((l) => l.id)).toEqual(['L1', 'L2']);
     expect(lanesOf(parseSvg((await m.render('s', as('lanes'))).svg))).toEqual([]);
   });
+
+  // The part loads under a layout name but is no engine (as `lineHops`): never a `layout`, and
+  // a loader registered under its name replaces nothing.
+  it('takes no `layout: flowchartLanes`, and no loader replaces the part', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    let calls = 0;
+    const loader = () => (calls++, Promise.resolve(swimlane));
+    m.registerLayoutLoaders([{ name: 'flowchartLanes', loader }]);
+    const body = text.replace(/^---[\s\S]*?---\n/, '');
+    const as = (layout: string) => `---\nconfig:\n  layout: ${layout}\n---\n${body}`;
+    const part = await m.render('s', as('flowchartLanes'));
+    expect(part.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
+    expect(lanesOf(parseSvg(part.svg))).toEqual([]);
+    const own = await m.render('s', as('swimlane'));
+    expect(lanesOf(parseSvg(own.svg)).map((l) => l.id)).toEqual(['L1', 'L2']);
+    expect(calls).toBe(0);
+  });
 });
 
 describe('warnings (D226, D536)', () => {

@@ -8,11 +8,13 @@
  * lane drawing and warnings, T2 (#598, D536).
  */
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
-import { CORE_DEFAULTS } from '@mermaid-js/core/config';
+import { CORE_DEFAULTS, KEY_TREE } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import { flowchartConfigDefaults } from '@mermaid-js/diagram-flowchart';
+import { flowchart } from '@mermaid-js/diagram-flowchart';
 import { describe, expect, it } from 'vitest';
+import { SiteConfigs, snapshot } from './config-snapshot.ts';
 import { createMermaid, detectType, type MermaidConfig } from './index.ts';
+import type { AnyPlugin, Detected } from './registry.ts';
 
 const SWIMLANE = 'swimlane-beta TD\n  A --> B';
 const FLOWCHART = 'flowchart TD\n  A --> B';
@@ -136,14 +138,27 @@ describe('swimlane-beta registration (D534, D535)', () => {
     expect(both.config.swimlane?.automaticLaneOrdering).toBe(true);
   });
 
-  // config-snapshot.ts puts no swimlane defaults over flowchart's plugin defaults (R-PERF-1): on
-  // the keys both sections resolve together the two defaults must agree, or the order would show.
-  it("agrees with flowchart's defaults on every key both sections resolve", () => {
+  // Flowchart's plugin defaults < swimlane's defaults, on every key both sections' schemas have
+  // (the keys a chained type resolves into both). The shipped defaults agree, so a flowchart
+  // whose defaults differ on each of those keys shows the order.
+  it("puts swimlane's defaults over flowchart's on every key both schemas have", () => {
+    const tree = KEY_TREE as Record<string, object>;
     const own = CORE_DEFAULTS.swimlane as Record<string, unknown>;
-    const flow = flowchartConfigDefaults as Record<string, unknown>;
-    for (const key of ['theme', 'layout', 'useMaxWidth', 'useWidth'])
-      if (key in own && key in flow) expect(own[key], key).toEqual(flow[key]);
-    expect(own.theme).toBe(flow.theme);
+    const shared = Object.keys(tree.swimlane!).filter((k) => k in tree.flowchart! && k in own);
+    expect(shared).toEqual(expect.arrayContaining(['theme', 'layout', 'useMaxWidth']));
+    const other = (v: unknown) => (typeof v === 'boolean' ? !v : `not-${String(v)}`);
+    const plugin = {
+      ...flowchart,
+      configDefaults: Object.fromEntries(shared.map((k) => [k, other(own[k])])),
+    } as unknown as AnyPlugin;
+    const detected = { type: 'swimlane', id: 'flowchart', section: 'swimlane' } as Detected;
+    const sections = ['swimlane', 'flowchart'];
+    const { plain } = new SiteConfigs().get(snapshot(), plugin, detected, sections, []).site;
+    const scoped = plain as unknown as Record<string, Record<string, unknown>>;
+    for (const k of shared) {
+      expect(scoped.swimlane![k], k).toEqual(own[k]);
+      expect(scoped.flowchart![k], k).toEqual(own[k]);
+    }
   });
 
   describe('section layering: flowchart defaults < swimlane defaults < flowchart.* < swimlane.*', () => {

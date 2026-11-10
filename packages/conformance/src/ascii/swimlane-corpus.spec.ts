@@ -1,8 +1,8 @@
 // ASCII render properties over the swimlane corpus (`e2e/diagrams/swimlanes`), in both charsets
 // (#603, D534, D179, R-ASCII-9). Text output takes flowchart's `ascii` hook with the built-in
 // `layered` engine, lanes drawn as plain groups (subgraph frames), and warns one
-// `ASCII_DROPPED` (`feature: 'layout'`). Nothing of the swimlane engine reaches it: no
-// `LayoutModel.lanes`, no `SWIMLANE_*` warning, no default lane. The same holds for any
+// `ASCII_DROPPED` (`feature: 'layout'`). Nothing of the swimlane engine reaches it: no lane
+// part (`flowchartLanes`), no `SWIMLANE_*` warning, no default lane. The same holds for any
 // flowchart with `layout: swimlane` (D535), which draws the same text. Besides flowchart's own
 // corpus properties (`corpus.spec.ts`), no edge label, arrowhead or marker sits on a group
 // frame (pitfall 20).

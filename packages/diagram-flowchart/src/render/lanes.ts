@@ -10,10 +10,7 @@ import { rotate, type Attrs } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from './context.ts';
 import type { NodeView, Prepared } from './prepare.ts';
-import type { LaneDrawer, Scene } from './render.ts';
-
-/** The renderer's class-name helper (`render.ts`), passed in so this part imports none of it. */
-type Classes = (names: readonly string[]) => string;
+import type { Classes, LaneDrawer, LaneDrawerFactory, Scene } from './render.ts';
 
 /**
  * The lanes of a render the swimlane engine laid out: its top-level groups (D535), a group with
@@ -73,13 +70,12 @@ const astOf = (flow: Prepared, id: string): string[] => {
  * subgraph nested in one (kept in the first; both lanes in `astIds`), and
  * `SWIMLANE_NESTED_LANE` for each subgraph inside a lane (drawn as a box).
  */
-export function laneWarnings(
+function laneWarnings(
   model: FlowModel,
   flow: Prepared,
-  layout: LayoutModel,
+  lanes: ReadonlySet<string>,
   warn: (warning: FlowWarning) => void
 ): void {
-  const lanes = lanesOf(layout, flow);
   /** The lane `id` sits in (or is), following the drawn nesting. */
   const laneOf = (id: string): string | undefined => {
     const seen = new Set<string>();
@@ -167,29 +163,27 @@ function drawLane(
 }
 
 /**
- * The part's default export: one render's lane drawer, drawing with the renderer's `cls`.
- * `mermaid` loads it with the `swimlane` layout and the renderer gets it from
- * `ctx.layoutPart` (per API object, never module state).
+ * The part's default export: one layout's lane drawer, its lanes worked out once, drawing with
+ * the renderer's `cls`; with `warn`, v12's warnings first. `mermaid` loads it with the
+ * `swimlane` layout and the renderer gets it from `ctx.layoutPart` (per API object, never
+ * module state).
  */
-export function makeLanes(cls: Classes): LaneDrawer {
-  return {
-    warn: laneWarnings,
-    draw(scene, model, plain) {
-      const lanes = lanesOf(scene.layout, scene.flow);
-      const { flow, layout } = scene;
-      // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
-      // default lane the slot after every subgraph's, so it never takes the first one.
-      let made = model.subgraphs.length;
-      for (const id of lanes) {
-        const box = flow.views.has(id) ? undefined : layout.groups.get(id);
-        if (box) drawLane(cls, scene, id, box, undefined, made++);
-      }
-      for (const g of flow.groups) {
-        const box = layout.groups.get(g.id);
-        if (!box) continue;
-        if (lanes.has(g.id)) drawLane(cls, scene, g.id, box, g, g.order);
-        else plain(g, box);
-      }
-    },
+export const makeLanes: LaneDrawerFactory = (cls, model, flow, layout, warn): LaneDrawer => {
+  const lanes = lanesOf(layout, flow);
+  if (warn) laneWarnings(model, flow, lanes, warn);
+  return (scene, plain) => {
+    // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
+    // default lane the slot after every subgraph's, so it never takes the first one.
+    let made = model.subgraphs.length;
+    for (const id of lanes) {
+      const box = flow.views.has(id) ? undefined : layout.groups.get(id);
+      if (box) drawLane(cls, scene, id, box, undefined, made++);
+    }
+    for (const g of flow.groups) {
+      const box = layout.groups.get(g.id);
+      if (!box) continue;
+      if (lanes.has(g.id)) drawLane(cls, scene, g.id, box, g, g.order);
+      else plain(g, box);
+    }
   };
-}
+};

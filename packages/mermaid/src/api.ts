@@ -291,8 +291,8 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
     const name = layoutName(config, a.plugin);
     const { need } = registry.layout(name, a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
-    const part = a.plugin.layoutParts?.get(name);
-    if (part && !registry.part(part)) missing.push({ kind: 'layout', name: part });
+    const [part, loaded] = registry.layoutPart(a.plugin, name);
+    if (part && !loaded) missing.push({ kind: 'layout', name: part });
   }
   // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
   // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
@@ -405,7 +405,7 @@ export function createMermaid(
   // D534): both are given, highest first.
   function sectionOf(detected: Detected, plugin?: AnyPlugin) {
     const own = plugin?.configSection ?? plugin?.id ?? detected.id;
-    return detected.section ? [detected.section, own!] : own;
+    return detected.section && detected.section !== own ? [detected.section, own!] : own;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).
@@ -656,7 +656,9 @@ export function createMermaid(
         });
       }
       engine = found.engine;
-      part = registry.layoutPart(plugin, name);
+      // The layout's part of the drawing (`layoutParts`), only when that layout lays it out:
+      // ready (a stand-in engine never is).
+      if (found.state === 'ready') part = registry.layoutPart(plugin, name)[1];
     }
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
     const tables = { rules: registry.themeRules(), diagram: plugin.theme };

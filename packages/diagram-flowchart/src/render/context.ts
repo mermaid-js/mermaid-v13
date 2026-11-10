@@ -35,7 +35,11 @@ export interface FlowRenderContext {
   readonly limits?: Limits;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;
-  /** The part of the drawing this render's layout brings (`layoutParts`): swimlane lanes. */
+  /**
+   * The part of the drawing this render's layout brings (`layoutParts`): swimlane lanes, a
+   * `LaneDrawerFactory`. `unknown`, as core's `RenderContext` has it; anything but a function
+   * draws plain subgraphs.
+   */
   readonly layoutPart?: unknown;
   /** Prefix of the root's only ids, `${idPrefix}-title` and `${idPrefix}-desc` (R-A11Y-1). */
   readonly idPrefix?: string;

@@ -132,6 +132,13 @@ export interface ResolvedSite {
   readonly plugin: Readonly<Plain>;
   readonly defaults: Readonly<Plain>;
   readonly tree: Readonly<Record<string, KeyTree>>;
+  /**
+   * The keys `theme`/`layout` resolution covers: those two, or for a chained type (D534) every
+   * key all its sections' schemas have. Worked out once per site, not per diagram text.
+   */
+  readonly keys: readonly string[];
+  /** `section` as a list, highest first. */
+  readonly sections: readonly string[];
   readonly secure: ReadonlySet<string>;
   readonly section: string | readonly string[] | undefined;
   /** Whether `initialize()` already earned the one `LOOK_REMOVED` warning. */
@@ -175,14 +182,24 @@ export function resolveSite(
   // so `initialize({ secure })` can extend the list but not shrink it.
   const secure = new Set<string>([...INTEGRATOR_ONLY_KEYS, ...stringList(base.secure)]);
   const section = options.section ?? soleKey(plugin);
+  // A chained type (D534) resolves every key all its sections' schemas have (`theme`, `layout`,
+  // `useMaxWidth`, `useWidth`), each written into every section, so only where the schema has it.
+  const sections = [section ?? []].flat();
+  const keys = sections[1]
+    ? Object.keys(Object(tree[sections[0]!]) as object).filter((k) =>
+        sections.every((s) => k in Object(tree[s]))
+      )
+    : APPEARANCE_KEYS;
   const layers = {
     base: deepFreeze(base),
     site: deepFreeze(site),
     plugin: deepFreeze(plugin),
     defaults: deepFreeze(looks.strip(coreDefaults)),
+    keys,
+    sections,
   };
   return {
-    plain: layered({ ...layers, tree }, section, {}),
+    plain: layered(layers, {}),
     ...layers,
     tree,
     secure,
@@ -234,24 +251,18 @@ export function resolveText(
       text.themeVariables = { ...vars, fontFamily: text.fontFamily };
     }
   }
-  return layered(site, site.section, text);
+  return layered(site, text);
 }
 
 // The site's base with `text` merged over it, appearance resolved, frozen. Parts `text` does
 // not touch stay shared with the (frozen) site.
 function layered(
-  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults' | 'tree'>,
-  section: ResolvedSite['section'],
+  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults' | 'keys' | 'sections'>,
   text: Plain
 ): ResolvedConfig {
   const config: Plain = { ...layers.base };
   merge(config, text);
-  resolveAppearance(
-    config,
-    section,
-    [text, layers.site, layers.plugin, layers.defaults],
-    layers.tree
-  );
+  resolveAppearance(config, [text, layers.site, layers.plugin, layers.defaults], layers);
   return deepFreeze(config) as ResolvedConfig;
 }
 
@@ -309,38 +320,27 @@ function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
  */
 function resolveAppearance(
   config: Plain,
-  section: ResolvedSite['section'],
   layers: Plain[],
-  tree: ResolvedSite['tree']
+  { sections, keys }: Pick<ResolvedSite, 'keys' | 'sections'>
 ) {
-  const sections = [section ?? []].flat();
   const scopedOf = (layer: Plain, s: string): Plain | undefined => {
     const value = layer[s];
     return isPlainObject(value) ? value : undefined;
   };
-  // A chained type (D534) resolves every key all its sections' schemas have (`theme`, `layout`,
-  // `useMaxWidth`, `useWidth`), each written into every section, so only where the schema has it.
-  const chained = sections.length > 1;
-  const keys = chained
-    ? Object.keys(Object(tree[sections[0]!]) as object).filter((k) =>
-        sections.every((s) => k in Object(tree[s]))
-      )
-    : APPEARANCE_KEYS;
   for (const key of keys) {
     const top = key === 'theme' || key === 'layout';
-    let value: unknown;
-    for (const layer of layers) {
-      value = [
+    const value = layers
+      .flatMap((layer) => [
         ...sections.map((s) => scopedOf(layer, s)?.[key]),
         top ? layer[key] : undefined,
-      ].find((v) => (top ? typeof v === 'string' : v !== undefined));
-      if (value !== undefined) break;
-    }
+      ])
+      .find((v) => (top ? typeof v === 'string' : v !== undefined));
     if (value === undefined) continue;
     if (top) config[key] = value;
+    // A chained type's keys (`ResolvedSite.keys`) are written into every section.
     for (const s of sections) {
       const scoped = scopedOf(config, s);
-      if ((chained || scoped?.[key] !== undefined) && scoped?.[key] !== value)
+      if ((sections[1] || scoped?.[key] !== undefined) && scoped?.[key] !== value)
         config[s] = { ...scoped, [key]: value };
     }
   }

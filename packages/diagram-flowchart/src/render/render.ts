@@ -33,42 +33,57 @@ import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shap
 export interface FlowLayout extends LayoutModel {
   /** Set by `layoutFlowchart`; a `postLayout` hook that builds a new model drops it. */
   readonly flow?: Prepared;
+  /** With `flow`: the lane drawer, on a layout the `swimlane` layout made (D535, D536). */
+  readonly lanes?: LaneDrawer;
 }
+
+/**
+ * Draws every group of a swimlane render: the lanes the engine made, then each subgraph in
+ * order, a lane as a lane and any other through `plain` (the renderer's subgraph box).
+ */
+export type LaneDrawer = (scene: Scene, plain: PlainCluster) => void;
 
 /**
  * Swimlane lane drawing and warnings (spec #528, D535, D536): a part of its own
  * (`../lanes.ts`), which `mermaid` loads with the `swimlane` layout for flowcharts
  * (`layoutParts`), so a plain flowchart loads none of it (R-PERF-1). A render gets it as
  * `ctx.layoutPart` only when that layout laid it out, so it is also the answer to "is this a
- * swimlane render": then the top-level groups are lanes. Its default export makes one drawer
- * per render from the class-name helper.
+ * swimlane render": then the top-level groups are lanes. Its default export makes one layout's
+ * drawer, its lanes worked out once, and given `warn`, raises v12's swimlane warnings.
  */
-export interface LaneDrawer {
-  /** v12's swimlane warnings, at layout. */
-  warn(model: FlowModel, flow: Prepared, layout: LayoutModel, warn: Warn): void;
-  /**
-   * Draws every group: the lanes the engine made, then each subgraph in order, a lane as a
-   * lane and any other through `plain` (the renderer's subgraph box).
-   */
-  draw(scene: Scene, model: FlowModel, plain: PlainCluster): void;
-}
+export type LaneDrawerFactory = (
+  cls: Classes,
+  model: FlowModel,
+  flow: Prepared,
+  layout: LayoutModel,
+  warn?: Warn
+) => LaneDrawer;
+
+/** The renderer's class-name helper, passed to the part so it imports none of this file. */
+export type Classes = (names: readonly string[]) => string;
 
 /** Draws one subgraph as a plain box. */
 export type PlainCluster = (view: NodeView, box: LayoutModelGroup) => void;
 
 type Warn = (warning: FlowWarning) => void;
 
-/** This render's lane drawer: only on a render the `swimlane` layout laid out. */
-const laneDrawer = (ctx: FlowRenderContext): LaneDrawer | undefined =>
-  (ctx.layoutPart as ((c: typeof cls) => LaneDrawer) | undefined)?.(cls);
+/** The layout's lane drawer: only on a render the `swimlane` layout laid out. */
+function lanesFor(
+  { layoutPart }: FlowRenderContext,
+  ...args: [FlowModel, Prepared, LayoutModel, Warn?]
+): LaneDrawer | undefined {
+  return typeof layoutPart === 'function'
+    ? (layoutPart as LaneDrawerFactory)(cls, ...args)
+    : undefined;
+}
 
 /** Measures the model and lays it out with `ctx.layout` (default `layered`). */
 export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
   const prepared = prepare(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
-  // At layout, as prepare's own warnings: once per layout, also for a host that only lays out.
-  laneDrawer(ctx)?.warn(model, prepared, laid, (w) => ctx.warn(w));
-  return { ...laid, flow: prepared };
+  // Its warnings at layout, as prepare's own: once per layout, also for a host that only lays out.
+  const lanes = lanesFor(ctx, model, prepared, laid, (w) => ctx.warn(w));
+  return { ...laid, flow: prepared, lanes };
 }
 
 const THICK = 3.5;
@@ -242,7 +257,8 @@ export function renderFlowchart(
   w: SvgWriter
 ): void {
   const flow = layout.flow ?? prepare(model, ctx);
-  const lanes = laneDrawer(ctx);
+  // Built once, at layout; a layout from elsewhere (a `postLayout` model) gets its own.
+  const lanes = layout.lanes ?? lanesFor(ctx, model, flow, layout);
   const scene: Scene = {
     w,
     layout,
@@ -253,7 +269,7 @@ export function renderFlowchart(
     lanes,
   };
   openRoot(scene, model);
-  if (scene.paint.cluster) drawClusters(scene, model);
+  if (scene.paint.cluster) drawClusters(scene);
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
@@ -311,7 +327,7 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: str
   w.close();
 }
 
-function drawClusters(scene: Scene, model: FlowModel): void {
+function drawClusters(scene: Scene): void {
   const { w, layout, flow, ctx, paint } = scene;
   const cluster = paint.cluster!;
   w.open('g', { class: 'clusters' });
@@ -343,7 +359,7 @@ function drawClusters(scene: Scene, model: FlowModel): void {
     });
     w.close();
   };
-  if (scene.lanes) scene.lanes.draw(scene, model, plain);
+  if (scene.lanes) scene.lanes(scene, plain);
   else
     for (const g of flow.groups) {
       const box = layout.groups.get(g.id);

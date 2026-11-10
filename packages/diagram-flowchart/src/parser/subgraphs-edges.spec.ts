@@ -101,12 +101,18 @@ describe('listed members (v12 droppedSubGraphMembers, swimlane D536)', () => {
     expect(listed('subgraph A;a;end;subgraph B;a;b;end')).toEqual({ B: ['a', 'b'] });
     // A subgraph listed in two others is a member too.
     expect(listed('subgraph S;x;end;subgraph A;S;end;subgraph B;S;end')).toEqual({ B: ['S'] });
-    // Under a subgraph nested in another, and on a redeclaration (both declarations' lists).
+    // Under a subgraph nested in another, and on a redeclaration (the losing declaration's list).
     expect(listed('subgraph A;a;end;subgraph B;subgraph C;a;end;end')).toEqual({ C: ['a'] });
     expect(listed('subgraph A;a;end;subgraph B;b;end;subgraph B;a;end')).toEqual({ B: ['a'] });
   });
 
-  it('is absent when the subgraph kept everything it listed', () => {
+  it('is absent when no other, earlier subgraph kept a listed member', () => {
     expect(listed('subgraph A;a;end;subgraph B;b;end')).toEqual({});
+    // Its own id, a member it lists again itself, or one a subgraph nested in it keeps.
+    expect(listed('subgraph A;A-->a;end')).toEqual({});
+    expect(listed('subgraph A;a;end;subgraph A;a;end')).toEqual({});
+    expect(listed('subgraph P;subgraph C;a-->b;end;b-->x;end')).toEqual({});
+    expect(listed('subgraph P;subgraph C;subgraph D;a;end;end;a;end')).toEqual({});
+    expect(listed('subgraph P;subgraph C;a;end;end;subgraph P;a;end')).toEqual({});
   });
 });
