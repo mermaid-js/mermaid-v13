@@ -21,7 +21,7 @@
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
-import { collapsedInto, containment } from './containment.ts';
+import { collapsedInto, containment, FlowOpenings, type Mark } from './containment.ts';
 import { drawnShape, isValidShape, RESERVED_ID, resolveShape, vertexKind } from './shapes.ts';
 import type { AgentflowShape, VertexKind } from './shapes.ts';
 
@@ -188,12 +188,30 @@ export interface LinkInfo {
 /** Item of a block body as v12's grammar collects it. */
 export type DocItem = string | readonly string[] | { stmt: 'dir'; value: string };
 
+/**
+ * What a warning names besides its range: the other places (`related`) and, for the render
+ * warning, the AST ids of the elements it is about, every repeat included (core's `Warning`
+ * keeps `astIds` and drops `related`).
+ */
+export interface WarningExtra {
+  related?: RelatedInfo[];
+  astIds?: readonly AstId[];
+}
+
+/**
+ * A warning of the parse. D461's codes and D464's warnings list the elements they are about in
+ * `astIds`, which core's render `Warning` keeps (sankey's `SankeyWarning`, #496).
+ */
+export interface AgentflowParseWarning extends Diagnostic {
+  readonly astIds?: readonly AstId[];
+}
+
 export interface BuilderOptions {
   maxEdges: number;
   maxNodes: number;
   inheritDir: boolean;
   error(code: string, message: string, range: Range): void;
-  warn(code: string, message: string, range: Range, related?: RelatedInfo[]): void;
+  warn(code: string, message: string, range: Range, extra?: WarningExtra): void;
 }
 
 function labelType(type: unknown): LabelType {
@@ -261,6 +279,8 @@ export interface VertexParts {
   props?: Record<string, string>;
   /** The parsed `@{ … }` block; null when it did not parse. */
   data?: YamlMap | null;
+  /** The AST id of the statement that wrote these parts (`n:A@2`); the vertex's when absent. */
+  mention?: AstId;
 }
 
 /** What one link statement asks for: every start to every end. */
@@ -290,17 +310,20 @@ export interface FlowParts {
 /** Where a vertex's mentions set something the diagnostics point at. */
 interface VertexMarks {
   /** The bracket or `@{ … }` block that set the type last. */
-  shapeAt?: Range;
+  shape?: Mark;
   /** The `@{ … }` blocks that wrote metadata. */
-  dataAt: Range[];
+  data: Mark[];
   /** The `@{ … }` block that wrote `view`. */
-  viewAt?: Range;
+  view?: Mark;
 }
 
 const NO_RANGE: Range = { start: 0, end: 0 };
 
-/** Occurrences of one D464 warning: the first is the diagnostic's range, the rest related. */
-type Occurrences = { at: Range; message: string }[];
+/**
+ * Occurrences of one D464 warning: the first is the diagnostic's range, the rest related; every
+ * one's AST id is in `astIds`.
+ */
+type Occurrences = (Mark & { message: string })[];
 
 /** Collects one parse's model, in v12 AgentFlowDB order. Create one per parse. */
 export class AgentflowBuilder {
@@ -317,8 +340,8 @@ export class AgentflowBuilder {
   accTitle = '';
   accDescr = '';
   private readonly flowById = new Map<string, AgentflowFlowModel>();
-  /** The opener of each flow's first opening, for `CONTAINMENT_VIOLATION`. */
-  private readonly flowAt = new Map<string, Range>();
+  /** Where each flow is opened and lists its members, for `CONTAINMENT_VIOLATION`. */
+  private readonly openings = new FlowOpenings();
   private readonly edgeById = new Map<string, AgentflowModelEdge>();
   private readonly connectorIds: string[] = [];
   private readonly globalNodes = new Set<string>();
@@ -332,8 +355,8 @@ export class AgentflowBuilder {
   private subCount = 0;
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
   private readonly limitHit = new Set<'edges' | 'nodes'>();
-  private readonly reservedAt: Range[] = [];
-  private readonly replaced: { at: Range; id: string; first: Range }[] = [];
+  private readonly reservedAt: Mark[] = [];
+  private readonly replaced: (Mark & { id: string; first: Range })[] = [];
   private readonly findings: AgentflowFinding[] = [];
 
   constructor(private readonly options: BuilderOptions) {}
@@ -355,7 +378,7 @@ export class AgentflowBuilder {
 
   private marksOf(id: string): VertexMarks {
     let m = this.marks.get(id);
-    if (!m) this.marks.set(id, (m = { dataAt: [] }));
+    if (!m) this.marks.set(id, (m = { data: [] }));
     return m;
   }
 
@@ -363,6 +386,7 @@ export class AgentflowBuilder {
   addVertex(id: string, ast: AstId, at: Range, parts: VertexParts = {}): void {
     if (!id || id.trim().length === 0) return;
     const { label, type, styles, props, data } = parts;
+    const mention = parts.mention ?? ast;
     // v12 resolved the alias in the metadata itself before routing it anywhere.
     // A block that did not parse (`data` null) is reported already, and sets nothing.
     let doc: YamlMap | undefined;
@@ -376,7 +400,7 @@ export class AgentflowBuilder {
       }
     }
 
-    if (this.routed(id, doc, at)) return;
+    if (this.routed(id, doc, { at, ast: mention })) return;
     let vertex = this.vertices.get(id);
     if (vertex === undefined) {
       if (this.vertices.size >= this.options.maxNodes) {
@@ -413,7 +437,7 @@ export class AgentflowBuilder {
     }
     if (type !== undefined) {
       vertex.type = type;
-      this.marksOf(id).shapeAt = parts.shapeAt ?? at;
+      this.marksOf(id).shape = { at: parts.shapeAt ?? at, ast: mention };
     }
     if (styles) vertex.styles.push(...styles);
     if (props) for (const [k, v] of Object.entries(props)) vertex.props[k] = v;
@@ -421,9 +445,10 @@ export class AgentflowBuilder {
 
     vertex.metadata = { ...vertex.metadata, ...doc };
     const marks = this.marksOf(id);
-    marks.dataAt.push(at);
-    if ('view' in doc) marks.viewAt = at;
-    if (doc.shape) this.dataShape(vertex, authored, doc.shape, at);
+    const mark = { at, ast: mention };
+    marks.data.push(mark);
+    if ('view' in doc) marks.view = mark;
+    if (doc.shape) this.dataShape(vertex, authored, doc.shape, mark);
     if (doc.label) this.dataLabel(vertex, doc, at);
   }
 
@@ -456,7 +481,7 @@ export class AgentflowBuilder {
    * v12's routing of a mention, first match wins: metadata of a flow or a connector goes to it,
    * the reserved `connectors` id and an edge id make no vertex. Whether it was routed.
    */
-  private routed(id: string, doc: YamlMap | undefined, at: Range): boolean {
+  private routed(id: string, doc: YamlMap | undefined, mark: Mark): boolean {
     const flow = this.flowById.get(id);
     if (flow && doc) {
       flow.metadata = { ...flow.metadata, ...doc };
@@ -469,18 +494,19 @@ export class AgentflowBuilder {
       return true;
     }
     if (id === RESERVED_ID) {
-      this.reservedAt.push(at);
+      this.reservedAt.push(mark);
       return true;
     }
     const edge = this.edgeById.get(id);
     if (!edge) return false;
-    if (doc) this.edgeData(edge, doc, at);
+    if (doc) this.edgeData(edge, doc, mark.at);
     return true;
   }
 
   /** v12's `@{ shape }` checks, which threw: unknown shapes are errors. */
-  private dataShape(vertex: AgentflowVertex, authored: unknown, shape: unknown, at: Range): void {
+  private dataShape(vertex: AgentflowVertex, authored: unknown, shape: unknown, mark: Mark): void {
     const { options } = this;
+    const { at } = mark;
     if (typeof authored !== 'string') {
       options.error('UNKNOWN_SHAPE', `No such shape: ${JSON.stringify(authored)}.`, at);
       return;
@@ -505,7 +531,7 @@ export class AgentflowBuilder {
       return;
     }
     vertex.type = resolved;
-    this.marksOf(vertex.id).shapeAt = at;
+    this.marksOf(vertex.id).shape = mark;
   }
 
   // An edge's `@{…}` keys: all kept as metadata; the presentation ones typed, anything else
@@ -752,6 +778,8 @@ export class AgentflowBuilder {
     // node written in a `global` block.
     const nodes = nodeList.filter((n) => n !== id && !globalNodes.has(n) && !members.has(n));
     for (const n of nodes) members.add(n);
+    const ast = astFor(id);
+    this.openings.closed(id, { at: opener, ast }, nodes);
     const title = (titleText?.text ?? '').trim();
     const existing = this.flowById.get(id);
     if (existing) {
@@ -759,12 +787,11 @@ export class AgentflowBuilder {
       existing.nodes.push(...nodes);
       if (title) existing.title = title;
       if (dir !== undefined) existing.dir = dir;
-      astFor(id);
       return id;
     }
     const flow: AgentflowFlowModel = {
       id,
-      ast: astFor(id),
+      ast,
       title,
       labelType: labelType(titleText?.type),
       nodes,
@@ -775,7 +802,6 @@ export class AgentflowBuilder {
     if (dir !== undefined) flow.dir = dir;
     this.flows.push(flow);
     this.flowById.set(id, flow);
-    this.flowAt.set(id, opener);
     return id;
   }
 
@@ -812,7 +838,7 @@ export class AgentflowBuilder {
       return id;
     }
     if (existing) {
-      this.replaced.push({ at, id, first: this.firstAt.get(id) ?? at });
+      this.replaced.push({ at, ast, id, first: this.firstAt.get(id) ?? at });
       this.marks.delete(id);
     }
     const connector: AgentflowVertex = {
@@ -839,20 +865,23 @@ export class AgentflowBuilder {
     const dropped: Occurrences = [];
     const ignored: Occurrences = [];
     for (const [id, marks] of this.marks) {
-      if (marks.dataAt.length === 0) continue;
+      if (marks.data.length === 0) continue;
       if (flowById.has(id)) {
-        for (const at of marks.dataAt) {
-          dropped.push({ at, message: `The metadata on \`${id}\` is lost.` });
+        for (const mark of marks.data) {
+          dropped.push({ ...mark, message: `The metadata on \`${id}\` is lost.` });
         }
-      } else if (marks.viewAt !== undefined && vertices.get(id)?.connector !== true) {
-        ignored.push({ at: marks.viewAt, message: `\`view\` on the node \`${id}\` is ignored.` });
+      } else if (marks.view !== undefined && vertices.get(id)?.connector !== true) {
+        ignored.push({ ...marks.view, message: `\`view\` on the node \`${id}\` is ignored.` });
       }
     }
     const once = (code: string, list: Occurrences, message: (first: string) => string) => {
       const [first, ...rest] = list;
       if (!first) return;
       const related = rest.map((o) => ({ message: o.message, range: o.at }));
-      options.warn(code, message(first.message), first.at, related.length ? related : undefined);
+      options.warn(code, message(first.message), first.at, {
+        ...(related.length ? { related } : {}),
+        astIds: list.map((o) => o.ast),
+      });
     };
     dropped.sort((a, b) => a.at.start - b.at.start);
     once(
@@ -870,15 +899,16 @@ export class AgentflowBuilder {
     if (!this.reservedClaimed()) {
       once(
         'AGENTFLOW_RESERVED_ID',
-        this.reservedAt.map((at) => ({ at, message: 'The node `connectors` is left out.' })),
+        this.reservedAt.map((mark) => ({ ...mark, message: 'The node `connectors` is left out.' })),
         () =>
           '`connectors` is a reserved id: the node is left out of the diagram and its edges have no end there (as in v12). Use another id.'
       );
     }
     once(
       'AGENTFLOW_CONNECTOR_REPLACED',
-      this.replaced.map(({ at, id, first }) => ({
+      this.replaced.map(({ at, ast, id, first }) => ({
         at,
+        ast,
         message: `\`connector ${id}\` replaces the node \`${id}\` written at line ${lineOf(first.start)}.`,
       })),
       (m) =>
@@ -909,8 +939,8 @@ export class AgentflowBuilder {
     const into = collapsedInto(flows, flowById);
     const parent = containment(flows, into, (flow, id) => {
       const message = `Container "${flow}" cannot contain "${id}" because "${id}" already contains it. The nesting that would close the loop is dropped.`;
-      const range = this.flowAt.get(id) ?? NO_RANGE;
-      this.options.warn('CONTAINMENT_VIOLATION', message, range);
+      const { range, astIds } = this.openings.cycle(flow, id);
+      this.options.warn('CONTAINMENT_VIOLATION', message, range, { astIds });
       this.findings.push({
         id: 'CONTAINMENT_VIOLATION',
         severity: 'warning',
@@ -939,8 +969,9 @@ export class AgentflowBuilder {
       const message = removed
         ? `shape "${check.name}" was removed in v0.8.1, using "roundedRect"`
         : `shape "${check.name}" is not supported, using "roundedRect"`;
-      const range = this.marks.get(v.id)?.shapeAt ?? this.firstAt.get(v.id) ?? NO_RANGE;
-      this.options.warn(id, message, range);
+      const shape = this.marks.get(v.id)?.shape;
+      const range = shape?.at ?? this.firstAt.get(v.id) ?? NO_RANGE;
+      this.options.warn(id, message, range, { astIds: [shape?.ast ?? v.ast] });
       this.findings.push({ id, severity: 'warning', message, nodeId: v.id, range });
     }
     this.dropWarnings(lineOf);

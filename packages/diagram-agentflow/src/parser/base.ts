@@ -146,8 +146,11 @@ export abstract class ParserBase {
       error: (code, message, range) => {
         diagnostics.error(code, message, range);
       },
-      warn: (code, message, range, related) => {
-        diagnostics.warning(code, message, range, related ? { related } : undefined);
+      warn: (code, message, range, extra) => {
+        const { related, astIds } = extra ?? {};
+        const d = diagnostics.warning(code, message, range, related ? { related } : undefined);
+        // Core's render `Warning` keeps `astIds` (and drops `related`): `AgentflowParseWarning`.
+        if (astIds) Object.assign(d, { astIds });
       },
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;

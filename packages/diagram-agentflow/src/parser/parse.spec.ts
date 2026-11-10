@@ -4,6 +4,7 @@ import { semanticModel } from '../semantic.ts';
 import type { AgentflowFlow, AgentflowStatementNode } from './ast.ts';
 import { parseAgentflow } from './parser.ts';
 import type { AgentflowParseOptions } from './parser.ts';
+import type { AgentflowParseWarning } from './model.ts';
 
 const af = (...lines: string[]) => ['agentflow-beta', ...lines].join('\n');
 const parse = (src: string, options?: AgentflowParseOptions) => parseAgentflow(src, options);
@@ -254,6 +255,33 @@ describe('agentflow diagnostics (D461)', () => {
     ]);
   });
 
+  it('reports a cycle at the nested opening that closes it, naming both openings (D461, US3)', () => {
+    // The second `flow B` holds the second `flow A`: that `flow A` closes the loop, not the
+    // first `flow A`, which `B` was nested in.
+    const src = af('flow A', ' flow B', ' end', 'end', 'flow B', ' flow A', ' end', 'end');
+    expect(warnings(src)).toEqual([['CONTAINMENT_VIOLATION', 7, 'flow A']]);
+    const [d] = parse(src).diagnostics as AgentflowParseWarning[];
+    expect(d?.astIds).toEqual(['s:A@2', 's:B@2']);
+    expect(d?.message).toBe(
+      'Container "B" cannot contain "A" because "A" already contains it. The nesting that would close the loop is dropped.'
+    );
+    // Listed by name only, the contained flow is reported at its first opening.
+    const named = af('flow A', ' a1 --> B', 'end', 'flow B', ' b1 --> A', 'end');
+    expect((parse(named).diagnostics as AgentflowParseWarning[]).map((w) => w.astIds)).toEqual([
+      ['s:B', 's:A'],
+    ]);
+  });
+
+  it('names the vertex whose shape is drawn as the default, at the mention that set it', () => {
+    const src = af(' a', ' b((x))', ' a@{ shape: triangle }');
+    expect(
+      (parse(src).diagnostics as AgentflowParseWarning[]).map((d) => [d.code, d.astIds])
+    ).toEqual([
+      ['SHAPE_REMOVED', ['n:b']],
+      ['SHAPE_UNSUPPORTED', ['n:a@2']],
+    ]);
+  });
+
   it('gives an out-of-range linkStyle v12 bounds message', () => {
     const { diagnostics } = parse(af(' a --> b', ' linkStyle 4 stroke:red'));
     expect(diagnostics.map((d) => [d.code, d.message])).toEqual([
@@ -319,6 +347,13 @@ describe('agentflow silent drops (D464)', () => {
       ['AGENTFLOW_CONNECTOR_REPLACED', 12, []],
     ]);
     expect(diagnostics.every((d) => d.severity === 'warning')).toBe(true);
+    // Each lists every element it is about, repeats included, for the render warning.
+    expect((diagnostics as AgentflowParseWarning[]).map((d) => [d.code, d.astIds])).toEqual([
+      ['AGENTFLOW_METADATA_DROPPED', ['n:f', 'n:g']],
+      ['AGENTFLOW_VIEW_IGNORED', ['n:a']],
+      ['AGENTFLOW_RESERVED_ID', ['n:connectors']],
+      ['AGENTFLOW_CONNECTOR_REPLACED', ['n:gh@2']],
+    ]);
     // The model is v12's: the metadata is gone, `view` does nothing, the connector replaced `gh`.
     const { model } = parse(src);
     expect(model.flows.map((f) => [f.id, f.collapsed, f.metadata])).toEqual([

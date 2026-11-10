@@ -135,7 +135,7 @@ export abstract class StatementParser extends ParserBase {
     const shapeFrom = this.i;
     const parts: VertexParts & { label?: AgentflowLabelNode } = this.shape();
     if (parts.type !== undefined) parts.shapeAt = this.span(shapeFrom);
-    this.db.addVertex(name, this.nodeAst(name), nameRange, parts);
+    this.db.addVertex(name, this.nodeAst(name), nameRange, { ...parts, mention: node.id });
     if (parts.type !== undefined) node.shape = parts.type;
     if (parts.label) node.label = parts.label;
     node.range = this.span(startTok);
@@ -211,7 +211,10 @@ export abstract class StatementParser extends ParserBase {
   }
 
   protected applyData(node: AgentflowNodeStmt, data: ShapeData): void {
-    this.db.addVertex(node.name, this.nodeAst(node.name), data.range, { data: data.value });
+    this.db.addVertex(node.name, this.nodeAst(node.name), data.range, {
+      data: data.value,
+      mention: node.id,
+    });
     node.dataRange = data.range;
     node.range = { start: node.range.start, end: data.range.end };
   }

@@ -6,7 +6,50 @@
  * around it; both are linear here (union-find roots, and redirects between collapses), with
  * v12's results.
  */
+import type { AstId, Range } from '@mermaid-js/core/parser-kit';
 import type { AgentflowFlowModel } from './model.ts';
+
+/** Where something is written, and the AST id of the statement that wrote it. */
+export interface Mark {
+  at: Range;
+  ast: AstId;
+}
+
+/**
+ * Where each flow is opened and lists its members, for `CONTAINMENT_VIOLATION` (D461: "the
+ * inner `flow` opener"): a cycle is reported at the opening of the contained flow inside the
+ * container that closes the loop, or at the contained flow's first opening when the container
+ * lists it by name only, and names both openings.
+ */
+export class FlowOpenings {
+  private readonly first = new Map<string, Mark>();
+  private readonly latest = new Map<string, Mark>();
+  /** For each id a flow lists: that flow's opening, and the id's own opening inside it. */
+  private readonly listed = new Map<string, { container: AstId; nested?: Mark }>();
+
+  /** At its `end`: the opening `opening` of flow `id` lists `members` (first listed there). */
+  closed(id: string, opening: Mark, members: readonly string[]): void {
+    for (const n of members) {
+      // A flow opened after this opener (and so closed before its `end`) is opened inside it.
+      const inner = this.latest.get(n);
+      const nested = inner && inner.at.start > opening.at.start ? { nested: inner } : {};
+      this.listed.set(n, { container: opening.ast, ...nested });
+    }
+    this.latest.set(id, opening);
+    if (!this.first.has(id)) this.first.set(id, opening);
+  }
+
+  /** Where the refused nesting of `id` in `container` is reported, and what it names. */
+  cycle(container: string, id: string): { range: Range; astIds: AstId[] } {
+    const m = this.listed.get(id);
+    const inner = m?.nested ?? this.first.get(id);
+    const outer = m?.container ?? this.first.get(container)?.ast;
+    return {
+      range: inner?.at ?? { start: 0, end: 0 },
+      astIds: [inner?.ast, outer].filter((a): a is AstId => a !== undefined),
+    };
+  }
+}
 
 /** The end of `id`'s chain of links, with path compression (every link on it now points there). */
 function rootOf(links: Map<string, string>, id: string): string {

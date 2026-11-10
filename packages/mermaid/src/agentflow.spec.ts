@@ -102,6 +102,39 @@ describe('agentflow diagrams through the public API (#550)', () => {
     expect(codes(removed)).toEqual(['SHAPE_REMOVED']);
   });
 
+  it('names what each D461 and D464 warning is about in astIds, every repeat (US3)', async () => {
+    const text = [
+      'agentflow-beta',
+      '  f@{ owner: x }',
+      '  f@{ team: y }',
+      '  flow f',
+      '    a@{ view: collapsed }',
+      '  end',
+      '  connectors --> a',
+      '  x((y)) --> connectors',
+      '  gh',
+      '  connector gh',
+      '  flow A',
+      '    flow B',
+      '    end',
+      '  end',
+      '  flow B',
+      '    flow A',
+      '    end',
+      '  end',
+      '',
+    ].join('\n');
+    const r = await createMermaid().render('a3b', text);
+    expect(r.warnings.map((w) => [w.code, w.astIds])).toEqual([
+      ['AGENTFLOW_METADATA_DROPPED', ['n:f', 'n:f@2']],
+      ['AGENTFLOW_VIEW_IGNORED', ['n:a']],
+      ['AGENTFLOW_RESERVED_ID', ['n:connectors', 'n:connectors@2']],
+      ['SHAPE_REMOVED', ['n:x']],
+      ['AGENTFLOW_CONNECTOR_REPLACED', ['n:gh@2']],
+      ['CONTAINMENT_VIOLATION', ['s:A@2', 's:B@2']],
+    ]);
+  });
+
   it('has the generated agentflow defaults, the schema’s', async () => {
     expect(agentflow.configDefaults).toBe(agentflowConfigDefaults);
     expect(agentflowConfigDefaults).toEqual({
