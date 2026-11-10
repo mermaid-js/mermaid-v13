@@ -22,7 +22,7 @@ export const cost = (run: () => unknown, reps: number): number => {
 
 /**
  * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
+ * on Linux `threadCpuUsage` (the kernel's per-thread CPU counter) only moves when the scheduler books
  * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
  */
 export const clockStepMs = (): number => {
