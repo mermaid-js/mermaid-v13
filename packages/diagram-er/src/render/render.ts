@@ -5,10 +5,9 @@
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
 import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  cls,
+  openSvgRoot,
+  paletteSlots,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -30,15 +29,6 @@ const DASH = '8,8' as SafeValue;
 const LABEL_PAD = 4;
 const CELL_CLASSES = ['attribute-type', 'attribute-name', 'attribute-keys', 'attribute-comment'];
 
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
-
 type ThemeOf = ErRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
@@ -47,26 +37,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-entity palette colour (v12 ER `genColor`, `colorIndex`). On only when the theme carries
- * a non-empty `borderColorArray`, never by theme name (D152). The slot is the entity's
- * declaration order modulo the palette length; the fill (outline and rows) comes from
- * `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (order) => {
-    if (border.length === 0) return undefined;
-    const slot = order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
-    };
-  };
 }
 
 interface TablePaint {
@@ -222,39 +192,23 @@ export function renderEr(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
   const maxWidth = config.er?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-er erDiagram',
+  openSvgRoot(w, ctx, {
+    name: 'er erDiagram',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'er',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 function drawClusters({ w, layout, er, ctx, paint }: Scene): void {

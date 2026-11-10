@@ -8,10 +8,10 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
   translate,
   type Attrs,
   type CheckedStyle,
@@ -44,15 +44,6 @@ const DASH: Readonly<Record<string, SafeValue | undefined>> = { dashed: DASHED, 
 /** Room on each side of a relationship label's background (as the flowchart's). */
 const LABEL_PAD = 4;
 
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
-
 type ThemeOf = ClassRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
@@ -61,26 +52,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-class palette colour (v12 class `genColor` and `stampColorSlot`). On only when the theme
- * carries a non-empty `borderColorArray`, never by theme name (D152). The slot is the class's
- * declaration order modulo the palette length (v12 `colorIndex`: only classes take a slot);
- * the fill comes from `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (order) => {
-    if (border.length === 0) return undefined;
-    const slot = order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
-    };
-  };
 }
 
 /** Every theme variable the body uses, looked up before the root is written. */
@@ -206,39 +177,24 @@ export function renderClass(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
   const maxWidth = config.class?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-class',
+  openSvgRoot(w, ctx, {
+    name: 'class',
+    roleDescription: 'classDiagram',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'classDiagram',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 /**

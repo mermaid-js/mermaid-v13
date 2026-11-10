@@ -5,11 +5,10 @@
 // an AST node carries `data-id` and `data-ast` (R-PARSE-8); labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
 import {
+  centreX,
+  centreY,
   checkColor,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  openSvgRoot,
   type Paint,
   type SafeValue,
   type SvgWriter,
@@ -90,48 +89,29 @@ export function renderSequence(
   w.close();
 }
 
-const centreX = (r: { x: number; width: number }): number => r.x + r.width / 2;
-const centreY = (r: { y: number; height: number }): number => r.y + r.height / 2;
-
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
   const maxWidth = config.sequence?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-sequence',
+  openSvgRoot(w, ctx, {
+    name: 'sequence',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'sequence',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** An author colour (`rect`, `box`), checked; a refused one warns and takes `fallback`. */

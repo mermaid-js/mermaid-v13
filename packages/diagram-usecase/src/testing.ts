@@ -4,6 +4,7 @@
  * lexed. They live outside the runtime entry, so the chunk mermaid loads for a usecase render
  * stays small (D217).
  */
+import { paletteSlots } from '@mermaid-js/core/svg';
 export {
   CHEVROTAIN_NAMES,
   decodePlaceholders,
@@ -16,4 +17,6 @@ export type { UsecaseToken, UsecaseView } from './parser/index.ts';
 export { usecaseLayoutProblems } from './layout/invariants.ts';
 export { renderUsecaseForTest } from './render/harness.ts';
 export type { RenderedUsecase, RenderUsecaseOptions } from './render/harness.ts';
-export { paletteSlots as usecasePaletteSlots } from './render/paint.ts';
+/** The palette slots as the renderer reads them (fill by slot). */
+export const usecasePaletteSlots = (theme: Parameters<typeof paletteSlots>[0]) =>
+  paletteSlots(theme, 'slot');

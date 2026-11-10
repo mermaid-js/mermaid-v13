@@ -6,7 +6,7 @@
 // profile's sizing (`sizing.ts`: in px the metrics table, the config or core's px profile,
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -315,7 +315,9 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
         style: styleBits(style),
         inline: ctx.inline,
       }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(new Map(model.classDefs.map((c) => [c.id, c.styles])), (w) => ctx.warn(w), [
+      'default',
+    ]),
   };
 }
 
@@ -402,24 +404,6 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
   const plain = parts.measure.styleOf([]);
   const title = text ? parts.measure.label(text, base, Infinity, plain) : undefined;
   return { graph, nodes, layoutIds, boundaries, edges, config, ...(title ? { title } : {}) };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure['styleOf'] {
-  const classDefs = new Map<string, readonly string[]>();
-  for (const c of model.classDefs) classDefs.set(c.id, c.styles);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of ['default', ...classes]) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
 }
 
 function withParent<T extends object>(view: T, parent: string | undefined): T {

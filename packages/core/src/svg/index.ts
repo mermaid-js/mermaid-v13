@@ -72,3 +72,16 @@ export {
   type CheckedStyle,
 } from './style.ts';
 export { assertInert, inertProblem, type InertOptions } from './inert.ts';
+export {
+  centreX,
+  centreY,
+  cls,
+  fixedPaint,
+  openSvgRoot,
+  paletteSlots,
+  styleCache,
+  textElement,
+  type PaletteTint,
+  type RootContext,
+  type RootOptions,
+} from './document.ts';

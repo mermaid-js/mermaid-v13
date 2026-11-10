@@ -6,10 +6,9 @@
 // A task dot's `data-id` is its legend entry's (`a:<name>`), its `data-ast` the mention's.
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  centreX,
+  centreY,
+  openSvgRoot,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -65,50 +64,32 @@ export function renderJourney(
   w.close();
 }
 
-const centreX = (r: { x: number; width: number }): number => r.x + r.width / 2;
-const centreY = (r: { y: number; height: number }): number => r.y + r.height / 2;
 /** Lines start at the label's left edge (v12 drew the legend and title `text-anchor: start`). */
 const leftAligned = (text: MeasuredLabel): MeasuredLabel => ({ ...text, left: true });
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
   const maxWidth = config.journey?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-journey',
+  openSvgRoot(w, ctx, {
+    name: 'journey',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'journey',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** The actor legend (v12 `drawActorLegend`): a dot and a name per named actor (D244). */

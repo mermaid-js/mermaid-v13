@@ -6,10 +6,9 @@
 // from the package's theme table (D152, D435); outlines and lines go through `w.outline`
 // (D301, D302), the markers are plain.
 import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  cls,
+  openSvgRoot,
+  paletteSlots,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -33,15 +32,6 @@ import { routePath } from './route.ts';
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;
 
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
-
 type ThemeOf = RequirementRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
@@ -50,26 +40,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-box palette colour (v12 `requirementBox.ts`, `data-color-id`, and `styles.js`
- * `genColor`): on only when the theme carries a non-empty `borderColorArray`, never by theme
- * name (D152). The slot is the box's (v12's `colorIndex`: requirements first, then elements)
- * modulo the palette; the fill comes from `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (slot: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (n) => {
-    if (border.length === 0) return undefined;
-    const slot = n % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[n % bkg.length] : undefined,
-    };
-  };
 }
 
 interface Paints {
@@ -199,41 +169,25 @@ export function renderRequirement(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Frame): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const x = Math.floor(frame.x);
   const y = Math.floor(frame.y);
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
   const maxWidth = config.requirement?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-requirement requirementDiagram',
+  openSvgRoot(w, ctx, {
+    name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'requirement',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {

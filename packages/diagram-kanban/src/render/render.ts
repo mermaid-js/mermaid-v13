@@ -7,11 +7,10 @@
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
 import {
+  centreX,
+  centreY,
   checkStyle,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
+  openSvgRoot,
   type Attrs,
   type SafeValue,
   type SvgWriter,
@@ -73,21 +72,12 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const maxWidth = config.kanban?.useMaxWidth !== false;
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-kanban',
+  openSvgRoot(w, ctx, {
+    name: 'kanban',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'kanban',
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(ctx.idPrefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    ...font,
+    maxWidth,
+    attrs: { ...font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(ctx.idPrefix), auto.light, auto.dark));
 }
 
 /**
@@ -102,9 +92,6 @@ function fontAttrs(f: FontKey, theme: KanbanRenderContext['theme']): Attrs {
   const size = f.size === theme.number('fontSize') ? theme.length('fontSize') : f.size;
   return { 'font-family': family, 'font-size': size };
 }
-
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 
 /** A label in its `g.label` group; card labels are left-aligned in their box. */
 function drawLabel(

@@ -11,7 +11,7 @@ import type {
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -216,7 +216,10 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     rule: units.id === 'cell' ? 1 : 0,
     label: (text, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(
+      new Map(model.classes.map((c) => [c.name, [...c.styles, ...c.textStyles]])),
+      (w) => ctx.warn(w)
+    ),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
   const nest = nesting(model);
@@ -262,24 +265,6 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
   }
   const graph = layoutGraph(model, { entities, groups, edges }, ctx, length);
   return { graph, entities, edges, groups, pad: m.pad };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: ErModel, ctx: ErRenderContext): Measure['styleOf'] {
-  const classDefs = new Map<string, readonly string[]>();
-  for (const c of model.classes) classDefs.set(c.name, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
 }
 
 interface Nesting {

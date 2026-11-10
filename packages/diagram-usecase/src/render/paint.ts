@@ -14,7 +14,7 @@
  *   only under `colorScheme: rotate`. The fill is `bkgColorArray`'s entry when that is not empty
  *   (redux-dark-color's is: it colours outlines only). An author's `classDef` / `style` wins.
  */
-import type { Paint } from '@mermaid-js/core/svg';
+import { paletteSlots, type Paint } from '@mermaid-js/core/svg';
 import type { UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseRenderContext } from './context.ts';
@@ -67,24 +67,6 @@ export interface Paints {
   readonly title?: Paint;
 }
 
-/**
- * The slot of each counted element (v12 `stampColorSlot`): `color-<n mod |border|>`, its border
- * colour, and its fill from `bkgColorArray` at that slot when the array is not empty.
- */
-export function paletteSlots(theme: ThemeOf): (n: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (n) => {
-    if (border.length === 0) return undefined;
-    const slot = n % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      ...(bkg.length > 0 ? { fill: bkg[slot % bkg.length]! } : {}),
-    };
-  };
-}
-
 /** Reads the variables `model` needs, and only those (an unread one declares no alias). */
 export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRenderContext): Paints {
   const { theme } = ctx;
@@ -98,7 +80,7 @@ export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRend
     fontSize: theme.length('fontSize'),
     family: theme.value('fontFamily'),
     rotate: p.config.colorScheme === 'rotate',
-    slotOf: paletteSlots(theme),
+    slotOf: paletteSlots(theme, 'slot'),
     ...(model.actors.length > 0 && {
       actor: { fill: c('usecaseActorBkg'), stroke: c('usecaseActorBorder'), text: text! },
     }),

@@ -4,8 +4,7 @@
 // `accTitle` and `accDescr` name the SVG (D133). Its colour is the shared `textColor`, which
 // v12's root style gave the text; info has no theme variable of its own.
 import type { RenderContext } from '@mermaid-js/core';
-import { px, styleScope, styleText, themeStyleSheet } from '@mermaid-js/core/svg';
-import type { SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot, type SvgWriter } from '@mermaid-js/core/svg';
 import type { InfoLayout } from './layout.ts';
 import type { InfoModel } from './model.ts';
 
@@ -44,36 +43,19 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.ceil(layout.bounds.width);
   const height = Math.ceil(layout.bounds.height);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   const font = theme.font();
-  const auto = theme.autoDeclarations();
   // v12's `configureSvgSize(svg, 100, 400, true)`: always the full width, up to the canvas.
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-info',
+  openSvgRoot(w, ctx, {
+    name: 'info',
     viewBox: [x, y, width, height],
-    width: '100%',
-    role: 'img',
-    'aria-roledescription': 'info',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText({ 'max-width': px(width) }, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth: true,
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

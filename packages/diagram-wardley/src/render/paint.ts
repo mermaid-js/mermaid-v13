@@ -3,24 +3,21 @@
 // keeps them. Each name is written as a literal, so the vocabulary `usedBy` scan
 // (`theme-used-by.spec.ts`) sees it. Wardley has no theme-name or `look` branch (D227).
 import type { RenderContext } from '@mermaid-js/core';
-import { checkColor, type Paint } from '@mermaid-js/core/svg';
+import { fixedPaint, type Paint } from '@mermaid-js/core/svg';
 import type { WardleyLayout } from '../layout/index.ts';
 
 type Theme = RenderContext['theme'];
-
-/** A colour v12 wrote as a literal in every theme. */
-const fixed = (c: string): Paint => checkColor(c) as Paint;
 
 /**
  * v12's literals (`wardleyRenderer.ts`), kept by D426: the strategy overlays, the build
  * overlay's stroke, the market circles and the (de)accelerators' fill.
  */
 export const FIXED = {
-  outsource: fixed('#666'),
-  buy: fixed('#ccc'),
-  build: fixed('#eee'),
-  buildStroke: fixed('#000'),
-  white: fixed('white'),
+  outsource: fixedPaint('#666'),
+  buy: fixedPaint('#ccc'),
+  build: fixedPaint('#eee'),
+  buildStroke: fixedPaint('#000'),
+  white: fixedPaint('white'),
 } as const;
 
 export interface Paints {
