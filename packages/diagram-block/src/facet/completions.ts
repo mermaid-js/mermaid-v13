@@ -10,7 +10,7 @@
  * - At the end of an id used elsewhere or written after a link: its shapes, the id as the label.
  * - Inside a block arrow's `(…)`: the directions.
  * - After `class` and `style`: the block ids (those `class` and `style` can name); after the ids
- *   of `class`: the `classDef` names.
+ *   of `class`: the class names used elsewhere, in source order.
  *
  * Nothing in a label, a shape, a `classDef` or `style` definition, a comment, a directive or
  * front matter. Line breaks mean nothing to block's grammar, so "on its line" is the editor's
@@ -168,7 +168,10 @@ function targetItems(doc: DocumentView<BlockDocument>, at: number): CompletionIt
   return items.list;
 }
 
-/** The `classDef` names, for the word at `at` in a `class` statement's class text. */
+/**
+ * The class names the diagram uses (`classDef` and the other `class` statements), for the word
+ * at `at` in a `class` statement's class text.
+ */
 function classItems(doc: DocumentView<BlockDocument>, token: Range, at: number): CompletionItem[] {
   const word = runAround(doc.text, at, /\S/, token.start, token.end);
   const items = new Items(doc.text.slice(word.start, at), word);
