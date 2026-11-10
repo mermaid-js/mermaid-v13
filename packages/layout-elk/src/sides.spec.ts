@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  layered,
   validateLayout,
   type Dir,
   type LayoutContext,
@@ -68,6 +69,16 @@ function onSide(model: LayoutModel, id: string, side: Side, p: Point): boolean {
   return near(p.x, side === 'left' ? x0 : x1) && within(p.y, y0, y1);
 }
 
+/** Whether `p` lies on the border of node `id`'s box at least 6 from each corner. */
+function clearOfCorners(model: LayoutModel, id: string, p: Point): boolean {
+  const n = model.nodes.get(id)!;
+  const xs = [n.x - n.width / 2, n.x + n.width / 2];
+  const ys = [n.y - n.height / 2, n.y + n.height / 2];
+  const far = xs.every((x) => ys.every((y) => Math.hypot(p.x - x, p.y - y) >= 6));
+  const side = (['top', 'bottom', 'left', 'right'] as const).some((s) => onSide(model, id, s, p));
+  return far && side;
+}
+
 /** The route leaves (or enters) square to `side`, outward. */
 function leaves(from: Point, next: Point, side: Side): boolean {
   const o = OUTWARD[side];
@@ -128,11 +139,122 @@ describe('ELK layered: named sides become FIXED_SIDE ports (D503)', () => {
     const b = model.edges.get('b')!.points;
     expect(l[0]).toMatchObject({ x: a.x - a.width / 2, y: top + 10 });
     expect(r[r.length - 1]).toMatchObject({ x: a.x + a.width / 2, y: top + 10 });
-    expect(b[0]).toMatchObject({ x: a.x, y: a.y + a.height / 2 });
+    expect(onSide(model, 'A', 'bottom', b[0]!)).toBe(true);
     expect(toElkGraph(g, 'layered').nodes.get('A')!.layoutOptions).toMatchObject({
       'elk.portConstraints': 'FIXED_POS',
     });
     expect(validateLayout(g, model)).toEqual([]);
+  });
+
+  // Review 1 and 5: on a FIXED_POS node, ends that name no side used to sit at a corner.
+  it('keeps unsided ends of an anchorY node on a side, clear of the corners (review 1)', () => {
+    const g = graph('TB');
+    g.nodes[0] = { ...g.nodes[0]!, anchorY: 10 };
+    g.edges.push(
+      { id: 'l', source: 'A', target: 'C', minLen: 1, sides: { source: 'left' } },
+      { id: 'in', source: 'C', target: 'A', minLen: 1 }
+    );
+    const model = elkEngine('layered')(g);
+    const e = model.edges.get('e')!;
+    const into = model.edges.get('in')!.points;
+    expect(clearOfCorners(model, 'A', e.points[0]!)).toBe(true);
+    expect(clearOfCorners(model, 'A', into.at(-1)!)).toBe(true);
+    expect(onSide(model, 'A', e.ports.source, e.points[0]!)).toBe(true);
+    expect(validateLayout(g, model)).toEqual([]);
+  });
+
+  it('spreads ends that share a side of an anchorY node (review 4)', () => {
+    const g = graph('LR');
+    g.nodes[0] = { ...g.nodes[0]!, anchorY: 15 };
+    g.edges.push(
+      { id: 'l1', source: 'A', target: 'B', minLen: 1, sides: { source: 'left' } },
+      { id: 'l2', source: 'A', target: 'C', minLen: 1, sides: { source: 'left' } },
+      { id: 't1', source: 'A', target: 'B', minLen: 1, sides: { source: 'top' } },
+      { id: 't2', source: 'A', target: 'C', minLen: 1, sides: { source: 'top' } }
+    );
+    const model = elkEngine('layered')(g);
+    const start = (id: string): Point => model.edges.get(id)!.points[0]!;
+    const a = model.nodes.get('A')!;
+    expect(start('l1')).not.toEqual(start('l2'));
+    expect(start('t1')).not.toEqual(start('t2'));
+    for (const id of ['l1', 'l2']) {
+      expect(onSide(model, 'A', 'left', start(id))).toBe(true);
+      // Around the icon line, not across the whole side.
+      expect(Math.abs(start(id).y - (a.y - a.height / 2 + 15))).toBeLessThanOrEqual(spacing.edge);
+    }
+    for (const id of ['t1', 't2']) expect(onSide(model, 'A', 'top', start(id))).toBe(true);
+    expect(validateLayout(g, model)).toEqual([]);
+  });
+
+  it('routes a named side of a group that grows for its title from outside it (review 2)', () => {
+    const g: LayoutGraph = {
+      direction: 'TB',
+      spacing,
+      diagramPadding: 8,
+      nodes: [
+        { id: 'A', width: 60, height: 40 },
+        { id: 'X', width: 20, height: 20, parent: 'G' },
+      ],
+      edges: [{ id: 'in', source: 'A', target: 'G', minLen: 1, sides: { target: 'left' } }],
+      groups: [
+        {
+          id: 'G',
+          padding: { top: 8, right: 8, bottom: 8, left: 8 },
+          title: { width: 300, height: 20 },
+        },
+      ],
+    };
+    const model = elkEngine('layered')(g);
+    const pts = model.edges.get('in')!.points;
+    const box = model.groups.get('G')!;
+    const left = box.x - box.width / 2;
+    expect(pts.at(-1)!.x).toBeCloseTo(left);
+    // Every point before the end lies outside the group, so the route never crosses it.
+    for (const p of pts.slice(0, -1)) {
+      const inside =
+        p.x > left + 0.5 &&
+        p.x < box.x + box.width / 2 - 0.5 &&
+        p.y > box.y - box.height / 2 + 0.5 &&
+        p.y < box.y + box.height / 2 - 0.5;
+      expect(inside, JSON.stringify(pts)).toBe(false);
+    }
+    expect(pts.at(-2)!.x).toBeLessThan(left);
+  });
+
+  it('gives no port to an edge between a group and its own member, as layered (review 6)', () => {
+    const g: LayoutGraph = {
+      direction: 'TB',
+      spacing,
+      diagramPadding: 8,
+      nodes: [
+        { id: 'X', width: 40, height: 40, parent: 'G' },
+        { id: 'Y', width: 40, height: 40, parent: 'H' },
+      ],
+      edges: [
+        {
+          id: 'own',
+          source: 'G',
+          target: 'X',
+          minLen: 1,
+          sides: { source: 'left', target: 'left' },
+        },
+        {
+          id: 'deep',
+          source: 'Y',
+          target: 'G',
+          minLen: 1,
+          sides: { source: 'right', target: 'top' },
+        },
+      ],
+      groups: [
+        { id: 'G', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+        { id: 'H', parent: 'G', padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+      ],
+    };
+    const built = toElkGraph(g, 'layered');
+    for (const n of built.nodes.values()) expect(n.ports, n.id).toBeUndefined();
+    expect(built.edges.get('own')).toMatchObject({ sources: ['G'], targets: ['X'] });
+    expect(built.edges.get('deep')).toMatchObject({ sources: ['Y'], targets: ['G'] });
   });
 
   it('keeps FIXED_SIDE on a node with anchorY that names only top or bottom', () => {
@@ -143,14 +265,32 @@ describe('ELK layered: named sides become FIXED_SIDE ports (D503)', () => {
     });
   });
 
-  it.each([Number.NaN, -1, 41, Infinity])(
-    'refuses anchorY %s where it places a port',
-    (anchorY) => {
-      const g = graph('TB', { source: 'left' });
-      g.nodes[0] = { ...g.nodes[0]!, anchorY };
-      expect(() => elkEngine('layered')(g)).toThrow(RangeError);
+  // Review 3: refused as `layered`'s check() refuses it, on every node, sides or not.
+  it.each([
+    [Number.NaN, { source: 'left' }],
+    [-1, { source: 'right' }],
+    [41, { source: 'left' }],
+    [Infinity, { source: 'left' }],
+    [Number.NaN, { source: 'top' }],
+    [41, undefined],
+  ] as const)('refuses anchorY %s (sides %o) as layered does', (anchorY, sides) => {
+    const g = graph('TB', sides);
+    g.nodes[0] = { ...g.nodes[0]!, anchorY };
+    let want: unknown;
+    try {
+      layered(g);
+    } catch (e) {
+      want = e;
     }
-  );
+    expect(want).toBeInstanceOf(RangeError);
+    expect(() => elkEngine('layered')(g)).toThrow((want as Error).message);
+  });
+
+  it.each([0, 40])('accepts anchorY %s, on the box edge', (anchorY) => {
+    const g = graph('TB', { source: 'left' });
+    g.nodes[0] = { ...g.nodes[0]!, anchorY };
+    expect(() => elkEngine('layered')(g)).not.toThrow();
+  });
 
   it('puts ports on a group and on a node inside one', () => {
     const g: LayoutGraph = {
@@ -277,7 +417,16 @@ describe('through createMermaid().render() with the ELK package registered', () 
       expect(onSide(model, a, source, e.points[0]!), id).toBe(true);
       expect(onSide(model, b, target, e.points.at(-1)!), id).toBe(true);
     }
-    const a = model.nodes.get('a')!;
-    expect(model.edges.get('e0')!.points[0]!.y).toBeCloseTo(a.y - a.height / 2 + 40);
+    // b's one left end sits on its icon line; a's two right ends spread about it.
+    const line = (id: string): number => {
+      const n = model.nodes.get(id)!;
+      return n.y - n.height / 2 + 40;
+    };
+    expect(model.edges.get('e0')!.points.at(-1)!.y).toBeCloseTo(line('b'));
+    const right = ['e0', 'e2'].map((id) => {
+      const pts = model.edges.get(id)!.points;
+      return (id === 'e0' ? pts[0]! : pts.at(-1)!).y - line('a');
+    });
+    expect(right.sort((x, y) => x - y)).toEqual([-spacing.edge / 2, spacing.edge / 2]);
   });
 });
