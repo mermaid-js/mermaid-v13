@@ -11,12 +11,7 @@ import {
   type LayoutManifest,
   type PluginManifest,
 } from '@mermaid-js/core';
-import {
-  CORE_DEFAULTS,
-  checkFragment,
-  type ConfigFragment,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
+import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import type { lineHops as LineHops } from '@mermaid-js/core/layout/hops';
 import {
@@ -551,15 +546,11 @@ export class Registry {
   }
 
   /**
-   * A first-party type's default layout (D534), for `preload`: its own (`elk` for
-   * `flowchart-elk`), else its section's schema default (`swimlane.layout`). The type only,
-   * never a plugin id (`flowchart` must not load ELK).
+   * A first-party type's default layout (D534), for `preload`: `elk` for `flowchart-elk`,
+   * `swimlane` for `swimlane`. The type only, never a plugin id (`flowchart` must not load ELK).
    */
   layoutOf(type: string): string | undefined {
-    const e = this.entries.find((x) => x.type === type);
-    return (
-      e?.layout ?? (CORE_DEFAULTS as Record<string, { layout?: string }>)[e?.section ?? '']?.layout
-    );
+    return this.entries.find((x) => x.type === type)?.layout;
   }
 
   /** The loaded plugin for a detected type, if any. */
