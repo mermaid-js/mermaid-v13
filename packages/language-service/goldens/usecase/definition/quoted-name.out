@@ -1,0 +1,10 @@
+@ 2:15  actor "Shop |owner"
+  -> 2:10-2:20 "Shop owner"
+@ 3:24  "Reset password" --> |Done
+  -> 3:24-3:28 "Done"
+@ 4:31  "Shop owner" --> "Reset pass|word"
+  -> 3:4-3:18 "Reset password"
+@ 5:22  note for Reset_pass|word "x"
+  -> 3:4-3:18 "Reset password"
+@ 6:16  class Shop_ow|ner hot
+  -> 2:10-2:20 "Shop owner"

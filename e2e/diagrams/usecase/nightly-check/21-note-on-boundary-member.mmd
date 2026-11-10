@@ -1,0 +1,15 @@
+---
+description: >-
+  A note on a boundary member with another member between it and the actor
+  outside: the extending use case sits in the rank before its target, so the
+  note goes on the target's far side, beside it, not next to the actor.
+---
+usecase-beta
+  systemBoundary Shop
+    Checkout("Check out")
+    Coupon("Apply coupon")
+  end
+  actor Customer
+  Customer --> Checkout
+  Coupon ..> : extend Checkout
+  note for Checkout "Needs a basket"

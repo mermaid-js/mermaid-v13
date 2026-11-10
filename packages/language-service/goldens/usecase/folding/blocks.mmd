@@ -1,0 +1,21 @@
+---
+title: Shop
+---
+usecase-beta
+  accDescr {
+    Customers buy things.
+  }
+  systemBoundary Shop
+    actor Clerk@{
+      type: hollow
+    }
+    Checkout
+  end
+  json Order@{
+    "total": 10,
+    "items": [1, 2]
+  }
+  Clerk --> Checkout
+  Checkout@{
+    business: true
+  }
