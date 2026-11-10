@@ -12,6 +12,8 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 
 - Follow-up (flowchart, not this port): flowchart's `paletteSlots` fills from `bkgColorArray[order % bkg.length]`, where v12 used `bkgColorArray[(colorIndex % border.length) % bkg.length]`; they differ only when an author's two palettes have different lengths. Block's copy follows v12 (review of #556).
 
+- Follow-up (class port, not this one): class.ebnf:80's `<class> STRUCT_STOP` pops two modes, but Monarch generates one `@pop`, so after a one-line `namespace N { class A }` the highlighter stays in `namespace-body` while jison is back in INITIAL (review of #557).
+
 ## T0 #552
 
 - Done in its own PR into `mermaid-v13`. Rows get `usedBy` `['flowchart']`; T4 adds `'block'` to each row it reads.

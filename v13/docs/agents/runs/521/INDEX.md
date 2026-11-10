@@ -11,7 +11,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T2 grammar, parser, model, AST | #554 | #553 | merged (ff f8bf0c3c2; package entry 11,883 B gz, no core change) |
 | T3 layout | #555 | #554 | merged (ff e7fef7bd3; package entry 17,666 B gz, no core change) |
 | T4 SVG renderer and local shapes | #556 | #552, #555 | merged (ff 3c3553fc4; package entry 20,507 B gz, no core change) |
-| T6 language facet | #557 | #554 | |
+| T6 language facet | #557 | #554 | merged (ff b9f104d0d; package entry 20,898 B gz, `./language` 16,721 B gz; shared language-service: one frozen empty modifiers array, `deepFreeze` without per-object key arrays) |
 | T5 integration | #558 | #556, #557 | |
 | T7 ASCII renderer (optional, D320) | #559 | #558 | |
 
