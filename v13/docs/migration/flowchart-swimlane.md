@@ -47,6 +47,7 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
   (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
   it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.
-- **`format: 'ascii'`** draws the flowchart with `layered`, lanes as plain groups, with one
-  `ASCII_DROPPED` warning (`feature: 'layout'`), as for any engine text output does not use
-  (D179, D534).
+- **`format: 'ascii'`** (new; v12 had no text output) draws the flowchart with `layered`, lanes
+  as plain subgraph frames with no title band or default lane, in both charsets, with one
+  `ASCII_DROPPED` warning (`feature: 'layout'`) and no `SWIMLANE_*` warning, as for any engine
+  text output does not use (D179, D534); a flowchart with `layout: swimlane` draws the same.

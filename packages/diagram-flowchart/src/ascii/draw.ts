@@ -205,7 +205,11 @@ export function drawFlowchart(
       height: Math.max(g.label.height, 1),
     });
     writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs);
-    gaps.push({ x: at.x - 1, y: at.y }, { x: at.x + at.width, y: at.y });
+    // Around the first line as written (on the border), not the whole block: a wider line
+    // below it would otherwise leave a gap beside a corner, cut off from the border (#603).
+    const first = g.label.left ? g.label.width : (g.label.widths[0] ?? at.width);
+    const x = at.x + Math.floor((at.width - first) / 2);
+    gaps.push({ x: x - 1, y: at.y }, { x: x + first, y: at.y });
   }
 
   const ends: End[] = [];
