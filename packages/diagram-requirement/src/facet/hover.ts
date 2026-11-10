@@ -12,8 +12,8 @@ import type {
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
 import { requirementDocs } from '../generated/docs.ts';
-import { boxesByName, boxNamed } from '../model.ts';
 import type { BoxOf, RequirementModel } from '../model.ts';
+import { boxesByName, boxNamed } from '../parser/boxes.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';

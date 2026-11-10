@@ -28,7 +28,6 @@ import {
   REQUIREMENT_STYLE_DROPPED,
   REQUIREMENT_UNKNOWN_NODE,
 } from '../codes.ts';
-import { boxNamed } from '../model.ts';
 import type {
   BoxesByName,
   Element,
@@ -44,6 +43,7 @@ import type {
   StyleCopies,
   VerifyMethod,
 } from '../model.ts';
+import { boxNamed } from './boxes.ts';
 
 type Writable<T> = { -readonly [K in keyof T]: T[K] };
 

@@ -3,8 +3,8 @@
  * ({@link Occurrence}); {@link symbolsOf} settles kinds and roles once the model is built.
  */
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
-import { boxesByName, boxNamed } from '../model.ts';
 import type { BoxKind, RequirementModel } from '../model.ts';
+import { boxesByName, boxNamed } from './boxes.ts';
 
 /**
  * A name or class name as read: a box's own name (`requirement`, `element`), a name a statement

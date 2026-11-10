@@ -104,31 +104,10 @@ export type BoxOf<R = Requirement, E = Element> =
 /** Which of the two a box is. */
 export type BoxKind = BoxOf['is'];
 
-/** Boxes by name, one map per kind. */
+/** Boxes by name, one map per kind (`parser/boxes.ts`). */
 export interface BoxesByName<R = Requirement, E = Element> {
   readonly requirements: ReadonlyMap<string, R>;
   readonly elements: ReadonlyMap<string, E>;
-}
-
-/** The model's boxes by name, for {@link boxNamed}. */
-export function boxesByName(
-  model: Pick<RequirementModel, 'requirements' | 'elements'>
-): BoxesByName {
-  return {
-    requirements: new Map(model.requirements.map((r) => [r.name, r])),
-    elements: new Map(model.elements.map((e) => [e.name, e])),
-  };
-}
-
-/**
- * The box `name` reaches: the requirement of that name, else the element (v12's order, D434).
- * The one lookup of relation ends, `style`, `class`, symbols and hover.
- */
-export function boxNamed<R, E>(name: string, boxes: BoxesByName<R, E>): BoxOf<R, E> | undefined {
-  const r = boxes.requirements.get(name);
-  if (r !== undefined) return { is: 'requirement', box: r };
-  const e = boxes.elements.get(name);
-  return e === undefined ? undefined : { is: 'element', box: e };
 }
 
 /** A `classDef`. */
