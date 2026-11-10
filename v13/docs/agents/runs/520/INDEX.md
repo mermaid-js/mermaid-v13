@@ -10,7 +10,7 @@ Integration branch `feature/520_requirement` (from `mermaid-v13` at 521fb76ee). 
 | T4 SVG renderer | #574 | #570 | merged (ff a1d1ce0dd; package entry ~18.7 kB gz; core 94,410 B gz) |
 | T6 language facet | #579 | #564 | merged (ff 540078f92; `./language` 17,030 B gz core external; 50k cycle 11.4 ms) |
 | T5 integration | #587 | #574, #579 | merged (ff 122753b59; core 94,429 B gz, +17 B registry row; load path 118,072 B; warm render 55.2x v12) |
-| T7 ASCII renderer (optional, D320) | #588 | #587 | open |
+| T7 ASCII renderer (optional, D320) | #588 | #587 | merged (92a23cc8d; text path 8,837 B gz; core 94,442 B gz) |
 
 No T0 and no core change (spec). One ticket agent at a time (seven ports share AI-Max).
 
