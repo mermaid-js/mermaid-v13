@@ -70,8 +70,9 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'requirement',
     pattern: /^\s*requirement(Diagram)?/,
     id: 'requirement',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     load: () => import('@mermaid-js/diagram-requirement').then((m) => m.requirement),
+    loadAscii: () => import('@mermaid-js/diagram-requirement/ascii').then((m) => m.ascii),
   },
   {
     type: 'sequence',

@@ -7,6 +7,7 @@ import type {
   LayoutGraph,
   LayoutMetrics,
   LayoutNode,
+  UnitProfile,
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
@@ -22,6 +23,7 @@ import type { RequirementRenderContext } from './context.ts';
 import {
   markerGeometry,
   markerRoom,
+  REQUIREMENT_CELL_METRICS as C,
   REQUIREMENT_METRICS as M,
   type MarkerExtent,
   type MarkerGeometry,
@@ -46,6 +48,11 @@ export interface LineView {
   readonly y: number;
   /** The kind and the name are centred; body lines start `bodyInset` in. */
   readonly align: 'center' | 'start';
+  /**
+   * In cells (text output) only: the most cells a body line shows, its key and 40 cells of
+   * value; a longer line is cut to it, ending in an ellipsis (D438).
+   */
+  readonly cut?: number;
 }
 
 /** A box of either kind: `kind` says which model record `box` is. */
@@ -235,6 +242,59 @@ function boxView(of: BoxOf, { font, measure, styleOf }: BoxEnv): BoxView {
   };
 }
 
+/**
+ * The text form of a box (#588, D438): ER's box with a divider. The kind and the name centred,
+ * the divider row, then the body lines `nodePad.x` in from the side, each value cut to
+ * `C.value` cells; `nodePad.y` blank rows above and below each band. `x` and `y` count cells
+ * from the box's top left, its border included.
+ */
+function cellBoxView(of: BoxOf, { font, measure, styleOf }: BoxEnv, units: UnitProfile): BoxView {
+  const { box } = of;
+  const pad = units.builder.nodePad;
+  const style = styleOf(box.styles);
+  const content = linesOf(of);
+  const head: [LinePart, MeasuredLabel][] = [
+    ['kind', measure(content.kind, font, 0)],
+    ['name', measure(box.name, font, 0)],
+  ];
+  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel, number] => [
+    part,
+    measure(text, font, 0),
+    text.indexOf(': ') + ': '.length + C.value,
+  ]);
+  let widest = 0;
+  for (const [, l] of head) widest = Math.max(widest, l.width);
+  for (const [, l, cut] of body) widest = Math.max(widest, Math.min(l.width, cut));
+  const border = 1;
+  const width = widest + 2 * (pad.x + border);
+  const lines: LineView[] = [];
+  let y = border + pad.y;
+  for (const [part, label] of head) {
+    const x = border + pad.x + Math.floor((widest - label.width) / 2);
+    lines.push({ part, label, x, y, align: 'center' });
+    y += label.lines.length;
+  }
+  y += pad.y;
+  const divider = y;
+  if (body.length > 0) y += border + pad.y;
+  for (const [part, label, cut] of body) {
+    lines.push({ part, label, x: border + pad.x, y, align: 'start', cut });
+    y += label.lines.length;
+  }
+  if (body.length > 0) y += pad.y;
+  return {
+    ...of,
+    id: box.ast,
+    style,
+    classes: box.classes,
+    slot: box.slot,
+    width,
+    height: y + border,
+    lines,
+    ...(body.length > 0 ? { divider } : {}),
+  };
+}
+
 /** The engine metrics: self-loops and edge ends along a side sized for the markers. */
 function requirementMetrics(room: MarkerExtent): LayoutMetrics {
   const m = pxProfile.engine;
@@ -242,6 +302,52 @@ function requirementMetrics(room: MarkerExtent): LayoutMetrics {
     ...m,
     loop: Math.max(m.loop, room.length + m.loopGap),
     portPitch: Math.max(m.portPitch, room.width + m.minPitch),
+  };
+}
+
+/**
+ * The graph in cells (#588): the cell profile's spacing, with a rank gap that holds both ends'
+ * marks and a line cell beside the label (`C.rank`); with the ranks running down, ends along a
+ * side far enough apart for the `contains` mark across a line, and self-loops reaching out far
+ * enough for it along theirs; stepped routes on the grid. The marks take no head room of
+ * their own: the rank gap holds them, as ER's ends.
+ */
+function cellGraph(
+  model: RequirementModel,
+  boxes: readonly BoxView[],
+  relations: readonly RelationView[],
+  units: UnitProfile
+): LayoutGraph {
+  const b = units.builder;
+  const m = units.engine;
+  const across = model.direction === 'LR' || model.direction === 'RL';
+  return {
+    direction: model.direction,
+    nodes: boxes.map(
+      (v): LayoutNode => ({ id: v.id, width: v.width, height: v.height, shape: 'requirementBox' })
+    ),
+    edges: relations.map(
+      (e): LayoutEdge => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        minLen: 1,
+        label: { width: e.label.width + b.labelPatch.x, height: e.label.height + b.labelPatch.y },
+      })
+    ),
+    groups: [],
+    spacing: { node: b.spacing.node, rank: Math.max(b.spacing.rank, C.rank), edge: b.spacing.edge },
+    diagramPadding: b.diagramPadding,
+    routing: 'stepped',
+    headRoom: b.headRoom,
+    metrics: {
+      ...m,
+      // A self-loop leaves its side straight for the `contains` mark along it before it turns.
+      loop: Math.max(m.loop, C.containsWidth + m.loopGap),
+      // Lines leave the top and bottom sides only when the ranks run down.
+      ...(across ? {} : { portPitch: Math.max(m.portPitch, C.containsWidth + m.minPitch) }),
+    },
+    grid: units.grid,
   };
 }
 
@@ -266,9 +372,12 @@ export function prepareRequirement(
     return style;
   };
   const env: BoxEnv = { font, measure, styleOf };
+  // Text output (#588): the cell profile sizes the boxes and the graph in cells.
+  const cells = ctx.units?.grid === undefined ? undefined : ctx.units;
+  const view = (of: BoxOf): BoxView => (cells ? cellBoxView(of, env, cells) : boxView(of, env));
   const boxes = [
-    ...model.requirements.map((box) => boxView({ kind: 'requirement', box }, env)),
-    ...model.elements.map((box) => boxView({ kind: 'element', box }, env)),
+    ...model.requirements.map((box) => view({ kind: 'requirement', box })),
+    ...model.elements.map((box) => view({ kind: 'element', box })),
   ];
   const relations: RelationView[] = [];
   model.relations.forEach((r, n) => {
@@ -291,28 +400,40 @@ export function prepareRequirement(
   const b = pxProfile.builder;
   const markers = markerGeometry(theme);
   const room = markerRoom(markers);
-  const graph: LayoutGraph = {
-    direction: model.direction,
-    nodes: boxes.map(
-      (v): LayoutNode => ({ id: v.id, width: v.width, height: v.height, shape: 'requirementBox' })
-    ),
-    edges: relations.map(
-      (e): LayoutEdge => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        minLen: 1,
-        label: { width: e.label.width + b.labelPatch.x, height: e.label.height + b.labelPatch.y },
-        ...(e.markerAt === 'source' ? { startMarker: { ...room } } : { endMarker: { ...room } }),
-      })
-    ),
-    groups: [],
-    spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
-    diagramPadding: M.viewBoxPadding,
-    routing: ROUTING[curve] ?? 'stepped',
-    headRoom: room.length,
-    metrics: requirementMetrics(room),
-  };
+  const graph: LayoutGraph = cells
+    ? cellGraph(model, boxes, relations, cells)
+    : {
+        direction: model.direction,
+        nodes: boxes.map(
+          (v): LayoutNode => ({
+            id: v.id,
+            width: v.width,
+            height: v.height,
+            shape: 'requirementBox',
+          })
+        ),
+        edges: relations.map(
+          (e): LayoutEdge => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            minLen: 1,
+            label: {
+              width: e.label.width + b.labelPatch.x,
+              height: e.label.height + b.labelPatch.y,
+            },
+            ...(e.markerAt === 'source'
+              ? { startMarker: { ...room } }
+              : { endMarker: { ...room } }),
+          })
+        ),
+        groups: [],
+        spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
+        diagramPadding: M.viewBoxPadding,
+        routing: ROUTING[curve] ?? 'stepped',
+        headRoom: room.length,
+        metrics: requirementMetrics(room),
+      };
   // v12 `insertTitle` writes the title as plain text in the diagram's font.
   const title = model.title?.trim();
   return {

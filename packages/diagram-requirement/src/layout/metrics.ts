@@ -59,6 +59,25 @@ export const REQUIREMENT_METRICS = Object.freeze({
 
 const M = REQUIREMENT_METRICS;
 
+/**
+ * The requirement diagram's cell lengths for text output (#588, D438), beside the cell profile's
+ * own (`cellProfile`): what the text form draws that the profile has no length for.
+ */
+export const REQUIREMENT_CELL_METRICS = Object.freeze({
+  /** A body line's value is cut to this many cells, the last an ellipsis (D438). */
+  value: 40,
+  /**
+   * Cells the `contains` mark takes across a vertical line (`(+)` in the `ascii` charset), so
+   * ends along one side stay that far apart plus a free cell.
+   */
+  containsWidth: 3,
+  /**
+   * The least rank gap: the `contains` mark along a horizontal line (3), a line cell, the
+   * arrowhead and a line cell between them and the label (as ER's six).
+   */
+  rank: 6,
+});
+
 /** How far a drawn marker reaches out from the outline along its line, and across it. */
 export interface MarkerExtent {
   readonly length: number;
