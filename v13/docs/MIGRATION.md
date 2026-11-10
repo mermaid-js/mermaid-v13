@@ -355,7 +355,17 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.xAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
 | `xyChart.yAxis.$ref` | ignored | Not an option; 12.2.0's default config leaked it (a schema reference). |  |
+| `requirement.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the requirement renderer never did. |  |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `requirement.rect_fill` | ignored | v12.2.0's requirement renderer never read it: boxes are sized from their text and drawn from the theme (D435). |  |
+| `requirement.text_color` | ignored | v12.2.0's requirement renderer never read it: the text is `requirementTextColor` (D435). |  |
+| `requirement.rect_border_size` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderSize` (D435). |  |
+| `requirement.rect_border_color` | ignored | v12.2.0's requirement renderer never read it: the border is `requirementBorderColor` (D435). |  |
+| `requirement.rect_min_width` | ignored | v12.2.0's requirement renderer never read it: a box is as wide as its widest line plus its padding (D436). |  |
+| `requirement.rect_min_height` | ignored | v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436). |  |
+| `requirement.fontSize` | ignored | v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style. |  |
+| `requirement.rect_padding` | ignored | v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436). |  |
+| `requirement.line_height` | ignored | v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436). |  |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -384,9 +394,11 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `treeView.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the treeView renderer never did. |  |
 | `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `radar.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the radar renderer never did. |  |
 | `radar.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `usecase.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the usecase renderer never did. |  |
 | `usecase.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `venn.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the venn renderer never did. |  |
 | `venn.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -419,6 +431,8 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 | `ishikawa.useMaxWidth` | `true` | The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width="100%"` and a `max-width`; false draws the diagram's own `width` and `height`. |
+| `usecase.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
+| `usecase.usecaseFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
@@ -713,7 +727,7 @@ npm install @mermaid-js/plugin-hand-drawn
   `neo-dark` the gradient strokes the sketch and the `dropShadow` filter sits on the sketch's
   `<g>`; v12 never combined neo and hand-drawn. Fills are hachured as in v12; state composites
   are solid.
-- **What is sketched (D301):** <!-- BEGIN hand-drawn-list:sketched -->flowchart (node shapes, their inner lines, subgraphs, the collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state (states, composites, notes, start and end, choice, fork and join, region dividers, transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines), mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards; the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319) and ishikawa (the head, label boxes, spine and bones, D494)<!-- END hand-drawn-list:sketched -->. v12 did not sketch mindmap's plain
+- **What is sketched (D301):** <!-- BEGIN hand-drawn-list:sketched -->flowchart (node shapes, their inner lines, subgraphs, the collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state (states, composites, notes, start and end, choice, fork and join, region dividers, transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines), mindmap (every node shape, the rule under a plain node, edges), kanban (columns and cards; the priority bar is kept, D379), venn (circles and the overlaps a style fills, D319), requirement (boxes, dividers, relation lines; the markers stay plain, as in v12), ishikawa (the head, label boxes, spine and bones, D494) and usecase (actor glyphs, use cases, notes, JSON tables and their cells, boundary frames and tabs, relationship lines; business marks stay plain, as v12 drew them without roughjs)<!-- END hand-drawn-list:sketched -->. v12 did not sketch mindmap's plain
   node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text are
   never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
@@ -722,7 +736,7 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (<!-- BEGIN hand-drawn-list:pending -->requirement, block, swimlanes, usecase, agentflow<!-- END hand-drawn-list:pending -->) are
+  v13 has not ported yet (<!-- BEGIN hand-drawn-list:pending -->block, swimlanes, agentflow<!-- END hand-drawn-list:pending -->) are
   sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -782,7 +796,7 @@ the passes (D174). Parity is with v12's ELK options, not its pixels.
 | Per-container `id@{ algorithm: elk.box }` laid that container out with its own algorithm | Parsed but not applied yet: the container is laid out with the diagram's ELK algorithm, with one `ELK_ALGORITHM_IGNORED` warning per render listing the algorithms asked for | D174 |
 | `elk.radial` did not exist as a layout name (only as a container id); a container that was not a tree failed the render | `layout: elk.radial` lays out a tree radially. A graph that is not a tree (a cycle, or a node with two parents) is drawn with `layered`, plus one `ELK_RADIAL_NOT_A_TREE` warning | D171 |
 | `cycleBreakingStrategy: MODEL_ORDER` was set on every container, and elkjs 0.12 threw for a container laid out with its parent, so that render failed | `MODEL_ORDER` is set on the root and on containers ELK lays out on their own (one with its own `direction` that no edge crosses); a container laid out with its parent follows the root's value | D174 |
-| `lineHops` drew hops and dropped the rounding of corners | Same hops (arc or gap, v12's radius and rule), drawn on straight runs only; corners keep their rounding | D174 |
+| `lineHops` drew hops and dropped the rounding of corners | Same hops (arc or gap, v12's radius and rule), drawn on straight runs only; corners keep their rounding. Core draws them (D537): a top-level `lineHops: false` turns ELK's hops off too | D174, D537 |
 | v12's frame-evening and label post-passes (`evenGroupFrames`, `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, marker segment lengths) | Not ported: no `elk.*` key controls them, and v13's diagrams clip edges at their own outlines. Two edges into one side can share an end point | D174 |
 | Spacing from `spacing.baseValue` | Spacing comes from the diagram's `nodeSpacing` and `rankSpacing`, as for `layered` | D174 |
 | Text output did not exist | Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not, with one `ASCII_DROPPED` warning (`feature: 'layout'`) for the ELK name and no `ELK_NOT_INSTALLED` | D179 |
@@ -2453,3 +2467,215 @@ and bones as `edge` outlines at the drawer's defaults for those roles (node roug
 hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
 options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
 are drawn plain, as without the look (D302); text is never sketched, as in v12.
+
+## Requirement diagram
+
+- **Detection:** `requirementDiagram` and v12's bare `requirement` are detected by v12's
+  case-sensitive detector with no word boundary (`/^\s*requirement(Diagram)?/`), between `pie`
+  and `sequence` as in v12. So `requirementsx` is detected and then rejected as a syntax error
+  (`SYNTAX`), and `RequirementDiagram` is not detected (`UNSUPPORTED_DIAGRAM`), as in v12. The
+  language service, CodeMirror and Monaco know it.
+- **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture, the v12
+  spec strings and docs examples, and the grammar is in
+  [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
+  with a range at the token (R-PARSE-4).
+- **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
+  v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
+  now accept. The six forms v12 accepted only because a blank swallowed the next line break
+  (`requirement ⏎ a {`, `a - traces ⏎-> b`, …) keep v12's model.
+- **`direction`** (D432) is a statement only at the start of a line, and the rest of the line
+  is read as usual: `a - traces -> b direction LR` is a relation to `b direction LR`, which v12
+  dropped silently. Text after a line-start direction (`direction LR;`,
+  `direction LR a - traces -> b`) is now one syntax error, where v12 dropped the rest of the
+  line.
+- **Order-dependent styling** (D433) is kept: a `style`, `class` or `:::` before its box is
+  defined is lost, `style` stops at its first unknown name and `classDef default` reaches the
+  boxes defined before it only, as in v12. One `REQUIREMENT_STYLE_DROPPED` warning per render
+  lists each lost statement (`related`, `astIds`). Style copies are capped at 1,000,000: past
+  that the render fails with `MermaidError` `code: 'LIMIT'`, `limit: 'maxLayoutWork'`
+  (R-SEC-5).
+- **Unknown ends, duplicates and shared names** (D434): a relation to a name no box has stays
+  in the model and is not drawn, with one `REQUIREMENT_UNKNOWN_NODE` warning; of duplicate
+  definitions the first is kept, with one `REQUIREMENT_DUPLICATE` warning; a requirement and an
+  element of one name are two boxes, relations and styles reaching the requirement first (v12's
+  order), with one `REQUIREMENT_SHARED_NAME` warning. v12 warned about none of them.
+- **Theme variables** (D435): `requirementBackground`, `requirementBorderColor`,
+  `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
+  documented and never read, now take effect, with `relationColor` and `relationLabelColor`
+  added; unset, they draw v12's colours. The redux themes' label chip is white (dark: `#16141f`),
+  as v12 drew it. See [theme-variables.md](./theme-variables.md).
+- **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
+  (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the
+  line above, and a font whose half line passes the 20px padding no longer draws text above
+  the box (its top is clamped). Body lines are left-aligned 10px in under every engine, where
+  v12 with dagre centred them.
+- **Config.** The `requirement` section is honoured: `theme` (default `redux-color`, as v12),
+  `layout` (no requirement default: the top-level `layout`, `layered`) and `useMaxWidth`. v12's
+  renderer read `state.useMaxWidth`, `state.nodeSpacing`, `state.rankSpacing` and
+  `state.titleTopMargin` instead (a v12 bug): v13 reads `requirement.useMaxWidth`, and the
+  spacing (50 by 50) and title margin (25) are fixed, v12's defaults; a `state.*` key no longer
+  changes a requirement diagram. `useWidth`, `rect_fill`, `text_color`, `rect_border_size`,
+  `rect_border_color`, `rect_min_width`, `rect_min_height`, `fontSize`, `rect_padding` and
+  `line_height` are accepted and ignored, as v12.2.0's renderer never read them (see the
+  ignored-keys table); `look` as everywhere (D153).
+- **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
+  layout keeps room for each marker so it no longer overlaps the next box.
+- **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
+  [ASCII output](../ascii.md#requirement-diagrams).
+- **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
+  and the relation lines (markers are never sketched, D301).
+
+## Requirement SVG structure
+
+What changed in the requirement diagram's SVG compared with v12 (DESIGN §7.2, spec #520 T4,
+#574). The groups are v12's unified render's (`edgePaths`, `edgeLabels`, `nodes`), and v12's
+class names are kept where the element still exists (`node default <classDef>`, `basic
+label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-normal`,
+`edge-pattern-solid`/`-dashed`, `edgeLabel`, `labelBkg`, `requirementDiagramTitleText`).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="requirementDiagram"`, `aria-roledescription="requirement"`, a `<style>` element | No root `id`; `class="mermaid mermaid-requirement requirementDiagram"`, `role="img"`, `aria-roledescription="requirement"`, `data-mermaid-version`; no `<style>`, colours are presentation attributes reading `var(--_x)` aliases | Only `<id>-title` and `<id>-desc` ids, and the neo gradient's (D182, R-A11Y-1); inert output (R-SEC-2) |
+| Box `<g class="node default …" id="<render id>-<name>" data-look>` | `<g class="node default …" data-id="<name>" data-ast="requirement:<name>"\|"element:<name>" data-color-id transform>` | `data-ast` maps the box to its definition (D437, R-PARSE-8); `look` is removed (D153) |
+| Outline as rough.js paths in `<g class="basic label-container outer-path">` (a fill path and a stroke path) | One `<rect class="basic label-container outer-path">` (through the outline hook: a sketch under `look: handDrawn`) | One element per outline (D302) |
+| Each line a `<g class="label">` holding a `<foreignObject>` (or `<text>`), `<<Kind>>` and the name centred, the body centred under dagre and left-aligned under ELK | One `<text class="label kind\|name\|id\|text\|risk\|verification\|type\|docRef">` per line; the body left-aligned 10px in under every engine, a multi-line value stacked line under line | Text labels only (D5); GAPS #570 |
+| Divider `<g class="divider">` with a rough.js line (neo: a 0.001-tall polygon) | `<g class="divider">` with one `<path>`: the rule alone, its right end lifted 0.01 under the neo gradient so the gradient paints it | D185, as class's dividers; the outline is sketched once under `look: handDrawn` |
+| Relation `<path class="edge-thickness-normal edge-pattern-dashed\|solid relationshipLine" id="<render id>-<src>-<dst>-<n>" data-id="<src>-<dst>-<n>" marker-start\|marker-end>`, `<marker>` elements in `<defs>` | `<path class="edge-thickness-normal edge-pattern-dashed\|solid relationshipLine" data-id="<src>-<dst>-<n>" data-ast="relation:<src>-><dst>">` and its marker beside it: `<path class="marker requirement_arrow">` (the chevron's two strokes) at the target, or `<g class="marker requirement_contains">` (a `<circle>` and the plus `<path>`) at the source | No `<defs>` or ids (D35); markers are never sketched (D301) |
+| A relation to a name no box has: an edge with an undefined end | Not drawn; its `<n>` still counts it | D434 |
+| `look: neo`: 2px lines, the chevron at 0.8 in user space, marker strokes and box outline at `strokeWidth`, the gradient on the outline and divider, the drop shadow on the outline | The same, by theme family: the redux and neo themes draw it, the classic themes draw v12 classic (1px lines, a 20 × 20 chevron and r 9 circle with 1px strokes, a 1.3px outline, no shadow). The geometry is `relationStrokeWidth` (lines and marker strokes), `relationArrowScale` and `requirementBorderSize` | D152, D153, D227 |
+| Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
+| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with `<rect class="labelBkg">` 4px wider than the text each side and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
+| A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
+| A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |
+| Palette colours by CSS `[data-color-id].node path` rules | `data-color-id` kept; the colours are attributes on the outline and divider; an author `style` still wins | D152 |
+| Front-matter `title` as `<text class="requirementDiagramTitleText" y="-25">` | `<text class="requirementDiagramTitleText">` centred over the drawing, its baseline 25px above the layout's top, in `textColor`; the viewBox grows to hold it | D218 |
+| Five documented theme variables (`requirementBackground`, `…BorderColor`, `…BorderSize`, `…TextColor`, `relationLabelBackground`) drew nothing | They, `relationColor` and `relationLabelColor` paint the boxes, text, lines, markers and label chips, with v12's drawn values by default | D435 |
+
+## Tree view
+
+The tree view parser accepts the v12 language, `treeView-beta`, box-drawn input (`├──`, `└──`,
+`│`, and the heavy `┣━━` set) included (oracle parity over every e2e fixture, the v12 spec
+strings and the syntax page; grammar in [syntax/treeview.md](./syntax/treeview.md)). The rows,
+indents, connectors, descriptions, highlights and v12's `/` root row are v12's (spec #518). What
+changes:
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Syntax errors: Langium's first message, naming tokens; in box-drawn input at the line and column of v12's rewritten text | Every error, in words, at its source line and column, box-drawn lines included. The traps v12 has are kept, each with its own warning: two nodes on one line (`TREEVIEW_NODES_ON_ONE_LINE`), a trailing blank that indents the next node (`TREEVIEW_TRAILING_BLANK`), an annotation on the line after its node (`TREEVIEW_ANNOTATION_NEXT_LINE`), a first node read as a title (`TREEVIEW_NAME_READ_AS_TITLE`) | D486 |
+| v12 drew a connector into the root row `/`, from `-rowIndent` to 0, outside its `viewBox` | The `/` row is kept; that connector is gone | D482 |
+| The `viewBox` cut the right edge by half a line width, and a highlight could reach past it | The `viewBox` is v12's, grown wherever something drawn reaches past it | D224 |
+| The diagram title (`title …` or front matter) was kept and not drawn | The same: kept in the model, not drawn. Names and descriptions are plain text with their blank runs: `<br>`, `$$` and `fa:` in a name print as written | D484, D218 |
+| The built-in `file` and `folder` icons came from a `mermaid-treeview` Iconify pack that v12 registered | treeView draws them itself and registers no pack: `registerIconPacks` code that reads `mermaid-treeview` finds none. Other icons (`icon(pack:name)`, `defaultIconPack`, the icon maps) come from an icons extension (`@mermaid-js/plugin-icons`); one that is not drawn leaves its slot empty, with one `ICON_NOT_RENDERED` warning naming it, where v12 drew Iconify's unknown-icon glyph | D485, D290, D299 |
+| Under `showIcons`, a file named `constructor`, `toString` or `a.constructor` (any name on `Object.prototype`) looked its icon up through the prototype and drew a broken icon; `icon(constructor)` with a `defaultIconPack` was `mermaid-treeview:constructor` | Own-property lookups: such a file draws its default icon, and `icon(constructor)` is `<defaultIconPack>:constructor` | D486 |
+| A `treeView` config value of the wrong type or a negative length was used as given: `rowIndent: "20"` with `paddingX` 5 indented each level by `"205"`, 205 px | A length is a number, or a numeric string as its number, of 0 or more; a `defaultIconPack` a string; an icon map an object. Anything else draws with the default and one `TREEVIEW_CONFIG_INVALID` warning per key | D226 |
+| Every `:::highlight` row widened the diagram by 10 px and made each later highlight box 10 px wider than the one before | The same: kept for parity | |
+| `themeVariables.treeView.labelFontSize` in `em` or `pt` (`1em`, `12pt`) sized the labels through CSS | Only px or a bare number: another unit is dropped with `THEME_VARIABLE_DROPPED` (naming the flat `treeViewLabelFontSize`) and the labels stay 16 px | Core's theme `length` kind takes px only (`16px` or a bare number), and the layout measures in px; a unit-aware kind would change every diagram's size variables. Needs a D-id |
+| `themeVariables.treeView.*`: v12's styles read seven keys | The same keys set `treeViewLabelFontSize`, `treeViewLabelColor`, `treeViewLineColor`, `treeViewIconColor`, `treeViewDescriptionColor`, `treeViewHighlightBg` and `treeViewHighlightStroke`, key by key; each is also a flat theme variable, and the flat name wins when both are set | D335, D540 |
+| `look: handDrawn` (top level or `treeView.look`): v12 never sketched a tree view | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the tree view draws exactly as without it: not sketched | D301, D303 |
+| `format: 'ascii'`: no text output | Text output from `@mermaid-js/diagram-treeview/ascii` (loaded only for a text render): `tree(1)` style from the first real row, no `/` row; `├── `, `└── `, `│   ` (`|-- `, `` `-- ``, `|   ` with `ascii.charset: 'ascii'`); directories keep their `/`; descriptions in one aligned column; icons dropped with one `ASCII_DROPPED`; a highlighted row marked `▶` (`>`) in a one-cell gutter; `ascii.padding: roomy` puts a line between rows | D488, D320 |
+
+### Tree view theme colours
+
+v12 drew its seven literals in every theme: black label ink and connectors, `#546e7a` icons,
+`#6a9955` descriptions, a `rgba(255, 193, 7, 0.15)` highlight fill with a `#ffc107` stroke, at
+16 px. v13 keeps them in every light theme and in `base` with `darkMode` (the colours follow the
+theme's dark trait, as v12 never varied them by `darkMode`). In the four dark themes the label
+ink and the connectors follow the theme, and the icons take blue grey 300, the dark counterpart
+of `#546e7a`; the description green and the highlight read on both and stay
+(`packages/conformance/src/treeView/theme.spec.ts` lists each difference):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `dark` | Black labels and connectors and `#546e7a` icons on the dark background | Labels in the theme's `textColor`, connectors in its `lineColor`, icons `#90a4ae` | D483 |
+| `redux-dark` | Black labels and connectors and `#546e7a` icons on the dark background | Labels in the theme's `textColor`, connectors in its `lineColor`, icons `#90a4ae` | D483 |
+| `redux-dark-color` | Black labels and connectors and `#546e7a` icons on the dark background | Labels in the theme's `textColor`, connectors in its `lineColor`, icons `#90a4ae` | D483 |
+| `neo-dark` | Black labels and connectors and `#546e7a` icons on the dark background | Labels in the theme's `textColor`, connectors in its `lineColor`, icons `#90a4ae` | D483 |
+
+### Tree view SVG structure
+
+What changed in the tree view's SVG compared with v12 (spec #518, DESIGN §7.2). v12's class names
+are kept (`tree-view`, `treeView-highlight-bg`, `treeView-node-icon`, `treeView-node-label`,
+`treeView-node-dir`, the author's `:::class`, `treeView-node-description`, `treeView-node-line`),
+and so are the rows, the connectors and the draw order.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="treeView"` | No root `id`; `class="mermaid mermaid-treeView"`, `role="img"`, `aria-roledescription="treeView"`, `data-mermaid-version`, `font-family`; `<title>` and `<desc>` (accTitle, accDescr) with ids `<id>-title`, `<id>-desc` | R-SEC-2, R-A11Y-1 |
+| A `<style>` scoped by the id: the `.treeView-*` rules gave the fills, sizes, weights and strokes, and `white-space: pre` | No `<style>` (except under `theme: 'auto'`, core's light/dark sheet): presentation attributes on each element: `fill` and `font-size` on labels and descriptions, `font-weight="bold"` on directories, `font-style="italic"` on descriptions, `stroke` and `stroke-width` on connectors and highlight boxes, `color` on the icon group, `xml:space="preserve"` for the blank runs; colours read `var(--_x)` aliases on the root `style` | Inert output (R-SEC-2), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Each icon a nested `<svg>` from `getIconSVG` inside `g.treeView-node-icon` | `g.treeView-node-icon` (still `translate(x + paddingX, y + paddingY)`) holds a `<path>`: the built-in `file` or `folder` glyph, or the icons extension's glyph; no nested `<svg>`. An icon that is not drawn leaves the slot empty | D485, D293 |
+| No source mapping | Each node's row `g` carries `data-ast` (`node:<dir>/<dir>/<name>`, `@2` for a repeat in one directory) and `data-id`; its highlight box, icon, label, description and connectors carry `data-id` only. The `/` root row carries neither | R-PARSE-8, D487 |
+| The connector into the root row, outside the `viewBox` | Gone | D482 |
+| Dark themes drew the light literals | The D483 colours ([above](#tree-view-theme-colours)) | D483 |
+| `look: neo` and the redux themes: the same tree view as the classic themes | The same: the tree view differs between families by colour only | D227 |
+
+## Usecase diagram
+
+The usecase parser accepts the v12 language (`usecase-beta`; a differential test runs v12's own
+lexer and parser over every e2e fixture, the v12 spec strings and the docs examples, and the
+grammar is in [syntax/usecase.md](./syntax/usecase.md)). `usecase-beta` is detected by v12's
+case-sensitive detector (`/^\s*usecase-beta(?:\s|$)/`), last, as in v12; it was
+`UNSUPPORTED_DIAGRAM` before the port. The language service, CodeMirror and Monaco know it. What
+changes (spec #517):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Laid out with the top-level `layout`, whose 12.2.0 default is `elk` | Laid out with `layered` unless `layout` (or `usecase.layout`) names another engine: `dagre` draws with `layered`, `compass` takes its sides from `direction`, `elk` and `elk.<algorithm>` need `@mermaid-js/layout-elk` and without it draw with `layered` and one `ELK_NOT_INSTALLED` warning. Positions are not ELK's | R-LAYOUT-7, D127, D173, D327 |
+| `actorFontFamily` and `usecaseFontFamily` defaulted to `"Open Sans", sans-serif` | Unset, both are the theme's `fontFamily`, as every other label; a set value takes effect | D132 |
+| The first error stopped the parse: Chevrotain's lexer and parser messages (naming tokens and rules), V8's `JSON.parse` text, or the model builder's message with `at line L, column C [s,e)` | Every error is reported, with a range. Model errors (conflicting kinds, labels or shapes, unresolved targets, invalid relations, metadata or JSON, duplicate ids, …) keep v12's message without the location suffix, and the diagram is still rejected; lexer, parser and JSON errors have v13's own messages. v12's first error is among v13's at the same offset | D473, R-PARSE-4 |
+| `usecase-beta` then an unclosed `%%{` line: v12's directive regex removed the line and the diagram drew | Rejected with `UNCLOSED_DIRECTIVE` (core's preprocess, as for every type) | Core preprocess; parity lists it (`directive-unclosed`) |
+| `#name;` codes: v12 drew them from the browser's full HTML table (`#mp;` as ∓) | Codes outside core's entity table draw literally (`&mp;`); core's names (`#amp;`, `#quot;`, `#copy;`, …) and every numeric code still draw their character | Core's table (R-PERF-8); parity lists it (`entities-outside-core`) |
+| The front-matter `title` was never drawn (`db.clear()` wiped it) | Drawn above the diagram ([Usecase SVG structure](#usecase-svg-structure)) | D472, D133 |
+| `data-usecase-id`, `data-usecase-kind` and a DOM id `usecase-<id>` on each element | `data-ast` (AST ids `actor:A`, `usecase:B`, `boundary:S`, `note:1`, `json:P`, `rel:e1` or `rel:A->B`, `@2` for a repeat) and `data-id`; `role`, `aria-label` and `aria-hidden` kept ([Usecase SVG structure](#usecase-svg-structure)) | D475 |
+| The DB's `getAST()`: a source-span AST of statements | Not ported. The parse result's AST (`parseUsecase(text).ast`, DESIGN §4.2) and the language facet (`@mermaid-js/diagram-usecase/language`) carry the statements, ids and symbols | D476 |
+| Plain labels, stereotypes, JSON cells, edge labels and the title were escaped (`&`, `<`, `>`) before drawing | The same: their markup is text; only Markdown labels read the HTML subset | D225, R-SEC-2 |
+| Actor names in `actorTextColor` (the sequence diagram's variable) | `primaryTextColor`, as use case labels; differs in `default`, `dark`, `forest` and `neutral` ([Usecase theme colours](#usecase-theme-colours)) | D474 |
+| The boundary greys `usecaseBoundaryBkg` / `usecaseBoundaryBorder` of `redux-color` (`#FAFAFC` / `#BDBCCC`) | `clusterBkg` / `clusterBorder`, never painted in the colour themes: each boundary takes its palette slot there, in v12 too ([Usecase theme colours](#usecase-theme-colours)) | D474, D541 |
+| A `usecase` length, font or `colorScheme` of the wrong type reached the renderer as it was (`wrappingWidth: "wide"`, `actorFontSize: -1`) | A length is a number or a numeric string, from the schema's minimum up to 10000; a weight one of the schema's; a family one the style check allows; `colorScheme` `role` or `rotate`. Anything else draws with the default and one `USECASE_CONFIG_IGNORED` warning per key | Pitfall 22 |
+| A styled `font-size` (`classDef`, `style`) in `vw`, `vh`, `0` or 10000px and up was drawn as given | Measured and drawn at the element's default size, with one `USECASE_STYLE_IGNORED` warning per value: the layout measures every label before drawing it | Pitfalls 16, 22 |
+| `usecase.theme` (default `redux-color`) chose the theme when no other layer set one | The same: honoured with v12's default; a `theme` from `initialize()` or the text wins over it, and `usecase.theme` over the top-level `theme` within a layer | P2 |
+| No text output | `format: 'ascii'` draws the diagram as text ([ASCII output](ascii.md#usecase-diagrams)): actors as a figure, use cases as `( label )`, boundaries as frames | D320, D478 |
+
+## Usecase SVG structure
+
+What changed in the usecase diagram's SVG compared with v12 (spec #517). v12's classes and draw
+order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<type>` with its
+`rect.boundary-body`, a package's `rect.boundary-tab` and `g.system-boundary-title`), then
+`g.edgePaths` (each `g.relationship.relationship-<type>`), `g.edgeLabels` and `g.nodes` (actors
+`g.usecase-actor.usecase-actor-<type>` with `g.usecase-actor-glyph`, use cases
+`g.usecase-element.usecase-ellipse|usecase-rect`, `usecase-business`, `g.usecase-note`,
+`g.usecase-json-table`), with the author's `:::`/`class` names and `edge-animation-fast|slow`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id holding the role colours, the palette slot rules and the fonts as `--mermaid-usecase-*` custom properties | No root `id`; `class="mermaid mermaid-usecase"`, `role="img"`, `aria-roledescription="usecase"`, `data-mermaid-version`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes, widths and fonts are presentation attributes, colours reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-THEME-3 |
+| An unscoped DOM id `usecase-<id>` on each element, an id on each relationship path, `data-usecase-id` and `data-usecase-kind` | No ids but `<prefix>-title` and `<prefix>-desc`. `data-ast` (the AST id: `actor:A`, `usecase:B`, `boundary:S`, `note:1`, `json:P`, `rel:e1` or `rel:A->B`) on each element's and relationship's group, `data-id` (the model id: `A`, `note-0`, `edge-0`, `note-0-edge`) on it and on its parts; the kind is the group's class | D475, R-PARSE-8 |
+| `role="img"` and an `aria-label` on each element; on each relationship path `role="img"` and an `aria-label`, `aria-hidden="true"` on a note's connector | The same names and attributes (`business hollow actor Customer, stereotype Human`, `include from Login to Pay`), the element's on its group, a relationship's on its line | D475 |
+| Labels in `foreignObject` (HTML), and a stereotype folded into a use case's label as Markdown (`«s»<br/>label`) | SVG text laid out by core ([Labels and text](#labels-and-text)): `<br>`, entities, Markdown, math and icons work. A stereotype is a first `text.usecase-stereotype` line `«s»` above the label, for actors and use cases alike. A plain label's markup is still text, as v12 escaped it (`Hostile("<img …>")` draws the tag's text); only Markdown labels read the HTML subset | D225, R-SEC-2 |
+| The front-matter `title` was set, then wiped by `db.clear()` before `insertTitle` ran: never drawn | Drawn above the diagram as `text.usecaseDiagramTitleText` in the root's text colour, centred, the drawing moved down by its height and the diagram padding; it does not name the diagram (`accTitle` does) | D472, D133 |
+| `<defs>` with `<marker>` elements (`point`, `circle`, `cross`, `extension`) referenced by `marker-end` | Each marker is a `path.marker` in its relationship's group: v12's classic point, circle, cross and the generalization's hollow triangle (filled `mainBkg`), sized as v12's classic markers in every theme, in the line's colour (an author's `style` stroke included) | DESIGN §7.1, D227 |
+| An invisible `rect.usecase-actor-outline` (`opacity: 0`) around each actor | Not written: the actor's group carries the name, the layout its box | Nothing invisible is drawn |
+| Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The `edge-animation-fast|slow` class only, with round caps: the keyframes need a `<style>` | R-SEC-2, as the flowchart |
+| An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
+| `look: neo` (the `usecase.look` default) was never read by the renderer, which took the global `look` (`classic`): no shadow, no gradient | The same in every theme: usecase differs between families by colour only | D227, D153 |
+| Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3) and line (`edge`); markers, business marks and text stay plain | D301, D302 |
+
+### Usecase theme colours
+
+The eight role colours are the package's theme variables (`usecaseActorBkg`,
+`usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`, `usecaseBoundaryBkg`,
+`usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`), with v12's fallbacks. Where a
+theme carries a palette, the six that `redux-color` takes from it (`borderColorArray` slots 5, 1,
+10, 2, `bkgColorArray` slots 5, 1) read the palette's slot, so both colour themes match v12 and an
+author's `borderColorArray` recolours them in any theme, where v12 kept the theme's (D474). With a
+palette each system boundary takes its own slot under both colour schemes, and under
+`usecase.colorScheme: rotate` actors then use cases take one shared counter, as in v12; notes and
+JSON tables never do, and every counted element carries `data-color-id`. What changed
+(`packages/conformance/src/usecase/theme.spec.ts` lists each one):
+
+| Themes | v12 | v13 | Why |
+| --- | --- | --- | --- |
+| `redux-color` | `usecaseBoundaryBkg` `#FAFAFC` | `clusterBkg` (`#F9F9FB`). Never painted: each boundary takes its palette slot, in v12 too | D474, D541 |
+| `default`, `dark`, `forest`, `neutral` | Actor names in `actorTextColor` (`black`, `lightgrey`, `black`, `#333`) | `primaryTextColor`, as use case labels: `actorTextColor` is the sequence diagram's own variable | No shared input (D474) |
+| `base` | Actor, use case and boundary borders from v12 base's border step | v13 base's border step (`actorBorder`, `nodeBorder`, `clusterBorder`), as every diagram in that theme | Core theme |
+| `neo-dark` | Boundary border `clusterBorder` derived with the light rules | Derived with the dark rules | D183 |

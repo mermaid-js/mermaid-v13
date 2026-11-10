@@ -1,0 +1,23 @@
+---
+description: >-
+  Comments in every form v12 reads: whole `%%` lines (removed before lexing),
+  `#` and `%` comments at a token start, after a brace and after a field value,
+  and a `#` inside a value, which is text (`issue #42`).
+---
+requirementDiagram
+%% a whole-line comment
+  # a hash comment
+  % a percent comment
+  requirement comment_req { # after the brace
+    id: 1
+    %% a comment line in the body
+    text: tracks issue #42 here
+    risk: high # after a keyword value
+    verifymethod: test
+  }
+
+  element comment_el {
+    type: simulation
+  }
+
+  comment_el - satisfies -> comment_req

@@ -1,0 +1,9 @@
+@ 10:8  b.ts |
+  :::highlight class (a highlighted row) 10:8-10:8 "" -> ":::highlight"
+  icon(file) constant (the built-in file glyph) 10:8-10:8 "" -> "icon(file)"
+  icon(folder) constant (the built-in folder glyph) 10:8-10:8 "" -> "icon(folder)"
+  icon(none) constant (no icon) 10:8-10:8 "" -> "icon(none)"
+  ## operator (then a description) 10:8-10:8 "" -> "## "
+  icon(logos: constant (an icon of the logos pack) 10:8-10:8 "" -> "icon(logos:"
+  icon(fa: constant (an icon of the fa pack) 10:8-10:8 "" -> "icon(fa:"
+  icon(devicon: constant (an icon of the devicon pack) 10:8-10:8 "" -> "icon(devicon:"

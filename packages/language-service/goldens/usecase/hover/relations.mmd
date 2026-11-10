@@ -1,0 +1,9 @@
+usecase-beta
+  User |e1@--> Login
+  e1@{ animation: fast }
+  User --|-> Logout
+  User -- "pays" -|-o Pay
+  Login .|.> : include Check
+  Login ..> : ext|end Help
+  Admin --\||> User
+  User <-|-- Notify

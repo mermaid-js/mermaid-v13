@@ -1,0 +1,29 @@
+---
+description: >-
+  Every relation kind written right to left (`b <- kind - a`, source on the
+  right), `contains` among them, next to the left-to-right form.
+---
+requirementDiagram
+  requirement parent {
+    id: 1
+    text: the parent
+  }
+
+  requirement child {
+    id: 2
+    text: the child
+  }
+
+  element doc {
+    type: document
+    docref: docs/parent
+  }
+
+  child <- contains - parent
+  child <- copies - parent
+  child <- derives - parent
+  parent <- satisfies - doc
+  parent <- verifies - doc
+  child <- refines - parent
+  child <- traces - doc
+  parent - contains -> child
