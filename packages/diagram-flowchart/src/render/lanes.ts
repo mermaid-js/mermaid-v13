@@ -1,19 +1,26 @@
 // Swimlane lanes (spec #528, D535, D536): when the `swimlane` engine lays a flowchart out, each
-// top-level subgraph is a lane (`LayoutModel.lanes`), drawn as v12's swimlane cluster (`clusters/swimlane.js` at
+// top-level group is a lane, drawn as v12's swimlane cluster (`clusters/swimlane.js` at
 // upstream c9b12739f): a title band filled `clusterBkg` and an unfilled body, both stroked
 // `clusterBorder`. Loose nodes sit in a lane the engine makes, which flowchart's model does
 // not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
-// A chunk of its own, loaded with the engine (`../lanes.ts`, R-PERF-1): `render.ts` holds only
-// the slot it installs into.
+// A part of its own (`../lanes.ts`, R-PERF-1), loaded with the engine for flowcharts only. It
+// imports only types from the renderer: what it draws with comes in the `Scene` and `makeLanes()`.
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';
 import { rotate, type Attrs } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from './context.ts';
 import type { NodeView, Prepared } from './prepare.ts';
-import { cls, useLanes, type Scene } from './render.ts';
+import type { LaneDrawer, Scene } from './render.ts';
 
-/** The lanes of a layout the swimlane engine laid out (`LayoutModel.lanes`): `lanes.has(id)`. */
-const lanesOf = (layout: LayoutModel): ReadonlySet<string> => new Set(layout.lanes);
+/** The renderer's class-name helper (`render.ts`), passed in so this part imports none of it. */
+type Classes = (names: readonly string[]) => string;
+
+/**
+ * The lanes of a render the swimlane engine laid out: its top-level groups (D535), a group with
+ * no subgraph (the engine's default lane) included. `lanes.has(id)` is the one lane test.
+ */
+const lanesOf = (layout: LayoutModel, flow: Prepared): ReadonlySet<string> =>
+  new Set([...layout.groups.keys()].filter((id) => flow.views.get(id)?.parent === undefined));
 
 interface Rect {
   readonly x: number;
@@ -72,7 +79,7 @@ export function laneWarnings(
   layout: LayoutModel,
   warn: (warning: FlowWarning) => void
 ): void {
-  const lanes = lanesOf(layout);
+  const lanes = lanesOf(layout, flow);
   /** The lane `id` sits in (or is), following the drawn nesting. */
   const laneOf = (id: string): string | undefined => {
     const seen = new Set<string>();
@@ -84,16 +91,23 @@ export function laneWarnings(
     return undefined;
   };
   const subgraphs = new Set(model.subgraphs.map((sg) => sg.id));
-  for (const { node, keptBy, droppedFrom } of model.droppedMembers ?? []) {
-    const kept = laneOf(keptBy);
-    const dropped = laneOf(droppedFrom);
-    if (kept === undefined || dropped === undefined || kept === dropped) continue;
-    const what = subgraphs.has(node) ? 'subgraph' : 'node';
-    warn({
-      code: 'SWIMLANE_SHARED_NODE',
-      message: `Swimlane ${what} "${node}" is listed in lanes "${kept}" and "${dropped}"; it is drawn in "${kept}" only.`,
-      astIds: [...astOf(flow, kept), ...astOf(flow, dropped)],
-    });
+  // A member a subgraph listed but an earlier one kept (v12 `droppedSubGraphMembers`): its
+  // keeper is the subgraph it is drawn in. A keeper in the same lane (nested in the lister, or
+  // the lister itself) is no conflict.
+  for (const sg of model.subgraphs) {
+    const own = new Set(sg.nodes);
+    for (const node of sg.listed ?? []) {
+      if (node === sg.id || own.has(node)) continue;
+      const kept = laneOf(flow.views.get(node)?.parent ?? '');
+      const dropped = laneOf(sg.id);
+      if (kept === undefined || dropped === undefined || kept === dropped) continue;
+      const what = subgraphs.has(node) ? 'subgraph' : 'node';
+      warn({
+        code: 'SWIMLANE_SHARED_NODE',
+        message: `Swimlane ${what} "${node}" is listed in lanes "${kept}" and "${dropped}"; it is drawn in "${kept}" only.`,
+        astIds: [...astOf(flow, kept), ...astOf(flow, dropped)],
+      });
+    }
   }
   for (const g of flow.groups) {
     if (lanes.has(g.id) || g.parent === undefined) continue;
@@ -114,6 +128,7 @@ export function laneWarnings(
  * `view` is undefined for a lane the engine made (the default lane): no subgraph, no label.
  */
 function drawLane(
+  cls: Classes,
   { w, layout, ctx, paint }: Scene,
   id: string,
   box: LayoutModelGroup,
@@ -152,24 +167,29 @@ function drawLane(
 }
 
 /**
- * Installs lane drawing into flowchart's renderer (idempotent) and returns `engine` as is:
- * `mermaid`'s `swimlane` loader passes the engine's module through it.
+ * The part's default export: one render's lane drawer, drawing with the renderer's `cls`.
+ * `mermaid` loads it with the `swimlane` layout and the renderer gets it from
+ * `ctx.layoutPart` (per API object, never module state).
  */
-export function withLanes<T>(engine: T): T {
-  useLanes({
+export function makeLanes(cls: Classes): LaneDrawer {
+  return {
     warn: laneWarnings,
-    open(scene, model) {
-      const lanes = lanesOf(scene.layout);
+    draw(scene, model, plain) {
+      const lanes = lanesOf(scene.layout, scene.flow);
+      const { flow, layout } = scene;
       // Lanes the engine made (the default lane for loose nodes) have no subgraph. v12 gives the
       // default lane the slot after every subgraph's, so it never takes the first one.
       let made = model.subgraphs.length;
       for (const id of lanes) {
-        const box = scene.flow.views.has(id) ? undefined : scene.layout.groups.get(id);
-        if (box) drawLane(scene, id, box, undefined, made++);
+        const box = flow.views.has(id) ? undefined : layout.groups.get(id);
+        if (box) drawLane(cls, scene, id, box, undefined, made++);
       }
-      return lanes;
+      for (const g of flow.groups) {
+        const box = layout.groups.get(g.id);
+        if (!box) continue;
+        if (lanes.has(g.id)) drawLane(cls, scene, g.id, box, g, g.order);
+        else plain(g, box);
+      }
     },
-    draw: (scene, view, box) => drawLane(scene, view.id, box, view, view.order),
-  });
-  return engine;
+  };
 }

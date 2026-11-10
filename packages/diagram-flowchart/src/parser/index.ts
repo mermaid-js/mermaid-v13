@@ -9,7 +9,6 @@ export type { FlowchartType } from './detect.ts';
 export type {
   FlowCallback,
   FlowClass,
-  FlowDroppedMember,
   FlowLabel,
   FlowLink,
   FlowModel,

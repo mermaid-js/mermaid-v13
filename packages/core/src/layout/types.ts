@@ -214,12 +214,6 @@ export interface LayoutModel {
   groups: Map<string, LayoutModelGroup>;
   /** May differ from the input when `availableWidth` turned the drawing. */
   direction: Dir;
-  /**
-   * Set only by an engine that lays groups out as lanes (`swimlane`, D536): the lane group ids
-   * across the flow, an engine-made lane for loose nodes included (it is in `groups`, not in
-   * the graph). Each lane's title band is on top for TB/BT and on the left for LR/RL.
-   */
-  lanes?: string[];
 }
 
 /** What an engine gets besides the graph. Engine-specific settings come from the `layout` config. */

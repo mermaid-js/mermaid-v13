@@ -271,15 +271,6 @@ function extent(graph: LayoutGraph, model: LayoutModel): [number, number, number
   return x0 === Infinity ? [0, 0, 0, 0] : [x0, y0, x1, y1];
 }
 
-/** The lanes across the flow: the phases' `laneOrder`, then any lane it left out. */
-function laneIds(data: LayoutData, isLane: (id: string) => boolean): string[] {
-  const all = data.nodes.filter((n) => n.isGroup && isLane(n.id)).map((n) => n.id);
-  const known = new Set(all);
-  const ordered = (data.laneOrder ?? []).filter((id) => known.has(id));
-  const seen = new Set(ordered);
-  return [...ordered, ...all.filter((id) => !seen.has(id))];
-}
-
 /**
  * The `LayoutModel`: every graph node and group, plus the default lane when the engine made one
  * (`__swimlane_default__`), with end labels placed, moved so the drawing starts at
@@ -300,7 +291,6 @@ export function toLayoutModel(graph: LayoutGraph, data: LayoutData): LayoutModel
         .map((g) => [g.id, { ...boxOf(g), title: titleOf(g, laneModel.isLane(g.id)) }])
     ),
     direction: graph.direction,
-    lanes: laneIds(data, laneModel.isLane),
   };
   placeEndLabels(graph, model);
   const [x0, y0, x1, y1] = extent(graph, model);

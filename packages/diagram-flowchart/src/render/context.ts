@@ -35,6 +35,8 @@ export interface FlowRenderContext {
   readonly limits?: Limits;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;
+  /** The part of the drawing this render's layout brings (`layoutParts`): swimlane lanes. */
+  readonly layoutPart?: unknown;
   /** Prefix of the root's only ids, `${idPrefix}-title` and `${idPrefix}-desc` (R-A11Y-1). */
   readonly idPrefix?: string;
   /** Written as `data-mermaid-version`. */

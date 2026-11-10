@@ -89,32 +89,24 @@ describe('node properties', () => {
   });
 });
 
-describe('droppedMembers (v12 droppedSubGraphMembers, swimlane D536)', () => {
-  const dropped = (body: string) =>
-    parseFlowchart(`flowchart TD\n${body.split(';').join('\n')}`).model.droppedMembers;
+describe('listed members (v12 droppedSubGraphMembers, swimlane D536)', () => {
+  const listed = (body: string) =>
+    Object.fromEntries(
+      parseFlowchart(`flowchart TD\n${body.split(';').join('\n')}`)
+        .model.subgraphs.filter((s) => s.listed)
+        .map((s) => [s.id, s.listed])
+    );
 
-  it('records a member a later subgraph lists but an earlier one keeps', () => {
-    expect(dropped('subgraph A;a;end;subgraph B;a;end')).toEqual([
-      { node: 'a', keptBy: 'A', droppedFrom: 'B' },
-    ]);
+  it('keeps every member a subgraph listed when an earlier subgraph kept one of them', () => {
+    expect(listed('subgraph A;a;end;subgraph B;a;b;end')).toEqual({ B: ['a', 'b'] });
     // A subgraph listed in two others is a member too.
-    expect(dropped('subgraph S;x;end;subgraph A;S;end;subgraph B;S;end')).toEqual([
-      { node: 'S', keptBy: 'A', droppedFrom: 'B' },
-    ]);
+    expect(listed('subgraph S;x;end;subgraph A;S;end;subgraph B;S;end')).toEqual({ B: ['S'] });
+    // Under a subgraph nested in another, and on a redeclaration (both declarations' lists).
+    expect(listed('subgraph A;a;end;subgraph B;subgraph C;a;end;end')).toEqual({ C: ['a'] });
+    expect(listed('subgraph A;a;end;subgraph B;b;end;subgraph B;a;end')).toEqual({ B: ['a'] });
   });
 
-  it('records one listed again under a subgraph nested in another', () => {
-    expect(dropped('subgraph A;a;end;subgraph B;subgraph C;a;end;end')).toEqual([
-      { node: 'a', keptBy: 'A', droppedFrom: 'C' },
-    ]);
-  });
-
-  it('is absent when the keeper sits inside the subgraph that lists the member again', () => {
-    expect(dropped('subgraph P;subgraph C;a;end;a;end')).toBeUndefined();
-    expect(dropped('subgraph A;a;end;subgraph A;a;end')).toBeUndefined();
-  });
-
-  it('is absent for a redeclared subgraph whose first declaration nested the keeper', () => {
-    expect(dropped('subgraph P;subgraph C;a;end;end;subgraph P;a;end')).toBeUndefined();
+  it('is absent when the subgraph kept everything it listed', () => {
+    expect(listed('subgraph A;a;end;subgraph B;b;end')).toEqual({});
   });
 });

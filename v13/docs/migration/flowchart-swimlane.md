@@ -72,12 +72,14 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
     v12's router skipped self-loops. A route end v12 left off its box is put back on it.
   - A labelled edge to or from a subgraph puts its label in the row of its ranked end, beside
     that lane's nodes; v12 put it on top of the other end.
-- **Integrators.** Lane drawing is flowchart's own lazily loaded chunk, loaded with the
-  `swimlane` engine (`preload({ layouts: ['swimlane'] })`, or any `render()`), so a plain
-  flowchart loads none of it. A host that registers the engine itself under its own loader
-  passes it through `withLanes` from `@mermaid-js/diagram-flowchart/lanes`, or gets
-  engine and drawing together from that module's `engine()`; without it the groups draw as
-  plain subgraphs.
+- **Integrators.** Lane drawing is flowchart's own lazily loaded part, `flowchartLanes`
+  (`@mermaid-js/diagram-flowchart/lanes`), loaded alongside the `swimlane` engine for
+  flowcharts only, so a plain flowchart, or a class diagram with `layout: swimlane`, loads none
+  of it. `render()`, `prepare()` and `preload({ types: ['swimlane'] })` load both; for a
+  `flowchart` with `layout: swimlane`, `preload({ layouts: ['swimlane', 'flowchartLanes'] })`.
+  Lanes are drawn only on a render the `swimlane` layout laid out: an engine registered under
+  another name draws the groups as plain subgraphs, and a placeholder render that lacks the
+  part says so in its `PLACEHOLDER` warning.
 - **`format: 'ascii'`** (new; v12 had no text output) draws the flowchart with `layered`, lanes
   as plain subgraph frames with no title band or default lane, in both charsets, with one
   `ASCII_DROPPED` warning (`feature: 'layout'`) and no `SWIMLANE_*` warning, as for any engine

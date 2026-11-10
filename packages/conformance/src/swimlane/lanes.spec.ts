@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
-import { withLanes } from '@mermaid-js/diagram-flowchart/lanes';
 import { createMermaid, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -199,18 +198,34 @@ describe('lanes follow the engine that laid out, not the layout name', () => {
     expect(lanesOf(parseSvg(r.svg))).toEqual([]);
   });
 
-  // Lane drawing is flowchart's own lazy chunk (R-PERF-1): a host that registers the engine
-  // itself passes it through `withLanes`, as `mermaid`'s `swimlane` loader does.
-  it('draws lanes for an engine registered under another name', async () => {
+  it('names the lane part when only the engine is loaded, and draws the groups as subgraphs', async () => {
     const m = createMermaid();
     m.initialize({ deterministic: true });
-    m.registerLayoutLoaders([
-      { name: 'lanes', loader: () => Promise.resolve(withLanes(swimlane)) },
+    await m.preload({ types: ['flowchart'], layouts: ['swimlane'] });
+    expect(() => m.renderSync(text)).toThrow(/layout "flowchartLanes"/);
+    const r = m.renderSync(text, { placeholders: true });
+    expect(r.warnings.map((w) => [w.code, w.message.includes('flowchartLanes')])).toEqual([
+      ['PLACEHOLDER', true],
     ]);
+    expect(lanesOf(parseSvg(r.svg))).toEqual([]);
+  });
+
+  // Lanes are drawn only on a render the `swimlane` layout laid out: its part of flowchart's
+  // drawing reaches that render only (per API object, no module state). An engine registered
+  // under another name lays groups out the same, but draws them as subgraphs.
+  it('draws no lanes for the engine registered under another name, even once lanes are loaded', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    m.registerLayoutLoaders([{ name: 'lanes', loader: () => Promise.resolve(swimlane) }]);
     const body = text.replace(/^---[\s\S]*?---\n/, '');
-    const r = await m.render('s', `---\nconfig:\n  layout: lanes\n---\n${body}`);
-    expect(r.warnings.map((w) => w.code)).toEqual(['SWIMLANE_NESTED_LANE']);
-    expect(lanesOf(parseSvg(r.svg)).map((l) => l.id)).toEqual(['L1', 'L2']);
+    const as = (layout: string) => `---\nconfig:\n  layout: ${layout}\n---\n${body}`;
+    const alias = await m.render('s', as('lanes'));
+    expect(alias.warnings).toEqual([]);
+    expect(lanesOf(parseSvg(alias.svg))).toEqual([]);
+    const own = await m.render('s', as('swimlane'));
+    expect(own.warnings.map((w) => w.code)).toEqual(['SWIMLANE_NESTED_LANE']);
+    expect(lanesOf(parseSvg(own.svg)).map((l) => l.id)).toEqual(['L1', 'L2']);
+    expect(lanesOf(parseSvg((await m.render('s', as('lanes'))).svg))).toEqual([]);
   });
 });
 

@@ -98,6 +98,12 @@ export interface RenderContext {
    * extension has. Absent when no extension has `glyphs`, and in text output.
    */
   readonly icon?: IconLookup;
+  /**
+   * The part of the plugin's drawing that this render's layout brings (`layoutParts`), loaded
+   * by this API object: its module's default export. Only on a render that layout laid out:
+   * absent for a stand-in engine, text output, or a layout with no part.
+   */
+  readonly layoutPart?: unknown;
   warn(warning: Warning): void;
 }
 
@@ -173,6 +179,12 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
     readonly default: string;
     readonly aliases?: Readonly<Record<string, string>>;
   };
+  /**
+   * Parts of its drawing loaded only with a layout (spec #528: flowchart's swimlane lanes),
+   * layout name → the lazily loaded part's name. A graph render with that layout needs the part
+   * as a `layout` resource; the drawing gets it as `RenderContext.layoutPart`.
+   */
+  readonly layoutParts?: ReadonlyMap<string, string>;
   /** Its config section's defaults. */
   readonly configDefaults?: Readonly<Record<string, unknown>>;
   /**

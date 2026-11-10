@@ -221,8 +221,10 @@ export const LINE_HOPS = 'lineHops';
 const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   ['tree', () => import('@mermaid-js/core/layout/tree').then((m) => m.tree)],
   ['compass', () => import('@mermaid-js/core/layout/compass').then((m) => m.compass)],
-  // Through flowchart's lane drawing (spec #528, R-PERF-1), which a plain flowchart never loads.
-  ['swimlane', () => import('@mermaid-js/diagram-flowchart/lanes').then((l) => l.engine())],
+  ['swimlane', () => import('@mermaid-js/core/layout/swimlane')],
+  // Not an engine: flowchart's lane drawing (spec #528), a part its `layoutParts` asks for with
+  // `swimlane`, so a plain flowchart and other diagrams never load it (R-PERF-1).
+  ['flowchartLanes', () => import('@mermaid-js/diagram-flowchart/lanes') as never],
   // Not an engine: core's line-hop step (D537), loaded the same way. D285's gate keeps it from
   // laying a diagram out; `registerLayouts` and discovery refuse the name.
   [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
@@ -969,6 +971,20 @@ export class Registry {
     if (loader) return { engine: layered, state: 'missing', need: name };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
+  }
+
+  /**
+   * The part of `plugin`'s drawing for renders `name` lays out (flowchart's swimlane lanes,
+   * #601), once loaded, and only while `name` itself is ready: never under a stand-in engine.
+   */
+  layoutPart(plugin: AnyPlugin, name: string): unknown {
+    const part = plugin.layoutParts?.get(name);
+    return part && this.layouts.has(name) ? this.layouts.get(part) : undefined;
+  }
+
+  /** A loaded layout or layout part (`DiagramPlugin.layoutParts`) by name; else undefined. */
+  part(name: string): unknown {
+    return this.layouts.get(name);
   }
 
   /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */

@@ -5,6 +5,7 @@
  */
 import {
   CORE_DEFAULTS,
+  KEY_TREE,
   resolveSite,
   type ConfigFragment,
   type ConfigInput,
@@ -209,19 +210,19 @@ export class Overlays {
   }
 }
 
+/** A diagram's config section, or its chain of sections, highest first (D534). */
+export type Sections = string | readonly string[] | undefined;
+
 /**
  * Init directive config in source order (v12's `config` key moved into the section). With a
  * chain of sections (`['swimlane', 'flowchart']`, D534), each `config` key goes to the first
- * section when that section has a default for it, else to the last (keys both sections have
- * resolve into both, `resolveAppearance`).
+ * section when that section's schema has it (`look` and any key without a default included),
+ * else to the last; keys both schemas have resolve into both (`resolveAppearance`).
  */
-export function directiveConfig(
-  pre: PreprocessResult,
-  section: string | readonly string[] | undefined
-): ConfigInput[] {
+export function directiveConfig(pre: PreprocessResult, section: Sections): ConfigInput[] {
   const out: ConfigInput[] = [];
   const [first, last] = [section ?? []].flat();
-  const own = (CORE_DEFAULTS as Plain)[first!];
+  const own = (KEY_TREE as Plain)[first!];
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {
@@ -262,7 +263,7 @@ export class SiteConfigs {
     snap: Snapshot,
     plugin: AnyPlugin,
     detected: Detected,
-    section: string | readonly string[] | undefined,
+    section: Sections,
     fragments: readonly ConfigFragment[]
   ): SiteConfig {
     if (fragments !== this.fragments) {

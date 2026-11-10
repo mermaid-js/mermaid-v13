@@ -288,8 +288,11 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const { config } = a.prepared;
   // Text output lays out with core's own `layered`, never a registered engine (D179).
   if (a.plugin.layoutKind === 'graph' && !text) {
-    const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
+    const name = layoutName(config, a.plugin);
+    const { need } = registry.layout(name, a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
+    const part = a.plugin.layoutParts?.get(name);
+    if (part && !registry.part(part)) missing.push({ kind: 'layout', name: part });
   }
   // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
   // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
@@ -400,12 +403,9 @@ export function createMermaid(
 
   // A type may read its own section on top of its plugin's (`swimlane` over `flowchart`,
   // D534): both are given, highest first.
-  function sectionOf(
-    detected: Detected,
-    plugin?: AnyPlugin
-  ): string | readonly string[] | undefined {
+  function sectionOf(detected: Detected, plugin?: AnyPlugin) {
     const own = plugin?.configSection ?? plugin?.id ?? detected.id;
-    return detected.section && own && detected.section !== own ? [detected.section, own] : own;
+    return detected.section ? [detected.section, own!] : own;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).
@@ -621,7 +621,7 @@ export function createMermaid(
       });
     }
     for (const w of packsUnsupported(iconPacks, hooks.claims())) warn(w);
-    let engine: LayoutEngine | undefined;
+    let engine: LayoutEngine | undefined, part: unknown;
     let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
       const asked = layoutName(config, plugin);
@@ -656,6 +656,7 @@ export function createMermaid(
         });
       }
       engine = found.engine;
+      part = registry.layoutPart(plugin, name);
     }
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
     const tables = { rules: registry.themeRules(), diagram: plugin.theme };
@@ -684,6 +685,7 @@ export function createMermaid(
       now,
       availableWidth: width,
       iconPacks: packs,
+      layoutPart: part,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
         // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
@@ -922,7 +924,8 @@ export function createMermaid(
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
           // The plugin's own default engine (D284), or the type's (D534), comes with it.
           const layout = registry.layoutOf(t) ?? p.layoutEngine?.default;
-          if (layout) return registry.loadLayout(layout);
+          const parts = [layout, layout && p.layoutParts?.get(layout)];
+          return Promise.all(parts.map((n) => n && registry.loadLayout(n)));
         })
       );
       if (ascii)

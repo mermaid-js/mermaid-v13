@@ -219,6 +219,16 @@ describe('swimlane-beta registration (D534, D535)', () => {
       const parsed = await m.parse(`%%{init: {"config": {"nodeSpacing": 99}}}%%\n${SWIMLANE}`);
       expect(parsed.config).toEqual({ flowchart: { nodeSpacing: 99 } });
     });
+
+    it('sends a swimlane schema key with no default (`look`) to swimlane, not flowchart', async () => {
+      const m = createMermaid();
+      const text = `%%{init: {"config": {"look": "neo", "nodeSpacing": 70}}}%%\n${SWIMLANE}`;
+      const r = await m.prepare(text);
+      expect(r.warnings.map((w) => [w.code, (w as { path?: string }).path])).toEqual([
+        ['LOOK_REMOVED', 'swimlane.look'],
+      ]);
+      expect(r.config.flowchart?.nodeSpacing).toBe(70);
+    });
   });
 
   it('draws rounded curves by default, and an author curve wins (v12 layoutCore.ts:47-51)', async () => {

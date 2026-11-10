@@ -102,7 +102,6 @@ describe('swimlane ascii corpus properties (#603, D534)', () => {
       problems((c) => {
         const { layout } = c;
         const found: string[] = [];
-        if (layout.lanes !== undefined) found.push(`lanes ${JSON.stringify(layout.lanes)}`);
         const groups = c.layout.flow.groups.map((g) => g.id).sort();
         const laid = [...layout.groups.keys()].sort();
         if (JSON.stringify(groups) !== JSON.stringify(laid))

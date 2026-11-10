@@ -23,9 +23,9 @@ async function draw(text: string) {
 
 /** `text` with the config line `from` (exactly one, front matter indentation) replaced. */
 function flip(text: string, from: string, to: string): string {
-  const line = new RegExp(`^ {4}${from}$`, 'm');
+  const line = new RegExp(`^ {4}${from}(\r?)$`, 'm');
   expect(text).toMatch(line);
-  return text.replace(line, `    ${to}`);
+  return text.replace(line, `    ${to}$1`);
 }
 
 const classesOf = (tree: SvgView, el: ReturnType<SvgView['find']>[number]): string[] =>
