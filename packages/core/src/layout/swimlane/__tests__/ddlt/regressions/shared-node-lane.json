@@ -1,5 +1,9 @@
 {
-  "tuning": {},
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
   "graph": {
     "direction": "LR",
     "nodes": [
