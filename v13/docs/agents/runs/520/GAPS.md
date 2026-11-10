@@ -82,6 +82,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice** (warnings): `ASCII_DROPPED` for `style` (styled boxes and `style`/`classDef`/`class` statements), `curve` (a `flowchart.curve` set to anything but `step`/`stepBefore`/`stepAfter`, pitfall 22), `emphasis` (markdown bold/italic in a line or label) and `accessibility`; `ASCII_ROUTE` as ER. `ASCII_TOO_WIDE` comes from the pipeline as for every type.
 - **Choice** (shared spec): `bench/src/ascii-size.spec.ts` hard-coded the six ascii types, so a seventh failed it; it now reads the types from each manifest's `ascii` key (shared-files.md rule 1), asserting the six are still among them. This is the only shared-code edit; the full `pnpm check` ran for it.
 - **Choice** (docs): a "Requirement diagrams" section in `ascii.md` (before "What gets dropped"); the type enumerations there are left alone (shared lists). `migration/requirement.md`'s text-output bullet now links it; MIGRATION.md regenerated.
+- Open (base, from #587): `pnpm lint:spell` fails on `feature/520_requirement` itself: `facetless` (T5's `testing/facetless.ts` in language-service and both adapters) is not in the cspell wordlist. Not fixed here (shared wordlist); the rest of `pnpm check` passes on this branch.
 - Note: R-ASCII-9 text path (core/ascii + requirement's entry) 8,837 B gz (er 9,066, flowchart 9,551, sequence 10,144); core 94,429 → 94,442 B (+13, the `loadAscii` registry row).
 
 ## Final merge of `mermaid-v13`
