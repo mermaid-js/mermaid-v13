@@ -1,5 +1,5 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
@@ -23,6 +23,11 @@ export interface RequirementRenderContext {
   readonly measurer: Measurer;
   /** One render's theme: its font is the one every label is measured in. */
   readonly theme: Theme;
+  /**
+   * The unit profile: unset (or px) for SVG; the cell profile for text output, which sizes the
+   * boxes and spacing in cells and puts the graph on the grid (#588).
+   */
+  readonly units?: UnitProfile;
   warn(warning: RequirementLayoutWarning): void;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;

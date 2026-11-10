@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,27 @@ import { bundle } from './build.ts';
 import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
+
+/**
+ * The diagram types whose manifest names an `ascii` entry, sorted: read from each package's
+ * own `package.json`, so a port's text output needs no line here (shared-files.md rule 1).
+ */
+function asciiTypes(): string[] {
+  const packages = fileURLToPath(new URL('../../', import.meta.url));
+  return readdirSync(packages)
+    .filter((dir) => dir.startsWith('diagram-'))
+    .flatMap((dir) => {
+      const path = join(packages, dir, 'package.json');
+      if (!existsSync(path)) return [];
+      const { mermaid } = JSON.parse(readFileSync(path, 'utf8')) as {
+        mermaid?: { plugin?: string; ascii?: unknown };
+      };
+      return mermaid?.plugin === 'diagram' && typeof mermaid.ascii === 'string'
+        ? [dir.slice('diagram-'.length)]
+        : [];
+    })
+    .sort();
+}
 
 /** The production bundle the bench serves as `v13` (R-PERF-1), built once for the file. */
 let prod: Bundle;
@@ -70,7 +91,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence', 'packet', 'info', 'kanban'])
+    for (const type of asciiTypes())
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -78,14 +99,11 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    expect(paths.map((p) => p.diagram)).toEqual([
-      'er',
-      'flowchart',
-      'info',
-      'kanban',
-      'packet',
-      'sequence',
-    ]);
+    // The six of 13.0's first wave at least, and every manifest that names an ascii entry.
+    expect(asciiTypes()).toEqual(
+      expect.arrayContaining(['er', 'flowchart', 'info', 'kanban', 'packet', 'sequence'])
+    );
+    expect(paths.map((p) => p.diagram)).toEqual(asciiTypes());
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
       expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);

@@ -50,8 +50,8 @@
   ignored-keys table); `look` as everywhere (D153).
 - **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
   layout keeps room for each marker so it no longer overlaps the next box.
-- **Text output** (`format: 'ascii'`) throws `UnsupportedFormatError` for now (D320; D438 is
-  the planned shape). The diagram is sketched under `look: handDrawn` (the box outline and the
+- **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
+  [ASCII output](../ascii.md#requirement-diagrams). The diagram is sketched under `look: handDrawn` (the box outline and the
   divider; markers are never sketched, D301).
 
 ## Requirement SVG structure

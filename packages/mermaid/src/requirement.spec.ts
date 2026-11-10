@@ -3,7 +3,7 @@ import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { LimitError } from '@mermaid-js/core/limits';
 import { assertInert } from '@mermaid-js/core/svg';
 import { requirement } from '@mermaid-js/diagram-requirement';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -152,13 +152,117 @@ describe('requirement diagrams through the public API (#587)', () => {
     }
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError (D320)', async () => {
+  it('supports ascii (#588, D320, D438): boxes with a divider, a labelled line, ► at the target', async () => {
     const m = createMermaid();
+    m.initialize({ deterministic: true });
     expect(m.supportsFormat('requirement', 'svg')).toBe(true);
-    expect(m.supportsFormat('requirement', 'ascii')).toBe(false);
-    const e = await rejection(m.render('r8', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('requirement');
+    expect(m.supportsFormat('requirement', 'ascii')).toBe(true);
+    const out = await m.render('r8', TEXT, { format: 'ascii' });
+    expect(out).toMatchObject({ format: 'ascii', diagramType: 'requirement', warnings: [] });
+    expect(out.text).toBe(
+      [
+        '  ┌──────────────────┐',
+        '  │   <<Element>>    │',
+        '  │   test_entity    │',
+        '  ├──────────────────┤',
+        '  │ Type: simulation │',
+        '  └─────────┬────────┘',
+        '            ┆',
+        '            ┆',
+        '            ┆',
+        '      <<satisfies>>',
+        '            ┆',
+        '            ┆',
+        '            ▼',
+        '┌──────────────────────┐',
+        '│   <<Requirement>>    │',
+        '│       test_req       │',
+        '├──────────────────────┤',
+        '│ ID: 1                │',
+        '│ Text: the test text. │',
+        '│ Risk: High           │',
+        '│ Verification: Test   │',
+        '└──────────────────────┘',
+      ].join('\n')
+    );
+  });
+
+  it('marks contains with ⊕ at the source, (+) in the ascii charset (D438)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const src = 'requirementDiagram\n  element a {\n  }\n  element b {\n  }\n  a - contains -> b\n';
+    const at = async (charset: 'unicode' | 'ascii') =>
+      (await m.render('r8c', src, { format: 'ascii', ascii: { charset } })).text.split('\n');
+    const unicode = await at('unicode');
+    expect(unicode.slice(3, 6)).toEqual(['└──────┬──────┘', '       ⊕', '       │']);
+    const ascii = await at('ascii');
+    expect(ascii.slice(3, 6)).toEqual(['+------+------+', '      (+)', '       |']);
+    expect(ascii.join('\n')).not.toMatch(/[^\x20-\x7e\n]/);
+  });
+
+  it('cuts a value to 40 columns with …, ~ in the ascii charset (D438)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const src = `requirementDiagram\n  requirement r {\n    text: ${'x'.repeat(50)}\n  }\n`;
+    const line = async (charset: 'unicode' | 'ascii') =>
+      (await m.render('r8v', src, { format: 'ascii', ascii: { charset } })).text
+        .split('\n')
+        .find((l) => l.includes('Text:'));
+    expect(await line('unicode')).toBe(`│ Text: ${'x'.repeat(39)}… │`);
+    expect(await line('ascii')).toBe(`| Text: ${'x'.repeat(39)}~ |`);
+  });
+
+  it('is never cropped: wider than ascii.maxWidth warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const at = async (maxWidth?: number) => {
+      const ascii = maxWidth === undefined ? {} : { maxWidth };
+      const out = await m.render('r8w', TEXT, { format: 'ascii', ascii });
+      return { columns: out.columns, codes: out.warnings.map((w) => w.code) };
+    };
+    const whole = await at();
+    expect(await at(whole.columns)).toEqual({ columns: whole.columns, codes: [] });
+    expect(await at(10)).toEqual({ columns: whole.columns, codes: ['ASCII_TOO_WIDE'] });
+  });
+
+  it('drops styles and accessibility text, one ASCII_DROPPED warning each (R-ASCII-5)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const src = [
+      'requirementDiagram',
+      '  accTitle: T',
+      '  element a {',
+      '  }',
+      '  classDef hot fill:#f00',
+      '  class a hot',
+      '  style a stroke:#00f',
+      '',
+    ].join('\n');
+    const out = await m.render('r8d', src, { format: 'ascii' });
+    expect(out.warnings.map((w) => [w.code, (w as { feature?: string }).feature])).toEqual([
+      ['ASCII_DROPPED', 'style'],
+      ['ASCII_DROPPED', 'accessibility'],
+    ]);
+  });
+
+  it('warns once that a flowchart.curve other than a step is drawn square (pitfall 22)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const codes = async (curve: 'basis' | 'step') => {
+      const config = { flowchart: { curve } };
+      const out = await m.render('r8k', TEXT, { format: 'ascii', config });
+      return out.warnings.map((w) => [w.code, (w as { feature?: string }).feature]);
+    };
+    expect(await codes('basis')).toEqual([['ASCII_DROPPED', 'curve']]);
+    expect(await codes('step')).toEqual([]);
+  });
+
+  it('renders text with renderSync once prepare has loaded the ascii entry', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    await m.prepare(TEXT, { format: 'ascii' });
+    const sync = m.renderSync(TEXT, { format: 'ascii' });
+    expect(sync.text).toBe((await m.render('r8s', TEXT, { format: 'ascii' })).text);
   });
 });
 
