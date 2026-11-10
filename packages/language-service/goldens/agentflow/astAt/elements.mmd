@@ -1,0 +1,14 @@
+agentflow-beta TB
+  flow outer["Outer"]
+    flow inner["Inner"]
+      |a["Alpha"] -|-> b
+    e|nd
+  |  c --x a
+  end
+  connector |hub@{ owner: ops }
+  global
+    |g
+  end
+  accDescr {
+    A d|escription
+  }

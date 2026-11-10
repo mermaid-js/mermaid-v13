@@ -1,0 +1,9 @@
+@ 3:3  |a --> b
+  prepare: 3:3-3:4 "a"; rename to "connectors":
+  refused: 'connectors' is reserved: agentflow keeps it for its connectors and draws no node for it.
+@ 4:13  connector |c
+  prepare: 4:13-4:14 "c"; rename to "connectors":
+  refused: 'connectors' is reserved: agentflow keeps it for its connectors and draws no node for it.
+@ 5:8  flow |f
+  prepare: 5:8-5:9 "f"; rename to "connectors":
+  refused: 'connectors' is reserved: agentflow keeps it for its connectors and draws no node for it.

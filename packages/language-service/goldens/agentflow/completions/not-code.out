@@ -1,0 +1,8 @@
+@ 2:8  a[Lab|el] --> b
+  none
+@ 3:15  accTitle: Ti|tle
+  none
+@ 4:9  %% com|ment
+  none
+@ 5:16  c@{ label: "x|" }
+  none

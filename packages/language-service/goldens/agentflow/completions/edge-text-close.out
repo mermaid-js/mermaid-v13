@@ -1,0 +1,6 @@
+@ 2:16  a -- retries |
+  --> operator (sequence: the target runs after the source) 2:16-2:16 "" -> "-->"
+  --x operator (failure: the target runs when the source fails) 2:16-2:16 "" -> "--x"
+@ 3:18  a -- retries --|
+  --> operator (sequence: the target runs after the source) 3:16-3:18 "--" -> "-->"
+  --x operator (failure: the target runs when the source fails) 3:16-3:18 "--" -> "--x"

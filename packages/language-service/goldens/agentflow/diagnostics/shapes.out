@@ -1,0 +1,4 @@
+2:4-2:24 "@{ shape: cylinder }" warning SHAPE_REMOVED: shape "cylinder" was removed in v0.8.1, using "roundedRect"
+3:4-3:21 "@{ shape: cloud }" warning SHAPE_UNSUPPORTED: shape "cloud" is not supported, using "roundedRect"
+4:4-4:14 "((circle))" warning SHAPE_REMOVED: shape "circle" was removed in v0.8.1, using "roundedRect"
+9:3-9:19 "flow B[\"Flow B\"]" warning CONTAINMENT_VIOLATION: Container "A" cannot contain "B" because "B" already contains it. The nesting that would close the loop is dropped.

@@ -101,6 +101,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
@@ -240,6 +243,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
@@ -438,6 +444,12 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/diagram-agentflow:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-block:
     devDependencies:
       '@mermaid-js/core':
@@ -611,6 +623,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -711,6 +726,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -967,6 +985,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:*
+        version: link:../diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
@@ -1149,6 +1170,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-agentflow':
+        specifier: workspace:^
+        version: link:../../packages/diagram-agentflow
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../../packages/diagram-block
