@@ -1,0 +1,40 @@
+@ 1:7  C4Cont|ext
+  1:1-1:10 "C4Context"
+  | **`C4Context`**
+  |
+  | `C4Context`, `C4Container`, `C4Component`, `C4Dynamic` or `C4Deployment`: the header, on the first line. Every header takes every element.
+@ 2:3  ti|tle The title
+  2:1-2:6 "title"
+  | **`title`**
+  |
+  | `title <text>`: the diagram title, the rest of the line up to a `#` or `;`, trimmed. A lone `title` is a title with no text (D452).
+@ 3:4  acc|Descr {
+  3:1-3:9 "accDescr"
+  | **`accDescr`**
+  |
+  | `title`, `accDescription`, `accTitle:`, `accDescr:` or `accDescr { … }`: the title and the accessible title and description; the last of each wins.
+@ 6:5  Pers|on(a, "A")
+  6:1-6:7 "Person"
+  | **`Person`**
+  |
+  | `Person(alias, "Label", "Description")` and the other elements: `alias, label, descr?, sprite?, tags?, link?`; containers and components take `techn?` after the label. A later statement with the same alias merges into the first.
+@ 7:11  System_Bou|ndary(b, "B") {
+  7:1-7:16 "System_Boundary"
+  | **`System_Boundary`**
+  |
+  | `Boundary(alias, "Label") { … }` and the other boundaries and deployment nodes: their statements go between `{` and `}`, the first an element, relation or style. The `{` ends the macro's line or starts the next.
+@ 8:12  Container|Db(db, "DB")
+  8:3-8:14 "ContainerDb"
+  | **`ContainerDb`**
+  |
+  | `Person(alias, "Label", "Description")` and the other elements: `alias, label, descr?, sprite?, tags?, link?`; containers and components take `techn?` after the label. A later statement with the same alias merges into the first.
+@ 10:5  Rel_|Back(a, db, "Uses")
+  10:1-10:9 "Rel_Back"
+  | **`Rel_Back`**
+  |
+  | `Rel(from, to, "Label")` and the other relations: `from, to, label, techn?, descr?, sprite?, tags?, link?`; `RelIndex` takes an index first, which is not drawn.
+@ 11:10  UpdateRel|Style(a, db, $textColor="red")
+  11:1-11:15 "UpdateRelStyle"
+  | **`UpdateRelStyle`**
+  |
+  | `UpdateElementStyle(alias, …)`, `UpdateRelStyle(from, to, …)` and `UpdateLayoutConfig(shapesInRow?, boundariesInRow?)`: style an element or relation already written, or set how many shapes and boundaries go in a row.

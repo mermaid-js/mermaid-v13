@@ -1,0 +1,10 @@
+C4Context
+title System Context diagram for Internet Banking System
+Person(customerA, "Banking Customer A", "A customer of the bank.")
+Enterprise_Boundary(b0, "BankBoundary0") {
+  System(SystemAA, "Internet Banking System", "Allows customers to view their accounts.")
+  SystemDb_Ext(SystemE, "Mainframe Banking System")
+}
+Rel(customerA, SystemAA, "Uses")
+BiRel(SystemAA, SystemE, "Uses", "XML/HTTPS")
+UpdateRelStyle(customerA, SystemAA, $textColor="blue", $offsetY="-10")

@@ -63,8 +63,9 @@ function alternatives(source: string): string[] {
 /**
  * A first-party detector pattern as a lookahead at the diagram's first line, where `detect`
  * stands once blanks are skipped: the detector tests the text from that line on, so a leading
- * `^\s*` is dropped. An alternative without one (c4's `C4Container`, which v12 finds anywhere)
- * may start anywhere on the line; Monarch sees no further.
+ * `^\s*` is dropped. An alternative without one may start anywhere on the line; Monarch sees no
+ * further. No first-party detector has one since D451 anchored c4's headers (v12 found
+ * `C4Container` anywhere in the text).
  */
 function headerOf(pattern: RegExp): string {
   const lead = '^\\s*';

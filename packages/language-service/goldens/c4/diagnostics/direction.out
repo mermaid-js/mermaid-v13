@@ -1,0 +1,2 @@
+2:1-2:13 "direction LR" error C4_DIRECTION: C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.
+3:1-3:47 "Container(c, \"Says direction TB in its label\")" error C4_DIRECTION: C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.

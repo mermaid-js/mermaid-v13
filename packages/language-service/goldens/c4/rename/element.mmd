@@ -1,0 +1,8 @@
+%% rename-to: client
+C4Context
+Person(|customerA, "Customer A")
+System(sys, "System")
+Rel(customerA, sys, "Uses")
+Rel(sys, customerA, "Answers")
+UpdateElementStyle(customerA, $bgColor="grey")
+UpdateRelStyle(customerA, sys, $textColor="red")

@@ -1,0 +1,10 @@
+@ 3:8  Person(|customerA, "Customer A")
+  prepare: 3:8-3:17 "customerA"; rename to "client":
+  %% rename-to: client
+  C4Context
+  Person(client, "Customer A")
+  System(sys, "System")
+  Rel(client, sys, "Uses")
+  Rel(sys, client, "Answers")
+  UpdateElementStyle(client, $bgColor="grey")
+  UpdateRelStyle(client, sys, $textColor="red")

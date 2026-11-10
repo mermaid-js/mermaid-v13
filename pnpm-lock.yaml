@@ -107,6 +107,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -249,6 +252,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
@@ -456,6 +462,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-c4:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-class:
     devDependencies:
       '@mermaid-js/core':
@@ -629,6 +641,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -732,6 +747,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -991,6 +1009,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:*
         version: link:../diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:*
+        version: link:../diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
@@ -1176,6 +1197,9 @@ importers:
       '@mermaid-js/diagram-block':
         specifier: workspace:^
         version: link:../../packages/diagram-block
+      '@mermaid-js/diagram-c4':
+        specifier: workspace:^
+        version: link:../../packages/diagram-c4
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../../packages/diagram-class

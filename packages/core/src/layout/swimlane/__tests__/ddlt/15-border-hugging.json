@@ -1,0 +1,204 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "24",
+        "width": 152,
+        "height": 120.60000000000001,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "25",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "26",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Supply_Chain_Head",
+        "span": 128
+      },
+      {
+        "id": "28",
+        "width": 152,
+        "height": 104.5,
+        "shape": "rect",
+        "parent": "General_Manager",
+        "span": 128
+      },
+      {
+        "id": "23",
+        "width": 152,
+        "height": 104.5,
+        "shape": "rect",
+        "parent": "BOD",
+        "span": 128
+      },
+      {
+        "id": "27",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Finance_Head",
+        "span": 128
+      }
+    ],
+    "groups": [
+      {
+        "id": "Requestor",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 64.582,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Supply_Chain_Associate",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 147.84,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Supply_Chain_Head",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 120.61,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "General_Manager",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 108.934,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "BOD",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 30.338,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Finance_Head",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 87.15,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_23_24_0",
+        "source": "23",
+        "target": "24",
+        "minLen": 1
+      },
+      {
+        "id": "L_24_25_0",
+        "source": "24",
+        "target": "25",
+        "minLen": 1
+      },
+      {
+        "id": "L_25_26_0",
+        "source": "25",
+        "target": "26",
+        "minLen": 1
+      },
+      {
+        "id": "L_26_27_0",
+        "source": "26",
+        "target": "27",
+        "minLen": 1
+      },
+      {
+        "id": "L_27_28_0",
+        "source": "27",
+        "target": "28",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}
