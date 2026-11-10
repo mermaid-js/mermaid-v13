@@ -30,6 +30,11 @@ export interface BlockMetrics {
   readonly maxSizings: number;
   /** A styled `font-size` at or past this is ignored (flowchart's bound on a label's font). */
   readonly maxFontSize: number;
+  /**
+   * The largest `block.padding` laid out (D445, D226): a larger one is cut to it with one
+   * `BLOCK_CONFIG_INVALID` warning, so a padding of 1e9 cannot draw a viewBox 1e9 wide.
+   */
+  readonly maxPadding: number;
 }
 
 export const BLOCK_METRICS: BlockMetrics = {
@@ -40,6 +45,7 @@ export const BLOCK_METRICS: BlockMetrics = {
   loopReach: 24,
   maxSizings: 16,
   maxFontSize: 1000,
+  maxPadding: 1000,
 };
 
 /** A cubic Bézier's point at one half: its ends weigh 1/8 each, its control points 3/8. */

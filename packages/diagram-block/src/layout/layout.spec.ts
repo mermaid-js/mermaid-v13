@@ -272,6 +272,9 @@ describe('bounds (D224) and degenerate input (D445)', () => {
       expect(lay('block\na b', { padding }).padding).toBe(8);
     }
     expect(lay('block\na b', { padding: 0 }).blocks[1]!.cell.x).toBe(44);
+    // Past 1,000 the padding is cut to 1,000 (D445); the warning is the plugin's (block.spec.ts).
+    expect(lay('block\na b', { padding: 1e9 }).padding).toBe(1000);
+    expect(lay('block\na b', { padding: 1000 }).padding).toBe(1000);
   });
 
   it('lay out the degenerate fixtures without NaN', () => {

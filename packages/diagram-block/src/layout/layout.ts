@@ -8,7 +8,8 @@
  * outlines (D441), and the bounds cover everything drawn plus v12's 5 px (D224). Lengths come
  * from the `block` config and the metrics table (pitfall 13).
  */
-import type { RenderContext } from '@mermaid-js/core';
+import type { RenderContext, Warning } from '@mermaid-js/core';
+import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
 import type { Block, BlockEdge, BlockModel } from '../model.ts';
@@ -26,9 +27,9 @@ import type {
   Rect,
 } from './types.ts';
 
-/** What the layout reads from the render context. */
+/** What the layout reads from the render context (`warn` for `BLOCK_CONFIG_INVALID`). */
 export type BlockLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
 
 /** A measured label before it is placed. */
 type Measured = Omit<PlacedLabel, 'x' | 'y'>;
@@ -44,13 +45,43 @@ interface Item extends BlockGridItem {
   readonly natural: Natural;
 }
 
+const shown = (value: unknown): string =>
+  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
+
 /**
- * `block.padding` from the config: a finite number of 0 or more, else the default (a negative
- * padding would overlap the cells it separates).
+ * `block.padding` from the config (D226, D445): a finite number of 0 or more, at most
+ * `BLOCK_METRICS.maxPadding`. Anything else lays out at the default (a negative padding would
+ * overlap the cells it separates), and a larger one at the maximum, each with one
+ * `BLOCK_CONFIG_INVALID` to `warn`.
  */
-export function blockPadding(config: BlockLayoutContext['config']): number {
+export function blockPadding(
+  config: BlockLayoutContext['config'],
+  warn?: (w: Warning) => void
+): number {
   const p = (config as { block?: { padding?: unknown } }).block?.padding;
-  return typeof p === 'number' && Number.isFinite(p) && p >= 0 ? p : BLOCK_METRICS.padding;
+  if (p === undefined) return BLOCK_METRICS.padding;
+  const invalid = (message: string): Warning => ({
+    code: BLOCK_CONFIG_INVALID,
+    message,
+    path: 'block.padding',
+  });
+  if (typeof p !== 'number' || !Number.isFinite(p) || p < 0) {
+    warn?.(
+      invalid(
+        `block.padding is ${shown(p)}, not a finite number of 0 or more; using ${BLOCK_METRICS.padding}`
+      )
+    );
+    return BLOCK_METRICS.padding;
+  }
+  if (p > BLOCK_METRICS.maxPadding) {
+    warn?.(
+      invalid(
+        `block.padding is ${p}, over ${BLOCK_METRICS.maxPadding}; using ${BLOCK_METRICS.maxPadding}`
+      )
+    );
+    return BLOCK_METRICS.maxPadding;
+  }
+  return p;
 }
 
 /** The base font and, per class list and own styles, the font a block's label is drawn in. */
@@ -112,7 +143,7 @@ export function blockGrid(
 
 /** The measured grid and what drawing it needs. */
 function prepare(model: BlockModel, ctx: BlockLayoutContext) {
-  const padding = blockPadding(ctx.config);
+  const padding = blockPadding(ctx.config, ctx.warn);
   const pads = padsOf(ctx.theme, padding);
   const font = fonts(model, ctx);
   const inline = ctx.inline ? { inline: ctx.inline } : {};

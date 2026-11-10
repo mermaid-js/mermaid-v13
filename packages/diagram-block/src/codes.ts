@@ -18,3 +18,8 @@ export const BLOCK_SIZE_INVALID = 'BLOCK_SIZE_INVALID';
  * one warning per parse.
  */
 export const BLOCK_TRUNCATED = 'BLOCK_TRUNCATED';
+/**
+ * `block.padding` that is not a finite number of 0 or more (laid out at the default 8), or over
+ * 1,000 (cut to 1,000), D226, D445: one warning per render. v12 laid it out as it was.
+ */
+export const BLOCK_CONFIG_INVALID = 'BLOCK_CONFIG_INVALID';

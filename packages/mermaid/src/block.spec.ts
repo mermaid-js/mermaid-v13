@@ -102,6 +102,43 @@ describe('block diagrams through the public API (#558)', () => {
     expect((await m.render('b4', body)).svg).toBe(wide.svg);
   });
 
+  it('lays an invalid block.padding out at 8, and one over 1,000 at 1,000, warning once (D226, D445)', async () => {
+    const m = createMermaid();
+    const body = 'block\n  columns 2\n  a b c\n  block:g\n    d\n  end\n';
+    const plain = await m.render('b4', body);
+    for (const padding of ['-3', '"x"', '"20"', 'null', 'true', '[]']) {
+      const r = await m.render('b4', `%%{init: {"block": {"padding": ${padding}}}}%%\n` + body);
+      if (padding === 'null') {
+        // A null value is dropped by the config reader: the default, and nothing to warn about.
+        expect(r.svg, padding).toBe(plain.svg);
+        continue;
+      }
+      expect(r.svg, padding).toBe(plain.svg);
+      const codes = r.warnings.map((w) => w.code).filter((c) => c === 'BLOCK_CONFIG_INVALID');
+      expect(codes, padding).toEqual(['BLOCK_CONFIG_INVALID']);
+      expect(r.warnings.find((w) => w.code === 'BLOCK_CONFIG_INVALID')?.path).toBe('block.padding');
+    }
+    m.initialize({ block: { padding: Number.POSITIVE_INFINITY } });
+    const infinite = await m.render('b4', body);
+    expect(infinite.svg).toBe(plain.svg);
+    expect(infinite.warnings.map((w) => w.code)).toContain('BLOCK_CONFIG_INVALID');
+    const capped = await createMermaid().render(
+      'b4',
+      '%%{init: {"block": {"padding": 1000}}}%%\n' + body
+    );
+    expect(capped.warnings).toEqual([]);
+    const huge = await createMermaid().render(
+      'b4',
+      '%%{init: {"block": {"padding": 1e9}}}%%\n' + body
+    );
+    expect(huge.warnings.map((w) => w.code)).toEqual(['BLOCK_CONFIG_INVALID']);
+    expect(huge.warnings[0]!.message).toBe('block.padding is 1000000000, over 1000; using 1000');
+    expect(huge.svg).toBe(capped.svg);
+    const [, , w, h] = box(huge.svg)!.split(' ').map(Number);
+    expect(w).toBeLessThan(20_000);
+    expect(h).toBeLessThan(20_000);
+  });
+
   it('honours block.useMaxWidth: false draws the diagram at its own size', async () => {
     const m = createMermaid();
     const body = 'block\n  a b\n';
@@ -149,6 +186,18 @@ describe('block diagrams through the public API (#558)', () => {
     );
     expect(block.labels(model)).toEqual(['A $$x$$', 'b', 'G', 'c', 'd', 'to b']);
   });
+
+  it('cuts a spacer over 100,000 cells with one BLOCK_TRUNCATED and draws it finite (D445)', async () => {
+    const r = await createMermaid().render('b9', 'block\n  columns 3\n  a space:100001 b\n');
+    expect(r.warnings.map((w) => w.code)).toEqual(['BLOCK_TRUNCATED']);
+    expect(r.svg).not.toMatch(/NaN|Infinity|undefined/);
+    const nums = box(r.svg)!.split(' ').map(Number);
+    expect(nums.every(Number.isFinite)).toBe(true);
+    // 100,000 cells in 3 columns: 33,334 rows, both blocks drawn.
+    expect(nums[3]).toBeGreaterThan(1_000_000);
+    expect(count(r.svg, /<g class="node [^"]*flowchart-label"/g)).toBe(2);
+    assertInert(r.svg);
+  }, 60_000);
 
   it('supports svg only until #559: ascii is refused with UnsupportedFormatError (R-ASCII-5)', async () => {
     const m = createMermaid();

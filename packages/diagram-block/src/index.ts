@@ -15,7 +15,13 @@ export {
 } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';
-export { BLOCK_SIZE_INVALID, BLOCK_STYLE_UNKNOWN, BLOCK_TRUNCATED } from './codes.ts';
+export {
+  BLOCK_CONFIG_INVALID,
+  BLOCK_SIZE_INVALID,
+  BLOCK_STYLE_UNKNOWN,
+  BLOCK_TRUNCATED,
+} from './codes.ts';
+export { blockLabels } from './labels.ts';
 export { block } from './plugin.ts';
 export { renderBlock, type BlockRenderContext } from './render/index.ts';
 export { blockPadding, layoutBlock, type BlockLayoutContext } from './layout/index.ts';

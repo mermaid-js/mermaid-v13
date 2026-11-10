@@ -6236,7 +6236,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "As v12: the grid gap and inset, and a leaf's label padding (a composite's label padding is 0). A value that is not a finite number of 0 or more lays out with the default 8."
+            "reason": "As v12: the grid gap and inset, and a leaf's label padding (a composite's label padding is 0). A value that is not a finite number of 0 or more lays out with the default 8, and one over 1,000 with 1,000, each with one `BLOCK_CONFIG_INVALID` warning (D226, D445)."
           }
         },
         "useMaxWidth": {

@@ -37,9 +37,12 @@
   grid for its label, so the label no longer sits under the children; an unlabelled composite
   is laid out as in v12.
 - **Config** (the `block` section): `padding` (default 8: the grid gap and inset, and a leaf's
-  label padding) and `useMaxWidth` are honoured, and a block-scoped `theme` wins over the top
-  level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block renderer never read
-  them (block lays out its own grid). `look` is removed (D153): ignored with one
+  label padding) and `useMaxWidth` are honoured. A `padding` that is not a finite number of 0 or
+  more (`-3`, `"x"`, `"20"`) lays out at 8, and one over 1,000 at 1,000, each with one
+  `BLOCK_CONFIG_INVALID` warning (D226, D445); v12 laid it out as it was (a string was
+  concatenated into the sizes, `1e9` drew a viewBox about 1e9 wide). A block-scoped `theme`
+  wins over the top level, as in 12.2.0. `useWidth` and `layout` are ignored, as v12's block
+  renderer never read them (block lays out its own grid). `look` is removed (D153): ignored with one
   `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
   paddings.
 - **Text output**: `format: 'ascii'` throws `UnsupportedFormatError` until block's ASCII

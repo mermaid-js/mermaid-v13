@@ -19,10 +19,10 @@ import { layout as v12Layout, type V12Block } from './v12-layout.ts';
  * the same measured leaves, on every corpus source v12's code can run (the e2e fixtures and the
  * v12 spec and syntax-page strings). `layoutBlock`'s cells are that grid.
  *
- * Left out, each asserted: the sources with a labelled composite, whose label band is D444's
- * (v12 put the label under the children), and any spacer cut to 100,000 cells (v12's copy would
- * hold them all; the linear grid lays the same 100,000-cell spacer out in
- * `layout-stress.spec.ts`).
+ * Left out, asserted: the sources with a labelled composite, whose label band is D444's (v12
+ * put the label under the children). The corpus has no spacer over the 100,000-cell cap (D445)
+ * since #558 moved that source to the cases (`block-cases/space-over-the-cap-is-cut`), which
+ * this spec does not read; `layout-stress.spec.ts` lays the same spacer out.
  *
  * v12 sizes a block at depth d 2^d times, and the repeats are not idempotent (a spanning child
  * grows by `padding · (span − 1) / span` each time). The grid replays v12's calls, a block with
@@ -81,13 +81,11 @@ function worst(a: number[][], b: number[][]): number {
 }
 
 const depth = (n: GridNode): number => 1 + Math.max(0, ...n.children.map(depth));
-const count = (n: GridNode): number => n.children.reduce((k, c) => k + count(c), 1);
 
 describe('block grid parity with v12', () => {
   it('gives every block v12 centre and size on every corpus source', async () => {
     const failures: string[] = [];
     const banded: string[] = [];
-    const tooLarge: string[] = [];
     let compared = 0;
     let nested = 0;
     for (const item of corpus) {
@@ -96,10 +94,6 @@ describe('block grid parity with v12', () => {
       // In the source's own theme: the redux family's shape padding is v12 neo's.
       const ctx = blockTestContext(await blockTestTheme(resolved), config);
       const { root, padding } = blockGrid(model, ctx);
-      if (count(root) > 5000) {
-        tooLarge.push(item.id);
-        continue;
-      }
       const hasBand = (n: GridNode): boolean => n.band > 0 || n.children.some(hasBand);
       if (hasBand(root)) {
         banded.push(item.id);
@@ -133,8 +127,6 @@ describe('block grid parity with v12', () => {
       ].map((f) => `e2e/baseline/${f}.mmd`),
       'e2e/nightly-check/composite-with-a-label.mmd',
     ]);
-    // The 100,000-cell spacer is a corpus case since #558 (too tall for an e2e screenshot).
-    expect(tooLarge).toEqual([]);
     expect(compared).toBeGreaterThan(90);
     // Composites inside composites are in the comparison too.
     expect(nested).toBeGreaterThan(5);
