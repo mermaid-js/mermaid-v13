@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseTreemap } from '@mermaid-js/diagram-treemap';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the treemap parser, value conversion, tree building and warnings
@@ -36,38 +37,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['a long name', (n) => `treemap\n"${'a'.repeat(n)}": 1`],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the treemap parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseTreemap(small); // warm up
-      parseTreemap(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseTreemap(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseTreemap(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseTreemap(small),
+          () => parseTreemap(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
