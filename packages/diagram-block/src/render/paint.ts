@@ -10,9 +10,9 @@
 import type { Warning } from '@mermaid-js/core';
 import { checkStyle, type CheckedStyle, type OutlinePaint, type Paint } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
-import type { BlockLayout } from '../layout/types.ts';
 import type { Block, BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from './arrowheads.ts';
+import { BLOCK_RENDER } from './metrics.ts';
 
 type Length = ReturnType<Theme['length']>;
 type Font = ReturnType<Theme['font']>;
@@ -39,20 +39,27 @@ export interface NodePaint {
   readonly ringGap: number;
 }
 
-/** The edges' paint, read only when the diagram has an edge. */
+/** The edges' paint (v12's `.flowchart-link`, `.marker` and `.edgeLabel` rules). */
 export interface EdgePaint {
   readonly line: Paint;
+  /** A normal edge's width (`strokeWidth`, v12's `edge-thickness-normal`). */
+  readonly width: Length;
+  /** A thick edge's (v12's `edge-thickness-thick`). */
+  readonly thickWidth: number;
+  /** `arrowheadColor`, as flowchart v13 (v12 block's markers took `lineColor`). */
   readonly arrow: Paint;
   readonly heads: Arrowheads;
-  /** `edgeLabelBackground`, read only when an edge has a label. */
-  readonly labelFill?: Paint;
+  /** `edgeLabelBackground`. */
+  readonly labelFill: Paint;
+  /** `nodeTextColor`: v12's `.label` and `span` rules reached edge labels too. */
+  readonly labelText: Paint;
 }
 
 export interface Paints {
   readonly font: Font;
   readonly fontSize: Length;
   readonly node: NodePaint;
-  readonly edge?: EdgePaint;
+  readonly edge: EdgePaint;
   /** A composite's palette slot from its `colorIndex`, or undefined with no palette. */
   readonly slotOf: (colorIndex: number | undefined) => Tint | undefined;
   /** A block's checked `classDef` and `style` declarations (R-SEC-3), one check per list. */
@@ -62,8 +69,9 @@ export interface Paints {
 /**
  * The composite palette (v12 `genColor`), copied from flowchart's `paletteSlots()`: on wherever
  * the theme carries a non-empty `borderColorArray` (never by theme name, D152), the slot the
- * composite's declaration order modulo the palette; the fill from `bkgColorArray` only when that
- * is not empty, so `redux-dark-color` colours borders only.
+ * composite's declaration order modulo the palette; the fill is `bkgColorArray`'s entry at the
+ * slot modulo its length (v12), only when that is not empty, so `redux-dark-color` colours
+ * borders only.
  */
 function paletteSlots(theme: Theme): Paints['slotOf'] {
   const border = theme.palette('borderColorArray');
@@ -74,7 +82,8 @@ function paletteSlots(theme: Theme): Paints['slotOf'] {
     return {
       id: `color-${slot}`,
       stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
+      // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
+      fill: bkg.length > 0 ? bkg[slot % bkg.length] : undefined,
     };
   };
 }
@@ -103,13 +112,8 @@ function styleCache(model: BlockModel, warn: (w: Warning) => void): Paints['styl
   };
 }
 
-/** Reads every paint `layout` needs from `theme`. */
-export function paints(
-  theme: Theme,
-  model: BlockModel,
-  layout: BlockLayout,
-  warn: (w: Warning) => void
-): Paints {
+/** Reads every paint a render uses from `theme`. */
+export function paints(theme: Theme, model: BlockModel, warn: (w: Warning) => void): Paints {
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   const node: NodePaint = {
@@ -120,22 +124,20 @@ export function paints(
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
     ringGap: theme.number('doubleCircleGap'),
   };
-  const edge: EdgePaint | undefined =
-    layout.edges.length > 0
-      ? {
-          line: theme.color('lineColor'),
-          arrow: theme.color('arrowheadColor'),
-          heads: arrowheads(theme),
-          ...(layout.edges.some((e) => e.label)
-            ? { labelFill: theme.color('edgeLabelBackground') }
-            : {}),
-        }
-      : undefined;
+  const edge: EdgePaint = {
+    line: theme.color('lineColor'),
+    width: node.strokeWidth,
+    thickWidth: BLOCK_RENDER.thickEdge,
+    arrow: theme.color('arrowheadColor'),
+    heads: arrowheads(theme),
+    labelFill: theme.color('edgeLabelBackground'),
+    labelText: node.text,
+  };
   return {
     font,
     fontSize,
     node,
-    ...(edge ? { edge } : {}),
+    edge,
     slotOf: paletteSlots(theme),
     styleOf: styleCache(model, warn),
   };

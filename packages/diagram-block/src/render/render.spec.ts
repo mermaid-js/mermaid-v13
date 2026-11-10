@@ -240,6 +240,24 @@ describe('the composite palette (v12 blockColorIndex stylesheet cases)', () => {
     expect([attr(rects[1]!, 'stroke'), attr(rects[1]!, 'fill')]).toEqual(['#0f0', '#ff0']);
   });
 
+  it("takes the fill at the border slot, as v12, when the arrays' lengths differ", async () => {
+    const four = `${src}  block:a4\n    v\n  end\n`;
+    const { svg } = await render(four, {
+      themeVariables: {
+        borderColorArray: ['#111111', '#222222', '#333333'],
+        bkgColorArray: ['#eeeeee', '#dddddd'],
+      },
+    });
+    const rects = tags(svg).filter((t) => t.includes('composite label-container'));
+    // Slots 0, 1, 2, 0 (four composites over three borders); fills at slot mod 2.
+    expect(rects.map((t) => [attr(t, 'stroke'), attr(t, 'fill')])).toEqual([
+      ['#111111', '#eeeeee'],
+      ['#222222', '#dddddd'],
+      ['#333333', '#eeeeee'],
+      ['#111111', '#eeeeee'],
+    ]);
+  });
+
   it('colours borders only where bkgColorArray is empty (redux-dark-color)', async () => {
     const { svg } = await render(src, { theme: 'redux-dark-color' });
     const rect = tags(svg).find((t) => t.includes('composite label-container'))!;

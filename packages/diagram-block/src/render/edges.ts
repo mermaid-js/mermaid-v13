@@ -40,18 +40,11 @@ function edgePath(w: SvgWriter, e: BlockEdgeLayout, trimStart: number, trimEnd: 
   if (e.kind === 'loop' && p.length === 4) {
     const u1 = unit(s, p[1]!);
     const u2 = unit(p[2]!, t);
-    const d = w
-      .path()
-      .moveTo(along(s, u1, trimStart).x, along(s, u1, trimStart).y)
-      .curveTo(
-        along(p[1]!, u1, trimStart).x,
-        along(p[1]!, u1, trimStart).y,
-        along(p[2]!, u2, -trimEnd).x,
-        along(p[2]!, u2, -trimEnd).y,
-        along(t, u2, -trimEnd).x,
-        along(t, u2, -trimEnd).y
-      )
-      .done();
+    const from = along(s, u1, trimStart);
+    const c1 = along(p[1]!, u1, trimStart);
+    const c2 = along(p[2]!, u2, -trimEnd);
+    const to = along(t, u2, -trimEnd);
+    const d = w.path().moveTo(from.x, from.y).curveTo(c1.x, c1.y, c2.x, c2.y, to.x, to.y).done();
     return {
       d,
       start: { x: s.x, y: s.y, dx: -u1.x, dy: -u1.y },
@@ -76,7 +69,7 @@ const edgeClass = (e: BlockEdgeLayout): string =>
 
 /** One edge: its path (`data-id`, `data-ast`), then its arrowheads. */
 export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
-  const edge = paint.edge!;
+  const { edge } = paint;
   const { heads } = edge;
   const path = edgePath(
     w,
@@ -92,9 +85,10 @@ export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
     d: path.d,
     fill: 'none',
     stroke: edge.line,
-    'stroke-width': e.thickness === 'thick' ? BLOCK_RENDER.thickEdge : paint.node.strokeWidth,
+    'stroke-width': e.thickness === 'thick' ? edge.thickWidth : edge.width,
     'stroke-dasharray': dotted ? BLOCK_RENDER.dottedEdge : undefined,
-    // v12 drew dotted edges with butt caps; round caps would close a 2 px dash's gaps.
+    // Flowchart v13's caps (one family): round, but butt on dotted edges, whose 2 px dashes
+    // round caps would close.
     'stroke-linecap': dotted ? 'butt' : 'round',
   });
   const head: Attrs = { fill: edge.arrow };
@@ -104,7 +98,7 @@ export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
 
 /** v12's edge label: a `g.edgeLabel` (`data-id` only), its background box, then its text. */
 export function drawEdgeLabel({ w, paint }: Scene, e: BlockEdgeLayout, label: PlacedLabel): void {
-  const edge = paint.edge!;
+  const { edge } = paint;
   const pad = BLOCK_RENDER.edgeLabelPad;
   w.open('g', { class: 'edgeLabel', 'data-id': e.id });
   w.leaf('rect', {
@@ -116,7 +110,7 @@ export function drawEdgeLabel({ w, paint }: Scene, e: BlockEdgeLayout, label: Pl
     fill: edge.labelFill,
   });
   w.label(label.text, label.x + label.width / 2, label.y + label.height / 2, {
-    fill: paint.node.text,
+    fill: edge.labelText,
   });
   w.close();
 }

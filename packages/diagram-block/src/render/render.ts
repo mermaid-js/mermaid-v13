@@ -29,8 +29,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import type { Block, BlockModel } from '../model.ts';
-import { drawBlockArrow, drawComposite, drawLeaf } from '../shapes/draw.ts';
-import type { LeafShape } from '../shapes/leaf.ts';
+import { drawShape } from '../shapes/draw.ts';
 import type { BlockRenderContext } from './context.ts';
 import { drawEdge, drawEdgeLabel } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
@@ -51,13 +50,13 @@ export function renderBlock(
   w: SvgWriter
 ): void {
   // Every theme variable is read before the root, so its style declares them.
-  const scene: Scene = { w, ctx, layout, paint: paints(ctx.theme, model, layout, ctx.warn) };
+  const scene: Scene = { w, ctx, layout, paint: paints(ctx.theme, model, ctx.warn) };
   const byId = modelBlocks(model);
   openRoot(scene);
   w.open('g', { class: 'block' });
   for (const b of layout.blocks) {
     const block = byId.get(b.id);
-    if (block && b.outline) drawNode(scene, b, block);
+    if (block) drawNode(scene, b, block);
   }
   for (const e of layout.edges) drawEdge(scene, e);
   for (const e of layout.edges) if (e.label) drawEdgeLabel(scene, e, e.label);
@@ -118,10 +117,12 @@ function nodeClass(block: Block): string {
   return out + (any ? '' : ' default') + ' flowchart-label';
 }
 
-/** One block: its `g.node`, its shape, then its label. */
+/** One block: its `g.node`, its shape, then its label. A space draws nothing. */
 function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): void {
+  const { shape, outline } = b;
+  if (shape === 'space' || !outline) return;
   const style = paint.styleOf(block);
-  const slot = b.shape === 'composite' ? paint.slotOf(b.colorIndex) : undefined;
+  const slot = shape === 'composite' ? paint.slotOf(b.colorIndex) : undefined;
   w.open('g', {
     class: nodeClass(block),
     'data-id': b.id,
@@ -130,22 +131,18 @@ function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): v
     transform: translate(b.centre.x, b.centre.y),
   });
   // The author's `style` and `classDef` win over the palette and the theme (spread after).
-  const shape: Attrs = {
+  const outlineAttrs: Attrs = {
     fill: slot?.fill ?? paint.node.fill,
     stroke: slot?.stroke ?? paint.node.stroke,
     'stroke-width': paint.node.strokeWidth,
     filter: paint.node.shadow,
     ...style.shape,
   };
-  const outline = b.outline!;
-  if (b.shape === 'composite') drawComposite(w, outline, shape);
-  else if (b.shape === 'block-arrow') drawBlockArrow(w, outline, shape);
-  else
-    drawLeaf(w, b.shape as LeafShape, outline, {
-      shape,
-      line: { stroke: shape.stroke, 'stroke-width': shape['stroke-width'] },
-      ringGap: paint.node.ringGap,
-    });
+  drawShape(w, shape, outline, {
+    outline: outlineAttrs,
+    line: { stroke: outlineAttrs.stroke, 'stroke-width': outlineAttrs['stroke-width'] },
+    ringGap: paint.node.ringGap,
+  });
   if (b.label) {
     // A filled shape's text takes the ink of its fill; the author's text style wins.
     const fill = style.shape.fill;

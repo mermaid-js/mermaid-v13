@@ -1,11 +1,13 @@
 /**
  * Block's leaf shapes (D446): a local copy of the flowchart shapes block draws
- * (`diagram-flowchart/src/render/shapes.ts`: sizes from the label box and the theme's padding,
- * and the outline), as class, state and mindmap keep theirs. Only the geometry half is here:
+ * (`diagram-flowchart/src/render/shapes.ts`, itself ported from Pele's src/svg/shapes.ts at
+ * 3a2f075, https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano: sizes from the label box
+ * and the theme's padding, and the outline), as class, state and mindmap keep theirs. Only the geometry half is here:
  * the size, whether the shape fills its grid cell, and the outline edges are clipped at. The
  * drawing is `draw.ts`'s.
  * Which block type is which shape is `../layout/kinds.ts`'s table.
  */
+// cspell:ignore kepano
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Outline, Point } from './outline.ts';
 
