@@ -4,7 +4,14 @@
 // joined to its state by an edge. Every length comes from the unit profile (ADR-13, D77): the
 // shared builder metrics, plus state's own shape table (D108, `metrics.ts`).
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
+import {
+  fromPx,
+  graphSpacing,
+  labelledEdge,
+  pxProfile,
+  sideways,
+  type UnitProfile,
+} from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
@@ -88,7 +95,6 @@ export interface StatePrepared {
   regions: ReadonlyMap<string, readonly string[]>;
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
@@ -410,20 +416,7 @@ function layoutGraph(
 ): LayoutGraph {
   const { units } = m;
   const b = units.builder;
-  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = length(key);
-    return px === undefined ? fallback : fromPx(units, px, axis, min);
-  };
-  const along = sideways(model.direction) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, model.direction, length);
   // Composites a reopening left holding plain children beside its regions (model `group()`).
   const mixed = new Set<string>();
   for (const x of [...nodes, ...groups.filter((g) => !g.region)])
@@ -445,22 +438,8 @@ function layoutGraph(
       if (d) group.direction = d;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    ...spacing,
     diagramPadding: b.diagramPadding,
     // On the grid routes are always square (D78).
     routing: units.grid === undefined ? 'curved' : 'stepped',

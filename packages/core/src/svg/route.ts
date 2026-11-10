@@ -2,7 +2,7 @@
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
 // (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
 // cspell:ignore kepano
-import type { RoutePoint } from '../layout/types.ts';
+import type { EdgeRouting, RoutePoint } from '../layout/types.ts';
 import type { PathData } from './types.ts';
 import type { SvgWriter } from './writer.ts';
 
@@ -29,6 +29,10 @@ export function curveKind(curve: string | undefined): CurveKind {
     ? curve
     : 'curved';
 }
+
+/** How the layout engine routes edges drawn with this curve: right angles but for two. */
+export const curveRouting = (kind: CurveKind): EdgeRouting =>
+  kind === 'linear' ? 'straight' : kind === 'curved' ? 'curved' : 'stepped';
 
 export interface EdgePath {
   d: PathData;

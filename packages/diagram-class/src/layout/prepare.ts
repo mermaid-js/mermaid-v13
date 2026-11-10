@@ -4,6 +4,7 @@
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
   fromPx,
+  graphSpacing,
   pxProfile,
   type Dir,
   type EndMarker,
@@ -13,7 +14,7 @@ import {
   type LayoutNode,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
-import { curveKind, type CurveKind } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,
@@ -155,14 +156,7 @@ export type ClassCurve = CurveKind;
 
 export const classCurve = curveKind;
 
-/** How the engine routes each curve (flowchart's table): the rest are right angles. */
-const ROUTING: Readonly<Partial<Record<ClassCurve, 'straight' | 'curved'>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
-
 const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 /** What the view builders share. */
 interface Build {
@@ -413,18 +407,9 @@ function layoutGraph(
     const v = configLength(key);
     return v === undefined ? fallback : fromPx(units, v, axis, min);
   };
-  const along = sideways(direction) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
   // `class.nodeSpacing` runs across the flow and `class.rankSpacing` along it (v12 fell back
   // to 50 for both).
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, direction, configLength);
   const headRoom = b.headRoom;
   // v12 padded namespaces with `class.padding ?? 16` on every side; the title adds its height.
   const groupPx = configLength('padding') ?? GROUP_PAD;
@@ -484,15 +469,14 @@ function layoutGraph(
         ...(marker(e.endMarker) ? { endMarker: marker(e.endMarker)! } : {}),
       })
     ),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    ...spacing,
     diagramPadding:
       units.grid === undefined
         ? fromConfig('diagramPadding', b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // `flowchart.curve`, as v12 drew class edges with it; `rounded` (right angles) by default.
     // On the grid routes are always square (D78).
-    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
+    routing: units.grid === undefined ? curveRouting(curve) : 'stepped',
     headRoom,
     metrics: units.engine,
   };

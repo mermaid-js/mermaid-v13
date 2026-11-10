@@ -5,7 +5,13 @@
 // note joins its target through an internal dotted edge. Every length comes from the unit
 // profile's sizing (`sizing.ts`: in px the metrics table, the config or core's px profile,
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
-import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
+import {
+  labelledEdge,
+  type LayoutEdge,
+  type LayoutGraph,
+  type LayoutGroup,
+  type LayoutNode,
+} from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
@@ -673,20 +679,12 @@ function layoutGraph(views: Views, config: UsecaseLayoutConfig, sizing: Sizing):
       else if (titled) group.title = { width: g.label.width, height: g.label.height };
       return group;
     }),
-    edges: views.edges.map((e): LayoutEdge => {
-      const edge: LayoutEdge = {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        minLen: e.kind === 'relation' ? e.relationship.minlen : 1,
-      };
-      if (e.kind === 'relation' && e.label && e.label.width > 0)
-        edge.label = {
-          width: e.label.width + builder.labelPatch.x,
-          height: e.label.height + builder.labelPatch.y,
-        };
-      return edge;
-    }),
+    edges: views.edges.map(
+      (e): LayoutEdge =>
+        e.kind === 'relation'
+          ? labelledEdge(builder, e.id, e.source, e.target, e.label, e.relationship.minlen)
+          : labelledEdge(builder, e.id, e.source, e.target, undefined)
+    ),
     spacing: { node: config.nodeSpacing, rank: config.rankSpacing, edge: builder.spacing.edge },
     diagramPadding: config.diagramPadding,
     headRoom: builder.headRoom,

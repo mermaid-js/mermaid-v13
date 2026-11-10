@@ -21,9 +21,22 @@ import type {
   LayoutNode,
   UnitProfile,
 } from '@mermaid-js/core/layout';
-import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import {
+  fromPx,
+  graphSpacing,
+  groupPadding,
+  labelledEdge,
+  pxProfile,
+  sideways,
+} from '@mermaid-js/core/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import { checkStyle, curveKind, type CheckedStyle, type CurveKind } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  curveKind,
+  curveRouting,
+  type CheckedStyle,
+  type CurveKind,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -126,14 +139,7 @@ export interface AgentflowPrepared {
   titleTopMargin: number;
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
-
-/** How the engine routes for the diagram's default curve (flowchart's table); else stepped. */
-const ROUTING: Readonly<Partial<Record<CurveKind, EdgeRouting>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
 
 /** v12 `destructEdgeType`: an open link has no head; a cross or point head at the end. */
 const arrowsOf = (type: string): [Arrowhead, Arrowhead] =>
@@ -467,16 +473,7 @@ function layoutGraph(
   const { units, agentflowLength } = m;
   const b = units.builder;
   // Node spacing runs across the flow and rank spacing along it (px config, v12 `|| 50`).
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromPx(units, agentflowLength('nodeSpacing'), node, b.minSpacing.node),
-    rank: fromPx(units, agentflowLength('rankSpacing'), rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const along = sideways(rootDir) ? 'x' : 'y';
-  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
-  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, rootDir, agentflowLength);
   // In cells a flow's title sits on its top border (`ascii/warnings.ts` names a margin set).
   const titleRoom = m.cells ? 0 : fromPx(units, titleMargin.top + titleMargin.bottom, 'y');
   const graph: LayoutGraph = {
@@ -493,12 +490,7 @@ function layoutGraph(
       const titled = g.label.height > 0;
       const group: LayoutGroup = {
         id: g.id,
-        padding: {
-          top: titled ? b.titlePad + titleRoom : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: groupPadding(b, titled, titleRoom),
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
@@ -509,28 +501,14 @@ function layoutGraph(
       if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: e.edge.length ?? 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label, e.edge.length ?? 1)),
+    ...spacing,
     // Text output trims the empty margin, so in cells a margin would only eat into
     // `ascii.maxWidth` (D84): the profile's own (0) applies.
     diagramPadding: m.cells
       ? b.diagramPadding
       : fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
-    routing: units.grid === undefined ? (ROUTING[m.curve] ?? 'stepped') : 'stepped',
+    routing: units.grid === undefined ? curveRouting(m.curve) : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };

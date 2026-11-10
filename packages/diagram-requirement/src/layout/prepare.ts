@@ -10,7 +10,13 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
-import { checkStyle, curveKind, type CheckedStyle, type CurveKind } from '@mermaid-js/core/svg';
+import {
+  checkStyle,
+  curveKind,
+  curveRouting,
+  type CheckedStyle,
+  type CurveKind,
+} from '@mermaid-js/core/svg';
 import {
   fontSizePx,
   layoutLabel,
@@ -118,12 +124,6 @@ export interface RequirementPrepared {
 }
 
 export const requirementCurve = curveKind;
-
-/** How the engine routes each curve (flowchart's table): the rest are right angles. */
-const ROUTING: Readonly<Partial<Record<RequirementCurve, EdgeRouting>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
 
 /** The least bold font weight. */
 const BOLD = 600;
@@ -336,7 +336,7 @@ function pxGraph(
     groups: [],
     spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
     diagramPadding: M.viewBoxPadding,
-    routing: ROUTING[curve] ?? 'stepped',
+    routing: curveRouting(curve),
     headRoom: room.length,
     metrics: requirementMetrics(room),
   };

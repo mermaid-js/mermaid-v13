@@ -4,7 +4,14 @@
 // before layout (DESIGN §6.1).
 // cspell:ignore kepano
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import {
+  fromPx,
+  graphSpacing,
+  groupPadding,
+  labelledEdge,
+  pxProfile,
+  sideways,
+} from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
@@ -16,7 +23,7 @@ import {
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, type CurveKind } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -82,17 +89,11 @@ export interface Prepared {
 // hexagon is tall.
 const MIN_SLANT = 1;
 
-const ROUTING: Readonly<Partial<Record<CurveKind, 'straight' | 'curved'>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
-
 function vertexShape(v: FlowVertex): string {
   if (v.img) return 'img';
   return v.icon ? 'icon' : canonicalShape(v.type);
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 function arrows(type: string, stroke: string): [string, string] {
   if (stroke === 'invisible' || type === 'arrow_open') return ['none', 'none'];
@@ -373,17 +374,8 @@ function layoutGraph(
     const px = length(key);
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
-  const along = sideways(rootDir) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  // Node spacing runs across the flow and rank spacing along it.
+  const spacing = graphSpacing(units, rootDir, length);
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
   const curve = curveKind(model.defaultInterpolate ?? flow.curve);
@@ -402,12 +394,7 @@ function layoutGraph(
       const titled = g.label.height > 0;
       const group: LayoutGroup = {
         id: g.id,
-        padding: {
-          top: titled ? b.titlePad : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: groupPadding(b, titled),
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
@@ -418,22 +405,8 @@ function layoutGraph(
       if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: e.edge.length ?? 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label, e.edge.length ?? 1)),
+    ...spacing,
     // Text output trims the empty margin, so in cells a margin would only eat into
     // `availableWidth` (`ascii.maxWidth`, D84): the profile's own (0) applies.
     diagramPadding:
@@ -441,7 +414,7 @@ function layoutGraph(
         ? fromConfig('diagramPadding', b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // On the grid routes are always square (D78): curves have no text form (D82).
-    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
+    routing: units.grid === undefined ? curveRouting(curve) : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };

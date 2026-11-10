@@ -9,7 +9,13 @@ import type {
   LayoutNode,
   UnitProfile,
 } from '@mermaid-js/core/layout';
-import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import {
+  fromPx,
+  graphSpacing,
+  groupPadding,
+  labelledEdge,
+  pxProfile,
+} from '@mermaid-js/core/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
@@ -108,7 +114,6 @@ export interface ErPrepared {
   pad: { readonly x: number; readonly y: number };
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
@@ -462,23 +467,12 @@ function layoutGraph(
   // gap is at least that (6), over the cell profile's own 4. In px the marks size the
   // engine's self-loop and port pitch instead (`erMetrics`).
   const endRoom = units.grid === undefined ? 0 : ENDS_GAP;
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(
-      sizeKey(units, length, 'nodeSpacing'),
-      b.spacing.node,
-      node,
-      b.minSpacing.node
-    ),
-    rank: Math.max(
-      fromConfig(sizeKey(units, length, 'rankSpacing'), b.spacing.rank, rank, b.minSpacing.rank),
-      endRoom
-    ),
-    edge: b.spacing.edge,
-  });
-  const along = sideways(model.direction) ? 'x' : 'y';
-  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(
+    units,
+    model.direction,
+    (key) => sizeKey(units, length, key),
+    endRoom
+  );
   const graph: LayoutGraph = {
     direction: model.direction,
     nodes: entities.map((e): LayoutNode => {
@@ -490,34 +484,15 @@ function layoutGraph(
       const titled = g.label.height > 0;
       const group: LayoutGroup = {
         id: g.id,
-        padding: {
-          top: titled ? b.titlePad : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: groupPadding(b, titled),
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       if (g.subgraph.direction) group.direction = g.subgraph.direction;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    ...spacing,
     // D116: er.diagramPadding (px) is the margin around the drawing. Text output trims the
     // empty margin, so in cells the profile's own applies (as the flowchart).
     diagramPadding:
