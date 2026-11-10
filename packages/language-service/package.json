@@ -37,6 +37,7 @@
     "@mermaid-js/diagram-gantt": "workspace:*",
     "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-info": "workspace:*",
+    "@mermaid-js/diagram-ishikawa": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
     "@mermaid-js/diagram-kanban": "workspace:*",
     "@mermaid-js/diagram-mindmap": "workspace:*",
@@ -49,6 +50,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
+    "@mermaid-js/diagram-treeview": "workspace:*",
     "@mermaid-js/diagram-venn": "workspace:*",
     "@mermaid-js/diagram-wardley": "workspace:*",
     "@mermaid-js/diagram-xychart": "workspace:*"
@@ -76,6 +78,9 @@
       "optional": true
     },
     "@mermaid-js/diagram-info": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-ishikawa": {
       "optional": true
     },
     "@mermaid-js/diagram-journey": {
@@ -114,6 +119,9 @@
     "@mermaid-js/diagram-treemap": {
       "optional": true
     },
+    "@mermaid-js/diagram-treeview": {
+      "optional": true
+    },
     "@mermaid-js/diagram-venn": {
       "optional": true
     },
@@ -134,6 +142,7 @@
     "@mermaid-js/diagram-gantt": "workspace:*",
     "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-info": "workspace:*",
+    "@mermaid-js/diagram-ishikawa": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
     "@mermaid-js/diagram-kanban": "workspace:*",
     "@mermaid-js/diagram-mindmap": "workspace:*",
@@ -146,6 +155,7 @@
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/diagram-timeline": "workspace:*",
     "@mermaid-js/diagram-treemap": "workspace:*",
+    "@mermaid-js/diagram-treeview": "workspace:*",
     "@mermaid-js/diagram-venn": "workspace:*",
     "@mermaid-js/diagram-wardley": "workspace:*",
     "@mermaid-js/diagram-xychart": "workspace:*"

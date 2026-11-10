@@ -150,7 +150,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     loadAscii: () => import('@mermaid-js/diagram-block/ascii').then((m) => m.ascii),
   },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
-  { type: 'treeView', pattern: /^\s*treeView-beta/ },
+  {
+    type: 'treeView',
+    pattern: /^\s*treeView-beta/,
+    id: 'treeView',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-treeview').then((m) => m.treeView),
+    loadAscii: () => import('@mermaid-js/diagram-treeview/ascii').then((m) => m.ascii),
+  },
   {
     type: 'radar',
     pattern: /^\s*radar-beta/,
@@ -158,7 +165,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-radar').then((m) => m.radar),
   },
-  { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
+  {
+    type: 'ishikawa',
+    pattern: /^\s*ishikawa(-beta)?\b/i,
+    id: 'ishikawa',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-ishikawa').then((m) => m.ishikawa),
+    loadAscii: () => import('@mermaid-js/diagram-ishikawa/ascii').then((m) => m.ascii),
+  },
   {
     type: 'treemap',
     pattern: /^\s*treemap/,

@@ -1,0 +1,30 @@
+@ 2:8  Blurry |Photo
+  2:1-2:13 "Blurry Photo"
+  | **effect** `Blurry Photo`
+  |
+  | The head of the fish · 3 causes, 6 with their sub-causes
+@ 3:3  |Process
+  3:3-3:10 "Process"
+  | **cause** `Process`
+  |
+  | Depth 1, a top-level cause, above the spine · 1 sub-cause
+@ 4:12  Out of |focus
+  4:5-4:17 "Out of focus"
+  | **cause** `Out of focus`
+  |
+  | Depth 2, under `Process`, above the spine · no sub-causes
+@ 5:5  Us|er
+  5:3-5:7 "User"
+  | **cause** `User`
+  |
+  | Depth 1, a top-level cause, below the spine · 2 sub-causes
+@ 6:5  |Shaky hands
+  6:5-6:16 "Shaky hands"
+  | **cause** `Shaky hands`
+  |
+  | Depth 2, under `User`, below the spine · no sub-causes
+@ 8:7  Gear|
+  8:3-8:7 "Gear"
+  | **cause** `Gear`
+  |
+  | Depth 1, a top-level cause, above the spine · no sub-causes

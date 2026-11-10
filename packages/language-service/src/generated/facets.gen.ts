@@ -161,7 +161,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     load: () => import('@mermaid-js/diagram-block/language').then((m) => m.language),
   },
   { type: 'eventmodeling', id: 'eventmodeling', pattern: /^\s*eventmodeling/, detector: (text) => /^\s*eventmodeling/.test(text) },
-  { type: 'treeView', id: 'treeView', pattern: /^\s*treeView-beta/, detector: (text) => /^\s*treeView-beta/.test(text) },
+  {
+    type: 'treeView',
+    id: 'treeView',
+    section: 'treeView',
+    pattern: /^\s*treeView-beta/,
+    detector: (text) => /^\s*treeView-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-treeview/language').then((m) => m.language),
+  },
   {
     type: 'radar',
     id: 'radar',
@@ -170,7 +177,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*radar-beta/.test(text),
     load: () => import('@mermaid-js/diagram-radar/language').then((m) => m.language),
   },
-  { type: 'ishikawa', id: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i, detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text) },
+  {
+    type: 'ishikawa',
+    id: 'ishikawa',
+    section: 'ishikawa',
+    pattern: /^\s*ishikawa(-beta)?\b/i,
+    detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text),
+    load: () => import('@mermaid-js/diagram-ishikawa/language').then((m) => m.language),
+  },
   {
     type: 'treemap',
     id: 'treemap',
@@ -214,4 +228,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'radar' | 'treemap' | 'venn' | 'wardley' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin';

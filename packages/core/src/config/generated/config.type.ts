@@ -1596,11 +1596,24 @@ layoutAlgorithm?: string
  */
 export interface IshikawaDiagramConfig extends BaseDiagramConfig {
 /**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
  * The amount of padding around the diagram as a whole so that embedded
  * diagrams have margins, expressed in pixels.
  * 
  */
 diagramPadding?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
 useMaxWidth?: boolean
 }
 /**
@@ -2287,6 +2300,14 @@ rowHeight?: number
  * via the `definition` "TreeViewDiagramConfig".
  */
 export interface TreeViewDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Horizontal distance between rows differing by one level
  */

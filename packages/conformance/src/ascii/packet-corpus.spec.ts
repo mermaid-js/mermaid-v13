@@ -87,8 +87,18 @@ function problems(check: (c: Case, charset: Charset) => string[]): Record<string
   return out;
 }
 
-/** A line as cells: a wide grapheme takes its cell and an empty one after it. */
+/**
+ * A line as cells: a wide grapheme takes its cell and an empty one after it. Several properties
+ * read the same lines, so each line is split once (callers only read the array).
+ */
+const cellsOf = new Map<string, string[]>();
 function cells(line: string): string[] {
+  let out = cellsOf.get(line);
+  if (out === undefined) cellsOf.set(line, (out = splitCells(line)));
+  return out;
+}
+
+function splitCells(line: string): string[] {
   const out: string[] = [];
   for (const g of graphemes(line)) {
     if (g.width === 0) out[out.length - 1] += g.text;

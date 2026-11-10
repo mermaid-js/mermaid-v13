@@ -20,6 +20,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-info` | The info diagram plugin (SVG and text; `info`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-ishikawa` | The Ishikawa (fishbone) diagram plugin (SVG and text; `ishikawa`, `ishikawa-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-kanban` | The kanban board plugin (SVG; `kanban`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-mindmap` | The mindmap plugin (SVG; `mindmap`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-packet` | The packet diagram plugin (SVG, and text output from `/ascii`; `packet`, `packet-beta`). | with `mermaid/slim` |
@@ -30,6 +31,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-timeline` | The timeline plugin (SVG; `timeline`, `LR` and `TD`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-treemap` | The treemap plugin (SVG; `treemap`, `treemap-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-treeview` | The tree view plugin (SVG, and text output from `/ascii`; `treeView-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-venn` | The Venn diagram plugin (SVG; `venn-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |

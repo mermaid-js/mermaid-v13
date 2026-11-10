@@ -33,9 +33,9 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | `@mermaid-js/diagram-block` | yes | yes |
 | `eventmodeling` | not ported | no | no |
-| `treeView` | not ported | no | no |
+| `treeView` | `@mermaid-js/diagram-treeview` | yes | yes |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
-| `ishikawa` | not ported | no | no |
+| `ishikawa` | `@mermaid-js/diagram-ishikawa` | yes | yes |
 | `treemap` | `@mermaid-js/diagram-treemap` | yes | no |
 | `railroad` | not ported | no | no |
 | `railroadEbnf` | not ported | no | no |

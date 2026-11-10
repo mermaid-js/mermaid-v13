@@ -8,8 +8,8 @@ Only diagram types that declare `ascii` in their manifest support it. In 13.0 th
 flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
 relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
 sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)), the packet diagram (`packet`,
-[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the block
-diagram (`block`, [below](#block-diagrams)) and `info`. See
+[below](#packet-diagrams)), the kanban board (`kanban`, [below](#kanban-boards)), the Ishikawa diagram (`ishikawa`,
+[below](#ishikawa-diagrams)), the block diagram (`block`, [below](#block-diagrams)) and `info`. See
 [the format matrix](format-matrix.md) for every type.
 
 ```
@@ -118,7 +118,7 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,
-the packet diagram, the kanban board and the block diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+the packet diagram, the kanban board, the Ishikawa diagram and the block diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -442,6 +442,55 @@ packet
 - Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels and title)
   and `accessibility` (`accTitle`, `accDescr`).
 
+## Ishikawa diagrams
+
+The Ishikawa diagram's text entry (`@mermaid-js/diagram-ishikawa/ascii`, #586, D498) draws an
+outline, not the fishbone: the effect in a box, and the causes below it as a `tree(1)`-style tree
+hanging from the box, in source order, with no left or right sides.
+
+```
+┌───────────────┐
+│ Server Outage │
+└─┬─────────────┘
+  ├── Hardware
+  │   ├── Disk
+  │   │   ├── Bad sectors
+  │   │   └── Full capacity
+  │   └── Memory
+  │       └── Leak detected
+  └── Software
+      └── Bug
+          └── Race condition
+```
+
+from
+
+```mermaid
+ishikawa-beta
+  Server Outage
+  Hardware
+      Disk
+          Bad sectors
+          Full capacity
+      Memory
+          Leak detected
+  Software
+      Bug
+          Race condition
+```
+
+- The connectors are `tree(1)`'s: `├── `, `└── ` for the last cause under its parent, and `│   `
+  for the trunk past it; in the `ascii` charset `|-- `, `` `-- `` and `|   `.
+- Every label is one line of plain text, as the SVG's `<title>`: entities decode, markup goes
+  and a `<br>` reads as a space. Labels never wrap and the outline is never folded: wider than
+  `ascii.maxWidth`, it is drawn whole, with `ASCII_TOO_WIDE`.
+- The front-matter `title` is centred on the first line, on one line. An empty body (no effect)
+  is the title line alone, or no text without a title, as the SVG draws nothing, with the same
+  `ISHIKAWA_EMPTY` warning.
+- The pixel geometry (`ishikawa.diagramPadding`) is ignored, with no warning.
+- Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels, drawn
+  plain), `math` (`$$…$$`, the TeX shown as written) and `icon` (`fa:fa-…`, shown as written).
+
 ## What gets dropped
 
 Text output is plain: no colour. Features with no text form are left out, with **one**
@@ -470,7 +519,7 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's, the
-packet diagram's, the kanban board's, the block diagram's or info's)
+packet diagram's, the kanban board's, the Ishikawa diagram's, the block diagram's or info's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

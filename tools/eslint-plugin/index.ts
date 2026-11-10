@@ -55,11 +55,18 @@ const isLanguageCode = (src: string, filename: string) => {
     first?.startsWith('language.') === true
   );
 };
-/** Modules that pull in rendering: `render/`, the plugin and main entry, ASCII code. */
+/**
+ * Modules that pull in rendering: the renderer and the layout (what it draws from, which the
+ * language bundle specs keep out of `./language` too), as a folder (`render/`, `layout/`) or a
+ * file (`render.ts`, `layout.ts`, as info's), the plugin and main entry, ASCII code.
+ */
 const isRenderSide = (src: string, target: string) => {
   const [first] = relative(src, target).split(sep);
   return (
     first === 'render' ||
+    first?.startsWith('render.') === true ||
+    first === 'layout' ||
+    first?.startsWith('layout.') === true ||
     first === 'ascii' ||
     first?.startsWith('ascii.') === true ||
     /^(plugin|index)(\.[cm]?[jt]s)?$/.test(first ?? '')

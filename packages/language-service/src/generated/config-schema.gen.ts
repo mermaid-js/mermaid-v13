@@ -1212,7 +1212,8 @@ export const configSchema: ConfigSchema = {
     "ishikawa": {
       "$ref": "#/$defs/IshikawaDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "treemap": {
@@ -3068,21 +3069,42 @@ export const configSchema: ConfigSchema = {
       ],
       "description": "The object containing configurations specific for ishikawa diagrams",
       "type": "object",
+      "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for ishikawa diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the ishikawa renderer never did."
+          }
+        },
         "diagramPadding": {
           "description": "The amount of padding around the diagram as a whole so that embedded\ndiagrams have margins, expressed in pixels.\n",
           "type": "integer",
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A number of 0 or more, or a numeric string as its number; anything else lays out with the default 20, with no warning."
           }
         },
         "useMaxWidth": {
-          "type": "boolean",
-          "default": false,
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from `false` to `true`, the value v12's renderer drew with (its runtime config gave `true`). True draws `width=\"100%\"` and a `max-width`; false draws the diagram's own `width` and `height`."
           }
         }
       }
@@ -6314,13 +6336,30 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the treeView renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "rowIndent": {
           "description": "Horizontal distance between rows differing by one level",
           "type": "number",
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text: `rowIndent: \"20\"` indented by 205 px)."
           }
         },
         "paddingX": {
@@ -6329,7 +6368,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 joined it as text where it added it: `paddingX: \"5\"` indented each level by `10 + \"5\"`, 105 px, and drew a label whose row starts at x 105 at x 1055)."
           }
         },
         "paddingY": {
@@ -6338,7 +6379,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number (v12 doubled it as a number for the row height, but joined it as text in an icon's position, so every icon below the first row was drawn far below its label)."
           }
         },
         "lineThickness": {
@@ -6347,7 +6390,9 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A negative value, or one that is not a number, falls back to the default with one `TREEVIEW_CONFIG_INVALID` warning (D226); a numeric string counts as its number, as v12 drew it (it only halved the value or wrote it as the stroke width)."
           }
         },
         "showIcons": {
@@ -6355,7 +6400,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, any truthy value shows the icons."
           }
         },
         "defaultIconPack": {
@@ -6363,7 +6410,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The pack comes from an icons extension (D290); there is no `mermaid-treeview` pack (D485). A value that is not a string falls back to `''` with one `TREEVIEW_CONFIG_INVALID` warning (D226)."
           }
         },
         "filenameIcons": {
@@ -6374,7 +6423,9 @@ export const configSchema: ConfigSchema = {
           },
           "default": {},
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not a map falls back to `{}` with one `TREEVIEW_CONFIG_INVALID` warning (D226); an entry whose icon is not a string is skipped."
           }
         },
         "extensionIcons": {
@@ -6385,7 +6436,9 @@ export const configSchema: ConfigSchema = {
           },
           "default": {},
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A value that is not a map falls back to `{}` with one `TREEVIEW_CONFIG_INVALID` warning (D226); an entry whose icon is not a string is skipped."
           }
         }
       }
