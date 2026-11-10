@@ -21,15 +21,13 @@ import {
 import type { C4Argument } from './ast.ts';
 import {
   BOUNDARY,
-  ELEMENT_FIELDS,
   ELEMENT_STYLE,
+  nameRoute,
   NO_NAMES,
   NODE,
   OFFSETS,
   REL,
   REL_STYLE,
-  RELATION_FIELDS,
-  STRUCTURAL,
 } from './slots.ts';
 import type { SlotTable } from './slots.ts';
 
@@ -193,9 +191,11 @@ export class C4Builder {
         s.at
       );
     }
-    if (this.structure(s)) return;
-    const known = item.type === 'relation' ? RELATION_FIELDS : ELEMENT_FIELDS;
-    if (known.has(name)) {
+    const route = nameRoute(item.type, name, s.last);
+    // v12 set a name again after the arguments: no effect.
+    if (route === 'again') return;
+    if (route === 'structure') return this.structure(s);
+    if (route === 'field') {
       (item.bag as unknown as Record<string, string>)[name] = value;
       return;
     }
@@ -210,14 +210,11 @@ export class C4Builder {
   }
 
   /**
-   * A name for the structure, as v12 took it (`bag[key] = value`); whether `s.name` is one. Where
-   * v12's value would break the model, the structure is kept with a warning.
+   * A name for the structure, as v12 took it (`bag[key] = value`). Where v12's value would break
+   * the model, the structure is kept with a warning.
    */
-  private structure(s: Setting): boolean {
+  private structure(s: Setting): void {
     const { item, name, value } = s;
-    if (!STRUCTURAL[item.type].has(name)) return false;
-    // v12 set it again after the arguments: no effect.
-    if (s.last.has(name)) return true;
     if (name === 'wrap') {
       this.kept(s, 'changes nothing', 'wrapping follows the `c4.wrap` config');
     } else if (item.type === 'relation') {
@@ -252,7 +249,6 @@ export class C4Builder {
         'changes nothing',
         `\`${value}\` is not a deployment node kind (\`node\`, \`nodeL\`, \`nodeR\`)`
       );
-    return true;
   }
 
   /** The structure is kept where v12 broke it: one warning, saying what happens instead. */
@@ -305,7 +301,7 @@ export class C4Builder {
   /** A named argument: on a relation an offset is a number; any other name sets its field. */
   private named(item: Item, arg: Arg, last: ReadonlySet<string>): void {
     const name = arg.name ?? '';
-    if (item.type === 'relation' && OFFSETS.has(name)) {
+    if (nameRoute(item.type, name, last) === 'offset' && item.type === 'relation') {
       this.offset(item.bag, name, arg.value, arg.range);
     } else this.set({ item, name, value: arg.value, at: arg.range, arg, last });
   }

@@ -1,8 +1,12 @@
 /**
- * Each macro's argument slots, in order, and the names a `$name="…"` argument sets: the one
- * table the builder reads arguments by (`build.ts`) and the language facet completes and hovers
- * from (`facet/`). The slots are v12's (`c4Db.ts`); D452 and D457 changed what some do, not
- * where they are.
+ * Each macro's argument slots, in order, and where a `$name="…"` argument goes. `SLOT_TABLES`
+ * maps every macro keyword to its table: the parser takes an element macro's table from it
+ * (`MACROS`), and the language facet completes and hovers from it (`facet/`). The builder reads
+ * each statement's arguments by the same tables (`build.ts` `rest()`): an element's as the
+ * parser hands it, the others by name (`BOUNDARY`, `NODE`, `REL`, `ELEMENT_STYLE`, `REL_STYLE`);
+ * a typed boundary is read as `BOUNDARY` once its type is spliced in. `nameRoute` routes every
+ * `$name` for the builder and for hover. The slots are v12's (`c4Db.ts`); D452 and D457 changed
+ * what some do, not where they are.
  */
 import { T } from './tokens.ts';
 
@@ -76,6 +80,24 @@ export const STRUCTURAL: Readonly<
   boundary: new Set(['alias', 'parentBoundary', 'nodeType', 'wrap']),
   relation: new Set(['type', 'from', 'to', 'wrap']),
 };
+
+/**
+ * Where a `$name` argument goes on an item: a relation's offset (a number); a name for the
+ * structure; one the macro set again after its arguments, so it changes nothing (`again`); a
+ * field; else `extra`. The builder routes every named argument by it, and hover says what it does
+ * from it.
+ */
+export type NameRoute = 'offset' | 'structure' | 'again' | 'field' | 'extra';
+
+export function nameRoute(
+  item: 'element' | 'boundary' | 'relation',
+  name: string,
+  setAfter: ReadonlySet<string>
+): NameRoute {
+  if (item === 'relation' && OFFSETS.has(name)) return 'offset';
+  if (STRUCTURAL[item].has(name)) return setAfter.has(name) ? 'again' : 'structure';
+  return (item === 'relation' ? RELATION_FIELDS : ELEMENT_FIELDS).has(name) ? 'field' : 'extra';
+}
 
 const slot = (name: string, role: SlotRole = 'text'): Slot => ({ name, role });
 const blank = (name: string): Slot => ({ name, role: 'text', blank: true });

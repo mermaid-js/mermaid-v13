@@ -62,7 +62,7 @@ import type {
 import { C4Builder } from './build.ts';
 import type { Arg, BoundaryMacro } from './build.ts';
 import { lex } from './lexer.ts';
-import { ELEMENT, TECHN_ELEMENT } from './slots.ts';
+import { SLOT_TABLES } from './slots.ts';
 import type { SlotTable } from './slots.ts';
 import { HEADERS, T } from './tokens.ts';
 
@@ -100,12 +100,12 @@ type Macro =
   | { role: 'relation'; kind: C4RelationKind; index?: boolean }
   | { role: 'elementStyle' | 'relStyle' | 'layout' };
 
-const person = (kind: C4ElementKind): Macro => ({ role: 'element', kind, table: ELEMENT });
-const container = (kind: C4ElementKind): Macro => ({
-  role: 'element',
-  kind,
-  table: TECHN_ELEMENT,
-});
+/** An element macro: its kind, and its keyword's slots from `SLOT_TABLES` (the one map of them). */
+const element = (keyword: number, kind: C4ElementKind): [number, Macro] => {
+  const table = SLOT_TABLES.get(keyword);
+  if (!table) throw new Error(`no slot table for the element keyword ${keyword}`);
+  return [keyword, { role: 'element', kind, table }];
+};
 const rel = (kind: C4RelationKind): Macro => ({ role: 'relation', kind });
 const deployment = (nodeKind: C4NodeKind): Macro => ({
   role: 'boundary',
@@ -114,26 +114,26 @@ const deployment = (nodeKind: C4NodeKind): Macro => ({
 
 /** Each macro keyword's statement, as `c4Diagram.jison`'s `diagramStatement` maps it. */
 const MACROS: ReadonlyMap<number, Macro> = new Map<number, Macro>([
-  [T.Person, person('person')],
-  [T.PersonExt, person('external_person')],
-  [T.System, person('system')],
-  [T.SystemDb, person('system_db')],
-  [T.SystemQueue, person('system_queue')],
-  [T.SystemExt, person('external_system')],
-  [T.SystemDbExt, person('external_system_db')],
-  [T.SystemQueueExt, person('external_system_queue')],
-  [T.Container, container('container')],
-  [T.ContainerDb, container('container_db')],
-  [T.ContainerQueue, container('container_queue')],
-  [T.ContainerExt, container('external_container')],
-  [T.ContainerDbExt, container('external_container_db')],
-  [T.ContainerQueueExt, container('external_container_queue')],
-  [T.Component, container('component')],
-  [T.ComponentDb, container('component_db')],
-  [T.ComponentQueue, container('component_queue')],
-  [T.ComponentExt, container('external_component')],
-  [T.ComponentDbExt, container('external_component_db')],
-  [T.ComponentQueueExt, container('external_component_queue')],
+  element(T.Person, 'person'),
+  element(T.PersonExt, 'external_person'),
+  element(T.System, 'system'),
+  element(T.SystemDb, 'system_db'),
+  element(T.SystemQueue, 'system_queue'),
+  element(T.SystemExt, 'external_system'),
+  element(T.SystemDbExt, 'external_system_db'),
+  element(T.SystemQueueExt, 'external_system_queue'),
+  element(T.Container, 'container'),
+  element(T.ContainerDb, 'container_db'),
+  element(T.ContainerQueue, 'container_queue'),
+  element(T.ContainerExt, 'external_container'),
+  element(T.ContainerDbExt, 'external_container_db'),
+  element(T.ContainerQueueExt, 'external_container_queue'),
+  element(T.Component, 'component'),
+  element(T.ComponentDb, 'component_db'),
+  element(T.ComponentQueue, 'component_queue'),
+  element(T.ComponentExt, 'external_component'),
+  element(T.ComponentDbExt, 'external_component_db'),
+  element(T.ComponentQueueExt, 'external_component_queue'),
   [T.Boundary, { role: 'boundary', boundary: { type: 'system' } }],
   [T.EnterpriseBoundary, { role: 'boundary', boundary: { type: 'system', splice: 'ENTERPRISE' } }],
   [T.SystemBoundary, { role: 'boundary', boundary: { type: 'system', splice: 'SYSTEM' } }],

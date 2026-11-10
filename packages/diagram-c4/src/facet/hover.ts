@@ -10,13 +10,7 @@ import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/p
 import { c4Docs } from '../generated/docs.ts';
 import { kindWords, type C4Boundary, type C4Element, type C4Model } from '../model.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
-import {
-  ELEMENT_FIELDS,
-  OFFSETS,
-  RELATION_FIELDS,
-  SLOT_TABLES,
-  STRUCTURAL,
-} from '../parser/slots.ts';
+import { nameRoute, SLOT_TABLES } from '../parser/slots.ts';
 import type { SlotTable } from '../parser/slots.ts';
 import { KEYWORDS } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
@@ -160,12 +154,11 @@ function nameDoc(model: C4Model, arg: ArgAt, name: string): string {
     model.boundaries.some((b) => b.alias === arg.first);
   let item: 'element' | 'boundary' | 'relation' = styledBoundary ? 'boundary' : 'element';
   if (table.names !== 'styled') item = table.names;
-  const structural = STRUCTURAL[item].has(name);
-  const field =
-    item === 'relation' ? RELATION_FIELDS.has(name) || OFFSETS.has(name) : ELEMENT_FIELDS.has(name);
-  if (!structural && !field) return `Not a name ${code(arg.macro)} reads: kept, not drawn.`;
-  if (structural && table.setAfter.has(name) && name !== 'wrap') return SET_AFTER;
-  if (item === 'relation' && name === 'type') return RELATION_TYPE_DOC;
+  // Where the builder sends it (`nameRoute`, the one routing table).
+  const route = nameRoute(item, name, table.setAfter);
+  if (route === 'extra') return `Not a name ${code(arg.macro)} reads: kept, not drawn.`;
+  if (route === 'again' && name !== 'wrap') return SET_AFTER;
+  if (route === 'structure' && item === 'relation' && name === 'type') return RELATION_TYPE_DOC;
   return SLOT_DOCS[name] ?? '';
 }
 
