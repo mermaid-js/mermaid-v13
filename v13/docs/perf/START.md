@@ -19,6 +19,19 @@ is integrated; no accepted speedup is claimed. Other hypotheses remain untested.
 stopped before the final diagnostics/reference jobs; all timing comparisons used the same
 frozen P27 limits. Browser validation and e2e remain pending/unverified.
 
+**Round 1’s second batch is complete.** [The report](runs/1/batch-2/REPORT.md) records
+1a, 3c and 4b as unfit: observed gains of 2.251%, 2.405% and 2.702% remain below 7.402%.
+Their named counters pass, and all 5,000 SVGs are byte-identical. Nine accepted jobs completed;
+two invalid attempts were archived and excluded. Docker’s VM/backend was off during this batch,
+and P27 limits stayed unchanged. The exact round-1 Pelé reference from batch 1 was reused.
+See [BATCH-2.md](runs/1/BATCH-2.md) and [the review](runs/1/batch-2/REVIEW.md).
+
+Six hypotheses have now been measured; none qualifies for integration. No runner is active.
+The remaining hypotheses need the next batch selection. These two batches do not constitute
+two empty rounds under P2. Browser validation and e2e remain pending/unverified. Results are
+published in [PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
+preparation/base branch; no renderer optimization is included.
+
 The exact freeze prerequisite was `.tmp/perf-validation-p27-20261110-02/acceptance.json`:
 `validationProfile: "node"`, `sourceStable: true`, `ready: true`. Node 24.16.0 and pnpm 10.30.3
 were pinned; `NODE_OPTIONS` was unset. All 57 harness tests, literal `pnpm check` (895 files,

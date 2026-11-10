@@ -1,7 +1,9 @@
 # Round 1 hypotheses
 
-Status: first batch (2b, 1c, 5b) evaluated and rejected; see [the report](batch-1/REPORT.md).
-Remaining hypotheses are prepared but untested. All candidates use the same frozen round base.
+Status: first batch (2b, 1c, 5b) and second batch (1a, 3c, 4b) evaluated and rejected;
+see [batch 1](batch-1/REPORT.md) and [batch 2](batch-2/REPORT.md). None is integrated.
+Remaining hypotheses are untested and need the next batch selection. All measured candidates
+use the same frozen round base. These batches are not two completed rounds.
 P28 withdraws 3a: cache reset is a measurement requirement already handled by the harness,
 not a production cache-removal task. Do not dispatch 3a.
 Read [the operating manual](../../LOOP.md) before implementation. Claimed lanes below are

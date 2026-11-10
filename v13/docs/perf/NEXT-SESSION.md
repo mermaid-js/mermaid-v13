@@ -1,7 +1,8 @@
 # Next session: validate Node execution access, then headless round 0
 
-> Current execution checkpoint: round 0 is complete, and round 1's first batch (2b, 1c, 5b)
-> has been measured and rejected. See [START.md](START.md) and [the batch report](runs/1/batch-1/REPORT.md).
+> Current execution checkpoint: round 0 is complete. Round 1’s first two batches
+> (2b, 1c, 5b; then 1a, 3c, 4b) have been measured and rejected. See [START.md](START.md),
+> [batch 1](runs/1/batch-1/REPORT.md), and [batch 2](runs/1/batch-2/REPORT.md).
 > No runner is active. Preserve all frozen evidence; do not rerun round 0 or redispatch these
 > candidates as new work. Remaining hypotheses need the next batch selection. Browser/e2e
 > validation remains pending. The round-0 launch instructions below are retained for provenance.
