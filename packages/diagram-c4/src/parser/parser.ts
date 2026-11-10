@@ -266,10 +266,10 @@ class C4Parser {
   private readonly pre: PreprocessResult;
   private readonly view: SourceView;
   private readonly st = new ParseState();
-  private readonly c: TokenCursor;
+  private readonly cursor: TokenCursor;
   /** Probe mode only (R-LANG-7). */
   private readonly probe: Probe | undefined;
-  private readonly b: C4Builder;
+  private readonly builder: C4Builder;
   private readonly doc: C4Document;
 
   private c4Type: C4Type | undefined;
@@ -293,14 +293,14 @@ class C4Parser {
       pre.directives.map((d) => d.range)
     );
     if (options.probe === undefined) {
-      this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+      this.cursor = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
     } else {
       const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       // The cursor marks an offset inside a comment or directive as outside code.
-      this.c = new ProbeCursor(lex(src, pre.bodyStart, this.view, probe), probe, SKIPPED);
+      this.cursor = new ProbeCursor(lex(src, pre.bodyStart, this.view, probe), probe, SKIPPED);
     }
-    this.b = new C4Builder(src, this.st);
+    this.builder = new C4Builder(src, this.st);
     this.doc = {
       id: 'doc',
       type: 'Document',
@@ -319,19 +319,19 @@ class C4Parser {
     const title = this.title ?? this.pre.frontMatter?.title;
     const model: C4Model = {
       ...(this.c4Type !== undefined && { c4Type: this.c4Type }),
-      ...this.b.model(),
+      ...this.builder.model(),
       ...(title !== undefined && { title }),
       accTitle: this.accTitle,
       accDescr: this.accDescr,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
-    return st.result(model, this.doc, this.c.tokens, this.options, this.probe);
+    return st.result(model, this.doc, this.cursor.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
 
   private range(j: number): Range {
-    const t = this.c.tokens;
+    const t = this.cursor.tokens;
     return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
   }
 
@@ -343,7 +343,7 @@ class C4Parser {
 
   /** The kind of the next stream token after `j` that is not a comment or directive. */
   private rawNext(j: number): number {
-    const t = this.c.tokens;
+    const t = this.cursor.tokens;
     for (let i = j + 1; i < t.length; i++) {
       const k = t.kind[i] ?? Kind.EOF;
       if (k !== Kind.Comment && k !== Kind.Directive) return k;
@@ -365,7 +365,7 @@ class C4Parser {
    * `accDescr {}`, which is no statement) stay two, as in v12.
    */
   private lineBreaks(): boolean {
-    const { c } = this;
+    const { cursor: c } = this;
     if (c.kind !== Kind.Newline) return false;
     let from = c.next();
     while (c.at(Kind.Newline) && this.commentBetween(from, c.pos)) from = c.next();
@@ -374,7 +374,7 @@ class C4Parser {
 
   /** Whether only trivia, a `%%` comment among it, lies between tokens `a` and `b`. */
   private commentBetween(a: number, b: number): boolean {
-    const t = this.c.tokens;
+    const t = this.cursor.tokens;
     let comment = false;
     for (let i = a + 1; i < b; i++) {
       const k = t.kind[i];
@@ -386,7 +386,7 @@ class C4Parser {
 
   /** What the message says was found at the cursor. */
   private found(): string {
-    const { c } = this;
+    const { cursor: c } = this;
     if (inKindSet(ENDS, c.kind)) return 'the end of the text';
     if (c.kind === Kind.Newline || c.start === c.end) return 'a line break';
     const text = this.src.slice(c.start, c.end).split('\n')[0] ?? '';
@@ -401,7 +401,7 @@ class C4Parser {
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string): never {
-    const { c } = this;
+    const { cursor: c } = this;
     const why = hint === undefined ? '' : `; ${hint}`;
     const message = `Expected ${formatExpected(names)}, got ${this.found()}${why}.`;
     this.st.diagnostics.error('UNEXPECTED', message, c.range, { expected: names });
@@ -410,7 +410,7 @@ class C4Parser {
 
   /** The hint for an unexpected character at the cursor. */
   private hint(): string | undefined {
-    const { c } = this;
+    const { cursor: c } = this;
     if (c.kind !== Kind.Error) return undefined;
     const ch = this.src.charAt(c.start);
     if (ch === ';') return NO_SEMICOLON_HINT;
@@ -436,7 +436,7 @@ class C4Parser {
    * `(…)` with it.
    */
   private recover(from: Start): void {
-    const { c } = this;
+    const { cursor: c } = this;
     c.recovering();
     const role = MACROS.get(c.tokens.kind[from.pos] ?? 0)?.role;
     let boundary = role === 'boundary' && this.frames.length === from.frames;
@@ -468,7 +468,7 @@ class C4Parser {
 
   /** Whether the significant token after token `j` is a zero-width error (a line break). */
   private zeroWidthAfter(j: number): boolean {
-    const t = this.c.tokens;
+    const t = this.cursor.tokens;
     for (let i = j + 1; i < t.length; i++) {
       const k = t.kind[i] ?? Kind.EOF;
       if (inKindSet(SKIPPED, k)) continue;
@@ -479,7 +479,7 @@ class C4Parser {
 
   /** Run one rule; on failure, skip to the next line. Whether it ran through. */
   private guarded(rule: () => void): boolean {
-    const { c } = this;
+    const { cursor: c } = this;
     const from: Start = { pos: c.pos, start: c.start, frames: this.frames.length };
     try {
       rule();
@@ -495,7 +495,7 @@ class C4Parser {
 
   /** `header NEWLINE`. */
   private header(): void {
-    const { c } = this;
+    const { cursor: c } = this;
     c.tested(HEADER_KINDS);
     const k = c.kind;
     if (HEADERS.has(k)) {
@@ -511,7 +511,7 @@ class C4Parser {
 
   /** The statements after the header, to the end: at least one. */
   private body(): void {
-    const { c } = this;
+    const { cursor: c } = this;
     if (inKindSet(ENDS, c.kind) && !this.st.diagnostics.hasErrors) {
       this.st.diagnostics.unexpected('UNEXPECTED', c.range, STATEMENT, this.found());
     }
@@ -535,7 +535,7 @@ class C4Parser {
    * opening took its line break already.
    */
   private separator(after: After): void {
-    const { c } = this;
+    const { cursor: c } = this;
     const k = c.kind;
     if (after === OPENED || this.lineBreaks()) return;
     if (inKindSet(ENDS, k) || (k === T.RBrace && this.frames.length > 0)) return;
@@ -550,7 +550,7 @@ class C4Parser {
 
   /** One statement; what may come after it. */
   private statement(): After {
-    const { c } = this;
+    const { cursor: c } = this;
     c.tested(this.statementKinds());
     const k = c.kind;
     const frame = this.frames[this.frames.length - 1];
@@ -598,14 +598,14 @@ class C4Parser {
     this.st.diagnostics.error(
       codes.C4_DIRECTION,
       'C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.',
-      this.c.range
+      this.cursor.range
     );
     throw STOP;
   }
 
   /** `title`, `accDescription`, `accTitle:`, `accDescr:` or `accDescr { … }`. */
   private other(): void {
-    const { c } = this;
+    const { cursor: c } = this;
     const j = c.pos;
     const k = c.kind;
     const start = c.start;
@@ -647,7 +647,7 @@ class C4Parser {
 
   /** The range of the `accDescr {` before the block value at `j`. */
   private blockStart(j: number): Range {
-    const t = this.c.tokens;
+    const t = this.cursor.tokens;
     for (let i = j - 1; i >= 0; i--) {
       if (t.kind[i] === T.AccDescrBlockStart) return this.range(i);
     }
@@ -658,7 +658,7 @@ class C4Parser {
 
   /** A macro statement: its arguments, then what it adds to the model. */
   private macro(macro: Macro): After {
-    const { c, b } = this;
+    const { cursor: c, builder: b } = this;
     const name = this.src.slice(c.start, c.end);
     const start = c.start;
     c.next();
@@ -701,8 +701,8 @@ class C4Parser {
 
   /** The end of the last significant token read. */
   private lastEnd(): number {
-    const t = this.c.tokens;
-    for (let i = this.c.pos - 1; i >= 0; i--) {
+    const t = this.cursor.tokens;
+    for (let i = this.cursor.pos - 1; i >= 0; i--) {
       if (!inKindSet(SKIPPED, t.kind[i] ?? 0)) return t.end[i] ?? 0;
     }
     return 0;
@@ -710,7 +710,7 @@ class C4Parser {
 
   /** `arguments`: `(`, at least one argument, `)`. */
   private args(name: string): Arg[] {
-    const { c } = this;
+    const { cursor: c } = this;
     const out: Arg[] = [];
     const open = c.range;
     if (c.kind === T.AttributeEmpty) {
@@ -743,7 +743,7 @@ class C4Parser {
 
   /** `"text"`: no escapes, line breaks included. */
   private quoted(): Arg {
-    const { c } = this;
+    const { cursor: c } = this;
     const open = c.range;
     const start = c.end - 1;
     c.next();
@@ -760,7 +760,7 @@ class C4Parser {
 
   /** `$name="value"`. */
   private named(): Arg {
-    const { c } = this;
+    const { cursor: c } = this;
     const open = c.range;
     const start = c.end - 1;
     c.next();
@@ -793,10 +793,10 @@ class C4Parser {
 
   /** A boundary's statement and its `{`: `{` NEWLINE, or NEWLINE `{` [NEWLINE]. */
   private boundary(parts: MacroParts & { macro: BoundaryMacro }): void {
-    const { c } = this;
+    const { cursor: c } = this;
     const { macro, name, args, at } = parts;
     const parent = this.current();
-    const { ast, alias, index } = this.b.boundary({ macro, args, end: at.end, parent });
+    const { ast, alias, index } = this.builder.boundary({ macro, args, end: at.end, parent });
     const node: C4BoundaryNode = {
       id: ast,
       type: 'Boundary',
@@ -854,7 +854,7 @@ class C4Parser {
   private relation(parts: MacroParts & { kind: C4RelationKind; index: boolean }): void {
     const { name, args, at } = parts;
     this.st.statement('relation', at);
-    const added = this.b.relation({
+    const added = this.builder.relation({
       kind: parts.kind,
       args: parts.index ? args.slice(1) : args,
       at,
@@ -891,6 +891,6 @@ class C4Parser {
     for (const r of this.failed) {
       for (const w of this.src.slice(r.start, r.end).split(/[\s,()"{}$=]+/)) words.add(w);
     }
-    this.b.finish((alias) => alias !== '' && words.has(alias));
+    this.builder.finish((alias) => alias !== '' && words.has(alias));
   }
 }
