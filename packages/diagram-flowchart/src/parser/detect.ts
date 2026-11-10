@@ -9,13 +9,17 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 /** v12 diagram type of a flowchart source, or undefined when it is not one. */
 export type FlowchartType = 'flowchart-v2' | 'flowchart-elk' | 'swimlane';
 
+// v12's `\b` after `swimlane-beta`: the next character is not a word character.
+const WORD = /\w/;
+
 export function detectFlowchart(
   src: string,
   pre: PreprocessResult = preprocess(src)
 ): FlowchartType | undefined {
   const start = diagramStart(src, pre);
   if (src.startsWith('flowchart-elk', start)) return 'flowchart-elk';
-  if (/^swimlane-beta\b/.test(src.slice(start, start + 14))) return 'swimlane';
+  if (src.startsWith('swimlane-beta', start) && !WORD.test(src.charAt(start + 13)))
+    return 'swimlane';
   if (src.startsWith('graph', start) || src.startsWith('flowchart', start)) return 'flowchart-v2';
   return undefined;
 }

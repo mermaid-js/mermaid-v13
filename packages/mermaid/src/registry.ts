@@ -36,6 +36,10 @@ export interface FirstPartyEntry {
   /** The plugin id (`flowchart`). */
   readonly id?: string;
   readonly formats?: readonly string[];
+  /** The config section the type reads on top of its plugin's (`swimlane`, D534). */
+  readonly section?: string;
+  /** The type's default layout, below every config layer (`elk`, `swimlane`; D534). */
+  readonly layout?: string;
   readonly load?: () => Promise<AnyPlugin>;
   /** The lazily loaded text-output hook (manifest key `ascii`, D76). */
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -133,9 +137,7 @@ export interface SkippedPlugin {
   readonly package: string;
 }
 
-interface Entry {
-  readonly type: string;
-  readonly id: string | undefined;
+interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
    * `body` is the text from the diagram's start (front matter, leading directives and comments
@@ -192,6 +194,10 @@ export interface Detected {
   readonly type: string;
   /** Plugin id; undefined when the type has no v13 package (R-COMPAT-7). */
   readonly id: string | undefined;
+  /** {@link FirstPartyEntry.section}. */
+  readonly section?: string;
+  /** {@link FirstPartyEntry.layout}. */
+  readonly layout?: string;
 }
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
@@ -435,14 +441,13 @@ export class Registry {
       if (e.id !== undefined) this.firstPartyNames.add(e.id);
     }
     for (const e of firstParty) {
+      // The row's own fields (type, id, section, layout, loaders) come along.
       this.entries.push({
-        type: e.type,
+        ...e,
         id: e.id,
         formats: e.formats ?? [],
         detect: (body, _clean, _config, v12) =>
           firstPartyDetects((text) => e.pattern.test(text), body, v12),
-        load: e.load,
-        loadAscii: e.loadAscii,
       });
     }
   }
@@ -520,13 +525,19 @@ export class Registry {
     let old: string | undefined;
     const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
     for (const e of this.detectionOrder()) {
-      if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
+      // The entry is a `Detected`: its type, id and the type's section and layout (D534).
+      if (e.detect(body, cleaned, config, v12)) return e;
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
       { source: src, offset: start }
     );
+  }
+
+  /** A type's default layout (D534), for `preload`. */
+  layoutOf(type: string): string | undefined {
+    return this.entryFor(type)?.layout;
   }
 
   /** The loaded plugin for a detected type, if any. */

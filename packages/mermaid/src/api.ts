@@ -398,12 +398,14 @@ export function createMermaid(
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
   let textBackend: TextBackend | undefined;
 
-  // `swimlane-beta` is flowchart's with its own section on top (D534): `swimlane.layout` and
-  // `swimlane.theme` scope it and `%%{init: {config}}` goes there, as in v12; `flowchart.*`
-  // keys still reach the plugin, whose defaults stay in its own section.
-  function sectionOf(detected: Detected, plugin?: AnyPlugin): string | undefined {
-    if (detected.type === 'swimlane') return 'swimlane';
-    return plugin?.configSection ?? plugin?.id ?? detected.id;
+  // A type may read its own section on top of its plugin's (`swimlane` over `flowchart`,
+  // D534): both are given, highest first.
+  function sectionOf(
+    detected: Detected,
+    plugin?: AnyPlugin
+  ): string | readonly string[] | undefined {
+    const own = plugin?.configSection ?? plugin?.id ?? detected.id;
+    return detected.section && own ? [detected.section, own] : own;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).
@@ -918,8 +920,9 @@ export function createMermaid(
         registry.load(t).then((p) => {
           if (!p)
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
-          // The plugin's own default engine (D284) comes with it, as `layered` does.
-          if (p.layoutEngine) return registry.loadLayout(p.layoutEngine.default);
+          // The plugin's own default engine (D284), or the type's (D534), comes with it.
+          const layout = registry.layoutOf(t) ?? p.layoutEngine?.default;
+          if (layout) return registry.loadLayout(layout);
         })
       );
       if (ascii)

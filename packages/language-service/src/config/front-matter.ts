@@ -74,14 +74,15 @@ export function frontMatterTree(ctx: DocumentContext): FrontMatterTree | undefin
 }
 
 /**
- * The config section the renderer resolves this type's config with (mermaid's `sectionOf`:
- * the plugin id): a first-party row's generated `section` (none for a type with no v13
- * package), a third-party row's id.
+ * The config sections the renderer resolves this type's config with, highest first (mermaid's
+ * `sectionOf`): a first-party row's generated `section` and `baseSection` (none for a type with
+ * no v13 package; `swimlane` then `flowchart` for `swimlane-beta`), a third-party row's id.
  */
-export function configSection(ctx: DocumentContext): string | undefined {
+export function configSections(ctx: DocumentContext): readonly string[] {
   const entry = ctx.entry;
-  if (entry === undefined) return undefined;
-  return firstPartyFacets.includes(entry) ? entry.section : entry.id;
+  if (entry === undefined) return [];
+  if (!firstPartyFacets.includes(entry)) return [entry.id];
+  return [entry.section, entry.baseSection].filter((s) => s !== undefined);
 }
 
 /** The mapping at a key path from the root (the first pair of a key), if there is one. */
@@ -161,7 +162,7 @@ export function liveKeys(props: Map<string, SchemaNode>): string[] {
 
 /** Keys diagram text cannot set: core's integrator-only and secure keys (R-SEC-5, R-SEC-6). */
 export function secureKeys(): ReadonlySet<string> {
-  return siteFor(undefined).secure;
+  return siteFor([]).secure;
 }
 
 /** Sites by section: content-keyed, and frozen by core. */
@@ -169,11 +170,14 @@ const sites = new Map<string, ResolvedSite>();
 
 /** The integrator side a render starts from, with no `initialize()`: core defaults, and the
  * section (a third-party one is open, as its plugin's defaults make it in a render). */
-function siteFor(section: string | undefined): ResolvedSite {
-  const key = section ?? '';
+function siteFor(sections: readonly string[]): ResolvedSite {
+  const key = sections.join('\0');
   let site = sites.get(key);
   if (site === undefined) {
-    site = resolveSite(CORE_DEFAULTS, undefined, section ? { [section]: {} } : {}, { section });
+    const plugin = Object.fromEntries(sections.map((s) => [s, {}]));
+    site = resolveSite(CORE_DEFAULTS, undefined, plugin, {
+      ...(sections.length > 0 ? { section: sections } : {}),
+    });
     sites.set(key, site);
   }
   return site;
@@ -229,7 +233,7 @@ export function configDiagnostics(
   // The config the render reads: none from YAML with errors (those errors are shown instead).
   const config = fm === undefined || fm.unclosed ? undefined : ctx.pre.frontMatter?.config;
   if (fm === undefined || config === undefined) return [];
-  const site = siteFor(configSection(ctx));
+  const site = siteFor(configSections(ctx));
   const warnings: ConfigWarning[] = [];
   resolveText(site, config, [], { warn: (w) => warnings.push(w) });
   const configPair =

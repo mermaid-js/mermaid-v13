@@ -87,6 +87,15 @@ describe('swimlane-beta registration (D534, D535)', () => {
     expect(() => bare.renderSync(text)).toThrow(/layout "swimlane"/);
   });
 
+  it('preloads its default layout with the type, so renderSync draws it', async () => {
+    const text = 'swimlane-beta LR\n  subgraph Sales\n    A --> B\n  end';
+    const m = createMermaid();
+    await m.preload({ types: ['swimlane'] });
+    const r = m.renderSync(text, { id: 's' });
+    expect(r.warnings).toEqual([]);
+    expect(r.svg).toBe((await createMermaid().render('s', text)).svg);
+  });
+
   it('may take `layered` or `elk` (D535)', async () => {
     const m = createMermaid();
     const layered = await m.render('s', `---\nconfig:\n  layout: layered\n---\n${SWIMLANE}`);
@@ -110,10 +119,66 @@ describe('swimlane-beta registration (D534, D535)', () => {
     const both = await m.prepare(keyed);
     expect(both.config.flowchart?.nodeSpacing).toBe(120);
     expect(both.config.swimlane?.automaticLaneOrdering).toBe(true);
-    // `%%{init: {config}}` goes to the swimlane section, as v12's detectInit sent it.
-    const init = await m.prepare(`%%{init: {"config": {"layout": "dagre"}}}%%\n${SWIMLANE}`);
-    expect(init.config.swimlane?.layout).toBe('dagre');
-    expect(init.config.layout).toBe('dagre');
+  });
+
+  describe('section layering: flowchart defaults < swimlane defaults < flowchart.* < swimlane.*', () => {
+    const front = (yaml: string) => `---\nconfig:\n${yaml}\n---\n${SWIMLANE}`;
+
+    it('lets an author flowchart.layout or flowchart.theme move it, unless swimlane.* is set', async () => {
+      const m = createMermaid();
+      const elk = await m.prepare(front('  flowchart:\n    layout: elk'));
+      expect(elk.config.layout).toBe('elk');
+      expect(elk.config.swimlane?.layout).toBe('elk');
+      const both = await m.prepare(
+        front('  flowchart:\n    layout: elk\n  swimlane:\n    layout: dagre')
+      );
+      expect(both.config.layout).toBe('dagre');
+      expect(both.config.flowchart?.layout).toBe('dagre');
+      const dark = await m.prepare(front('  flowchart:\n    theme: dark'));
+      expect(dark.config.theme).toBe('dark');
+      const themes = await m.prepare(
+        front('  flowchart:\n    theme: dark\n  swimlane:\n    theme: forest')
+      );
+      expect(themes.config.theme).toBe('forest');
+      // A plain flowchart reads no swimlane.* at all.
+      const flow = await m.prepare(
+        `---\nconfig:\n  swimlane:\n    theme: forest\n---\n${FLOWCHART}`
+      );
+      expect(flow.config.theme).toBe('redux-color');
+    });
+
+    it('resolves a key both sections have (useMaxWidth) the same way, into both', async () => {
+      const m = createMermaid();
+      const flow = await m.prepare(front('  flowchart:\n    useMaxWidth: false'));
+      expect(flow.config.flowchart?.useMaxWidth).toBe(false);
+      expect(flow.config.swimlane?.useMaxWidth).toBe(false);
+      const both = await m.prepare(
+        front('  flowchart:\n    useMaxWidth: false\n  swimlane:\n    useMaxWidth: true')
+      );
+      expect(both.config.flowchart?.useMaxWidth).toBe(true);
+      const own = await m.prepare(front('  swimlane:\n    useMaxWidth: false'));
+      expect(own.config.flowchart?.useMaxWidth).toBe(false);
+      expect((await m.render('s', front('  swimlane:\n    useMaxWidth: false'))).svg).not.toMatch(
+        /max-width/
+      );
+    });
+
+    it('sends an unscoped %%{init: {config}}%% key to swimlane when its schema has it, else to flowchart', async () => {
+      const m = createMermaid();
+      const init = (config: string) => m.prepare(`%%{init: {"config": ${config}}}%%\n${SWIMLANE}`);
+      const spacing = await init('{"nodeSpacing": 99, "layout": "dagre"}');
+      expect(spacing.warnings).toEqual([]);
+      expect(spacing.config.flowchart?.nodeSpacing).toBe(99);
+      expect(spacing.config.swimlane?.layout).toBe('dagre');
+      expect(spacing.config.layout).toBe('dagre');
+      const tuning = await init('{"automaticLaneOrdering": true, "curve": "linear"}');
+      expect(tuning.warnings).toEqual([]);
+      expect(tuning.config.swimlane?.automaticLaneOrdering).toBe(true);
+      expect(tuning.config.flowchart?.curve).toBe('linear');
+      // Through parse() too, which returns the text's own config.
+      const parsed = await m.parse(`%%{init: {"config": {"nodeSpacing": 99}}}%%\n${SWIMLANE}`);
+      expect(parsed.config).toEqual({ flowchart: { nodeSpacing: 99 } });
+    });
   });
 
   it('draws rounded curves by default, and an author curve wins (v12 layoutCore.ts:47-51)', async () => {

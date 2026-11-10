@@ -5591,7 +5591,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {

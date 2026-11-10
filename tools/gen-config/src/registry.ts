@@ -82,6 +82,27 @@ export interface DiagramManifest {
    * `wardley-beta`, D421).
    */
   readonly section?: string;
+  /**
+   * Per-type options, by v12 type (D534): `section`, the config section the type reads on top of
+   * the package's own (`swimlane` for `swimlane-beta`), and `layout`, the type's default layout
+   * (`elk` for `flowchart-elk`), below every config layer.
+   */
+  readonly typeOptions?: Readonly<Record<string, TypeOptions>>;
+}
+
+/** A manifest's {@link DiagramManifest.typeOptions} entry. */
+export interface TypeOptions {
+  readonly section?: string;
+  readonly layout?: string;
+}
+
+/** A row's `section` and `layout` fields, from the manifest's options for `type`. */
+function typeFields(m: ManifestSource, type: string): string[] {
+  const o = m.manifest.typeOptions?.[type];
+  return [
+    ...(o?.section === undefined ? [] : [`section: '${o.section}'`]),
+    ...(o?.layout === undefined ? [] : [`layout: '${o.layout}'`]),
+  ];
 }
 
 /** A package.json `exports` map: subpath → conditions → file. */
@@ -132,6 +153,9 @@ function manifestsByType(manifests: readonly ManifestSource[]): Map<string, Mani
       }
       byType.set(type, m);
     }
+    for (const type of Object.keys(m.manifest.typeOptions ?? {}))
+      if (!m.manifest.types.includes(type))
+        throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
   }
   return byType;
 }
@@ -159,6 +183,7 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
       `    pattern: ${pattern},`,
       `    id: '${m.manifest.id}',`,
       `    formats: [${formats}],`,
+      ...typeFields(m, type).map((f) => `    ${f},`),
       `    load: () => import('${m.name}').then((m) => m.${m.manifest.export}),`
     );
     if (m.manifest.ascii !== undefined) {
@@ -176,10 +201,19 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
  * detector order, so the service tells a type with no facet yet (an info diagnostic) from an
  * unknown one (`UNSUPPORTED_DIAGRAM`). A package whose manifest has a `language` entry gets a
  * lazy `load` of that subpath's `language` export (a fixed name, as `ascii` is for the text hook).
- * `section` is the config section the renderer reads for the type: the manifest's `section`, else
- * the package id, as the plugin's `configSection` else its `id` (`sectionOf` in mermaid's api.ts);
- * a type with no package has none.
+ * `section` is the config section the renderer reads for the type: the type's own
+ * (`typeOptions[type].section`), else the package's (the manifest's `section`, else its id, as the
+ * plugin's `configSection` else its `id`; `sectionOf` in mermaid's api.ts). A type with its own
+ * section also gets `baseSection`, the package's, which it reads under its own (D534). A type
+ * with no package has neither.
  */
+/** The sections a type reads, highest first (see {@link generateFacets}). */
+function sectionsOf(m: ManifestSource, type: string): string[] {
+  const own = m.manifest.section ?? m.manifest.id;
+  const typed = m.manifest.typeOptions?.[type]?.section;
+  return typed === undefined || typed === own ? [own] : [typed, own];
+}
+
 export function generateFacets(manifests: readonly ManifestSource[]): string {
   const byType = manifestsByType(manifests);
   const lines = [
@@ -204,7 +238,7 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
       `  {`,
       `    type: '${type}',`,
       `    id: '${m.manifest.id}',`,
-      `    section: '${m.manifest.section ?? m.manifest.id}',`,
+      ...sectionsOf(m, type).map((x, i) => `    ${i === 0 ? 'section' : 'baseSection'}: '${x}',`),
       `    pattern: ${pattern},`,
       `    detector: ${detector},`
     );
@@ -247,8 +281,11 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       continue;
     }
     const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    const extra = typeFields(m, type)
+      .map((f) => `, ${f}`)
+      .join('');
     lines.push(
-      `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}] },`
+      `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}]${extra} },`
     );
   }
   lines.push('];', '');

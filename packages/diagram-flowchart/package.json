@@ -58,6 +58,15 @@
       "flowchart-v2",
       "swimlane"
     ],
+    "typeOptions": {
+      "flowchart-elk": {
+        "layout": "elk"
+      },
+      "swimlane": {
+        "section": "swimlane",
+        "layout": "swimlane"
+      }
+    },
     "formats": [
       "svg",
       "ascii"

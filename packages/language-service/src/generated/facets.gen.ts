@@ -82,7 +82,8 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   {
     type: 'swimlane',
     id: 'flowchart',
-    section: 'flowchart',
+    section: 'swimlane',
+    baseSection: 'flowchart',
     pattern: /^\s*swimlane-beta\b/,
     detector: (text) => /^\s*swimlane-beta\b/.test(text),
     load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),

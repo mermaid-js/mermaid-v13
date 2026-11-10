@@ -10,14 +10,18 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
 - **Layout.** The default layout is `swimlane`, a default below every config layer: `layout:
   dagre` (or `layered`) at the top level, in `swimlane.layout`, in front matter or in a
   directive moves a swimlane diagram onto layered, as v12's `swimlanesDiagram.spec.ts` asserts.
-  `swimlane-beta` may also take `elk` (D535). The engine loads lazily: `render()` loads it, and
-  for `renderSync` `prepare()` or `preload({ types: ['swimlane'] })` with `layouts: ['swimlane']`
-  does. Any graph diagram may select `layout: swimlane` too (D535).
-- **Config.** `swimlane` is the diagram's section on top of flowchart's: `swimlane.layout` and
-  `swimlane.theme` scope it, an `%%{init: {"config": …}}%%` key goes to `swimlane` as in v12,
-  and the engine reads `swimlane.ignoreCrossLaneEdges`, `optimizeRanksByCrossings`,
-  `automaticLaneOrdering` and `lineHops`. `flowchart.*` keys (spacing, curve, labels, padding)
-  still apply, as in v12.
+  `swimlane-beta` may also take `elk` (D535). Any graph diagram may select `layout: swimlane`
+  too (D535).
+- **Config.** `swimlane` is the diagram's section on top of flowchart's. Lowest first:
+  flowchart's defaults, swimlane's defaults, the author's `flowchart.*`, the author's
+  `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
+  `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
+  unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
+  (`useMaxWidth`) resolves the same way in both. An `%%{init: {"config": …}}%%` key goes to
+  `swimlane` when that section has it, else to `flowchart` (v12 sent all of it to `swimlane`).
+  The engine reads `swimlane.ignoreCrossLaneEdges`,
+  `optimizeRanksByCrossings`, `automaticLaneOrdering` and `lineHops`; `flowchart.*` keys
+  (spacing, curve, labels, padding) apply as in v12.
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
   when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
   or `linkStyle default interpolate` wins.

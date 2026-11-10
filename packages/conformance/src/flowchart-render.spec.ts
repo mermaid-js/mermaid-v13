@@ -10,8 +10,7 @@ import { REPO_ROOT, corpusFromDir } from './index.ts';
 import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from './svg-tree.ts';
 
 /**
- * Render properties (DESIGN §13.2, §13.4) over the e2e flowchart fixtures, and the swimlanes
- * ones (`swimlane-beta`, flowchart's syntax with the swimlane engine, D534), through the public
+ * Render properties (DESIGN §13.2, §13.4) over the e2e flowchart fixtures, through the public
  * `render()` with `deterministic: true`: well-formed XML, the allow-list, render-twice
  * determinism, no NaN/Infinity/undefined, the viewBox holds every drawn coordinate, and every
  * vertex, edge and subgraph maps to exactly one `data-ast` element whose id resolves to an AST
@@ -36,11 +35,7 @@ function api() {
 
 beforeAll(async () => {
   const m = api();
-  const corpus = async function* () {
-    for (const dir of ['flowchart', 'swimlanes'])
-      yield* corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir);
-  };
-  for await (const item of corpus()) {
+  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'flowchart')) {
     try {
       const prepared = await m.prepare(item.source, { id: 'mermaid-0' });
       const result = m.renderSync(item.source, { id: 'mermaid-0' });
@@ -129,13 +124,6 @@ describe('flowchart render properties over the e2e corpus', () => {
     expect(skipped.filter((s) => !s.reason.startsWith('UNSUPPORTED_DIAGRAM'))).toEqual([]);
   });
 
-  it('renders every swimlanes fixture as the swimlane type (D534)', () => {
-    const lanes = cases.filter((c) => c.id.startsWith('swimlanes/'));
-    expect(lanes.length).toBe(50);
-    expect(skipped.filter((s) => s.id.startsWith('swimlanes/'))).toEqual([]);
-    for (const c of lanes) expect(c.prepared.diagramType, c.id).toBe('swimlane');
-  });
-
   it('writes well-formed XML that passes the allow-list', () => {
     for (const c of cases) {
       expect(wellFormed(c.result.svg), c.id).toBeUndefined();
@@ -150,8 +138,7 @@ describe('flowchart render properties over the e2e corpus', () => {
       const again = await m.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
     }
-    // Some 470 renders, the swimlanes' with their engine: past vitest's 5 s under load.
-  }, 60_000);
+  });
 
   it('writes no NaN, Infinity or undefined', () => {
     for (const c of cases) expect(c.result.svg, c.id).not.toMatch(/NaN|Infinity|undefined/);

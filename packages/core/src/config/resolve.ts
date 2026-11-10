@@ -60,9 +60,12 @@ export interface ResolveConfigOptions {
   /**
    * The config section of the diagram being rendered (e.g. `flowchart`), for the
    * diagram-scoped `theme` and `layout`. Defaults to the single top-level key
-   * of `pluginDefaults`, when it has exactly one.
+   * of `pluginDefaults`, when it has exactly one. A type that reads its own section on top of
+   * its plugin's gives both, highest first (`['swimlane', 'flowchart']`, D534): in each source
+   * the first section's key wins over the second's, over the top-level one, and a key both
+   * sections have takes that value in both.
    */
-  readonly section?: string;
+  readonly section?: string | readonly string[];
   /**
    * The config fragments of the registered plugins (D153): their keys are known, their
    * defaults merged over `defaults`, their aliases applied to every source.
@@ -130,7 +133,7 @@ export interface ResolvedSite {
   readonly defaults: Readonly<Plain>;
   readonly tree: Readonly<Record<string, KeyTree>>;
   readonly secure: ReadonlySet<string>;
-  readonly section: string | undefined;
+  readonly section: string | readonly string[] | undefined;
   /** Whether `initialize()` already earned the one `LOOK_REMOVED` warning. */
   readonly lookWarned: boolean;
   /** The fragments' legacy aliases, applied to diagram text too. */
@@ -238,7 +241,7 @@ export function resolveText(
 // not touch stay shared with the (frozen) site.
 function layered(
   layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults'>,
-  section: string | undefined,
+  section: ResolvedSite['section'],
   text: Plain
 ): ResolvedConfig {
   const config: Plain = { ...layers.base };
@@ -299,24 +302,33 @@ function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
  * the diagram-scoped value beats the global one. (v12 also passed over unknown theme names;
  * that check belongs with the theme registry, core/theme.)
  */
-function resolveAppearance(config: Plain, section: string | undefined, layers: Plain[]) {
-  const scopedOf = (layer: Plain): Plain | undefined => {
-    const value = section === undefined ? undefined : layer[section];
+function resolveAppearance(config: Plain, section: ResolvedSite['section'], layers: Plain[]) {
+  const sections = section === undefined ? [] : [section].flat();
+  const scopedOf = (layer: Plain, s: string): Plain | undefined => {
+    const value = layer[s];
     return isPlainObject(value) ? value : undefined;
   };
-  let scoped = scopedOf(config);
-  for (const key of APPEARANCE_KEYS) {
+  // Keys a chained type's sections share (`useMaxWidth`) resolve like `theme` and `layout`,
+  // without a top-level key.
+  const keys = new Set<string>(APPEARANCE_KEYS);
+  for (const key of Object.keys(scopedOf(config, sections[0] ?? '') ?? {}))
+    if (sections.some((s, i) => i > 0 && scopedOf(config, s)?.[key] !== undefined)) keys.add(key);
+  for (const key of keys) {
+    const top = key === 'theme' || key === 'layout';
+    let value: unknown;
     for (const layer of layers) {
-      const value = [scopedOf(layer)?.[key], layer[key]].find((v) => typeof v === 'string');
-      if (value === undefined) {
-        continue;
-      }
-      config[key] = value;
-      if (scoped?.[key] !== undefined && scoped[key] !== value) {
-        if (Object.isFrozen(scoped)) config[section as string] = scoped = { ...scoped };
-        scoped[key] = value;
-      }
-      break;
+      value = [
+        ...sections.map((s) => scopedOf(layer, s)?.[key]),
+        top ? layer[key] : undefined,
+      ].find((v) => (top ? typeof v === 'string' : v !== undefined));
+      if (value !== undefined) break;
+    }
+    if (value === undefined) continue;
+    if (top) config[key] = value;
+    for (const s of sections) {
+      const scoped = scopedOf(config, s);
+      if (scoped?.[key] !== undefined && scoped[key] !== value)
+        config[s] = { ...scoped, [key]: value };
     }
   }
 }

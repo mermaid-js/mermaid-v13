@@ -137,6 +137,7 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     expect(out).toContain('    detector: (text) => /^\\s*(graph|flowchart)/.test(text),');
     // The config section the renderer reads: the package id; a type with no package has none.
     expect(out).toContain("    section: 'flowchart',");
+    expect(out).not.toContain('baseSection');
     expect(out).not.toMatch(/type: 'mindmap'.*section/);
     expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'mindmap'"));
     expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
@@ -147,6 +148,31 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     const out = generateFacets([{ ...flowchart, manifest }]);
     expect(out).toContain("    section: 'flowchart-beta',");
     expect(out).toContain("    id: 'flowchart',");
+  });
+
+  it('gives a type with its own section and layout both, its own first (swimlane, D534)', () => {
+    const manifest = {
+      ...flowchart.manifest,
+      types: ['flowchart-elk', 'flowchart-v2', 'swimlane'],
+      typeOptions: {
+        swimlane: { section: 'swimlane', layout: 'swimlane' },
+        'flowchart-elk': { layout: 'elk' },
+      },
+    };
+    const facets = generateFacets([{ ...flowchart, manifest }]);
+    expect(facets).toContain("    section: 'swimlane',\n    baseSection: 'flowchart',");
+    expect(facets.match(/baseSection/g)).toHaveLength(1);
+    const rows = generateRegistry([{ ...flowchart, manifest }]);
+    expect(rows).toMatch(/type: 'swimlane',[^}]*section: 'swimlane',\n {4}layout: 'swimlane',/);
+    expect(rows).toMatch(/type: 'flowchart-elk',[^}]*layout: 'elk',/);
+    expect(rows).not.toMatch(/type: 'flowchart-v2',[^}]*layout:/);
+    expect(generateDetectors([{ ...flowchart, manifest }])).toContain(
+      "formats: ['svg'], section: 'swimlane', layout: 'swimlane' },"
+    );
+    const stray = { ...manifest, typeOptions: { sequence: { layout: 'elk' } } };
+    expect(() => generateRegistry([{ ...flowchart, manifest: stray }])).toThrow(
+      /not one of its types/
+    );
   });
 
   it('names the ids that have a facet in one union type', () => {

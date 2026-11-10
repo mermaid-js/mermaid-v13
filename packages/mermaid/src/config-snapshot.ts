@@ -209,20 +209,32 @@ export class Overlays {
   }
 }
 
-/** Init directive config in source order (v12's `config` key moved into the section). */
-export function directiveConfig(pre: PreprocessResult, section: string | undefined): ConfigInput[] {
+/**
+ * Init directive config in source order (v12's `config` key moved into the section). With a
+ * chain of sections (`['swimlane', 'flowchart']`, D534), each `config` key goes to the first
+ * section when that section has a default for it (core's own engine sections), else to the last.
+ */
+export function directiveConfig(
+  pre: PreprocessResult,
+  section: string | readonly string[] | undefined
+): ConfigInput[] {
   const out: ConfigInput[] = [];
+  const [first, last] = section === undefined ? [] : [section].flat();
+  const own = (CORE_DEFAULTS as Plain)[first ?? ''];
   for (const d of pre.directives) {
     if (d.kind === 'wrap') out.push({ wrap: true });
     else if (d.kind === 'init' && isPlain(d.args)) {
-      const args = { ...d.args };
+      const args: Plain = { ...d.args };
+      const value = args.config;
       // v12 detectInit: an init `config` key belongs to the detected diagram's section.
-      if (args.config !== undefined && section) {
-        args[section] =
-          isPlain(args[section]) && isPlain(args.config)
-            ? mergeInto({ ...args[section] }, args.config)
-            : args.config;
+      if (value !== undefined && first) {
         delete args.config;
+        const parts: [string, unknown][] =
+          last && isPlain(value) && isPlain(own)
+            ? Object.entries(value).map(([k, v]) => [k in own ? first : last, { [k]: v }])
+            : [[first, value]];
+        for (const [s, v] of parts)
+          args[s] = isPlain(args[s]) && isPlain(v) ? mergeInto({ ...args[s] }, v) : v;
       }
       out.push(args);
     }
@@ -249,7 +261,7 @@ export class SiteConfigs {
     snap: Snapshot,
     plugin: AnyPlugin,
     detected: Detected,
-    section: string | undefined,
+    section: string | readonly string[] | undefined,
     fragments: readonly ConfigFragment[]
   ): SiteConfig {
     if (fragments !== this.fragments) {
@@ -260,18 +272,20 @@ export class SiteConfigs {
     if (!byPlugin) this.bySnapshot.set(snap, (byPlugin = new WeakMap()));
     let byType = byPlugin.get(plugin);
     if (!byType) byPlugin.set(plugin, (byType = new Map<string, SiteConfig>()));
-    const key = `${section ?? ''}\0${detected.type}`;
+    const key = `${String(section)}\0${detected.type}`;
     let hit = byType.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
-      // The plugin's defaults go to its own section, even when a type reads another (D534).
-      const own = plugin.configSection ?? plugin.id;
-      if (plugin.configDefaults) pluginDefaults[own] = plugin.configDefaults;
-      // The plugin's engine (D284), and v12's flowchart-elk detector's `layout: 'elk'` and
-      // swimlane's `layout: 'swimlane'` (D534), sit below the user's config.
+      // The plugin's defaults go to its own section; a type's own section (D534) sits over
+      // them, so its defaults outrank the plugin's.
+      if (plugin.configDefaults)
+        pluginDefaults[plugin.configSection ?? plugin.id] = plugin.configDefaults;
+      const typed = detected.section && (CORE_DEFAULTS as Plain)[detected.section];
+      if (typed) pluginDefaults[detected.section] = typed;
+      // The plugin's engine (D284), and the type's default layout (v12's flowchart-elk detector's
+      // `elk`, swimlane's `swimlane`), sit below the user's config.
       if (plugin.layoutEngine) pluginDefaults.layout = plugin.layoutEngine.default;
-      if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
-      if (detected.type === 'swimlane') pluginDefaults.layout = 'swimlane';
+      if (detected.layout) pluginDefaults.layout = detected.layout;
       const recorded: Warning[] = [];
       const site = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
         warn: (w) => void recorded.push(w),

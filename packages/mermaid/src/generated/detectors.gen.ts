@@ -3,7 +3,7 @@ import type { FirstPartyEntry } from '../registry.ts';
 
 /** First-party detectors in v12 detection order, without loaders (`mermaid/slim`). */
 export const DETECTORS: readonly FirstPartyEntry[] = [
-  { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'] },
+  { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'], layout: 'elk' },
   { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
   { type: 'architecture', pattern: /^\s*architecture/ },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
@@ -16,7 +16,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'pie', pattern: /^\s*pie/, id: 'pie', formats: ['svg'] },
   { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
   { type: 'sequence', pattern: /^\s*sequenceDiagram/, id: 'sequence', formats: ['svg', 'ascii'] },
-  { type: 'swimlane', pattern: /^\s*swimlane-beta\b/, id: 'flowchart', formats: ['svg', 'ascii'] },
+  { type: 'swimlane', pattern: /^\s*swimlane-beta\b/, id: 'flowchart', formats: ['svg', 'ascii'], section: 'swimlane', layout: 'swimlane' },
   { type: 'flowchart-v2', pattern: /^\s*(graph|flowchart)/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'timeline', pattern: /^\s*timeline/, id: 'timeline', formats: ['svg'] },
   { type: 'gitGraph', pattern: /^\s*gitGraph/, id: 'gitGraph', formats: ['svg'] },

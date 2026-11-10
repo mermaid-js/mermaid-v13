@@ -4452,7 +4452,7 @@ $defs:
       theme:
         $ref: '#/$defs/BaseDiagramConfig/properties/theme'
         default: 'redux-color'
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
         x-mermaid:
