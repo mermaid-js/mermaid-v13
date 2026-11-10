@@ -3,6 +3,7 @@ import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { layoutC4, type C4Model } from '@mermaid-js/diagram-c4';
 import { c4TestContext, parsedC4 } from '@mermaid-js/diagram-c4/testing';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { cost, MIN_MS, repeatsFor } from './timing.ts';
 
 /**
  * R-SEC-5, D455: the C4 layout's work is bounded. The router and the label placement count the
@@ -12,8 +13,9 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
  * `rels · (elements + boundaries + 3·rels) ≤ 2,000,000` at the large size) costs no more than its
  * budget. Shape from `./stress.spec.ts` (#531): n and 8n elements; linear is ~8x, quadratic
  * ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, of the layout alone
- * (each source parsed once), the small layout repeated until it takes at least `MIN_MS`. Not
- * measured on a steady machine.
+ * (each source parsed once), the small layout repeated until it takes at least `MIN_MS`. The
+ * router's own cases have shapes too: a hub every element relates to, self-loops and reverse
+ * pairs. Not measured on a steady machine.
  */
 const C = 'C4Context\n';
 /** A shape: its name, its source for n elements, n for the small size, and whether it is past the budget there. */
@@ -53,6 +55,40 @@ const SHAPES: [string, (n: number) => string, number, boolean][] = [
     false,
   ],
   [
+    'a hub every element relates to (fan-in)',
+    (n) => {
+      let s = C + 'System(hub, "Hub")\n';
+      for (let i = 0; i < n; i++) s += `System(s${i}, "S${i}")\nRel(s${i}, hub, "uses ${i}")\n`;
+      return s;
+    },
+    100,
+    false,
+  ],
+  // Past the budget at both sizes: below it each label's search scans the lines and labels
+  // placed so far, so loops and reverse pairs grow faster than linearly up to the budget.
+  [
+    'self-loops',
+    (n) => {
+      let s = C;
+      for (let i = 0; i < n; i++) s += `System(s${i}, "S${i}")\nRel(s${i}, s${i}, "itself")\n`;
+      return s;
+    },
+    1_000,
+    true,
+  ],
+  [
+    'reverse pairs',
+    (n) => {
+      let s = C;
+      for (let i = 0; i < n; i++) s += `System(s${i}, "S${i}")\n`;
+      for (let i = 0; i + 1 < n; i += 2)
+        s += `Rel(s${i}, s${i + 1}, "there")\nRel(s${i + 1}, s${i}, "back")\n`;
+      return s;
+    },
+    1_000,
+    true,
+  ],
+  [
     // 800 elements and 560 relations at the large size: 560 · (800 + 1,680) = 1,388,800.
     'long relations across a grid, under the old estimate',
     (n) => {
@@ -67,42 +103,6 @@ const SHAPES: [string, (n: number) => string, number, boolean][] = [
     false,
   ],
 ];
-
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-/** CPU ms of `reps` runs of `run`. */
-const cost = (run: () => unknown, reps: number): number => {
-  const t0 = cpuMs();
-  for (let k = 0; k < reps; k++) run();
-  return cpuMs() - t0;
-};
-/**
- * The step of {@link cpuMs}: the median of 20 changes seen while spinning. About 1 µs on macOS;
- * on Linux `threadCpuUsage` (`getrusage(RUSAGE_THREAD)`) only moves when the scheduler books
- * the running thread's time, at each tick or switch, and steps by 4 ms on the hosted CI runner.
- */
-const clockStepMs = (): number => {
-  const steps: number[] = [];
-  let last = cpuMs();
-  while (steps.length < 20) {
-    const now = cpuMs();
-    if (now !== last) steps.push(now - last);
-    last = now;
-  }
-  return steps.sort((a, b) => a - b)[10]!;
-};
-/** The shortest small measurement: 8 ms, or ten clock steps where the clock is coarser. */
-const MIN_MS = Math.max(8, 10 * clockStepMs());
-/** How many runs of `run` take at least {@link MIN_MS}, in each of three samples. */
-const repeatsFor = (run: () => unknown): number => {
-  let reps = 1;
-  while (![0, 1, 2].every(() => cost(run, reps) >= MIN_MS)) reps *= 2;
-  return reps;
-};
 
 let theme: Theme;
 beforeAll(async () => {
