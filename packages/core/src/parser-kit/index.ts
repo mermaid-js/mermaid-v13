@@ -58,3 +58,5 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
+export { dropAt, isBreak, RuleLexer, SKIP, tagQuotes, UNSET } from './rule-lexer.ts';
+export type { RuleLexerOptions } from './rule-lexer.ts';
