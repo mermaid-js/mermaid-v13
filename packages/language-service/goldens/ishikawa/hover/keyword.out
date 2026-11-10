@@ -1,0 +1,12 @@
+@ 1:5  ishi|kawa-beta
+  1:1-1:14 "ishikawa-beta"
+  | **`ishikawa-beta`**
+  |
+  | `ishikawa-beta` or `ishikawa`: starts an Ishikawa (fishbone) diagram. Its first line is the effect, at the head of the fish; the indented lines after it are the causes, as bones off the spine.
+@ 2:4  E|ffect
+  2:3-2:9 "Effect"
+  | **effect** `Effect`
+  |
+  | The head of the fish · no causes
+@ 3:1  |
+  none

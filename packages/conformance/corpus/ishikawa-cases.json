@@ -1,0 +1,504 @@
+[
+  {
+    "id": "ishikawa-cases/header-alone",
+    "source": "ishikawa-beta"
+  },
+  {
+    "id": "ishikawa-cases/header-alone-bare-keyword",
+    "source": "ishikawa"
+  },
+  {
+    "id": "ishikawa-cases/header-newline",
+    "source": "ishikawa-beta\n"
+  },
+  {
+    "id": "ishikawa-cases/header-bare-keyword-newline",
+    "source": "ishikawa\n"
+  },
+  {
+    "id": "ishikawa-cases/header-blank-lines",
+    "source": "ishikawa-beta\n\n   \n\t\n"
+  },
+  {
+    "id": "ishikawa-cases/header-leading-lines",
+    "source": "\n\n  ishikawa-beta\n\n\n  P\n  A\n\n"
+  },
+  {
+    "id": "ishikawa-cases/header-bare-keyword",
+    "source": "ishikawa\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-upper-case",
+    "source": "ISHIKAWA-BETA\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-mixed-case",
+    "source": "IshiKawa\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-mixed-case-beta",
+    "source": "IshiKawa-Beta\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-word-suffix",
+    "source": "ishikawa-betax\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-underscore-suffix",
+    "source": "ishikawa-beta_x\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-dash-suffix",
+    "source": "ishikawa-beta-x\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-digit-suffix",
+    "source": "ishikawa-beta2\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-not-a-word",
+    "source": "ishikawas\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-effect-on-line",
+    "source": "ishikawa-beta Problem here\n  A\n  B"
+  },
+  {
+    "id": "ishikawa-cases/header-effect-on-line-bare-keyword",
+    "source": "ishikawa Problem\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-effect-after-tab",
+    "source": "ishikawa-beta\tTabbed effect\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-effect-on-line-only",
+    "source": "ishikawa-beta Problem"
+  },
+  {
+    "id": "ishikawa-cases/header-trailing-blanks",
+    "source": "ishikawa-beta   \n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/header-trailing-blanks-no-body",
+    "source": "ishikawa-beta   "
+  },
+  {
+    "id": "ishikawa-cases/header-twice",
+    "source": "ishikawa-beta\n  ishikawa-beta\n  P"
+  },
+  {
+    "id": "ishikawa-cases/header-blank-line-before-effect",
+    "source": "ishikawa-beta\n\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/keyword-at-line-start",
+    "source": "ishikawa-beta\n  P\n  Ishikawa review"
+  },
+  {
+    "id": "ishikawa-cases/keyword-dash-word-at-line-start",
+    "source": "ishikawa-beta\n  P\n  ishikawa-diagram"
+  },
+  {
+    "id": "ishikawa-cases/keyword-upper-case-at-line-start",
+    "source": "ishikawa-beta\n  P\n  ISHIKAWA-BETA"
+  },
+  {
+    "id": "ishikawa-cases/keyword-alone-at-line-start",
+    "source": "ishikawa-beta\n  P\n  ishikawa"
+  },
+  {
+    "id": "ishikawa-cases/keyword-unindented-line",
+    "source": "ishikawa-beta\nP\nishikawa method"
+  },
+  {
+    "id": "ishikawa-cases/keyword-inside-text",
+    "source": "ishikawa-beta\n  P\n  The ishikawa way\n  ishikawas\n  ishikawa_x"
+  },
+  {
+    "id": "ishikawa-cases/keyword-as-effect",
+    "source": "ishikawa-beta\n  ishikawa"
+  },
+  {
+    "id": "ishikawa-cases/comment-whole-line",
+    "source": "ishikawa-beta\n  P\n  %% a comment\n  A\n%% another\n    a1"
+  },
+  {
+    "id": "ishikawa-cases/comment-inline",
+    "source": "ishikawa-beta\n  P\n  A %% not a comment\n  B%%glued"
+  },
+  {
+    "id": "ishikawa-cases/comment-on-header-line",
+    "source": "ishikawa-beta %% c\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/comment-glued-to-header",
+    "source": "ishikawa-beta%% c\n  P"
+  },
+  {
+    "id": "ishikawa-cases/comment-bare-percent-line",
+    "source": "ishikawa-beta\n  P\n%%\n  A\n  %%\n  B"
+  },
+  {
+    "id": "ishikawa-cases/comment-bare-percent-last",
+    "source": "ishikawa-beta\n  P\n%%"
+  },
+  {
+    "id": "ishikawa-cases/comment-percent-blanks",
+    "source": "ishikawa-beta\n  P\n%%   \n  A"
+  },
+  {
+    "id": "ishikawa-cases/comment-last-line",
+    "source": "ishikawa-beta\n  P\n  A\n  %% end"
+  },
+  {
+    "id": "ishikawa-cases/comment-before-header",
+    "source": "%% leading\nishikawa-beta\n  P"
+  },
+  {
+    "id": "ishikawa-cases/comment-after-effect-on-header",
+    "source": "ishikawa-beta P %% c\n  A"
+  },
+  {
+    "id": "ishikawa-cases/directive-before-header",
+    "source": "%%{init: {\"theme\": \"dark\"}}%%\nishikawa-beta\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/directive-mid-line",
+    "source": "ishikawa-beta\n  P\n  A%%{init: {}}%%B\n  C"
+  },
+  {
+    "id": "ishikawa-cases/title-and-acc-as-causes",
+    "source": "ishikawa-beta\n  P\n  title Foo\n  accTitle: x\n  accDescr: y\n  accDescr {\n  }"
+  },
+  {
+    "id": "ishikawa-cases/front-matter-title",
+    "source": "---\ntitle: From front matter\n---\nishikawa-beta\n  P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/punctuation-text",
+    "source": "ishikawa-beta\n  P\n  [a] (b) {c} \"d\" 'e' :f; g->h"
+  },
+  {
+    "id": "ishikawa-cases/tabs",
+    "source": "ishikawa-beta\n\tP\n\tA\n\t\ta1\n\tB"
+  },
+  {
+    "id": "ishikawa-cases/tabs-and-spaces",
+    "source": "ishikawa-beta\n  P\n\t A\n \t  a1\n  B"
+  },
+  {
+    "id": "ishikawa-cases/baseline-clamp",
+    "source": "ishikawa-beta\n  P\n    A\n      a1\n  B\n    b1"
+  },
+  {
+    "id": "ishikawa-cases/baseline-clamp-unindented",
+    "source": "ishikawa-beta\nP\n    A\nB\n  b1"
+  },
+  {
+    "id": "ishikawa-cases/effect-indented-more",
+    "source": "ishikawa-beta\n      P\n  A\n    a1\n  B"
+  },
+  {
+    "id": "ishikawa-cases/unindented-effect-indented-causes",
+    "source": "ishikawa-beta\nRoot Cause\n    Category A\n        Cause 1\n    Category B\n        Cause 2"
+  },
+  {
+    "id": "ishikawa-cases/example-blurry-photo",
+    "source": "\nishikawa-beta\n    Blurry Photo\n    Process\n        Out of focus\n        Shutter speed too slow\n        Protective film not removed\n        Beautification filter applied\n    User\n        Shaky hands\n    Equipment\n        LENS\n            Inappropriate lens\n            Damaged lens\n            Dirty lens\n        SENSOR\n            Damaged sensor\n            Dirty sensor\n    Environment\n        Subject moved too quickly\n        Too dark\n"
+  },
+  {
+    "id": "ishikawa-cases/blank-lines-between-causes",
+    "source": "ishikawa-beta\n  P\n\n  A\n\n\n  B"
+  },
+  {
+    "id": "ishikawa-cases/blank-only-lines-between-causes",
+    "source": "ishikawa-beta\n  P\n   \n  A\n \t \n    \n  B"
+  },
+  {
+    "id": "ishikawa-cases/trailing-blanks-after-text",
+    "source": "ishikawa-beta\n  P   \n  A\t\n  B  "
+  },
+  {
+    "id": "ishikawa-cases/trailing-blank-lines",
+    "source": "ishikawa-beta\n  P\n  A\n\n\n"
+  },
+  {
+    "id": "ishikawa-cases/trailing-blanks-last-line",
+    "source": "ishikawa-beta\n  P\n  A\n   "
+  },
+  {
+    "id": "ishikawa-cases/no-indent-at-all",
+    "source": "ishikawa-beta\nP\nA\nB"
+  },
+  {
+    "id": "ishikawa-cases/br-in-labels",
+    "source": "ishikawa-beta\n  Effect<br>two lines\n  A<br/>B\n    a<br />b"
+  },
+  {
+    "id": "ishikawa-cases/entities",
+    "source": "ishikawa-beta\n  P #35; x\n  A #quot;q#quot;\n  B #9829;"
+  },
+  {
+    "id": "ishikawa-cases/style-like-semicolon",
+    "source": "ishikawa-beta\n  P\n  style a:#f00;\n  classDef x fill:#fff;"
+  },
+  {
+    "id": "ishikawa-cases/html-attribute-quotes",
+    "source": "ishikawa-beta\n  P\n  <a href=\"x\">link</a>"
+  },
+  {
+    "id": "ishikawa-cases/unicode-text",
+    "source": "ishikawa-beta\n  Ärger 問題\n  Ursache 😀\n    naïve"
+  },
+  {
+    "id": "ishikawa-cases/case-folding-ascii-only",
+    "source": "ishikawa\n  P\n  iKshikawa\n  ıshikawa\n  iſhikawa"
+  },
+  {
+    "id": "ishikawa-cases/odd-characters",
+    "source": "ishikawa-beta\n  @{}[]()\"`'\\^#;:<>\u0000\n 😀"
+  },
+  {
+    "id": "ishikawa-cases/comment-line-in-blank-run",
+    "source": "ishikawa-beta\n  P\n\n%% c\n   \n  A"
+  },
+  {
+    "id": "ishikawa-cases/long-label",
+    "source": "ishikawa-beta\n  word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \n  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  {
+    "id": "ishikawa-cases/cr-line-breaks",
+    "source": "ishikawa-beta\r  P\r  A\r    a1"
+  },
+  {
+    "id": "ishikawa-cases/crlf-blank-lines",
+    "source": "ishikawa-beta\r\n\r\n  P\r\n  \r\n  A\r\n"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-in-text",
+    "source": "ishikawa-beta\n  P still P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-as-indent",
+    "source": "ishikawa-beta\n  P\n A\n  B"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-after-header",
+    "source": "ishikawa-beta P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-ends-header-comment",
+    "source": "ishikawa-beta %% c P\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-before-line-break",
+    "source": "ishikawa-beta\n  P \n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-blank-run",
+    "source": "ishikawa-beta\n  P\n   \n  A"
+  },
+  {
+    "id": "ishikawa-cases/paragraph-separator-in-text",
+    "source": "ishikawa-beta\n  P x\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-before-comment",
+    "source": "ishikawa-beta\n  P\n %% c\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-in-bare-comment",
+    "source": "ishikawa-beta\n  P\n%% x\n  A"
+  },
+  {
+    "id": "ishikawa-cases/line-separator-in-removed-comment-line",
+    "source": "ishikawa-beta\n  P\n  %% c d\n  A"
+  },
+  {
+    "id": "ishikawa-cases/no-break-space-indent",
+    "source": "ishikawa-beta\n  P\n    A"
+  },
+  {
+    "id": "ishikawa-cases/bom-and-wide-spaces",
+    "source": "ishikawa-beta\n﻿P\n　A\n  a1"
+  },
+  {
+    "id": "ishikawa-cases/vertical-tab-and-form-feed",
+    "source": "ishikawa-beta\n  P\n\u000bA\n\f\fa1"
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-line",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa review\n  B",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-lines",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa x\n  B\n  Ishikawa-beta y\n  C",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-unindented-lines",
+    "source": "ishikawa-beta\nP\n  A\nishikawa\n  B\nISHIKAWA again\n  C",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-on-header-line",
+    "source": "ishikawa-beta ishikawa\nP\n  A",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-header-twice",
+    "source": "ishikawa-beta\nishikawa-beta\nP\n  A\n  B",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-line-after-header",
+    "source": "ishikawa-beta\n\nP\n  A\n  B",
+    "errors": [["UNEXPECTED", 3]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-lines-after-header",
+    "source": "ishikawa-beta\n\n \n\t\nP\n  A",
+    "errors": [["UNEXPECTED", 5]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-then-blank-line",
+    "source": "ishikawa-beta\nP\n  A\n%%\n\n  B\n  C",
+    "errors": [["UNEXPECTED", 6]],
+    "keeps": ["A", "B", "C"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-then-blank-lines-twice",
+    "source": "ishikawa-beta\nP\n  A\n%%\n\n  B\n%%\n\n\n  C\n  D",
+    "errors": [
+      ["UNEXPECTED", 6],
+      ["UNEXPECTED", 10]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-after-header-and-comment-pairs",
+    "source": "ishikawa-beta\n\nP\n  A\n%%\n\n  B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-separator-ends-header-comment",
+    "source": "ishikawa-beta %% c P\n  A",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-separator-ends-header-comment-then-keyword",
+    "source": "ishikawa-beta %% c P\n  A\n  ishikawa\n  B",
+    "errors": [
+      ["UNEXPECTED", 1],
+      ["UNEXPECTED", 3]
+    ],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header",
+    "source": "ishikawa",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header-beta",
+    "source": "ishikawa-beta",
+    "errors": [["UNEXPECTED", 1]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-bare-header-after-comment-lines",
+    "source": "%%\nishikawa",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": []
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-mixed",
+    "source": "ishikawa-beta\nP\n  A\n  ishikawa\n  B\n%%\n\n  C\n  ishikawa-beta\n  D",
+    "errors": [
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 8],
+      ["UNEXPECTED", 9]
+    ],
+    "keeps": ["A", "B", "C", "D"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-many-errors",
+    "source": "ishikawa-beta\n\nP\n  ishikawa\n  A\n%%\n\n  B\nishikawa-beta\n  C\n%%\n\n  D\n  ishikawa x\n  E",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 8],
+      ["UNEXPECTED", 9],
+      ["UNEXPECTED", 13],
+      ["UNEXPECTED", 14]
+    ],
+    "keeps": ["A", "B", "C", "D", "E"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-deep-causes",
+    "source": "ishikawa-beta\nP\n  A\n    a1\n    ishikawa\n    a2\n      ishikawa-beta\n  B",
+    "errors": [
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 7]
+    ],
+    "keeps": ["A", "a1", "a2", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-tab-indent",
+    "source": "ishikawa-beta\nP\n\tA\n\tishikawa\n\tB",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-crlf",
+    "source": "ishikawa-beta\r\nP\r\n  A\r\n  ishikawa\r\n  B\r\n",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-comment-blank-crlf",
+    "source": "ishikawa-beta\r\nP\r\n  A\r\n%%\r\n\r\n  B\r\n",
+    "errors": [["UNEXPECTED", 6]],
+    "keeps": ["A", "B"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-keyword-each-line",
+    "source": "ishikawa-beta\nP\n  ishikawa\n  ishikawa\n  ishikawa\n  A",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 4],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A"]
+  },
+  {
+    "id": "ishikawa-cases/recovery-blank-after-header-keyword-later",
+    "source": "ishikawa-beta\n\nP\n  A\n  ishikawa-beta\n  B",
+    "errors": [
+      ["UNEXPECTED", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["A", "B"]
+  }
+]
