@@ -21,6 +21,8 @@ Unmet criteria: none. Choices the spec and D-ids leave open:
 
 ## T0b #591
 
+- **Merged as-is at +1,270 B gz** (#647, 7d8589e43); no decision comment was left on the A/B/C options. #591 stays open for the maintainer.
+
 Unmet criteria: none of the ticket's. **Size is open, for Knut (A/B/C in tickets/591.md):** gated core +1,270 B gz as is; +1,195 without node-wide lane avoidance.
 
 Choices:
