@@ -10,12 +10,11 @@
  * D514's two fixes of v12, listed in MIGRATION.md:
  * - rule names are measured at the bold weight they are drawn in (v12 measured them at normal
  *   weight), so the start marker clears a bold name;
- * - every arc reaches at least `max(extent + verticalSeparation, 2 × arcRadius)` from the track
- *   it leaves. v12 drew a choice branch closer than `2r` to the main line with its vertical piece
- *   running backwards (overshooting arcs); such a branch, and every branch beyond it on that side,
- *   now moves out to `2r`, so the choice's main line is no longer at half its height. An
- *   optional's bypass and a repetition's loop already reach `2r` past the element; they keep
- *   v12's gap of `2r` unless `verticalSeparation` is larger.
+ * - a choice's nearest branch above and below the main line reaches at least `2 × arcRadius`
+ *   (`2r`) from it. v12 drew a branch closer than `2r` with its vertical piece running backwards
+ *   (overshooting arcs); that branch now moves out to `2r`, and every branch beyond it on that
+ *   side moves with it, so the choice's main line is no longer at half its height. An optional's
+ *   bypass and a repetition's loop sit `max(2r, verticalSeparation)` from the element (v12: `2r`).
  * With v12's defaults (`verticalSeparation` 8, `arcRadius` 10) and v12's measurements, only the
  * choices v12 overshot change.
  */
@@ -80,10 +79,12 @@ export function layoutRailroad(
   ctx: RailroadLayoutContext,
   cells?: RailroadCellOptions
 ): RailroadLayout {
-  const config = railroadConfig(railroadSection(ctx));
-  const invalid = cells || ctx.units?.id === 'cell' ? undefined : railroadConfigWarning(config);
+  const checked = railroadConfig(railroadSection(ctx));
+  const invalid = cells || ctx.units?.id === 'cell' ? undefined : railroadConfigWarning(checked);
   if (invalid) ctx.warn?.(invalid);
-  const options = cells?.lengths ?? config.lengths;
+  // In cells the preset's lengths replace the section's (which are px).
+  const config = cells ? { ...checked, lengths: cells.lengths } : checked;
+  const options = config.lengths;
   const m = cells?.metrics ?? RAILROAD_METRICS;
   const measurer = cells?.measurer ?? ctx.measurer;
   const units = cells ? 'cell' : 'px';
@@ -98,7 +99,7 @@ export function layoutRailroad(
 
   if (model.rules.length === 0) {
     const canvas = { x: 0, y: 0, width: m.emptyWidth, height: m.emptyHeight };
-    return { ...canvas, units, metrics: m, options, config, fonts, rules: [], bounds: canvas };
+    return { ...canvas, units, metrics: m, config, fonts, rules: [], bounds: canvas };
   }
 
   const place = new Placer(options, m, measurer, text, ruleName, cells ?? { guard: pxGuard });
@@ -119,7 +120,7 @@ export function layoutRailroad(
   for (const r of rules) {
     visitRule(r, (d) => void box.add(d.stroked ? shifted(d.rect, 0, 0, half) : d.rect));
   }
-  return { width, height, units, metrics: m, options, config, fonts, rules, bounds: box.rect() };
+  return { width, height, units, metrics: m, config, fonts, rules, bounds: box.rect() };
 }
 
 /** The size of a laid-out expression, before its parent places it. */
@@ -398,7 +399,7 @@ class Placer {
 
   /**
    * The gap between an element and a bypass above it or a loop below it: v12's `2r`, or more
-   * when `verticalSeparation` asks for it (D514: the arcs reach `max(extent + vs, 2r)`).
+   * when `verticalSeparation` is larger (D514: `max(2r, verticalSeparation)`).
    */
   private gap(): number {
     return Math.max(2 * this.o.arcRadius, this.o.verticalSeparation);

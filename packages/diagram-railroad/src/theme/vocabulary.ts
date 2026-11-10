@@ -3,12 +3,9 @@ import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 /** `usedBy` of every row: railroad reads them all. */
 const RAILROAD: readonly string[] = ['railroad'];
 
-const colour = (alias: string, nested: string): DiagramThemeVarDef => ({
-  alias,
-  kind: 'color',
-  usedBy: RAILROAD,
-  nested,
-});
+/** A colour row; `nested` keeps its literal type, which `RAILROAD_COLOUR_KEYS` is keyed by. */
+const colour = <N extends string>(alias: string, nested: N) =>
+  ({ alias, kind: 'color', usedBy: RAILROAD, nested }) as const satisfies DiagramThemeVarDef;
 
 /**
  * Railroad's theme variables (spec #526 Q6, D516, D331, D335, D540): one colour per v12 style
@@ -17,7 +14,7 @@ const colour = (alias: string, nested: string): DiagramThemeVarDef => ({
  * `commentFill`, `commentStroke` and `commentTextColor` style `.railroad-comment`, which nothing
  * draws, so they have no variable. `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
-export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
+export const THEME_VARIABLES = {
   railroadTerminalFill: colour('rtf', 'terminalFill'),
   railroadTerminalStroke: colour('rts', 'terminalStroke'),
   railroadTerminalTextColor: colour('rtt', 'terminalTextColor'),
@@ -29,4 +26,4 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   railroadSpecialFill: colour('rsf', 'specialFill'),
   railroadSpecialStroke: colour('rss', 'specialStroke'),
   railroadRuleNameColor: colour('rrn', 'ruleNameColor'),
-};
+} as const satisfies Readonly<Record<string, DiagramThemeVarDef>>;

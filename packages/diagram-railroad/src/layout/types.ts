@@ -10,7 +10,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
-import type { RailroadConfig, RailroadLayoutConfig } from '../config.ts';
+import type { RailroadConfig } from '../config.ts';
 import type { RailroadNodeKind } from '../model.ts';
 import type { RailroadMetrics } from './metrics.ts';
 
@@ -154,14 +154,10 @@ export interface RailroadLayout {
   /** The fixed lengths the layout used: `RAILROAD_METRICS`, or the cell table in cells. */
   readonly metrics: RailroadMetrics;
   /**
-   * The lengths the layout used: the checked `railroad` lengths (`config.lengths`) in px, the
-   * `ascii.padding` preset's in cells.
-   */
-  readonly options: RailroadLayoutConfig;
-  /**
    * The `railroad` section, checked once (D515): lengths, the font and colours it sets that are
    * usable, `useMaxWidth`, and the keys it set that are not (the layout's one
-   * `RAILROAD_CONFIG_INVALID`). The renderer draws with it.
+   * `RAILROAD_CONFIG_INVALID`). The renderer draws with it. `lengths` are the lengths the layout
+   * used: the checked `railroad` lengths in px, the `ascii.padding` preset's in cells.
    */
   readonly config: RailroadConfig;
   /** The fonts measured in: every box's text, and the rule names (bold, D514). */

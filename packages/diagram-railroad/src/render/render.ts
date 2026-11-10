@@ -196,7 +196,7 @@ function openRoot(
     style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
     'font-family': family,
     'font-size': size,
-    'stroke-width': layout.options.strokeWidth,
+    'stroke-width': layout.config.lengths.strokeWidth,
   });
   if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
   if (title) textElement(w, 'title', title, `${prefix}-title`);

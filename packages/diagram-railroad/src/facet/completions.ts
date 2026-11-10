@@ -22,11 +22,14 @@ import { RAILROAD_HEADERS } from '../parser/detect.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
 import {
+  atLineStart,
+  block,
   NOTATION_DOCS,
   notationOf,
+  ruleDefinitions,
   ruleFirstLine,
-  rulesByName,
   span,
+  isTrivia,
   tokenBefore,
 } from './tables.ts';
 
@@ -130,13 +133,6 @@ function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeRe
   return span(probe.prefix.start, end);
 }
 
-/** Whether only blanks come before `at` on its line. */
-function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
-}
-
 /** The defined rules whose name starts with `prefix`, as items written by `write`. */
 function ruleItems(
   doc: DocumentView<RailroadDocument>,
@@ -145,7 +141,7 @@ function ruleItems(
   write: (name: string) => string
 ): CompletionItem[] {
   const out: CompletionItem[] = [];
-  for (const [name, [first]] of rulesByName(doc.result.ast)) {
+  for (const [name, [first]] of ruleDefinitions(doc.text, doc.result)) {
     if (!first || !name.startsWith(prefix)) continue;
     const line = ruleFirstLine(doc.text, first).trim();
     out.push({
@@ -154,7 +150,7 @@ function ruleItems(
       insertText: write(name),
       range,
       detail: 'rule',
-      documentation: `\`\`\`\n${line}\n\`\`\``,
+      documentation: block(line),
     });
   }
   return out;
@@ -180,7 +176,7 @@ function irReferenceItems(
   const before: number[] = [];
   for (let k = j - 1; k >= 0 && before.length < 2; k--) {
     const kk = tokens.kind[k] ?? Kind.EOF;
-    if (kk !== Kind.Space && kk !== Kind.Comment && kk !== T.BlockComment) before.push(kk);
+    if (!isTrivia(kk)) before.push(kk);
   }
   if (before[0] !== T.LParen || before[1] !== T.KwNonterminal) return [];
   const name = /^[\w-]*/.exec(text.slice(o))?.[0] ?? '';

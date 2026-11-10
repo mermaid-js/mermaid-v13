@@ -249,6 +249,11 @@ describe('completion', () => {
     expect(ir.find((i) => i.label === 'ab')?.insertText).toBe('nonterminal("ab")');
     const quoted = complete('railroad-beta\nab = terminal("1") ;\nc = nonterminal("a|") ;');
     expect(quoted.map((i) => [i.label, i.insertText])).toEqual([['ab', 'ab']]);
+    // Any trivia between the call and its string, a directive too.
+    const directive = complete(
+      'railroad-beta\nab = terminal("1") ;\nc = nonterminal %%{init: {}}%%\n("a|") ;'
+    );
+    expect(directive.map((i) => i.label)).toEqual(['ab']);
     // Not in a terminal's string, nor at a new rule's name.
     expect(complete('railroad-beta\nab = terminal("1") ;\nc = terminal("a|") ;')).toEqual([]);
     expect(labels(complete('railroad-ebnf-beta\nab = "1" ;\na|'))).toEqual([]);
@@ -260,6 +265,19 @@ describe('completion', () => {
     expect(labels(complete('railroad-abnf-beta\na = b |;'))).toEqual(
       expect.arrayContaining(['/', '*', '1*', ';'])
     );
+  });
+
+  it('offers a rule that does not parse, and the rule being written', () => {
+    expect(labels(complete('railroad-ebnf-beta\nb = "x" | ;\na = |'))).toContain('b');
+    expect(labels(complete('railroad-abnf-beta\nb = "x" ; trailing\nc = "y" ;\na = |'))).toContain(
+      'b'
+    );
+    expect(labels(complete('railroad-ebnf-beta\nexpr = "x" | ex|'))).toContain('expr');
+  });
+
+  it('fences a rule’s line whatever backticks it holds', () => {
+    const items = complete('railroad-ebnf-beta\nb = "```" ;\na = |');
+    expect(items.find((i) => i.label === 'b')?.documentation).toBe('````\nb = "```" ;\n````');
   });
 });
 
@@ -288,6 +306,16 @@ describe('hover', () => {
   it('shows the first line of the rule a name refers to', () => {
     expect(hover('railroad-peg-beta\na <- |b ;\nb <- "1"\n  / "2" ;')).toContain('b <- "1" …');
     expect(hover('railroad-peg-beta\na <- |c ;')).toContain('No rule named `c`');
+  });
+
+  it('shows a rule that does not parse yet, as go-to-definition finds it', () => {
+    const ebnf = hover('railroad-ebnf-beta\na = |b ;\nb = "x" | ;');
+    expect(ebnf).not.toContain('No rule named');
+    expect(ebnf).toContain('b = "x" | ;');
+    expect(ebnf).toContain('does not parse yet');
+    const abnf = hover('railroad-abnf-beta\na = |b ;\nb = "x" ; trailing');
+    expect(abnf).not.toContain('No rule named');
+    expect(abnf).toContain('b = "x" ; trailing');
   });
 
   it('shows what an ABNF repeat was read as', () => {

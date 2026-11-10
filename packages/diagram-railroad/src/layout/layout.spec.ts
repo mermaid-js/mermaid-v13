@@ -5,6 +5,9 @@ import { railroadConfigDefaults } from '../generated/config-defaults.ts';
 import { parseRailroad } from '../parser/index.ts';
 import { railroadLayoutViolations } from './invariants.ts';
 import { layoutRailroad } from './layout.ts';
+import { cellOptions } from './cells.ts';
+import { RAILROAD_CELL_LENGTHS } from './metrics.ts';
+import { cellProfile } from '@mermaid-js/core/layout';
 import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
 import type { Theme } from '@mermaid-js/core/theme';
 import {
@@ -274,6 +277,20 @@ describe('D514', () => {
 });
 
 describe('config and fonts', () => {
+  it('keeps the lengths it used in config.lengths only: the checked ones in px, the cell preset’s in cells', () => {
+    const px = lay('railroad-beta\na = terminal("x") ;\n', { padding: 12 });
+    expect(px.config.lengths.padding).toBe(12);
+    expect('options' in px).toBe(false);
+    const { model } = parseRailroad('railroad-beta\na = terminal("x") ;\n');
+    const cells = layoutRailroad(
+      model,
+      context({ padding: 12 }),
+      cellOptions(cellProfile('compact'), v12Measurer)
+    );
+    expect(cells.config.lengths).toEqual(RAILROAD_CELL_LENGTHS.compact);
+    expect('options' in cells).toBe(false);
+  });
+
   it('reads the lengths as v12 did: numbers, parseFloat strings, else the default', () => {
     expect(railroadLayoutConfig(undefined)).toEqual(RAILROAD_LAYOUT_DEFAULTS);
     expect(

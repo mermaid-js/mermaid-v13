@@ -14,7 +14,7 @@
  *
  * A probe parse (completion) gets the parser's result alone.
  */
-import { inKindSet, isSpace, Kind } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type {
   Diagnostic,
   Range,
@@ -24,9 +24,9 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import type { RailroadParseOptions, RailroadParseResult } from '../parser/parser.ts';
 import { parseRailroad } from '../parser/parse.ts';
-import { RAILROAD_TRIVIA, T } from '../parser/tokens.ts';
+import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
-import { code, notationOf } from './tables.ts';
+import { atLineStart, code, isTrivia, notationOf } from './tables.ts';
 
 /** D513's hint codes, and D517's undefined reference. */
 export const RAILROAD_TITLE_PREFIX = 'RAILROAD_TITLE_PREFIX';
@@ -65,8 +65,6 @@ const info = (id: string, message: string, range: Range): Diagnostic => ({
   message,
   range,
 });
-
-const isTrivia = (kind: number) => inKindSet(RAILROAD_TRIVIA, kind);
 
 /** The significant token before (`step` -1) or after (+1) token `j`, or -1. */
 function significant(tokens: TokenStream, j: number, step: 1 | -1): number {
@@ -149,16 +147,6 @@ function hints(text: string, tokens: TokenStream, notation: RailroadNotation): D
     if (hint) out.push(hint);
   }
   return out;
-}
-
-/** Whether only blanks come before `at` on its line. */
-function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && !LINE_BREAK.test(text.charAt(i - 1))) {
-    if (!isSpace(text.charCodeAt(i - 1))) return false;
-    i--;
-  }
-  return true;
 }
 
 /**

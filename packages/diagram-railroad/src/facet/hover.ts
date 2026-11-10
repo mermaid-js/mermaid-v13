@@ -1,6 +1,7 @@
 /**
  * Railroad hover (DESIGN §4.5, D93): a rule name, where a rule defines it or a nonterminal
- * names it, shows the first line of the rule it refers to (the first rule of that name, D517),
+ * names it, shows the first line of the rule it refers to (the first rule of that name, D517;
+ * a rule that does not parse yet counts, as go-to-definition finds it),
  * says when the name is defined more than once (v12 draws each) and when no rule defines it; an
  * ABNF repeat shows the minimum and maximum it was read as, which the diagram does not draw
  * (D514); a keyword or operator shows the one-line doc of its notation's grammar file
@@ -12,7 +13,15 @@ import type { RailroadDocument } from '../parser/ast.ts';
 import { RULE_SYMBOL } from '../parser/parser.ts';
 import { repeatBounds } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import { code, NOTATION_DOCS, notationOf, ruleFirstLine, rulesByName, span } from './tables.ts';
+import {
+  block,
+  code,
+  NOTATION_DOCS,
+  notationOf,
+  ruleDefinitions,
+  ruleFirstLine,
+  span,
+} from './tables.ts';
 
 /** The header statement tokens: only their keyword is hovered. */
 const STATEMENT_WORDS: Readonly<Record<number, string>> = {
@@ -21,16 +30,9 @@ const STATEMENT_WORDS: Readonly<Record<number, string>> = {
   [T.AccDescr]: 'accDescr',
 };
 
-/** A fenced code block holding `text`, whatever backticks it has. */
-function block(text: string): string {
-  const runs = text.match(/`{3,}/g) ?? [];
-  const fence = '`'.repeat(Math.max(2, ...runs.map((r) => r.length)) + 1);
-  return `${fence}\n${text}\n${fence}`;
-}
-
 function ruleHover(name: string, doc: DocumentView<RailroadDocument>): string {
   const head = `**rule** ${code(name)}`;
-  const rules = rulesByName(doc.result.ast).get(name) ?? [];
+  const rules = ruleDefinitions(doc.text, doc.result).get(name) ?? [];
   const [first] = rules;
   if (!first) {
     return `${head}\n\nNo rule named ${code(name)} is defined: the diagram draws its box with no rule behind it.`;
@@ -38,6 +40,9 @@ function ruleHover(name: string, doc: DocumentView<RailroadDocument>): string {
   const line = ruleFirstLine(doc.text, first);
   const more = first.range.end - first.range.start > line.length ? ' …' : '';
   const parts = [head, block(`${line}${more}`)];
+  if (!first.parsed) {
+    parts.push('This rule does not parse yet: the diagram draws it once it does.');
+  }
   if (rules.length > 1) {
     const lines = new LineIndex(doc.text);
     const at = rules.map((r) => lines.position(r.range.start).line + 1);

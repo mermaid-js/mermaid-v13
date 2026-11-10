@@ -4,7 +4,8 @@
  * model's `notation`). Keyword docs are not written here: they come from the grammar files
  * (`generated/*.docs.ts`).
  */
-import type { Range, TokenCategory, TokenStream } from '@mermaid-js/core/parser-kit';
+import { inKindSet, isSpace } from '@mermaid-js/core/parser-kit';
+import type { ParseResult, Range, TokenCategory, TokenStream } from '@mermaid-js/core/parser-kit';
 import { railroadCategories } from '../generated/categories.ts';
 import { railroadDocs } from '../generated/docs.ts';
 import { railroadAbnfCategories } from '../generated/railroad-abnf.categories.ts';
@@ -15,6 +16,8 @@ import { railroadPegCategories } from '../generated/railroad-peg.categories.ts';
 import { railroadPegDocs } from '../generated/railroad-peg.docs.ts';
 import type { RailroadModel } from '../model.ts';
 import type { RailroadDocument, RailroadRuleNode } from '../parser/ast.ts';
+import { RULE_SYMBOL } from '../parser/parser.ts';
+import { RAILROAD_TRIVIA } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
 
 /** Each notation's kind → category table (D94), as gen-grammar wrote it from its grammar. */
@@ -51,16 +54,57 @@ export function notationOf(model: unknown): RailroadNotation {
   return (model as Partial<RailroadModel> | undefined)?.notation ?? 'railroad';
 }
 
-/** The rules of `doc` by name, in source order; each name's rules in source order. */
-export function rulesByName(doc: RailroadDocument): Map<string, RailroadRuleNode[]> {
-  const out = new Map<string, RailroadRuleNode[]>();
-  for (const n of doc.children) {
-    if (n.type !== 'Rule') continue;
-    const list = out.get(n.name);
-    if (list) list.push(n);
-    else out.set(n.name, [n]);
+/** Where a rule is defined: the rule itself, or the first line of one that fails to parse. */
+export interface RuleDefinition {
+  /** From the rule's name to its end (a rule that parsed) or its line's end (one that failed). */
+  readonly range: Range;
+  /** Whether the rule parsed (a failed rule still defines its name, `keepFailedRules`). */
+  readonly parsed: boolean;
+}
+
+/**
+ * The rules `result` defines, by name, in source order: every definition of a rule symbol, as
+ * go-to-definition and rename read them, so a rule that fails to parse is one too.
+ */
+export function ruleDefinitions(
+  text: string,
+  result: ParseResult<unknown, RailroadDocument>
+): Map<string, RuleDefinition[]> {
+  const parsed = new Map<number, RailroadRuleNode>();
+  for (const n of result.ast.children) if (n.type === 'Rule') parsed.set(n.nameRange.start, n);
+  const out = new Map<string, RuleDefinition[]>();
+  for (const s of result.symbols) {
+    if (s.role !== 'def' || s.kind !== RULE_SYMBOL) continue;
+    const rule = parsed.get(s.range.start);
+    const start = s.range.start;
+    const def: RuleDefinition = rule
+      ? { range: rule.range, parsed: true }
+      : { range: span(start, start + restOfLine(text, start).length), parsed: false };
+    const list = out.get(s.name);
+    if (list) list.push(def);
+    else out.set(s.name, [def]);
   }
   return out;
+}
+
+/** A fenced code block holding `text`, whatever backticks it has. */
+export function block(text: string): string {
+  const runs = text.match(/`{3,}/g) ?? [];
+  const fence = '`'.repeat(Math.max(2, ...runs.map((r) => r.length)) + 1);
+  return `${fence}\n${text}\n${fence}`;
+}
+
+/** Whether a token of `kind` is trivia: a blank, comment, directive or YAML block. */
+export const isTrivia = (kind: number): boolean => inKindSet(RAILROAD_TRIVIA, kind);
+
+/** Whether only blanks come before `at` on its line. */
+export function atLineStart(text: string, at: number): boolean {
+  let i = at;
+  while (i > 0 && text.charAt(i - 1) !== '\n' && text.charAt(i - 1) !== '\r') {
+    if (!isSpace(text.charCodeAt(i - 1))) return false;
+    i--;
+  }
+  return true;
 }
 
 /** Index of the last token of `tokens` starting at or before `offset`, or -1. */

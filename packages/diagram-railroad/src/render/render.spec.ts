@@ -67,6 +67,10 @@ describe('railroad SVG structure (v12 class names)', () => {
     expect(shape(t, label)).toBe('text.railroad-rule-name');
     expect(textOf(t, label)).toBe('a =');
     expect(t.getAttr(label, 'font-weight')).toBe('bold');
+    // The rule name's text carries its rule's data-id; its group, no source mapping.
+    expect(t.getAttr(label, 'data-id')).toBe('rule:a');
+    expect(t.getAttr(label, 'data-ast')).toBeUndefined();
+    expect(t.getAttr(name!, 'data-id')).toBeUndefined();
     expect(kids(t, start!).map((n) => tagOf(t, n))).toEqual(['circle']);
     expect(t.getAttr(kids(t, end!)[0]!, 'r')).toBe('5');
   });

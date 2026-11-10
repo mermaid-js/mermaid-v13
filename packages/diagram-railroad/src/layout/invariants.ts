@@ -432,7 +432,7 @@ function measuredViolations(
       `${rule.ast}: the name is ${rule.label.box.width} wide, bold it measures ${nameWidth}`
     );
   }
-  const p = layout.options.padding;
+  const p = layout.config.lengths.padding;
   const lineHeight = measurer.metrics(text).lineHeight;
   const walk = (e: RailroadExpressionLayout) => {
     if (e.text && e.box) {
@@ -482,7 +482,7 @@ export function railroadLayoutViolations(
   if (layout.rules.length !== model.rules.length) {
     return [`${layout.rules.length} rules, the model has ${model.rules.length}`];
   }
-  const o = layout.options;
+  const o = layout.config.lengths;
   const r = o.arcRadius;
   const half = o.strokeWidth / 2;
   const bounds = { x0: 0, y0: 0, x1: layout.width, y1: layout.height };

@@ -18,6 +18,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
 import { railroadConfigDefaults } from './generated/config-defaults.ts';
+import { THEME_VARIABLES } from './theme/vocabulary.ts';
 
 /** The `railroad` lengths the layout reads, every one set. */
 export interface RailroadLayoutConfig {
@@ -108,24 +109,18 @@ export function railroadFontOverride(
   };
 }
 
+type RailroadThemeVariables = typeof THEME_VARIABLES;
+
 /**
  * The `railroad` colour keys the renderer draws and the theme variable each one beats (D515,
- * D516): v12's style keys, as `themeVariables.railroad.*` names them too. v12's three `comment*`
- * keys style nothing that is drawn.
+ * D516): v12's style keys, as `themeVariables.railroad.*` names them too, read from the theme
+ * vocabulary's `nested` keys. v12's three `comment*` keys style nothing that is drawn.
  */
-export const RAILROAD_COLOUR_KEYS = {
-  terminalFill: 'railroadTerminalFill',
-  terminalStroke: 'railroadTerminalStroke',
-  terminalTextColor: 'railroadTerminalTextColor',
-  nonTerminalFill: 'railroadNonTerminalFill',
-  nonTerminalStroke: 'railroadNonTerminalStroke',
-  nonTerminalTextColor: 'railroadNonTerminalTextColor',
-  lineColor: 'railroadLineColor',
-  markerFill: 'railroadMarkerFill',
-  specialFill: 'railroadSpecialFill',
-  specialStroke: 'railroadSpecialStroke',
-  ruleNameColor: 'railroadRuleNameColor',
-} as const;
+export const RAILROAD_COLOUR_KEYS = Object.freeze(
+  Object.fromEntries(Object.entries(THEME_VARIABLES).map(([name, v]) => [v.nested, name]))
+) as {
+  readonly [K in keyof RailroadThemeVariables as RailroadThemeVariables[K]['nested']]: K;
+};
 
 export type RailroadColourKey = keyof typeof RAILROAD_COLOUR_KEYS;
 

@@ -12,7 +12,9 @@
   terminal keyword 3:8-3:8 "" -> "terminal("
   nonterminal keyword 3:8-3:8 "" -> "nonterminal("
   special keyword 3:8-3:8 "" -> "special("
+  expr node (rule) 3:8-3:8 "" -> "nonterminal(\"expr\")"
   term node (rule) 3:8-3:8 "" -> "nonterminal(\"term\")"
+  other node (rule) 3:8-3:8 "" -> "nonterminal(\"other\")"
 @ 3:31  expr = sequence(nonterminal("t|"), ) ;
   term node (rule) 3:30-3:31 "t" -> "term"
 @ 3:35  expr = sequence(nonterminal("t"), |) ;
@@ -24,7 +26,9 @@
   terminal keyword 3:35-3:35 "" -> "terminal("
   nonterminal keyword 3:35-3:35 "" -> "nonterminal("
   special keyword 3:35-3:35 "" -> "special("
+  expr node (rule) 3:35-3:35 "" -> "nonterminal(\"expr\")"
   term node (rule) 3:35-3:35 "" -> "nonterminal(\"term\")"
+  other node (rule) 3:35-3:35 "" -> "nonterminal(\"other\")"
 @ 4:21  term = terminal("1")| ;
   ; operator 4:21-4:21 "" -> ";"
 @ 5:11  other = op|
