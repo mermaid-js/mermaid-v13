@@ -2,7 +2,7 @@
  * Turning one attribute value into its unescaped string form. Both writer backings and the
  * `SvgTree` view call this, so they agree byte for byte.
  */
-import { GRADIENT_ATTRS, HREF_TAGS, isAllowedAttr, isAllowedTag } from './allowlist.ts';
+import { ALLOWED_ATTRS, GRADIENT_ATTRS, HREF_TAGS, isAllowedTag } from './allowlist.ts';
 import { num } from './escape.ts';
 
 export function checkTag(tag: string): void {
@@ -13,7 +13,7 @@ export function checkTag(tag: string): void {
 export function formatValue(tag: string, name: string, value: unknown): string | undefined {
   if (value === undefined) return undefined;
   if (GRADIENT_ATTRS.has(name)) throw new TypeError(`${name} is not allowed on <${tag}>`);
-  if (!isAllowedAttr(name)) throw new TypeError(`${name} is not an allowed SVG attribute`);
+  if (!ALLOWED_ATTRS.has(name)) throw new TypeError(`${name} is not an allowed SVG attribute`);
   if (name === 'href' && !HREF_TAGS.has(tag))
     throw new TypeError(`href is not allowed on <${tag}>`);
   if (name === 'xmlns' && tag !== 'svg') throw new TypeError(`xmlns is only allowed on <svg>`);

@@ -10,7 +10,9 @@ const INVALID_XML = '\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe
 
 /** Characters that `esc()` drops. A validator must reject them, so what was checked is what is written. */
 export const RE_INVALID_XML = new RegExp(`[${INVALID_XML}]`, 'u');
-const RE_NEEDS_ESC = new RegExp(`[&<>"${INVALID_XML}]`, 'u');
+// Printable ASCII needs no replacement unless it contains markup. Non-ASCII takes the
+// Unicode-aware replacement below, which preserves paired surrogates.
+const RE_NON_PLAIN_ASCII = /[^\x20-\x7e]|[&<>"]/;
 const RE_ESC = new RegExp(`[&<>"]|[${INVALID_XML}]+`, 'gu');
 const ESC: Readonly<Record<string, string>> = {
   '&': '&amp;',
@@ -21,20 +23,27 @@ const ESC: Readonly<Record<string, string>> = {
 
 /** Escapes text for XML text and double-quoted attribute values, dropping invalid characters. */
 export function esc(text: string): string {
-  return RE_NEEDS_ESC.test(text) ? text.replace(RE_ESC, (c) => ESC[c] ?? '') : text;
+  return RE_NON_PLAIN_ASCII.test(text) ? text.replace(RE_ESC, (c) => ESC[c] ?? '') : text;
 }
 
-const RE_ATTR_WS = /[\t\n\r]/;
-const RE_ATTR_WS_G = /[\t\n\r]/g;
+const RE_ATTR_ESC = new RegExp(`[&<>"\\t\\n\\r]|[${INVALID_XML}]+`, 'gu');
 const ATTR_WS: Readonly<Record<string, string>> = { '\t': '&#9;', '\n': '&#10;', '\r': '&#13;' };
+// A bounded memo for adjacent equal values, separate from text escaping's whitespace rules.
+let lastAttr = '';
+let lastEscapedAttr = '';
 
 /**
  * `esc()` for a double-quoted attribute value. Tab, LF and CR are written as character
  * references too, since an XML reader turns them into spaces (attribute-value normalisation).
  */
 export function escAttr(value: string): string {
-  const e = esc(value);
-  return RE_ATTR_WS.test(e) ? e.replace(RE_ATTR_WS_G, (c) => ATTR_WS[c] as string) : e;
+  if (value === lastAttr) return lastEscapedAttr;
+  const escaped = RE_NON_PLAIN_ASCII.test(value)
+    ? value.replace(RE_ATTR_ESC, (c) => ESC[c] ?? ATTR_WS[c] ?? '')
+    : value;
+  lastAttr = value;
+  lastEscapedAttr = escaped;
+  return escaped;
 }
 
 // The two decimals of a coordinate, by hundredths. Building the string from integers is
