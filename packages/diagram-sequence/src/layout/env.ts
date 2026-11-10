@@ -17,6 +17,7 @@ import {
 } from '../model.ts';
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
 import type { PlacedLabel } from './types.ts';
+import { fontWeightOf as weightOf } from '@mermaid-js/core/config';
 
 /** What the layout reads from the render context. */
 export type SequenceLayoutContext = Pick<
@@ -108,12 +109,6 @@ export const BIDIRECTIONAL = kindsWhere((h) => h.start !== undefined && h.end !=
 /** Arrows whose head is drawn at the start (`…_reverse…`). */
 export const REVERSE_ARROWS = kindsWhere((h) => h.start !== undefined && h.end === undefined);
 
-function weightOf(value: unknown): number {
-  if (value === 'bold' || value === 'bolder') return FONT_WEIGHT.bold;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : FONT_WEIGHT.normal;
-}
-
 /**
  * The fonts labels are measured in, and so drawn in (the renderer reads them too). A per-key
  * family the style check refuses falls back to the Mermaid font, with a warning when `warn`
@@ -144,7 +139,7 @@ export function fontsOf(
     return {
       family: safe ?? family,
       size: s !== undefined && s > 0 ? s : size,
-      weight: weightOf(seq[`${prefix}FontWeight`]),
+      weight: weightOf(seq[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };
   };
   return {

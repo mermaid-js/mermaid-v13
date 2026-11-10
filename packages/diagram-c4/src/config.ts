@@ -19,6 +19,8 @@ import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
+import { configNumber } from '@mermaid-js/core/config';
+import { fontWeightOf as weightOf } from '@mermaid-js/core/config';
 
 /** The `c4` lengths, row counts and flags the layout reads, every one set. */
 export interface C4LayoutConfig {
@@ -76,14 +78,6 @@ const LENGTHS = [
 ] as const;
 const LENGTH_MIN = 0;
 
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
-
 /** The section the layout reads from the resolved config. */
 export function c4Section(config: RenderContext['config']): Readonly<Record<string, unknown>> {
   const section = (config as { c4?: unknown }).c4;
@@ -112,13 +106,6 @@ export function c4LayoutConfig(config: RenderContext['config']): C4LayoutConfig 
     wrap,
     wrapAll: wrap && (config as { wrap?: unknown }).wrap === true,
   };
-}
-
-/** A CSS font weight as a number: `bold` and `bolder` are 700, anything else not a number 400. */
-function weightOf(value: unknown): number {
-  if (value === 'bold' || value === 'bolder') return FONT_WEIGHT.bold;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : FONT_WEIGHT.normal;
 }
 
 /** The fonts text is measured in, and so drawn in: by element kind, and for boundaries and relations. */
@@ -157,7 +144,7 @@ export function c4Fonts(
     return {
       family: safe ?? family,
       size: s !== undefined && s > 0 ? s : size,
-      weight: weightOf(c4[`${prefix}FontWeight`]),
+      weight: weightOf(c4[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };
   };
   const elements = new Map(C4_ELEMENT_KINDS.map((k) => [k, font(k)]));

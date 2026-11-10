@@ -11,6 +11,7 @@ import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
 import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
+import { NUMERIC } from '@mermaid-js/core/config';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
 export const MINDMAP_CONFIG_IGNORED = 'MINDMAP_CONFIG_IGNORED';
@@ -81,9 +82,6 @@ export interface MindmapPrepared {
   /** One per non-root node, in model order. */
   readonly edges: readonly MindmapEdgeView[];
 }
-
-/** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
 
 /**
  * A config length (a number, or a whole numeric string, as v12 takes it) of at least 0, or above

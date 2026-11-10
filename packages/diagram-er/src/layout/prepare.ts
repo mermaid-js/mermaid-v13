@@ -26,7 +26,7 @@ import type {
   ErRelationship,
   ErSubgraph,
 } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
 
@@ -208,7 +208,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const length = configLengths(ctx.config.er ?? {}, erConfigDefaults, (w) => ctx.warn(w));
+  const length = configLengths('er', 'ER_CONFIG_IGNORED', ctx.config.er ?? {}, erConfigDefaults, (w) => ctx.warn(w));
   const m: Measure = {
     font,
     pad: cellPad(units, length),

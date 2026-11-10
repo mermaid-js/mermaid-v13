@@ -29,6 +29,7 @@ import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
 import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
 import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { LinkPaint } from './layout/types.ts';
+import { shownValue as shown } from '@mermaid-js/core/config';
 
 export interface SankeyLayoutConfig {
   readonly width: number;
@@ -74,9 +75,6 @@ function linkPaint(given: unknown): LinkPaint | undefined {
   if (typeof given !== 'string') return undefined;
   return MODES.has(given) ? (given as LinkPaint) : checkColor(given);
 }
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 type Reader = (value: unknown) => unknown;
 

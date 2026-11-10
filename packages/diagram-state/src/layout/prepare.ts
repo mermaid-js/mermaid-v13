@@ -14,7 +14,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
@@ -125,7 +125,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const units = ctx.units ?? pxProfile;
   const b = units.builder;
   const cfg = ctx.config.state ?? {};
-  const length = configLengths(cfg, stateConfigDefaults, (w) => ctx.warn(w));
+  const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) => ctx.warn(w));
   const m: Measure = {
     units,
     sm: stateMetrics(units),

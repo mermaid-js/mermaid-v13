@@ -18,6 +18,9 @@ import type { Warning } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import type { TreeViewIconOptions } from './icons.ts';
+import { rawConfigNumber as configNumber } from '@mermaid-js/core/config';
+import { shownValue as shown } from '@mermaid-js/core/config';
+import { useMaxWidth } from '@mermaid-js/core/config';
 
 export const TREEVIEW_CONFIG_INVALID = 'TREEVIEW_CONFIG_INVALID';
 
@@ -61,13 +64,6 @@ const DEFAULT_ICON_PACK = schemaDefault('defaultIconPack');
 const LENGTHS: readonly LengthKey[] = ['rowIndent', 'paddingX', 'paddingY', 'lineThickness'];
 const MAPS = ['filenameIcons', 'extensionIcons'] as const;
 
-/** A number, or a string that reads as one; else NaN. */
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim() !== '') return Number(value);
-  return Number.NaN;
-}
-
 /** `value` when it is a plain object (the icon maps), its string entries; else undefined. */
 function iconMap(value: unknown): Readonly<Record<string, string>> | undefined {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -75,9 +71,6 @@ function iconMap(value: unknown): Readonly<Record<string, string>> | undefined {
   for (const [k, v] of Object.entries(value)) if (typeof v === 'string') out[k] = v;
   return out;
 }
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /**
  * The options from the resolved `treeView` section, each checked (`undefined`: the defaults);
@@ -127,6 +120,5 @@ export function treeViewOptions(
 export function treeViewUseMaxWidth(
   section: Readonly<Pick<TreeViewDiagramConfig, 'useMaxWidth'>> | undefined
 ): boolean {
-  const value: unknown = section?.useMaxWidth;
-  return value === undefined || Boolean(value);
+  return useMaxWidth(section?.useMaxWidth, 'truthy');
 }

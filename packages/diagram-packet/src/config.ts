@@ -11,6 +11,8 @@
  */
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfigDefaults } from './generated/config-defaults.ts';
+import { rawConfigNumber as configNumber } from '@mermaid-js/core/config';
+import { shownValue as shown } from '@mermaid-js/core/config';
 
 export interface PacketConfig {
   readonly rowHeight: number;
@@ -68,15 +70,6 @@ const LENGTHS: readonly (readonly [LengthKey, number, boolean, string])[] = [
   ['paddingX', 0, false, 'a number of 0 or more'],
   ['paddingY', 0, false, 'a number of 0 or more'],
 ];
-
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim() !== '') return Number(value);
-  return Number.NaN;
-}
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /** The packet options from the resolved `packet` config section, each checked. */
 export function packetConfig(section: Readonly<Record<string, unknown>> | undefined): {

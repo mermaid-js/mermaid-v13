@@ -13,6 +13,7 @@ import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { ParticipantKind } from '../model.ts';
+import { configNumber } from '@mermaid-js/core/config';
 
 export interface XY {
   readonly x: number;
@@ -397,12 +398,6 @@ export interface SequenceMetrics extends ConfigLengths, FixedLengths, ThemeLengt
 
 // Config numbers may arrive as strings from front matter, as v12 accepted them.
 const MAX_CONFIG = 1e4;
-function configNumber(value: unknown): number | undefined {
-  let n = NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string') n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? Math.min(n, MAX_CONFIG) : undefined;
-}
 
 type Axis = 'x' | 'y';
 const SINGLE: Readonly<Record<string, Axis>> = {
@@ -432,7 +427,7 @@ export function sequenceMetrics(
   const cfg = (config ?? {}) as Readonly<Record<string, unknown>>;
   const out: Record<string, unknown> = { ...table.fixed, ...themeLengths(units, theme) };
   const length = (key: string, axis: Axis, fallback: number, min: number): number => {
-    const px = configNumber(cfg[key]);
+    const px = configNumber(cfg[key], 0, MAX_CONFIG, true);
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   for (const [key, axis] of Object.entries(SINGLE)) {

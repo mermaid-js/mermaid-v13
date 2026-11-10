@@ -8,6 +8,8 @@
 import type { Warning } from '@mermaid-js/core';
 import { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
 import type { QuadrantLayoutConfig } from './layout/index.ts';
+import { configNumber } from '@mermaid-js/core/config';
+import { shownValue as shown } from '@mermaid-js/core/config';
 
 type NumberKey = {
   [K in keyof QuadrantLayoutConfig]: QuadrantLayoutConfig[K] extends number ? K : never;
@@ -40,17 +42,6 @@ const SIDES: Readonly<Record<'xAxisPosition' | 'yAxisPosition', readonly string[
 
 const DEFAULTS = quadrantChartConfigDefaults as QuadrantLayoutConfig;
 
-/** A length in px: a finite number ≥ 0, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
-}
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
-
 const invalid = (key: string, value: unknown, wants: string, used: unknown): Warning => ({
   code: 'QUADRANT_CONFIG_INVALID',
   message: `quadrantChart.${key} is ${shown(value)}, not ${wants}; using the default ${shown(used)}`,
@@ -66,7 +57,7 @@ export function quadrantLayoutConfig(
   const set = (key: string): boolean => Object.hasOwn(given, key) && given[key] !== undefined;
   for (const key of NUMBERS) {
     if (!set(key)) continue;
-    const n = configNumber(given[key]);
+    const n = configNumber(given[key], 0);
     if (n === undefined) warn(invalid(key, given[key], 'a number of 0 or more', DEFAULTS[key]));
     else out[key] = n;
   }

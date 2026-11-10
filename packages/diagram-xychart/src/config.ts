@@ -15,6 +15,8 @@
 import type { Warning } from '@mermaid-js/core';
 import type { XYChartAxisConfig, XYChartConfig } from '@mermaid-js/core/config';
 import { xyChartConfigDefaults } from './generated/config-defaults.ts';
+import { configNumber } from '@mermaid-js/core/config';
+export { configNumber } from '@mermaid-js/core/config';
 
 export const XYCHART_CONFIG_INVALID = 'XYCHART_CONFIG_INVALID';
 
@@ -68,14 +70,6 @@ const AXIS_DEFAULTS = {
   xAxis: X_AXIS_DEFAULTS as XyChartAxisOptions,
   yAxis: Y_AXIS_DEFAULTS as XyChartAxisOptions,
 };
-
-/** A finite number, or a string that reads as one; else undefined. */
-export function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
 
 /** A value as a warning quotes it. */
 const quoted = (value: unknown): string =>

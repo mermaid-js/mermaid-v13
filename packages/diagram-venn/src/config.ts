@@ -13,6 +13,7 @@
  */
 
 /** The `venn` options the layout reads, every one set. */
+import { configNumber } from '@mermaid-js/core/config';
 export interface VennLayoutConfig {
   readonly width: number;
   readonly height: number;
@@ -50,14 +51,6 @@ const MINIMUM: Readonly<Record<'width' | 'height' | 'padding', number>> = {
   height: 1,
   padding: 0,
 };
-
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
 
 /** The layout's options from the resolved `venn` section. */
 export function vennLayoutConfig(

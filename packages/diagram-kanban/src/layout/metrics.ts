@@ -11,6 +11,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { KanbanDiagramConfig } from '@mermaid-js/core/config';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
 import { kanbanConfigDefaults } from '../generated/config-defaults.ts';
+import { NUMERIC } from '@mermaid-js/core/config';
 
 /**
  * The generated `kanban` section defaults, with every key set: the schema gives each of
@@ -178,9 +179,6 @@ export const MAX_LENGTH = 10000;
  * `W − cardInset` wide, are wider than 0).
  */
 export const MIN_SECTION_WIDTH = KANBAN_METRICS.wrapInset + KANBAN_METRICS.minWrap;
-
-/** A whole decimal number, spaces around it allowed: `"300"`, `" 300 "`; not `"300px"`. */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
 
 /** The px lengths `kanban` config sets for one render, over their defaults. */
 export interface ConfigLengths {

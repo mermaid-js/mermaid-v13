@@ -7,6 +7,8 @@
  */
 import type { IshikawaDiagramConfig } from '@mermaid-js/core/config';
 import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
+import { configNumber } from '@mermaid-js/core/config';
+import { useMaxWidth } from '@mermaid-js/core/config';
 
 /** The `ishikawa` options the layout reads, every one set. */
 export interface IshikawaLayoutConfig {
@@ -24,14 +26,6 @@ export const ISHIKAWA_CONFIG_DEFAULTS = ishikawaConfigDefaults as Required<
   Pick<IshikawaDiagramConfig, 'diagramPadding' | 'useMaxWidth'>
 >;
 
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
-
 /** The layout's options from the resolved `ishikawa` section. */
 export function ishikawaLayoutConfig(
   section: Readonly<Record<string, unknown>> | undefined
@@ -47,6 +41,5 @@ export function ishikawaLayoutConfig(
 export function ishikawaUseMaxWidth(
   section: Readonly<Record<string, unknown>> | undefined
 ): boolean {
-  const value = section?.useMaxWidth;
-  return typeof value === 'boolean' ? value : ISHIKAWA_CONFIG_DEFAULTS.useMaxWidth;
+  return useMaxWidth(section?.useMaxWidth, 'boolean', ISHIKAWA_CONFIG_DEFAULTS.useMaxWidth);
 }

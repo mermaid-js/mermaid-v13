@@ -26,6 +26,7 @@ import type {
   PlacedLabel,
   Rect,
 } from './types.ts';
+import { shownValue as shown } from '@mermaid-js/core/config';
 
 /** What the layout reads from the render context (`warn` for `BLOCK_CONFIG_INVALID`). */
 export type BlockLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -44,9 +45,6 @@ interface Item extends BlockGridItem {
   /** Its natural size, label shift and band, as its kind measures it. */
   readonly natural: Natural;
 }
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /**
  * `block.padding` from the config (D226, D445): a finite number of 0 or more, at most

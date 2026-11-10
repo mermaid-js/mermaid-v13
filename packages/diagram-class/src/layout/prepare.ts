@@ -28,7 +28,7 @@ import {
 import { MARKER_ACROSS } from '../render/markers.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
 import type { ClassLayoutContext } from './context.ts';
 
 /** A class, as laid out. */
@@ -236,7 +236,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     classIds: new Map(),
     interfaceIds: new Map(),
   };
-  const length = configLengths(conf, configDefaults, (w) => ctx.warn?.(w));
+  const length = configLengths('class', 'CLASS_CONFIG_IGNORED', conf, configDefaults, (w) => ctx.warn?.(w));
   const padding = length('padding');
   const boxPad = padding ?? BOX_PAD;
   const metrics: BoxMetrics = {
